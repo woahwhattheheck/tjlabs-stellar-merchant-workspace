@@ -401,8 +401,72 @@ Use the original 4BF5/Actions BLS case for its actual native and browser result.
 
 ## IATI customer operating procedures
 
-The maintained customer projection carries the complete IATI operating-procedure introduction into the existing IATI chapter and concise customer, product and funded-installation paragraphs into the original answers. A complete section supplied by the manuscript owner takes precedence. The chapter joins the exact saved document case to the existing Operating Plans application, full source/catalog/plan history, Markdown and HTML, and original native ZIP receiving. Its five source registrations select the merged guide, native reader, pure procedure model, complete installed command and full IATI operator guide at `0110a7fde307112abee5be63a06291855aa72599`.
+The maintained customer projection carries the complete IATI operating-procedure introduction into the existing IATI chapter and concise customer, product and funded-installation paragraphs into the original answers. A complete section supplied by the manuscript owner takes precedence. In the nine-answer application, the owner may consolidate the three introductions into the Working product narrative. When that narrative names Operating Plans and links the full IATI operating guide, and none of the maintained introduction prefixes remain, composition preserves the authored answer unchanged. An older partially received set of prefixed introductions is still completed through the normal receiver. The chapter joins the exact saved document case to the existing Operating Plans application, full source/catalog/plan history, Markdown and HTML, and original native ZIP receiving. Its five source registrations select the merged guide, native reader, pure procedure model, complete installed command and full IATI operator guide at `0110a7fde307112abee5be63a06291855aa72599`.
 
 Continue using the normal `grant-compose` command with the complete current application, companion, reader and index. Omit `--manuscript` when receiving these maintained additions into the already saved cumulative reader. Subsequent full-manuscript composition preserves this introduction when the original customer chapter has not yet received it; a manuscript-owned version is retained. The existing nine answer identities, all other customer chapters and six package/capacity/cash assumptions remain part of the same composition.
 
 Customer procedure creation and editing operate the exact case through the original applications. The separate original FCDO native receiving programme supplies its own dated result; follow its existing case and worker operation when updating demonstration results. The operating-procedure source and chapter describe the implemented customer capability and complete receiving sequence.
+
+## Receive Connected Systems commissioning
+
+The canonical **Connected Systems observations: customer commissioning and repeat
+use** subsection travels through the existing whole-§9A `--manuscript` receiver.
+It retains the selected observation source and returned schema, original numbers,
+units and quality fields, declared acquisition coverage, reviewed mapping,
+editions, queries, comparisons and independent customer receiving.
+
+The same selected manuscript carries its concise front-answer additions and
+complete **8. Delivery capacity and cash timing** treatment. Keep the proposed
+$9,600 / 72 engineering-hour / 12-active-day workorder and its two uncollected
+$4,800 payments distinct from the six funded packages. The commissioning payer,
+technical owner, acceptance owner, source rights, receiving environment and actual
+available contributors are established in the original customer workorder.
+
+The source receiver follows four immutable links from that complete subsection:
+
+- `connected-systems-customer-operator`: the selected `CONNECTED_SYSTEMS.md`
+  operating and installation guide.
+- `connected-systems-publisher-observation`: the publisher's original
+  `obs-simple.json` observation used by the completed native receiving example.
+- `connected-systems-commissioning-programme`: the original GeoRobotix Workshare
+  phases and Customer Installation operating guide.
+- `connected-systems-workshare-intake`: the exact maintained Python scope and plan
+  intake used by the completed native commercial operation.
+
+All four records retain their actual repository, commit and path. A later accepted
+source edition updates the existing record and clears an obsolete blob pin
+through the original receiver. Earlier manuscripts without this subsection keep
+the preceding source register. All unrelated source records and customer
+chapters remain in the same composition.
+
+The completed one-observation native example, an installed operator, a live
+collection and a selected paid merchant/buyer service have separate actual
+outcomes. Receive their current descriptions from the canonical manuscript.
+Neither a prepared implementation proposal nor a source archive adds a customer
+agreement, collected revenue or qualifying purchase.
+
+Use the same four-reader source pins and original saved draft, review, Page and
+Site publisher. The complete chapter and capacity discussion accompany the
+existing editable answers; this source addition creates no new authoring,
+application or customer-operation controller.
+
+The current canonical chapter includes the original completed commercial
+Workshare and Installation intake. Its eight engineering workorders remain
+planned, with the same $9,600 proposal, 72 hours, 12 active business days and two
+$4,800 milestones. The observation product's dependency completion, installed
+receiving and browser acceptance remain the next product stages. Receive the
+current author's complete paragraphs through the existing manuscript receiver;
+keep its live wording, source appendix and concurrent customer chapters. The
+source registration is additive and supplies no new application or native result.
+
+## Receive Calendar and Connected Systems in the cumulative edition
+
+Receive the accepted Calendar demand, product and delivery answers together with the complete **Product selection, installation and recurring buyer work** chapter. The customer projector retains the chapter's original `CUSTOMER_USE_CALENDAR.md` and `INSTALLATIONS.md` selections as `customer-use-calendar` and `customer-use-installations`. The maintained delivery-plan module carries the dated buyer/cohort schedule through its existing T1, T2 and T3 rows. Keep that producer with the received manuscript so a later normal composition preserves the reviewed wording. The original hours, costs and six funded packages remain the selected financial basis.
+
+The complete **Connected Systems observations: customer commissioning and repeat use** source selection also travels through the existing customer receiver. Its `connected-systems-customer-operator` record follows the original operating guide; `connected-systems-publisher-observation` retains the complete original observation's source repository, commit and path. Use the actual chapter's immutable links and retain both full source records. The existing public-link projection and repeated composition preserve the surrounding source catalogue.
+
+The October 13 cumulative receiving first reconciled 150 original source records and 45 chapters, then received the newer complete publisher edition with all its added chapters and source registrations. The current joined output contains 183 records and 54 chapters. Of the preceding 173 records, 166 remain byte-identical; the Geography browser procedure selects its completed continuation, and the original product registry adds only its source-kind and registration fields to the six unchanged SQL-preparation selections. The ten new records are the two original Calendar selections and all eight sources already required by the scientific-array declaration. The preceding Connected Systems source update is preserved exactly. The existing Datasette public projection is unchanged. Subsequent editions may add sources; compare complete identities and content rather than enforcing this historical count.
+
+Keep all four complete reader outputs and their `sourcePins` together. A reviewer source package uses application Markdown, source-index JSON, the original budget CSV and the complete companion; the HTML reader is a separate published output. Receive that complete package into the original saved draft with `grant-export --draft ORIGINAL --receive-source-package NEW_PACKAGE --out NEW_EXPORT`, then reopen its complete draft. Preserve its edited answers, field mapping, plans, review history and preceding source editions through the maintained source comparison.
+
+The scientific-array chapter must retain the immutable links selected by its existing `grant-products/zarr-scientific-arrays.json` declaration. Its original workspace, native contract, upstream and receiving sources accompany the pinned commissioning guide, editable worksheet and original agreement. Keep the complete declaration active in the ordinary composer; missing required links are source errors. The maintained public projection retains the agreement's authenticated-source identity while omitting its private URL from the reader.

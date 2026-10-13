@@ -141,7 +141,11 @@ The analyst opens each original series and its full comparison rows, with exact 
 
 Reopening a saved report or resuming its download retains the original purchase. A later reporting window or newly retained source edition begins the next useful operation: review the selected acquisition, inspect the changed report and approve its publication. Catch-up completion belongs to the selected watch and exact release snapshot, so a later snapshot can reveal an additional series revision on a date already processed. Previous plans and buyer reports remain readable with their original source and values. Source retrieval time, API real-time/vintage dates and observation-period labels retain their distinct meanings.
 
-County customer receiving saves its original destination with the same purchase before writing report files. If the browser or host restarts, the customer reopens that native intent and continues the same receiving directory. A separately downloaded complete package can be received on another host through the installed command. Publishing or transferring an existing county edition reuses its original compressed package bytes.
+**Retain the complete customer operation when the project moves.** County customer receiving saves its original destination with the same purchase before writing report files. A complete project handover now carries the merchant publication, every prepared request, completed or pending Buyer reference, and each original customer receiving selection. A receiving engineer can relocate the economic project, reopen an unstarted request with its original preparation, or recover a completed purchase through the same configured Buyer. The transferred customer inventory preserves the original request, configuration, report, payment and selected receiving path; the Customer desk reopens every current and predecessor report file from that retained operation.
+
+The receiving host keeps the original Buyer store and customer receiving directory available through their existing backup and restore procedures. A separately downloaded complete package can instead be received into another directory through the installed command. Publishing and project transfer reuse the original compressed report bytes. The current project extension includes full customer state; earlier publication-only exports remain readable with the information they originally contained. Receiving a project restores its saved requests and selections, and the operator uses the normal review and execution controls to continue them.
+
+**Complete county operating programme.** The maintained source-to-customer programme acquires the original county intake and CPI capture, produces the complete retained reports, operates the desktop and phone workspace, and continues through the native Merchant and Buyer. Its paid phase selects the original report and every predecessor, purchases each current advertised resource, recovers the original complete-package request after a closed browser, receives the original report archive independently, and transfers the complete economic project. The final receiving phase reopens both the prepared and completed customer requests in the relocated project and downloads every current and predecessor member. The programme preserves its original selections, payment results and full operating output between continuations. The county programme is delivered to the original operating team; its completed result will join this same customer example.
 
 **Implementation within the existing funded plan.** The six packages below are the application’s shared allocation for both selected merchant installations. This economic-reporting case supplies concrete work and acceptance inside those packages; its installation workorder assigns each adaptation once.
 
@@ -165,7 +169,7 @@ The allocation remains **400 prospective hours / USD 38,000 / 150 days from actu
 
 [Merged complete DDP and current-publication application](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/574) · [Integrated large-source comparison](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/764) · [Complete publication operation and receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/355e98f3ea45ccc322d2a6a8651e522f14ab3bec/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/PUBLISHED-WORKSPACE.md)
 
-[Merged complete release-planner application](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/280) · [Release planning, source acquisition and receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d14b92d08c56b311da33b58676f52b72e638d35f/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/PROJECT.md) · [Official source and calendar interpretation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d14b92d08c56b311da33b58676f52b72e638d35f/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/README.md) · [Recurring briefing guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d14b92d08c56b311da33b58676f52b72e638d35f/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/TEMPLATES.md) · [Original analyst operation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d14b92d08c56b311da33b58676f52b72e638d35f/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/BRIEFINGS.md) · [Installed client and merchant operation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d14b92d08c56b311da33b58676f52b72e638d35f/stellar-forge/mcp-merchant-operator/FRED.md)
+[Merged complete release-planner application](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/280) · [Release planning, source acquisition and receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d14b92d08c56b311da33b58676f52b72e638d35f/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/PROJECT.md) · [Official source and calendar interpretation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d14b92d08c56b311da33b58676f52b72e638d35f/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/README.md) · [Recurring briefing guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d14b92d08c56b311da33b58676f52b72e638d35f/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/TEMPLATES.md) · [Original analyst operation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d14b92d08c56b311da33b58676f52b72e638d35f/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/BRIEFINGS.md) · [Installed client and merchant operation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d14b92d08c56b311da33b58676f52b72e638d35f/stellar-forge/mcp-merchant-operator/FRED.md) · [Merged county Merchant and Customer application](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/656) · [Paid county reports, Customer recovery and project receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7aa35eda5fe25bbbb177772c533e425f31b6da6b/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/MERCHANT.md) · [County source and report methodology](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7aa35eda5fe25bbbb177772c533e425f31b6da6b/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/README.md) · [Complete county source-production workspace and original operating recovery](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7aa35eda5fe25bbbb177772c533e425f31b6da6b/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/WORKSPACE.md) · [Complete original county Merchant and Customer receiving programme](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7aa35eda5fe25bbbb177772c533e425f31b6da6b/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/merchant-journey.mjs) · [Full county publication and Customer inventory in the original economic project](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7aa35eda5fe25bbbb177772c533e425f31b6da6b/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/bundle.mjs)
 
 ## Coastal model-input installation
 
@@ -2454,19 +2458,69 @@ Each adaptation is assigned once to its grant package or a separately commission
 
 The [current SCF #46 round](https://communityfund.stellar.org/awards/recxrSMYwAl8vcglg) lists the November 8, 2026 Build deadline and invitation from the existing interest process. The [submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria) require the submission to carry its own substantive architecture, evidence, deliverables and verification. The [budget guidance](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines) limits funding to future development and the original three-tranche structure. This chapter supplies the product facts within that same application; it does not assert an invitation, grant approval or completed future milestone.
 
+## Complete delivered-edition review and independent customer receiving
+
+A recurring resource purchase must remain useful after the original transfer. An analyst needs to compare the new edition with the earlier delivery, explain accepted or disputed changes, receive another reviewer’s decisions and hand the complete work to a colleague. The Resource Review application provides that workflow in the existing buyer library. It uses the original delivery, payment records, private library and decision journal throughout.
+
+### Customer operation
+
+The operator opens the delivered files in **Edition review**, selects before and after resources and chooses their interpretation. A comparison reads both complete verified files. JSON retains exact number literals, type changes and null-versus-missing distinctions. CSV uses explicit identity columns when supplied, preserving quoted cells and detecting duplicate identities. Text retains line endings; binary review identifies changed byte ranges. Searchable text prefixes are for discovery; the comparison and exact download use complete source files.
+
+A saved comparison retains its source identities, direction, settings, complete change rows and every decision revision. The analyst records **Accept**, **Reject** or **Follow up**, with a reviewer label and explanation. The whole-case decision is separate from decisions on individual changes. A printable HTML report presents the review; complete JSON carries the editable handover, while CSV carries the change and decision rows. A recipient can receive the comparison and continue reviewing after the original source files are unavailable.
+
+The application supports two existing receiving workflows:
+
+|Customer need|Operating behavior|
+|  ---  |  ---  |
+|Receive an incoming handover into a comparison already under review.|The incoming source is retained. Compatible newer decisions append; older input preserves newer local work. A divergent return keeps both histories for explicit resolution. Saved choices survive a process restart and bind to the complete reviewed local state.|
+|Receive a complete journal with earlier sources, staged returns and reconciliation receipts.|The operator stages it against the current local journal, inspects the histories and explicitly keeps local work, takes the returned decision or authors a new resolution. Application retains the original sources and complete reconciliation history.|
+|Continue in a separate customer workspace.|The recipient imports the full comparison and journal, reviews earlier resolutions, saves a new decision and exports its next complete edition. Reopening selects the same saved comparison and history.|
+
+
+Both receiving paths use the original decision writer. An intervening decision makes an older resolution plan stale so the operator reviews the current state before applying it. Applying a reviewed return is one transaction. Replaying an interrupted request uses its saved operation identity and returns the original outcome. Operator-supplied reviewer labels retain who was recorded in the review; the customer’s workorder supplies the actual approval responsibilities.
+
+### Completed native customer operation
+
+The original **SCF-REVIEW-RETURNS-COMPOSITION-B41A-20261012** programme completed on **October 12, 2026 at 20:06:45 UTC**. It ran the complete comparison, incoming-return, returned-journal, Python-delivery and original Python-browser programmes, then exported the full journal, built and checked the original customer archive. Its retained outputs include the real review workspaces, original source histories, portable reports and receiving results.
+
+The final Chrome journey completed these customer actions:
+
+1. Open the original edition review and its conflicting returned journal; review the conflict, apply the selected resolution and export the complete accepted journal.
+2. Receive that journal in a separate workspace with the original source absent, edit the received comparison and reopen the saved work.
+3. Open the original incoming review return, retain its native source and application result, and produce the complete review report.
+
+The incoming-return result also records compatible fast-forward, preservation of later local work, atomic conflict handling, choices retained after a killed process, stale-plan conflicts, all three resolution modes, recovery after a lost apply reply and complete incoming history. The completed browser run retained **twelve views across 1,440- and 390-pixel widths**, with **zero recorded page or console errors** and no recorded horizontal overflow. Its actual runtime was Node 24.19.0, Python 3.12.14 and Chrome 130.0.6723.116.
+
+The complete customer archive is **4,513,584 bytes with 1,191 package-manifest members**. The selected Resource Review composition supplies **46 complete source files**; the customer package also retains its original Python and runtime selection. The complete accepted journal, original reports and installed receiving inputs travel together. The original browser/state and programme-output archives preserve the operated customer state for continuation.
+
+### Current continuation and funded installation
+
+Two merged contributions extend this customer application. [PR685](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/685) preserves explicit comparison and originating-return links over an older saved selection, distinguishes draft and saved decisions, keeps one journal-upload identity through receiving and makes complete reports readable on desktop, phone and paper. [PR835](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/835) connects the original Python customer entry points to the existing incoming-return and full-journal workflows, with scoped navigation and complete accepted-journal download. The accepted October 12 run is the starting customer edition; the continuation receives these merged sources through its original builder and receiving programme.
+
+For a selected funded installation, **T1** binds the customer’s delivered resource, comparison interpretation, reviewer responsibilities and receiving destination to the merchant/buyer workflow. **T2** operates changed editions and interrupted delivery or review handover with the selected facilitators and installed response controls. **T3** carries production purchases, original review histories and full customer files into the independent maintainer’s receiving procedure. These adaptations use the existing six packages and 400-hour allocation. The delivered comparison and review implementation is the pre-award starting product.
+
+### Retained operating sources
+
+* Original composition and receiving thread.
+* Complete 46-file Resource Review source.
+* [Accepted native receiving result](https://chatgpt.com/api/library/files/libfile_61552973f8548191a3d5415553a44d25/download) and [complete customer application](https://chatgpt.com/api/library/files/libfile_656b196547a88191b0c24e3bd85b34e4/download).
+* [Merged browser-continuation operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ee93378c6557bfe859624af0c8ec6e36409b8c20/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/JOURNAL_CONTINUATION.md) and [merged Python/customer entry points](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/835).
+
+The accepted customer archive has SHA-256 `68d20e9923d9a05b15c48f1b109a0b72c9777b4b97a987e411b76b2393ee0aa1`; its 46-file composition has SHA-256 `d564d9c307af7b9c742e75325ad0096d166acd623326c5b273dea5a3e266e70e`. The original operation and returned customer files supply the installed result. The same application retains each subsequent merged-source continuation and its actual receiving outcome.
+
 ## AirGradient customer reporting, original-source intake and complete receiving
 
 An implementation partner or customer operator can commission a recurring air-quality reporting installation around its selected AirGradient locations and existing reporting destination. The useful output is a complete named period, its source and coverage, a readable comparison with the preceding edition, and an editable package that another operator can continue. AirGradient's existing free API, dashboard and exports are the source foundation; the proposed work covers the customer's integration, destination and operating handover. The original environmental commissioning package retains the first-party research, complete workshare and commercial correspondence.
 
 ### Installed customer operation
 
-The [complete customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/f021c67de5122560c4d23789b43dd01424e47f75/stellar/scf-starforge-20261009/partners/airgradient-operations/README.md) provides the browser, CLI, authenticated HTTP, typed workspace and managed Applications operation. A project names the organisation, accountable operator, up to twenty locations, source route, measurements, bucket, coverage requirement, reporting period and any customer-selected threshold. Public indoor and outdoor Map locations retain distinct identities; the private Dashboard source uses its operator's authorised token and location IDs. The original Map and Dashboard definitions are retained with the installation.
+The [complete customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/4224a19629e9565285e6c7ba990254534010774b/stellar/scf-starforge-20261009/partners/airgradient-operations/README.md) provides the browser, CLI, authenticated HTTP, typed workspace and managed Applications operation. A project names the organisation, accountable operator, up to twenty locations, source route, measurements, bucket, coverage requirement, reporting period and any customer-selected threshold. Public indoor and outdoor Map locations retain distinct identities; the private Dashboard source uses its operator's authorised token and location IDs. The original Map and Dashboard definitions are retained with the installation.
 
 For an existing source collection, the operator imports the complete original packet, selects the customer locations and explicit report period, reviews coverage and commits the report. Each report retains the original metadata pages, history requests, source bytes and retrieval windows. The report's period is separately selected from the wider source request. A later report uses the accepted prior edition as its baseline. New provider acquisition remains available for a period outside the saved collection, using the same retained request, response and retry operation.
 
-Complete HTML, summary and full-series CSV, report JSON and editable ZIP delivery carry the original collection and operating history. Each delivered operating guide names the actual source collection, original packet, covered range and next reporting selection. The receiving workspace retains the exact project, report and plan; **Continue a received study** restores its saved local receiving selections after reopening. The operator explicitly chooses which received project to continue.
+Complete HTML, summary and full-series CSV, report JSON and editable ZIP delivery carry the original collection and operating history. Each delivered operating guide names the actual source collection, original packet, covered range and next reporting selection. The receiving workspace retains the exact project, report and plan; **Continue a received study** restores its saved local receiving selections after reopening. The operator explicitly chooses which received project to continue. Selecting a received study keeps its captured receipt, project, report, exact source plan and source collection together through the browser request and refresh. The picker pauses while the selection is pending, and stale refreshes cannot replace that selected study.
 
-Customer-directory delivery now saves the immutable package selection and every file byte in SQLite before its first destination write. **Resume delivery** continues those same bytes after a process restart, later acquisition or receiving, or a renderer change. **Reopen delivery** reads the accepted files and original receipt. Complete older manifests and partial editable packages enter through the same source-aware receiving graph. The complete integration is merged in [PR897](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/897), [PR928](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/928) and [PR952](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/952); current source is `f021c67de5122560c4d23789b43dd01424e47f75`.
+Customer-directory delivery now saves the immutable package selection and every file byte in SQLite before its first destination write. **Resume delivery** continues those same bytes after a process restart, later acquisition or receiving, or a renderer change. **Reopen delivery** reads the accepted files and original receipt. Complete older manifests and partial editable packages enter through the same source-aware receiving graph. The complete integration is merged in [PR897](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/897), [PR928](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/928) [PR952](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/952) and [PR971](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/971); current source is `4224a19629e9565285e6c7ba990254534010774b`.
 
 ### Original source and operated reporting collection
 
@@ -2474,7 +2528,7 @@ The [complete original commissioning-source package](https://github.com/woahwhat
 
 The original report operator completed its Linux build, independent receiving and cold reopening with fifty-nine received files, both full report datasets, all sixty selected measure summaries per period and classified gaps. The source includes ten outdoor PM2.5 histories and ten indoor all-field histories; unrequested outdoor measurement families retain their explicit selection status. The original completed report operation provides the actual outcome.
 
-The installed application's complete two-workspace programme consumes that same original packet. It saves first and later report identities, complete frozen archives, customer directories, return receiving and a continued editable handover. Its original native operator accepted the complete current application and same customer settings; that installed operation continues with the original workspaces and the integrated destination recovery. The [maintained customer case](https://app.notion.com/p/3f7dd77231008167862fd27c2e4decd6) joins current source, the original report outcome and native continuation.
+The installed application's complete two-workspace programme consumes that same original packet. It saves first and later report identities, complete frozen archives, customer directories, return receiving and a continued editable handover. Its original native operator accepted the complete current application and same customer settings; that installed operation continues with the original workspaces and the integrated destination recovery. The [maintained customer case](https://app.notion.com/p/3f7dd77231008167862fd27c2e4decd6) joins current source, the original report outcome and native continuation. The same original coordinator has the complete corrected source: all twenty-four application/contribution files, 321,969 original UTF-8 source bytes, retained in two complete attachments on that case.
 
 ### Commissioning and the existing six funded packages
 
@@ -2581,13 +2635,14 @@ The delivery team needs to assign responsibility, review completed work, reconci
 
 An installation administrator enrolls each person with a lead, finance, reviewer or contributor role and selects that person's actual cases. A contributor's profile binds to their original contributor record in each assigned case. Staff use individual sign-in codes; access changes take effect on their next request and end their existing sessions.
 
-| Person | Complete operating task |
-| --- | --- |
-| Contributor | Retain original work files, record completed work against a package, submit it for review, enter a multi-line invoice and inspect its paid, open and credit balances. |
-| Reviewer | Read the submitted work and attachments, accept or reopen the same record, and prepare the original implementation, cohort and tranche-completion reviews. |
-| Finance | Review or dispute the invoice, record an observed cash movement, allocate it to the original invoice and apply an explicit correction when needed. |
-| Delivery lead | Maintain the assigned operating case, coordinate work and customer handovers, and use its current planning and review functions. |
-| Installation administrator | Manage staff assignments, reissue or revoke access, inspect the original history and export the complete installation. |
+|Person|Complete operating task|
+|  ---  |  ---  |
+|Contributor|Retain original work files, record completed work against a package, submit it for review, enter a multi-line invoice and inspect its paid, open and credit balances.|
+|Reviewer|Read the submitted work and attachments, accept or reopen the same record, and prepare the original implementation, cohort and tranche-completion reviews.|
+|Finance|Review or dispute the invoice, record an observed cash movement, allocate it to the original invoice and apply an explicit correction when needed.|
+|Delivery lead|Maintain the assigned operating case, coordinate work and customer handovers, and use its current planning and review functions.|
+|Installation administrator|Manage staff assignments, reissue or revoke access, inspect the original history and export the complete installation.|
+
 
 The browser and HTTP service apply the same role and case selections. Each business event retains the enrolled person's stable recording identity. A later display-name or assignment change preserves that history.
 
@@ -2597,14 +2652,15 @@ Contributors can retain a draft while another person updates the case. If the sa
 
 The [complete operating programme](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b412f1ea76bd3f243c2ef78eeb4360730b65ef80/stellar/scf_2026/sf47_budget_model/workspace/STAFF_WORKFLOW_RECEIVING.py) completed on 13 October 2026 against the merged source in [PR 717](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/717). It exercised enrollment and case assignment, simultaneous contribution, submission and review, invoicing, payments and correction, identity changes, browser use and installation download.
 
-| Completed internal exercise | Observed result |
-| --- | --- |
-| Named operating profiles | Six profiles across the delivered roles |
-| Work and invoice lifecycle | Three work records and two example invoices; USD 375 invoiced and paid, with USD 0 open |
-| Desktop and mobile operation | Fifteen Chromium views, with no browser errors |
-| Complete source receiving | 421 source files totaling 9,339,187 bytes |
-| Application startup selection | The same 218 ordered entries in the Python and Node selectors |
-| Independent recovery | Original business history and staff assignments reopened from the complete export, then reopened again after a cold restart |
+|Completed internal exercise|Observed result|
+|  ---  |  ---  |
+|Named operating profiles|Six profiles across the delivered roles|
+|Work and invoice lifecycle|Three work records and two example invoices; USD 375 invoiced and paid, with USD 0 open|
+|Desktop and mobile operation|Fifteen Chromium views, with no browser errors|
+|Complete source receiving|421 source files totaling 9,339,187 bytes|
+|Application startup selection|The same 218 ordered entries in the Python and Node selectors|
+|Independent recovery|Original business history and staff assignments reopened from the complete export, then reopened again after a cold restart|
+
 
 The invoice amounts are internal exercise data. Actual project finance enters through the existing observed-receipt, supplier-invoice and cash workflows.
 

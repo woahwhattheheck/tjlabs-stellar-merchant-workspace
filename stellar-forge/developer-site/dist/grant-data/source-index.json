@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 40496,
-    "sha256": "e70b88c2fec534575f0ebf325a2db179fbecf62b4cf0bc3b6f0224d9cbc55244",
-    "git_blob": "124d6590aaf316c26d10da5af4162e29ebce1c3d"
+    "bytes": 40066,
+    "sha256": "1489f53aa83a544d540ed0df3f5e30c25c3143a54f8467a38903edd0360d054e",
+    "git_blob": "cb0164d3f24c413d76f359339fff5f94d2fa4f0f"
   },
   "request": {
     "basis": "prospective",
@@ -2704,6 +2704,220 @@
       "url": "https://github.com/opengeospatial/ogcapi-connected-systems/blob/fb858be23aa03e2b824ec50b5a97ac2c2a1d3fec/api/part2/openapi/examples/observations/obs-simple.json"
     },
     {
+      "id": "customer-use-calendar",
+      "kind": "published-source",
+      "label": "Saved customer-use calendar and complete editable receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "c912e6ecb56a1f049901401d71f98be6cfd5dbb1",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/CUSTOMER_USE_CALENDAR.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/c912e6ecb56a1f049901401d71f98be6cfd5dbb1/stellar/scf_2026/sf47_budget_model/workspace/CUSTOMER_USE_CALENDAR.md"
+    },
+    {
+      "id": "customer-use-installations",
+      "kind": "published-source",
+      "label": "Original Installation selection, preview, immutable editions and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "c912e6ecb56a1f049901401d71f98be6cfd5dbb1",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/c912e6ecb56a1f049901401d71f98be6cfd5dbb1/stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/README.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/README.md",
+      "source_kind": "source-file",
+      "id": "zarr-native-array-guide",
+      "kind": "published-source",
+      "label": "Original native Zarr array source and operating limits",
+      "source_registration": "zarr-scientific-arrays",
+      "git_blob": "99fe59b35f42d3c7c257e3d7717300605f811cfd",
+      "sha256": "4f27fb742a3b28c42247c33e229a4a62f9d4254eb63fe3fc0c31ed588c89864a",
+      "bytes": 14332,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/README.md",
+        "git_blob": "99fe59b35f42d3c7c257e3d7717300605f811cfd",
+        "sha256": "4f27fb742a3b28c42247c33e229a4a62f9d4254eb63fe3fc0c31ed588c89864a",
+        "bytes": 14332
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/WORKSPACE.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/WORKSPACE.md",
+      "source_kind": "source-file",
+      "id": "zarr-array-workspace-guide",
+      "kind": "published-source",
+      "label": "Complete Zarr operator, publisher and receiving workflow",
+      "source_registration": "zarr-scientific-arrays",
+      "git_blob": "28718e5f780dda32b3efdda8cef1130f3a83aa4b",
+      "sha256": "4c973a4f36ccba54ad9bbf0ee518508addb5a5359625ad4569d2ac96d5b8b790",
+      "bytes": 20355,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/WORKSPACE.md",
+        "git_blob": "28718e5f780dda32b3efdda8cef1130f3a83aa4b",
+        "sha256": "4c973a4f36ccba54ad9bbf0ee518508addb5a5359625ad4569d2ac96d5b8b790",
+        "bytes": 20355
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/CLI_CONTRACT.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/CLI_CONTRACT.json",
+      "source_kind": "source-file",
+      "id": "zarr-array-native-contract",
+      "kind": "published-source",
+      "label": "Original Zarr native command and operation contract",
+      "source_registration": "zarr-scientific-arrays",
+      "git_blob": "824b816ff80c10d7ba400eb4abaf522dc840f3f1",
+      "bytes": 3655,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/CLI_CONTRACT.json",
+        "git_blob": "824b816ff80c10d7ba400eb4abaf522dc840f3f1",
+        "bytes": 3655
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/UPSTREAM.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/UPSTREAM.md",
+      "source_kind": "source-file",
+      "id": "zarr-array-source-provenance",
+      "kind": "published-source",
+      "label": "Original Zarr engine, upstream arrays and source provenance",
+      "source_registration": "zarr-scientific-arrays",
+      "git_blob": "4cc6a71f91b64914994d8c2075f7136137cc7c9a",
+      "bytes": 6026,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/UPSTREAM.md",
+        "git_blob": "4cc6a71f91b64914994d8c2075f7136137cc7c9a",
+        "bytes": 6026
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/RECEIVING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/RECEIVING.md",
+      "source_kind": "source-file",
+      "id": "zarr-array-merchant-receiving",
+      "kind": "published-source",
+      "label": "Complete original Zarr merchant and customer receiving",
+      "source_registration": "zarr-scientific-arrays",
+      "git_blob": "73f522cecd73a1cd75dd3a920f70c1851b6c2a37",
+      "bytes": 15443,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/RECEIVING.md",
+        "git_blob": "73f522cecd73a1cd75dd3a920f70c1851b6c2a37",
+        "bytes": 15443
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "d901b45911a14df19acef842b43553ec0ee06653",
+      "path": "stellar-forge/developer-site/ZARR_CUSTOMER_COMMISSIONING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d901b45911a14df19acef842b43553ec0ee06653/stellar-forge/developer-site/ZARR_CUSTOMER_COMMISSIONING.md",
+      "source_kind": "source-file",
+      "id": "zarr-customer-commissioning",
+      "kind": "published-source",
+      "label": "Scientific-array customer commissioning and delivery economics",
+      "source_registration": "zarr-scientific-arrays",
+      "git_blob": "527608a5c3a6ce6cdb136898155518e5035f2790",
+      "sha256": "2fd0024c020ea995e61aa3282d5e5cee602fdb6a8cb74c34ab0178450b80b381",
+      "bytes": 14788,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "d901b45911a14df19acef842b43553ec0ee06653",
+        "path": "stellar-forge/developer-site/ZARR_CUSTOMER_COMMISSIONING.md",
+        "git_blob": "527608a5c3a6ce6cdb136898155518e5035f2790",
+        "sha256": "2fd0024c020ea995e61aa3282d5e5cee602fdb6a8cb74c34ab0178450b80b381",
+        "bytes": 14788
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "d901b45911a14df19acef842b43553ec0ee06653",
+      "path": "stellar-forge/developer-site/zarr-customer-commissioning.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d901b45911a14df19acef842b43553ec0ee06653/stellar-forge/developer-site/zarr-customer-commissioning.json",
+      "source_kind": "source-file",
+      "id": "zarr-customer-selection-workorder",
+      "kind": "published-source",
+      "label": "Editable original Brightband scientific source and delivery workorder",
+      "source_registration": "zarr-scientific-arrays",
+      "git_blob": "b2a6de4841fdff86e0c9beff7f60512e8e6dea1a",
+      "sha256": "0bd238991c0c88d8e5e2506cbadab6a5fe5dd7c62b29227da9218c89062264a9",
+      "bytes": 8644,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "d901b45911a14df19acef842b43553ec0ee06653",
+        "path": "stellar-forge/developer-site/zarr-customer-commissioning.json",
+        "git_blob": "b2a6de4841fdff86e0c9beff7f60512e8e6dea1a",
+        "sha256": "0bd238991c0c88d8e5e2506cbadab6a5fe5dd7c62b29227da9218c89062264a9",
+        "bytes": 8644
+      }
+    },
+    {
+      "repository": "woahwhattheheck/commons",
+      "commit": "5eceeaacc2b65d7eef4331cf1c2508a2a15e15b9",
+      "path": "opportunities/brightband_ewb_receiving_2026/SCIENCE-AND-ACCEPTANCE.md",
+      "source_kind": "source-file",
+      "id": "brightband-ewb-scientific-agreement",
+      "kind": "published-source",
+      "label": "Original Brightband issued scientific case and acceptance definition",
+      "source_registration": "zarr-scientific-arrays",
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html"
+    },
+    {
+      "id": "economic-county-report",
+      "kind": "published-source",
+      "label": "County report publication, original purchase and complete customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "7aa35eda5fe25bbbb177772c533e425f31b6da6b",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/MERCHANT.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7aa35eda5fe25bbbb177772c533e425f31b6da6b/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/MERCHANT.md"
+    },
+    {
+      "id": "economic-county-source-methods",
+      "kind": "published-source",
+      "label": "Original county source, calculation profiles and complete report production",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "7aa35eda5fe25bbbb177772c533e425f31b6da6b",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/README.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7aa35eda5fe25bbbb177772c533e425f31b6da6b/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/README.md"
+    },
+    {
+      "id": "connected-systems-commissioning-programme",
+      "kind": "published-source",
+      "label": "Original Workshare phases and Customer Installation operating programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "4dea5f17698a7842f6007f95de46b73c0bd48092",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/GEOROBOTIX_CSAPI.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/4dea5f17698a7842f6007f95de46b73c0bd48092/stellar/scf_2026/sf49_data_commissioning/installation-workorders/GEOROBOTIX_CSAPI.md"
+    },
+    {
+      "id": "connected-systems-workshare-intake",
+      "kind": "published-source",
+      "label": "Original Workshare scope and plan intake into Customer Installation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "edefd19d9516c793de90759d0f747fc3b0ffebea",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/workshare_intake.py",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/edefd19d9516c793de90759d0f747fc3b0ffebea/stellar/scf_2026/sf47_budget_model/workspace/workshare_intake.py"
+    },
+    {
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "commit": "8a9c1240a2cbb6600683e9ee27e5d70fcd361011",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/regional.py",
@@ -2991,166 +3205,6 @@
     },
     {
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
-      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/README.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/README.md",
-      "source_kind": "source-file",
-      "id": "zarr-native-array-guide",
-      "kind": "published-source",
-      "label": "Original native Zarr array source and operating limits",
-      "source_registration": "zarr-scientific-arrays",
-      "git_blob": "99fe59b35f42d3c7c257e3d7717300605f811cfd",
-      "sha256": "4f27fb742a3b28c42247c33e229a4a62f9d4254eb63fe3fc0c31ed588c89864a",
-      "bytes": 14332,
-      "product_byte_identity": {
-        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
-        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/README.md",
-        "git_blob": "99fe59b35f42d3c7c257e3d7717300605f811cfd",
-        "sha256": "4f27fb742a3b28c42247c33e229a4a62f9d4254eb63fe3fc0c31ed588c89864a",
-        "bytes": 14332
-      }
-    },
-    {
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
-      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/WORKSPACE.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/WORKSPACE.md",
-      "source_kind": "source-file",
-      "id": "zarr-array-workspace-guide",
-      "kind": "published-source",
-      "label": "Complete Zarr operator, publisher and receiving workflow",
-      "source_registration": "zarr-scientific-arrays",
-      "git_blob": "28718e5f780dda32b3efdda8cef1130f3a83aa4b",
-      "sha256": "4c973a4f36ccba54ad9bbf0ee518508addb5a5359625ad4569d2ac96d5b8b790",
-      "bytes": 20355,
-      "product_byte_identity": {
-        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
-        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/WORKSPACE.md",
-        "git_blob": "28718e5f780dda32b3efdda8cef1130f3a83aa4b",
-        "sha256": "4c973a4f36ccba54ad9bbf0ee518508addb5a5359625ad4569d2ac96d5b8b790",
-        "bytes": 20355
-      }
-    },
-    {
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
-      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/CLI_CONTRACT.json",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/CLI_CONTRACT.json",
-      "source_kind": "source-file",
-      "id": "zarr-array-native-contract",
-      "kind": "published-source",
-      "label": "Original Zarr native command and operation contract",
-      "source_registration": "zarr-scientific-arrays",
-      "git_blob": "824b816ff80c10d7ba400eb4abaf522dc840f3f1",
-      "bytes": 3655,
-      "product_byte_identity": {
-        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
-        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/CLI_CONTRACT.json",
-        "git_blob": "824b816ff80c10d7ba400eb4abaf522dc840f3f1",
-        "bytes": 3655
-      }
-    },
-    {
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
-      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/UPSTREAM.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/UPSTREAM.md",
-      "source_kind": "source-file",
-      "id": "zarr-array-source-provenance",
-      "kind": "published-source",
-      "label": "Original Zarr engine, upstream arrays and source provenance",
-      "source_registration": "zarr-scientific-arrays",
-      "git_blob": "4cc6a71f91b64914994d8c2075f7136137cc7c9a",
-      "bytes": 6026,
-      "product_byte_identity": {
-        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
-        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/UPSTREAM.md",
-        "git_blob": "4cc6a71f91b64914994d8c2075f7136137cc7c9a",
-        "bytes": 6026
-      }
-    },
-    {
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
-      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/RECEIVING.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/RECEIVING.md",
-      "source_kind": "source-file",
-      "id": "zarr-array-merchant-receiving",
-      "kind": "published-source",
-      "label": "Complete original Zarr merchant and customer receiving",
-      "source_registration": "zarr-scientific-arrays",
-      "git_blob": "73f522cecd73a1cd75dd3a920f70c1851b6c2a37",
-      "bytes": 15443,
-      "product_byte_identity": {
-        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25",
-        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/RECEIVING.md",
-        "git_blob": "73f522cecd73a1cd75dd3a920f70c1851b6c2a37",
-        "bytes": 15443
-      }
-    },
-    {
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "d901b45911a14df19acef842b43553ec0ee06653",
-      "path": "stellar-forge/developer-site/ZARR_CUSTOMER_COMMISSIONING.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d901b45911a14df19acef842b43553ec0ee06653/stellar-forge/developer-site/ZARR_CUSTOMER_COMMISSIONING.md",
-      "source_kind": "source-file",
-      "id": "zarr-customer-commissioning",
-      "kind": "published-source",
-      "label": "Scientific-array customer commissioning and delivery economics",
-      "source_registration": "zarr-scientific-arrays",
-      "git_blob": "527608a5c3a6ce6cdb136898155518e5035f2790",
-      "sha256": "2fd0024c020ea995e61aa3282d5e5cee602fdb6a8cb74c34ab0178450b80b381",
-      "bytes": 14788,
-      "product_byte_identity": {
-        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "d901b45911a14df19acef842b43553ec0ee06653",
-        "path": "stellar-forge/developer-site/ZARR_CUSTOMER_COMMISSIONING.md",
-        "git_blob": "527608a5c3a6ce6cdb136898155518e5035f2790",
-        "sha256": "2fd0024c020ea995e61aa3282d5e5cee602fdb6a8cb74c34ab0178450b80b381",
-        "bytes": 14788
-      }
-    },
-    {
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "d901b45911a14df19acef842b43553ec0ee06653",
-      "path": "stellar-forge/developer-site/zarr-customer-commissioning.json",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d901b45911a14df19acef842b43553ec0ee06653/stellar-forge/developer-site/zarr-customer-commissioning.json",
-      "source_kind": "source-file",
-      "id": "zarr-customer-selection-workorder",
-      "kind": "published-source",
-      "label": "Editable original Brightband scientific source and delivery workorder",
-      "source_registration": "zarr-scientific-arrays",
-      "git_blob": "b2a6de4841fdff86e0c9beff7f60512e8e6dea1a",
-      "sha256": "0bd238991c0c88d8e5e2506cbadab6a5fe5dd7c62b29227da9218c89062264a9",
-      "bytes": 8644,
-      "product_byte_identity": {
-        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "d901b45911a14df19acef842b43553ec0ee06653",
-        "path": "stellar-forge/developer-site/zarr-customer-commissioning.json",
-        "git_blob": "b2a6de4841fdff86e0c9beff7f60512e8e6dea1a",
-        "sha256": "0bd238991c0c88d8e5e2506cbadab6a5fe5dd7c62b29227da9218c89062264a9",
-        "bytes": 8644
-      }
-    },
-    {
-      "repository": "woahwhattheheck/commons",
-      "commit": "5eceeaacc2b65d7eef4331cf1c2508a2a15e15b9",
-      "path": "opportunities/brightband_ewb_receiving_2026/SCIENCE-AND-ACCEPTANCE.md",
-      "source_kind": "source-file",
-      "id": "brightband-ewb-scientific-agreement",
-      "kind": "published-source",
-      "label": "Original Brightband issued scientific case and acceptance definition",
-      "source_registration": "zarr-scientific-arrays",
-      "access": "authenticated-source",
-      "reader_url": "../grant-companion.html"
-    },
-    {
-      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "commit": "b412f1ea76bd3f243c2ef78eeb4360730b65ef80",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/STAFF_ACCESS.md",
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b412f1ea76bd3f243c2ef78eeb4360730b65ef80/stellar/scf_2026/sf47_budget_model/workspace/STAFF_ACCESS.md",
@@ -3240,9 +3294,9 @@
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "3ca1ca984c30e91ffded783d3d31211ba5011376",
-    "bytes": 566370,
-    "sha256": "18e8a9e0061df9a2e9771d9c972811fcabb583fbaf884f1574a8282b192b9a98",
+    "git_blob": "7fee0fb9b67395690d2a829fe29ce4e8cc44b6ae",
+    "bytes": 578018,
+    "sha256": "46d8e6fd41598b3b4ac2b3da2859d1198e6bfc2882fcd7f58a3c641853dc5fd2",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "29e0ab9723e0eb787041409803158dc3ae94c1e3"
   },
@@ -3436,7 +3490,7 @@
         "native_execution_basis": "The existing development purchase baseline remains the original operated XLM services. The October 12 captured catalog and functional ranking comparison describe the separate published HTTP resource set."
       }
     ],
-    "current_application_sha256": "e70b88c2fec534575f0ebf325a2db179fbecf62b4cf0bc3b6f0224d9cbc55244",
+    "current_application_sha256": "1489f53aa83a544d540ed0df3f5e30c25c3143a54f8467a38903edd0360d054e",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -3444,8 +3498,8 @@
     "composition": {
       "operation": "SCF-GRANT-REVIEWER-PUBLICATION-8910-20261012",
       "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
-      "canonical_front_sha256": "eed9a99095752eb28db87535cf94101ff60369376dd3df377e3ed7625a240a91",
-      "canonical_front_bytes": 30834,
+      "canonical_front_sha256": "a5408e3676d7d320322b0af2d274d73c4fc234fa73a420fb4da0ac2e1b57e7dd",
+      "canonical_front_bytes": 31462,
       "renderer_git_blob": "6b00fa461d35ea132895a388c52254709ec03bed",
       "source_editions": [
         {
@@ -3516,6 +3570,7 @@
         "Regional labor analysis and recurring data delivery",
         "Scientific-array customer commissioning and complete receiving",
         "Haystack building models: reviewed point lists, validation and contractor handover",
+        "Complete delivered-edition review and independent customer receiving",
         "AirGradient customer reporting, original-source intake and complete receiving",
         "OData recurring editions: complete customer delivery and managed operation",
         "Customer adoption economics, delivery scheduling and recorded outcomes",
@@ -3523,7 +3578,7 @@
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-      "projector_git_blob": "dab0d27efb493cadcbe41614980b6968a63f65c5",
+      "projector_git_blob": "27ee61a5c17d10ac836169595840051df5776eb3",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
@@ -3532,8 +3587,8 @@
         "purpose": "Complete timed presentation and original purchase/receiving guide in the existing operator chapter."
       },
       "shell_example_normalization": "ASCII option indentation restored only inside fenced shell examples after Canvas rich-text transport; command arguments, values and quoted data retained.",
-      "reviewer_entry_git_blob": "2390043f4e9e3a925f64faa2a1d7bc4c1129688b",
-      "delivery_plan_git_blob": "6f57fa54402f7302b72dab96ff0abc09c4765d78",
+      "reviewer_entry_git_blob": "b4beccf32d39f0b0205cf83e71f77c8d93a1521f",
+      "delivery_plan_git_blob": "a74875cbae4bbdb77ed98574097b6f44b743364c",
       "a2a_projector_git_blob": "835eaf91ab8ba65a3b2eed4433e79153c9d0af71",
       "a2a_source_catalogue": {
         "schema": "stellar-forge.a2a-grant-source-catalogue.v1",
@@ -3773,8 +3828,8 @@
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application.md",
     "source_index_route": "/grant-data/source-index.json",
-    "application_sha256": "e70b88c2fec534575f0ebf325a2db179fbecf62b4cf0bc3b6f0224d9cbc55244",
-    "application_git_blob": "124d6590aaf316c26d10da5af4162e29ebce1c3d",
+    "application_sha256": "1489f53aa83a544d540ed0df3f5e30c25c3143a54f8467a38903edd0360d054e",
+    "application_git_blob": "cb0164d3f24c413d76f359339fff5f94d2fa4f0f",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
     "form_map_schema": "stellar-forge.grant-form-map.v1",
@@ -3862,8 +3917,8 @@
     "schema": "stellar-forge.grant-review-round-integration.v1",
     "route": "/grant-review-round.html",
     "submission_route": "/grant-submission.html",
-    "application_sha256": "e70b88c2fec534575f0ebf325a2db179fbecf62b4cf0bc3b6f0224d9cbc55244",
-    "application_git_blob": "124d6590aaf316c26d10da5af4162e29ebce1c3d",
+    "application_sha256": "1489f53aa83a544d540ed0df3f5e30c25c3143a54f8467a38903edd0360d054e",
+    "application_git_blob": "cb0164d3f24c413d76f359339fff5f94d2fa4f0f",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "draft_export_schema": "stellar-forge.grant-submission-export.v1",
     "review_schema": "stellar-forge.grant-review-round.v1",
@@ -3876,8 +3931,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "18e8a9e0061df9a2e9771d9c972811fcabb583fbaf884f1574a8282b192b9a98",
-    "source_bytes": 566370,
+    "source_sha256": "46d8e6fd41598b3b4ac2b3da2859d1198e6bfc2882fcd7f58a3c641853dc5fd2",
+    "source_bytes": 578018,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",

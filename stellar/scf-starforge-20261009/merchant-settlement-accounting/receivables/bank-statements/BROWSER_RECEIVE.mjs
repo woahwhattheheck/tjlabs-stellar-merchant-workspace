@@ -2,8 +2,8 @@
 // One browser continuation of the original merchant accounting native operation.
 // The caller owns the existing server, accounting workspace and final source return.
 import assert from 'node:assert/strict';
-import {mkdir,writeFile,readFile,access,chmod} from 'node:fs/promises';
-import {join,resolve,basename} from 'node:path';
+import {mkdir,writeFile,readFile,access,chmod,open,rename} from 'node:fs/promises';
+import {join,resolve,basename,dirname} from 'node:path';
 import {createRequire} from 'node:module';
 import {createHash,randomUUID} from 'node:crypto';
 
@@ -88,7 +88,7 @@ async function browserRuntime(scenario){
  * downloads to exact original records. The single injected interruption discards a
  * real, already committed receipt response and then recovers its original journal ID.
  */
-export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sourceDirectory,reportDirectory,scenario}){
+export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sourceDirectory,reportDirectory,scenario,resume=null,onCheckpoint=null}){
  assert(scenario?.account?.id&&scenario?.customer?.id&&scenario?.receivables,'Original account, customer and writer are required');
  const origin=new URL(baseUrl).origin,base=origin+'/api/receivables/bank-statements';
  assert(['127.0.0.1','localhost','[::1]'].includes(new URL(origin).hostname),'Use the caller-owned local server');
@@ -96,18 +96,53 @@ export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sour
  await mkdir(reportDirectory,{recursive:true,mode:0o700});
  const inputsDir=join(reportDirectory,'original-inputs'),downloadsDir=join(reportDirectory,'downloads'),screensDir=join(reportDirectory,'screens');
  for(const dir of [inputsDir,downloadsDir,screensDir])await mkdir(dir,{recursive:true,mode:0o700});
- const phases=[],downloads=[],screenshots=[],pageErrors=[],networkErrors=[],consoleErrors=[],intentionalFailures=new Set(),mutations=[];
- const startedAt=new Date().toISOString(),accountId=scenario.account.id,actor='Original bank browser receiving';
- let browser,context,page,phaseName='browser setup',receiptPosts=0,receiptRequest=null,recoveredReceipt=null;
- const phase=(name,details={})=>{phaseName=name;phases.push({name,at:new Date().toISOString(),...details});};
+ const prior=resume?.result??null;
+ if(prior){
+  assert(['FAILED','RUNNING','INTERRUPTED'].includes(prior.status),'Receive the retained original browser interruption');
+  assert.equal(prior.workspaceId,workspaceId);assert.equal(resolve(prior.caseDirectory),resolve(caseDirectory));
+  assert.equal(resolve(prior.sourceDirectory),resolve(sourceDirectory));
+  assert(Number.isSafeInteger(resume.revision),'Retain the original interruption revision');
+  const previous=await readFile(join(reportDirectory,'browser-result.json'));
+  assert.deepEqual(JSON.parse(previous.toString('utf8')),prior,'The caller supplied the exact retained browser journal');
+  const previousPath=join(reportDirectory,'browser-result-interrupted-'+sha(previous)+'.json');
+  try{await writeFile(previousPath,previous,{flag:'wx',mode:0o600});}
+  catch(error){if(error.code!=='EEXIST')throw error;assert.deepEqual(await readFile(previousPath),previous);}
+ }
+ const retained=name=>prior?.[name]?structuredClone(prior[name]):[];
+ const phases=retained('phases'),downloads=retained('downloads'),screenshots=retained('screenshots'),pageErrors=retained('pageErrors'),
+  networkErrors=retained('networkErrors'),consoleErrors=retained('consoleErrors'),intentionalFailures=new Set(),mutations=retained('mutations');
+ const startedAt=prior?.startedAt??new Date().toISOString(),accountId=scenario.account.id,actor='Original bank browser receiving';
+ let browser,context,page,currentRuntime,originalIntake,originalInputs=[],phaseName='browser setup',receiptPosts=0,receiptRequest=null,recoveredReceipt=null;
+ const phase=async(name,details={})=>{phaseName=name;phases.push({name,at:new Date().toISOString(),...details});await checkpoint(name);};
  const get=async path=>{const response=await fetch(base+path);assert.equal(response.status,200,path+': '+await response.clone().text());return response.json();};
  const originalOctober=await get('/closes/'+scenario.finalClose.id);
  const initial=await get('/state');assert.equal(initial.workspaceId,workspaceId);
+ if(prior)assert.equal(initial.revision,resume.revision,'Continue the exact retained financial revision');
  const readTransactions=async()=>{const rows=[],limit=200;let offset=0,total=Infinity;
   while(offset<total){const value=await get('/transactions?accountId='+encodeURIComponent(accountId)+'&offset='+offset+'&limit='+limit);rows.push(...value.items);total=value.total;offset+=value.items.length;assert(value.items.length||offset>=total,'Complete transaction pagination');}return rows;};
- const retain=async(path,bytes)=>{await writeFile(path,bytes,{mode:0o600});await chmod(path,0o600);return {path,...exact(bytes)};};
+ const retain=async(path,bytes)=>{
+  const temp=path+'.receiving-'+randomUUID(),file=await open(temp,'wx',0o600);
+  try{await file.writeFile(bytes);await file.sync();}finally{await file.close();}
+  await rename(temp,path);const parent=await open(dirname(path),'r');
+  try{await parent.sync();}finally{await parent.close();}
+  return {path,...exact(bytes)};
+ };
+ const checkpoint=async note=>{
+  if(!onCheckpoint)return;
+  const state=await get('/state');assert.equal(state.workspaceId,workspaceId);
+  const progress={schema:'stellar-forge.merchant-bank-browser-receiving.v1',status:'RUNNING',startedAt,
+   checkpointAt:new Date().toISOString(),phase:phaseName,checkpointNote:note,
+   originalOperation:'SCF-MERCHANT-BANK-RECONCILIATION-DFF77-20261012',
+   workspaceId,caseDirectory:resolve(caseDirectory),sourceDirectory:resolve(sourceDirectory),baseUrl:origin,
+   ...(currentRuntime?{browser:{version:browser.version(),executable:currentRuntime.executable,packagePath:currentRuntime.packagePath}}:{}),
+   phases,originalInputs,screenshots,downloads,mutations,originalIntake,
+   originalRequest:receiptRequest?{requestId:receiptRequest.requestId,actualReceiptPosts:receiptPosts,receiptId:recoveredReceipt?.id??null}:null,
+   pageErrors,networkErrors,consoleErrors,revision:state.revision};
+  await retain(join(reportDirectory,'browser-result.json'),Buffer.from(json(progress)));
+  await onCheckpoint(progress);
+ };
  try{
-  const runtime=await browserRuntime(scenario);
+  const runtime=await browserRuntime(scenario);currentRuntime=runtime;
   browser=await runtime.chromium.launch({executablePath:runtime.executable,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
   context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true,locale:'en-US',timezoneId:'UTC'});
   page=await context.newPage();page.setDefaultTimeout(25000);
@@ -120,7 +155,7 @@ export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sour
   const tab=async name=>{await closedDialogs();await page.locator('nav [data-tab="'+name+'"]').click();await page.locator('#view-'+name).waitFor({state:'visible'});};
   const ready=async revision=>{await page.waitForFunction(value=>{const revisionMatch=document.querySelector('#workspace-identity')?.textContent.match(/\brevision\s+(\d+)\b/);return revisionMatch&&Number(revisionMatch[1])>=value&&document.querySelector('#pending')?.hidden&&!document.querySelector('#actor')?.disabled;},revision);};
   const responseFor=(path,method='POST')=>page.waitForResponse(r=>r.url()===base+path&&r.request().method()===method);
-  const submit=async(form,path)=>{const responsePromise=responseFor(path);await page.locator(form+' button[type="submit"]').click();const response=await responsePromise;const body=await response.json();assert(response.ok(),path+': '+json(body));if(Number.isInteger(body.revision))await ready(body.revision);return body;};
+  const submit=async(form,path)=>{const responsePromise=responseFor(path);await page.locator(form+' button[type="submit"]').click();const response=await responsePromise;const body=await response.json();assert(response.ok(),path+': '+json(body));if(Number.isInteger(body.revision))await ready(body.revision);if(!/(?:source-preview|close-preview|preview)$/.test(path))await checkpoint('Accepted original bank action '+path);return body;};
   const field=async(form,name,value)=>{const locator=page.locator(form+' [name="'+name+'"]');const kind=await locator.evaluate(el=>el.tagName);if(kind==='SELECT')await locator.selectOption(String(value));else await locator.fill(String(value));};
   const screenshot=async(name,{mobile=false}={})=>{
    await page.setViewportSize(mobile?{width:390,height:844}:{width:1440,height:1000});
@@ -273,7 +308,7 @@ export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sour
    const originalReport={accountId,receiptIntakeAccountId:bound,bankImportId:intakeId,postingId:posting.bankPosting.id,
     originalSource:inspection.source,receiptId:receipt.id,originalCoverage,proposal:review.proposal,totals:review.balanceEffects.totals,files:receivedFiles,receiptCount:after.receipts.length,closed:closed.bankImport};
    const originalReportFile=await retain(join(reportDirectory,'receipt-intake-browser-result.json'),Buffer.from(json(originalReport)));
-   phase('visible original receipt-intake inspection, source alias, gross receipt and fee review, intake close and full handover',
+   await phase('visible original receipt-intake inspection, source alias, gross receipt and fee review, intake close and full handover',
     {receiptIntakeAccountId:bound,bankImportId:intakeId,receiptId:receipt.id,postingId:posting.bankPosting.id,grossAmount:'50.00',bankAmount:'47.00',adjustmentAmount:'-3.00',additionalReceipts:0,originalReport:originalReportFile,files:receivedFiles});
    await page.waitForLoadState('networkidle');await page.goto(origin+'/bank-statements/',{waitUntil:'networkidle'});await connected();
    if(await page.locator('#account-picker').inputValue()!==accountId)await page.locator('#account-picker').selectOption(accountId);
@@ -288,6 +323,9 @@ export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sour
    await page.waitForFunction(name=>document.querySelector('#source-file-summary h3')?.textContent===name,source.name);
    if(mapping){
     await field('#source-form','format','CSV');
+    const balanceSection=page.locator('#source-form details').filter({has:page.locator('[name="balanceRecords"]')});
+    if(!await balanceSection.evaluate(element=>element.open))await balanceSection.locator(':scope > summary').click();
+    await page.locator('#source-form [name="balanceRecords"]').waitFor({state:'visible'});
     const values={bankId:'NATIVE-RECEIVING-BANK',branchId:'',accountId:'operating-001',accountType:'CHECKING',currency:'USD',headerRow:'1',delimiter:',',dateFormat:'YMD',decimalSeparator:'.',groupSeparator:'',amountMode:'SIGNED',postedStatuses:'Booked',pendingStatuses:'Pending',
      balanceRecords:JSON.stringify([{recordNumber:2,kind:'OPENING',amountColumn:mapping.balance,dateColumn:'Date'},{recordNumber:4,kind:'CLOSING',amountColumn:mapping.balance,dateColumn:'Date'}]),skipRecords:'[]'};
     for(const [name,value]of Object.entries(values))await field('#source-form',name,value);
@@ -334,7 +372,16 @@ export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sour
    for(const name of all?CLOSE_FILES:['account.tar','editable-reconciliation.json'])files[name]=await download(page.locator('#record-body [data-action="close-file"][data-id="'+close.id+'"][data-file="'+name+'"]'),label+' '+name);
    const members=tarEntries(files['account.tar'].data),editable=JSON.parse(members.get('editable-reconciliation.json').toString('utf8'));
    assert.equal(editable.close.id,close.id);assert.equal(editable.close.closingBalance,close.closingBalance);
-   assert(members.has('manifest.json')&&members.size>8,'Whole original account export');
+   assert(members.has('manifest.json'),'Original account manifest');
+   const manifest=JSON.parse(members.get('manifest.json').toString('utf8'));
+   assert.equal(manifest.schema,'stellar-forge.merchant-bank-close-manifest.v1');assert.equal(manifest.closeId,close.id);
+   assert.deepEqual([...members.keys()].sort(),[...Object.keys(manifest.files),'manifest.json'].sort(),'Complete original manifest file set');
+   for(const [name,expected] of Object.entries(manifest.files)){
+    const bytes=members.get(name);assert(bytes,'Original manifest member '+name);
+    assert.equal(bytes.length,expected.bytes,name);assert.equal(sha(bytes),expected.sha256,name);
+   }
+   for(const name of CLOSE_FILES.filter(name=>name!=='account.tar'))assert(members.has(name),'Complete original reconciliation document '+name);
+   if(close.files?.['manifest.json'])assert.equal(sha(members.get('manifest.json')),close.files['manifest.json'].sha256,'Original retained manifest bytes');
    return {files,editable,members};
   };
   const reopen=async(close,reason)=>{
@@ -352,17 +399,25 @@ export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sour
   };
   await page.goto(origin+'/bank-statements/',{waitUntil:'networkidle'});await connected();
   await page.locator('#account-picker').selectOption(accountId);await page.locator('#actor').fill(actor);
+  if(!prior){
   await screenshot('workspace-open');await screenshot('workspace-open',{mobile:true});
   const beforeOriginal=await sourceDownload(scenario.originalImport.id,scenario.original.file.content,'Original October OFX');
   assert.equal(beforeOriginal.report.file.sha256,sha(scenario.original.file.content));
-  phase('original server, same saved bank/customer workspace and complete original source download',{workspaceId,accountId,browser:browser.version(),executable:runtime.executable,packagePath:runtime.packagePath,originalImportId:scenario.originalImport.id});
+  await phase('original server, same saved bank/customer workspace and complete original source download',{workspaceId,accountId,browser:browser.version(),executable:runtime.executable,packagePath:runtime.packagePath,originalImportId:scenario.originalImport.id});
+  }
 
   const november=novemberSource(),correction=novemberSource({corrected:true}),december=decemberSource();
-  const originalInputs=[];
-  for(const source of [november,correction,december])originalInputs.push(await retain(join(inputsDir,source.name.replaceAll(' ','_')),Buffer.from(source.content)));
-  const firstImport=await upload(november,{capture:true});
-  let rows=await readTransactions();
+  originalInputs=[];
+  for(const source of [november,correction,december]){
+   const path=join(inputsDir,source.name.replaceAll(' ','_')),content=Buffer.from(source.content);
+   if(prior){assert.deepEqual(await readFile(path),content,'Retain the original complete browser source bytes');originalInputs.push({path,...exact(content)});}
+   else originalInputs.push(await retain(path,content));
+  }
+  let rows=await readTransactions(),correctedNovember;
   const byProvider=id=>{const found=rows.filter(x=>x.providerId===id&&x.status!=='SUPERSEDED');assert.equal(found.length,1,'One current original provider transaction '+id);return found[0];};
+  if(!prior){
+  const firstImport=await upload(november,{capture:true});
+  rows=await readTransactions();
   const deposit=byProvider('BROWSER-NET50'),income=byProvider('BROWSER-INCOME10'),fee=byProvider('BROWSER-FEE2'),zero=byProvider('BROWSER-ZERO');
   const sourceReport=await get('/imports/'+firstImport.import.id);
   const originalStatement=sourceReport.report.statements.find(x=>x.rows?.some(row=>row.providerId==='BROWSER-NET50'));
@@ -416,19 +471,19 @@ export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sour
   const paidResponse=await fetch(origin+'/api/receivables/invoices/'+invoice.id+'?asOf=2026-12-31');
   assert.equal(paidResponse.status,200);const paid=await paidResponse.json();assert.equal(paid.invoice.paymentStatus,'PAID');assert.equal(paid.invoice.amountDue,'0.00');
   assert.equal((await get('/transactions/'+deposit.id)).transaction.match.parts.length,2);
-  phase('visible gross receipt, fee, full invoice allocation and durable original request recovery',{invoiceId:invoice.id,receiptId:recovered.receipt.id,allocationId:recovered.allocation.id,requestId:receiptRequest.requestId,actualReceiptPosts:receiptPosts,originalRecovery:recoveryFile,asOf:'2026-12-31',paymentStatus:paid.invoice.paymentStatus});
+  await phase('visible gross receipt, fee, full invoice allocation and durable original request recovery',{invoiceId:invoice.id,receiptId:recovered.receipt.id,allocationId:recovered.allocation.id,requestId:receiptRequest.requestId,actualReceiptPosts:receiptPosts,originalRecovery:recoveryFile,asOf:'2026-12-31',paymentStatus:paid.invoice.paymentStatus});
 
   await classify(income.id,'INCOME','10.00','Original November other income classification');
   await classify(fee.id,'FEE','-2.00','Original November account fee');
   const zeroResult=await classify(zero.id,null,'0.00','Original bank reports zero cash; retain its source explanation');
   assert.equal(zeroResult.transaction.match.parts.length,0);
-  const originalIntake=await receiveOriginalIntakeInBrowser({source:november,deposit,receipt:recovered.receipt});
+  originalIntake=await receiveOriginalIntakeInBrowser({source:november,deposit,receipt:recovered.receipt});
   const novemberClose=await closePeriod(firstImport.import,'November original bank statement','1350.00',{capture:true});
   const novemberArchive=await closeDownloads(novemberClose,'November original complete close',{all:true});
   assert.equal(novemberArchive.editable.transactions.filter(x=>x.status==='POSTED'&&x.postedDate>='2026-11-01'&&x.postedDate<='2026-11-30').length,4);
   assert(novemberArchive.editable.receipts.some(x=>x.id===recovered.receipt.id));
   await sourceDownload(firstImport.import.id,november.content,'Original November OFX');
-  phase('all original posted rows, explained zero cash and full reviewed statement close',{importId:firstImport.import.id,closeId:novemberClose.id,closingBalance:'1350.00',archive:novemberArchive.files['account.tar'],pendingRows:1});
+  await phase('all original posted rows, explained zero cash and full reviewed statement close',{importId:firstImport.import.id,closeId:novemberClose.id,closingBalance:'1350.00',archive:novemberArchive.files['account.tar'],pendingRows:1});
 
   const correctionImport=await upload(correction);rows=await readTransactions();
   const feeCorrection=byProvider('BROWSER-FEE3');assert.equal(feeCorrection.status,'CORRECTION_REVIEW');
@@ -437,35 +492,130 @@ export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sour
   await reopen(novemberClose,'The bank supplied an original REPLACE transaction and corrected closing balance.');
   await applyCorrection(feeCorrection,fee.id,'Original CORRECTFITID BROWSER-FEE2 and REPLACE, with complete native original amounts.');
   await classify(feeCorrection.id,'FEE','-3.00','Original corrected November account fee');
-  const correctedNovember=await closePeriod(correctionImport.import,'November corrected bank statement','1349.00');
+  correctedNovember=await closePeriod(correctionImport.import,'November corrected bank statement','1349.00');
   const correctedNovemberArchive=await closeDownloads(correctedNovember,'November corrected complete close');
   const earlierAgain=await closeDownloads(novemberClose,'Original November close after correction');
   assert.equal(earlierAgain.files['account.tar'].sha256,novemberArchive.files['account.tar'].sha256,'Earlier immutable close remains byte-identical');
-  phase('visible native REPLACE, original match undo, corrected close and immutable prior archive',{correctionImportId:correctionImport.import.id,transactionId:feeCorrection.id,earlierCloseId:novemberClose.id,closeId:correctedNovember.id,closingBalance:'1349.00',archive:correctedNovemberArchive.files['account.tar']});
+  await phase('visible native REPLACE, original match undo, corrected close and immutable prior archive',{correctionImportId:correctionImport.import.id,transactionId:feeCorrection.id,earlierCloseId:novemberClose.id,closeId:correctedNovember.id,closingBalance:'1349.00',archive:correctedNovemberArchive.files['account.tar']});
 
-  const csvImport=await upload(december,{mapping:{amount:'Amount',balance:'Balance'}});rows=await readTransactions();
-  const csvOriginal=byProvider('BROWSER-CSV-INCOME');assert.equal(cents(csvOriginal.amount),500n);
-  await classify(csvOriginal.id,'INCOME','5.00','Explicit original CSV Amount column');
-  const decemberClose=await closePeriod(csvImport.import,'December first source interpretation','1354.00');
+
+  }else{
+   const receiptPhase=prior.phases.find(x=>x.name==='visible gross receipt, fee, full invoice allocation and durable original request recovery');
+   const intakePhase=prior.phases.find(x=>x.name==='visible original receipt-intake inspection, source alias, gross receipt and fee review, intake close and full handover');
+   const originalPhase=prior.phases.find(x=>x.name==='all original posted rows, explained zero cash and full reviewed statement close');
+   const correctedPhase=prior.phases.find(x=>x.name==='visible native REPLACE, original match undo, corrected close and immutable prior archive');
+   assert(receiptPhase&&intakePhase&&originalPhase&&correctedPhase,'Complete retained November browser course');
+   assert(prior.phases.some(x=>x.name===correctedPhase.name),'Retain the completed original November course while continuing its December records');
+   const readRetained=async record=>{
+    assert(resolve(record.path).startsWith(resolve(reportDirectory)+'/'),'Original browser handover path');
+    const bytes=await readFile(record.path);assert.equal(bytes.length,record.bytes);assert.equal(sha(bytes),record.sha256);return bytes;
+   };
+   const originalRequest=JSON.parse((await readRetained(receiptPhase.originalRecovery)).toString('utf8'));
+   assert.equal(originalRequest.id,receiptPhase.requestId);assert.equal(originalRequest.body.requestId,receiptPhase.requestId);
+   receiptRequest=originalRequest.body;receiptPosts=receiptPhase.actualReceiptPosts;assert.equal(receiptPosts,1);
+   assert.equal(mutations.filter(x=>x.requestId===receiptPhase.requestId).length,1,'Retain the one original receipt POST');
+   const recovered=await get('/operations/'+receiptPhase.requestId);
+   assert.equal(recovered.receipt.id,receiptPhase.receiptId);assert.equal(recovered.allocation.id,receiptPhase.allocationId);
+   recoveredReceipt=recovered.receipt;
+   const paidResponse=await fetch(origin+'/api/receivables/invoices/'+receiptPhase.invoiceId+'?asOf=2026-12-31');
+   assert.equal(paidResponse.status,200);const paid=await paidResponse.json();assert.equal(paid.invoice.paymentStatus,'PAID');assert.equal(paid.invoice.amountDue,'0.00');
+   originalIntake=JSON.parse((await readRetained(intakePhase.originalReport)).toString('utf8'));
+   assert.equal(originalIntake.bankImportId,intakePhase.bankImportId);assert.equal(originalIntake.receiptId,receiptPhase.receiptId);
+   const originalDetail=await get('/closes/'+originalPhase.closeId),correctedDetail=await get('/closes/'+correctedPhase.closeId);
+   assert.equal(originalDetail.close.closingBalance,'1350.00');assert.equal(correctedDetail.close.closingBalance,'1349.00');
+   assert.equal(correctedDetail.currentProblems.length,0);correctedNovember=correctedDetail.close;
+   const originalAgain=await closeDownloads(originalDetail.close,'Retained November original close after receiving');
+   const correctedAgain=await closeDownloads(correctedNovember,'Retained November corrected close after receiving');
+   assert.equal(originalAgain.files['account.tar'].sha256,originalPhase.archive.sha256);
+   assert.equal(correctedAgain.files['account.tar'].sha256,correctedPhase.archive.sha256);
+   assert.equal((await get('/state')).revision,initial.revision,'November receiving is read-only');
+   await phase('same original browser continuation after retained November correction',{revision:initial.revision,receiptId:recoveredReceipt.id,requestId:receiptRequest.requestId,actualReceiptPosts:receiptPosts,originalNovemberCloseId:originalPhase.closeId,correctedNovemberCloseId:correctedPhase.closeId,retainedScreenshots:prior.screenshots.length,retainedDownloads:prior.downloads.length});
+  }
+
+  let csvImport,csvOriginal,decemberClose,csvCorrection,finalDecember;
+  const retainedCsv=prior?initial.imports.filter(row=>row.accountId===accountId&&row.format==='CSV'&&row.file.sha256===sha(december.content)):[];
+  if(retainedCsv.length){
+   assert(retainedCsv.length<=2,'Retain the two original December interpretation editions');
+   const originals=retainedCsv.filter(row=>row.supersedesImportId===null);
+   assert.equal(originals.length,1,'One original December interpretation');
+   const imported=originals[0];assert.equal(imported.file.bytes,Buffer.byteLength(december.content));
+   const successors=retainedCsv.filter(row=>row.supersedesImportId===imported.id);
+   assert.equal(successors.length,retainedCsv.length-1,'The correction retains that original interpretation');
+   csvImport={import:imported,preview:{file:imported.file,reviewSha256:imported.reviewSha256}};
+   if(successors.length)csvCorrection={import:successors[0],preview:{file:successors[0].file,reviewSha256:successors[0].reviewSha256}};
+   rows=await readTransactions();
+   const originalsRows=rows.filter(row=>row.providerId==='BROWSER-CSV-INCOME'&&!row.interpretationReplacesId&&
+    row.copies.some(copy=>copy.importId===imported.id));
+   assert.equal(originalsRows.length,1,'The first CSV transaction retains its native import and row identity');
+   csvOriginal=originalsRows[0];assert.equal(cents(csvOriginal.amount),500n);
+   const detail=await get('/transactions/'+csvOriginal.id);
+   assert(['POSTED','SUPERSEDED'].includes(detail.transaction.status),'The original row remains posted or superseded by its retained correction');
+   if(detail.transaction.match){
+    assert.equal(detail.transaction.match.parts.length,1);assert.equal(detail.transaction.match.parts[0].kind,'INCOME');
+    assert.equal(cents(detail.transaction.match.parts[0].amount),500n);
+   }else assert(csvCorrection,'An undone original match retains its source correction');
+   const firstCloses=initial.closes.filter(close=>close.accountId===accountId&&close.from==='2026-12-01'&&
+    close.until==='2026-12-31'&&close.closingBalance==='1354.00'&&close.sourceClosing.importId===imported.id);
+   assert.equal(firstCloses.length,1,'One retained first December close');decemberClose=firstCloses[0];
+   if(!csvCorrection)assert.equal((await get('/closes/'+decemberClose.id)).currentProblems.length,0);
+   const retainedSource=await sourceDownload(imported.id,december.content,'Retained December first original source');
+   assert.equal(retainedSource.original.sha256,sha(december.content));
+   assert.equal((await get('/state')).revision,initial.revision,'Receiving retained December records is read-only');
+  }else{
+   csvImport=await upload(december,{mapping:{amount:'Amount',balance:'Balance'}});rows=await readTransactions();
+   csvOriginal=byProvider('BROWSER-CSV-INCOME');assert.equal(cents(csvOriginal.amount),500n);
+   await classify(csvOriginal.id,'INCOME','5.00','Explicit original CSV Amount column');
+   decemberClose=await closePeriod(csvImport.import,'December first source interpretation','1354.00');
+  }
   const decemberArchive=await closeDownloads(decemberClose,'December first interpretation');
-  const csvCorrection=await upload(december,{mapping:{amount:'AccountAmount',balance:'AccountBalance'},supersedes:csvImport.import.id});
+  if(!csvCorrection)csvCorrection=await upload(december,{mapping:{amount:'AccountAmount',balance:'AccountBalance'},supersedes:csvImport.import.id});
   assert.equal(csvCorrection.preview.file.sha256,csvImport.preview.file.sha256,'Same exact original CSV file');
+  assert.equal(csvCorrection.import.file.bytes,Buffer.byteLength(december.content));
   assert.notEqual(csvCorrection.preview.reviewSha256,csvImport.preview.reviewSha256);
   assert.equal(csvCorrection.import.supersedesImportId,csvImport.import.id);
   rows=await readTransactions();const changedInterpretations=rows.filter(x=>x.interpretationReplacesId===csvOriginal.id);
-  assert.equal(changedInterpretations.length,1);const csvReplacement=changedInterpretations[0];
-  assert.equal(csvReplacement.status,'CORRECTION_REVIEW');assert.equal(csvReplacement.interpretationAction,'REPLACE');assert.equal(cents(csvReplacement.amount),700n);
-  await openTransaction(csvReplacement.id);assert.match(await page.locator('#detail-body').innerText(),/Reviewed interpretation correction:\s*REPLACE/);
-  await reopen(decemberClose,'The original file includes account-currency amounts and balances; retain its explicit corrected mapping.');
-  await applyCorrection(csvReplacement,csvOriginal.id,'Same original source bytes; use AccountAmount and AccountBalance, retaining both interpretation editions.');
-  await classify(csvReplacement.id,'INCOME','7.00','Reviewed original account-currency CSV amount');
-  const finalDecember=await closePeriod(csvCorrection.import,'December corrected original-source close','1356.00');
+  assert.equal(changedInterpretations.length,1);let csvReplacement=changedInterpretations[0];
+  assert.equal(csvReplacement.interpretationAction,'REPLACE');assert.equal(cents(csvReplacement.amount),700n);
+  assert(csvReplacement.copies.some(copy=>copy.importId===csvCorrection.import.id),'The replacement belongs to the retained corrected interpretation');
+  let firstCloseDetail=await get('/closes/'+decemberClose.id);
+  if(!firstCloseDetail.reopening){
+   assert.equal(csvReplacement.status,'CORRECTION_REVIEW');
+   await openTransaction(csvReplacement.id);assert.match(await page.locator('#detail-body').innerText(),/Reviewed interpretation correction:\s*REPLACE/);
+   await reopen(decemberClose,'The original file includes account-currency amounts and balances; retain its explicit corrected mapping.');
+  }
+  if(csvReplacement.status==='CORRECTION_REVIEW'){
+   const oldDetail=await get('/transactions/'+csvOriginal.id);
+   assert.equal(oldDetail.transaction.status,'POSTED');
+   if(oldDetail.transaction.match){
+    await openTransaction(csvOriginal.id);await field('#undo-form','reason','Same original source bytes; retain the original match undo before applying AccountAmount and AccountBalance.');
+    await submit('#undo-form','/transactions/'+encodeURIComponent(csvOriginal.id)+'/undo');
+   }
+   await openTransaction(csvReplacement.id);await field('#resolve-form','action','APPLY_CORRECTION');
+   await field('#resolve-form','targetManual',csvOriginal.id);
+   await field('#resolve-form','reason','Same original source bytes; use AccountAmount and AccountBalance, retaining both interpretation editions.');
+   await submit('#resolve-form','/transactions/'+encodeURIComponent(csvReplacement.id)+'/resolve');
+  }else{
+   assert.equal(csvReplacement.status,'POSTED');assert.equal(csvReplacement.supersedesId,csvOriginal.id);
+  }
+  const oldDetail=await get('/transactions/'+csvOriginal.id);
+  assert.equal(oldDetail.transaction.status,'SUPERSEDED');assert.equal(oldDetail.transaction.correctedBy,csvReplacement.id);
+  let replacementDetail=await get('/transactions/'+csvReplacement.id);
+  if(!replacementDetail.transaction.match)await classify(csvReplacement.id,'INCOME','7.00','Reviewed original account-currency CSV amount');
+  replacementDetail=await get('/transactions/'+csvReplacement.id);
+  assert.equal(replacementDetail.transaction.match.parts.length,1);
+  assert.equal(replacementDetail.transaction.match.parts[0].kind,'INCOME');
+  assert.equal(cents(replacementDetail.transaction.match.parts[0].amount),700n);
+  const currentDecember=await get('/state'),finalCloses=currentDecember.closes.filter(close=>close.accountId===accountId&&
+   close.from==='2026-12-01'&&close.until==='2026-12-31'&&close.closingBalance==='1356.00'&&close.sourceClosing.importId===csvCorrection.import.id);
+  assert(finalCloses.length<=1,'One final corrected original-source close');
+  finalDecember=finalCloses[0]??await closePeriod(csvCorrection.import,'December corrected original-source close','1356.00');
+  assert.equal((await get('/closes/'+finalDecember.id)).currentProblems.length,0);
   const finalDecemberArchive=await closeDownloads(finalDecember,'December final complete handover',{all:true});
   const oldDecember=await closeDownloads(decemberClose,'December earlier retained interpretation');
   assert.equal(oldDecember.files['account.tar'].sha256,decemberArchive.files['account.tar'].sha256);
   const originalCsv=await sourceDownload(csvCorrection.import.id,december.content,'Same original CSV and complete correction interpretation');
   assert.equal(originalCsv.original.sha256,sha(december.content));
-  phase('full mapped CSV intake, same-byte interpretation correction and replacement original closing balance',{originalImportId:csvImport.import.id,correctedImportId:csvCorrection.import.id,sourceSha256:sha(december.content),oldTransactionId:csvOriginal.id,newTransactionId:csvReplacement.id,earlierCloseId:decemberClose.id,finalCloseId:finalDecember.id,closingBalance:'1356.00',archive:finalDecemberArchive.files['account.tar']});
+  await phase('full mapped CSV intake, same-byte interpretation correction and replacement original closing balance',{originalImportId:csvImport.import.id,correctedImportId:csvCorrection.import.id,sourceSha256:sha(december.content),oldTransactionId:csvOriginal.id,newTransactionId:csvReplacement.id,earlierCloseId:decemberClose.id,finalCloseId:finalDecember.id,closingBalance:'1356.00',archive:finalDecemberArchive.files['account.tar']});
 
   await page.reload({waitUntil:'networkidle'});await connected();
   assert.equal(await page.locator('#account-picker').inputValue(),accountId);
@@ -477,16 +627,18 @@ export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sour
   assert.equal((await get('/closes/'+finalDecember.id)).currentProblems.length,0);
   assert.deepEqual(pageErrors,[],'No application page errors');
   assert.deepEqual(networkErrors.filter(x=>!x.expected),[],'All application requests succeed except the retained deliberate transport interruption');
-  phase('same-browser reopen, current original accounting review and complete desktop/390px handover',{revision:finalState.revision,activeNovemberCloseId:correctedNovember.id,activeDecemberCloseId:finalDecember.id,originalOctoberCloseId:scenario.finalClose.id});
+  await phase('same-browser reopen, current original accounting review and complete desktop/390px handover',{revision:finalState.revision,activeNovemberCloseId:correctedNovember.id,activeDecemberCloseId:finalDecember.id,originalOctoberCloseId:scenario.finalClose.id});
   const result={schema:'stellar-forge.merchant-bank-browser-receiving.v1',status:'PASS',startedAt,completedAt:new Date().toISOString(),node:process.version,
    originalOperation:'SCF-MERCHANT-BANK-RECONCILIATION-DFF77-20261012',workspaceId,caseDirectory:resolve(caseDirectory),sourceDirectory:resolve(sourceDirectory),baseUrl:origin,
    browser:{version:browser.version(),executable:runtime.executable,packagePath:runtime.packagePath},phases,originalInputs,screenshots,downloads,mutations,
    originalIntake,originalRequest:{requestId:receiptRequest.requestId,actualReceiptPosts:receiptPosts,receiptId:recoveredReceipt.id},pageErrors,networkErrors,consoleErrors,revision:finalState.revision};
-  await retain(join(reportDirectory,'browser-result.json'),Buffer.from(json(result)));return result;
+  await retain(join(reportDirectory,'browser-result.json'),Buffer.from(json(result)));if(onCheckpoint)await onCheckpoint(result);return result;
  }catch(error){
-  const failure={schema:'stellar-forge.merchant-bank-browser-receiving.v1',status:'FAILED',startedAt,failedAt:new Date().toISOString(),phase:phaseName,message:error.message,stack:error.stack,workspaceId,caseDirectory,sourceDirectory,phases,screenshots,downloads,mutations,pageErrors,networkErrors,consoleErrors};
+  const failure={schema:'stellar-forge.merchant-bank-browser-receiving.v1',status:'FAILED',startedAt,failedAt:new Date().toISOString(),phase:phaseName,message:error.message,stack:error.stack,originalOperation:'SCF-MERCHANT-BANK-RECONCILIATION-DFF77-20261012',workspaceId,caseDirectory,sourceDirectory,phases,originalInputs,originalIntake,originalRequest:receiptRequest?{requestId:receiptRequest.requestId,actualReceiptPosts:receiptPosts,receiptId:recoveredReceipt?.id??null}:null,screenshots,downloads,mutations,pageErrors,networkErrors,consoleErrors};
   if(page){try{const path=join(screensDir,'failure.png');await page.screenshot({path,fullPage:true});await chmod(path,0o600);failure.failureScreenshot=path;failure.visibleText=(await page.locator('body').innerText()).slice(0,30000);}catch{}}
+  try{failure.revision=(await get('/state')).revision;}catch{}
   await retain(join(reportDirectory,'browser-result.json'),Buffer.from(json(failure)));
+  if(onCheckpoint&&Number.isSafeInteger(failure.revision)){try{await onCheckpoint(failure);}catch(checkpointError){error.checkpointError=checkpointError.message;}}
   error.bankBrowserReport=join(reportDirectory,'browser-result.json');throw error;
  }finally{if(context)await context.close();if(browser)await browser.close();}
 }

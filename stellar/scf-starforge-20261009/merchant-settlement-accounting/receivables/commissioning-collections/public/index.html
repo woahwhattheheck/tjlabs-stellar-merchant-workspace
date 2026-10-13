@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Commissioning collections</title>
+<link rel="stylesheet" href="./styles.css">
+<script type="module" src="./app.mjs"></script>
+</head>
+<body>
+<header class="topbar">
+  <div><p class="eyebrow">Customer operations</p><h1>Commissioning collections</h1><p class="subtitle">Original workshares, milestone billing and dated customer cash.</p></div>
+  <nav class="related" aria-label="Related workspaces"><a id="receivables-link" href="/receivables/">Invoices and customers</a><a id="xero-link" href="/receivables/xero/">Xero cash cycles</a><a href="./README.md" target="_blank" rel="noopener">Operator guide</a></nav>
+</header>
+<div class="workspace-bar"><span id="connection">Opening the original accounting workspace…</span><label>Recording operator <input id="actor" type="text" maxlength="300" autocomplete="name"></label><button id="refresh" type="button">Refresh records</button><label class="button" for="request-file">Load saved request</label><input id="request-file" class="file-control" type="file" accept=".json,application/json"></div>
+<div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+<section id="pending" class="pending" aria-label="Saved request recovery" hidden>
+  <div><h2>Saved request</h2><p id="pending-description"></p><p id="pending-error"></p></div>
+  <div class="actions"><button id="pending-find" type="button">Find saved outcome</button><button id="pending-retry" type="button">Retry original request</button><button id="pending-download" type="button">Download original request</button><button id="pending-retire" type="button" hidden>Close unsaved request</button></div>
+</section>
+<nav class="tabs" aria-label="Commissioning stages"><button type="button" data-tab="sources" aria-selected="true">1. Source editions</button><button type="button" data-tab="matching" aria-selected="false">2. Milestones and cash</button><button type="button" data-tab="review" aria-selected="false">3. Review and capture</button><button type="button" data-tab="captures" aria-selected="false">Saved handovers</button></nav>
+<main>
+<section id="panel-sources" class="panel">
+  <div class="two-column">
+    <section class="card"><h2>Import an original workshare source</h2><p>Load the original workshares JSON. Its project fees, milestone percentages, dates and contact stages are retained as supplied.</p>
+      <form id="source-form">
+        <label>Original JSON file <input id="source-file" type="file" accept=".json,application/json" required></label>
+        <label>Source label <input id="source-label" type="text" maxlength="300" placeholder="Original workshare edition"></label>
+        <div class="fields"><label>Received at (UTC, optional) <input id="source-received" type="datetime-local"></label><label>Earlier source edition <select id="source-replaces"><option value="">First or independent edition</option></select></label></div>
+        <details><summary>Currency precision and source identity</summary><label>Currency minor-unit scales <textarea id="source-scales" rows="3" spellcheck="false">{"EUR":2,"GBP":2,"USD":2}</textarea></label><label>Expected source SHA-256 (optional) <input id="source-expected" type="text" minlength="64" maxlength="64" spellcheck="false"></label></details>
+        <div class="actions"><button type="submit" id="source-inspect">Inspect original source</button><button type="button" id="source-import" disabled>Retain inspected source</button></div>
+      </form>
+      <div id="source-inspection" hidden></div>
+    </section>
+    <section class="card"><h2>Retained source editions</h2><div class="toolbar"><label>Find a source <input id="source-search" type="search" placeholder="Label, project or original filename"></label><button id="source-search-button" type="button">Search</button></div><div id="source-list"></div><button id="source-more" type="button" hidden>Load more editions</button></section>
+  </div>
+</section>
+<section id="panel-matching" class="panel" hidden>
+  <div id="matching-empty" class="empty">Open a retained source edition to bind its projects to original customer records.</div>
+  <div id="matching-workspace" hidden>
+    <section class="card"><div class="section-head"><div><h2 id="selected-source-title">Source edition</h2><p id="selected-source-meta" class="muted"></p></div><div class="actions"><button id="source-original" type="button">Download original source</button><button id="draft-download" type="button">Download draft</button><label class="button" for="draft-file">Load draft</label><input id="draft-file" class="file-control" type="file" accept=".json,application/json"></div></div>
+      <div class="fields"><label>Review label <input id="review-label" type="text" maxlength="300"></label><label>Account date <input id="as-of" type="date" required></label><label>Compare with saved capture <select id="baseline"><option value="">First capture</option></select></label></div>
+      <p class="muted">Select the source cohort and bind each project explicitly. Original invoice amounts, allocated settlement and physical cash remain separate in the review.</p>
+    </section>
+    <div class="workbench">
+      <aside class="card project-sidebar"><div class="section-head"><h2>Project cohort</h2><span id="project-selection-count"></span></div><label>Find a project <input id="project-search" type="search"></label><div class="actions"><button id="projects-all" type="button">Select all</button><button id="projects-none" type="button">Clear cohort</button></div><div id="project-list"></div></aside>
+      <div>
+        <section class="card"><h2 id="project-title">Project</h2><p id="project-description" class="muted"></p><div class="fields"><label>Find an original customer <input id="customer-search" type="search" placeholder="Customer name or reference"></label><button id="customer-search-button" type="button">Search customers</button><label>Original customer <select id="customer-select"><option value="">Choose an original customer</option></select></label></div><p id="customer-context" class="muted"></p><div id="milestone-editors"></div><h3>Physical customer cash</h3><p class="muted">Attribute each original receipt or refund once across the selected cohort. Milestone allocations are recorded above.</p><div id="project-cash"></div><h3>Saved Xero cash cycles</h3><div id="project-cycles"></div></section>
+        <section class="card"><h2>Choose original account records</h2><div class="fields"><label>Record type <select id="candidate-view"><option value="invoices">Issued invoices and lines</option><option value="allocations">Receipt allocations</option><option value="credits">Credit-note lines</option><option value="receipts">Customer receipts</option><option value="refunds">Customer refunds</option><option value="xeroCycles">Saved Xero cash cycles</option></select></label><label>Milestone for invoice, allocation or credit <select id="candidate-milestone"></select></label><label>Find a record <input id="candidate-search" type="search" placeholder="Original number, source reference or record ID"></label><button id="candidate-search-button" type="button">Search records</button></div><p id="candidate-context" class="muted"></p><div id="candidate-list"></div><div class="actions"><button id="candidate-prev" type="button" disabled>Previous</button><span id="candidate-page"></span><button id="candidate-next" type="button" disabled>Next</button></div></section>
+      </div>
+    </div>
+    <div class="sticky-actions"><span id="draft-state">Draft retained in this browser.</span><button id="preview" type="button" class="primary">Review complete cohort</button></div>
+  </div>
+</section>
+<section id="panel-review" class="panel" hidden><section class="card"><div class="section-head"><div><h2 id="review-title">Commissioning review</h2><p id="review-meta" class="muted">Review a source cohort or open a saved handover.</p></div><div class="actions"><button id="capture" type="button" class="primary" disabled>Capture reviewed handover</button><button id="review-as-draft" type="button" hidden>Use selection as a new draft</button><button id="review-as-baseline" type="button" hidden>Use as baseline</button></div></div><div id="review-summary"></div><div id="review-totals"></div><h3>Milestone and customer results</h3><div id="review-projects"></div><h3>Items to resolve</h3><div id="review-findings"></div><h3>Changes from baseline</h3><div id="review-changes"></div><div id="review-files"></div></section></section>
+<section id="panel-captures" class="panel" hidden><section class="card"><h2>Saved commissioning handovers</h2><div class="toolbar"><label>Find a saved capture <input id="capture-search" type="search" placeholder="Label, source, project or customer"></label><button id="capture-search-button" type="button">Search</button></div><div id="capture-list"></div><button id="capture-more" type="button" hidden>Load more captures</button></section></section>
+</main>
+<footer>Source editions and saved captures remain in the original accounting workspace. Complete workspace archives include the private account snapshot; the selected-cohort reports are available separately.</footer>
+</body></html>
