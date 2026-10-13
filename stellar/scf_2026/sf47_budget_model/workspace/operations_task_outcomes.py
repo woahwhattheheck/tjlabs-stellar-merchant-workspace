@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+from datetime import datetime, timezone
 from copy import deepcopy
 from decimal import Decimal, localcontext
 import hashlib
@@ -127,7 +128,7 @@ def method(raw, context, label):
 
 def normalized(context, raw):
     value = obj(raw, ("title", "customer", "task", "unit", "currency", "installation",
-                     "deploymentIds", "purchaseIds", "baseline", "installed", "comparison", "status", "conclusion"),
+                     "deploymentIds", "purchaseIds", "baseline", "installed", "comparison", "status", "conclusion", "followups"),
                 "Customer task comparison")
     currency = text(value.get("currency", "USD"), "Comparison currency", 12, True)
     if not re.fullmatch(r"[A-Z][A-Z0-9]{2,11}", currency):
@@ -159,7 +160,61 @@ def normalized(context, raw):
     if result["status"] == "REVIEWED":
         if result["comparison"]["decision"] == "UNREVIEWED" or not result["comparison"]["reason"] or not result["conclusion"]:
             fail("A reviewed edition needs a comparability decision, its explanation and the customer conclusion.")
+    # Preserve the byte-derived legacy document when no recurring series was supplied.
+    if "followups" in value:
+        result["followups"] = followups(context, value["followups"])
     return result
+
+
+def followups(context, values):
+    if not isinstance(values, list) or len(values) > 100:
+        fail("Keep at most 100 complete recurring observations in one comparison.")
+    result, seen = [], set()
+    for raw in values:
+        value = obj(raw, ("id", "label", "method", "comparison", "status", "conclusion",
+                          "acceptance", "deploymentIds", "purchaseIds"), "Recurring observation")
+        rid = text(value.get("id"), "Original recurring observation ID", 100, True)
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}", rid) or rid in seen:
+            fail("Retain a unique stable identity for each recurring observation.")
+        seen.add(rid)
+        compared = obj(value.get("comparison", {}), ("decision", "reason"), "Recurring comparability review")
+        acceptance = obj(value.get("acceptance", {}), ("status", "by", "at", "note"), "Customer acceptance")
+        accepted = {"status": domain.enum(acceptance.get("status", "PENDING"),
+                         ("PENDING", "ACCEPTED", "DECLINED"), "Customer acceptance state"),
+                    "by": text(acceptance.get("by", ""), "Actual receiving reviewer", 300),
+                    "at": domain.timestamp(acceptance.get("at"), "Actual customer response time", True),
+                    "note": text(acceptance.get("note", ""), "Customer response and original source", 12000)}
+        if accepted["status"] != "PENDING" and not all(accepted[key] for key in ("by", "at", "note")):
+            fail("Record the actual reviewer, response time and original response for customer acceptance or decline.")
+        row = {
+            "id": rid, "label": text(value.get("label", ""), "Recurring observation name", 300, True),
+            "method": method(value.get("method", {}), context, "Recurring " + rid),
+            "comparison": {"decision": domain.enum(compared.get("decision", "UNREVIEWED"),
+                            ("UNREVIEWED", "COMPARABLE", "NOT_COMPARABLE"), "Recurring comparability decision"),
+                           "reason": text(compared.get("reason", ""), "Recurring complete scope review", 12000)},
+            "status": domain.enum(value.get("status", "DRAFT"), ("DRAFT", "REVIEWED"), "Recurring review state"),
+            "conclusion": text(value.get("conclusion", ""), "Recurring customer outcome and next work", 12000),
+            "acceptance": accepted,
+            "deploymentIds": refs(value.get("deploymentIds", []),
+                                  {r["id"] for r in context["records"]["deployments"]}, "Recurring deployment selection"),
+            "purchaseIds": refs(value.get("purchaseIds", []),
+                                {r["id"] for r in context["records"]["purchases"]}, "Recurring purchase selection"),
+        }
+        if row["status"] == "REVIEWED" and (row["comparison"]["decision"] == "UNREVIEWED"
+                or not row["comparison"]["reason"] or not row["conclusion"]):
+            fail("A reviewed recurring observation needs its own complete scope decision, explanation and conclusion.")
+        result.append(row)
+    return result
+
+
+def selected_ids(document, kind):
+    if kind == "sources":
+        ids = document["baseline"]["sourceIds"] + document["installed"]["sourceIds"]
+        ids += [key for row in document.get("followups", []) for key in row["method"]["sourceIds"]]
+    else:
+        field = {"deployments": "deploymentIds", "purchases": "purchaseIds"}[kind]
+        ids = document[field] + [key for row in document.get("followups", []) for key in row[field]]
+    return sorted(set(ids))
 
 
 def blank_method(name):
@@ -263,7 +318,7 @@ def report(document):
     if comparable and not same_population:
         findings.append({"path": "comparison.completedTasks", "message": "The completed task counts differ or are unavailable; compare per completed task."})
     observed = all(document[side]["basis"] == "OBSERVED" for side in ("baseline", "installed"))
-    return {"schema": SCHEMA + ".report", "currency": document["currency"], "unit": document["unit"],
+    result = {"schema": SCHEMA + ".report", "currency": document["currency"], "unit": document["unit"],
             "baseline": before, "installed": after, "scopeDifferences": differences,
             "comparisonReviewed": compared, "comparable": comparable, "sameCompletedTaskCount": same_population,
             "measurementBasis": "OBSERVED" if observed else "ESTIMATED_OR_INCOMPLETE",
@@ -272,18 +327,60 @@ def report(document):
                      "Labour equals person-minutes times the stated hourly rate divided by 60. "
                      "All costs use the selected currency. Positive differences mean lower installed-method effort or cost. "
                      "Missing measurements stay unknown. Complete task counts include the stated acceptance criteria."}
+    if "followups" in document:
+        result.update(series_report(document))
+    return result
+
+
+def series_report(document):
+    rows, accepted_dates = [], set()
+    for observation in document["followups"]:
+        comparison = {key: value for key, value in document.items() if key != "followups"}
+        comparison.update(installed=observation["method"], comparison=observation["comparison"],
+                          status=observation["status"], conclusion=observation["conclusion"])
+        calculated = report(comparison)
+        comparable_observed = (observation["status"] == "REVIEWED" and calculated["comparable"]
+                               and calculated["measurementBasis"] == "OBSERVED"
+                               and observation["method"]["observedAt"] is not None
+                               and calculated["installed"]["completedTasks"] is not None
+                               and Decimal(calculated["installed"]["completedTasks"]) > 0)
+        accepted = observation["acceptance"]["status"] == "ACCEPTED"
+        if comparable_observed and accepted and observation["method"]["observedAt"]:
+            at = datetime.fromisoformat(observation["method"]["observedAt"].replace("Z", "+00:00"))
+            accepted_dates.add(at.astimezone(timezone.utc).date().isoformat())
+        elapsed = savings(calculated["baseline"]["elapsedMinutes"], calculated["installed"]["elapsedMinutes"]) if (
+            calculated["comparable"] and calculated["sameCompletedTaskCount"]) else None
+        rows.append({"id": observation["id"], "label": observation["label"], "status": observation["status"],
+                     "acceptance": deepcopy(observation["acceptance"]), "report": calculated,
+                     "elapsedMinutesDifference": elapsed,
+                     "acceptedComparableObserved": accepted and comparable_observed})
+    return {"followups": rows, "series": {
+        "observations": len(rows),
+        "reviewed": sum(row["status"] == "REVIEWED" for row in rows),
+        "accepted": sum(row["acceptance"]["status"] == "ACCEPTED" for row in rows),
+        "declined": sum(row["acceptance"]["status"] == "DECLINED" for row in rows),
+        "pending": sum(row["acceptance"]["status"] == "PENDING" for row in rows),
+        "acceptedComparableObserved": sum(row["acceptedComparableObserved"] for row in rows),
+        "observedUtcDates": sorted(accepted_dates),
+        "basis": "Every recurring observation compares its complete scope with this edition's original baseline. "
+                 "Customer acceptance is separate from measurement and operator review. Accepted comparable observed "
+                 "counts require a reviewed scope, OBSERVED measurements on both methods, an original observation time "
+                 "and a positive completed-task count; they do not assert "
+                 "effort or monetary savings when those quantities are unknown. Dates use the recurring observation's "
+                 "original measurement timestamp, converted to UTC. Overlapping work is not added into cumulative "
+                 "savings; each original observation and its source selection remain separately available."}}
 
 
 def snapshot(operations, context, document):
-    source_ids = sorted(set(document["baseline"]["sourceIds"] + document["installed"]["sourceIds"]))
+    source_ids = selected_ids(document, "sources")
     result = {
         "case": {"id": context["program"]["id"], "version": context["program"]["version"],
                  "mode": context["program"]["mode"], "planId": context["program"]["planId"],
                  "planRevision": context["program"]["planRevision"],
                  "planContentSha256": context["plan"]["contentSha256"]},
         "sources": [deepcopy(context["sources"][key]) for key in source_ids],
-        "deployments": [deepcopy(row) for row in context["records"]["deployments"] if row["id"] in document["deploymentIds"]],
-        "purchases": [deepcopy(row) for row in context["records"]["purchases"] if row["id"] in document["purchaseIds"]],
+        "deployments": [deepcopy(row) for row in context["records"]["deployments"] if row["id"] in selected_ids(document, "deployments")],
+        "purchases": [deepcopy(row) for row in context["records"]["purchases"] if row["id"] in selected_ids(document, "purchases")],
         "installation": None,
     }
     if document["installation"]:
@@ -355,6 +452,10 @@ def checked_chain(rows):
                                                   "revision": prior["edition"]["revision"]}
             if row["edition"]["revision"] != revision or row["edition"].get("previous") != expected:
                 fail("The task comparison's complete original revision history is required.", "TASK_OUTCOMES_HISTORY", 409)
+            if prior:
+                retained = {item["id"] for item in prior["edition"]["document"].get("followups", [])}
+                if retained - {item["id"] for item in row["edition"]["document"].get("followups", [])}:
+                    fail("A recurring observation is missing from its later complete comparison edition.", "TASK_OUTCOMES_HISTORY", 409)
             prior = row
     return sorted(rows, key=lambda row: (row["edition"]["id"], row["edition"]["revision"]))
 
@@ -368,11 +469,15 @@ def heads(rows):
 
 def summary(row):
     edition = row["edition"]
-    return {"id": edition["id"], "revision": edition["revision"], "sourceId": row["source"]["id"],
+    result = {"id": edition["id"], "revision": edition["revision"], "sourceId": row["source"]["id"],
             "sourceSha256": row["source"]["sha256"], "sha256": edition["sha256"],
             "title": edition["document"]["title"], "customer": edition["document"]["customer"],
             "status": edition["document"]["status"], "savedAt": edition["savedAt"], "actor": edition["actor"],
             "comparison": edition["document"]["comparison"], "measurementBasis": edition["report"]["measurementBasis"]}
+    if "series" in edition["report"]:
+        result["recurring"] = {key: edition["report"]["series"][key] for key in
+                               ("observations", "accepted", "acceptedComparableObserved")}
+    return result
 
 
 def get(operations, program_id, study_id, revision=None):
@@ -400,6 +505,10 @@ def preview(operations, context, body):
     if revision != (prior["edition"]["revision"] if prior else 0):
         fail("A later task comparison edition exists. Retain your draft and reconcile that edition.", "TASK_OUTCOMES_CONFLICT", 409)
     document = normalized(context, inputs.get("document"))
+    if prior:
+        retained = {row["id"] for row in prior["edition"]["document"].get("followups", [])}
+        if retained - {row["id"] for row in document.get("followups", [])}:
+            fail("Retain every saved recurring observation; correct its full method and review in this next edition.")
     calculation = report(document)
     captured = snapshot(operations, context, document)
     candidate = {"schema": SCHEMA + ".preview",
@@ -464,10 +573,10 @@ def validate_import(context, events, files, saved_installations, *, plan_for_ver
         if (captured["case"].get("planContentSha256") != selected_plan["contentSha256"]
                 or captured["case"].get("planRevision") != selected_plan["revision"]):
             fail("The task comparison's original pinned planning source differs.")
-        selected_ids = sorted(set(document["baseline"]["sourceIds"] + document["installed"]["sourceIds"]))
-        if captured.get("sources") != [context["sources"][key] for key in selected_ids]:
+        selected_source_ids = selected_ids(document, "sources")
+        if captured.get("sources") != [context["sources"][key] for key in selected_source_ids]:
             fail("The comparison's complete selected source attachments differ.")
-        for key, ids in (("deployments", document["deploymentIds"]), ("purchases", document["purchaseIds"])):
+        for key, ids in (("deployments", selected_ids(document, "deployments")), ("purchases", selected_ids(document, "purchases"))):
             selected = captured.get(key)
             if not isinstance(selected, list) or {r.get("id") for r in selected} != set(ids) or len(selected) != len(ids):
                 fail("The comparison's retained " + key + " selection is incomplete.")
@@ -508,9 +617,55 @@ def html_report(row):
         content += "<h2>" + label + " — complete work</h2>" + table(["ID", "Work", "Category", "Person-minutes", "Hourly rate", "Notes"], [(r["id"], r["label"], r["category"], r["personMinutes"], r["hourlyRate"], r["notes"]) for r in value["effort"]])
         content += table(["ID", "Other cost", "Amount", "Notes"], [(r["id"], r["label"], r["amount"], r["notes"]) for r in value["costs"]])
     content += "<h2>Findings</h2>" + table(["Field", "Review item"], [(r["path"], r["message"]) for r in calculation["findings"]])
-    content += "<h2>Customer conclusion</h2><p>" + escape(document["conclusion"]) + "</p><h2>Original selection</h2><pre>" + escape(json.dumps(edition["source"], ensure_ascii=False, indent=2)) + "</pre>"
+    content += "<h2>Customer conclusion</h2><p>" + escape(document["conclusion"]) + "</p>"
+    if "followups" in document:
+        content += recurring_html(document, calculation, table, escape)
+    content += "<h2>Original selection</h2><pre>" + escape(json.dumps(edition["source"], ensure_ascii=False, indent=2)) + "</pre>"
     content += "<p>Saved " + escape(edition["savedAt"]) + " by " + escape(edition["actor"]) + ". " + escape(edition["note"]) + "</p><p>Original source " + escape(source["id"]) + " · SHA-256 " + escape(source["sha256"]) + "</p>"
     return ("<!doctype html><html lang='en'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>" + escape(document["title"]) + "</title><style>body{font:15px/1.5 system-ui,sans-serif;color:#181818;background:#fff;max-width:1100px;margin:24px auto;padding:0 20px}h1,h2{line-height:1.2}p,td,pre{white-space:pre-wrap;overflow-wrap:anywhere}.table{overflow-x:auto}table{border-collapse:collapse;width:100%;margin:16px 0}th,td{border:1px solid #aaa;padding:8px;text-align:left;vertical-align:top}th{background:#eee}pre{font:12px/1.4 monospace;border:1px solid #aaa;padding:12px}@media print{body{max-width:none;margin:0}h2{break-after:avoid}tr{break-inside:avoid}.table{overflow:visible}}</style><body>" + content + "</body></html>\n").encode()
+
+
+def recurring_html(document, calculation, table, escape):
+    series = calculation["series"]
+    content = "<h2>Recurring customer observations</h2><p>" + escape(series["basis"]) + "</p>"
+    content += table(["Observations", "Reviewed", "Accepted", "Declined", "Pending", "Accepted comparable observed"],
+                     [[series[key] for key in ("observations", "reviewed", "accepted", "declined", "pending", "acceptedComparableObserved")]])
+    content += "<p>Observed UTC dates of accepted comparable observations: " + escape(", ".join(series["observedUtcDates"]) or "None recorded") + ".</p>"
+    content += table(["Observation", "Review", "Customer response", "Completed", "Person-minutes", "Elapsed minutes", "Total cost"],
+                     [(row["label"], row["status"], row["acceptance"]["status"],
+                       row["report"]["installed"]["completedTasks"], row["report"]["installed"]["personMinutes"],
+                       row["report"]["installed"]["elapsedMinutes"], row["report"]["installed"]["totalCost"])
+                      for row in calculation["followups"]])
+    for observation, derived in zip(document["followups"], calculation["followups"]):
+        method, report = observation["method"], derived["report"]
+        content += "<h3>" + escape(observation["label"]) + "</h3><p>Original observation " + escape(observation["id"]) + ".</p>"
+        content += table(["Scope / method", "Original observation"],
+                         [(key, method[key]) for key in ("name", "basis", "observedAt", "sourceReference", "population", "period", "output", "quality", "notes")])
+        content += table(["Measurement", "Original baseline", "Recurring method"],
+                         [(key, report["baseline"][key], report["installed"][key]) for key in
+                          ("attemptedTasks", "completedTasks", "incompleteTasks", "elapsedMinutes", "personMinutes",
+                           "labourCost", "otherCost", "totalCost", "personMinutesPerCompletedTask", "costPerCompletedTask")])
+        content += table(["Measurement", "Baseline minus recurring", "Percent"],
+                         [(key, value["difference"] if value else None, value["percent"] if value else None)
+                          for key, value in report["savings"].items()])
+        elapsed = derived["elapsedMinutesDifference"]
+        content += "<p>Whole-operation elapsed difference: " + escape(elapsed["difference"] if elapsed else None) + " minutes. Active effort remains separate.</p>"
+        content += table(["Changed scope", "Baseline", "Recurring"],
+                         [(row["field"], row["prior"], row["installed"]) for row in report["scopeDifferences"]])
+        content += table(["ID", "Work", "Category", "Person-minutes", "Hourly rate", "Notes"],
+                         [(row["id"], row["label"], row["category"], row["personMinutes"], row["hourlyRate"], row["notes"]) for row in method["effort"]])
+        content += table(["ID", "Other cost", "Amount", "Notes"],
+                         [(row["id"], row["label"], row["amount"], row["notes"]) for row in method["costs"]])
+        content += "<p>Operator review: " + escape(observation["status"]) + " · " + escape(observation["comparison"]["decision"]) + ".</p><p>" + escape(observation["comparison"]["reason"]) + "</p><p>" + escape(observation["conclusion"]) + "</p>"
+        acceptance = observation["acceptance"]
+        content += "<h4>Customer response</h4>" + table(["State", "Actual reviewer", "Original response time", "Response / source"],
+                                                       [[acceptance[key] for key in ("status", "by", "at", "note")]])
+        content += table(["Original selection", "Record IDs"],
+                         [("Attachments", ", ".join(method["sourceIds"])),
+                          ("Deployments", ", ".join(observation["deploymentIds"])),
+                          ("Purchase observations", ", ".join(observation["purchaseIds"]))])
+        content += table(["Field", "Review item"], [(row["path"], row["message"]) for row in report["findings"]])
+    return content
 
 
 def csv_reports(row):
@@ -521,6 +676,11 @@ def csv_reports(row):
             effort.append({"method": side, "basis": document[side]["basis"], "currency": document["currency"], **value})
         for value in document[side]["costs"]:
             costs.append({"method": side, "basis": document[side]["basis"], "currency": document["currency"], **value})
+    for observation in document.get("followups", []):
+        method = observation["method"]
+        common = {"method": "followup:" + observation["id"], "basis": method["basis"], "currency": document["currency"]}
+        effort.extend({**common, **value} for value in method["effort"])
+        costs.extend({**common, **value} for value in method["costs"])
     return {"task-outcomes-effort.csv": csv_bytes(["method", "basis", "id", "label", "category", "personMinutes", "hourlyRate", "currency", "notes"], effort),
             "task-outcomes-costs.csv": csv_bytes(["method", "basis", "id", "label", "amount", "currency", "notes"], costs)}
 

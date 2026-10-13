@@ -2601,11 +2601,22 @@ export interface GrantFundingReceipt {
 export type GrantFundingRequest = {caseId: string; caseCreatedAt: string; requestId: string} &
   ({found: false} | {found: true; fingerprint: string; result: GrantFundingReceipt; resultSha256: string});
 
+export interface GrantTaskRecurringObservation {
+  /** Stable original observation identity, retained in later comparison editions. */
+  id: string; label: string; method: GrantTaskMethod;
+  comparison: { decision: 'UNREVIEWED' | 'COMPARABLE' | 'NOT_COMPARABLE'; reason: string };
+  status: 'DRAFT' | 'REVIEWED'; conclusion: string;
+  /** Actual customer response, separate from the recording operator's review. */
+  acceptance: {status: 'PENDING' | 'ACCEPTED' | 'DECLINED'; by: string; at: string | null; note: string};
+  deploymentIds: string[]; purchaseIds: string[];
+}
 export interface GrantTaskOutcomeDocument {
   title: string; customer: string; task: string; unit: string; currency: string;
   installation: { id: string; revision: number } | null;
   deploymentIds: string[]; purchaseIds: string[];
   baseline: GrantTaskMethod; installed: GrantTaskMethod;
+  /** Omitted in legacy editions; each recurring method compares with this same baseline. */
+  followups?: GrantTaskRecurringObservation[];
   comparison: { decision: 'UNREVIEWED' | 'COMPARABLE' | 'NOT_COMPARABLE'; reason: string };
   status: 'DRAFT' | 'REVIEWED'; conclusion: string;
 }
@@ -2632,6 +2643,11 @@ export interface GrantTaskOutcomeReport {
   measurementBasis: 'OBSERVED' | 'ESTIMATED_OR_INCOMPLETE';
   savings: Record<'personMinutes' | 'totalCost' | 'personMinutesPerCompletedTask' | 'costPerCompletedTask', GrantTaskOutcomeDifference | null>;
   findings: Array<{path: string; message: string}>; basis: string;
+  followups?: Array<{id: string; label: string; status: 'DRAFT' | 'REVIEWED';
+    acceptance: GrantTaskRecurringObservation['acceptance']; report: GrantTaskOutcomeReport;
+    elapsedMinutesDifference: GrantTaskOutcomeDifference | null; acceptedComparableObserved: boolean}>;
+  series?: {observations: number; reviewed: number; accepted: number; declined: number; pending: number;
+    acceptedComparableObserved: number; observedUtcDates: string[]; basis: string};
 }
 export interface GrantTaskOutcomeSnapshot {
   case: {id: string; version: number; mode: string; planId: string; planRevision: number; planContentSha256: string};
@@ -2646,6 +2662,7 @@ export interface GrantTaskOutcomeSummary {
   id: string; revision: number; sourceId: string; sourceSha256: string; sha256: string;
   title: string; customer: string; status: 'DRAFT' | 'REVIEWED'; savedAt: string; actor: string;
   comparison: GrantTaskOutcomeDocument['comparison']; measurementBasis: GrantTaskOutcomeReport['measurementBasis'];
+  recurring?: {observations: number; accepted: number; acceptedComparableObserved: number};
 }
 export interface GrantTaskOutcomeEdition {
   schema: 'stellar-forge.sf47-customer-task-outcomes.v1';
