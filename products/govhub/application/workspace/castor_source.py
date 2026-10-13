@@ -491,7 +491,7 @@ def capture_source(session, provider_inventory, selection):
         image_rows = []
         candidates = [(value, None) for value in image_selection]
         if not candidates:
-            for row in observed_images:
+            for row in inventory.get("images", []):
                 value = row.get("ID") or row.get("Id") or row.get("id")
                 if not isinstance(value, str) or not re.fullmatch(r"(?:sha256:)?[a-f0-9]{12,64}", value):
                     raise ValueError("Native Compose must supply an actual image ID for exact resolution.")
@@ -506,7 +506,7 @@ def capture_source(session, provider_inventory, selection):
         if state.get("target") is not None and state["target"] != target:
             raise ValueError("The retained original image/source target changed.")
         state["target"] = target
-        state["parts"]["images"] = {"selection": image_selection, "original_compose_rows": observed_images,
+        state["parts"]["images"] = {"selection": image_selection, "original_compose_rows": inventory.get("images", []),
             "resolved": image_rows, "image_ids": image_ids, "docker_engine_id": engine["ID"]}
         save()
         repos = state.get("repositories")
@@ -660,7 +660,7 @@ def capture_source(session, provider_inventory, selection):
             after = inspect_image("image-" + str(index) + "-after", row["image_id"])
             if after["Id"] != row["image_id"]:
                 raise ValueError("The retained native image identity changed during save.")
-        if observe_images("compose-images-after") != observed_images:
+        if sorted(map(_canonical, observe_images("compose-images-after"))) != sorted(map(_canonical, observed_images)):
             raise ValueError("The selected native Compose image cohort changed during capture.")
         engine_after = json.loads(fresh("engine-after", [tools["docker"], "--context", requested["docker_context"],
             "info", "--format", "{{json .}}"]))
@@ -953,9 +953,10 @@ def reopen_source(session, received_directory, checkout_directory):
 
         command("init", ["init"], True)
         command("bundle-verify", ["bundle", "verify", str(data / "repository.bundle")])
-        command("refs", ["fetch", "--force", str(data / "repository.bundle"), "+refs/*:refs/*"], True)
         command("head-fetch", ["fetch", str(data / "repository.bundle"), "HEAD"], True)
         command("checkout", ["checkout", "--detach", "--force", repository["head"]], True)
+        # Fetch original heads only after leaving init's current branch.
+        command("refs-after-detach", ["fetch", "--force", str(data / "repository.bundle"), "+refs/*:refs/*"], True)
         if (data / "staged.patch").stat().st_size:
             command("index", ["apply", "--cached", "--binary", str(data / "staged.patch")], True)
         entries = _load(data / "worktree.json")
