@@ -64,7 +64,12 @@ Open `/customer-delivery` on its printed origin and use the same private workspa
 3. The upload proceeds in exact 64 KiB chunks. Every chunk has its own SHA-256. Complete package verification must match the sender's digest before the received result is published.
 4. Inspect the original intent IDs, outcome observations, complete-output flags, file lengths and digests.
 5. Download a complete response or the customer review. The complete selected source tree and original package remain in the private receiving directory.
-6. Reopen a previously received package using its package SHA-256. Reopening verifies the retained files again.
+6. **Received customer packages** lists every completed receipt in this workspace. Choose **Open received package** to recheck the original package and every retained member. The saved browser selection reopens after login; a fresh browser can select the same package from server history without an externally retained hash. The explicit SHA-256 form remains available.
+7. **Download original complete package** returns the identical received `.ndjson`, including every response, review and source file. Its byte count and SHA-256 remain the original sender's values.
+
+History discovery reads the existing immutable receipt files; it does not create another package registry or rewrite earlier records. A history row describes a saved receipt, not a fresh verification of all of its members. Selecting or downloading it performs those full byte checks. The date shown is the original source-capture time, not an invented receiving date. Incomplete receiving directories and unreadable receipts remain visible separately; one damaged receipt does not hide other packages. A selected package that cannot be verified is not displayed as a usable result.
+
+The selected package is saved through the same IndexedDB compare-and-set as the pending request. Choosing or refreshing history does not discard a pending upload/preparation, the last completed outcome, or an archived request. If storage is unavailable or another tab changes the retained record, recover that exact record before continuing. Legacy browser records that retained only their last completed receive are reopened through the same server verification.
 
 **Archive browser request** retains an exact local archived copy and clears only the active browser slot. It does not remove, cancel or replace a server-side named delivery or upload, whose outcome may still need inspection. Use a new delivery ID for a deliberately changed selection.
 
@@ -99,8 +104,14 @@ list --directory ABS
 show --directory ABS --id ID
 inspect-package --file ABS
 receive --receiving-directory ABS --file ABS --sha256 SHA
+received-list --receiving-directory ABS
 received --receiving-directory ABS --sha256 SHA
+received-package --receiving-directory ABS --sha256 SHA
 ```
+
+`received-list` returns complete receipt summaries plus explicit incomplete/unavailable entries. `received` verifies the original package and all unpacked members, then returns the original receipt unchanged. `received-package` performs the same verification and returns the original package's absolute path, media type, byte count and SHA-256 for an existing file-transfer caller. The module exposes `listReceived()` and `receivedPackage(sha256)` alongside its original methods. Authenticated HTTP routes are `GET /api/customer-delivery/received` and `GET /api/customer-delivery/received/:sha256/file`; individual received/member routes remain unchanged.
+
+The maintained real-source `receiving/receive.mjs` programme now also reloads the recipient browser without entering a hash, closes and reopens the server, selects the original receipt in a fresh browser with empty IndexedDB, and downloads the original package again. Its `selectedReceiptReloaded`, `recipientHistoryColdReopened` and `receivedPackageDownloaded` steps are recorded only after those actual actions succeed. A previously completed operation keeps its existing result; it does not retroactively acquire these observations.
 
 Preview request:
 

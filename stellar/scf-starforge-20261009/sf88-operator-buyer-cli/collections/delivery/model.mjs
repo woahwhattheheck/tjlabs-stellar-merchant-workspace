@@ -6,7 +6,7 @@ import { acquireCollectionLease } from '../model.mjs';
 import { captureInbox } from '../../operations-handoff/capture.mjs';
 import { inspectHandoff } from '../../operations-handoff/contract.mjs';
 import { initializationDirectory, initializationBytes, optionalInitializationBytes, retainInitializationFile } from '../../initialization.mjs';
-import { SCHEMA, bytes, clone, need, hash, identity, digest, absolute, measure, copyFile, ensureMember, writePackage, inspectPackage, receivePackage, MAX_PACKAGE } from './format.mjs';
+import { SCHEMA, bytes, clone, need, hash, identity, digest, absolute, measure, copyFile, ensureMember, writePackage, inspectPackage, receivePackage, validateManifest, MAX_PACKAGE } from './format.mjs';
 import { selectSource } from './source.mjs';
 
 const ID=/^[A-Za-z0-9._-]{1,100}$/;
@@ -108,7 +108,41 @@ export async function openCustomerDelivery({collections=null,directory}){
   need(hash(expectedSha256),'CUSTOMER_DELIVERY_EXPECTED_SHA_REQUIRED');
   return lock(async()=>receivePackage({file,directory:join(receivesRoot,expectedSha256),expectedSha256}));
  }
- async function received(sha256){need(hash(sha256),'CUSTOMER_DELIVERY_EXPECTED_SHA_REQUIRED');const base=join(receivesRoot,sha256);const result=await parsed(join(base,'result.json'));need(result&&result.sha256===sha256,'CUSTOMER_DELIVERY_RECEIVED_NOT_FOUND');for(const row of result.manifest.files)await measure(join(base,'members',row.path),row);return result;}
+ function receivedReceipt(result,sha256){
+  // Original v1 receipts inherit receive-intent's schema through its object spread.
+  // Preserve those immutable receipts as well as the explicit received spelling.
+  need(result&&result.sha256===sha256&&[SCHEMA+'.receive-intent',SCHEMA+'.received'].includes(result.schema),'CUSTOMER_DELIVERY_RECEIVED_RECORD');
+  const selected=validateManifest(result.manifest);
+  need(result.manifestSha256===selected.sha256&&result.files===selected.files&&result.contentBytes===selected.bytes&&result.outputsComplete===selected.outputsComplete&&Number.isSafeInteger(result.bytes)&&result.bytes>0&&result.bytes<=MAX_PACKAGE,'CUSTOMER_DELIVERY_RECEIVED_RECORD');
+  return result;
+ }
+ async function listReceived(){
+  const packages=[];
+  for(const item of await readdir(receivesRoot,{withFileTypes:true})){
+   if(!hash(item.name)||!item.isDirectory()||item.isSymbolicLink())continue;
+   const sha256=item.name,base=join(receivesRoot,sha256);
+   try{
+    const result=await parsed(join(base,'result.json'));
+    if(!result){packages.push({sha256,state:'INCOMPLETE'});continue;}
+    receivedReceipt(result,sha256);
+    packages.push({sha256,state:'COMPLETE',title:result.manifest.title,collectionId:result.manifest.collection.id,capturedAt:result.manifest.capture.capturedAt,manifestSha256:result.manifestSha256,bytes:result.bytes,files:result.files,contentBytes:result.contentBytes,outputsComplete:result.outputsComplete,requestCount:result.manifest.rows.length});
+   }catch(error){packages.push({sha256,state:'UNAVAILABLE',code:/^[A-Z0-9_]+$/.test(error.code??'')?error.code:'CUSTOMER_DELIVERY_RECEIVED_RECORD'});}
+  }
+  packages.sort((a,b)=>String(b.capturedAt??'').localeCompare(String(a.capturedAt??''))||a.sha256.localeCompare(b.sha256));
+  // This discovers saved receipts; opening a selected package rechecks all bytes.
+  return{schema:SCHEMA+'.received-list',packages};
+ }
+ async function received(sha256){
+  need(hash(sha256),'CUSTOMER_DELIVERY_EXPECTED_SHA_REQUIRED');const base=join(receivesRoot,sha256);
+  const result=await parsed(join(base,'result.json'));need(result,'CUSTOMER_DELIVERY_RECEIVED_NOT_FOUND');receivedReceipt(result,sha256);
+  await measure(join(base,'customer-delivery.ndjson'),result,MAX_PACKAGE);
+  for(const row of result.manifest.files)await measure(join(base,'members',row.path),row);
+  return result;
+ }
+ async function receivedPackage(sha256){
+  const result=await received(sha256);
+  return{path:join(receivesRoot,sha256,'customer-delivery.ndjson'),filename:'received-'+sha256+'.ndjson',mediaType:'application/x-ndjson',bytes:result.bytes,sha256:result.sha256};
+ }
  async function member(sha256,path){const result=await received(sha256);const row=result.manifest.files.find(row=>row.path===path);need(row,'CUSTOMER_DELIVERY_MEMBER_NOT_FOUND');return{...row,name:path.split('/').at(-1),path:join(receivesRoot,sha256,'members',path),mediaType:path==='review.html'?'text/html; charset=utf-8':path==='review.json'?'application/json':'application/octet-stream'};}
- return{directory,preview,prepare,inspect,list,download,receive,received,member,async close(){closed=true;await Promise.allSettled([...active]);}};
+ return{directory,preview,prepare,inspect,list,download,receive,listReceived,received,receivedPackage,member,async close(){closed=true;await Promise.allSettled([...active]);}};
 }

@@ -113,7 +113,13 @@ export async function receiveCustomerDelivery({directory,collections,sourceRoot,
    await page.locator('#package-file').setInputFiles(join(files,'customer-delivery.ndjson'));await page.locator('#package-sha').fill(state.original.package.sha256);
    await page.locator('#receive-form button').click();await page.waitForFunction(()=>!window.customerDelivery.inspect().pending&&!window.customerDelivery.inspect().busy&&document.querySelector('#received-view h3'));
    state.received=await receivingDesk.received(state.original.package.sha256);need(state.received.outputsComplete&&identity(state.received.manifest)===identity(state.original.manifest),'CUSTOMER_DELIVERY_RECEIVED_IDENTITY');state.steps.received=true;await save();
-  }else{await page.locator('#received-sha').fill(state.original.package.sha256);await page.locator('#open-received button').click();await page.locator('#received-view h3').waitFor();}
+  }else{await page.locator('[data-received-open="'+state.original.package.sha256+'"]').click();await page.locator('#received-view h3').waitFor();}
+  const history=await receivingDesk.listReceived();
+  need(history.packages.some(row=>row.sha256===state.original.package.sha256&&row.state==='COMPLETE'&&row.manifestSha256===state.original.package.manifestSha256),'CUSTOMER_DELIVERY_RECEIVED_HISTORY');
+  // The same browser restores its verified selection without re-entering a hash.
+  await page.reload();await page.locator('#token').fill(recipient.token);await page.locator('#login-form button').click();
+  await page.waitForFunction(sha=>!window.customerDelivery.inspect().busy&&window.customerDelivery.inspect().selectedReceivedSha256===sha&&document.querySelector('#received-view')?.dataset.sha256===sha&&document.querySelector('#received-view h3'),state.original.package.sha256);
+  state.steps.selectedReceiptReloaded=true;await save();
   await screenshot(page,'recipient-desktop.png');await page.setViewportSize({width:390,height:900});await screenshot(page,'recipient-mobile.png');
   const first=state.received.manifest.rows.find(row=>row.output.state==='VERIFIED');need(first,'CUSTOMER_DELIVERY_OUTPUT_REQUIRED');
   if(!state.steps.responseDownloaded){
@@ -124,6 +130,22 @@ export async function receiveCustomerDelivery({directory,collections,sourceRoot,
   await closeBrowser();await recipient.close();recipient=null;await receivingDesk.close();receivingDesk=null;
   receivingDesk=await openCustomerDelivery({directory:join(receiveRoot,'customer-delivery')});
   const reopened=await receivingDesk.received(state.original.package.sha256);need(identity(reopened)===identity(state.received),'CUSTOMER_DELIVERY_COLD_REOPEN');
+  // A fresh server and fresh browser have no IndexedDB selection. Discover the
+  // original receipt from the workspace history, then verify/download its bytes.
+  recipient=await serveCollections(null,{receivingDirectory:receiveRoot,port:state.recipientPort,approvalMode:'TERMINAL'});
+  page=await browserOpen(recipient.origin,recipient.token);
+  need(await page.evaluate(()=>window.customerDelivery.inspect().selectedReceivedSha256===null),'CUSTOMER_DELIVERY_FRESH_BROWSER_SELECTION');
+  await page.locator('[data-received-open="'+state.original.package.sha256+'"]').click();
+  await page.waitForFunction(sha=>!window.customerDelivery.inspect().busy&&window.customerDelivery.inspect().selectedReceivedSha256===sha&&document.querySelector('#received-view')?.dataset.sha256===sha,state.original.package.sha256);
+  const originalPackage=await receivingDesk.receivedPackage(state.original.package.sha256);
+  need(originalPackage.bytes===state.original.package.bytes&&originalPackage.sha256===state.original.package.sha256,'CUSTOMER_DELIVERY_RECEIVED_PACKAGE_IDENTITY');
+  if(!state.steps.receivedPackageDownloaded){
+   const target=join(files,'received-original-package.ndjson');
+   try{await inspectPackage(target,{expected:state.original.package});}
+   catch(cause){if(cause.code!=='ENOENT')throw cause;const event=page.waitForEvent('download');await page.locator('[data-received-download="'+state.original.package.sha256+'"]').click();const download=await event;need(await download.failure()===null,'CUSTOMER_DELIVERY_RECEIVED_PACKAGE_DOWNLOAD');await copyFile(await download.path(),target,state.original.package,{maximum:MAX_PACKAGE});}
+   state.files.push({name:'received-original-package.ndjson',kind:'package',bytes:state.original.package.bytes,sha256:state.original.package.sha256});state.steps.receivedPackageDownloaded=true;await save();
+  }
+  await screenshot(page,'recipient-history-cold-reopen.png');state.steps.recipientHistoryColdReopened=true;await save();
   const repeated=await receivingDesk.receive({file:join(files,'customer-delivery.ndjson'),expectedSha256:state.original.package.sha256});const {directory:ignored,...exact}=repeated;need(identity(exact)===identity(state.received),'CUSTOMER_DELIVERY_SAME_RECEIVE');
   const replay=await desk.prepare({...state.request,expectedPreviewSha256:state.preview.previewSha256});need(identity(replay)===identity(state.original),'CUSTOMER_DELIVERY_ORIGINAL_REQUEST_REPLAY');
   need(state.pageErrors.length===0,'CUSTOMER_DELIVERY_BROWSER_ERRORS');
