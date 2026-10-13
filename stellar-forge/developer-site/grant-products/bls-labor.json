@@ -21,6 +21,12 @@
           "bytes": 18376,
           "sha256": "637769cc226f3b9969816ff47287f98577c5550f579d4fe9f73190caeccbce8c",
           "git_blob": "57dda3845fb8135b588825c569cc22ed39e4082a"
+        },
+        {
+          "commit": "aee0d55e1c9964475fb1cf3b9db3a56e88109d8b",
+          "bytes": 26196,
+          "sha256": "df66ae6a3ce2c91dee3e56718636325420a26b48237c1bbeb2f52fc4cefb8969",
+          "git_blob": "1f09874330114184a6b17b287651407741b92624"
         }
       ]
     },
@@ -116,6 +122,102 @@
           "bytes": 12274,
           "sha256": "188b64fd57cfdeb8215c98a318fd87c841430bd5beb0a908dbc8e8a43a8d621c",
           "git_blob": "25dcf6ca09d9fd88ba0d72c4d4e6785b320794d5"
+        }
+      ]
+    },
+    {
+      "id": "bls-analyst-agent-setup",
+      "label": "Complete original BLS analyst customer-agent commissioning and receiving",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/MERCHANT_SETUP.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "aee0d55e1c9964475fb1cf3b9db3a56e88109d8b",
+          "bytes": 5525,
+          "sha256": "5cc75651ea48d4940f4b6852250cc65783431ccdce1e1a3a181b08fe3c84694b",
+          "git_blob": "087369d6626a52eb70ab8a171d545dff09b0458d"
+        }
+      ]
+    },
+    {
+      "id": "bls-analyst-agent-catalogue",
+      "label": "Complete original BLS analyst customer tool catalogue",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/catalog.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "aee0d55e1c9964475fb1cf3b9db3a56e88109d8b",
+          "bytes": 4309,
+          "sha256": "4c49144886cc01284cfd2b584764dbaa212dd039784e2b909d30ae5f46005968",
+          "git_blob": "9f2fd487242075af552cb02db2cd0382a62d7703"
+        }
+      ]
+    },
+    {
+      "id": "bls-analyst-agent-client",
+      "label": "Durable original analyst request, attachment and complete-file client",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/agent-client.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "aee0d55e1c9964475fb1cf3b9db3a56e88109d8b",
+          "bytes": 20124,
+          "sha256": "3d2cb2b262c2827d190ffc23ecfd28b89f95235f594b7aeb33b4f3927e778ba5",
+          "git_blob": "a440cd3e03906c2d228971be50b491b62b7ad396"
+        }
+      ]
+    },
+    {
+      "id": "bls-analyst-agent-runtime",
+      "label": "Source-owned BLS analyst Merchant runtime and retained customer files",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/merchant.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "aee0d55e1c9964475fb1cf3b9db3a56e88109d8b",
+          "bytes": 17295,
+          "sha256": "c8efff1d4d6445f361837a9aaf77ec3686d7dfa61547c390d8fb722288c62a2f",
+          "git_blob": "d47a17fcc7c9c68c4ec6e1658fe3fb10c99d3b15"
+        }
+      ]
+    },
+    {
+      "id": "bls-analyst-installed-contribution",
+      "label": "Installed BLS analyst Applications, typed-client and customer-agent product selection",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/bls-labor.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "aee0d55e1c9964475fb1cf3b9db3a56e88109d8b",
+          "bytes": 2741,
+          "sha256": "b089e8a39631696abe75bc846853b8850ea5943065c5b456a2dd231f328061bf",
+          "git_blob": "fecf59c1b8388b9dd97d7e0732565a24de6e16d6"
+        }
+      ]
+    },
+    {
+      "id": "bls-regional-agent-commissioning-guide",
+      "label": "Regional labor customer commissioning, recurring service and complete agent handover",
+      "path": "products/bls-labor/GRANT.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "81de07473f9596312ee47c1ff81e2f8dbb1371c8",
+          "bytes": 18657,
+          "sha256": "d19813f61f32099e1608e50f6bc334d53aaca3f2bb620009aa48c8f2c4019e21",
+          "git_blob": "df6ef9a8220d94fadd5e1e9ee6cfc2214df26c9d"
         }
       ]
     }

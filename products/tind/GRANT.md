@@ -66,6 +66,57 @@ The original MSU driver receives either `--edition-mode staff-cases` for the 11-
 
 For a commissioning task that also needs cross-source identity review, select the maintained [record-mastering contribution](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/f8f27083267ca88af81bc7fe0b8a9414cc8b0e8f/stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/README.md) alongside the repository product. Import the agreed flat CSV fields with stable original record keys, review suggested matches, explicitly merge or split records, and choose original or custom field values. Its immutable CSV, schema and field-provenance edition can feed the original dataset merchant; its complete private project reopens independently for later review. Keep this reviewed derivative linked to the original OAI edition and retain ordered MARC fields, article/issue distinctions and access decisions in the repository workspace.
 
+## Customer agents operate the original installation
+
+The selected product registers the source-owned `tind-workspaces` provider in the existing Merchant host. Its [typed customer client](../../stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/client.mjs), [Merchant runtime](../../stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/merchant.mjs) and [complete setup guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/MERCHANT_SETUP.md) operate the original Python application and its saved SQLite project. The selected contribution includes these modules and their type declarations. Existing staff records, source editions, access decisions, production waves and destination jobs remain the working record for both browser and agent use.
+
+### Commission and connect the existing customer workspace
+
+The customer selects the original workspace and names its repository authority and receiving engineer. Configure private aliases for that directory, actual received source files and original file roots. The setup options select the existing host directory, connection file, optional display name and optional original release store. Initialization preserves the complete existing host configuration and its other installed providers.
+
+In managed mode, open the same workspace through Applications, then attach the agent to its authenticated live instance. Closing the attachment leaves that application running. In owned mode, the configured runtime starts the original TIND command and owns only that process. The original workspace lease prevents two independent application owners. Paths, permitted authorization environment names and the Python executable belong to the private connection; ordinary customer tool calls use configured aliases.
+
+Initialize the installed provider through the maintained host:
+
+```sh
+starforge merchant-providers init tind-workspaces --options /private/tind-setup.json
+```
+
+Use its returned host configuration with the existing Merchant launcher. Keep credentials and the private connection with the selected operator. The operating guide provides the complete actual connection format, original launcher and direct client use.
+
+### Complete one useful customer task
+
+|Stage|Original operation and retained customer result|
+|---|---|
+|Open and select|List configured workspaces, attach to the actual instance, and read the original project ID, current revision, source edition and staff decisions. Continue paginated views to their actual end.|
+|Review and save|Preview the real staff-case or destination result, then save the complete original request with its stable operation ID and expected project revision. Receive source files through their configured aliases and retain the original byte identity.|
+|Continue production|Read the saved plan and exact wave membership, exclusions and exceptions. Prepare reviewed ready records, retain the frozen batch and continue its original transfer.|
+|Receive the actual destination|Bind the documented job contract, retain the original GET or imported response, preview its explicit record interpretation, receive the reviewed outcomes and reconcile the same batch against the current destination and file/access observations.|
+|Deliver the customer files|Prepare a frozen record, native batch, production register, original source document, destination-job history or complete editable handover. Receive all bytes and verify the returned length and SHA-256.|
+|Reopen and continue|Restore the complete project, bind its actual new listener, perform an agreed correction or later source change and return the updated files with the original source and receiving history.|
+
+The 13 tools are `merchant_tind_workspaces`, `merchant_tind_open`, `merchant_tind_view`, `merchant_tind_preview`, `merchant_tind_save`, `merchant_tind_native_start`, `merchant_tind_operation`, `merchant_tind_resume`, `merchant_tind_source_pause`, `merchant_tind_export`, `merchant_tind_file_read`, `merchant_tind_file_release` and `merchant_tind_close`. Their catalogue and typed client retain the original application's request shapes and project identities.
+
+Before a write, the client retains the complete immutable request and then its actual attempt and result. If the response is lost, inspect the same operation ID and kind before resuming it. A completed operation can return its saved receipt even after an input file moves; an unsatisfied source-file operation verifies its original configured alias and immutable source identity. New source work uses a new reviewed request. Native transfer acceptance does not establish destination completion, and an unknown destination write is not converted into another unrelated send.
+
+Ordinary work is serialized per workspace. Source pause and exact-instance close can reach active work. Pause retains the original acquisition checkpoint. An owned close drains accepted work and retained reads before releasing its process; a managed close detaches. A failed close can be retried against the same retained instance and descriptors. The original job and request remain available after reopening.
+
+### Receive every original byte and the editable working project
+
+A stable export ID freezes one original selection, including its project revision, file length and SHA-256. Reusing that export returns the retained file; a later edition uses another ID. The client streams complete downloads into the configured private customer-export directory outside the source workspace. The receiving caller reads bounded chunks until the returned next position is null and verifies the whole digest and length. After restart, it can reopen the same export and digest at its retained offset rather than generating a different file.
+
+For complete customer delivery, select a full handover with original files. The explicit metadata-only option remains separately available. The full archive carries the editable database, original documents, source history, decisions, waves, jobs, original response objects and saved agent requests with the receiving source. It excludes the current private live connection and incomplete transport stages. The receiving engineer uses the maintained original `receive` command, reopens the project and supplies a new private connection to that received workspace.
+
+The original MSU eleven-record staff collection, complete fifteen-record Endeavors edition and distinct CIIM169 case retain their separate source identities. The customer-agent workflow continues their existing installed operations; it does not replace their original receiving evidence. Publication and source verification establish the maintained capability. Record actual host execution, accepted destination results and customer acceptance in the original commissioning case.
+
+## Destination-job evidence in the production handover
+
+The [destination-job receiver](../../stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/native_jobs.py) extends the original frozen-batch workflow. Select the institution's actual documented GET contract and bind it to the original submitted transfer. The receiver retains request, original response bytes, status, headers, time and operator. An authenticated browser or export can supply the same unchanged result with its real GET receipt. An interrupted observation resumes its retained request even if a later job contract has been edited.
+
+Review the observed job state and each reported record. Explicit results or a reviewed JSON mapping connect exact source identifiers to accepted, pending, failed or withdrawn outcomes; unknown statuses and records outside the transferred file need resolution. Unreported records remain visible. HTTP success alone does not receive them. Saving binds the response identity, current revision and reviewed interpretation before applying the existing native receipt engine.
+
+Continue that same batch through current destination-export and original file/access reconciliation. Retain unresolved work in its saved wave. The complete job-history ZIP carries bindings, original transfer, every observation and response body, and receiving reviews and receipts. These objects also travel in the whole editable handover. Operators preserve the actual native endpoint and authorization contract; the application does not infer vendor endpoints or undocumented status meanings.
+
 ## A recurring service with a useful purchased result
 
 The commissioning work establishes the institution's source, mapping and receiving workflow. Recurring service then supports real new work: a newly published journal edition, changed access or contributor metadata, a requested metadata query, or a comparison between agreed source periods.
@@ -110,6 +161,7 @@ Use the customer's stated hourly value only when supplied, and keep direct labor
 - [Original response intake and editable receiving release](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/633).
 - [Complete original GetRecord collection release](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/661).
 - [Original-document receiving release](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1059) and [actual MSU document operator input](https://github.com/woahwhattheheck/commons/pull/36946).
+- [Saved production-wave release](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1102), [destination-job receiving release](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1236) and [same-workspace customer-agent release](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1299).
 - [Complete MSU staff-collection input](https://github.com/woahwhattheheck/commons/pull/36287).
 - [TIND native record and export capabilities](https://info.tind.io/roadmap/24.0.0-ils) and [repository import, search/export and object storage](https://info.tind.io/roadmap/1.8-ir-da-rdm). Apply the selected institution's actual current API and configuration in the native operation.
 - The canonical application chapter, **Institutional repository services and complete scholarly receiving**, is received through the existing grant composer into the public product companion and source register. The nine-answer application links to that complete customer workflow.
