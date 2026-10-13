@@ -333,7 +333,7 @@ function adoptInput(next, reference = { id: null, revision: 0 }, edited = true) 
   showErrors([]); selectResource(0); renderSharedFields(); updateTitle(); activateStep(0, false);
 }
 async function refreshDrafts() {
-  const drafts = await listDrafts();
+  const drafts = (await listDrafts()).filter(record => record.resources > 0 && !record.id.startsWith('draft-library-journal:') && !record.id.startsWith('draft-library-working:'));
   $('draft-list').replaceChildren();
   if (!drafts.length) { $('draft-list').append(el('p', 'No saved drafts in this browser yet.', 'pane-intro')); return; }
   for (const draft of drafts) {
@@ -469,3 +469,18 @@ paymentEditor = createPaymentEditor({
   selectResource, onChange: () => { renderResourcePayment(); changed(); },
 });
 selectResource(0); renderSharedFields(); updateTitle();
+
+const requestedProject = new URL(location.href).searchParams.get('draft');
+if (requestedProject) {
+  const openedVersion = editVersion;
+  void (async () => {
+    try {
+      const record = await loadDraft(requestedProject);
+      if (!record) throw new Error('This saved project is absent. Return to Saved projects and refresh the library.');
+      if (editVersion !== openedVersion) throw new Error('The open workspace changed while loading. Reopen the saved project explicitly.');
+      if (!Array.isArray(record.input?.resources) || record.input.schema?.startsWith('stellar-forge.grant-')) throw new Error('Open this saved project in its original workflow from Saved projects.');
+      adoptInput(record.input, { id: record.id, revision: record.revision }, false);
+      setStatus('Opened '+record.name+', revision '+record.revision+'. Save retains the original project identity.');
+    } catch (error) { reportError(error); }
+  })();
+}
