@@ -501,7 +501,7 @@ export function createCentralReleaseOperations({workspace,store,formReleases,fet
    need(Number.isSafeInteger(index),'Choose an original HTTP attempt.',404);
    const attempt=s.attempts?.[index];need(attempt,'This original HTTP attempt is absent.',404);
    const original=await store.sourceFile(attempt.sha256);need(original.bytes===attempt.bytes,'The original HTTP attempt byte count changed.',409);
-   return {...original,name:'http-attempt-'+index+'-'+attempt.kind+'-'+attempt.status+'.bin',kind:'original-http-attempt',sourceId:s.id};
+   return {...original,name:'original-response-'+index+'.body',kind:'original-http-attempt',sourceId:s.id};
   }
   const {source:s,resource:r}=resource(input.sourceId,input.resourceKey);return {...await store.sourceFile(r.sha256),name:r.name,kind:r.kind,sourceId:s.id};
  }
