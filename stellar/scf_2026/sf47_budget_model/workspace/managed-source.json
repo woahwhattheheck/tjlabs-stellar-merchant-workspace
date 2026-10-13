@@ -587,6 +587,12 @@
     "supplier_statement_engine/guards.mjs",
     "supplier_statement_engine/json.mjs",
     "supplier_statement_engine/clock.mjs",
-    "supplier_statement_engine/ORIGINAL.json"
+    "supplier_statement_engine/ORIGINAL.json",
+    "operations_expense_billing.py",
+    "operations_expense_billing.mjs",
+    "operations_expense_billing.css",
+    "operations_expense_billing_http.py",
+    "operations_expense_billing_cli.py",
+    "EXPENSE_BILLING.md"
   ]
 }

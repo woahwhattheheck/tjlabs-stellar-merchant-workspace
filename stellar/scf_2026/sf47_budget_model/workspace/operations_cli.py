@@ -11,6 +11,7 @@ import tempfile
 from model import Problem, MAX_BUNDLE, canonical
 from operations import Operations, MAX_SOURCE
 import operations_commercial_cli as commercial_cli
+import operations_expense_billing_cli as expense_billing_cli
 import operations_installation_returns_cli as installation_returns_cli
 import operations_company_returns_cli as company_returns_cli
 import operations_ledger_intake as ledger_intake
@@ -559,6 +560,7 @@ def register(subparsers, common):
 
     award_terms_cli.register(command, mutation)
     commercial_cli.register(command)
+    expense_billing_cli.register(command)
     installation_returns_cli.register(command, mutation)
     company_returns_cli.register(command, mutation)
 
@@ -761,6 +763,8 @@ def operate(workspace, args):
         return company_returns_cli.operate(ops, args, read_bytes, publish)
     if action == "installation-returns" or action.startswith("installation-return-"):
         return installation_returns_cli.operate(ops, args, read_bytes, publish)
+    if action.startswith("expense-billing-"):
+        return expense_billing_cli.operate(ops, args, read_bytes, publish)
     if action.startswith("commercial-"):
         return commercial_cli.operate(ops, args, read_bytes, publish)
     if action == "list":

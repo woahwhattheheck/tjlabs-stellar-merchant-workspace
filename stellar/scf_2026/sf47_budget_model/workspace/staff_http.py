@@ -246,7 +246,7 @@ def authorize(handler):
                 bind_actor(handler, body)
             return
         if role == "lead" or role == "finance" and (
-                action in ("ledger-intake-apply", "cash-correction", "account-reconciliation", "workbook-apply") or action.startswith("commercial/")):
+                action in ("ledger-intake-apply", "cash-correction", "account-reconciliation", "workbook-apply") or action.startswith(("commercial/", "expense-billing/"))):
             # Commercial preview bodies use the original actor where supplied.
             if "actor" in body or action in ("ledger-intake-apply", "cash-correction", "account-reconciliation", "workbook-apply"):
                 bind_actor(handler, body)

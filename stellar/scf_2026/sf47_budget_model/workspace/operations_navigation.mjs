@@ -32,6 +32,7 @@ const sectionDetails = {
   'supplier-statements':['people','Reconcile original supplier statements with invoices, payments and refunds.','supplier statement accounts payable reconciliation'],
   'work-intake':['people','Receive complete original timesheet and supplier invoice files with reviewed mappings.','timesheet invoice csv tsv import intake'],
   'ledger-intake':['people','Inspect and receive complete source tables through the original ledger writers.','bulk ledger csv tsv json import source'],
+  'expense-billing':['cash','Review customer recovery of original buyer expense portions, customer terms, native invoices and corrections.','expense recovery recharge reimbursement customer billing credit replacement'],
   expenses:['cash','Attribute original issued buyer expenses and credits to retained work packages with their accountant sources.','buyer expense credit accountant issued allocation valuation cost'],
   settlements:['cash','Open the original merchant settlement receiving desk.','merchant settlement receipt cash payment'],
   'award-terms':['cash','Open the retained issuer terms and their original operating context.','issuer grant award terms tranche'],
