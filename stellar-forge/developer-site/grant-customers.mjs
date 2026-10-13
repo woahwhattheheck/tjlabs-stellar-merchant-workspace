@@ -385,6 +385,20 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-organisation-2026\/document-evidence-native-result\.json)/, iati);
   receive("iati-fcdo-document-connected-result", "FCDO document evidence original SDK, Merchant and browser result",
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-organisation-2026\/document-evidence-connected-result\.json)/, iati);
+  receive('iati-geography-workspace', 'IATI saved geography review and complete source contract',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/GEOGRAPHY\.md)/, iati);
+  receive('iati-geography-operator', 'IATI geographic review, browser and typed client',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/GEOGRAPHY_UI\.md)/, iati);
+  receive('iati-geography-native-receiving', 'Complete original geography native and customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/receiving\/geography\.py)/, iati);
+  receive('iati-geography-browser-receiving', 'Original geography browser and saved-request continuation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/receiving\/GEOGRAPHY_BROWSER\.md)/, iati);
+  receive('iati-aiddata-nigeria-attribution', 'Original AidData Nigeria research source and attribution',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/aiddata-nigeria-2016\/AIDDATA_NIGERIA\.md)/, iati);
+  receive('iati-aiddata-nigeria-metadata', 'Original AidData Nigeria documentary source identities',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/aiddata-nigeria-2016\/aiddata-nigeria\.json)/, iati);
+  receive('iati-aiddata-nigeria-xml', 'Complete original AidData Nigeria IATI publication',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/aiddata-nigeria-2016\/iati_2\.03_NigeriaAIMS_GeocodedResearchRelease\.xml)/, iati);
   const institutionalRepository = section(companion, INSTITUTIONAL_REPOSITORY)?.text || '';
   receive('tind-institutional-migration', 'Institutional repository migration and complete customer receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/tind\/OPERATING\.md)/, institutionalRepository);
