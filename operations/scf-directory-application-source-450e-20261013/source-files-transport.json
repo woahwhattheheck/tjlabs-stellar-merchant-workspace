@@ -1,0 +1,25 @@
+{
+  "schema": "commons.complete-source-compression.v1",
+  "encoding": "base64",
+  "compression": "gzip",
+  "file": "source-files.json.gz.b64",
+  "encoded": {
+    "bytes": 2765901,
+    "sha256": "ba1c452916c5a8e10d70ac40d1449eebebf29d0fae1291b1007b9db1b44ea94c",
+    "git_blob": "4db4315403b5c11c10dd15439aba94f242e116bd"
+  },
+  "compressedBytes": 2074424,
+  "decoded": {
+    "file": "source-files.json",
+    "bytes": 8289431,
+    "sha256": "e4b0ffbae0cd9b6e57e26e20a340391f0ce4a204fd2bd014d713ef563f0dbe28",
+    "git_blob": "0e002a8517f78c4c785f03cfdf74a1b33e9833b0"
+  },
+  "sourceFiles": 271,
+  "library": {
+    "name": "fflate",
+    "sourceBytes": 32665,
+    "sha256": "c3b34f2e9f5e74d4d7d64e01cac7a0c01954c6c406414d42185c7b53d6875ddf"
+  },
+  "verification": "Complete gzip roundtrip compared every decoded byte with the original complete 8,289,431-byte carrier; no file subset or abbreviated source."
+}
