@@ -252,7 +252,9 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_navigation.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_navigation_ui.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_navigation.css",
-    "stellar/scf_2026/sf47_budget_model/workspace/OPERATING_DESK.md"
+    "stellar/scf_2026/sf47_budget_model/workspace/OPERATING_DESK.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_workflows.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/SAVED_WORKFLOWS.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

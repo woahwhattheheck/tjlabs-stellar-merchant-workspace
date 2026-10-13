@@ -233,7 +233,28 @@ export function mountAwardTerms({container,current,api,saveApi=api,session={},mu
       if(action==='clear-rejected'){if(!desk.pending?.error?.rejected)throw new Error('Receive the original operation result before clearing it.');await retain(next=>{next.rejectedRequests.push(next.pending);next.pending=null;});termsPreview=null;planPreview=null;await refresh();render();return;}
     });
   });
-  const ready=(async()=>{desk=await loadDesk(caseId);if(desk&&(desk.schema!==SCHEMA||desk.planId!==planId))throw new Error('Open the original case for the retained local issuer draft.');if(!desk){desk={schema:SCHEMA,id:caseId,planId,sequence:0,updatedAt:new Date().toISOString(),tab:'messages',selection:session.selection||null,draft:null,parkedDrafts:[],planInputs:null,nativePlan:null,priorPlanInputs:null,messageInput:{filename:'',mediaType:'message/rfc822',contentBase64:'',observedAt:new Date().toISOString(),sourceUrl:''},messageNote:'',selectedPaths:['original'],messageSourceId:null,termsNote:'',commissionNote:'',reviewStatement:'',applyPlan:false,pending:null,receipts:[],rejectedRequests:[],jsonEdits:{}};await retain(()=>{});}if(session.selection&&session.selection.id!==desk.selection?.id)await retain(next=>{next.selection=clone(session.selection);next.tab='history';});session.desk=desk;await refresh();if(desk.selection)await openTerms(desk.selection.id,desk.selection.revision,false);if(desk.messageSourceId)messageDetail=await saveApi(base+'/issuer-correspondence/'+desk.messageSourceId);if(available())render();})();
+  async function openSavedWorkflow(selection){
+    await ready;
+    if(!available())throw new Error('Open this original issuer-terms desk before selecting a saved edition.');
+    if(busy||desk.pending)throw new Error('Finish the retained issuer request before opening another saved edition.');
+    if(selection?.kind!=='award-terms'||typeof selection.id!=='string'||!Number.isSafeInteger(selection.revision)||selection.revision<1)
+      throw new Error('Select an original issuer-terms identity and revision.');
+    if(selection.caseId!==undefined&&selection.caseId!==caseId||selection.expectedVersion!==undefined&&selection.expectedVersion!==caseNow.program.version)
+      throw new Error('Refresh the original case before opening this saved issuer edition.');
+    busy=true;error='';controls();
+    try{
+      await serial;
+      const token=++opening,result=await saveApi(base+'/award-terms/'+encodeURIComponent(selection.id)+'?revision='+selection.revision);
+      if(!available()||token!==opening)throw new Error('The original issuer desk changed while its edition was opening.');
+      if(result?.edition?.id!==selection.id||result.edition.revision!==selection.revision)
+        throw new Error('The returned issuer edition differs from the selected original revision.');
+      await retain(next=>{next.selection={id:selection.id,revision:selection.revision};next.tab='history';});
+      detail=result;render();
+      return {outcome:'opened',caseId,kind:'award-terms',id:selection.id,revision:selection.revision};
+    }catch(problem){showError(problem);throw problem;}
+    finally{busy=false;if(available())controls();}
+  }
+  const ready=(async()=>{desk=await loadDesk(caseId);if(desk&&(desk.schema!==SCHEMA||desk.planId!==planId))throw new Error('Open the original case for the retained local issuer draft.');if(!desk){desk={schema:SCHEMA,id:caseId,planId,sequence:0,updatedAt:new Date().toISOString(),tab:'messages',selection:session.selection||null,draft:null,parkedDrafts:[],planInputs:null,nativePlan:null,priorPlanInputs:null,messageInput:{filename:'',mediaType:'message/rfc822',contentBase64:'',observedAt:new Date().toISOString(),sourceUrl:''},messageNote:'',selectedPaths:['original'],messageSourceId:null,termsNote:'',commissionNote:'',reviewStatement:'',applyPlan:false,pending:null,receipts:[],rejectedRequests:[],jsonEdits:{}};await retain(()=>{});}if(session.selection&&(session.selection.id!==desk.selection?.id||session.selection.revision!==desk.selection?.revision))await retain(next=>{next.selection=clone(session.selection);next.tab='history';});session.desk=desk;await refresh();if(desk.selection)await openTerms(desk.selection.id,desk.selection.revision,false);if(desk.messageSourceId)messageDetail=await saveApi(base+'/issuer-correspondence/'+desk.messageSourceId);if(available())render();})();
   render();
-  return {ready,dispose(){active=false;opening++;},setHostBusy(value){hostBusy=Boolean(value);controls();}};
+  return {ready,openSavedWorkflow,dispose(){active=false;opening++;},setHostBusy(value){hostBusy=Boolean(value);controls();}};
 }

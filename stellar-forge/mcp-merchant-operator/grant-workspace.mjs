@@ -595,7 +595,7 @@ export class MerchantGrantWorkspaces {
     if (verb === 'close') return client.detach(args.expectedInstanceId);
     const rest = Object.fromEntries(Object.entries(args).filter(([key]) => key !== 'workspace'));
     const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', plan_comparison:'plan-comparison', cases:'cases', case:'case',
-      case_report:'case-report', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
+      case_report:'case-report', operating_workflows:'operating-workflows', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       settlements:'settlements',settlement:'settlement',
       engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar', delivery_agenda:'delivery-agenda',

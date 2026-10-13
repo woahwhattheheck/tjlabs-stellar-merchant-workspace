@@ -379,6 +379,8 @@ export const grantWorkspaceTools = [
     {...ws, planId:id('plan')}, ['workspace'], true),
   tool('case', 'Read the entire original operating case, pinned plan, eight record collections, source metadata, reviews, forecasts and portfolios.',
     {...ws, caseId:id('operation')}, ['workspace','caseId'], true),
+  tool('operating_workflows', 'Read the complete six-family saved operating workflow index at one original case version: statement originals, account reconciliation editions, funding editions, award terms, cohort delivery and grant procedures. Each entry retains its original summary and exact selection. The complete response uses the existing retained snapshot and paging tools.',
+    {...ws, caseId:id('operation'), expectedVersion:integer}, ['workspace','caseId','expectedVersion'], true),
   tool('case_report', 'Read original delivery, invoice allocation, native asset and grant receipt reporting without reinterpretation.',
     {...ws, caseId:id('operation')}, ['workspace','caseId'], true),
   tool('amendments', 'Read the original selected case baseline, complete saved plan revision choices and immutable amendment summaries.',

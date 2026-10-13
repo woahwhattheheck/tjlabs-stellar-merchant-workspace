@@ -162,7 +162,49 @@ function reviewSection(row) {
   return 'reviews';
 }
 
-export function buildCaseIndex(current,sections) {
+
+export const WORKFLOW_INDEX_SCHEMA = 'stellar-forge.sf47-operating-workflows.v1';
+const workflowCollections = {
+  statements:{section:'statements',kind:'statement-original',fields:['kind','sourceId']},
+  reconciliations:{section:'account-reconciliation',kind:'account-reconciliation',fields:['kind','reconciliationId','revision']},
+  funding:{section:'funding',kind:'cost-funding',fields:['kind','revision']},
+  awardTerms:{section:'award-terms',kind:'award-terms',fields:['kind','id','revision']},
+  cohortDelivery:{section:'cohort-delivery',kind:'cohort-delivery',fields:['kind','sourceId']},
+  procedures:{section:'procedures',kind:'grant-procedure',fields:['kind','sourceId']},
+};
+
+export function validateOperatingWorkflows(value,current) {
+  const fail=()=>{throw new TypeError('Reload the complete saved-workflow index for this original case and version.');};
+  if(!plain(value)||value.schema!==WORKFLOW_INDEX_SCHEMA||!plain(value.case)||
+     value.case.id!==current.program.id||value.case.version!==current.program.version||
+     !Array.isArray(value.populations)||!Array.isArray(value.entries))fail();
+  const populations=new Map(),keys=new Set(),counts=new Map();
+  for(const row of value.populations) {
+    const definition=plain(row)&&Object.prototype.hasOwnProperty.call(workflowCollections,row.key)?workflowCollections[row.key]:null;
+    if(!definition||row.section!==definition.section||typeof row.label!=='string'||
+       !Number.isSafeInteger(row.count)||row.count<0||populations.has(row.key))fail();
+    populations.set(row.key,row);counts.set(row.key,0);
+  }
+  for(const row of value.entries) {
+    const definition=plain(row)&&Object.prototype.hasOwnProperty.call(workflowCollections,row.collection)?workflowCollections[row.collection]:null;
+    if(!definition||!populations.has(row.collection)||row.section!==definition.section||
+       typeof row.key!=='string'||!row.key||keys.has(row.key)||
+       typeof row.id!=='string'||!row.id||typeof row.label!=='string'||typeof row.kindLabel!=='string'||
+       !(row.revision===null||Number.isSafeInteger(row.revision)&&row.revision>0)||
+       !plain(row.summary)||!plain(row.selection)||row.selection.kind!==definition.kind||
+       Object.keys(row.selection).length!==definition.fields.length||
+       definition.fields.some(key=>!Object.prototype.hasOwnProperty.call(row.selection,key)))fail();
+    const selection=row.selection;
+    if('revision'in selection&&(!Number.isSafeInteger(selection.revision)||selection.revision<=0||selection.revision!==row.revision))fail();
+    for(const key of ['sourceId','reconciliationId','id'])if(key in selection&&
+      (typeof selection[key]!=='string'||!selection[key]||selection[key]!==row.id))fail();
+    keys.add(row.key);counts.set(row.collection,counts.get(row.collection)+1);
+  }
+  for(const [key,row]of populations)if(row.count!==counts.get(key))fail();
+  return value;
+}
+
+export function buildCaseIndex(current,sections,workflows=null) {
   if(!plain(current)||!plain(current.program)||typeof current.program.id!=='string')
     throw new TypeError('Open the complete original Operations case before searching.');
   const sectionMap=new Map(sections.map(section=>[section.id,section]));
@@ -206,10 +248,21 @@ export function buildCaseIndex(current,sections) {
         label:first(row,definition.title),subtitle:subtitle(row,['state','status','revision','version','createdAt','updatedAt']),data:row});
     }
   }
+  const workflowPopulations=[];
+  if(workflows!==null) {
+    validateOperatingWorkflows(workflows,current);
+    for(const row of workflows.entries) {
+      add({key:'workflow:'+row.key,id:row.id,type:'saved',collection:row.collection,
+        kindLabel:row.kindLabel,section:row.section,label:row.label,
+        subtitle:subtitle(row.summary,['state','status','stage','revision','version','savedAt','createdAt','recordedAt','observedAt']),
+        data:row.summary,workflowSelection:row.selection,workflowRevision:row.revision});
+    }
+    workflowPopulations.push(...workflows.populations.filter(row=>sectionMap.has(row.section)));
+  }
   const counts=entries.reduce((result,entry)=>(result[entry.type]=(result[entry.type]||0)+1,result),{section:0,record:0,source:0,saved:0});
   return {schema:NAVIGATION_SCHEMA,caseId:current.program.id,version:current.program.version,caseName:current.program.name,
-    entries,byKey,byId,counts,
-    coverage:'Available sections, their native case records, retained source metadata and saved installation, intake, forecast, portfolio, amendment and review summaries. Attached file contents are available through their original downloads.'};
+    entries,byKey,byId,counts,workflowPopulations,
+    coverage:'Available sections, their native case records, retained source metadata and saved installation, intake, forecast, portfolio, amendment and review summaries. Attached file contents are available through their original downloads.' + (workflows!==null?' Additional complete saved populations: '+(workflowPopulations.map(row=>row.label+' ('+row.count+')').join(', ')||'none available to this profile')+'.':'')};
 }
 
 export function searchCaseIndex(index,{query='',kind='all',section='',page=0,pageSize=25}={}) {
