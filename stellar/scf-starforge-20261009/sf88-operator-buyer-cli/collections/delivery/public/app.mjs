@@ -1,6 +1,6 @@
 // MIT. Original workspace token remains in memory; pending bodies remain exact.
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const state={token:'',scope:null,storageReady:false,storageError:null,record:null,pending:null,last:null,busy:false,preview:null,request:null,collection:null,canPrepare:false,tab:'prepare'};
+const state={token:'',scope:null,storageReady:false,storageError:null,record:null,pending:null,last:null,busy:false,preview:null,request:null,collection:null,canPrepare:false,uploadBatchChunks:1,tab:'prepare'};
 let dbPromise=null,generation=0;
 const message=t=>{$('#status').textContent=t;};
 function db(){if(!dbPromise)dbPromise=new Promise((resolve,reject)=>{const request=indexedDB.open('sf88-customer-delivery',1);request.onupgradeneeded=()=>request.result.createObjectStore('states');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);}).catch(error=>{dbPromise=null;throw error;});return dbPromise;}
@@ -66,7 +66,7 @@ async function selectCollection(){
 async function login(){
  state.token=$('#token').value.trim();if(!state.token)throw new Error('Enter the workspace token.');
  state.storageReady=false;state.scope=null;state.record=null;state.pending=null;state.preview=null;controls();
- const status=await request('/api/customer-delivery/status');state.scope=location.origin+'|'+status.scope;state.canPrepare=status.canPrepare;
+ const status=await request('/api/customer-delivery/status');state.scope=location.origin+'|'+status.scope;state.canPrepare=status.canPrepare;state.uploadBatchChunks=Number.isSafeInteger(status.uploadBatchChunks)&&status.uploadBatchChunks>0?Math.min(16,status.uploadBatchChunks):1;
  await readState();$('#login-panel').hidden=true;$('#workspace').hidden=false;
  $('#collections-link').href='/#'+encodeURIComponent(state.token);
  if(state.canPrepare){const listed=await request('/api/collections');$('#collection').replaceChildren();for(const row of listed.collections){const option=new Option(row.name+' · '+row.id,row.id);$('#collection').append(option);}await selectCollection();}else tab('receive');
@@ -99,15 +99,20 @@ async function continuePending(){
  const pending=state.pending;let result;
  if(pending.kind==='prepare')result=await request(pending.path,{method:'POST',body:pending.body});
  else{
-  const body=pending.body;let upload=await request('/api/customer-delivery/uploads',{method:'POST',body});
+  const body=pending.body;let upload=await request('/api/customer-delivery/uploads?progress=compact',{method:'POST',body});
   const file=$('#resume-file').files[0]??$('#package-file').files[0];
   if(upload.offset<body.bytes){if(!file||file.name!==body.filename||file.size!==body.bytes)throw new Error('Reselect the original file with the retained name and byte count. Its complete SHA-256 will be verified.');}
   while(upload.offset<body.bytes){
-   const offset=upload.offset,part=await file.slice(offset,Math.min(body.bytes,offset+65536)).arrayBuffer();
-   upload=await request('/api/customer-delivery/uploads/'+body.sha256+'/chunk',{method:'POST',body:{offset,base64:base64(part),sha256:await sha(part)}});
+   const begin=upload.offset,chunks=[];let offset=begin;
+   while(chunks.length<state.uploadBatchChunks&&offset<body.bytes){
+    const part=await file.slice(offset,Math.min(body.bytes,offset+65536)).arrayBuffer();
+    chunks.push({offset,base64:base64(part),sha256:await sha(part)});offset+=part.byteLength;
+   }
+   upload=await request('/api/customer-delivery/uploads/'+body.sha256+'/'+(state.uploadBatchChunks>1?'chunks':'chunk')+'?progress=compact',{method:'POST',body:state.uploadBatchChunks>1?{chunks}:chunks[0]});
+   if(!Number.isSafeInteger(upload.offset)||upload.offset<offset||upload.offset>body.bytes)throw new Error('The retained upload progress differs from the selected package.');
    message('Retained '+upload.offset+' of '+body.bytes+' package bytes.');
   }
-  await request('/api/customer-delivery/uploads/'+body.sha256+'/finish',{method:'POST',body:{}});
+  // The original receive action finishes and verifies this same upload once.
   result=await request('/api/customer-delivery/uploads/'+body.sha256+'/receive',{method:'POST',body:{}});
  }
  await save({pending:null,last:{kind:pending.kind,result}});
