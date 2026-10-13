@@ -451,3 +451,8 @@ Required content now records the named reviewer and complete selected answer/iss
 ## Continue the same application offline
 
 Choose **Download offline editor** to retain one editable HTML with the complete current draft and original editor modules. It keeps all nine views, source files, field limits, planning, histories and handover. Open it directly in a supported browser, download an updated offline edition or the original full draft, and return that JSON through **Open draft file**. Source controls in the file receive an actual source-package file. The complete desktop/phone, native export and return workflow is in [GRANT_OFFLINE.md](./GRANT_OFFLINE.md).
+
+
+## Prepare and return issuer-form worksheets
+
+The original Form fields view includes **Issuer-form workbook**. Export the actual prompts, complete wording, answer mappings, recorded limits and source dates with a retained baseline; edit CSV or TSV; compare the returned values with the current draft; and apply explicit choices through the original form-map history. Current-only work remains available. The same panel is included in complete offline editors, and `grant-export --form-workbook` provides native preparation and reviewed return. Follow [GRANT_FORM_WORKBOOK.md](./GRANT_FORM_WORKBOOK.md) for the full spreadsheet, conflict, native and return workflow.

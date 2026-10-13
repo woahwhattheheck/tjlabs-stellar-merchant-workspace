@@ -32,7 +32,8 @@
     "./grant/saved-projects": "./source/stellar-forge/developer-site/dist/saved-project-library.mjs",
     "./grant/saved-projects/composition": "./source/stellar-forge/developer-site/saved-projects.mjs",
     "./grant/offline-editor": "./source/stellar-forge/developer-site/grant-offline.mjs",
-    "./grant/offline-editor/package": "./source/stellar-forge/developer-site/dist/grant-offline-package.mjs"
+    "./grant/offline-editor/package": "./source/stellar-forge/developer-site/dist/grant-offline-package.mjs",
+    "./grant/form-workbook": "./source/stellar-forge/developer-site/dist/grant-form-workbook.mjs"
   },
   "commands": {
     "grant-application": "stellar-forge/developer-site/grant.mjs",
@@ -72,6 +73,7 @@
     "stellar-forge/developer-site/GRANT_CATALOG.md",
     "stellar-forge/developer-site/SAVED_PROJECTS.md",
     "stellar-forge/developer-site/dist/grant-data/financial-native-result.json",
-    "stellar-forge/developer-site/GRANT_OFFLINE.md"
+    "stellar-forge/developer-site/GRANT_OFFLINE.md",
+    "stellar-forge/developer-site/GRANT_FORM_WORKBOOK.md"
   ]
 }

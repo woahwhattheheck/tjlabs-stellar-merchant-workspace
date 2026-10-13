@@ -113,3 +113,8 @@ See [the submission guide](GRANT_SUBMISSION.md) for editing and form mapping, an
 ## Complete editable offline application
 
 Add **--offline-editor** to the existing export command to include **edit.html**. It contains the complete final native draft and the actual original Prepare submission runtime, with the existing answers, issuer fields and limits, planning, source editions, histories and handover. The original review.html, draft.json and field exports are retained. The complete export manifest includes the added HTML bytes and hash. Open edit.html in a supported browser, then download an updated complete HTML or native JSON after editing. [GRANT_OFFLINE.md](./GRANT_OFFLINE.md) covers browser export, phone opening, local source receiving and return through the authoritative draft importer.
+
+
+## Issuer-form workbook preparation and reviewed return
+
+Add `--form-workbook` to retain a complete comparison baseline, profile and field CSV sheets, and the complete original answer reference. Receive edited sheets with `--receive-form-workbook`, `--form-profile`, `--form-fields`, and `--form-review-only`; that first operation writes the current unchanged draft and full comparison. Apply selected choices using the displayed `--form-review-sha` and a `--form-decisions` file. The original form-map importer retains the preceding native version, and normal draft, prepared handover and offline output continue. [GRANT_FORM_WORKBOOK.md](./GRANT_FORM_WORKBOOK.md) covers the exact columns, CSV/TSV encoding, concurrent local work and complete command sequence.
