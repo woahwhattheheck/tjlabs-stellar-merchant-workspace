@@ -113,12 +113,32 @@ The native result remains pending rendered attachment review until the producing
 
 For the existing publisher's next selection, preserve all45 original identities and editions. Add the eight measured MCP identities and select the contribution's additional PR1956 edition. The original 1259→1304 source receiving below remains an actual historical observation; it is not re-labelled as an execution of this successor. Read back the current complete chapter/declaration pair and continue the original cumulative receiver with the exact new tuple.
 
+
+## Continue into the customer Installation and Source Desk
+
+The complete customer product is PR2014 at 679fb836376d77c6b78b154b8985f27b8dfa00e7. Read the full [customer Installation guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/679fb836376d77c6b78b154b8985f27b8dfa00e7/products/econdb/CUSTOMER_INSTALLATION.md) and the same in-application [Source Desk guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/679fb836376d77c6b78b154b8985f27b8dfa00e7/stellar/scf_2026/sf47_budget_model/workspace/ECONDB_SOURCE_DESK.md). They contain the exact installation, packing, catalogue, inspection, preparation, API, terminal and receiving inputs. Use the maintained complete source selection **econdb-customer**, which joins the original Econdb and Grant Operations applications. The existing Grant Operations selection also includes this customer desk.
+
+Continue the original Econdb receiving programme and its actual saved maritime project. Export the full original workspace, retain the exact archive identity, and select the saved project UUID, revision and input SHA-256. Inspection uses the original transfer/project validators. Select the original commercial Workshare and its fresh seed; retain original phases, acceptance checks and terms. The commissioning document and explicit bindings select source rights, merchant/buyer, receiving host, accountable operator and payment terms through that same case.
+
+Operate **Econdb customer handover** in the existing authenticated Installation Source Desk: import the whole archive; catalogue and inspect the chosen project; import/read the Workshare and commissioning; review the full binding template; add every required working file; prepare; open the full source and commercial outputs; Preview and Save using the original native controls. Recover any uncertain source request through its retained UUID before changing the request. An attachment change requires a fresh preparation/preview. The typed client and streamed Python source client use this same original case and service.
+
+Retain and deliver BOTH the full customer case archive and complete Econdb preparation. The latter includes its whole operator ZIP, transfer manifest, original inputs, all selected project members and source editions, workorder, complete commercial documents, source selection, attachments and recovery files. The direct receiving input selects the actual preparation SHA-256, original Operations workspace and case, independent receiving Operations and Econdb directories, separate result directory, actor and selected Python executable. Use either the actual saved Installation ID/revision or the original native Save request. The full guide defines each field and command.
+
+The maintained receiving course exports and independently imports the full case, receives the complete original maritime workspace, verifies the selected project, closes/reopens the received work and compares its following export. Its newly imported case/plan identifiers follow the original native import contract; preserve the old-to-new relation and complete source/Installation history. Continue the original 0C75/C5AE operation and return the actual current output paths and identities through that same thread.
+
+Complete actual producing-seat inspection after native receiving: open and operate the original customer desk and both received applications; personally view desktop and390px screens; inspect long source labels, case/project selections, unknown values, period results, preparation changes, native Preview/Save and pending recovery; open each complete report, CSV, JSON, source response, commercial document, ZIP member and editable workspace. Exercise the downloaded/reopened product and repair any observed clipping, overflow, missing content or broken control. The producing seat reviews returned screenshots and attachments itself.
+
+This author successor retains all53 earlier source IDs and54 measured editions, then adds28 optional complete source identities at the product merge. Older chapters can therefore reopen their original selections. The full current chapter supplies an immutable link for every added source; the unchanged grant source receiver selects all81 identities and82 measured editions remain in the registration. Receive the whole matched chapter/declaration into E496's current cumulative manuscript and source union; preserve every concurrent author and the original saved-v7/four-output course.
+
+The recorded distribution exercise executed the original maintained pure composer with complete current source inputs in V8; it selected the full customer source cohort and retained the original command bindings. Native archive, HTTP/browser, installed-package and recipient-format results enter through the existing receiving operation. Read the exact returned results and continue the full grant package with the current whole author pair.
+
+
 ## Join the existing canonical publisher
 
 The new authored files are:
 
 - stellar-forge/developer-site/GRANT_ECONDB_MARITIME.md — one complete registered H2, including its source appendix.
-- stellar-forge/developer-site/grant-products/econdb-maritime.json — one stable declaration with all 53 measured source identities and 54 immutable editions.
+- stellar-forge/developer-site/grant-products/econdb-maritime.json — one stable declaration with all 81 measured source identities and 82 immutable editions, retaining the original 53-source cohort.
 - stellar-forge/developer-site/GRANT_ECONDB_RECEIVING.md — this whole operating/publisher course.
 
 Receive the chapter once at its exact H2 in the complete current canonical manuscript. Keep all current answers, economic/finance/threat/customer chapters and other product registrations. Do not replace the canonical document with this single chapter. A later Econdb amendment replaces its own full H2 and preserves everything else.
@@ -132,10 +152,25 @@ The same publisher produces its original four complete outputs:
 | dist/grant.html | Existing complete application reader with its Econdb companion/source route |
 | dist/grant-data/application.md | Whole application with existing economic and adoption terms retained |
 | dist/grant-data/product-and-finance.md | This full H2 once, including all subsections and source links |
-| dist/grant-data/source-index.json | Preserve the original 45 identities; receive eight new identities and one additional selected contribution edition, retaining all prior editions |
+| dist/grant-data/source-index.json | Preserve all 53 preceding identities and 54 measured editions; receive the 28 complete customer Installation identities at their actual merged source |
 
 The real maintained pure receiver was executed against the retained 1,259-source index at 63f8a4347656defb04b5d5311bf07f9a439010b0. It received all 45 new records, yielding 1,304; every preceding record remained byte-equivalent, and identical re-receiving was unchanged. Its chapter selector reported this full H2 present once. Those numbers describe that exact received basis, not a claim that a later cumulative edition has only 1,304 sources. Use fresh current source for actual composition and preserve later concurrent additions.
 
 The publisher should read back this chapter and declaration at their actual merged commit, receive them into its current manuscript, inspect the complete coverage and measured identities, and continue its existing whole reviewer-package/render/reopen operation. No generated dist files, canonical answers or publisher programme are changed by this authored three-file contribution.
 
 A source declaration is not a completion certificate. Keep actual host receiving, payment/customer status, formal SCF issuer terms and grant application submission separate. Nothing in this handoff submits an application, approves a purchase or sends a customer message.
+
+## Standing owner instruction consumed by this receiving course
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
