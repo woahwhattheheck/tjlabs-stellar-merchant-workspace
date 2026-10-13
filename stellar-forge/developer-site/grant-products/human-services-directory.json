@@ -185,13 +185,19 @@
       "label": "Complete typed source, findings, worksheet and reconciliation transport",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
-      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
       "editions": [
         {
           "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
           "bytes": 57089,
           "sha256": "48f92b3e51de039a3d3b9fd4d6e205419ccc6f6ef3258b2efbeba37eb9aeff57",
           "git_blob": "1a68d2ed92ccce0eb28cf30c09eb4ba2c8e2c8da"
+        },
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 63749,
+          "sha256": "5f48b28f9a21b24aab103a2565e73d6340461757a0e8a9a66a7b896aa5f578da",
+          "git_blob": "2ac7c03365c35f2da5ad9a3c4bd48755a69e8622"
         }
       ]
     },
@@ -201,13 +207,19 @@
       "label": "Original schemas and exact Merchant tool argument catalogue",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
-      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
       "editions": [
         {
           "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
           "bytes": 26960,
           "sha256": "289619a42ff202f7eeb95905d4011fb6638e11c4a3a1f6feedda25094a270d8f",
           "git_blob": "8a3a9d0c822a902da0d99f5dadc02dfee59cd55b"
+        },
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 27937,
+          "sha256": "5f260cfdb2fad65297ce8e4db50058860f9b12868e47faf35d9d66797dc95d8a",
+          "git_blob": "2a0990269eced514a647e6263b78e02adfc8f671"
         }
       ]
     },
@@ -233,13 +245,19 @@
       "label": "Installed product, SDK, MCP and complete support-file selection",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
-      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
       "editions": [
         {
           "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
           "bytes": 10583,
           "sha256": "8542e457a97b0f7a70bcc494fa9daebaee1774698896765f94aba967c185a129",
           "git_blob": "445ab5ac6dd5184600b02ac9f78d894d1e789e6f"
+        },
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 11151,
+          "sha256": "9a8bbb388b184c5fe55316a9bf23f49fcea55dbfdeb58196ccbc92e7ffb708a6",
+          "git_blob": "656afbe694f3d83cf00fbae9650879dd648d2b30"
         }
       ]
     },
@@ -313,13 +331,323 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/human-services-directory/GRANT_EVIDENCE.json",
-      "commit": "24f73d4a454fca6f6f8e5498a5b5a6c7c8022aec",
+      "commit": "dcd61f41681f235758829d5acc58150409464c4b",
       "editions": [
         {
           "commit": "24f73d4a454fca6f6f8e5498a5b5a6c7c8022aec",
           "bytes": 13846,
           "sha256": "badfaf5ac822c5963444bdacb8a76c805d9790ef0457906d5f1f8adb28f15a15",
           "git_blob": "4759d9d05df988723b5cda6906b5121e32b7e421"
+        },
+        {
+          "commit": "dcd61f41681f235758829d5acc58150409464c4b",
+          "bytes": 28625,
+          "sha256": "a01b9c567c8931a424e8655b37d2979cc03c251c1658c5b869067ea97dd7629e",
+          "git_blob": "aa0f5b67c6a05011620296096931f9a9a820cd3a"
+        }
+      ]
+    },
+    {
+      "id": "directory-service-selection",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory_selection.py",
+      "label": "Saved original service selection and immutable successor linkage",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 20320,
+          "sha256": "32b2314512ab352574ca4da12a99da32acc7a4354fd6684f78171fb2bec8a29a",
+          "git_blob": "8ea36110b212507deab0c458ecf9fab93ea9e478"
+        }
+      ]
+    },
+    {
+      "id": "directory-choice-refresh-engine",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory_selection_refresh.py",
+      "label": "Complete original and later-edition service-choice review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 18739,
+          "sha256": "ddac3c314e12292872d710a05ec5cc88e6da86fb964bdd87d86899efdaaea1f8",
+          "git_blob": "d70501825e0ac155593f8529f1cae6adb859b197"
+        }
+      ]
+    },
+    {
+      "id": "directory-source-schema",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory-schema.json",
+      "label": "Strict complete Directory schemas and five refresh actions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 134565,
+          "sha256": "20c9dc6b987b6212332058c9fb10133075d46335cbbb98cdd7e847a221add9b1",
+          "git_blob": "fef8f1a02e7cf5cea6a3a0dab25d27ad20f17b13"
+        }
+      ]
+    },
+    {
+      "id": "directory-schema-admission",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory_schema.py",
+      "label": "Original Directory input validation and defaults",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 9983,
+          "sha256": "b86cbb519d0b315a0bd5f7a75a100cf383b9f47629b3fb61e151bcd849f7eb31",
+          "git_blob": "0baf86eed6abc7e918dbd71571f427e2b1a56326"
+        }
+      ]
+    },
+    {
+      "id": "directory-workspace",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory_workspace.py",
+      "label": "Same Workspace persistence and complete service-choice export",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 17482,
+          "sha256": "a0f64e4b016c846b536c136702aa49b8cb6163180f162f691293c15774ff04ea",
+          "git_blob": "4ec9b054989ff35416cccfa00cf6b9712b7bdbd6"
+        }
+      ]
+    },
+    {
+      "id": "directory-editable-receiving",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory_receiving.py",
+      "label": "Full editable graph receiving with retained refresh records",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 32772,
+          "sha256": "32129c561f4a9ebf81591f592a84997f0d6547324eb7039d2c046fa80ae29be2",
+          "git_blob": "1f0eb246563a14fa482d4a4e0f40212611aaf3b1"
+        }
+      ]
+    },
+    {
+      "id": "directory-http-interface",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory_server.py",
+      "label": "Original HTTP preview, immutable report and explicit acceptance routes",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 20175,
+          "sha256": "a119a67c7998897ea102c1f4f6f4d59d19a0781e8e8b499ead767f963cff90f3",
+          "git_blob": "b477e6a056c3dd90354973763d9ce19b704a34ad"
+        }
+      ]
+    },
+    {
+      "id": "directory-native-cli",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/cli.py",
+      "label": "Complete native service-choice CLI",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 17071,
+          "sha256": "21725bbfcbe9528970f0d20e1e197ea9eb31d18419812518813cb701c0b5e9f7",
+          "git_blob": "e5c2b83351c136744b0d1a021838ed7875c7ab0c"
+        }
+      ]
+    },
+    {
+      "id": "directory-choice-refresh-browser",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/public/directory-selection-refresh.mjs",
+      "label": "Original-to-current service-choice review controls",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 13245,
+          "sha256": "790189153958ed9b50850b3b99317812f1685c081b2a5f11f63b67245dc5b9b6",
+          "git_blob": "4175fa7a192e04df8bb7be0eaca1fb4e70bb8446"
+        }
+      ]
+    },
+    {
+      "id": "directory-operator",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/public/app.js",
+      "label": "Current Directory operator and retained navigation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 75895,
+          "sha256": "5e1a8ec87d0a5a8e016ab7cc3be34d7ab18b96e283d761c14ac41cb09d4bec60",
+          "git_blob": "8f64fa88eeb490cdae8a62eefbeafe2e8cc5b866"
+        }
+      ]
+    },
+    {
+      "id": "directory-connected-runtime",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/connected/runtime.mjs",
+      "label": "Exact Directory connected actions and confirmed acceptance routing",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 16996,
+          "sha256": "6fc7f747164f60497b46b5c334a0c3ca7b8584816dcf229edc5f22c846fbc785",
+          "git_blob": "6454ec00afd8006d7626898ed35c830cf7adc271"
+        }
+      ]
+    },
+    {
+      "id": "directory-client-types",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/connected/client.d.mts",
+      "label": "Complete typed client method and input declarations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 73862,
+          "sha256": "8c82bcde1559f0084fc20d870cae726cef293299029945261e67e2dd20e24ed8",
+          "git_blob": "d49f52ac5da6b0f930387246322f46ff135830c6"
+        }
+      ]
+    },
+    {
+      "id": "directory-choice-refresh-native-course",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/operate_selection_refresh.py",
+      "label": "Exact saved-review export, acceptance and independent cold receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 8819,
+          "sha256": "759612feb3e78d0257f72ef864483fc24a56c825e96af8065706db08eb2318d4",
+          "git_blob": "f8f9735aebb434ad4400d93ca13a4f5048280733"
+        }
+      ]
+    },
+    {
+      "id": "directory-choice-refresh-guide",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/SELECTION_REFRESH.md",
+      "label": "Full service-choice refresh and recipient use instructions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 10896,
+          "sha256": "9d99c654311dfd7541e0147db9db3145ed75ab14b99de27e7cc93b6218c4a6b3",
+          "git_blob": "44d32523d867b5b0c6e9aaf10f3214db56c6b64b"
+        }
+      ]
+    },
+    {
+      "id": "directory-native-contribution",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/human-services-directory.json",
+      "label": "Complete native Directory installed contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 9974,
+          "sha256": "516cceb1320230178b0a657b01d4d6d2e2577a1855c767a4b2f630e19ed68ab7",
+          "git_blob": "db531cfdd07aac892d852a063744c4790c59bd2d"
+        }
+      ]
+    },
+    {
+      "id": "directory-distribution-selection",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/human-services-directory.json",
+      "label": "Complete Directory application source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 14756,
+          "sha256": "5f5723bb125a83d6a70b1474e39ab8d0a7eb2fd0780cd2c0db9a29b5b69aa476",
+          "git_blob": "5fdbec14320511a3657570c5cde5cebdd7d14eff"
+        }
+      ]
+    },
+    {
+      "id": "directory-product-source",
+      "path": "products/human-services-directory/SOURCE.json",
+      "label": "Current product source lineage and full implementation closure",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 25888,
+          "sha256": "edfa2ddb23ce0346346840583b1762d6f34cb77385523e3d6e6ce5ebeab97366",
+          "git_blob": "1a6b2fa1dddd904ba1d9027ddca64508a35b0b3e"
+        }
+      ]
+    },
+    {
+      "id": "directory-product-operating",
+      "path": "products/human-services-directory/OPERATING.md",
+      "label": "Original customer workflow and current service-choice continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 12561,
+          "sha256": "4761c75799d0bd3651d7aff29fe9c7750144b0a24fc4025607c7402e12305f47",
+          "git_blob": "b77d965b3c9b41dc4494ac3d24ae0f1441ef76db"
+        }
+      ]
+    },
+    {
+      "id": "directory-product-receiving",
+      "path": "products/human-services-directory/RECEIVING.md",
+      "label": "Original receiving operation and complete refresh extension",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+      "editions": [
+        {
+          "commit": "a7da1391088377556d9126eaabac1e5a87eeeb90",
+          "bytes": 8846,
+          "sha256": "03ac2ec39ec1de57bb1c267301fc429b014db7042e4b6deeab41d1215c585d16",
+          "git_blob": "2bff1ff6a4323b8b83efbfaf93e78e2d4586d8ad"
         }
       ]
     }

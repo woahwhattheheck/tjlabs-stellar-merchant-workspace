@@ -1,16 +1,18 @@
 # Receive Human Services Directory into the existing grant assembly
 
-This contribution receives the complete Directory customer journey and twenty measured source registrations through the original application composer. It owns the existing **Service-directory commissioning and referral destinations** H3 inside **Referral implementation: source changes, returned outcomes and complete receiving**. The original cumulative publisher retains the saved application, review, Page and Site.
+This contribution receives the complete Directory customer journey and thirty-nine measured source registrations through the original application composer. It owns the existing **Service-directory commissioning and referral destinations** H3 inside **Referral implementation: source changes, returned outcomes and complete receiving**. The original cumulative publisher retains the saved application, review, Page and Site.
 
 ## Complete maintained inputs
 
 - `products/human-services-directory/GRANT.md`: the complete customer chapter, including the original completed Directory receiving, standards and relationships, staff corrections, offline customer worksheets and returned work against a later accepted edition.
-- `products/human-services-directory/GRANT_EVIDENCE.json`: original completed native result and full editable-packet identities, nineteen measured product sources and the distinct status of the newer whole programme.
-- `stellar-forge/developer-site/grant-products/human-services-directory.json`: the twenty-source declaration under the existing Referral H2.
+- `products/human-services-directory/GRANT_EVIDENCE.json`: original completed native result and full editable-packet identities, the original nineteen measured product sources, the complete twenty-two-file saved-choice refresh and the distinct status of each later native programme.
+- `stellar-forge/developer-site/grant-products/human-services-directory.json`: the thirty-nine-source declaration under the existing Referral H2.
 - `stellar-forge/developer-site/grant-directory.mjs`: a source-only receiving helper that replaces exactly the selected Directory H3 and verifies the current complete subsection digest. Its whole prefix and suffix remain byte-identical.
 - This complete receiving guide.
 
-The current product source is Merchant reconciliation merge `7fcf609e926d26e353954fc1a1527f4fbbc65010` followed by saved-draft recovery merge `e963db6a3cc2c29f4593c60e4084e670105bb7fb`. Corresponding public merges are `ffe2bf91f780c5873af78499c4df641ecd9641fa` and `c15780c96cc7ea40792d2c700b3410baf30f11d1`. The declaration measures the complete actual selected file bodies, including the current guide, engine, typed client, tool catalogue, Applications bridge, distribution selection and native/browser/customer courses.
+The current saved-choice refresh is Merchant merge `a7da1391088377556d9126eaabac1e5a87eeeb90` (PR2026), whose complete twenty-two files are now explicitly selected. The declaration retains all twenty original IDs and historical editions, advances the three shared product source IDs and original-evidence ID, and adds nineteen previously unregistered paths. Its thirty-nine current sources retain forty-three measured editions. The evidence update is immutable source commit `dcd61f41681f235758829d5acc58150409464c4b`; the complete new operating guide is `stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/SELECTION_REFRESH.md`.
+
+The preceding source remains a historical receiving basis: Merchant reconciliation merge `7fcf609e926d26e353954fc1a1527f4fbbc65010` followed by saved-draft recovery merge `e963db6a3cc2c29f4593c60e4084e670105bb7fb`. Corresponding public merges are `ffe2bf91f780c5873af78499c4df641ecd9641fa` and `c15780c96cc7ea40792d2c700b3410baf30f11d1`. The declaration measures the complete actual selected file bodies, including the current guide, engine, typed client, tool catalogue, Applications bridge, distribution selection and native/browser/customer courses.
 
 ## Receive into the current manuscript
 
@@ -62,6 +64,28 @@ The original Directory native run 76867 / child 133 completed with exit 0. Its c
 The later 354-source reconciliation programme is published and source-reviewed. It starts from that original result and packet, operates the worksheet prerequisite and later-edition review, then continues through the offline customer editor, operator, Merchant, independent customer state and complete saves. Its source helpers were admitted in an earlier continuation, but transport was lost; no completed later native/browser/customer result is observed. Unknown process handles require reconciliation of the original process, source intake and operation lock before continuation. The private operation owner retains the complete source/input and actual admission history; none of those unresolved attempts is represented as an additional completed customer installation.
 
 The public native and browser operating guides supply the actual original input and same-workspace receiving contracts. No new runtime, source acquisition, payment, saved application or Site is launched by the assembler helper.
+
+## Complete saved-choice refresh adoption
+
+Receive the same full Directory H3 through the unchanged `grant-directory.mjs` guard, then select the complete updated `human-services-directory.json`. The H3 remains under the original Referral H2. Historical links remain present. The maintained source selector prefers each explicitly linked current pin. Receive this complete current chapter with its matched 39-source declaration; when replaying the older complete chapter, use its retained original 20-source declaration and measured historical editions. Do not replace the cumulative manuscript/index with a dated receiving result.
+
+The new journey is original saved choice → later retained source → explicit one-to-one row match or reasoned omission → complete current disposition and criteria → immutable seven-file report → separate exact-hash/actor/note acceptance → ordinary successor/customer handoff → original full Workspace export/receive/cold reopen. Original source scope, missing/null/zero values, locations, schedule interpretation and original classification remain inspectable. It records no provider closure, availability promise, reservation, clinical mutation, external contact or actual purchase.
+
+Continue `SCF-HUMAN-SERVICES-DIRECTORY-RECEIVING-450E-20261012` on the existing UUID `2c51f522-4852-463b-bdc0-59389d7bae83`. The full native helper takes the actual saved refresh ID; optional acceptance takes the actual separately reviewed complete input. The completed original result remains the starting evidence. Neither complete source publication nor chapter composition substitutes for executing and viewing this following product. E496 retains cumulative manuscript/four-output/saved-application custody; 450E retains original Directory and browser custody.
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
 
 ## Funding and customer meaning
 
