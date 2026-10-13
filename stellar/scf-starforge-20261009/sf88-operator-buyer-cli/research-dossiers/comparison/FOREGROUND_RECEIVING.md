@@ -8,7 +8,7 @@ Use the complete exported Research source selection, with the original relative 
 
     stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/
 
-This includes all maintained dependencies elsewhere in the same selection, plus the reviewed protocol selector and the two receiving modules in this guide. The public protocol selector is merged at 62a42017ebcbe7b51e3d4940cca356c646b79b77. Preserve any later reviewed source explicitly before the first accepted course; a running course keeps its original selection. A small changed-file overlay alone is insufficient.
+This includes all maintained dependencies elsewhere in the same selection, plus the reviewed protocol selector and all receiving modules required by this guide. The public protocol selector is merged at 62a42017ebcbe7b51e3d4940cca356c646b79b77. Preserve any later reviewed source explicitly before the first accepted course; a running course keeps its original selection. A small changed-file overlay alone is insufficient.
 
 The launcher requires the existing Node runtime, GNU flock, Python supported by the original Research components, an existing Playwright Node entrypoint, and an installed Chromium executable. Supply their actual absolute paths. It does not install packages, download a browser, allocate a worker or change account/provider settings.
 
@@ -56,7 +56,7 @@ The full module performs:
 
 Fixture values keep exact decimal text and explicit undefined reasons. Reports continue to identify the training fixture. The browser module does not rank or recalculate measurements.
 
-The authenticated listener is the maintained startDossierWorkspace function. Its original close method drains its owned services. The launcher owns only its two listeners and browser context. Signal handling closes those owned resources; no unrelated process is killed. A cleanup error preserves the execution error as its cause. The final foreground result is written only after owned cleanup succeeds.
+The authenticated listener is the maintained startDossierWorkspace function. Its original close method drains its owned services. The launcher owns only the declared original and received-workspace listeners and its browser context. Signal handling closes those owned resources; no unrelated process is killed. A cleanup error preserves the execution error as its cause. The final foreground result is written only after owned cleanup succeeds.
 
 ## Retained records
 
