@@ -19,7 +19,7 @@ The summary distinguishes:
 
 Blank, missing, null, boolean and nonnumeric values do not become zero. Source quality is retained. A preliminary water-level record's first flag is an excluded-sample count; a verified record's first flag is an inferred-value indicator. Unknown quality/flag meanings remain uninterpreted through the maintained domain module.
 
-One inspection holds at most 200,000 distinct product/timestamp/event identities. Exceeding that bound raises an explicit selection error without returning a truncated result. The complete original window can be narrowed through its date controls. The same original source table and exports remain available.
+One inspection holds at most 200,000 distinct product/timestamp/event identities and two million expected grid slots. Exceeding that bound raises an explicit selection error without returning a truncated result. The complete original window can be narrowed through its date controls. The same original source table and exports remain available.
 
 GMT records retain their existing UTC projection. LST is displayed on its original local-standard clock. LST_LDT retains original repeated/absent clock labels and has no invented elapsed-UTC expected grid. High/low predictions have no fixed expected grid. Predictions are inspected as a separate product and never relabelled observations. No unit or datum conversion occurs.
 
