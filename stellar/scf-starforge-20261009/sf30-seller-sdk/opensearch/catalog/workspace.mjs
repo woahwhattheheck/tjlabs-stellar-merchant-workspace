@@ -10,6 +10,7 @@ import { normalizeCatalogMapping, compileCatalogMapping, catalogText, catalogIde
 import { exportCatalog, createCatalogQueryDraft } from './exports.mjs';
 import { exportCatalogBundle, importCatalogBundle } from './transfer.mjs';
 import { SupplierWorkspace } from './supplier/workspace.mjs';
+import { bmecatInputProfile, assertBMEcatCatalogMode } from './supplier/bmecat/projection.mjs';
 import { setupCatalogImportStorage, inspectCatalogImportStorage, retireCatalogImportStage } from './import-storage.mjs';
 
 export const CATALOG_SCHEMA = 'stellar-forge.material-catalog.v1';
@@ -139,6 +140,13 @@ export class OpenSearchCatalogWorkspace {
     if (!result) fail('CATALOG_SOURCE_NOT_FOUND', 'Retained catalog input not found.', 404);
     return result;
   }
+  bmecatInputProfile({ sourceId } = {}) {
+    this.open();
+    const source = sourceId ? this.source(sourceId) : null;
+    if (source && source.format.kind !== 'bmecat-xml')
+      fail('CATALOG_BMECAT_SOURCE_REQUIRED', 'Choose a retained original BMEcat XML source.');
+    return bmecatInputProfile(source?.bmecat ?? null);
+  }
   async retainedSource(id) {
     const source = this.source(id), path = this.sourcePath(id), actual = await hashCatalogFile(path);
     if (actual.bytes !== source.bytes || actual.sha256 !== source.sha256) fail('CATALOG_SOURCE_CHANGED', 'The retained source no longer matches its original bytes.', 409);
@@ -240,8 +248,9 @@ export class OpenSearchCatalogWorkspace {
       await this.retainBytes(selected, bytes, this.sourcePath(source.id));
       const sample = []; let sampleBytes = 0, sampled = 0;
       source.columns = source.format.columns ?? [];
+      const onDocument = metadata => { source.bmecat = clone(metadata); };
       for await (const row of readCatalogRows(this.sourcePath(source.id), source.format,
-        { db: this.db, expectedBytes: source.bytes, expectedSha256: source.sha256 })) {
+        { db: this.db, expectedBytes: source.bytes, expectedSha256: source.sha256, onDocument })) {
         if (!sampled) source.columns = Object.keys(row.record);
         sampled++; const size = Buffer.byteLength(json(row.record));
         if (size + sampleBytes <= 32768) { sample.push(row.record); sampleBytes += size; }
@@ -270,13 +279,27 @@ export class OpenSearchCatalogWorkspace {
       if (base && base.catalogId !== catalog.id) fail('CATALOG_BASE_FOREIGN', 'The comparison base belongs to another catalog.');
       if (mode === 'delta' && !base) fail('CATALOG_DELTA_BASE_REQUIRED', 'Select an existing full catalog edition before applying a delta.');
       const source = await this.retainedSource(request.sourceId);
+      if (source.format.kind === 'bmecat-xml' && source.bmecat)
+        assertBMEcatCatalogMode(source.bmecat, mode);
       const compiled = await compileCatalogMapping(catalog.mapping, id => this.retainedSource(id), { db: this.db });
       const editionId = digest('catalog-edition:' + request.requestId).slice(0, 32), at = now();
       const insert = this.db.prepare('INSERT INTO catalog_materials VALUES(?,?,?,?,?) ON CONFLICT(edition_id,material_key) DO UPDATE SET material_id=excluded.material_id,sha256=excluded.sha256,record_json=excluded.record_json');
       const seen = this.db.prepare('INSERT INTO catalog_intake VALUES(?,?,?,?)');
       const remove = this.db.prepare('DELETE FROM catalog_materials WHERE edition_id=? AND material_key=?');
-      if (mode === 'delta') this.store.transaction(() =>
-        this.db.prepare('INSERT INTO catalog_materials SELECT ?,material_key,material_id,sha256,record_json FROM catalog_materials WHERE edition_id=?').run(editionId, base.id));
+      const seedBase = () => {
+        if (mode === 'delta') this.store.transaction(() =>
+          this.db.prepare('INSERT INTO catalog_materials SELECT ?,material_key,material_id,sha256,record_json FROM catalog_materials WHERE edition_id=?').run(editionId, base.id));
+      };
+      const validateBMEcatRow = row => {
+        if (source.format.kind !== 'bmecat-xml') return;
+        const operation = compiled.operation(row.record, mode);
+        const expectedOperation = row.record.bmecat.mode === 'delete' ? 'delete' : 'upsert';
+        if (operation !== expectedOperation)
+          fail('CATALOG_BMECAT_OPERATION_CHANGED', 'Row ' + row.ordinal + ' declares original BMEcat mode ' + row.record.bmecat.mode + '. Keep that operation in the delta mapping.');
+        if (compiled.materialId(row.record) !== row.record.materialId)
+          fail('CATALOG_BMECAT_ID_CHANGED', 'Keep the original SUPPLIER_PID as the material identifier for BMEcat intake; retain other identifiers as references.');
+      };
+      if (source.format.kind !== 'bmecat-xml') seedBase();
       let batch = [], batchBytes = 0, inputRows = 0;
       const flush = () => {
         if (!batch.length) return;
@@ -284,6 +307,7 @@ export class OpenSearchCatalogWorkspace {
           for (const row of batch) {
             const operation = compiled.operation(row.record, mode);
             const materialId = compiled.materialId(row.record), key = digest([catalog.tenantId, materialId]);
+            validateBMEcatRow(row);
             if (this.db.prepare('SELECT 1 FROM catalog_intake WHERE edition_id=? AND material_key=?').get(editionId, key))
               fail('CATALOG_DUPLICATE_MATERIAL', 'Input row ' + row.ordinal + ' repeats material ' + materialId + '. Supply one final operation per material.');
             seen.run(editionId, key, row.ordinal, operation);
@@ -297,8 +321,15 @@ export class OpenSearchCatalogWorkspace {
         });
         batch = []; batchBytes = 0;
       };
+      // Every XML row's immutable operation and identifier is checked while staged.
+      // Only the complete verified document may seed or write the new edition.
+      const onDocument = metadata => {
+        assertBMEcatCatalogMode(metadata, mode);
+        seedBase();
+      };
       for await (const row of readCatalogRows(source.path, source.format,
-        { db: this.db, expectedBytes: source.bytes, expectedSha256: source.sha256 })) {
+        { db: this.db, expectedBytes: source.bytes, expectedSha256: source.sha256,
+          onDocument, validateRow: validateBMEcatRow })) {
         inputRows++; batch.push(row); batchBytes += Buffer.byteLength(json(row.record));
         if (batch.length >= 250 || batchBytes >= 2 * 1024 * 1024) flush();
       }
