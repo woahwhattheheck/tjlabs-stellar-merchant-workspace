@@ -249,8 +249,28 @@ export class ResearchWorkspaceClient{
   }
   risSources(){return createRisSourceClient({request:(route,body,options)=>this.#json(route,body,options),
     download:(route,file,options)=>this.#download(route,file,options)});}
+  async #programmeArchiveRange(route,{offset,limit,bytes,sha256,signal}={}){
+    need(/^\/api\/customer-quote-programmes\/archives\/[a-f0-9-]{36}$/.test(route)&&
+      Number.isSafeInteger(offset)&&offset>=0&&Number.isSafeInteger(limit)&&limit>=1&&limit<=4194304&&
+      Number.isSafeInteger(bytes)&&bytes>0&&bytes<=RESEARCH_QUOTE_PROGRAMME_ARCHIVE_LIMIT&&offset<bytes&&
+      /^[a-f0-9]{64}$/.test(sha256??''),'RESEARCH_QUOTE_PROGRAMME_RANGE_INVALID');
+    const end=Math.min(offset+limit,bytes)-1,length=end-offset+1;
+    return this.#request(route,{signal,readOnly:true,headers:{
+      Range:'bytes='+offset+'-'+end,'If-Match':'"'+sha256+'"'}},async response=>{
+      need(response.status===206&&response.headers.get('content-range')==='bytes '+offset+'-'+end+'/'+bytes&&
+        response.headers.get('content-length')===String(length)&&response.headers.get('x-archive-bytes')===String(bytes)&&
+        response.headers.get('x-content-sha256')===sha256&&response.headers.get('etag')==='"'+sha256+'"'&&
+        response.headers.get('content-type')?.split(';')[0].trim()==='application/gzip',
+        'RESEARCH_QUOTE_PROGRAMME_ARCHIVE_CHANGED');
+      const body=await readResponse(response,length);
+      need(body.length===length&&createHash('sha256').update(body).digest('hex')===response.headers.get('x-chunk-sha256'),
+        'RESEARCH_QUOTE_PROGRAMME_CHUNK_CHANGED');
+      return body;
+    });
+  }
   customerQuoteProgrammes(){
     return createResearchQuoteProgrammesClient({run:work=>this.#run(work),
+      range:(route,options)=>this.#programmeArchiveRange(route,options),
       request:(route,body,options)=>this.#jsonAccepted(route,body,options),
       download:(route,file,options)=>this.#downloadAccepted(route,file,options),
       upload:(route,body,options)=>this.#request(route,{...options,method:'PUT',body,
