@@ -8,3 +8,21 @@
 /* Complete workspace handover remains readable on narrow operator screens. */
 #portable-digest, #portable-receive { white-space: pre-wrap; overflow-wrap: anywhere; }
 #portable-result .form-actions a { color: inherit; text-decoration: underline; padding: 0.4rem 0; }
+
+/* Original return comparison: three readable versions at presentation and phone widths. */
+.return-choices{border:0;padding:0;min-width:0;margin:20px 0}
+.return-choices>legend{font-weight:600;margin-bottom:12px}
+.return-field{border:1px solid var(--line);padding:16px;margin:14px 0;min-width:0}
+.return-field .section-heading{align-items:flex-start;margin-bottom:6px}
+.return-field h3,.return-key{overflow-wrap:anywhere}
+.return-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:12px 0}
+.return-values>section{min-width:0}
+.return-values h4{font-size:12px;margin:0 0 6px}
+.return-value{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;background:var(--surface);border:1px solid var(--line);padding:10px;margin:0;max-height:32rem;overflow:auto;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
+.return-field>label{max-width:420px;margin-bottom:0}
+.return-check{display:flex;gap:8px;align-items:center}
+.return-check input{width:18px;min-height:18px;margin:0}
+.return-pending{border-top:1px solid var(--line);margin-top:18px;padding-top:16px}
+#return-reviewed>p,#return-review-sha,#return-result{overflow-wrap:anywhere}
+#tab-returns input,#tab-returns select,#tab-returns textarea{min-width:0}
+@media(max-width:760px){.return-values{grid-template-columns:minmax(0,1fr)}.return-field{padding:12px}.return-field .section-heading{flex-direction:column}.tabs{flex-wrap:wrap}.tabs button{padding:9px 10px}.return-values .return-value{max-height:22rem}}

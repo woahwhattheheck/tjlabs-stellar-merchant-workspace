@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // MIT. Complete original SEC operator workspace receiving.
 import { parseArgs } from 'node:util';
+import { readFile, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
@@ -8,12 +9,18 @@ import {
 } from './operator.mjs';
 import { need } from './manifest.mjs';
 
-const HELP = `sec-edgar-workspace review|export|inspect|receive|open
+const HELP = `sec-edgar-workspace review|export|inspect|receive|open|returns|return-receive|return-inspect|return-preview|return-apply|return-operation
 review --workspace DIR [--store DIR]
 export --workspace DIR [--store DIR] --out DIR [--review SHA256]
 inspect --archive ZIP [--sha256 SHA256]
 receive --archive ZIP --sha256 SHA256 --out DIR
 open --root DIR [--port N]
+returns --workspace DIR [--store DIR]
+return-receive --workspace DIR [--store DIR] --archive ZIP --sha256 SHA256 [--label TEXT]
+return-inspect --workspace DIR [--store DIR] --return SHA256
+return-preview --workspace DIR [--store DIR] --return SHA256 [--issued-revision N] [--output JSON]
+return-apply --workspace DIR [--store DIR] --input ORIGINAL_REQUEST_JSON
+return-operation --workspace DIR [--store DIR] --return SHA256 --request-id ID
 
 Review and export include every original saved revision and imported edition.
 The store defaults to WORKSPACE/captures. Supply --store for an external source store.
@@ -25,12 +32,52 @@ export async function main(args = process.argv.slice(2)) {
     workspace: { type: 'string' }, store: { type: 'string' }, out: { type: 'string' },
     root: { type: 'string' }, archive: { type: 'string' }, sha256: { type: 'string' },
     review: { type: 'string' }, python: { type: 'string' }, port: { type: 'string' },
+    'return': { type: 'string' }, 'request-id': { type: 'string' }, label: { type: 'string' },
+    'issued-revision': { type: 'string' }, input: { type: 'string' }, output: { type: 'string' },
     help: { type: 'boolean' },
   } });
   if (v.help || !positionals.length) { process.stdout.write(HELP); return; }
-  need(positionals.length === 1 && ['review', 'export', 'inspect', 'receive', 'open'].includes(positionals[0]),
+  need(positionals.length === 1 && ['review', 'export', 'inspect', 'receive', 'open', 'returns', 'return-receive', 'return-inspect', 'return-preview', 'return-apply', 'return-operation'].includes(positionals[0]),
     'EDGAR_PORTABLE_COMMAND_INVALID', HELP);
   const command = positionals[0];
+  if (command === 'returns' || command.startsWith('return-')) {
+    need(v.workspace, 'EDGAR_PORTABLE_DIRECTORY_REQUIRED', 'Choose the original --workspace directory.');
+    const directory = resolve(v.workspace), storeDirectory = resolve(v.store ?? join(directory, 'captures'));
+    // Read the existing whole source before opening; this never creates a substitute workspace.
+    await reviewEdgarOperator({ directory, storeDirectory });
+    const { openEdgarWorkspace } = await import('../workspace.mjs');
+    const workspace = await openEdgarWorkspace(directory, { storeDirectory, python: v.python });
+    let result;
+    try {
+      if (command === 'returns') result = await workspace.listReturns();
+      else if (command === 'return-receive') {
+        need(v.archive && v.sha256, 'EDGAR_RETURN_ARCHIVE_REQUIRED', 'Use the complete --archive and its original --sha256.');
+        result = await workspace.receiveReturn({ archivePath: resolve(v.archive),
+          expectedArchiveSha256: v.sha256, ...(v.label === undefined ? {} : { label: v.label }) });
+      } else if (command === 'return-apply') {
+        need(v.input, 'EDGAR_RETURN_REQUEST_REQUIRED', 'Use --input with the complete original apply request JSON.');
+        const bytes = await readFile(resolve(v.input));
+        need(bytes.length <= 2 * 1024 * 1024, 'EDGAR_RETURN_REQUEST_LIMIT');
+        result = await workspace.applyReturn(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)));
+      } else {
+        need(v.return, 'EDGAR_RETURN_ID_REQUIRED', 'Choose the original --return SHA-256 identity.');
+        if (command === 'return-inspect') result = await workspace.inspectReturn({ returnId: v.return });
+        else if (command === 'return-operation') {
+          need(v['request-id'], 'EDGAR_RETURN_REQUEST_REQUIRED', 'Use the original --request-id.');
+          result = await workspace.returnOperation({ returnId: v.return, requestId: v['request-id'] });
+        } else {
+          const issued = v['issued-revision'];
+          need(issued === undefined || /^\d+$/.test(issued) && Number.isSafeInteger(Number(issued)),
+            'EDGAR_RETURN_ISSUED_REVISION_INVALID');
+          result = await workspace.previewReturn({ returnId: v.return,
+            ...(issued === undefined ? {} : { issuedRevision: Number(issued) }) });
+        }
+      }
+      const bytes = JSON.stringify(result, null, 2) + '\n';
+      if (v.output) await writeFile(resolve(v.output), bytes, { flag: 'wx', mode: 0o600 });
+      process.stdout.write(bytes); return result;
+    } finally { await workspace.close(); }
+  }
   if (command === 'open') {
     need(v.root, 'EDGAR_PORTABLE_DIRECTORY_REQUIRED', 'Use --root with the complete received directory.');
     const root = resolve(v.root);

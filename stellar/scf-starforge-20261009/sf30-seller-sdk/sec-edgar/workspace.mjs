@@ -18,7 +18,7 @@ const requireRevision = value => {
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
 /** Reopen the same private version history and immutable capture directory. */
-export async function openEdgarWorkspace(directory, { storeDirectory, title = 'SEC EDGAR merchant' } = {}) {
+export async function openEdgarWorkspace(directory, { storeDirectory, title = 'SEC EDGAR merchant', python, signal } = {}) {
   directory = await privateDirectory(resolve(directory));
   const versions = await privateDirectory(join(directory, 'versions'));
   const source = await openEdgarStore(resolve(storeDirectory ?? join(directory, 'captures')));
@@ -65,8 +65,22 @@ export async function openEdgarWorkspace(directory, { storeDirectory, title = 'S
     return { compiled, editions: [...editions.values()] };
   }
 
-  async function saveDraft({ expectedRevision, config, restoredFrom = null } = {}) {
+  async function saveDraft({ expectedRevision, config, restoredFrom = null, returnedWorkspace = null } = {}) {
     requireRevision(expectedRevision);
+    if (returnedWorkspace !== null) {
+      const allowed = new Set(['schema', 'requestId', 'requestSha256', 'returnId', 'reviewSha256',
+        'issuedRevision', 'currentRevision', 'returnedRevision', 'actor', 'notes']);
+      if (!object(returnedWorkspace) || Object.keys(returnedWorkspace).some(key => !allowed.has(key)) ||
+          returnedWorkspace.schema !== 'stellar-forge.sec-edgar-return-application.v1' ||
+          !/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(returnedWorkspace.requestId ?? '') ||
+          !['requestSha256', 'returnId', 'reviewSha256'].every(key => /^[a-f0-9]{64}$/.test(returnedWorkspace[key] ?? '')) ||
+          !['issuedRevision', 'currentRevision', 'returnedRevision'].every(key =>
+            Number.isSafeInteger(returnedWorkspace[key]) && returnedWorkspace[key] >= 0) ||
+          returnedWorkspace.currentRevision !== expectedRevision ||
+          typeof returnedWorkspace.actor !== 'string' || !returnedWorkspace.actor.trim() || returnedWorkspace.actor.length > 256 ||
+          (returnedWorkspace.notes !== undefined && (typeof returnedWorkspace.notes !== 'string' || returnedWorkspace.notes.length > 8192)))
+        throw error('EDGAR_RETURN_APPLICATION_INVALID', 'The original returned-workspace decision is invalid.');
+    }
     if (!object(config)) throw error('EDGAR_CONFIG_REQUIRED', 'A merchant configuration is required.');
     // The compiler owns product/payment semantics; the workspace owns retained source binding.
     const { compiled } = await validateBindings(config);
@@ -76,10 +90,12 @@ export async function openEdgarWorkspace(directory, { storeDirectory, title = 'S
       throw error('EDGAR_REVISION_CHANGED', 'Another operator saved this draft. Reload the saved version before applying your changes.', 409,
         { currentRevision: current.revision });
     const configSha256 = hash(retained);
-    if (current.configSha256 === configSha256) return { ...copy(current), review: merchantReview(compiled), unchanged: true };
-    const next = { ...current, revision: current.revision + 1, updatedAt: new Date().toISOString(),
+    if (returnedWorkspace === null && current.configSha256 === configSha256) return { ...copy(current), review: merchantReview(compiled), unchanged: true };
+    const { returnedWorkspace: previousReturn, ...prior } = current;
+    const next = { ...prior, revision: current.revision + 1, updatedAt: new Date().toISOString(),
       title: retained.title, action: restoredFrom === null ? 'draft-saved' : 'revision-restored',
-      config: retained, configSha256, restoredFrom };
+      config: retained, configSha256, restoredFrom,
+      ...(returnedWorkspace === null ? {} : { action: 'returned-workspace-applied', returnedWorkspace: copy(returnedWorkspace) }) };
     try { await writeJson(join(versions, revisionName(next.revision)), next, { exclusive: true }); }
     catch (cause) {
       if (cause.code !== 'EEXIST') throw cause;
@@ -126,9 +142,26 @@ export async function openEdgarWorkspace(directory, { storeDirectory, title = 'S
       openapi: merchantOpenApi(compiled, 'NATIVE_X402'), merchantConfig: copy(state.config) };
   }
 
+  let returnsPromise = null;
+  async function returnsDesk() {
+    checkOpen();
+    return returnsPromise ??= import('./returned-workspace.mjs').then(({ openEdgarReturns }) =>
+      openEdgarReturns({ directory, storeDirectory: source.root, workspace: { snapshot, saveDraft }, python, signal }));
+  }
   return {
     directory, source, storeDirectory: source.root,
-    snapshot, saveDraft, preview, buyerHandoff,
+    snapshot, preview, buyerHandoff,
+    saveDraft(input = {}) {
+      if (Object.hasOwn(input, 'returnedWorkspace'))
+        throw error('EDGAR_RETURN_REVIEW_REQUIRED', 'Apply returned-workspace choices through their original comparison.');
+      return saveDraft(input);
+    },
+    async receiveReturn(input) { return (await returnsDesk()).receive(input); },
+    async listReturns() { return (await returnsDesk()).list(); },
+    async inspectReturn(input) { return (await returnsDesk()).inspect(input); },
+    async previewReturn(input) { return (await returnsDesk()).preview(input); },
+    async applyReturn(input) { return (await returnsDesk()).apply(input); },
+    async returnOperation(input) { return (await returnsDesk()).operation(input); },
     async listRevisions({ limit = 50 } = {}) {
       if (!Number.isSafeInteger(limit) || limit < 1 || limit > 200) throw error('EDGAR_REVISION_LIMIT', 'Revision limit must be 1–200.');
       const files = await names();

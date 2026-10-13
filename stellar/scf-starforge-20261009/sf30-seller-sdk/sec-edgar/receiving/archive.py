@@ -12,7 +12,9 @@ POLICY = ArchivePolicy(
     max_expanded_bytes=8 * 1024 * 1024 * 1024,
     max_members=100000,
     max_manifest_bytes=64 * 1024 * 1024,
-    max_file_bytes=32 * 1024 * 1024,
+    # The typed JavaScript manifest retains original 32 MiB native source limits;
+    # a retained original returned-workspace ZIP may use the full existing ceiling.
+    max_file_bytes=8 * 1024 * 1024 * 1024,
     receipt_name="received-handover.json",
     prefix="EDGAR_PORTABLE",
 )
