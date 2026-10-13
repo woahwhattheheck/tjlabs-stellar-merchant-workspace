@@ -57,6 +57,22 @@ In **Libraries**, save the numeric user or group library ID, its title, source a
 
 Backoff and Retry-After are retained in the capture record. Resume a waiting capture when its displayed time is eligible. **Restart source attempt** preserves the prior pages and starts another attempt on the same capture record after the library changes. Cancellation retains the existing cursor and source objects. Replaying a prior control UUID cannot cancel a successor attempt.
 
+The official API can omit the default `format=json` and `include=data` values
+from its next-page link. The capture reifies those two documented defaults and
+continues the same original JSON/data request. Explicitly different values,
+unknown parameters, duplicate query keys, changed library/path, noncontiguous
+cursors and changed source versions remain errors. The original response's
+`Link` header stays with its complete retained page.
+
+A complete consumed HTTP 200 response that fails header, page or pagination
+validation is retained under that capture's `rejectedDocuments`, with its
+original body hash, request URL, response headers and reason. Its cursor and
+accepted-page counts stay at the previous committed page. Source-attempt restart
+retains that rejected custody with the earlier attempt. After adopting corrected
+source, use the existing capture's **Resume** action and original workspace;
+a new reviewed resume action gets its own UUID. Receiving and subsequent export
+carry the full saved capture revisions and original response objects.
+
 To import files that have already been acquired, use the browser or wrap the exact originals:
 
 ~~~sh

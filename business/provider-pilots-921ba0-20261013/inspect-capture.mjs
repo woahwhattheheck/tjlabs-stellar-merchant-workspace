@@ -26,7 +26,8 @@ function readCapture(path) {
 }
 try {
   const [kind, path, ...extra] = process.argv.slice(2);
-  const project = {nevermined:projectNeverminedSettlement, aisa:projectAisaUsageCapture, 'aisa-combine':combineAisaUsageCaptures}[kind];
+  const projectors = {nevermined:projectNeverminedSettlement, aisa:projectAisaUsageCapture, 'aisa-combine':combineAisaUsageCaptures};
+  const project = Object.hasOwn(projectors, kind) ? projectors[kind] : null;
   if (!project || !path || extra.length) throw new Error('Usage: node inspect-capture.mjs nevermined|aisa|aisa-combine /absolute/capture.json');
   const result = project(readCapture(path));
   writeFileSync(1, JSON.stringify(result, null, 2) + '\n');

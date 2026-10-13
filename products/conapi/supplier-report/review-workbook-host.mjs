@@ -260,15 +260,15 @@ async function readDirectory(directory,schema) {
   check(canonicalJSON(actualNames)===canonicalJSON(expectedNames),'WORKBOOK_DELIVERY_CHANGED','Keep the exact receiving member inventory.');
   return {root,manifest,files};
 }
-async function readDelivery(directory) {
+async function readDelivery(directory,{python}={}) {
   const saved=await readDirectory(directory,DELIVERY_SCHEMA);
   const {manifestSha256,...manifest}=saved.manifest;
   const packet={schema:DELIVERY_SCHEMA,manifest,manifestSha256,files:saved.files};
-  const received=await receiveWorkbookDelivery(packet);
+  const received=await receiveWorkbookDelivery(packet,{readWorkbook:contentBase64=>readReviewWorkbook(fromBase64(contentBase64),{python})});
   return {packet,received};
 }
-export async function workbookDeliveryMembers(directory,workspace) {
-  const {packet,received}=await readDelivery(directory);
+export async function workbookDeliveryMembers(directory,workspace,{python}={}) {
+  const {packet,received}=await readDelivery(directory,{python});
   const selected=reopenWorkspace(serializeWorkspace(workspace));
   const recovered=recoverWorkbookReturn(selected,received.operation);
   check(recovered.status==='ALREADY_APPLIED','WORKBOOK_DELIVERY_NOT_APPLIED',
@@ -324,7 +324,7 @@ export async function workbookMain(argv) {
     return {status:preview.canApply?'WORKBOOK_REVIEW_READY':'WORKBOOK_REVIEW_CONFLICTS',directory,preview};
   }
   if(command==='workbook-apply'){
-    allowed(options,['workspace','review-dir','operation','out','delivery-dir','force','finalize']);
+    allowed(options,['workspace','review-dir','operation','out','delivery-dir','force','finalize','python']);
     const original=await workspaceRead(required(options,'workspace'));
     const review=await readDirectory(required(options,'review-dir'),REVIEW_PACKET);
     const index=new Map(review.files.map(file=>[file.name,file]));
@@ -332,12 +332,15 @@ export async function workbookMain(argv) {
       'WORKBOOK_REVIEW_CHANGED','Keep the full original review selection.');
     const parsed=JSON.parse(index.get('return.json').content),preview=JSON.parse(index.get('review.json').content);
     check(preview.planSha256===review.manifest.planSha256,'WORKBOOK_REVIEW_CHANGED','The reviewed selection differs from its manifest.');
+    const actualReturned=await readReviewWorkbook(fromBase64(index.get('returned.xlsx').content),{python:options.python});
+    check(canonicalJSON(actualReturned)===canonicalJSON(parsed),'WORKBOOK_RETURN_XLSX_CHANGED',
+      'The actual returned XLSX cells differ from this retained review selection. Review the original returned workbook again.');
     const delivery=path.resolve(required(options,'delivery-dir')),out=path.resolve(required(options,'out')),operationId=required(options,'operation');
     const previousOut=await exists(out)?await fileRead(out):null;
     if(previousOut&&!options.force)fail('WORKBOOK_OUTPUT_EXISTS','Use a new output or explicitly use --force.');
     let operation,packet,next,status;
     if(await exists(delivery)){
-      const prior=await readDelivery(delivery);
+      const prior=await readDelivery(delivery,{python:options.python});
       check(prior.received.operation.operationId===operationId &&
         prior.received.operation.preview.planSha256===preview.planSha256 &&
         prior.received.operation.request.finalizeOutput===!!options.finalize &&
@@ -360,10 +363,13 @@ export async function workbookMain(argv) {
     return {status,operationId,deliveryDirectory:delivery,workspace:receipt,receipt:operation.receipt};
   }
   if(command==='workbook-receive'){
-    allowed(options,['packet','delivery-dir','out-dir']);
+    allowed(options,['packet','delivery-dir','out-dir','python']);
     check(!!options.packet!==!!options['delivery-dir'],'WORKBOOK_ARGUMENT','Select one --packet or --delivery-dir.');
-    const packet=options.packet?json((await fileRead(options.packet)).data,'Workbook receiving packet'):(await readDelivery(options['delivery-dir'])).packet;
-    const received=await receiveWorkbookDelivery(packet);
+    let packet,received;
+    if(options.packet){
+      packet=json((await fileRead(options.packet)).data,'Workbook receiving packet');
+      received=await receiveWorkbookDelivery(packet,{readWorkbook:contentBase64=>readReviewWorkbook(fromBase64(contentBase64),{python:options.python})});
+    }else ({packet,received}=await readDelivery(options['delivery-dir'],{python:options.python}));
     const directory=await writeDirectory(required(options,'out-dir'),packet.files,{...packet.manifest,manifestSha256:packet.manifestSha256});
     return {status:'WORKBOOK_RECEIVED',directory,operationId:received.operation.operationId,
       comparisonId:received.report.comparisonId,revision:received.report.revision,workspace:path.join(directory,'workspace.json')};

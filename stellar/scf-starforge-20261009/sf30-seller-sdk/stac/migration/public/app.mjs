@@ -1,5 +1,5 @@
 import {ExactNumber, parseExactJSON, stringifyExactJSON} from "/vector/json.mjs";
-import {mappingWorkbookPanel, savedWorkbookPanel, downloadMappingRegister} from "/workbook.mjs";
+import {mappingWorkbookPanel, savedWorkbookPanel, downloadMappingRegister, downloadMappingWorkbook} from "/workbook.mjs";
 const $ = selector => document.querySelector(selector);
 const clone = value => parseExactJSON(stringifyExactJSON(value));
 const text = value => value === null || value === undefined ? "" : String(value);
@@ -573,6 +573,7 @@ async function plansView() {
         draft.workbookSource=null;draft.workbookReview=null;await navigate("mapping");}),
       btn("Complete saved plan",()=>detail("Saved original plan",plan)),
       btn("Download plan",()=>download(opened.record.file.path)),
+      btn("Export complete mapping workbook",()=>downloadMappingWorkbook(api,id)),
       btn("Export mapping register",()=>downloadMappingRegister(api,id)),
       btn("Complete source review",()=>detail("Every source constraint and native field map",opened.review))),
     table(["Layer","Features","Issues","Native field mapping"],opened.review.layers.map(row=>h("tr",{},

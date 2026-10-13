@@ -1,17 +1,30 @@
 /** MIT. Operator-owned loopback MCP workspace; credentials never arrive over MCP. */
 import { createServer } from 'node:http';
+import { readFile, stat } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { McpPaidToolBroker, createMcpHttpHandler } from './agent-server.mjs';
 import { createOperatorConsoleHandler } from './operator-console.mjs';
 import { loadOAuthResourceHost } from './oauth-host.mjs';
+import { normalizeCatalogConfiguration } from './catalogs.mjs';
 
-export async function startMcpWorkspace({ environment = process.env, oauthFetchImpl, operatorAdapter } = {}) {
-  const discoveryUrl = environment.BAZAAR_DISCOVERY_URL;
+async function catalogFile(path) {
+  if (path === undefined || path === '') return undefined;
+  if (typeof path !== 'string' || !isAbsolute(path))
+    throw new TypeError('BAZAAR_CATALOGS_FILE must be an absolute trusted configuration path.');
+  if ((await stat(path)).size > 65536) throw new TypeError('Catalog configuration exceeds 64 KiB.');
+  const bytes = await readFile(path);
+  if (bytes.length > 65536) throw new TypeError('Catalog configuration exceeds 64 KiB.');
+  try { return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)); }
+  catch { throw new TypeError('Catalog configuration must contain complete UTF-8 JSON.'); }
+}
+
+export async function startMcpWorkspace({ environment = process.env, oauthFetchImpl, operatorAdapter, discoveryCatalogs } = {}) {
+  const discoveryUrl = environment.BAZAAR_DISCOVERY_URL || undefined;
   const bearerToken = environment.MCP_ACCESS_TOKEN;
   const oauthConfigPath = environment.MCP_OAUTH_CONFIG;
-  if (!discoveryUrl || (!bearerToken && !oauthConfigPath))
-    throw new TypeError('Configure BAZAAR_DISCOVERY_URL and either MCP_ACCESS_TOKEN or MCP_OAUTH_CONFIG.');
+  if (!bearerToken && !oauthConfigPath)
+    throw new TypeError('Configure MCP_ACCESS_TOKEN or MCP_OAUTH_CONFIG.');
   const modulePath = environment.MCP_OPERATOR_MODULE;
   const directory = environment.MCP_STATE_DIR;
   if (modulePath && (!isAbsolute(modulePath) || !directory))
@@ -51,7 +64,14 @@ export async function startMcpWorkspace({ environment = process.env, oauthFetchI
           (operator.agentCommerce !== undefined && typeof operator.agentCommerce !== 'function'))
         throw new TypeError('Export paired approve/signPayment functions, reconciliation or spending inspection functions, or both.');
     }
-    broker = new McpPaidToolBroker({ discoveryUrl, allowedResourceOrigins, quoteStore, resultStore, timeoutMs,
+    const configurations = [discoveryCatalogs, await catalogFile(environment.BAZAAR_CATALOGS_FILE),
+      operator?.discoveryCatalogs].filter(value => value !== undefined)
+      .map(value => normalizeCatalogConfiguration({discoveryUrl,discoveryCatalogs:value}));
+    if (configurations.some(value => JSON.stringify(value) !== JSON.stringify(configurations[0])))
+      throw new TypeError('The trusted host catalog configurations disagree. Select one original configuration.');
+    const catalogs = configurations[0] ?? normalizeCatalogConfiguration({discoveryUrl});
+    broker = new McpPaidToolBroker({ discoveryUrl, discoveryCatalogs:catalogs,
+      allowedResourceOrigins, quoteStore, resultStore, timeoutMs,
       ...(operator ? { ...(operator.signPayment ? {approve:operator.approve,signPayment:operator.signPayment} : {}),
         reconcilePayment:operator.reconcilePayment ?? null,spendingStatus:operator.spendingStatus ?? null,
         agentCommerce: operator.agentCommerce ?? null,
@@ -86,6 +106,7 @@ export async function startMcpWorkspace({ environment = process.env, oauthFetchI
   let closing;
   return {
     broker, server, address, consoleUrl: `${address}/console/`, authorization:access.describe(),
+    catalogs:broker.catalogs(),
     durable: Boolean(quoteStore), paymentAdapterConnected: typeof operator?.signPayment === 'function',
     paymentReconciliationConnected: typeof operator?.reconcilePayment === 'function',
     aggregateSpendingConnected: typeof operator?.spendingStatus === 'function',
@@ -111,7 +132,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   try {
     const args = process.argv.slice(2);
     if (args.length === 1 && ['--help', '-h'].includes(args[0])) {
-      process.stdout.write(`Usage: node serve.mjs\n\nStart the original loopback MCP buyer and browser console.\nRequired: BAZAAR_DISCOVERY_URL and either MCP_ACCESS_TOKEN (at least 24 characters)\nor an absolute MCP_OAUTH_CONFIG path. The two access modes are exclusive.\nOAuth uses the existing issuer, explicit operator subjects and original tool scopes.\nMCP_STATE_DIR retains original quotes and complete native results.\nMCP_PORT defaults to 3210; 0 selects an available port.\nOpen the printed http://127.0.0.1:PORT/console/ URL and enter the same access token.\nPAID_RESOURCE_ORIGINS selects the merchant origins permitted for quotes.\nMCP_CLIENT_ORIGINS allows additional original MCP client origins.\nPaid execution requires an absolute trusted MCP_OPERATOR_MODULE and MCP_STATE_DIR.\nThat host module owns independent approval and signing; the browser cannot approve for it.\nMCP_PROVIDER_TIMEOUT_MS: 1..300000, default 8000.\nGuides: README.md, CONSOLE.md, REMOTE_MCP.md, RESULTS.md, OAUTH_RESOURCE.md.\n`);
+      process.stdout.write(`Usage: node serve.mjs\n\nStart the original loopback MCP buyer and browser console.\nRequired: a configured catalog and either MCP_ACCESS_TOKEN (at least 24 characters)\nor an absolute MCP_OAUTH_CONFIG path. The two access modes are exclusive.\nConfigure BAZAAR_DISCOVERY_URL for one catalog, an absolute BAZAAR_CATALOGS_FILE\nfor a named source list, or discoveryCatalogs in the trusted operator module.\nIf BAZAAR_DISCOVERY_URL is also set, it must match that list's default source.\nOAuth uses the existing issuer, explicit operator subjects and original tool scopes.\nMCP_STATE_DIR retains original quotes and complete native results.\nMCP_PORT defaults to 3210; 0 selects an available port.\nOpen the printed http://127.0.0.1:PORT/console/ URL and enter the same access token.\nPAID_RESOURCE_ORIGINS selects the merchant origins permitted for quotes.\nMCP_CLIENT_ORIGINS allows additional original MCP client origins.\nPaid execution requires an absolute trusted MCP_OPERATOR_MODULE and MCP_STATE_DIR.\nThat host module owns independent approval and signing; the browser cannot approve for it.\nMCP_PROVIDER_TIMEOUT_MS: 1..300000, default 8000.\nGuides: README.md, CATALOGS.md, CONSOLE.md, REMOTE_MCP.md, RESULTS.md, OAUTH_RESOURCE.md.\n`);
     } else {
       if (args.length) throw new TypeError('This launcher uses environment configuration. Use --help for its settings.');
       const workspace = await startMcpWorkspace();

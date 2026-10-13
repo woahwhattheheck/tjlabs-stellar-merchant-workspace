@@ -252,7 +252,7 @@ export async function startMcpStdio({
 export async function main(args = process.argv.slice(2)) {
   if (args.length) {
     if (args.length === 1 && ['--help', '-h'].includes(args[0])) {
-      process.stderr.write('Stellar Forge MCP stdio\n\nLaunch from an MCP host with BAZAAR_DISCOVERY_URL.\nSet MCP_STATE_DIR to retain original quote history. PAID_RESOURCE_ORIGINS\nselects allowed merchant origins. MCP_OPERATOR_MODULE loads the existing\ntrusted approval/signing adapter. Use client-config.mjs to generate host JSON.\n');
+      process.stderr.write('Stellar Forge MCP stdio\n\nLaunch from an MCP host with BAZAAR_DISCOVERY_URL,\nan absolute BAZAAR_CATALOGS_FILE, or discoveryCatalogs exported by the trusted\noperator module. Set MCP_STATE_DIR to retain original quote history.\nPAID_RESOURCE_ORIGINS\nselects allowed merchant origins. MCP_OPERATOR_MODULE loads the existing\ntrusted approval/signing adapter. Use client-config.mjs to generate host JSON.\n');
       return;
     }
     throw new TypeError('stdio takes configuration through the host environment; use --help');

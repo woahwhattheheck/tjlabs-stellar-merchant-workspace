@@ -8,8 +8,8 @@ There is no separate browser purchase backend or result database.
 ## Open your workspace
 
 Start [the HTTP workspace](README.md#start-the-local-http-workspace) with
-`BAZAAR_DISCOVERY_URL`, `MCP_ACCESS_TOKEN` and, for retained quotes and results,
-`MCP_STATE_DIR`. The launcher prints both its MCP address and console URL:
+`BAZAAR_DISCOVERY_URL` or a trusted `BAZAAR_CATALOGS_FILE`, `MCP_ACCESS_TOKEN`
+and, for retained quotes and results, `MCP_STATE_DIR`. The launcher prints both its MCP address and console URL:
 
 ```text
 http://127.0.0.1:3210/console/
@@ -30,14 +30,16 @@ JSON-response MCP transport, including initialization and the advertised tools l
 
 ## Discover and review the exact invocation
 
-Browse the configured live catalog or search it with the customer's words.
+Choose a source from the configured catalog selector, then browse it or search
+with the customer's words. The selector shows the source's original URL;
+**Refresh catalogs** reloads the host's trusted choices.
 Resource type, recipient, network, scheme, asset, extension and maximum amount
 filters use the original advertised values. Inspect a resource to read its
 complete declaration, source observation, input schema and payment alternatives.
 Load another page through the original operation's complete continuation;
 existing rows remain visible. The console shows source coverage, filtered or
 invalid row counts, partial results and any unusable continuation. Apply edited
-search or filter values to start a new discovery operation; page continuation
+catalog, search or filter values to start a new discovery operation; page continuation
 keeps the last applied selection until then. See
 [the complete discovery workflow](DISCOVERY.md) for the native tools and typed client.
 
@@ -56,7 +58,9 @@ concrete endpoint, method, tool, canonical arguments, timestamps and full select
 payment terms. Amounts retain the asset's base units. The additive `acceptedTerms`
 field in quote status/history exposes the complete retained alternative,
 including extra payment-flow terms; `selected` retains its existing compact
-shape. Creating a quote calls neither the merchant nor a signer.
+shape. The retained **source** identifies the original catalog, complete provider
+page and row; quote history and review keep that source after restart. Creating a
+quote calls neither the merchant nor a signer.
 
 ## Request host approval and continue the original quote
 
@@ -153,7 +157,7 @@ transport/body limits and installed typed client.
 
 A host configured with [NATIVE_REGISTRY.md](NATIVE_REGISTRY.md) exposes its full
 service list in the HTTP requests desk. The selected catalog offer shows only
-route/payment-compatible native choices. Each saved request retains its service,
+catalog/route/payment-compatible native choices. Each saved request retains its service,
 original intent, exact input and complete original provider page. Opening history
 from any service restores that request's original service for execution,
 cancellation, recovery and saved-response download. The inbox can show one

@@ -14,6 +14,15 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({
+        "/operations_procedures.mjs": ("operations_procedures.mjs", "text/javascript; charset=utf-8"),
+        "/operations_procedures.css": ("operations_procedures.css", "text/css; charset=utf-8"),
+        "/grant_procedures.mjs": ("grant_procedures.mjs", "text/javascript; charset=utf-8"),
+        "/scf-starforge-20261009/distribution/discovery/operating-plan.mjs":
+            ("../../../scf-starforge-20261009/distribution/discovery/operating-plan.mjs", "text/javascript; charset=utf-8"),
+        "/scf-starforge-20261009/distribution/discovery/catalog.mjs":
+            ("../../../scf-starforge-20261009/distribution/discovery/catalog.mjs", "text/javascript; charset=utf-8"),
+    })
     static.update({"/operations_settlements.mjs": ("operations_settlements.mjs", "text/javascript; charset=utf-8"),
                    "/operations_settlements.css": ("operations_settlements.css", "text/css; charset=utf-8")})
     static.update({"/cohort_delivery_comparison.mjs": ("cohort_delivery_comparison.mjs", "text/javascript; charset=utf-8"),
