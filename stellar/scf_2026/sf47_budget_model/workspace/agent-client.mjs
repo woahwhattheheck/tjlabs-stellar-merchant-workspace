@@ -1278,6 +1278,36 @@ export class GrantWorkspaceClient {
     }
     return this.#request('/api/operations/'+caseId+'/installation-commissioning-review',{body,mutation:false});
   }
+  installationEffortSeed(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','installationId','expectedRevision','asOfDate','document'],
+      ['expectedVersion','installationId','expectedRevision','asOfDate']);
+    integer(body.expectedVersion,'Current case version');
+    integer(body.expectedRevision,'Current installation edition',1,500);
+    id(body.installationId,'installation');
+    completionDate(body.asOfDate);
+    if(Object.hasOwn(body,'document'))object(body.document,'Complete editable Installation document');
+    return this.#request('/api/operations/'+caseId+'/installation-effort-seed',{body,mutation:false});
+  }
+  installationEffortSelection(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','forecastId','installationSelections','name','note'],
+      ['expectedVersion','forecastId','installationSelections']);
+    integer(body.expectedVersion,'Current case version'); id(body.forecastId,'forecast');
+    need(Array.isArray(body.installationSelections)&&body.installationSelections.length>=1&&body.installationSelections.length<=100,
+      'GRANT_INVALID_INPUT','Select one through 100 saved Installation editions.');
+    for(const selected of body.installationSelections){
+      exact(selected,['taskId','installationId','installationRevision','installationSha256'],
+        ['taskId','installationId','installationRevision','installationSha256']);
+      text(selected.taskId,'Original Portfolio task ID',150);
+      id(selected.installationId,'installation');
+      integer(selected.installationRevision,'Saved Installation edition',1,500);
+      sha(selected.installationSha256);
+    }
+    if(Object.hasOwn(body,'name'))text(body.name,'Forecast name',300);
+    if(Object.hasOwn(body,'note'))text(body.note,'Remaining-effort selection note',12000,true);
+    return this.#request('/api/operations/'+caseId+'/installation-effort-selection',{body,mutation:false});
+  }
   installationPreview(caseId, body) {
     id(caseId,'operation');
     exact(body,['expectedVersion','installationId','expectedRevision','document','returnReview'],

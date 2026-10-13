@@ -158,7 +158,7 @@ export class ResearchProgrammeOperator{
    try{await source.close();this.#failed.delete(source);}catch(error){primary??=error;}
    if(primary)throw primary;
    return {schema:RESEARCH_PROGRAMME_OPERATOR_SCHEMA,workspaceId:definition.workspaceId,exportId,
-    selection:selected,file:result,reused:false};
+    selection:selected,file:{...result,path:result.path??result.file},reused:false};
   });
  }
  close(){

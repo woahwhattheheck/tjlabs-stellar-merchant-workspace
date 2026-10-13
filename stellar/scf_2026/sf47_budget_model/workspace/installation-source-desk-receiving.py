@@ -585,6 +585,169 @@ class Receiving:
                 need(actual == expected, "Original native request replay changed its complete receipt.")
 
 
+    def bind_commissioning(self):
+        """Retain the exact saved merchant capture selected for this same run."""
+        if self.args.commissioning_receiving is None:
+            self.commissioning = None
+            return None
+        selected_path = self.args.commissioning_receiving.expanduser().absolute()
+        selected = object_file(selected_path, 8 * 1024 * 1024)
+        need(set(selected) == {"schema", "sourceRoot", "files", "projects"} and
+             selected["schema"] == "stellar-forge.installation-commissioning-run.v1",
+             "Select the complete commissioning receiving descriptor.")
+        source_root = directory(selected["sourceRoot"])
+        need(source_root != self.root and source_root not in self.root.parents and self.root not in source_root.parents,
+             "Keep original capture inputs separate from this run's retained control files.")
+        files, names = selected["files"], set()
+        need(isinstance(files, list) and 5 <= len(files) <= 200,
+             "Select every complete original capture identity and each requested report once.")
+        retained_root = directory(self.control / "commissioning-original-files", create=True)
+        retained = []
+        for item in files:
+            need(isinstance(item, dict) and set(item) == {
+                "filename", "mediaType", "sourceUrl", "observedAt", "bytes", "sha256"},
+                "Retain complete original file identity, MIME type, source and observation.")
+            filename = item["filename"]
+            need(isinstance(filename, str) and
+                 re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,199}", filename) and filename not in names,
+                 "Use each complete receiving filename once.")
+            names.add(filename)
+            raw = regular(source_root / filename, 8 * 1024 * 1024)
+            need(len(raw) == item["bytes"] and sha(raw) == item["sha256"],
+                 "The original commissioning source changed: " + filename)
+            output = retained_root / filename
+            retain(output, raw)
+            retained.append({"selection": deepcopy(item), "receipt": self.remember(output)})
+        need({"commissioning-capture.json", "commissioning-manifest.json",
+              "commissioning-review.json", "commissioning-source.json", "original-workshares.json"} <= names,
+             "Select the complete original capture, review, manifest and Workshare source.")
+        projects = selected["projects"]
+        need(isinstance(projects, list) and 0 < len(projects) <= 200 and
+             all(isinstance(row, dict) and set(row) == {
+                 "projectId", "workshareCaseId", "milestonePhases", "includeAccountSnapshot"} for row in projects),
+             "Retain explicit project, original Workshare case and milestone-to-phase mappings.")
+        keys = [(row["projectId"], row["workshareCaseId"]) for row in projects]
+        need(all(isinstance(first, str) and first and isinstance(second, str) and second for first, second in keys)
+             and len(set(keys)) == len(keys), "Keep each original project / Workshare association once.")
+        binding = {"descriptor": file_receipt(selected_path, 8 * 1024 * 1024),
+                   "selection": selected, "files": retained}
+        self.freeze("commissioning-receiving-selection.json", binding)
+        self.commissioning = binding
+        return binding
+
+    def receive_commissioning(self):
+        """Complete original source intake, reviewed attachment and journal replay."""
+        selected = self.commissioning
+        need(selected is not None, "Select the saved commissioning receiving descriptor.")
+        files = []
+        for index, original in enumerate(selected["files"]):
+            metadata = original["selection"]
+            state = self.desk.get(self.case_id, self.draft_id)
+            existing = next((row for row in state["files"] if row["filename"] == metadata["filename"]), None)
+            if existing is not None:
+                need(all(existing.get(key) == value for key, value in metadata.items()),
+                     "An existing original draft filename selects a different complete file.")
+                _, raw = self.desk.file(self.case_id, self.draft_id, existing["id"], state["revision"])
+                need(sha(raw) == metadata["sha256"] and len(raw) == metadata["bytes"],
+                     "The retained original draft input changed.")
+                files.append(existing)
+                continue
+            def body(original=original, metadata=metadata):
+                raw = regular(original["receipt"]["path"], 8 * 1024 * 1024)
+                need(sha(raw) == metadata["sha256"] and len(raw) == metadata["bytes"],
+                     "The private complete commissioning input changed.")
+                return {**metadata, "contentBase64": base64.b64encode(raw).decode("ascii")}
+            result = self.desk_request("12c-file-" + str(index), "file.add", body)
+            files.append(result["result"]["file"])
+        capture_file = next(row for row in files if row["filename"] == "commissioning-capture.json")
+        results = []
+        for index, mapping in enumerate(selected["selection"]["projects"]):
+            label = "12c-receive-" + str(index)
+            before_path = self.control / (label + "-before.json")
+            preview_path = self.control / (label + "-preview.json")
+            # A request may already have committed before this process recorded
+            # its phase result. Preserve its original input/review and replay.
+            if not (self.requests / (label + ".json")).exists():
+                state = self.desk.get(self.case_id, self.draft_id)
+                inspected = self.desk.commissioning_inspect(self.case_id, self.draft_id, {
+                    "expectedRevision": state["revision"], "captureFileId": capture_file["id"],
+                    "fileIds": [row["id"] for row in reversed(files)]})
+                project = next((row for row in inspected["projects"] if row["id"] == mapping["projectId"]), None)
+                need(project is not None and project["caseId"] == mapping["workshareCaseId"],
+                     "The saved project must name the exact original Workshare case.")
+                candidates = [row for row in self.report["installations"] if row["caseId"] == mapping["workshareCaseId"]]
+                need(len(candidates) == 1, "Select one original Installation created for this exact Workshare case.")
+                target = self.ops.installation(self.case_id, candidates[0]["id"])
+                selection = {"expectedRevision": state["revision"], "captureFileId": capture_file["id"],
+                             "fileIds": [row["id"] for row in reversed(files)],
+                             "expectedVersion": inspected["version"], "projectId": mapping["projectId"],
+                             "installationId": target["id"], "expectedInstallationRevision": target["revision"],
+                             "milestonePhases": deepcopy(mapping["milestonePhases"]),
+                             "includeAccountSnapshot": mapping["includeAccountSnapshot"]}
+                preview = self.desk.commissioning_preview(self.case_id, self.draft_id, selection)
+                normalized = self.desk.commissioning_preview(self.case_id, self.draft_id, {
+                    "expectedRevision": preview["draftRevision"], **preview["selection"]})
+                need(normalized == preview, "The returned normalized selection must replay its complete native review exactly.")
+                self.freeze(before_path.name, {key: value for key, value in target.items() if key != "current"})
+                self.freeze(preview_path.name, preview)
+            preview = object_file(preview_path)
+            before = object_file(before_path)
+            result = self.desk_request(label, "commissioning.attach", lambda: {
+                **preview["selection"], "expectedPreviewSha256": preview["previewSha256"]})
+            received = result["result"]
+            need(received["state"] == "ATTACHED_COMMISSIONING" and
+                 received["previewSha256"] == preview["previewSha256"] and
+                 received["projectId"] == mapping["projectId"] and
+                 received["workshare"]["caseId"] == mapping["workshareCaseId"],
+                 "The original attachment receipt differs from the reviewed association.")
+            after = self.ops.installation(self.case_id, received["installation"]["id"], received["installation"]["revision"])
+            need(after["sha256"] == received["installation"]["sha256"],
+                 "The selected saved Installation differs from its original receiving receipt.")
+            original_document = before["preview"]["document"]
+            document = deepcopy(after["preview"]["document"])
+            attached_ids = {row["sourceId"] for row in received["sources"]}
+            need(attached_ids <= set(document["receiving"]["sourceIds"]),
+                 "The saved original receiving selection lost attached source identities.")
+            target_checks = {row["checkId"] for row in preview["milestonePhases"]}
+            original_checks = {row["id"]: row for row in original_document["checks"]}
+            for check in document["checks"]:
+                if check["id"] in target_checks:
+                    need(attached_ids <= set(check["sourceIds"]), "An explicitly selected phase lost its source references.")
+                else:
+                    need(check["sourceIds"] == original_checks[check["id"]]["sourceIds"],
+                         "An unselected original phase changed its source references.")
+                check["sourceIds"] = deepcopy(original_checks[check["id"]]["sourceIds"])
+            document["receiving"]["sourceIds"] = deepcopy(original_document["receiving"]["sourceIds"])
+            need(document == original_document,
+                 "The complete original acceptance, dates, payment, Workshare and other Installation fields must be unchanged.")
+            generated = [row for row in received["sources"] if row.get("generated")]
+            need(len(generated) == 1, "Retain one complete native capture-to-phase association in the original case.")
+            for file in received["sources"]:
+                metadata, raw = self.ops.source(self.case_id, file["sourceId"])
+                need(sha(raw) == file["sha256"] and len(raw) == file["bytes"],
+                     "An attached complete original source differs from its receipt.")
+                if file.get("generated"):
+                    link = json.loads(raw)
+                    need(link["kind"] == "REVIEWED_CAPTURE_PHASE_BINDING" and
+                         link["capture"]["id"] == received["capture"]["id"] and
+                         link["milestonePhases"] == preview["milestonePhases"],
+                         "The exported native association lost its exact saved capture or phase mapping.")
+            current_version = self.ops.read(self.case_id)["program"]["version"]
+            lookup = self.desk.request(self.case_id, self.draft_id, result["requestId"])
+            saved_request = object_file(self.requests / (label + ".json"))
+            replay = self.desk.command(self.case_id, self.draft_id, saved_request["body"])
+            need(lookup["state"] == "RECORDED" and lookup["result"] == result and replay == result and
+                 self.ops.read(self.case_id)["program"]["version"] == current_version,
+                 "Receiving replay must return its original complete receipt without another source or Installation edition.")
+            self.freeze(label + "-saved.json", {key: value for key, value in after.items() if key != "current"})
+            results.append({"requestId": result["requestId"], "projectId": mapping["projectId"],
+                            "captureId": received["capture"]["id"], "installation": received["installation"],
+                            "sourceCount": len(received["sources"]), "generatedAssociation": generated[0],
+                            "previewSha256": preview["previewSha256"], "receiptSha256": value_sha(result)})
+        return {"schema": "stellar-forge.installation-commissioning-receiving.v1",
+                "selections": len(results), "receipts": results,
+                "originalObservationsPreserved": True, "originalReplayPreserved": True}
+
     def bind_inputs(self):
         self.args.workspace = directory(self.args.workspace)
         need((self.args.workspace / "planning.sqlite3").is_file(), "Select the original existing SF47 workspace.")
@@ -621,6 +784,9 @@ class Receiving:
                      "recordingActor": self.args.actor, "sourceSelection": file_receipt(self.args.selection, 8 * 1024 * 1024),
                      "originalFiles": original_files, "runtime": runtime, "installedSource": source,
                      "scenario": file_receipt(self.args.scenario, 16 * 1024 * 1024)}
+        commissioning = self.bind_commissioning()
+        if commissioning is not None:
+            selection["commissioningReceiving"] = commissioning
         self.freeze("selection.json", selection)
         self.selected = selected
         self.original_files = original_files
@@ -952,6 +1118,13 @@ class Receiving:
                  "The full source draft/history did not reopen in the received workspace.")
             need(operations.read(self.case_id) == self.ops.read(self.case_id),
                  "The original complete native case did not reopen.")
+            commissioning = self.report["phases"].get("12c-original-commissioning-capture-receiving")
+            if commissioning is not None:
+                for received in commissioning["receipts"]:
+                    lookup = desk.request(self.case_id, self.draft_id, received["requestId"])
+                    need(lookup["state"] == "RECORDED" and
+                         value_sha(lookup["result"]) == received["receiptSha256"],
+                         "The complete original commissioning receipt, sources and Installation edition did not reopen.")
             for row in self.prepared()["files"]:
                 _, raw = desk.output(self.case_id, self.draft_id, self.prepared()["id"], row["filename"])
                 need(sha(raw) == row["sha256"], "A complete prepared output failed independent reopening.")
@@ -1025,6 +1198,8 @@ def run_program(args):
             run.phase("10-terminal-complete-file-delivery", run.cli_download)
             run.phase("11-every-native-customer-installation", run.installations)
             run.phase("12-actual-desktop-and-phone-operator", run.browser)
+            if args.commissioning_receiving is not None:
+                run.phase("12c-original-commissioning-capture-receiving", run.receive_commissioning)
             run.phase("13-earlier-business-and-request-preservation", lambda: {
                 "caseVersion": run.verify_original()["program"]["version"], "originalRecordsPreserved": True})
             run.phase("14-complete-native-operations-export", run.final_export)
@@ -1041,6 +1216,8 @@ def run_program(args):
             run.report["state"] = "PASS"
             run.report["resultScope"] = "Complete original-source preparation, native planned Installations, browser receiving and full workspace reopen."
             run.report["commissioning"] = "Original customer acceptance, payment, funding and commissioning state remain unchanged."
+            if args.commissioning_receiving is not None:
+                run.report["resultScope"] += " Saved merchant capture, explicit original phase receiving and full receipt replay."
     except BaseException as error:
         failure = error
         run.report["state"] = "INTERRUPTED"
@@ -1091,6 +1268,8 @@ def main(argv=None):
     parser.add_argument("--expected-case-version", required=True, type=int)
     parser.add_argument("--selection", required=True, type=Path, help="Complete original native source selection JSON")
     parser.add_argument("--source-root", required=True, type=Path, help="Every exact original selected input at its receiving filename")
+    parser.add_argument("--commissioning-receiving", type=Path,
+                        help="Optional complete saved merchant capture files and explicit project/Workshare phase mapping")
     parser.add_argument("--scenario", type=Path, default=HERE.parent / "sf10_current_candidate.json")
     parser.add_argument("--actor", required=True)
     parser.add_argument("--operation-id", default="SCF-INSTALLATION-SOURCE-DESK-2769-20261012")

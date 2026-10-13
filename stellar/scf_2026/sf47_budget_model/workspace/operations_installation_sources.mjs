@@ -1,6 +1,7 @@
 // Complete original-source preparation and native Workshare/Installation handover.
 import {Sha256, sha256File} from './operations_installation_source_hash.mjs';
 import {bindingTemplate, prepareInstallation, renderWorkorder} from '/installation-prepare-core.mjs';
+import {createCommissioningReceivingDesk} from './operations_installation_commissioning.mjs';
 
 const SCHEMA='stellar-forge.installation-source-desk.v1';
 const SELECTION='stellar-forge.installation-source-selection.v1';
@@ -101,7 +102,7 @@ export function mountInstallationSources(root,bridge){
   const journal=new BrowserJournal(caseId+':'+scope.planId+':'+scope.createdAt);
   const initial={schema:SCHEMA,scope,open:false,tab:'files',draftId:null,revision:null,work:null,note:'',newTitle:'',
     upload:{filename:'',mediaType:'application/json',sourceUrl:'',observedAt:''},
-    caseForm:null,pendingId:null,preparationId:null,profileWork:null,
+    caseForm:null,pendingId:null,preparationId:null,profileWork:null,commissioningWork:null,
     inspectionFileId:null,notice:'',error:'',rejected:[]};
   let state=clone(initial),alive=true,busy=false,hostBusy=false,initialized=false;
   let saved=null,edition=null,heads=[],catalogue=null,prepared=null,inspection=null,request=null,chosenFile=null;
@@ -112,9 +113,15 @@ export function mountInstallationSources(root,bridge){
   const current=()=>bridge.context();
   const readonly=()=>hostBusy||!!bridge.readOnlyReason?.();
   const historic=()=>saved&&state.revision!==null&&state.revision!==saved.revision;
-  const workingDirty=()=>!!state.work?.dirty||!!state.caseForm?.dirty||!!state.profileWork?.dirty;
+  const workingDirty=()=>!!state.work?.dirty||!!state.caseForm?.dirty||!!state.profileWork?.dirty||!!state.commissioningWork?.dirty;
   const pending=()=>!!state.pendingId;
   const editing=()=>initialized&&!busy&&!pending()&&!readonly()&&!historic();
+  const commissioning=createCommissioningReceivingDesk({
+    state:()=>state,draft:()=>selectedDraft(),files:()=>files(),caseId,available,editing,historic,
+    requireEdit,changed,render,issue,esc,pretty,stable,header,table,empty,hint,btn,field,
+    api:(suffix,value)=>bridge.api(prefix+'/'+state.draftId+suffix,value),
+    download:downloadBlob
+  });
   function snapshot(){return clone(state);}
   function persistNow(){
     clearTimeout(timer);timer=null;const value=snapshot(),version=generation;
@@ -144,7 +151,7 @@ export function mountInstallationSources(root,bridge){
       };
       node.disabled=(Object.hasOwn(liveDisabled,action)?liveDisabled[action]:node.dataset.sourceFixed==='true')||busy||hostBusy||
         (node.matches('[data-source-edit]')&&!editing())||
-        (!!state.pendingId&&['new','upload','remove','save-selection','prepare','native-receive','attach','case-add','case-remove','case-new','case-edit','profile-seed','profile-apply'].includes(action));
+        (!!state.pendingId&&['new','upload','remove','save-selection','prepare','native-receive','attach','case-add','case-remove','case-new','case-edit','profile-seed','profile-apply','commissioning-open','commissioning-inspect','commissioning-preview','commissioning-attach'].includes(action));
     }
   }
   function checkContext(){
@@ -191,6 +198,7 @@ export function mountInstallationSources(root,bridge){
       state.work.baseRevision=value.revision;state.work.selectionText=value.selection?pretty(value.selection):'';
     }
     state.revision=null;
+    commissioning.onDraftAccepted({replace});
   }
   async function openDraft(id,revision=null,force=false){
     if(pending())throw new Error('Recover the original request before replacing its source draft or selected revision.');
@@ -199,7 +207,7 @@ export function mountInstallationSources(root,bridge){
     const latest=await bridge.api(prefix+'/'+id);
     const value=revision===null||revision===latest.revision?latest:await bridge.api(prefix+'/'+id+'?revision='+revision);
     if(!available()||epoch!==generation)return;
-    state.draftId=id;acceptState(latest,{replace:true});
+    state.draftId=id;state.commissioningWork=null;acceptState(latest,{replace:true});
     if(value.revision!==latest.revision){
       state.revision=value.revision;
       state.work={draftId:id,baseRevision:value.revision,selectionText:value.selection?pretty(value.selection):'',dirty:false};
@@ -218,7 +226,7 @@ export function mountInstallationSources(root,bridge){
     const title=state.newTitle.trim();
     if(!title)throw new Error('Name this complete source preparation.');
     const id='source-desk-'+crypto.randomUUID().replaceAll('-','');
-    state.draftId=id;state.work=null;state.caseForm=null;state.profileWork=null;state.revision=null;saved=null;
+    state.draftId=id;state.work=null;state.caseForm=null;state.profileWork=null;state.commissioningWork=null;state.revision=null;saved=null;
     return issue('create',{title},0);
   }
   function verifyReceipt(value,original){
@@ -247,6 +255,7 @@ export function mountInstallationSources(root,bridge){
     if(value.result?.state==='ATTACHED_SOURCES'){
       state.tab='installation';state.notice='Attached the complete prepared cohort to the original case in one transaction.';
     }
+    commissioning.adoptReceipt(value.result);
     changed();
     try{await persistNow();}catch(error){state.pendingId=original.body.requestId;request=original;throw error;}
     // Once both the receipt and working selection are durable, a failed read is
@@ -256,6 +265,8 @@ export function mountInstallationSources(root,bridge){
       if(value.result?.state==='ATTACHED_SOURCES'){
         await bridge.refreshCase();
         if(available())await readPreparation(value.result.preparationId);
+      }else if(value.result?.state==='ATTACHED_COMMISSIONING'){
+        await bridge.refreshCase();
       }
     }catch(error){state.error='Saved original request; refresh its current case to finish readback. '+(error.message||String(error));changed();}
     return value;
@@ -525,7 +536,7 @@ export function mountInstallationSources(root,bridge){
     state.notice='Selected the original value '+item.text+'. Enter its explicit assigned hours and original unit; native preparation checks the exact conversion.';
   }
   function latestAttachment(){
-    return [...(saved?.attachments||[])].reverse().find(a=>!state.preparationId||a.preparationId===state.preparationId)??null;
+    return [...(saved?.attachments||[])].reverse().find(a=>a.state==='ATTACHED_SOURCES'&&(!state.preparationId||a.preparationId===state.preparationId))??null;
   }
   async function openInstallation(){
     requireEdit();
@@ -851,6 +862,7 @@ export function mountInstallationSources(root,bridge){
       '<details><summary>Your complete retained edited selection</summary><pre>'+esc(state.work.selectionText)+'</pre></details>'+
       (state.caseForm?.dirty?'<details><summary>Your complete edited customer mapping</summary><pre>'+esc(pretty(state.caseForm))+'</pre></details>':'')+
       (state.profileWork?.dirty?'<details><summary>Your complete edited Installation bindings</summary><pre>'+esc(pretty(state.profileWork))+'</pre></details>':'')+
+      (state.commissioningWork?.dirty?'<details><summary>Your complete commissioning receiving selection</summary><pre>'+esc(pretty(state.commissioningWork))+'</pre></details>':'')+
       '<div class="source-desk-actions">'+btn('Keep edited mapping against this reviewed revision','rebase')+btn('Open current saved selection','current-open')+'</div></section>';
   }
   async function rebaseWorking(){
@@ -861,8 +873,8 @@ export function mountInstallationSources(root,bridge){
     state.reconciliations??=[];
     state.reconciliations.push({fromRevision:state.work.baseRevision,reviewedRevision:head.revision,
       editedSelectionText:state.work.selectionText,editedCustomerMapping:clone(state.caseForm),
-      editedProfileBindings:clone(state.profileWork),savedSelection:clone(head.selection),at:new Date().toISOString()});
-    state.work.baseRevision=head.revision;changed();await persistNow();
+      editedProfileBindings:clone(state.profileWork),editedCommissioningReceiving:clone(state.commissioningWork),savedSelection:clone(head.selection),at:new Date().toISOString()});
+    state.work.baseRevision=head.revision;commissioning.rebase();changed();await persistNow();
     state.notice='Kept both complete selections and your edited mapping. Native preparation will verify every source binding before attachment.';
   }
   function recoveryView(){
@@ -879,9 +891,9 @@ export function mountInstallationSources(root,bridge){
   function render(){
     if(!available())return;
     root.hidden=!state.open;
-    const tabs=[['files','1 · Original files'],['mapping','2 · Source mapping'],['outputs','3 · Complete package'],['installation','4 · Installation'],['history','Saved history']];
+    const tabs=[['files','1 · Original files'],['mapping','2 · Source mapping'],['outputs','3 · Complete package'],['installation','4 · Installation'],['commissioning','5 · Receive commissioning'],['history','Saved history']];
     const content=state.tab==='mapping'?mappingView():state.tab==='outputs'?outputsView():state.tab==='installation'?installationView():
-      state.tab==='history'?historyView():filesView();
+      state.tab==='commissioning'?commissioning.render():state.tab==='history'?historyView():filesView();
     root.innerHTML=header('Prepare original source workshares','Complete documents → exact effort mapping → native receiving package → original Installation.',
       btn('Download complete working fields','working-download','',!saved)+btn('Close source desk','close'))+
       '<p data-source-status class="source-desk-status" aria-live="polite"></p>'+
@@ -946,6 +958,7 @@ export function mountInstallationSources(root,bridge){
   root.addEventListener('change',event=>{
     const target=event.target;
     try{
+      if(commissioning.edit(target))return;
       if(target.matches('[data-source-upload]')){
         if(!editing())return;
         chosenFile=target.files?.[0]??null;
@@ -972,6 +985,7 @@ export function mountInstallationSources(root,bridge){
     event.preventDefault();const action=target.dataset.sourceAction;
     if(action==='close'){own(closeView()).catch(error=>{state.error=error.message;status();});return;}
     run(async()=>{
+      if(action.startsWith('commissioning-'))return commissioning.action(action,target);
       if(action==='new')return createDraft();
       if(action==='draft-open')return openDraft(target.dataset.id);
       if(action==='current-open')return openDraft(state.draftId);
@@ -983,6 +997,7 @@ export function mountInstallationSources(root,bridge){
       if(action==='tab'){
         state.tab=target.dataset.tab;changed();
         if(state.tab==='installation'&&!state.profileWork&&latestAttachment()&&!historic())await openInstallation();
+        if(state.tab==='commissioning'&&!state.commissioningWork&&!historic()&&!pending()&&!readonly())commissioning.open();
         return;
       }
       if(action==='working-download')return snapshotDownload();

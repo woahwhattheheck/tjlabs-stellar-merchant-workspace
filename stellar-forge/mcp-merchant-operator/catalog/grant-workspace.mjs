@@ -2,6 +2,7 @@
 import {grantCohortAdoptionTools} from './grant-cohort-adoption.mjs';
 import {grantCohortDeliveryTools} from './grant-cohort-delivery.mjs';
 import {grantPlanningSourceTools} from './grant-planning-sources.mjs';
+import {grantReportingCaptureTools} from './grant-reporting-capture.mjs';
 import {GRANT_CASE_ACTIONS,GRANT_MAX_BUNDLE_BYTES,GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 
 const str = (maximum = 12000) => ({type:'string', maxLength:maximum});
@@ -428,6 +429,7 @@ export const grantWorkspaceTools = [
       note:str(12000), planning:object, filename:nonempty(240)},
     ['workspace','input','expectedInputSha256','kind','name','requestId']),
   ...grantPlanningSourceTools,
+  ...grantReportingCaptureTools,
   tool('cases', 'Read original operating case summaries, optionally for a selected saved plan.',
     {...ws, planId:id('plan')}, ['workspace'], true),
   tool('case', 'Read the entire original operating case, pinned plan, eight record collections, source metadata, reviews, forecasts and portfolios.',
@@ -655,6 +657,15 @@ export const grantWorkspaceTools = [
     {...ws,...caseSelection,...installationSelection,...modelInput,sourceId:id('source'),expectedSourceSha256:digest,
       cycleIds:{type:'array',items:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$'},minItems:1,maxItems:100,uniqueItems:true}},
     ['workspace','caseId','expectedVersion','sourceId','expectedSourceSha256','cycleIds','installationId','expectedRevision'],true),
+  tool('installation_effort_seed', 'Prepare complete original Installation effort and support inputs from the selected source, current native Work inventory and saved case-local phase allocations. Supply an optional complete edited document inline or through the existing verified input reference. The returned /document continues through the original installation_preview and installation_save.',
+    {...ws,...caseSelection,installationId:id('installation'),expectedRevision:installationRevision,...modelInput,asOfDate:supportDate},
+    ['workspace','caseId','expectedVersion','installationId','expectedRevision','asOfDate'],true),
+  tool('installation_effort_selection', 'Open a complete native Forecast draft from the exact current saved Installation effort editions and their reviewed phase remainders. Keep matching original commercial task and source identities. Original cash, price and cost inputs remain in the complete /inputs object for the normal Forecast preview/save, followed by original Portfolio seed.',
+    {...ws,...caseSelection,forecastId:id('forecast'),name:nonempty(300),note:str(12000),
+      installationSelections:{type:'array',minItems:1,maxItems:100,items:{type:'object',additionalProperties:false,
+        properties:{taskId:nonempty(150),installationId:id('installation'),installationRevision,installationSha256:digest},
+        required:['taskId','installationId','installationRevision','installationSha256']}}},
+    ['workspace','caseId','expectedVersion','forecastId','installationSelections'],true),
   tool('installation_preview', 'Review the complete selected customer installation against the original case version and current saved edition. Supply the document as inputs or one exact retained input with inputPointer /document from the seed.',
     {...ws,...caseSelection,...installationSelection,...modelInput,returnReview:installationReviewRef},
     ['workspace','caseId','expectedVersion','installationId','expectedRevision'],true),

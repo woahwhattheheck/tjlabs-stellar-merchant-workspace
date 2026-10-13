@@ -64,7 +64,7 @@ Accepted tag changes are applied to the working material while the imported sour
 
 ## 3. Import complete native grids
 
-In **Source files**, choose one or more native Haystack JSON-v4 files. Enter an optional source URL or provenance reference. The checkbox **Add each imported file to the working selection** controls selection for newly imported sources.
+In **Source files**, choose one or more native Haystack JSON-v4 or Zinc 3.0 files, then choose their actual **Format of these files**. Import files of one format together. Enter an optional source URL or provenance reference. The checkbox **Add each imported file to the working selection** controls selection for newly imported sources.
 
 Choose **Import original files**. Files are imported sequentially. Before sending each source, the browser retains its complete original request, including the file's base64 bytes. The progress line identifies the file currently being imported. Completed earlier files remain retained if a later file needs correction or the connection is interrupted.
 
@@ -346,7 +346,7 @@ Open **Reports & delivery**. Choose the working selection or a saved edition.
 | --- | --- | --- |
 | Asset and point register | Complete selected source set, optionally filtered to sites, equipment or points | JSON, CSV, HTML |
 | Diagnostics report | Complete findings for the selected material | JSON, CSV, HTML |
-| Native source grid | One exact source from the selected material | Native JSON-v4 |
+| Native source grid | One exact source from the selected material | Native JSON-v4 or Zinc 3.0 |
 | Complete editable workspace | Every retained original source, proposal, edition and saved mutation, plus the complete application | Workspace JSON package |
 
 The register retains source IDs, source names, provenance, original row indexes, reference IDs, display names, roles, parent references, source-local relationship targets, kind, unit and complete native tag values. JSON preserves the structured report. CSV includes complete native tags and relationships as JSON fields. HTML includes the complete register and diagnostic tables.
@@ -534,3 +534,11 @@ Open **Work items** to capture findings from the native register or diagnostics,
 The **Point-list modelling** link opens the full source intake, mapping, model editor, standard catalogue, native validation, reporting, returned-work and request-history views in this same workspace. [SEMANTIC_MODELLING.md](SEMANTIC_MODELLING.md) provides the complete workflow and operator commands. It retains every original source row and stable entity identity, complete model versions, exact-version reviews and all native report bytes.
 
 Install the explicitly selected offline standard runtime only when needed, using [SEMANTIC_NATIVE.md](SEMANTIC_NATIVE.md). Physical or live-site observations are recorded with their own author and evidence; successful standard validation does not supply those observations. The complete v3 workspace package receives the original v1 and corrective v2 package inventories as well.
+
+## Reviewed typed-grid projections
+
+Use **Haystack projections** to choose a saved model version, map source columns and typed values, inspect complete lineage, review a version and deliver the native grid. The same workspace retains each corrected return and its explicit row decisions. [PROJECTION.md](PROJECTION.md) provides the full browser and CLI workflow. Complete v4 deliveries retain this projection history and receive the earlier v1, v2 and v3 application inventories.
+
+## Zinc native grids
+
+The same native source workflow accepts explicit `zinc` imports and exports Zinc 3.0 from a selected source or saved edition. JSON-v4 remains the default, tag edits retain their typed JSON representation, and the complete original file is always downloadable. See [Zinc contract](ZINC_CONTRACT.md) for commands, normalization, unsupported representations and complete source references. New complete workspace exports use package v6 and carry the Zinc codec, typed-projection application and VOLTTRON registry desk together. Receiving preserves the published v1, v2, v3, v4 and v5 inventories.

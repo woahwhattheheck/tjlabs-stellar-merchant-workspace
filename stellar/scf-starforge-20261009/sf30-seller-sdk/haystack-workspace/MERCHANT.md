@@ -217,3 +217,7 @@ Prepare the exact wheel archive through `install_semantic_runtime.py` as describ
 The common Applications provider retains that file and its SHA-256 with the saved launch. Start, Open, Stop and reopen use the original controller. The product does not add a second validator selector or process controller. The complete ontology/dependency identity is visible in the modelling view and saved with each actual native result.
 
 `SEMANTIC_BROWSER.mjs` consumes the sole point-modelling programme's existing server and records desktop/mobile operation, exact source downloads, reviewed model edits, interrupted-response recovery, stale peer comparison, complete native outputs and explicit contractor-return decisions. It also exercises the same merchant provider and replays the original saved operations. Actual managed Start/Stop receiving requires the original READY runtime/controller selection and is reported separately until that input is supplied.
+
+## Zinc source aliases
+
+A host input with `kind: "source"` can declare `format: "zinc"` alongside its exact original file path and SHA-256. Omitted format remains `json-v4`; workspace-return aliases keep their original package format. `merchant_haystack_import_file` uses this host-pinned format and retains all original bytes. Native-grid delivery accepts `format: "zinc"` through the original action and download path. See [Zinc contract](ZINC_CONTRACT.md).

@@ -32,6 +32,10 @@ Optional predecessors express delivery dependencies between those tasks. Release
 
 The operator can change resource assignments, dependencies and date assumptions while keeping the complete source task set. Work-scope or quoted-cost changes belong in a new original operating forecast.
 
+## Start from reviewed remaining effort
+
+A saved Installation effort review can prepare a complete Forecast draft using its explicitly reviewed phase remainders. Select the exact current Installation editions and matching original commercial tasks through `installationEffortSelection`, then review and save the returned Forecast input through the existing Forecast workflow. Continue that saved Forecast and the retained phase/source selections in Portfolio. Original cash observations, cost inputs and collection dates stay attached to the full Forecast. [Installation effort and support](INSTALLATION_EFFORT.md) provides the complete operating flow.
+
 ## Allocate saved installation phases
 
 In **Portfolio**, select the original saved forecast, then **Use installation phases**. The source chooser reads current Installation editions prepared from an original Workshare. It shows the edition, customer and quote, original phase owners, dependencies, and delivery and support terms. Choose an edition for the matching commercial task. The task ID, Installation ID, edition number and edition digest stay together in the allocation.

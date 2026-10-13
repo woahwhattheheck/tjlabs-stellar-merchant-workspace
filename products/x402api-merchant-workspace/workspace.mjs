@@ -97,7 +97,7 @@ export class MerchantResult extends VerifiedFile {
   constructor(metadata) { super(); this.metadata = Object.freeze(safeClone(metadata)); }
   _metadata() { return this.metadata; }
 }
-export async function openMerchantWorkspace({ directory, config: input, provider, credential, webhookSecretsByVersion, fulfillment, allowLoopback = false, clock = () => Date.now() }) {
+export async function openMerchantWorkspace({ directory, config: input, provider, credential, webhookSecretsByVersion, fulfillment, allowLoopback = false, clock = () => Date.now(), observationBinding = null }) {
   need(typeof directory === 'string' && isAbsolute(directory), 'ABSOLUTE_PRIVATE_DIRECTORY_REQUIRED');
   const config = validateConfig(input, { allowLoopback });
   need(object(webhookSecretsByVersion) && Object.keys(webhookSecretsByVersion).length > 0, 'WEBHOOK_SECRETS_REQUIRED');
@@ -106,7 +106,7 @@ export async function openMerchantWorkspace({ directory, config: input, provider
   const store = await MerchantStore.open(resolve(directory));
   try {
     await mkdir(join(store.directory, 'results'), { recursive: true, mode: 0o700 });
-    return new MerchantWorkspace({ store, config, upstream, webhookSecretsByVersion, fulfillment, clock });
+    return new MerchantWorkspace({ store, config, upstream, webhookSecretsByVersion, fulfillment, clock, observationBinding });
   } catch (error) { await store.close(); throw error; }
 }
 /** Open saved invoices with the same complete projection and file reader.
@@ -125,8 +125,18 @@ export async function openMerchantReview({ directory, config: input, allowLoopba
     result: view.result.bind(view), tick: async () => undefined, close: view.close.bind(view) });
 }
 export class MerchantWorkspace {
-  constructor({ store, config, upstream, webhookSecretsByVersion, fulfillment, clock }) {
+  constructor({ store, config, upstream, webhookSecretsByVersion, fulfillment, clock, observationBinding = null }) {
     this.store = store; this.config = config; this.upstream = upstream;
+    const selected = observationBinding ?? {
+      kind: 'programmatic-config', configSha256: sha(canonicalJson(config)), inputsSha256: null,
+    };
+    need(object(selected) && ['reviewed-file-inputs', 'configuration-file', 'programmatic-config'].includes(selected.kind) &&
+      typeof selected.configSha256 === 'string' && /^[a-f0-9]{64}$/.test(selected.configSha256) &&
+      (selected.inputsSha256 === null || typeof selected.inputsSha256 === 'string' && /^[a-f0-9]{64}$/.test(selected.inputsSha256)) &&
+      (selected.kind !== 'reviewed-file-inputs' || selected.inputsSha256 !== null), 'OBSERVATION_BINDING_INVALID');
+    this.observationBinding = Object.freeze({ kind: selected.kind,
+      configSha256: selected.configSha256, inputsSha256: selected.inputsSha256,
+      tenantId: config.tenantId, resourceVersionId: config.template.resourceVersionId });
     this.webhookSecretsByVersion = webhookSecretsByVersion; this.fulfillment = fulfillment; this.clock = clock;
     this.locks = new Map(); this.returned = new Map(); this.providerReturns = new Map(); this.closing = false;
     this.projectSnapshot = null;

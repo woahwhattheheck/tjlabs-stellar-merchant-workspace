@@ -221,6 +221,17 @@ export async function importPlanningBook(input) {
   let book;
   try { book = typeof input === 'string' ? JSON.parse(input.replace(/^\uFEFF/, '')) : copy(input); }
   catch { throw new PlanningTableError('BOOK_JSON', 'Open a complete planning source-table project.'); }
+  // Source Tables agent replies retain the same complete native book. Accept their
+  // original response file here so both browser consumers and generated CLI steps
+  // read one selected source without replacing its retained outer bytes.
+  let response = null;
+  if (object(book) && book.schema === 'stellar-forge.sf47-planning-source-agent.v1') {
+    response = book;
+    need(object(response.book) && object(response.baseline) &&
+      typeof response.operation === 'string' && response.operation.length > 0,
+      'BOOK_RESPONSE', 'Retain the complete Source Tables response, its native book and selected baseline.');
+    book = copy(response.book);
+  }
   need(object(book) && book.schema === BOOK_SCHEMA && /^table-plan-[a-f0-9-]{36}$/.test(book.id || ''),
     'BOOK_SCHEMA', 'Use a complete planning source-table project.');
   string(book.name, 'Project name', 200, true);
@@ -269,6 +280,12 @@ export async function importPlanningBook(input) {
   }
   need(book.appliedReviewId === null || reviewIds.has(book.appliedReviewId), 'REVIEW', 'Retain the selected applied review.');
   await validateWorkbookMaterials(book);
+  if (response) {
+    need(response.baseline.id === book.baseline.id &&
+      response.baseline.revision === book.baseline.revision &&
+      response.baseline.contentSha256 === book.baseline.contentSha256,
+      'BOOK_RESPONSE_BASELINE', 'The Source Tables response and its complete book must retain the same native planning baseline.');
+  }
   return book;
 }
 function resolveRule(binding, field, row, existing) {

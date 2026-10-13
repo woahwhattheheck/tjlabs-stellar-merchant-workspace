@@ -1,0 +1,23 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "commerce-receiving",
+  "description": "Original commerce export comparison, explicit reviewer return and complete saved-case receiving",
+  "components": [
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console",
+    "stellar/scf_2026/sf49_data_commissioning",
+    "stellar-forge/mcp-merchant-operator"
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
+    "stellar/scf_2026/sf49_data_commissioning/source-edition-archive.py"
+  ],
+  "commands": {
+    "merchant-commerce-receiving": "stellar/scf-starforge-20261009/sf74-merchant-support-console/commerce-reconciliation-cli.mjs"
+  },
+  "commandDescriptions": {
+    "merchant-commerce-receiving": "Compare selected original commerce exports, record source-bound review and receive through the original saved case"
+  },
+  "exports": {
+    "./merchant/commerce-reconciliation": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commerce-reconciliation.mjs"
+  }
+}

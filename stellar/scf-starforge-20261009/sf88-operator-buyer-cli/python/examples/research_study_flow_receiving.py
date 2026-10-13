@@ -205,8 +205,8 @@ def operate(args, original, out, baseline_bytes, baseline, cancel):
                 delivery = flow.export(out / "exports" / filename, revision=revision,
                     flow_id=flow_id, edition_id=edition_id, format=format, section=section,
                     expected_sha256=item["sha256"], cancel_event=cancel)
-            need(delivery.native["bytes"] == item["bytes"], "Original downloaded length changed")
-            exports.append(delivery.native)
+            need(delivery.delivery["bytes"] == item["bytes"], "Original downloaded length changed")
+            exports.append(delivery.delivery)
         atomic(out / "exports.json", exports)
         need(flow.read(cancel_event=cancel)["dossier"]["revision"] == revision,
              "Receiving changed the original dossier")

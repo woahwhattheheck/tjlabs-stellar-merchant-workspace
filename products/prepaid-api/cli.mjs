@@ -13,8 +13,16 @@ import {runCustomerWorkspaceLifetime}
 import {main as originalMerchantMain}
   from '../../stellar/scf-starforge-20261009/sf101-merchant-receiver/api-application/workspace/cli.mjs';
 
+import {buildPrepaidCommissioning,preparePrepaidCommissioning,inspectPrepaidCommissioning} from './commissioning-native.mjs';
+
 const HELP = [
   'Prepaid API product',
+  '',
+  'starforge prepaid-api commissioning --directory ABS_SETUP --out ABS_PRIVATE_OUTPUT',
+  '  [--document ABS_COMMISSIONING_JSON --actor NAME]',
+  'starforge prepaid-api commissioning-inspect --document ABS_COMMISSIONING_JSON',
+  'starforge prepaid-api commissioning-prepare --document ABS_COMMISSIONING_JSON --out ABS_PRIVATE_OUTPUT',
+  '  [--runtime-workspace-id ACTUAL_ID --runtime-id READY_ID]',
   '',
   'starforge prepaid-api template --out ABS_JSON',
   'starforge prepaid-api prepare --directory ABS --request ABS_JSON',
@@ -85,6 +93,19 @@ const output = value => {if (value !== undefined) process.stdout.write(encoded(v
 export async function main(argv = process.argv.slice(2)) {
   const {command, values} = argumentsOf([...argv]);
   if (command === 'help') {process.stdout.write(HELP + '\n'); return;}
+  if (command === 'commissioning') {
+    only(values, ['directory', 'out', 'document', 'actor']);
+    return buildPrepaidCommissioning({directory:value(values,'directory'),out:value(values,'out'),
+      document:value(values,'document'),actor:value(values,'actor','merchant-operator')});
+  }
+  if (command === 'commissioning-inspect') {
+    only(values, ['document']);return inspectPrepaidCommissioning(value(values,'document'));
+  }
+  if (command === 'commissioning-prepare') {
+    only(values, ['document','out','runtime-workspace-id','runtime-id']);
+    return preparePrepaidCommissioning({document:value(values,'document'),out:value(values,'out'),
+      workspaceId:value(values,'runtime-workspace-id'),runtimeId:value(values,'runtime-id')});
+  }
   if (command === 'template') {
     only(values, ['out']);
     const path = absolute(value(values, 'out'));

@@ -63,7 +63,7 @@ export function oauthCaptureView(capture,currentInputs) {
   };
 }
 
-function continuity(before,after,label) {
+function continuity(before,after,label,{unattributed=false}={}) {
   const problems=[];
   if(!record(before)||!record(after))return [label+': missing stage counters'];
   for(const stage of STAGES) {
@@ -72,7 +72,12 @@ function continuity(before,after,label) {
     for(const key of COUNTS) {
       if(!nonnegative(a[key])||!nonnegative(b[key]))
         problems.push(label+'.'+stage+'.'+key+': unavailable counter');
-      else if(b[key]<a[key])problems.push(label+'.'+stage+'.'+key+': cumulative count decreased');
+      // A pending authentication is initially unattributed. The original
+      // observer moves its started check to the verified issuer on success.
+      // Only this attribution balance may decrease; completions and outcomes
+      // remain cumulative, as do all aggregate stage counters.
+      else if(b[key]<a[key]&&!(unattributed&&stage==='authentication'&&key==='started'))
+        problems.push(label+'.'+stage+'.'+key+': cumulative count decreased');
     }
     if(!record(a.outcomes)||!record(b.outcomes)){
       problems.push(label+'.'+stage+'.outcomes: unavailable outcome counts');continue;
@@ -104,11 +109,35 @@ function issuerContinuity(before,after) {
   if(!Array.isArray(before)||!Array.isArray(after))
     return ['issuers: missing original issuer counter inventory'];
   const right=new Map(after.map(row=>[row.issuer,row])),problems=[];
+  let verifiedCompletions=0;
   for(const row of before) {
     const next=right.get(row.issuer);
     if(!next){problems.push('issuers: a previously observed issuer bucket is missing');continue;}
-    problems.push(...continuity(row.counters,next.counters,'issuer '+(row.issuer??'unattributed')));
+    const label='issuer '+(row.issuer??'unattributed');
+    problems.push(...continuity(row.counters,next.counters,label,
+      {unattributed:row.issuer===null}));
+    if(row.issuer!==null) {
+      const a=row.counters?.authentication,b=next.counters?.authentication;
+      if(record(a)&&record(b)&&
+          [a.started,b.started,a.completed,b.completed,a.allowed,b.allowed,
+            a.outcomes?.ALLOWED,b.outcomes?.ALLOWED].every(nonnegative)) {
+        const completed=b.completed-a.completed;
+        // The original verifier returns the authenticated issuer only on success.
+        // Its synchronous finish moves one start and adds that same ALLOWED
+        // completion; an unexplained transfer cannot be accepted as attribution.
+        if(b.started-a.started!==completed||b.allowed-a.allowed!==completed||
+            b.outcomes.ALLOWED-a.outcomes.ALLOWED!==completed)
+          problems.push(label+'.authentication: attributed starts must match verified ALLOWED completions');
+        if(completed>=0&&Number.isSafeInteger(verifiedCompletions+completed))
+          verifiedCompletions+=completed;
+        else problems.push(label+'.authentication: invalid verified completion growth');
+      }
+    }
   }
+  const a=before.find(row=>row.issuer===null)?.counters?.authentication?.started;
+  const b=right.get(null)?.counters?.authentication?.started;
+  if(nonnegative(a)&&nonnegative(b)&&a-b>verifiedCompletions)
+    problems.push('issuer unattributed.authentication.started: decrease exceeds verified completions');
   return problems;
 }
 function issuerDelta(before,after) {
@@ -177,7 +206,7 @@ export function compareOAuthCaptures(before,after) {
   if(problems.length) {
     view.sourceIntegrity=true;view.continuityProblems=problems;
     return result('OAUTH_COUNTERS_CHANGED',
-      'At least one cumulative counter or issuer bucket is unavailable or decreased inside the same original session. The case keeps both sources and makes no incremental activity claim.');
+      'At least one cumulative counter or issuer attribution is unavailable, regressed or inconsistent with verified completions inside the same original session. The case keeps both sources and makes no incremental activity claim.');
   }
   if(a.coverage!=='COMPLETE'||b.coverage!=='COMPLETE')
     return result('OAUTH_OBSERVER_INCOMPLETE',

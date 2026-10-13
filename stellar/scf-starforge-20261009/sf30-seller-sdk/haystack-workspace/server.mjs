@@ -104,7 +104,7 @@ export async function startServer({ directory, title = "Building turnover", host
       const sourceMatch = /^\/api\/source\/([0-9a-f]{64})$/.exec(url.pathname);
       if (request.method === "GET" && sourceMatch) {
         const { source, bytes } = await workspace.originalSource(sourceMatch[1]);
-        attachment(response, bytes, { name: source.name, mediaType: "application/json", sha256: source.id }, request.headers.range); return;
+        attachment(response, bytes, { name: source.name, mediaType: source.format === "zinc" ? "text/zinc; charset=utf-8" : "application/json", sha256: source.id }, request.headers.range); return;
       }
       const deliveryMatch = /^\/api\/delivery\/([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/.exec(url.pathname);
       if (request.method === "GET" && deliveryMatch) {

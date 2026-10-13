@@ -8,9 +8,11 @@ export const OPERATING_RETURN_MAX_BYTES = 128 * 1024 * 1024;
 export const OPERATING_RETURN_PLAN_MAX_BYTES = 32 * 1024 * 1024;
 export const OPERATING_RETURN_CHOICES = Object.freeze(['current', 'incoming', 'base', 'custom']);
 const PLAN_FIELDS = ['title', 'customer', 'purpose', 'period', 'owner', 'receiving', 'notes'];
-const STEP_FIELDS = ['title', 'instruction', 'inputs', 'expectedResult', 'owner', 'due'];
+const STEP_FIELDS = ['title', 'instruction', 'inputs', 'expectedResult', 'owner', 'due', 'files'];
 const WORK_FIELDS = ['title', 'instruction', 'inputs', 'expectedResult', 'argv', 'selection'];
 const RESULT_FIELDS = ['status', 'recordedResult'];
+const resultChanged = (left, right) => !same(pick(left, RESULT_FIELDS), pick(right, RESULT_FIELDS)) ||
+  !same(left.files ?? [], right.files ?? []);
 const pick = (value, keys) => Object.fromEntries(keys.map(key => [key, value[key]]));
 const ORDER_KEY = '/steps/@order';
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -102,8 +104,8 @@ function comparisons(source) {
     } else {
       const currentWork = pick(current, WORK_FIELDS), incomingWork = pick(incoming, WORK_FIELDS);
       const crossedResult = !same(currentWork, incomingWork) &&
-        ((!same(currentWork, pick(base, WORK_FIELDS)) && !same(pick(incoming, RESULT_FIELDS), pick(base, RESULT_FIELDS))) ||
-         (!same(incomingWork, pick(base, WORK_FIELDS)) && !same(pick(current, RESULT_FIELDS), pick(base, RESULT_FIELDS))));
+        ((!same(currentWork, pick(base, WORK_FIELDS)) && resultChanged(incoming, base)) ||
+         (!same(incomingWork, pick(base, WORK_FIELDS)) && resultChanged(current, base)));
       if (crossedResult) {
         const item = row('/steps/' + id, 'step-context', title + ' · work and recorded results', base, current, incoming, id);
         item.automatic = null; item.conflict = true;
@@ -112,7 +114,9 @@ function comparisons(source) {
       } else {
         for (const field of STEP_FIELDS) {
           const item = row('/steps/' + id + '/' + field, 'step-field', title + ' · ' + label(field),
-            base[field], current[field], incoming[field], id);
+            field === 'files' ? base.files ?? [] : base[field],
+            field === 'files' ? current.files ?? [] : current[field],
+            field === 'files' ? incoming.files ?? [] : incoming[field], id);
           if (item) rows.push(item);
         }
         const item = row('/steps/' + id + '/@command', 'step-command', title + ' · registration and command arguments',

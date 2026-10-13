@@ -82,13 +82,16 @@ export async function readHaystackWorkspaceConfiguration(path) {
       if (input.kind === "point-list") {
         need(["csv", "tsv"].includes(input.format), "Declare the original point-list format as csv or tsv.");
         need(input.delimiter === undefined || [",", "\t", ";"].includes(input.delimiter), "Declare the actual comma, tab or semicolon point-list delimiter.");
-      } else need(input.format === undefined && input.delimiter === undefined, "Format and delimiter belong only to a point-list alias.");
+      } else if (input.kind === "source") {
+        need(input.format === undefined || ["json-v4", "zinc"].includes(input.format), "Declare the original grid format as json-v4 or zinc.");
+        need(input.delimiter === undefined, "A native grid does not use a point-list delimiter.");
+      } else need(input.format === undefined && input.delimiter === undefined, "A complete returned workspace does not use a source format or delimiter.");
       const selected = resolve(base, text(input.path, "original input file"));
       entry.inputs[name] = {
         label: text(input.label ?? name, "input label", 240), path: selected, kind: input.kind,
         sha256: input.sha256, name: text(input.name ?? basename(selected), "input name", 240),
-        mediaType: text(input.mediaType ?? (input.kind === "point-list" ? input.format === "tsv" ? "text/tab-separated-values" : "text/csv" : "application/json"), "media type", 160),
-        ...(input.kind === "point-list" ? { format: input.format, ...(input.delimiter === undefined ? {} : { delimiter: input.delimiter }) } : {}),
+        mediaType: text(input.mediaType ?? (input.kind === "point-list" ? input.format === "tsv" ? "text/tab-separated-values" : "text/csv" : input.kind === "source" && input.format === "zinc" ? "text/zinc; charset=utf-8" : "application/json"), "media type", 160),
+        ...(input.kind === "point-list" ? { format: input.format, ...(input.delimiter === undefined ? {} : { delimiter: input.delimiter }) } : input.kind === "source" ? { format: input.format ?? "json-v4" } : {}),
         sourceReference: input.sourceReference === undefined ? "" : text(input.sourceReference, "source reference")
       };
     }

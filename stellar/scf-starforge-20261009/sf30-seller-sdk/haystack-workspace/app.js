@@ -69,7 +69,7 @@ function controls(){
   $("edit-value").disabled=S.busy||$("edit-action").value==="remove";
   $("save-source-selection").disabled=unavailable||!S.sourceDirty;
   const native=$("report-kind").value==="native-grid";
-  $("report-format").disabled=S.busy||native;
+  $("report-format").disabled=S.busy;
   $("report-source").disabled=S.busy||!native;
   $("report-role").disabled=S.busy||native||["diagnostics","work-register"].includes($("report-kind").value);
   $("report-edition").disabled=S.busy||$("report-kind").value==="work-register";
@@ -364,20 +364,20 @@ function renderSelectionNote(){
 }
 async function downloadSource(source){
   const bytes=await S.client.sourceBytes(source.id);
-  saveFile(bytes,source.name,"application/json");
+  saveFile(bytes,source.name,source.format==="zinc"?"text/zinc; charset=utf-8":"application/json");
   notice("Downloaded the complete verified original source: "+source.name+".");
 }
 async function importSources(){
   requireWorkspace();
-  const files=[...$("source-files").files],sourceUrl=$("source-url").value.trim(),select=$("source-import-select").checked;
-  if(!files.length)throw new Error("Choose at least one native JSON-v4 grid.");
+  const files=[...$("source-files").files],sourceUrl=$("source-url").value.trim(),select=$("source-import-select").checked,format=$("source-import-format").value;
+  if(!files.length)throw new Error("Choose at least one native JSON-v4 or Zinc grid in the selected format.");
   let imported=0,retained=0;
   for(let index=0;index<files.length;index++){
     const file=files[index];
     if(file.size<1||file.size>32*1024*1024)throw new Error("Import a complete original grid of 1 byte to 32 MiB: "+file.name);
     $("import-progress").textContent="Importing "+(index+1)+" of "+files.length+": "+file.name;
     const base64=await fileBase64(file);
-    const result=await mutate("source.import",cleanArgs({name:file.name,base64,sourceUrl,format:"json-v4",select}));
+    const result=await mutate("source.import",cleanArgs({name:file.name,base64,sourceUrl,format,select}));
     if(result.alreadyRetained)retained++;else imported++;
     await synchronize();
   }
@@ -645,7 +645,10 @@ async function loadComparison(offset=0,reset=false){
 function reportRules(){
   const kind=$("report-kind").value;
   if(kind!=="native-grid")$("report-source").value="";
-  if(kind==="native-grid"){$("report-format").value="json";$("report-help").textContent="Choose one exact source. The export is a complete native JSON-v4 grid for that source, including accepted changes in the selected edition.";}
+  const formats=kind==="native-grid"?["json","zinc"]:["json","csv","html"];
+  for(const option of $("report-format").options){option.disabled=!formats.includes(option.value);option.hidden=option.disabled;}
+  if(!formats.includes($("report-format").value))$("report-format").value="json";
+  if(kind==="native-grid"){$("report-help").textContent="Choose one exact source and JSON or Zinc. The export includes accepted changes in the selected edition. Zinc applies standard typed-value normalization; the original download preserves every source byte.";}
   else if(kind==="diagnostics")$("report-help").textContent="The report includes every finding and its source or record reference for the chosen scope.";
   else if(kind==="work-register")$("report-help").textContent="The complete corrective work register includes current assignment, progress, source context and retained evidence across this workspace.";
   else $("report-help").textContent="The report includes every source-linked asset or point in the chosen scope, with native tag values.";

@@ -1,5 +1,7 @@
 # Prepaid API: merchant setup, original purchase and customer workspace
 
+The complete [commissioning desk](COMMISSIONING.md) provides guided original request authoring, exact native preparation, managed Applications setup and complete portable receiving. Start with `starforge prepaid-api commissioning --directory ABS_SETUP --out ABS_PRIVATE_OUTPUT`, then continue the maintained commands below.
+
 This selected product turns a reviewed application and its payment terms into an API allowance that a customer can purchase and use from the original browser or agent client. It includes a complete numeric-series application, a retained merchant setup, offer publication, original customer handoffs, complete file receiving and a customer launcher that opens the existing purchase or access workspace.
 
 The selected installation carries the original merchant console, checkout and delivery engines, API gateway and application worker, customer workspace, Buyer/Inbox, original approval bridge, both source-owned MCP providers and the native backup receiver. Its source selection is `prepaid-api`. The normal cumulative toolkit also includes the `prepaid-api` command through this product's own distribution contribution.

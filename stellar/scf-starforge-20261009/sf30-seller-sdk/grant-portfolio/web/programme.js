@@ -3,6 +3,7 @@
 function GrantProgrammeConsole(H) {
   const {state, node, button, field, panel, heading, metric, table, api, response,
     action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName} = H;
+  const recipientProjects = GrantRecipientProjects(H);
   const U = {register:"overview", nodeId:"", grantId:"", search:"", archived:false,
     offset:0, actor:"", schema:null, selection:null};
   const names = {nodes:"Programmes and projects", partners:"Partners and applicants", grants:"Grants and subgrants",
@@ -555,7 +556,8 @@ function GrantProgrammeConsole(H) {
     if (epoch !== state().epoch) return;
     resetSelection();
     const controls = [];
-    if (model() && editable()) controls.push(button("Reporting settings", settings));
+    if (model() && editable()) controls.push(button("Reporting settings", settings),
+      button("Import application plan", () => recipientProjects.open().catch(failure)));
     container.append(heading("Programme delivery", "Projects, partners, grants, workplans, results, evidence and donor reporting.", controls));
     if (!model()) { introduction(container); return; }
     container.append(node("p", "Portfolio revision " + p().revision + " · Programme revision " + model().revision +

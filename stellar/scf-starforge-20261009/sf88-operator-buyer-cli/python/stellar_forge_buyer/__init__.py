@@ -20,6 +20,7 @@ if _TYPE_CHECKING:
     from .recovery import WorkspaceRecovery, WorkspaceRecoveryResult, WorkspaceRecoveryProcess, WorkspaceRecoveryError
     from .result import AccountingResult, BuyerResult, FileDelivery, FileTransfer, SessionAccountingResult
     from .research_workspace import ResearchWorkspace, ResearchError
+    from .research_remote_programmes import ResearchRemoteProgrammes, ResearchRemoteResult, ResearchRemoteError
     from .research_commerce import ResearchCommerce, ResearchCommerceArchive
     from .research_quotes import ResearchQuotes, ResearchQuoteExport, ResearchQuoteBundle
     from .research_quote_programmes import ResearchQuoteProgrammes, ResearchQuoteProgrammeHandover
@@ -39,6 +40,7 @@ __all__ = [
     "ResearchQuoteProgrammes", "ResearchQuoteProgrammeHandover",
     "ResearchStudyFlow",
     "ResearchWorkspace", "ResearchError", "ResearchExtraction", "ResearchDocuments", "ResearchPipelines",
+    "ResearchRemoteProgrammes", "ResearchRemoteResult", "ResearchRemoteError",
     "ResearchSelection", "ResearchInputFile", "ResearchDocumentSource",
     "AcquisitionWorkspace", "AcquisitionResult", "AcquisitionProcess", "AcquisitionError",
     "WorkspaceRecovery", "WorkspaceRecoveryResult", "WorkspaceRecoveryProcess", "WorkspaceRecoveryError",
@@ -65,6 +67,9 @@ _EXPORTS = {
     "ResearchQuoteBundle": ".research_quotes",
     "ResearchCommerce": ".research_commerce",
     "ResearchCommerceArchive": ".research_commerce",
+    "ResearchRemoteProgrammes": ".research_remote_programmes",
+    "ResearchRemoteResult": ".research_remote_programmes",
+    "ResearchRemoteError": ".research_remote_programmes",
     "ResearchWorkspace": ".research_workspace",
     "ResearchError": ".research_workspace",
     "ResearchExtraction": ".research_extraction",

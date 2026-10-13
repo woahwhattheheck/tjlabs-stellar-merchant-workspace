@@ -1,0 +1,127 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "grant-accounts-operating-desk",
+  "heading": "## Original grant accounts and saved operating work",
+  "sources": [
+    {
+      "id": "grant-account-statements",
+      "label": "Original bank statements, exact cash review and account receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENTS.md",
+      "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+      "editions": [
+        {
+          "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+          "git_blob": "07d326f7c94ededada48ca2392db6caed511b8b1",
+          "bytes": 24417
+        }
+      ]
+    },
+    {
+      "id": "grant-bank-source-readers",
+      "label": "Original OFX / QFX and MT940 account selection and source translation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statement_formats.py",
+      "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+      "editions": [
+        {
+          "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+          "git_blob": "40c97a693ea9fd17cc54cf290e8053bfc3888c3f",
+          "bytes": 26033
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-cash-receiving",
+      "label": "Original account identity, reviewed statement batches and atomic cash receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statements.py",
+      "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+      "editions": [
+        {
+          "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+          "git_blob": "c52a1a50e48405fa15020f95566f10d116dfa3b8",
+          "bytes": 46396
+        }
+      ]
+    },
+    {
+      "id": "grant-operating-desk",
+      "label": "Complete grouped navigation, case finder and original record handoff",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/OPERATING_DESK.md",
+      "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+      "editions": [
+        {
+          "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+          "git_blob": "3bee76039e64eeb79645eefd06d714c7caa3cffc",
+          "bytes": 6024
+        }
+      ]
+    },
+    {
+      "id": "grant-saved-operating-workflows",
+      "label": "Six-family saved source and edition discovery with original desk reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/SAVED_WORKFLOWS.md",
+      "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+      "editions": [
+        {
+          "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+          "git_blob": "66b8e6262f1ff36bde9c074dab3db1fd30b9e368",
+          "bytes": 10315
+        }
+      ]
+    },
+    {
+      "id": "grant-saved-workflow-read-model",
+      "label": "Original saved-source summaries, case version and role-scoped discovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_workflows.py",
+      "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+      "editions": [
+        {
+          "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+          "git_blob": "c47f059b42fe2929f145168fb14973fd39e8bf30",
+          "bytes": 11125
+        }
+      ]
+    },
+    {
+      "id": "grant-statements-original-receiving",
+      "label": "Complete original browser, native account, independent import and cold receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/scf-statements-original-32c2-20261013/README.md",
+      "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+      "editions": [
+        {
+          "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+          "git_blob": "b5d0a066e58b26e6a132f83d8ed6093d4bcf4cf0",
+          "bytes": 9130
+        }
+      ]
+    },
+    {
+      "id": "grant-statements-native-controller",
+      "label": "Original statement replay, cash correction, native bank imports and account export",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/scf-statements-original-32c2-20261013/receive-original-statements.py",
+      "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+      "editions": [
+        {
+          "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+          "git_blob": "e7aae0e6711d1b27d816d584cf5a8df318291d56",
+          "bytes": 24120
+        }
+      ]
+    }
+  ]
+}

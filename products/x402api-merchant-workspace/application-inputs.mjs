@@ -25,14 +25,14 @@ export function merchantInputFiles(value = []) {
   need(new Set(paths).size === paths.length, 'MERCHANT_APPLICATION_INPUT_FILES_DUPLICATE');
   return paths.sort();
 }
-export async function readMerchantInput(path, { maximum = 4 * 1024 * 1024, collect = false, privateOnly = false } = {}) {
+export async function readMerchantInput(path, { maximum = 4 * 1024 * 1024, collect = false, privateOnly = false, allowMultipleLinks = false } = {}) {
   absolute(path);
   need(await realpath(dirname(path)) === dirname(path), 'MERCHANT_APPLICATION_REAL_INPUT_REQUIRED');
   const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const before = await handle.stat();
     need(before.isFile() && before.size <= maximum, 'MERCHANT_APPLICATION_REGULAR_INPUT_REQUIRED');
-    if (privateOnly) need(before.nlink === 1 && !(before.mode & 0o077) &&
+    if (privateOnly) need((before.nlink === 1 || allowMultipleLinks === true && before.nlink > 1) && !(before.mode & 0o077) &&
       (process.getuid === undefined || before.uid === process.getuid()), 'MERCHANT_APPLICATION_PRIVATE_CONFIG_REQUIRED');
     const digest = createHash('sha256'), chunks = [];
     const buffer = Buffer.allocUnsafe(65536); let bytes = 0;
