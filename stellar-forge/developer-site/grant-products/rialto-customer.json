@@ -257,6 +257,66 @@
           "sha256": "8c06dc4750247b3f8b0eebe93169b85ff941184daf0129793eea12ac2bdbc463"
         }
       ]
+    },
+    {
+      "id": "rialto-acquisition-progress-runtime",
+      "label": "Complete original Rialto acquisition progress and private source receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/capture-progress.mjs",
+      "commit": "802f9a74f152777461119f30805b93c621eb2ebb",
+      "editions": [
+        {
+          "commit": "802f9a74f152777461119f30805b93c621eb2ebb",
+          "bytes": 20132,
+          "sha256": "227cc86a47c3d1f44e4e8c5351834f12b657bfdecc0bcf44f85dc374f2ed683b"
+        }
+      ]
+    },
+    {
+      "id": "rialto-acquisition-progress-customer",
+      "label": "Maintained customer commands for partial acquisition and independent reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/customer.mjs",
+      "commit": "802f9a74f152777461119f30805b93c621eb2ebb",
+      "editions": [
+        {
+          "commit": "802f9a74f152777461119f30805b93c621eb2ebb",
+          "bytes": 20474,
+          "sha256": "5e2f162be6ebdce81789c65008cc3fd654cc7dc406ff2ef354504e627321157d"
+        }
+      ]
+    },
+    {
+      "id": "rialto-acquisition-progress-guide",
+      "label": "Whole failed and partial capture, interpretation, transfer and resume guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/CAPTURE_PROGRESS.md",
+      "commit": "802f9a74f152777461119f30805b93c621eb2ebb",
+      "editions": [
+        {
+          "commit": "802f9a74f152777461119f30805b93c621eb2ebb",
+          "bytes": 9488,
+          "sha256": "05b16b5179ad4bdb004631b43c5225c971ef528d4f5d92b1d02af0c4ff11b084"
+        }
+      ]
+    },
+    {
+      "id": "rialto-acquisition-progress-operating",
+      "label": "Complete Rialto acquisition, comparison, customer and Installation operating course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/OPERATING.md",
+      "commit": "802f9a74f152777461119f30805b93c621eb2ebb",
+      "editions": [
+        {
+          "commit": "802f9a74f152777461119f30805b93c621eb2ebb",
+          "bytes": 14546,
+          "sha256": "421e14a2aaf52ac67e7f79bf4dcd77b13797ce6337c581a607d684faab991e02"
+        }
+      ]
     }
   ]
 }
