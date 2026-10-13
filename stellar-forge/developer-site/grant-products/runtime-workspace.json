@@ -1702,6 +1702,411 @@
           "git_blob": "e78923ad7dbfba9ecd34805d3c45801ab455ff43"
         }
       ]
+    },
+    {
+      "id": "runtime-retained-configuration-operation-guide",
+      "label": "Managed operation history and source-preserving configuration recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/MANAGED_OPERATIONS.md",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 17204,
+          "sha256": "64648529d97e2bd299bbd1a3058c22d3f65e627cfbe5cc6f4efc4384b5503314"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-config-output-assets",
+      "label": "Complete installed configuration and output browser assets",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/browser-assets.json",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 6657,
+          "sha256": "bc389e31e53840b9adeccd009fbed2823fe648ef5c6a1c945f459af861f910f9"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-config-output-cli",
+      "label": "Installed configuration edition and whole-output search commands",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/cli.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 37616,
+          "sha256": "0d5db4f4b1f1899bbadb559e49c7d83dded1ac331cf6bfd1ecc2cf097e9b98f3"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-configuration-writer",
+      "label": "Original managed writer with complete before/after configuration editions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-workspace.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 28592,
+          "sha256": "8df375536ce30e759978413c950ae9f9dbffdd14beef3f140f06f45f9935038a"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-config-output-model",
+      "label": "Current original Runtime model, read methods and shared lifecycle",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 56315,
+          "sha256": "c86b8bddb91cc9fd3282911a5df56e5b64552f620bc4406828b954664d447e82"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-configuration-integration",
+      "label": "Managed releases browser and original configuration integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/managed.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 21607,
+          "sha256": "e62a9742bc9e1fc58b3b3c686ab12a45f07726b04f8f6f4117ba9af9ddf40105"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-config-output-server",
+      "label": "Authenticated original Runtime routes and one-use complete downloads",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 55848,
+          "sha256": "522740b594c81d39e0ff5a9e50c3acce1125008846c19f4a1164d0e0fd393652"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-output-operator",
+      "label": "Original complete output reader and source-specific operator workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/OUTPUT.md",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 14760,
+          "sha256": "49b1225e6f158a528496c780986687c2d3c531f26ea176056af3d0f6e6c278b5"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-output-reader",
+      "label": "Original fixed-end output handles, search and full streamed export",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-output.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 18138,
+          "sha256": "193610edec9e1398a6e1d82e78f8e5e5343231253a15d984e8f6bde359875119"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-output-browser",
+      "label": "Original Applications reader, search and byte-context navigation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-output.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 11235,
+          "sha256": "c77c75fa8d925a7560c82aee2149a9cc8572b11754f4dd070c58101f028abb40"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-output-runtime-browser",
+      "label": "Runtime and installation-attempt browser source binding",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/runtime-output.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 7284,
+          "sha256": "cd69d69b4aaed4d9be6d5b8ae5bc05b497a46b8e7bf2eaba51d61f92ab7914d0"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-output-runtime-reader",
+      "label": "Original worker and installation-attempt source resolution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/runtime-output.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 7481,
+          "sha256": "cbfd198c22192d274d3cee3a4aa4aa44a84043fe965f57b94d241d868610ce0d"
+        }
+      ]
+    },
+    {
+      "id": "runtime-configuration-history-distribution",
+      "label": "Complete configuration-history installed source contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/runtime-configuration-history.json",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 1532,
+          "sha256": "2a68982cac234c3766ff52ae429d1a81953aae51aca4717e003e24bd1449eae9"
+        }
+      ]
+    },
+    {
+      "id": "runtime-configuration-history-guide",
+      "label": "Whole managed configuration editing, recovery and receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/MANAGED_CONFIGURATION.md",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 7993,
+          "sha256": "ffaefbbfff5e45a77fb40ec89bef63a9bc15faea06e83d819f7abf3c8e59e728"
+        }
+      ]
+    },
+    {
+      "id": "runtime-configuration-history-model",
+      "label": "Complete immutable configuration edition, identity and recovery engine",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-configuration-history.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 10991,
+          "sha256": "6c8a9e898cef61432aee5ae4a9c34f62f8b1a9abbc238fcfc1301efbfe8f47da"
+        }
+      ]
+    },
+    {
+      "id": "runtime-configuration-history-drafts",
+      "label": "Independent exact-file browser drafts and retained legacy migration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/managed-configuration-drafts.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 3386,
+          "sha256": "6a6820f33f52b9e405437f59d7cbd2005ff938134c8f7946c0287ae9ed63c182"
+        }
+      ]
+    },
+    {
+      "id": "runtime-configuration-history-style",
+      "label": "Installed responsive configuration editing layout",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/managed-configuration.css",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 974,
+          "sha256": "ed4c74cdf67c3f8e7a0159cc892e3368d0a4ba531b297281eecedc626b75014a"
+        }
+      ]
+    },
+    {
+      "id": "runtime-configuration-history-browser",
+      "label": "Actual configuration editor, pending operation and explicit restoration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/managed-configuration.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 20136,
+          "sha256": "4083cade98ccb1bd1f4fea2ac8afe2e0d5b15e891141236b2265945d36138ed4"
+        }
+      ]
+    },
+    {
+      "id": "runtime-configuration-history-receiving",
+      "label": "Original installed configuration/browser/backup receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/MANAGED_CONFIGURATION_RECEIVE.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 10067,
+          "sha256": "a88d3cf851f8f896ea51b165301061fa761645c0da08c40da4450f36aa18a6ca"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-search-distribution",
+      "label": "Complete fixed-end search installed source contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/runtime-output-search.json",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 1738,
+          "sha256": "d33dbd705d51207b7970a118236ed688e04450a3733f76c0f296a1aaaf687bf2"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-search-guide",
+      "label": "Complete selected-output search and native receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/OUTPUT_SEARCH.md",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 6899,
+          "sha256": "ddd54d5b5cb24c99e6dc1a69239717e54cfc760d1f4ababf1678609c845b3a69"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-search-cli",
+      "label": "Full selected-output search and exclusive JSONL export commands",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/output-search-cli.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 3687,
+          "sha256": "7a7d79b5f8d32291d76264ae0122ea839230fdecef3c5443fef99d5aa294bab7"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-search-core",
+      "label": "Streaming literal UTF-8 search with exact candidate cursors",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/output-search-core.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 5700,
+          "sha256": "1682cf3e17fdc50cba3cbde08f8ed2d0cc9df54ae5940f5405025deb55b41625"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-search-style",
+      "label": "Responsive installed complete-output search controls",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/output-search.css",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 910,
+          "sha256": "0dba3fc44c70315bde943f8531df4012c3d5d7418aceb5df737fece01e732621"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-search-browser",
+      "label": "Retained search pages, pause/resume and original byte navigation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/output-search.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 11097,
+          "sha256": "21ae23fbde4782c67833693a83b69c9a98d3caf6bf2ca6e4ec819b6b07aa3b36"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-search-receiving",
+      "label": "Original whole output search/download/browser receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/OUTPUT_SEARCH_RECEIVE.mjs",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 10352,
+          "sha256": "0db44b24de202bf227eaa250fbdff93c6bf7d43eda128aa6a46b147e59b4e1e8"
+        }
+      ]
+    },
+    {
+      "id": "runtime-retained-config-output-operating",
+      "label": "Canonical installed Runtime configuration and output operating workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md",
+      "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+      "editions": [
+        {
+          "commit": "b3964cc509263629ae5c29451ed3cd9d5a6fbd02",
+          "bytes": 25385,
+          "sha256": "5de4694f5849ae783a5bcc36f9ccfde97456d177f53ae47a23e2cc7fa78e20d1"
+        }
+      ]
     }
   ]
 }
