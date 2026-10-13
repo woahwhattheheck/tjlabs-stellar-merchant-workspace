@@ -259,12 +259,29 @@ def main(argv=None):
     parser.add_argument("--workspace", required=True, help="Original private receiving directory")
     parser.add_argument("--operation-id", required=True)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--programme-browser", action="store_true",
+                        help="Continue this same course through the live programme browser and own-archive reopen")
+    parser.add_argument("--node")
+    parser.add_argument("--playwright-module")
+    parser.add_argument("--chromium")
+    parser.add_argument("--process-family")
+    parser.add_argument("--source-commit")
     args = parser.parse_args(argv)
     try:
         require(re.fullmatch(r"[a-f0-9]{32}", args.operation_id) is not None,
                 "Use a stable lowercase hexadecimal receiving operation ID.")
         result = receive(args.baseline_handover, args.candidate_handover, args.worldbank_core,
                          args.workspace, args.operation_id, resume=args.resume)
+        if args.programme_browser:
+            require(all((args.node, args.playwright_module, args.chromium,
+                         args.process_family, args.source_commit)),
+                    "Select the existing Node, Playwright, Chromium, process-family source and actual source commit.")
+            from .worldbank_programmes_receive import receive_programmes
+            extension = receive_programmes(result, args.candidate_handover, args.worldbank_core,
+                args.workspace, args.operation_id, node=args.node, playwright=args.playwright_module,
+                chromium=args.chromium, process_family=args.process_family,
+                source_commit=args.source_commit, resume=args.resume)
+            result = {**result, "programme": extension}
         print(json.dumps(result, ensure_ascii=False, allow_nan=False), flush=True)
         return 0
     except KeyboardInterrupt:

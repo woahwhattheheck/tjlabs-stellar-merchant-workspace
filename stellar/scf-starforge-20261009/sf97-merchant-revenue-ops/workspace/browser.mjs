@@ -1,4 +1,8 @@
 // MIT. Original reports only: no browser persistence or financial recalculation.
+import { createCommercialHistory } from './history-browser.mjs';
+let commercialArchive;
+const comparisonPins = new Map();
+const comparisonRows = () => [...new Map([...(current?.history??[]),...comparisonPins.values()].map(item=>[item.version,item])).values()];
 const $ = id => document.getElementById(id);
 const SESSION = 'SESSION', PERIOD = 'DURABLE_HISTORY';
 let current, draft, selected = 0, editRevision = null, dirty = false, busy = false, pendingSave = null, sourceDirty = false;
@@ -29,10 +33,11 @@ function controls() {
   lock($('reset-source'),!sourceDirty);
   lock($('preview'),!current.snapshot || sourceDirty);
   lock($('save'),!current.snapshot || sourceDirty);
-  const comparable = current.history.length > 1;
+  const comparable = comparisonRows().length > 1;
   lock($('compare-left'),!comparable); lock($('compare-right'),!comparable);
   lock($('compare'),!comparable || !$('compare-left').value || !$('compare-right').value || $('compare-left').value === $('compare-right').value);
   repricingControls();
+  commercialArchive?.controls();
 }
 async function api(path,input) {
   const response = await fetch(path,{method:input === undefined ? 'GET' : 'POST',
@@ -209,23 +214,32 @@ function renderSource() {
 function reportLink(version,name,label) {
   const anchor = text('a',label); anchor.href = '/files/'+encodeURIComponent(version)+'/'+name.split('/').map(encodeURIComponent).join('/'); anchor.target = '_blank'; anchor.rel = 'noopener'; return anchor;
 }
+function retainComparisonChoices() {
+  const rows=comparisonRows();
+  for(const side of ['left','right']) {
+    const item=rows.find(row=>row.version===$('compare-'+side).value);
+    if(item) comparisonPins.set(side,item);
+  }
+}
+function invalidateComparison() {
+  $('comparison-result').hidden=true;
+  $('comparison-status').textContent='Choose Compare reviews to load these original saved reports.';
+  controls();
+}
 function renderComparisonChoices() {
   const previousLeft = $('compare-left').value, previousRight = $('compare-right').value;
-  for (const id of ['compare-left','compare-right']) $(id).replaceChildren(...current.history.map(item => {
+  for (const id of ['compare-left','compare-right']) $(id).replaceChildren(...comparisonRows().map(item => {
     const kind = item.observationKind ?? SESSION;
     const scope = kind === PERIOD && item.observation?.range ? rangeLabel(item.observation.range) : item.sessionId ?? 'saved session';
     const option = text('option',`${item.label} · ${scope}`); option.value = item.version; return option;
   }));
-  const periods = current.history.filter(item=>item.observationKind === PERIOD);
-  const candidates = periods.length > 1 ? periods : current.history;
-  $('compare-left').value = current.history.some(item=>item.version === previousLeft) ? previousLeft : candidates[1]?.version ?? candidates[0]?.version ?? '';
-  $('compare-right').value = current.history.some(item=>item.version === previousRight) ? previousRight : candidates[0]?.version ?? '';
+  const periods = comparisonRows().filter(item=>item.observationKind === PERIOD);
+  const candidates = periods.length > 1 ? periods : comparisonRows();
+  $('compare-left').value = comparisonRows().some(item=>item.version === previousLeft) ? previousLeft : candidates[1]?.version ?? candidates[0]?.version ?? '';
+  $('compare-right').value = comparisonRows().some(item=>item.version === previousRight) ? previousRight : candidates[0]?.version ?? '';
   controls();
 }
-function renderHistory() {
-  $('history').replaceChildren(); $('history-count').textContent = `${current.history.length} recent versions`;
-  if (!current.history.length) $('history').append(text('p','No saved reviews yet.','muted'));
-  current.history.forEach(item => {
+function renderHistoryItem(item) {
     const row = document.createElement('article'); row.className = 'history-item';
     const description = document.createElement('div'), title = text('div',item.label,'history-title');
     const kind = item.observationKind ?? SESSION; title.append(text('span',sourceName(kind),'history-kind'));
@@ -257,9 +271,13 @@ function renderHistory() {
     reprice.addEventListener('click',() => run(async () => {
       if (await loadRepricing(item.version)) $('repricing-panel').scrollIntoView({behavior:'smooth',block:'start'});
     }));
-    actions.append(report,reuse,reprice); row.append(description,actions); $('history').append(row);
-  });
-  renderComparisonChoices();
+    actions.append(report,reuse,reprice); row.append(description,actions); return row;
+}
+function renderHistory() {
+  $('history').replaceChildren(); $('history-count').textContent = `${current.history.length} recent versions`;
+  if (!current.history.length) $('history').append(text('p','No saved reviews yet.','muted'));
+  current.history.forEach(item=>$('history').append(renderHistoryItem(item)));
+  renderComparisonChoices(); commercialArchive?.notifyHeads(current);
 }
 function renderInputs() {
   $('merchant-name').value = draft.merchantName; $('fixed-cost').value = draft.sharedMonthlyFixedUsd ?? '';
@@ -551,14 +569,9 @@ function repricingFiles(item) {
   return Array.isArray(item.files) ? item.files.map(file => typeof file === 'string' ? file : file.file ?? file.name).filter(Boolean)
     : Object.keys(item.files ?? {});
 }
-function renderRepricingHistory() {
-  const entries = current.repricing?.history ?? [];
-  $('repricing-history-count').textContent = entries.length+' recent versions';
-  $('repricing-history').replaceChildren();
-  if (!entries.length) $('repricing-history').append(text('p','Saved configurations will appear here with their original inputs and price changes.','repricing-empty'));
+function renderRepricingItem(item) {
   const labels = {'launch-seller.json':'Local launch configuration','seller.json':'Seller configuration','terms.json':'Merchant terms','source-seller.json':'Source seller configuration',
     'source-terms.json':'Source merchant terms','pricing-report.json':'Source pricing report','decision.json':'Price change review','manifest.json':'Version manifest'};
-  for (const item of entries) {
     const article = document.createElement('article'); article.className = 'history-item';
     const description = document.createElement('div'), count = item.changedPaymentOptions ?? item.changes?.length ?? 0;
     description.append(text('div',item.label,'history-title'),
@@ -589,14 +602,22 @@ function renderRepricingHistory() {
       const stage = text('button','Stage retained release'); stage.type = 'button';
       stage.addEventListener('click',() => run(async () => {
         const result = await api('/api/repricing/stage',{decision:item.decision,reviewSha256:item.reviewSha256});
-        item.release = result.release; renderRepricingHistory();
+        item.release = result.release; renderRepricingHistory(); await commercialArchive?.reload();
         notice((result.recovered ? 'Retained release recovered · ' : 'Retained release staged · ')+result.release.id+'. Review and select it in the existing seller release console.');
       }));
       actions.append(stage); article.append(actions);
     }
-    $('repricing-history').append(article);
-  }
+    return article;
 }
+function renderRepricingHistory() {
+  const entries = current.repricing?.history ?? [];
+  $('repricing-history-count').textContent = entries.length+' recent versions';
+  $('repricing-history').replaceChildren();
+  if (!entries.length) $('repricing-history').append(text('p','Saved configurations will appear here with their original inputs and price changes.','repricing-empty'));
+  entries.forEach(item=>$('repricing-history').append(renderRepricingItem(item)));
+  commercialArchive?.notifyHeads(current);
+}
+
 function renderRepricing() {
   repricingChoices();
   if (pendingRepricingSave) {
@@ -618,6 +639,7 @@ async function loadRepricing(version) {
   repricingDirty = false; repricingRoutePage = 0;
   repricingEditRevision = Object.hasOwn(source,'repricingRevision') ? source.repricingRevision : current.repricing?.revision ?? null;
   for (const route of source.routes) route.paymentOptions.forEach((option,index) => repricingAmounts.set(paymentKey(route.routeId,index),paymentAmount(option)));
+  repricingChoices(); // Include the loaded original review even when it is older than the recent list.
   $('repricing-source').value = version; $('repricing-editor').hidden = false; $('repricing-review').hidden = true;
   $('repricing-name').value = (source.label+' price change').slice(0,100);
   $('repricing-state').textContent = 'Loaded · '+source.label;
@@ -775,7 +797,7 @@ $('save').addEventListener('click',() => run(async () => {
   }
   notice(result.recovered ? 'The previous save completed. Its original version has been recovered.' : 'Review saved with the selected original source. Open its report or use the saved-review comparison below.');
 }));
-for (const id of ['compare-left','compare-right']) $(id).addEventListener('change',() => { $('comparison-result').hidden = true; $('comparison-status').textContent = 'Choose Compare reviews to load these original saved reports.'; controls(); });
+for (const id of ['compare-left','compare-right']) $(id).addEventListener('change',() => { retainComparisonChoices(); invalidateComparison(); });
 $('comparison-form').addEventListener('submit',event => { event.preventDefault(); run(async () => {
   const leftVersion = $('compare-left').value, rightVersion = $('compare-right').value;
   if (!leftVersion || !rightVersion || leftVersion === rightVersion) throw new Error('Choose two different saved reviews.');
@@ -871,4 +893,9 @@ async function initialize() {
   notice(current.sourceError || (current.sellerChanged ? 'Seller configuration has changed since the latest review. Review its current payment choices before saving.'
     : 'Select the original operations source, enter merchant assumptions, then calculate or save a review.'),Boolean(current.sourceError));
 }
+commercialArchive=createCommercialHistory({api,run,lock,renderReview:renderHistoryItem,renderDecision:renderRepricingItem,
+  pinComparison:(side,item)=>{
+    retainComparisonChoices(); comparisonPins.set(side,item);renderComparisonChoices();$('compare-'+side).value=item.version;invalidateComparison();
+    notice('Selected '+item.label+' as the '+(side==='left'?'first':'second')+' original comparison. It stays selected while browsing other history pages.');
+  }});
 run(initialize);

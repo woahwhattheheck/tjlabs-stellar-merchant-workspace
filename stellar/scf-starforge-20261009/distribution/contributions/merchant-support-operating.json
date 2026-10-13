@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-support-operating",
-  "description": "Original OAuth/Support source retention, customer Operating Plans, complete returned work and full history receiving",
+  "description": "Original Support source retention, complete customer handovers, editable Operating Plans and returned-work receiving",
   "components": [
     "stellar/scf-starforge-20261009/distribution/discovery",
     "stellar/scf-starforge-20261009/sf74-merchant-support-console"
@@ -10,7 +10,7 @@
     "support-operating-plan": "stellar/scf-starforge-20261009/distribution/discovery/support-operating-cli.mjs"
   },
   "commandDescriptions": {
-    "support-operating-plan": "Retain original Support evidence, record complete returned files, review customer changes and receive full plan histories"
+    "support-operating-plan": "Retain original Support evidence, export and receive complete customer handovers, review returned work and preserve full plan histories"
   },
   "exports": {
     "./merchant/support-operating-plans": {
@@ -28,6 +28,18 @@
     "./merchant/support-operating-return-source": {
       "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-return-native.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-return-native.mjs"
+    },
+    "./merchant/support-operating-handover": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-handover.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-handover.mjs"
+    },
+    "./merchant/support-operating-handover-archive": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-handover-archive.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-handover-archive.mjs"
+    },
+    "./merchant/support-operating-handover-native": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-handover-native.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/support-operating-handover-native.mjs"
     }
   }
 }

@@ -379,6 +379,34 @@
         "../GRANT_TRACKER_OPERATOR.md",
         "text/plain; charset=utf-8"
       ]
+    ],
+    [
+      "/support-operating-handover.mjs",
+      [
+        "support-operating-handover.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/support-operating-handover.mjs",
+      [
+        "../support-operating-handover.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/support-operating-handover-archive.mjs",
+      [
+        "../support-operating-handover-archive.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/support-operating-handover-hash.mjs",
+      [
+        "../support-operating-handover-hash.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

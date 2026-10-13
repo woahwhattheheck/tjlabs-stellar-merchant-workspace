@@ -11,6 +11,8 @@ import { createSupportOperatingPlan, inspectSupportOperatingSource,
 import { recordSupportOperatingWork, createSupportOperatingReturn, inspectSupportOperatingReturn,
   compareSupportOperatingReturn, reviseSupportOperatingReturn, decideSupportOperatingReturn,
   applySupportOperatingReturn, renderSupportOperatingReturnHTML } from './support-operating-return.mjs';
+import {createSupportOperatingHandover,inspectSupportOperatingHandover,receiveSupportOperatingHandover,
+  renderSupportOperatingHandoverHTML,SUPPORT_HANDOVER_MAX_DOCUMENT_BYTES} from './support-operating-handover.mjs';
 import { saveTextExport } from './write-json.mjs';
 
 const LIMIT = 32 * 1024 * 1024;
@@ -26,6 +28,9 @@ const RULES = {
   'return-details': ['return','request','out'], 'return-decide': ['return','request','out'],
   'return-apply': ['return','plan','request','out','plan-out'],
   'return-show': ['return','format','out'],
+  'handover-create':['request','out'], 'handover-inspect':['handover','out'],
+  'handover-show':['handover','format','out'], 'handover-receive-plan':['handover','existing','out'],
+  'handover-pack':['request','out'], 'handover-open':['request','out'], 'handover-receive':['request','out'],
 };
 export const SUPPORT_OPERATING_HELP = [
   'OAuth / Support customer operating procedures',
@@ -58,6 +63,16 @@ export const SUPPORT_OPERATING_HELP = [
   'return-create keeps both complete histories and all selected compact source descriptors.',
   'return-apply saves the completed review first, then its full resulting plan; retain both.',
   'Outputs are create-only; an identical already-written result is acknowledged without replacement.',
+  '',
+  'starforge support-operating-plan handover-create --request DOCUMENT-INPUT.json --out HANDOVER.json',
+  'starforge support-operating-plan handover-inspect --handover HANDOVER.json [--out VERIFIED.json]',
+  'starforge support-operating-plan handover-show --handover HANDOVER.json [--format json|html] [--out REPORT]',
+  'starforge support-operating-plan handover-receive-plan --handover HANDOVER.json [--existing CURRENT.json] --out PLAN.json',
+  'starforge support-operating-plan handover-pack --request PACK.json --out PACK-RECEIPT.json',
+  'starforge support-operating-plan handover-open --request ARCHIVE.json --out HANDOVER.json',
+  'starforge support-operating-plan handover-receive --request RECEIVE.json --out RECEIVE-RECEIPT.json',
+  'The portable TAR retains all original companion members. Native receiving uses the original case-history receiver.',
+  'Pure handover document actions do not claim that the separate archive members were read.',
 ].join('\n');
 function error(code,message) { const e=new TypeError(message);e.code=code;return e; }
 function required(value,label) {
@@ -79,7 +94,10 @@ export function parseSupportOperatingArguments(input) {
     if(!args.length||args[0].startsWith('--'))throw error('SUPPORT_PLAN_ARGUMENT','Missing value for '+flag);
     options[name]=required(args.shift(),flag);
   }
-  const needed=['capture','receive-source','create'].includes(action)?['request','out']:
+  const needed=['handover-create','handover-pack','handover-open','handover-receive'].includes(action)?['request','out']:
+    action==='handover-receive-plan'?['handover','out']:
+    action.startsWith('handover-')?['handover']:
+    ['capture','receive-source','create'].includes(action)?['request','out']:
     ['record','record-work','record-source-work'].includes(action)?['plan','request','out']:
     action==='return-create'?['plan','incoming','request','out']:
     action==='return-apply'?['return','plan','request','out','plan-out']:
@@ -93,7 +111,7 @@ export function parseSupportOperatingArguments(input) {
     options.revision=Number(options.revision);
     if(!Number.isSafeInteger(options.revision))throw error('SUPPORT_PLAN_ARGUMENT','--revision is too large.');
   }
-  const formats=action==='return-show'?['json','html']:['json','markdown','html'];
+  const formats=action==='return-show'||action==='handover-show'?['json','html']:['json','markdown','html'];
   if(options.format&&!formats.includes(options.format))
     throw error('SUPPORT_PLAN_ARGUMENT','--format must be '+formats.join(' or ')+'.');
   if(options['plan-out']&&resolve(options['plan-out'])===resolve(options.out))
@@ -137,8 +155,30 @@ export async function mainSupportOperatingPlan(args=process.argv.slice(2),{log=c
   const {action,options}=parseSupportOperatingArguments(args);
   if(action==='help'){log(SUPPORT_OPERATING_HELP);return;}
   const plan=options.plan?inspectOperatingPlan(await readJSON(options.plan,signal)):null;
-  let value,body,nativeReused,sourceReceipt;
-  if(action==='capture'||action==='receive-source'){
+  let value,body,nativeReused,sourceReceipt,handoverReceipt;
+  if(action.startsWith('handover-')){
+    if(['handover-pack','handover-open','handover-receive'].includes(action)){
+      const request=await readJSON(options.request,signal,SUPPORT_HANDOVER_MAX_DOCUMENT_BYTES);
+      const allowed=action==='handover-pack'?['directory','id','title','owner','createdAt','plan','returns','companions']:
+        action==='handover-open'?['archive','expectedArchive']:['archive','directory','expectedArchive','existingPlan'];
+      requestFields(request,allowed,action==='handover-pack'?['directory','id','title','owner','createdAt','plan','companions']:
+        action==='handover-open'?['archive']:['archive','directory','expectedArchive']);
+      const native=await import('./support-operating-handover-native.mjs');signal?.throwIfAborted();
+      const result=action==='handover-pack'?await native.packSupportOperatingHandover({...request,signal}):
+        action==='handover-open'?await native.inspectSupportOperatingHandoverArchive({...request,signal}):
+        await native.receiveSupportOperatingHandoverArchive({...request,signal});
+      handoverReceipt={archive:result.archiveFile,document:result.documentFile,...(result.receiptFile?{receipt:result.receiptFile}:{}),verification:result.verification};
+      if(action==='handover-open')value=result.handover;
+      else{const {handover,plan:received,...receipt}=result;value={...receipt,plan:received?.revisions?{id:received.id,revisions:received.revisions.length}:received};}
+    }else if(action==='handover-create')value=await createSupportOperatingHandover(await readJSON(options.request,signal,SUPPORT_HANDOVER_MAX_DOCUMENT_BYTES));
+    else{
+      const selected=await inspectSupportOperatingHandover(await readJSON(options.handover,signal,SUPPORT_HANDOVER_MAX_DOCUMENT_BYTES));
+      if(action==='handover-receive-plan'){
+        const existing=options.existing?inspectOperatingPlan(await readJSON(options.existing,signal)):null;
+        value=(await receiveSupportOperatingHandover(selected,existing)).plan;
+      }else{value=selected;if(action==='handover-show'&&options.format==='html')body=await renderSupportOperatingHandoverHTML(selected);}
+    }
+  }else if(action==='capture'||action==='receive-source'){
     const request=await readJSON(options.request,signal);
     if(!request||typeof request!=='object'||Array.isArray(request)||Object.hasOwn(request,'signal'))
       throw error('SUPPORT_PLAN_INPUT','Use the complete original capture or receive request; cancellation is supplied by the caller.');
@@ -213,16 +253,22 @@ export async function mainSupportOperatingPlan(args=process.argv.slice(2),{log=c
   signal?.throwIfAborted();
   body??=JSON.stringify(value,null,2)+'\n';
   if(options.out){
-    const receipt=await publish(options.out,body,signal,action.startsWith('return-')?RETURN_LIMIT:LIMIT);
+    const receipt=await publish(options.out,body,signal,action.startsWith('handover-')?SUPPORT_HANDOVER_MAX_DOCUMENT_BYTES:action.startsWith('return-')?RETURN_LIMIT:LIMIT);
     log(JSON.stringify({schema:'stellar-forge.support-operating-cli-result.v1',action,
       planId:value?.revisions?value.id:plan?.id??null,
       revision:options.revision??value?.revisions?.length??plan?.revisions?.length??null,
       ...receipt,...(nativeReused===undefined?{}:{sourceReused:nativeReused}),
       ...(sourceReceipt?{source:sourceReceipt}:{}),
+      ...(handoverReceipt?{handover:handoverReceipt}:{}),
       ...(value?.review?{reviewId:value.review.id}:{} )}));
   }else log(body);
   return value;
 }
 if(process.argv[1]&&await realpath(resolve(process.argv[1])).then(
-  name=>pathToFileURL(name).href===import.meta.url,()=>false))
-  mainSupportOperatingPlan().catch(e=>{console.error((e.code?e.code+': ':'')+e.message);process.exitCode=1;});
+  name=>pathToFileURL(name).href===import.meta.url,()=>false)){
+  const owner=new AbortController(),stop=()=>owner.abort(new Error('The original Support operation was stopped.'));
+  process.once('SIGINT',stop);process.once('SIGTERM',stop);
+  try{await mainSupportOperatingPlan(process.argv.slice(2),{signal:owner.signal});}
+  catch(e){console.error((e.code?e.code+': ':'')+e.message);process.exitCode=1;}
+  finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}
+}
