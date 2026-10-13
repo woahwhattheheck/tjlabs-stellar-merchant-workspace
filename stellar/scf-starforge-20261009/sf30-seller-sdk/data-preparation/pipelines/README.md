@@ -20,7 +20,7 @@ Open the exact `http://127.0.0.1:PORT` address printed by the operator. The appl
 Build the complete offline archive from maintained source with `node package.mjs ./dist`. With the supplied npm archive, installation requires no network service:
 
 ```sh
-npm install --offline --ignore-scripts ./tokenjunkielabs-data-preparation-pipelines-0.1.0.tgz
+npm install --offline --ignore-scripts ./tokenjunkielabs-data-preparation-pipelines-0.2.0.tgz
 npx --no-install starforge-data-pipelines --workspace ./project init
 npx --no-install starforge-data-pipelines --workspace ./project serve
 ```
@@ -175,3 +175,82 @@ Operations include `state`, `list`, `definition`, `from-recipe`, `save`, `enqueu
 `engine.py` owns pipeline metadata and execution coordination; `delivery.py` owns the outer pipeline archive. The original `preparation.py` and `transfer.py` own native data and computation. `server.py`, the browser, the Python CLI and `client.mjs` share that implementation.
 
 The accompanying original-engine correction allows SQLite's column-free `count(*)` authorization callback only after the same selected source view has authorized the table. Unrelated sources, workspace metadata, SQL writes and extension loading remain outside that query connection's authorization.
+
+## Receive earlier projects and reuse unchanged stages
+
+The same maintained operator receives both its current three-member project
+archive and the earlier PIPE12 two-member archive. The earlier native source,
+recipe, result and review records keep their exact IDs and bytes. Its complete
+plan and execution history travels in the current project as original provenance;
+converted executions use the corresponding `e_` identifier. Receiving does not
+run the saved SQL. `pipeline.py` and `pipeline_transfer.py` are the retained
+original-format validator/receiver dependencies, not another application command.
+
+In **Handover**, select a complete project ZIP and choose **Receive independent
+project**. The result opens a separate operator address. The sending workspace
+and any running jobs remain unchanged. Previously received projects remain
+available after restarting the host; choose **Open independent workspace** to
+start its original operator again. A received workspace may also be served on its
+own with the same CLI. The host retains independent projects under
+`received-pipeline-projects`; close the host to close its child operator listeners.
+
+The CLI continues to accept:
+
+```sh
+python3 cli.py --workspace ./received receive ./complete-project.zip
+python3 cli.py --workspace ./received serve --port 8777
+```
+
+When running another saved edition, **Prior execution for unchanged stages** is
+optional. The default computes every stage. An explicit prior selection permits
+reuse only when its recorded engine, SQL, parameters and exact original input or
+predecessor result identities match. Changed stages and their dependent changes
+execute through the original native writer. Reused stages keep the original run,
+review history and result file; the operator and report identify this reuse.
+Editing labels alone does not require repeating unchanged SQL.
+
+```sh
+python3 cli.py --workspace ./received run p_PIPELINE_ID \
+  --revision 3 --request-key customer-edition-3 \
+  --reuse-execution e_PRIOR_EXECUTION_ID
+```
+
+Use real IDs from the saved workspace in place of the illustrative IDs above.
+The selection, including the prior execution, is part of the stable request key.
+Replaying the same key returns the same execution; changing the selection requires
+a new key. A completed history remains readable across engine changes, while
+new work uses the installed engine. To continue an unfinished imported execution
+whose engine version differs, save and run another explicit edition; its original
+unfinished attempts remain retained.
+
+The typed client provides the same receiving and reuse operations:
+
+```js
+const received = await client.receiveProject('./complete-project.zip', {
+  requestKey: 'customer-project-2026-10-12'
+});
+const independent = new PipelineClient(received.origin);
+const run = await independent.enqueue(savedPipeline.id, 'edition-3', {
+  revision: savedPipeline.revision,
+  reuseExecution: selectedPriorExecution.id
+});
+await independent.execute(run.id);
+const completed = await independent.wait(run.id);
+```
+
+A lost upload response can be retried with the same receiving key and same whole
+archive. The receiver returns its original independent project. Reusing the key
+with different archive bytes is rejected. `received()` lists the durable received
+projects and `openReceived(id)` returns the current operator address after restart.
+
+### Complete composition programme
+
+`EXERCISE_COMPOSITION.py ORIGINAL_PROJECT.zip NEW_DIRECTORY` operates an actual
+retained seven-stage, 120,507-input-row project through original receiving,
+unchanged native identity checks, independent recipe edits, explicit stage reuse,
+all selected customer outputs, complete project export, re-receiving and another
+editable continuation. The original project fixture is supplied with the source
+handover, not generated from a preview. It includes exact-decimal pricing, a
+96,000-row detailed result, four regional totals and an empty result with its
+complete schema. The original whole-process interruption programme is retained
+in the accompanying operating-history archive.

@@ -12,6 +12,10 @@
     "./grant/cohort-delivery": {
       "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_comparison.d.mts",
       "import": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_comparison.mjs"
+    },
+    "./grant/cohort-delivery-agent": {
+      "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_agent.d.mts",
+      "import": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_agent.mjs"
     }
   },
   "supportFiles": [

@@ -3,6 +3,10 @@ import { createGrantReportingPlan as createReferencePlan } from './grant-reporti
 import { inspectGrantReportingInput, requireSameGrantReportingPreview } from './grant-reporting-input.mjs';
 import { createOperatingPlan, createOperatingStep, operatingPlanRevision, snapshotRegistration } from './operating-plan.mjs';
 
+export { GRANT_REPORTING_PREPARATION_SCHEMA, GrantReportingInputError,
+  grantReportingPreparationInput, inspectGrantReportingInput, requireSameGrantReportingPreview }
+  from './grant-reporting-input.mjs';
+
 const copy = value => JSON.parse(JSON.stringify(value));
 const pretty = value => JSON.stringify(value, null, 2);
 function child(directory, name) {
@@ -11,12 +15,17 @@ function child(directory, name) {
   return directory.replace(/[\\/]+$/, '') + separator + name;
 }
 
+export function grantReportingProcedureFile(directory) {
+  if (typeof directory !== 'string' || !directory) throw new TypeError('Enter the original report output directory.');
+  return child(directory, 'grant-reporting-plan.json');
+}
+
 /** Rebuild a complete preparation through the original native source importer and plan model. */
 export async function prepareGrantReportingPlan(value) {
   const received = await inspectGrantReportingInput(value);
   const { input, selection, preview } = received;
   const project = selection.sourceProject;
-  const procedureFile = child(input.paths.outputDirectory, 'grant-reporting-plan.json');
+  const procedureFile = grantReportingProcedureFile(input.paths.outputDirectory);
   const reference = {
     id: input.id, savedAt: input.savedAt, title: input.title, customer: input.customer,
     period: input.period, owner: input.owner, receiving: input.receiving,

@@ -413,7 +413,9 @@ export async function createWorkbookDelivery(operation,contentBase64) {
     files:files.map(({content,...file})=>file)};
   return freeze({schema:DELIVERY_SCHEMA,manifest,manifestSha256:digest(manifest),files});
 }
-export async function receiveWorkbookDelivery(packet) {
+export async function receiveWorkbookDelivery(packet,{readWorkbook}={}) {
+  check(typeof readWorkbook==='function','WORKBOOK_READER_REQUIRED',
+    'Receive the retained XLSX through the original workbook parser before adopting its decisions.');
   check(object(packet) && packet.schema===DELIVERY_SCHEMA && object(packet.manifest) &&
     packet.manifest.schema===DELIVERY_SCHEMA && Array.isArray(packet.files),
     'WORKBOOK_DELIVERY_INVALID','Open the complete original workbook delivery packet.');
@@ -426,6 +428,9 @@ export async function receiveWorkbookDelivery(packet) {
   check(equal(packet.manifest,expected.manifest) && packet.manifestSha256===expected.manifestSha256,
     'WORKBOOK_DELIVERY_CHANGED','The source/history/export manifest differs from the original receiving operation.');
   exactSet(packet.files,expected.files,row=>row.name,'Delivery');
+  const parsed=await readWorkbook(files.get('returned.xlsx').content);
+  check(equal(parsed,operation.input),'WORKBOOK_RETURN_XLSX_CHANGED',
+    'The actual returned XLSX cells differ from the retained review input. Receive its original complete workbook and operation.');
   return {report:reportOf(operation.afterWorkspace),operation:verifyWorkbookOperation(operation),
     contentBase64:files.get('returned.xlsx').content,manifest:clone(packet.manifest)};
 }

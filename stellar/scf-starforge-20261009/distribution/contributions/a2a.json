@@ -48,7 +48,11 @@
     "./a2a-analysis/service": "./source/stellar-forge/a2a-analysis-agent/service.mjs",
     "./a2a-analysis/config": "./source/stellar-forge/a2a-analysis-agent/config.mjs",
     "./a2a-analysis/native": "./source/stellar-forge/a2a-analysis-agent/native.mjs",
-    "./a2a-analysis/receive": "./source/stellar-forge/a2a-analysis-agent/receive.mjs"
+    "./a2a-analysis/receive": "./source/stellar-forge/a2a-analysis-agent/receive.mjs",
+    "./a2a/commissioning": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/a2a/commissioning.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/a2a/commissioning.mjs"
+    }
   },
   "applicationProviders": {
     "a2a": "stellar/scf-starforge-20261009/sf30-seller-sdk/a2a/application-provider.mjs"
@@ -59,7 +63,8 @@
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs",
-    "stellar/scf-starforge-20261009/sf82-seller-pilot/release-source-contracts.mjs"
+    "stellar/scf-starforge-20261009/sf82-seller-pilot/release-source-contracts.mjs",
+    "stellar-forge/developer-site/a2a-customer-commissioning.json"
   ],
   "runtimePackageManifests": {
     "a2a": "stellar/scf-starforge-20261009/sf30-seller-sdk/a2a/runtime-package.json",

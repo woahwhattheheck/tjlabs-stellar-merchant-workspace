@@ -1,5 +1,4 @@
 // MIT. Preparation inputs feed the existing Operating plans model and receiver.
-import { createGrantReportingPlan } from '/reporting/grant-reporting-core.mjs';
 import { inspectOperatingPlan, operatingPlanRevision, operatingStepCommand,
   renderOperatingPlanHTML, renderOperatingPlanMarkdown } from '/operating-plan-core.mjs';
 
@@ -78,6 +77,34 @@ function download(content, name, type = 'application/json') {
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
+let reportingBuilder;
+async function createGrantReportingPlan(input) {
+  reportingBuilder ??= await import('/reporting/grant-reporting-core.mjs');
+  return reportingBuilder.createGrantReportingPlan(input);
+}
+function planIdentity(value) {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value))
+    throw new TypeError('Retain the original 1–128 character Operating plan identifier.');
+  return value;
+}
+function planCreationTime(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value) ||
+      !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0, 19) !== value.slice(0, 19))
+    throw new TypeError('Retain the original UTC Operating plan creation time.');
+  return value;
+}
+function retainedPreparation(value) {
+  const selected = copy(value);
+  selected.planId = planIdentity(selected.planId);
+  selected.planCreatedAt = planCreationTime(selected.planCreatedAt ?? selected.preview?.savedAt ?? selected.createdAt);
+  return selected;
+}
+function nativeProcedureFile(directory) {
+  const windows = /^[A-Za-z]:[\\/]|^\\\\/.test(directory);
+  return directory.replace(/[\\/]+$/, '') + (windows && !directory.includes('/') ? '\\' : '/') +
+    'grant-reporting-plan.json';
+}
+
 function freshPreparation(previous) {
   const now = timestamp();
   const values = Object.fromEntries(fields.map(key => [key, '']));
@@ -87,7 +114,7 @@ function freshPreparation(previous) {
     ? location.origin + ':80' : location.origin;
   return {
     schema: PREPARATION_SCHEMA, id: crypto.randomUUID(), planId: crypto.randomUUID(),
-    revision: 0, createdAt: now, updatedAt: now,
+    planCreatedAt: now, revision: 0, createdAt: now, updatedAt: now,
     values: previous ? copy(previous.values) : values,
     files: previous ? copy(previous.files) : {},
     preview: null, received: false,
@@ -100,12 +127,12 @@ function validateValues(value) {
   const result = {};
   for (const key of fields) {
     if (typeof value[key] !== 'string') throw new TypeError('The preparation field ' + key + ' must be text.');
-    if (value[key].length > (key === 'receiving' ? 32000 : 1000)) throw new RangeError('The preparation field ' + key + ' is too long.');
+    if (value[key].length > (key === 'receiving' ? 32000 : ['title', 'owner'].includes(key) ? 300 : 1000)) throw new RangeError('The preparation field ' + key + ' is too long.');
     result[key] = value[key];
   }
   result.paths = {};
   for (const key of pathFields) {
-    if (typeof value.paths[key] !== 'string' || value.paths[key].length > 8192)
+    if (typeof value.paths[key] !== 'string' || value.paths[key].length > 4096)
       throw new TypeError('The preparation needs a complete text path for ' + key + '.');
     result.paths[key] = value.paths[key];
   }
@@ -235,7 +262,10 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
   function changed({ invalidate = true } = {}) {
     dirty = true; change++;
     if (invalidate) {
-      if (preparation.preview) preparation.planId = crypto.randomUUID();
+      if (preparation.preview) {
+        preparation.planId = crypto.randomUUID();
+        preparation.planCreatedAt = timestamp();
+      }
       preparation.preview = null;
       $('preview').hidden = true; $('preview-content').replaceChildren();
     }
@@ -283,6 +313,7 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
       body.steps.length + ' ordered steps',
     ].filter(Boolean).join(' · '), 'hint'));
     if (body.purpose) root.append(element('p', body.purpose));
+    root.append(element('p', 'Save complete plan JSON at ' + nativeProcedureFile(preparation.values.paths.outputDirectory) + ' before running its native commands.', 'hint'));
     const steps = element('ol', undefined, 'reporting-preview-steps');
     for (const [index, step] of body.steps.entries()) {
       const item = element('li'), detail = element('details');
@@ -339,7 +370,7 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
       try { selected = sessionStorage.getItem('starforge-grant-reporting-preparation'); } catch {}
       if (selected) {
         const retained = await readStorage(database, 'preparations', selected);
-        if (retained) preparation = retained;
+        if (retained) preparation = retainedPreparation(retained);
       }
       opened = true;
       await render();
@@ -382,7 +413,7 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
       status('Opened the retained complete preview with its original plan identity.');
       return retained;
     }
-    const savedAt = timestamp();
+    const savedAt = preparation.planCreatedAt;
     const plan = inspectOperatingPlan(await createGrantReportingPlan(await builderInput(savedAt)));
     const file = await sourceRecord('operating-plan-' + plan.id + '.json', json(plan), 'plan');
     preparation.preview = { ...rememberFile(file), savedAt };
@@ -398,7 +429,7 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
     for (const [kind, reference] of Object.entries(preparation.files)) files[kind] = await getFile(reference);
     const value = {
       schema: PREPARATION_SCHEMA, id: preparation.id, planId: preparation.planId,
-      createdAt: preparation.createdAt, updatedAt: timestamp(),
+      planCreatedAt: preparation.planCreatedAt, createdAt: preparation.createdAt, updatedAt: timestamp(),
       values: copy(preparation.values), files, plan: await preparedPlan(),
     };
     const text = json(value);
@@ -418,7 +449,7 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
     for (const kind of ['case', 'sourceProject', 'catalog']) {
       if (!value.files[kind]) continue;
       const incoming = value.files[kind];
-      if (!isObject(incoming) || typeof incoming.name !== 'string' || typeof incoming.text !== 'string')
+      if (!isObject(incoming) || incoming.kind !== kind || typeof incoming.name !== 'string' || typeof incoming.text !== 'string')
         throw new TypeError('The preparation input ' + kind + ' is incomplete.');
       const retained = await sourceRecord(incoming.name, incoming.text, kind);
       if (retained.sha256 !== incoming.sha256 || retained.bytes !== incoming.bytes)
@@ -426,7 +457,12 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
       receivedFiles[kind] = retained;
     }
     const incomingPlan = value.plan === null || value.plan === undefined ? null : inspectOperatingPlan(value.plan);
+    const originalPlanId = planIdentity(value.planId);
+    const originalPlanCreatedAt = planCreationTime(value.planCreatedAt ?? incomingPlan?.createdAt ?? value.createdAt);
+    if (incomingPlan && (incomingPlan.id !== originalPlanId || incomingPlan.createdAt !== originalPlanCreatedAt))
+      throw new TypeError('The saved preview must keep the preparation’s original plan identity and creation time.');
     const next = freshPreparation();
+    next.planId = originalPlanId; next.planCreatedAt = originalPlanCreatedAt;
     next.values = values;
     next.origin = { id: typeof value.id === 'string' ? value.id : '', importedAt: timestamp() };
     if (incomingPlan) {
@@ -480,7 +516,7 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
     await persist();
     const retained = await readStorage(database, 'preparations', selected);
     if (!retained) throw new Error('The selected preparation is unavailable.');
-    preparation = retained; dirty = false; change++;
+    preparation = retainedPreparation(retained); dirty = false; change++;
     await render(); remember();
     status('Opened the complete saved preparation and its retained original inputs.');
   }));
@@ -523,10 +559,12 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
       const plan = await preparedPlan();
       if (!plan) throw new Error('Preview the complete procedure before downloading the plan.');
       const stem = 'grant-reporting-' + plan.id;
-      if (format === 'json') download(plan, stem + '.json');
+      if (format === 'json') download(plan, 'grant-reporting-plan.json');
       else if (format === 'html') download(renderOperatingPlanHTML(plan), stem + '.html', 'text/html');
       else download(renderOperatingPlanMarkdown(plan), stem + '.md', 'text/markdown');
-      status('Downloaded the complete reporting plan in ' + format.toUpperCase() + ' format.');
+      status(format === 'json'
+        ? 'Downloaded the complete plan. Save it at ' + nativeProcedureFile(preparation.values.paths.outputDirectory) + ' before running its commands.'
+        : 'Downloaded the complete reporting plan in ' + format.toUpperCase() + ' format.');
     }));
   }
   $('receive').addEventListener('click', () => perform(async () => {

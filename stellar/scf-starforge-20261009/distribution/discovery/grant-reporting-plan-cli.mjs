@@ -7,7 +7,7 @@ import { loadCommandCatalog } from './load.mjs';
 import { saveExport } from './write-json.mjs';
 import { createGrantReportingPlan } from './grant-reporting-plan.mjs';
 import { prepareGrantReportingPlan } from './grant-reporting-core.mjs';
-import { GRANT_REPORTING_PREPARATION_SCHEMA } from './grant-reporting-input.mjs';
+import { GRANT_REPORTING_PREPARATION_SCHEMA, grantReportingPreparationInput } from './grant-reporting-input.mjs';
 import { summarizeOperatingPlan } from './operating-plan.mjs';
 
 export const GRANT_REPORTING_HELP = [
@@ -19,7 +19,8 @@ export const GRANT_REPORTING_HELP = [
   'Input may be the complete browser preparation, full native case/source-project input, or compact reference input.',
   'The complete preparation retains and verifies all three original JSON files and its saved preview.',
   'For full inputs, --out must be OUTPUT_DIRECTORY/grant-reporting-plan.json, preserving the plan’s command path.',
-  'A preparation keeps its captured catalog; open it in the browser to intentionally refresh that selection.',
+  'A preparation keeps its captured catalog; a supplied --catalog must match it exactly.',
+  'Open the preparation in the browser to intentionally refresh its source selection.',
   '',
   'The input retains the original case/plan IDs and revisions, actual workspace, selected files,',
   'customer/period/receiving notes, a stable procedure ID and savedAt time, and a fixed browser origin.',
@@ -53,12 +54,15 @@ export function parseGrantReportingArguments(args) {
     throw new TypeError('Preserve the original input and catalog; choose a separate new output.');
   return {action, options};
 }
+const canonical = value => value === null || typeof value !== 'object' ? JSON.stringify(value)
+  : Array.isArray(value) ? '[' + value.map(canonical).join(',') + ']'
+  : '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + canonical(value[key])).join(',') + '}';
 async function jsonFile(filename, maximum = 32 * 1024 * 1024) {
   const path = resolve(filename), info = await stat(path);
   if (!info.isFile() || info.size > maximum) throw new TypeError('Use a complete regular UTF-8 JSON file within the selected input size limit.');
   const raw = await readFile(path);
   if (raw.length > maximum) throw new TypeError('The complete JSON input exceeds its selected size limit.');
-  return JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(raw));
+  return JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(raw).replace(/^\uFEFF/, ''));
 }
 export async function mainGrantReportingPlan(args = process.argv.slice(2), {log = console.log} = {}) {
   const {action, options} = parseGrantReportingArguments(args);
@@ -69,16 +73,20 @@ export async function mainGrantReportingPlan(args = process.argv.slice(2), {log 
   if (input.procedureFile !== undefined && resolve(input.procedureFile) !== output)
     throw new TypeError('The original procedureFile must match --out; retain the input/output binding.');
   const portable = input.schema === GRANT_REPORTING_PREPARATION_SCHEMA;
-  const full = portable || Object.hasOwn(input, 'paths') || Object.hasOwn(input, 'sourceProject');
+  const full = portable || Object.hasOwn(input, 'paths') || Object.hasOwn(input, 'sourceProject') ||
+    Boolean(input.case?.program) || Boolean(input.case?.value?.program);
   const sourceRoot = options['source-root'] ?? input.sourceRoot ?? undefined;
   const selection = options.selection ?? input.sourceSelection ?? undefined;
   let document, selected;
   if (full) {
-    if (portable && (options.catalog || options['source-root'] || options.selection))
-      throw new TypeError('Keep the portable preparation’s original catalog and preview. Refresh them in the existing editor before exporting a new preparation.');
-    const catalog = portable ? null : options.catalog ? await jsonFile(options.catalog)
-      : input.catalog && !options['source-root'] && !options.selection ? input.catalog
-      : await loadCommandCatalog({sourceRoot, selection});
+    const retained = await grantReportingPreparationInput(input);
+    const retainedCatalog = retained.input.catalog;
+    if (retainedCatalog && (options['source-root'] || options.selection))
+      throw new TypeError('This complete input retains its original toolkit catalog. Refresh it in the existing editor before preparing against a different source selection.');
+    const supplied = options.catalog ? await jsonFile(options.catalog) : undefined;
+    if (retainedCatalog && supplied && canonical(retainedCatalog) !== canonical(supplied))
+      throw new TypeError('The supplied catalog differs from the complete preparation. Preserve its saved catalog or prepare a new reviewed procedure.');
+    const catalog = retainedCatalog ?? supplied ?? await loadCommandCatalog({sourceRoot, selection});
     const prepared = await prepareGrantReportingPlan(portable ? input : {...input, catalog,
       ...(sourceRoot ? {sourceRoot: resolve(sourceRoot)} : {}),
       ...(selection ? {sourceSelection: selection} : {})});

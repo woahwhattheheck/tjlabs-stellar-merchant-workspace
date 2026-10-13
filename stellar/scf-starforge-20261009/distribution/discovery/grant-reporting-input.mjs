@@ -50,7 +50,7 @@ function identity(value, label) {
   return value;
 }
 function parse(value, label) {
-  if (typeof value !== 'string') return copy(value);
+  if (typeof value !== 'string') return value === undefined || value === null ? value : copy(value);
   try { return JSON.parse(value.replace(/^\uFEFF/, '')); }
   catch { throw new GrantReportingInputError('REPORTING_JSON', label + ' must contain complete UTF-8 JSON.'); }
 }
@@ -61,7 +61,7 @@ function absolutePath(value, label) {
   return value;
 }
 function finderURL(value) {
-  text(value, 'the original Command finder address', 8192, true);
+  text(value, 'the original Command finder address', 4096, true);
   const origin = /^http:\/\/(localhost|127\.0\.0\.1|\[::1\]):([1-9]\d{0,4})(?=\/|$)/.exec(value);
   let url;
   try { url = new URL(value); } catch {}
@@ -98,7 +98,7 @@ export async function grantReportingPreparationInput(value) {
     received[kind] = await portableFile(value.files[kind], kind);
   const preview = value.plan === undefined || value.plan === null ? null : inspectOperatingPlan(value.plan);
   const id = identity(value.planId, 'The retained operating plan ID');
-  const savedAt = time(value.planCreatedAt ?? preview?.createdAt ?? value.updatedAt ?? value.createdAt,
+  const savedAt = time(value.planCreatedAt ?? preview?.createdAt ?? value.createdAt,
     'The retained operating plan creation time');
   need(!preview || preview.id === id && preview.createdAt === savedAt,
     'REPORTING_PREPARATION_PLAN', 'The retained preview must keep the preparation’s original plan identity and creation time.');

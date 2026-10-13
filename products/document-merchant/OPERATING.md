@@ -364,6 +364,14 @@ A useful first task starts from a report or invoice template the customer alread
 
 A merchant can then price repeat use from actual returned supplier usage and its provider account. Whole-task completion and repeat-customer adoption come from the original buyer workflow. The grant's paid-purchase, parent-task and prepaid-consumption records keep their existing counting rules.
 
+## Compose the customer's dataset and templates
+
+Use [COMPOSITION.md](COMPOSITION.md) when the customer starts with order rows, report data or another complete CSV/JSON export. It covers grouping line items, choosing optional documents, escaped HTML/Markdown templates, source preview and exact native batch preparation. Preparation preserves the full original dataset and templates; interruption resumes the same source and customer batch. The actual native quote determines the amount for all generated documents before rendering. Receiving and Collection export retain the complete PDF, source and original dataset/template handover.
+
+~~~sh
+starforge document-merchant compose --help
+~~~
+
 ## Fulfill and deliver complete document batches
 
 Use [BATCHES.md](BATCHES.md) for a customer's complete order or reporting period. The installed `document-merchant batch` workflow stages whole HTML/Markdown sources, reviews every native document price, continues the original payment and job records, receives all four output files, and exports one portable Resource library Collection with a complete customer table. It includes full invoice and greeting-card source for one shared task, plus commands for interrupted preparation, checkout recovery, partial file receiving and independent Collection receiving.

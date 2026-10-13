@@ -5,6 +5,7 @@ export const GRANT_REPORTING_PREPARATION_SCHEMA: 'stellar-forge.grant-reporting-
 export class GrantReportingInputError extends TypeError {
   code: string;
   details: Record<string, unknown>;
+  constructor(code: string, message: string, details?: Record<string, unknown>);
 }
 export interface GrantReportingPaths {
   workspace: string;
@@ -50,7 +51,7 @@ export interface GrantReportingPreparation {
   planId: string;
   createdAt: string;
   updatedAt: string;
-  /** Optional explicit original clock. Otherwise a saved preview supplies its createdAt. */
+  /** Original clock. Legacy input uses the saved preview or original preparation creation time. */
   planCreatedAt?: string;
   values: GrantReportingValues;
   files: { case: GrantReportingOriginalFile; sourceProject: GrantReportingOriginalFile; catalog: GrantReportingOriginalFile };
@@ -98,3 +99,11 @@ export function grantReportingPreparationInput(value: unknown): Promise<{
 }>;
 export function inspectGrantReportingInput(value: unknown): Promise<InspectedGrantReportingFullInput>;
 export function requireSameGrantReportingPreview(preview: OperatingPlan | null | undefined, generated: OperatingPlan): OperatingPlan;
+
+/** Complete-input names retained by the joined source adapter. */
+export type GrantReportingObject = Record<string, unknown>;
+export type GrantReportingFields = GrantReportingValues;
+export type GrantReportingInput = GrantReportingFullInput;
+export type GrantReportingRetainedFile = GrantReportingOriginalFile;
+export type InspectedGrantReportingInput = InspectedGrantReportingFullInput;
+export type GrantReportingPlanSelection = GrantReportingSelection['plan'];

@@ -213,6 +213,15 @@ exports, and `result.json`. Reopening the same case reuses its retained reads,
 decisions and frozen report. The programme closes and reopens its source store
 before returning the selected archive identity.
 
+A non-success HTTP response or an unexpected content type keeps its complete
+response body and request-attempt record under `provider-errors/`. The source
+request records the actual HTTP status, original query, body size and SHA,
+content type and any `Retry-After` header. Open that saved body to inspect the
+provider's response. Running the same case again reuses every successful capture
+and gives the outstanding original request a new recorded source attempt. The
+case's location, model, dates, variables and units remain bound to its saved
+selection.
+
 Feed that exact returned ZIP into the complete browser journey:
 
 ```sh

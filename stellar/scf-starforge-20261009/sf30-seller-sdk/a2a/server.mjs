@@ -7,6 +7,8 @@ import { openA2AWorkspace } from './workspace.mjs';
 import { startA2AMerchant } from './merchant.mjs';
 import { LIMITS, now, id, sha, canonical, fail, publicError, atomicFile, safeName } from './foundation.mjs';
 
+import { commissioningTemplate } from './commissioning.mjs';
+
 export const A2A_STARTUP_SCHEMA='stellar-forge.a2a-workspace-startup.v1';
 export const A2A_PROBE_SCHEMA='stellar-forge.a2a-workspace-probe.v1';
 export const A2A_LAUNCH_FILE='operator-listener.json';
@@ -42,7 +44,7 @@ export async function startA2AWorkspaceServer(options={}) {
   const probe=()=>({schema:A2A_PROBE_SCHEMA,launchId,workspaceId:workspace.workspaceId,connectionFileSha256:options.connectionFileSha256??null,process:processIdentity,origin});
   async function handle(req,res){
     if(closed)fail('SERVER_CLOSING',undefined,503);trusted(req);const url=new URL(req.url,origin);
-    if(['GET','HEAD'].includes(req.method)&&['/','/app.mjs','/style.css'].includes(url.pathname)){
+    if(['GET','HEAD'].includes(req.method)&&['/','/app.mjs','/commissioning.mjs','/style.css'].includes(url.pathname)){
       const type=url.pathname==='/'?'text/html; charset=utf-8':url.pathname.endsWith('.mjs')?'text/javascript; charset=utf-8':'text/css; charset=utf-8';
       let bytes=readFileSync(new URL('./web/'+(url.pathname==='/'?'index.html':url.pathname.slice(1)),import.meta.url));
       if(url.pathname==='/')bytes=Buffer.from(bytes.toString('utf8').replace('__OPERATOR_TOKEN__',token).replace('__WORKSPACE_ID__',workspace.workspaceId));
@@ -56,8 +58,11 @@ export async function startA2AWorkspaceServer(options={}) {
     if(['GET','HEAD'].includes(req.method)&&url.pathname==='/api/source'){download(res,workspace.readSource(url.searchParams.get('id'),url.searchParams.get('sha256'),{revision:queryRevision(url)}),req.method);return;}
     if(['GET','HEAD'].includes(req.method)&&url.pathname==='/api/export'){download(res,workspace.exportPacket(url.searchParams.get('id'),{revision:queryRevision(url),handoffId:url.searchParams.get('handoffId')}),req.method);return;}
     if(['GET','HEAD'].includes(req.method)&&url.pathname==='/api/result'){download(res,workspace.exportResult(url.searchParams.get('id'),url.searchParams.get('editionId')),req.method);return;}
-    if(req.method==='POST'&&url.pathname==='/api/dispatch'){
-      const bytes=await body(req,2*LIMITS.requestBytes);let input;try{input=JSON.parse(bytes.toString('utf8'));}catch{fail('JSON_REQUIRED');}
+    if(['GET','HEAD'].includes(req.method)&&url.pathname==='/api/commissioning/template'){download(res,commissioningTemplate(),req.method);return;}
+    if(['GET','HEAD'].includes(req.method)&&url.pathname==='/api/commissioning'){const value=workspace.commissioningReport(url.searchParams.get('id'),{revision:queryRevision(url)}),bytes=Buffer.from(canonical(value)+'\n');download(res,{bytes,sha256:sha(bytes),filename:'a2a-commissioning-'+value.projectId+'-r'+value.revision+'.json',mediaType:'application/json'},req.method);return;}
+    if(req.method==='POST'&&['/api/dispatch','/api/commissioning/source'].includes(url.pathname)){
+      const upload=url.pathname==='/api/commissioning/source';const bytes=await body(req,upload?Math.ceil(LIMITS.artifactBytes*4/3)+65536:2*LIMITS.requestBytes);let input;try{input=JSON.parse(bytes.toString('utf8'));}catch{fail('JSON_REQUIRED');}
+      if(upload&&input.action!=='commission_retain_source')fail('COMMISSION_SOURCE_ACTION');
       const requestId=input?.payload?.requestId,bodySha256=sha(bytes);
       const operation=workspace.dispatch(input.action,input.payload);
       try{

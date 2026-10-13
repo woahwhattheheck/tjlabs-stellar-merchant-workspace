@@ -10,3 +10,8 @@ export function prepareGrantReportingPlan(input: GrantReportingFullInput | Grant
 }>;
 /** Same complete original OperatingPlan used by the browser and command-line creator. */
 export function createGrantReportingPlan(input: GrantReportingFullInput | GrantReportingPreparation): Promise<OperatingPlan>;
+
+/** Exact original output filename shared by browser and CLI. */
+export function grantReportingProcedureFile(outputDirectory: string): string;
+export { GRANT_REPORTING_PREPARATION_SCHEMA, GrantReportingInputError,
+  grantReportingPreparationInput, inspectGrantReportingInput, requireSameGrantReportingPreview } from './grant-reporting-input.mjs';

@@ -23,3 +23,11 @@ export {
   normalizeDocumentServiceOptions, assertDocumentServiceSource, readDocumentServiceSelection,
   assertDocumentServiceSelection, openDocumentService, runDocumentServiceCommand, readDocumentServiceLaunch
 } from './launch.mjs';
+export {
+  DOCUMENT_COMPOSITION_SCHEMA, DOCUMENT_COMPOSITION_PLAN_SCHEMA,
+  documentCompositionTemplate, normalizeDocumentComposition, parseDocumentCsv,
+  parseDocumentDataset, compileDocumentTemplate, renderDocumentTemplate,
+  composeDocumentSources, reviewDocumentComposition, readDocumentComposition,
+  prepareDocumentComposition, receiveDocumentComposition,
+  prepareDocumentCompositionBatch, readDocumentCompositionBatch, exportDocumentComposition
+} from './composition.mjs';

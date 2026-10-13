@@ -1,22 +1,25 @@
-# Open311 municipal service operations
+# Operate the complete municipal service suite
 
-Capture an official municipal service catalog and its published requests, keep the complete original responses, assign internal reviews, compare later observations, and deliver a workspace another operator can receive and reopen. The browser, command line and sixteen merchant tools share the same saved SQLite workspace.
+The open311-service-configuration source selection installs six applications for municipal source collection, service reporting, GIS analysis, request/work-order follow-through, crew field work and service implementation. Each application opens its own saved private workspace. Complete original exports connect the operating stages and let another operator receive and continue the work.
 
-This product is installed through the original Stellar merchant distribution. Its application is **Open311 service operations**, its command is **open311**, and its merchant provider is **open311-workspaces**. The [source adoption record](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/open311/SOURCE_ADOPTION.json) names every original source blob. The original [source guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/open311/README.md), [browser guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace/WORKSPACE.md), and [merchant guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/open311/MCP.md) travel in the package.
+Use this guide for installation, saved-directory launch, runtime preparation and merchant attachment. [WORKFLOWS.md](WORKFLOWS.md) describes the complete customer workflows and the exact files that connect them. [RECEIVING.md](RECEIVING.md) gives all six editable-workspace receiving commands and their identity behavior.
 
-## What the operator can complete
+## Choose the operating desk
 
-| Work | Saved result |
-| --- | --- |
-| Select an official endpoint and jurisdiction | Named connection, provider limits, declared extensions and attribution |
-| Capture a service catalog, service definition, request window, individual request, token or discovery document | Complete original response bytes, parsed document, source URL and observation receipt |
-| Search and review captured cases | Exact source identity, original fields, internal assignment, status, due date and review history |
-| Compare two captures | Added records and field changes, with missing-from-capture reporting only for comparable fixed scopes |
-| Deliver a selected edition | Original response, JSON with reviews, CSV or printable HTML |
-| Hand over the whole project | Complete workspace bundle with original captures, review history and saved operation results |
-| Reopen through Applications or merchant tools | The same workspace identity and operating state |
+| Application in Applications | Command | Application ID | Saved SQLite file |
+| --- | --- | --- | --- |
+| Open311 service operations | open311 | open311-operations | open311.sqlite |
+| Open311 service performance | open311-reporting | open311-reporting | open311-reporting.sqlite |
+| Open311 GIS handoff | open311-gis | open311-gis | open311-gis.sqlite |
+| Open311 request/work-order follow-through | open311-follow-through | open311-follow-through | open311-follow-through.sqlite |
+| Open311 field work and crew returns | open311-field-desk | open311-field-desk | open311-field-desk.sqlite |
+| Municipal service configuration | open311-service-configuration | open311-service-configuration | open311-service-configuration.sqlite |
 
-Source status remains visible exactly as the provider supplied it. Internal review status is new, assigned, in_progress or done. Saving a review updates the local workspace. The source client reads civic endpoints with GET.
+The collection desk captures official catalogs and requests, keeps all original windows/pages and supports source-linked review. Reporting freezes periods, source cutoffs, mappings and target calendars. GIS exchanges complete analyst files and reviewed mapped dispatch. Follow-through relates original request and order editions, reviews discrepancies and prepares selected approved actions. Field Desk carries that approved work through crew visits, partial returns, supervisor decisions and destination updates. Service configuration applies explicit agency/routing/template choices to a complete original register and saves the reviewed implementation package.
+
+The browser and command line for a desk operate the same SQLite file. Five desks also expose typed merchant providers; reporting is available through its browser, CLI and direct source SDK. The [source adoption record](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/open311/SOURCE_ADOPTION.json) identifies the original source editions.
+
+Keep the source package, installed runtime and private working directories separate. Use one directory per desk and a new empty directory for an independent received workspace. The supported cross-application files are listed in [WORKFLOWS.md](WORKFLOWS.md#files-that-connect-applications).
 
 ## Install the selected merchant product
 
@@ -28,12 +31,12 @@ From a checkout of this repository at the intended immutable commit:
 node stellar/scf-starforge-20261009/distribution/build.mjs \
   --repo . \
   --ref "$(git rev-parse HEAD)" \
-  --selection open311-operations \
+  --selection open311-service-configuration \
   --out /absolute/private/open311-package \
   --offline
 ~~~
 
-The new output directory receives one original archive and its package/manifest information. Keep the returned archive path and SHA-256 with the delivery. The selected recipe retains the Open311 browser assets, typed interfaces, merchant provider, Applications adapter, installation and receiving infrastructure.
+The new output directory receives one original archive and its package/manifest information. Keep the returned archive path and SHA-256 with the delivery. The selected recipe retains all six municipal commands and browser applications, their typed interfaces, the five merchant providers, and the original installation, Applications and receiving infrastructure. Its complete selection is [open311-service-configuration.json](../../stellar/scf-starforge-20261009/distribution/selections/open311-service-configuration.json).
 
 Install that archive in a private working directory:
 
@@ -43,15 +46,84 @@ cd /absolute/private/open311-install
 npm install --ignore-scripts --offline --omit=optional \
   /absolute/private/open311-package/*.tgz
 npx --no-install starforge doctor
-npx --no-install starforge registrations --source open311-operations
+npx --no-install starforge registrations --source open311-service-configuration
 npx --no-install starforge merchant-providers inspect open311-workspaces
 ~~~
 
-The source-only install makes the Open311 browser, CLI and direct SDK available. For an external MCP client, complete the prepared runtime installation in [Attach the merchant tools](#attach-the-merchant-tools) below. Its source-selected dependencies install beside a separate retained copy of the same archive. The complete source build and runtime receiving procedures are documented in [BUILDING.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/BUILDING.md), [RUNTIME_INSTALL.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md) and [SOURCE_SELECTIONS.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md).
+The source-only install makes the selected municipal browsers, CLIs and direct SDKs available. For an external MCP client, complete the prepared runtime installation in [Attach the merchant tools](#attach-the-merchant-tools) below. Its source-selected dependencies install beside a separate retained copy of the same archive. The complete source build and runtime receiving procedures are documented in [BUILDING.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/BUILDING.md), [RUNTIME_INSTALL.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md) and [SOURCE_SELECTIONS.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md).
 
 Run npx from /absolute/private/open311-install in the examples below. The MCP commands use runtime-install run to select the prepared runtime explicitly. Keep private workspaces, host configuration and exports outside both source and runtime directories.
 
-## Create the desk and select a source
+## Initialize or receive the selected desks
+
+Initialize only the applications needed for the operation. These commands run from the private installation directory and create a new saved desk at revision 0:
+
+| Desk | Initialization command |
+| --- | --- |
+| Collection | npx --no-install starforge open311 state --workspace /absolute/private/municipal/collection |
+| Reporting | npx --no-install starforge open311-reporting init --workspace /absolute/private/municipal/reporting |
+| GIS | npx --no-install starforge open311-gis init --workspace /absolute/private/municipal/gis |
+| Follow-through | npx --no-install starforge open311-follow-through init --workspace /absolute/private/municipal/follow-through |
+| Field Desk | npx --no-install starforge open311-field-desk init --workspace /absolute/private/municipal/field |
+| Service configuration | npx --no-install starforge open311-service-configuration init --workspace /absolute/private/municipal/service-configuration |
+
+If continuing a delivered workspace, use its [receiving command](RECEIVING.md#receive-each-editable-workspace) in an empty destination before saving its Applications entry. A collection, report, dispatch or crew file uses the receiving application's source/return import workflow; the whole-workspace receive command accepts that application's complete editable package.
+
+All six commands support serve with --workspace and --port. For example:
+
+~~~sh
+npx --no-install starforge open311-gis serve \
+  --workspace /absolute/private/municipal/gis \
+  --host 127.0.0.1 --port 0
+~~~
+
+The single startup JSON line gives the actual URL and saved workspace identity. Open that URL for the selected desk. Stop the process cleanly when finished; the same directory reopens its original state. Each command's help describes its exact writes and export flags. In particular, service configuration uses --revision, --input and --output; the other desks' receiving and export flags are enumerated in [RECEIVING.md](RECEIVING.md).
+
+## Open the six applications through the managed runtime
+
+First complete [Prepare the runtime for the selected source archive](#prepare-the-runtime-for-the-selected-source-archive) and confirm its retained installation is READY. Initialize a new runtime workspace, attach that prepared runtime, then open its existing operator:
+
+~~~sh
+npx --no-install starforge runtime-workspace init \
+  --workspace /absolute/private/merchant-runtime-workspace \
+  --runtime-home /absolute/private/runtimes
+
+npx --no-install starforge runtime-workspace attach \
+  --workspace /absolute/private/merchant-runtime-workspace \
+  --runtime /absolute/private/open311-runtime \
+  --label "Municipal service suite"
+
+npx --no-install starforge runtime-workspace serve \
+  --workspace /absolute/private/merchant-runtime-workspace \
+  --port 8465
+~~~
+
+For an existing runtime workspace, retain its saved installation and application entries; attach the intended prepared runtime through that same setup workflow. In Applications, choose the title from the six-desk table, select the initialized or received private directory, then Review and Save. Start launches that saved application; Open connects to the actual live server. Stop and recovery act on the saved managed process.
+
+Preparation reads the original SQLite workspace identity and binds it to the selected directory, source/runtime edition and port. Start checks the retained preparation and actual startup response; the live launch endpoint identifies the same workspace and server instance. This keeps several municipal desks distinguishable even when their pages are open together.
+
+The existing Applications CLI can inspect the same saved entries and their history:
+
+~~~sh
+npx --no-install starforge runtime-workspace applications \
+  --workspace /absolute/private/merchant-runtime-workspace --history-limit 1
+
+npx --no-install starforge runtime-workspace application-start-review \
+  --workspace /absolute/private/merchant-runtime-workspace \
+  --application-id SAVED_APPLICATION_ID
+
+npx --no-install starforge runtime-workspace application-connect \
+  --workspace /absolute/private/merchant-runtime-workspace \
+  --application-id SAVED_APPLICATION_ID
+~~~
+
+SAVED_APPLICATION_ID is the saved application instance returned by Review/Save, rather than the source provider ID in the first table. The complete [Applications guide](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATIONS.md) defines its review/save/start request files, stop, recovery, output and history. [Application setup](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_SETUP.md) covers initialized and received directory selection. The maintained [named-group workflow](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_GROUPS.md) can review, start, continue and stop an explicit group of saved applications.
+
+Receive a complete handover before the first Review/Save of its destination. For an application previously bound to an empty receiving directory, stop that managed process and Review/Save again after receiving, then Start/Open. This records the received workspace's actual identity. Reporting's recipient identity behavior is described separately in the receiving guide.
+
+## Collector walkthrough: connect an official source
+
+The following complete example operates the original collection desk. Use [WORKFLOWS.md](WORKFLOWS.md) for reporting, GIS, Follow-through, Field Desk and service configuration from their own original inputs.
 
 Initialize the durable workspace:
 
@@ -93,20 +165,6 @@ npx --no-install starforge open311 serve \
 ~~~
 
 The command prints a single startup JSON line containing the actual loopback URL, workspace identity and binding. Open that URL. Save connections, capture source data, search requests, assign reviews, compare captures and download files through the same browser.
-
-### Use the managed Applications launcher
-
-For a maintained installed runtime, open the original runtime workspace and choose **Applications → Open311 service operations**. Select the initialized private desk directory, review and save the application, then start it. The provider binds the saved workspace UUID and directory to the actual startup response. Start, Open, Stop and recovery remain part of the shared Applications workflow.
-
-The maintained runtime workspace entry point is:
-
-~~~sh
-npx --no-install starforge runtime-workspace serve \
-  --workspace /absolute/private/merchant-runtime-workspace \
-  --port 8465
-~~~
-
-Use its existing runtime installation or attach the selected Open311 runtime through the workspace's original installation workflow. The Open311 workspace directory is the directory containing open311.sqlite.
 
 ## Capture complete source observations
 
@@ -215,6 +273,20 @@ Compare field changes from the source. Treat missingFromCapture as an observatio
 
 ## Attach the merchant tools
 
+Each provider opens the selected saved desk and exposes its declared tools through the original merchant host. The complete package includes these providers:
+
+| Desk | Merchant provider ID | Host setup and file contract |
+| --- | --- | --- |
+| Collection | open311-workspaces | [Open311 MCP.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/MCP.md) |
+| GIS | open311-gis-workspaces | [GIS MCP.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/gis/MCP.md) |
+| Follow-through | open311-follow-through-workspaces | [Follow-through MCP.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/follow-through/MCP.md) |
+| Field Desk | open311-field-desk-workspaces | [Field Desk MCP.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/field-desk/MCP.md) |
+| Service configuration | open311-service-configuration-workspaces | [Service configuration MCP.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/service-configuration/MCP.md) |
+
+Reporting's maintained contribution registers its browser, CLI and direct SDK. Continue reports through those interfaces. The other five providers use their own typed host schema and named file kinds; follow the selected provider's complete host example rather than reusing a different desk's connection file.
+
+The runtime preparation below applies to the complete selected archive. The subsequent host and typed-client example attaches the collection provider; the linked guides give the corresponding complete setup for the other four providers.
+
 ### Prepare the runtime for the selected source archive
 
 Use the same archive and SHA-256 retained from the selected package build. Replace ORIGINAL_OPEN311_ARCHIVE.tgz and ORIGINAL_ARCHIVE_SHA256 with those exact delivered values. The parent /absolute/private must exist; runtime-install prepare creates the new open311-runtime directory.
@@ -315,7 +387,7 @@ npx --no-install starforge runtime-install run \
   --config /absolute/private/open311-merchant/merchant-mcp.json
 ~~~
 
-The MCP client's host environment supplies any apiKeyEnv values. If the runtime is upgraded or recovered into a new directory, generate a new client configuration from that runtime and update the client's selected server entry; the previous generated entry continues to name its original absolute source path. The provider's sixteen tools cover desk discovery, status, complete records, source configuration, captures, catalogs, case search/detail, comparison, review, operation recovery, selected input receiving, complete file reading and reader release.
+The MCP client's host environment supplies any apiKeyEnv values. If the runtime is upgraded or recovered into a new directory, generate a new client configuration from that runtime and update the client's selected server entry; the previous generated entry continues to name its original absolute source path. The provider's declared tools cover desk discovery, status, complete records, source configuration, captures and catalogs, collection planning/run/pause, source-version case review, comparison, operation recovery, selected input receiving and complete retained-file reading.
 
 The typed SDK is exported as:
 
@@ -338,7 +410,7 @@ const worklist = await desk.requests({
 
 Here transport is the already connected MCP client. Mutations carry their saved request ID and revision. Source response downloads use immutable capture IDs; workspace and reviewed exports use the selected business revision. The provider drains its own active work before closing its SQLite handles and retained readers, allowing the independent browser to continue.
 
-## Deliver and reopen
+## Deliver and reopen the collection desk
 
 The [receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/open311/RECEIVING.md) gives the complete transfer procedure and original-file checks. From the same desk, export the selected source bytes or the full workspace:
 
@@ -371,7 +443,7 @@ npx --no-install starforge open311 operation \
 
 Repeat the same request ID, original expected revision and unchanged inputs for that same intended operation. Use a new ID and current revision for a new intended change. A failed source acquisition preserves its available original response and receipt in the operation; it can be exported through the merchant operation file.
 
-## Run the whole commissioning workflow
+## Run the original collector commissioning workflow
 
 The included commission.mjs executes one operated journey: original catalog and request capture, review, repeat capture/diff, source/JSON/CSV/report/full exports, merchant attachment and multichunk original-file reading, independent browser continuity, complete receiving and reopen.
 
@@ -386,3 +458,16 @@ node node_modules/@tokenjunkielabs/starforge-merchant/source/stellar/scf-starfor
 ~~~
 
 Use a new private output directory. For retained original source responses, add --retained with the complete original-source manifest described in the browser guide. The journey records the actual retained bytes, source observation metadata, operating results and receiving outcome in its output directory.
+
+## Source guide index
+
+| Desk | Source and command guide | Browser guide |
+| --- | --- | --- |
+| Collection | [README.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/README.md), [COLLECTIONS.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/COLLECTIONS.md) | [WORKSPACE.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace/WORKSPACE.md) |
+| Reporting | [README.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/README.md), [INSTALL.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/INSTALL.md) | The reporting desk's named profile, build, request detail, review and receiving controls |
+| GIS | [README.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/gis/README.md), [FORMATS.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/gis/FORMATS.md) | [WORKSPACE.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/gis/WORKSPACE.md) |
+| Follow-through | [README.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/follow-through/README.md) | [WORKSPACE.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/follow-through/WORKSPACE.md) |
+| Field Desk | [README.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/field-desk/README.md) | [WORKSPACE.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/field-desk/WORKSPACE.md) |
+| Service configuration | [README.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/service-configuration/README.md), [SOURCE_CONTRACT.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/service-configuration/SOURCE_CONTRACT.md) | [WORKSPACE.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open311/service-configuration/WORKSPACE.md) |
+
+Each desk's complete editable package is described in [RECEIVING.md](RECEIVING.md). Keep the original source files and selected ordinary outputs with that package so the next operator can continue the work and inspect its source context.
