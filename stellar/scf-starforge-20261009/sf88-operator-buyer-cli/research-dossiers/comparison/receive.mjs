@@ -21,7 +21,7 @@ async function retainedJson(file,value){await retain(file,jsonBytes(value));retu
 async function readJson(file){const b=await optional(file);return b?parseJson(b):null;}
 export async function receiveComparison({directory,operationId,reviewer}){
  directory=await privateDirectory(resolve(directory));
- need(typeof reviewer==='string'&&reviewer.trim().length>0&&reviewer.length<=240,'COMPARISON_COURSE_REVIEWER_REQUIRED');
+ need(typeof reviewer==='string'&&reviewer.trim().length>0&&reviewer.length<=200,'COMPARISON_COURSE_REVIEWER_REQUIRED');
  const actor={id:'comparison-course-reviewer',name:reviewer};
  need(typeof operationId==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,99}$/.test(operationId),'COMPARISON_COURSE_OPERATION_REQUIRED');
  const outputs=await privateDirectory(join(directory,'outputs')),requests=await privateDirectory(join(directory,'requests'));
@@ -43,11 +43,21 @@ export async function receiveComparison({directory,operationId,reviewer}){
  need(binding.operationId===operationId&&binding.storeDirectory===storeDirectory,'COMPARISON_COURSE_BINDING_CHANGED');
  const dossierId=binding.dossierId;
  let metadata=await store.getMetadata(dossierId);
- need(metadata.title===title&&metadata.description===description,'COMPARISON_COURSE_DOSSIER_CHANGED');
+ const originalMetadata=await store.getMetadata(dossierId,{revision:1});
+ need(originalMetadata.title===title&&originalMetadata.description===description,'COMPARISON_COURSE_DOSSIER_CHANGED');
  const questionText='Training receiving: retain exact model, platform and architecture evidence without recomputing scientific results.';
- let questions=metadata.questions.filter(q=>q.text===questionText);need(questions.length<=1,'COMPARISON_COURSE_QUESTION_DUPLICATE');
- if(!questions.length){await store.addQuestion(dossierId,{text:questionText,expectedRevision:metadata.revision,projection:'metadata'});metadata=await store.getMetadata(dossierId);questions=metadata.questions.filter(q=>q.text===questionText);}
- need(questions.length===1,'COMPARISON_COURSE_QUESTION_MISSING');const questionId=questions[0].id;
+ let questionBinding=await readJson(join(directory,'question-binding.json'));
+ if(!questionBinding){
+  const accepted=await readJson(join(requests,'case-v1.accepted.json'));
+  let questions=accepted?[metadata.questions.find(q=>q.id===accepted.record.definition.questionId)].filter(Boolean):metadata.questions.filter(q=>q.text===questionText);
+  need(questions.length<=1,'COMPARISON_COURSE_QUESTION_DUPLICATE');
+  if(!questions.length){need(!accepted,'COMPARISON_COURSE_QUESTION_MISSING');await store.addQuestion(dossierId,{text:questionText,expectedRevision:metadata.revision,projection:'metadata'});metadata=await store.getMetadata(dossierId);questions=metadata.questions.filter(q=>q.text===questionText);}
+  need(questions.length===1,'COMPARISON_COURSE_QUESTION_MISSING');
+  questionBinding={schema:SCHEMA,operationId,dossierId,questionId:questions[0].id};
+  await retainedJson(join(directory,'question-binding.json'),questionBinding);
+ }
+ need(questionBinding.operationId===operationId&&questionBinding.dossierId===dossierId&&metadata.questions.some(q=>q.id===questionBinding.questionId),'COMPARISON_COURSE_QUESTION_CHANGED');
+ const questionId=questionBinding.questionId;
  const sourceValue={schema:'sf88-research-results-v1',provider:'training-fixture',sourceTerms:'Original software training fixture. No patient, proprietary or actual model evaluation data.',results:[{id:'comparison-training-protocol',title:'Explicit comparison receiving fixture',content:FIXTURE+'. A declared numeric measurement, undefined metric and separate human judgment exercise the software. They are not a scientific result.',metadata:{operationId}}]};
  const sourceBytes=jsonBytes(sourceValue),sourceReceipt=await retain(join(outputs,'original-training-source.json'),sourceBytes);
  let edition=metadata.editions.find(e=>e.questionId===questionId&&e.raw?.sha256===sourceReceipt.sha256);
@@ -92,11 +102,16 @@ export async function receiveComparison({directory,operationId,reviewer}){
  const decision=await review('decision-v1','decision.save',{...scope,decisionId:null,previousVersionId:null,definition:{title:'Training receiving decision',candidateVersionIds:[candidate.versionId],runIds:[run.id],judgmentVersionIds:[judgment.versionId],reviewer:actor.name,reviewedAt:'2026-10-13T00:03:00.000Z',recommendation:'Retain for software review only',rationale:'The original source, decimal value, undefined reason and manual judgment are independently accessible.',limitations:FIXTURE,sourceRefs}});
  const c2=await review('case-v2','case.save',{caseId:c.id,previousVersionId:c.versionId,definition:{...c.definition,title:'Training comparison — revised protocol',scope:FIXTURE+'; second protocol does not inherit original candidate/run measurements.'}});
  const candidate2=await review('candidate-v2','candidate.save',{caseId:c.id,caseVersionId:c2.versionId,candidateId:candidate.id,previousVersionId:candidate.versionId,definition:{...candidate.definition,version:'fixture-2',configuration:{...candidate.definition.configuration,revision:'explicit successor'}}});
- const finalMeta=await store.getMetadata(dossierId),revision=finalMeta.revision;
+ // The first accepted final operation fixes this course generation permanently.
+ // Later legitimate native/browser work is preserved and is not a new export selection.
+ const revision=receipts.at(-1).dossierRevision;
+ const finalMeta=await store.getMetadata(dossierId,{revision});
+ need(finalMeta.revision===revision,'COMPARISON_COURSE_GENERATION_CHANGED');
+ const currentRevision=(await store.getMetadata(dossierId)).revision;
  // Original UUID replay after later state changes must not create a new revision.
  const originalRunRequest=await readJson(join(requests,'run-v1.json'));
  const repeated=await store.reviewComparison(dossierId,{...originalRunRequest,projection:'metadata'});
- need(repeated.duplicate&&repeated.operation.record.id===run.id&&(await store.getMetadata(dossierId)).revision===revision,'COMPARISON_COURSE_REPLAY_CHANGED');
+ need(repeated.duplicate&&repeated.operation.record.id===run.id&&(await store.getMetadata(dossierId)).revision===currentRevision,'COMPARISON_COURSE_REPLAY_CHANGED');
  const report=await store.comparisonReport(dossierId,{revision,...scope}),newReport=await store.comparisonReport(dossierId,{revision,caseId:c.id});
  need(report.measurementRows[0].value==='1.2500'&&report.measurementRows[1].value===null&&report.decisions.some(d=>d.versionId===decision.versionId),'COMPARISON_COURSE_REPORT_CHANGED');
  need(newReport.case.versionId===c2.versionId&&newReport.runs.length===0&&newReport.candidates[0].versionId===candidate2.versionId,'COMPARISON_COURSE_PROTOCOL_LEAK');
@@ -129,14 +144,17 @@ export async function receiveComparison({directory,operationId,reviewer}){
  files.push(portableReceipt);
  const coldDirectory=join(directory,'cold-store'),cold=await openDossierStore(coldDirectory);
  const receive=async()=>{const stream=await openPortableFile(portableFile);try{return await cold.reopenStream(stream,{projection:'metadata'});}finally{stream.destroy();}};
+ let previousColdRevision=null;
+ try{previousColdRevision=(await cold.getMetadata(dossierId)).revision;}catch(error){if(error.code!=='DOSSIER_NOT_FOUND')throw error;}
  const opened=await receive(),reopened=await receive();
- need(opened.id===dossierId&&opened.revision===revision&&reopened.revision===revision,'COMPARISON_COURSE_COLD_IDENTITY_CHANGED');
+ const expectedColdHead=Math.max(previousColdRevision??0,revision),coldSelected=await cold.getMetadata(dossierId,{revision});
+ need(opened.id===dossierId&&opened.revision===expectedColdHead&&reopened.revision===expectedColdHead&&coldSelected.revision===revision,'COMPARISON_COURSE_COLD_IDENTITY_CHANGED');
  const coldReport=await cold.comparisonReport(dossierId,{revision,...scope});
  need(same(coldReport,report),'COMPARISON_COURSE_COLD_REPORT_CHANGED');
  const coldRaw=await cold.comparisonFile(dossierId,{revision,runId:run.id}),coldMember=await cold.comparisonFile(dossierId,{revision,runId:run.id,artifactId:artifact.id});
  need(coldRaw.body.equals(raw.body)&&coldMember.body.equals(member.body),'COMPARISON_COURSE_COLD_BYTES_CHANGED');
  const coldReplay=await cold.reviewComparison(dossierId,{...originalRunRequest,projection:'metadata'});
- need(coldReplay.duplicate&&coldReplay.operation.requestId===originalRunRequest.requestId&&(await cold.getMetadata(dossierId)).revision===revision,'COMPARISON_COURSE_COLD_REPLAY_CHANGED');
+ need(coldReplay.duplicate&&coldReplay.operation.requestId===originalRunRequest.requestId&&(await cold.getMetadata(dossierId)).revision===expectedColdHead,'COMPARISON_COURSE_COLD_REPLAY_CHANGED');
  for(const member of source){const body=await readBytes(join(ROOT,member.name),4*1024*1024);need(body.length===member.bytes&&digest(body)===member.sha256,'COMPARISON_COURSE_SOURCE_CHANGED');}
  const outcome={schema:SCHEMA,status:'BACKEND_RECEIVING_COMPLETE',fixture:FIXTURE,operationId,directory,storeDirectory,coldDirectory,dossierId,questionId,sourceEditionId:edition.id,revision,caseId:c.id,caseVersionId:c.versionId,currentCaseVersionId:c2.versionId,candidateVersionId:candidate.versionId,currentCandidateVersionId:candidate2.versionId,runId:run.id,judgmentVersionId:judgment.versionId,decisionVersionId:decision.versionId,source,operations:receipts,pagesReceived:paged.length,originalRequestReplay:true,coldRequestReplay:true,fullPortableReopen:true,files,literalInspection:{status:'PENDING',files:['comparison-report.html','comparison-report.csv','original-dossier.research.json.gz'],instruction:'Open and inspect the actual report, original raw run/member files and editable received dossier. A backend receipt alone is not a browser or visual review.'}};
  await retainedJson(join(directory,'receiving-result.json'),outcome);return outcome;

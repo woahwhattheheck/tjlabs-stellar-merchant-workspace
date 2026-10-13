@@ -47,3 +47,8 @@ The installed `research-customer-handover-desk` command opens a private operator
 ## Start from an existing customer handover
 
 Use `research-customer-handover-intake` when continuing an original published customer delivery. Select the actual dossier and delivery, inspect its complete saved handover and the current native head, and review explicit round, item and source limits before preparing the selection. The intake freezes that reviewed baseline and launches the existing handover desk with its same operation and original native API. Draft scope remains recoverable before preparation; the prepared selection and accepted request identities remain stable afterward. [HANDOVER_INTAKE.md](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/HANDOVER_INTAKE.md) contains the complete first-use commands, browser journey and original-input receiving course.
+
+
+## Model, platform and architecture comparisons
+
+Open **Comparisons** in the original Research dossier to define source-bound criterion protocols and candidate editions, receive complete measured runs and attachments, and record named judgments and decisions. Saved working copies preserve exact requests across interrupted replies and concurrent tabs. Current and previous protocol reports remain readable and downloadable, while the full dossier transfer carries every original run, member and revision into an editable receiving workspace. Follow the [complete comparison operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/OPERATING.md) and [original-store receiving programme](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RECEIVING.md).
