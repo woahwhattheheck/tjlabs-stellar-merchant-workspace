@@ -60,7 +60,8 @@ export async function openCollectionReceiver(directory){
   const manifest=await originalManifest(directory),shutdown=new AbortController();
   let closing=null,closed=false;
   const collections=createNativeCollections({manifest,isClosed:()=>closed});
-  const collectionDelivery=createNativeCollectionDelivery({manifest,isClosed:()=>closed});
+  // This listener declares maxRequestBytes:256*1024 below; generic hosts default to one part.
+  const collectionDelivery=createNativeCollectionDelivery({manifest,isClosed:()=>closed,maxUploadBatchChunks:2});
   const recovery=createNativeCollectionRecovery({manifest,registerCollections:collections.register,isClosed:()=>closed});
   const available=()=>need(!closed,'MCP_NATIVE_WORKSPACE_CLOSING');
   return Object.freeze({
