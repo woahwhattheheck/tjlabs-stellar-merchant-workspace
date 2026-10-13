@@ -243,12 +243,14 @@ export async function receiveCurrentSourceBrowser(page,{
     const retainAccepted=async candidate=>{
       need(workingSaveDisposition(saveIntent,candidate,submission.retainVersion)==='complete',
         'Accept only the exact committed original working save.');
+      // Preserve the observed committed browser store before publishing its
+      // portable acceptance receipt, so a receipt never advances that snapshot.
+      if(checkpoint)await checkpoint();
       const accepted={schema:'stellar-forge.current-source-working-save-accepted.v1',
         selection:saveSelection,record:candidate};
       await retainJSON(saveReceiptPath,accepted);saveReceipt=accepted;
       // The portable native record is preserved before any remaining export.
       await retainJSON(join(output,'saved-submission-record.json'),candidate);
-      if(checkpoint)await checkpoint();
       return candidate;
     };
 
