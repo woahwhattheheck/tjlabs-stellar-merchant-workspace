@@ -1,0 +1,159 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "gridfabric-procedures",
+  "heading": "## GridFabric customer procedures and complete operating handover",
+  "sources": [
+    {
+      "id": "gridfabric-installed-customer-product",
+      "label": "Complete GridFabric native application, browser, typed SDK and managed integration",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "tree",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gridfabric-plaid",
+      "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63"
+    },
+    {
+      "id": "gridfabric-energy-operating-guide",
+      "label": "Installed Utility, Leap and GridFabric product selection and operating guide",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "products/energy-operations/OPERATING.md",
+      "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+      "editions": [
+        {
+          "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+          "git_blob": "8e33ea621769e865ee98098a1cda108de52aba14",
+          "bytes": 10057,
+          "sha256": "908b4e5b4234d7579bcd10bcb9a84b1b034b9636d360a41f701f459d24221773"
+        }
+      ]
+    },
+    {
+      "id": "gridfabric-customer-procedure-guide",
+      "label": "Complete nine-stage customer procedure, CLI, archive and independent receiving guide",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/GRIDFABRIC_PROCEDURES.md",
+      "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+      "editions": [
+        {
+          "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+          "git_blob": "d57c2e7714ef3300d0041862595755ba9eb84b48",
+          "bytes": 17414,
+          "sha256": "5d7c7a399a339c80fbabf97ed4510cbad72935ac50314763d47229ed886c3471"
+        }
+      ]
+    },
+    {
+      "id": "gridfabric-customer-browser-guide",
+      "label": "Complete saved browser work, request continuation and received customer archive guide",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gridfabric-plaid/BROWSER_PROCEDURES.md",
+      "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+      "editions": [
+        {
+          "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+          "git_blob": "f1345cc92e7888a8911098eb63d2b81a05fe5bb3",
+          "bytes": 8950,
+          "sha256": "cbcce5174ab70c143c1e408afd572ac710657ff940390b8ba360f0353084250f"
+        }
+      ]
+    },
+    {
+      "id": "gridfabric-customer-procedure-model",
+      "label": "Original customer plan preparation and source-bound recorded procedure model",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/gridfabric-procedure.mjs",
+      "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+      "editions": [
+        {
+          "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+          "git_blob": "14eb7fc5c2e7d71b04cbdb5de6552037530654c3",
+          "bytes": 15243,
+          "sha256": "d246b2236f450560a0fd9a3037401148fab472eaafb66a839397f485199b4685"
+        }
+      ]
+    },
+    {
+      "id": "gridfabric-customer-native-capture",
+      "label": "Complete original SDK capture, source retention and independent offline receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/gridfabric-procedure-native.mjs",
+      "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+      "editions": [
+        {
+          "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+          "git_blob": "4d50dabd409b705e5bdb7afd3055d6b55bbf6900",
+          "bytes": 40045,
+          "sha256": "e139c05f22874014f6f44420310e40b82c237b13cf6fed7e32cb63e125d78b4c"
+        }
+      ]
+    },
+    {
+      "id": "gridfabric-customer-procedure-cli",
+      "label": "Installed procedure preparation, capture, archive, receive and render command",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/gridfabric-procedure-cli.mjs",
+      "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+      "editions": [
+        {
+          "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+          "git_blob": "569cd84d09a3105fb1c18b6a4450a323e7f58ffb",
+          "bytes": 10610,
+          "sha256": "124e8f74111239fb105625a700bbb7fe4eaba54c09ecd31eb840d7878e6f0ae7"
+        }
+      ]
+    },
+    {
+      "id": "gridfabric-customer-archive",
+      "label": "Complete streamed original-member export and receive implementation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gridfabric-plaid/procedure-archive.mjs",
+      "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+      "editions": [
+        {
+          "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+          "git_blob": "39728c942b862d0d04b76b982e3dfcd2aedb4917",
+          "bytes": 9871,
+          "sha256": "551e34ec052110cab2b20db18b61c19ab5834648bfe1ffce804b9e9f8d31e17a"
+        }
+      ]
+    },
+    {
+      "id": "gridfabric-customer-source-selection",
+      "label": "Complete public product selection with its original dependency closure",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/gridfabric-plaid.json",
+      "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+      "editions": [
+        {
+          "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+          "git_blob": "8e132dcad97371e104748e12f7847843958f3778",
+          "bytes": 18964,
+          "sha256": "f3941e1e82733851112ac0fdc2359e805760ccd5ec57365a65744c116c1ab3a0"
+        }
+      ]
+    },
+    {
+      "id": "gridfabric-customer-command-registration",
+      "label": "Original typed procedure exports and installed command registration",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/gridfabric-procedures.json",
+      "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+      "editions": [
+        {
+          "commit": "1e28cff54113f5c0b8ed39ff1783074926a9ad63",
+          "git_blob": "55cbe22c6ad351ed56e9c8b9dd2398e58504370b",
+          "bytes": 1270,
+          "sha256": "e64e5dcc42c55ae7b0258c74e3a856edd9d82c58a3d2d2b2ca2f54df141695bf"
+        }
+      ]
+    }
+  ]
+}

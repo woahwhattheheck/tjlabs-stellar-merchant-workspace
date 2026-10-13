@@ -2,7 +2,7 @@
 import {createHash} from 'node:crypto';
 import {join,resolve,dirname,isAbsolute} from 'node:path';
 import {parseWorkspace} from './workspace-file.mjs';
-import {newCommissioning,commissioningError} from './commissioning.mjs';
+import {newCommissioning,commissioningError,applyCommissioningCommand} from './commissioning.mjs';
 import {operateCaseCommissioning,originalEditionPayload} from './case-commissioning.mjs';
 import {createCaseSourceInputs} from './case-source-inputs.mjs';
 import {MAX_SOURCE_BUNDLE_MANIFEST_BYTES,parseImplementationSourceManifest} from './source-bundle-reference.mjs';
@@ -46,7 +46,7 @@ export async function createCaseSourceDelivery({
   ensure(typeof directory==='string'&&isAbsolute(directory),'Use an absolute private source bundle directory');
   const root=resolve(directory),cache=new Map();
   const resolveInputs=createCaseSourceInputs({store,directory:join(root,'case-inputs')});
-  async function attachBundle(args) {
+  async function attachmentCommand(args) {
     stopped(args.signal);
     ensure(CASE.test(args.caseId)&&SHA.test(args.expectedRevision)&&ID.test(args.requestId)&&
       typeof args.actor==='string'&&args.actor.trim()&&Buffer.byteLength(args.actor)<=200,
@@ -105,9 +105,12 @@ export async function createCaseSourceDelivery({
         sourceCase,sourceBundle:{manifestText,runtimeBytes:Buffer.byteLength(native.inputs.supportText)}};
     }
     stopped(args.signal);
-    const result=await operateCaseCommissioning(store,{id:args.caseId,expectedRevision:args.expectedRevision,
+    return {id:args.caseId,expectedRevision:args.expectedRevision,
       command:{type:'record_workorder',requestId:args.requestId,actor:args.actor,
-        expectedRevision:state.revision,payload}});
+        expectedRevision:state.revision,payload}};
+  }
+  async function attachBundle(args) {
+    const result=await operateCaseCommissioning(store,await attachmentCommand(args));
     return {caseId:result.case.id,revision:result.case.revision,
       commissioningRevision:result.revision,editionId:result.result.editionId,replayed:result.replayed};
   }
@@ -152,5 +155,19 @@ export async function createCaseSourceDelivery({
     const url=SOURCE_DELIVERY_HTTP_BASE+'/download?'+new URLSearchParams({id:found.id,kind:'file',name:value.path});
     return {...file,url,bundleId:found.bundleId,manifestSha256:found.manifestSha256};
   }
-  return {directory:root,service,resolveBundle,resolveFile,close:()=>service.close()};
+  async function previewAttachment({id,caseId,expectedRevision,requestId,actor,recordedAt}) {
+    const transfer=await service.get({id});
+    const found=descriptor(transfer.descriptor),located=await resolveBundle(found);
+    const {sourceEditionWorkorderInput}=await import('../../scf_2026/sf49_data_commissioning/source-edition-workorder.mjs');
+    const native=await sourceEditionWorkorderInput({directory:located.directory});
+    const args=await attachmentCommand({caseId,expectedRevision,requestId,actor,
+      descriptor:found,directory:located.directory,loadWorkorder:async()=>native});
+    const record=await store.read(caseId),workspace=await parseWorkspace(record.workspaceText);
+    ensure(record.revision===expectedRevision,'The original case changed during source preview','CASE_CONFLICT',409);
+    const result=await applyCommissioningCommand(workspace.commissioning??newCommissioning(),
+      {...args.command,...(recordedAt?{recordedAt}:{})});
+    return {caseId,caseRevision:record.revision,descriptor:found,state:result.state,
+      result:result.result,replayed:result.replayed};
+  }
+  return {directory:root,service,resolveBundle,resolveFile,previewAttachment,close:()=>service.close()};
 }

@@ -2,7 +2,7 @@
   "schema": "stellar-forge.grant-nine-answer-source-map.v1",
   "edition": "2026-10-13-commercial-adoption-and-buyer-course",
   "scope": "Complete following reviewer working edition using the existing four-role source package and original nine saved-answer IDs.",
-  "sourceCommit": "a6a3c7a8760586ac387d8834af164fbee3f269dd",
+  "sourceCommit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
   "sourceRows": 523,
   "answer": {
     "path": "stellar-forge/developer-site/dist/grant-data/application-reviewer.md",
@@ -20,7 +20,7 @@
     {
       "role": "application",
       "path": "stellar-forge/developer-site/dist/grant-data/application.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a6a3c7a8760586ac387d8834af164fbee3f269dd/stellar-forge/developer-site/dist/grant-data/application.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e438c436fcad65c816866074bb56dd6d1b96d97e/stellar-forge/developer-site/dist/grant-data/application.md",
       "gitBlob": "15c2a09c49fc72e63179e17211ff7395c756955d",
       "bytes": 47684,
       "sha256": "5bddff9b185890bd0021ac25642975115095b435108d1c19fa2a7291cd03cb37"
@@ -28,15 +28,15 @@
     {
       "role": "source-index",
       "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a6a3c7a8760586ac387d8834af164fbee3f269dd/stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "gitBlob": "022c88301b8363212f474578b43939844d974987",
-      "bytes": 650033,
-      "sha256": "6a97853007c37fde16c41c5551b36e8b16dd628cbf5cd28ec1a1a099351fc8df"
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e438c436fcad65c816866074bb56dd6d1b96d97e/stellar-forge/developer-site/dist/grant-data/source-index.json",
+      "gitBlob": "871dc34934f3493ca96fde8210d0e1a80aebb62f",
+      "bytes": 650196,
+      "sha256": "a6439b66f02f83ebe50521ce506ad0b9d1167786d42b1609b810d197538f2412"
     },
     {
       "role": "budget",
       "path": "stellar-forge/developer-site/dist/grant-data/budget.csv",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a6a3c7a8760586ac387d8834af164fbee3f269dd/stellar-forge/developer-site/dist/grant-data/budget.csv",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e438c436fcad65c816866074bb56dd6d1b96d97e/stellar-forge/developer-site/dist/grant-data/budget.csv",
       "gitBlob": "c62afa352e881c2cf81fe937649fe63fea3ceab5",
       "bytes": 597,
       "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00"
@@ -44,10 +44,10 @@
     {
       "role": "product-and-finance",
       "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a6a3c7a8760586ac387d8834af164fbee3f269dd/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
-      "gitBlob": "32ce24b40b655c8dc43071330ca2a86a72232a9f",
-      "bytes": 997782,
-      "sha256": "34d716c0ac6fae76ed2e6c6e8ca9ca5d3cc7991a4e80b034780f5a24088ddf70"
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e438c436fcad65c816866074bb56dd6d1b96d97e/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+      "gitBlob": "9adc345d8a59849d2586898f7a6f0d40454d0b18",
+      "bytes": 997464,
+      "sha256": "00eb69e4b7212587df452e5dd2a170560091517b5b08b5d8c7cb9117ff54084e"
     }
   ],
   "previousReviewer": {
@@ -295,5 +295,6 @@
     "The same nine answer identities map to current saved edits through explicit Source editions receiving.",
     "No native customer case, issuer form, purchase, payment, award or eligibility decision is created by this editorial publication.",
     "A later canonical union must be composed from its complete current four-role tuple; it must not reuse this dated523-row source as if it contained a later chapter."
-  ]
+  ],
+  "compositionObservation": "Current e438c436 source projection contains 523 source entries and the complete 997,464-byte companion after removal of private Page links. The pending Saved projects canonical union remains a following edition; its installed application/142-route manifest are preserved by this five-file publication."
 }
