@@ -210,6 +210,102 @@
           "sha256": "0eb564c03a6b962ba675bdc46fb99f544a85c000da3ea2372264df7d9117cf3f"
         }
       ]
+    },
+    {
+      "id": "collections-task-desk-installation-guide",
+      "label": "Complete Task Desk original-root installation and customer receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/task-desk/INSTALLATION.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7087c5f90159c750b58e3d348347800df7f49e93",
+          "git_blob": "c670d497c73e9c8391bc96326fb5a2216e0283b3",
+          "bytes": 16313,
+          "sha256": "16956b2dfa3200a2e07e824a43b0f76c91355f75e41b7eb90b800fe3e32e7c57"
+        }
+      ]
+    },
+    {
+      "id": "collections-task-desk-installation-source",
+      "label": "Original installed Task Desk preparation, foreground launch and Merchant connection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/task-desk/installation.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7087c5f90159c750b58e3d348347800df7f49e93",
+          "git_blob": "d8aaa56deb927faf44d422ac9e1593a3dea28a8e",
+          "bytes": 19603,
+          "sha256": "011b919760d0b2b8d9f7fffd6cec688ce5d0fb1e980d8dafce06a2684ee912e1"
+        }
+      ]
+    },
+    {
+      "id": "collections-task-desk-selected-product",
+      "label": "Complete original source selection for Task Desk and customer delivery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/buyer-task-desk.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7087c5f90159c750b58e3d348347800df7f49e93",
+          "git_blob": "8ce093f1bae78e7ac912f8a03daeb300ef367cc2",
+          "bytes": 9685,
+          "sha256": "ceef17c2451248e70164c66f71b663a85957bfd59f942a2042ef6d85f24a19bc"
+        }
+      ]
+    },
+    {
+      "id": "collections-task-desk-installation-workorder",
+      "label": "Original useful customer task and complete native Installation workorder profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/buyer-task-desk.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7087c5f90159c750b58e3d348347800df7f49e93",
+          "git_blob": "506d3b982b981ea67346c1698525bcf2d2fc28e5",
+          "bytes": 11443,
+          "sha256": "3bf2b8beecd974d39eaf75bad3b613bd1f53c084af1d29b27cc8d1e72b3ecc84"
+        }
+      ]
+    },
+    {
+      "id": "collections-task-desk-commissioning",
+      "label": "Original Workshare, Installation and independent task/customer commissioning guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/TASK_DESK.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7087c5f90159c750b58e3d348347800df7f49e93",
+          "git_blob": "54ba21ac3de8c928cc780a4dff2a78e6c1c95120",
+          "bytes": 9911,
+          "sha256": "c749c64bf2d5183f13938bf44279585522d192d98b04b72f15c1903f9c6d6f0f"
+        }
+      ]
+    },
+    {
+      "id": "collections-task-desk-merchant",
+      "label": "Complete Merchant task/customer request, reconciliation and typed archive receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/TASK_DESK.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "78e8e5407c37ae426de5d3dec0bb1c6efa5b7059",
+          "git_blob": "2ddd5863bd4efc0455bf7174d3b5a0746e90ba97",
+          "bytes": 18559,
+          "sha256": "6978805bc051c7a1f8eef408a1eebce068d70f3bf7972f82e215b9c1bb615a52"
+        }
+      ]
     }
   ]
 }
