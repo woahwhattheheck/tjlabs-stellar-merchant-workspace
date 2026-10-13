@@ -94,6 +94,17 @@ export function renderGrantMarkdown(markdown) {
         rows.slice(2).map(row => '<tr>' + row.map((cell, column) => column === 0 ? '<th scope="row">' + inline(cell) + '</th>' : '<td>' + inline(cell) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>');
       continue;
     }
+    if (/^[-*+]\s+\S/.test(line)) {
+      const items = [];
+      while (i < lines.length) {
+        const item = lines[i].match(/^[-*+]\s+(.+)$/);
+        if (!item) break;
+        items.push('<li>' + inline(item[1]) + '</li>');
+        i++;
+      }
+      output.push('<ul>' + items.join('') + '</ul>');
+      continue;
+    }
     const ordered = line.match(/^(\d+)\.\s+(.+)$/);
     if (ordered) {
       const items = [];
@@ -365,9 +376,10 @@ export async function runGrantComposition(argv = process.argv.slice(2)) {
     product_registry_git_blob: gitBlob(productRegistrySource),
     ...(manuscript ? { canonical_front_sha256: digest(selectedApplication), canonical_front_bytes: bytes(selectedApplication) } : {}),
   } };
+  // Preserve authenticated source identities when the received companion has projected private links.
   const result = composeGrantApplication({
     applicationMarkdown: selectedApplication,
-    productAndFinanceMarkdown: companion, templateHtml, sourceIndex: index,
+    productAndFinanceMarkdown: companion, templateHtml, sourceIndex: projectGrantSourceIndex(index),
     fredCommit: options['--fred-commit'] || index.narrative_source?.economic_product_commit,
     coopsCommit, financeCommit, customerClosingCommit, datasetteCommit, datasettePublisherCommit, productRegistrations,
   });
