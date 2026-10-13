@@ -1,0 +1,11 @@
+id,required original input,purpose,initial state
+RI01,Named customer and Rigby receiving/release owners,Select actual authority,PENDING
+RI02,Medusa and integration exact source commit/runtime versions,Bind implemented source,PENDING
+RI03,Dynamics Sales schema and existing Account Contact Opportunity mapping,Select correct target and fields,PENDING
+RI04,Existing order key upsert and ambiguity queue behavior,Preserve original identity and retry semantics,PENDING
+RI05,Authorized source and destination exports with common time/filter/page scope,Establish comparison boundary,PENDING
+RI06,Currency scales amount units selected customer/status fields,Prevent false comparison,PENDING
+RI07,Staging access and permitted recovery exercise,Receive actual behavior,PENDING
+RI08,Production change window rollback owner and before-state,Control actual release,PENDING
+RI09,Original private saved case and complete source directory,Preserve original case history,PENDING
+RI10,Customer receiving destination and 75-minute handover attendance,Complete independent receiving,PENDING

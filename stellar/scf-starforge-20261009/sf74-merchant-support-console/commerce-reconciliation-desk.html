@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Commerce integration receiving</title>
+<style>
+:root{color-scheme:light}*{box-sizing:border-box}body{font:15px system-ui,sans-serif;line-height:1.55;color:#1f2933;background:#f5f6f7;margin:0}main{max-width:1220px;margin:auto;padding:28px}header,panel,section{display:block;background:white;border:1px solid #d2d7dc;border-radius:8px;padding:24px;margin-bottom:18px}h1{font-size:30px;margin:0 0 8px}h2{font-size:21px}h3{font-size:17px}p{max-width:95ch}small{color:#525d67}label{display:block;margin:12px 0}input,select,textarea,button{font:inherit}input,select,textarea{display:block;width:100%;padding:9px;border:1px solid #a9b1ba;border-radius:4px;background:white}textarea#input{font:12px ui-monospace,monospace;min-height:280px}button{border:1px solid #364759;border-radius:4px;padding:9px 14px;color:#fff;background:#263c51;cursor:pointer;margin:4px 4px 4px 0}button:disabled{opacity:.5;cursor:default}.row{display:grid;grid-template-columns:1fr 1fr;gap:20px}.notice{padding:12px;border-left:4px solid #54778b;background:#edf3f6}.error{color:#a01520}#status{min-height:28px;font-weight:600}fieldset{border:1px solid #c4ccd3;margin:16px 0;padding:16px;border-radius:4px}legend{font-weight:650}iframe{width:100%;height:620px;border:1px solid #c4ccd3;background:#fff}code{overflow-wrap:anywhere}@media(max-width:750px){main{padding:12px}.row{grid-template-columns:1fr}header,section{padding:16px}}
+</style></head><body><main>
+<header><h1>Commerce integration receiving</h1><p>Compare one selected commerce export with its downstream CRM or ERP export. Keep exact amounts, duplicate keys, scope limitations and reviewer decisions visible.</p>
+<p class="notice">This page runs locally. It makes no account, order, payment or customer identity changes. Its initial example is authored receiving data. Save the complete input and review before closing; the existing Merchant Support case remains the persistent work record.</p></header>
+<section><h2>1. Select the original exports</h2><label>Open complete retained input JSON<input id="open-input" type="file" accept=".json,application/json"></label>
+<div class="row"><label>Replace source CSV<input id="source-file" type="file" accept=".csv,text/csv"></label><label>Replace destination CSV<input id="destination-file" type="file" accept=".csv,text/csv"></label></div>
+<p>Edit the selected common time scope, completeness, source references, actual capture times, amount units and column mappings in this complete input. Use explicit currency precision and status pairs. Customer comparison checks only the selected keys; it does not resolve a person's identity.</p>
+<label>Complete source-bound input<textarea id="input" spellcheck="false" aria-label="Complete source-bound input"></textarea></label>
+<button id="analyze">Analyze selected exports</button><button id="download-input">Save complete input</button><p id="status" role="status"></p></section>
+<section><h2>2. Review the observed findings</h2><p id="summary">No analyzed selection.</p>
+<label>Open original review return<input id="open-review" type="file" accept=".json,application/json"></label>
+<div class="row"><label>Actual reviewer<input id="actor" autocomplete="name"></label><label>Observed UTC time<input id="observed" placeholder="2026-10-13T12:00:00.000Z"></label></div>
+<label>Review authority or decision reference<input id="review-reference"></label><div id="issues"></div>
+<button id="download-review">Save source-bound review</button><button id="download-report">Download current report</button><button id="download-csv">Download exceptions CSV</button>
+<p>Leaving a finding pending preserves that status. A recorded disposition is an operator decision; customer acceptance and implementation completion remain separate original case actions.</p></section>
+<section><h2>3. Receive into the original case</h2><p>Use <code>commerce-reconciliation-cli.mjs review --input ... --review ... --out ...</code> to create the complete package, then its <code>inspect</code> and <code>attach</code> commands. Preserve the first attachment request ID, operator, timestamp and selected case revision for replay. The existing implementation export/receive commands carry all case history and original source bundles.</p><iframe id="preview" title="Current reconciliation report" sandbox=""></iframe></section>
+</main><script>
+const originalHash=(()=>{const module={exports:{}};/**
+ * Strict UTF-8 SHA-256 for retained complete text, with no runtime imports.
+ *
+ * Bundled upstream: emn178/js-sha256 1.0.0, build/sha256.cjs
+ * Commit: 9a54fb31d4594762987e1b5d175265f6bac921de
+ * Upstream blob: e3a08633357cb7ca248e14751f9270d95fbbbdf2
+ * The upstream source between the markers is unchanged.
+ *
+ * Upstream license:
+ * Copyright (c) 2014-2026 Chen, Yi-Cyuan
+ * 
+ * MIT License
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+// BEGIN UNCHANGED UPSTREAM SOURCE
+/**
+ * [js-sha256]{@link https://github.com/emn178/js-sha256}
+ *
+ * @version 1.0.0
+ * @author Chen, Yi-Cyuan [emn178@gmail.com]
+ * @copyright Chen, Yi-Cyuan 2014-2026
+ * @license MIT
+ */
+'use strict';
+
+var INPUT_ERROR = 'input is invalid type';
+var FINALIZE_ERROR = 'finalize already called';
+
+var ARRAY_BUFFER = typeof ArrayBuffer !== 'undefined';
+
+var formatMessage = function (message) {
+  var type = typeof message;
+  if (type === 'string') {
+    return [message, true];
+  }
+  if (Array.isArray(message)) {
+    return [message, false];
+  }
+  if (ARRAY_BUFFER && message) {
+    if (message.constructor === ArrayBuffer) {
+      return [new Uint8Array(message), false];
+    } else if (ArrayBuffer.isView(message)) {
+      return [message, false];
+    }
+  }
+  throw new Error(INPUT_ERROR);
+};
+
+var HEX_CHARS = '0123456789abcdef'.split('');
+var EXTRA = [-2147483648, 8388608, 32768, 128];
+var SHIFT = [24, 16, 8, 0];
+var K = [
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+];
+var OUTPUT_TYPES = ['hex', 'array', 'digest', 'arrayBuffer'];
+
+var blocks = [];
+
+var createOutputMethod = function (outputType, is224) {
+  return function (message) {
+    return new Sha256(is224, true).update(message)[outputType]();
+  };
+};
+
+var createMethod = function (is224) {
+  var method = createOutputMethod('hex', is224);
+  method.create = function () {
+    return new Sha256(is224);
+  };
+  method.update = function (message) {
+    return method.create().update(message);
+  };
+  for (var i = 0; i < OUTPUT_TYPES.length; ++i) {
+    var type = OUTPUT_TYPES[i];
+    method[type] = createOutputMethod(type, is224);
+  }
+  return method;
+};
+
+var createHmacOutputMethod = function (outputType, is224) {
+  return function (key, message) {
+    return new HmacSha256(key, is224, true).update(message)[outputType]();
+  };
+};
+
+var createHmacMethod = function (is224) {
+  var method = createHmacOutputMethod('hex', is224);
+  method.create = function (key) {
+    return new HmacSha256(key, is224);
+  };
+  method.update = function (key, message) {
+    return method.create(key).update(message);
+  };
+  for (var i = 0; i < OUTPUT_TYPES.length; ++i) {
+    var type = OUTPUT_TYPES[i];
+    method[type] = createHmacOutputMethod(type, is224);
+  }
+  return method;
+};
+
+function Sha256(is224, sharedMemory) {
+  if (sharedMemory) {
+    blocks[0] = blocks[16] = blocks[1] = blocks[2] = blocks[3] =
+      blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+      blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+      blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+    this.blocks = blocks;
+  } else {
+    this.blocks = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  }
+
+  if (is224) {
+    this.h0 = 0xc1059ed8;
+    this.h1 = 0x367cd507;
+    this.h2 = 0x3070dd17;
+    this.h3 = 0xf70e5939;
+    this.h4 = 0xffc00b31;
+    this.h5 = 0x68581511;
+    this.h6 = 0x64f98fa7;
+    this.h7 = 0xbefa4fa4;
+  } else { // 256
+    this.h0 = 0x6a09e667;
+    this.h1 = 0xbb67ae85;
+    this.h2 = 0x3c6ef372;
+    this.h3 = 0xa54ff53a;
+    this.h4 = 0x510e527f;
+    this.h5 = 0x9b05688c;
+    this.h6 = 0x1f83d9ab;
+    this.h7 = 0x5be0cd19;
+  }
+
+  this.block = this.start = this.bytes = this.hBytes = 0;
+  this.finalized = this.hashed = false;
+  this.first = true;
+  this.is224 = is224;
+}
+
+Sha256.prototype.update = function (message) {
+  if (this.finalized) {
+    throw new Error(FINALIZE_ERROR);
+  }
+  var result = formatMessage(message);
+  message = result[0];
+  var isString = result[1];
+  var code, index = 0, i, length = message.length, blocks = this.blocks;
+  while (index < length) {
+    if (this.hashed) {
+      this.hashed = false;
+      blocks[0] = this.block;
+      this.block = blocks[16] = blocks[1] = blocks[2] = blocks[3] =
+        blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+        blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+        blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+    }
+
+    if (isString) {
+      for (i = this.start; index < length && i < 64; ++index) {
+        code = message.charCodeAt(index);
+        if (code < 0x80) {
+          blocks[i >>> 2] |= code << SHIFT[i++ & 3];
+        } else if (code < 0x800) {
+          blocks[i >>> 2] |= (0xc0 | (code >>> 6)) << SHIFT[i++ & 3];
+          blocks[i >>> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i++ & 3];
+        } else if (code < 0xd800 || code >= 0xe000) {
+          blocks[i >>> 2] |= (0xe0 | (code >>> 12)) << SHIFT[i++ & 3];
+          blocks[i >>> 2] |= (0x80 | ((code >>> 6) & 0x3f)) << SHIFT[i++ & 3];
+          blocks[i >>> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i++ & 3];
+        } else {
+          code = 0x10000 + (((code & 0x3ff) << 10) | (message.charCodeAt(++index) & 0x3ff));
+          blocks[i >>> 2] |= (0xf0 | (code >>> 18)) << SHIFT[i++ & 3];
+          blocks[i >>> 2] |= (0x80 | ((code >>> 12) & 0x3f)) << SHIFT[i++ & 3];
+          blocks[i >>> 2] |= (0x80 | ((code >>> 6) & 0x3f)) << SHIFT[i++ & 3];
+          blocks[i >>> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i++ & 3];
+        }
+      }
+    } else {
+      for (i = this.start; index < length && i < 64; ++index) {
+        blocks[i >>> 2] |= message[index] << SHIFT[i++ & 3];
+      }
+    }
+
+    this.lastByteIndex = i;
+    this.bytes += i - this.start;
+    if (i >= 64) {
+      this.block = blocks[16];
+      this.start = i - 64;
+      this.hash();
+      this.hashed = true;
+    } else {
+      this.start = i;
+    }
+  }
+  if (this.bytes > 4294967295) {
+    this.hBytes += this.bytes / 4294967296 << 0;
+    this.bytes = this.bytes % 4294967296;
+  }
+  return this;
+};
+
+Sha256.prototype.finalize = function () {
+  if (this.finalized) {
+    return;
+  }
+  this.finalized = true;
+  var blocks = this.blocks, i = this.lastByteIndex;
+  blocks[16] = this.block;
+  blocks[i >>> 2] |= EXTRA[i & 3];
+  this.block = blocks[16];
+  if (i >= 56) {
+    if (!this.hashed) {
+      this.hash();
+    }
+    blocks[0] = this.block;
+    blocks[16] = blocks[1] = blocks[2] = blocks[3] =
+      blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+      blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+      blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+  }
+  blocks[14] = this.hBytes << 3 | this.bytes >>> 29;
+  blocks[15] = this.bytes << 3;
+  this.hash();
+};
+
+Sha256.prototype.hash = function () {
+  var a = this.h0, b = this.h1, c = this.h2, d = this.h3, e = this.h4, f = this.h5, g = this.h6,
+    h = this.h7, blocks = this.blocks, j, s0, s1, maj, t1, t2, ch, ab, da, cd, bc;
+
+  for (j = 16; j < 64; ++j) {
+    // rightrotate
+    t1 = blocks[j - 15];
+    s0 = ((t1 >>> 7) | (t1 << 25)) ^ ((t1 >>> 18) | (t1 << 14)) ^ (t1 >>> 3);
+    t1 = blocks[j - 2];
+    s1 = ((t1 >>> 17) | (t1 << 15)) ^ ((t1 >>> 19) | (t1 << 13)) ^ (t1 >>> 10);
+    blocks[j] = blocks[j - 16] + s0 + blocks[j - 7] + s1 << 0;
+  }
+
+  bc = b & c;
+  for (j = 0; j < 64; j += 4) {
+    if (this.first) {
+      if (this.is224) {
+        ab = 300032;
+        t1 = blocks[0] - 1413257819;
+        h = t1 - 150054599 << 0;
+        d = t1 + 24177077 << 0;
+      } else {
+        ab = 704751109;
+        t1 = blocks[0] - 210244248;
+        h = t1 - 1521486534 << 0;
+        d = t1 + 143694565 << 0;
+      }
+      this.first = false;
+    } else {
+      s0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+      s1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+      ab = a & b;
+      maj = ab ^ (a & c) ^ bc;
+      ch = (e & f) ^ (~e & g);
+      t1 = h + s1 + ch + K[j] + blocks[j];
+      t2 = s0 + maj;
+      h = d + t1 << 0;
+      d = t1 + t2 << 0;
+    }
+    s0 = ((d >>> 2) | (d << 30)) ^ ((d >>> 13) | (d << 19)) ^ ((d >>> 22) | (d << 10));
+    s1 = ((h >>> 6) | (h << 26)) ^ ((h >>> 11) | (h << 21)) ^ ((h >>> 25) | (h << 7));
+    da = d & a;
+    maj = da ^ (d & b) ^ ab;
+    ch = (h & e) ^ (~h & f);
+    t1 = g + s1 + ch + K[j + 1] + blocks[j + 1];
+    t2 = s0 + maj;
+    g = c + t1 << 0;
+    c = t1 + t2 << 0;
+    s0 = ((c >>> 2) | (c << 30)) ^ ((c >>> 13) | (c << 19)) ^ ((c >>> 22) | (c << 10));
+    s1 = ((g >>> 6) | (g << 26)) ^ ((g >>> 11) | (g << 21)) ^ ((g >>> 25) | (g << 7));
+    cd = c & d;
+    maj = cd ^ (c & a) ^ da;
+    ch = (g & h) ^ (~g & e);
+    t1 = f + s1 + ch + K[j + 2] + blocks[j + 2];
+    t2 = s0 + maj;
+    f = b + t1 << 0;
+    b = t1 + t2 << 0;
+    s0 = ((b >>> 2) | (b << 30)) ^ ((b >>> 13) | (b << 19)) ^ ((b >>> 22) | (b << 10));
+    s1 = ((f >>> 6) | (f << 26)) ^ ((f >>> 11) | (f << 21)) ^ ((f >>> 25) | (f << 7));
+    bc = b & c;
+    maj = bc ^ (b & d) ^ cd;
+    ch = (f & g) ^ (~f & h);
+    t1 = e + s1 + ch + K[j + 3] + blocks[j + 3];
+    t2 = s0 + maj;
+    e = a + t1 << 0;
+    a = t1 + t2 << 0;
+    this.chromeBugWorkAround = true;
+  }
+
+  this.h0 = this.h0 + a << 0;
+  this.h1 = this.h1 + b << 0;
+  this.h2 = this.h2 + c << 0;
+  this.h3 = this.h3 + d << 0;
+  this.h4 = this.h4 + e << 0;
+  this.h5 = this.h5 + f << 0;
+  this.h6 = this.h6 + g << 0;
+  this.h7 = this.h7 + h << 0;
+};
+
+Sha256.prototype.hex = function () {
+  this.finalize();
+
+  var h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3, h4 = this.h4, h5 = this.h5,
+    h6 = this.h6, h7 = this.h7;
+
+  var hex = HEX_CHARS[(h0 >>> 28) & 0x0F] + HEX_CHARS[(h0 >>> 24) & 0x0F] +
+    HEX_CHARS[(h0 >>> 20) & 0x0F] + HEX_CHARS[(h0 >>> 16) & 0x0F] +
+    HEX_CHARS[(h0 >>> 12) & 0x0F] + HEX_CHARS[(h0 >>> 8) & 0x0F] +
+    HEX_CHARS[(h0 >>> 4) & 0x0F] + HEX_CHARS[h0 & 0x0F] +
+    HEX_CHARS[(h1 >>> 28) & 0x0F] + HEX_CHARS[(h1 >>> 24) & 0x0F] +
+    HEX_CHARS[(h1 >>> 20) & 0x0F] + HEX_CHARS[(h1 >>> 16) & 0x0F] +
+    HEX_CHARS[(h1 >>> 12) & 0x0F] + HEX_CHARS[(h1 >>> 8) & 0x0F] +
+    HEX_CHARS[(h1 >>> 4) & 0x0F] + HEX_CHARS[h1 & 0x0F] +
+    HEX_CHARS[(h2 >>> 28) & 0x0F] + HEX_CHARS[(h2 >>> 24) & 0x0F] +
+    HEX_CHARS[(h2 >>> 20) & 0x0F] + HEX_CHARS[(h2 >>> 16) & 0x0F] +
+    HEX_CHARS[(h2 >>> 12) & 0x0F] + HEX_CHARS[(h2 >>> 8) & 0x0F] +
+    HEX_CHARS[(h2 >>> 4) & 0x0F] + HEX_CHARS[h2 & 0x0F] +
+    HEX_CHARS[(h3 >>> 28) & 0x0F] + HEX_CHARS[(h3 >>> 24) & 0x0F] +
+    HEX_CHARS[(h3 >>> 20) & 0x0F] + HEX_CHARS[(h3 >>> 16) & 0x0F] +
+    HEX_CHARS[(h3 >>> 12) & 0x0F] + HEX_CHARS[(h3 >>> 8) & 0x0F] +
+    HEX_CHARS[(h3 >>> 4) & 0x0F] + HEX_CHARS[h3 & 0x0F] +
+    HEX_CHARS[(h4 >>> 28) & 0x0F] + HEX_CHARS[(h4 >>> 24) & 0x0F] +
+    HEX_CHARS[(h4 >>> 20) & 0x0F] + HEX_CHARS[(h4 >>> 16) & 0x0F] +
+    HEX_CHARS[(h4 >>> 12) & 0x0F] + HEX_CHARS[(h4 >>> 8) & 0x0F] +
+    HEX_CHARS[(h4 >>> 4) & 0x0F] + HEX_CHARS[h4 & 0x0F] +
+    HEX_CHARS[(h5 >>> 28) & 0x0F] + HEX_CHARS[(h5 >>> 24) & 0x0F] +
+    HEX_CHARS[(h5 >>> 20) & 0x0F] + HEX_CHARS[(h5 >>> 16) & 0x0F] +
+    HEX_CHARS[(h5 >>> 12) & 0x0F] + HEX_CHARS[(h5 >>> 8) & 0x0F] +
+    HEX_CHARS[(h5 >>> 4) & 0x0F] + HEX_CHARS[h5 & 0x0F] +
+    HEX_CHARS[(h6 >>> 28) & 0x0F] + HEX_CHARS[(h6 >>> 24) & 0x0F] +
+    HEX_CHARS[(h6 >>> 20) & 0x0F] + HEX_CHARS[(h6 >>> 16) & 0x0F] +
+    HEX_CHARS[(h6 >>> 12) & 0x0F] + HEX_CHARS[(h6 >>> 8) & 0x0F] +
+    HEX_CHARS[(h6 >>> 4) & 0x0F] + HEX_CHARS[h6 & 0x0F];
+  if (!this.is224) {
+    hex += HEX_CHARS[(h7 >>> 28) & 0x0F] + HEX_CHARS[(h7 >>> 24) & 0x0F] +
+      HEX_CHARS[(h7 >>> 20) & 0x0F] + HEX_CHARS[(h7 >>> 16) & 0x0F] +
+      HEX_CHARS[(h7 >>> 12) & 0x0F] + HEX_CHARS[(h7 >>> 8) & 0x0F] +
+      HEX_CHARS[(h7 >>> 4) & 0x0F] + HEX_CHARS[h7 & 0x0F];
+  }
+  return hex;
+};
+
+Sha256.prototype.toString = Sha256.prototype.hex;
+
+Sha256.prototype.digest = function () {
+  this.finalize();
+
+  var h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3, h4 = this.h4, h5 = this.h5,
+    h6 = this.h6, h7 = this.h7;
+
+  var arr = [
+    (h0 >>> 24) & 0xFF, (h0 >>> 16) & 0xFF, (h0 >>> 8) & 0xFF, h0 & 0xFF,
+    (h1 >>> 24) & 0xFF, (h1 >>> 16) & 0xFF, (h1 >>> 8) & 0xFF, h1 & 0xFF,
+    (h2 >>> 24) & 0xFF, (h2 >>> 16) & 0xFF, (h2 >>> 8) & 0xFF, h2 & 0xFF,
+    (h3 >>> 24) & 0xFF, (h3 >>> 16) & 0xFF, (h3 >>> 8) & 0xFF, h3 & 0xFF,
+    (h4 >>> 24) & 0xFF, (h4 >>> 16) & 0xFF, (h4 >>> 8) & 0xFF, h4 & 0xFF,
+    (h5 >>> 24) & 0xFF, (h5 >>> 16) & 0xFF, (h5 >>> 8) & 0xFF, h5 & 0xFF,
+    (h6 >>> 24) & 0xFF, (h6 >>> 16) & 0xFF, (h6 >>> 8) & 0xFF, h6 & 0xFF
+  ];
+  if (!this.is224) {
+    arr.push((h7 >>> 24) & 0xFF, (h7 >>> 16) & 0xFF, (h7 >>> 8) & 0xFF, h7 & 0xFF);
+  }
+  return arr;
+};
+
+Sha256.prototype.array = Sha256.prototype.digest;
+
+Sha256.prototype.arrayBuffer = function () {
+  this.finalize();
+
+  var buffer = new ArrayBuffer(this.is224 ? 28 : 32);
+  var dataView = new DataView(buffer);
+  dataView.setUint32(0, this.h0);
+  dataView.setUint32(4, this.h1);
+  dataView.setUint32(8, this.h2);
+  dataView.setUint32(12, this.h3);
+  dataView.setUint32(16, this.h4);
+  dataView.setUint32(20, this.h5);
+  dataView.setUint32(24, this.h6);
+  if (!this.is224) {
+    dataView.setUint32(28, this.h7);
+  }
+  return buffer;
+};
+
+function HmacSha256(key, is224, sharedMemory) {
+  var i, result = formatMessage(key);
+  key = result[0];
+  if (result[1]) {
+    var bytes = [], length = key.length, index = 0, code;
+    for (i = 0; i < length; ++i) {
+      code = key.charCodeAt(i);
+      if (code < 0x80) {
+        bytes[index++] = code;
+      } else if (code < 0x800) {
+        bytes[index++] = (0xc0 | (code >>> 6));
+        bytes[index++] = (0x80 | (code & 0x3f));
+      } else if (code < 0xd800 || code >= 0xe000) {
+        bytes[index++] = (0xe0 | (code >>> 12));
+        bytes[index++] = (0x80 | ((code >>> 6) & 0x3f));
+        bytes[index++] = (0x80 | (code & 0x3f));
+      } else {
+        code = 0x10000 + (((code & 0x3ff) << 10) | (key.charCodeAt(++i) & 0x3ff));
+        bytes[index++] = (0xf0 | (code >>> 18));
+        bytes[index++] = (0x80 | ((code >>> 12) & 0x3f));
+        bytes[index++] = (0x80 | ((code >>> 6) & 0x3f));
+        bytes[index++] = (0x80 | (code & 0x3f));
+      }
+    }
+    key = bytes;
+  }
+
+  if (key.length > 64) {
+    key = (new Sha256(is224, true)).update(key).array();
+  }
+
+  var oKeyPad = [], iKeyPad = [];
+  for (i = 0; i < 64; ++i) {
+    var b = key[i] || 0;
+    oKeyPad[i] = 0x5c ^ b;
+    iKeyPad[i] = 0x36 ^ b;
+  }
+
+  Sha256.call(this, is224, sharedMemory);
+
+  this.update(iKeyPad);
+  this.oKeyPad = oKeyPad;
+  this.inner = true;
+  this.sharedMemory = sharedMemory;
+}
+HmacSha256.prototype = new Sha256();
+
+HmacSha256.prototype.finalize = function () {
+  Sha256.prototype.finalize.call(this);
+  if (this.inner) {
+    this.inner = false;
+    var innerHash = this.array();
+    Sha256.call(this, this.is224, this.sharedMemory);
+    this.update(this.oKeyPad);
+    this.update(innerHash);
+    Sha256.prototype.finalize.call(this);
+  }
+};
+
+var sha256 = createMethod();
+var sha224 = createMethod(true);
+sha256.sha256 = sha256;
+sha256.sha224 = sha224;
+sha256.hmac = createHmacMethod();
+sha224.hmac = createHmacMethod(true);
+
+module.exports = sha256;
+// END UNCHANGED UPSTREAM SOURCE
+
+const connectedSha256Upstream = module.exports;
+
+/**
+ * Count exact UTF-8 bytes and reject unpaired UTF-16 surrogates.
+ * Use this for text validation when no digest is needed.
+ */
+function utf8ByteLength(value) {
+  if (typeof value !== 'string') throw new TypeError('utf8ByteLength requires a string');
+  let bytes = 0;
+  for (const char of value) {
+    const code = char.codePointAt(0);
+    if (code >= 0xd800 && code <= 0xdfff) throw new TypeError('Unpaired UTF-16 surrogate');
+    bytes += code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
+  }
+  return bytes;
+}
+
+/**
+ * Hash a complete well-formed UTF-16 string as its exact UTF-8 content bytes.
+ * No normalization, byte-order mark insertion, newline conversion or I/O.
+ * @returns {{bytes: number, sha256: string}}
+ */
+function sha256Utf8(value) {
+  if (typeof value !== 'string') throw new TypeError('sha256Utf8 requires a string');
+  const bytes = utf8ByteLength(value);
+  // A separate hasher owns its working state for each invocation.
+  const sha256 = connectedSha256Upstream.create().update(value).hex();
+  return {bytes, sha256};
+}
+
+/** Hash exact binary source bytes with the same maintained upstream implementation. */
+function sha256Bytes(value) {
+  if (!(value instanceof Uint8Array)) throw new TypeError('sha256Bytes requires a Uint8Array');
+  return {bytes: value.byteLength,
+    sha256: connectedSha256Upstream.create().update(value).hex()};
+}
+
+module.exports = {sha256Utf8, sha256Bytes, utf8ByteLength};
+
+return module.exports;})();
+// MIT. Source-bound commerce export reconciliation; no account or order writes.
+const RECONCILIATION_SCHEMA='stellar-forge.commerce-export-reconciliation.v1';
+const REVIEW_SCHEMA='stellar-forge.commerce-export-review.v1';
+const MAX_BYTES=16*1024*1024,MAX_ROWS=50000;
+const plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+const copy=v=>JSON.parse(JSON.stringify(v));
+const fail=(code,message)=>{throw Object.assign(new Error(message),{code});};
+const need=(v,m,c='INVALID_COMMERCE_RECONCILIATION')=>{if(!v)fail(c,m);};
+const text=(v,label,max=1000)=>{need(typeof v==='string'&&v.trim()&&v.length<=max&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v),'Use '+label);return v;};
+const stable=v=>v===null||typeof v!=='object'?JSON.stringify(v):Array.isArray(v)?'['+v.map(stable).join(',')+']':'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}';
+const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const csvCell=v=>'"'+String(v??'').replaceAll('"','""')+'"';
+function csv(raw) {
+  need(typeof raw==='string','Receive complete UTF-8 CSV text');
+  const data=raw.charCodeAt(0)===0xfeff?raw.slice(1):raw;
+  let rows=[],row=[],field='',quoted=false,closed=false,started=false;
+  function column(){row.push(field);field='';closed=false;started=false;}
+  function line(){column();if(row.length!==1||row[0]!=='')rows.push(row);row=[];need(rows.length<=MAX_ROWS+1,'Select at most '+MAX_ROWS+' records per export');}
+  for(let i=0;i<data.length;i++){
+    const c=data[i];
+    if(quoted){if(c==='"'){if(data[i+1]==='"'){field+='"';i++;}else{quoted=false;closed=true;}}else field+=c;continue;}
+    if(c==='"'){need(!started&&!closed,'A quote must begin a complete CSV field');quoted=true;started=true;continue;}
+    if(c===','){column();continue;}
+    if(c==='\r'||c==='\n'){if(c==='\r'&&data[i+1]==='\n')i++;line();continue;}
+    need(!closed,'Unexpected text after a quoted CSV field');field+=c;started=true;
+  }
+  need(!quoted,'Complete the quoted CSV field');
+  if(field!==''||row.length||started||closed)line();
+  need(rows.length>0,'Receive a header row');
+  const headers=rows.shift();need(headers.every(h=>h!==''&&!/[\r\n\u0000]/.test(h))&&new Set(headers).size===headers.length,'Use distinct nonempty exact CSV headers');
+  return {headers,rows:rows.map((values,index)=>{need(values.length===headers.length,'CSV record '+(index+2)+' has a different field count');return {record:index+2,values:Object.fromEntries(headers.map((h,i)=>[h,values[i]]))};})};
+}
+function mapping(value,headers) {
+  need(plain(value),'Select an explicit column mapping');
+  const allowed=['key','amount','currency','customer','status'];
+  need(Object.keys(value).every(k=>allowed.includes(k)),'Unknown mapping column');
+  for(const k of ['key','amount','currency'])need(typeof value[k]==='string'&&headers.includes(value[k]),'Select the original '+k+' column');
+  for(const k of ['customer','status'])if(value[k]!==undefined)need(typeof value[k]==='string'&&headers.includes(value[k]),'Select the original '+k+' column');
+  return copy(value);
+}
+function decimal(raw,unit,scale) {
+  if(typeof raw!=='string'||raw.length>100||!/^[-+]?\d+(?:\.\d+)?$/.test(raw))return null;
+  const negative=raw.startsWith('-'),s=raw.replace(/^[-+]/,''),[whole,fraction='']=s.split('.');
+  if(unit==='minor'&&fraction)return null;
+  if(unit==='major'&&fraction.length>scale&&/[1-9]/.test(fraction.slice(scale)))return null;
+  const digits=unit==='minor'?whole:whole+fraction.slice(0,scale).padEnd(scale,'0');
+  const n=BigInt(digits)*(negative?-1n:1n);
+  return n.toString();
+}
+function utc(v,label){text(v,label,40);need(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(v)&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString().slice(0,19)===v.slice(0,19),'Use a UTC '+label);return v;}
+function createCommerceReconciliation({sha256Utf8}={}) {
+  need(typeof sha256Utf8==='function','Use the original SHA-256 function');
+  const hash=s=>{const h=sha256Utf8(s);need(h&&/^[a-f0-9]{64}$/.test(h.sha256)&&Number.isSafeInteger(h.bytes),'SHA-256 interface changed');return h;};
+  function analyze(input) {
+    need(plain(input)&&input.schema===RECONCILIATION_SCHEMA,'Select the complete commerce reconciliation input');
+    need(Object.keys(input).every(k=>['schema','reference','scope','source','destination','currency_scales','status_pairs','comparison'].includes(k)),'Unknown input fields');
+    const reference=text(input.reference,'engagement/change reference'),scope=input.scope;
+    need(plain(scope),'Record the original common export scope');
+    const from=utc(scope.from,'scope start'),through=utc(scope.through,'scope end');
+    need(Date.parse(from)<Date.parse(through),'Scope end must follow start');
+    need(scope.completeness==='selected_scope_complete'||scope.completeness==='partial','Record complete or partial scope explicitly');
+    const scopeNote=text(scope.description,'selected scope description',4000);
+    need(plain(input.currency_scales)&&Object.keys(input.currency_scales).length>0,'Select explicit currency scales');
+    for(const [currency,scale] of Object.entries(input.currency_scales))need(/^[A-Z]{3}$/.test(currency)&&Number.isInteger(scale)&&scale>=0&&scale<=6,'Use an uppercase currency and scale from zero to six');
+    const comparison=input.comparison??{customer:false,status:false};
+    need(plain(comparison)&&typeof comparison.customer==='boolean'&&typeof comparison.status==='boolean'&&Object.keys(comparison).every(k=>['customer','status'].includes(k)),'Select explicit customer/status comparison');
+    const pairs=input.status_pairs??[];
+    need(Array.isArray(pairs)&&pairs.length<=1000,'Select the original status equivalence pairs');
+    for(const p of pairs)need(plain(p)&&Object.keys(p).length===2&&typeof p.source==='string'&&typeof p.destination==='string','Use complete source/destination status pairs');
+    const issues=[],allRows={},exports={};
+    function issue(kind,key,sourceRows,destinationRows,details) {
+      const value={kind,key,source_records:sourceRows.map(r=>r.record),destination_records:destinationRows.map(r=>r.record),details};
+      const id='issue-'+hash(stable(value)).sha256.slice(0,32);issues.push({id,...value});
+    }
+    for(const side of ['source','destination']) {
+      const original=input[side];need(plain(original),'Receive the complete '+side+' export');
+      need(Object.keys(original).every(k=>['name','content','sha256','bytes','mapping','amount_unit','captured_at','system','export_reference'].includes(k)),'Unknown export fields');
+      const identity=hash(original.content);need(identity.bytes<=MAX_BYTES,'Use an export of at most 16 MiB');
+      need(identity.sha256===original.sha256&&identity.bytes===original.bytes,'Original '+side+' export identity changed','SOURCE_CHANGED');
+      text(original.name,'original filename',255);text(original.system,'original system',255);text(original.export_reference,'original export reference',4000);
+      utc(original.captured_at,'capture time');need(['major','minor'].includes(original.amount_unit),'Select major or minor amount units explicitly');
+      const parsed=csv(original.content),map=mapping(original.mapping,parsed.headers);
+      if(comparison.customer)need(map.customer,'Map the customer column on both sides');
+      if(comparison.status)need(map.status,'Map the status column on both sides');
+      const rows=parsed.rows.map(row=>{
+        const rawKey=row.values[map.key],key=rawKey.trim(),currency=row.values[map.currency].trim().toUpperCase(),scale=input.currency_scales[currency];
+        const rawAmount=row.values[map.amount],amount=scale===undefined?null:decimal(rawAmount,original.amount_unit,scale);
+        const record={record:row.record,key,currency,amount_minor:amount,amount_original:rawAmount,
+          customer:map.customer?row.values[map.customer]:null,status:map.status?row.values[map.status]:null};
+        const invalid=[];
+        if(!key)invalid.push('Missing original order/integration key');
+        if(key!==rawKey)invalid.push('Key has leading/trailing whitespace; source must be corrected or explicitly remapped');
+        if(!/^[A-Z]{3}$/.test(currency)||scale===undefined)invalid.push('Currency has no explicitly selected scale');
+        if(amount===null)invalid.push('Amount is not an exact selected-unit decimal at the configured currency precision');
+        if(invalid.length)issue('INVALID_ROW',key,side==='source'?[record]:[],side==='destination'?[record]:[],invalid);
+        record.valid=invalid.length===0;return record;
+      });
+      allRows[side]=rows;exports[side]={name:original.name,system:original.system,export_reference:original.export_reference,
+        captured_at:original.captured_at,sha256:identity.sha256,bytes:identity.bytes,row_count:rows.length,mapping:map,amount_unit:original.amount_unit};
+    }
+    const indexes={};
+    for(const side of ['source','destination']){
+      const index=new Map();for(const row of allRows[side]){if(!row.key)continue;const list=index.get(row.key)??[];list.push(row);index.set(row.key,list);}
+      indexes[side]=index;
+    }
+    const matches=[],keys=[...new Set([...indexes.source.keys(),...indexes.destination.keys()])].sort();
+    for(const key of keys){
+      const a=indexes.source.get(key)??[],b=indexes.destination.get(key)??[];
+      if(a.length>1||b.length>1){issue('DUPLICATE_KEY',key,a,b,['Exact integration key is not unique; do not choose a row automatically']);continue;}
+      if(!a.length||!b.length){issue(scope.completeness==='partial'?'OUTSIDE_OBSERVED_EXPORT':!a.length?'DESTINATION_ONLY':'SOURCE_ONLY',key,a,b,
+        [scope.completeness==='partial'?'Partial exports cannot establish a missing destination/source record':'No matching exact key in the complete selected counterpart export']);continue;}
+      if(!a[0].valid||!b[0].valid)continue;
+      const left=a[0],right=b[0],differences=[];
+      if(left.currency!==right.currency)differences.push('Currency differs');
+      else if(left.amount_minor!==right.amount_minor)differences.push('Exact amount differs');
+      if(comparison.customer&&left.customer!==right.customer)differences.push('Explicit customer key differs');
+      if(comparison.status&&!pairs.some(p=>p.source===left.status&&p.destination===right.status))differences.push('Status pair has no selected equivalence');
+      if(differences.length)issue('FIELD_DIFFERENCE',key,a,b,differences);
+      else matches.push({key,source_record:left.record,destination_record:right.record,currency:left.currency,amount_minor:left.amount_minor});
+    }
+    const totals={source:{},destination:{}};
+    for(const side of ['source','destination'])for(const row of allRows[side])if(row.valid){
+      totals[side][row.currency]=(BigInt(totals[side][row.currency]??'0')+BigInt(row.amount_minor)).toString();
+    }
+    const input_sha256=hash(stable(input)).sha256;
+    return {schema:RECONCILIATION_SCHEMA,input_sha256,reference,
+      scope:{from,through,completeness:scope.completeness,description:scopeNote},exports,
+      currency_scales:copy(input.currency_scales),comparison:copy(comparison),status_pairs:copy(pairs),
+      totals_minor:totals,matches,issues,counts:{source:allRows.source.length,destination:allRows.destination.length,
+        matched:matches.length,issues:issues.length},state:issues.length?'REVIEW_REQUIRED':'MATCHED',
+      interpretation:'Read-only comparison of the selected retained exports. It does not prove source capture completeness, live integration health, customer identity, payment or acceptance.'};
+  }
+  function review(input,returnValue){
+    const report=analyze(input);need(plain(returnValue)&&returnValue.schema===REVIEW_SCHEMA,'Select the original review return');
+    need(returnValue.input_sha256===report.input_sha256,'Review belongs to another complete original input','SOURCE_CHANGED');
+    text(returnValue.actor,'reviewer');utc(returnValue.observed_at,'review time');
+    text(returnValue.reference,'review authority/reference',4000);
+    need(Array.isArray(returnValue.decisions)&&returnValue.decisions.length<=report.issues.length,'Use one decision for each selected issue');
+    const seen=new Set();
+    const decisions=returnValue.decisions.map(decision=>{
+      need(plain(decision)&&Object.keys(decision).every(k=>['issue_id','outcome','note','reference'].includes(k)),'Unknown issue decision fields');
+      need(report.issues.some(i=>i.id===decision.issue_id)&&!seen.has(decision.issue_id),'Use a retained issue once');seen.add(decision.issue_id);
+      need(['accepted_difference','requires_repair','not_applicable'].includes(decision.outcome),'Choose an explicit issue outcome');
+      text(decision.note,'decision reason',4000);text(decision.reference,'decision source reference',4000);return copy(decision);
+    });
+    return {...report,review:{actor:returnValue.actor,observed_at:returnValue.observed_at,reference:returnValue.reference,decisions,
+      pending_issue_ids:report.issues.filter(i=>!seen.has(i.id)).map(i=>i.id)},state:'REVIEW_RECORDED'};
+  }
+  function reportHtml(report) {
+    need(report.schema===RECONCILIATION_SCHEMA,'Use the analyzed original report');
+    const issueRows=report.issues.map(i=>{const decision=report.review?.decisions.find(d=>d.issue_id===i.id);
+      return '<tr><td>'+escape(i.key)+'</td><td>'+escape(i.kind)+'</td><td>'+escape(i.source_records.join(', '))+'</td><td>'+
+        escape(i.destination_records.join(', '))+'</td><td>'+escape(i.details.join('; '))+'</td><td>'+
+        escape(decision?decision.outcome+' — '+decision.note+' ('+decision.reference+')':'Awaiting original review')+'</td></tr>';}).join('');
+    return '<!doctype html><html lang="en"><meta charset="utf-8"><title>Commerce integration receiving</title>'+
+      '<style>body{font:15px system-ui;color:#20252a;max-width:1180px;margin:36px auto;padding:0 24px}h1{font-size:29px}table{border-collapse:collapse;width:100%;margin:20px 0}th,td{padding:10px;border:1px solid #b9bec3;text-align:left;vertical-align:top}code{overflow-wrap:anywhere}aside{padding:16px;background:#eef1f3}small{color:#4d5760}</style>'+
+      '<h1>Commerce integration receiving</h1><p>'+escape(report.reference)+'</p><aside>'+escape(report.interpretation)+'</aside>'+
+      '<h2>Selected original exports</h2><p>'+escape(report.scope.description)+' · '+escape(report.scope.from)+' → '+escape(report.scope.through)+
+      ' · '+escape(report.scope.completeness)+'</p><table><tr><th>Side</th><th>Original file</th><th>System / capture</th><th>Identity</th></tr>'+
+      Object.entries(report.exports).map(([side,v])=>'<tr><td>'+side+'</td><td>'+escape(v.name)+'</td><td>'+escape(v.system)+'<br>'+escape(v.captured_at)+'</td><td>'+v.bytes+' bytes<br><code>'+v.sha256+'</code></td></tr>').join('')+'</table>'+
+      '<p>Source rows: '+report.counts.source+' · Destination rows: '+report.counts.destination+' · Exact matched keys: '+report.counts.matched+' · Issues: '+report.counts.issues+'</p>'+
+      '<h2>Exceptions and receiving decisions</h2><table><tr><th>Key</th><th>Finding</th><th>Source record</th><th>Destination record</th><th>Observed difference</th><th>Recorded disposition</th></tr>'+issueRows+'</table>'+
+      '<h2>Totals by currency</h2><pre>'+escape(JSON.stringify(report.totals_minor,null,2))+'</pre><p>Amounts above are exact minor units with the retained currency scales. Duplicate or partial rows remain in the raw export totals; totals are not revenue or payment proof.</p>'+
+      '<p>Input SHA-256: <code>'+report.input_sha256+'</code></p></html>\n';
+  }
+  function issuesCsv(report){return [['issue_id','key','kind','source_records','destination_records','details'],...report.issues.map(i=>[i.id,i.key,i.kind,i.source_records.join(';'),i.destination_records.join(';'),i.details.join('; ')])].map(r=>r.map(v=>csvCell(/^[=+\-@]/.test(String(v))?"'"+v:v)).join(',')).join('\r\n')+'\r\n';}
+  return Object.freeze({analyze,review,reportHtml,issuesCsv});
+}
+
+const INITIAL_INPUT={"schema":"stellar-forge.commerce-export-reconciliation.v1","reference":"Authored receiving exercise — no customer records","scope":{"from":"2026-10-01T00:00:00Z","through":"2026-10-02T00:00:00Z","completeness":"selected_scope_complete","description":"Authored order-export acceptance cases; no Rigby, Septeo or Healthletic customer data"},"currency_scales":{"USD":2,"JPY":0},"comparison":{"customer":true,"status":true},"status_pairs":[{"source":"completed","destination":"won"},{"source":"pending","destination":"open"}],"source":{"name":"commerce.csv","content":"order_id,amount,currency,customer,status\nord-A,120.50,usd,cust-1,completed\nord-B,99.00,usd,cust-2,pending\nord-C,1,JPY,cust-3,completed\nord-D,200.00,USD,cust-4,completed\nord-D,200.00,USD,cust-4,completed\nord-E,10.005,USD,cust-5,completed\n","bytes":237,"sha256":"36d3cdb2ff9544b053310eed3e58d086754ee1d69ee4b03b926fd0a63929344d","system":"Authored Medusa-shaped export","export_reference":"Acceptance fixture, not API capture","captured_at":"2026-10-02T01:00:00Z","amount_unit":"major","mapping":{"key":"order_id","amount":"amount","currency":"currency","customer":"customer","status":"status"}},"destination":{"name":"crm.csv","content":"external_order_id,amount_minor,currency,account_key,state\nord-A,12050,USD,cust-1,won\nord-B,9900,USD,cust-2,open\nord-C,1,JPY,cust-3,won\nord-F,1000,USD,cust-6,won\n","bytes":161,"sha256":"9de06ada7e2b0339ec444e911506e780c8d48ee5e4033dc642795055e5b52e4f","system":"Authored CRM export","export_reference":"Acceptance fixture, not API capture","captured_at":"2026-10-02T01:00:00Z","amount_unit":"minor","mapping":{"key":"external_order_id","amount":"amount_minor","currency":"currency","customer":"account_key","status":"state"}}};
+
+const $=id=>document.getElementById(id),hash=originalHash.sha256Utf8;
+const engine=createCommerceReconciliation({sha256Utf8:hash});
+let current=null,currentInput=null,dirty=false,reviewDirty=false,busy=false;
+const json=value=>JSON.stringify(value,null,2)+'\n';
+const status=(message,error=false)=>{$('status').textContent=message;$('status').className=error?'error':'';};
+function controls(){for(const node of document.querySelectorAll('button,input,select,textarea'))node.disabled=busy;for(const id of ['download-report','download-csv','download-review'])$(id).disabled=busy||!current;}
+function forget(message){current=null;currentInput=null;reviewDirty=false;$('summary').textContent='No analyzed selection.';$('issues').replaceChildren();$('preview').removeAttribute('srcdoc');controls();status(message);}
+function selectSource(){return !reviewDirty||window.confirm('This changes the selected source and clears unexported review edits. Continue?');}
+async function action(fn){if(busy)return;busy=true;controls();try{await fn();}catch(error){status(error.message,true);}finally{busy=false;controls();}}
+function parsed(){const value=JSON.parse($('input').value);if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Use the complete original input object.');return value;}
+function download(name,content,type='application/json'){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function exactCurrent(){const input=parsed(),report=engine.analyze(input);if(!current||report.input_sha256!==current.input_sha256)throw Error('The input changed. Analyze the current source before recording or downloading this review.');return input;}
+function append(parent,tag,text,attrs={}){const node=document.createElement(tag);node.textContent=text;for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);parent.append(node);return node;}
+function show(report){current=report;currentInput=parsed();$('summary').textContent=report.counts.source+' source rows · '+report.counts.destination+' destination rows · '+report.counts.matched+' exact matches · '+report.counts.issues+' findings. '+report.state;
+  $('issues').replaceChildren();for(const issue of report.issues){const box=append($('issues'),'fieldset',''),legend=append(box,'legend',issue.key||'(missing key)');legend.append(' · '+issue.kind);
+    append(box,'p',issue.details.join('; '));append(box,'small','Source CSV records '+(issue.source_records.join(', ')||'—')+' · destination '+(issue.destination_records.join(', ')||'—'));
+    const label=append(box,'label','Disposition'),select=append(label,'select','',{'data-issue':issue.id,'aria-label':'Disposition '+issue.id});
+    for(const [value,text] of [['','Leave pending'],['requires_repair','Requires repair'],['accepted_difference','Accepted difference'],['not_applicable','Not applicable']]){const option=append(select,'option',text);option.value=value;}
+    const noteLabel=append(box,'label','Reason'),note=append(noteLabel,'textarea','',{'data-note':issue.id,rows:'2','aria-label':'Reason '+issue.id});
+    const referenceLabel=append(box,'label','Original authority/reference'),ref=append(referenceLabel,'input','',{'data-reference':issue.id,'aria-label':'Reference '+issue.id});
+    const existing=report.review?.decisions.find(d=>d.issue_id===issue.id);if(existing){select.value=existing.outcome;note.value=existing.note;ref.value=existing.reference;}
+  }
+  if(report.review){$('actor').value=report.review.actor;$('observed').value=report.review.observed_at;$('review-reference').value=report.review.reference;}
+  $('preview').srcdoc=engine.reportHtml(report);controls();
+}
+$('input').addEventListener('input',()=>{dirty=true;status('Input edited. Analyze again before recording a review.');});
+$('open-input').addEventListener('change',event=>action(async()=>{const file=event.target.files[0];if(!file)return;if(!selectSource()){event.target.value='';return;}if(file.size>40*1024*1024)throw Error('Select a complete input of at most 40 MiB.');const value=await file.text();JSON.parse(value);$('input').value=value;dirty=true;forget('Original input opened. Check scope, mappings and actual capture times, then analyze.');}));
+for(const side of ['source','destination'])$(side+'-file').addEventListener('change',event=>action(async()=>{const file=event.target.files[0];if(!file)return;if(!selectSource()){event.target.value='';return;}if(file.size>16*1024*1024)throw Error('Each source export is limited to 16 MiB.');const raw=new Uint8Array(await file.arrayBuffer()),content=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw);
+  const identity=hash(content);if(identity.bytes!==raw.byteLength||originalHash.sha256Bytes(raw).sha256!==identity.sha256)throw Error('Keep exact UTF-8 content, including any original BOM. Load its full source-bound input instead if the selected reader would change bytes.');
+  const value=parsed();if(!value[side]||typeof value[side]!=='object')throw Error('Use a complete input template before selecting CSV files.');
+  value[side]={...value[side],name:file.name,content,...identity};$('input').value=json(value);dirty=true;forget('Selected '+side+' original bytes. Set the actual export reference/capture time and column mapping.');}));
+$('analyze').addEventListener('click',()=>action(async()=>{const value=parsed(),report=engine.analyze(value);if(current&&current.input_sha256===report.input_sha256){status('This exact input is already analyzed. Existing review edits remain available.');return;}if(!selectSource())return;reviewDirty=false;show(report);dirty=true;status('Analysis uses the exact selected input. No system or customer record has been changed.');}));
+$('download-input').addEventListener('click',()=>action(async()=>{const value=parsed();engine.analyze(value);download('commerce-input.json',json(value));dirty=false;status('Complete source input downloaded. Preserve it with the original exports.');}));
+$('open-review').addEventListener('change',event=>action(async()=>{const file=event.target.files[0];if(!file)return;if(file.size>16*1024*1024)throw Error('Review return exceeds the selected limit.');const input=exactCurrent(),value=JSON.parse(await file.text()),report=engine.review(input,value);show(report);dirty=true;status('Original review reread against its exact input. Pending findings remain pending.');}));
+$('download-review').addEventListener('click',()=>action(async()=>{const input=exactCurrent(),decisions=[];
+  for(const select of document.querySelectorAll('[data-issue]'))if(select.value){const id=select.dataset.issue;decisions.push({issue_id:id,outcome:select.value,note:document.querySelector('[data-note="'+id+'"]').value,reference:document.querySelector('[data-reference="'+id+'"]').value});}
+  const review={schema:REVIEW_SCHEMA,input_sha256:current.input_sha256,actor:$('actor').value,observed_at:$('observed').value,reference:$('review-reference').value,decisions},report=engine.review(input,review);
+  show(report);download('commerce-review.json',json(review));reviewDirty=false;status('Source-bound review downloaded. Use the original CLI to create its complete receiving package and attach it to the saved case.');}));
+$('download-report').addEventListener('click',()=>action(async()=>{exactCurrent();download('commerce-reconciliation.html',engine.reportHtml(current),'text/html');}));
+$('download-csv').addEventListener('click',()=>action(async()=>{exactCurrent();download('commerce-exceptions.csv',engine.issuesCsv(current),'text/csv');}));
+$('issues').addEventListener('input',()=>{reviewDirty=true;});
+for(const id of ['actor','observed','review-reference'])$(id).addEventListener('input',()=>{reviewDirty=true;});
+window.addEventListener('beforeunload',event=>{if(dirty||reviewDirty){event.preventDefault();event.returnValue='';}});
+$('input').value=json(INITIAL_INPUT);controls();status('Authored receiving example loaded. It is not customer data. Replace both exports and select their actual scope before customer use.');
+
+</script></body></html>

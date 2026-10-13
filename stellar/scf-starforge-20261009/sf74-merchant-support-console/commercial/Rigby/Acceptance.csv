@@ -1,0 +1,9 @@
+id,deliverable,receiving method,authority
+RC01,Original source and mapping,Selected commit versions field map extraction scope and hashes reread,Rigby named reviewer
+RC02,Exact comparison,Major and minor units currency precision invalid amounts duplicates and partial scope observed,Rigby named reviewer
+RC03,Customer ambiguity,Original selected keys and ambiguity route preserved without automatic identity merge,Rigby named reviewer
+RC04,Source-bound review,Changed input rejects stale reviewer return and pending issues remain visible,Rigby named reviewer
+RC05,Original operation recovery,Same case request after lost receipt returns original material without duplicate event,Rigby named reviewer
+RC06,Selected integration behavior,One selected flow and at most one recovery change observed through its original source/API,Rigby release owner
+RC07,Rollout and recovery,Actual staged change original readback and selective rollback steps retained,Rigby release owner
+RC08,Complete independent receiving,All case history source exports review and code reopen with original identities,Rigby receiving owner
