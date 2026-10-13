@@ -8,7 +8,8 @@ import {mappingValue,mappingSourceValue,mappingChanges,materializeExport,retaine
 import {openWorkspaceStore,jsonBytes,stable} from '../stellar-expert/store.mjs';
 import {WORKSPACE_SCHEMA,workspaceSchema,ACTIONS,SOURCE_CONTRACT} from './schema.mjs';
 import {normaliseStation,makeQuery,requestPlan,metadataTasks,decodeSource,fetchCoopsResponse,normaliseBundle,importedResponse,text,fault,hashBytes} from './provider.mjs';
-import {editionRows,summarizeEdition,exportEdition} from './domain.mjs';
+import {editionRows,rowSelection,summarizeEdition,exportEdition} from './domain.mjs';
+import {inspectEdition,inspectPoint,inspectRows,inspectionEvidence} from './inspection.mjs';
 import {prepareCoastalDataset,queryNativeDataset,nativePublishers,prepareNativeRelease,inspectNativeRelease,controlNativeRelease,inspectBuyer,receiveBuyer,readBuyerOutput} from './dataset.mjs';
 const selected=(rows,id,label)=>{const r=rows.find(x=>x.id===id);if(!r)throw fault('COOPS_SELECTION','Choose a saved '+label+'.',404);return r;};
 const studyFrame=study=>Object.fromEntries(Object.entries(structuredClone(study)).filter(([name])=>name!=='history'));
@@ -156,10 +157,19 @@ export async function openCoopsWorkspace({directory,inboxDirectory,releaseRuntim
   if(typeof operationId!=='string'||!/^[A-Za-z0-9_-]{8,100}$/.test(operationId))throw fault('COOPS_OPERATION_ID','Supply the original stable operationId.');
   const digest=hashBytes(Buffer.from(stable({action,payload}))),prior=store.read().operations[operationId];
   if(prior){if(prior.requestSha256!==digest)throw fault('COOPS_OPERATION_CONFLICT','That operation identity belongs to another request.',409);return{...prior,reused:true};}
-  let imported=null,sourceObject=null,mappingSource=null,studyChunk=null;
+  let imported=null,sourceObject=null,mappingSource=null,studyChunk=null,selectedInspection=null,exportSelection=null;
   if(action==='capture.import'){imported=normaliseBundle(payload.bundle);sourceObject=await retain(imported.bytes);for(const response of imported.failedResponses)await retain(response.body);}
   if(action==='mapping.save'&&payload.mappingSource!==undefined){const incoming=mappingSourceValue(payload.mappingSource,{requireDecision:true});await retain(incoming.bytes);mappingSource=incoming.source;}
   if(action==='study.return.chunk'){studyChunk=chunkInput(payload);await retain(studyChunk.bytes);}
+  if(action==='export.create'&&['beginDate','endDate','products'].some(k=>payload[k]!==undefined)){
+   if(!['csv','json','jsonl'].includes(payload.format))throw fault('COOPS_EXPORT_SELECTION','Selected windows export complete CSV, JSON or JSONL rows. Use the full-edition controls for the complete source package or report.');
+   if(!store.read().editionIds.includes(payload.editionId))throw fault('COOPS_EDITION','Choose a retained edition.',404);
+   exportSelection=rowSelection(await store.edition(payload.editionId),{table:payload.table??'observations',beginDate:payload.beginDate,endDate:payload.endDate,products:payload.products});
+  }
+  if(action==='annotation.save'&&payload.inspection!==undefined){
+   if(!store.read().editionIds.includes(payload.editionId))throw fault('COOPS_INSPECTION_EDITION','Select a retained original edition.',404);
+   selectedInspection=await inspectionEvidence(store,await store.edition(payload.editionId),payload.inspection);
+  }
   let op;await store.mutate(s=>{
    const prior=s.operations[operationId];if(prior){if(prior.requestSha256!==digest)throw fault('COOPS_OPERATION_CONFLICT','The operation identity changed.',409);op={...prior,reused:true};return;}
    if(!Number.isSafeInteger(expectedRevision)||s.revision!==expectedRevision)throw fault('COOPS_REVISION_CHANGED','The workspace changed. Review its saved state while retaining the pending form.',409,{currentRevision:s.revision});
@@ -186,7 +196,8 @@ export async function openCoopsWorkspace({directory,inboxDirectory,releaseRuntim
    if(action==='annotation.save'){
     const subject=text(payload.subject,'a review subject',300),prior=s.annotations.find(a=>a.editionId===payload.editionId&&a.subject===subject)??null,targetId=prior?.id??key(operationId);
     if(!prior&&s.annotations.some(a=>a.id===targetId))throw fault('COOPS_REVIEW_TARGET','The original creation identity already belongs to a saved source review. Inspect that record before choosing a new request.',409);
-    op.context={annotationTarget:{id:targetId,editionId:payload.editionId,subject,recordSha256:prior?hashBytes(Buffer.from(stable(prior))):null,updatedAt:prior?.updatedAt??null}};
+    op.context={annotationTarget:{id:targetId,editionId:payload.editionId,subject,recordSha256:prior?hashBytes(Buffer.from(stable(prior))):null,updatedAt:prior?.updatedAt??null},
+     ...(selectedInspection?{inspection:structuredClone(selectedInspection),inspectionSha256:hashBytes(Buffer.from(stable(selectedInspection)))}:{})};
    }
    if(action==='mapping.save'){
     const prior=payload.mappingId?selected(s.mappings,payload.mappingId,'model-input mapping'):null,targetId=prior?.id??'mapping-'+key(operationId);
@@ -243,7 +254,7 @@ export async function openCoopsWorkspace({directory,inboxDirectory,releaseRuntim
    }
    if(action==='study.dataset.prepare'){const release=selected(s.studyReleases,payload.releaseId,'immutable reviewed study delivery');op.context={release:structuredClone(release),releaseSha256:hashBytes(jsonBytes(release))};}
    if(action==='dataset.prepare')op.context={mapping:payload.mappingId?structuredClone(selected(s.mappings,payload.mappingId,'model-input mapping')):null};
-   if(action==='export.create')op.context={annotations:structuredClone(s.annotations.filter(a=>a.editionId===payload.editionId)),mapping:payload.mappingId?structuredClone(selected(s.mappings,payload.mappingId,'model-input mapping')):null};
+   if(action==='export.create')op.context={selection:exportSelection,annotations:structuredClone(s.annotations.filter(a=>a.editionId===payload.editionId)),mapping:payload.mappingId?structuredClone(selected(s.mappings,payload.mappingId,'model-input mapping')):null};
    if(action==='backfill.export'){const b=selected(s.backfills,payload.backfillId,'backfill');op.context={backfill:structuredClone(b),annotations:structuredClone(s.annotations.filter(a=>b.parts.some(p=>p.editionId===a.editionId))),mapping:payload.mappingId?structuredClone(selected(s.mappings,payload.mappingId,'model-input mapping')):null};}
    if(action==='release.prepare')op.context={releaseRuntime:structuredClone(releaseRuntime)};
    if(action.startsWith('buyer.'))op.context={inboxDirectory:inboxDirectory??null};
@@ -363,7 +374,10 @@ export async function openCoopsWorkspace({directory,inboxDirectory,releaseRuntim
     if(!target)throw fault('COOPS_REVIEW_REQUIRED','This unfinished request predates retained source-review comparison. Review the current decision and preserve this request before issuing a new save.',409);
     const prior=s.annotations.find(a=>a.editionId===target.editionId&&a.subject===target.subject)??null,currentSha256=prior?hashBytes(Buffer.from(stable(prior))):null;
     if(currentSha256!==target.recordSha256||!prior&&s.annotations.some(a=>a.id===target.id))throw fault('COOPS_REVIEW_CHANGED','The selected source review changed after this request was reserved. Compare the current decision with the retained note before issuing a new save.',409);
-    const a={id:target.id,editionId:p.editionId,subject,note,status:p.status,updatedAt:op.createdAt,history:prior?[...(prior.history??[]),{note:prior.note,status:prior.status,updatedAt:prior.updatedAt}]:[]};
+    if(p.inspection!==undefined&&(!op.context.inspection||op.context.inspection.source.editionId!==p.editionId||hashBytes(Buffer.from(stable(op.context.inspection)))!==op.context.inspectionSha256))throw fault('COOPS_INSPECTION_PIN','The original reviewed observation evidence is not retained with this request.',409);
+    const a={id:target.id,editionId:p.editionId,subject,note,status:p.status,updatedAt:op.createdAt,
+     ...((op.context.inspection??prior?.inspection)?{inspection:structuredClone(op.context.inspection??prior.inspection)}:{}),
+     history:prior?[...(prior.history??[]),Object.fromEntries(Object.entries(prior).filter(([key])=>key!=='history'))]:[]};
     s.annotations=s.annotations.filter(x=>x.id!==a.id);s.annotations.push(a);return a;});break;}
    case'study.dataset.prepare':{
     const c=op.context;
@@ -396,9 +410,10 @@ export async function openCoopsWorkspace({directory,inboxDirectory,releaseRuntim
    case'buyer.receive':result=await receiveBuyer(store,op.context?.inboxDirectory??inboxDirectory,p.intentIds,'buyer-'+id);await local(op,s=>{if(!s.receipts.some(r=>r.id===result.id))s.receipts.push(result);return result;});break;
    case'export.create':{
     const edition=await store.edition(p.editionId),table=p.table??'observations',annotations=op.context?.annotations??[];
+    if(['beginDate','endDate','products'].some(k=>p[k]!==undefined)&&!op.context?.selection)throw fault('COOPS_EXPORT_SELECTION','This unfinished export has no retained original window. Preserve its request and explicitly prepare the reviewed window again.',409);
     if(p.format==='source-package')result=await writeSourcePackage(store,{id:'export-'+id,edition,annotations,createdAt:op.createdAt});
     else if(p.format==='report'){const output=await exportEdition(store,edition,annotations,table,p.format);result=await materializeExport(store,{id:'export-'+id,kind:'edition',editionId:edition.id,table,format:p.format,name:'coops-'+edition.id.slice(0,12)+'.html',type:output.type,createdAt:op.createdAt},async function*(){yield output.bytes;});}
-    else result=await writeTableExport(store,{id:'export-'+id,editions:[edition],annotations,table,format:p.format,mapping:op.context?.mapping??null,createdAt:op.createdAt});
+    else result=await writeTableExport(store,{id:'export-'+id,editions:[edition],annotations,table,format:p.format,mapping:op.context?.mapping??null,createdAt:op.createdAt,selection:op.context?.selection??null});
     await local(op,s=>{if(!s.exports.some(e=>e.id===result.id))s.exports.push(result);return result;});break;
    }
    case'analysis.export':{
@@ -438,6 +453,9 @@ export async function openCoopsWorkspace({directory,inboxDirectory,releaseRuntim
   async operation(operationId){const op=store.read().operations[operationId];if(!op)return{operationId,state:'NOT_RESERVED'};const {payload,context,materializedResult,...record}=op;return{...record,...(op.action==='study.return.finish'?{resumeRequest:{action:op.action,payload:structuredClone(op.payload),operationId:op.operationId,expectedRevision:op.expectedRevision}}:{}),result:op.resultSha256?JSON.parse((await store.object(op.resultSha256)).toString('utf8')):undefined};},
   async edition(id){if(!store.read().editionIds.includes(id))throw fault('COOPS_EDITION','Choose a retained edition.',404);return store.edition(id);},
   rows:(id,options)=>store.edition(id).then(e=>editionRows(store,e,options)),
+  async inspection(id,selection){if(!store.read().editionIds.includes(id))throw fault('COOPS_INSPECTION_EDITION','Select a retained original edition.',404);return inspectEdition(store,await store.edition(id),selection);},
+  async inspectionRows(id,selection,options){if(!store.read().editionIds.includes(id))throw fault('COOPS_INSPECTION_EDITION','Select a retained original edition.',404);return inspectRows(store,await store.edition(id),selection,options);},
+  async inspectionPoint(id,reference){if(!store.read().editionIds.includes(id))throw fault('COOPS_INSPECTION_EDITION','Select a retained original edition.',404);return inspectPoint(store,await store.edition(id),reference);},
   async raw(id,index){const e=await store.edition(id);if(!Number.isSafeInteger(index)||index<0||index>=e.pages.length)throw fault('COOPS_SOURCE_PAGE','Choose an original response page.');const receipt=e.pages[index];return{receipt,bytes:await store.object(receipt.sha256),type:'application/json; charset=utf-8'};},
   async captureRaw(id,index){const c=selected(store.read().captures,id,'capture'),all=[...c.pages,...c.failedResponses];if(!Number.isSafeInteger(index)||index<0||index>=all.length)throw fault('COOPS_SOURCE_PAGE','Choose an original capture response.');const receipt=all[index];return{receipt,bytes:await store.object(receipt.sha256),type:'application/octet-stream'};},
   async exported(id){const item=selected(store.read().exports,id,'export');return item.relativeFile?retainedExport(store,item):{item,bytes:await store.object(item.sha256)};},
