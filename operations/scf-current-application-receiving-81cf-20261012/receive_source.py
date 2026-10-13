@@ -26,8 +26,22 @@ def digest(body):
 def git_blob(body):
     return hashlib.sha1(b"blob " + str(len(body)).encode() + b"\0" + body).hexdigest()
 
+def source_bytes(row):
+    content = row["content"]
+    if not isinstance(content, str):
+        raise ValueError("Retain a complete encoded source string: " + row["path"])
+    encoding = row.get("encoding", "utf-8")
+    if encoding in (None, "utf-8"):
+        return content.encode("utf-8")
+    if encoding == "base64":
+        body = base64.b64decode(content, validate=True)
+        if base64.b64encode(body).decode("ascii") != content:
+            raise ValueError("Retain canonical complete base64 source: " + row["path"])
+        return body
+    raise ValueError("Select UTF-8 or base64 source encoding: " + row["path"])
+
 def checked_body(row):
-    body = row["content"].encode("utf-8")
+    body = source_bytes(row)
     if len(body) != row["bytes"] or digest(body) != row["sha256"] or git_blob(body) != row["git_blob"]:
         raise ValueError("Complete selected source differs: " + row["path"])
     return body
