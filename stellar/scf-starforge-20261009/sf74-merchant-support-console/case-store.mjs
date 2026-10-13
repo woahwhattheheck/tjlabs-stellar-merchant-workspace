@@ -308,12 +308,10 @@ export async function openCaseStore(path) {
       throw error;
     }
   }
-  async function list({q = '', status = '', dueOn = '', offset = 0, limit = 100} = {}) {
+  async function scanCases({q = '', status = '', dueOn = ''} = {}) {
     text(q, 1000, 'search');
     if (status && !CASE_STATUSES.includes(status)) throw fail('INVALID_CASE_QUERY', 'Unknown work status');
     if (dueOn) caseMetadata({followUpOn:dueOn});
-    if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 200)
-      throw fail('INVALID_CASE_QUERY', 'Invalid case list page');
     const found = [], unavailable = [], needle = q.toLocaleLowerCase();
     for (const entry of await readdir(root, {withFileTypes:true})) {
       if (!ID.test(entry.name)) continue;
@@ -329,8 +327,20 @@ export async function openCaseStore(path) {
     }
     found.sort((a,b) => (a.metadata.followUpOn || '9999').localeCompare(b.metadata.followUpOn || '9999') ||
       b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
+    return {found, unavailable};
+  }
+  async function list({q = '', status = '', dueOn = '', offset = 0, limit = 100} = {}) {
+    if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 200)
+      throw fail('INVALID_CASE_QUERY', 'Invalid case list page');
+    const {found,unavailable}=await scanCases({q,status,dueOn});
     return {enabled:true, cases:found.slice(offset, offset + limit), total:found.length,
       offset, limit, nextOffset:offset + limit < found.length ? offset + limit : null, unavailable};
+  }
+  /** One original directory scan, retaining each observed immutable case head.
+   * These independent case observations do not claim a cross-case transaction. */
+  async function catalog({q = '', status = '', dueOn = ''} = {}) {
+    const {found,unavailable}=await scanCases({q,status,dueOn});
+    return {enabled:true,cases:found,total:found.length,unavailable};
   }
   async function history(id, {before = null, limit = 20} = {}) {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw fail('INVALID_CASE_QUERY', 'Invalid history page');
@@ -416,5 +426,5 @@ export async function openCaseStore(path) {
       await releaseWriter(lock);
     }
   }
-  return Object.freeze({list,read,save,history});
+  return Object.freeze({list,read,save,history,catalog});
 }
