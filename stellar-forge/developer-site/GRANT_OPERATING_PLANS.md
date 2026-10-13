@@ -304,3 +304,17 @@ Use `newGrantOperatingSelection` for entered fields and bindings, and
 
 The installed command-line composition is available through
 `@tokenjunkielabs/starforge-merchant/grant/operating-plan/cli`.
+
+## Keep an unfinished customer return and its complete step sequence
+
+The **Receive customer procedure** desk retains the complete opened plan, original filename, review note, native planning source/revision, prepared procedure identity and compared operating revision inside the original saved planning review. Use **Save** to persist the unfinished work in the existing browser draft. **Download whole editable draft** carries the same pending file and note; reopening that draft restores them. Each saved copy keeps its own pending state.
+
+Opening another return, accepting it, refreshing its comparison or explicitly closing it first retains the preceding complete submission version. The returned plan can be downloaded before receiving, including while its current history needs reconciliation. Editing the review note marks the submission dirty through the normal save path.
+
+If the retained procedure advances after comparison, the desk keeps the source and note, displays the current complete comparison and disables adoption until **Use this current comparison for receiving** is selected. That explicit action changes only the compared operating revision. The shared receiving model retains the existing expected-revision check. A successful receive clears the matching pending history; receiving a different procedure leaves unrelated pending work available.
+
+The comparison shows the complete **Originally prepared**, **Previously selected** and **Returned sequence**, with every original step ID, title and position. Reordering existing steps appears as a sequence change even when all step fields and status counts are unchanged. Added and removed IDs remain explicit, and customer additions appear at their actual returned positions. The full comparison JSON and typed API carry this same `stepOrder` projection; the original native package mapping, scope, costs, completion measures and complete Operating Plan history remain intact.
+
+The additive model interfaces are `stageGrantOperatingReturn`, `refreshGrantOperatingReturn` and `closeGrantOperatingReturn`. They return new planning reviews for the original saved-draft writer. The optional `operatingSelection.returnDraft` contains the full source and review state; earlier saved selections without that field remain readable.
+
+When the installed CLI receives the exact pending plan from a saved draft, it uses the retained review note unless `--return-note` explicitly replaces it. Replaying an already retained matching plan saves any pending-desk cleanup in the full output draft, with the preceding complete version preserved. A replay with no review change retains the original draft state.

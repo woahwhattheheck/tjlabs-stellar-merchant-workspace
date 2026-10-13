@@ -43,6 +43,10 @@ export async function documentCompositionExtension(controller){
           limit:number(url,'limit',100),...(url.searchParams.has('sourceSha256')?
             {sourceSha256:url.searchParams.get('sourceSha256')}:{ }),signal}));return true;
       }
+      if(path==='assembly'){
+        send(await controller.assembly({id:url.searchParams.get('id'),sourceSha256:url.searchParams.get('sourceSha256'),
+          assemblyId:url.searchParams.get('assemblyId'),assemblySha256:url.searchParams.get('assemblySha256'),signal}));return true;
+      }
       if(path==='operation'){
         send(controller.operation({operationId:url.searchParams.get('operationId')}));return true;
       }
@@ -54,7 +58,8 @@ export async function documentCompositionExtension(controller){
       }
     }
     if(method==='POST'){
-      if(['stage','restore','prepare','run','receive','export'].includes(path)){
+      if(['stage','restore','prepare','run','receive','export','assembly-stage','assembly-prepare',
+        'assembly-run','assembly-receive','assembly-export'].includes(path)){
         // Whole dataset and all template bytes fit the existing host's selected 48 MiB ceiling.
         const input=await body(path==='stage'||path==='restore'?40*1048576:2*1048576);
         send(controller.start(path,input),202);return true;

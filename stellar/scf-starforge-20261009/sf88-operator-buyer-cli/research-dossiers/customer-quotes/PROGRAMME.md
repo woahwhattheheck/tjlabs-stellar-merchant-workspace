@@ -375,3 +375,8 @@ For the Python counterpart, requests/<step>.json is the exact original input use
 The CLI installs its signal owner before opening the client. A signal aborts active transport work, then drains the existing client and every acquired owner. A failed closer stays retained for another signal/retry and keeps the process alive until the same owner closes. Final output is awaited inside that lifetime. The existing Research application remains attached.
 
 Each programme mutation uses its original private operating lease. Native case, pricing, customer, publication and Buyer operations continue to use their own writers and request histories. Complete file exports and receiving use the maintained create-only publishers and full SHA/size checks. Matching stopped publication files are completed as their original operations; completed native inputs and results are retained unchanged.
+
+
+## Browser programme and complete archive receiving
+
+The existing Research listener now exposes the complete programme desk at `/customer-quote-programmes.html`, also linked from the original quotation forms. Programme-aware forms save their original requests as native steps; the desk applies exact saved reviews, replays original requests, freezes the complete customer package and receives it into the selected destination. The [full browser and receiving guide](PROGRAMME_BROWSER.md) covers original working forms, asynchronous jobs, 4 MiB upload recovery, streamed archive download, typed client and exact destination review. The same original programme, case and dossier engines remain the source of saved state.

@@ -22,7 +22,7 @@ const HASH=/^[a-f0-9]{64}$/;
 const FIELDS=new Set(['workspaceOptionsFile','sourceRoot','provider','merchantOrigin','intakeKeyEnvironment',
   'deadlineMs','pollMs','port']);
 export const DOCUMENT_COMPOSITION_SERVICE_SOURCE_FILES=Object.freeze([
-  'cli.mjs','composition-cli.mjs','composition-service.mjs','composition-application-provider.mjs',
+  'assembly.mjs','assembly-archive.mjs','assembly-cli.mjs','examples/ordered-pdfs.json','cli.mjs','composition-cli.mjs','composition-service.mjs','composition-application-provider.mjs',
   'composition-workspace.mjs','composition-server.mjs','composition.mjs','batch.mjs','contracts.mjs',
   'composition-browser-assets.json','composition-public/index.html','composition-public/app.mjs',
   'composition-public/style.css','examples/composition/orders.json','examples/composition/order-documents.json',

@@ -1,0 +1,67 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "grant-named-staff",
+  "heading": "## Named grant delivery, contributor work and complete staff handover",
+  "sources": [
+    {
+      "id": "grant-named-staff-access",
+      "label": "Named staff roles and complete contribution, review and invoice workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/STAFF_ACCESS.md",
+      "editions": [
+        {
+          "commit": "b412f1ea76bd3f243c2ef78eeb4360730b65ef80",
+          "bytes": 14313,
+          "sha256": "c465e97e4148ff38c14447c868122ed9f2c2c3ceee1d023d3eeb39157dafd5bb",
+          "git_blob": "4fc458c0f09a2c7002e18f78ad98ab3a5f9701e2"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-installation",
+      "label": "Complete named-staff installation, private backup and independent restoration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/STAFF_INSTALLATION.md",
+      "editions": [
+        {
+          "commit": "b412f1ea76bd3f243c2ef78eeb4360730b65ef80",
+          "bytes": 14904,
+          "sha256": "2824b9ca12f03a6997d4c240406f7d2e4ccabbbdca7a14573a9eb8d4cacdd2cb",
+          "git_blob": "f5d730a09a051ca4980578b0f1c26521cb6d94d6"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-workflow",
+      "label": "Original named-staff operating programme and browser continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/STAFF_WORKFLOW_RECEIVING.py",
+      "editions": [
+        {
+          "commit": "b412f1ea76bd3f243c2ef78eeb4360730b65ef80",
+          "bytes": 29898,
+          "sha256": "aa9a9805e3e2c4237e9ba8c3bcb23a91d5927b56186f8e5667a16d2791c229db",
+          "git_blob": "701cf67fddc76de758af92f66354970f03f95585"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-receiving",
+      "label": "Independent complete installation receiving and cold reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/STAFF_INSTALLATION_RECEIVING.py",
+      "editions": [
+        {
+          "commit": "b412f1ea76bd3f243c2ef78eeb4360730b65ef80",
+          "bytes": 18889,
+          "sha256": "2f437948d3e05c2046cc2d5781904882f21f2ffe9c4c2cce9e966b83530e836b",
+          "git_blob": "06020c64f8a89b9de8eb8ba0749850ddfa892fe6"
+        }
+      ]
+    }
+  ]
+}

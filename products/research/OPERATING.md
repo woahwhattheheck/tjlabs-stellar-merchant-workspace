@@ -1406,3 +1406,10 @@ The [Merchant return family](../../stellar-forge/mcp-merchant-operator/DOSSIER_R
 - [Original saved-case operating journey](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/examples/README.md)
 
 Keep operating directories, source credentials and private startup records outside the source checkout. Retain the complete original case and delivery together through the customer's receiving handover.
+
+
+## Complete quotation programmes and receiving
+
+The Research application includes **Customer programmes**, linked from the quotation desk and served at `/customer-quote-programmes.html`. It joins the existing quotation forms to a saved customer programme: original case and project, complete native inputs, explicit review/application/replay, frozen customer delivery, paid-publication files and realized report. The operator can download the full programme archive, resume its upload on the destination, inspect every original file, review the actual local case selection and receive the editable case and dossier through their existing writers.
+
+The [complete programme browser guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/PROGRAMME_BROWSER.md) covers working forms, retained background jobs, streamed file transfer, typed client and saved reopening. The existing Node and installed Python programme interfaces share these same native records and complete portable files. Application Stop drains accepted programme work before its quote, commerce and dossier/listener dependencies close.
