@@ -2,6 +2,7 @@
 import {dirname,resolve,join} from 'node:path';
 import {ODK_ACTION_TOOLS,odkWorkspaceTools} from './mcp-catalog.mjs';
 import {CentralRetainedFiles} from './mcp-files.mjs';
+import {normalizeCentralUrl,normalizeCodespacesTokenEnv} from './source.mjs';
 import {ODK_CONNECTION_FILENAME,ODK_UUID,odkNeed,odkPlain,odkExact,odkAbsolute,
   odkPrivateDirectory,odkReadPrivateJson,odkFailure,readCentralConnection,odkConnectionView,
   odkRequest,inspectCentralListener,inspectCentralCommissioning,inspectCentralWarehouse,requestCentralAction} from './connection.mjs';
@@ -34,7 +35,7 @@ function page(value,offset=0,limit=50){
   return result;
 }
 function sourceProfile(value,key){
-  odkExact(value,['id','name','url','authEnv','allowLoopback'],['id','name','url','authEnv']);
+  odkExact(value,['id','name','url','authEnv','allowLoopback','codespacesTokenEnv'],['id','name','url','authEnv']);
   odkNeed(typeof value.id==='string'&&value.id.length>=1&&value.id.length<=240&&!/[\x00-\x1f\x7f]/.test(value.id)&&typeof value.authEnv==='string'&&
     /^[A-Za-z_][A-Za-z0-9_]*$/.test(value.authEnv)&&value.authEnv.length<=200&&
     (value.allowLoopback===undefined||typeof value.allowLoopback==='boolean'),
@@ -42,7 +43,9 @@ function sourceProfile(value,key){
   let url;try{url=new URL(value.url);}catch{}
   odkNeed(url&&['https:','http:'].includes(url.protocol)&&!url.username&&!url.password&&!url.hash&&!url.search,
     'ODK_SOURCE_PROFILE_INVALID','Declare the original Central base URL without credentials or query.');
-  return {...value,name:label(value.name,key)};
+  const proxyEnv=normalizeCodespacesTokenEnv(value.codespacesTokenEnv,
+    normalizeCentralUrl(value.url,{allowLoopback:value.allowLoopback===true}),value.authEnv);
+  return {...value,name:label(value.name,key),...(proxyEnv===undefined?{}:{codespacesTokenEnv:proxyEnv})};
 }
 /** Loading host configuration does not open a writer or call Central. */
 export async function readCentralWorkspaceConfiguration(path){
