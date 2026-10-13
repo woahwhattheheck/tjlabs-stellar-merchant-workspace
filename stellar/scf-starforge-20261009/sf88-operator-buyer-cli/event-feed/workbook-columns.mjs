@@ -88,6 +88,14 @@ export function reopen(value,selected) {
   }
   return {schema:HANDOVER,original,columns};
 }
+export function serializeNativeJSON(value) {
+  const pretty=JSON.stringify(value,null,2);need(typeof pretty==='string','Retain a complete JSON value.');
+  if(utf8Length(pretty+'\n')<=MAX_EVENT_WORKBOOK_CHOICES_BYTES)return pretty+'\n';
+  const compact=JSON.stringify(value)+'\n';
+  need(utf8Length(compact)<=MAX_EVENT_WORKBOOK_CHOICES_BYTES,
+    'The complete JSON exceeds the original 16 MiB return-file allowance. Keep this window open and save the complete editable worksheet to retain the full proposal and choices; no content has been removed.');
+  return compact;
+}
 export function serializeChoices(value) {
   const selected=reopen(value),pretty=JSON.stringify(selected,null,2)+'\n';
   if(utf8Length(pretty)<=MAX_EVENT_WORKBOOK_CHOICES_BYTES)return pretty;
@@ -162,7 +170,7 @@ export function reviewHTML(value) {
 }
 export function createEventWorkbookColumnReview(root,{onChange=()=>{},onMessage=()=>{},onEditableDownload=null}={}) {
   const doc=root.ownerDocument,el=(tag,text)=>{const node=doc.createElement(tag);if(text!==undefined)node.textContent=String(text);return node;};
-  let current=null,locked=false,page=0,activeSheet=null,cached=null,storageUnavailable=false;
+  let current=null,locked=false,page=0,activeSheet=null,cached=null,storageUnavailable=false,storageNotice=null;
   const size=20,controls=[];
   function addControl(node,disabled=false){node.disabled=locked||disabled;controls.push({node,disabled});return node;}
   function key(){const c=current.original;return 'sf-event-workbook-columns:'+c.workspace_id+':'+c.programme+':'+c.proposal.operation_id+':'+c.proposal.review_sha256;}
@@ -176,6 +184,7 @@ export function createEventWorkbookColumnReview(root,{onChange=()=>{},onMessage=
     const value=snapshot();storageUnavailable=false;
     try{const raw=JSON.stringify(value);localStorage.setItem(key(),raw);if(localStorage.getItem(key())!==raw)throw Error();}
     catch{storageUnavailable=true;}
+    if(storageNotice){storageNotice.textContent=storageUnavailable?CHOICE_STORAGE_WARNING:'';storageNotice.hidden=!storageUnavailable;}
     onChange(clone(value.columns),{retained:!storageUnavailable});
     if(storageUnavailable)setStatus(CHOICE_STORAGE_WARNING,true);
   }
@@ -191,7 +200,8 @@ export function createEventWorkbookColumnReview(root,{onChange=()=>{},onMessage=
   }
   function updateSummary(node){const r=review(current);node.textContent=r.ready?'Selected references and UTF-8/XML field values are ready for native review. The original native workbook will check Unicode heading uniqueness, complete source conversions and the current definition.':r.issues.length+' incomplete choice(s). '+r.issues.slice(0,4).map(x=>'Sheet '+x.sheet+(x.column===null?'':' column '+(x.column+1))+': '+x.message).join(' ');}
   function render(){
-    root.replaceChildren();controls.length=0;if(!current)return;
+    root.replaceChildren();controls.length=0;storageNotice=null;if(!current)return;
+    storageNotice=el('p',storageUnavailable?CHOICE_STORAGE_WARNING:'');storageNotice.className='notice';storageNotice.setAttribute('role','alert');storageNotice.hidden=!storageUnavailable;
     const sheets=current.original.proposal.worksheets;
     if(!sheets.some(s=>s.sheet===activeSheet))activeSheet=sheets[0].sheet;
     const sheet=sheets.find(s=>s.sheet===activeSheet),columns=current.columns[String(activeSheet)];
@@ -206,7 +216,7 @@ export function createEventWorkbookColumnReview(root,{onChange=()=>{},onMessage=
     const picker=addControl(el('input'));picker.type='file';picker.accept='.json,application/json';const pickLabel=el('label','Reopen complete choices');pickLabel.append(picker);
     const importButton=button('Open selected choices',()=>{const file=picker.files[0];need(file&&file.size>0&&file.size<=MAX_EVENT_WORKBOOK_CHOICES_BYTES,'Choose a complete column-choice file up to 16 MiB.');const before=canonical(current.original),workingBefore=canonical(current),selected=current.original;
       file.text().then(raw=>{const next=reopen(JSON.parse(raw),selected);need(!locked,'An original action started while the file was opening. Reopen these saved choices after it finishes.');need(current&&canonical(current.original)===before,'The original proposal changed while the file was opening.');need(canonical(current)===workingBefore,'The displayed choices changed while the file was opening. Select the saved file again to review replacement.');if(!confirm('Replace the displayed choices for this exact original proposal with this complete saved file?'))return;current=next;page=0;persist();render();setStatus('Opened every retained choice for this exact original worksheet source.');}).catch(error=>setStatus(error.message,true));});
-    toolbar.append(pickLabel,importButton);root.append(intro,toolbar);
+    toolbar.append(pickLabel,importButton);root.append(intro,storageNotice,toolbar);
     if(cached){const bar=el('div');bar.className='row';bar.append(el('p','This browser retains a different complete choice set for the same proposal.'),button('Restore browser choices',()=>{if(!confirm('Replace the displayed choices with this browser’s complete saved choices for the same proposal?'))return;current=reopen(cached,current.original);cached=null;page=0;persist();render();}));root.append(bar);}
     const extra=Object.fromEntries(Object.entries(current.columns).filter(([index])=>!sheets.some(sheet=>String(sheet.sheet)===index)));
     if(Object.keys(extra).length){const retained=el('details');retained.append(el('summary','Other complete worksheet choices retained from this original action'),el('pre',JSON.stringify(extra,null,2)));root.append(retained);}
@@ -253,7 +263,7 @@ export function createEventWorkbookColumnReview(root,{onChange=()=>{},onMessage=
       if(retained && canonical(retained.columns)!==canonical(candidate.columns))cached=retained;
       render();onChange(clone(current.columns));return snapshot();
     },
-    clear(){current=null;cached=null;activeSheet=null;page=0;storageUnavailable=false;root.replaceChildren();controls.length=0;},
+    clear(){current=null;cached=null;activeSheet=null;page=0;storageUnavailable=false;storageNotice=null;root.replaceChildren();controls.length=0;},
     lock(value){locked=!!value;for(const c of controls)c.node.disabled=locked||c.disabled;},
     selected(){return current?clone(current.original):null;},
     view(value){

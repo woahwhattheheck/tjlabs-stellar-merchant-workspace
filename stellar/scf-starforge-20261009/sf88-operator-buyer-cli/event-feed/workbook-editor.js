@@ -30,7 +30,7 @@
   $('save-choices').addEventListener('click',()=>run(()=>editor.download()));
   $('save-original').addEventListener('click',()=>run(()=>{
     const value=editor.snapshot().original;
-    file(JSON.stringify(value.proposal,null,2)+'\n','event-workbook-proposal-'+value.proposal.operation_id+'.json','application/json');
+    file(serializeNativeJSON(value.proposal),'event-workbook-proposal-'+value.proposal.operation_id+'.json','application/json');
     message('Downloaded the complete original native worksheet proposal. Workspace and programme also remain in the full choice file.');
   }));
   addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
