@@ -176,8 +176,8 @@ export function inspectCorrectionDocument(source, { pointer = '', offset = 0, li
       label, characters: literal.length, childCount: child.node.children?.length ?? null,
       preview: literal.slice(0, 512), previewComplete: literal.length <= 512 };
   }
-  const rows = (node.children ?? []).map(descriptor).filter(item =>
-    !lower || item.label.toLocaleLowerCase().includes(lower) || item.preview.toLocaleLowerCase().includes(lower));
+  const rows = (node.children ?? []).filter(child => !lower || child.key.toLocaleLowerCase().includes(lower) ||
+    correctionRaw(document, child.node).toLocaleLowerCase().includes(lower)).map(descriptor);
   return { pointer, parentPointer: tokens.length ? correctionPointer(tokens.slice(0, -1)) : null,
     type: node.type, characters: raw.length, literalText: raw.length <= literalLimit ? raw : null,
     literalComplete: raw.length <= literalLimit, childCount: node.children?.length ?? 0,

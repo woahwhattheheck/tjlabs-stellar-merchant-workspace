@@ -280,6 +280,8 @@ export function createDcatCorrections({ directory, state, dcat, launch, persist 
       return { ...launch(prior ? 'reopen saved catalogue correction revision' : 'save catalogue correction revision', async () => {
         if (prior) { await revisionFiles(directory, selected, prior); return { correctionId: selected.id, revision: complete(prior) }; }
         const value = await preview(input);
+        need(input.expectedResultSha256 === undefined || input.expectedResultSha256 === digest(value.raw),
+          'DCAT_CORRECTION_PREVIEW_CHANGED', 'Preview the complete current change set before saving.', 409);
         const journal = await pending(input, requestSha256, selected.id, id);
         const revision = await retainRevision(selected, id, requestSha256, value.raw,
           { kind: 'edit', createdAt: journal.createdAt, ...credit, operations: complete(input.operations), changes: value.result.changes });
