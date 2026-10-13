@@ -15,7 +15,7 @@ export function composeFinancialWalkthrough(markdown) {
     throw new Error('Select the complete original merchant financial walkthrough.');
   }
   let body = renderGrantMarkdown(markdown).replace(
-    /href="\.\/(application\.md|product-and-finance\.md|source-index\.json)(?=["#?])/g,
+    /href="\.\/(application\.md|product-and-finance\.md|source-index\.json|financial-native-result\.json)(?=["#?])/g,
     'href="./grant-data/$1'
   ).replace(/href="\.\/grant-data\/product-and-finance\.md(?=["#?])/g, 'href="./grant-companion.html')
     .replace(/href="\.\/grant-data\/application\.md(?=["#?])/g, 'href="./grant.html');

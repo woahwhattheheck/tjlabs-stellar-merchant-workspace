@@ -1,0 +1,236 @@
+{
+  "schema": "stellar-forge.grant-financial-native-receiving.v1",
+  "operation": "SCF-FINANCIAL-RESULT-REVIEWER-3FC8-20261013",
+  "original_operation": "SCF-MCP-RECEIVABLES-COLLECTION-2A51-20261012",
+  "retained_results_commit": "2c69f99e2a787a0ff4966e1029c809fc65a8c0c2",
+  "source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5",
+    "capsule": "7fcaec7a66deb03c5d9fed00f193138218d8c323",
+    "files": 116
+  },
+  "payment": {
+    "program": "PAYMENT_CHECK.mjs",
+    "program_git_blob": "9020c4e40784b676fbc57d0fc1c7c58580be6474",
+    "program_bytes": 15841,
+    "run_id": 38343867655,
+    "run_url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/actions/runs/38343867655",
+    "result_packet_url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2c69f99e2a787a0ff4966e1029c809fc65a8c0c2/operations/scf-receivables-native-2a51-20261012/results/run-38343867655.json",
+    "result_packet_git_blob": "80c16d4ce00247d6675fe3d7b1b9c445011cc27f",
+    "exit_code": 0,
+    "path": "receiving/source/PAYMENT_CHECK_RESULT.json",
+    "bytes": 1201,
+    "sha256": "5bdacf3bdf9134aad72df3f161fc92577f48cfb011864b3e499c32a8882bd74c",
+    "value": {
+      "result": "PASS",
+      "runtime": "v22.23.3",
+      "stellarSdk": "16.3.0",
+      "fixtureSource": "Official Stellar SDK-generated transaction and result XDR delivered through the original RPC transport",
+      "syntaxFiles": 9,
+      "workflows": [
+        "Original customer, reviewed USD 100.00 invoice and retained invoice document through HTTP",
+        "Public-network XLM request; optional payer; NOT_FOUND followed by receipt/allocation; original request replay",
+        "Issued asset; fee-bump inner-hash RPC lookup; both hash aliases; exact strict-send and strict-receive result amounts",
+        "Fee-bump outer-alias duplicate rejection, cancellation and status-filtered paging",
+        "Test-network proof observed while commercial customer balance stays USD 50.00",
+        "Retained native proof hydrated through HTTP; compact journal; unchanged issued documents; browser module served",
+        "Original accounting workspace closed and reopened with balances, payment state, receipts and proof downloads intact"
+      ],
+      "currency": "USD",
+      "invoiceTotal": "100.00",
+      "receiptsTotal": "50.00",
+      "amountDue": "50.00",
+      "receipts": 2,
+      "testnetCommercialCredits": 0,
+      "workspaceStateBytes": 48121,
+      "rpcFixtureCalls": 8
+    }
+  },
+  "mcp": {
+    "program": "MCP_RECEIVABLES_CHECK.mjs",
+    "program_git_blob": "568669a6e3de268aa34c4aa17427582585c4fcf9",
+    "program_bytes": 26247,
+    "run_id": 38359117638,
+    "run_url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/actions/runs/38359117638",
+    "result_packet_url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2c69f99e2a787a0ff4966e1029c809fc65a8c0c2/operations/scf-receivables-native-2a51-20261012/results/run-38359117638.json",
+    "result_packet_git_blob": "2e7e07d3e453d5778fb866c200b8139dfe197b6e",
+    "exit_code": 0,
+    "completed_at": "2026-10-13T06:51:55.784050+00:00",
+    "path": "receiving/source/MCP_RECEIVABLES_CHECK_RESULT.json",
+    "bytes": 4529,
+    "sha256": "d1e9da55e08677a7f80e96e3dc429e9744b6dac24390158445db04736e947121",
+    "value": {
+      "result": "PASS",
+      "runtime": "v22.23.3",
+      "operation": "SCF-MCP-RECEIVABLES-COLLECTION-2A51-20261012",
+      "transport": "Original authenticated MCP HTTP handler and merchant accounting host",
+      "quoteProducer": "Original SF74 commercial context, quote review/seal and response document factory",
+      "rpcObservation": "Controlled NOT_FOUND through the original canonical RPC transport",
+      "currency": "USD",
+      "invoiceTotal": "100.00",
+      "credited": "25.00",
+      "paid": "75.00",
+      "amountDue": "0.00",
+      "receiptRecords": 2,
+      "currentReceipts": 1,
+      "nativeQuoteImports": 1,
+      "rpcFixtureCalls": 2,
+      "workflows": [
+        "Original configured sources, authenticated MCP connection, accounting ownership and current customer identity",
+        "Original sealed SF74 quote/response, configured alias import, lost-reply recovery and archived-byte reconciliation after both aliases change",
+        "Editable native draft, complete SHA-bound preview, original invoice issuance and unchanged reviewed business text over HTTP",
+        "Reviewed SEP-7 handoff, optional payer return, original RPC NOT_FOUND observation, retained proof and explicit cancellation",
+        "Original USD 70.00 preliminary receipt, USD 25.00 scope credit, allocation release, corrected USD 75.00 receipt and fully paid invoice",
+        "Complete original invoice, credit, quote/response, wallet instructions, hydrated receiving proof and native customer account.tar through retained SHA-pinned chunks",
+        "Original application, invoice and service-agreement recovery fields survive the composed HTTP projector; an interrupted download finishes its same read drain after a transient release failure",
+        "Original owner closed and reopened with paid invoice, cancelled wallet request, native proof, sealed documents and saved quote request intact"
+      ],
+      "files": [
+        {
+          "name": "invoice.json",
+          "bytes": 1700,
+          "sha256": "565c2bff3393be16a6390ab9c147295ba5b8c9e5ca9a9ed85608a938af5ea10b"
+        },
+        {
+          "name": "credit.json",
+          "bytes": 1328,
+          "sha256": "90427a200d2e2245f6ba61b609a6fdaea49fc697179580e79e2668b531db32ff"
+        },
+        {
+          "name": "payment-request.json",
+          "bytes": 2147,
+          "sha256": "310d1e20260717d58a18b765d465cc2b57f453dd3da4fa942de5791800b7a997"
+        },
+        {
+          "name": "payment-request.uri",
+          "bytes": 225,
+          "sha256": "edbfff1265032d14594060a17f31cee346680940712753373038b5ff58826a5e"
+        },
+        {
+          "name": "proof.json",
+          "bytes": 4378,
+          "sha256": "ec8e025f956cdada79cb5c6f98b44241aa1b4c09380f93e460f95ec2aff512ac"
+        },
+        {
+          "name": "receiving.json",
+          "bytes": 9599,
+          "sha256": "62873ef9c0cc2d488443aa620fcd71caf1066485beb45da319c69bbd5413470a"
+        },
+        {
+          "name": "quote.json",
+          "bytes": 4836,
+          "sha256": "894c059e38f7069ee8896f1c0577de83fa755e45426c58c797bb9c7eccbe194e"
+        },
+        {
+          "name": "response.json",
+          "bytes": 774,
+          "sha256": "2423c69178e4ab0234e32ddc83588c25ceb3326ba598c75bf9e365390725acaf"
+        },
+        {
+          "name": "account.tar",
+          "bytes": 27648,
+          "sha256": "2ca70d0e1740ef27f7eb7637d3ed91576cf03ab70eb2605a490a8fdb6f805623"
+        }
+      ],
+      "toolCalls": {
+        "merchant_accounting_sources": 1,
+        "merchant_accounting_open": 8,
+        "merchant_accounting_receivables_status": 16,
+        "merchant_accounting_receivables_settings": 1,
+        "merchant_accounting_receivables_request_lookup": 7,
+        "merchant_accounting_receivables_quote_import": 1,
+        "merchant_accounting_receivables_invoice_detail": 6,
+        "merchant_accounting_file": 273,
+        "merchant_accounting_receivables_invoice_preview": 2,
+        "merchant_accounting_receivables_draft_save": 1,
+        "merchant_accounting_receivables_invoice_issue": 1,
+        "merchant_accounting_receivables_payment_preview": 1,
+        "merchant_accounting_receivables_payment_create": 1,
+        "merchant_accounting_receivables_payment_return": 1,
+        "merchant_accounting_receivables_payment_receive": 1,
+        "merchant_accounting_receivables_payment_detail": 2,
+        "merchant_accounting_receivables_payment_cancel": 1,
+        "merchant_accounting_receivables_payment_list": 1,
+        "merchant_accounting_receivables_receipt_record": 2,
+        "merchant_accounting_receivables_allocate": 2,
+        "merchant_accounting_receivables_credit": 1,
+        "merchant_accounting_receivables_release": 1,
+        "merchant_accounting_receivables_receipt_void": 1,
+        "merchant_accounting_receivables_customer_export": 1,
+        "merchant_accounting_file_release": 2,
+        "merchant_accounting_close": 2
+      }
+    },
+    "source_correction": {
+      "path": "receiving/source-correction.json",
+      "bytes": 1541,
+      "sha256": "20a3e473e067fc7fe124d4dcae679b12634470181e72d90a774ecdaf4380d1d6",
+      "value": {
+        "schema": "commons.original-source-receiving-correction.v1",
+        "operation": "SCF-RECEIVABLES-NATIVE-2A51-20261012",
+        "originalSourceCommit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5",
+        "maintainedSourceCommit": "1f44c8a18477bcfbb1b8890f8bd228ba52bb1306",
+        "originalResultCapsule": "80c16d4ce00247d6675fe3d7b1b9c445011cc27f",
+        "reason": "Use the exact maintained Grist and SeaTable registration repairs plus the direct original host-files import from the frozen receivables CLI successor. The programme and accounting engine bytes remain unchanged.",
+        "priorCorrectionCapsule": "93d2f87ceab7c1ba17dbbc2f2e276c3e977f3aaa",
+        "gitBlob": "bbc06b338f4ee7b51640ec0e241b05d39e71cee8",
+        "files": [
+          {
+            "path": "stellar/scf-starforge-20261009/distribution/contributions/grist-authoring.json",
+            "originalGitBlob": "b48a143dac0ec868c8aa5afc8cdbf7dca9535cab",
+            "gitBlob": "628fc04f8e1de10cc35c497064fa8cac8438a483",
+            "bytes": 1380
+          },
+          {
+            "path": "stellar/scf-starforge-20261009/distribution/contributions/seatable-authoring.json",
+            "originalGitBlob": "de2447ce789f64564cb7cc0af98adfc82e0acdd4",
+            "gitBlob": "8c24dca1c4f6333b4c844bd4b8ca06ba3a0b573a",
+            "bytes": 1426
+          },
+          {
+            "path": "stellar-forge/mcp-merchant-operator/accounting-receivables-cli.mjs",
+            "originalGitBlob": "6f36c6858318fded77dc93163991ad88dd70caba",
+            "gitBlob": "bb7cd566159333727c409eb50a4077132662cda5",
+            "bytes": 24204,
+            "sourceCommit": "65a06ce7820ac4e436917e3951b0bc64f795b8d8"
+          }
+        ]
+      }
+    }
+  },
+  "historical_payment_run": {
+    "payment_exit_code": 0,
+    "mcp_exit_code": 1,
+    "reason": "MCP provider registration stopped before its lifecycle; the corrected continuation retains that failure and completes the unchanged MCP programme."
+  },
+  "readback": {
+    "original_packet_files_verified": true,
+    "packet_file_counts": {
+      "payment": 12,
+      "mcp": 12
+    },
+    "verification": "Each retained UTF-8 output was compared against its original byte count and SHA-256."
+  },
+  "current_product": {
+    "repository": "woahwhattheheck/public-commons-sprint-2026",
+    "commit": "8aed042e255201c352564753caa3af69b46e82db",
+    "pull_request": 2583,
+    "source_capsule": "18a23dfbf4031713d0e68918fe6687ff82d638fc",
+    "source_files": 275,
+    "receiving_relation": "The completed results identify frozen 94ad source with the recorded startup correction. Current 8aed product receiving keeps its own source selection and original operation."
+  },
+  "measurement": {
+    "kind": "source-native operated development lifecycle",
+    "rpc_inputs": "Official Stellar SDK-generated transaction and result XDR delivered through the original RPC transport",
+    "mcp_rpc_observation": "Controlled NOT_FOUND through the original canonical RPC transport",
+    "purchase_register_relation": "These local programme executions validate customer accounting and native transfer handling. The application's distinct team-operated network-purchase baseline remains 18 purchases / 411000 testnet stroops.",
+    "customer_adoption_relation": "Independent merchant/buyer adoption and commercial revenue use their original customer and purchase records."
+  },
+  "execution_controls": {
+    "repository_enabled": false,
+    "workflow_state": "disabled_manually",
+    "repository_readback_status": 200,
+    "workflow_readback_status": 200,
+    "source_url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2c69f99e2a787a0ff4966e1029c809fc65a8c0c2/operations/scf-receivables-native-2a51-20261012/HOSTED_RECEIVING.md"
+  }
+}

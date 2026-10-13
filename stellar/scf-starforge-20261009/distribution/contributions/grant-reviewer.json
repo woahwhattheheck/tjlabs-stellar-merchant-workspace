@@ -68,6 +68,7 @@
     "stellar-forge/developer-site/GRANT_ISSUER_CONTEXT.md",
     "stellar-forge/developer-site/GRANT_ISSUER_RECEIVING.mjs",
     "stellar-forge/developer-site/GRANT_CATALOG.md",
-    "stellar-forge/developer-site/SAVED_PROJECTS.md"
+    "stellar-forge/developer-site/SAVED_PROJECTS.md",
+    "stellar-forge/developer-site/dist/grant-data/financial-native-result.json"
   ]
 }

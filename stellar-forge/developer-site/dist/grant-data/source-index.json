@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 47684,
-    "sha256": "5bddff9b185890bd0021ac25642975115095b435108d1c19fa2a7291cd03cb37",
-    "git_blob": "15c2a09c49fc72e63179e17211ff7395c756955d"
+    "bytes": 48727,
+    "sha256": "4455464858afcac7b8c24055c71af3c086b782113c8b5fe1af91ba290a4c34bb",
+    "git_blob": "912110298b0eef71da5c375517ea3e3b087a3b61"
   },
   "request": {
     "basis": "prospective",
@@ -9819,15 +9819,56 @@
         "sha256": "badfaf5ac822c5963444bdacb8a76c805d9790ef0457906d5f1f8adb28f15a15",
         "bytes": 13846
       }
+    },
+    {
+      "id": "merchant-original-payment-native-result",
+      "label": "Completed original invoice-wallet programme: seven workflows",
+      "path": "operations/scf-receivables-native-2a51-20261012/results/run-38343867655.json",
+      "git_blob": "80c16d4ce00247d6675fe3d7b1b9c445011cc27f",
+      "run_id": 38343867655,
+      "program": "PAYMENT_CHECK.mjs",
+      "result": "PASS",
+      "program_result_sha256": "5bdacf3bdf9134aad72df3f161fc92577f48cfb011864b3e499c32a8882bd74c",
+      "kind": "published-native-result",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "2c69f99e2a787a0ff4966e1029c809fc65a8c0c2",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2c69f99e2a787a0ff4966e1029c809fc65a8c0c2/operations/scf-receivables-native-2a51-20261012/results/run-38343867655.json",
+      "original_source_commit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5"
+    },
+    {
+      "id": "merchant-original-mcp-native-result",
+      "label": "Completed original authenticated merchant receiving: eight workflows",
+      "path": "operations/scf-receivables-native-2a51-20261012/results/run-38359117638.json",
+      "git_blob": "2e7e07d3e453d5778fb866c200b8139dfe197b6e",
+      "run_id": 38359117638,
+      "program": "MCP_RECEIVABLES_CHECK.mjs",
+      "result": "PASS",
+      "program_result_sha256": "d1e9da55e08677a7f80e96e3dc429e9744b6dac24390158445db04736e947121",
+      "kind": "published-native-result",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "2c69f99e2a787a0ff4966e1029c809fc65a8c0c2",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2c69f99e2a787a0ff4966e1029c809fc65a8c0c2/operations/scf-receivables-native-2a51-20261012/results/run-38359117638.json",
+      "original_source_commit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5"
+    },
+    {
+      "id": "merchant-original-financial-receiving-guide",
+      "label": "Original programme source, exact corrections and completed receiving",
+      "path": "operations/scf-receivables-native-2a51-20261012/HOSTED_RECEIVING.md",
+      "git_blob": "615b0c4e4042b044d638725ee43400dd43f1eb88",
+      "kind": "published-native-result",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "2c69f99e2a787a0ff4966e1029c809fc65a8c0c2",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2c69f99e2a787a0ff4966e1029c809fc65a8c0c2/operations/scf-receivables-native-2a51-20261012/HOSTED_RECEIVING.md",
+      "original_source_commit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5"
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "9adc345d8a59849d2586898f7a6f0d40454d0b18",
-    "bytes": 997464,
-    "sha256": "00eb69e4b7212587df452e5dd2a170560091517b5b08b5d8c7cb9117ff54084e",
+    "git_blob": "b88ca474db07a0d9118a67f078370a739e0529ab",
+    "bytes": 999941,
+    "sha256": "6b08d2066d64a6bfe020745afd91c2369d160cc7acc90293b71f578668b0aed5",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
-    "prior_git_blob": "9ff11768d30ce0a77f620ed0e50cde965b3e0c4a"
+    "prior_git_blob": "9adc345d8a59849d2586898f7a6f0d40454d0b18"
   },
   "narrative_source": {
     "basis": "Original manuscript author's complete October 12 reviewer answer",
@@ -10031,9 +10072,24 @@
         "complete_financial_section_sha256": "de99fb3804cd166e42b0b8cea989b15ab4ef8200c6b446e286caa2375a3c4c1d",
         "common_budget_unchanged": true,
         "original_purchase_baseline_unchanged": true
+      },
+      {
+        "id": "merchant-financial-native-receiving",
+        "application_operation": "SCF-FINANCIAL-RESULT-REVIEWER-3FC8-20261013",
+        "basis": "Completed original payment and authenticated merchant-interface receiving, preserved in the original nine-answer application and 78-chapter companion.",
+        "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "results_commit": "2c69f99e2a787a0ff4966e1029c809fc65a8c0c2",
+        "original_source_commit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5",
+        "source_correction": "bbc06b338f4ee7b51640ec0e241b05d39e71cee8",
+        "payment_run_id": 38343867655,
+        "mcp_run_id": 38359117638,
+        "payment_workflows": 7,
+        "mcp_workflows": 8,
+        "original_purchase_baseline_unchanged": true,
+        "common_budget_unchanged": true
       }
     ],
-    "current_application_sha256": "5bddff9b185890bd0021ac25642975115095b435108d1c19fa2a7291cd03cb37",
+    "current_application_sha256": "4455464858afcac7b8c24055c71af3c086b782113c8b5fe1af91ba290a4c34bb",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -11069,7 +11125,7 @@
       ],
       "product_registry_git_blob": "ff0c7f74e29909ebb4b0e8c26a4974e47624be5b",
       "financial_projector_git_blob": "675cfb667dcaaa6892336cbcf38e71ae2872dce0",
-      "financial_walkthrough_renderer_git_blob": "1fc9682a6db743924b5f4a37ebfc4be1db04ac39"
+      "financial_walkthrough_renderer_git_blob": "59793e5d721b8851189410fd7a5cb7733eaa460d"
     },
     "datasette_customer_commit": "84b0b2415fe9f76a654f12dc23aae07eb1c5ebc4",
     "datasette_publisher_commit": "ab876f6dc2ad24b7938f6b928202d78fbdeef777",
@@ -11198,7 +11254,10 @@
       "merchant-bank-statements-installation",
       "merchant-bank-statements-handover",
       "merchant-bank-statements-example",
-      "merchant-bank-statements-selection"
+      "merchant-bank-statements-selection",
+      "merchant-original-payment-native-result",
+      "merchant-original-mcp-native-result",
+      "merchant-original-financial-receiving-guide"
     ],
     "installed_selection": "merchant-receivables-xero",
     "installed_command": "receivables-xero",
@@ -11219,15 +11278,15 @@
       "operation": "SCF-FINANCIAL-REVIEWER-WALKTHROUGH-3FC8-20261013",
       "source": {
         "path": "/grant-data/financial-walkthrough.md",
-        "bytes": 50479,
-        "sha256": "8663ed5785105e247fe2d384d79d32cca4df873a6865fe91aa22cb70df065da9",
-        "git_blob": "71beada97de44640ae98227e7351afc2fa14645b"
+        "bytes": 56567,
+        "sha256": "ca99d72423e61d856ef96fdc05191548d30c512c8d03fcb2906393a8e589ad4b",
+        "git_blob": "471df5253ef75c8242ee614ce687ee56dd91d651"
       },
       "page": {
         "path": "/grant-financial-walkthrough.html",
-        "bytes": 60353,
-        "sha256": "e600e023f5696ce19d27c3dd06dfdf1c75469a2f56fa6d01c26ae3fd1a582b29",
-        "git_blob": "8cda6c3c25495dcfbbccb1d2678ccd62282aa02b"
+        "bytes": 67546,
+        "sha256": "bd776a02f27754fa738f802b532889126a8b843ebab7709b0b32c5042c4f3a18",
+        "git_blob": "2bea013dfa7aee763ad121256de6ef57e063322d"
       },
       "renderer": "stellar-forge/developer-site/grant-financial-walkthrough.mjs"
     },
@@ -11261,7 +11320,7 @@
           "sha256": "9029314a300abb5f93dbddf8783b6cb8773d520d35cc4ac0c5803d5cf668f7d0"
         }
       ],
-      "meaning": "Complete current source and unchanged original programmes selected by the existing financial receiving operation; returned runtime outcomes remain attached to that original operation."
+      "meaning": "The selected 275-file source and unchanged original programmes belong to the 8aed042e public product continuation. Completed frozen 94ad programme results and their exact correction are separately recorded in completed_native_receiving."
     },
     "completed_customer_billing": {
       "operation": "SCF-COMMERCIAL-MILESTONE-BILLING-F8C1-20261012",
@@ -11300,6 +11359,90 @@
         "reopen": true
       },
       "measurement": "Saved invoice and account outcomes of the original operated customer example; independent-adoption and paid-Stellar measures retain their original registers."
+    },
+    "completed_native_receiving": {
+      "schema": "stellar-forge.grant-financial-native-receiving.v1",
+      "operation": "SCF-MCP-RECEIVABLES-COLLECTION-2A51-20261012",
+      "source": {
+        "path": "/grant-data/financial-native-result.json",
+        "bytes": 12313,
+        "sha256": "82345bab85b7786acdcb2845299e9c3227d79fcd78e71598dc25f4ffb08ec46c",
+        "git_blob": "3e0d8f59ee6390bc570fe7e46b7bc6ac83017eac"
+      },
+      "results_commit": "2c69f99e2a787a0ff4966e1029c809fc65a8c0c2",
+      "original_source": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5",
+        "capsule": "7fcaec7a66deb03c5d9fed00f193138218d8c323",
+        "files": 116
+      },
+      "source_correction": {
+        "schema": "commons.original-source-receiving-correction.v1",
+        "operation": "SCF-RECEIVABLES-NATIVE-2A51-20261012",
+        "originalSourceCommit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5",
+        "maintainedSourceCommit": "1f44c8a18477bcfbb1b8890f8bd228ba52bb1306",
+        "originalResultCapsule": "80c16d4ce00247d6675fe3d7b1b9c445011cc27f",
+        "reason": "Use the exact maintained Grist and SeaTable registration repairs plus the direct original host-files import from the frozen receivables CLI successor. The programme and accounting engine bytes remain unchanged.",
+        "priorCorrectionCapsule": "93d2f87ceab7c1ba17dbbc2f2e276c3e977f3aaa",
+        "gitBlob": "bbc06b338f4ee7b51640ec0e241b05d39e71cee8",
+        "files": [
+          {
+            "path": "stellar/scf-starforge-20261009/distribution/contributions/grist-authoring.json",
+            "originalGitBlob": "b48a143dac0ec868c8aa5afc8cdbf7dca9535cab",
+            "gitBlob": "628fc04f8e1de10cc35c497064fa8cac8438a483",
+            "bytes": 1380
+          },
+          {
+            "path": "stellar/scf-starforge-20261009/distribution/contributions/seatable-authoring.json",
+            "originalGitBlob": "de2447ce789f64564cb7cc0af98adfc82e0acdd4",
+            "gitBlob": "8c24dca1c4f6333b4c844bd4b8ca06ba3a0b573a",
+            "bytes": 1426
+          },
+          {
+            "path": "stellar-forge/mcp-merchant-operator/accounting-receivables-cli.mjs",
+            "originalGitBlob": "6f36c6858318fded77dc93163991ad88dd70caba",
+            "gitBlob": "bb7cd566159333727c409eb50a4077132662cda5",
+            "bytes": 24204,
+            "sourceCommit": "65a06ce7820ac4e436917e3951b0bc64f795b8d8"
+          }
+        ]
+      },
+      "programmes": [
+        {
+          "program": "PAYMENT_CHECK.mjs",
+          "run_id": 38343867655,
+          "exit_code": 0,
+          "result": "PASS",
+          "workflows": 7,
+          "result_sha256": "5bdacf3bdf9134aad72df3f161fc92577f48cfb011864b3e499c32a8882bd74c"
+        },
+        {
+          "program": "MCP_RECEIVABLES_CHECK.mjs",
+          "run_id": 38359117638,
+          "exit_code": 0,
+          "result": "PASS",
+          "workflows": 8,
+          "completed_at": "2026-10-13T06:51:55.784050+00:00",
+          "result_sha256": "d1e9da55e08677a7f80e96e3dc429e9744b6dac24390158445db04736e947121"
+        }
+      ],
+      "financial_outcome": {
+        "currency": "USD",
+        "invoice_total": "100.00",
+        "credited": "25.00",
+        "paid": "75.00",
+        "amount_due": "0.00",
+        "historical_receipts": 2,
+        "current_receipts": 1,
+        "customer_files": 9
+      },
+      "measurement": {
+        "kind": "source-native operated development lifecycle",
+        "rpc_inputs": "Official Stellar SDK-generated transaction and result XDR delivered through the original RPC transport",
+        "mcp_rpc_observation": "Controlled NOT_FOUND through the original canonical RPC transport",
+        "purchase_register_relation": "These local programme executions validate customer accounting and native transfer handling. The application's distinct team-operated network-purchase baseline remains 18 purchases / 411000 testnet stroops.",
+        "customer_adoption_relation": "Independent merchant/buyer adoption and commercial revenue use their original customer and purchase records."
+      }
     }
   },
   "submission_review_round": {
@@ -11322,8 +11465,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "00eb69e4b7212587df452e5dd2a170560091517b5b08b5d8c7cb9117ff54084e",
-    "source_bytes": 997464,
+    "source_sha256": "6b08d2066d64a6bfe020745afd91c2369d160cc7acc90293b71f578668b0aed5",
+    "source_bytes": 999941,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",
