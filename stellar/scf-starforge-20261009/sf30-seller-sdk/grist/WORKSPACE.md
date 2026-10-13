@@ -403,3 +403,32 @@ The native operation compares every projected value and preserves original reque
 The same source workspace now includes an **Operating plans** panel. Select saved document catalogs, table discoveries, complete captures, reviewed source versions and original operation IDs; edit a complete customer procedure without reopening a provider or publisher. The original OperatingPlan and returned-plan models preserve revision history and explicit field/order decisions. Procedure changes and their request results commit together in `sources.sqlite`, under its existing owner and operation journal.
 
 Use [OPERATING_PLANS.md](OPERATING_PLANS.md) for the complete browser, CLI, MCP, capture, recovery and recipient workflow. The installed `grist-workspace operating --directory PRIVATE_DIR --input PRIVATE_METHOD_AND_ARGS.json` command and `merchant_grist_operating_*` tools call the same source-owned API. Applications opens the existing combined editor; no additional host or service account is created. Export complete procedure JSON to retain source bindings, observations and return reviews; use original plan JSON when exchanging with the general Operating Plans editor. A saved observation preserves operator-authored instructions and status and is never evidence of a new provider read, successful publication or recipient acceptance.
+
+## Complete editable workspace handover
+
+The existing Grist owner now prepares a streamed private `.grwh` archive and receives
+it as a named independent workspace. This preserves the original captured document and
+table responses, draft/version/review/request history, operating procedures and their
+request origins, publisher plans, dataset editions and merchant releases. The original
+raw SQLite settings and initialization bytes stay unchanged; a verified placement
+record supplies the receiving host paths without rebinding operating-plan identity.
+
+Use [the complete handover controls](HANDOVER.md) and
+[the customer commissioning course](../../../../products/grist/COMMISSIONING.md).
+The existing `grist-workspace` CLI, browser, Applications owner and customer-agent
+provider operate the same model; a received child can be edited, published deliberately
+and re-exported through its own owner. Export drains only this workspace's owned
+publisher/deployment services. Replaying a completed export verifies its original
+immutable archive without stopping a later service. A completed receive reopens its
+progressed child without overwriting it. Captured provider data is not refreshed and
+merchant releases are not activated by receiving.
+
+Operating-plan procedures, exact request replay and returned-plan review retain their
+existing APIs and source owners. Separate received workspaces and the sender's archive
+cache are not recursively included in an export; select each child itself to export
+that child's complete editable history.
+
+The original 14F5 receiving operation must run this exact final source with its actual
+Grist document/table acquisition, publisher/buyer and desktop/narrow browser course.
+Source review and emulated control-flow execution do not establish a completed native
+or rendered result.

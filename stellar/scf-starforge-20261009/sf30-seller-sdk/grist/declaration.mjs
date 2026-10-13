@@ -144,7 +144,7 @@ export async function readGristDocumentFile(filename) {
 export function sourceSelection(config,queries=compileQueries(config.queries)){
   return{...binding(config),fields:selectedFields(queries)};
 }
-export async function readGristSourceFile(filename,{allowUnprojected=false}={}) {
+export async function readGristSourceFile(filename,{allowUnprojected=false,resolveCaptureFile=value=>value}={}) {
   const original=await readPrivate(filename);let config;
   try{config=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(original));}catch{throw fault('GRIST_SOURCE_JSON_INVALID');}
   only(config,['schema','server','apiVersion','docId','tableId','filter','sourceOrder','connection','queries'],'GRIST_SOURCE_CONFIG_INVALID');
@@ -156,5 +156,5 @@ export async function readGristSourceFile(filename,{allowUnprojected=false}={}) 
   }else restOptions(config,{allowUnordered:allowUnprojected});
   return{config,binding:selected,queries,original,hash:digest(original),
     selectionHash:Object.keys(queries).length?identity(sourceSelection(config,queries)):null,
-    captureFile:config.connection.kind==='capture'?resolve(dirname(filename),config.connection.file):null};
+    captureFile:config.connection.kind==='capture'?resolveCaptureFile(resolve(dirname(filename),config.connection.file)):null};
 }

@@ -127,7 +127,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/OPERATING.md",
-      "commit": "97dbd2e2b4449cae11f9b45065e32cd93cc05834",
+      "commit": "62a42017ebcbe7b51e3d4940cca356c646b79b77",
       "required": true,
       "editions": [
         {
@@ -135,6 +135,12 @@
           "bytes": 11270,
           "sha256": "ea61129e137fa666ab687fb8ebf4b8432be2c8d2cb5b97fc461ef7bfb179cd08",
           "git_blob": "968656247776d91fe7315e860a2d7c358af3cc30"
+        },
+        {
+          "commit": "62a42017ebcbe7b51e3d4940cca356c646b79b77",
+          "bytes": 14058,
+          "sha256": "a74a1b183a8348436d2231cccb945a7c76412467f4e0ec5ec089cbccd50cfbb8",
+          "git_blob": "e59becca8c4bf62338c26d55d1b5e5b086bcb43c"
         }
       ]
     },
@@ -195,7 +201,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/comparison.js",
-      "commit": "97dbd2e2b4449cae11f9b45065e32cd93cc05834",
+      "commit": "62a42017ebcbe7b51e3d4940cca356c646b79b77",
       "required": true,
       "editions": [
         {
@@ -203,6 +209,12 @@
           "bytes": 33751,
           "sha256": "785983fb3434fcb97a3c599cff7d9a64446bb27c54d1d4d1ad51d30263175ead",
           "git_blob": "12c6271f4eb5170904a091f2ece0f282d9d83ffa"
+        },
+        {
+          "commit": "62a42017ebcbe7b51e3d4940cca356c646b79b77",
+          "bytes": 37274,
+          "sha256": "58bb7347e48533e4751b02f6858822ed96cbbae630304c0aa0ab54115f8eaae8",
+          "git_blob": "206749a6afd2e25441f3699a3da1b84da4fc77e8"
         }
       ]
     },
@@ -263,7 +275,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RECEIVING.md",
-      "commit": "97dbd2e2b4449cae11f9b45065e32cd93cc05834",
+      "commit": "62a42017ebcbe7b51e3d4940cca356c646b79b77",
       "required": true,
       "editions": [
         {
@@ -271,6 +283,199 @@
           "bytes": 8784,
           "sha256": "e6f30126dce2e5b9ca94f59cac91cb02f9381617066c6d7ba65c6885323ed77c",
           "git_blob": "424388d2cc679c508e362abee67118408bda9c4d"
+        },
+        {
+          "commit": "62a42017ebcbe7b51e3d4940cca356c646b79b77",
+          "bytes": 9896,
+          "sha256": "eaf1bebc770e7ce3b36b4c23fcc9fc6cdee99da41719d1c5fbeeedb81cdd8e85",
+          "git_blob": "176b4ef9f0f52000d862f7fcc92a39fbb4272227"
+        }
+      ]
+    },
+    {
+      "id": "research-risk-study-operating",
+      "label": "Complete original risk-study operating and source course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RISK_STUDY_OPERATING.md",
+      "commit": "6bcda12b358ce2d35380aab107e4a6c40e4ac42f",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6bcda12b358ce2d35380aab107e4a6c40e4ac42f",
+          "bytes": 20213,
+          "sha256": "c74c5d3d274f890e0ffef0b6382567023b5f6bcbb4c6714c4c83b1f1c1b96e92",
+          "git_blob": "d46784894ecd5477c7a6b907d47865e6edb9f8ba"
+        }
+      ]
+    },
+    {
+      "id": "research-risk-study-evaluator",
+      "label": "Original cohort, prediction, exact quantity and uncertainty evaluator",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/risk_study/evaluation.py",
+      "commit": "6bcda12b358ce2d35380aab107e4a6c40e4ac42f",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6bcda12b358ce2d35380aab107e4a6c40e4ac42f",
+          "bytes": 67053,
+          "sha256": "0b88587363bf1e0d9e6d0f73939b06efbc56d4fb0c28c519d3a35090aca3dafc",
+          "git_blob": "decce1a1df9eed8aede05216aba6a227837a7dfb"
+        }
+      ]
+    },
+    {
+      "id": "research-risk-study-import-guide",
+      "label": "Complete original result and saved-case import guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RISK_STUDY_IMPORT.md",
+      "commit": "6bcda12b358ce2d35380aab107e4a6c40e4ac42f",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6bcda12b358ce2d35380aab107e4a6c40e4ac42f",
+          "bytes": 18553,
+          "sha256": "e0d07992c92d194c9dee7984c027759fae072771fba1a632ed02e0d272d0684e",
+          "git_blob": "63b0d34fe00b4480feb6e4efaf5b723ba54cf25b"
+        }
+      ]
+    },
+    {
+      "id": "research-risk-study-import",
+      "label": "Whole scientific producer result to original comparison adapter",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/risk_study/comparison_adapter.py",
+      "commit": "6bcda12b358ce2d35380aab107e4a6c40e4ac42f",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6bcda12b358ce2d35380aab107e4a6c40e4ac42f",
+          "bytes": 33278,
+          "sha256": "f2a5d882502212de132382ccc41c43b78c60eb55c9c36655504c5d044e892f53",
+          "git_blob": "149674c48725a709ecb25802de4c559e7104ab08"
+        }
+      ]
+    },
+    {
+      "id": "research-original-output-operating",
+      "label": "Complete original table and customer receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/OPERATING.md",
+      "commit": "b3a4fa9c0c68f179a4e258a857db1d28d3d03ecb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "b3a4fa9c0c68f179a4e258a857db1d28d3d03ecb",
+          "bytes": 10125,
+          "sha256": "d613d0a14550c7099ed3c1dd62124e8cdae3078254dbf9c4769b1488372b335e",
+          "git_blob": "db1a378d1d045947019f0e9150410313b6161830"
+        }
+      ]
+    },
+    {
+      "id": "research-original-output-preparation",
+      "label": "Exact table, source mapping and complete run preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/prepare.mjs",
+      "commit": "b3a4fa9c0c68f179a4e258a857db1d28d3d03ecb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "b3a4fa9c0c68f179a4e258a857db1d28d3d03ecb",
+          "bytes": 15987,
+          "sha256": "70e0debdf322b48b2d55efe1902d26bb63016353388dbeb71ca76d5a3b52e81f",
+          "git_blob": "66fdc90f226fdd3b4907f000708e9d1457ebbccf"
+        }
+      ]
+    },
+    {
+      "id": "research-original-output-review",
+      "label": "Readable complete original-row mapping review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/review.mjs",
+      "commit": "b3a4fa9c0c68f179a4e258a857db1d28d3d03ecb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "b3a4fa9c0c68f179a4e258a857db1d28d3d03ecb",
+          "bytes": 7148,
+          "sha256": "e1e491ebb389deee0d2dc9d43eba6527dce563d2adb1a5a80ec024b49d44cdeb",
+          "git_blob": "2fb23faa69a798bd1f3bf4abbf4bb8f8e11e8816"
+        }
+      ]
+    },
+    {
+      "id": "research-original-output-receiving",
+      "label": "Original dossier import, report and editable reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/receive.mjs",
+      "commit": "b3a4fa9c0c68f179a4e258a857db1d28d3d03ecb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "b3a4fa9c0c68f179a4e258a857db1d28d3d03ecb",
+          "bytes": 14404,
+          "sha256": "d139b1a4182f97cb21efc4e9df88b01bd5d022d636662c284b9dbeb197499009",
+          "git_blob": "dbe198fbe31573e544179ab60261c6d643befe42"
+        }
+      ]
+    },
+    {
+      "id": "research-comparison-handover-guide",
+      "label": "Complete frozen comparison and staff handover guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/HANDOVER.md",
+      "commit": "6d0a0bcb276853e2fdfae9b23b41a1e1f4d1e6a7",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6d0a0bcb276853e2fdfae9b23b41a1e1f4d1e6a7",
+          "bytes": 6945,
+          "sha256": "ba2f653541322bcb7f1acac1e552e6ff71264d7b23c2898f65d2caa4b94e553c",
+          "git_blob": "afceb5a1e68166c01c427d460f91f197a274cb9f"
+        }
+      ]
+    },
+    {
+      "id": "research-comparison-handover",
+      "label": "Original fixed-generation handover producer",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/handover.mjs",
+      "commit": "6d0a0bcb276853e2fdfae9b23b41a1e1f4d1e6a7",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6d0a0bcb276853e2fdfae9b23b41a1e1f4d1e6a7",
+          "bytes": 5564,
+          "sha256": "1b09ddce89881a86e65332ea68a16928ed130bdca43287d4b5e4fdfeb21a9a3d",
+          "git_blob": "97aae0bb828710e73b81a1ac853aaf59549b486f"
+        }
+      ]
+    },
+    {
+      "id": "research-comparison-handover-inspector",
+      "label": "Original comparison and portable source inspector",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/inspect-handover.mjs",
+      "commit": "6d0a0bcb276853e2fdfae9b23b41a1e1f4d1e6a7",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6d0a0bcb276853e2fdfae9b23b41a1e1f4d1e6a7",
+          "bytes": 12015,
+          "sha256": "86ad87041d1c3274c05a53092a9be3bb8e39499c3d66df5f43ac133d2f3c3188",
+          "git_blob": "02a32ae31473bcfe5e2e4fea5ea04d0fb5a9b210"
         }
       ]
     }

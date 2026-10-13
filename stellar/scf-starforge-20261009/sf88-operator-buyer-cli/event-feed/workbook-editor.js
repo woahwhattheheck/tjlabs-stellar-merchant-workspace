@@ -20,7 +20,7 @@
     copy.querySelector('#editor-status').textContent='Opening the complete saved worksheet…';
     const html='<!doctype html>\n'+copy.outerHTML+'\n';
     file(html,'event-workbook-editor-'+value.choices.original.proposal.operation_id+'.html','text/html;charset=utf-8');
-    dirty=false;message('Saved the complete editable worksheet. Reopen that file to continue these exact choices.');
+    message('Requested the complete editable worksheet download. Open the downloaded file to continue these exact choices. This window retains its changed-work reminder.');
   }
   function run(fn){if(!ready)return;try{fn();}catch(error){message(error.message,true);}}
   $('save-editor').addEventListener('click',()=>run(save));

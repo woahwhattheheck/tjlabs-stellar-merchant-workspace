@@ -246,3 +246,47 @@ The complete receiving continuation composes the maintained SeaTable programs pu
 The original publisher, SF82, generated client, runtime workspace, Applications and MCP engines are reused. Receiving journals record progress around those engines. MIT notices remain intact.
 
 This guide documents complete implemented source. Actual provider acquisition, selected installation and browser/native receiving remain pending until the original operation returns their real receipts. No payment is claimed by this challenge-only continuation.
+
+## Complete editable workspace handover
+
+The existing Grist owner now prepares a streamed private `.grwh` archive and receives
+it as a named independent workspace. This preserves the original captured document and
+table responses, draft/version/review/request history, operating procedures and their
+request origins, publisher plans, dataset editions and merchant releases. The original
+raw SQLite settings and initialization bytes stay unchanged; a verified placement
+record supplies the receiving host paths without rebinding operating-plan identity.
+
+Use [the complete handover controls](HANDOVER.md) and
+[the customer commissioning course](../../../../products/grist/COMMISSIONING.md).
+The existing `grist-workspace` CLI, browser, Applications owner and customer-agent
+provider operate the same model; a received child can be edited, published deliberately
+and re-exported through its own owner. Export drains only this workspace's owned
+publisher/deployment services. Replaying a completed export verifies its original
+immutable archive without stopping a later service. A completed receive reopens its
+progressed child without overwriting it. Captured provider data is not refreshed and
+merchant releases are not activated by receiving.
+
+Operating-plan procedures, exact request replay and returned-plan review retain their
+existing APIs and source owners. Separate received workspaces and the sender's archive
+cache are not recursively included in an export; select each child itself to export
+that child's complete editable history.
+
+The original 14F5 receiving operation must run this exact final source with its actual
+Grist document/table acquisition, publisher/buyer and desktop/narrow browser course.
+Source review and emulated control-flow execution do not establish a completed native
+or rendered result.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949

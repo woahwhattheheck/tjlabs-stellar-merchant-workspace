@@ -1,4 +1,5 @@
 // MIT. One portable edition of the original SCF submission editor and draft.
+import {importSubmissionWorkingCopy, submissionWorkingDraft} from './grant-submission-working-copy.mjs';
 import {openDraftEnvelope} from './grant-handover-source.mjs';
 export const OFFLINE_SCHEMA='stellar-forge.grant-offline-editor.v1';
 export const RUNTIME_SCHEMA='stellar-forge.grant-offline-runtime.v1';
@@ -125,16 +126,19 @@ async function startOffline(resolveRoute,references){
       imports[prefix+file.route]=URL.createObjectURL(new Blob([content],{type:'text/javascript'}));
     }
     const map=document.createElement('script');map.type='importmap';map.nonce=pack.nonce;map.textContent=JSON.stringify({imports});document.head.append(map);
-    globalThis.__STELLAR_GRANT_OFFLINE__={schema:pack.schema,envelope:pack.envelope,runtime};
+    globalThis.__STELLAR_GRANT_OFFLINE__={schema:pack.schema,envelope:pack.envelope,workingEnvelope:pack.workingEnvelope||null,runtime};
     const entry=document.createElement('script');entry.type='module';entry.nonce=pack.nonce;entry.src=imports[prefix+runtime.entry];entry.onerror=()=>fail(new Error('The original editor could not start. Open this complete HTML in your browser rather than its document preview.'));document.head.append(entry);
   }catch(error){fail(error);}
 }
-export async function createOfflineEditor({envelope,runtime,planningOptions,exportedAt=new Date().toISOString()}){
-  need(typeof envelope==='string'&&bytes(envelope).length<=32*1024*1024+65536,'Retain the complete original draft export.');
-  const draft=await openDraftEnvelope(envelope,{planningOptions});await validateOfflineRuntime(runtime);
+export async function createOfflineEditor({envelope=null,workingEnvelope=null,runtime,planningOptions,exportedAt=new Date().toISOString()}){
+  need((typeof envelope==='string')!==(typeof workingEnvelope==='string'),'Select one complete original draft or unfinished working export.');
+  let draft;
+  if(workingEnvelope!==null){const working=await importSubmissionWorkingCopy(workingEnvelope);draft=submissionWorkingDraft(working);need(draft,'Open an application before exporting its offline editor.');}
+  else{need(bytes(envelope).length<=32*1024*1024+65536,'Retain the complete original draft export.');draft=await openDraftEnvelope(envelope,{planningOptions});}
+  await validateOfflineRuntime(runtime);
   need(Number.isFinite(Date.parse(exportedAt)),'Use a valid offline export date.');
   const {files,page}=checkClosure(runtime),nonce=crypto.randomUUID().replace(/-/g,'');
-  const pack={schema:OFFLINE_SCHEMA,exportedAt,nonce,envelope,runtime};
+  const pack={schema:OFFLINE_SCHEMA,exportedAt,nonce,envelope,workingEnvelope,runtime};
   let html=files.get(PAGE).content;
   html=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,'');
   html=html.replace(/<header class="site-header">[\s\S]*?<\/header>/,'<header class="site-header"><a class="brand" href="#editor">Stellar Forge <span>Offline submission</span></a><nav aria-label="Main navigation"><a href="#workspace-root">Draft and output controls</a></nav></header>');

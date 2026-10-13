@@ -61,7 +61,9 @@ to continue. The saved file supplies the initial work; a different browser
 cache is offered as an explicit restoration, with confirmation before replacing
 the displayed choices. Cache failure leaves complete file saving available.
 Opening an older copy does not silently substitute a newer browser draft.
-The editor warns before leaving unsaved changed choices.
+The editor warns before leaving changed choices. Requesting a download keeps
+that reminder in the original window, since the browser may cancel the file
+save. Reopen the complete saved file to continue its retained edition.
 
 **Download complete choices for original programme** exports the existing
 source-bound JSON. The source proposal is independently downloadable, and
@@ -329,7 +331,7 @@ Keep plain industrial presentation: readable tables, clear hierarchy, useful
 labels, consistent typography and spacing, restrained controls and responsive
 layouts. Repair concrete layout or behavior issues in this same source.
 Continue the complete original native operation; use focused checks for actual
-remaining risks and retain the owner's October 13, 2026 14:00 UTC cutoff.
+remaining risks and preserve this SCF operation's actual owner schedule.
 An equipped receiver returns exact source, original operation/workspace IDs,
 complete files and actual viewed normal/narrow frames to the producer. Carry
 this full instruction into any delegated operating course.
