@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Native read-only Xero acquisition and complete source/decision receiving. Node >=20. */
-import {readFile,writeFile,mkdir,rename,rm,lstat} from "node:fs/promises";
+import {readFile,writeFile,mkdir,rename,rm,link,lstat} from "node:fs/promises";
 import {createHash,randomUUID} from "node:crypto";
 import {resolve,dirname,join,isAbsolute} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -19,8 +19,12 @@ const descriptor=(path,content,contentType="application/json")=>({path,bytes:Buf
 async function read(path){const st=await lstat(path);need(st.isFile()&&!st.isSymbolicLink()&&st.size<=128*1024*1024,"REGULAR_SOURCE_FILE_REQUIRED",path);return readFile(path);}
 async function readJSON(path){return JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(await read(path)));}
 async function unchangedWrite(path,content){
-  try{await writeFile(path,content,{flag:"wx",mode:0o600});}
-  catch(e){if(e.code!=="EEXIST")throw e;need((await read(path)).equals(Buffer.from(content)),"EXISTING_FILE_DIFFERS",path);}
+  const temporary=path+".writing-"+randomUUID();
+  try{
+    await writeFile(temporary,content,{flag:"wx",mode:0o600});
+    try{await link(temporary,path);}
+    catch(e){if(e.code!=="EEXIST")throw e;need((await read(path)).equals(Buffer.from(content)),"EXISTING_FILE_DIFFERS",path);}
+  }finally{await rm(temporary,{force:true});}
 }
 async function atomic(path,value){const serialized=json(value);need(Buffer.byteLength(serialized)<=128*1024*1024,"STATE_SIZE_LIMIT",path);const tmp=path+".writing-"+randomUUID();try{await writeFile(tmp,serialized,{flag:"wx",mode:0o600});await rename(tmp,path);}finally{await rm(tmp,{force:true});}}
 function argumentsOf(argv){
