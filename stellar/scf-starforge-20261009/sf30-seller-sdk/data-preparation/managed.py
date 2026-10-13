@@ -24,6 +24,7 @@ from urllib.parse import urlparse, parse_qs
 from preparation import Workspace, PreparationError, Busy, parse_json, dumps, digest, now
 from server import OperatorServer, OperatorHandler, STATIC
 from transfer import export_workspace, receive_workspace, merchant_delivery, result_report, ARCHIVE
+from managed_pipelines import PipelineRuntime, pipeline_status, prepare_pipeline_file, engine as pipeline_engine
 
 CONNECTION = 'preparation-connection.json'
 CONNECTION_SCHEMA = 'stellar-forge.data-preparation-listener.v1'
@@ -109,16 +110,29 @@ def verify_delivery(root, record):
     return record
 
 def prepare_delivery(ws, workspace_sha, body):
-    need(isinstance(body, dict) and set(body) <= {'operationId','kind','runId','file','label','expectedStateSha256'},
+    need(isinstance(body, dict) and set(body) <= {'operationId','kind','runId','file','label','expectedStateSha256','executionId','stageId','expectedPipelineSha256'},
          'Use the declared delivery arguments')
     operation = body.get('operationId')
     kind = body.get('kind')
     need(isinstance(operation, str) and OPERATION.fullmatch(operation), 'Use a delivery operation ID of 1–96 letters, numbers, underscores or hyphens')
-    need(kind in {'project','merchant','report','result'}, 'Choose project, merchant, report or result delivery')
+    pipeline_kinds = {'pipeline-project','pipeline-results','pipeline-report','pipeline-merchant','pipeline-result'}
+    need(kind in {'project','merchant','report','result'} | pipeline_kinds, 'Choose an original preparation or pipeline delivery')
+    is_pipeline = kind in pipeline_kinds
     need(HASH.fullmatch(body.get('expectedStateSha256', '')), 'Select the reviewed workspace state SHA-256')
-    need(kind != 'project' or not any(k in body for k in ('runId','file','label')), 'A project export uses the complete workspace')
-    need(kind == 'result' or 'file' not in body, 'A result filename belongs to a result delivery')
-    need(kind == 'merchant' or 'label' not in body, 'A label belongs to a merchant delivery')
+    need(kind not in {'project','pipeline-project'} or not any(k in body for k in ('runId','executionId','stageId','file','label')),
+         'A project export uses the complete workspace')
+    need(kind in {'result','pipeline-result'} or 'file' not in body, 'A result filename belongs to a result delivery')
+    need(kind in {'merchant','pipeline-merchant'} or 'label' not in body, 'A label belongs to a merchant delivery')
+    if is_pipeline:
+        need(HASH.fullmatch(body.get('expectedPipelineSha256','')), 'Select the reviewed pipeline state SHA-256')
+        need('runId' not in body, 'Pipeline deliveries select original execution and stage IDs')
+        need(kind == 'pipeline-project' or isinstance(body.get('executionId'),str), 'Select the original pipeline execution')
+        need(kind not in {'pipeline-merchant','pipeline-result'} or isinstance(body.get('stageId'),str),
+             'Select the original completed stage')
+        need(kind in {'pipeline-merchant','pipeline-result'} or 'stageId' not in body, 'Only stage deliveries use a stage ID')
+    else:
+        need(not any(k in body for k in ('executionId','stageId','expectedPipelineSha256')),
+             'Pipeline selections belong to a pipeline delivery')
     file_id = hashlib.sha256(dumps([workspace_sha, operation]).encode()).hexdigest()
     root = delivery_directory(ws)
     intent = {'schema':DELIVERY_SCHEMA+'.intent','workspaceSha256':workspace_sha,'request':body}
@@ -141,11 +155,14 @@ def prepare_delivery(ws, workspace_sha, body):
         temporary = root/(file_id+'.ready')
         # A stopped producer before its prepared record published no delivery.
         temporary.unlink(missing_ok=True)
-        with ws.mutation():
+        with (contextlib.nullcontext() if is_pipeline else ws.mutation()):
             state, state_sha = snapshot(ws)
             need(state_sha == body['expectedStateSha256'], 'The workspace changed; inspect its current state before creating a new delivery operation')
             bound = LockedWorkspace(ws, state)
-            if kind == 'project':
+            pipeline_sha = None
+            if is_pipeline:
+                filename, media, pipeline_sha = prepare_pipeline_file(pipeline_engine.PipelineWorkspace(ws.root), body, temporary, snapshot)
+            elif kind == 'project':
                 export_workspace(bound, temporary)
                 filename, media = 'preparation-project.zip', 'application/zip'
             elif kind == 'merchant':
@@ -171,6 +188,7 @@ def prepare_delivery(ws, workspace_sha, body):
                       'workspaceSha256':workspace_sha,'stateSha256':state_sha,'request':body,
                       'createdAt':now(),'filename':filename,'mediaType':media,
                       'bytes':temporary.stat().st_size,'sha256':digest(temporary)}
+            if pipeline_sha is not None: record['pipelineStateSha256'] = pipeline_sha
             write_json(staged_receipt, record)
             os.link(temporary, content)
             write_json(receipt_path, record)
@@ -194,6 +212,14 @@ class ManagedServer(OperatorServer):
                            'workspaceSha256':workspace_sha,'instanceId':self.instance,'pid':os.getpid(),'startedAt':now(),
                            'origin':f'http://127.0.0.1:{self.server_port}','token':self.token}
         self.descriptor['url'] = self.descriptor['origin']+'/#'+self.token
+        self.origin = self.descriptor['origin']
+        self.closed = False
+        try:
+            self.pipelines = PipelineRuntime(self, open_managed_listener)
+        except BaseException:
+            ThreadingHTTPServer.server_close(self)
+            shutil.rmtree(self.downloads, ignore_errors=True)
+            raise
     def check_identity(self):
         info = private_directory(self.workspace.root).stat()
         need({'dev':str(info.st_dev),'ino':str(info.st_ino)} == self.directory_identity and
@@ -205,6 +231,7 @@ class ManagedServer(OperatorServer):
     def public_connection(self):
         return {key:value for key,value in self.descriptor.items() if key not in {'token','url'}}
     def download(self, relative):
+        if relative.startswith('/api/pipelines/'): return self.pipelines.download(relative)
         url = urlparse(relative)
         need(not url.scheme and not url.netloc and not url.fragment, 'Choose an original local download')
         query = {key:values[-1] for key,values in parse_qs(url.query).items()}
@@ -223,19 +250,33 @@ class ManagedServer(OperatorServer):
         need(record['workspaceSha256'] == self.workspace_sha, 'The delivery belongs to another original workspace')
         return root/(match[1]+'.content'), record['mediaType'], record['filename']
     def server_close(self):
+        if self.closed: return
+        self.closed = True
         self.closing = True
-        with self.jobs_lock: active = list(self.jobs.items())
-        for run_id,_ in active: self.workspace.cancel(run_id)
-        # Close the socket and drain actual requests before removing downloads.
-        ThreadingHTTPServer.server_close(self)
-        with self.jobs_lock: active = list(self.jobs.items())
-        for run_id,_ in active: self.workspace.cancel(run_id)
+        errors = []
+        def cancel_active():
+            with self.jobs_lock: active = list(self.jobs.items())
+            for run_id,_ in active:
+                try: self.workspace.cancel(run_id)
+                except Exception as exc: errors.append(exc)
+            return active
+        cancel_active()
+        try:
+            # An in-flight receive may finish its original native publication.
+            # Drain every actual HTTP writer before collecting the final children.
+            ThreadingHTTPServer.server_close(self)
+        except Exception as exc: errors.append(exc)
+        active = cancel_active()
+        try: self.pipelines.close()
+        except Exception as exc: errors.append(exc)
         for _,worker in active: worker.join()
         shutil.rmtree(self.downloads, ignore_errors=True)
+        if errors: raise errors[0]
 
 class ManagedHandler(OperatorHandler):
     # StreamRequestHandler applies this before reading any request line/header.
     timeout = 60
+    disable_nagle_algorithm = True
     def authorized(self):
         supplied = self.headers.get('Authorization', '')
         instance = self.headers.get('X-Preparation-Instance-ID')
@@ -258,6 +299,21 @@ class ManagedHandler(OperatorHandler):
     def do_GET(self):
         try:
             url = urlparse(self.path)
+            if url.path in {'/pipelines','/pipelines/','/pipelines/app.js','/pipelines/style.css','/pipelines/pipeline-browser.mjs'} and not url.query:
+                OperatorHandler.check_host(self)
+                if url.path in {'/pipelines','/pipelines/'}:
+                    original = (STATIC/'pipelines'/'index.html').read_text(encoding='utf-8')
+                    marker = '<script defer src="/app.js"></script>'
+                    need(original.count(marker) == 1 and original.count('href="/style.css"') == 1,
+                         'The original pipeline browser entry changed')
+                    data = original.replace(marker, '<script type="module" src="/pipelines/pipeline-browser.mjs"></script>').replace(
+                        'href="/style.css"', 'href="/pipelines/style.css"').encode()
+                    self.response_headers(200,'text/html; charset=utf-8',len(data)); self.wfile.write(data)
+                else:
+                    name = url.path.rsplit('/',1)[1]
+                    file = STATIC/name if name == 'pipeline-browser.mjs' else STATIC/'pipelines'/name
+                    self.send_file(file, 'text/css; charset=utf-8' if name == 'style.css' else 'text/javascript; charset=utf-8')
+                return
             if url.path in {'/','/app.js','/style.css','/managed-browser.mjs'} and not url.query:
                 OperatorHandler.check_host(self)
                 if url.path == '/':
@@ -279,6 +335,10 @@ class ManagedHandler(OperatorHandler):
             self.check_host()
             if url.path == '/api/managed/connection':
                 self.answer(self.server.public_connection()); return
+            if url.path == '/api/managed/pipelines':
+                self.answer(pipeline_status(self.server.pipelines.workspace, snapshot)); return
+            if url.path.startswith('/api/pipelines/'):
+                self.server.pipelines.dispatch(self); return
             if url.path in {'/api/managed/state','/api/managed/records'}:
                 state, sha = snapshot(self.ws)
                 if url.path.endswith('/state'):
@@ -305,6 +365,8 @@ class ManagedHandler(OperatorHandler):
         try:
             self.check_host(True)
             url = urlparse(self.path)
+            if url.path.startswith('/api/pipelines/'):
+                self.server.pipelines.dispatch(self); return
             if url.path == '/api/import' and self.headers.get('X-Preparation-Source-SHA256'):
                 expected = self.headers['X-Preparation-Source-SHA256']
                 need(HASH.fullmatch(expected), 'Use the reviewed input SHA-256')
@@ -403,7 +465,8 @@ def receive_original(archive, destination, expected_sha, maximum):
         return {**received_info(destination),'reused':reused}
     finally: temporary.unlink(missing_ok=True)
 
-def serve_managed(args):
+@contextlib.contextmanager
+def open_managed_listener(args):
     directory = Path(args.workspace)
     need(directory.is_absolute() and directory == directory.resolve(), 'Use a canonical absolute workspace directory')
     parent = private_directory(directory.parent)
@@ -428,24 +491,37 @@ def serve_managed(args):
         server = ManagedServer(ws, args.port, workspace_sha)
         connection_path = directory/CONNECTION
         connection_sha = None
-        previous = {}
         try:
             write_json(connection_path, server.descriptor)
             connection_sha = digest(connection_path)
             announcement = {**server.descriptor,'schema':STARTUP_SCHEMA,'status':'DATA_PREPARATION_READY',
                             'connectionFile':str(connection_path),'connectionSha256':connection_sha}
             announcement.pop('token')
+            yield server, announcement
+        finally:
+            try:
+                server.server_close()
+            finally:
+                if connection_sha and connection_path.exists() and digest(connection_path) == connection_sha:
+                    connection_path.unlink()
+
+def serve_managed(args):
+    previous = {}
+    try:
+        with open_managed_listener(args) as (server, announcement):
             print(dumps(announcement), flush=True)
             def stop(_signum, _frame):
                 if not server.closing:
                     server.closing = True
                     threading.Thread(target=server.shutdown, name='preparation-stop', daemon=True).start()
-            for signum in (signal.SIGINT, signal.SIGTERM): previous[signum] = signal.signal(signum, stop)
+            for signum in (signal.SIGINT, signal.SIGTERM):
+                previous[signum] = signal.signal(signum, stop)
             server.serve_forever(poll_interval=0.2)
-        finally:
-            server.server_close()
-            if connection_sha and connection_path.exists() and digest(connection_path) == connection_sha: connection_path.unlink()
-            for signum, handler in previous.items(): signal.signal(signum, handler)
+    finally:
+        # Keep repeated stop signals cooperative until the original listener,
+        # active transfers and all received-project jobs have completely drained.
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
 
 def main():
     os.umask(0o077)
