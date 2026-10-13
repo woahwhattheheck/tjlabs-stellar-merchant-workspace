@@ -172,6 +172,7 @@ export class BlsAnalystClient{
   });
  }
  async save(request,{sourcePath,sourceAlias,destinationPath,destinationAlias}={}){
+  request=structuredClone(request);
   return this.#tracked(async()=>{
    const c=this.#c,paths=this.#paths(request.id),logical={request,sourceAlias:sourceAlias??null,destinationAlias:destinationAlias??null};
    if(!plain(request)||!plain(request.input)||!Number.isSafeInteger(request.expected_revision)||request.expected_revision<0)
@@ -181,7 +182,8 @@ export class BlsAnalystClient{
    if(intent){
     if(!same(intent.logical,logical)||intent.workspaceId!==c.selected.value.workspaceId)throw blsError('BLS_OPERATION_CHANGED','This operation already belongs to different exact customer input.');
     if(lookup.found){
-     const retained=parse(await readPrivate(paths.request,MAX_REQUEST_BYTES),'original accepted request');
+     let retained;
+     try{retained=parse(await readPrivate(paths.request,MAX_REQUEST_BYTES),'original accepted request');}catch(error){if(error.code==='ENOENT')throw blsError('BLS_REQUEST_MISSING','The workspace has accepted this ID but its immutable agent request is missing; restore the original agent request before continuing.');throw error;}
      if(!same(retained,lookup.request))throw blsError('BLS_OPERATION_CHANGED','The original saved workspace request differs from the retained input.');
      if(['complete','pending','running'].includes(lookup.operation.state))return lookup.operation;
     }

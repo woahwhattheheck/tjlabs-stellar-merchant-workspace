@@ -86,6 +86,7 @@ export async function openBlsLaborWorkspaceClient({connectionFile,expectedWorksp
     request:id=>json(query('/api/request',{id})),
     nativeState:id=>json(query('/api/native-state',{id})),
     async save(request,{requestFile}={}){
+      request=structuredClone(request);
       need(plain(request)&&typeof request.id==='string'&&typeof request.kind==='string'&&plain(request.input)&&
         Number.isSafeInteger(request.expected_revision),'Use the complete original operation request.');
       need(typeof requestFile==='string'&&isAbsolute(requestFile),'Retain the complete request in an absolute private requestFile before sending.');

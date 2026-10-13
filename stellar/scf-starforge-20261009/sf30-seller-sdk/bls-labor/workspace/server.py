@@ -172,6 +172,7 @@ def serve(workspace, port=0, expected_binding=None):
             temporary = None
             try:
                 self.authenticate()
+                require(binding(workspace.directory)["sha256"] == selected["sha256"], "The original installed source changed; reopen its current listener.")
                 path, query = self.route()
                 require(path == "/api/upload" and set(query) <= {"id", "name"} and "id" in query,
                         "Use an original upload ID and optional filename.")
