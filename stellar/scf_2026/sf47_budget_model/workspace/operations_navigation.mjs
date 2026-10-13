@@ -28,6 +28,8 @@ const sectionDetails = {
   work:['people','Record and review completed contributor work against the original work packages.','timesheet time hours task effort'],
   invoices:['people','Record supplier invoices, original lines and links to completed work.','bill invoice expense liability'],
   'supplier-account':['people','Inspect supplier balances, invoice payments and the original account history.','accounts payable supplier balance dispute payment'],
+  workbook:['people','Prepare and exchange complete editable work and invoice workbooks, then review returned changes.','xlsx workbook timesheet supplier invoice return'],
+  'supplier-statements':['people','Reconcile original supplier statements with invoices, payments and refunds.','supplier statement accounts payable reconciliation'],
   'work-intake':['people','Receive complete original timesheet and supplier invoice files with reviewed mappings.','timesheet invoice csv tsv import intake'],
   'ledger-intake':['people','Inspect and receive complete source tables through the original ledger writers.','bulk ledger csv tsv json import source'],
   expenses:['cash','Attribute original issued buyer expenses and credits to retained work packages with their accountant sources.','buyer expense credit accountant issued allocation valuation cost'],

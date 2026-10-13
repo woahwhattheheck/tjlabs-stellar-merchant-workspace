@@ -727,3 +727,5 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
   })();
   return {ready,dispose,setHostBusy};
 }
+
+export {intakeStore as workPreparationDraftStore};

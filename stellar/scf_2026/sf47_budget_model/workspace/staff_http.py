@@ -15,6 +15,7 @@ FINANCE_COMMANDS = {
     "invoice.save", "invoice.review", "invoice.dispute", "invoice.reopen", "invoice.void",
     "cash.record", "cash.void", "statement.receive", "statement-setup.save", "forecast.save", "portfolio.save",
     "work-intake.upload", "work-intake.save", "work-intake.apply",
+    "workbook.prepare", "workbook.save", "workbook.return", "supplier-statement.save",
     "engagement.prepare", "engagement.receiving",
     "expense.receive", "expense.save", "expense.review", "expense.reopen", "expense.void",
 }
@@ -24,6 +25,8 @@ READ_POSTS = {
     "risk-register-seed", "risk-register-preview", "risk-register-request",
     "installation-return-seed", "installation-return-preview", "installation-return-review-seed",
     "installation-return-review-preview",
+    "workbook-preview", "workbook-return-preview",
+    "supplier-statements/seed", "supplier-statements/preview", "supplier-statements/source", "supplier-statements/request",
     "work-intake-preview", "ledger-intake-inspect", "ledger-intake-preview", "statement-inspect", "statement-preview",
     "implementation-source", "implementation-preview", "cohort-seed", "cohort-preview",
     "installation-workflows", "installation-workflow-seed", "installation-workshares",
@@ -243,9 +246,9 @@ def authorize(handler):
                 bind_actor(handler, body)
             return
         if role == "lead" or role == "finance" and (
-                action in ("ledger-intake-apply", "cash-correction", "account-reconciliation") or action.startswith("commercial/")):
+                action in ("ledger-intake-apply", "cash-correction", "account-reconciliation", "workbook-apply") or action.startswith("commercial/")):
             # Commercial preview bodies use the original actor where supplied.
-            if "actor" in body or action in ("ledger-intake-apply", "cash-correction", "account-reconciliation"):
+            if "actor" in body or action in ("ledger-intake-apply", "cash-correction", "account-reconciliation", "workbook-apply"):
                 bind_actor(handler, body)
             return
         fail("This staff role cannot apply this operating change.")

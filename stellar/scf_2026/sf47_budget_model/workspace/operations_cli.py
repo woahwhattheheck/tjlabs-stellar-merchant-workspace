@@ -19,6 +19,8 @@ import award_terms_cli
 import operations_agenda_cli as agenda_cli
 import operations_installation_editions_cli as editions_cli
 import operations_risks_cli as risks_cli
+import operations_workbook_cli as workbook_cli
+import operations_supplier_statements_cli as supplier_statements_cli
 
 
 def register(subparsers, common):
@@ -45,6 +47,8 @@ def register(subparsers, common):
         target.add_argument("--name", required=True)
         target.add_argument("--calendar-start", help="Explicit operational YYYY-MM-DD anchor; does not record an award")
 
+    supplier_statements_cli.register(command, mutation)
+    workbook_cli.register(command, mutation)
     funding_cli.register(command, mutation)
     risks_cli.register(command, mutation)
     agenda_cli.register(command)
@@ -739,6 +743,10 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if supplier_statements_cli.operates(action):
+        return supplier_statements_cli.operate(ops, args, read_bytes, publish)
+    if workbook_cli.operates(action):
+        return workbook_cli.operate(ops, args, read_bytes, publish)
     if editions_cli.operates(action):
         return editions_cli.operate(ops, args, read_bytes, publish)
     if risks_cli.operates(action):
