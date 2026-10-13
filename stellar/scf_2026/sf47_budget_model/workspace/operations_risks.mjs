@@ -1,5 +1,6 @@
 // Complete delivery risk and mitigation desk on the original Operations case.
 import {currentStaffContext,staffDeskStorageKey} from './staff-session.mjs';
+import {createDeliveryRiskComparison} from './operations_risk_comparison.mjs';
 const SCHEMA='stellar-forge.sf47-delivery-risks.v1';
 const DESK='stellar-forge.sf47-delivery-risk-desk.v1';
 const clone=value=>structuredClone(value);
@@ -96,6 +97,8 @@ export function mountDeliveryRisks({container,current,saveApi,session={},mutatio
   for(const [key,value] of Object.entries(defaults))if(!Object.hasOwn(session,key))session[key]=clone(value);
   let active=true,hostBusy=false,caseValue=current,initializing=true;
   const available=()=>active&&root.isConnected;
+  const comparison=createDeliveryRiskComparison({programId,saveApi,session:session.comparisonView||(session.comparisonView={}),
+    editions:()=>session.listing?.editions||[],download,sourceMetadata:id=>(caseValue.sources||[]).find(row=>row.id===id),available});
   const $=selector=>root.querySelector(selector);
   const busy=()=>initializing||hostBusy||!!session.inflight;
   const locked=()=>!!session.pending||!!session.accepted||session.storageBlocked;
@@ -610,7 +613,7 @@ export function mountDeliveryRisks({container,current,saveApi,session={},mutatio
   function importControl(){return '<div class="risk-fields">'+field('Risk document JSON','',{type:'file',wide:true,attrs:{accept:'.json,application/json','data-risk-import':'true'},help:'Only the complete native risk document is read. Native preview validates every link and predecessor.'})+'</div>'+button('Use selected complete document','import',{},locked()||caseValue.program.state!=='OPEN');}
   function editionsView(){
     const rows=session.listing?.editions||[];
-    return '<div class="risk-actions">'+button('Refresh editions','refresh')+'</div>'+
+    return '<div class="risk-actions">'+button('Refresh editions','refresh')+button('Compare saved editions','comparison-open')+'</div>'+
       (rows.length?table(['Edition','Assessment date / operator','Recorded totals','Original predecessor','Open'],rows.map(row=>[
         '<strong>'+esc(row.name||row.id)+'</strong><small>'+esc(row.id)+'</small>'+esc(row.sha256),
         esc(row.asOfDate)+'<small>'+esc(row.actor)+' · '+esc(row.createdAt)+'</small>'+esc(row.note),
@@ -657,17 +660,17 @@ export function mountDeliveryRisks({container,current,saveApi,session={},mutatio
   function render(){
     if(!available())return;
     const previous=document.activeElement;
-    const focus=previous&&root.contains(previous)?{filter:previous.dataset.riskFilter,start:previous.selectionStart,end:previous.selectionEnd}:null;
+    const focus=previous&&root.contains(previous)?{filter:previous.dataset.riskFilter,comparison:previous.dataset.riskComparison,start:previous.selectionStart,end:previous.selectionEnd}:null;
     root.innerHTML='<header class="risk-heading"><div><h3>Delivery risks and mitigations</h3><p>A dated register of delivery risks, current issues, responsible contributors and mitigation evidence.</p></div>'+badge(caseValue.program.mode)+'</header>'+
       '<p role="status" aria-live="polite" data-risk-notice>'+esc(session.notice)+'</p>'+
       (session.error?'<p role="alert">'+esc(session.error)+'</p>':'')+
       (session.storageError?'<section class="risk-pending" role="alert"><p>'+esc(session.storageError)+'</p>'+button('Download complete desk','download-desk')+'</section>':'')+
       (locked()?'<div class="risk-pending">A retained request or local storage problem needs attention. '+button('Open original request','tab',{'data-risk-tab':'request'})+'</div>':'')+
       '<nav class="risk-tabs" aria-label="Risk register views">'+[['register','Register'],['draft','Draft edition'],['editions','Editions and history'],['request','Request recovery'],['copies','Working copies']].map(([key,label])=>'<button type="button" data-risk-action="tab" data-risk-tab="'+key+'"'+(session.tab===key?' aria-current="page"':'')+'>'+label+'</button>').join('')+'</nav>'+
-      '<div data-risk-panel tabindex="-1">'+({register:registerView,draft:draftView,editions:editionsView,request:requestView,copies:copiesView}[session.tab]||registerView)()+'</div>';
+      '<div data-risk-panel tabindex="-1">'+(session.tab==='editions'&&comparison.visible?comparison.render():({register:registerView,draft:draftView,editions:editionsView,request:requestView,copies:copiesView}[session.tab]||registerView)())+'</div>';
     updateControls();
-    if(focus?.filter){
-      const next=root.querySelector('[data-risk-filter="'+focus.filter+'"]');next?.focus();
+    if(focus?.filter||focus?.comparison){
+      const next=root.querySelector(focus.comparison?'[data-risk-comparison="'+focus.comparison+'"]':'[data-risk-filter="'+focus.filter+'"]');next?.focus();
       if(next?.setSelectionRange&&typeof focus.start==='number')try{next.setSelectionRange(focus.start,focus.end);}catch{}
     }
   }
@@ -690,6 +693,11 @@ export function mountDeliveryRisks({container,current,saveApi,session={},mutatio
   const docKeys=new Set(['name','asOfDate','note']);
   function input(event){
     const target=event.target;
+    if(target.dataset.riskComparison!==undefined){
+      if(busy())return;
+      try{if(comparison.change(target))render();}catch(error){setError(error);render();}
+      return;
+    }
     if(target.dataset.riskFilter!==undefined){
       if(busy())return;
       const key=target.dataset.riskFilter;
@@ -719,6 +727,11 @@ export function mountDeliveryRisks({container,current,saveApi,session={},mutatio
   }
   const editingActions=new Set(['seed','import','add-risk','add-issue','add-action','preview','save']);
   async function dispatch(action,target){
+    if(action==='comparison-open'){
+      if(!session.listing)await refresh();
+      comparison.open({afterReviewId:session.book?.review?.id});session.tab='editions';persist();return;
+    }
+    if(action.startsWith('comparison-')){await comparison.action(action.slice('comparison-'.length),target);return;}
     if(editingActions.has(action))need(!locked()&&caseValue.program.state==='OPEN','Resolve the original request or reopen the original case before editing.');
     if(action==='export-copy'){await exportCopy();return;}
     if(action==='review-copy'){await stageCopy($('[data-risk-copy-import]')?.files[0]);return;}
@@ -787,9 +800,16 @@ export function mountDeliveryRisks({container,current,saveApi,session={},mutatio
     if(!available()){initializing=false;return;}
     const work=(async()=>{
       await refresh();
-      if(session.accepted)await finishAccepted();
-      else if(session.requestedReview){const selected=session.requestedReview;await openBook(selected);if(session.requestedReview===selected)delete session.requestedReview;}
-      else if(session.listing.current&&!session.book)await openBook(session.listing.current.id);
+      const accepted=!!session.accepted;
+      if(accepted)await finishAccepted();
+      if(session.requestedComparison){
+        const selected=session.requestedComparison;
+        await comparison.openReceived(selected);session.tab='editions';
+        if(session.requestedComparison===selected)delete session.requestedComparison;
+      }else if(!accepted){
+        if(session.requestedReview){const selected=session.requestedReview;await openBook(selected);if(session.requestedReview===selected)delete session.requestedReview;}
+        else if(session.listing.current&&!session.book)await openBook(session.listing.current.id);
+      }
     })();
     session.inflight=work;
     try{await work;}catch(error){setError(error);}

@@ -4039,7 +4039,95 @@ export interface GrantCompletionPreviewInput extends GrantObject {
   correctionReviewId?: string;
 }
 
+/** Exact immutable editions selected from the original risk register list. */
+export interface GrantRiskComparisonSelection {
+  caseId: string;
+  beforeReviewId: string;
+  beforeReviewSha256: string;
+  afterReviewId: string;
+  afterReviewSha256: string;
+}
+/** Non-ZIP exports reject a supplied case-version condition. */
+export interface GrantRiskComparisonExportSelection extends GrantRiskComparisonSelection {
+  expectedComparisonSha256: string;
+  expectedVersion?: never;
+}
+/** Full case export also binds the current case version observed by the read. */
+export interface GrantRiskComparisonZipSelection extends GrantRiskComparisonSelection {
+  expectedComparisonSha256: string;
+  expectedVersion: number;
+}
+export type GrantRiskComparisonChange = 'ADDED' | 'REMOVED' | 'CHANGED' | 'UNCHANGED';
+export type GrantRiskComparisonSide =
+  | { present: false; value: null }
+  | { present: true; value: unknown };
+export interface GrantRiskComparisonField {
+  path: string;
+  before: GrantRiskComparisonSide;
+  after: GrantRiskComparisonSide;
+}
+export interface GrantRiskComparisonRiskRow {
+  id: string;
+  change: GrantRiskComparisonChange;
+  before: GrantRiskRecord | null;
+  after: GrantRiskRecord | null;
+  fields: GrantRiskComparisonField[];
+  reportBefore: GrantRiskReportEntry | null;
+  reportAfter: GrantRiskReportEntry | null;
+  reportFields: GrantRiskComparisonField[];
+  /** Linked saved plan/contributor/package/source changes, independent of reportFields. */
+  contextChanged: boolean;
+}
+export interface GrantRiskComparisonActionRow {
+  id: string;
+  riskId: string;
+  change: GrantRiskComparisonChange;
+  before: GrantRiskAction | null;
+  after: GrantRiskAction | null;
+  fields: GrantRiskComparisonField[];
+  reportBefore: GrantRiskReportEntry['actions'][number] | null;
+  reportAfter: GrantRiskReportEntry['actions'][number] | null;
+  reportFields: GrantRiskComparisonField[];
+  contextChanged: boolean;
+}
+export interface GrantRiskComparisonContextRow {
+  kind: 'SOURCE_IDENTITY' | 'PLAN' | 'CONTRIBUTOR' | 'PACKAGE' | 'SOURCE';
+  id: string;
+  change: GrantRiskComparisonChange;
+  before: unknown;
+  after: unknown;
+  fields: GrantRiskComparisonField[];
+}
+export interface GrantRiskComparison {
+  schema: 'stellar-forge.sf47-delivery-risk-comparison.v1';
+  engineVersion: 1;
+  selection: Omit<GrantRiskComparisonSelection, 'caseId'>;
+  direction: 'SAME_EDITION' | 'FORWARD' | 'REVERSE';
+  before: GrantRiskSummary;
+  after: GrantRiskSummary;
+  originals: { before: GrantRiskReview; after: GrantRiskReview };
+  registerFields: GrantRiskComparisonField[];
+  counts: { name: string; before: number; after: number; delta: number }[];
+  riskRows: GrantRiskComparisonRiskRow[];
+  actionRows: GrantRiskComparisonActionRow[];
+  contextRows: GrantRiskComparisonContextRow[];
+  notice: string;
+  /** Authoritative native Python canonical digest; never substitute JS reserialization. */
+  comparisonSha256: string;
+}
+export interface GrantRiskComparisonView {
+  comparison: GrantRiskComparison;
+  /** Current case identity stays outside the immutable comparison digest. */
+  current: { programId: string; version: number };
+}
+
 export interface GrantDownloadSelections {
+  'risk-comparison': GrantRiskComparisonZipSelection;
+  'risk-comparison-json': GrantRiskComparisonExportSelection;
+  'risk-comparison-report': GrantRiskComparisonExportSelection;
+  'risk-comparison-risks': GrantRiskComparisonExportSelection;
+  'risk-comparison-actions': GrantRiskComparisonExportSelection;
+  'risk-comparison-context': GrantRiskComparisonExportSelection;
   'forecast-comparison': GrantForecastComparisonExportSelection;
   'forecast-comparison-report': GrantForecastComparisonExportSelection;
   'forecast-comparison-json': GrantForecastComparisonExportSelection;
@@ -4127,6 +4215,7 @@ export class GrantWorkspaceClient {
   read(view: 'installations', selection: { caseId: string }): Promise<GrantJsonResponse<{ installations: GrantObject[] }>>;
   read(view: 'installation', selection: { caseId: string; installationId: string; revision?: number }): Promise<GrantJsonResponse<GrantInstallationEdition>>;
   read(view: 'installation-history', selection: { caseId: string; installationId: string; before?: number; limit?: number }): Promise<GrantJsonResponse<{ editions: GrantObject[]; nextBefore: number | null }>>;
+  read(view: 'risk-comparison', selection: GrantRiskComparisonSelection): Promise<GrantJsonResponse<GrantRiskComparisonView>>;
   read(view: 'risks', selection: { caseId: string }): Promise<GrantJsonResponse<GrantRiskList>>;
   read(view: 'risk-register', selection: { caseId: string; reviewId: string }): Promise<GrantJsonResponse<GrantRiskRegister>>;
   read(view: 'risk-history', selection: { caseId: string; riskId: string }): Promise<GrantJsonResponse<GrantRiskHistory>>;

@@ -541,6 +541,147 @@ Merchant MCP exposes `merchant_grant_risks`, `merchant_grant_risk_register`, `me
 
 Use `merchant_grant_export` with `kind: 'risk-register'`, `caseId` and `reviewId` to receive the full selected handover. Existing staff accounts, service connection ownership, source transfers and client shutdown rules apply unchanged.
 
+
+## Compare saved Delivery risk editions through the typed client
+
+Select two immutable original review IDs and their SHA-256 values from
+`client.read('risks', {caseId})`. Keep the full selected values, including
+the two original saved reviews, across review and download. A comparison
+does not save an edition, change a draft, assign a score or alter another
+case workflow.
+
+`GrantRiskComparisonSelection` contains `caseId`,
+`beforeReviewId`, `beforeReviewSha256`, `afterReviewId` and
+`afterReviewSha256`. The typed read returns
+`GrantJsonResponse<GrantRiskComparisonView>`:
+
+```js
+// client is the existing authorized GrantWorkspaceClient.
+// selection uses actual case/review IDs and hashes from its native risk list.
+async function receiveRiskComparison(client, selection) {
+  const response = await client.read('risk-comparison', selection);
+  const {comparison, current} = response.value;
+  const exact = {
+    ...selection,
+    expectedComparisonSha256: comparison.comparisonSha256,
+  };
+  const completeJSON = await client.download('risk-comparison-json', exact);
+  const completeCase = await client.download('risk-comparison', {
+    ...exact,
+    expectedVersion: current.version,
+  });
+  return {response, completeJSON, completeCase};
+}
+```
+
+Each response retains its complete `bytes`, SHA-256, media type, status,
+filename and native response source under the existing transport owner.
+Persist those original bytes through your existing private download
+destination before reporting them delivered. The example borrows the
+existing client; the caller retains its ordinary close responsibility.
+
+The read value has `comparison` and `current`. Comparison JSON export
+contains the complete comparison object itself, followed by the native
+JSON line ending; it does not wrap that object in `{comparison,current}`.
+Its `comparisonSha256` is the original native Python canonical digest
+over the whole comparison before that hash field is added. Preserve this
+digest exactly. Do not replace it with JavaScript JSON serialization:
+legitimate numbers and Unicode keys can serialize differently. The
+transport response hash identifies different bytes and is not a
+substitute for the native comparison hash.
+
+### Complete result and dated context
+
+The result contains forward/reverse/same-edition direction, both summaries,
+both complete original reviews, register fields, all dated counts,
+every risk and action row, all saved context rows and the native notice.
+The declarations retain every row and field rather than reducing the
+result to counts or changed records.
+
+Field sides distinguish absent `{present:false,value:null}` from explicit
+null `{present:true,value:null}`. Original decimal strings and all
+remaining JSON values are retained. Risk fields omit nested actions;
+actions retain their original risk ID and have separate complete rows.
+
+`reportFields` records changed original dated report observations.
+`contextChanged` independently records changes to linked saved
+plan/contributor/package/source context. A changed assessment date may
+change overdue observations while a risk's fields and linked context
+remain unchanged. A consumer displaying differences must consider both
+facts. Count deltas are exactly After minus Before on the saved assessment
+dates; they do not establish improved or worsened risk exposure.
+
+The current case ID/version stay outside the comparison digest. After a
+full case import, use the actual received `caseId` and retain the original
+review IDs/hashes. Original review source identities may still refer to
+the producing case. Do not rewrite those historical identities.
+
+### Select the exact native download
+
+| Client download kind | Native file | Required conditions |
+| --- | --- | --- |
+| `risk-comparison` | Complete case ZIP with comparison and both reviews | Exact selection, expectedComparisonSha256, expectedVersion |
+| `risk-comparison-json` | Complete comparison JSON | Exact selection, expectedComparisonSha256 |
+| `risk-comparison-report` | Native readable HTML | Exact selection, expectedComparisonSha256 |
+| `risk-comparison-risks` | Every risk comparison row in CSV | Exact selection, expectedComparisonSha256 |
+| `risk-comparison-actions` | Every mitigation comparison row in CSV | Exact selection, expectedComparisonSha256 |
+| `risk-comparison-context` | Every saved context comparison row in CSV | Exact selection, expectedComparisonSha256 |
+
+Only ZIP accepts and requires `expectedVersion`; supplying it for any
+other format is an input error. The comparison client rejects unknown
+arguments, omitted identity conditions and a conflicting explicit
+`kind` before native work. It never silently drops a requested version
+or hash guard.
+
+If a full-case ZIP reports `OPERATIONS_CONFLICT`, read the same exact
+comparison again to observe the actual current case version, review that
+result and explicitly request the ZIP. A changed review or comparison
+identity is a source conflict; preserve the original selected values and
+inspect the native response rather than substituting a different edition.
+No save command or new request ID is involved in this read/download path.
+
+### Merchant MCP and large complete results
+
+`merchant_grant_risk_comparison` takes the workspace alias, caseId and
+the four exact review identity fields. It calls the same original client
+and keeps the full native response in the existing immutable snapshot
+store. Its read-only annotation grants no additional access.
+
+Use `merchant_grant_snapshot` for individual pointers and
+`merchant_grant_rows` to page `/comparison/riskRows`,
+`/comparison/actionRows`, `/comparison/contextRows` and
+`/comparison/counts`. Preserve the returned snapshot ID and SHA-256
+when paging. Complete original reviews remain at
+`/comparison/originals/before` and `/comparison/originals/after`.
+Oversized rows remain in the complete retained file; they are not discarded.
+
+`merchant_grant_export` accepts the six kinds in the table with the
+same identities and required guards. It retains the exact native file
+under the original snapshot/file transfer owner. Use the maintained
+`merchant_grant_file_read` and host-download operations to receive every
+byte; a preview or page is not the full export. Snapshot provenance
+includes both review IDs/hashes, the native comparison hash and the ZIP
+case-version condition. Existing source IDs, staff permissions,
+connection ownership and shutdown remain authoritative.
+
+The full case ZIP uses the original Operations importer. Its selected
+comparison is validated and reopens in the received Risk desk through
+the same native read. See [the complete comparison desk and receiving
+workflow](RISK_COMPARISON.md).
+
+### Outgoing installed-view inspection
+
+Before describing the customer-facing comparison or exports as ready,
+open the exact installed source edition and inspect its rendered output
+with the original case owner. Operate the saved selectors, date-only
+report differences, filters, all exports and independent receiving reopen.
+View populated, empty, loading and native-error states at desktop and
+narrow widths. Source review, peer approval and HTTP success alone are
+not visual inspection. If runtime capacity is unavailable, keep the
+edition source-reviewed and send its exact source and opening steps to
+the existing equipped receiver; do not start a replacement case or an
+unrelated validation programme.
+
 ## Contributor Engagements
 
 The complete typed client, eight Merchant tools and original Forecast/Portfolio receiving course are documented in [Contributor Engagements](ENGAGEMENTS.md#typed-client-and-merchant-mcp). They retain the original source attachments, immutable agreement reviews, decimal amounts, command identities and complete case exports. Both `engagement.prepare` and `engagement.receiving` require a nonempty recorded note; current Work/Invoice and Installation operations remain on their original implementations.

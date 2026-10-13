@@ -1111,6 +1111,11 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
             Object.assign(retained,{selectedReview:result.selectedInstallationReturn.id,mode:'saved'});
             retainedInstallationReturnSessions.set(result.id,retained);view.tab='installation-returns';
           }
+          if(result.selectedRiskComparison){
+            const retained=retainedRiskSessions.get(result.id)||{};
+            retained.requestedComparison=structuredClone(result.selectedRiskComparison);
+            retainedRiskSessions.set(result.id,retained);view.tab='risks';
+          }
           await loadCases(result.id);inform('Received complete operations source with its retained history.');return;
         }
         if(meta.kind==='attach'){
