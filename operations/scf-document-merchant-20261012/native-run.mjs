@@ -1,4 +1,4 @@
-// Run once on the existing merchant operator after receiving the complete source files.
+// Original operator receiver: commission from its retained commerce setup, or reopen the earlier Jobs input.
 import {readFile} from 'node:fs/promises';
 import {resolve, join} from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -6,6 +6,12 @@ import {createHash} from 'node:crypto';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 
+if(process.argv[3]==='--commerce'){
+  const checkout=resolve(process.argv[2]);
+  const {runDocumentCommissioningCommand}=await import(pathToFileURL(join(checkout,
+    'products/document-merchant/commissioning-cli.mjs')).href);
+  await runDocumentCommissioningCommand(process.argv.slice(4));
+}else{
 const [checkoutArg, originalJobsArg, outputArg] = process.argv.slice(2);
 if (!checkoutArg || !originalJobsArg || !outputArg || process.argv.length !== 5)
   throw Error('Usage: node document-native-run.mjs EXISTING_MERCHANT_CHECKOUT ORIGINAL_JOBS_CONFIG NEW_PRIVATE_OUTPUT');
@@ -123,3 +129,5 @@ const summary = {...starting, completedAt: new Date().toISOString(),
 await owned.writeExact(join(output, 'run-summary.json'), owned.encoded(summary));
 console.log(JSON.stringify(summary, null, 2));
 } finally {await lease.close();}
+
+}

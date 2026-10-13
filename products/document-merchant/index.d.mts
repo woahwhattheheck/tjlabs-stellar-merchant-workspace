@@ -136,3 +136,5 @@ export * from './composition-server.mjs';
 export * from './composition-service.mjs';
 
 export * from './assembly.mjs';
+
+export * from './commissioning.mjs';
