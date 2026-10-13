@@ -129,7 +129,7 @@ export function openOperatingProcedures({db,transaction,settings,current,operati
     'GRIST_PROCEDURE_SELECTION','Supply every source-kind array, with at most 200 unique original IDs each.');
    rows.push(...selection[kind].map(selected=>sourceRow(kind,selected)));
   }
-  need(rows.length>0,'GRIST_PROCEDURE_SELECTION','Select actual saved Grist items.');return rows;
+  return rows; // An empty original selection creates a manual procedure.
  }
  function snapshot(rows){
   const state=current();
