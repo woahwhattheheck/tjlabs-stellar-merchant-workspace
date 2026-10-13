@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Explicit customer controls over the original borrowed Installation services.
 import {join} from 'node:path';
-import {readdir} from 'node:fs/promises';
+import {readdir,lstat} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {GrantWorkspaceClient} from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-client.mjs';
 import {readInstallationReceivingHost} from './installation-receiving-cli.mjs';
@@ -158,6 +158,61 @@ export function createInstallationReceivingDesk({ui,installation,hosts={}}){
     await writeConsoleWorkflowFile(join(ui,'installation-observations',prefix+String(sequence).padStart(10,'0')+'.json'),observation);
     return{...summary(value),snapshot:identity};
   }
+
+  function journalMembers(snapshot,bound){
+    need(object(snapshot)&&Object.keys(snapshot).length===6&&['schema','operationId','owner','preparation','files','contentSha256'].every(k=>Object.hasOwn(snapshot,k))&&
+      snapshot.schema===RECEIVING_SCHEMA+'.snapshot'&&snapshot.operationId===bound.receivingOperationId&&
+      stable(snapshot.preparation)===stable(bound.preparation)&&
+      stable(snapshot.owner?.source)===stable(bound.host.source)&&stable(snapshot.owner?.receiving)===stable(bound.host.receiving)&&
+      HASH.test(snapshot.contentSha256??'')&&Array.isArray(snapshot.files)&&snapshot.files.length>0&&snapshot.files.length<=20000,
+      'Keep the complete original native journal, preparation and inspected workspace bindings.','INSTALLATION_JOURNAL_IDENTITY');
+    const metadata={schema:snapshot.schema,operationId:snapshot.operationId,owner:snapshot.owner,preparation:snapshot.preparation,
+      files:snapshot.files.map(({path,bytes,sha256})=>({path,bytes,sha256}))};
+    need(sha(encode(metadata))===snapshot.contentSha256,'The selected original native journal roster changed.','INSTALLATION_JOURNAL_IDENTITY');
+    const members=new Map();
+    for(const f of snapshot.files){
+      need(object(f)&&Object.keys(f).length===5&&['path','bytes','sha256','encoding','content_base64'].every(k=>Object.hasOwn(f,k))&&
+        typeof f.path==='string'&&(f.path==='OWNER.json'||f.path.startsWith(snapshot.operationId+'/'))&&
+        Number.isSafeInteger(f.bytes)&&f.bytes>=0&&f.bytes<=128*1024*1024&&HASH.test(f.sha256??'')&&
+        f.encoding==='base64'&&typeof f.content_base64==='string'&&!members.has(f.path),
+        'Keep each complete original native journal member exactly once.','INSTALLATION_JOURNAL_IDENTITY');
+      members.set(f.path,f);
+    }
+    return members;
+  }
+  function journalContinuation(retained,current,bound){
+    const saved=journalMembers(retained,bound),live=journalMembers(current,bound);
+    need(stable(retained.owner)===stable(current.owner),'The current journal belongs to another original receiving owner.','INSTALLATION_JOURNAL_IDENTITY');
+    const sameFile=(a,b)=>!!a&&!!b&&a.bytes===b.bytes&&a.sha256===b.sha256&&a.encoding===b.encoding&&a.content_base64===b.content_base64;
+    // A memory-only observation can be promoted by the original phase validator.
+    // No validated response can regress to an unvalidated observation.
+    const preserved=[...saved].every(([path,file])=>{
+      if(sameFile(file,live.get(path)))return true;
+      const match=/^(preview|save|export|receive)\.observed-response\.json$/.exec(path.slice(bound.receivingOperationId.length+1));
+      return !!match&&sameFile(file,live.get(bound.receivingOperationId+'/'+match[1]+'.response.json'));
+    });
+    if(preserved)return 'CURRENT';
+    // Restore a captured memory return only if every currently retained original
+    // is already in that exact snapshot. The bridge validates the whole source
+    // and publishes create-only before any native request can be dispatched.
+    if([...live].every(([path,file])=>sameFile(file,saved.get(path))))return 'RESTORE';
+    throw Object.assign(new Error('Current and transferred native history do not preserve the same complete original records. Keep both cuts and reconcile the original journal before continuation.'),{code:'INSTALLATION_JOURNAL_CONFLICT',status:409});
+  }
+  async function continueJournal(bridge,snapshot,bound){
+    journalMembers(snapshot,bound);
+    const directory=join(bridge.directory,id(bound.receivingOperationId));
+    let entry;try{entry=await lstat(directory);}catch(error){if(error.code!=='ENOENT')throw error;}
+    if(!entry){await bridge.restore(snapshot);return;}
+    need(entry.isDirectory()&&!entry.isSymbolicLink(),'The original native operation path is not its private directory.','INSTALLATION_JOURNAL_IDENTITY');
+    let current;
+    try{current=await bridge.snapshot(bound.receivingOperationId);}
+    catch(error){
+      if(error.code!=='INSTALLATION_RESTORE_PENDING')throw error;
+      await bridge.restore(snapshot);return;
+    }
+    if(journalContinuation(snapshot,current,bound)==='RESTORE')await bridge.restore(snapshot);
+  }
+
   async function execute(command,current){
     const bound=await binding(command,current),c=await connection(bound.hostAlias,bound.host);
     const originalBound=await original(bound.receivingOperationId,current);
@@ -171,7 +226,7 @@ export function createInstallationReceivingDesk({ui,installation,hosts={}}){
         need(snapshot.schema===RECEIVING_SCHEMA+'.snapshot'&&HASH.test(snapshot.contentSha256??'')&&snapshot.operationId===bound.receivingOperationId&&snapshot.preparation.sha256===bound.preparation.sha256&&
           stable(snapshot.owner.source)===stable(bound.host.source)&&stable(snapshot.owner.receiving)===stable(bound.host.receiving),
           'The retained native journal belongs to another original operation.');
-        await c.bridge.restore(snapshot);
+        await continueJournal(c.bridge,snapshot,bound);
       }
       if(command.action==='installation-preview'){
         const prepared=await installation.restorePackage(bound.preparationOperationId);
