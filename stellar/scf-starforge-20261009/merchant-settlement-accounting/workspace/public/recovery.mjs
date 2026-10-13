@@ -69,12 +69,19 @@ export async function mountRecovery({api, operator, onModeChange}) {
   }
   function renderConfiguration() {
     const mode = state.mode || 'RUNNING';
+    const recoveryStatus = state.recovery?.status;
+    const absent = recoveryStatus === 'WORKSPACE_ABSENT';
+    const interrupted = recoveryStatus === 'RESTORE_IN_PROGRESS';
     const descriptions = {
       RUNNING:'Accounting is open. Pause the workspace before reviewing sources or capturing a backup.',
       PAUSING:'Finishing accepted accounting operations and closing their source owners. This page remains available.',
       PAUSED:'Accounting is paused. Review the current sources, create or verify a backup, or recover the retained operation.',
       RESUMING:'Reopening the original accounting sources and controllers.',
-      RECOVERY_REQUIRED:'An original recovery is unfinished. Continue with its retained backup before reopening accounting.',
+      RECOVERY_REQUIRED:absent
+        ? 'This location is ready to receive the original account. Select its retained backup and receiving location before reopening accounting.'
+        : interrupted
+          ? 'An original recovery is unfinished. Continue with its retained backup before reopening accounting.'
+          : 'Review the retained recovery state and original backup before reopening accounting.',
       CLOSING:'The server is finishing its accepted operation and closing.'
     };
     $('maintenance-mode').textContent = state.configured ? friendly(mode) : 'Not configured';
@@ -86,7 +93,13 @@ export async function mountRecovery({api, operator, onModeChange}) {
     $('maintenance-setup').hidden = Boolean(state.configured);
     $('maintenance-workflow').hidden = !state.configured;
     $('maintenance-recovery-required').hidden = mode !== 'RECOVERY_REQUIRED';
-    $('maintenance-recovery-values').innerHTML = definitionRows(Object.entries(state.recovery || {}).filter(([,value]) => value !== null && value !== undefined).map(([name,value]) => [friendly(name.replace(/([a-z])([A-Z])/g,'$1 $2')), value]));
+    $('maintenance-recovery-heading').textContent = absent ? 'Receive the original account' : interrupted ? 'Continue the interrupted recovery' : 'Recover the original account';
+    $('maintenance-recovery-description').textContent = absent
+      ? 'This receiving location has no account yet. Choose the original backup above, review its recorded identity and receiving location, then restore the complete account.'
+      : interrupted
+        ? 'The original recovery record identifies the retained backup. Select that same backup and restore again to reuse files already recovered and finish the remaining work.'
+        : 'The retained state below describes what this host found. Use the original backup and recorded account identity to complete recovery.';
+    $('maintenance-recovery-values').innerHTML = definitionRows(Object.entries(state.recovery || {}).filter(([,value]) => value !== null && value !== undefined).map(([name,value]) => [friendly(name.replace(/([a-z])([A-Z])/g,'$1 $2')), name === 'status' ? friendly(value) : value]));
   }
   function renderReview() {
     const review = state.review;
