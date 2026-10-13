@@ -11,6 +11,7 @@ import {commercialContext,readCommercialDocuments}
   from '../../../scf-starforge-20261009/sf74-merchant-support-console/commercial-quote.mjs';
 import {inspectAcceptedCommercialImplementation}
   from '../../../scf-starforge-20261009/sf74-merchant-support-console/case-commercial-implementation.mjs';
+import {readCommercialEconomics} from '../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/economics.mjs';
 import {commissioningOriginalFiles}
   from '../../../scf-starforge-20261009/sf74-merchant-support-console/commissioning.mjs';
 
@@ -73,6 +74,8 @@ async function readerIdentity() {
   // source bundle also retains their native imported dependencies.
   const entries=[
     ['./commercial_installation_source.mjs','sf47/commercial_installation_source.mjs'],
+    ['./cohort_planning.mjs','sf47/cohort_planning.mjs'],
+    ['../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/economics.mjs','sf74/commercial/economics.mjs'],
     ['../../../scf-starforge-20261009/sf74-merchant-support-console/case-commercial-implementation.mjs','sf74/case-commercial-implementation.mjs'],
     ['../../../scf-starforge-20261009/sf74-merchant-support-console/commercial-quote.mjs','sf74/commercial-quote.mjs'],
     ['../../../scf-starforge-20261009/sf74-merchant-support-console/commercial-pricing.mjs','sf74/commercial-pricing.mjs'],
@@ -116,7 +119,7 @@ export async function inspectCommercialInstallationSource(raw,selected=null) {
       supportSha256,metadata:clone(metadata),
       originalCaseIds:[...new Set(documents.map(row=>row.caseId))].sort()},
     quotes:context.quotes.map(quote=>quoteSummary(context,quote)),externalFiles:clone(externalFiles),
-    reader:await readerIdentity()};
+    reader:await readerIdentity(),economics:readCommercialEconomics(context)};
   if(selected!==null){
     selected=selection(selected);
     const quote=context.quotes.find(row=>row.id===selected.quoteId);
@@ -169,7 +172,8 @@ export async function inspectCommercialInstallationSource(raw,selected=null) {
         acceptanceSha256:response.material.sha256,plan:read.plan,tasks:acceptedTasks,terms:quote.draft.terms})),
       scope,acceptedPlan:clone(read.plan),acceptedTasks:clone(acceptedTasks),
       originalReview:clone(read.review),quote:clone(quote),acceptance:clone(response),
-      quoteText:quote.customerDocument};
+      quoteText:quote.customerDocument,
+      economics:result.economics.assessments.filter(row=>row.quoteId===quote.id&&row.quoteSha256===quote.sha256)};
   }
   if(Buffer.byteLength(JSON.stringify(result))>MAX_OUTPUT)
     throw error('COMMERCIAL_REVIEW_SIZE','The complete original commercial read exceeds 16 MiB.',413);
