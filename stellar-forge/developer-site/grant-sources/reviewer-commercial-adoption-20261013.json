@@ -1,0 +1,299 @@
+{
+  "schema": "stellar-forge.grant-nine-answer-source-map.v1",
+  "edition": "2026-10-13-commercial-adoption-and-buyer-course",
+  "scope": "Complete following reviewer working edition using the existing four-role source package and original nine saved-answer IDs.",
+  "sourceCommit": "a6a3c7a8760586ac387d8834af164fbee3f269dd",
+  "sourceRows": 523,
+  "answer": {
+    "path": "stellar-forge/developer-site/dist/grant-data/application-reviewer.md",
+    "bytes": 22348,
+    "sha256": "14ffc65d8ebf3cb893d3d139a0a16e4c8972449f0645eabe0ca4b56cc83ddc58",
+    "gitBlob": "443df32e15e7bc64e15f90550b3f9561bed28cca",
+    "words": 2857
+  },
+  "buyerCourse": {
+    "path": "products/grant-reviewer/BUYER_COURSE.md",
+    "bytes": 9416,
+    "sha256": "743d9a6d7e6e4ab21a52f7a0e2d9f6694f4289fb3b06411e5b465d1dea37f3aa"
+  },
+  "unchangedOriginalRoles": [
+    {
+      "role": "application",
+      "path": "stellar-forge/developer-site/dist/grant-data/application.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a6a3c7a8760586ac387d8834af164fbee3f269dd/stellar-forge/developer-site/dist/grant-data/application.md",
+      "gitBlob": "15c2a09c49fc72e63179e17211ff7395c756955d",
+      "bytes": 47684,
+      "sha256": "5bddff9b185890bd0021ac25642975115095b435108d1c19fa2a7291cd03cb37"
+    },
+    {
+      "role": "source-index",
+      "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a6a3c7a8760586ac387d8834af164fbee3f269dd/stellar-forge/developer-site/dist/grant-data/source-index.json",
+      "gitBlob": "022c88301b8363212f474578b43939844d974987",
+      "bytes": 650033,
+      "sha256": "6a97853007c37fde16c41c5551b36e8b16dd628cbf5cd28ec1a1a099351fc8df"
+    },
+    {
+      "role": "budget",
+      "path": "stellar-forge/developer-site/dist/grant-data/budget.csv",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a6a3c7a8760586ac387d8834af164fbee3f269dd/stellar-forge/developer-site/dist/grant-data/budget.csv",
+      "gitBlob": "c62afa352e881c2cf81fe937649fe63fea3ceab5",
+      "bytes": 597,
+      "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00"
+    },
+    {
+      "role": "product-and-finance",
+      "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a6a3c7a8760586ac387d8834af164fbee3f269dd/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+      "gitBlob": "32ce24b40b655c8dc43071330ca2a86a72232a9f",
+      "bytes": 997782,
+      "sha256": "34d716c0ac6fae76ed2e6c6e8ca9ca5d3cc7991a4e80b034780f5a24088ddf70"
+    }
+  ],
+  "previousReviewer": {
+    "commit": "7fcc044a5cbe76fafbce9969c575fad29623c508",
+    "path": "stellar-forge/developer-site/dist/grant-data/application-reviewer.md",
+    "bytes": 27195,
+    "sha256": "f18984425dfce30acd044934941ce523ab66c5427d73f4e49d9697de0b97195c",
+    "gitBlob": "6d64f69be260f013a89babe6ce0684825a4ae2ac"
+  },
+  "method": {
+    "composerPath": "stellar-forge/developer-site/grant-reviewer-edition.mjs",
+    "composerBlob": "b1b9d0857530659f3fb56524e5255a8a92143f01",
+    "sourcePackage": "stellar-forge.grant-reviewer-source-package.v1",
+    "roles": [
+      "application",
+      "source-index",
+      "budget",
+      "product-and-finance"
+    ],
+    "receiving": "Open the complete generated reviewer-working-source.json through existing Source editions; compare and explicitly receive into the same original native draft. Original manual answers, issuer fields, plans, reviews and history remain under their existing operator.",
+    "validation": "Execute the maintained complete composer, then open its complete package through openReviewerSourcePackage. Compare every original sources[] row in order and byte-identical budget/product-and-finance objects. No native case or issuer form is changed by composition."
+  },
+  "answers": [
+    {
+      "id": "project",
+      "heading": "Project and requested outcome",
+      "canonicalSection": "Project and requested outcome",
+      "companionSections": [
+        "Application at a glance",
+        "5. Funded work and acceptance"
+      ],
+      "retained": [
+        "$38,000; 400 prospective hours; 150 days from actual award acceptance",
+        "Two independently operated merchants and two independent buyer operators",
+        "Day30 complete approved testnet purchase per merchant; day90 recurring testnet and same-service two-facilitator use; day150 mainnet",
+        "Remaining source/consumer, deployment, monitoring and recovery work returns to reusable public product"
+      ],
+      "change": "Leads with buyer output and independent operators. Separates existing catalog work from the funded two-installation outcome."
+    },
+    {
+      "id": "need",
+      "heading": "Customer problem, need and adoption",
+      "canonicalSection": "Customer problem, need and adoption",
+      "companionSections": [
+        "1. Customer problem and commercial model",
+        "6. Customer selection and repeat use"
+      ],
+      "retained": [
+        "Report and typed-query/dataset installation patterns",
+        "Commissioning payer, merchant, buyer and receiving engineer roles",
+        "Veridex testnet invitation/no third-party testing budget; CoCart payer/introducer/contract question; Blockscout interest/no integration budget; Nansen declined",
+        "Two funded installations and agreements still to be selected",
+        "Explicit source, population/period, output, paid unit, spending cap, host, acceptance and cost owners",
+        "Thirty purchases need more than two buyers each purchasing once per ordinary weekday in fourteen days",
+        "Original commercial relationship, acceptance/corrections/payment and one-allocation-per-hour boundaries"
+      ],
+      "change": "Adds an explicit pre-development selection/access sequence to the existing workorder, not a new selected customer. Makes recurring demand and customer task versus paid page distinct."
+    },
+    {
+      "id": "stellar",
+      "heading": "Why Stellar and what we contribute",
+      "canonicalSection": "Why Stellar and what we contribute",
+      "companionSections": [
+        "3. Why Stellar and the ecosystem fit"
+      ],
+      "retained": [
+        "Existing x402 Exact Soroban transfer authorization and selected facilitator/network",
+        "Payer/recipient/atomic amount/expiry and explicit fee sponsorship",
+        "Existing SDK/token contracts; x402 libraries, CLI, Bazaar, ApiCharge and MPP roles",
+        "Same useful service through two facilitators; Vellar/Periplo original lack of shared seller/route identity",
+        "Open Track selection subject to actual issuer invitation/review"
+      ],
+      "change": "States reusable complete-task and receiving differentiation using existing primitives. Does not present an invented token/protocol or resolve issuer track choice."
+    },
+    {
+      "id": "architecture",
+      "heading": "Defined architecture and operating behavior",
+      "canonicalSection": "Defined architecture and operating behavior",
+      "companionSections": [
+        "2. Product architecture and control",
+        "Prepaid API: one acquired pass, useful calls and later work"
+      ],
+      "retained": [
+        "Merchant source/terms, typed HTTP/MCP, exact approval and aggregate budget, native settlement, complete delivery/accounting, recovery/receiving components",
+        "Prepaid original selection and consumed allowance across default changes",
+        "Separate MPP Charge lifecycle",
+        "Uncertain transfers reconcile before further payment; settled unfinished delivery uses existing entitlement/session",
+        "Browser/CLI/typed-client/MCP and Node/Python/SQLite/PHP/WooCommerce; source/license/upstream inventory"
+      ],
+      "change": "Compresses repeated mechanics into one architecture table and maps remaining work to T1/T2/T3. Root-reviewed wording says current components exist while selected-customer adaptation remains funded."
+    },
+    {
+      "id": "product",
+      "heading": "Working product and demonstrated results",
+      "canonicalSection": "Working product and demonstrated results",
+      "companionSections": [
+        "4. Completed development work",
+        "Current demonstration and operator journey"
+      ],
+      "retained": [
+        "18 distinct team-operated testnet purchases; 411000 stroops/.0411XLM; fees separate",
+        "Complete144-row HPD task is two10000-stroop purchases of100+44 rows",
+        "Film/bundled100-row14-column53468-byte result is one50000-stroop purchase and remains truncationtrue",
+        "830 original OData Orders, typed/SQL/report/two-sheet workbook, independent receiver, three subscription editions and unchanged-source zero changes",
+        "Six profiles/three work records/two example invoices,15 views0 errors,cold421 files;243-file billing and4400Paid/4400Open examples remain examples",
+        "Saved pass allowance preserved; OpenLineage1000-row measurement/1001requirement/unreported columnunknown/two matching76-file exports",
+        "27HTTP/33queries/31scoredpairs;22→31retrieval;19→29top3;11improved20unchanged;9unmappedqueries",
+        "3:32 original product/team film"
+      ],
+      "change": "Keeps strongest useful-output examples in a compact table; retains additional funded-relevant operations in prose. No new independent buyer, mainnet, purchase or revenue is inferred."
+    },
+    {
+      "id": "delivery",
+      "heading": "Three funded tranches and six priced deliverables",
+      "canonicalSection": "Three funded tranches and six priced deliverables",
+      "companionSections": [
+        "5. Funded work and acceptance"
+      ],
+      "retained": [
+        "T1resource80h7600;T1authority40h3800;T2provider70h6650;T2threat50h4750;T3mainnet90h8550;T3recovery70h6650",
+        "Tranche11400/11400/15200;320engineering+80integration;96+24/96+24/128+32",
+        "T1successful independently observed testnet transfer and actual full buyer output; retained network/asset/accounts/atomicamount",
+        "T2twofacilitators,same service/schema/population/output,at least10purchases7days,both merchants",
+        "T2threat/monitoring/responders and two original recovery cases",
+        "T3bothmainnet,at least30purchases14days,both independentbuyersreturnanotherUTCday",
+        "Independent restore/supportcase and complete state/files; T1reopen not recounted",
+        "Futuredevonly; grants/customerwork allocateonce; no purchase subsidy; original0incrementalservice/Actions allocation and namedcostowners"
+      ],
+      "change": "Keeps all six prices and completion commitments in one table; consolidates report artifacts and avoids repeated mechanism descriptions."
+    },
+    {
+      "id": "outcomes",
+      "heading": "Threat response and outcome measurement",
+      "canonicalSection": "Threat response and outcome measurement",
+      "companionSections": [
+        "7. Threat response and useful-outcome measurement"
+      ],
+      "retained": [
+        "Ten threat decisions/eightmonitoringdefinitions deployed with actual numericthresholds/responders",
+        "Merchant/buyer/facilitator/receiving responsibilities",
+        "Separate financial/delivery states,response/recoverytime and observationgaps",
+        "Distinct approvedintent+observedtransfer+fullacceptedoutput;dedupnetwork;fees/assetsseparate",
+        "Pass counts once afterfirstacceptedoperation,latercallsusage;allpages/filesrequiredfortask",
+        "Originalfirstattemptcohort,settlementandacceptanceinwindow,actualtimestamps and allotheroutcomes",
+        "Independent people/orgs,not agents/walletcounts",
+        "Comparable activeeffort/corrections/time/output and actualcustomerhourlyvalue,costsincluded;publicsanitized/privateprotected"
+      ],
+      "change": "Defines each metric once; ties installed monitoring to the same operators and customer acceptance."
+    },
+    {
+      "id": "capacity",
+      "heading": "Delivery capacity, payment timing and sustainability",
+      "canonicalSection": "Delivery capacity, payment timing and sustainability",
+      "companionSections": [
+        "8. Capacity and cash plan",
+        "Customer operating procedures and maintainer handover",
+        "Source and compute allowance in the proposed commercial sequence"
+      ],
+      "retained": [
+        "Modeled25engineering+8integrationweekly; actualnamedavailability/paymentarrangementsstillbeingfinalized",
+        "T196engineering=19.2activedays;4–14hslackbeforeholidays;preawardaccessselection",
+        "3800/7600/11400/15200paymentversus11400/11400/15200cost;USD-equivalentXLMreferenceactualpaymentday",
+        "90calendardaysafterprecedingactualpayment,writtenextensionconfirmation",
+        "Grantonlyfunding17250/23275/26600 at14/30/60daylags;fullcash/zeroopeningbalanceassumptions",
+        "Commercial3259;14furthercollectiondelay10960.67;combined14daygrant7690;requirementsnotavailablecash",
+        "Fiveworkshares320h40320;9560contributionbeforecost;Lutra200reserve9360;customer+20%3280;both+20%864hdeficit4320;85/75alternative5952",
+        "Separate72hGeoRobotixcapacity;originalterms/eightalternatives/27cashcurvesretainedinunchangedcompanion",
+        "Same namedpackage/work/invoice/cash/reviewoperation and nativeOperatingplans",
+        "Source-versionedrelease/savedplan/Runtime/dependencylicense/config/installupgrade/fullstate/owners/responders/carehandover",
+        "Drainbeforeupdate;rollbackpreserveslaterpurchases;restorepostbackupreconciliation;SDK/protocolcompatibilityreturnstomaintainedsource"
+      ],
+      "change": "Retains current October13 scenarios and the financially material assumptions in the answer. Full earlier labor-only sensitivities and detailed dated schedules remain unchanged in the canonical companion, with no amended forecast or extra funding."
+    },
+    {
+      "id": "applicant",
+      "heading": "Applicant, experience and submission",
+      "canonicalSection": "Applicant, experience and submission",
+      "companionSections": [
+        "9. Applicant, delivery experience and assistance"
+      ],
+      "retained": [
+        "BryceMuhlnickel/TokenJunkieLabs/USindividual;DeveloperTooling/OpenTrack/Global/noreferral",
+        "Full AIassistance disclosure and actualaccountability",
+        "InterestackOctober11 14:59:29UTC",
+        "Individualeligibilityinquiryandfullinvitationpending;noadditionalcommittedhumaninvented",
+        "SCF46November8submission/November11–18review/November23–December3vote;awardundated",
+        "Actualfieldlimits/issuerquestionswhenavailable;localinfrastructureNot sure yet"
+      ],
+      "change": "Keeps unresolved issuer questions factual and preserves the existing saved submission flow without adding an approval gate."
+    }
+  ],
+  "officialReview": [
+    {
+      "id": "criteria",
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria",
+      "reviewedAt": "2026-10-13",
+      "applicationDecision": "Keep the substantive case self-contained; source/demo links are optional inspection. State actual traction, defined architecture, future work and verifiable staged outcomes."
+    },
+    {
+      "id": "open-track",
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/open-track",
+      "reviewedAt": "2026-10-13",
+      "applicationDecision": "Explain meaningful existing-tool differentiation, Stellar-specific operation, mainnet path, team/cost and full AI assistance. Retain actual submitted track pending issuer review."
+    },
+    {
+      "id": "budget",
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines",
+      "reviewedAt": "2026-10-13",
+      "applicationDecision": "Preserve three prospective development tranches, T2 threat/monitoring, mainnet final, fourpayment structure and receipt-based deadlines."
+    },
+    {
+      "id": "rules",
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/official-rules-for-submissions",
+      "reviewedAt": "2026-10-13",
+      "applicationDecision": "Preserve actual applicant and unanswered individual/two-human inquiry. Do not resolve issuer eligibility or add human commitments by editorial rewrite."
+    },
+    {
+      "id": "round",
+      "url": "https://communityfund.stellar.org/awards/recxrSMYwAl8vcglg",
+      "reviewedAt": "2026-10-13",
+      "applicationDecision": "Use actual posted round dates and start the delivery clock at actual award acceptance."
+    }
+  ],
+  "buyerCourseSources": [
+    {
+      "path": "products/grant-reviewer/OPERATING.md",
+      "commit": "03a93f7c59a703ebc63416ae0e914f07099fef37",
+      "gitBlob": "1015cf307b5fba8a4f84e9ef3b53fcb57be0d01c",
+      "scope": "Actual Applications/Packet intake/Buyer/closed export/independent receive/continuation controls and argv."
+    },
+    {
+      "path": "products/merchant-workspace/DEVELOPMENT.md",
+      "commit": "687ea12ac97f06b7f1336676249c349ade7a7692",
+      "scope": "Exact144/100-row original purchase identities and original830-row analytical operation."
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/SUBSCRIPTIONS.md",
+      "commit": "358f418c1deafd4c3013676097d9d990978349bf",
+      "scope": "Original recurring-edition, request continuation and full receiving contracts."
+    }
+  ],
+  "preservedBoundaries": [
+    "Canonical application.md, original source-index.json, budget.csv and product-and-finance.md remain unchanged.",
+    "Every current original sources[] row is retained exactly by the maintained composer.",
+    "The same nine answer identities map to current saved edits through explicit Source editions receiving.",
+    "No native customer case, issuer form, purchase, payment, award or eligibility decision is created by this editorial publication.",
+    "A later canonical union must be composed from its complete current four-role tuple; it must not reuse this dated523-row source as if it contained a later chapter."
+  ]
+}
