@@ -1,0 +1,46 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "odr-workspace",
+  "description": "Complete original ODR source review, managed durable saves and independent receiving",
+  "components": [
+    "products/odr-workspace"
+  ],
+  "supportFiles": [
+    "products/odr-workspace/native/files.py",
+    "products/odr-workspace/native/source.py",
+    "products/odr-workspace/native/manage.py",
+    "products/odr-workspace/native/operations.py",
+    "products/odr-workspace/native/launch.py",
+    "products/odr-workspace/client.d.mts",
+    "products/odr-workspace/workspace.d.mts",
+    "products/odr-workspace/native/API.md",
+    "products/odr-workspace/SCF.md",
+    "products/odr-workspace/receiving/run-installed.py",
+    "products/odr-workspace/receiving/README.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/odr-source-review.json"
+  ],
+  "commands": {
+    "odr-workspace": "products/odr-workspace/cli.mjs",
+    "odr-commission": "products/odr-workspace/commission.mjs"
+  },
+  "commandDescriptions": {
+    "odr-workspace": "Install, operate and independently receive the complete original ODR workspace",
+    "odr-commission": "Join the complete original ODR application source and Workshare to Customer Installation"
+  },
+  "exports": {
+    "./merchant/odr": {
+      "types": "./source/products/odr-workspace/client.d.mts",
+      "import": "./source/products/odr-workspace/client.mjs"
+    },
+    "./merchant/mcp/odr": {
+      "types": "./source/products/odr-workspace/workspace.d.mts",
+      "import": "./source/products/odr-workspace/workspace.mjs"
+    }
+  },
+  "applicationProviders": {
+    "odr-workspace": "products/odr-workspace/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "odr-workspaces": "products/odr-workspace/merchant-provider.mjs"
+  }
+}
