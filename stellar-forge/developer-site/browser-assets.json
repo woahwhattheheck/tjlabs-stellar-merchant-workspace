@@ -549,6 +549,20 @@
       ]
     ],
     [
+      "/grant-requirement-review-core.mjs",
+      [
+        "grant-requirement-review-core.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-requirement-review-workspace.mjs",
+      [
+        "grant-requirement-review-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/grant-review-round-core.mjs",
       [
         "grant-review-round-core.mjs",
