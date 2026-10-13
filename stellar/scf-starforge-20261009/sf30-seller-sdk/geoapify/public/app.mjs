@@ -1,5 +1,6 @@
 // MIT. Original-workspace browser, retained job continuation and explicit candidate decisions.
 import {createPublisherPanel} from './publisher.mjs';
+import {createSourceIntake} from './source-intake.mjs';
 import {createSourceHistoryPanel} from './source-history.mjs';
 import {createCustomerReviewPanel} from './customer-review.mjs';
 const $=id=>document.getElementById(id),json=v=>JSON.stringify(v,null,2);
@@ -8,7 +9,7 @@ const detail=(title,value)=>{const e=node('details');e.append(node('summary',tit
 const button=(label,key,value)=>{const e=node('button',label);e.type='button';e.dataset[key]=value;return e;};
 const facts=items=>{const e=node('dl');for(const[k,v]of items)e.append(node('dt',k),node('dd',v));return e;};
 let state=null,busy=false,publisher=null,selected=null,reviewPage=null,reviewOffset=0,reviewCriteria={status:'',search:''},sourceOffset=0,sourcePage=null,queryResult=null,querySnapshot=null,initialized=false;
-let noticeRevision=0,sourceHistoryPanel=null,customerReviewPanel=null;
+let noticeRevision=0,sourceHistoryPanel=null,customerReviewPanel=null,sourceMapper=null,stageMapper=null;
 let draft={schema:'stellar-forge.geoapify-editor.v1',fields:{},decisions:{},tab:'source'};
 const tokenKey='starforge-geoapify-token:'+location.origin,fragment=new URLSearchParams(location.hash.slice(1));
 const token=fragment.get('token')||sessionStorage.getItem(tokenKey);
@@ -22,7 +23,7 @@ function selectedDecisionDraft(){
     coordinateChoice:$('coordinate-choice').value,reviewer:$('reviewer').value,note:$('decision-note').value};
 }
 function capture(){
-  selectedDecisionDraft();if(sourceHistoryPanel)draft.sourceHistory=sourceHistoryPanel.capture();if(customerReviewPanel)draft.customerReview=customerReviewPanel.capture();
+  selectedDecisionDraft();if(sourceMapper)draft.sourceSetup=sourceMapper.capture();if(stageMapper)draft.stageSetup=stageMapper.capture();if(sourceHistoryPanel)draft.sourceHistory=sourceHistoryPanel.capture();if(customerReviewPanel)draft.customerReview=customerReviewPanel.capture();
   for(const e of document.querySelectorAll('input[id],select[id],textarea[id]')){
     if(e.type==='file'||e.id.startsWith('pub-')||['job-selection','coordinate-choice','reviewer','decision-note'].includes(e.id))continue;
     draft.fields[e.id]=e.type==='checkbox'?e.checked:e.value;
@@ -38,7 +39,7 @@ function applyDraft(value){
   draft=structuredClone(value);draft.decisions??={};
   for(const[id,value]of Object.entries(draft.fields)){const e=$(id);if(!e||e.type==='file'||e.id.startsWith('pub-'))continue;
     if(e.type==='checkbox')e.checked=value===true;else if(typeof value==='string')e.value=value;}
-  sourceHistoryPanel?.restore(draft.sourceHistory);customerReviewPanel?.restore(draft.customerReview);switchTab(draft.tab??'source');return true;
+  sourceMapper?.restore(draft.sourceSetup);stageMapper?.restore(draft.stageSetup);sourceHistoryPanel?.restore(draft.sourceHistory);customerReviewPanel?.restore(draft.customerReview);switchTab(draft.tab??'source');return true;
 }
 document.addEventListener('input',event=>{if(event.target.matches('input,textarea,select'))saveLocal();});
 document.addEventListener('change',event=>{if(event.target.matches('input,textarea,select'))saveLocal();});
@@ -52,8 +53,9 @@ async function request(path,options={}){
   return response;
 }
 async function perform(action,payload={}){
-  const result=await(await request('/api/action',{method:'POST',headers:{'content-type':'application/json'},
-    body:json({action,payload:action.startsWith('publisher.')?payload:{...payload,expectedRevision:state.revision}})})).json();
+  const body=json({action,payload:action.startsWith('publisher.')?payload:{...payload,expectedRevision:state.revision}});
+  if(new TextEncoder().encode(body).length>24*1024*1024)throw new Error('The complete operator request exceeds24MiB. Use the original host path for large source files, or shorten oversized working text before saving.');
+  const result=await(await request('/api/action',{method:'POST',headers:{'content-type':'application/json'},body})).json();
   await adoptState(result.state);return result.result;
 }
 function clearSourceDisplay(){
@@ -61,7 +63,7 @@ function clearSourceDisplay(){
   initialized=false;draft={schema:'stellar-forge.geoapify-editor.v1',fields:{},decisions:{},tab:'source'};
   for(const form of document.querySelectorAll('form'))if(!form.id.startsWith('pub-'))form.reset();
   for(const id of ['source-results','review-rows','prepared-summary'])$(id).replaceChildren();
-  $('address-detail').hidden=true;sourceHistoryPanel?.clear();customerReviewPanel?.clear();
+  $('address-detail').hidden=true;sourceMapper?.clear();stageMapper?.clear();sourceHistoryPanel?.clear();customerReviewPanel?.clear();
 }
 async function adoptState(next){
   const changed=state&&(next.id!==state.id||next.intake?.sha256!==state.intake?.sha256);
@@ -97,7 +99,7 @@ const selectedJob=()=>state?.jobs.find(j=>j.id===$('job-selection').value);
 function controls(){
   document.querySelectorAll('button').forEach(e=>{e.disabled=busy;});
   if(!state)return;
-  $('source-form').querySelector('button').disabled=busy||Boolean(state.intake);
+  $('source-form').querySelector('button[type=submit]').disabled=busy||Boolean(state.intake);
   $('restore-form').querySelector('button').disabled=busy||Boolean(state.intake);
   $('prepare-form').querySelector('button').disabled=busy||!state.intake;
   for(const id of ['inspect-source','review-prev','review-next','source-prev','source-next','inspect-source'])$(id).disabled=busy||!state.intake;
@@ -114,7 +116,7 @@ function controls(){
   $('query-form').querySelector('button').disabled=busy||!state.activeEditionId;
   $('query-next').disabled=busy||!queryResult?.body?.page?.nextCursor||querySnapshot!==state.editions.find(e=>e.id===state.activeEditionId)?.snapshot;
   $('merchant-form').querySelector('button').disabled=busy||!state.activeEditionId;
-  publisher?.controls(busy);sourceHistoryPanel?.controls(busy);customerReviewPanel?.controls(busy);
+  sourceMapper?.controls(busy);stageMapper?.controls(busy);publisher?.controls(busy);sourceHistoryPanel?.controls(busy);customerReviewPanel?.controls(busy);
 }
 function renderJob(){
   const j=selectedJob(),area=$('job-summary');area.replaceChildren();$('request-body').hidden=true;
@@ -164,9 +166,7 @@ async function sourceRows(offset=sourceOffset){
     detail('Original rows',sourcePage.rows),detail('Repeated business identities',sourcePage.duplicateIdentities));controls();
 }
 bind('source-form',async()=>{
-  const original=await fileInput('source-file','source-path');
-  await perform('intake.import',{...original,format:$('source-format').value,name:$('source-name').value,
-    sourceURL:$('source-url').value||null,provenance:$('source-provenance').value,mapping:JSON.parse($('source-mapping').value)});
+  await perform('intake.import',await sourceMapper.payload());
   $('source-file').value='';await sourceRows();switchTab('jobs');
 });
 $('inspect-source').onclick=()=>void handle(sourceRows);
@@ -278,11 +278,13 @@ async function publisherDownload(kind,id){
   const r=await request('/api/publisher/exports/'+encodeURIComponent(kind)+'/'+encodeURIComponent(id)),d=r.headers.get('content-disposition')??'';
   const match=/filename\*=UTF-8''([^;]+)/i.exec(d);saveBlob(await r.blob(),match?decodeURIComponent(match[1]):kind+'-'+id);
 }
+sourceMapper=createSourceIntake({prefix:'source',perform,handle,notice,persist:saveLocal,download:saveBlob});
+stageMapper=createSourceIntake({prefix:'stage',perform,handle,notice,persist:saveLocal,download:saveBlob});
 customerReviewPanel=createCustomerReviewPanel({getState:()=>state,perform,handle,download,fileInput,notice,persist:saveLocal});
-sourceHistoryPanel=createSourceHistoryPanel({getState:()=>state,perform,handle,saveEditor,notice,
+sourceHistoryPanel=createSourceHistoryPanel({getState:()=>state,perform,handle,saveEditor,notice,intakeMapper:stageMapper,
   changedSource:refresh});
 publisher=createPublisherPanel({getState:()=>state,perform,download:publisherDownload,handle,notice,selectSection:name=>switchTab(name==='exports'?'delivery':name)});
-$('clear-files').onclick=()=>{if(busy)return;for(const file of document.querySelectorAll('input[type=file]'))file.value='';saveLocal();notice('Selected local file pickers cleared. Working text and already retained source files are preserved.');};
+$('clear-files').onclick=()=>{if(busy)return;for(const file of document.querySelectorAll('input[type=file]'))file.value='';sourceMapper?.clearFile();stageMapper?.clearFile();saveLocal();notice('Selected local file pickers cleared. Working text and already retained source files are preserved.');};
 $('refresh').onclick=()=>void handle(refresh);
 setInterval(()=>{if(!busy)controls();},1000);
 controls();void handle(refresh);
