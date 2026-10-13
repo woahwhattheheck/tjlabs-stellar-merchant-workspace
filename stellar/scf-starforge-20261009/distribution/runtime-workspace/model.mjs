@@ -12,6 +12,8 @@ import { plain, now, digest, json, canonical, fail, need, recordId, operationId,
   privateDirectory, makePrivate, readJSON, saveJSON, workerAlive, processIdentity,
   operationLease, operationRunning, tailFile } from './storage.mjs';
 
+import { createOperationReader, summarizeOperationObservations } from './operation-observations.mjs';
+
 import { managedOperationFields, initializeManagedWorkspace, managedState, openManagedHome, reviewManagedAdoption,
   managedConfig, normalizeManagedOperation, executeManagedOperation, managedCommandAlive,
   stopManagedCommand, recoverManagedOperation } from './managed-workspace.mjs';
@@ -132,12 +134,29 @@ async function retainedView(value) {
       archiveSha256: plan?.archiveSha256 ?? preparation?.archiveSha256 ?? null };
   } catch (error) { return { ...value, phase: 'UNAVAILABLE', error: asError(error) }; }
 }
-async function jobView(root, id) {
+async function jobView(root, id, observe = null) {
   const directory = jobPath(root, id), request = await readJSON(join(directory, 'request.json'), true);
-  if (!request) return { id, operation: 'prepare request', phase: 'INITIALIZING', displayPhase: 'INITIALIZING', workerActive: false };
-  const state = await readJSON(join(directory, 'state.json'), true) ?? { phase: 'QUEUED' };
-  const active = state.phase === 'RUNNING' && (await workerAlive(state) || await operationRunning(join(directory, 'worker.lock')));
-  const commandActive = state.phase === 'RUNNING' && Boolean(state.commandProcess) && (await managedCommandAlive(state) || active);
+  if (!request) return { id, operation: 'prepare request', phase: 'INITIALIZING', displayPhase: 'INITIALIZING',
+    workerActive: false, commandActive: false, ...(observe ? {
+      observation: { status: 'CURRENT', source: 'RETAINED', checkedAt: now() } } : {}) };
+  let state = await readJSON(join(directory, 'state.json'), true) ?? { phase: 'QUEUED' };
+  let activity;
+  if (observe) {
+    activity = await observe(state, join(directory, 'worker.lock'));
+    // A probe may finish after the original worker wrote its terminal result.
+    // Reopen that same state before presenting a running/interrupted observation.
+    if (state.phase === 'RUNNING') {
+      const current = await readJSON(join(directory, 'state.json'), true);
+      if (current && json(current) !== json(state)) {
+        state = current; activity = await observe(state, join(directory, 'worker.lock'));
+      }
+    }
+  } else {
+    const active = state.phase === 'RUNNING' && (await workerAlive(state) || await operationRunning(join(directory, 'worker.lock')));
+    activity = { workerActive: active, commandActive: state.phase === 'RUNNING' &&
+      Boolean(state.commandProcess) && (await managedCommandAlive(state) || active) };
+  }
+  const { workerActive: active, commandActive } = activity;
   return { id, operation: request.operation, runtimeId: request.runtimeId ?? request.targetId ?? null,
     homeId: request.homeId ?? null, applicationId: request.applicationId ?? null, terminal: request.terminal === true, commandActive,
     ...(Object.hasOwn(pythonOperationFields, request.operation) ? { python: request.python,
@@ -150,8 +169,10 @@ async function jobView(root, id) {
     contextDirectory: request.contextDirectory ?? null, transferDirectory: request.transferDirectory ?? null,
     containerDirectory: request.containerDirectory ?? null, reviewId: request.reviewId ?? null,
     deploymentReviewId: request.deploymentReviewId ?? null,
-    ...state, workerActive: active,
-    displayPhase: state.phase === 'RUNNING' && !active && !commandActive ? 'INTERRUPTED' : state.phase };
+    ...state, ...activity,
+    displayPhase: state.phase === 'RUNNING' && active !== true && commandActive !== true
+      ? activity.observation?.status === 'UNAVAILABLE' ? 'OBSERVATION_UNAVAILABLE' : 'INTERRUPTED'
+      : state.phase };
 }
 async function spawnWorker(root, id) {
   const log = await open(join(jobPath(root, id), 'worker.log'),
@@ -199,6 +220,10 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
   await initializeTransferWorkspace(root);
   await initializePythonWorkspace(root);
   await initializeSourceBuildWorkspace(root);
+  const operationReader = createOperationReader({
+    readJob: (id, observe) => jobView(root, id, observe),
+    workerAlive, managedCommandAlive, operationRunning,
+  });
   const groupLifecycle = {
     start: input => model.applicationsStart(input),
     recover: input => model.applicationsRecover(input),
@@ -315,12 +340,17 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
     async state({ runtimeId = null } = {}) {
       const [saved, archives, names] = await Promise.all([records(root, 'entries'), records(root, 'archives'), readdir(join(root, 'operations'))]);
       const entries = await Promise.all(saved.map(retainedView));
-      const jobs = await Promise.all(names.filter(name => /^[a-f0-9-]{36}$/.test(name)).map(id => jobView(root, id)));
+      const jobs = await operationReader.read(names.filter(name => /^[a-f0-9-]{36}$/.test(name)));
       jobs.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
       const selected = runtimeId ? entries.find(item => item.id === recordId(runtimeId)) ?? null : entries[0] ?? null;
       const observation = selected ? await readJSON(recordPath(root, 'observations', selected.id), true) : null;
       return { workspaceId: config.workspaceId, directory: root, runtimeHome: config.runtimeHome, archives,
-        runtimes: entries.map(({ profile, preparation, ...value }) => value), selected, observation, operations: jobs };
+        runtimes: entries.map(({ profile, preparation, ...value }) => value), selected, observation, operations: jobs,
+        operationObservation: summarizeOperationObservations(jobs) };
+    },
+    async operationStatus({ operationId: id }) {
+      await privateDirectory(jobPath(root, id));
+      return (await operationReader.read([id]))[0];
     },
     async attach({ directory: target, label }) {
       const checked = await inspectRuntimeInstall({ directory: absolute(target), load: false });
@@ -485,7 +515,16 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
           runtimeDirectory: observed.directory, preserveAbsoluteDirectory: true } };
     },
     async logs({ runtimeId, operationId: operation } = {}) {
-      if (operation) return { name: 'worker.log', ...await tailFile(join(jobPath(root, operation), 'worker.log')) };
+      if (operation) {
+        const directory = jobPath(root, operation);
+        await privateDirectory(directory);
+        try { return { name: 'worker.log', available: true, ...await tailFile(join(directory, 'worker.log')) }; }
+        catch (error) {
+          return { name: 'worker.log', available: false,
+            state: error.code === 'ENOENT' ? 'NOT_CREATED' : 'UNAVAILABLE',
+            text: '', totalBytes: 0, offset: 0, error: asError(error) };
+        }
+      }
       const selected = await entry(root, runtimeId), state = await readJSON(join(selected.directory, 'install-state.json'));
       need(typeof state.logFile === 'string' && /^install-\d+(?:-[a-f0-9-]{36})?\.log$/.test(state.logFile),
         'RUNTIME_WORKSPACE_INSTALL_LOG_UNAVAILABLE', 'This runtime has no npm attempt log yet');
