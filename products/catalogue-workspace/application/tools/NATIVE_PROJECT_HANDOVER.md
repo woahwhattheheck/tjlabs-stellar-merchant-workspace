@@ -51,7 +51,7 @@ Required commands:
 - database_dump: native complete SQL dump. Set output to stdout or file. The latter must write {database_sql}.
 - database_import: native import into the selected target. Use stdin: "{database_sql}" if the installed command consumes standard input, or bind that path in its original argv.
 
-For queue_mode external, queue_export and queue_import are also required. They must export/import the original broker's full selected queue state through its own authorized native tooling under the same stopped-worker boundary. queue_export writes complete ordinary files under {queue_directory}; queue_import consumes those exact bytes. The programme neither guesses a broker format nor starts an alternate dispatcher.
+For queue_mode external, queue_export, queue_import and verify_reopen are also required. verify_reopen must verify the actual restored native broker/transport state and its original queue identities before workers resume. They must export/import the original broker's full selected queue state through its own authorized native tooling under the same stopped-worker boundary. queue_export writes complete ordinary files under {queue_directory}; queue_import consumes those exact bytes. The programme neither guesses a broker format nor starts an alternate dispatcher.
 
 Optional cache_rebuild and verify_reopen run the installed target's actual commands. Select verify_reopen to check engine-specific schema, sequences, triggers, transport routing and application health that cannot be inferred from row hashes alone. Native SQL must contain the complete database schema and data, including sequences and native queue tables. Any intentionally external state needs an explicit original export/import contract.
 
@@ -59,7 +59,7 @@ A generic, deliberately unbound example is supplied in native-project.example.js
 
 ## Secret and runtime boundaries
 
-The programme always excludes .env.local, .env.local.php, .env.<selected-environment>.local and auth.json from the project projection. Explicitly list every other host secret, including actual Symfony decryption keys, custom runtime credentials and any compiled private configuration. A committed nonsecret .env can remain in source. Audit the actual installed tree; automatic filename recognition is not a complete secret inventory.
+The programme always excludes .env.local, .env.local.php, .env.<selected-environment>.local and auth.json, plus config/packages/tjl_catalogue_workspace.yaml, from the project projection. The latter retains each host's actual private Store path; the independently booted kernel must resolve tjl_catalogue_workspace.directory to the configured store_root. Explicitly list every other host secret, including actual Symfony decryption keys, custom runtime credentials and any compiled private configuration. Exclude actual native database storage files/directories, including SQLite database/WAL/SHM files when applicable: the complete native SQL is the database authority. A committed nonsecret .env can remain in source. Audit the actual installed tree; automatic filename recognition is not a complete secret inventory.
 
 Source exclusions are recorded in the authenticated manifest. Target-private and reproducible runtime paths are preserved, and an incoming archive that contains a conflicting target-private path is rejected before mutation. Named storage roots must contain the intended application/source/media bytes; do not select unrelated private credential directories. Source/media journals exclude API credentials, while their complete retained native responses remain private.
 
@@ -122,7 +122,7 @@ The target stays drained while the owner inspects this concrete review. Native d
 
 Invoke receive with the exact returned review hash. Before the first mutation it compares the actual target database/files with the authenticated target backup. Each file mutation retains its exact original preimage and desired postimage. It adopts an already completed original write only when the actual bytes/mode match, and rejects unrelated changes.
 
-The complete native SQL is then imported with the original target command. External queue import uses the authenticated original broker export. The configured installed cache command follows. A separate native PHP process boots the received kernel and compares all native table row counts/digests, platform, Composer/vendor/console identities and queue mode with the source snapshot inside the authenticated archive. Optional native health verification runs before the original target workers resume.
+The complete native SQL is then imported with the original target command. External queue import uses the authenticated original broker export. The configured installed cache command follows. A separate native PHP process boots the received kernel and compares all native table row counts/digests, platform, Composer/vendor/console identities and queue mode with the source snapshot inside the authenticated archive. Native health verification runs before the original target workers resume and is mandatory for external queues. The complete post-hook filesystem inventory is compared with the authenticated source; changes are allowed only inside the explicit host-private/runtime exclusions.
 
 The completed result is tjl.catalogue.native-reopen.v1 with state COMPLETE, phase receive, source, target, source_manifest, archive_sha256, review_sha256 and target_roots. source is the frozen authenticated source. target is the actual independently reopened probe. The receiving course can additionally run the unchanged catalogue workspace CLI as the original restored actor to inspect project, source, record, approval and pending-message identities.
 
@@ -132,7 +132,7 @@ reopen recovers an unfinished original receive or returns its immutable completi
 
 recover requires the same key and reviewed target hash. It drains the existing target and restores the full authenticated target backup through the same file/native SQL/queue/reopen path. Unreviewed file changes halt recovery rather than being overwritten. A command whose actual exit is unknown must first be reconciled; recovery does not race an original database child.
 
-Recovery after a partially failed native database import is an explicit request to restore that reviewed original database backup. Do not use it as a way to discard later legitimate target work. Retain that work independently first if the original owner chooses a separate restore operation.
+After a verified receive, recovery also compares the current native database with the original verified source or reviewed target and rejects later native changes. Recovery after a partially failed native database import is an explicit request to restore that reviewed original database backup. Do not use it as a way to discard later legitimate target work. Retain that work independently first if the original owner chooses a separate restore operation.
 
 ## Process admission and interruption
 

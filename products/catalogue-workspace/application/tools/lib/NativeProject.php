@@ -106,12 +106,12 @@ final class NativeProject
             foreach ($config[$field] as &$path) { $path = Files::relative($path); } unset($path);
         }
         $config['host_private_paths'] = array_values(array_unique(array_merge(
-            ['.env.local', '.env.local.php', '.env.' . $config['environment'] . '.local', 'auth.json'],
+            ['.env.local', '.env.local.php', '.env.' . $config['environment'] . '.local', 'auth.json', 'config/packages/tjl_catalogue_workspace.yaml'],
             $config['host_private_paths']
         )));
         foreach (['drain', 'verify_drained', 'resume', 'database_dump', 'database_import'] as $command) { $this->validateCommand($config['commands'][$command] ?? null, $command); }
         if ($config['queue_mode'] === 'external') {
-            foreach (['queue_export', 'queue_import'] as $command) { $this->validateCommand($config['commands'][$command] ?? null, $command); }
+            foreach (['queue_export', 'queue_import', 'verify_reopen'] as $command) { $this->validateCommand($config['commands'][$command] ?? null, $command); }
         }
         foreach (['cache_rebuild', 'verify_reopen'] as $command) { if (isset($config['commands'][$command])) { $this->validateCommand($config['commands'][$command], $command); } }
         if (!in_array($config['commands']['database_dump']['output'] ?? null, ['stdout', 'file'], true)) { throw new HandoverFailure('Declare native database dump output as stdout or file.'); }
@@ -590,6 +590,10 @@ final class NativeProject
             throw new HandoverFailure('Actual independently reopened native database/dependency state differs from authenticated source.', 'REOPEN_MISMATCH');
         }
         if (isset($this->config['commands']['verify_reopen'])) { $this->selectedCommand('verify_reopen', $phase . ':verify-reopen', $variables); }
+        $expectedFiles = array_values(array_filter($received['manifest']['entries'], fn (array $entry): bool => $this->destination($entry['path']) !== null));
+        if ($this->inventory()['entries'] !== $expectedFiles) {
+            throw new HandoverFailure('Native import/cache/reopen changed a captured file outside the explicitly excluded runtime paths.', 'REOPEN_FILES_MISMATCH');
+        }
         $result = ['schema' => 'tjl.catalogue.native-reopen.v1', 'state' => 'COMPLETE', 'phase' => $phase,
             'operation_id' => $this->operationId, 'review_sha256' => $expected,
             'archive_sha256' => $received['archive_sha256'], 'source' => $source, 'target' => $target,
@@ -624,6 +628,13 @@ final class NativeProject
         $review = $this->requireReview($expected);
         if (isset($this->state['recover_result'])) { return $this->state['recover_result']; }
         $this->selectedCommand('drain', 'recover:drain');
+        if (isset($this->state['receive_verified'])) {
+            $current = $this->probe($this->freshStage('recover:current-target'));
+            if ($this->comparable($current) !== $this->comparable($this->state['receive_verified']['target'])
+                && $this->comparable($current) !== $this->comparable($review['target'])) {
+                throw new HandoverFailure('The verified received database has later native work; retain it before choosing a separate recovery operation.', 'TARGET_CHANGED');
+            }
+        }
         $received = $this->authenticated($review['target_backup']['path'], $key, 'target-backup');
         if ($received['archive_sha256'] !== $review['target_backup']['sha256']) { throw new HandoverFailure('Original target recovery archive changed.'); }
         // Recover only original reviewed preimages/postimages. Preserve evidence of any unknown database command.

@@ -30,7 +30,12 @@ $kernel = new $kernelClass($environment, false);
 if (!$kernel instanceof \Symfony\Component\HttpKernel\KernelInterface) { throw new RuntimeException('Selected class is not the native Symfony kernel.'); }
 $kernel->boot();
 try {
-    $registry = $kernel->getContainer()->get('doctrine');
+    $container = $kernel->getContainer();
+    $configuredStore = $container->getParameter('tjl_catalogue_workspace.directory');
+    if (!is_string($configuredStore) || realpath($configuredStore) !== realpath($config['store_root'])) {
+        throw new RuntimeException('The received native kernel does not use the explicitly selected original catalogue Store root.');
+    }
+    $registry = $container->get('doctrine');
     $connection = $registry->getConnection($config['connection'] ?? null);
     $parameters = $connection->getParams();
     $identity = [];
@@ -101,7 +106,7 @@ try {
         'composer' => ['json' => $file($project . '/composer.json'), 'lock' => $file($project . '/composer.lock'),
                        'installed' => $file($project . '/vendor/composer/installed.json')],
         'console' => $file($project . '/' . Files::relative($config['console'])),
-        'queue_mode' => $config['queue_mode'], 'observed_at' => gmdate(DATE_ATOM)];
+        'store_root' => realpath($configuredStore), 'queue_mode' => $config['queue_mode'], 'observed_at' => gmdate(DATE_ATOM)];
     Files::writeJson($options['output'], $result);
     echo Files::json(['state' => 'COMPLETE', 'output' => $options['output'], 'sha256' => hash_file('sha256', $options['output'])]) . "\n";
 } finally { $kernel->shutdown(); }
