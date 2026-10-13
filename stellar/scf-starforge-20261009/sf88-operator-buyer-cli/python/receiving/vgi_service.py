@@ -284,42 +284,75 @@ class Receiving:
 @contextmanager
 def buyer(workspace, root, export_locations):
     from stellar_forge_buyer.duckdb_http import serve
-    server, control, private_url = serve(
-        workspace, port=0, export_root=root / "query-exports",
-        handoff_root=root / "handoffs", vgi=True,
-        vgi_export_locations=export_locations)
-    thread = threading.Thread(target=server.serve_forever,
-                              name="vgi-receiving-private-operator", daemon=False)
-    thread.start()
-    parsed = urllib.parse.urlsplit(private_url)
-    base = urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, "", "", ""))
-    capability = parsed.fragment
     workspace_id = workspace.identity()["workspace_id"]
-
-    def api(path, body=None):
-        headers = {"X-DuckDB-Capability": capability,
-                   "X-DuckDB-Workspace-ID": workspace_id}
-        data = None
-        if body is not None:
-            data = encoded(body)
-            headers["Content-Type"] = "application/json"
-        request = urllib.request.Request(base + path, data=data, headers=headers,
-                                         method="POST" if body is not None else "GET")
-        try:
-            with urllib.request.urlopen(request, timeout=180) as response:
-                return json.loads(response.read())
-        except urllib.error.HTTPError as error:
-            value = json.loads(error.read())
-            raise RuntimeError("Original operator " + str(error.code) + ": "
-                               + str(value.get("error"))) from None
-
+    origin_path = private(root / "private") / "operator-origin.json"
+    original_origin = read(origin_path) if origin_path.exists() else None
+    port = 0
+    if original_origin is not None:
+        port = original_origin.get("port")
+        need(type(port) is int and 1 <= port <= 65535,
+             "The retained private operator port is invalid")
+        need(original_origin == {
+            "schema": "stellar-forge.vgi-receiving-operator-origin.v1",
+            "operation": OPERATION, "workspace_id": workspace_id,
+            "directory": str(root.resolve()), "port": port,
+            "origin": "http://127.0.0.1:" + str(port),
+        }, "The retained browser origin belongs to another receiving workspace")
+    server = None
+    thread = None
+    started = False
     try:
+        server, control, private_url = serve(
+            workspace, port=port, export_root=root / "query-exports",
+            handoff_root=root / "handoffs", vgi=True,
+            vgi_export_locations=export_locations)
+        parsed = urllib.parse.urlsplit(private_url)
+        need(parsed.scheme == "http" and parsed.hostname == "127.0.0.1"
+             and parsed.port == server.server_port and parsed.fragment
+             and (port == 0 or parsed.port == port),
+             "The private operator must retain its original loopback origin")
+        base = urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, "", "", ""))
+        capability = parsed.fragment
+        save(origin_path, {
+            "schema": "stellar-forge.vgi-receiving-operator-origin.v1",
+            "operation": OPERATION, "workspace_id": workspace_id,
+            "directory": str(root.resolve()), "port": parsed.port, "origin": base,
+        }, immutable=True)
+
+        def api(path, body=None):
+            headers = {"X-DuckDB-Capability": capability,
+                       "X-DuckDB-Workspace-ID": workspace_id}
+            data = None
+            if body is not None:
+                data = encoded(body)
+                headers["Content-Type"] = "application/json"
+            request = urllib.request.Request(base + path, data=data, headers=headers,
+                                             method="POST" if body is not None else "GET")
+            try:
+                with urllib.request.urlopen(request, timeout=180) as response:
+                    return json.loads(response.read())
+            except urllib.error.HTTPError as error:
+                value = json.loads(error.read())
+                raise RuntimeError("Original operator " + str(error.code) + ": "
+                                   + str(value.get("error"))) from None
+
+        thread = threading.Thread(target=server.serve_forever,
+                                  name="vgi-receiving-private-operator", daemon=False)
+        thread.start()
+        started = True
         yield api, base + "/vgi/#" + capability
     finally:
-        server.shutdown()
-        server.server_close()
-        thread.join(timeout=15)
-        need(not thread.is_alive(), "The original private operator is still active")
+        if server is not None:
+            try:
+                if started:
+                    server.shutdown()
+            finally:
+                try:
+                    server.server_close()
+                finally:
+                    if started:
+                        thread.join(timeout=15)
+                        need(not thread.is_alive(), "The original private operator is still active")
 
 
 def source_table(path):

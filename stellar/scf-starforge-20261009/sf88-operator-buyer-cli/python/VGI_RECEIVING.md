@@ -124,6 +124,8 @@ The input remains the original 227,992-byte C271 carrier and its unchanged wareh
 
 Reinvoke the identical command with the same source, input, selected executables and output directory after reconciling the existing native owner. `receiving.lock` retains the sole process lifetime across the installed-interpreter exec. Original source selection and action bodies are immutable, while original native request IDs and response receipts are reused. The phase journal resumes the first unfinished transition.
 
+The private operator retains its actual loopback origin in `private/operator-origin.json` before opening the browser. Continuation reuses that exact port so the persistent browser profile can reopen the original origin-bound working copies, pending requests and alternatives. An occupied original port is reported as a binding failure; the programme never silently selects a new origin. The restored-warehouse operator retains its own corresponding origin under `restored-operator/private/`. Keep both original private bindings and browser profile with the same receiving edition.
+
 If the process ends after alias retirement but before restoration, the same retained `current_access` transitions restore it before the following batch or SQL scan. The new-head assertion belongs to its completed cursor phase, and the restored listener is refreshed after access restoration. An already completed operation returns its original final result.
 
 Useful output paths under the selected directory are:
