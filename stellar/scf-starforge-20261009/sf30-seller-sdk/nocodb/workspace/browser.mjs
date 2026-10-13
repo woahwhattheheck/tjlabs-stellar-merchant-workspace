@@ -13,6 +13,7 @@ let token = new URLSearchParams(location.hash.slice(1)).get('token');
 if (token) { sessionStorage.setItem(tokenKey, token); history.replaceState(null, '', location.pathname + location.search); }
 else token = sessionStorage.getItem(tokenKey);
 let state = null, busy = false, pending = null, retryPayload = null, known = null, recovering = false;
+let initializing = true, initializationError = null;
 let metadata = null, sourceOrders = [], captureColumns = new Map(), editorColumns = new Map(), captureView = null;
 let draft = null, draftRevision = 0, dirty = false, queryName = null, preview = null, upload = null;
 let revision = 0, renderEpoch = 0, deployment = null, deploymentReview = null;
@@ -25,9 +26,11 @@ function tab(name) {
   document.querySelectorAll('[data-view]').forEach(e => e.setAttribute('aria-current', e.dataset.view === name ? 'page' : 'false'));
 }
 function lock() {
-  $('workspace-controls').disabled = !state || busy || Boolean(pending) || Boolean(handoverPending);
-  for (const id of ['check-operation','resume-operation','retry-operation','dismiss-operation','retry-file']) $(id).disabled = busy || recovering;
-  $('retry-operation').disabled = busy || recovering || (!retryPayload && Boolean(pending?.file));
+  const unavailable = initializing || Boolean(initializationError);
+  $('workspace-controls').disabled = !state || unavailable || busy || Boolean(pending) || Boolean(handoverPending);
+  for (const id of ['check-operation','resume-operation','retry-operation','dismiss-operation','retry-file']) $(id).disabled = unavailable || busy || recovering;
+  $('retry-operation').disabled = unavailable || busy || recovering || (!retryPayload && Boolean(pending?.file));
+  renderHandoverRecords();
 }
 const markerPrefix = directory => 'stellar.nocodb.pending.v1:' + directory + ':';
 const activeKey = directory => 'stellar.nocodb.active.v1:' + directory;
@@ -106,7 +109,7 @@ async function finish(result, marker) {
   notice('Saved. Original request ' + marker.requestId + '.');
 }
 async function checkReceipt() {
-  if (!pending || recovering) return;
+  if (initializing || initializationError || !pending || recovering) return;
   recovering = true; lock();
   try {
     const reply = await api('/api/operation?id=' + encodeURIComponent(pending.requestId));
@@ -116,7 +119,7 @@ async function checkReceipt() {
   finally { recovering = false; lock(); }
 }
 async function mutate(path, body, label, file = null) {
-  if (pending || busy || handoverPending) return;
+  if (initializing || initializationError || pending || busy || handoverPending) return;
   busy = true; lock(); notice('');
   try {
     const requestId = uuid(), payload = { ...clone(body), requestId };
@@ -137,7 +140,7 @@ async function mutate(path, body, label, file = null) {
   finally { busy = false; lock(); }
 }
 async function readAction(action) {
-  if (busy || pending || handoverPending) return;
+  if (initializing || initializationError || busy || pending || handoverPending) return;
   busy = true; lock(); notice('');
   try { await action(); } catch (issue) { notice(errorMessage(issue), true); } finally { busy = false; lock(); }
 }
@@ -154,7 +157,7 @@ function table(parent, headings, rows) {
   const b=node('tbody');for(const cells of rows){const r=node('tr');for(const value of cells){const c=node('td');c.append(value instanceof Node?value:node('span',shown(value)));r.append(c);}b.append(r);}t.append(b);parent.append(t);
 }
 function button(label, action) {
-  const b=node('button',label);b.type='button';b.addEventListener('click',async event=>{event.preventDefault();if(busy||pending||handoverPending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}});return b;
+  const b=node('button',label);b.type='button';b.addEventListener('click',async event=>{event.preventDefault();if(initializing||initializationError||busy||pending||handoverPending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}});return b;
 }
 function actions(...buttons){const n=node('div');n.append(...buttons);return n;}
 function description(title, detail){const n=node('div');n.append(node('strong',title),node('small',detail));return n;}
@@ -304,7 +307,7 @@ function renderDeploymentReview(){
   $('prepare-deployment').disabled=!deploymentReview;
   if(deploymentReview)out.append(node('h4','Reviewed original publication'),jsonView(deploymentReview));
 }
-function guarded(action){return async event=>{event?.preventDefault();if(busy||pending||handoverPending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}};}
+function guarded(action){return async event=>{event?.preventDefault();if(initializing||initializationError||busy||pending||handoverPending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}};}
 for(const b of document.querySelectorAll('[data-view]'))b.addEventListener('click',()=>tab(b.dataset.view));
 $('refresh').addEventListener('click',guarded(()=>readAction(()=>refresh())));
 $('load-current-draft').addEventListener('click',guarded(()=>readAction(async()=>{await refresh();if(state.draft)await loadDraft(state.draft,state.draftRevision);})));
@@ -402,13 +405,13 @@ for(const [name,get,set]of [
 })));
 $('check-operation').addEventListener('click',()=>checkReceipt());
 $('resume-operation').addEventListener('click',async()=>{
-  if(!pending||busy||recovering)return;recovering=true;lock();
+  if(initializing||initializationError||!pending||busy||recovering)return;recovering=true;lock();
   try{const marker=pending,result=await api('/api/resume',{body:{requestId:marker.requestId}});await finish(result,marker);}
   catch(issue){notice(errorMessage(issue),true);const reply=await api('/api/operation?id='+pending.requestId).catch(()=>null);if(reply){known=reply.operation;showRecovery();}}
   finally{recovering=false;lock();}
 });
 $('retry-file').addEventListener('change',async()=>{
-  if(!pending||busy||recovering)return;
+  if(initializing||initializationError||!pending||busy||recovering)return;
   try{const value=await readUpload($('retry-file').files[0]);if(value.file.bytes!==pending.file.bytes||value.file.sha256!==pending.file.sha256)throw new Error('Reselect the exact original packet bytes.');
     const payload={...pending.small,packet:value.packet,requestId:pending.requestId};
     if(await bodyHash(payload)!==pending.bodySha256)throw new Error('The retained request payload differs. Keep this original request for receipt lookup.');
@@ -416,7 +419,7 @@ $('retry-file').addEventListener('change',async()=>{
   }catch(issue){notice(errorMessage(issue),true);}
 });
 $('retry-operation').addEventListener('click',async()=>{
-  if(!pending||busy||recovering)return;recovering=true;lock();
+  if(initializing||initializationError||!pending||busy||recovering)return;recovering=true;lock();
   try{const body=retryPayload??pending.small;
     if(!body||await bodyHash(body)!==pending.bodySha256)throw new Error('The identical input is not available. Reselect its original packet or inspect the receipt.');
     const marker=pending,result=await api(marker.path,{body});await finish(result,marker);
@@ -424,7 +427,7 @@ $('retry-operation').addEventListener('click',async()=>{
   finally{recovering=false;lock();}
 });
 $('dismiss-operation').addEventListener('click',async()=>{
-  if(!pending||busy||recovering||known?.status!=='failed')return;
+  if(initializing||initializationError||!pending||busy||recovering||known?.status!=='failed')return;
   const original=pending.requestId;forget();await refresh().catch(issue=>notice(errorMessage(issue),true));
   notice('Recorded failure acknowledged. Original request '+original+' and its retained files remain in the workspace.');
 });
@@ -432,9 +435,248 @@ $('dismiss-operation').addEventListener('click',async()=>{
 let handoverPending = null, handoverUpload = null, handoverFile = null, handoverAbort = null, handoverRejected = [];
 const HANDOVER_MAX = 32 * 1024 * 1024 * 1024 + 32 * 1024 * 1024 + 13, HANDOVER_CHUNK = 1024 * 1024;
 const handoverKey = () => 'stellar.nocodb.workspace-handover.v1:' + state.directory;
-function saveHandoverState() {
-  localStorage.setItem(handoverKey(), JSON.stringify({ pending: handoverPending, upload: handoverUpload, rejected:handoverRejected }));
+const handoverPrefix = directory => 'stellar.nocodb.workspace-handover-record.v2:' + directory + ':';
+const handoverSelectionKey = directory => 'stellar.nocodb.workspace-handover-selection.v2:' + directory;
+const handoverSame = (a,b) => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
+const handoverId = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+const handoverObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+let handoverRecords = new Map(), handoverStorageError = null;
+function recoveryNeed(value, message) { if (!value) throw new Error(message); }
+function validateHandoverMarker(marker) {
+  recoveryNeed(handoverObject(marker) && ['export','upload','receive'].includes(marker.kind) &&
+    handoverId(marker.requestId) && handoverObject(marker.input) && marker.input.requestId === marker.requestId,
+    'Keep the complete original handover request and its UUID.');
+  const input=marker.input;
+  if(marker.kind==='export') recoveryNeed(Number.isSafeInteger(input.expectedDraftRevision) && input.expectedDraftRevision>=0 &&
+    (input.expectedSelectedVersion===null || Number.isSafeInteger(input.expectedSelectedVersion) && input.expectedSelectedVersion>0),
+    'The original export revision and selected version are required.');
+  if(marker.kind==='upload') recoveryNeed(Number.isSafeInteger(input.bytes) && input.bytes>0 && input.bytes<=HANDOVER_MAX &&
+    typeof input.filename==='string' && (input.sha256===null || /^[a-f0-9]{64}$/.test(input.sha256)) &&
+    handoverObject(marker.file) && marker.file.bytes===input.bytes && marker.file.name===input.filename,
+    'The original upload file, byte length and intended hash must remain unchanged.');
+  if(marker.kind==='receive') recoveryNeed(handoverId(input.uploadId) && /^[a-f0-9]{64}$/.test(input.expectedSha256) &&
+    typeof input.name==='string', 'Keep the original upload, complete hash and receiving name.');
+  return marker;
 }
+function validateHandoverUpload(value) {
+  if(value===null)return value;
+  recoveryNeed(handoverObject(value) && handoverId(value.id) && typeof value.filename==='string' &&
+    Number.isSafeInteger(value.bytes) && value.bytes>0 && value.bytes<=HANDOVER_MAX &&
+    Number.isSafeInteger(value.received) && value.received>=0 && value.received<=value.bytes &&
+    typeof value.complete==='boolean' && (!value.complete || value.received===value.bytes && /^[a-f0-9]{64}$/.test(value.sha256)),
+    'Keep the complete original native upload receipt.');
+  return value;
+}
+function handoverRecordIdentity(record) {
+  if(record.type==='request')return {kind:record.marker.kind,requestId:record.marker.requestId,input:record.marker.input,file:record.marker.file??null};
+  return record;
+}
+function validateHandoverRecord(record,key) {
+  recoveryNeed(handoverObject(record) && record.schema==='stellar-forge.nocodb-handover-browser-record.v2' &&
+    record.directory===state.directory, 'This handover record belongs to a different original workspace.');
+  let suffix;
+  if(record.type==='request'){validateHandoverMarker(record.marker);suffix='request:'+record.marker.requestId;}
+  else if(record.type==='receipt'){
+    validateHandoverMarker(record.marker);recoveryNeed(handoverObject(record.result),'The complete original result is required.');
+    suffix='receipt:'+record.marker.requestId;
+  } else if(record.type==='rejected'){
+    validateHandoverMarker(record.marker);recoveryNeed(typeof record.marker.rejectedAt==='string' && handoverObject(record.marker.error),
+      'Keep the original rejected request and reason.');suffix='rejected:'+record.marker.requestId+':'+encodeURIComponent(record.marker.rejectedAt);
+  } else if(record.type==='upload'){
+    validateHandoverUpload(record.upload);recoveryNeed(record.upload?.complete,'Only a fully verified upload can be selected.');
+    suffix='upload:'+record.upload.id;
+  } else throw new Error('Unknown retained handover record; preserve its complete download before continuing.');
+  recoveryNeed(key===handoverPrefix(state.directory)+suffix,'The original record key and identity differ.');
+  return record;
+}
+function retainHandoverRecord(type,value) {
+  const record={schema:'stellar-forge.nocodb-handover-browser-record.v2',directory:state.directory,type,...clone(value)};
+  const suffix=type==='upload'?'upload:'+record.upload.id:type+':'+record.marker.requestId+
+    (type==='rejected'?':'+encodeURIComponent(record.marker.rejectedAt):'');
+  const key=handoverPrefix(state.directory)+suffix;
+  validateHandoverRecord(record,key);
+  const raw=localStorage.getItem(key);
+  if(raw!==null){
+    const existing=validateHandoverRecord(JSON.parse(raw),key);
+    recoveryNeed(handoverSame(handoverRecordIdentity(existing),handoverRecordIdentity(record)),
+      'This UUID already retains a different original request or result. Both originals must be preserved.');
+    handoverRecords.set(key,existing);return existing;
+  }
+  localStorage.setItem(key,JSON.stringify(record));
+  handoverRecords.set(key,record);return record;
+}
+function scanHandoverRecords() {
+  const found=new Map(), prefix=handoverPrefix(state.directory);
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i);if(!key?.startsWith(prefix))continue;
+    const raw=localStorage.getItem(key);if(raw!==null)found.set(key,validateHandoverRecord(JSON.parse(raw),key));
+  }
+  for(const record of found.values()){
+    if(record.type!=='receipt'&&record.type!=='rejected')continue;
+    const original=found.get(prefix+'request:'+record.marker.requestId);
+    recoveryNeed(original&&handoverSame(handoverRecordIdentity(original),
+      handoverRecordIdentity({type:'request',marker:record.marker})),
+      'Keep the original input paired with its accepted result or rejection.');
+  }
+  handoverRecords=found;
+}
+function saveHandoverState() {
+  try {
+    if(handoverPending)handoverPending=clone(retainHandoverRecord('request',{marker:handoverPending}).marker);
+    for(const marker of handoverRejected){retainHandoverRecord('request',{marker});retainHandoverRecord('rejected',{marker});}
+    validateHandoverUpload(handoverUpload);
+    sessionStorage.setItem(handoverSelectionKey(state.directory),JSON.stringify({
+      schema:'stellar-forge.nocodb-handover-browser-selection.v2',directory:state.directory,
+      requestId:handoverPending?.requestId??null,upload:clone(handoverUpload)
+    }));
+    handoverStorageError=null;
+  } catch(issue) { handoverStorageError=issue;throw issue; }
+}
+function handoverControl(label, action, disabled=false) {
+  const control=node('button',label);control.type='button';control.disabled=disabled;
+  control.addEventListener('click',event=>{event.preventDefault();Promise.resolve().then(action).catch(issue=>notice(errorMessage(issue),true));});
+  return control;
+}
+function downloadRecoveryRecords() {
+  const originals=[],readErrors=[];
+  if(state) {
+    try {
+      const prefixes=[handoverPrefix(state.directory),markerPrefix(state.directory)],legacy=handoverKey();
+      for(let i=0;i<localStorage.length;i++){
+        const key=localStorage.key(i);
+        if(key===legacy||prefixes.some(prefix=>key?.startsWith(prefix)))originals.push({key,text:localStorage.getItem(key)});
+      }
+    }catch(issue){readErrors.push(errorMessage(issue));}
+  }
+  const value={schema:'stellar-forge.nocodb-browser-recovery-records.v1',directory:state?.directory??null,
+    savedAt:new Date().toISOString(),pending:clone(pending),handoverPending:clone(handoverPending),
+    handoverUpload:clone(handoverUpload),handoverRejected:clone(handoverRejected),
+    records:[...handoverRecords.values()].map(clone),originals,readErrors};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)+'\n'],{type:'application/json'}));
+  const a=node('a');a.href=url;a.download='NocoDB-original-recovery-records.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function renderHandoverRecords() {
+  const out=$('handover-retained-records');if(!out)return;
+  out.replaceChildren(node('h2','Retained handover requests'));
+  out.append(node('p','Each original UUID remains available across windows. Opening a record selects it for receipt lookup; it sends nothing. Archive bytes stay on the original host.','help'));
+  out.append(handoverControl('Download complete recovery records',downloadRecoveryRecords));
+  const blocked=initializing||Boolean(initializationError)||busy||recovering||Boolean(pending);
+  out.append(handoverControl('Reload local recovery records',()=>restoreRecoveryState(),busy||recovering||initializing));
+  if(initializationError||handoverStorageError)out.append(node('p',errorMessage(initializationError||handoverStorageError),'error'));
+  const requests=[...handoverRecords.values()].filter(r=>r.type==='request');
+  const uploads=[...handoverRecords.values()].filter(r=>r.type==='upload');
+  const wrap=node('div',null,'table-wrap');out.append(wrap);
+  table(wrap,['Original request','State','Retained input','Actions'],requests.map(record=>{
+    const marker=record.marker;
+    const receipt=handoverRecords.get(handoverPrefix(state.directory)+'receipt:'+marker.requestId);
+    const rejected=[...handoverRecords.values()].filter(r=>r.type==='rejected'&&r.marker.requestId===marker.requestId);
+    const details=node('details');details.append(node('summary','Complete original request and history'),jsonView({request:marker,receipt:receipt??null,rejected}));
+    const select=handoverControl(receipt?'Review recorded result':'Open retained request',()=>{
+      if(initializing||initializationError||busy||recovering||pending)return;
+      if(receipt){details.open=true;return;}
+      if(handoverPending)saveHandoverState();
+      const previous={pending:handoverPending,upload:handoverUpload,file:handoverFile};
+      handoverPending=clone(marker);handoverFile=null;
+      try{saveHandoverState();}catch(issue){handoverPending=previous.pending;handoverUpload=previous.upload;handoverFile=previous.file;throw issue;}
+      renderHandoverRecovery('Original request selected. Check its saved receipt before retrying the same input.');tab('handover');
+    },blocked||rejected.length>0&&!receipt);
+    return [description(marker.kind+' · '+marker.requestId,when(marker.createdAt)),receipt?'Recorded complete':rejected.length?'Rejected original':handoverPending?.requestId===marker.requestId?'Selected original':'Retained original',details,select];
+  }));
+  if(uploads.length){
+    out.append(node('h3','Previously verified complete uploads'));
+    for(const record of uploads){
+      const value=record.upload;
+      out.append(node('p',value.filename+' · '+value.bytes+' bytes · '+value.sha256,'path'),
+        handoverControl('Select verified upload '+value.id,()=>{
+          if(initializing||initializationError||busy||recovering||pending||handoverPending)return;
+          const previous=handoverUpload;handoverUpload=clone(value);
+          try{saveHandoverState();}catch(issue){handoverUpload=previous;throw issue;}renderHandoverUpload();
+        },blocked||Boolean(handoverPending)));
+    }
+  }
+}
+async function restoreSourceRequest() {
+  const active=sessionStorage.getItem(activeKey(state.directory));
+  if(!active)return;
+  recoveryNeed(handoverId(active),'The retained source request UUID is invalid. Preserve its complete recovery download.');
+  const text=localStorage.getItem(markerPrefix(state.directory)+active);
+  recoveryNeed(text!==null,'The selected original source request is missing from browser storage.');
+  const original=JSON.parse(text);
+  const paths=['/api/return/capture','/api/return/review','/api/return/apply','/api/discover','/api/capture','/api/import-package','/api/draft','/api/preview','/api/version','/api/select',
+    '/api/publisher/start','/api/publisher/stop','/api/deployment/review','/api/deployment/prepare','/api/deployment/stage',
+    '/api/deployment/console/open','/api/deployment/console/close'];
+  recoveryNeed(handoverObject(original)&&original.directory===state.directory&&original.requestId===active&&
+    paths.includes(original.path)&&/^[a-f0-9]{64}$/.test(original.bodySha256)&&handoverObject(original.small),
+    'Keep the complete original source request and workspace selection.');
+  if(original.file)recoveryNeed(handoverObject(original.file)&&typeof original.file.name==='string'&&
+    Number.isSafeInteger(original.file.bytes)&&original.file.bytes>0&&/^[a-f0-9]{64}$/.test(original.file.sha256),
+    'Keep the original source packet identity.');
+  else recoveryNeed(original.small.requestId===active&&await bodyHash(original.small)===original.bodySha256,
+    'The saved original source request hash does not match.');
+  pending=original;retryPayload=original.file?null:original.small;known=null;showRecovery();
+}
+async function restoreHandoverState() {
+  scanHandoverRecords();
+  const legacyRaw=localStorage.getItem(handoverKey());
+  let legacy=null;
+  if(legacyRaw!==null){
+    legacy=JSON.parse(legacyRaw);recoveryNeed(handoverObject(legacy),'Keep the complete original legacy handover record.');
+    if(legacy.pending)retainHandoverRecord('request',{marker:validateHandoverMarker(legacy.pending)});
+    recoveryNeed(legacy.rejected===undefined||Array.isArray(legacy.rejected),'Keep every original rejected request.');
+    for(const marker of legacy.rejected??[]){retainHandoverRecord('request',{marker});retainHandoverRecord('rejected',{marker});}
+    validateHandoverUpload(legacy.upload??null);
+    if(legacy.upload?.complete&&legacy.pending?.requestId!==legacy.upload.id)retainHandoverRecord('upload',{upload:legacy.upload});
+    // The original directory-wide record is never overwritten or deleted.
+  }
+  const raw=sessionStorage.getItem(handoverSelectionKey(state.directory));
+  let selected;
+  if(raw!==null){
+    selected=JSON.parse(raw);
+    recoveryNeed(handoverObject(selected)&&selected.schema==='stellar-forge.nocodb-handover-browser-selection.v2'&&
+      selected.directory===state.directory&&(selected.requestId===null||handoverId(selected.requestId)),
+      'Keep the original window recovery selection.');
+    validateHandoverUpload(selected.upload??null);
+  }else selected={requestId:legacy?.pending?.requestId??null,upload:legacy?.upload??null};
+  let original=null;
+  if(selected.requestId){
+    original=handoverRecords.get(handoverPrefix(state.directory)+'request:'+selected.requestId)?.marker;
+    recoveryNeed(original,'The selected complete handover request is missing.');
+  }
+  if(handoverPending){
+    // Reloading storage must not discard an in-memory original after a failed write.
+    retainHandoverRecord('request',{marker:handoverPending});original=handoverPending;
+  }
+  handoverPending=clone(original);handoverUpload=clone(selected.upload??null);
+  if(original){
+    const completed=handoverRecords.get(handoverPrefix(state.directory)+'receipt:'+original.requestId);
+    const rejected=[...handoverRecords.values()].some(r=>r.type==='rejected'&&r.marker.requestId===original.requestId);
+    if(completed){
+      recoveryNeed(handoverSame(handoverRecordIdentity({type:'request',marker:completed.marker}),
+        handoverRecordIdentity({type:'request',marker:original})),'The original accepted result belongs to another input.');
+      if(original.kind==='upload')handoverUpload=clone(validateHandoverUpload(completed.result));
+      handoverPending=null;
+    }else if(rejected)handoverPending=null;
+  }
+  handoverRejected=[...handoverRecords.values()].filter(r=>r.type==='rejected').map(r=>clone(r.marker));
+  saveHandoverState();renderHandoverRecovery();renderHandoverUpload();
+}
+async function restoreRecoveryState() {
+  if(initializing||busy||recovering||!state)return;
+  initializing=true;initializationError=null;lock();
+  try { await restoreSourceRequest();await restoreHandoverState(); }
+  catch(issue){initializationError=issue;notice(errorMessage(issue),true);}
+  finally{initializing=false;lock();renderHandoverRecovery();renderHandoverRecords();}
+}
+const handoverRecordPanel=node('section');handoverRecordPanel.id='handover-retained-records';
+handoverRecordPanel.className='recovery';$('handover-recovery').after(handoverRecordPanel);
+window.addEventListener('storage',event=>{
+  if(!state||!(event.key===null||event.key===handoverKey()||event.key?.startsWith(handoverPrefix(state.directory))))return;
+  try{scanHandoverRecords();}
+  catch(issue){handoverStorageError=issue;initializationError=issue;}
+  // A detected inconsistent record closes writes until a complete local restore succeeds.
+  renderHandoverRecovery();
+});
 function renderHandoverRecovery(message = '') {
   $('handover-recovery').hidden = !handoverPending;
   if (handoverPending) {
@@ -444,7 +686,7 @@ function renderHandoverRecovery(message = '') {
     $('handover-reselect-label').hidden = handoverPending.kind !== 'upload';
     $('handover-retry').textContent = handoverPending.kind === 'upload' ? 'Resume with the same file' : 'Retry original request';
   }
-  for (const name of ['handover-check','handover-retry','handover-reselect']) $(name).disabled = busy || recovering;
+  for (const name of ['handover-check','handover-retry','handover-reselect']) $(name).disabled = initializing || Boolean(initializationError) || busy || recovering || Boolean(pending);
   $('handover-pause').hidden = !handoverAbort;
   $('handover-pause').disabled = !handoverAbort;
   lock();
@@ -519,6 +761,8 @@ async function refreshHandovers() {
   ]));
 }
 async function completeHandover(result, marker) {
+  retainHandoverRecord('receipt',{marker,result});
+  finishHandoverMarker(marker);
   await refreshHandovers();
   if (marker.kind === 'export') {
     $('handover-download-note').textContent = 'Saved ' + result.filename + ' · ' + result.bytes + ' bytes · SHA256 ' + result.sha256 + '. Download the exact file from the list.';
@@ -526,11 +770,12 @@ async function completeHandover(result, marker) {
   } else if (marker.kind === 'receive') {
     $('handover-opened').hidden=false;$('handover-opened').replaceChildren(node('p','Received independent workspace ' + result.name + '. Open it from the saved receiving list.'));
   }
-  finishHandoverMarker(marker);
   notice('Saved original whole-workspace ' + marker.kind + ' request ' + marker.requestId + '.');
 }
 async function submitHandover(marker) {
   try {
+    validateHandoverMarker(marker);
+    retainHandoverRecord('request',{marker});saveHandoverState();
     const result = await handoverApi('/api/workspace/' + marker.kind, {method:'POST',body:marker.input});
     await completeHandover(result, marker);
   } catch (issue) {
@@ -545,7 +790,7 @@ async function submitHandover(marker) {
   }
 }
 async function checkHandover() {
-  if (!handoverPending || busy || recovering) return;
+  if (initializing || initializationError || pending || !handoverPending || busy || recovering) return;
   recovering=true;renderHandoverRecovery();
   try {
     const marker=handoverPending;
@@ -569,7 +814,9 @@ async function checkHandover() {
   finally{recovering=false;renderHandoverRecovery();}
 }
 async function streamHandoverUpload(file, marker) {
+  validateHandoverMarker(marker);
   if(!file || file.size!==marker.file.bytes)throw new Error('Select the complete original archive with the same byte length. Every retained byte is compared by the original host.');
+  retainHandoverRecord('request',{marker});saveHandoverState();
   handoverAbort=new AbortController();renderHandoverRecovery('Uploading original archive…');
   try{
     try {
@@ -594,12 +841,14 @@ async function streamHandoverUpload(file, marker) {
     handoverUpload=await handoverApi('/api/workspace/upload/finish',{method:'POST',body:{requestId:marker.requestId},signal:handoverAbort.signal});
     if(!handoverUpload.complete || handoverUpload.bytes!==file.size || !/^[a-f0-9]{64}$/.test(handoverUpload.sha256))
       throw new Error('The host has not returned a complete exact archive identity.');
+    retainHandoverRecord('upload',{upload:handoverUpload});
+    retainHandoverRecord('receipt',{marker,result:handoverUpload});
     saveHandoverState();finishHandoverMarker(marker);renderHandoverUpload();
     $('handover-progress').textContent='Complete archive retained and verified. Review its SHA256 before receiving.';
   }finally{handoverAbort=null;renderHandoverRecovery();}
 }
 async function runHandover(action) {
-  if(busy||recovering||pending)return;
+  if(initializing||initializationError||busy||recovering||pending)return;
   busy=true;lock();renderHandoverRecovery();notice('');
   try{await action();}catch(issue){notice(errorMessage(issue),true);renderHandoverRecovery('The original request is retained. '+errorMessage(issue));}
   finally{busy=false;lock();renderHandoverRecovery();}
@@ -635,6 +884,7 @@ $('handover-receive-form').addEventListener('submit',guarded(()=>runHandover(asy
 })));
 $('handover-check').addEventListener('click',checkHandover);
 $('handover-reselect').addEventListener('change',()=>{
+  if(initializing||initializationError||busy||recovering||pending)return;
   handoverFile=$('handover-reselect').files[0]??null;
   renderHandoverRecovery(handoverFile?'Selected '+handoverFile.name+'. Resume will compare its complete bytes against this original upload.':'');
 });
@@ -643,12 +893,7 @@ $('handover-retry').addEventListener('click',()=>runHandover(async()=>{
   if(marker.kind==='upload')await streamHandoverUpload(handoverFile,marker);else await submitHandover(marker);
 }));
 $('handover-pause').addEventListener('click',()=>handoverAbort?.abort());
-async function restoreHandoverState() {
-  const saved=localStorage.getItem(handoverKey());
-  if(saved){const value=JSON.parse(saved);handoverPending=value.pending??null;handoverUpload=value.upload??null;handoverRejected=Array.isArray(value.rejected)?value.rejected:[];}
-  renderHandoverRecovery();renderHandoverUpload();
-  await refreshHandovers();
-}
+
 
 
 // Source-bound review of a complete, already received independent workspace.
@@ -882,11 +1127,14 @@ $('return-carry').addEventListener('click',guarded(()=>readAction(carryReturnedC
 
 try{
   await refresh();
+  // Restore both authoritative local selections before optional remote lists.
+  await restoreSourceRequest();
   await restoreHandoverState();
-  await refreshReturnedInventory();
-  const active=sessionStorage.getItem(activeKey(state.directory));
-  if(active){try{pending=JSON.parse(localStorage.getItem(markerPrefix(state.directory)+active));}catch{}}
-  if(pending){retryPayload=pending.file?null:pending.small;showRecovery();await checkReceipt();}
-  else if(state.draft)await loadDraft(state.draft,state.draftRevision);
-}catch(issue){notice(errorMessage(issue),true);lock();}
-
+}catch(issue){initializationError=issue;notice(errorMessage(issue),true);}
+finally{initializing=false;lock();renderHandoverRecovery();renderHandoverUpload();}
+if(!initializationError){
+  if(pending)await checkReceipt();
+  else if(state.draft)await loadDraft(state.draft,state.draftRevision).catch(issue=>notice(errorMessage(issue),true));
+  await refreshReturnedInventory().catch(issue=>notice('Saved returned reviews could not be read. Original recovery records remain available. '+errorMessage(issue),true));
+  await refreshHandovers().catch(issue=>notice('Saved handovers could not be read. Original recovery records remain available. '+errorMessage(issue),true));
+}
