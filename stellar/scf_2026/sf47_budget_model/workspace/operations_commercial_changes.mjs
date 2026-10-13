@@ -6,6 +6,31 @@ const day=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffse
 const download=(blob,name)=>{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);};
 const human=value=>String(value||'').toLowerCase().replaceAll('_',' ').replace(/^./,s=>s.toUpperCase());
 
+/** Select only an authoritative refusal of the exact original pending intent. */
+export function rejectedCommercialAction(original,row){
+  if(!original||!row||original.changeId!==row.id||
+     original.body?.expectedProposalSha256!==row.proposalSha256||!Array.isArray(row.commands))return null;
+  if(original.action==='apply'){
+    // An acknowledged earlier replacement step must finish through its original
+    // remaining request. Only the unused first step can release this browser action.
+    const command=row.commands[0],step=row.proposal?.steps?.[0];
+    if(!['PREPARED','RUNNING'].includes(row.state)||row.commands.length!==1||!step||
+       command.index!==0||command.action!==step.action||command.state!=='REJECTED'||
+       command.requestId!==row.id+'-step-1'||command.body?.requestId!==command.requestId)return null;
+    return {changeId:row.id,proposalSha256:row.proposalSha256,state:row.state,command:copy(command)};
+  }
+  if(original.action==='issue'){
+    const command=row.commands.find(c=>c.action==='issue');
+    if(row.state!=='APPLIED'||!command||command.state!=='REJECTED'||
+       command.requestId!==row.id+'-issue'||command.body?.requestId!==command.requestId||
+       command.review?.id!==row.id||command.review?.proposalSha256!==row.proposalSha256||
+       command.review?.invoiceId!==row.activeInvoiceId||command.body?.invoiceId!==row.activeInvoiceId||
+       command.review?.issuePreviewSha256!==original.body.expectedIssuePreviewSha256)return null;
+    return {changeId:row.id,proposalSha256:row.proposalSha256,state:row.state,command:copy(command)};
+  }
+  return null;
+}
+
 /** Source-backed changes remain within the original case and native account. */
 export function mountCommercialChanges({container,current,billing,milestone,api,saveApi,mutationId,recordingActor,staffContext,onClose,onSources}){
   if(!document.querySelector('link[data-commercial-changes-style]')){
@@ -44,7 +69,7 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
     return '<label><span>'+esc(label)+'</span>'+control+'</label>';
   }
   function busy(){root.setAttribute('aria-busy',String(state.busy||hostBusy));root.querySelectorAll('button,input,select,textarea').forEach(e=>{
-    const recovery=['resume','download-desk','download-request','close','refresh'].includes(e.dataset.changeAction);
+    const recovery=['resume','download-desk','download-request','download-rejected','close','refresh'].includes(e.dataset.changeAction);
     e.disabled=state.busy||hostBusy||e.dataset.fixed==='true'||Boolean(session.pending&&!recovery);
   });}
   async function run(fn){if(!visible()||state.busy||hostBusy)return;capture();state.busy=true;state.error=false;state.message='';busy();try{await fn();}catch(e){state.error=true;state.message=e.message||String(e);}finally{state.busy=false;persist();if(visible())render();}}
@@ -54,6 +79,18 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
       ['apply','cancel','issue'].includes(op.action)&&typeof op.changeId==='string'?selectedPath(op.changeId)+'/'+op.action:null;
     if(!expected||op.endpoint!==expected)throw Error('This action belongs to another customer or milestone.');
     assertStaffRequestActor(op.body,context);return op;
+  }
+  function receiveRejection(row){
+    const original=session.pending;if(!original)return false;
+    validateAction(original);const outcome=rejectedCommercialAction(original,row);if(!outcome)return false;
+    const previous=copy(session),receivedAt=new Date().toISOString();
+    const retained={...copy(original),disposition:'REJECTED',receivedAt,nativeOutcome:outcome};
+    session.rejectedRequests=[...(session.rejectedRequests||[]),retained];session.lastRequest=copy(retained);
+    session.pending=null;
+    try{persist(true);}catch(error){session=previous;throw error;}
+    state.review=null;state.reviewInput=null;state.issue=null;state.row=row;
+    state.message='Received the original native refusal. Its complete action remains in rejected history; review a correction, cancellation or the same original request.';
+    return true;
   }
   async function sendOriginal(op=null){
     if(op){if(session.pending)throw Error('Resume the original retained action first.');validateAction(op);session.pending={...copy(op),createdAt:new Date().toISOString()};}
@@ -69,7 +106,12 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
       if(original.action==='prepare'&&[400,409,413,415,422].includes(e.status)&&e.code!=='REQUEST_CONFLICT'){
         session.lastRequest=copy(original);session.pending=null;
       }
-      persist();throw e;
+      persist();
+      if(session.pending===original&&original.changeId){
+        try{receiveRejection(await api(selectedPath(original.changeId)));}
+        catch(journalError){if(session.pending)session.pending.journalReadError={message:journalError.message||String(journalError),at:new Date().toISOString()};persist();}
+      }
+      throw e;
     }
   }
   async function refresh(wanted=session.selected){
@@ -77,6 +119,7 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
     state.current=program;state.items=listing.items;state.head=listing.previousChangeId;
     const found=state.items.find(x=>x.id===wanted)||state.items.at(-1);
     session.selected=found?.id||null;state.row=found?await api(selectedPath(found.id)):null;
+    if(state.row)receiveRejection(state.row);
     if(state.row){const fresh=await saveApi(selectedPath(state.row.id)+'/refresh',{});state.row=fresh;}
   }
   function snapshot(){return {schema:SCHEMA,caseId:current.program.id,preparedId:billing.id,milestoneId:milestone.milestoneId,session:copy(session)};}
@@ -87,7 +130,18 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
     if(value.schema!==SCHEMA||value.caseId!==current.program.id||value.preparedId!==billing.id||value.milestoneId!==milestone.milestoneId||!value.session?.inputs)throw Error('Open this case and milestone’s original change desk.');
     if(session.pending)throw Error('Receive the current original action before opening another desk.');
     if(value.session.pending)validateAction(value.session.pending);
+    if(value.session.rejectedRequests!==undefined){
+      if(!Array.isArray(value.session.rejectedRequests))throw Error('Retain the complete rejected-action history.');
+      for(const original of value.session.rejectedRequests)validateAction(original);
+    }
     downloadDesk();session=copy(value.session);state.review=null;state.issue=null;persist(true);await refresh();state.message='Opened the retained source fields and original customer action.';
+  }
+  function rejectedHistory(){
+    const rows=session.rejectedRequests||[];if(!rows.length)return '';
+    return '<section class="change-card"><h3>Retained rejected actions</h3><p>Each complete original action and its matching native refusal remain available.</p><ol>'+
+      rows.map((original,index)=>'<li>'+esc(human(original.action))+' · '+esc(new Date(original.receivedAt).toLocaleString())+
+        '<br>'+esc(original.nativeOutcome?.command?.lastError?.message||original.error?.message||'Original native refusal')+
+        '<br><button type="button" data-change-action="download-rejected" data-rejected-index="'+index+'">Download this complete original action</button></li>').join('')+'</ol></section>';
   }
   function money(value,currency=billing.schedule.currency){return esc(value??'—')+' '+esc(currency?.code||'');}
   function proposalView(proposal,heading){
@@ -155,7 +209,7 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
       (session.pending?'<p>'+esc(session.pending.error?.message||'The original customer action is retained. Receive its result before another action.')+'</p>'+button('Resume original action','resume'):'')+
       (state.items.length?'<label><span>Change history</span><select data-change-history>'+state.items.map(x=>'<option value="'+esc(x.id)+'"'+(x.id===session.selected?' selected':'')+'>'+
         esc('Change '+x.sequence+' · '+human(x.state)+' · '+human(x.mode||x.proposal?.mode))+'</option>').join('')+'</select></label>':'<p>No milestone change has been prepared.</p>')+'</section>'+
-      retainedView()+issueView()+
+      rejectedHistory()+retainedView()+issueView()+
       '<section class="change-card"><h3>Review a customer amendment</h3><p>Select the original customer authorization already retained in this case. The original Workshare remains attached to the billing history.</p>'+
       '<form data-change-form><div class="change-grid">'+
       field('mode','Change','DRAFT_EDIT',{options:[['DRAFT_EDIT','Correct an unissued draft'],['CREDIT','Reduce an issued amount by credit'],['VOID','Void an unpaid invoice'],['REPLACE','Replace an issued invoice']]} )+
@@ -188,6 +242,10 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
     const target=e.target.closest('[data-change-action]');if(!target||target.disabled)return;const action=target.dataset.changeAction;
     if(action==='close'){capture();onClose();return;}
     if(action==='download-desk'){downloadDesk();return;}
+    if(action==='download-rejected'){
+      const original=session.rejectedRequests?.[Number(target.dataset.rejectedIndex)];
+      if(original)download(new Blob([JSON.stringify(original,null,2)+'\n'],{type:'application/json'}),'milestone-rejected-action.json');return;
+    }
     if(action==='download-request'){download(new Blob([JSON.stringify(session.pending||session.lastRequest,null,2)+'\n'],{type:'application/json'}),'milestone-original-action.json');return;}
     if(action==='open-desk'){root.querySelector('[data-change-desk-file]').click();return;}
     if(action==='sources'){capture();onSources?.();return;}
