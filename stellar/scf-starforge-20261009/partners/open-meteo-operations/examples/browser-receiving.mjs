@@ -14,7 +14,7 @@ const ORIGINAL_ARCHIVE_BYTES=33416;
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const fail=(code,details)=>{throw Object.assign(new Error(code),{code,details});};
 function options(args){
- const allowed=new Set(['--runtime','--archive','--output','--chrome','--playwright','--owner','--report-title','--archive-sha256','--archive-bytes']);
+ const allowed=new Set(['--runtime','--archive','--output','--chrome','--playwright','--owner','--report-title','--archive-sha256','--archive-bytes','--next-package']);
  const result={};
  for(let i=0;i<args.length;i++){const key=args[i];if(!allowed.has(key)||result[key]!==undefined||!args[i+1])fail('OPTION_INVALID',key);result[key]=args[++i];}
  for(const name of ['--runtime','--archive','--output','--chrome'])if(!result[name])fail('OPTION_REQUIRED',name);
@@ -265,12 +265,179 @@ async function main(){
    first:await runCli('cold-first-reopen',['status','--settings',join(firstRoot,'settings.json')]),
    second:await runCli('cold-second-reopen',['status','--settings',join(secondRoot,'settings.json')])
   }));
+
+  let renewalOperation=null;
+  const renewalSelectionPath=join(logs,'renewal-source-selection.json');
+  if(opt['--next-package']||await exists(renewalSelectionPath)){
+   const priorSelection=await exists(renewalSelectionPath)?await json(renewalSelectionPath):null;
+   const selectedPath=resolve(opt['--next-package']??priorSelection.originalPath);
+   const retainedNext=join(deliveries,'next-provider-source.weather.json');
+   const nextContent=await readFile(await exists(selectedPath)?selectedPath:retainedNext,'utf8');
+   const nextInspection=inspectWeatherHandover(nextContent);
+   const renewalSelection={schema:'stellar-forge.weather-browser-renewal-selection.v1',
+    originalPath:selectedPath,bytes:Buffer.byteLength(nextContent),sha256:sha(nextContent),
+    baselineReportId:newReport.id,baselineReportSha256:newReport.sha256,
+    packageSha256:nextInspection.packageSha256,sourceReportId:nextInspection.value.report.id};
+   if(priorSelection&&!equal(priorSelection,renewalSelection))fail('RENEWAL_SOURCE_PACKAGE_CHANGED');
+   if(nextInspection.review.sourceCount!==3||nextInspection.review.selectedDecisions!==3)fail('RENEWAL_COMPLETE_SOURCE_PACKAGE_REQUIRED');
+   await retained(retainedNext,nextContent);
+   if(!priorSelection)await atomic(renewalSelectionPath,renewalSelection);
+   const {normalizeWeatherRenewal}=await import(pathToFileURL(join(source,'renewal.mjs')));
+   const authenticated=async(p,path,input)=>p.evaluate(async({path,input})=>{
+    const response=await fetch(path,input===undefined?{cache:'no-store'}:
+     {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(input)});
+    const value=await response.json();if(!response.ok)throw new Error(value.error??'HTTP_'+response.status);return value;
+   },{path,input});
+   first=await launch(firstRoot);({context,page}=await newPage(first));
+   const nextReceived=await phase('receive-next-provider-edition',()=>receiveViaBrowser(page,retainedNext,nextInspection.packageSha256));
+   const nextPlan=prepareWeatherReceiving(nextInspection);
+   if(!equal(nextReceived.result.receipt.mapping,nextPlan.mapping))fail('RENEWAL_SOURCE_RECEIVING_CHANGED');
+   const afterNext=await inspectState(page);
+   for(const capture of nextPlan.captures){
+    const {raw,view,...descriptor}=capture;
+    if(!equal(afterNext.captures.find(item=>item.id===capture.id),descriptor))fail('RENEWAL_ORIGINAL_CAPTURE_CHANGED',capture.id);
+   }
+   const renewedReview=await phase('review-complete-next-edition',async()=>{
+    await page.locator('[data-tab="reports"]').click();
+    const loaded=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/reports/'+newReport.id+'/renewal'&&response.request().method()==='GET');
+    await page.locator('[data-action="renew-report"][data-id="'+newReport.id+'"]').click();
+    const response=await loaded,choices=await response.json();
+    if(!response.ok()||!equal(choices.report,newReport))fail('RENEWAL_BASELINE_REPORT_CHANGED');
+    await page.locator('#renewal-form').waitFor();
+    const selected={...choices.selection,title:'Renewed customer weather operating review',owner,
+     notes:'Complete next source edition. Retain the customer’s current rules, original threshold units and earlier source history. Each selected UTC window follows its retained provider response.',
+     entries:choices.entries.map(choice=>{
+      const working=choice.working;
+      const originalSource=afterNext.captures.find(capture=>capture.id===working.captureId);
+      if(!originalSource)fail('RENEWAL_WORKING_SOURCE_MISSING',working.captureId);
+      const candidates=nextPlan.report.decisions.filter(decision=>{
+       const capture=nextPlan.captures.find(item=>item.id===decision.captureId);
+       return capture?.metadata.family===originalSource.metadata.family&&decision.rule.variable===working.rule.variable;
+      });
+      if(candidates.length!==1)fail('RENEWAL_NEXT_SOURCE_AMBIGUOUS',working.id);
+      const next=candidates[0],capture=nextPlan.captures.find(item=>item.id===next.captureId);
+      if(!choice.candidates.some(item=>item.id===capture.id))fail('RENEWAL_NEXT_SOURCE_INCOMPATIBLE',working.id);
+      return {decisionId:working.id,expectedRevision:working.revision,captureId:capture.id,
+       startUtc:next.rule.startUtc,endUtc:next.rule.endUtc,disposition:'monitor',
+       notes:'Monitor this explicitly selected '+capture.metadata.family+' edition using the current reviewed rule. Original retrieval: '+capture.provenance.retrievedAt+'.'};
+     })};
+    await page.locator('#renewal-form [name="renewalTitle"]').fill(selected.title);
+    await page.locator('#renewal-form [name="renewalOwner"]').fill(selected.owner);
+    await page.locator('#renewal-form [name="renewalNotes"]').fill(selected.notes);
+    for(let index=0;index<selected.entries.length;index++){
+     const entry=selected.entries[index];
+     await page.locator('#renewal-form [name="capture-'+index+'"]').selectOption(entry.captureId);
+     await page.locator('#renewal-form [name="start-'+index+'"]').fill(entry.startUtc);
+     await page.locator('#renewal-form [name="end-'+index+'"]').fill(entry.endUtc);
+     await page.locator('#renewal-form [name="disposition-'+index+'"]').selectOption(entry.disposition);
+     await page.locator('#renewal-form [name="notes-'+index+'"]').fill(entry.notes);
+    }
+    const reviewed=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/renewal/review'&&response.request().method()==='POST');
+    await page.locator('#renewal-form button').filter({hasText:'Review complete next edition'}).click();
+    const reviewResponse=await reviewed,review=await reviewResponse.json();
+    if(!reviewResponse.ok()||!equal(review.selection,normalizeWeatherRenewal(selected))||
+     review.sourceReport.id!==newReport.id||review.sourceReport.sha256!==newReport.sha256||
+     review.entries.length!==selected.entries.length)fail('RENEWAL_COMPLETE_REVIEW_CHANGED',review);
+    for(const entry of review.entries){
+     const choice=choices.entries.find(item=>item.working.id===entry.proposed.id);
+     const chosen=selected.entries.find(item=>item.decisionId===entry.proposed.id);
+     if(!choice||!chosen||!equal(entry.baseline,choice.baseline)||!equal(entry.ruleSource,choice.working)||
+      entry.proposed.captureId!==chosen.captureId||entry.proposed.revision!==chosen.expectedRevision+1||
+      !equal(entry.proposed.rule,{...choice.working.rule,startUtc:chosen.startUtc,endUtc:chosen.endUtc}))
+       fail('RENEWAL_CURRENT_RULE_CHANGED',entry.proposed.id);
+    }
+    await page.locator('[data-action="commit-renewal"]:not([disabled])').waitFor();
+    await shot(page,'10-complete-renewal-review-desktop');
+    await shot(page,'11-complete-renewal-review-phone',390);
+    await page.setViewportSize({width:1440,height:1000});
+    return review;
+   });
+   const commitInput={selection:renewedReview.selection,expectedReviewSha256:renewedReview.reviewSha256};
+   const renewed=await phase('create-reviewed-next-edition',async()=>{
+    const button=page.locator('[data-action="commit-renewal"]:not([disabled])');
+    let result;
+    if(await button.count()){
+     const committed=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/renewal/commit'&&response.request().method()==='POST');
+     await button.click();
+     const response=await committed;result=await response.json();
+     if(!response.ok()||!equal(response.request().postDataJSON(),commitInput))fail('RENEWAL_ACCEPTED_INPUT_CHANGED',result);
+    }else result=await authenticated(page,'/api/renewal/commit',commitInput);
+    if(result.reviewSha256!==renewedReview.reviewSha256||result.report.renewal?.sourceReport.sha256!==newReport.sha256)
+     fail('RENEWAL_SAVED_REPORT_CHANGED',result);
+    const expected=renewedReview.entries.map(entry=>entry.proposed).sort((a,b)=>a.id.localeCompare(b.id));
+    const actual=result.report.decisions.map(({createdAt,...decision})=>decision).sort((a,b)=>a.id.localeCompare(b.id));
+    if(!equal(actual,expected))fail('RENEWAL_SAVED_DECISIONS_CHANGED');
+    return result;
+   });
+   await phase('reopen-accepted-renewal',async()=>{
+    const same=await authenticated(page,'/api/renewal/commit',commitInput);
+    if(!same.reopened||!equal(same.report,renewed.report)||same.reviewSha256!==renewed.reviewSha256)fail('RENEWAL_COMMIT_REPLAY_CHANGED');
+    return same;
+   });
+   await page.locator('#refresh').click();await page.locator('[data-tab="reports"]').click();
+   const renewedHandover=join(deliveries,'renewed-customer-report.weather.json'),renewedZip=join(deliveries,'renewed-customer-report.zip');
+   const renewedDownloads=await phase('download-complete-renewed-delivery',async()=>{
+    const outputs=[];
+    for(const [format,name]of [['handover','renewed-customer-report.weather.json'],['zip','renewed-customer-report.zip'],
+     ['html','renewed-customer-report.html'],['json','renewed-customer-report.json']])
+      outputs.push(await download(page,'/api/reports/'+renewed.report.id+'/download?format='+format,join(deliveries,name)));
+    await shot(page,'12-complete-renewed-report');
+    return outputs;
+   });
+   const renewedInspection=inspectWeatherHandover(await readFile(renewedHandover,'utf8'));
+   if(!equal(renewedInspection.value.report,renewed.report)||!renewedInspection.value.receivingHistory.some(item=>item.originalArchive?.sha256===archiveSha256))
+    fail('RENEWAL_ORIGINAL_HISTORY_CHANGED');
+   const zipData=await readFile(renewedZip),zipHash=sha(zipData),convertedRenewal=join(deliveries,'renewed-zip-editable.weather.json');
+   await phase('open-complete-renewed-zip',async()=>{
+    if(await exists(convertedRenewal)){
+     const existing=inspectWeatherHandover(await readFile(convertedRenewal,'utf8'));
+     if(existing.value.legacyArchive?.sha256!==zipHash)fail('RENEWED_ZIP_SELECTION_CHANGED');
+     return existing.review;
+    }
+    return runCli('open-complete-renewed-zip',['from-report-zip','--input',renewedZip,'--output',convertedRenewal,'--archive-sha',zipHash]);
+   });
+   const zipInspection=inspectWeatherHandover(await readFile(convertedRenewal,'utf8'));
+   if(zipInspection.value.legacyArchive?.sha256!==zipHash||!equal(zipInspection.value.report,renewed.report)||
+    !equal(zipInspection.value.sources,renewedInspection.value.sources)||
+    !equal(zipInspection.value.decisionHistory,renewedInspection.value.decisionHistory))fail('RENEWED_ZIP_COMPLETE_HISTORY_CHANGED');
+   const thirdRoot=join(root,'renewed-customer-workspace');
+   await phase('initialize-renewed-customer-review',()=>initializeWeatherReview({stateRoot:thirdRoot}));
+   second=await launch(thirdRoot);const customer=await newPage(second);
+   const customerReceived=await phase('independent-renewed-customer-receiving',()=>receiveViaBrowser(customer.page,convertedRenewal,zipInspection.packageSha256));
+   const customerPlan=prepareWeatherReceiving(zipInspection),customerState=await inspectState(customer.page);
+   const expectedCaptures=customerPlan.captures.map(({raw,view,...capture})=>capture).sort((a,b)=>a.id.localeCompare(b.id));
+   if(!equal(customerState.captures.slice().sort((a,b)=>a.id.localeCompare(b.id)),expectedCaptures)||
+    !equal(customerState.decisions.slice().sort((a,b)=>a.id.localeCompare(b.id)),customerPlan.decisions.slice().sort((a,b)=>a.id.localeCompare(b.id)))||
+    !equal(customerState.reports.find(report=>report.id===customerPlan.report.id),customerPlan.report)||
+    !equal(customerReceived.result.receipt.mapping,customerPlan.mapping))fail('RENEWED_CUSTOMER_COMPLETE_SELECTION_CHANGED');
+   await atomic(join(logs,'renewed-customer-state.json'),customerState);
+   await shot(customer.page,'13-independent-renewed-customer-desktop');await shot(customer.page,'14-independent-renewed-customer-phone',390);
+   await customer.context.close();await second.close();second=null;
+   await phase('reopen-original-preserve-renewed-decisions',async()=>{
+    const original=await receiveViaBrowser(page,converted,originalInspection.packageSha256);
+    if(!original.result.reopened)fail('ORIGINAL_RECEIVING_REPLAY_CHANGED');
+    const latest=await inspectState(page);
+    for(const decision of renewed.report.decisions)if(!equal(latest.decisions.find(item=>item.id===decision.id),decision))
+     fail('RENEWED_DECISION_CHANGED_ON_ORIGINAL_REOPEN',decision.id);
+    return {reopened:true,reportId:renewed.report.id,decisions:renewed.report.decisions.map(({id,revision})=>({id,revision}))};
+   });
+   await atomic(join(logs,'renewed-original-workspace-state.json'),await inspectState(page));
+   await context.close();context=null;await first.close();first=null;
+   const cold=await phase('cold-reopen-complete-renewal',async()=>({
+    original:await runCli('cold-renewed-original',['status','--settings',join(firstRoot,'settings.json')]),
+    customer:await runCli('cold-renewed-customer',['status','--settings',join(thirdRoot,'settings.json')])
+   }));
+   renewalOperation={selection:renewalSelection,sourceReceiving:nextReceived.result.receipt,review:renewedReview,accepted:renewed,
+    completePackage:renewedInspection.review,completeZip:{path:renewedZip,bytes:zipData.length,sha256:zipHash},
+    customer:{directory:thirdRoot,receiving:customerReceived.result.receipt,report:customerPlan.report},
+    deliveries:renewedDownloads,cold};
+  }
   if(pageErrors.length||failedResponses.length)fail('BROWSER_OPERATION_ERRORS',{pageErrors,failedResponses});
   const result={schema:'stellar-forge.weather-editable-receiving-result.v1',operation:OPERATION,complete:true,
    startedAt:progress.startedAt,finishedAt:new Date().toISOString(),runtime:{node:process.version,executable:process.execPath,source:runtime},
    originalArchive:{path:originalZip,bytes:bytes.length,sha256:archiveSha256},original:originalInspection.review,
    first:{directory:firstRoot,receipt,revisedDecision:revised},onward:{directory:secondRoot,review:onward.review,receipt:onwardReceipt.result.receipt},
-   nextReport:newReport,deliveries:progress.phases['download-complete-onward-delivery'],
+   nextReport:newReport,renewal:renewalOperation,deliveries:progress.phases['download-complete-onward-delivery'],
    phases:Object.keys(progress.phases),browser:{pageErrors,failedResponses,screenshots},sourceSelection:selection};
   await atomic(join(root,'result.json'),result);
   process.stdout.write(JSON.stringify({complete:true,operation:OPERATION,result:join(root,'result.json'),originalArchiveSha256:archiveSha256,nextReport:newReport.id,onwardPackageSha256:onward.packageSha256})+'\n');
