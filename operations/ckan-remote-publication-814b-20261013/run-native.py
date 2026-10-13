@@ -29,6 +29,7 @@ if not capture.is_file() or capture.stat().st_size != 434557: raise ValueError("
 with capture.open("rb") as stream:
     if hashlib.file_digest(stream, "sha256").hexdigest() != "b093a0a66b12830f7daf507980b77a9f6f692e22dcf44cd195ef2e599998979c": raise ValueError("original capture hash")
 work = pathlib.Path(options.work_directory).absolute()
+options.work_directory = str(work)
 if work.exists() or work.is_symlink(): raise ValueError("preserve existing operation directory; select the original accepting host's new private directory")
 source = receive(SOURCE_URL, SOURCE_BYTES)
 if len(source) != SOURCE_BYTES or hashlib.sha256(source).hexdigest() != SOURCE_SHA256: raise ValueError("original complete source packet")
