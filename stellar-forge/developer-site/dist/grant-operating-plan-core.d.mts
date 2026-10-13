@@ -1,7 +1,9 @@
-import type { OperatingPlan, OperatingRegistration } from
+import type { OperatingPlan, OperatingRegistration, OperatingStep, OperatingStepState } from
   '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 export const GRANT_OPERATING_SELECTION_SCHEMA: 'stellar-forge.grant-operating-selection.v1';
 export const GRANT_OPERATING_PREPARATION_SCHEMA: 'stellar-forge.grant-operating-preparation.v1';
+export const GRANT_OPERATING_CONTINUATION_SCHEMA: 'stellar-forge.grant-operating-continuation.v1';
+export const GRANT_OPERATING_RETURN_COMPARISON_SCHEMA: 'stellar-forge.grant-operating-return-comparison.v1';
 export interface NativeGrantPlanningSource {
   schema: 'stellar-forge.grant-plan-source.v1'; sha256: string; filename: string;
   receivedAt: string; bytes: number; base64: string; kind: 'json' | 'zip';
@@ -25,9 +27,39 @@ export interface GrantOperatingPreparation {
   packageIds: string[];
   totals: { plannedUsd: string; estimatedHours: string | null; awardRequestUsd: string; projectEndDay: number };
   plan: OperatingPlan;
+  continuation?: GrantOperatingContinuation;
 }
 export function newGrantOperatingSelection(source: NativeGrantPlanningSource, revision?: number): GrantOperatingSelection;
 export function validateGrantOperatingSelection(value: unknown, source: NativeGrantPlanningSource, revision: number): GrantOperatingSelection;
 export function grantOperatingSelectionOf(review: NativeGrantPlanningReview, source: NativeGrantPlanningSource): GrantOperatingSelection;
 export function prepareGrantOperatingPlan(source: NativeGrantPlanningSource, review: NativeGrantPlanningReview,
   options: { id: string; savedAt?: string; selection?: GrantOperatingSelection }): GrantOperatingPreparation;
+
+export interface GrantOperatingContinuation {
+  schema: typeof GRANT_OPERATING_CONTINUATION_SCHEMA;
+  plan: OperatingPlan;
+  receipts: Array<{ at: string; filename: string; note: string; fromRevision: number; toRevision: number }>;
+}
+export interface GrantOperatingReturnedPackage {
+  packageId: string; stepId: string; native: Record<string, any>;
+  original: OperatingStep; previous: OperatingStep | null; returned: OperatingStep | null;
+  status: OperatingStepState | 'missing'; changedFromPrepared: string[]; changedFromPrevious: string[];
+}
+export interface GrantOperatingReturnComparison {
+  schema: typeof GRANT_OPERATING_RETURN_COMPARISON_SCHEMA;
+  planId: string; source: GrantOperatingPreparation['source']; packageIds: string[];
+  totals: GrantOperatingPreparation['totals']; preparedRevision: number; previousRevision: number;
+  incomingRevision: number; selectedRevision: number; addedRevisions: number; reused: boolean;
+  originalTitle: string; previousTitle: string; incomingTitle: string;
+  planChanges: Array<{ field: string; original: string; previous: string; returned: string }>;
+  packages: GrantOperatingReturnedPackage[]; additionalSteps: OperatingStep[];
+  counts: Record<OperatingStepState | 'missing', number>;
+}
+export function grantOperatingContinuationPlan(prepared: GrantOperatingPreparation): OperatingPlan;
+export function compareGrantOperatingReturn(source: NativeGrantPlanningSource,
+  review: NativeGrantPlanningReview, incoming: OperatingPlan): GrantOperatingReturnComparison;
+export function receiveGrantOperatingReturn(source: NativeGrantPlanningSource,
+  review: NativeGrantPlanningReview, incoming: OperatingPlan, options?: {
+    at?: string; filename?: string; note?: string; expectedRevision?: number;
+  }): { review: NativeGrantPlanningReview; comparison: GrantOperatingReturnComparison;
+    reused: boolean; addedRevisions: number };
