@@ -110,6 +110,14 @@ def validate_outputs(raw, fields):
             if isinstance(value, str):
                 text(value, "Filter value", 2000, empty=True)
             json_bytes(value)
+            kind = known[condition["field"]]["type"]
+            compatible = (value is None or
+                          (kind in {"string", "decimal"} and type(value) is str) or
+                          (kind == "boolean" and type(value) is bool) or
+                          (kind == "integer" and type(value) is int) or
+                          (kind == "number" and type(value) in (int, float)))
+            if not compatible:
+                raise InputError("Filter equality must use the selected field's scalar type; decimal values use exact strings")
             where.append({"field": condition["field"], "equals": value})
         results.append({"id": ident, "title": text(layout.get("title"), "Output title", 160),
                         "groupBy": groups, "measures": measures, "columns": selected, "where": where})
@@ -171,9 +179,20 @@ def expression(field):
 def _layout(db, edition, layout, coverage):
     terms, params = ["edition=?", "valid=1"], [edition]
     for condition in layout["where"]:
-        terms.append(expression(condition["field"]) + (" IS NULL" if condition["equals"] is None else " = ?"))
-        if condition["equals"] is not None:
-            params.append(condition["equals"])
+        field, value = condition["field"], condition["equals"]
+        cell = expression(field)
+        kind = cell.replace("json_extract(", "json_type(", 1)
+        if value is None:
+            terms.append("(" + kind + " = 'null' OR " + kind + " IS NULL)")
+        elif type(value) is bool:
+            terms.append(kind + " = ?")
+            params.append("true" if value else "false")
+        elif type(value) is str:
+            terms.append("(" + kind + " = 'text' AND " + cell + " = ?)")
+            params.append(value)
+        else:
+            terms.append("(" + kind + " IN ('integer','real') AND " + cell + " = ?)")
+            params.append(value)
     where = " WHERE " + " AND ".join(terms)
     count = db.execute("SELECT COUNT(*) FROM rows" + where, params).fetchone()[0]
     output_count = 0
@@ -199,6 +218,11 @@ def _layout(db, edition, layout, coverage):
         iterator = (load_json(row[0]) for row in db.execute("SELECT values_json FROM rows" + where + " ORDER BY source_row", params))
     for record in iterator:
         values = [record.get(column["field"]) for column in layout["columns"]]
+        if layout["measures"]:
+            # SQLite exposes JSON booleans as 0/1 in grouped projections.
+            # Restore their declared JSON scalar kind in complete output rows.
+            values = [bool(value) if column["type"] == "boolean" and value is not None else value
+                      for column, value in zip(layout["columns"], values)]
         output_count += 1
         encoded = json_bytes(values)
         logical.update(encoded)
@@ -215,8 +239,9 @@ def _issue(code, message, **extra):
 def _comparison(db, editions, mappings):
     if len(editions) != 2:
         return {"enabled": False, "counts": {}, "fields": [], "logicalSha256": hashlib.sha256(b"").hexdigest()}
-    left_fields = {f["name"] for f in mappings[0]["fields"]}
-    right_fields = {f["name"] for f in mappings[1]["fields"]}
+    left_types = {f["name"]: f["type"] for f in mappings[0]["fields"]}
+    right_types = {f["name"]: f["type"] for f in mappings[1]["fields"]}
+    left_fields, right_fields = set(left_types), set(right_types)
     omitted = {"source_row", "edition_id", "period", "reference_id", "row_status"}
     fields = sorted((left_fields | right_fields) - omitted)
     counts = {"added": 0, "removed": 0, "changed": 0, "unchanged": 0,
@@ -243,8 +268,11 @@ def _comparison(db, editions, mappings):
             kind, differences = "removed", []
         else:
             differences = [{"field": f, "before": before.get(f), "after": after.get(f),
-                            "beforePresent": f in before, "afterPresent": f in after}
-                           for f in fields if (f in before) != (f in after) or before.get(f) != after.get(f)]
+                            "beforePresent": f in before, "afterPresent": f in after,
+                            "beforeType": left_types.get(f), "afterType": right_types.get(f)}
+                           for f in fields if (f in before) != (f in after)
+                           or left_types.get(f) != right_types.get(f)
+                           or json_bytes(before.get(f)) != json_bytes(after.get(f))]
             kind = "changed" if differences else "unchanged"
         counts[kind] += 1
         if kind == "unchanged":

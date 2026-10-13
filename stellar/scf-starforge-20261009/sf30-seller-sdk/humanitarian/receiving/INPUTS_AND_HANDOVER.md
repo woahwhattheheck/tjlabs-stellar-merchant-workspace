@@ -4,7 +4,7 @@ This guide connects configuration work to the saved objects in the humanitarian 
 
 ## 1. Select complete inputs
 
-Retain the original table bytes before transformation. Record the file name, size, hash, acquisition URL or source owner, retrieval date, reporting period, permitted use and schema information. For spreadsheets, identify the actual sheet and header rows. For delimited input, retain the encoding and delimiter. Keep identifiers and administrative codes as strings.
+Retain the original table bytes before transformation. Record the file name, size, hash, acquisition URL or source owner, retrieval date, reporting period, permitted use and schema information. For spreadsheets, identify the actual sheet and header rows. CSV input uses UTF-8, comma delimiters and standard quoting. Retain the original encoding and delimiter if an explicit preparation step creates the selected CSV edition. Keep identifiers and administrative codes as strings.
 
 Use source --file FILE --label LABEL for the complete supplied files. Record each returned source ID. A source label is useful for people; the actual retained source ID identifies the edition used by a mapping or review.
 
@@ -18,7 +18,7 @@ Distinguish administrative code matching from geographic display. A code/name/pa
 
 ## 3. Save a mapping and review aliases
 
-Use save-mapping to bind source columns and output fields. Retain the selected identifier, period, measure, unit, location code/name/level/parent, missing-value representation and aggregation grain. Describe each chosen transform and any source rows it excludes. An output total is meaningful only with its grain, measure and membership rules.
+Use save-mapping to bind source columns and output fields. Retain the selected identifier, period, measure, unit, location code/name/level/parent, missing-value representation and aggregation grain. Describe each chosen transform and any source rows it excludes. An output total is meaningful only with its grain, measure and membership rules. Equality filters use the mapped field's JSON scalar type: a boolean is true or false, a number is numeric, and a string or exact decimal is quoted text. Missing values use null. Grouped boolean fields retain their boolean values in the complete JSON outputs.
 
 A local variant of a name can correspond to multiple administrative records. Use the issue view to inspect its source context and candidate reference records. save-alias retains the named resolution. Keep the source spelling, reference edition, selected code/level/parent, reviewer and rationale. An unresolved issue remains visible in the review and export choices.
 
@@ -42,7 +42,7 @@ Use rows to inspect complete source-related records, its issues filter to inspec
 | Alias decisions | Reproduce named decisions and retain unresolved issues |
 | Output grain | State the entity and period represented by each output row |
 
-For a later edition, select that edition explicitly and save its own review or revision using the model's actual supported request contract. Compare retained source definitions, periods, aliases and layouts before interpreting changes in totals. A revised indicator definition or reference edition can change a result without representing a change in the underlying situation.
+For a later edition, select that edition explicitly and save its own review or revision using the model's actual supported request contract. Compare retained source definitions, periods, aliases and layouts before interpreting changes in totals. A revised indicator definition or reference edition can change a result without representing a change in the underlying situation. Edition comparison retains changes in declared field type as well as value; true and 1 are different selected values.
 
 ## 5. Choose outputs from the saved mapping
 
