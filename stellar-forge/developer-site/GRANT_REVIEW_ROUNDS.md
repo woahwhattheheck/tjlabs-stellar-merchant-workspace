@@ -335,6 +335,30 @@ The colleague downloads the complete review JSON. In the author's original curre
 
 The offline package does not confer authority to complete a review, change the source selection or overwrite the author's later decision. Those are the same explicit original actions as in hosted operation. Repeated receipt uses the original retained request/result behavior. Pending original requests and their complete results remain in the working JSON; continue them rather than creating another request after an uncertain write. A third colleague can receive an onward offline HTML or whole review JSON without erasing earlier origins.
 
+### Install and export the complete maintained reader
+
+The original `grant-reviewer` distribution now exports the offline package, complete embedded source bank and source builder under `./grant/review-round/offline-package`, `./grant/review-round/offline-source` and `./grant/review-round/offline-source-builder`. The same selected product retains this full guide and the original review/working models. The builder is maintainer source: it requires an actual Git checkout and Node's `--experimental-vm-modules` option as described below. Receiving an installed package does not manufacture that checkout or run a new build.
+
+Both the checked-in `browser-assets.json` and `registerGrantReviewRoundAssets` register `/grant-review-offline-package.mjs`, `/grant-review-offline-source.mjs` and `/grant-review-round-guide.md`. Keep these exact routes with `/grant-review-round.html`, its workspace, working-copy/core modules and every declared dependency. The application source index records the offline schemas and these original routes alongside its existing application/review identities. A source bank is a complete frozen selection; it is not automatically regenerated or silently advanced by installation.
+
+Serve the installed source through the existing command:
+
+```sh
+starforge grant-application serve --port 0
+```
+
+Use the returned origin and open `/grant-review-round.html`. The original source server resolves the same manifest used by the distribution builder. Read the full selected guide at `/grant-review-round-guide.md`; the package module and complete bank must be served with their declared JavaScript content type. Opening the original review page must reach its actual controls before issuance; an HTTP response alone does not establish that the application loaded.
+
+Export that same complete reader with its existing operation:
+
+```sh
+starforge grant-application export --out /ABS/NEW-STATIC-READER
+```
+
+The destination must be new. The existing exporter streams every declared original asset, including the complete offline bank and guide, and retains each route, source path, byte length and SHA-256 in `starforge-static-reader.json`. Publish or receive the whole exported directory with its recorded route/content-type mapping. Do not copy only the review HTML or rewrite its dependency URLs. Open `grant-review-round.html` through the original receiving static host; a multi-file reader is distinct from the self-contained HTML issued by **Download offline reviewer**.
+
+Within the same existing receiving course, open the installed page, retain the full recorded review and issue the standalone colleague file. Then open the exported static reader at its receiving origin, import the complete recorded or working JSON explicitly, and issue another complete colleague file from that selected bank. Operate and LOOK at both pages at the intended wide and narrow widths, open the downloaded guide, working JSON, recorded JSON, report, original draft and each standalone HTML, and cold-reopen the colleague return through the author's original comparison. Keep the two browser origins' local records separate; transferring a directory does not transfer IndexedDB. Use the original pending request and complete working recovery at either origin. Retain the actual source/route manifest and operated outcomes with the original author/recipient case; this source integration alone is not a native installation or rendered result.
+
 ### Maintain the selected application source
 
 The generated `dist/grant-review-offline-source.mjs` is the complete review source bank. Its member records retain full repo-relative path, kind, original content, byte length, SHA-256 and exact dependency bindings. The reusable `dist/grant-review-offline-package.mjs` validates that bank and composes the single HTML with an inert complete input envelope and embedded module map. Import URLs are rewritten only for delivery; every unmodified original source body remains in the bank. The generated bank is excluded from its own graph to avoid recursive self-inclusion. An offline onward export reads the same embedded bank instead of fetching another edition.
