@@ -12,11 +12,12 @@ export const STARTUP_SCHEMA = 'stellar-forge.opensanctions-workspace-launch.v1';
 export const GET_OPERATIONS = Object.freeze([
   'state', 'contract', 'entity', 'entities', 'aliases', 'changes', 'impacts',
   'case', 'statements', 'response', 'request', 'update-plan',
+  'cycles', 'cycle', 'cycle-request', 'cycle-report',
 ]);
 export const POST_OPERATIONS = Object.freeze([
   'published-edition', 'edition', 'portfolio', 'statement-set', 'compare', 'update',
   'fetch-update', 'select-update', 'review', 'case', 'profile', 'prepare',
-  'dispatch', 'receive-response', 'query',
+  'dispatch', 'receive-response', 'query', 'cycle-command',
 ]);
 const SHA = /^[a-f0-9]{64}$/;
 const MAX_OBJECT = 256 * 1024 * 1024;
@@ -388,13 +389,21 @@ export class MonitoringClient {
   }
   inspect() { return this.#run(async () => { await this.#connect(); return this.identity; }); }
   get(operation, parameters = {}) {
-    return this.#run(async () => (await this.#json(await this.#connect(), route(operation, parameters))).reply);
+    const path = route(operation, parameters);
+    return this.#run(async () => {
+      const connection = await this.#connect();
+      return (await this.#json(connection, path,
+        { headers: { 'X-Review-Workspace': encodeURIComponent(this.#identity.workspace) } })).reply;
+    });
   }
   post(operation, input) {
     need(POST_OPERATIONS.includes(operation), 'MONITORING_OPERATION', 'Choose an original monitoring write operation.');
     const body = jsonInput(input), path = operation === 'query' ? '/api/query' : '/api/os/' + operation;
-    return this.#run(async () => (await this.#json(await this.#connect(), path,
-      { method: 'POST', body, headers: { 'Content-Type': 'application/json' } })).reply);
+    return this.#run(async () => {
+      const connection = await this.#connect();
+      return (await this.#json(connection, path, { method: 'POST', body,
+        headers: { 'Content-Type': 'application/json', 'X-Review-Workspace': encodeURIComponent(this.#identity.workspace) } })).reply;
+    });
   }
   upload(filename, { name, media = 'application/octet-stream', sourceUrl = '' } = {}) {
     string(media, 'Media type', 240);

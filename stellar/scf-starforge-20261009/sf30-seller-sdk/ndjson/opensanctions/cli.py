@@ -12,6 +12,7 @@ from model import Workspace, InputError, json_bytes
 from web import OperatorServer
 import matching
 import updates
+import review_cycles
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -32,6 +33,12 @@ def main():
     change = sub.add_parser("receive-update"); change.add_argument("--before", required=True); change.add_argument("--after", required=True)
     export = sub.add_parser("export"); export.add_argument("--output", required=True)
     receive = sub.add_parser("import"); receive.add_argument("--input", required=True)
+    sub.add_parser("cycles", help="List finite customer review cycles")
+    cycle = sub.add_parser("cycle"); cycle.add_argument("--id", required=True)
+    command = sub.add_parser("cycle-command"); command.add_argument("--input", required=True)
+    report = sub.add_parser("cycle-report"); report.add_argument("--id", required=True)
+    report.add_argument("--version", required=True, type=int); report.add_argument("--output", required=True)
+    report.add_argument("--html", action="store_true")
     args = p.parse_args()
     if args.action == "binding":
         from application_binding import inspect_binding
@@ -75,7 +82,25 @@ def main():
                     signal.signal(sig, handler)
             return
         matching.recover_interrupted(d)
-        if args.action == "state":
+        if args.action == "cycles":
+            result = review_cycles.view(d)
+        elif args.action == "cycle":
+            result = review_cycles.view(d, args.id)
+        elif args.action == "cycle-command":
+            from model import load_json
+            result = review_cycles.command(d, load_json(Path(args.input).read_bytes()))
+        elif args.action == "cycle-report":
+            from model import private_write
+            result = review_cycles.report(d, args.id, args.version)
+            content = review_cycles.report_html(d, args.id, args.version).encode() if args.html else json_bytes(result)
+            output = Path(args.output)
+            if output.exists():
+                if output.read_bytes() != content:
+                    raise InputError("The selected report output already contains different bytes")
+            else:
+                private_write(output, content)
+            result = {"cycleId": args.id, "version": args.version, "file": str(output), "bytes": len(content), "sha256": __import__("hashlib").sha256(content).hexdigest()}
+        elif args.action == "state":
             result = d.state()
         elif args.action == "receive-published":
             result = updates.receive_published(d, args.metadata_url)

@@ -10,6 +10,7 @@ from model import (Domain, Workspace, InputError, MAX_SOURCE, json_bytes, load_j
                    MONITORING_DEFAULT, ndjson_application)
 import matching
 import updates
+import review_cycles
 
 HERE = Path(__file__).resolve().parent
 
@@ -20,11 +21,17 @@ class Handler(ndjson_application.Handler):
     def domain(self):
         return self.server.domain
 
+    def _cycle_branch(self):
+        selected = unquote(self.headers.get("X-Review-Workspace", ""))
+        if selected != str(self.domain.ws.root):
+            raise InputError("Open the original workspace branch for this review cycle request")
+
     def _get(self):
         target = urlsplit(self.path)
         assets = {"/monitor": ("index.html", "text/html; charset=utf-8"),
                   "/monitor/": ("index.html", "text/html; charset=utf-8"),
                   "/monitor/app.js": ("app.js", "text/javascript; charset=utf-8"),
+                  "/monitor/review-cycles.js": ("review-cycles.js", "text/javascript; charset=utf-8"),
                   "/monitor/style.css": ("style.css", "text/css; charset=utf-8")}
         if target.path in assets:
             self._gate(api=False)
@@ -40,6 +47,21 @@ class Handler(ndjson_application.Handler):
         q = {k: v[0] for k, v in params.items()}
         path = target.path[len("/api/os/"):]
         d = self.domain
+        if path == "cycle-context":
+            return self._json({"workspace": str(d.ws.root), "name": d.ws.root.name})
+        if path in {"cycles", "cycle", "cycle-request", "cycle-report", "cycle-report-html"}:
+            self._cycle_branch()
+        if path == "cycles":
+            return self._json(review_cycles.view(d))
+        if path == "cycle":
+            return self._json(review_cycles.view(d, q["id"]))
+        if path == "cycle-request":
+            return self._json(review_cycles.request(d, q["id"]))
+        if path == "cycle-report":
+            return self._json(review_cycles.report(d, q["id"], int(q["version"])))
+        if path == "cycle-report-html":
+            raw = review_cycles.report_html(d, q["id"], int(q["version"])).encode("utf-8")
+            self._headers(200, "text/html; charset=utf-8", len(raw)); self.wfile.write(raw); return
         if path == "state":
             return self._json(d.state())
         if path == "contract":
@@ -90,6 +112,8 @@ class Handler(ndjson_application.Handler):
         d = self.domain
         path = target.path[len("/api/os/"):]
         if path == "object":
+            if self.headers.get("X-Review-Workspace") is not None:
+                self._cycle_branch()
             name = unquote(self.headers.get("X-Original-Name", "original"))
             source_url = unquote(self.headers.get("X-Original-URL", ""))
             body = self._body(MAX_SOURCE)
@@ -112,6 +136,17 @@ class Handler(ndjson_application.Handler):
         body = load_json(self._body(24 * 1024 * 1024).read())
         if not isinstance(body, dict):
             raise InputError("Expected the selected operation's JSON object")
+        if path == "cycle-command":
+            self._cycle_branch()
+            try:
+                return self._json(review_cycles.command(d, body), 201)
+            except InputError as error:
+                absent = False
+                try:
+                    absent = not review_cycles.request(d, body.get("requestId"))["committed"]
+                except InputError:
+                    pass  # Invalid history or request identity cannot establish an absent effect.
+                return self._json({"error": str(error), "notCommitted": absent, "requestId": body.get("requestId")}, 400)
         if path == "published-edition":
             return self._json(updates.receive_published(d, body["metadataUrl"], body.get("entitlement")), 201)
         if path == "edition":
