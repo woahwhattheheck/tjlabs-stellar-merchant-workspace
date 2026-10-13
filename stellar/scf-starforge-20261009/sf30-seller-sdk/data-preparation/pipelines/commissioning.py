@@ -223,10 +223,11 @@ class CommissioningDesk:
         with self.lock:
             self.alive()
             folder = self.directory("requests", body["id"], True)
-            customer = self.customers(body["customerAlias"])
-            # The saved private target stays fixed if the host later edits its alias.
-            write(folder / "customer.json", customer)
             write(folder / "intent.json", body)
+            # Retrying the same intent reuses its original private customer,
+            # including when the host alias was edited after a lost response.
+            if not (folder / "customer.json").exists():
+                write(folder / "customer.json", self.customers(body["customerAlias"]))
         return self.start("requests", body["id"], "catalog")
 
     def seed_request(self, body):

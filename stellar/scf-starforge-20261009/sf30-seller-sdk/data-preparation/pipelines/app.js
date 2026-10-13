@@ -408,6 +408,7 @@ async function renderCommissionRecord(kind){
   const version=commission.epoch,value=await commissionAPI('record?'+new URLSearchParams({kind,id}));
   if(version!==commission.epoch||ui.view!=='commissioning'||commission[order?'order':'receiving']!==id)return;
   const result=order?value.result?.prepared:value.result?.received;
+  if(order&&panel.contains(document.activeElement)&&document.activeElement?.matches('input,select,textarea'))return;
   panel.className='panel';
   panel.innerHTML='<div class="section-title"><h3>'+esc(order?value.intent.reportName:'Received pipeline work')+'</h3>'+status(value.status)+'</div>'+
     '<p class="hint">'+esc(id)+(value.updatedAt?' · '+esc(date(value.updatedAt)):'')+'</p>'+
@@ -530,7 +531,8 @@ async function renderCommissionRequest(panel,value){
         (row.message?'<p>'+esc(row.message)+'</p>':'')+
         '<div class="toolbar">'+(row.active?'<button data-request-cancel="'+row.id+'">Stop current file operation</button>':
           '<button data-request-review="'+row.id+'">Review complete catalog and request</button>'+
-          (handoff?'<a data-request-open="'+row.id+'" href="'+esc(handoff.requestUrl)+'">Open original Request</a>':
+          (handoff?'<button data-request-seed="'+row.id+'" data-catalog="'+esc(row.selectedCatalogSha256||handoff.catalogSha256)+'">Reconnect same original Request</button>'+
+            '<a data-request-open="'+row.id+'" href="'+esc(handoff.requestUrl)+'">Open original Request</a>':
            catalog?'<button class="primary" data-request-seed="'+row.id+'" data-catalog="'+esc(row.selectedCatalogSha256||catalog.catalogSha256)+'">'+
             (row.selectedCatalogSha256?'Continue same original Request':'Create Request with both complete files')+'</button>':
             '<button data-request-catalog="'+row.id+'">Continue catalog read</button>'))+'</div>'+
