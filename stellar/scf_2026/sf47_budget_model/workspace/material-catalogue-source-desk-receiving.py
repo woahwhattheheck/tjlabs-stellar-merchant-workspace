@@ -153,15 +153,17 @@ def main(argv=None):
     need(isinstance(source.get("actor"), str) and source["actor"].strip(), "Name the actual receiving operator.")
     need(isinstance(source.get("selection"), dict) and isinstance(source.get("bindings"), dict),
          "Select the complete original catalogue and explicit receiving bindings.")
-    need(bool(source.get("sourceId")) != bool(source.get("sourceFile")),
-         "Select one attached original source or one complete saved file for typed intake.")
+    raw_intake = source.get("supplierIntake") is not None
+    need((not source.get("sourceId") and not source.get("sourceFile")) if raw_intake else
+         bool(source.get("sourceId")) != bool(source.get("sourceFile")),
+         "Select either the complete original supplier receiving input or one complete existing bundle.")
     report_path = root / "Material_Catalogue_Source_Desk_Receiving.json"
     report = json.loads(raw(report_path)) if report_path.exists() else {
         "schema": SCHEMA, "inputSha256": sha(input_raw), "sourceCommit": args.ref,
         "operationId": source["operationId"], "state": "PREPARED", "phases": {}, "artifacts": {}, "commands": []}
     need(report["inputSha256"] == sha(input_raw) and report["sourceCommit"] == args.ref,
          "Resume the same complete input and selected source release.")
-    server = thread = child = workspace = None
+    server = thread = child = workspace = supplier_runtime = None
     old_handlers, failure = {}, None
     report["state"] = "RUNNING"
 
@@ -264,6 +266,7 @@ def main(argv=None):
         from operations import Operations
         from operations_material_catalogue import perform, _engine
         from server import create_server
+        from material_supplier_intake_receiving import OriginalSupplierRuntime
         scenario = args.scenario.resolve() if args.scenario else installed.parent / "sf10_current_candidate.json"
         keep("Original_Scenario.json", raw(scenario))
         report["phases"]["complete-software"] = {"archive": identity(root / "Material_Catalogue_Installation_Source.tgz"),
@@ -280,29 +283,39 @@ def main(argv=None):
             browser_report = root / "Material_Catalogue_Source_Desk_Browser.json"
             if not browser_report.exists():
                 need(case["program"]["version"] == source["expectedVersion"], "Read the actual current case before first receiving.")
-        if source.get("sourceFile"):
-            full_source = raw(source["sourceFile"], 128 * 1024 * 1024)
-            need(sha(full_source) == source["sourceSha256"], "The selected full material catalogue file differs.")
+        if raw_intake:
+            supplier_runtime = OriginalSupplierRuntime(
+                source=source, root=root, app=app, node=args.node.resolve(),
+                raw=raw, write=write, identity=identity, need=need)
+            supplier_input = supplier_runtime.start()
+            for name, record in supplier_runtime.files.items():
+                report["artifacts"][name] = record
+            save()
+            full_source = None
         else:
-            source_meta, full_source = ops.source(source["caseId"], source["sourceId"])
-            need(source_meta["sha256"] == source["sourceSha256"], "The selected original material catalogue attachment differs.")
-        keep("Original_Material_Catalogue.jsonl", full_source)
-        inspection = _engine({"action": "inspect", "sourceBase64": base64.b64encode(full_source).decode("ascii")})
-        need(inspection["file"]["sha256"] == source["sourceSha256"] and
-             inspection["file"]["bytes"] == len(full_source),
-             "The actual original material reader received different source bytes.")
-        selection = source["selection"]
-        need(selection.get("operationId") == source["operationId"] and
-             selection.get("bundleSha256") == source["sourceSha256"] and
-             selection.get("catalogId") == inspection["summary"]["catalogId"] and
-             selection.get("catalogRevision") == inspection["summary"]["revision"] and
-             selection.get("activeEditionId") == inspection["summary"]["activeEditionId"],
-             "The retained material selection must bind this exact catalogue edition.")
-        editions = {row["id"] for row in inspection["editions"]}
-        need(source.get("beforeEditionId") in editions and source.get("afterEditionId") in editions and
-             source["beforeEditionId"] != source["afterEditionId"],
-             "Choose two distinct original saved catalogue editions for the receiving comparison.")
-        keep("Original_Native_Inspection.json", inspection)
+            if source.get("sourceFile"):
+                full_source = raw(source["sourceFile"], 128 * 1024 * 1024)
+                need(sha(full_source) == source["sourceSha256"], "The selected full material catalogue file differs.")
+            else:
+                source_meta, full_source = ops.source(source["caseId"], source["sourceId"])
+                need(source_meta["sha256"] == source["sourceSha256"], "The selected original material catalogue attachment differs.")
+            keep("Original_Material_Catalogue.jsonl", full_source)
+            inspection = _engine({"action": "inspect", "sourceBase64": base64.b64encode(full_source).decode("ascii")})
+            need(inspection["file"]["sha256"] == source["sourceSha256"] and
+                 inspection["file"]["bytes"] == len(full_source),
+                 "The actual original material reader received different source bytes.")
+            selection = source["selection"]
+            need(selection.get("operationId") == source["operationId"] and
+                 selection.get("bundleSha256") == source["sourceSha256"] and
+                 selection.get("catalogId") == inspection["summary"]["catalogId"] and
+                 selection.get("catalogRevision") == inspection["summary"]["revision"] and
+                 selection.get("activeEditionId") == inspection["summary"]["activeEditionId"],
+                 "The retained material selection must bind this exact catalogue edition.")
+            editions = {row["id"] for row in inspection["editions"]}
+            need(source.get("beforeEditionId") in editions and source.get("afterEditionId") in editions and
+                 source["beforeEditionId"] != source["afterEditionId"],
+                 "Choose two distinct original saved catalogue editions for the receiving comparison.")
+            keep("Original_Native_Inspection.json", inspection)
         keep("Original_Commercial_Document.json", encoded(source["document"]))
         workspace.close()
         workspace = None
@@ -321,6 +334,8 @@ def main(argv=None):
                          "playwright": str(args.playwright.resolve()), "chromium": str(args.chromium.resolve()),
                          "documentPath": str(root / "Original_Commercial_Document.json"),
                          "handoverPath": str(root / "Original_Material_Catalogue.jsonl")}
+        if raw_intake:
+            browser_input["supplierIntake"] = supplier_input
         keep("Browser_Input.json", browser_input)
         command("original-complete-browser-course",
                 [args.node.resolve(), installed / "material-catalogue-source-desk-browser.mjs", root / "Browser_Input.json", access_path])
@@ -338,6 +353,18 @@ def main(argv=None):
 
         workspace = Workspace(args.workspace, scenario)
         ops = Operations(workspace)
+        if raw_intake:
+            def template(source_id, source_sha):
+                return perform(ops, source["caseId"], "template", {
+                    "expectedVersion": ops.read(source["caseId"])["program"]["version"],
+                    "sourceId": source_id, "expectedSourceSha256": source_sha,
+                    "document": source["document"], "operationId": source["operationId"]})
+            source, full_source = supplier_runtime.finish(browser, _engine, template)
+            for name, record in supplier_runtime.files.items():
+                report["artifacts"][name] = record
+            report["phases"]["original-supplier-intake"] = browser["supplierIntake"]
+            supplier_runtime.close()
+            save()
         actual_source_id = browser["sourceId"]
         source_meta, retained = ops.source(source["caseId"], actual_source_id)
         need(retained == full_source and source_meta["sha256"] == source["sourceSha256"],
@@ -438,10 +465,25 @@ def main(argv=None):
             server.workspace.close()
         if workspace is not None:
             workspace.close()
+        if supplier_runtime is not None:
+            try:
+                supplier_runtime.close()
+            except BaseException as exc:
+                report.setdefault("cleanupErrors", []).append(
+                    {"type": type(exc).__name__, "message": str(exc)})
+                if failure is None:
+                    failure = exc
+                    report["state"] = "INTERRUPTED"
+                    report["error"] = {"type": type(exc).__name__, "message": str(exc),
+                                       "code": getattr(exc, "code", None)}
+                else:
+                    failure.add_note("Original supplier cleanup also failed: " + repr(exc))
         for sig, handler in old_handlers.items():
             signal.signal(sig, handler)
         (root / "private-browser-access.json").unlink(missing_ok=True)
-        report["lifetimes"] = "CLOSED"
+        report["lifetimes"] = ("SUPPLIER_CLOSE_INCOMPLETE"
+                               if supplier_runtime is not None and supplier_runtime.process is not None
+                               else "CLOSED")
         save()
         output = root / "Material_Catalogue_Installation_Complete.zip"
         temp = root / (".complete-" + uuid.uuid4().hex + ".zip")

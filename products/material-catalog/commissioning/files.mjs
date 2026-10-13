@@ -12,6 +12,7 @@ export const APPLICATION=[
  SELF+'core.mjs',SELF+'files.mjs',SELF+'cli.mjs',SELF+'handover.mjs',SELF+'receive.mjs',SELF+'README.md',SELF+'RECEIVING.md',
  'products/material-catalog/recipient/core.mjs','products/material-catalog/recipient/sha256.mjs',
  'products/material-catalog/recipient/assemble.mjs','products/material-catalog/recipient/review.mjs',
+ 'products/material-catalog/recipient/renewal.mjs','products/material-catalog/recipient/renewal-panel.mjs',
  'products/material-catalog/recipient/review-panel.mjs','products/material-catalog/recipient/workspace.mjs','products/material-catalog/recipient/reader.html',
  ORIGINAL+'prepare-core.mjs',ORIGINAL+'commercial-workshare-core.mjs',ORIGINAL+'supplier-catalogues.json'
 ];
@@ -116,7 +117,7 @@ function derive(source,app){
  put('WORKORDER.md',Buffer.from(value.workorder));
  for(const {manifest,bytes}of bundle.sources.values())put('original-sources/'+manifest.id+'.bin',Buffer.from(bytes));
  const original=name=>app.get('application/products/material-catalog/recipient/'+name).toString('utf8');
- const modules=Object.fromEntries(['sha256.mjs','core.mjs','review.mjs','review-panel.mjs','workspace.mjs','reader.html'].map(name=>[name,original(name)]));
+ const modules=Object.fromEntries(['sha256.mjs','core.mjs','review.mjs','renewal.mjs','renewal-panel.mjs','review-panel.mjs','workspace.mjs','reader.html'].map(name=>[name,original(name)]));
  put('Material_Catalog_Reader.html',Buffer.from(assembleRecipient(modules,{name:'customer-catalog.jsonl',base64:Buffer.from(input.bundleBytes).toString('base64'),sha256:input.expectedBundleSha256})));
  put('REOPEN.md',Buffer.from('# Complete material customer commissioning\n\nOpen START_HERE.html and Material_Catalog_Reader.html. Every original input is retained under source/ and attachments/, with extracted exact original feeds under original-sources/.\n\nRun the retained complete source with an existing Node installation:\n\n~~~sh\nnode application/products/material-catalog/commissioning/cli.mjs reopen --directory .\n~~~\n\nUse an absolute directory when calling from elsewhere. Reopening verifies every file, reconstructs the native input/preview and handover from the original retained bundle, current-case snapshot, Workshare, explicit bindings and source closure, and compares exact bytes. Copy this complete directory to a distinct private receiving location and run that same command there.\n\nIn the original Operations Customer installations screen, Load input file accepts installation-input.json and performs its current-case preview. Keep the original writer, request and full-case export/independent receiving. A moved current case needs a fresh original seed and deliberate new preparation; this historical package remains unchanged.\n\nThe whole public implementation and receiving guide are retained under application/products/material-catalog/commissioning/. Open all final attachments and downloaded/reopened outputs as the recipient; producing-seat desktop/narrow image viewing remains part of actual delivery.\n'));
  const rows=[...out].map(([path,b])=>ref(path,b));

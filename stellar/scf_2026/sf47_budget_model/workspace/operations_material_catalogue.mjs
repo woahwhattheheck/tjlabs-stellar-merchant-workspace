@@ -2,6 +2,8 @@
 // Read-only catalogue preparation; the original Installation editor remains the writer.
 import {clone,object,need,same,canonical,identity,hashBytes,originalSource,newCopy,sourceFor,
  inputValue,checkpoint,emptyState,archive,readArchive,mergeState,openStore,MAX_SOURCE,MAX_ARCHIVE} from './operations_material_catalogue_model.mjs';
+import {createMaterialSupplierIntakeDesk} from './operations_material_supplier_intake.mjs';
+import {pendingSupplierRequests} from './operations_material_supplier_intake_model.mjs';
 import {Sha256} from './operations_installation_source_hash.mjs';
 import {staffDeskStorageKey} from './staff-session.mjs';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -25,10 +27,11 @@ export function mountMaterialCatalogueSourceDesk(root,host){
  if(!document.querySelector('link[data-material-catalogue-desk]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_material_catalogue.css';link.dataset.materialCatalogueDesk='true';document.head.append(link);}
  let alive=true,opened=false,busy=false,hostBusy=false,store=null,state=emptyState(),dirty=false,conflict=false;
  let timer=null,chain=Promise.resolve(),activeOperation=Promise.resolve(),generation=0,error='',notice='';
+ let supplierMode=false;
  let sourceId='',copyName='',tab='overview',tableName='',recordPage=null,beforeId='',afterId='',comparison=null,memberPage=null,historyIndex='';
  const $=selector=>root.querySelector(selector),current=()=>state.copies.find(c=>c.id===state.selected)||null;
  const sources=()=>host.caseData().sources||[],reason=()=>host.readOnlyReason?.()||'';
- const pending=()=>state.intakes.filter(i=>i.state==='PREPARED');
+ const pending=()=>[...state.intakes.filter(i=>i.state==='PREPARED'),...pendingSupplierRequests(state)];
  function checkScope(){need(inScope(host.context(),scope),'Reopen this original Operations case; its workspace identity changed.');}
  async function persist(){
   need(store,'Open browser storage before saving a complete review.');need(!conflict,'Preserve this tab and reconcile the other saved copy first.');
@@ -56,8 +59,13 @@ export function mountMaterialCatalogueSourceDesk(root,host){
  function invalidate(c){if(c.prepared){const next=checkpoint(c,'Before changed preparation input',now());Object.assign(c,next);c.prepared=null;c.preparedInput=null;}}
  function controls(){
   root.setAttribute('aria-busy',String(busy||hostBusy));
-  const localActions=new Set(['close','archive','source-download','view','copy-open','history-open','checkpoint-download','prepared-download','commercial-html','commercial-md','workorder-md','selection-download','reload-store','merge-store','import','import-fork','member-download','member-next','member','rows','rows-next','compare','compare-next','verify']);
+  const localActions=new Set(['close','archive','source-download','view','copy-open','history-open','checkpoint-download','prepared-download','commercial-html','commercial-md','workorder-md','selection-download','reload-store','merge-store','import','import-fork','member-download','member-next','member','rows','rows-next','compare','compare-next','verify','supplier-mode','catalogue-mode']);
   for(const el of root.querySelectorAll('button,input,select,textarea')){
+   const rawAction=el.dataset.msAction;
+   if(rawAction||el.dataset.msField!==undefined||el.matches('[data-ms-file]')){
+    const local=supplierDesk.localAction(rawAction),recovery=['reconcile','replay'].includes(rawAction);
+    el.disabled=busy||hostBusy||conflict||((!!reason()||pending().length>0)&&!local&&!recovery);continue;
+   }
    const action=el.dataset.mcAction;
    const recovery=action==='intake-recover',local=localActions.has(action);
    el.disabled=busy||hostBusy||(conflict&&!['archive','reload-store','merge-store','close'].includes(action))||
@@ -121,7 +129,7 @@ export function mountMaterialCatalogueSourceDesk(root,host){
   }
   const intakes=state.intakes.map(i=>'<section class="mc-intake"><strong>'+esc(i.body.data.filename)+'</strong><p>'+esc(i.state)+' · '+i.identity.bytes+' bytes</p><code>'+esc(i.identity.sha256)+'</code>'+
     (i.state==='PREPARED'?button('Recover exact original source intake','intake-recover','data-id="'+esc(i.id)+'"'):i.state==='COMMITTED'?button('Select accepted catalogue','intake-open','data-id="'+esc(i.id)+'"'):details('Original rejection',i.error))+'</section>').join('');
-  root.innerHTML='<header><h2>Material catalogue source desk</h2>'+button('Return to Installation editor','close')+'</header>'+
+  root.innerHTML='<header><h2>Material catalogue source desk</h2><div>'+button('Original supplier intake','supplier-mode')+button('Complete catalogue reviews','catalogue-mode')+button('Return to Installation editor','close')+'</div></header>'+
    '<p class="mc-notice">Original Operations case '+esc(scope.caseId)+' · current version '+host.context().version+'. Preparation and package downloads use the maintained native catalogue and Workshare engines.</p>'+
    '<p role="'+(error?'alert':'status')+'" aria-live="polite" class="mc-status">'+esc(error||notice||'Open a named review to begin.')+'</p>'+
    (reason()?'<p class="mc-notice">'+esc(reason())+'</p>':'')+
@@ -130,6 +138,7 @@ export function mountMaterialCatalogueSourceDesk(root,host){
    '<label>Attach original full catalogue (128 MiB maximum)<input type="file" data-mc-upload accept=".json,.jsonl,application/json,application/x-ndjson"></label><p>Original bytes are retained through the existing case command. A pending request is recovered with the same actor and request ID.</p>'+
    intakes+'<h3>Retained working copies</h3>'+list+'<h3>Complete browser work</h3>'+button('Download all source and review history','archive')+button('Import complete archive','import')+
    button('Import as explicit alternatives','import-fork')+'<input type="file" data-mc-import hidden accept=".json,application/json"></aside><main>'+body+'</main></div>';
+  if(supplierMode)root.querySelector('.mc-layout').outerHTML=supplierDesk.render();
   controls();
  }
  async function run(fn){
@@ -259,6 +268,7 @@ export function mountMaterialCatalogueSourceDesk(root,host){
  async function importWork(file,fork){
   need(file&&file.size<=MAX_ARCHIVE,'Select the complete bounded browser archive.');
   const incoming=readArchive(await file.text());for(const c of incoming.copies)need(inScope(c.scope,scope),'Receive this archive in its original Operations case.');for(const i of incoming.intakes)need(inScope(i.scope,scope),'Receive original source requests only in their original case.');
+  for(const i of incoming.supplierIntakes??[])need(inScope(i.scope,scope),'Receive supplier intake work only in its original Operations case.');
   const next=mergeState(state,incoming,{fork});await commit(next);clearPages();notice='Complete original sources, drafts, preparation history and request receipts received.';
  }
  function edit(target){
@@ -281,12 +291,22 @@ export function mountMaterialCatalogueSourceDesk(root,host){
    c.updatedAt=now();changed();if(['plan','review'].includes(key))render();
   }catch(e){error=e.message;render();}
  }
- root.addEventListener('input',event=>{if(!busy&&!hostBusy&&!conflict)edit(event.target);});
+ const supplierDesk=createMaterialSupplierIntakeDesk({
+  state:()=>state,scope,context:host.context,api:host.api,readOnlyReason:reason,
+  otherPending:()=>state.intakes.some(i=>i.state==='PREPARED'),commit,changed,render,
+  refreshCase:host.refreshCase,notice:value=>{notice=value;},download,
+  attachBundle:async(file,name)=>{await upload(file);need(!state.intakes.some(i=>i.state==='PREPARED'),'Recover the exact original bundle attachment before opening its source review.');
+   copyName=name;await openSource();supplierMode=false;tab='overview';
+   notice='The exact frozen complete supplier catalogue is attached and open as a separate named source review. Existing Workshare and Installation drafts remain retained.';}
+ });
+ root.addEventListener('input',event=>{if(!busy&&!hostBusy&&!conflict){if(!supplierDesk.edit(event.target))edit(event.target);}});
  root.addEventListener('change',event=>{
+  if(event.target.matches('[data-ms-file]')){const file=event.target.files?.[0];event.target.value='';run(()=>supplierDesk.retainFile(file));}
   if(event.target.matches('[data-mc-upload]')){const file=event.target.files?.[0];event.target.value='';run(()=>upload(file));}
   if(event.target.matches('[data-mc-import]')){const file=event.target.files?.[0],fork=event.target.dataset.fork==='true';event.target.value='';run(()=>importWork(file,fork));}
  });
  root.addEventListener('click',event=>{
+  const raw=event.target.closest('[data-ms-action]');if(raw&&root.contains(raw)){run(()=>supplierDesk.action(raw.dataset.msAction,raw));return;}
   const el=event.target.closest('[data-mc-action]');if(!el||!root.contains(el))return;const action=el.dataset.mcAction;
   if(action==='import'||action==='import-fork'){const input=$('[data-mc-import]');input.dataset.fork=String(action==='import-fork');input.click();return;}
   if(action==='archive'){try{download(archive(state),'Material_Catalogue_Complete_Working_Review.json');}catch(e){error=e.message;render();}return;}
@@ -300,6 +320,8 @@ export function mountMaterialCatalogueSourceDesk(root,host){
   }
   run(async()=>{
    const c=current(),s=c?sourceFor(state,c):null;
+   if(action==='supplier-mode'){supplierMode=true;return;}
+   if(action==='catalogue-mode'){supplierMode=false;return;}
    if(action==='close'){opened=false;root.hidden=true;host.close?.();return;}
    if(action==='open-source')return openSource();
    if(action==='intake-recover')return recoverIntake(el.dataset.id);
@@ -325,7 +347,7 @@ export function mountMaterialCatalogueSourceDesk(root,host){
    if(action==='workorder-md')download(typeof c.prepared.result.workorder==='string'?c.prepared.result.workorder:json(c.prepared.result.workorder),'Material_Workorder.md','text/markdown');
   });
  });
- const ready=(async()=>{store=await openStore(staffDeskStorageKey('sf47.material-catalogue.'+scope.caseId+'.'+scope.planId+'.'+scope.createdAt));state=await store.read();for(const c of state.copies)need(inScope(c.scope,scope),'This browser review belongs to another original case.');})();
+ const ready=(async()=>{store=await openStore(staffDeskStorageKey('sf47.material-catalogue.'+scope.caseId+'.'+scope.planId+'.'+scope.createdAt));state=await store.read();for(const c of state.copies)need(inScope(c.scope,scope),'This browser review belongs to another original case.');for(const i of state.supplierIntakes??[])need(inScope(i.scope,scope),'This supplier intake belongs to another original case.');})();
  return {ready,async open(){await ready;checkScope();opened=true;root.hidden=false;render();root.scrollIntoView({block:'start'});},
   setHostBusy(value){hostBusy=!!value;controls();},refresh(){if(opened&&!busy){controls();}},flush,
   dispose(){clearTimeout(timer);alive=false;Promise.allSettled([activeOperation,ready]).then(async()=>{try{await flush();}catch{}finally{await chain.catch(()=>{});store?.close();}});}

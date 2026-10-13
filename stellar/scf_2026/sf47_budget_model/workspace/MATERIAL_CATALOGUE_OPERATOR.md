@@ -86,3 +86,69 @@ Use plain, clean industrial design: monochrome hierarchy, readable source values
 Carry this complete rule into current and future provider/cloud/child assignments. Preserve the original owner’s stops, cutoffs and current operation identity; do not restart a receiver or create a watcher. Bryce’s October13 local in-app-browser meeting reservation was explicitly released at canonical1791908979.290839; that release permits authorized local use while preserving user tabs/state and the existing single receiving owner. No browser is launched merely because this source has been authored.
 
 Current source publication and source parsing are distinct from native execution, browser completion, attachment reopening, producer pixel review and customer acceptance. Record each only when its actual receipt exists.
+
+
+## Original supplier files through the running catalogue workspace
+
+The **Original supplier intake** view joins raw publisher files to the existing complete catalogue review. The catalogue host and its native parser, mappings, request journal, immutable previews and selection rules remain authoritative. The final Installation still uses the original editor and Save command. The server configuration and exact proxy/CLI protocol are documented in [MATERIAL_SUPPLIER_INTAKE.md](MATERIAL_SUPPLIER_INTAKE.md).
+
+Open the original case and complete commercial Workshare draft first. Select **Material catalogue**, then **Original supplier intake**. Read the configured catalogue workspaces, select one explicitly and name the supplier intake. A configuration entry is only a selectable declaration; reading the actual workspace checks its native workspace identity. No connection origin, session token or filesystem path is exposed in the browser.
+
+### Retain, map, preview and select
+
+1. Retain the complete original full file in **Supplier files**. Inspect its filename, byte count, SHA-256, exact format JSON and provenance. Download and reopen the retained original when checking its source meaning. The complete browser archive retains original bytes before upload. Each original file is limited to 16 MiB for this intake route.
+2. Use **Upload exact original supplier source**. The response retains the native source identity and original sample. CSV/JSON sample success does not prove the complete file is valid: native preview reads and validates the whole source. Original BMEcat parsing completes the full document before exposing its sample.
+3. For BMEcat, **Read original BMEcat profile** retains its exact native source profile. **Use this original catalogue mapping** is an explicit mapping choice. It does not accept a supplier recipient plan or classify a partial price/product-data transaction as a full replacement.
+4. In **Catalogue mapping**, explicitly create a new catalogue or receive a selected existing catalogue. Preserve its original tenant, identifiers, field/reference/unit bindings and operation semantics. Save the complete native mapping. The server returns its normalized mapping and actual revision; that exact result is retained alongside the submitted request. A different tenant requires a new catalogue.
+5. In **Edition review**, choose **Complete replacement** or **Explicit complete upserts and deletes**, and select the exact original base. A delta requires a retained base from this catalogue. No base is inferred silently. Preview retains a new immutable edition and its counts; selection is a separate action.
+6. Read the actual changed records and material pages, including their original identity and totals. Download the exact native preview. The preview is marked historical after any source, typed mapping, mapping revision, meaning or base change. Only a preview matching the current full basis can be explicitly selected.
+7. Retain the complete update file separately and repeat its actual upload, mapping, preview and explicit selection. A full publisher snapshot used as upserts is an operator-selected interpretation: retain that reason in the mapping. Do not call it a publisher-issued delta.
+
+Original request IDs are generated once and retained before dispatch. A completed response keeps the full original request, exact native result and exchanges. Native upload metadata may contain normalized format defaults; that normalization does not replace the original browser request or raw file.
+
+### Unknown outcomes and retained alternatives
+
+The browser stores every proxy dispatch attempt before sending. A response bound to this exact request with dispatchStarted:false proves only that this attempt did not dispatch. Earlier unknown attempts remain pending. A later read returning no operation is not proof that an earlier network attempt can never arrive.
+
+Use **Reconcile original native operation** to read the saved ID, or **Replay exact original request** to send its unchanged full body. Do not change an unresolved request or replace it with a fresh ID. Native COMPLETE, FAILED and INTERRUPTED outcomes are retained. FAILED/INTERRUPTED are terminal original operations, not resumable by changing their input; review the source and error before starting a new explicit operation.
+
+The **Native history** view includes complete request/exchange bodies, workspace observations and named checkpoints. Unfinished mapping, format and provenance JSON remains editable text in the archive. An older differing supplier intake is imported as an explicit alternative, retaining both complete histories. Every alternative remains bound to its original case and configured catalogue workspace. Existing catalogue working copies, source commands and Installation drafts retain their original identities.
+
+**Download all source and review history** exports the complete existing desk archive, including raw original files, unfinished supplier fields, mappings, original requests, previews, captures and all prior complete source reviews. Import uses the same existing archive reader and IndexedDB revision comparison. A competing tab is preserved for explicit reconciliation. The complete archive retains its existing 512 MiB bound; do not discard history to make a write fit.
+
+### Freeze the capture before attaching it
+
+**Capture complete selected bundle** requests one full native catalogue export. A new export can legitimately have a different timestamp and bytes. The browser checks the complete downloaded SHA-256, byte count, native workspace, catalogue ID/revision, active edition, tenant and mapping digest against the reviewed selection. It freezes those exact bytes and header identity into the saved browser archive before an attachment is attempted.
+
+**Download frozen complete bundle** always downloads the retained capture. **Attach and open separate source review** uses the original material-catalog-source.add command and opens a distinct named complete source review. If that case command has an unknown outcome, replay its exact request and frozen bytes. Do not recapture a different export under that pending attachment. A changed case must be freshly opened before the next mutation, while reads and reconciliation preserve the original request basis.
+
+Continue the complete catalogue source/record/edition comparison, Installation template, explicit bindings, native preparation and whole customer package steps above. Receiving the prepared document creates a separate unsaved Installation draft; original Save remains its only writer.
+
+### Same original receiving course
+
+The existing material-catalogue-source-desk-browser.mjs accepts optional supplierIntake input. The one existing native receiver starts the original catalogue host and supplies its actual opaque connection identity. The browser alone performs the raw upload/save/preview/select/capture course; the CLI remains an independent operator interface.
+
+The supplied full and update paths are checked against their complete byte/hash descriptors before the browser opens. The source case and complete commercial document remain unchanged in report.originalInput. Actual native request IDs/results, full/update edition IDs, the first frozen capture and its header identity are saved in report.supplierIntake. The effectiveSourceSelection is derived from the actual saved source and original native Material template, with the same operationId and commercial document; it does not overwrite originalInput.
+
+The course then uses that retained selection for the existing complete source attachment, original record/source/edition views, native preparation, whole customer ZIP, complete archive import, distinct Installation draft, original Save and cold browser reopening. The parent receiver independently checks the captured original bundle and source bytes, native operation outcomes, complete customer ZIP and original case import/cold reopen. No second mutation course is launched.
+
+The supplied SAP SPS11 and SPS12 receiving files remain their original full published CSV snapshots. The explicitly selected update mapping adds constant upsert semantics and the recorded explanation; it does not change the publisher bytes or claim a published delta transaction. The original mapping is retained separately.
+
+Actual desktop and 390-pixel narrow screenshots cover workspace/source selection, retained input, incomplete mapping, full mapping and preview, explicit update/base, changed records and frozen capture. Both actual original file downloads, the captured catalogue and the original complete outgoing attachments are opened. Source parsing and authored receiving do not establish a browser result. Return actual images and files to the producing seat, and keep producer viewing pending until that seat has opened and LOOKED at them.
+
+The complete current owner instruction is retained in [MATERIAL_CATALOGUE_SOURCE_DESK.md](MATERIAL_CATALOGUE_SOURCE_DESK.md#rendered-product-inspection--owner-instruction-2026-10-13) and applies unchanged to this additional course, all attachments and any continuing provider/child assignment.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949

@@ -256,6 +256,16 @@ def authorize(handler):
             return
         if role == "contributor":
             fail("Use the contributor desk's original work and invoice commands.")
+        if action.startswith("material-catalog-intake/"):
+            intake_action = action.split("/", 1)[1]
+            if intake_action in ("upload", "save", "preview", "select"):
+                if role not in ("lead", "finance"):
+                    fail("A delivery lead or finance operator records supplier catalogue changes.")
+                bind_actor(handler, body)
+            elif intake_action not in ("connections", "state", "catalog", "profile", "materials",
+                                       "changes", "operation", "bundle"):
+                fail("Select an original supplier catalogue operation.", "STAFF_ROUTE", 422)
+            return
         if action in ("airflow-source", "material-catalog-source"):
             if role not in ("lead", "finance"):
                 fail("A delivery lead or finance operator retains the original source file.")
@@ -305,9 +315,11 @@ def record_operation(handler, status, body):
         return
     supplied = getattr(handler, "_json_cache", {})
     result = body if isinstance(body, dict) else {}
+    native = supplied.get("nativeRequest")
+    native_request_id = native.get("requestId") if isinstance(native, dict) else None
     handler.server.staff.event(principal["actor"], "operation", principal["id"],
         {"path": urlsplit(handler.path).path, "action": supplied.get("action"),
-         "requestId": supplied.get("requestId") or handler.headers.get("X-Request-ID"),
+         "requestId": supplied.get("requestId") or native_request_id or handler.headers.get("X-Request-ID"),
          "id": result.get("id"), "version": result.get("version", result.get("revision"))})
 
 

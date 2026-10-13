@@ -83,6 +83,7 @@ export async function performMaterialSource(input){
    independentReopen:{complete:true,files:receipt.files.length+1},source:identity(raw)};
  }
  const bundle=inspectMaterialSource(raw,sha);
+ if(input.action==='intake-custody')return {schema:'stellar-forge.material-intake-custody.v1',file:clone(bundle.identity),header:clone(bundle.header),catalogue:selectedFields(bundle.catalog,['id','tenantId','revision','activeEditionId','mappingSha256']),summary:clone(bundle.summary)};
  if(input.action==='custody')return {schema:'stellar-forge.material-source-desk-custody.v1',file:clone(bundle.identity),summary:clone(bundle.summary)};
  if(input.action==='inspect')return describe(bundle);
  if(input.action==='member'){
