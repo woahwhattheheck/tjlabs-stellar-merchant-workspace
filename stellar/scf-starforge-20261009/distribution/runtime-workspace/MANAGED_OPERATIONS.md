@@ -100,6 +100,10 @@ An unavailable observation belongs to its operation. Other runtimes, application
 
 Use **Refresh operation status** in either the Operations or Managed releases view to recheck that original UUID directly. **Status check detail** shows its observation source, time and error. The command label distinguishes a running process, an ended process and unavailable status. **Open retained output** remains available in all three cases. A worker log that has not been created is shown explicitly; an unreadable log reports its actual error while preserving the operation selection.
 
+The **Applications** view uses the same observation reader for its runtime connection, current launch, paged history, output and terminal. **Refresh applications** reloads those original records. An unknown process keeps the application's saved settings, retained output and original saved addresses visible with an explicit status note. A new start or settings edit waits for that process to become observable. Terminal output and input receipts remain readable while input controls require an observed active terminal. Actual input submission still performs its own original strict lease check.
+
+Application groups use those same observations when displaying a selected run. An uncertain member keeps its original run and output visible, sets the group phase to **OBSERVATION_UNAVAILABLE**, and prevents **Continue**. A pending stop remains visible while any member's status is uncertain. Group start, review, member actions and stop still perform their original strict lifecycle reads.
+
 Status observation does not authorize recovery, stop, activation, installation or another launch. Those actions retain their existing process checks, source comparisons and original exclusive lease. The workspace never changes an operation's persisted phase merely because its status probe failed. After an operation becomes observable again, its existing recovery controls follow its actual retained phase.
 
 The capability-protected browser API supplies:

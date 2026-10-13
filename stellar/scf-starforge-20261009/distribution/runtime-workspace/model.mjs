@@ -224,6 +224,10 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
     readJob: (id, observe) => jobView(root, id, observe),
     workerAlive, managedCommandAlive, operationRunning,
   });
+  async function observedOperations(ids = null) {
+    const selected = ids ?? (await readdir(join(root, 'operations'))).filter(name => /^[a-f0-9-]{36}$/.test(name));
+    return new Map((await operationReader.read(selected)).map(job => [job.id, job]));
+  }
   const groupLifecycle = {
     start: input => model.applicationsStart(input),
     recover: input => model.applicationsRecover(input),
@@ -530,7 +534,7 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
         'RUNTIME_WORKSPACE_INSTALL_LOG_UNAVAILABLE', 'This runtime has no npm attempt log yet');
       return { name: state.logFile, ...await tailFile(join(selected.directory, state.logFile)) };
     },
-    async applicationGroupsState(options) { return applicationGroupsState(root, options); },
+    async applicationGroupsState(options) { return applicationGroupsState(root, options, await observedOperations()); },
     async applicationGroupsSave(input) { return saveApplicationGroup(root, input); },
     async applicationGroupsReview(input) { return reviewApplicationGroup(root, input); },
     async applicationGroupsStart(input) { return startApplicationGroup(root, input, groupLifecycle); },
@@ -538,8 +542,8 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
     async applicationGroupsApplyReview(input) { return applyApplicationGroupReview(root, input); },
     async applicationGroupsMember(input) { return applicationGroupMemberAction(root, input, groupLifecycle); },
     async applicationGroupsStop(input) { return stopApplicationGroup(root, input, groupLifecycle); },
-    async applicationsState(options) { return applicationsState(root, options); },
-    async applicationsHistory(options) { return applicationsHistory(root, options); },
+    async applicationsState(options) { return applicationsState(root, options, await observedOperations()); },
+    async applicationsHistory(options) { return applicationsHistory(root, options, await observedOperations()); },
     async applicationsOpenApiSetup(input) {
       const selected = await entry(root, recordId(input.runtimeId));
       return openApiConnectionSetupAction(root, { ...input, runtimeDirectory: selected.directory }, { policy: setupPolicy });
@@ -590,8 +594,8 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
       if (current.phase === 'QUEUED') return model.resumeQueued(input.operationId);
       return model.recoverManagedOperation(input.operationId);
     },
-    async applicationsOutput(input) { return applicationOutput(root, input); },
-    async applicationsTerminal(input) { return readApplicationTerminal(root, input); },
+    async applicationsOutput(input) { return applicationOutput(root, input, await observedOperations([operationId(input.operationId)])); },
+    async applicationsTerminal(input) { return readApplicationTerminal(root, input, await observedOperations([operationId(input.operationId)])); },
     async applicationsInput(input) { return sendApplicationTerminal(root, input); },
     async managedState(options) { return managedState(root, options); },
     async openManagedHome(options) { return openManagedHome(root, options); },
