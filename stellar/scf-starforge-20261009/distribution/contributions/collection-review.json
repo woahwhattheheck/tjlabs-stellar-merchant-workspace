@@ -1,0 +1,39 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "collection-review",
+  "description": "Retain institutional collection sources, review editorial changes and story order, and reopen complete collection workspaces",
+  "supportFiles": [
+    "stellar-forge/developer-site/collection-review-cli.mjs",
+    "stellar-forge/developer-site/dist/collection-review-source.mjs",
+    "stellar-forge/developer-site/dist/collection-review-workspace.mjs",
+    "stellar-forge/developer-site/dist/collection-review-report.mjs",
+    "stellar-forge/developer-site/dist/collection-review.mjs",
+    "stellar-forge/developer-site/dist/collection-review.html",
+    "stellar-forge/developer-site/dist/collection-review.css",
+    "stellar-forge/developer-site/dist/collection-review-guide.md",
+    "stellar-forge/developer-site/serve.mjs",
+    "stellar-forge/developer-site/browser-assets.json",
+    "products/collection-review/OPERATING.md",
+    "products/collection-review/examples/ArchiveBlack_Institution_Review.json",
+    "products/collection-review/examples/ArchiveBlack_Review_Projection.json",
+    "products/collection-review/examples/README.md",
+    "products/collection-review/examples/ArchiveBlack_Review.html"
+  ],
+  "commands": {
+    "collection-review": "stellar-forge/developer-site/collection-review-cli.mjs"
+  },
+  "commandDescriptions": {
+    "collection-review": "Import complete collection source pages, review ordered records and editorial proposals, receive saved workspaces, export source-backed reports and open the local collection workbench"
+  },
+  "exports": {
+    "./collection-review": "./source/stellar-forge/developer-site/dist/collection-review-workspace.mjs",
+    "./collection-review/source": "./source/stellar-forge/developer-site/dist/collection-review-source.mjs",
+    "./collection-review/report": "./source/stellar-forge/developer-site/dist/collection-review-report.mjs"
+  },
+  "browserAssets": [
+    {
+      "server": "stellar-forge/developer-site/serve.mjs",
+      "manifest": "stellar-forge/developer-site/browser-assets.json"
+    }
+  ]
+}

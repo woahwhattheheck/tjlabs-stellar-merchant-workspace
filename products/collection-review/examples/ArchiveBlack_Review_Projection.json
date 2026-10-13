@@ -1,0 +1,1150 @@
+{
+  "schema": "stellar-forge.collection-review-report.v1",
+  "workspace": {
+    "id": "00000000-0000-4000-8000-000000000001",
+    "name": "ArchiveBlack · Institution source review"
+  },
+  "revision": {
+    "id": "revision-b2de4cbcc3d9b53b6c6da1a35d6f6d5795ff8db784f00f9c92ae74bea05b9e78",
+    "parentId": "revision-67da9d55127b73a32af9582448c13f04777c026922d94c41bed02e52e0830164",
+    "createdAt": "2026-10-13T07:54:47.000Z",
+    "actor": "TJLabs preparation operator",
+    "note": "Retained 44 published occurrences from the original captured pages. Review remains unreviewed; rights unknown."
+  },
+  "collections": [
+    {
+      "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282",
+      "institution": {
+        "title": "Toronto Metropolitan University – (Formerly Ryerson University)",
+        "description": "The Archives serves as the institutional memory of the Toronto Metropolitan University community. The Archives appraises, preserves, and makes accessible a broad range of primary source materials which provide administrative, academic, fiscal, legal, social, and cultural record of Toronto Metropolitan University.",
+        "address": "\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tToronto Metropolitan University\n\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t\t350 Victoria Street\n\n\t\t\t\t\t\t\t\t\t\tToronto, ON\n\n\t\t\t\t\t\t\t\t\t\tM5B 2K3\t\t\t\t\t\t\t\t\t\n\n\t\t\t\t\t\t\t\t",
+        "topics": [
+          "Community and Social Life",
+          "Historical Achievements, Figures, and Biography",
+          "Military Service and War Efforts",
+          "Oppression, Activism, and Resistance"
+        ],
+        "characteristics": [
+          "Performing Arts",
+          "Oral Histories",
+          "Ethnicity, Culture & Society",
+          "Portraits"
+        ]
+      },
+      "source": {
+        "format": "archiveblack-html",
+        "filename": "ArchiveBlack_Original_TMU_Institution_20261013.html",
+        "url": "https://archiveblack.ca/archives/toronto-metropolitan-university-ryerson/",
+        "observedAt": "2026-10-13T07:54:47.000Z",
+        "sha256": "876c468733f278e6d720d752dfe6a52e2738f4df967684b7598cde9c1b0c3e88",
+        "bytes": 127506
+      },
+      "entries": [
+        {
+          "ordinal": 1,
+          "title": "Black Canada and the Great War",
+          "url": "https://www.torontomu.ca/black-canada-and-the-great-war/",
+          "rawHref": "https://www.torontomu.ca/black-canada-and-the-great-war/",
+          "rawTitle": "Black Canada and the Great War",
+          "rawAnchor": "<a href=\"https://www.torontomu.ca/black-canada-and-the-great-war/\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Black Canada and the Great War</span></a>",
+          "sourceLocator": {
+            "start": 41267,
+            "end": 41435
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:1",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 2,
+          "title": "Mount Dennis Athletes Had Fine Minstrel Show 1921",
+          "url": "https://archives.library.torontomu.ca/index.php/mount-dennis-athletes-had-fine-minstrel-show",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/mount-dennis-athletes-had-fine-minstrel-show",
+          "rawTitle": "Mount Dennis Athletes Had Fine Minstrel Show 1921",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/mount-dennis-athletes-had-fine-minstrel-show\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Mount Dennis Athletes Had Fine Minstrel Show 1921</span></a>",
+          "sourceLocator": {
+            "start": 41436,
+            "end": 41659
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:2",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 3,
+          "title": "Minstrel Show Group Portrait 1930-1950",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_dpla_primary_3c1ffe15c97a885512555d1dda317f6a&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Minstrel%20show%20group%20portrait%201930&offset=0&pcAvailability=true",
+          "rawHref": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_dpla_primary_3c1ffe15c97a885512555d1dda317f6a&#038;context=PC&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Primo%20Central&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Minstrel%20show%20group%20portrait%201930&#038;offset=0&#038;pcAvailability=true",
+          "rawTitle": "Minstrel Show Group Portrait 1930-1950",
+          "rawAnchor": "<a href=\"https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_dpla_primary_3c1ffe15c97a885512555d1dda317f6a&#038;context=PC&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Primo%20Central&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Minstrel%20show%20group%20portrait%201930&#038;offset=0&#038;pcAvailability=true\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Minstrel Show Group Portrait 1930-1950</span></a>",
+          "sourceLocator": {
+            "start": 41660,
+            "end": 42162
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:3",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 4,
+          "title": "Portrait of Richard Gordineer ",
+          "url": "https://archives.library.torontomu.ca/index.php/portrait-of-richard-gordineer",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/portrait-of-richard-gordineer",
+          "rawTitle": "Portrait of Richard Gordineer ",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/portrait-of-richard-gordineer\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Portrait of Richard Gordineer </span></a>",
+          "sourceLocator": {
+            "start": 42163,
+            "end": 42352
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:4",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 5,
+          "title": "Third Annual Kodak Minstrel Show - ‟Minstrel Maids\" 1922",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_1016284443&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Minstrel%20Maids%201922&offset=0&pcAvailability=true",
+          "rawHref": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_1016284443&#038;context=PC&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Primo%20Central&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Minstrel%20Maids%201922&#038;offset=0&#038;pcAvailability=true",
+          "rawTitle": "Third Annual Kodak Minstrel Show - ‟Minstrel Maids\" 1922",
+          "rawAnchor": "<a href=\"https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_1016284443&#038;context=PC&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Primo%20Central&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Minstrel%20Maids%201922&#038;offset=0&#038;pcAvailability=true\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Third Annual Kodak Minstrel Show - ‟Minstrel Maids\" 1922</span></a>",
+          "sourceLocator": {
+            "start": 42353,
+            "end": 42835
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:5",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 6,
+          "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1922",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+          "rawHref": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&#038;context=L&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Local%20Search%20Engine&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&#038;offset=0&#038;pcAvailability=true",
+          "rawTitle": "Part of Kodak Canada Corporate Archives and Heritage Collection 1922",
+          "rawAnchor": "<a href=\"https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&#038;context=L&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Local%20Search%20Engine&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&#038;offset=0&#038;pcAvailability=true\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Part of Kodak Canada Corporate Archives and Heritage Collection 1922</span></a>",
+          "sourceLocator": {
+            "start": 42836,
+            "end": 43386
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:6",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 7,
+          "title": "First Annual Kodak Minstrel Show 1920",
+          "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/kodak-minstrels",
+          "rawTitle": "First Annual Kodak Minstrel Show 1920",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/kodak-minstrels\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">First Annual Kodak Minstrel Show 1920</span></a>",
+          "sourceLocator": {
+            "start": 43387,
+            "end": 43569
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:7",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 8,
+          "title": "Minstrel Shows 1985-2006",
+          "url": "https://archives.library.torontomu.ca/index.php/minstrel-shows",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/minstrel-shows",
+          "rawTitle": "Minstrel Shows 1985-2006",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/minstrel-shows\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Minstrel Shows 1985-2006</span></a>",
+          "sourceLocator": {
+            "start": 43570,
+            "end": 43738
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:8",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 9,
+          "title": "Second Annual Kodak Minstrel Show 1921",
+          "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-2",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-2",
+          "rawTitle": "Second Annual Kodak Minstrel Show 1921",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/kodak-minstrels-2\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Second Annual Kodak Minstrel Show 1921</span></a>",
+          "sourceLocator": {
+            "start": 43739,
+            "end": 43924
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:9",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 10,
+          "title": "Third Annual Kodak Minstrel Show - Crystal Theatre 1922",
+          "url": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-crystal-theater",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/kodak-minstrels-crystal-theater",
+          "rawTitle": "Third Annual Kodak Minstrel Show - Crystal Theatre 1922",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/kodak-minstrels-crystal-theater\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Third Annual Kodak Minstrel Show - Crystal Theatre 1922</span></a>",
+          "sourceLocator": {
+            "start": 43925,
+            "end": 44141
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:10",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 11,
+          "title": "Part of Kodak Canada Corporate Archives and Heritage Collection 1895-2006",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&offset=0&pcAvailability=true",
+          "rawHref": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&#038;context=L&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Local%20Search%20Engine&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&#038;offset=0&#038;pcAvailability=true",
+          "rawTitle": "Part of Kodak Canada Corporate Archives and Heritage Collection 1895-2006",
+          "rawAnchor": "<a href=\"https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991014477070808636&#038;context=L&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Local%20Search%20Engine&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Part%20of%20Kodak%20Canada%20Corporate%20Archives%20and%20Heritage%20Collection&#038;offset=0&#038;pcAvailability=true\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Part of Kodak Canada Corporate Archives and Heritage Collection 1895-2006</span></a>",
+          "sourceLocator": {
+            "start": 44142,
+            "end": 44697
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:11",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 12,
+          "title": "At Kodak Heights / Canadian Kodak Co. 1921-1932",
+          "url": "https://archives.library.torontomu.ca/index.php/at-kodak-heights-canadian-kodak-co",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/at-kodak-heights-canadian-kodak-co",
+          "rawTitle": "At Kodak Heights / Canadian Kodak Co. 1921-1932",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/at-kodak-heights-canadian-kodak-co\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">At Kodak Heights / Canadian Kodak Co. 1921-1932</span></a>",
+          "sourceLocator": {
+            "start": 44698,
+            "end": 44909
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:12",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 13,
+          "title": "Lena Horne: The Lady and Her Music Television Production 1982",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_138164922&context=PC&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Primo%20Central&tab=OCULDiscoveryNetwork&query=any,contains,Lena%20Horne:%20The%20Lady%20and%20Her%20Music%20television%20production%20Paddy%20sampson&offset=0&pcAvailability=true",
+          "rawHref": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_138164922&#038;context=PC&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Primo%20Central&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Lena%20Horne:%20The%20Lady%20and%20Her%20Music%20television%20production%20Paddy%20sampson&#038;offset=0&#038;pcAvailability=true",
+          "rawTitle": "Lena Horne: The Lady and Her Music Television Production 1982",
+          "rawAnchor": "<a href=\"https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_proquest_hnp_138164922&#038;context=PC&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Primo%20Central&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Lena%20Horne:%20The%20Lady%20and%20Her%20Music%20television%20production%20Paddy%20sampson&#038;offset=0&#038;pcAvailability=true\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Lena Horne: The Lady and Her Music Television Production 1982</span></a>",
+          "sourceLocator": {
+            "start": 44910,
+            "end": 45461
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:13",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 14,
+          "title": "Ethnicity and Recreation behaviour in Toronto: A Study of Canadian Blacks, Chinese and Italians 1993",
+          "url": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991000869809708636&context=L&vid=01OCUL_TMU:01OCUL_TMU&lang=en&search_scope=OCULDiscoveryNetwork&adaptor=Local%20Search%20Engine&tab=OCULDiscoveryNetwork&query=any,contains,Ethnicity%20and%20recreation%20behaviour%20in%20Toronto:%20a%20study%20of%20Canadian%20Blacks,%20Chinese%20and%20Italians&offset=0&pcAvailability=true",
+          "rawHref": "https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991000869809708636&#038;context=L&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Local%20Search%20Engine&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Ethnicity%20and%20recreation%20behaviour%20in%20Toronto:%20a%20study%20of%20Canadian%20Blacks,%20Chinese%20and%20Italians&#038;offset=0&#038;pcAvailability=true",
+          "rawTitle": "Ethnicity and Recreation behaviour in Toronto: A Study of Canadian Blacks, Chinese and Italians 1993",
+          "rawAnchor": "<a href=\"https://torontomu.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991000869809708636&#038;context=L&#038;vid=01OCUL_TMU:01OCUL_TMU&#038;lang=en&#038;search_scope=OCULDiscoveryNetwork&#038;adaptor=Local%20Search%20Engine&#038;tab=OCULDiscoveryNetwork&#038;query=any,contains,Ethnicity%20and%20recreation%20behaviour%20in%20Toronto:%20a%20study%20of%20Canadian%20Blacks,%20Chinese%20and%20Italians&#038;offset=0&#038;pcAvailability=true\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Ethnicity and Recreation behaviour in Toronto: A Study of Canadian Blacks, Chinese and Italians 1993</span></a>",
+          "sourceLocator": {
+            "start": 45462,
+            "end": 46086
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:14",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 15,
+          "title": "Patrick Watson / Harry Belafonte Interviews: Part 1 [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-1-unedited-footage",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-1-unedited-footage",
+          "rawTitle": "Patrick Watson / Harry Belafonte Interviews: Part 1 [unedited footage] 1976",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-1-unedited-footage\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Patrick Watson / Harry Belafonte Interviews: Part 1 [unedited footage] 1976</span></a>",
+          "sourceLocator": {
+            "start": 46087,
+            "end": 46357
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:15",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 16,
+          "title": "Patrick Watson / Harry Belafonte Interviews: Part 2 [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-2-unedited-footage",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-2-unedited-footage",
+          "rawTitle": "Patrick Watson / Harry Belafonte Interviews: Part 2 [unedited footage] 1976",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-part-2-unedited-footage\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Patrick Watson / Harry Belafonte Interviews: Part 2 [unedited footage] 1976</span></a>",
+          "sourceLocator": {
+            "start": 46358,
+            "end": 46628
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:16",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 17,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-2on-harry-belafonte-interviews-unedited-footage-2",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-2on-harry-belafonte-interviews-unedited-footage-2",
+          "rawTitle": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-2on-harry-belafonte-interviews-unedited-footage-2\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976</span></a>",
+          "sourceLocator": {
+            "start": 46629,
+            "end": 46934
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:17",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 18,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-3",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-3",
+          "rawTitle": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-3\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976</span></a>",
+          "sourceLocator": {
+            "start": 46935,
+            "end": 47192
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:18",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 19,
+          "title": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "url": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-4",
+          "rawHref": "https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-4",
+          "rawTitle": "Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976",
+          "rawAnchor": "<a href=\"https://archives.library.torontomu.ca/index.php/patrick-watson-harry-belafonte-interviews-unedited-footage-4\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Patrick Watson / Harry Belafonte Interviews [unedited footage] 1976</span></a>",
+          "sourceLocator": {
+            "start": 47193,
+            "end": 47450
+          },
+          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:19",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168",
+      "institution": {
+        "title": "Museum London",
+        "description": "The Museum London collection page highlights a large and diverse archive of over 5,500 artworks and nearly 50,000 historical artifacts focused on the history and culture of London and Southwestern Ontario.\n \nThese links were provided by Zahra McDoom (TD Curator of Collections of Museum London)",
+        "address": "\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t421 Ridout St N\n\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t\t421 Ridout Street North\n\n\t\t\t\t\t\t\t\t\t\tLondon, ON\n\n\t\t\t\t\t\t\t\t\t\tN6A 5H4\t\t\t\t\t\t\t\t\t\n\n\t\t\t\t\t\t\t\t",
+        "topics": [
+          "Community and Social Life",
+          "Culture, Heritage and Arts",
+          "Historical Achievements, Figures, and Biography",
+          "Politics and Governance",
+          "Sports and Recreation"
+        ],
+        "characteristics": [
+          "Community Engagement",
+          "Athletic Performance",
+          "Local History",
+          "Artistic Expression",
+          "Sports Heritage"
+        ]
+      },
+      "source": {
+        "format": "archiveblack-html",
+        "filename": "ArchiveBlack_Original_Museum_London_20261013.html",
+        "url": "https://archiveblack.ca/archives/museum-london/",
+        "observedAt": "2026-10-13T07:54:47.000Z",
+        "sha256": "7bf9e050d5786bce5db91fc8668ca28cdec89fe8c2f39c5603aabce776daa623",
+        "bytes": 127389
+      },
+      "entries": [
+        {
+          "ordinal": 1,
+          "title": "Black Lives Lived Here: London Family Photos 1910-1960",
+          "url": "https://museumlondon.ca/wp-content/uploads/2025/09/BLLH-Booklet-DIGITAL.pdf",
+          "rawHref": "https://museumlondon.ca/wp-content/uploads/2025/09/BLLH-Booklet-DIGITAL.pdf",
+          "rawTitle": "Black Lives Lived Here: London Family Photos 1910-1960",
+          "rawAnchor": "<a href=\"https://museumlondon.ca/wp-content/uploads/2025/09/BLLH-Booklet-DIGITAL.pdf\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Black Lives Lived Here: London Family Photos 1910-1960</span></a>",
+          "sourceLocator": {
+            "start": 41216,
+            "end": 41427
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:1",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 2,
+          "title": "Joey Hollingsworth's White Tuxedo ca. 1980s",
+          "url": "https://collection.museumlondon.ca/objects/59178/white-tuxedo?ctx=78077cf00fe931ce7c0c59a843bbc76146089034&idx=1",
+          "rawHref": "https://collection.museumlondon.ca/objects/59178/white-tuxedo?ctx=78077cf00fe931ce7c0c59a843bbc76146089034&#038;idx=1",
+          "rawTitle": "Joey Hollingsworth's White Tuxedo ca. 1980s",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59178/white-tuxedo?ctx=78077cf00fe931ce7c0c59a843bbc76146089034&#038;idx=1\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Joey Hollingsworth's White Tuxedo ca. 1980s</span></a>",
+          "sourceLocator": {
+            "start": 41428,
+            "end": 41670
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:2",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 3,
+          "title": "Joey Hollingsworth's White Tap Shoes ca. 1980s",
+          "url": "https://collection.museumlondon.ca/objects/59177/white-tap-shoes?ctx=78077cf00fe931ce7c0c59a843bbc76146089034&idx=0",
+          "rawHref": "https://collection.museumlondon.ca/objects/59177/white-tap-shoes?ctx=78077cf00fe931ce7c0c59a843bbc76146089034&#038;idx=0",
+          "rawTitle": "Joey Hollingsworth's White Tap Shoes ca. 1980s",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59177/white-tap-shoes?ctx=78077cf00fe931ce7c0c59a843bbc76146089034&#038;idx=0\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Joey Hollingsworth's White Tap Shoes ca. 1980s</span></a>",
+          "sourceLocator": {
+            "start": 41671,
+            "end": 41919
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:3",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 4,
+          "title": "Joey Hollingsworth's Cuff Link and Stud Set ca. 1980s",
+          "url": "https://collection.museumlondon.ca/objects/59179/cuff-link-and-stud-set?ctx=78077cf00fe931ce7c0c59a843bbc76146089034&idx=2",
+          "rawHref": "https://collection.museumlondon.ca/objects/59179/cuff-link-and-stud-set?ctx=78077cf00fe931ce7c0c59a843bbc76146089034&#038;idx=2",
+          "rawTitle": "Joey Hollingsworth's Cuff Link and Stud Set ca. 1980s",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59179/cuff-link-and-stud-set?ctx=78077cf00fe931ce7c0c59a843bbc76146089034&#038;idx=2\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Joey Hollingsworth's Cuff Link and Stud Set ca. 1980s</span></a>",
+          "sourceLocator": {
+            "start": 41920,
+            "end": 42182
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:4",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 5,
+          "title": "Paul Lewis Portrait ca. 1940s",
+          "url": "https://collection.museumlondon.ca/objects/59135/portrait-of-paul-lewis?ctx=25a6271d6ac212400b3d384f0db1fc7ccc47130b&idx=0",
+          "rawHref": "https://collection.museumlondon.ca/objects/59135/portrait-of-paul-lewis?ctx=25a6271d6ac212400b3d384f0db1fc7ccc47130b&#038;idx=0",
+          "rawTitle": "Paul Lewis Portrait ca. 1940s",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59135/portrait-of-paul-lewis?ctx=25a6271d6ac212400b3d384f0db1fc7ccc47130b&#038;idx=0\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Paul Lewis Portrait ca. 1940s</span></a>",
+          "sourceLocator": {
+            "start": 42183,
+            "end": 42421
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:5",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 6,
+          "title": "Barry Howson First Place Ribbon, Relay Race 1946",
+          "url": "https://collection.museumlondon.ca/objects/59165/first-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&idx=3",
+          "rawHref": "https://collection.museumlondon.ca/objects/59165/first-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=3",
+          "rawTitle": "Barry Howson First Place Ribbon, Relay Race 1946",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59165/first-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=3\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Barry Howson First Place Ribbon, Relay Race 1946</span></a>",
+          "sourceLocator": {
+            "start": 42422,
+            "end": 42686
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:6",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 7,
+          "title": "Barry Howson Third Place Ribbon, Relay Race 1947",
+          "url": "https://collection.museumlondon.ca/objects/59166/third-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&idx=4",
+          "rawHref": "https://collection.museumlondon.ca/objects/59166/third-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=4",
+          "rawTitle": "Barry Howson Third Place Ribbon, Relay Race 1947",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59166/third-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=4\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Barry Howson Third Place Ribbon, Relay Race 1947</span></a>",
+          "sourceLocator": {
+            "start": 42687,
+            "end": 42951
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:7",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 8,
+          "title": "Barry Howson First Place Ribbon, Relay Race 1949",
+          "url": "https://collection.museumlondon.ca/objects/59167/first-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&idx=5",
+          "rawHref": "https://collection.museumlondon.ca/objects/59167/first-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=5",
+          "rawTitle": "Barry Howson First Place Ribbon, Relay Race 1949",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59167/first-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=5\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Barry Howson First Place Ribbon, Relay Race 1949</span></a>",
+          "sourceLocator": {
+            "start": 42952,
+            "end": 43216
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:8",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 9,
+          "title": "Barry Howson First Place Ribbon, Relay Race 1950",
+          "url": "https://collection.museumlondon.ca/objects/59168/first-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&idx=6",
+          "rawHref": "https://collection.museumlondon.ca/objects/59168/first-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=6",
+          "rawTitle": "Barry Howson First Place Ribbon, Relay Race 1950",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59168/first-place-ribbon-relay-race?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=6\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Barry Howson First Place Ribbon, Relay Race 1950</span></a>",
+          "sourceLocator": {
+            "start": 43217,
+            "end": 43481
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:9",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 10,
+          "title": "P.U.C. Recreation Crest - London Playgrounds Champion 2024",
+          "url": "https://collection.museumlondon.ca/objects/59169/puc-recreation-crest--london-playgrounds-champion?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&idx=7",
+          "rawHref": "https://collection.museumlondon.ca/objects/59169/puc-recreation-crest--london-playgrounds-champion?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=7",
+          "rawTitle": "P.U.C. Recreation Crest - London Playgrounds Champion 2024",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59169/puc-recreation-crest--london-playgrounds-champion?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=7\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">P.U.C. Recreation Crest - London Playgrounds Champion 2024</span></a>",
+          "sourceLocator": {
+            "start": 43482,
+            "end": 43776
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:10",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 11,
+          "title": "P.U.C. Recreation Crest, Red Award 1959",
+          "url": "https://collection.museumlondon.ca/objects/59170/puc-recreation-crest-red-award?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&idx=8",
+          "rawHref": "https://collection.museumlondon.ca/objects/59170/puc-recreation-crest-red-award?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=8",
+          "rawTitle": "P.U.C. Recreation Crest, Red Award 1959",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59170/puc-recreation-crest-red-award?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=8\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">P.U.C. Recreation Crest, Red Award 1959</span></a>",
+          "sourceLocator": {
+            "start": 43777,
+            "end": 44033
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:11",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 12,
+          "title": "Trophy Cup, W.O.S.S.A. Track & Field, Individual Champion (Senior) 1957-1958",
+          "url": "https://collection.museumlondon.ca/objects/59172/trophy-cup-wossa-track--field-individual-champion-s?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&idx=10",
+          "rawHref": "https://collection.museumlondon.ca/objects/59172/trophy-cup-wossa-track--field-individual-champion-s?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=10",
+          "rawTitle": "Trophy Cup, W.O.S.S.A. Track & Field, Individual Champion (Senior) 1957-1958",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59172/trophy-cup-wossa-track--field-individual-champion-s?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=10\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Trophy Cup, W.O.S.S.A. Track & Field, Individual Champion (Senior) 1957-1958</span></a>",
+          "sourceLocator": {
+            "start": 44034,
+            "end": 44349
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:12",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 13,
+          "title": "W.O.S.S.A. Championship Crest - Football & Basketball 2024",
+          "url": "https://collection.museumlondon.ca/objects/59171/wossa-championship-crest--football--basketball?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&idx=9",
+          "rawHref": "https://collection.museumlondon.ca/objects/59171/wossa-championship-crest--football--basketball?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=9",
+          "rawTitle": "W.O.S.S.A. Championship Crest - Football & Basketball 2024",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59171/wossa-championship-crest--football--basketball?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=9\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">W.O.S.S.A. Championship Crest - Football & Basketball 2024</span></a>",
+          "sourceLocator": {
+            "start": 44350,
+            "end": 44641
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:13",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 14,
+          "title": "Playgrounds Track & Field Plaque 1947",
+          "url": "https://collection.museumlondon.ca/objects/59173/playgrounds-track--field?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&idx=11",
+          "rawHref": "https://collection.museumlondon.ca/objects/59173/playgrounds-track--field?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=11",
+          "rawTitle": "Playgrounds Track & Field Plaque 1947",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59173/playgrounds-track--field?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=11\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Playgrounds Track & Field Plaque 1947</span></a>",
+          "sourceLocator": {
+            "start": 44642,
+            "end": 44891
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:14",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 15,
+          "title": "Playground Supervisors 1958",
+          "url": "https://collection.museumlondon.ca/objects/59174/playground-supervisors?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&idx=12",
+          "rawHref": "https://collection.museumlondon.ca/objects/59174/playground-supervisors?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=12",
+          "rawTitle": "Playground Supervisors 1958",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/59174/playground-supervisors?ctx=f6ce579f7247259c5b62bb8034d305738f09967e&#038;idx=12\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Playground Supervisors 1958</span></a>",
+          "sourceLocator": {
+            "start": 44892,
+            "end": 45129
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:15",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 16,
+          "title": "Arielle Kayabaga: \"Sometimes, you are the change you want to see\" Button 2018",
+          "url": "https://collection.museumlondon.ca/objects/58306/sometimes-you-are-the-change-you-want-to-see-button?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&idx=4",
+          "rawHref": "https://collection.museumlondon.ca/objects/58306/sometimes-you-are-the-change-you-want-to-see-button?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&#038;idx=4",
+          "rawTitle": "Arielle Kayabaga: \"Sometimes, you are the change you want to see\" Button 2018",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/58306/sometimes-you-are-the-change-you-want-to-see-button?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&#038;idx=4\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Arielle Kayabaga: \"Sometimes, you are the change you want to see\" Button 2018</span></a>",
+          "sourceLocator": {
+            "start": 45130,
+            "end": 45445
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:16",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 17,
+          "title": "Arielle Kayabaga: Campaign T-Shirt 2018",
+          "url": "https://collection.museumlondon.ca/objects/58305/campaign-tshirt?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&idx=3",
+          "rawHref": "https://collection.museumlondon.ca/objects/58305/campaign-tshirt?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&#038;idx=3",
+          "rawTitle": "Arielle Kayabaga: Campaign T-Shirt 2018",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/58305/campaign-tshirt?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&#038;idx=3\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Arielle Kayabaga: Campaign T-Shirt 2018</span></a>",
+          "sourceLocator": {
+            "start": 45446,
+            "end": 45687
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:17",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 18,
+          "title": "Arielle Kayabaga: Campaign Door Hanger 2018",
+          "url": "https://collection.museumlondon.ca/objects/58303/campaign-door-hanger?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&idx=2",
+          "rawHref": "https://collection.museumlondon.ca/objects/58303/campaign-door-hanger?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&#038;idx=2",
+          "rawTitle": "Arielle Kayabaga: Campaign Door Hanger 2018",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/58303/campaign-door-hanger?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&#038;idx=2\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Arielle Kayabaga: Campaign Door Hanger 2018</span></a>",
+          "sourceLocator": {
+            "start": 45688,
+            "end": 45938
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:18",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 19,
+          "title": "Arielle Kayabaga: Campaign Sign 2018",
+          "url": "https://collection.museumlondon.ca/objects/58302/campaign-sign?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&idx=1",
+          "rawHref": "https://collection.museumlondon.ca/objects/58302/campaign-sign?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&#038;idx=1",
+          "rawTitle": "Arielle Kayabaga: Campaign Sign 2018",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/58302/campaign-sign?ctx=554e7b2c3271d0afb76dce3062e2cfeb912c24cf&#038;idx=1\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Arielle Kayabaga: Campaign Sign 2018</span></a>",
+          "sourceLocator": {
+            "start": 45939,
+            "end": 46175
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:19",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 20,
+          "title": "Arielle Kayabaga: Campaign Card 2018",
+          "url": "https://collection.museumlondon.ca/objects/58304/campaign-card-arielle-kayabaga",
+          "rawHref": "https://collection.museumlondon.ca/objects/58304/campaign-card-arielle-kayabaga",
+          "rawTitle": "Arielle Kayabaga: Campaign Card 2018",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/58304/campaign-card-arielle-kayabaga\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Arielle Kayabaga: Campaign Card 2018</span></a>",
+          "sourceLocator": {
+            "start": 46176,
+            "end": 46373
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:20",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 21,
+          "title": "Naomi Nadea: Pride Parade Costume 2013",
+          "url": "https://collection.museumlondon.ca/objects/52428/pride-parade-2013-costume?ctx=f9069ba34bf09370c27a10d0b2f8834c5804def6&idx=8",
+          "rawHref": "https://collection.museumlondon.ca/objects/52428/pride-parade-2013-costume?ctx=f9069ba34bf09370c27a10d0b2f8834c5804def6&#038;idx=8",
+          "rawTitle": "Naomi Nadea: Pride Parade Costume 2013",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/52428/pride-parade-2013-costume?ctx=f9069ba34bf09370c27a10d0b2f8834c5804def6&#038;idx=8\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Naomi Nadea: Pride Parade Costume 2013</span></a>",
+          "sourceLocator": {
+            "start": 46374,
+            "end": 46624
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:21",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 22,
+          "title": "Cleveland Brownlee: Signed \"Rookie\" Jersey 1984",
+          "url": "https://collection.museumlondon.ca/objects/58629/signed-rookie-jersey?ctx=3cbfee9f920febceac6e74ff229847cf19dce6cb&idx=5",
+          "rawHref": "https://collection.museumlondon.ca/objects/58629/signed-rookie-jersey?ctx=3cbfee9f920febceac6e74ff229847cf19dce6cb&#038;idx=5",
+          "rawTitle": "Cleveland Brownlee: Signed \"Rookie\" Jersey 1984",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/58629/signed-rookie-jersey?ctx=3cbfee9f920febceac6e74ff229847cf19dce6cb&#038;idx=5\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Cleveland Brownlee: Signed \"Rookie\" Jersey 1984</span></a>",
+          "sourceLocator": {
+            "start": 46625,
+            "end": 46879
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:22",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 23,
+          "title": "Cleveland Brownlee: Baseball 2018",
+          "url": "https://collection.museumlondon.ca/objects/58630/baseball?ctx=3cbfee9f920febceac6e74ff229847cf19dce6cb&idx=6",
+          "rawHref": "https://collection.museumlondon.ca/objects/58630/baseball?ctx=3cbfee9f920febceac6e74ff229847cf19dce6cb&#038;idx=6",
+          "rawTitle": "Cleveland Brownlee: Baseball 2018",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/58630/baseball?ctx=3cbfee9f920febceac6e74ff229847cf19dce6cb&#038;idx=6\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Cleveland Brownlee: Baseball 2018</span></a>",
+          "sourceLocator": {
+            "start": 46880,
+            "end": 47108
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:23",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 24,
+          "title": "Cleveland Brownlee: Black Baseball Bat 2018",
+          "url": "https://collection.museumlondon.ca/objects/58631/black-baseball-bat?ctx=3cbfee9f920febceac6e74ff229847cf19dce6cb&idx=7",
+          "rawHref": "https://collection.museumlondon.ca/objects/58631/black-baseball-bat?ctx=3cbfee9f920febceac6e74ff229847cf19dce6cb&#038;idx=7",
+          "rawTitle": "Cleveland Brownlee: Black Baseball Bat 2018",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/58631/black-baseball-bat?ctx=3cbfee9f920febceac6e74ff229847cf19dce6cb&#038;idx=7\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Cleveland Brownlee: Black Baseball Bat 2018</span></a>",
+          "sourceLocator": {
+            "start": 47109,
+            "end": 47357
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:24",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        },
+        {
+          "ordinal": 25,
+          "title": "Cleveland Brownlee: Gold Baseball Bat 2018",
+          "url": "https://collection.museumlondon.ca/objects/58633/gold-baseball-bat",
+          "rawHref": "https://collection.museumlondon.ca/objects/58633/gold-baseball-bat",
+          "rawTitle": "Cleveland Brownlee: Gold Baseball Bat 2018",
+          "rawAnchor": "<a href=\"https://collection.museumlondon.ca/objects/58633/gold-baseball-bat\" class=\"moba-collection\" target=\"_blank\"><span class=\"title\">Cleveland Brownlee: Gold Baseball Bat 2018</span></a>",
+          "sourceLocator": {
+            "start": 47358,
+            "end": 47548
+          },
+          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:25",
+          "review": {
+            "status": "unreviewed",
+            "suggestedTitle": "",
+            "summary": "",
+            "note": "",
+            "rights": {
+              "status": "unknown",
+              "basis": "",
+              "citation": ""
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "story": {
+    "title": "",
+    "introduction": "",
+    "order": [],
+    "note": ""
+  },
+  "relationships": [],
+  "counts": {
+    "collections": 2,
+    "occurrences": 44,
+    "unreviewed": 44,
+    "include": 0,
+    "exclude": 0,
+    "needs-info": 0,
+    "rightsUnknown": 44
+  }
+}

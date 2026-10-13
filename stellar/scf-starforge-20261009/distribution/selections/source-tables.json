@@ -72,7 +72,8 @@
   "contributions": [
     "source-tables",
     "dataset",
-    "dataset-buyer"
+    "dataset-buyer",
+    "collection-review"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
