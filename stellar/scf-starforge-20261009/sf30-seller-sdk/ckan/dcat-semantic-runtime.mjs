@@ -135,6 +135,15 @@ export async function inspectDcatSemanticRuntime(directory, { expectedSha256 } =
   const actual = new Map(record.packages.map(value => [value.name, value.version]));
   need(actual.size === record.packages.length && Object.entries(PINNED).every(([name, version]) => actual.get(name) === version),
     'DCAT_SEMANTIC_RUNTIME_DEPENDENCY_CHANGED');
+  if (record.transfer !== undefined) {
+    need(object(record.transfer) && HASH.test(record.transfer.receiptSha256 ?? '') &&
+      HASH.test(record.transfer.bundleSha256 ?? '') && HASH.test(record.transfer.sourceRuntimeReceiptSha256 ?? '') &&
+      record.transfer.lockSha256 === record.lockSha256,
+      'DCAT_SEMANTIC_RUNTIME_TRANSFER_RECEIPT_CHANGED');
+    const selection = JSON.parse(await readPrivate(join(directory, 'selection.json'), 16777216));
+    need(JSON.stringify(selection.transfer) === JSON.stringify(record.transfer),
+      'DCAT_SEMANTIC_RUNTIME_TRANSFER_RECEIPT_CHANGED');
+  }
   return { ...record, receiptSha256, receiptBytes: raw.length };
 }
 export async function verifyDcatSemanticRuntimeEnvironment(environment = process.env, { expectedSha256 } = {}) {
@@ -158,13 +167,19 @@ export async function verifyDcatSemanticRuntimeEnvironment(environment = process
     runtimeManifestSha256: record.source.runtimeManifestSha256,
     requirementsSha256: record.source.requirementsSha256, lockSha256: record.lockSha256 };
 }
-export async function prepareDcatSemanticRuntime({ directory, python, wheelhouse } = {}, { signal, onUpdate } = {}) {
+export async function prepareDcatSemanticRuntime({ directory, python, wheelhouse, transferDirectory, expectedTransferSha256 } = {}, { signal, onUpdate } = {}) {
   absolute(directory); absolute(python);
   if (wheelhouse !== undefined) absolute(wheelhouse);
+  if (transferDirectory !== undefined) {
+    absolute(transferDirectory);
+    need(wheelhouse === undefined && HASH.test(expectedTransferSha256 ?? ''),
+      'DCAT_SEMANTIC_RUNTIME_TRANSFER_SELECTION_REQUIRED');
+  } else need(expectedTransferSha256 === undefined, 'DCAT_SEMANTIC_RUNTIME_TRANSFER_SELECTION_REQUIRED');
   need(process.platform === 'linux', 'DCAT_SEMANTIC_RUNTIME_LINUX_REQUIRED');
   await verifySource(); await access(python, constants.X_OK);
   const argv = ['-B', HELPER, 'prepare', '--directory', directory, '--python', python, '--vendor', VENDOR,
-    ...(wheelhouse ? ['--wheelhouse', wheelhouse] : [])];
+    ...(wheelhouse ? ['--wheelhouse', wheelhouse] : []),
+    ...(transferDirectory ? ['--transfer-directory', transferDirectory, '--transfer-sha256', expectedTransferSha256] : [])];
   const environment = Object.fromEntries(['PATH', 'LANG', 'LC_ALL', 'HTTPS_PROXY', 'HTTP_PROXY', 'NO_PROXY']
     .filter(key => process.env[key] !== undefined).map(key => [key, process.env[key]]));
   environment.PYTHONDONTWRITEBYTECODE = '1'; environment.PYTHONUNBUFFERED = '1';

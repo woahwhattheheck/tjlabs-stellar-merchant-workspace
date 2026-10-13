@@ -164,3 +164,9 @@ The maintained implementation is `dcat_semantic_runtime.py` plus `dcat-semantic-
 The complete runtime receipt schema is `stellar-forge.dcat-semantic-prepared-runtime.v1`. The immutable preparation selection is `stellar-forge.dcat-semantic-runtime-selection.v1`; the exported environment receipt is `stellar-forge.dcat-semantic-runtime-environment.v1`. The native request retains the small `stellar-forge.dcat-semantic-runtime-binding.v1` record and exact complete-receipt SHA-256. All original source licenses/notices remain with the retained source.
 
 Neither runtime receipt nor private environment belongs in a customer catalogue archive. The archive retains the original native request, source identities, results, findings, artifacts and operator decisions needed for historical receiving. A recipient who wants another native operation prepares its own host runtime and deliberately selects it.
+
+## Carry the original wheel lock to a receiving host
+
+The [portable semantic runtime procedure](SEMANTIC_RUNTIME_TRANSFER.md) exports the verified original source, all retained wheels, exact dependency lock and sender custody receipts. The recipient receives those complete inputs into its own private directory and runs the original offline preparation at a separate final environment path. The transferred package does not contain an installed virtual environment. Wheel/platform compatibility is checked by the actual recipient installation; an incompatible wheel set remains a receiving finding rather than triggering a different dependency resolution.
+
+The received-input receipt (`READY_INPUTS`) and the installed runtime receipt (`READY`) are separate results. Only the completed runtime enters `writeDcatSemanticRuntimeEnvironment` and the original Applications receiving procedure. Existing saved reports and catalogue history can still be opened without preparing any interpreter.

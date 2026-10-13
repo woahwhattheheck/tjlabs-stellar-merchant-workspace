@@ -7,6 +7,7 @@ import { verifyDcatManagedSelection } from '../../distribution/runtime-workspace
 import { openCkanWorkbench } from './model.mjs';
 import { semanticCliOptions, semanticCliUsage, executeDcatSemanticCommand } from './dcat-semantic-cli.mjs';
 import { semanticRuntimeCliOptions, semanticRuntimeCliUsage, executeDcatSemanticRuntimeCommand } from './dcat-semantic-runtime.mjs';
+import { semanticRuntimeTransferCliOptions, semanticRuntimeTransferCliUsage, executeDcatSemanticRuntimeTransferCommand } from './dcat-semantic-runtime-transfer.mjs';
 import { openWorkbenchOwner, saveWorkbenchStartup } from './workbench-owner.mjs';
 import { parseCkanJson } from './capture.mjs';
 import { startCkanServer } from './server.mjs';
@@ -37,6 +38,7 @@ const usage = [
   '  dcat receive --file FILE.ckanw --sha256 HASH --workspace NEW_DIR',
   ...semanticCliUsage,
   ...semanticRuntimeCliUsage,
+  ...semanticRuntimeTransferCliUsage,
   'Set SCF_DCAT_PYTHON to the prepared interpreter; the default profile original requires Python 3.13.',
   'For prepared Python 3.12, explicitly set SCF_DCAT_RUNTIME_PROFILE=portable-python312; see PORTABLE_RUNTIME.md.',
   'Catalog originals, corrected candidates, full reviews and release history remain in the same saved project.',
@@ -45,6 +47,7 @@ const output = value => process.stdout.write(JSON.stringify(value, null, 2) + '\
 const optionsByCommand = {
   ...semanticCliOptions,
   ...semanticRuntimeCliOptions,
+  ...semanticRuntimeTransferCliOptions,
   init: ['workspace', 'origin'], serve: ['workspace', 'port', 'managed-selection', 'startup-file'],
   status: ['workspace'], source: ['workspace', 'source'],
   'save-source': ['workspace', 'source', 'expected-source', 'label', 'url', 'profile', 'token-env', 'interval-minutes', 'timeout-ms', 'max-bytes', 'enabled'],
@@ -117,12 +120,14 @@ export async function main(supplied = process.argv.slice(2)) {
     if (!options[name]) throw fault('DCAT_COMMAND_ARGUMENTS', 'Supply --' + name + '.');
     return options[name];
   };
-  if (Object.hasOwn(semanticRuntimeCliOptions, command)) {
+  if (Object.hasOwn(semanticRuntimeCliOptions, command) || Object.hasOwn(semanticRuntimeTransferCliOptions, command)) {
     const controller = new AbortController();
     const stop = () => controller.abort();
     process.once('SIGINT', stop); process.once('SIGTERM', stop);
     try {
-      const result = await executeDcatSemanticRuntimeCommand(command, options, { signal: controller.signal });
+      const execute = Object.hasOwn(semanticRuntimeTransferCliOptions, command)
+        ? executeDcatSemanticRuntimeTransferCommand : executeDcatSemanticRuntimeCommand;
+      const result = await execute(command, options, { signal: controller.signal });
       output(result.schema === 'stellar-forge.dcat-semantic-prepared-runtime.v1'
         ? { schema: result.schema, status: result.status, directory: result.directory, python: result.python,
             receiptSha256: result.receiptSha256, receiptBytes: result.receiptBytes,
