@@ -6,7 +6,7 @@ import {grantCohortDeliveryTools} from './grant-cohort-delivery.mjs';
 import {grantPlanningSourceTools} from './grant-planning-sources.mjs';
 import {grantReportingCaptureTools} from './grant-reporting-capture.mjs';
 import {grantProcedureTools} from './grant-procedures.mjs';
-import {GRANT_CASE_ACTIONS,GRANT_MAX_BUNDLE_BYTES,GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
+import {GRANT_CASE_ACTIONS,GRANT_MAX_BUNDLE_BYTES,GRANT_MAX_CASE_BUNDLE_BYTES,GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 
 const str = (maximum = 12000) => ({type:'string', maxLength:maximum});
 const nonempty = (maximum = 300) => ({type:'string', minLength:1, maxLength:maximum});
@@ -996,9 +996,9 @@ export const grantWorkspaceTools = [
     {...ws, snapshotId:{type:'string'}, readId:nonempty(64)}, ['workspace','snapshotId','readId'], true),
   tool('inputs', 'List declared host input aliases, or inspect exact current file size and SHA256 for one alias.',
     {...ws, input:alias}, ['workspace'], true),
-  tool('receive_begin', 'Declare one exact input file and stable transfer request ID. Bytes arrive in fixed 65,536-byte parts and remain separate from original business records until explicit native import.',
-    {...ws, requestId:nonempty(180), filename:nonempty(240), bytes:{type:'integer',minimum:0,maximum:GRANT_MAX_BUNDLE_BYTES},
-      sha256:digest, mediaType:nonempty(200)}, ['workspace','requestId','filename','bytes','sha256']),
+  tool('receive_begin', 'Declare one exact input file and stable transfer request ID. Ordinary files retain their 32 MiB allowance; select kind case-bundle for one complete operated case up to 320 MiB. Bytes arrive in fixed 65,536-byte parts and remain separate from original business records until explicit native import.',
+    {...ws, requestId:nonempty(180), filename:nonempty(240), bytes:{type:'integer',minimum:0,maximum:GRANT_MAX_CASE_BUNDLE_BYTES},
+      kind:{type:'string',enum:['original','case-bundle']}, sha256:digest, mediaType:nonempty(200)}, ['workspace','requestId','filename','bytes','sha256']),
   tool('receive_chunk', 'Retain the exact next or repeated original input part. A conflicting part is rejected; completed files support identical part replay.',
     {...ws, transferId:{type:'string'}, offset:{type:'integer',minimum:0}, data:{type:'string',maxLength:Math.ceil(CHUNK / 3) * 4}},
     ['workspace','transferId','offset','data']),

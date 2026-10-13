@@ -18,6 +18,29 @@ const rows = values => {
   return list;
 };
 const size = value => value < 1024 * 1024 ? (value / 1024).toFixed(1) + ' KiB' : (value / 1024 / 1024).toFixed(2) + ' MiB';
+// Keep whole-case transport aligned with the native DCAT archive and paired
+// Application handoff. The original server validates their actual contents.
+const MAX_NATIVE_CASE_BYTES = 320 * 1024 * 1024;
+const MAX_HANDOFF_BYTES = 432 * 1024 * 1024;
+function originalCaseBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error('The complete native case could not be read.'));
+    reader.onabort = () => reject(new Error('The original case read was cancelled.'));
+    reader.onload = () => {
+      const value = reader.result, comma = typeof value === 'string' ? value.indexOf(',') : -1;
+      if (comma < 0 || !value.slice(0, comma).endsWith(';base64')) {
+        reject(new Error('The selected original case could not be read as complete binary bytes.')); return;
+      }
+      const encoded = value.slice(comma + 1);
+      if (encoded.length !== Math.ceil(file.size / 3) * 4) {
+        reject(new Error('The complete original case read has a different byte length.')); return;
+      }
+      resolve(encoded);
+    };
+    reader.readAsDataURL(file);
+  });
+}
 const phaseLabel = phase => ({
   PREPARED: 'Prepared', EXPORTED: 'Ready to download', CASE_RECEIVED: 'Case received',
   APPLICATION_REVIEWED: 'Application ready for review', APPLICATION_SAVED: 'Application saved',
@@ -251,25 +274,24 @@ export function createGrantApplicationHandoffView({
     packageText = caseBase64 = caseFilename = inspected = null; receivingOperationId = null; inspection.hidden = true; syncDisabled();
     if (!selected) return;
     act(async context => {
-      const maximum = (native ? 32 : 48) * 1024 * 1024;
+      const maximum = native ? MAX_NATIVE_CASE_BYTES : MAX_HANDOFF_BYTES;
       if (selected.size < 1 || selected.size > maximum)
-        throw new Error(native ? 'Choose the complete native case ZIP, up to 32 MiB.' : 'Choose the complete handoff file, up to 48 MiB.');
-      const bytes = new Uint8Array(await selected.arrayBuffer());
-      if (!current(context) || generation !== fileGeneration) return;
+        throw new Error(native ? 'Choose the complete native case ZIP, up to 320 MiB.' : 'Choose the complete handoff file, up to 432 MiB.');
       if (native) {
-        let binary = '';
-        for (let offset = 0; offset < bytes.length; offset += 32768)
-          binary += String.fromCharCode(...bytes.subarray(offset, offset + 32768));
-        caseBase64 = btoa(binary); caseFilename = selected.name;
+        const encoded = await originalCaseBase64(selected);
+        if (!current(context) || generation !== fileGeneration) return;
+        caseBase64 = encoded; caseFilename = selected.name;
         const name = selected.name.replace(/\.zip$/i, '').replace(/_/g, ' ').slice(0, 300);
-        inspected = { native: true, name, bytes: bytes.length };
+        inspected = { native: true, name, bytes: selected.size };
         if (!label.value) label.value = name.slice(0, 120);
         if (!caseName.value) caseName.value = name;
         inspection.replaceChildren(el('h4', name), rows([
-          ['Original native archive', selected.name], ['Complete case archive', size(bytes.length)],
+          ['Original native archive', selected.name], ['Complete case archive', size(selected.size)],
           ['Application', 'Create from the selected receiving host and settings'],
         ]), el('p', 'The original native importer reads the complete plan, case, history and selected delivery document before this Application is saved.', 'note'));
       } else {
+        const bytes = new Uint8Array(await selected.arrayBuffer());
+        if (!current(context) || generation !== fileGeneration) return;
         const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
         const value = await post(context, 'inspect', { packageText: text });
         if (!current(context) || generation !== fileGeneration) return;

@@ -2,6 +2,7 @@
 export const GRANT_HANDOFF_SCHEMA: 'stellar-forge.grant-application-handoff.v1';
 export const GRANT_NATIVE_HANDOFF_SCHEMA: 'stellar-forge.native-grant-application-handoff.v1';
 export const GRANT_HANDOFF_OPERATION_SCHEMA: 'stellar-forge.grant-application-handoff-operation.v1';
+export const GRANT_HANDOFF_MAX_CASE_BYTES: number;
 export const GRANT_HANDOFF_MAX_BYTES: number;
 export interface GrantHostSettings {
   workspaceDirectory: string;

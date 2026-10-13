@@ -20,8 +20,11 @@ import {
 export const GRANT_HANDOFF_SCHEMA = 'stellar-forge.grant-application-handoff.v1';
 export const GRANT_NATIVE_HANDOFF_SCHEMA = 'stellar-forge.native-grant-application-handoff.v1';
 export const GRANT_HANDOFF_OPERATION_SCHEMA = 'stellar-forge.grant-application-handoff-operation.v1';
-export const GRANT_HANDOFF_MAX_BYTES = 48 * 1024 * 1024;
-const MAX_CASE = 32 * 1024 * 1024, MAX_SETUP = 2 * 1024 * 1024;
+// The native importer validates the selected case's own source budget. This
+// transport must carry its complete 320 MiB DCAT archive plus the original setup.
+export const GRANT_HANDOFF_MAX_CASE_BYTES = 320 * 1024 * 1024;
+export const GRANT_HANDOFF_MAX_BYTES = 432 * 1024 * 1024;
+const MAX_CASE = GRANT_HANDOFF_MAX_CASE_BYTES, MAX_SETUP = 2 * 1024 * 1024;
 const NATIVE = 'stellar/scf_2026/sf47_budget_model/workspace';
 const PACKAGE = 'grant-handoff.json';
 const hash = value => digest(json(canonical(value)));
@@ -376,7 +379,7 @@ export async function exportGrantHandoff(model, {
 async function readNativeCase(path, encoded, filename) {
   if (path) return { bytes: await regular(absolute(resolve(path)), MAX_CASE), filename: basename(path) };
   need(typeof encoded === 'string' && encoded.length <= Math.ceil(MAX_CASE / 3) * 4,
-    'GRANT_HANDOFF_NATIVE_CASE_INVALID', 'Choose the complete native case ZIP, up to 32 MiB.');
+    'GRANT_HANDOFF_NATIVE_CASE_INVALID', 'Choose the complete native case ZIP, up to 320 MiB.');
   const bytes = Buffer.from(encoded, 'base64');
   need(bytes.length > 0 && bytes.length <= MAX_CASE && bytes.toString('base64') === encoded,
     'GRANT_HANDOFF_NATIVE_CASE_INVALID');

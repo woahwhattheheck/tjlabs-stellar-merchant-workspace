@@ -287,7 +287,8 @@ $('download-bindings').addEventListener('click',()=>{if(Object.keys(state.bindin
 $('save-draft').addEventListener('click',()=>downloadJSON(state,'Catalogue_Installation_Editor.json'));
 $('open-draft').addEventListener('change',()=>run(async()=>{
  const file=$('open-draft').files[0];if(!file)return;if(file.size>256*1024*1024)throw new Error('Select a complete editor draft within its 256 MiB capacity.');
- const value=JSON.parse(await file.text());if(value.schema!==state.schema||!value.inputs||typeof value.inputs!=='object')throw new Error('Select the original complete catalogue Installation editor draft.');
+ const value=JSON.parse(await file.text());if(!value||typeof value!=='object'||Array.isArray(value)||value.schema!==state.schema||!value.inputs||typeof value.inputs!=='object'||Array.isArray(value.inputs))throw new Error('Select the original complete catalogue Installation editor draft.');
+ if(state.pending&&canonical(value.pending)!==canonical(state.pending))throw new Error('Continue or explicitly retain the current original request before opening a different editor draft.');
  const inspected=value.inspectionId?await api('/api/requests/'+value.inspectionId):null;
  if(inspected&&(inspected.type!=='inspect'||inspected.source.sourceSha256!==value.source?.sourceSha256))throw new Error('Reopen this draft with its original preparation directory and catalogue.');
  await followingDesk.validateDraft(value);if(state.following?.review)followingDesk.archiveDraft();const retained=state.following?.archivedReviews||[];Object.assign(state,value,{source:inspected?.source??null});if(state.following)state.following.archivedReviews=[...retained,...(state.following.archivedReviews||[])];await followingDesk.refresh();await remember();renderInputs();renderScope();renderBindings();renderResult();renderPending();message('Complete editor draft reopened.');

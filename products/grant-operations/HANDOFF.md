@@ -55,7 +55,7 @@ starforge grant-application-handoff save \
 
 The operator reads the returned Application review between **receive** and **save**. Both commands return the original operation when repeated. Resume **prepare** using only the original workspace and operation directory, or pass the same original ZIP and bindings; changed bytes require a new operation. Once prepared, the incoming ZIP can move without affecting the retained original.
 
-The native case limit is **32 MiB**. Browser transfer uses canonical base64 for the original binary bytes and keeps the original filename. The receiving package stores those bytes, the new setup, explicit bindings and the original native import/Application save requests together. A completed native import is recovered through its existing request identity, including a response lost before the handoff record advances. The native importer preserves the original source plan and case identity in the received case's origin, while assigning its actual receiving case and plan identities.
+The complete native case transport supports **320 MiB**, matching the original DCAT case importer. Its content validator still enforces the applicable source budgets: ordinary cases retain their 32 MiB archive limit; DCAT cases permit a 128 MiB catalogue source and 256 MiB of aggregate catalogue sources, with the original ordinary-source allowance. Browser transfer reads the original file directly as canonical base64 and keeps its original filename; it avoids building a second JavaScript binary string for the whole archive. The receiving package stores those bytes, the new setup, explicit bindings and the original native import/Application save requests together. A completed native import is recovered through its existing request identity, including a response lost before the handoff record advances. The native importer preserves the original source plan and case identity in the received case's origin, while assigning its actual receiving case and plan identities.
 
 After saving, the ordinary **Export a saved grant case** form can export the received case and its now-saved Application as a normal complete paired handoff. This is the same export, independent receiving and reopen workflow described below.
 
@@ -110,7 +110,7 @@ starforge grant-application-handoff inspect \
   --package /srv/grant/private/incoming/grant-handoff.json
 ~~~
 
-The inspection returns source identities, original file sizes and hashes, and the complete setup document. The original case archive supports up to 32 MiB; the complete setup supports up to 2 MiB. The enclosing file supports up to 48 MiB, including Base64 and metadata.
+The inspection returns source identities, original file sizes and hashes, and the complete setup document. The complete case archive transport supports up to 320 MiB; the complete setup supports up to 2 MiB. The enclosing file supports up to 432 MiB, including canonical Base64 and metadata. This limit covers the Base64 expansion of both complete maximum-size files, with additional room for their source identities. The dedicated Applications inspect and prepare HTTP routes derive their request bounds from this handoff limit. Use the installed case-capable Grant client and native importer from the same distribution so export, transfer and import all carry the same complete archive.
 
 ## 3. Write explicit destination bindings
 
