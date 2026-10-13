@@ -246,6 +246,20 @@
         "application-inputs.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/application-input-sets.mjs",
+      [
+        "application-input-sets.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/application-input-set-format.mjs",
+      [
+        "application-input-set-format.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
