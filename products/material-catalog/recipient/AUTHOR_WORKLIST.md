@@ -165,3 +165,28 @@ desktop/narrow/download/worklist/cold-open steps remain present.
 Caller-owned model/client/server and Page lifetimes remain explicit. Actual
 native/rendered completion must be reported by that equipped original course;
 source review alone does not claim it.
+
+
+## Compare reviewer decisions in the original catalogue
+
+The **Compare reviewers** section is part of **Material catalogs → Returned customer reviews**. Open or merge the complete author worklist and select its original catalogue. **Refresh cross-reviewer matrix** compares every retained return for that catalogue through one read-only transaction on the original workspace database. It reads the existing recipient comparison engine; it does not save a decision, generate a receiving request, or alter the worklist.
+
+The view groups each original customer and description context. Separate return cards show the reviewer, original review ID and complete return identity, proposed status/material/reason, original catalogue/edition, current author decision, current material eligibility, saved author choice and whether that choice belongs to the exact observation. Two returns with the same reviewer name remain distinct. Different status, note or material creates a disagreement. A return with no proposal for a context is shown as **missing**, never as Keep current. A blocked original source remains visible with its explanation; no current decision is inferred from it.
+
+Search customer/material text, select a reviewer return, or filter different proposals, changed original bases, missing proposals and blocked sources. Twenty contexts appear per page; every full proposal, original basis and observed author decision remains available in its evidence details. Saved draft history and complete request/outcome records remain in the worklist pane. **Download complete decision matrix** retains all rows, observations, original return/source identities, catalogue, exact worklist SHA256 and observation time. The complete original worklist is a separate download; neither replaces the other.
+
+Use **Open this return for reviewed receiving** on the desired original return. An existing draft opens with its unchanged choices, operator and reason; a return without a draft opens without inferred choices. This action preserves the previously selected unfinished draft. The original comparison must be refreshed and every original context explicitly selected before downloading and applying the original request. The receiving transaction compares the full original comparison hash again, so a decision changed after the matrix was observed is rejected rather than silently applied.
+
+### Observation and stale-state rules
+
+The matrix is a dated observation, not a reservation of catalogue state. All returns in one response share the original SQLite read snapshot. Original source-history mismatches are retained as blocked observations; ordinary runtime/database failures fail the refresh. The selected worklist object, full workspace/catalogue binding and input SHA256 must still match when the response arrives. A changed selection cannot replace the previous complete report. Editing or receiving work later marks that earlier report as retained; refresh is required before opening a return from it. An older report remains downloadable with its original identity.
+
+The upload is the same complete bounded worklist file (128 MiB), verified by exact byte count, full SHA256 and fatal UTF-8 decoding. The route inherits the current origin/token protection and is read-only. The normal 4 MiB return, 8 MiB reviewed request, exact saved request and Journal rules are unchanged. No bulk adoption or majority-rule choice is introduced.
+
+### Source and original receiving
+
+Pure matrix reader: `author-matrix.mjs`. Native observation: `author-matrix-native.mjs`, using the unchanged `openCatalogReadSnapshot` and `previewRecipientReview`. Installed panel: `catalog-author-matrix.mjs` and its scoped stylesheet, mounted inside the existing author-worklist panel. The original server registers its complete static closure and `POST /api/catalog/author-matrix`.
+
+The maintained `receiveInstalledRecipientReturn` course now reads the actual already-retained worklist in its original directory and operation. It observes the actual original catalogue, compares every full observation against the unchanged engine and complete pre-course export, saves the full matrix download, exercises disagreement filtering, and captures desktop/narrow views. It verifies that the complete worklist is byte-unchanged by the matrix and that drill-through cannot prepare a request before a fresh original comparison. The suffix then resumes the same existing completed-request replay and fresh whole-catalogue export checks. Do not start another customer adoption or replace an already-active immutable source selection.
+
+Producer acceptance requires opening and inspecting actual screenshots and full downloads, including current/empty/disagreement/missing/stale/blocked states present in the selected case. Complete source review and publication are separate from that existing equipped browser/native receiving result.

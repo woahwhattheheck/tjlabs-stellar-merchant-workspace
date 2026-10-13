@@ -7,10 +7,13 @@ import {createHash,randomUUID} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {openText,canonical} from './core.mjs';
 import {openRecipientReview,openRecipientWorking,compareRecipientReview,recipientView} from './review.mjs';
+import {validateAuthorDecisionMatrix} from './author-matrix.mjs';
 import {openAuthorWorklist,createAuthorWorklist,retainAuthorReturn,retainAuthorDraft,retainAuthorRequest,retainAuthorOutcome,exportAuthorWorklist} from './author-worklist.mjs';
 const HERE=dirname(fileURLToPath(import.meta.url)),sha=value=>createHash('sha256').update(value).digest('hex');
 const pretty=value=>JSON.stringify(value,null,2)+'\n';
-const sourcePaths=['receive-installed.mjs','review.mjs','core.mjs','sha256.mjs','author-worklist.mjs',
+const sourcePaths=['receive-installed.mjs','review.mjs','core.mjs','sha256.mjs','author-worklist.mjs','author-matrix.mjs','author-matrix-native.mjs',
+ '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/catalog-author-matrix.mjs',
+ '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/catalog-author-matrix.css',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/catalog-author-worklist.mjs',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/server.mjs',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/app.mjs',
@@ -126,6 +129,30 @@ export async function receiveInstalledRecipientReturn({page,serverUrl,directory:
    record.screenshots.push({path:output,width,bytes:bytes.length,sha256:sha(bytes)});await save();
   };
   await shot('comparison-desktop',1440);await shot('comparison-narrow',390);
+  const matrixInput=await download('matrix-original-worklist.json','Download complete author worklist'),matrixWork=openAuthorWorklist(matrixInput.bytes.toString('utf8'));
+  const [matrixResponse]=await Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname==='/api/catalog/author-matrix'),
+   page.getByRole('button',{name:'Refresh cross-reviewer matrix',exact:true}).click()]);
+  assert.ok(matrixResponse.ok());const matrix=await matrixResponse.json();validateAuthorDecisionMatrix(matrixWork,matrix);
+  assert.equal(matrix.inputSha256,sha(matrixInput.bytes));assert.equal(matrix.catalog.id,intent.catalogId);
+  const selectedReturns=matrixWork.items.filter(item=>item.catalogId===intent.catalogId);
+  assert.equal(matrix.summary.returns,selectedReturns.length);
+  for(let i=0;i<selectedReturns.length;i++){
+   assert.equal(matrix.observations[i].returnId,selectedReturns[i].id);
+   const expected=compareRecipientReview(recipientView(beforeBundle),openRecipientReview(selectedReturns[i].returnText));
+   assert.equal(canonical(matrix.observations[i].comparison),canonical(expected));
+  }
+  await page.locator('#author-matrix-status').filter({hasText:'Observed selected worklist'}).waitFor();
+  const matrixDownload=await download('complete-author-decision-matrix.json','Download complete decision matrix');
+  assert.equal(canonical(JSON.parse(matrixDownload.bytes)),canonical(matrix));
+  await page.locator('#author-matrix-filter').selectOption('disagreement');
+  assert.equal(await page.locator('[data-author-matrix-context]').count(),Math.min(matrix.summary.disagreements,20));
+  await page.locator('#author-matrix-filter').selectOption('all');
+  await shot('cross-reviewer-matrix-desktop',1440);await shot('cross-reviewer-matrix-narrow',390);
+  const matrixAfter=await download('matrix-worklist-after-read.json','Download complete author worklist');
+  assert.ok(matrixAfter.bytes.equals(matrixInput.bytes),'Read-only matrix changed the complete retained author worklist.');
+  await page.locator('[data-author-matrix-open="'+retainedReturn.id+'"]').first().click();
+  assert.equal(await page.locator('#recipient-request').isDisabled(),true,'Matrix drill-through bypassed original current comparison.');
+  record.steps.push('complete-cross-reviewer-original-snapshot-download-filters-readonly-worklist-and-explicit-drill-through');await save();
   await page.reload();await page.locator('#cat-catalog').waitFor({state:'attached'});
   await page.getByRole('button',{name:'Material catalogs',exact:true}).click();await page.locator('#cat-catalog').selectOption(intent.catalogId);
   await page.getByRole('tab',{name:'Returned customer reviews',exact:true}).click();

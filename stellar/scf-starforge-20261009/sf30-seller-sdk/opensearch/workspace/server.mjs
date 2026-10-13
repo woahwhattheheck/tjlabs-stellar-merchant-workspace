@@ -8,6 +8,8 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createOpenSearchWorkspace } from './service.mjs';
 import { WorkspaceError } from './store.mjs';
+import {previewAuthorDecisionMatrix} from '../../../../../products/material-catalog/recipient/author-matrix-native.mjs';
+import {MAX_AUTHOR_WORKLIST_BYTES} from '../../../../../products/material-catalog/recipient/author-worklist.mjs';
 
 const ASSETS = new Map([['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
@@ -15,6 +17,9 @@ const ASSETS = new Map([['/', ['index.html', 'text/html; charset=utf-8']],
   ['/catalog.mjs', ['catalog.mjs', 'text/javascript; charset=utf-8']],
   ['/catalog-recipient.mjs', ['catalog-recipient.mjs', 'text/javascript; charset=utf-8']],
   ['/catalog-author-worklist.mjs', ['catalog-author-worklist.mjs', 'text/javascript; charset=utf-8']],
+  ['/catalog-author-matrix.mjs', ['catalog-author-matrix.mjs', 'text/javascript; charset=utf-8']],
+  ['/catalog-author-matrix.css', ['catalog-author-matrix.css', 'text/css; charset=utf-8']],
+  ['/recipient/author-matrix.mjs', ['../../../../../products/material-catalog/recipient/author-matrix.mjs', 'text/javascript; charset=utf-8']],
   ['/recipient/author-worklist.mjs', ['../../../../../products/material-catalog/recipient/author-worklist.mjs', 'text/javascript; charset=utf-8']],
   ['/recipient/review.mjs', ['../../../../../products/material-catalog/recipient/review.mjs', 'text/javascript; charset=utf-8']],
   ['/recipient/core.mjs', ['../../../../../products/material-catalog/recipient/core.mjs', 'text/javascript; charset=utf-8']],
@@ -251,7 +256,7 @@ export async function startOpenSearchWorkspace({ workspace, port = 8447 } = {}) 
           return send(res, 200, comparison);
         }
       }
-      if (req.method === 'POST' && ['/api/catalog/upload', '/api/catalog/import', '/api/catalog/recipient-preview', '/api/catalog-recipient-receive'].includes(path) && !url.search) {
+      if (req.method === 'POST' && ['/api/catalog/upload', '/api/catalog/import', '/api/catalog/recipient-preview', '/api/catalog/author-matrix', '/api/catalog-recipient-receive'].includes(path) && !url.search) {
         const supplied = req.headers['x-workspace-token'];
         if (req.headers.origin !== origin || typeof supplied !== 'string' || Buffer.byteLength(supplied) !== Buffer.byteLength(token) ||
           !timingSafeEqual(Buffer.from(supplied), Buffer.from(token)))
@@ -259,7 +264,12 @@ export async function startOpenSearchWorkspace({ workspace, port = 8447 } = {}) 
         if (!/^application\/octet-stream(?:;|$)/i.test(req.headers['content-type'] ?? ''))
           throw new WorkspaceError('WORKSPACE_CATALOG_BYTES_REQUIRED', 'Send the selected file as application/octet-stream.', 400);
         const metadata = catalogMetadata(req);
-        operationId = path === '/api/catalog/recipient-preview' ? undefined : metadata.requestId;
+        operationId = ['/api/catalog/recipient-preview','/api/catalog/author-matrix'].includes(path) ? undefined : metadata.requestId;
+        if(path==='/api/catalog/author-matrix'){
+          if(Object.keys(metadata).some(key=>!['name','bytes','sha256','catalogId'].includes(key)))throw new WorkspaceError('WORKSPACE_CATALOG_METADATA_INVALID','Use only the original file identity and catalogue ID.',400);
+          const raw=await recipientFile(req,metadata,MAX_AUTHOR_WORKLIST_BYTES);
+          return send(res,200,await previewAuthorDecisionMatrix(workspace.catalog,raw,{catalogId:metadata.catalogId,workspaceId:workspace.store.id}));
+        }
         if (path === '/api/catalog/recipient-preview')
           return send(res, 200, workspace.catalog.previewRecipientReview(await recipientFile(req, metadata, 4 * 1024 * 1024)));
         if (path === '/api/catalog-recipient-receive') {
