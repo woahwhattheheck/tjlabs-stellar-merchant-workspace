@@ -450,6 +450,159 @@ def upload_case_checkpoint(args, output, state, descriptor):
     return receipt
 
 
+
+# The original complete receiving archive predates checkpoint.json. Its whole
+# saved-file identity anchors this one legacy import; current archives use the
+# complete per-member checkpoint manifest above.
+ORIGINAL_COMPLETE_ARCHIVE = {
+    "bytes": 21928589,
+    "sha256": "08ea94052fe0f676a9cb0f88910b9887028aa0452996b77094647c992d64e639",
+    "operationPrefix": "fcdo-financial-operation/",
+    "caseId": "5fa5c6d7736b4f100d04b00c19d86bfbf58c9f8d619dfefa7b12e54c44390ecd",
+    "finalRevision": 5,
+    "sourceEdition": "516e9460a85a727c2e43d582614d245ec31a28b569c783ad0b7b70c9b7faea56",
+}
+COMPLETE_ARCHIVE_SCHEMA = "stellar-forge.iati-complete-receiving-archive.v1"
+
+
+def restore_original_complete_archive(output, source, archive_identity):
+    """Adopt the completed original case and retain its captured runtime/source."""
+    require(archive_identity == {key: ORIGINAL_COMPLETE_ARCHIVE[key]
+                                 for key in ("bytes", "sha256")},
+            "Select the exact original complete receiving archive or a current closed-case checkpoint")
+    prefix = ORIGINAL_COMPLETE_ARCHIVE["operationPrefix"]
+    provenance = "restored-complete-archives/" + archive_identity["sha256"]
+    state_path = output / "operation-state.json"
+    marker_path = output / ".checkpoint-restore.json"
+    with zipfile.ZipFile(source) as archive:
+        entries = archive.infolist()
+        names = [item.filename for item in entries]
+        require(len(entries) <= CHECKPOINT_MAX_FILES and len(names) == len(set(names)),
+                "The original complete receiving archive must retain unique members")
+        require(all(not (item.flag_bits & 1)
+                    and item.compress_type in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
+                    for item in entries),
+                "The original complete receiving archive encoding changed")
+        state_member = prefix + "operation-state.json"
+        require(state_member in names and archive.getinfo(state_member).file_size <= 16 * 1024 * 1024,
+                "The complete original receiving archive must contain its operation state")
+        original_state_raw = archive.read(state_member)
+        original = load_json(original_state_raw)
+        identity = {"operation": OPERATION, **{key: ORIGINAL_COMPLETE_ARCHIVE[key]
+                                              for key in ("caseId", "finalRevision", "sourceEdition")}}
+        require(original.get("schema") == SCHEMA and checkpoint_state_identity(original) == identity
+                and original.get("state") == "COMPLETE",
+                "Adopt the completed original case, revision and captured source edition")
+        require(prefix + "reports/requests.json" in names and prefix + "reports/final-case.json" in names,
+                "The original complete receiving archive must retain its requests and reviewed case")
+        final = load_json(archive.read(prefix + "reports/final-case.json"))
+        require(final.get("id") == identity["caseId"] and final.get("revision") == identity["finalRevision"],
+                "The captured final report belongs to another financial case")
+        files, directories, members, excluded, total = {}, set(), {}, {}, 0
+        for info in entries:
+            name = info.filename.rstrip("/") if info.is_dir() else info.filename
+            checkpoint_member_name(name)
+            mode = (info.external_attr >> 16) & 0o170000
+            require(mode in ((0, stat.S_IFDIR) if info.is_dir() else (0, stat.S_IFREG)),
+                    "The complete original receiving archive contains a non-native file member")
+            if info.is_dir():
+                descriptor = {"kind": "directory"}
+            else:
+                digest, count = hashlib.sha256(), 0
+                with archive.open(info) as stream:
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        count += len(chunk)
+                        total += len(chunk)
+                        require(total <= CHECKPOINT_MAX_BYTES,
+                                "The complete original receiving archive exceeds its byte limit")
+                        digest.update(chunk)
+                require(count == info.file_size,
+                        "An original complete archive member differs from its retained byte count")
+                descriptor = {"kind": "file", "bytes": count, "sha256": digest.hexdigest()}
+            members[info.filename] = descriptor
+            if info.filename.startswith(prefix):
+                relative = info.filename[len(prefix):].rstrip("/")
+                if not relative:
+                    continue
+                checkpoint_member_name(relative)
+                if checkpoint_excluded(Path(relative)):
+                    excluded[info.filename] = descriptor
+                    continue
+                destination = relative
+            else:
+                destination = provenance + "/source/" + name
+            checkpoint_member_name(destination)
+            parts = destination.split("/")
+            directories.update("/".join(parts[:index]) for index in range(1, len(parts)))
+            if info.is_dir():
+                require(destination not in files, "An original archive directory collides with a file")
+                directories.add(destination)
+            else:
+                require(destination not in files and destination not in directories,
+                        "An original archive file collides with another member")
+                files[destination] = {"member": info.filename,
+                                      **{key: descriptor[key] for key in ("bytes", "sha256")}}
+        require(set(files).isdisjoint(directories)
+                and "sender-workspace" in directories and "receiver-workspace" in directories,
+                "Keep both complete original workspaces and their original directory structure")
+        manifest = {
+            "schema": COMPLETE_ARCHIVE_SCHEMA, "archive": archive_identity,
+            "identity": identity, "operationPrefix": prefix,
+            "members": members, "files": files, "directories": sorted(directories),
+            "inactiveRuntimeMembers": excluded, "sourceBytes": total,
+        }
+        manifest_raw = json_bytes(manifest)
+        restore = {"schema": COMPLETE_ARCHIVE_SCHEMA, **archive_identity,
+                   "identity": identity, "manifestSha256": hashlib.sha256(manifest_raw).hexdigest(),
+                   "provenanceDirectory": provenance}
+        if marker_path.exists():
+            require(not marker_path.is_symlink() and load_json(marker_path.read_bytes()) == restore,
+                    "Continue the original complete receiving archive that began restoring here")
+        else:
+            require(all(path.name == ".reconciliation-receiving.lock" for path in output.iterdir()),
+                    "Adopt the original complete case into a new private operation directory")
+            retained(marker_path, restore)
+        for name in sorted(directories, key=lambda value: (value.count("/"), value)):
+            private_directory(output / name)
+        for name, descriptor in sorted(files.items()):
+            if name == "operation-state.json":
+                continue
+            target = output / name
+            expected = {key: descriptor[key] for key in ("bytes", "sha256")}
+            if target.exists() or target.is_symlink():
+                require(not target.is_symlink() and target.is_file() and digest_file(target) == expected,
+                        "An existing original receiving member differs: " + name)
+                continue
+            with archive.open(descriptor["member"]) as incoming, complete_retained_file(target, expected) as sink:
+                shutil.copyfileobj(incoming, sink, 1024 * 1024)
+        manifest_path = output / provenance / "archive-members.json"
+        original_state_path = output / provenance / "original-operation-state.json"
+        retained(manifest_path, manifest_raw)
+        retained(original_state_path, original_state_raw)
+        if state_path.exists() or state_path.is_symlink():
+            require(not state_path.is_symlink() and state_path.is_file()
+                    and state_path.read_bytes() == original_state_raw,
+                    "The destination already contains a different original operating state")
+        else:
+            retained(state_path, original_state_raw)
+        original["restoredCheckpoint"] = restore
+        original.setdefault("adoptedCompleteArchives", {})[archive_identity["sha256"]] = {
+            "archive": archive_identity, "identity": identity,
+            "manifestFile": str(manifest_path.relative_to(output)),
+            "originalStateFile": str(original_state_path.relative_to(output)),
+            "members": len(members), "sourceBytes": total,
+        }
+        checkpoint(state_path, original)
+        marker_path.unlink(missing_ok=True)
+        directory = os.open(output, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+        print(json.dumps({"operation": OPERATION, "phase": "original-complete-case-restored",
+                          "checkpoint": restore, "output": str(output)}, sort_keys=True), flush=True)
+
+
 def restore_case_checkpoint(output, source):
     """Receive one exact saved operation, with a resumable, non-overwriting copy."""
     source = Path(source).expanduser().resolve(strict=True)
@@ -475,6 +628,8 @@ def restore_case_checkpoint(output, source):
                     and item.compress_type in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
                     for item in entries),
                 "The closed-case ZIP must use the original complete archive encoding")
+        if "checkpoint.json" not in names:
+            return restore_original_complete_archive(output, source, archive_identity)
         require("checkpoint.json" in names and archive.getinfo("checkpoint.json").file_size <= 16 * 1024 * 1024,
                 "The closed-case ZIP must retain its complete checkpoint manifest")
         manifest_raw = archive.read("checkpoint.json")
@@ -1741,7 +1896,7 @@ def main(argv=None):
     parser.add_argument("--activity-receipt", help="Original publisher-receipt.json, required for initial preparation")
     parser.add_argument("--organisation-packet", help="Receive the existing original assessed organisation packet")
     parser.add_argument("--output", required=True, help="Private operation directory; reuse this directory to resume")
-    parser.add_argument("--restore-checkpoint", help="Complete closed-case ZIP to restore into this new private output")
+    parser.add_argument("--restore-checkpoint", help="Complete closed-case ZIP or the original completed receiving archive, restored into this new private output")
     parser.add_argument("--checkpoint-directory", help="Existing persistent destination outside output; defaults to an adjacent checkpoints directory")
     parser.add_argument("--checkpoint-upload-helper", help="Current complete official Library library_upload.py, used in this same live namespace before the operator and after completion")
     parser.add_argument("--mcp-directory", required=True, help="Original composed mcp-merchant-operator directory")
