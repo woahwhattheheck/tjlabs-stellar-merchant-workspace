@@ -30,7 +30,19 @@ export async function runStudyFlowBrowserReceiving({sourceRoot,operationDirector
  need(journal.operationId===OP&&journal.dossierId===baseline.dossierId&&journal.sourceRoot===sourceRoot,'Original receiving binding changed');
  if(journal.complete)return journal;
  const checkpoint=async()=>{journal.updatedAt=new Date().toISOString();await durable(journalPath,journal);};
- let app,browser,context,page,aborted=false;
+ let app,browser,context,page,aborted=false,primaryError;
+ const closeResources=async()=>{
+  const failures=[];
+  for(const [name,resource]of [['context',context],['browser',browser],['workspace',app]]){
+   if(!resource)continue;
+   try{
+    await resource.close();
+    if(name==='context')context=null;else if(name==='browser')browser=null;else app=null;
+   }catch(error){failures.push({name,error});}
+  }
+  if(failures.length)throw Object.assign(new AggregateError(failures.map(value=>value.error),
+   'Original browser receiving cleanup is incomplete.'),{resources:failures.map(value=>value.name)});
+ };
  const cancelled=()=>{if(aborted||signal?.aborted)throw Error('Original browser receiving cancelled; saved journal retained');};
  const abort=()=>{aborted=true;void context?.close().catch(()=>{});void browser?.close().catch(()=>{});};
  if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});
@@ -134,13 +146,22 @@ export async function runStudyFlowBrowserReceiving({sourceRoot,operationDirector
   need(journal.requests.length===0,'Unexpected browser mutation in receiving');
   need(journal.browserErrors.length===0,'Browser errors retained in receiving journal');
   need(journal.httpErrors.length===0,'HTTP errors retained in receiving journal');
+  cancelled();await closeResources();cancelled();
   journal.finalRevision=after.dossier.revision;journal.complete=true;journal.completedAt=new Date().toISOString();
   journal.actualScope='Original same-dossier browser inspection of all eight views for both current saved flows, exact native download comparison, saved request history, and workspace-scoped local review draft/reload/refresh. No source acquisition, screen/review mutation, new flow, native replay or payment.';
   await checkpoint();await durable(join(out,'result.json'),journal);
   console.log(JSON.stringify({operationId:OP,phase:'browser-receiving-complete',revision:journal.finalRevision,downloads:journal.downloads.length,screenshots:journal.screenshots.length}));
   return journal;
- }catch(error){journal.error={at:new Date().toISOString(),message:error.message,phase:journal.phase};await checkpoint().catch(()=>{});throw error;}
- finally{signal?.removeEventListener('abort',abort);await context?.close().catch(()=>{});await browser?.close().catch(()=>{});await app?.close();}
+ }catch(error){primaryError=error;journal.error={at:new Date().toISOString(),message:error.message,phase:journal.phase};await checkpoint().catch(()=>{});throw error;}
+ finally{
+  signal?.removeEventListener('abort',abort);
+  try{await closeResources();}
+  catch(error){
+   journal.cleanupError={at:new Date().toISOString(),message:error.message,resources:error.resources??[]};
+   await checkpoint().catch(()=>{});
+   if(primaryError)primaryError.cleanupError=journal.cleanupError;else throw error;
+  }
+ }
 }
 if(process.argv[1]&&resolve(process.argv[1])===new URL(import.meta.url).pathname){
  const args={};for(let i=2;i<process.argv.length;i+=2)args[process.argv[i].replace(/^--/,'')]=process.argv[i+1];
