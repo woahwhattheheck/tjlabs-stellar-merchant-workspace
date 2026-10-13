@@ -70,6 +70,14 @@ try{
   await page.locator('nav [data-pane="programme"]').click();
   await page.waitForFunction(()=>document.getElementById('programme-status').textContent.startsWith('Programme revision '));
   if(await page.locator('#programme-select').inputValue()!==commission.id)throw new Error('The original programme selection was lost when reopening.');
+  const sourceCaptureId=commission.definition.agreement.source_receiving?.captureId;
+  if(sourceCaptureId){
+    await page.locator('#programme-source-edition').click();
+    await page.waitForFunction(id=>document.getElementById('edition-select')?.value===id,sourceCaptureId);
+    await page.locator('#edition-body').waitFor({state:'visible'});
+    await page.locator('nav [data-pane="programme"]').click();
+    await page.waitForFunction(()=>document.getElementById('programme-status').textContent.startsWith('Programme revision '));
+  }
   const capture=commission.captures.find(value=>value.id===selectedCaptures.find(value=>value.period===0).captureId);
   {
     const row=page.locator('.programme-period tbody tr').filter({hasText:capture.id}).first();
@@ -81,8 +89,8 @@ try{
   if(mutations.length)throw new Error('The read-only customer review attempted an unexpected operation: '+JSON.stringify(mutations));
   const receipt={schema:'stellar-forge.odk-customer-programme-review.v1',observedAt:new Date().toISOString(),workspaceId:state.workspaceId,commissionId:commission.id,revision:state.revision,
     forms:commission.definition.forms,periods,deliveries:(commission.deliveries??[]).map(d=>({id:d.id,status:d.status})),
-    reviewedDeliveryId:completedDelivery.id,reviewedPeriodCaptures:selectedCaptures,originalFiles:artifacts,desktop:{width:1360,height:1000},mobile:{width:390,height:844,overflow:false},
-    actions:['open existing programme','read both original period labels','download and verify exact completed-handover customer document','open exact commissioning version','return and retain programme selection','open original completed period edition'],pageErrors:errors,unexpectedMutations:mutations};
+    reviewedDeliveryId:completedDelivery.id,reviewedPeriodCaptures:selectedCaptures,originalSourceCaptureId:sourceCaptureId??null,originalFiles:artifacts,desktop:{width:1360,height:1000},mobile:{width:390,height:844,overflow:false},
+    actions:['open existing programme','read both original period labels','download and verify exact completed-handover customer document','open exact commissioning version','return and retain programme selection',...(sourceCaptureId?['open referenced original source edition']:[]),'open original completed period edition'],pageErrors:errors,unexpectedMutations:mutations};
   await writeFile(join(output,'customer-programme-review.json'),JSON.stringify(receipt,null,2)+'\n');
   process.stdout.write(JSON.stringify({ok:true,workspaceId:state.workspaceId,commissionId:commission.id,receipt:join(output,'customer-programme-review.json'),downloadedFiles:artifacts.length})+'\n');
 }finally{await browser?.close();}

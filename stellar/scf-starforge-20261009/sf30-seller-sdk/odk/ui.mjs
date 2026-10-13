@@ -378,7 +378,7 @@ function customerProgramme(state,{workspaceId,warehouse=null,releases=null}={}) 
       }
       if(state.storageReopenRequired||warehouse?.storageReopenRequired)next={label:'Reopen original workspace',description:'An original desk reports an uncertain storage result. Reopen the same workspace before continuing its writes.',desk:'commissioning'};
       return {id:c.id,status:c.status,error:c.error,name:a.name||a.opportunity_id||c.id,opportunityId:a.opportunity_id,
-        sourceDefinition:c.sourceDefinition,agreementSha256:d.agreementSha256,decisions,schedule:d.schedule,forms:d.forms,
+        sourceDefinition:c.sourceDefinition,agreementSha256:d.agreementSha256,sourceCaptureId:typeof a.source_receiving?.captureId==='string'?a.source_receiving.captureId:null,decisions,schedule:d.schedule,forms:d.forms,
         periods,deliveries,outputs:list(d.outputs),indicators:list(d.indicators),operations,reviews,next};
     })};
 }
@@ -441,6 +441,15 @@ function renderProgramme(){
   top.append(next);body.append(top);
   const scope=node('section',null,'programme-card');scope.append(node('h2','Agreed source and outputs'),
     programmeTable(['Project','Existing form'],c.forms.map(f=>[f.projectId,f.formId])));
+  if(c.sourceCaptureId){
+    const original=workspace.captures.find(capture=>capture.id===c.sourceCaptureId);
+    const source=node('div',null,'programme-next');source.append(node('h3','Original source edition'),
+      node('p',(original?.label?original.label+' · ':'')+c.sourceCaptureId),
+      node('p','Open the original source cohort to inspect its form versions, root and repeat rows, submission histories and retained media.'));
+    const open=programmeAction('Open original source edition',()=>openEdition(c.sourceCaptureId));open.id='programme-source-edition';open.disabled=!original;source.append(open);
+    if(!original)source.append(node('p','This reference is retained in the agreement; the original edition is not present in the current workspace.','help'));
+    scope.append(source);
+  }
   const outputRows=c.outputs.map(x=>[x.name,x.formId+' / '+x.table,(x.fields??[]).join(', ')]);
   if(outputRows.length)scope.append(node('h3','Approved dataset fields'),programmeTable(['Dataset','Source table','Fields'],outputRows));
   if(c.indicators.length)scope.append(node('h3','Report measures'),programmeTable(['Measure','Source table','Calculation'],c.indicators.map(x=>[x.name,x.formId+' / '+x.table,[x.operation,x.field].filter(Boolean).join(' ')])));
