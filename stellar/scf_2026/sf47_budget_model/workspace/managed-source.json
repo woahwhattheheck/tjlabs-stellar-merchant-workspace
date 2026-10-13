@@ -1246,6 +1246,8 @@
     "../../../scf-starforge-20261009/sf98-merchant-delivery/destinations/exchange.mjs",
     "../../../scf-starforge-20261009/sf98-merchant-delivery/destinations/model.mjs",
     "../../../scf-starforge-20261009/sf98-merchant-delivery/destinations/storage.mjs",
-    "forecast-financing-handover.mjs"
+    "forecast-financing-handover.mjs",
+    "COMMERCIAL_WORKSHARE.md",
+    "operations_commercial_workshare_case.py"
   ]
 }

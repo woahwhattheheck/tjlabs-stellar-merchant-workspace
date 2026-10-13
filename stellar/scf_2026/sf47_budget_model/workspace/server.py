@@ -19,7 +19,7 @@ import tempfile
 import threading
 from urllib.parse import parse_qs, urlsplit
 
-from model import Workspace, Problem, HERE, SOURCE_URL, canonical, csv_bytes, MAX_BUNDLE
+from model import Workspace, Problem, HERE, SOURCE_URL, canonical, csv_bytes, daily_csv_bytes, MAX_BUNDLE
 
 STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
           "/app.mjs": ("app.mjs", "text/javascript; charset=utf-8"),
@@ -246,12 +246,12 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200, json.dumps(current["scenario"], ensure_ascii=False, indent=2) + "\n",
                              "application/json; charset=utf-8", "sf47-scenario.json")
         if action == "daily.csv":
-            data = csv_bytes(["day", "date", "accruedUsd", "plannedOutflowUsd", "conditionalInflowUsd",
-                              "cashGapUsd", "gapAfterCapitalInputUsd", "accruedUnpaidUsd"], current["report"]["cash"]["days"])
+            data = daily_csv_bytes(current)
             return self.send(200, data, "text/csv; charset=utf-8", "sf47-daily-cash-flow.csv")
         if action == "costs.csv":
-            data = csv_bytes(["id", "tranche", "start_day", "end_day", "estimated_hours", "assumed_hourly_rate_usd",
-                              "amount_usd", "category", "remaining_work", "measurable_proof"], current["scenario"]["future_costs"])
+            data = csv_bytes((["id", "phase_id", "tranche", "cost_basis"] if current["scenario"].get("funding_mode") == "COMMERCIAL_WORKSHARE" else ["id", "tranche"]) +
+                              ["start_day", "end_day", "estimated_hours", "assumed_hourly_rate_usd",
+                               "amount_usd", "category", "remaining_work", "measurable_proof"], current["scenario"]["future_costs"])
             return self.send(200, data, "text/csv; charset=utf-8", "sf47-work-packages.csv")
         return self.send(200, current)
 

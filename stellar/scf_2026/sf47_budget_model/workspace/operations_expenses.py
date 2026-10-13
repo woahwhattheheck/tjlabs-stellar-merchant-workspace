@@ -354,6 +354,16 @@ def _continuity(value, inspection):
     return same
 
 
+
+def planned_costs(context):
+    """Retain unknown commercial estimates without manufacturing a USD value."""
+    scenario = context["plan"]["scenario"]
+    commercial = scenario.get("funding_mode") == "COMMERCIAL_WORKSHARE"
+    return [{"id": row["id"], "tranche": row.get("tranche"),
+             "plannedUsd": None if commercial and row["amount_usd"] is None
+                           else domain.usd(row["amount_usd"])}
+            for row in scenario["future_costs"]]
+
 def preview(context, body):
     fields(body, ("expectedVersion", "filename", "contentBase64"), "expense preview")
     expected = domain.integer(body.get("expectedVersion"), "Reviewed operations version", 1, 10000000)
@@ -381,8 +391,7 @@ def preview(context, body):
         "retainedIntakeId": exact["id"] if exact else None,
         "previousIntakeId": current["id"] if current else None,
         "previousSources": [row["id"] for row in same],
-        "costs": [{"id": row["id"], "tranche": row["tranche"], "plannedUsd": domain.usd(row["amount_usd"])}
-                  for row in context["plan"]["scenario"]["future_costs"]]}
+        "costs": planned_costs(context)}
     result["previewSha256"] = digest(result)
     return result
 
@@ -674,8 +683,7 @@ def dashboard(context):
     return {"schema": SCHEMA, "caseId": context["program"]["id"], "version": context["program"]["version"],
         "sources": sorted(sources, key=lambda x: (x["createdAt"], x["id"]), reverse=True),
         "lines": lines, "attributions": attributions, "reviewItems": issues,
-        "costs": [{"id": row["id"], "tranche": row["tranche"], "plannedUsd": domain.usd(row["amount_usd"])}
-                  for row in context["plan"]["scenario"]["future_costs"]],
+        "costs": planned_costs(context),
         "canReceive": context["program"]["state"] == "OPEN",
         "summary": expense_report(context)}
 

@@ -302,6 +302,15 @@ def _clock(context, row, as_of):
 
 def dashboard(context, as_of=None):
     as_of = day(as_of or today(), "Completion calendar date")
+    if context["plan"]["scenario"].get("funding_mode") == "COMMERCIAL_WORKSHARE":
+        return {"schema": "stellar-forge.sf47-completion-calendar.v1", "asOfDate": as_of,
+                "programId": context["program"]["id"], "version": context["program"]["version"],
+                "applicable": False, "fundingMode": "COMMERCIAL_WORKSHARE",
+                "rule": {"applicable": False, "title": "Original commercial Workshare acceptance",
+                         "note": "SCF tranche-completion rules do not apply to this fee-funded proposal. Use its original Workshare phases and explicit Customer Installation acceptance records."},
+                "calendarStart": context["program"].get("calendarStart"),
+                "clocks": [], "unassignedGrantIds": [], "finalPaymentIds": [], "tranches": [],
+                "workshareCaseId": context["plan"]["scenario"]["commercial"]["workshare"]["case_id"]}
     clocks, unassigned, final = [], [], []
     for row in context["records"]["cash"]:
         if row["category"] != "GRANT" or row["direction"] != "IN":

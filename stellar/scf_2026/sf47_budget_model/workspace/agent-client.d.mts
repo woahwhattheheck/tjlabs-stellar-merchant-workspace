@@ -126,7 +126,8 @@ export interface GrantExpenseDashboard extends GrantObject {
   sources: GrantObject[];
   lines: GrantExpenseLine[];
   attributions: GrantExpenseAttribution[];
-  costs: { id: string; tranche: number; plannedUsd: string }[];
+  /** Commercial phase costs have no grant tranche; unknown supplier estimates stay null. */
+  costs: { id: string; tranche: number | null; plannedUsd: string | null }[];
   canReceive: boolean;
   summary: GrantObject;
   reviewItems: GrantObject[];
@@ -138,6 +139,7 @@ export interface GrantExpensePreview extends GrantObject {
   filename: string;
   inspection: GrantObject;
   rows: GrantObject[];
+  costs: GrantExpenseDashboard['costs'];
   receiving: 'ALREADY_RETAINED' | 'HISTORICAL_EDITION' | 'CURRENT_ORIGINAL';
   retainedIntakeId: string | null;
   previousIntakeId: string | null;
@@ -1945,7 +1947,13 @@ export interface GrantPerformanceReport extends GrantObject {
   schema: 'stellar-forge.sf47-performance.v1';
   selection: GrantPerformancePeriod;
   case: { id: string; name: string; version: number; state: string; mode: 'OPERATIONS' | 'WALKTHROUGH' };
-  plan: { id: string; revision: number; name: string; contentSha256: string; sourceSha256: string; budgetUsd: string; plannedHours: string };
+  plan: { id: string; revision: number; name: string; contentSha256: string; sourceSha256: string;
+    budgetUsd: string | null; plannedHours: string; fundingMode?: 'COMMERCIAL_WORKSHARE';
+    knownBudgetUsd?: string; unknownCostIds?: string[]; costEstimatesComplete?: boolean };
+  planned: {calendarStart: GrantCivilDate | null; unavailableReason?: string;
+    opening: Record<'accruedUsd' | 'plannedOutflowUsd' | 'conditionalInflowUsd', string | null> | null;
+    period: Record<'accruedUsd' | 'plannedOutflowUsd' | 'conditionalInflowUsd', string | null> | null;
+    closing: Record<'accruedUsd' | 'plannedOutflowUsd' | 'conditionalInflowUsd', string | null> | null};
   finances: Record<'opening' | 'period' | 'closing', GrantPerformanceAmounts>;
   work: Record<'opening' | 'period' | 'closing', { recordedHours: string; acceptedHours: string; preawardHours: string }>;
   packages: GrantObject[];
@@ -2431,7 +2439,38 @@ export interface GrantInstallationReturnStageReceipt extends Omit<GrantInstallat
 }
 export type GrantInstallationReturnSave<T> = GrantOperationRequest & {note:string; inputs:T; expectedPreviewSha256:string};
 
+/** Original commercial proposal payment condition; no observed receipt is implied. */
+export interface GrantCommercialPlanPayment {
+  milestone_id: string; milestone_index: number; label: string; usd: string;
+  hypothetical_paid_day: number; release_condition: string; conditional: true;
+}
+export interface GrantOperationsPlanSummary extends GrantObject {
+  id: string; revision: number; contentSha256: string; sourceSha256: string;
+  /** Null for a customer proposal. It must not be treated as a zero grant request. */
+  requestUsd: string | null; conditionalFundingOnly: true; calendarStart: GrantCivilDate | null;
+  fundingMode?: 'COMMERCIAL_WORKSHARE'; proposedFeeUsd?: string;
+  costEstimatesComplete?: boolean; unknownCostIds?: string[];
+}
+export interface GrantCommercialPlanProposal extends GrantObject {
+  status: 'PROPOSED_UNSIGNED'; workshareCaseId: string; planSha256: string; proposedFeeUsd: string;
+  conditionalMilestones: GrantCommercialPlanPayment[];
+  proposalEstablishesAgreement: false; proposalEstablishesPayment: false; note: string;
+}
+export interface GrantOperationsReport extends GrantObject {
+  schema: 'stellar-forge.sf47-operations-report.v1'; mode: 'OPERATIONS' | 'WALKTHROUGH';
+  programId: string; version: number; applicationStage: string;
+  plan: GrantOperationsPlanSummary;
+  packages: (GrantObject & {id: string; tranche: number | null; plannedUsd: string | null;
+    recordedHours: string; acceptedHours: string; invoicedUsd: string; paidUsd: string;
+    invoiceVarianceUsd: string | null})[];
+  /** Commercial proposal plans have an empty grant-tranche inventory. */
+  tranches: {tranche: number; conditionalPlannedUsd: string; hypotheticalPaidDay: number; observedGrantUsd: string}[];
+  commercialProposal?: GrantCommercialPlanProposal;
+}
+
 export interface GrantCaseView extends GrantObject {
+  report: GrantOperationsReport;
+  expenseAttribution: GrantExpenseDashboard;
   statementSetups: GrantStatementSetupSummary[];
   workIntakes: GrantWorkIntakeSummary[];
   workIntakeRefs?: {id: string; revision: number; sha256: string; state: 'DRAFT' | 'APPLIED'}[];

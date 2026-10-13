@@ -41,7 +41,7 @@ DAY_FIELDS = ("date", "inUsd", "outUsd", "netUsd", "recordedNetCashUsd",
 
 
 def money(value):
-    return format(value, ".2f")
+    return None if value is None else format(value, ".2f")
 
 
 def hours(value):
@@ -171,25 +171,41 @@ def _view_fields(groups, identity):
 
 def _planned(context, selected):
     anchor = context["program"].get("calendarStart")
+    commercial = context["plan"]["scenario"].get("funding_mode") == "COMMERCIAL_WORKSHARE"
+    days = context["plan"]["report"]["cash"]["days"]
+    if commercial:
+        native_anchor = context["plan"]["planning"].get("calendarStart")
+        reason = None
+        if not native_anchor or not days or any(not row.get("date") for row in days):
+            reason = "The pinned commercial plan has no complete selected business-calendar date mapping."
+        elif anchor and anchor != native_anchor:
+            reason = ("The Operations calendar anchor differs from the pinned commercial planner anchor; "
+                      "review and explicitly reconcile the original calendar selections.")
+        anchor = native_anchor
+        if reason:
+            return {"calendarStart": anchor or None, "opening": None, "period": None,
+                    "closing": None, "unavailableReason": reason}
     if not anchor:
         return {"calendarStart": None, "opening": None, "period": None, "closing": None}
     anchor_date = date.fromisoformat(anchor)
-    days = context["plan"]["report"]["cash"]["days"]
     keys = ("accruedUsd", "plannedOutflowUsd", "conditionalInflowUsd")
 
     def at(stamp):
         if stamp is None:
             return {key: ZERO for key in keys}
         offset = (date.fromisoformat(stamp) - anchor_date).days
-        chosen = next((row for row in reversed(days) if row["day"] <= offset), None)
-        return {key: Decimal(chosen[key]) if chosen else ZERO for key in keys}
+        chosen = next((row for row in reversed(days)
+                       if (row["date"] <= stamp if commercial else row["day"] <= offset)), None)
+        return {key: (None if chosen[key] is None else Decimal(chosen[key])) if chosen else ZERO
+                for key in keys}
 
     before = (date.fromisoformat(selected["startDate"]) - timedelta(days=1)).isoformat() if (
         selected["startDate"] and selected["startDate"] > date.min.isoformat()) else None
     opening, closing = at(before), at(selected["endDate"])
     return {"calendarStart": anchor,
         "opening": {key: money(value) for key, value in opening.items()},
-        "period": {key: money(closing[key] - opening[key]) for key in keys},
+        "period": {key: None if closing[key] is None or opening[key] is None
+                   else money(closing[key] - opening[key]) for key in keys},
         "closing": {key: money(value) for key, value in closing.items()}}
 
 
@@ -219,14 +235,19 @@ def build(context, start_date=None, end_date=None):
     package_groups = _group_views(context, selected, lambda row, kind: row.get("costId"))
     packages = []
     native_packages = plan["scenario"]["future_costs"]
+    commercial = plan["scenario"].get("funding_mode") == "COMMERCIAL_WORKSHARE"
+    unknown_costs = [row["id"] for row in native_packages if commercial and row["amount_usd"] is None]
+    known_budget = sum((Decimal(row["amount_usd"]) for row in native_packages
+                        if row["id"] not in unknown_costs), ZERO)
     for row in native_packages:
         actual = _view_fields(package_groups, row["id"])
-        budget, planned_hours = Decimal(row["amount_usd"]), Decimal(str(row.get("estimated_hours") or 0))
+        budget = None if row["id"] in unknown_costs else Decimal(row["amount_usd"])
+        planned_hours = Decimal(str(row.get("estimated_hours") or 0))
         packages.append({"id": row["id"], "category": row.get("category", ""),
-            "tranche": row["tranche"], "description": row.get("remaining_work", ""),
+            "tranche": row.get("tranche"), "description": row.get("remaining_work", ""),
             "plannedUsd": money(budget), "plannedHours": hours(planned_hours), **actual,
-            "invoiceVarianceUsd": money(Decimal(actual["closingInvoicedUsd"]) - budget),
-            "remainingBudgetUsd": money(budget - Decimal(actual["closingInvoicedUsd"])),
+            "invoiceVarianceUsd": None if budget is None else money(Decimal(actual["closingInvoicedUsd"]) - budget),
+            "remainingBudgetUsd": None if budget is None else money(budget - Decimal(actual["closingInvoicedUsd"])),
             "hoursRemaining": hours(planned_hours - Decimal(actual["closingRecordedHours"]))})
     unassigned = {"id": None, "category": "UNASSIGNED", "tranche": None,
                   "description": "Original records without a pinned work-package association",
@@ -238,7 +259,9 @@ def build(context, start_date=None, end_date=None):
         members = [row for row in packages if row["category"] == category]
         fields = [key for key in members[0] if key.endswith("Usd") or key.endswith("Hours") or key == "hoursRemaining"]
         category_rows.append({"category": category, "packageIds": [row["id"] for row in members],
-            **{field: None if all(row[field] is None for row in members) else (
+            **{field: None if (all(row[field] is None for row in members)
+                or commercial and field in ("plannedUsd", "invoiceVarianceUsd", "remainingBudgetUsd")
+                and any(row[field] is None for row in members)) else (
                 money(sum((Decimal(row[field]) for row in members if row[field] is not None), ZERO))
                 if field.endswith("Usd") else
                 hours(sum((Decimal(row[field]) for row in members if row[field] is not None), ZERO)))
@@ -350,7 +373,9 @@ def build(context, start_date=None, end_date=None):
         "case": {key: program[key] for key in ("id", "name", "version", "state", "mode")},
         "plan": {"id": plan["id"], "revision": plan["revision"], "name": plan["name"],
             "contentSha256": plan["contentSha256"], "sourceSha256": plan["source"]["sha256"],
-            "budgetUsd": money(sum((Decimal(row["amount_usd"]) for row in native_packages), ZERO)),
+            "budgetUsd": None if unknown_costs else money(known_budget),
+            **({"fundingMode": "COMMERCIAL_WORKSHARE", "knownBudgetUsd": money(known_budget),
+                "unknownCostIds": unknown_costs, "costEstimatesComplete": not unknown_costs} if commercial else {}),
             "plannedHours": hours(sum((Decimal(str(row.get("estimated_hours") or 0)) for row in native_packages), ZERO))},
         "recordsSha256": digest(records), "sources": [context["sources"][identity] for identity in source_ids],
         "finances": finances, "work": work_views, "planned": _planned(context, selected),
@@ -373,6 +398,13 @@ def build(context, start_date=None, end_date=None):
             "USD amounts use recorded valuations and the original exact-cent line allocation. Native asset quantities remain grouped by currency, network and asset.",
             "Planned cash and accrual use the pinned planner's cumulative daily report, anchored to the operating case calendar.",
         ]}
+    if commercial:
+        report["basis"][-1] = ("Planned commercial cash and accrual use the pinned planner\'s actual business dates; "
+                              "proposal milestones remain conditional and establish no payment.")
+        report["basis"].append("Unentered supplier estimates and their total budgets or variances remain unknown; "
+                               "known estimates are a partial subtotal, never a complete cost forecast.")
+    if commercial and report["planned"].get("unavailableReason"):
+        report["basis"].append("Dated planned projection unavailable: " + report["planned"]["unavailableReason"])
     report["reportSha256"] = digest(report)
     return report
 
@@ -394,6 +426,17 @@ def render_html(report):
     span = (p["startDate"] or "All recorded dates") + " through " + p["endDate"]
     body = "<h1>" + html.escape(c["name"]) + "</h1><p>Budget performance · " + html.escape(span) + "</p>"
     body += "<p>Case version " + str(c["version"]) + " · " + html.escape(c["mode"]) + " · pinned plan revision " + str(report["plan"]["revision"]) + "</p>"
+    if report["plan"].get("fundingMode") == "COMMERCIAL_WORKSHARE":
+        plan = report["plan"]
+        body += "<h2>Commercial planning basis</h2>" + table(
+            ["Known supplier-cost subtotal USD", "Complete supplier budget USD", "Unestimated phases"],
+            [[plan["knownBudgetUsd"], plan["budgetUsd"] if plan["costEstimatesComplete"] else "Unknown",
+              ", ".join(plan["unknownCostIds"]) or "All estimates explicitly entered"]])
+        body += "<p>Known supplier costs are a partial subtotal until all phase estimates are entered. Proposed payment milestones establish no agreement or observed cash.</p>"
+        if report["planned"].get("unavailableReason"):
+            body += "<p>Dated planned projection unavailable: " + html.escape(report["planned"]["unavailableReason"]) + "</p>"
+        else:
+            body += "<p>Dated planned projection uses the pinned business calendar starting " + html.escape(report["planned"]["calendarStart"] or "Unselected") + ".</p>"
     body += "<h2>Cash and invoices</h2>" + table(["Measure", "Opening USD", "Period change USD", "Closing USD"],
         [[label, f["opening"][key], f["period"][key], f["closing"][key]] for key, label in (
             ("inUsd", "Recorded cash in"), ("outUsd", "Recorded cash out"), ("netUsd", "Net recorded cash"),

@@ -361,8 +361,8 @@ def allocated_lines(invoice, amount):
 
 
 def report(program, plan, records, sources, completionPlans=None, installationRefs=None, workIntakeRefs=None, expenseRecords=None):
-    package = {row["id"]: {"id": row["id"], "tranche": row["tranche"],
-                "plannedUsd": usd(row["amount_usd"]), "plannedHours": str(row.get("estimated_hours", "")),
+    package = {row["id"]: {"id": row["id"], "tranche": row.get("tranche"),
+                "plannedUsd": None if row["amount_usd"] is None else usd(row["amount_usd"]), "plannedHours": str(row.get("estimated_hours", "")),
                 "recordedHours": ZERO, "acceptedHours": ZERO, "preawardHours": ZERO,
                 "invoicedUsd": ZERO, "paidUsd": ZERO} for row in plan["scenario"]["future_costs"]}
     unplanned = {"recordedHours": ZERO, "acceptedHours": ZERO, "preawardHours": ZERO, "invoicedUsd": ZERO, "paidUsd": ZERO}
@@ -494,7 +494,10 @@ def report(program, plan, records, sources, completionPlans=None, installationRe
     for stamp, values in sorted(day_cash.items()):
         running += values["inUsd"] - values["outUsd"]
         offset = (date.fromisoformat(stamp) - date.fromisoformat(calendar_start)).days if calendar_start else None
-        conditional = planned_days.get(offset)
+        conditional = (next((item for item in planned_days.values() if item["date"] == stamp), None)
+                       if plan["scenario"].get("funding_mode") == "COMMERCIAL_WORKSHARE" else planned_days.get(offset))
+        if plan["scenario"].get("funding_mode") == "COMMERCIAL_WORKSHARE":
+            offset = None if conditional is None else conditional["day"]
         daily.append({"date": stamp, "day": offset, "inUsd": usd(values["inUsd"]), "outUsd": usd(values["outUsd"]),
                       "recordedNetCashUsd": format(running, ".2f"),
                       "plannedOutflowUsd": conditional["plannedOutflowUsd"] if conditional else None,
@@ -502,7 +505,7 @@ def report(program, plan, records, sources, completionPlans=None, installationRe
     package_rows = []
     for row in package.values():
         item = {key: (format(value, ".2f") if key.endswith("Usd") else format(value, "f")) if isinstance(value, Decimal) else value for key, value in row.items()}
-        item["invoiceVarianceUsd"] = format(Decimal(item["invoicedUsd"]) - Decimal(item["plannedUsd"]), ".2f")
+        item["invoiceVarianceUsd"] = None if item["plannedUsd"] is None else format(Decimal(item["invoicedUsd"]) - Decimal(item["plannedUsd"]), ".2f")
         package_rows.append(item)
     grants = sorted(records["awards"], key=lambda row: (row["date"], row["updatedAt"], row["id"]))
     stages = grants[-1]["stage"] if grants else "NOT_RECORDED"
@@ -511,7 +514,12 @@ def report(program, plan, records, sources, completionPlans=None, installationRe
         "originalApplicationState": plan["scenario"].get("application_state"),
         "plan": {"id": plan["id"], "revision": plan["revision"], "contentSha256": plan["contentSha256"],
                  "sourceSha256": plan["source"]["sha256"], "requestUsd": plan["report"]["originalModel"]["award_request_usd"],
-                 "conditionalFundingOnly": True, "calendarStart": calendar_start},
+                 "conditionalFundingOnly": True, "calendarStart": calendar_start,
+                 **({"fundingMode": "COMMERCIAL_WORKSHARE",
+                     "proposedFeeUsd": plan["report"]["originalModel"]["proposed_fee_usd"],
+                     "costEstimatesComplete": plan["report"]["originalModel"]["cost_estimates_complete"],
+                     "unknownCostIds": plan["report"]["originalModel"]["unknown_cost_ids"]}
+                    if plan["scenario"].get("funding_mode") == "COMMERCIAL_WORKSHARE" else {})},
         "cash": {"inUsd": usd(cash_in), "outUsd": usd(cash_out), "netUsd": format(cash_in - cash_out, ".2f"),
                  "grantReceiptsUsd": usd(grant_in), "invoiceLiabilityUsd": usd(invoice_total), "openInvoiceUsd": usd(open_total),
                  "overpaidInvoiceUsd": usd(credit_total), "unvaluedIds": unvalued, "excludedTestnetIds": excluded,
@@ -522,7 +530,7 @@ def report(program, plan, records, sources, completionPlans=None, installationRe
         "invoices": invoice_rows,
         "tranches": [{"tranche": row["tranche"], "conditionalPlannedUsd": row["usd"],
                       "hypotheticalPaidDay": row["hypothetical_paid_day"],
-                      "observedGrantUsd": usd(tranche_received[row["tranche"]])} for row in plan["report"]["originalModel"]["payouts"]],
+                      "observedGrantUsd": usd(tranche_received[row["tranche"]])} for row in plan["report"]["originalModel"]["payouts"] if "tranche" in row],
         "delivery": {"deployments": len(records["deployments"]), "externalMerchantOperators": operators("MERCHANT"),
                      "externalBuyerOperators": operators("BUYER"), "externalMainnetMerchantOperators": operators("MERCHANT", "MAINNET"),
                      "handoverCount": sum(row["state"] == "HANDED_OVER" for row in records["deployments"]),
@@ -534,6 +542,14 @@ def report(program, plan, records, sources, completionPlans=None, installationRe
             "operatorEntryRecords": sum(row.get("sourceBasis") == "OPERATOR_ENTRY" for values in records.values() for row in values)},
         "unresolved": unresolved}
 
+    if plan["scenario"].get("funding_mode") == "COMMERCIAL_WORKSHARE":
+        result["commercialProposal"] = {"status": "PROPOSED_UNSIGNED",
+            "workshareCaseId": plan["scenario"]["commercial"]["workshare"]["case_id"],
+            "planSha256": plan["scenario"]["commercial"]["workshare"]["plan_sha256"],
+            "proposedFeeUsd": plan["report"]["originalModel"]["proposed_fee_usd"],
+            "conditionalMilestones": plan["report"]["originalModel"]["payouts"],
+            "proposalEstablishesAgreement": False, "proposalEstablishesPayment": False,
+            "note": "These retained proposal terms and conditional milestones establish no agreement or payment. Actual separate Operations records remain authoritative."}
     from operations_buyer import node_report
     original_node = node_report({"sources": sources})
     if original_node is not None:

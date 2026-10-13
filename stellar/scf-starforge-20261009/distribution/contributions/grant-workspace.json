@@ -513,7 +513,9 @@
     "stellar/scf-starforge-20261009/sf98-merchant-delivery/destinations/exchange.mjs",
     "stellar/scf-starforge-20261009/sf98-merchant-delivery/destinations/model.mjs",
     "stellar/scf-starforge-20261009/sf98-merchant-delivery/destinations/storage.mjs",
-    "stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs"
+    "stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/COMMERCIAL_WORKSHARE.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_commercial_workshare_case.py"
   ],
   "managedSourceManifests": [
     "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json"

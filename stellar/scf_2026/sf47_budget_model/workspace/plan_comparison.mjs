@@ -66,19 +66,36 @@ export function mountPlanComparison({container, api, plan, plans, history, infor
       '<dt>Saved inputs</dt><dd><code>'+esc(value.contentSha256)+'</code></dd><dt>Retained report</dt><dd><code>'+esc(value.reportSha256)+'</code></dd>'+
       '<dt>Original source</dt><dd><code>'+esc(value.source.sha256)+'</code></dd><dt>Calculator</dt><dd><code>'+shown(value.calculatorSha256)+'</code></dd></dl></section>';
   }
+  function fundingSummary() {
+    if(!report?.funding)return '';
+    return '<section class="cmp-funding"><h3>Funding and quoted terms</h3>'+
+      table(['Side','Funding','Status','Day axis','Cost estimates'],['before','after'].map(side=>{
+        const value=report.funding[side];
+        return [esc(side==='before'?'Before':'After'),esc(value.label),esc(value.status),esc(value.dayBasis),
+          value.mode==='COMMERCIAL_WORKSHARE'?(value.costEstimatesComplete?'Complete':'Incomplete · '+value.unknownCostIds.length+' phases need estimates'):'Saved scenario'];
+      }))+'<p>'+esc(report.basis.commercialTerms)+'</p></section>';
+  }
+  function comparisonViews() {
+    const result=views.map(([key,label])=>[key,report?.groupLabels?.[key]??label]);
+    if(report?.groups.fundingTerms)result.splice(1,0,['fundingTerms','Funding and terms']);
+    if(report?.groups.paymentTerms)result.splice(2,0,['paymentTerms','Conditional fee milestones']);
+    return result;
+  }
   function renderResult() {
     const panel=root.querySelector('[data-cmp-result]');
     if(!report){panel.replaceChildren();return;}
+    if(!comparisonViews().some(([key])=>key===view)){view='impact';page=0;filter='';}
     panel.innerHTML='<div class="cmp-summary"><strong>'+report.summary.inputChanges+' input changes</strong><span>'+report.summary.reportChanges+' retained report changes</span>'+
       '<span>'+report.summary.modeledDaysBefore+' → '+report.summary.modeledDaysAfter+' modeled days</span></div>'+
-      '<p class="cmp-basis">Deltas are after minus before. Unset values and days outside a selected model have no numeric delta.</p>'+
+      '<p class="cmp-basis">Deltas are after minus before. Unset values and days outside a selected model have no numeric delta.</p>'+fundingSummary()+
+      (report.basis.sameDayBasis===false?'<p class="cmp-note">'+esc(report.basis.dailyBasis)+'</p>':'')+
       (!report.basis.sameOriginalSource?'<p class="cmp-note">These plans retain different original source documents. The original sources travel with the comparison package.</p>':'')+
       (!report.basis.sameCalculator?'<p class="cmp-note">These revisions retain results from different calculator versions. The comparison preserves each version’s saved output.</p>':'')+
       '<details class="cmp-source"><summary>Selected source and retained report identity</summary><div class="cmp-identities">'+identity('before')+identity('after')+'</div>'+
       '<p>Comparison SHA-256: <code>'+esc(report.comparisonSha256)+'</code></p></details>'+
       '<div class="cmp-toolbar cmp-downloads" aria-label="Export complete comparison">'+
       [['export.zip','Download receiving package'],['report.html','Full HTML report'],['changes.csv','All field changes CSV'],['impact.csv','Impact CSV'],['daily.csv','Daily cash CSV']].map(([kind,label])=>'<button type="button" data-cmp-export="'+kind+'">'+label+'</button>').join('')+'</div>'+
-      '<nav class="cmp-tabs" aria-label="Comparison views">'+views.map(([key,label])=>'<button type="button" data-cmp-view="'+key+'" aria-pressed="'+(view===key)+'">'+label+'</button>').join('')+'</nav>'+
+      '<nav class="cmp-tabs" aria-label="Comparison views">'+comparisonViews().map(([key,label])=>'<button type="button" data-cmp-view="'+key+'" aria-pressed="'+(view===key)+'">'+label+'</button>').join('')+'</nav>'+
       '<div class="cmp-filters"><label>Search this view<input type="search" data-cmp-filter value="'+esc(filter)+'"></label>'+
       (view==='changes'?'<label>Saved section<select data-cmp-area>'+[['','All sections'],['scenario','Scenario inputs'],['planning','Planning inputs'],['report','Retained report']].map(([key,label])=>'<option value="'+key+'"'+(area===key?' selected':'')+'>'+label+'</option>').join('')+'</select></label>':'')+
       (report.groups[view]?'<label class="cmp-check"><input type="checkbox" data-cmp-changed'+(changedOnly?' checked':'')+'>Changed rows only</label>':'')+'</div>'+
@@ -96,8 +113,9 @@ export function mountPlanComparison({container, api, plan, plans, history, infor
       headers=['Saved section','JSON path','Change','Before','After'];
       cells=shownRows.map(row=>[esc(row.area),'<code>'+esc(row.path)+'</code>',esc(row.kind),original(row.before,row.beforePresent),original(row.after,row.afterPresent)]);
     } else if(view==='daily') {
-      headers=['Project day','Before date','After date','Before cash gap (USD)','After cash gap (USD)','Change (USD)','Complete before day','Complete after day'];
+      headers=[report.funding?(report.basis.sameDayBasis?'Active business day':'Original day index'):'Project day','Before date','After date','Before cash gap (USD)','After cash gap (USD)','Change (USD)','Complete before day','Complete after day'];
       cells=shownRows.map(row=>[shown(row.day),shown(row.before?.date),shown(row.after?.date),shown(row.before?.cashGapUsd),shown(row.after?.cashGapUsd),signed(row.delta.cashGapUsd),original(row.before,row.before!==null),original(row.after,row.after!==null)]);
+      if(report.funding){headers.splice(6,0,'Before known-cost cash gap (USD)','After known-cost cash gap (USD)','Known-cost change (USD)');cells.forEach((cells,index)=>{const row=shownRows[index];cells.splice(6,0,shown(row.before?.knownCashGapUsd),shown(row.after?.knownCashGapUsd),signed(row.delta.knownCashGapUsd));});}
     } else {
       headers=['ID','Change','Before','After'];
       cells=shownRows.map(row=>['<code>'+esc(row.id)+'</code>',esc(row.state),original(row.before,row.state!=='added'),original(row.after,row.state!=='removed')]);

@@ -1,4 +1,4 @@
-"""Compare retained grant-plan revisions and carry their native source plans."""
+"""Compare retained planning revisions and carry their native source plans."""
 from copy import deepcopy
 from decimal import Decimal, InvalidOperation, localcontext
 from hashlib import sha256
@@ -30,6 +30,55 @@ METRICS = (
     ("last-day", "Last modeled day", "day", ("report", "cash", "lastModeledDay")),
 )
 ABSENT = object()
+
+COMMERCIAL_DAILY_FIELDS = ("knownAccruedUsd", "knownPlannedOutflowUsd",
+                          "knownCashGapUsd", "knownAccruedUnpaidUsd")
+
+
+def _commercial(snapshot):
+    return snapshot["scenario"].get("funding_mode") == "COMMERCIAL_WORKSHARE"
+
+
+def _funding(snapshot):
+    scenario, report = snapshot["scenario"], snapshot["report"]
+    if _commercial(snapshot):
+        source = scenario["commercial"]["workshare"]
+        terms = source["plan"]["commercial"]
+        return {"mode": "COMMERCIAL_WORKSHARE", "label": "Commercial Workshare proposal",
+                "status": scenario["status"], "currency": terms["currency"],
+                "proposedFeeUsd": report["originalModel"]["proposed_fee_usd"],
+                "costEstimatesComplete": report["originalModel"]["cost_estimates_complete"],
+                "unknownCostIds": report["originalModel"]["unknown_cost_ids"],
+                "dayBasis": "ACTIVE_BUSINESS_DAY", "workshareCaseId": source["case_id"],
+                "sourceUrl": source["source_url"], "documentSha256": source["document_sha256"],
+                "planSha256": source["plan_sha256"], "originalTerms": deepcopy(terms),
+                "conditionalReceiptSchedule": deepcopy(scenario["commercial"]["receipt_schedule"]),
+                "businessCalendar": deepcopy(snapshot["planning"].get("commercialCalendar"))}
+    return {"mode": "SCF_GRANT", "label": "SCF grant scenario",
+            "status": report["originalModel"].get("status"), "currency": "USD",
+            "awardRequestUsd": report["originalModel"].get("award_request_usd"),
+            "dayBasis": "PROJECT_DAY"}
+
+
+def _payment_terms(snapshot):
+    if not _commercial(snapshot):
+        return {}
+    commercial = snapshot["scenario"]["commercial"]
+    payouts = snapshot["report"]["originalModel"]["payouts"]
+    return {"commercial-payment-" + str(index + 1):
+            {"originalMilestone": deepcopy(row),
+             "conditionalSchedule": deepcopy(commercial["receipt_schedule"][index]),
+             "retainedPayouts": [deepcopy(value) for value in payouts if value.get("milestone_index") == index]}
+            for index, row in enumerate(commercial["workshare"]["plan"]["commercial"]["milestones"])}
+
+
+def _day_basis(snapshot):
+    return "ACTIVE_BUSINESS_DAY" if _commercial(snapshot) else "PROJECT_DAY"
+
+
+def _daily_fields(report):
+    return report.get("dailyFields", DAILY_FIELDS)
+
 
 
 def _revision(value, label):
@@ -119,6 +168,13 @@ def _packages(snapshot):
 
 
 def _milestones(snapshot):
+    if _commercial(snapshot):
+        planning = snapshot["planning"]
+        retained = snapshot["report"]["originalModel"]["milestones"]
+        return {row["id"]: {"phase": deepcopy(row),
+                            "deliveryNote": planning.get("deliveryNotes", {}).get(row["id"]),
+                            "retainedPhase": [deepcopy(value) for value in retained if value.get("phase_id") == row["id"]]}
+                for row in snapshot["scenario"]["commercial"]["workshare"]["plan"]["phases"]}
     payouts = snapshot["report"].get("originalModel", {}).get("payouts", [])
     notes = snapshot["planning"].get("deliveryNotes", {})
     return {str(row["tranche"]): {"milestone": row, "deliveryNote": notes.get(str(row["tranche"])),
@@ -153,27 +209,44 @@ def _build(before, after):
     for area in ("scenario", "planning", "report"):
         changes.extend({"area": area, **row} for row in _changes(before[area], after[area], "/" + area))
     metrics = []
+    commercial = _commercial(before) or _commercial(after)
+    same_day_basis = _day_basis(before) == _day_basis(after)
     for key, label, unit, path in METRICS:
+        if key == "award" and _commercial(before) and _commercial(after):
+            continue
         left, right = _path(before, path), _path(after, path)
         metrics.append({"id": key, "label": label, "unit": unit, "before": left, "after": right,
-                        "delta": _difference(left, right), "path": "/" + "/".join(path)})
+                        "delta": _difference(left, right) if unit != "day" or same_day_basis else None,
+                        "path": "/" + "/".join(path)})
     for key, label, field in (("overloaded-contributors", "Contributors with overloaded days", "contributors"),
                               ("overloaded-days", "Contributor days above capacity", "days")):
         values = []
         for side in (before, after):
-            rows = side["report"].get("capacity", {}).get("contributors", [])
-            values.append(sum(1 if field == "contributors" else row.get("overloadedDays", 0)
-                              for row in rows if row.get("overloadedDays", 0) > 0))
+            capacity = side["report"].get("capacity", {})
+            rows = capacity.get("contributors", [])
+            assessed = not _commercial(side) or capacity.get("weeklyDayDivisor") is not None
+            values.append(None if not assessed else
+                          sum(1 if field == "contributors" else row.get("overloadedDays", 0)
+                              for row in rows if (row.get("overloadedDays") or 0) > 0))
         metrics.append({"id": key, "label": label, "unit": field, "before": values[0], "after": values[1],
                         "delta": _difference(*values), "path": "/report/capacity/contributors"})
+    if commercial:
+        for key, label, path in (
+                ("fee", "Proposed Workshare fee", ("report", "originalModel", "proposed_fee_usd")),
+                ("known-cost", "Known supplier-cost subtotal", ("report", "cash", "knownTotalCostUsd")),
+                ("known-cash-gap", "Cash gap from known supplier costs", ("report", "cash", "knownPeakCashGapUsd"))):
+            left, right = _path(before, path), _path(after, path)
+            metrics.append({"id": key, "label": label, "unit": "USD", "before": left, "after": right,
+                            "delta": _difference(left, right), "path": "/" + "/".join(path)})
+    daily_fields = DAILY_FIELDS + (COMMERCIAL_DAILY_FIELDS if commercial else ())
     daily_maps = [{row["day"]: row for row in side["report"].get("cash", {}).get("days", [])}
                   for side in (before, after)]
     days = []
     for day in sorted(set(daily_maps[0]) | set(daily_maps[1])):
         left, right = daily_maps[0].get(day), daily_maps[1].get(day)
         days.append({"day": day, "before": left, "after": right,
-                     "delta": {key: _difference(left.get(key) if left else None, right.get(key) if right else None)
-                               for key in DAILY_FIELDS}})
+                     "delta": {key: (_difference(left.get(key) if left else None, right.get(key) if right else None)
+                                     if same_day_basis else None) for key in daily_fields}})
     groups = {
         "workPackages": _paired(_packages(before), _packages(after)),
         "milestones": _paired(_milestones(before), _milestones(after)),
@@ -185,6 +258,9 @@ def _build(before, after):
                                          "deliveryNotes": after["planning"].get("deliveryNotes", {}),
                                          "retainedDeliveryPlan": after["report"].get("deliveryPlan")}}),
     }
+    if commercial:
+        groups["fundingTerms"] = _paired({"funding": _funding(before)}, {"funding": _funding(after)})
+        groups["paymentTerms"] = _paired(_payment_terms(before), _payment_terms(after))
     result = {
         "schema": SCHEMA,
         "before": _identity(before), "after": _identity(after),
@@ -207,6 +283,18 @@ def _build(before, after):
         "metrics": metrics, "groups": groups, "changes": changes, "days": days,
         "snapshots": {"before": before, "after": after},
     }
+    if commercial:
+        result["funding"] = {"before": _funding(before), "after": _funding(after)}
+        result["basis"].update({"sameFundingMode": _commercial(before) == _commercial(after),
+                                "sameDayBasis": same_day_basis,
+                                "dailyBasis": ("Rows align by active business-day index; original calendar dates remain visible."
+                                               if same_day_basis else
+                                               "The saved plans use different day axes. Rows retain their original day indexes and dates; day and daily cash deltas are unset."),
+                                "commercialTerms": "Fees and their release conditions come from the complete proposed Workshare. Known supplier costs are shown separately when estimates are incomplete."})
+        result["dailyFields"] = list(daily_fields)
+        result["groupLabels"] = {"milestones": "Delivery phases and milestones",
+                                 "fundingTerms": "Funding basis and original terms",
+                                 "paymentTerms": "Conditional Workshare payment milestones"}
     return {**result, "comparisonSha256": digest(result)}
 
 
@@ -243,12 +331,13 @@ def impact_csv(report):
 
 def daily_csv(report):
     headers = ["day", "beforePresent", "afterPresent", "beforeDate", "afterDate"]
-    headers += [side + "_" + key for key in DAILY_FIELDS for side in ("before", "after", "delta")]
+    fields = _daily_fields(report)
+    headers += [side + "_" + key for key in fields for side in ("before", "after", "delta")]
     records = []
     for row in report["days"]:
         record = {"day": row["day"], "beforePresent": row["before"] is not None, "afterPresent": row["after"] is not None,
                   "beforeDate": (row["before"] or {}).get("date"), "afterDate": (row["after"] or {}).get("date")}
-        for key in DAILY_FIELDS:
+        for key in fields:
             for side in ("before", "after", "delta"):
                 record[side + "_" + key] = (row[side] or {}).get(key)
         records.append(record)
@@ -285,13 +374,29 @@ def render_html(report):
              "<h2>Funding and capacity impact</h2>",
              table(["Measure", "Unit", "Before", "After", "Change"],
                    [[text(row[key]) for key in ("label", "unit", "before", "after", "delta")] for row in report["metrics"]])]
+    if report.get("funding"):
+        parts += ["<h2>Commercial and funding basis</h2>",
+                  table(["Side", "Funding", "Status", "Day axis", "Complete original terms"],
+                        [[text(side), text(report["funding"][side]["label"]),
+                          text(report["funding"][side]["status"]), text(report["funding"][side]["dayBasis"]),
+                          original(report["funding"][side])] for side in ("before", "after")]),
+                  "<p>" + text(report["basis"]["commercialTerms"]) + "</p>"]
     labels = {"workPackages": "Work packages and payments", "milestones": "Milestones and retained payouts",
               "contributors": "Contributors and retained capacity", "delivery": "Delivery scope"}
+    labels.update(report.get("groupLabels", {}))
     for key, rows in report["groups"].items():
         parts += ["<h2>" + labels[key] + "</h2>",
                   table(["ID", "Change", "Before", "After"],
                         [[text(row["id"]), text(row["state"]), original(row["before"], row["state"] != "added"),
                           original(row["after"], row["state"] != "removed")] for row in rows])]
+    if report.get("funding"):
+        parts += ["<h2>Daily cash gaps from known supplier costs</h2>",
+                  "<p>These subtotals include only costed phases; total costs remain unset while any phase lacks an estimate. " + text(report["basis"]["dailyBasis"]) + "</p>",
+                  table(["Original day index", "Before date", "After date", "Before known-cost cash gap (USD)",
+                         "After known-cost cash gap (USD)", "Change (USD)"],
+                        [[text(row["day"]), text((row["before"] or {}).get("date")), text((row["after"] or {}).get("date")),
+                          text((row["before"] or {}).get("knownCashGapUsd")), text((row["after"] or {}).get("knownCashGapUsd")),
+                          text(row["delta"].get("knownCashGapUsd"))] for row in report["days"]])]
     parts += ["<h2>All saved JSON field changes</h2>",
               "<p>Paths use JSON Pointer. Array positions preserve original ordering. Added and removed values retain their complete content.</p>",
               table(["Area", "Path", "Change", "Before", "After"],
@@ -327,12 +432,12 @@ def export_bundle(workspace, plan_id, from_revision, to_revision, to_plan_id=Non
         files["CONTENTS.json"] = _json({"schema": SCHEMA + ".package", "comparisonSha256": report["comparisonSha256"],
                                       "nativePlans": plans})
         files["README.txt"] = (
-            "Saved grant plan comparison\n\n"
+            "Saved plan comparison\n\n"
             "Open report.html for the full readable comparison. comparison.json retains every selected input and report.\n"
             "changes.csv contains every changed JSON value, impact.csv contains exact decimal deltas, and daily.csv contains all modeled days.\n\n"
             "Continue the original plans:\n"
             "1. Extract this ZIP. CONTENTS.json identifies each selected plan ZIP and revision.\n"
-            "2. In the Grant workspace, import each unique ZIP under plans/ through Import planning scenario or workspace.\n"
+            "2. In the planning workspace, import each unique ZIP under plans/ through Import planning scenario or workspace.\n"
             "   Each is the original native export, including its original source and complete retained revision history at export.\n"
             "   Import allocates a new local plan ID. Use the IDs returned by import; revision numbers remain available.\n"
             "3. Open Compare saved plans, select the imported plans and the revision numbers in CONTENTS.json.\n"

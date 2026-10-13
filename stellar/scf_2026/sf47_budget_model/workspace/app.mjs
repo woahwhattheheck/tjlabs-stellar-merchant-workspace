@@ -18,7 +18,7 @@ const amount = value => new Intl.NumberFormat('en-US',{maximumFractionDigits:2})
 const label = value => String(value).replace(/_/g,' ').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./, character => character.toUpperCase());
 const tabs = [['overview','Overview'],['source-tables','Source tables'],['work','Work packages'],['milestones','Milestones'],['staffing','Staffing'],['payments','Payment timing'],['delivery','Delivery plan'],['history','Saved versions'],['comparison','Compare saved plans'],['operations','Delivery operations'],['agenda','Delivery agenda']];
 const state = {principal:null,staffContext:null,plans:[],current:null,draft:null,tab:'overview',dirty:false,stale:false,busy:false,history:[],selectedHistory:null};
-const planReadActions=new Set(['reload','export','daily','scenario','history-view']);
+const planReadActions=new Set(['reload','export','daily','scenario','history-view','commercial-report','commercial-workshare']);
 const canEditPlan=()=>state.principal?.role==='owner'||state.principal?.role==='lead';
 const canCreatePlan=()=>canEditPlan()&&state.principal.caseIds.includes('*');
 let controlId = 0;
@@ -252,7 +252,195 @@ function chart(days) {
   return '<figure class="cash-chart"><svg viewBox="0 0 '+width+' '+height+'" role="img" aria-labelledby="cash-chart-title"><title id="cash-chart-title">Daily planned outflows, conditional grant inflows and accrued work cost</title>'+grid+
     '<path d="'+line('accruedUsd')+'" fill="none" stroke="#999" stroke-width="2" stroke-dasharray="2 4"/><path d="'+line('plannedOutflowUsd')+'" fill="none" stroke="#666" stroke-width="2.5" stroke-dasharray="8 5"/><path d="'+line('conditionalInflowUsd')+'" fill="none" stroke="#222" stroke-width="2.5"/></svg><div class="chart-legend"><span>Conditional grant inflows</span><span class="outflow">Planned payments</span><span class="accrual">Accrued work cost</span></div><figcaption>Day zero is the planning acceptance date. Cash timing uses the complete work-package amounts and the payment schedules entered in this draft.</figcaption></figure>';
 }
+
+function isCommercial(value=state.draft) {return value?.scenario?.funding_mode==='COMMERCIAL_WORKSHARE';}
+function commercialOriginal(value=state.draft) {return value.scenario.commercial.workshare;}
+function commercialPhase(item,value=state.draft) {return commercialOriginal(value).plan.phases.find(row=>row.id===item.phase_id);}
+function commercialName(item,value=state.draft) {const phase=commercialPhase(item,value);return phase?.name||phase?.title||item.phase_id||item.id;}
+function commercialUnknown(value=state.draft) {return value.report.cash.unknownCostIds??value.report.originalModel.unknown_cost_ids??[];}
+function commercialFee(value=state.draft) {return value.report.originalModel.proposed_fee_usd;}
+function commercialText(value) {
+  if(value===null||value===undefined||value==='')return 'Not recorded';
+  if(typeof value==='object')return JSON.stringify(value,null,2);
+  return String(value);
+}
+function commercialProperties(value) {
+  return '<dl class="source-grid">'+Object.entries(value||{}).map(([key,item])=>'<dt>'+esc(label(key))+'</dt><dd'+(typeof item==='object'?' class="code"':'')+'>'+esc(commercialText(item))+'</dd>').join('')+'</dl>';
+}
+function commercialSource(value=state.draft) {
+  const source=commercialOriginal(value),plan=source.plan;
+  return '<section class="panel"><h3>Original proposed Workshare</h3><p>The complete retained proposal is read-only. New scope, fees, phase effort or payment conditions require an explicitly received following source proposal.</p>'+
+    commercialProperties({case_id:source.case_id,source_url:source.source_url,document_sha256:source.document_sha256,plan_sha256:source.plan_sha256,status:value.scenario.status||value.report.originalModel.status})+
+    '<details class="json-details"><summary>Complete original Workshare plan and conditions</summary><pre>'+esc(JSON.stringify(plan,null,2))+'</pre></details></section>';
+}
+function commercialPayouts(value=state.draft) {
+  const rows=value.report.originalModel.payouts||[];
+  return table(['Original payment condition','Proposed USD','Modeled business day','Release condition','Status'],
+    rows.map(row=>[esc(row.label||row.milestone_id||'Milestone '+(row.milestone_index+1)),money(row.usd),
+      row.hypothetical_paid_day===null?'Not modeled':esc(row.hypothetical_paid_day),esc(commercialText(row.release_condition)),'Proposed · conditional · unpaid']),['','numeric','','','']);
+}
+function commercialTimingNote(value=state.draft) {
+  const calendar=value.planning.calendarStart;
+  return '<p class="help">Day 0 is the first active business day of the proposed work. These offsets do not establish a kickoff, a signed agreement, an invoice, or a payment receipt. '+
+    (calendar?'The explicit calendar anchor is '+esc(calendar)+'; the saved workweek and exception dates govern calendar mapping.':'No calendar kickoff is selected.')+'</p>';
+}
+function commercialChart(value=state.draft) {
+  const cash=value.report.cash;
+  if(!cash.complete)return '<div class="notice"><strong>Complete cash requirement is unknown.</strong> Cost estimates are missing for '+esc(commercialUnknown(value).join(', '))+'. The known subtotal excludes those phases; it is not a full budget or profit estimate.</div>';
+  const days=cash.days||[];
+  if(!days.length)return '<p>No calculated cash periods are available.</p>';
+  // Reuse the original numerical drawing, with explicit commercial axis and conditional fee labels.
+  return chart(days).replace('Daily planned outflows, conditional grant inflows and accrued work cost','Active-business-day planned supplier outflows, conditional fee inflows and accrued estimated cost')
+    .replace('Conditional grant inflows','Conditional proposed fee inflows')
+    .replace('Day zero is the planning acceptance date. Cash timing uses the complete work-package amounts and the payment schedules entered in this draft.',
+      'Day zero is the first active business day. Conditional fee timing is a planning assumption; no payment is recorded. Supplier cash timing uses all entered phase cost estimates.');
+}
+
+function commercialDailyTable(value=state.draft) {
+  return table(['Active business day','Selected date','Known accrued cost','Known supplier outflow','Conditional proposed fee inflow','Known-cost gap','Complete cash gap'],
+    (value.report.cash.days||[]).map(row=>[esc(row.day),esc(row.date||'No kickoff selected'),money(row.knownAccruedUsd),money(row.knownPlannedOutflowUsd),
+      money(row.conditionalInflowUsd),money(row.knownCashGapUsd),row.cashGapUsd===null?'Unknown':money(row.cashGapUsd)]),['','','numeric','numeric','numeric','numeric','numeric']);
+}
+
+function commercialCalendar() {
+  const p=state.draft.planning,c=p.commercialCalendar||{};
+  return field('Selected kickoff date',['planning','calendarStart'],p.calendarStart,{type:'date',help:'Leave blank until an actual calendar anchor is selected.'})+
+    field('Active weekdays · Monday 0 through Sunday 6',['planning','commercialCalendar','weekdays'],Array.isArray(c.weekdays)?c.weekdays.join(', '):'',{kind:'integer-list',help:'Explicit working weekdays, comma separated. Enter these when selecting a kickoff.'})+
+    field('Nonworking dates · one YYYY-MM-DD per line',['planning','commercialCalendar','holidays'],(c.holidays||[]).join('\n'),{area:true,kind:'date-list'})+
+    field('Additional working dates · one YYYY-MM-DD per line',['planning','commercialCalendar','extraWorkingDates'],(c.extraWorkingDates||[]).join('\n'),{area:true,kind:'date-list'});
+}
+function commercialOverview() {
+  const {scenario,planning,report:r}=state.draft,cash=r.cash,unknown=commercialUnknown();
+  return heading('Proposed commercial Workshare','Review the retained customer fee, source-bound delivery effort and independently entered cost assumptions.')+draftHint()+
+    '<div class="notice"><strong>Proposed · unsigned.</strong> The fee and conditions below come from the selected Workshare. They do not record customer acceptance, funding received or a grant award.</div>'+
+    '<div class="cards">'+stat('Proposed customer fee',money(commercialFee()),'Original bound proposal · not a cost estimate')+
+    stat('Known delivery-cost subtotal',money(cash.knownTotalCostUsd),unknown.length?unknown.length+' phase costs remain unknown':'Every phase has an entered estimate')+
+    stat('Complete estimated delivery cost',cash.complete?money(cash.totalCostUsd??r.originalModel.planned_future_costs_usd):'Unknown',cash.complete?'All entered assumptions included':'Enter each missing cost assumption')+
+    stat('Proposed production effort',amount(r.capacity.totalHours)+' hours',scenario.project_end_day+1+' active business days')+'</div>'+
+    '<section class="panel"><h3>Conditional proposed payment timing</h3>'+commercialPayouts()+commercialTimingNote()+'</section>'+
+    '<section class="panel"><h3>Delivery cost and cash assumptions</h3>'+commercialChart()+
+      '<div class="cards">'+stat('Full peak cash requirement',cash.complete?money(cash.peakCashGapUsd):'Unknown',cash.complete?'Active business day '+cash.peakCashGapDay:'Missing costs prevent a complete calculation')+
+      stat('Known-cost peak requirement',money(cash.knownPeakCashGapUsd),'Subtotal for entered costs only')+
+      stat('Working-capital assumption',money(cash.capitalInputUsd),'A planning input, not available funds')+
+      stat('Unassigned production effort',amount(r.capacity.unassignedHours)+' hours','Assignments preserve original phase hours')+'</div>'+
+      '<details class="json-details"><summary>Every calculated business-day interval and known-cost subtotal</summary>'+commercialDailyTable()+'</details>'+
+      '<div class="button-row">'+button('Download saved daily CSV','daily')+button('Download saved scenario JSON','scenario')+
+      button('Download complete saved proposal report','commercial-report')+button('Download original bound Workshare','commercial-workshare')+'</div></section>'+
+    '<section class="panel"><h3>Planning context</h3><div class="grid">'+
+      field('Scenario description',['scenario','scenario_name'],scenario.scenario_name,{wide:true})+commercialCalendar()+
+      field('Working-capital assumption · USD',['planning','capitalUsd'],planning.capitalUsd,{help:'Leave blank when unassessed.'})+
+      field('Working-capital source and timing',['planning','capitalNote'],planning.capitalNote,{area:true,wide:true})+
+      field('Cost and delivery review notes',['planning','notes'],planning.notes,{area:true,wide:true})+'</div><div class="button-row">'+button('Clear kickoff and calendar mapping','commercial-clear-calendar')+'</div></section>'+commercialSource()+
+    '<section class="panel"><h3>Saved source identity</h3>'+commercialProperties({source:state.current.source.filename,source_sha256:state.current.source.sha256,
+      saved_revision:state.current.revision,calculator_sha256:r.calculatorSha256,saved_at:state.current.savedAt})+'</section>';
+}
+function commercialWork() {
+  const p=state.draft.planning;
+  return heading('Bound phases and cost assumptions','Keep the original production scope and hours. Record independent supplier cost estimates, their evidence and the proposed phase timing.')+
+    '<div class="notice">The customer fee remains '+money(commercialFee())+'. It is never matched to supplier costs. Blank cost or rate fields remain unknown; they are not zero-cost assumptions. Original phase rows and hours cannot be added, removed or changed in this revision.</div>'+
+    costs().map((item,index)=>{
+      const prefix=['scenario','future_costs',index],pricing=p.pricing[item.id],phase=commercialPhase(item);
+      let estimate;try{estimate=pricing==='hours'&&item.assumed_hourly_rate_usd!==null&&item.assumed_hourly_rate_usd!==''?
+        money(moneyString(plannedCents(item))):pricing==='fixed'&&item.amount_usd!==null&&item.amount_usd!==''?money(item.amount_usd):'Unknown';}catch{estimate='Incomplete';}
+      return '<details class="work-package" open><summary><span class="title"><strong>'+esc(commercialName(item))+'</strong><span>'+esc(item.phase_id)+' · '+esc(item.estimated_hours)+' original production hours</span></span><span class="amount">'+esc(estimate)+'</span></summary>'+
+        '<div class="package-body"><div class="day-row">'+
+        field('Start · active business day',prefix.concat('start_day'),item.start_day,{type:'number',kind:'integer'})+
+        field('Finish · active business day',prefix.concat('end_day'),item.end_day,{type:'number',kind:'integer'})+
+        field('Cost estimate basis',['planning','pricing',item.id],pricing,{choices:[['fixed','Fixed supplier cost estimate'],['hours','Original hours × supplier rate']]})+
+        field('Supplier rate · USD/hour',prefix.concat('assumed_hourly_rate_usd'),item.assumed_hourly_rate_usd,{type:'number',step:'.01',kind:'nullable-decimal',readonly:pricing!=='hours',help:'Blank means unknown.'})+
+        field('Fixed supplier cost · USD',prefix.concat('amount_usd'),pricing==='hours'?(()=>{try{return item.assumed_hourly_rate_usd===null||item.assumed_hourly_rate_usd===''?'':moneyString(plannedCents(item));}catch{return '';}})():item.amount_usd,
+          {type:'number',step:'.01',kind:'nullable-decimal',readonly:pricing==='hours',help:'A recorded 0 is an explicit zero-cost assumption.'})+
+        field('Cost classification',prefix.concat('category'),item.category,{help:'Retain the actual source or entered supplier-cost classification.'})+
+        '</div><div class="grid">'+field('Cost evidence / assumption',prefix.concat('cost_basis'),item.cost_basis||'',{area:true,wide:true,max:12000,help:'Identify the quote, rate, internal cost treatment or explicit basis for a zero-cost estimate.'})+'</div>'+
+        '<details class="json-details"><summary>Complete original phase, dependencies and commitments</summary><pre>'+esc(JSON.stringify(phase,null,2))+'</pre></details></div></details>';
+    }).join('')+commercialTimingNote();
+}
+function commercialMilestones() {
+  const rows=state.draft.scenario.commercial.receipt_schedule,payouts=state.draft.report.originalModel.payouts||[];
+  return heading('Proposed fee and payment conditions','Amounts and release conditions remain bound to the original unsigned proposal. Only the modeled timing assumptions are editable.')+draftHint()+
+    rows.map((row,index)=>{
+      const native=payouts.find(item=>item.milestone_index===row.milestone_index),prefix=['scenario','commercial','receipt_schedule',index];
+      return '<section class="panel"><h3>'+esc(native?.label||'Original payment condition '+(row.milestone_index+1))+'</h3>'+
+        '<p><strong>'+money(native?.usd)+'</strong> · proposed, conditional and unpaid</p><p>'+esc(commercialText(native?.release_condition))+'</p><div class="grid">'+
+        field('Modeled schedule anchor',prefix.concat('anchor'),row.anchor,{choices:[['START','Start of proposed delivery'],['FINISH','Finish of proposed delivery']]})+
+        field('Assumed payment lag · active business days',prefix.concat('lag_days'),row.lag_days,{type:'number',kind:'integer'})+
+        '</div><p class="help">Modeled receipt: active business day '+esc(native?.hypothetical_paid_day??'Not calculated')+'. This value records no payment event.</p></section>';
+    }).join('')+'<section class="panel"><h3>Complete original commercial terms</h3>'+commercialProperties(commercialOriginal().plan.commercial)+'</section>'+commercialTimingNote();
+}
+function commercialPayments() {
+  const p=state.draft.planning;
+  return heading('Supplier payment assumptions','Model when each entered delivery-cost estimate would be paid. These assumptions are independent of the customer’s conditional fee milestones.')+draftHint()+
+    '<div class="notice">A phase with an unknown cost remains unknown under every payment schedule. Enter the complete cost and its basis before treating the full cash review as complete.</div>'+
+    costs().map((item,index)=>{
+      const payment=p.payments[item.id]||{mode:'accrual',note:''},prefix=['planning','payments',item.id];
+      let body='<div class="grid">'+field('Supplier payment timing',prefix.concat('mode'),payment.mode,{choices:[['accrual','Pay evenly as work accrues'],['completion','Pay after phase completion'],['installments','Explicit dated installments']]})+
+        '<div><p class="eyebrow">Entered phase-cost estimate</p><strong>'+money(item.amount_usd)+'</strong><p class="help">Active business days '+esc(item.start_day)+'–'+esc(item.end_day)+'</p></div>';
+      if(payment.mode==='completion')body+=field('Lag after phase completion · business days',prefix.concat('lagDays'),payment.lagDays??0,{type:'number',kind:'integer'});
+      body+=field('Supplier payment assumption / source',prefix.concat('note'),payment.note||'',{area:true,wide:true})+'</div>';
+      if(payment.mode==='installments')body+=table(['Active business day','Estimated USD',''],(payment.installments||[]).map((row,i)=>[
+        field('Payment day',prefix.concat('installments',i,'day'),row.day,{type:'number',kind:'integer'}),
+        field('Installment estimate · USD',prefix.concat('installments',i,'usd'),row.usd,{type:'number',step:'.01'}),
+        button('Remove installment','remove-installment',' data-index="'+index+'" data-installment="'+i+'"')]))+
+        '<div class="button-row">'+button('Add cost installment','add-installment',' data-index="'+index+'"')+'</div>';
+      return '<section class="panel"><h3>'+esc(commercialName(item))+'</h3>'+body+'</section>';
+    }).join('')+commercialTimingNote();
+}
+function commercialDelivery() {
+  const plan=commercialOriginal().plan;
+  return heading('Original delivery commitments','Review every retained phase, original dependency, customer duty, acceptance condition and source-use constraint before progressing the proposal.')+
+    '<div class="notice">This is a proposed unsigned delivery. Saving planning assumptions does not create a contract, acceptance, invoice or paid receipt.</div>'+
+    (plan.phases||[]).map(phase=>'<section class="panel"><h3>'+esc(phase.name||phase.title||phase.id)+'</h3>'+commercialProperties(phase)+
+      field('Delivery review / owner and scheduling note',['planning','deliveryNotes',phase.id],state.draft.planning.deliveryNotes[phase.id]||'',{area:true,max:12000})+'</section>').join('')+
+    '<section class="panel"><h3>Whole proposal context</h3>'+commercialProperties(Object.fromEntries(Object.entries(plan).filter(([key])=>key!=='phases')))+'</section>'+
+    '<div class="button-row">'+button('Download complete saved proposal report','commercial-report')+button('Download original bound Workshare','commercial-workshare')+'</div>';
+}
+function commercialSavedReport(current) {
+  const value={scenario:current.scenario,planning:current.planning,report:current.report},r=value.report,source=commercialOriginal(value),unknown=commercialUnknown(value);
+  const body='<h1>'+esc(current.name)+'</h1><p>Commercial Workshare · proposed unsigned · saved revision '+esc(current.revision)+'</p>'+
+    '<p>'+esc(current.note||'')+'</p><h2>Fee, effort and independent cost estimates</h2>'+
+    table(['Item','Saved value'],[
+      ['Proposed customer fee',money(commercialFee(value))],['Original production hours',esc(r.capacity.totalHours)],
+      ['Active business days',esc(value.scenario.project_end_day+1)],['Known cost subtotal',money(r.cash.knownTotalCostUsd)],
+      ['Complete delivery-cost estimate',r.cash.complete?money(r.originalModel.planned_future_costs_usd):'Unknown'],
+      ['Unestimated phases',esc(unknown.join(', ')||'None')],['Complete peak cash requirement',r.cash.complete?money(r.cash.peakCashGapUsd):'Unknown']])+
+    '<p>Every fee milestone is conditional and unpaid in this proposal. The fee is not a supplier cost estimate. Unknown costs are not zero and prevent a complete cash or profit assessment.</p>'+
+    '<h2>Original proposed payment conditions</h2>'+commercialPayouts(value)+commercialTimingNote(value)+
+    '<h2>Every original delivery phase and cost assumption</h2>'+
+    table(['Original phase','Production hours','Business-day interval','Cost estimate','Cost basis'],
+      value.scenario.future_costs.map(item=>[esc(commercialName(item,value)),esc(item.estimated_hours),
+        esc(item.start_day)+'–'+esc(item.end_day),money(item.amount_usd),esc(item.cost_basis||'Not entered')]))+
+    '<h2>Every calculated business-day interval</h2>'+commercialDailyTable(value)+
+    '<h2>Original source and saved identity</h2>'+commercialProperties({source_filename:current.source.filename,source_sha256:current.source.sha256,
+      content_sha256:current.contentSha256,saved_at:current.savedAt,workshare_case:source.case_id,source_url:source.source_url,
+      workshare_document_sha256:source.document_sha256,workshare_plan_sha256:source.plan_sha256,calculator_sha256:r.calculatorSha256})+
+    '<h2>Complete retained proposed Workshare</h2><pre>'+esc(JSON.stringify(source.plan,null,2))+'</pre>'+
+    '<h2>Complete saved scenario, assumptions and native calculation</h2><pre>'+esc(JSON.stringify(value,null,2))+'</pre>';
+  return '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(current.name)+' · proposed Workshare</title>'+
+    '<style>body{font:16px/1.5 system-ui,sans-serif;color:#202020;background:#fff;max-width:1120px;margin:0 auto;padding:24px}h1{font-size:1.7rem}h2{border-top:2px solid #555;padding-top:1rem;margin-top:2rem}table{width:100%;border-collapse:collapse}td,th{border:1px solid #aaa;padding:10px;text-align:left;vertical-align:top}th{background:#eee}.table-wrap{overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #999;padding:16px}.source-grid{display:grid;grid-template-columns:minmax(150px,1fr) minmax(0,3fr);gap:8px}dd{margin:0;overflow-wrap:anywhere}@media(max-width:600px){body{padding:16px}.source-grid{grid-template-columns:1fr}dd{margin-bottom:12px}}</style><main>'+body+'</main></html>\n';
+}
+function commercialDownload(raw,filename,contentType) {
+  const blob=new Blob([raw],{type:contentType}),url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
+}
+
+function commercialHistoryCards(chosen) {
+  const r=chosen.report;
+  return stat('Proposed customer fee',money(commercialFee(chosen)),'Original unsigned proposal')+
+    stat('Complete cost estimate',r.cash.complete?money(r.originalModel.planned_future_costs_usd):'Unknown',commercialUnknown(chosen).length+' unestimated phases')+
+    stat('Proposed active business days',chosen.scenario.project_end_day+1,'No kickoff without explicit selection')+
+    stat('Original production effort',amount(r.capacity.totalHours)+' hours',chosen.planning.contributors.length+' planned contributors');
+}
+function renderPlanningMode() {
+  const commercial=isCommercial(),title=$('#planning-title'),context=$('#planning-mode-context'),eyebrow=$('#planning-eyebrow');
+  $('#workbench').dataset.fundingMode=commercial?'COMMERCIAL_WORKSHARE':'SCF';
+  if(title)title.textContent=commercial?'Commercial Workshare planning':'SCF delivery planning';
+  if(eyebrow)eyebrow.textContent=commercial?'Stellar Forge · Customer proposals':'Stellar Forge · Grant operations';
+  if(context){context.hidden=!commercial;context.textContent=commercial?'Proposed unsigned Workshare · fee, delivery cost assumptions and conditional payment timing':'';}
+  document.title=commercial?'Commercial Workshare planning':'SCF delivery planning';
+}
+
 function overview() {
+  if(isCommercial())return commercialOverview();
   const {scenario,planning,report}=state.draft,r=report,cash=r.cash,native=r.originalModel;
   return heading('Budget and delivery overview','Review the complete work plan, conditional program inflows and the timing of contributor payments.')+draftHint()+
     '<div class="cards">'+stat('Requested development budget',money(native.award_request_usd),r.capacity.totalHours+' estimated hours')+
@@ -273,6 +461,7 @@ function overview() {
     '<section class="panel"><h3>Source and current revision</h3><dl class="source-grid"><dt>Scenario source</dt><dd>'+esc(state.current.source.filename)+'</dd><dt>Source SHA-256</dt><dd class="code">'+esc(state.current.source.sha256)+'</dd><dt>Calculator SHA-256</dt><dd class="code">'+esc(r.calculatorSha256)+'</dd><dt>Saved at</dt><dd>'+esc(state.current.savedAt)+'</dd><dt>Application state in source</dt><dd>'+esc(label(scenario.application_state || 'Not recorded'))+'</dd></dl></section>';
 }
 function work() {
+  if(isCommercial())return commercialWork();
   const scenario=state.draft.scenario,planning=state.draft.planning;
   let sum;try {sum=money(moneyString(costs().reduce((value,row)=>value+plannedCents(row),0n)));} catch {sum='Enter complete amounts';}
   return heading('Remaining work packages','Edit effort, pricing and delivery outcomes. Existing source metadata stays attached to each package.',button('Add work package','add-cost'))+
@@ -294,6 +483,7 @@ function work() {
     }).join('');
 }
 function milestones() {
+  if(isCommercial())return commercialMilestones();
   const scenario=state.draft.scenario;
   return heading('Milestone schedule','Set the three submission days, their assumed review/payment lags and the outcomes the work must deliver.')+
     '<div class="notice">The original model keeps program payments sequential. The final submission must match the project end day; every package must finish by its assigned tranche.</div>'+
@@ -311,7 +501,7 @@ function milestones() {
 function staffing() {
   const p=state.draft.planning,r=state.draft.report.capacity;
   return heading('Contributors and capacity','Allocate the actual remaining effort and compare each contributor’s entered weekly capacity with overlapping package assignments.',button('Add contributor','add-person'))+
-    '<p class="help">Weekly equivalents distribute hours over each package’s inclusive calendar-day span. Enter the source of each capacity assumption in the contributor note.</p>'+
+    (isCommercial()?'<p class="help">Capacity uses the active-business-day spans and the native commercial workweek basis. Original phase production hours stay fixed. Enter the source of each capacity assumption in the contributor note.</p>':'<p class="help">Weekly equivalents distribute hours over each package’s inclusive calendar-day span. Enter the source of each capacity assumption in the contributor note.</p>')+
     (p.contributors.length?p.contributors.map((person,index)=>{
       const prefix=['planning','contributors',index];
       return '<section class="panel"><div class="grid-three">'+field('Contributor name',prefix.concat('name'),person.name)+field('Available hours per week',prefix.concat('weeklyHours'),person.weeklyHours,{type:'number',step:'.01'})+
@@ -325,11 +515,12 @@ function staffing() {
         return [field('Work package',prefix.concat('costId'),row.costId,{choices:costs().map(item=>[item.id,packageName(item)])}),field('Contributor',prefix.concat('contributorId'),row.contributorId,{choices:p.contributors.map(item=>[item.id,item.name || item.id])}),field('Assigned hours',prefix.concat('hours'),row.hours,{type:'number',step:'.01'}),button('Remove','remove-assignment',' data-index="'+index+'"')];
       })):'<p class="unassigned">The current plan has no entered contributor assignments.</p>')+'</section>'+
     '<section class="panel"><h3>Capacity review</h3>'+draftHint()+
-    (r.contributors.length?table(['Contributor','Assigned hours','Weekly capacity','Peak weekly requirement','Days above capacity'],r.contributors.map(row=>[esc(row.name),amount(row.totalHours),amount(row.weeklyCapacityHours),amount(row.peakWeeklyRequiredHours),row.overloadedDays?'<strong>'+row.overloadedDays+'</strong><br><span class="small">Day '+row.firstOverloadedDay+'–'+row.lastOverloadedDay+'</span>':'0']),['','numeric','numeric','numeric','']):'')+
+    (r.contributors.length?table(['Contributor','Assigned hours','Weekly capacity','Peak weekly requirement','Days above capacity'],r.contributors.map(row=>[esc(row.name),amount(row.totalHours),amount(row.weeklyCapacityHours),row.peakWeeklyRequiredHours===null?'Not evaluated without calendar':amount(row.peakWeeklyRequiredHours),isCommercial()&&r.weeklyDayDivisor===null?'Not evaluated without calendar':row.overloadedDays?'<strong>'+row.overloadedDays+'</strong><br><span class="small">Day '+row.firstOverloadedDay+'–'+row.lastOverloadedDay+'</span>':'0']),['','numeric','numeric','numeric','']):'')+
     '<p class="unassigned">'+amount(r.unassignedHours)+' of '+amount(r.totalHours)+' hours remain unassigned.</p>'+
     table(['Package','Unassigned hours'],r.unassigned.map(row=>[esc(packageName({id:row.costId})),amount(row.hours)]),['','numeric'])+'</section>';
 }
 function payments() {
+  if(isCommercial())return commercialPayments();
   const p=state.draft.planning;
   return heading('Contributor payment timing','Plan when each complete work-package amount is paid. Deferred amounts remain part of the plan and appear as accrued unpaid cost until their entered payment day.')+
     '<div class="notice">Payment timing changes the cash requirement. It keeps each package’s full price and the source program payout rules.</div>'+
@@ -344,6 +535,7 @@ function payments() {
     }).join('');
 }
 function delivery() {
+  if(isCommercial())return commercialDelivery();
   const original=state.draft.report.deliveryPlan;
   if(!original) return heading('Deployment acceptance plan','This scenario does not contain a structured deployment acceptance plan.')+'<p>Import a complete source scenario to retain its native deployment targets and operating record joins.</p>';
   const missing=(original.targets || []).flatMap(row=>row.cost_ids || []).filter(id=>!costs().some(row=>row.id===id));
@@ -362,18 +554,18 @@ function history() {
   return heading('Saved revisions and reopening','Every save appends a retained version. Restoring an earlier revision appends another version and keeps intervening work available.')+
     table(['Revision','Saved at','Change note',''],state.history.map(row=>['<strong>'+row.revision+'</strong>',esc(new Date(row.savedAt).toLocaleString()),esc(row.note),button('Review','history-view',' data-revision="'+row.revision+'"')]))+
     (chosen?'<section class="panel"><div class="section-heading"><div><h3>Revision '+chosen.revision+'</h3><p class="help">'+esc(chosen.note)+'</p></div>'+button('Restore as a new revision','restore',' data-revision="'+chosen.revision+'"')+'</div><div class="cards">'+
-      stat('Request',money(chosen.report.originalModel.award_request_usd),chosen.report.capacity.totalHours+' estimated hours')+
+      (isCommercial(chosen)?commercialHistoryCards(chosen):stat('Request',money(chosen.report.originalModel.award_request_usd),chosen.report.capacity.totalHours+' estimated hours')+
       stat('Planned cash gap',money(chosen.report.cash.peakCashGapUsd),'Day '+chosen.report.cash.peakCashGapDay)+
       stat('Program schedule',chosen.scenario.project_end_day+' days','Final submission')+
-      stat('Work packages',chosen.scenario.future_costs.length,chosen.planning.contributors.length+' contributors')+'</div><details class="json-details"><summary>Retained scenario and payment / staffing inputs</summary><pre>'+esc(JSON.stringify({scenario:chosen.scenario,planning:chosen.planning},null,2))+'</pre></details></section>':'<p class="help">Select a revision to review its complete saved inputs before restoring it.</p>');
+      stat('Work packages',chosen.scenario.future_costs.length,chosen.planning.contributors.length+' contributors'))+'</div><details class="json-details"><summary>Retained scenario and payment / staffing inputs</summary><pre>'+esc(JSON.stringify({scenario:chosen.scenario,planning:chosen.planning},null,2))+'</pre></details></section>':'<p class="help">Select a revision to review its complete saved inputs before restoring it.</p>');
 }
 function render(focus = false) {
   closeOperations();
   closeSourceTables();
   if(!state.current) return;
-  controlId=0;
+  controlId=0;renderPlanningMode();
   $('#plan-select').innerHTML=state.plans.map(row=>'<option value="'+esc(row.id)+'"'+(row.id===state.current.id?' selected':'')+'>'+esc(row.name)+'</option>').join('');
-  $('#sections').innerHTML=tabs.filter(([id])=>canEditPlan()||id!=='source-tables').map(([id,title])=>'<button type="button" data-tab="'+id+'"'+(state.tab===id?' aria-current="page"':'')+'>'+title+'</button>').join('');
+  $('#sections').innerHTML=tabs.filter(([id])=>canEditPlan()||id!=='source-tables').map(([id,title])=>'<button type="button" data-tab="'+id+'"'+(state.tab===id?' aria-current="page"':'')+'>'+esc(isCommercial()?({overview:'Commercial overview',work:'Phase cost assumptions',milestones:'Fee conditions',payments:'Supplier payment timing',delivery:'Delivery commitments'}[id]||title):title)+'</button>').join('');
   $('.savebar').hidden=!canEditPlan()||['operations','comparison','agenda'].includes(state.tab);
   if(state.tab==='operations') {
     const navigation=initialOperationsNavigation;
@@ -437,13 +629,16 @@ async function accept(current) {
 function patch() {
   const s=state.draft.scenario;
   const pick=(value,keys)=>Object.fromEntries(keys.filter(key=>value[key]!==undefined).map(key=>[key,value[key]]));
+  if(isCommercial())return {scenario_name:s.scenario_name,
+    commercial_receipt_schedule:clone(s.commercial.receipt_schedule),
+    future_costs:s.future_costs.map(row=>pick(row,['id','phase_id','tranche','start_day','end_day','estimated_hours','assumed_hourly_rate_usd','amount_usd','category','cost_basis','remaining_work','measurable_proof']))};
   return {scenario_name:s.scenario_name,award_request_usd:s.award_request_usd,project_end_day:s.project_end_day,
     milestones:s.milestones.map(row=>pick(row,['tranche','submit_day','review_and_payment_lag_days','deliverable','measurable_proof'])),
     future_costs:s.future_costs.map(row=>pick(row,['id','tranche','start_day','end_day','estimated_hours','assumed_hourly_rate_usd','amount_usd','category','remaining_work','measurable_proof']))};
 }
 async function calculate() {
   const result=await api('/api/plans/'+state.current.id+'/estimate',{expectedRevision:state.current.currentRevision,scenarioPatch:patch(),planning:state.draft.planning});
-  state.draft=result;state.stale=false;retainCasePlanning();render();inform('Draft calculated with the original SF47 model. Save a revision to retain these inputs.');
+  state.draft=result;state.stale=false;retainCasePlanning();render();inform(isCommercial()?'Draft calculated with the original bound Workshare and entered cost assumptions. Save a revision to retain this review.':'Draft calculated with the original SF47 model. Save a revision to retain these inputs.');
 }
 async function save() {
   if(casePlanning.summary()?.pending)return receiveCasePlanningSave();
@@ -458,7 +653,7 @@ async function save() {
   await accept(result);inform(result.unchanged?'The saved inputs are unchanged.':'Saved revision '+result.revision+'.');
 }
 async function download(suffix, filename) {
-  const selection=casePlanning.summary()?'?revision='+state.current.revision:'';
+  const selection=(casePlanning.summary()||isCommercial(state.current))?'?revision='+state.current.revision:'';
   const response=await api('/api/plans/'+state.current.id+'/'+suffix+selection,undefined,{download:true});
   const blob=await response.blob(),url=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -473,6 +668,17 @@ async function onAction(buttonNode) {
   const action=buttonNode.dataset.action,index=Number(buttonNode.dataset.index),planning=state.draft.planning;
   if(!canEditPlan()&&!planReadActions.has(action))throw new Error('Your staff role can review saved plans. A lead saves planning changes.');
   if(['clone','import'].includes(action)&&!canCreatePlan())throw new Error('An installation-wide lead creates or imports planning alternatives.');
+  if(isCommercial()&&['add-cost','remove-cost','match-total','use-lag'].includes(action))throw new Error('The commercial phase scope, fee and conditions remain bound to the original proposed Workshare. Receive a following complete proposal to change that source.');
+  if(action==='commercial-clear-calendar'){
+    if(!isCommercial())throw new Error('Select the commercial proposal.');
+    state.draft.planning.calendarStart=null;delete state.draft.planning.commercialCalendar;changed();render();return;
+  }
+  if(action==='commercial-report'||action==='commercial-workshare'){
+    if(!isCommercial(state.current))throw new Error('Select a saved commercial Workshare proposal.');
+    if(action==='commercial-report')commercialDownload(commercialSavedReport(state.current),'commercial-workshare-revision-'+state.current.revision+'.html','text/html; charset=utf-8');
+    else commercialDownload(JSON.stringify(commercialOriginal(state.current),null,2)+'\n','commercial-workshare-original.json','application/json');
+    inform('Downloaded saved revision '+state.current.revision+(state.dirty?'. Your unfinished edits remain in the workspace.':'.'));return;
+  }
   if(action==='calculate') return calculate();
   if(action==='save') return save();
   if(action==='reload') return loadPlan(state.current.id);
@@ -531,6 +737,10 @@ $('#main-panel').addEventListener('input',event=>{
   const control=event.target.closest('[data-path]');if(!control || state.busy || !canEditPlan())return;
   const parts=JSON.parse(control.dataset.path);
   let value=control.value;if(control.dataset.kind==='integer' && value!=='')value=Number(value);
+  if(control.dataset.kind==='nullable-decimal'&&value==='')value=null;
+  if(control.dataset.kind==='integer-list')value=value.trim()===''?[]:value.split(',').map(part=>/^\d+$/.test(part.trim())?Number(part.trim()):part.trim());
+  if(control.dataset.kind==='date-list')value=value.trim()===''?[]:value.split(/\r?\n/).map(part=>part.trim()).filter(Boolean);
+  if(isCommercial()&&parts[0]==='planning'&&parts[1]==='commercialCalendar')state.draft.planning.commercialCalendar??={weekdays:[],holidays:[],extraWorkingDates:[]};
   setPath(parts,value);changed();
 });
 $('#main-panel').addEventListener('change',event=>{
@@ -590,7 +800,7 @@ function showSignIn() {
   state.selectedHistory=null;state.dirty=false;state.stale=false;
   $('#main-panel').replaceChildren();$('#plan-select').replaceChildren();$('#sections').replaceChildren();
   $('#workbench').hidden=true;$('#sign-out').hidden=true;$('#access-panel').hidden=false;
-  $('#staff-identity').textContent='Grant workspace';$('#access-key').value='';
+  $('#staff-identity').textContent='Grant workspace';$('#access-key').value='';renderPlanningMode();
 }
 async function openAccess(token) {
   await signInOwner(token);
