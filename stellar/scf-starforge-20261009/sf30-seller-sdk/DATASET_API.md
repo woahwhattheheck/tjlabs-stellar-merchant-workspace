@@ -262,3 +262,12 @@ with a full browser-to-server run.
 `starforge sdmx` and `starforge dataset sdmx` open the same maintained SDMX workflow. It retains the original dataflow, data structure, codelists and observation sources; projects their exact string values through this dataset engine; compares saved editions; and transfers complete source-backed projects to another workspace. Its merchant release binds the native snapshot and lineage to explicit original SF30 public terms. Publication uses the original version store's current snapshot and revision, and customer acquisition uses the original SF88 paginated buyer and delivery.
 
 See [the SDMX operator guide](sdmx/README.md) for the captured ECB input, source acquisition receipts, native CLI, public imports and complete merchant/customer commands.
+
+
+## Named query studies and complete local results
+
+The original private Dataset workspace now retains complete named query studies, raw unfinished inputs, source-bound editions and successful pages. Native storage is selected with `--studies PRIVATE_DIR`; an original service defaults to its private `query-studies` subdirectory. The installed Applications form exposes the same directory selection.
+
+Complete-result jobs bind a saved study revision and successful query to the original snapshot. They use the existing dataset engine and SF100 page/cursor validators to retain every original page and produce full CSV, typed JSONL, source meanings, saved study and provenance manifest. Interrupted jobs resume the same original cursor. All records remain `LOCAL_OPERATOR_PREVIEW`.
+
+See [Dataset query studies](DATASET_STUDIES.md) for the complete browser workflow, native CLI, authenticated API, portability, custody and original receiving course. The existing buyer delivery and customer product routes remain independently available.
