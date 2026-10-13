@@ -16,7 +16,10 @@
       "merchant-accounting-recovery",
       "support-console",
       "revenue-workspace",
-      "revenue-report"
+      "revenue-report",
+      "merchant-mcp",
+      "merchant-mcp-stdio",
+      "merchant-mcp-client-config"
     ],
     "exports": [
       "./installation",
@@ -37,11 +40,15 @@
       "./merchant/revenue-model",
       "./merchant/revenue-report",
       "./package.json",
-      "./manifest.json"
+      "./manifest.json",
+      "./merchant/mcp/server",
+      "./merchant/mcp/stdio",
+      "./merchant/mcp/client-config"
     ],
     "features": [
       "schema",
-      "openapi"
+      "openapi",
+      "mcp"
     ],
     "applicationProviders": [],
     "merchantProviders": [],
@@ -55,7 +62,8 @@
     "merchant-commercial",
     "merchant-implementation",
     "merchant-service-operations",
-    "merchant-bank-statements"
+    "merchant-bank-statements",
+    "merchant-provider-accounting"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -69,7 +77,8 @@
     "stellar/scf-starforge-20261009/sf70-merchant-intake",
     "products/merchant-receivables",
     "products/merchant-payment-plans",
-    "products/merchant-bank-statements"
+    "products/merchant-bank-statements",
+    "stellar-forge/mcp-merchant-operator"
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
@@ -82,7 +91,8 @@
     "products/merchant-receivables/README.md",
     "products/merchant-payment-plans/README.md",
     "products/merchant-service-agreements/README.md",
-    "products/merchant-bank-statements/README.md"
+    "products/merchant-bank-statements/README.md",
+    "stellar-forge/mcp-paid-agent/package.json"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

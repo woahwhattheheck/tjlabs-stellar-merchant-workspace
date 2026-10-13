@@ -12,6 +12,11 @@ export default defineMerchantProvider({
   tools: accountingTools,
   instructions: [
     {
+      prefix: 'merchant_accounting_bank_statements_',
+      text: 'Use the original Bank reconciliation controller in the same accounting session. Distinguish these current CAMT/OFX/QFX/CSV accounts, page assemblies and closes from the earlier receivables bank receipt-intake tools. Inspect original bytes once, retain sourceInput and review SHA, bind actual workspaceId/revision/requestId on every mutation, and reconcile the original action and intent after a lost response. Page all original rows at one revision; download complete bank-statements-import/close files through the retained reader. account.tar carries the selected close and related customer source; whole-workspace operating backup uses original maintenance. The installed merchant-accounting-bank-statements command saves requests before execute. No new host, parser, receipt writer or payment is created. Follow ACCOUNTING_BANK_STATEMENTS.md.',
+      order: 43
+    },
+    {
       prefix: 'merchant_accounting_qbo_worksheet_',
       text: 'For QuickBooks allocation worksheets, retain the original workspace/source binding, complete worksheet base, company chart and returned CSV byte hashes. Export or inspect through host-declared platformInputs aliases; page every row and conflict against one result SHA and download complete files through file kind qbo-worksheet. Keep missing valuations and Pending-only exclusions explicit. Choose current or returned for each conflicting field, then preview worksheet-create through the original native compiler. Save the exact client operation before execution. Creation retains one original DRAFT plan; review, native posting and accountant return remain separate original operations. After a lost create reply, read worksheet_request or reconcile the same saved operation before reopening former aliases. Preserve the original entered CSV and conflict decisions, close MCP before opening the same workspace in Applications, and follow ACCOUNTING-QBO-WORKSHEETS.md.',
       order: 42

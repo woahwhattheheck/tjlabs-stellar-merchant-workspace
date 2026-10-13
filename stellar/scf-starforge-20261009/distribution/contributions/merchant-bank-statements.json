@@ -3,10 +3,12 @@
   "id": "merchant-bank-statements",
   "description": "Original bank intake, complete CAMT page assembly, customer cash reconciliation and accountant receiving",
   "commands": {
-    "bank-statements": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/cli.mjs"
+    "bank-statements": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/cli.mjs",
+    "merchant-accounting-bank-statements": "stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.mjs"
   },
   "commandDescriptions": {
-    "bank-statements": "Receive original CAMT.053/OFX/QFX/CSV statements, assemble complete source pages, match cash, retain balanced closes and open the accountant reader"
+    "bank-statements": "Receive original CAMT.053/OFX/QFX/CSV statements, assemble complete source pages, match cash, retain balanced closes and open the accountant reader",
+    "merchant-accounting-bank-statements": "Operate the original Bank reconciliation through authenticated Merchant accounting, saved exact requests and full files"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/README.md",
@@ -20,7 +22,10 @@
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_COLLECTIONS.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/BUNDESBANK.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/BUNDESBANK_ORIGINALS.json",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/BUNDESBANK_RECEIVE.mjs"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/BUNDESBANK_RECEIVE.mjs",
+    "stellar-forge/mcp-merchant-operator/accounting-bank-statements-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.d.mts",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_BANK_STATEMENTS.md"
   ],
   "exports": {
     "./merchant/bank-statements": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/store.mjs",
@@ -33,7 +38,15 @@
       "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/client.d.ts",
       "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/client.mjs"
     },
-    "./merchant/bank-statements/server": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/server.mjs"
+    "./merchant/bank-statements/server": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/server.mjs",
+    "./merchant/accounting-bank-statements": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-statements-client.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-statements-client.mjs"
+    },
+    "./merchant/accounting-bank-statements/operations": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.mjs"
+    }
   },
   "browserAssets": [
     {
