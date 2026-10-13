@@ -141,9 +141,10 @@ customer source.
 receiving-started.json binds the original argv and installed source before
 dispatch. A child inherits the continuation lock. receiving-completed.json
 binds the actual result, captures and portable reports. If the child completed
-before the parent's response was saved, the wrapper adopts that completed output
-in place. Otherwise it resumes the same captured command and original work
-directory. It never launches the Water operation or a separate native lease.
+before the parent's response was saved, the wrapper adopts the complete selected
+result, captures, portable reports and operating outputs in place. A missing final
+file or a recorded nonzero process exit returns to the original command's
+retry/repair path. The same captured command and original work directory remain. It never launches the Water operation or a separate native lease.
 
 An incomplete provider save resumes delivery/helper-state and delivery/provider
 through the existing native_library_delivery workflow. Every artifact remains

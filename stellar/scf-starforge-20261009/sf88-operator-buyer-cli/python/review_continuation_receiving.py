@@ -197,6 +197,26 @@ def receiving_result(path, plan, mapping, receiving):
     return result, captures
 
 
+
+def complete_outputs(result_path, plan, mapping, receiving):
+    """Adopt only the original programme's entire selected completed output set."""
+    result, captures = receiving_result(result_path, plan, mapping, receiving)
+    outputs = []
+    for row in plan.get("outputs", []):
+        name = str(relative(row["name"]))
+        path = selected_output(row["path"], mapping, receiving)
+        outputs.append({"name": name, "source": str(path), **identity(path)})
+    report_paths = [selected_output(value, mapping, receiving) for value in plan["portable_reports"]]
+    if any(path.suffix.lower() not in {".json", ".html", ".csv"} for path in report_paths):
+        raise ValueError("Keep the original complete portable JSON, HTML and CSV report formats")
+    if not {".json", ".html"}.issubset({path.suffix.lower() for path in report_paths}):
+        raise ValueError("The complete current journal requires its JSON and readable HTML exports")
+    names = [row["name"] for row in outputs]
+    if len(names) != len(set(names)):
+        raise ValueError("The original receiving outputs repeat a selected archive name")
+    reports = [{"source": str(path), **identity(path)} for path in report_paths]
+    return result, captures, outputs, reports
+
 def run_original(args, work, intent, context, lock_fd):
     if identity(args.programme) != {k: intent["programme"][k] for k in ("bytes", "sha256")}:
         raise ValueError("Resume the originally captured receiving command and output selection")
@@ -214,7 +234,9 @@ def run_original(args, work, intent, context, lock_fd):
         result_path = Path(intent["result"])
         if identity(result_path) != retained["result"]:
             raise ValueError("The original completed receiving result changed")
-        result, captures = receiving_result(result_path, plan, mapping, receiving)
+        result, captures, outputs, reports = complete_outputs(result_path, plan, mapping, receiving)
+        if outputs != retained["outputs"] or reports != retained["portable_reports"] or captures != retained["captures"]:
+            raise ValueError("The complete retained receiving output selection changed")
         for row in retained["outputs"] + retained["portable_reports"] + retained["captures"]:
             if identity(Path(row["source"])) != checked_row(row):
                 raise ValueError("A retained complete receiving output changed")
@@ -233,11 +255,22 @@ def run_original(args, work, intent, context, lock_fd):
                    "operation_id": OPERATION, "started_at": now(), "binding": source_binding,
                    "argv": intent["argv"], "cwd": str(cwd)}
         publish_json(started_path, started)
-    # A complete output left after a lost parent response is adopted in place.
+    # A known terminal failure follows the original retry/repair path, even if
+    # an earlier stage wrote the browser result before the process failed.
+    observed_failure = False
+    process_result_path = work / "receiving-process-result.json"
+    if process_result_path.exists():
+        process_result = read_json(process_result_path)
+        if process_result.get("binding") != source_binding or type(process_result.get("returncode")) is not int:
+            raise ValueError("The retained receiving process result belongs to another original attempt")
+        observed_failure = process_result["returncode"] != 0
+    # Lost-parent recovery adopts only the complete selected set: browser result,
+    # captures, portable reports and operating outputs. A missing final file must
+    # return to the original programme rather than repeatedly skipping it.
     complete = False
-    if result_path.exists():
+    if result_path.exists() and not observed_failure:
         try:
-            receiving_result(result_path, plan, mapping, receiving)
+            complete_outputs(result_path, plan, mapping, receiving)
             complete = True
         except (OSError, ValueError, KeyError, TypeError):
             complete = False
@@ -272,25 +305,12 @@ def run_original(args, work, intent, context, lock_fd):
         finally:
             for signum, handler in prior_signals.items():
                 signal.signal(signum, handler)
-    result, captures = receiving_result(result_path, plan, mapping, receiving)
-    outputs = []
-    for row in plan.get("outputs", []):
-        name = str(relative(row["name"]))
-        path = selected_output(row["path"], mapping, receiving)
-        outputs.append({"name": name, "source": str(path), **identity(path)})
-    report_paths = [selected_output(value, mapping, receiving) for value in plan["portable_reports"]]
-    if any(path.suffix.lower() not in {".json", ".html", ".csv"} for path in report_paths):
-        raise ValueError("Keep the original complete portable JSON, HTML and CSV report formats")
-    if not {".json", ".html"}.issubset({path.suffix.lower() for path in report_paths}):
-        raise ValueError("The complete current journal requires its JSON and readable HTML exports")
-    names = [row["name"] for row in outputs]
-    if len(names) != len(set(names)):
-        raise ValueError("The original receiving outputs repeat a selected archive name")
+    result, captures, outputs, reports = complete_outputs(result_path, plan, mapping, receiving)
     retained = {"schema": "commons.scf-customer-receiving-completed.v1",
                 "operation_id": OPERATION, "continuation_id": CONTINUATION, "completed_at": now(),
                 "binding": source_binding, "result": identity(result_path), "captures": captures,
                 "outputs": outputs,
-                "portable_reports": [{"source": str(path), **identity(path)} for path in report_paths]}
+                "portable_reports": reports}
     publish_json(receipt_path, retained)
     return retained, result, captures
 
