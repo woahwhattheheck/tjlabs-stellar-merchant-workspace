@@ -50,6 +50,27 @@
         "ACCOUNTANT_RECEIVING.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/working.mjs",
+      [
+        "working.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/portable.mjs",
+      [
+        "portable.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/working-source.json",
+      [
+        "working-source.json",
+        "application/json; charset=utf-8"
+      ]
     ]
   ]
 }
