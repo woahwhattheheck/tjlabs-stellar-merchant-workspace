@@ -524,6 +524,7 @@ const fail=s=>{throw new Error(s);},need=(v,s)=>{if(!v)fail(s);};
 const text=(v,label)=>{need(typeof v==="string",label+" must be text.");return v;};
 const nonempty=(v,label)=>{text(v,label);need(v.trim(),label+" is required.");return v;};
 const cleanText=(v,label)=>{text(v,label);need(!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v),label+" contains a control character.");return v;};
+const boundedText=(v,label,maximum)=>{cleanText(v,label);need(v.length<=maximum,label+" exceeds "+maximum+" characters.");return v;};
 function node(tag,value,cls){const n=document.createElement(tag);if(value!==undefined)n.textContent=value;if(cls)n.className=cls;return n;}
 function button(label,handler,opts={}){const b=node("button",label,opts.primary?"primary":undefined);b.type="button";if(opts.mutates)b.dataset.mutates="true";b.addEventListener("click",()=>run(handler));return b;}
 function announce(s){$("announcements").textContent=s;}
@@ -554,11 +555,11 @@ async function validateWork(w){
   validPackages.add(actual);
  }
  const ids=new Set(p.review.assessment.changes.map(x=>x.id));
- function choices(rows,complete){need(Array.isArray(rows),"Retain the complete decision array.");unique(rows,x=>x.changeId,"change decision");for(const d of rows){need(ids.has(d.changeId),"A decision belongs to another assessment.");need(["accept","remap","revise"].includes(d.decision),"Choose accept, remap or revise.");cleanText(d.note,"Disposition note");if(complete)nonempty(d.note,"Disposition note");}}
+ function choices(rows,complete){need(Array.isArray(rows),"Retain the complete decision array.");unique(rows,x=>x.changeId,"change decision");for(const d of rows){need(ids.has(d.changeId),"A decision belongs to another assessment.");need(["accept","remap","revise"].includes(d.decision),"Choose accept, remap or revise.");boundedText(d.note,"Disposition note",20000);if(complete)nonempty(d.note,"Disposition note");}}
  need(w.draft&&typeof w.draft==="object","The unfinished review draft is required.");
- cleanText(w.draft.reviewer,"Reviewer");cleanText(w.draft.note,"Review note");choices(w.draft.decisions,false);
- need(Array.isArray(w.editions),"Retain the complete saved editions.");unique(w.editions,e=>nonempty(e.id,"Edition identity"),"edition identity");
- for(const e of w.editions){nonempty(e.reviewer,"Saved reviewer");nonempty(e.note,"Saved review note");nonempty(e.createdAt,"Saved time");need(Number.isFinite(Date.parse(e.createdAt)),"Saved edition time is invalid.");choices(e.decisions,true);}
+ boundedText(w.draft.reviewer,"Reviewer",200);boundedText(w.draft.note,"Review note",30000);choices(w.draft.decisions,false);
+ need(Array.isArray(w.editions),"Retain the complete saved editions.");unique(w.editions,e=>nonempty(boundedText(e.id,"Edition identity",200),"Edition identity"),"edition identity");
+ for(const e of w.editions){nonempty(boundedText(e.reviewer,"Saved reviewer",200),"Saved reviewer");nonempty(boundedText(e.note,"Saved review note",30000),"Saved review note");nonempty(e.createdAt,"Saved time");need(Number.isFinite(Date.parse(e.createdAt)),"Saved edition time is invalid.");choices(e.decisions,true);}
  return w;
 }
 function combined(a,b,draft){
@@ -623,7 +624,7 @@ function setDecision(id,decision,note){const rows=S.work.draft.decisions.filter(
 function draftPanel(){
  const p=node("section",undefined,"panel reviewer");p.append(node("h2","Your review"));
  const grid=node("div",undefined,"grid"),reviewer=draftInput(document.createElement("input"),v=>S.work.draft.reviewer=v),note=draftInput(document.createElement("textarea"),v=>S.work.draft.note=v);
- reviewer.value=S.work.draft.reviewer;reviewer.autocomplete="name";note.value=S.work.draft.note;
+ reviewer.value=S.work.draft.reviewer;reviewer.autocomplete="name";reviewer.maxLength=200;note.value=S.work.draft.note;note.maxLength=30000;
  grid.append(field("Reviewer name",reviewer),field("Overall review note",note));p.append(grid);
  const a=node("div",undefined,"actions");a.append(button("Save unfinished work",async()=>{await saveNow();announce(S.session?"Working draft is retained in this tab. Download it before closing.":"Saved the complete unfinished draft in this browser.");},{mutates:true}),button("Save review edition",saveEdition,{mutates:true,primary:true}));
  p.append(a,node("p","Accept records your assessment; remap describes a required reporting mapping; revise requests a change. A saved edition records your name and notes. Native release approval stays in the original workspace.","small"));return p;
@@ -647,7 +648,7 @@ function renderChanges(root){
   if(c.path)card.append(node("p",c.path,"mono"));if(c.detail)card.append(node("p",c.detail));
   const pair=node("div",undefined,"before-after"),before=node("div"),after=node("div");before.append(node("h4","Baseline"),valueBlock(c.before));after.append(node("h4","Candidate"),valueBlock(c.after));pair.append(before,after);card.append(pair);
   if(c.dependencies?.length)card.append(details("Affected reports and original selectors · "+c.dependencies.length,c.dependencies));
-  const saved=currentDecision(c.id),choice=select([["","No disposition"],["accept","Accept"],["remap","Remap"],["revise","Revise"]],saved?.decision??""),note=document.createElement("textarea");note.value=saved?.note??"";note.placeholder="Explain this disposition and any source or report mapping.";
+  const saved=currentDecision(c.id),choice=select([["","No disposition"],["accept","Accept"],["remap","Remap"],["revise","Revise"]],saved?.decision??""),note=document.createElement("textarea");note.value=saved?.note??"";note.maxLength=20000;note.placeholder="Explain this disposition and any source or report mapping.";
   choice.dataset.draftInput="true";note.dataset.draftInput="true";note.dataset.requiresDecision=c.id;
   choice.addEventListener("change",()=>{setDecision(c.id,choice.value,note.value);note.disabled=!choice.value||!!S.pending||!!S.recovery;});
   note.addEventListener("input",()=>{if(choice.value)setDecision(c.id,choice.value,note.value);});note.disabled=!choice.value;
@@ -705,8 +706,8 @@ function inspectOriginal(file,name){
 
 
 async function saveEdition(){
- nonempty(S.work.draft.reviewer,"Reviewer");nonempty(S.work.draft.note,"Overall review note");
- for(const d of S.work.draft.decisions)nonempty(d.note,"Disposition note for "+d.changeId);
+ nonempty(boundedText(S.work.draft.reviewer,"Reviewer",200),"Reviewer");nonempty(boundedText(S.work.draft.note,"Overall review note",30000),"Overall review note");
+ for(const d of S.work.draft.decisions)nonempty(boundedText(d.note,"Disposition note",20000),"Disposition note for "+d.changeId);
  const at=new Date().toISOString(),body={createdAt:at,reviewer:S.work.draft.reviewer,note:S.work.draft.note,decisions:clone(S.work.draft.decisions)};
  const id="colleague-edition-"+sha.sha256Utf8(canonical({packageHash:S.work.package.contentHash,...body})).sha256.slice(0,40);
  need(!S.work.editions.some(e=>e.id===id),"This edition is already retained.");S.work={...S.work,editions:[...S.work.editions,{id,...body}]};changed();

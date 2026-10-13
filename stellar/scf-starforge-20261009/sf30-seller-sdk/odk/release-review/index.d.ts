@@ -150,7 +150,7 @@ export function composeCentralFormReleaseReview(input:{workspace:CentralWorkspac
 // Complete colleague files and feedback remain bound to the original review.
 export interface FormColleaguePackage extends FormRecord {
  schema:typeof FORM_COLLEAGUE_PACKAGE_SCHEMA;id:string;workspaceId:string;reviewId:string;reviewRevision:number;
- createdAt:string;review:FormReleaseReview;sources:{baseline:RetainedFormSource;candidate:RetainedFormSource};
+ createdAt:string;review:Omit<FormReleaseReview,'colleague'>;sources:{baseline:RetainedFormSource;candidate:RetainedFormSource};
  files:{sha256:string;bytes:number;base64:string;names:{sourceId:string;side:string;name:string;label:string}[]}[];
  fileCoverage:{nativeOnly:{sourceId:string;side:string;label:string;receipt:OriginalFileReceipt;reason:string}[]};
  contentHash:string;
