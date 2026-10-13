@@ -162,14 +162,53 @@ const PHASE_INVENTORY = {
   historical:['ddpMigrations','ddpReceivings','captures'],publications:['ddpMigrations'],
   customer:['publications','qcew'],handover:[]
 };
+const RESEARCH_PHASE_CONTEXT = {
+  sources:{
+    instruction:' Receive the retained research catalogue with its original question and product definitions, version histories and source snapshots. Each complete original response remains in the carried native project.',
+    expectedResult:' The research catalogue and its original source snapshots reopen with the same project.'
+  },
+  review:{
+    instruction:' Inspect the selected research definition and source snapshot, then retain the original reviewer decision, reviewer, note and reviewed time. Follow the saved product edition back to its exact definition, sources and review.',
+    expectedResult:' Research decisions and product editions retain their original definition, source and review references.'
+  },
+  handover:{
+    instruction:' Carry the complete research catalogue, definition histories, original source snapshots, saved reviews and product editions with this same economic project. Use the retained research references when recording the handover outcome.',
+    expectedResult:' The receiving project preserves the complete original research catalogue, source bodies and saved product lineage.'
+  }
+};
+function researchInputs(source, phase) {
+  if (!RESEARCH_PHASE_CONTEXT[phase] || !Object.hasOwn(source.inventory,'research')) return null;
+  const research = source.inventory.research;
+  const families = ['entries','sources','reviews','products'];
+  const collections = {};
+  for (const family of families) {
+    const rows = plain(research) && Array.isArray(research[family]) ? research[family] : null;
+    collections[family] = {reference:'/state/research/' + family,records:rows ? rows.length : null};
+    if (rows && (family === 'entries' || family === 'products')) {
+      collections[family].definitionVersions = rows.reduce((count,item) =>
+        count + (Array.isArray(item?.versions) ? item.versions.length : 0),0);
+    }
+    if (rows && family === 'products') {
+      collections[family].editions = rows.reduce((count,item) =>
+        count + (Array.isArray(item?.editions) ? item.editions.length : 0),0);
+    }
+  }
+  const evidence = source.evidence.filter(item => item.reference === '/state/research' ||
+    families.some(family => item.reference.startsWith('/state/research/' + family + '/')));
+  return {reference:'/state/research',collections,
+    evidence:{reference:'source.json#/evidence',records:evidence.length,
+      selection:'Use the retained references whose original project pointer is /state/research or one of its collections.'},
+    originalSource:'Complete research source response bytes remain in the original project artifact.'};
+}
 function phaseInputs(source, phase) {
   const inventory = {};
   for (const key of PHASE_INVENTORY[phase]) {
     const value = source.inventory[key];
     inventory[key] = {reference:'/state/' + key, records:Array.isArray(value) ? value.length : value === undefined ? 0 : null};
   }
+  const research = researchInputs(source, phase);
   return {sourceId:source.id,project:binding(source).project,originalProject:source.artifact,
-    inventory, currentPublicationOperations:source.published.length,
+    inventory, ...(research === null ? {} : {research}), currentPublicationOperations:source.published.length,
     originalSourceDescriptor:'source.json',
     sourceBasis:'Read complete source inventories and publication file descriptors from source.json and their retained artifacts.'};
 }
@@ -187,8 +226,9 @@ export function createFredOperatingPlan({source,catalog,id,title = 'Economic dat
     const argv = argvByPhase[phase] ?? [];
     need(selection !== null || Array.isArray(argv) && argv.length === 0,
       'Choose an installed registration before retaining command arguments for ' + phase + '.');
-    return createOperatingStep({id:'fred-' + phase,title:heading,instruction,
-      inputs:JSON.stringify(phaseInputs(selected,phase),null,2),expectedResult,
+    const researchContext = Object.hasOwn(selected.inventory,'research') ? RESEARCH_PHASE_CONTEXT[phase] : null;
+    return createOperatingStep({id:'fred-' + phase,title:heading,instruction:instruction + (researchContext?.instruction ?? ''),
+      inputs:JSON.stringify(phaseInputs(selected,phase),null,2),expectedResult:expectedResult + (researchContext?.expectedResult ?? ''),
       owner,status:'planned',recordedResult:'',selection,argv});
   });
   return createOperatingPlan({id,title,customer,owner,period,savedAt,steps,
