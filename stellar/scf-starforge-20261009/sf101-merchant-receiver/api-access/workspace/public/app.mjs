@@ -16,7 +16,18 @@ function showError(error){const view=$('notice');view.textContent=errorText(erro
 function notice(text){$('notice').textContent=text;$('notice').hidden=false;}
 function facts(rows){const dl=node('dl',null,'facts');for(const [name,value]of rows)append(dl,node('dt',name),node('dd',value));return dl;}
 function panel(title,...content){const section=node('section',null,'panel');if(title)section.append(node('h2',title));append(section,...content);return section;}
-function table(headers,rows){const wrap=node('div',null,'table-scroll'),t=node('table'),head=node('thead'),body=node('tbody');append(head,append(node('tr'),headers.map(x=>node('th',x))));for(const row of rows){const tr=node('tr');for(const value of row){const td=node('td');append(td,value);tr.append(td);}body.append(tr);}append(t,head,body);wrap.append(t);return wrap;}
+function table(headers,rows){
+ const wrap=node('div',null,'table-scroll'),t=node('table'),head=node('thead'),body=node('tbody');
+ t.setAttribute('role','table');head.setAttribute('role','rowgroup');body.setAttribute('role','rowgroup');
+ const heading=node('tr');heading.setAttribute('role','row');
+ headers.forEach((name,index)=>{const th=node('th',name||'Actions');th.scope='col';th.setAttribute('role','columnheader');heading.append(th);});
+ head.append(heading);
+ for(const row of rows){
+  const tr=node('tr');tr.setAttribute('role','row');
+  row.forEach((value,index)=>{const td=node('td');td.setAttribute('role','cell');td.dataset.label=headers[index]||'Actions';append(td,value);tr.append(td);});body.append(tr);
+ }
+ append(t,head,body);wrap.append(t);return wrap;
+}
 function code(value){return node('code',value);}
 const profile=id=>S.state?.profiles.find(row=>row.id===id);
 const draftKey=(key,scope=currentScope())=>scope.id+':'+key;
@@ -212,12 +223,17 @@ function renderPortfolioLive(){
  const filter=draft('portfolio-view'),query=(filter.query??'').trim().toLowerCase(),state=filter.status??'ACTIVE';
  const rows=data.passes.filter(p=>(state==='ALL'||state==='ACTIVE'&&!p.archived||state===p.status)&&
   (!query||[p.label,p.orderReference,p.gatewayBaseUrl,p.manifestSha256].some(value=>String(value).toLowerCase().includes(query))));
- for(const id of S.portfolioSelection)if(!data.passes.some(p=>p.id===id&&!p.archived))S.portfolioSelection.delete(id);
- const records=rows.map(p=>{
+ const activeIds=new Set(data.passes.filter(p=>!p.archived).map(p=>p.id));
+ S.portfolioSelection=new Set((Array.isArray(filter.selectedIds)?filter.selectedIds:[...S.portfolioSelection]).filter(id=>activeIds.has(id)));
+ const pageSize=25,requestedOffset=Number.isSafeInteger(filter.offset)&&filter.offset>=0?filter.offset:0;
+ const offset=Math.min(Math.floor(requestedOffset/pageSize)*pageSize,Math.max(0,Math.ceil(rows.length/pageSize)-1)*pageSize);
+ filter.offset=offset;
+ const visible=rows.slice(offset,offset+pageSize);
+ const records=visible.map(p=>{
   const select=node('input');select.type='checkbox';select.checked=S.portfolioSelection.has(p.id);select.disabled=p.archived;select.setAttribute('aria-label','Select '+p.label+' for allowance refresh');
-  select.addEventListener('change',()=>{select.checked?S.portfolioSelection.add(p.id):S.portfolioSelection.delete(p.id);renderPortfolioSelection();});
-  const title=append(node('div'),link(p.label,'#pass/'+p.id),node('small',p.orderReference,'mono'),node('small',p.gatewayBaseUrl));
-  if(p.selected)title.append(node('small','Default for new requests'));
+  select.addEventListener('change',()=>{select.checked?S.portfolioSelection.add(p.id):S.portfolioSelection.delete(p.id);savePortfolioSelection().catch(showError);renderPortfolioSelection();});
+  const title=append(node('div',null,'pass-identity'),append(node('h3'),link(p.label,'#pass/'+p.id)),node('small',p.orderReference,'mono'),node('small',p.gatewayBaseUrl));
+  if(p.selected)title.append(node('small','Default for new requests','pass-default'));
   if(p.replaces)title.append(link('Previous pass: '+p.replaces.label,'#pass/'+p.replaces.profileId));
   const requests=append(node('div'),link(p.requests.total+' saved request(s)','#pass/'+p.id+'/history'),
    node('small',p.requests.prepared+' prepared · '+p.requests.active+' active · '+p.requests.attention+' recovery'));
@@ -227,17 +243,40 @@ function renderPortfolioLive(){
   if(p.replacement)controls.append(link('Open replacement','#pass/'+p.replacement.profileId));
   else if(S.state.purchaseEnabled)controls.append(link('Prepare replacement','#replenish/'+p.id));
   const stateCell=append(node('div'),status(p.status),p.error?node('small',p.error.code):null,p.activeTasks?node('small',p.activeTasks+' operation(s) active'):null);
-  return [select,title,stateCell,allowanceCell(p),requests,p.checkedAt??'Awaiting first refresh',controls];
+  const card=node('article',null,'portfolio-pass');card.dataset.profileId=p.id;card.setAttribute('aria-label',p.label);
+  const pick=append(node('label',null,'pass-select'),select,node('span','Select for allowance refresh'));
+  const heading=append(node('div',null,'pass-heading'),title,stateCell);
+  const allowance=append(node('section',null,'pass-allowance'),node('h4','Units on this pass'),allowanceCell(p));
+  const work=append(node('section',null,'pass-work'),node('h4','Saved work'),requests,
+   node('h4','Last refreshed'),node('p',p.checkedAt??'Awaiting first refresh','pass-refreshed'));
+  controls.classList.add('pass-controls');controls.setAttribute('aria-label','Actions for '+p.label);
+  return append(card,pick,heading,allowance,work,controls);
  });
- host.replaceChildren(node('p',rows.length+' of '+data.passes.length+' passes','muted'));
- if(records.length)host.append(table(['','Pass','Availability','Units on this pass','Saved work','Last refreshed',''],records));
+ const count=node('p',rows.length+' of '+data.passes.length+' passes'+(rows.length?' · Showing '+(offset+1)+'–'+(offset+visible.length):''),'muted');
+ count.id='portfolio-result-count';count.setAttribute('role','status');host.replaceChildren(count);
+ if(records.length){
+  const selection=append(node('div',null,'actions portfolio-page-actions'),
+   button('Select this page',()=>{for(const row of visible)if(!row.archived)S.portfolioSelection.add(row.id);return savePortfolioSelection().then(renderPortfolioLive);}),
+   button('Clear this page',()=>{for(const row of visible)S.portfolioSelection.delete(row.id);return savePortfolioSelection().then(renderPortfolioLive);}));
+  host.append(selection,append(node('div',null,'portfolio-passes'),records));
+  const pager=node('nav',null,'actions portfolio-pages');pager.setAttribute('aria-label','Pass portfolio pages');
+  const go=async next=>{filter.offset=next;await retainDraft('portfolio-view');renderPortfolioLive();$('portfolio-result-count').scrollIntoView({block:'nearest'});};
+  if(offset>0)append(pager,button('First page',()=>go(0)),button('Previous page',()=>go(Math.max(0,offset-pageSize))));
+  if(offset+pageSize<rows.length)pager.append(button('Next page',()=>go(offset+pageSize)));
+  if(pager.childNodes.length)host.append(pager);
+ }
  else host.append(node('p',data.passes.length?'No passes match these filters.':'Connect a purchased pass or load a merchant handoff to begin.','empty'));
  renderPortfolioSelection();
  renderPortfolioAttention($('portfolio-attention'),data.attention,{preview:true});
 }
+async function savePortfolioSelection(){
+ draft('portfolio-view').selectedIds=[...S.portfolioSelection];
+ await retainDraft('portfolio-view');
+}
 function renderPortfolioSelection(){
  const b=$('portfolio-refresh-selected');if(!b)return;
  b.textContent='Refresh selected ('+S.portfolioSelection.size+')';b.disabled=S.portfolioSelection.size===0;
+ const summary=$('portfolio-selection');if(summary)summary.textContent=S.portfolioSelection.size+' selected across all filters and pages. Only Refresh selected sends these allowance requests.';
 }
 function renderHome(){
  const view=$('view');
@@ -250,9 +289,10 @@ function renderHome(){
  const search=formField(filters,'query','Find a pass',{value:filters.data.query,help:'Search name, order, gateway or purchased plan hash.'});
  const states=[['ACTIVE','Active passes'],['ALL','All passes'],['AVAILABLE','Available'],['LOW','Low allowance'],['EXHAUSTED','Exhausted'],['REFRESH_REQUIRED','Needs refresh'],['CLAIM_UNAVAILABLE','Claim unavailable'],['ARCHIVED','Archived']];
  const choice=formField(filters,'status','Availability',{type:'select',value:filters.data.status??'ACTIVE',choices:states});
- for(const input of [search,choice])input.addEventListener('input',renderPortfolioLive);
+ for(const input of [search,choice])input.addEventListener('input',()=>{filters.data.offset=0;renderPortfolioLive();});
  const selected=button('Refresh selected (0)',()=>refreshPasses([...S.portfolioSelection]),{disabled:true});selected.id='portfolio-refresh-selected';
- filters.append(append(node('div',null,'form-actions'),selected,button('Clear selection',()=>{S.portfolioSelection.clear();renderPortfolioLive();})));
+ filters.append(append(node('div',null,'form-actions'),selected,button('Clear selection',()=>{S.portfolioSelection.clear();return savePortfolioSelection().then(renderPortfolioLive);})));
+ const selectionStatus=node('p',null,'muted');selectionStatus.id='portfolio-selection';selectionStatus.setAttribute('role','status');filters.append(selectionStatus);
  const rows=node('div');rows.id='portfolio-table';append(workspace,filters,rows);view.append(workspace);
  const attention=panel();attention.id='portfolio-attention';view.append(attention);
  const settings=form('portfolio-settings',async f=>{
@@ -552,4 +592,5 @@ window.addEventListener('online',()=>{if(S.session)void refresh();});
 let key=sessionStorage.getItem('sf101-api-pass-key');const fragment=location.hash.slice(1);
 if(/^[A-Za-z0-9_-]{43}$/.test(fragment)){key=fragment;history.replaceState(null,'',location.pathname+location.search);}
 if(key)try{await login(key);}catch(error){lock();$('login-error').textContent=errorText(error);}
+
 
