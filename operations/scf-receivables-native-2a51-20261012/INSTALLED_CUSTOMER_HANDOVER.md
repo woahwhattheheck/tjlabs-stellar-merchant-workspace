@@ -163,3 +163,17 @@ All account, source, receiver, checkpoint, prepared-request and result bytes are
 The manual workflow has no cache or artifact upload and uses the existing same-operation concurrency group. Its receiving owner enables only that original repository/workflow for one requested job, retains the actual output, then restores both disabled states and reads them back. A source publication alone does not dispatch the programme.
 
 Select receiving_mode=installed-customer-fixture explicitly. original-mcp preserves the historical frozen continuation for its retained operation; the accepted original7+8 result is already complete.
+
+## Recover the complete original hosted output
+
+Download the complete log for the receiving job, then use the retained decoder:
+
+```bash
+python3 operations/scf-receivables-native-2a51-20261012/recover-hosted-customer.py \
+  --logs /private/receiving-job.log \
+  --out /private/recovered-customer
+```
+
+The decoder requires every numbered chunk and the exact original byte count and SHA256 before it publishes a file. It writes a private, create-only directory and a `LOG_RECOVERY.json` receipt bound to the complete input log. The recovered `retained-customer-workspace.tar.gz` contains the actual controlled source and receiving accounts, encrypted accounting backup, private requests and phase logs; `retained-customer-files.json` lists every original member. The complete selected release archive is retained inside that package. Keep the original log with the recovery receipt.
+
+The selected customer contribution explicitly includes the original SF101 `recover.mjs` engine. Accounting invokes that engine by a retained URL, so its original source must travel with the release even though it is not a static ESM dependency.
