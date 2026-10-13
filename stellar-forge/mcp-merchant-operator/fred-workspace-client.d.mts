@@ -6,6 +6,11 @@ export type { FredDdpPublicationOperation, FredDdpPublicationInventory, FredDdpP
   FredDdpPublicationRowsPage, FredDdpPublicationRow, FredDdpPublicationFile, FredDdpPublicationFileChunk }
   from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.mjs';
 import type { Buffer } from 'node:buffer';
+import type { FredOperatingSource } from '../../stellar/scf-starforge-20261009/distribution/discovery/fred-operating-plan.mjs';
+import type { OperatingPlan } from '../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
+export type { FredOperatingSource } from '../../stellar/scf-starforge-20261009/distribution/discovery/fred-operating-plan.mjs';
+export type { FredOperatingArchiveResult, FredOperatingArchiveExportOptions, FredOperatingArchiveInspectOptions, FredOperatingArchiveReceiveOptions }
+  from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/archive.mjs';
 import type { FredAlfredMetadataEdition } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.mjs';
 export type { FredAlfredCapture, FredAlfredModel, FredAlfredSeries, FredAlfredRow,
   FredAlfredMetadataEdition, FredAlfredMetadataCoverage } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.mjs';
@@ -94,7 +99,7 @@ export interface FredQcewProjectState {
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type JsonObject = { [key: string]: Json };
 export type NativeRecord = JsonObject & { id: string };
-export interface FredSourceInput { path: string; kind: 'public-table' | 'capture' | 'release-capture' | 'ddp-crosswalk' | 'ddp-package' | 'alfred-metadata'; label?: string; sha256?: string }
+export interface FredSourceInput { path: string; kind: 'public-table' | 'capture' | 'release-capture' | 'ddp-crosswalk' | 'ddp-package' | 'alfred-metadata' | 'operating-archive' | 'operating-plan'; label?: string; sha256?: string }
 export interface FredMerchantProfile { label?: string; origin: string; path?: string; payment: JsonObject }
 export interface FredWorkspaceOptions {
   label?: string; projectId?: string; expectedBindingSha256?: string;
@@ -349,6 +354,37 @@ export declare class FredWorkspaceError extends Error {
 export declare function readFredHostFile(path: string, maximum?: number,
   options?: { privateFile?: boolean; expectedSha256?: string }): Promise<Buffer>;
 export declare function readFredWorkspaceConfiguration(path: string): Promise<FredWorkspaceConfiguration>;
+
+export interface FredOperatingArchiveFile { path:'fred-operating-handover.tar.gz';bytes:number;sha256:string }
+export interface FredOperatingHandoverResult {
+  archive:FredOperatingArchiveFile;sourceId:string;
+  sourceFile:{path:string;bytes:number;sha256:string};manifestFile:{path:string;bytes:number;sha256:string};
+  sourceProject:FredOperatingSource['project'];inventoryCounts:Record<string,number>;
+  publishedCount:number;completePublishedCount:number;
+  plan:null|{id:string;title:string;revision:number};projectDirectory:string|null;
+}
+export interface FredOperatingHandover {
+  projectId:string;id:string;kind:'EXPORT'|'IMPORT';
+  state:'EXPORTING'|'UPLOADING'|'INSPECTING'|'INSPECTED'|'RECEIVING'|'COMPLETE'|'FAILED'|'INTERRUPTED';
+  phase:'export'|'upload'|'inspect'|'receive';active:boolean;
+  retryAction:null|'export'|'upload'|'inspect'|'receive';createdAt:string;updatedAt:string;
+  error:null|{code:string;message:string};result:FredOperatingHandoverResult|null;
+}
+export interface FredOperatingHandoverInventory {
+  projectId:string;total:number;offset:number;limit:number;nextOffset:number|null;items:FredOperatingHandover[];
+}
+export interface FredOperatingHandoverExport {
+  id:string;expectedRevision?:number;capturedAt?:string;publicationIds?:string[]|null;plan?:OperatingPlan|null;
+}
+export interface FredOperatingHandoverDownload {
+  projectId:string;id:string;sourceId:string;archive:FredOperatingArchiveFile;
+  destination:string;bytes:number;sha256:string;reused:boolean;
+}
+export declare const FRED_OPERATING_ARCHIVE_MAX_BYTES:number;
+/** Exact byte identity only; full archive/source inspection is the maintained native archive API. */
+export declare function inspectFredOperatingArchiveFile(path:string,options?:{expectedSha256?:string;signal?:AbortSignal}):
+  Promise<{archivePath:string;bytes:number;sha256:string}>;
+
 export declare class FredWorkspaceClient {
   constructor(definition: FredWorkspaceDefinition, runtime?: FredClientRuntime);
   readonly metadata: FredClientMetadata;
@@ -391,6 +427,17 @@ export declare class FredWorkspaceClient {
     options?: FredRequestOptions): Promise<FredDdpPublicationFileChunk>;
   downloadPublishedFile(input: Omit<FredDdpPublicationFileSelection, 'directory'>, destination: string,
     options?: FredRequestOptions): Promise<{ projectId: string; operationId: string; destination: string; name: string; bytes: number; sha256: string; contentType: string }>;
+  operatingHandovers(input?:{offset?:number;limit?:number},options?:FredRequestOptions):Promise<FredOperatingHandoverInventory>;
+  operatingHandover(input:{id:string},options?:FredRequestOptions):Promise<FredOperatingHandover>;
+  operatingHandoverSource(input:{id:string},options?:FredRequestOptions):Promise<FredOperatingSource>;
+  operatingCurrentPlan(options?:FredRequestOptions):Promise<{projectId:string;plan:OperatingPlan|null}>;
+  operatingHandoverPlan(input:{id:string},options?:FredRequestOptions):Promise<{projectId:string;id:string;plan:OperatingPlan|null}>;
+  exportOperatingHandover(input:FredOperatingHandoverExport,options?:FredRequestOptions):Promise<FredOperatingHandover>;
+  uploadOperatingHandover(input:{id:string;archivePath:string;expectedSha256?:string},options?:FredRequestOptions):Promise<FredOperatingHandover>;
+  inspectOperatingHandover(input:{id:string},options?:FredRequestOptions):Promise<FredOperatingHandover>;
+  receiveOperatingHandover(input:{id:string},options?:FredRequestOptions):Promise<FredOperatingHandover>;
+  openOperatingHandover(input:{id:string},options?:FredRequestOptions):Promise<{projectId:string;id:string;startup:FredStartup}>;
+  downloadOperatingHandover(input:{id:string;expectedSha256:string},destination:string,options?:FredRequestOptions):Promise<FredOperatingHandoverDownload>;
   ddpSources(options?: FredRequestOptions): Promise<FredDdpProjectInventory>;
   ddpCrosswalk(input: FredDdpPageInput & { crosswalkId: string; release?: string | null; query?: string },
     options?: FredRequestOptions): Promise<FredDdpCrosswalkView>;

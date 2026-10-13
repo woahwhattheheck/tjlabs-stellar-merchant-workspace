@@ -133,7 +133,23 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/source.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/cli.d.mts",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/README.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/README.md",
+    "stellar-forge/mcp-merchant-operator/fred-operating-transfer.mjs",
+    "stellar-forge/mcp-merchant-operator/fred-operating-transfer.d.mts",
+    "stellar-forge/mcp-merchant-operator/FRED_PORTABLE_HANDOVERS.md",
+    "stellar/scf-starforge-20261009/distribution/discovery/fred-operating-plan.mjs",
+    "stellar/scf-starforge-20261009/distribution/discovery/fred-operating-plan.d.mts",
+    "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs",
+    "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/archive.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/archive.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/source.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/source.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/files.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/archive-io.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/ARCHIVE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/http.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/operating.js"
   ],
   "merchantProviders": {
     "fred-workspaces": "stellar-forge/mcp-merchant-operator/providers/fred-workspaces.mjs"

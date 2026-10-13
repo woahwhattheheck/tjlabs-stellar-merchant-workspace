@@ -15,3 +15,9 @@ section[data-panel],.box,.table-wrap,.metric{min-width:0}.metric{overflow-wrap:a
 /* Keep original source names readable within the workspace viewport. */
 p,.metadata,code{overflow-wrap:anywhere}
 [data-panel=ddp] .table-wrap table,[data-panel=published] .table-wrap table{min-width:880px}
+
+#operating-handover h4{font-size:16px;margin:24px 0 12px}#operating-handover h5{font-size:15px;margin:18px 0 8px}
+#operating-handover progress{width:100%;height:14px;accent-color:#444}#operating-handover details{margin:10px 0}
+#operating-handover summary{cursor:pointer;font-weight:600}#handover-source-rows td:first-child{width:4rem}
+#handover-source-rows details{max-width:70ch}#handover-plan-steps details{padding:12px;border:1px solid #bcbcb8;background:#fafaf8}
+#handover-plan-steps p{white-space:pre-wrap}#handover-summary{margin:18px 0}#handover-summary strong{font-size:18px}

@@ -1,5 +1,10 @@
 // MIT. Complete client for the original FRED economic-edition workspace.
 import { constants } from 'node:fs';
+import { openFredOperatingArchiveFile, inspectFredOperatingArchiveFile, saveFredOperatingArchiveResponse,
+  FRED_OPERATING_ARCHIVE_MAX_BYTES } from './fred-operating-transfer.mjs';
+export { inspectFredOperatingArchiveFile, FRED_OPERATING_ARCHIVE_MAX_BYTES } from './fred-operating-transfer.mjs';
+import { inspectFredOperatingSource, inspectFredOperatingPlanSource } from '../../stellar/scf-starforge-20261009/distribution/discovery/fred-operating-plan.mjs';
+import { inspectOperatingPlan } from '../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 import { open, link, unlink } from 'node:fs/promises';
 import { resolve, dirname, basename, join } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
@@ -368,7 +373,7 @@ export async function readFredWorkspaceConfiguration(path) {
       for (const [name, input] of Object.entries(value.inputs)) {
         if (!ALIAS.test(name)) fail('FRED_CONNECTION_INVALID', 'Use a lowercase input alias.');
         fields(input, ['path', 'kind', 'label', 'sha256'], 'Host input');
-        if (!['public-table', 'capture', 'release-capture', 'ddp-crosswalk', 'ddp-package', 'alfred-metadata'].includes(input.kind))
+        if (!['public-table', 'capture', 'release-capture', 'ddp-crosswalk', 'ddp-package', 'alfred-metadata', 'operating-archive', 'operating-plan'].includes(input.kind))
           fail('FRED_CONNECTION_INVALID', 'Select a complete original observation, release, DDP source or historical ALFRED metadata input.');
         entry.inputs[name] = { path: resolve(base, text(input.path, 'original source path', 8192)),
           kind: input.kind, label: text(input.label ?? name, 'input label', 240),
@@ -467,6 +472,33 @@ function page(result, key) {
 }
 
 /** Attaches to the existing server; every mutation has one native HTTP attempt. */
+
+function checkFredHandover(value,projectId,id) {
+  if(value?.projectId!==projectId||value.id!==id||!['EXPORT','IMPORT'].includes(value.kind)||
+      !['EXPORTING','UPLOADING','INSPECTING','INSPECTED','RECEIVING','COMPLETE','FAILED','INTERRUPTED'].includes(value.state)||
+      !['export','upload','inspect','receive'].includes(value.phase)||typeof value.active!=='boolean'||
+      !(value.retryAction===null||['export','upload','inspect','receive'].includes(value.retryAction)))
+    fail('FRED_HANDOVER_RESPONSE_CHANGED','The handover status differs from its original workspace operation.');
+  operation(id);
+  if(value.result!==null){
+    const result=value.result;
+    if(!plain(result)||!/^fred-operating-source-[a-f0-9]{64}$/.test(result.sourceId)||
+        result.archive?.path!=='fred-operating-handover.tar.gz'||
+        !UUID.test(result.sourceProject?.id??'')||!Number.isSafeInteger(result.sourceProject.revision))
+      fail('FRED_HANDOVER_RESPONSE_CHANGED','The complete original source or archive result is invalid.');
+    digest(result.archive.sha256);integer(result.archive.bytes,1,FRED_OPERATING_ARCHIVE_MAX_BYTES,'archive bytes');
+    digest(result.sourceProject.bundleSha256);
+    for(const key of ['sourceFile','manifestFile']){
+      if(!plain(result[key])||typeof result[key].path!=='string')
+        fail('FRED_HANDOVER_RESPONSE_CHANGED','The original source-file descriptor is absent.');
+      digest(result[key].sha256);integer(result[key].bytes,1,32*1024*1024,'source descriptor bytes');
+    }
+    if(result.plan!==null&&(!plain(result.plan)||typeof result.plan.id!=='string'||!Number.isSafeInteger(result.plan.revision)))
+      fail('FRED_HANDOVER_RESPONSE_CHANGED','The retained customer procedure summary is invalid.');
+  }
+  return value;
+}
+
 export class FredWorkspaceClient {
   #definition; #environment; #fetch; #lifetime = new AbortController(); #boundId; #bound; #binding; #closed = false;
   constructor(definition, { environment = process.env, fetchImpl = globalThis.fetch } = {}) {
@@ -910,6 +942,120 @@ export class FredWorkspaceClient {
       return {projectId:original.projectId,operationId:id,destination:output,name,bytes,sha256:actual,contentType:descriptor.contentType};
     } finally { await response.body?.cancel().catch(() => {}); await handle?.close();
       await unlink(temporary).catch(error => { if(error.code !== 'ENOENT') throw error; }); }
+  }
+  async operatingHandovers({offset=0,limit=50}={},options={}) {
+    integer(offset,0,Number.MAX_SAFE_INTEGER,'handover offset');integer(limit,1,100,'handover page size');
+    const value=await this.#json('/api/operating-handovers?'+new URLSearchParams({offset:String(offset),limit:String(limit)}),options);
+    if(value?.projectId!==this.#boundId||!Array.isArray(value.items)||value.offset!==offset||value.limit!==limit||
+        !Number.isSafeInteger(value.total)||value.total<0||value.items.length>limit||
+        value.nextOffset!==(offset+value.items.length<value.total?offset+value.items.length:null))
+      fail('FRED_HANDOVER_RESPONSE_CHANGED','The original handover inventory page changed.');
+    for(const item of value.items)checkFredHandover(item,this.#boundId,item.id);
+    return value;
+  }
+  async operatingHandover({id},options={}) {
+    operation(id);
+    return checkFredHandover(await this.#json('/api/operating-handover?'+new URLSearchParams({id}),options),this.#boundId,id);
+  }
+  async operatingHandoverSource({id},options={}) {
+    operation(id);
+    const current=await this.operatingHandover({id},options);
+    const source=inspectFredOperatingSource(await this.#json('/api/operating-handover/source?'+new URLSearchParams({id}),{...options,maximum:32*1024*1024}));
+    if(!current.result||source.id!==current.result.sourceId||source.project.id!==current.result.sourceProject.id||
+        source.project.bundleSha256!==current.result.sourceProject.bundleSha256)
+      fail('FRED_HANDOVER_RESPONSE_CHANGED','The source descriptor differs from its original handover result.');
+    return source;
+  }
+  async operatingCurrentPlan(options={}) {
+    const value=await this.#json('/api/operating-handover/current-plan',{...options,maximum:64*1024*1024+65536});
+    if(value?.projectId!==this.#boundId)
+      fail('FRED_HANDOVER_RESPONSE_CHANGED','The retained customer procedure belongs to a different original workspace.');
+    if(value.plan!==null)inspectOperatingPlan(value.plan);
+    return value;
+  }
+  async operatingHandoverPlan({id},options={}) {
+    operation(id);
+    const source=await this.operatingHandoverSource({id},options);
+    const value=await this.#json('/api/operating-handover/plan?'+new URLSearchParams({id}),{...options,maximum:64*1024*1024+65536});
+    if(value?.projectId!==this.#boundId||value.id!==id)
+      fail('FRED_HANDOVER_RESPONSE_CHANGED','The procedure belongs to a different original handover.');
+    if(value.plan!==null)inspectFredOperatingPlanSource(value.plan,source);
+    return value;
+  }
+  async exportOperatingHandover(input,options={}) {
+    fields(input,['id','expectedRevision','capturedAt','publicationIds','plan'],'Original handover export');
+    operation(input.id);
+    if(input.expectedRevision!==undefined)revision(input.expectedRevision);
+    if(input.capturedAt!==undefined&&(!Number.isFinite(Date.parse(input.capturedAt))||typeof input.capturedAt!=='string'))
+      fail('FRED_HANDOVER_INPUT_INVALID','Retain the original explicit source capture timestamp.');
+    if(input.publicationIds!==undefined&&input.publicationIds!==null){
+      if(!Array.isArray(input.publicationIds)||new Set(input.publicationIds).size!==input.publicationIds.length)
+        fail('FRED_HANDOVER_INPUT_INVALID','Select each original publication operation once.');
+      input.publicationIds.forEach(operation);
+    }
+    if(input.plan!==undefined&&input.plan!==null)inspectOperatingPlan(input.plan);
+    const value=await this.#json('/api/operating-handover/export',{...options,method:'POST',body:input,operationId:input.id,maximum:1024*1024});
+    return checkFredHandover(value,this.#boundId,input.id);
+  }
+  async uploadOperatingHandover({id,archivePath,expectedSha256},options={}) {
+    operation(id);if(expectedSha256!==undefined)digest(expectedSha256);
+    const signal=AbortSignal.any([this.#lifetime.signal,AbortSignal.timeout(30*60*1000),...(options.signal?[options.signal]:[])]);
+    const original=await openFredOperatingArchiveFile(archivePath,{expectedSha256,signal});
+    let response;
+    try{
+      const selected=await this.#connect(signal),path='/api/operating-handover/upload?'+new URLSearchParams({id,bytes:String(original.bytes),sha256:original.sha256});
+      try{response=await this.#fetch(selected.origin+path,{method:'POST',headers:{authorization:'Bearer '+selected.token,
+        origin:selected.origin,'content-type':'application/octet-stream','content-length':String(original.bytes)},
+        body:original.body(),duplex:'half',redirect:'error',signal});}
+      catch{fail('FRED_CLIENT_TRANSPORT_ERROR','The original archive upload response was not received. Inspect the same handover ID before continuing.',
+        {operationId:id,ambiguous:true,responseReceived:false});}
+      const bytes=await responseBytes(response,1024*1024);
+      let value;try{value=JSON.parse(bytes.toString('utf8'));}catch{
+        fail('FRED_CLIENT_RESPONSE_INVALID','The archive upload did not return complete status metadata.',{operationId:id,ambiguous:true});}
+      if(!response.ok){
+        const error=value?.error??value;
+        fail(error.code??'FRED_HANDOVER_UPLOAD_FAILED',String(error.message??'The original archive upload was rejected.').split(selected.token).join('[private]'),
+          {operationId:id,status:response.status,ambiguous:response.status>=500});
+      }
+      const status=checkFredHandover(value,this.#boundId,id);
+      if(status.result&&(status.result.archive.sha256!==original.sha256||status.result.archive.bytes!==original.bytes))
+        fail('FRED_HANDOVER_RESPONSE_CHANGED','The upload operation already retains a different original archive.');
+      return status;
+    }finally{await response?.body?.cancel().catch(()=>{});await original.close();}
+  }
+  async inspectOperatingHandover({id},options={}) {
+    operation(id);return checkFredHandover(await this.#json('/api/operating-handover/inspect',
+      {...options,method:'POST',body:{id},operationId:id}),this.#boundId,id);
+  }
+  async receiveOperatingHandover({id},options={}) {
+    operation(id);return checkFredHandover(await this.#json('/api/operating-handover/receive',
+      {...options,method:'POST',body:{id},operationId:id}),this.#boundId,id);
+  }
+  async openOperatingHandover({id},options={}) {
+    operation(id);const current=await this.operatingHandover({id},options);
+    if(current.state!=='COMPLETE'||current.kind!=='IMPORT'||!current.result?.projectDirectory)
+      fail('FRED_HANDOVER_NOT_RECEIVED','Receive the complete original handover before reopening its workspace.');
+    const value=await this.#json('/api/operating-handover/open',{...options,method:'POST',body:{id},operationId:id});
+    if(value?.projectId!==this.#boundId||value.id!==id||value.startup?.schema!=='stellar-forge.fred-workspace-startup.v1'||
+        value.startup.binding?.projectId!==current.result.sourceProject.id||value.startup.state!=='LISTENING')
+      fail('FRED_HANDOVER_RESPONSE_CHANGED','The reopened workspace differs from the original received project.');
+    return value;
+  }
+  async downloadOperatingHandover({id,expectedSha256},destination,options={}) {
+    operation(id);digest(expectedSha256);text(destination,'new archive destination',8192);
+    const current=await this.operatingHandover({id},options),archive=current.result?.archive;
+    if(!archive||archive.sha256!==expectedSha256)
+      fail('FRED_HANDOVER_RESPONSE_CHANGED','Select the original complete archive descriptor before downloading.');
+    const signal=AbortSignal.any([this.#lifetime.signal,AbortSignal.timeout(30*60*1000),...(options.signal?[options.signal]:[])]);
+    const selected=await this.#connect(signal);
+    const response=await this.#fetch(selected.origin+'/api/operating-handover/file?'+new URLSearchParams({id}),
+      {headers:{authorization:'Bearer '+selected.token,origin:selected.origin},redirect:'error',signal});
+    if(!response.ok){
+      await response.body?.cancel();
+      fail('FRED_HANDOVER_DOWNLOAD_FAILED','The original complete archive download did not open.',{status:response.status,operationId:id});
+    }
+    const saved=await saveFredOperatingArchiveResponse(response,destination,archive,{signal});
+    return {projectId:current.projectId,id,sourceId:current.result.sourceId,archive,...saved};
   }
   async ddpSources(options = {}) {
     const value = ddpEnvelope(await this.#json('/api/ddp-sources', options), this.#boundId);

@@ -81,3 +81,11 @@ Output files use the existing create-only writer. An identical complete file is 
 - `@tokenjunkielabs/starforge-merchant/operator/fred/operating-cli`: installed parser and main entrypoint.
 
 The native source receiver owns project and publication persistence. Pure client calls return complete JSON values for the caller's existing persistence.
+
+## Complete portable archive
+
+The same native command now accepts `archive-export`, `archive-inspect` and `archive-receive`, each with `--request REQUEST.json`. Export and receive require `--out RESULT.json`; inspection may print its complete metadata instead. Requests go directly to the maintained `fred/operating/archive.mjs` APIs and retain the original source, manifests, selected publication archives, reviewed plan and QCEW contexts.
+
+Use the complete [portable handover operator guide](../../../../stellar-forge/mcp-merchant-operator/FRED_PORTABLE_HANDOVERS.md) for request examples, streamed workspace transfers and receiving/reopening. The archive stays a native `.tar.gz` file. The output JSON preserves its exact size, SHA256 and original receiving paths; the returned value retains native `reused` and `projectReceipt` observations. The saved result excludes those replay observations, following the existing source command convention.
+
+Archive requests allow the original 32 MiB procedure plus 64 KiB request fields. A saved native archive result can carry the complete source descriptor, procedure and publication receipt metadata (up to 96 MiB plus 64 KiB); binary archive members remain in their native files. In JSON requests omit `qcewSourceContexts` or use null; the original engine reconstructs transient contexts from complete retained captures. Native JavaScript callers may pass an existing Map directly.

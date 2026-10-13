@@ -1,6 +1,7 @@
 // MIT. Complete agent workflow on the original FRED economic-edition host.
 import { handlesFredOperating, callFredOperating } from './fred-operating.mjs';
-import { basename } from 'node:path';
+import { basename, join } from 'node:path';
+import { inspectFredOperatingArchiveFile } from './fred-operating-transfer.mjs';
 import { readFredAlfredMetadata } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.mjs';
 import { RetainedFileReads } from './retained-file-reads.mjs';
 import { FredWorkspaceClient, FredWorkspaceError, readFredWorkspaceConfiguration, readFredHostFile,
@@ -112,6 +113,7 @@ export class MerchantFredWorkspaces {
   async #input(alias, name, expectedSha256, inspect = false) {
     const input = this.#entry(alias).inputs?.[name];
     if (!input) fail('FRED_MCP_INPUT_NOT_FOUND', 'Choose an original host input alias.');
+    if(input.kind==='operating-archive')fail('FRED_MCP_INPUT_INVALID','Use the original handover upload for this complete binary archive.');
     const capacity = ['ddp-crosswalk', 'ddp-package'].includes(input.kind) ? FRED_DDP_MAX_SOURCE_BYTES : 64 * 1024 * 1024;
     let bytes = await readFredHostFile(input.path, capacity, { expectedSha256: expectedSha256 ?? input.sha256 });
     const sourceBytes = bytes.length, sha256 = fredDigest(bytes);
@@ -157,6 +159,11 @@ export class MerchantFredWorkspaces {
     const alias = args.workspace;
     this.#entry(alias);
     if (name === 'merchant_fred_inputs') return this.#inputs(alias);
+    if (name === 'merchant_fred_input_inspect' && this.#entry(alias).inputs?.[args.input]?.kind === 'operating-archive') {
+      const input=this.#entry(alias).inputs[args.input];
+      const descriptor=await inspectFredOperatingArchiveFile(input.path,{expectedSha256:input.sha256});
+      return {workspace:alias,input:args.input,kind:input.kind,name:basename(input.path),bytes:descriptor.bytes,sha256:descriptor.sha256};
+    }
     if (name === 'merchant_fred_input_inspect') {
       const source = await this.#input(alias, args.input, undefined, true), original = source.value;
       return { workspace: alias, input: args.input, kind: source.input.kind, name: basename(source.input.path),
@@ -179,6 +186,44 @@ export class MerchantFredWorkspaces {
       return { workspace: alias, client: 'DISCONNECTED' };
     }
     const client = this.#client(alias);
+    if(name==='merchant_fred_handover_export') {
+      const {workspace:_,planInput,planFileSha256,useCurrentPlan,...input}=args;
+      if(useCurrentPlan&&planInput!==undefined)fail('FRED_MCP_INPUT_INVALID','Select the existing received procedure or one configured reviewed plan input.');
+      if(planInput!==undefined){
+        const selected=this.#entry(alias).inputs?.[planInput];
+        if(selected?.kind!=='operating-plan')fail('FRED_MCP_INPUT_INVALID','Choose a configured operating-plan input.');
+        const bytes=await readFredHostFile(selected.path,32*1024*1024,{expectedSha256:planFileSha256??selected.sha256});
+        if(selected.sha256&&fredDigest(bytes)!==selected.sha256)fail('FRED_MCP_INPUT_CHANGED','The reviewed procedure input changed.');
+        input.plan=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+      }else if(planFileSha256!==undefined)fail('FRED_MCP_INPUT_INVALID','A procedure file digest requires its configured input alias.');
+      if(useCurrentPlan){
+        const current=await client.operatingCurrentPlan();
+        if(current.plan===null)fail('FRED_MCP_INPUT_INVALID','This workspace has no received customer procedure; select an explicit reviewed plan input.');
+        input.plan=current.plan;
+      }
+      return client.exportOperatingHandover(input);
+    }
+    if(name==='merchant_fred_handover_upload') {
+      const input=this.#entry(alias).inputs?.[args.input];
+      if(input?.kind!=='operating-archive')fail('FRED_MCP_INPUT_INVALID','Choose a complete configured operating-archive file.');
+      if(input.sha256&&args.expectedSha256&&input.sha256!==args.expectedSha256)
+        fail('FRED_MCP_INPUT_CHANGED','The selected archive digest differs from its configured original.');
+      return client.uploadOperatingHandover({id:args.id,archivePath:input.path,expectedSha256:args.expectedSha256??input.sha256});
+    }
+    if(name==='merchant_fred_handover_download') {
+      if(!this.#exports)fail('FRED_MCP_EXPORT_DIRECTORY_REQUIRED','The original host must configure its private export directory.');
+      if(!/^[A-Za-z0-9][A-Za-z0-9._-]{0,180}\.tar\.gz$/.test(args.outputName))
+        fail('FRED_MCP_INPUT_INVALID','Use one new archive filename within the configured export directory.');
+      return client.downloadOperatingHandover({id:args.id,expectedSha256:args.expectedSha256},join(this.#exports,args.outputName));
+    }
+    const handoverMethods={
+      merchant_fred_handovers:'operatingHandovers',merchant_fred_handover:'operatingHandover',
+      merchant_fred_handover_inspect:'inspectOperatingHandover',
+      merchant_fred_handover_receive:'receiveOperatingHandover',merchant_fred_handover_open:'openOperatingHandover'
+    };
+    if(Object.hasOwn(handoverMethods,name)){
+      const {workspace:_,...input}=args;return client[handoverMethods[name]](input);
+    }
     if (name === 'merchant_fred_status') {
       const result = await this.#state(alias);
       return { workspace: alias, project: projectSummary(result.project), merchant: result.merchant,
@@ -287,7 +332,7 @@ export class MerchantFredWorkspaces {
     }
     if (name === 'merchant_fred_import') {
       const source = await this.#input(alias, args.input, args.expectedSha256);
-      if (['release-capture', 'ddp-crosswalk', 'ddp-package', 'alfred-metadata'].includes(source.input.kind))
+      if (['release-capture', 'ddp-crosswalk', 'ddp-package', 'alfred-metadata', 'operating-plan'].includes(source.input.kind))
         fail('FRED_MCP_INPUT_INVALID', 'Use the corresponding original release or DDP source import; observation import selects an observation capture or public table.');
       return client.importCapture({ id: args.id, expectedRevision: args.expectedRevision, capture: source.value });
     }

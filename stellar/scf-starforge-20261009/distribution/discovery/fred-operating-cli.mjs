@@ -11,7 +11,10 @@ import { createFredOperatingPlan, inspectFredOperatingSource,
 import { saveTextExport } from './write-json.mjs';
 
 const LIMIT = 32 * 1024 * 1024;
+const ARCHIVE_REQUEST_LIMIT = LIMIT + 65536;
+const ARCHIVE_RESULT_LIMIT = 3 * LIMIT + 65536;
 const RULES = {
+  'archive-export': ['request','out'], 'archive-inspect': ['request','out'], 'archive-receive': ['request','out'],
   capture: ['request','out'], 'inspect-package': ['request','out'], 'receive-source': ['request','out'],
   create: ['request','out'], record: ['plan','request','out'],
   inspect: ['source','out'], show: ['plan','revision','format','out'],
@@ -20,6 +23,9 @@ const RULES = {
 export const FRED_OPERATING_HELP = [
   'FRED economic customer operating procedures',
   '',
+  'starforge fred-operating-plan archive-export --request EXPORT.json --out RESULT.json',
+  'starforge fred-operating-plan archive-inspect --request INSPECT.json [--out RESULT.json]',
+  'starforge fred-operating-plan archive-receive --request RECEIVE.json --out RESULT.json',
   'starforge fred-operating-plan capture --request CAPTURE.json --out NEW.json',
   'starforge fred-operating-plan inspect-package --request INSPECT.json [--out NEW.json]',
   'starforge fred-operating-plan receive-source --request RECEIVE.json --out NEW.json',
@@ -58,7 +64,7 @@ export function parseFredOperatingArguments(input) {
     if(!args.length||args[0].startsWith('--'))throw error('FRED_PLAN_ARGUMENT','Missing value for '+flag);
     options[name]=required(args.shift(),flag);
   }
-  const needed=['capture','receive-source','create'].includes(action)?['request','out']:action==='inspect-package'?['request']:action==='record'?['plan','request','out']:
+  const needed=['capture','receive-source','create','archive-export','archive-receive'].includes(action)?['request','out']:['inspect-package','archive-inspect'].includes(action)?['request']:action==='record'?['plan','request','out']:
     action==='inspect'?['source']:action==='compare'?['plan','catalog']:
     action==='receive'?['plan','out']:['plan'];
   for(const name of needed)if(!options[name])throw error('FRED_PLAN_ARGUMENT','--'+name+' is required.');
@@ -71,26 +77,26 @@ export function parseFredOperatingArguments(input) {
     throw error('FRED_PLAN_ARGUMENT','--format must be json, markdown or html.');
   return {action,options};
 }
-async function readBytes(filename,signal) {
+async function readBytes(filename,signal,maximum=LIMIT) {
   signal?.throwIfAborted();
   const file=resolve(filename),before=await stat(file);
-  if(!before.isFile()||before.size>LIMIT)throw error('FRED_PLAN_INPUT','Use a regular input file up to 32 MiB.');
+  if(!before.isFile()||before.size>maximum)throw error('FRED_PLAN_INPUT','Use a complete regular input file within its declared capacity.');
   const bytes=await readFile(file,{signal});
-  if(bytes.length>LIMIT)throw error('FRED_PLAN_INPUT','Input exceeds 32 MiB.');
+  if(bytes.length>maximum)throw error('FRED_PLAN_INPUT','Input exceeds its declared capacity.');
   return bytes;
 }
-async function readJSON(filename,signal) {
-  return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await readBytes(filename,signal)));
+async function readJSON(filename,signal,maximum=LIMIT) {
+  return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await readBytes(filename,signal,maximum)));
 }
-async function publish(filename,body,signal) {
+async function publish(filename,body,signal,maximum=LIMIT) {
   signal?.throwIfAborted();
   const bytes=Buffer.from(body,'utf8');
-  if(bytes.length>LIMIT)throw error('FRED_PLAN_OUTPUT','Output exceeds 32 MiB.');
+  if(bytes.length>maximum)throw error('FRED_PLAN_OUTPUT','Output exceeds its declared capacity.');
   let reused=false;
   try { await saveTextExport(filename,body); }
   catch(e) {
     if(e.code!=='EEXIST')throw e;
-    const current=await readBytes(filename,signal);
+    const current=await readBytes(filename,signal,maximum);
     if(!current.equals(bytes))throw error('FRED_PLAN_OUTPUT_EXISTS','The output already contains different bytes. Preserve it and select a new output path.');
     reused=true;
   }
@@ -102,15 +108,22 @@ export async function mainFredOperatingPlan(args=process.argv.slice(2),{log=cons
   if(action==='help'){log(FRED_OPERATING_HELP);return;}
   const plan=options.plan?inspectOperatingPlan(await readJSON(options.plan,signal)):null;
   let value,body,nativeReused;
-  if(['capture','inspect-package','receive-source'].includes(action)){
-    const request=await readJSON(options.request,signal);
+  if(['capture','inspect-package','receive-source','archive-export','archive-inspect','archive-receive'].includes(action)){
+    const request=await readJSON(options.request,signal,action.startsWith('archive-')?ARCHIVE_REQUEST_LIMIT:LIMIT);
     if(!request||typeof request!=='object'||Array.isArray(request)||Object.hasOwn(request,'signal'))
       throw error('FRED_PLAN_INPUT','Use the complete original capture or receive request; cancellation is supplied by the caller.');
-    const native=await import('../../sf30-seller-sdk/fred/operating/source.mjs');
-    value=action==='capture'
-      ?await native.captureFredOperatingSource({...request,signal})
-      :action==='inspect-package'?await native.inspectFredOperatingSourcePackage({...request,signal})
-      :await native.receiveFredOperatingSource({...request,signal});
+    if(request.qcewSourceContexts!==undefined&&request.qcewSourceContexts!==null)
+      throw error('FRED_PLAN_INPUT','Omit qcewSourceContexts in JSON requests. The original native engine recreates these transient contexts from retained source captures; JavaScript callers may pass their existing Map directly.');
+    if(action.startsWith('archive-')){
+      const native=await import('../../sf30-seller-sdk/fred/operating/archive.mjs');
+      const methods={'archive-export':'exportFredOperatingArchive','archive-inspect':'inspectFredOperatingArchive','archive-receive':'receiveFredOperatingArchive'};
+      value=await native[methods[action]]({...request,signal});
+    }else{
+      const native=await import('../../sf30-seller-sdk/fred/operating/source.mjs');
+      value=action==='capture'?await native.captureFredOperatingSource({...request,signal})
+        :action==='inspect-package'?await native.inspectFredOperatingSourcePackage({...request,signal})
+        :await native.receiveFredOperatingSource({...request,signal});
+    }
     nativeReused=value.reused;
     const {reused,projectReceipt,...stable}=value;
     body=JSON.stringify(stable,null,2)+'\n';
@@ -134,7 +147,7 @@ export async function mainFredOperatingPlan(args=process.argv.slice(2),{log=cons
   signal?.throwIfAborted();
   body??=JSON.stringify(value,null,2)+'\n';
   if(options.out){
-    const receipt=await publish(options.out,body,signal);
+    const receipt=await publish(options.out,body,signal,action.startsWith('archive-')?ARCHIVE_RESULT_LIMIT:LIMIT);
     log(JSON.stringify({schema:'stellar-forge.fred-operating-cli-result.v1',action,
       planId:value?.revisions?value.id:value?.plan?.id??plan?.id??null,
       sourceId:value?.source?.id??null,
@@ -145,5 +158,10 @@ export async function mainFredOperatingPlan(args=process.argv.slice(2),{log=cons
   return value;
 }
 if(process.argv[1]&&await realpath(resolve(process.argv[1])).then(
-  name=>pathToFileURL(name).href===import.meta.url,()=>false))
-  mainFredOperatingPlan().catch(e=>{console.error((e.code?e.code+': ':'')+e.message);process.exitCode=1;});
+  name=>pathToFileURL(name).href===import.meta.url,()=>false)){
+  const controller=new AbortController(),cancel=()=>controller.abort();
+  process.once('SIGINT',cancel);process.once('SIGTERM',cancel);
+  mainFredOperatingPlan(process.argv.slice(2),{signal:controller.signal})
+    .catch(e=>{console.error((e.code?e.code+': ':'')+e.message);process.exitCode=1;})
+    .finally(()=>{process.removeListener('SIGINT',cancel);process.removeListener('SIGTERM',cancel);});
+}
