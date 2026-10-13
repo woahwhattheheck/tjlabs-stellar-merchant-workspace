@@ -15,6 +15,52 @@ def require(value, message):
 
 def digest(raw): return hashlib.sha256(raw).hexdigest()
 
+
+def retain_original_file(target, data):
+    """Atomically retain this original complete member, recovering its exact prefix."""
+    target = Path(target)
+    target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    previous = None
+    if target.exists() or target.is_symlink():
+        require(target.is_file() and not target.is_symlink(), "Use the original regular receiving member")
+        previous = target.stat()
+        actual = target.read_bytes()
+        if actual == data:
+            target.chmod(0o600)
+            return
+        require(len(actual) < len(data) and data.startswith(actual),
+                "A different original receiving member already exists")
+    temporary = target.with_name("." + target.name + "." + os.urandom(12).hex() + ".receiving")
+    try:
+        with temporary.open("xb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.chmod(0o600)
+        if previous is None:
+            try:
+                os.link(temporary, target)
+            except FileExistsError:
+                require(target.is_file() and not target.is_symlink() and target.read_bytes() == data,
+                        "The original receiving member changed during publication")
+        else:
+            current = target.stat()
+            require(not target.is_symlink()
+                    and (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns)
+                    == (previous.st_dev, previous.st_ino, previous.st_size, previous.st_mtime_ns),
+                    "The partial original receiving member changed during recovery")
+            os.replace(temporary, target)
+        fd = os.open(target.parent, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
 def run(args):
     os.umask(0o077)
     root = Path(args.directory).absolute()
@@ -30,9 +76,7 @@ def run(args):
             target = original / path
             target.parent.mkdir(parents=True, exist_ok=True)
             data = source.read(item)
-            if target.exists(): require(target.read_bytes() == data, "Original received file changed")
-            else: target.write_bytes(data)
-            target.chmod(0o600)
+            retain_original_file(target, data)
     old = json.loads((original / "receiving.json").read_text())
     require(old["state"] == "COMPLETE" and old["steps"]["edition"]["rows"] == 32,
             "Use the completed original C271 source delivery")
@@ -71,8 +115,7 @@ def run(args):
     require(snapshot.stat().st_size == descriptor["bytes"] and digest(snapshot.read_bytes()) == descriptor["sha256"],
             "Original portable database changed")
     if not (working / "warehouse.duckdb").exists():
-        shutil.copyfile(snapshot, working / "warehouse.duckdb")
-        (working / "warehouse.duckdb").chmod(0o600)
+        retain_original_file(working / "warehouse.duckdb", snapshot.read_bytes())
     workspace = DuckDBWorkspace(working, memory_limit="256MB", threads=1)
     require(workspace.identity()["workspace_id"] == old["workspace_id"], "Original workspace identity changed")
     model = Analytics(workspace)
@@ -278,7 +321,8 @@ def run(args):
             if item["name"] not in {"analytical-workbook.zip", "report.html", "manifest.json"}: continue
             body = request("/api/exports/" + exported["export_id"] + "/file?name=" + quote(item["name"], safe=""), binary=True)
             require(len(body) == item["bytes"] and digest(body) == item["sha256"], "Original HTTP file changed")
-            destination = received_files / item["name"];destination.write_bytes(body);destination.chmod(0o600)
+            destination = received_files / item["name"]
+            retain_original_file(destination, body)
         html = (received_files / "report.html").read_text()
         require("<svg" in html and "&lt; &amp; &gt;" in html, "Original rendered chart/editorial receiving changed")
         keep("complete_export", {"export": exported, "files": len(inspected["files"]), "downloaded": [
@@ -330,11 +374,7 @@ def run(args):
                 require(len(body) == item["bytes"] and digest(body) == item["sha256"],
                         "The complete received edited-workbook file changed")
                 destination = received_files / item["name"]
-                if destination.exists():
-                    require(destination.read_bytes() == body, "The earlier edited-workbook download changed")
-                else:
-                    destination.write_bytes(body)
-                destination.chmod(0o600)
+                retain_original_file(destination, body)
             inspected = inspect_package(selected_export["directory"],
                                         expected_manifest_sha256=selected_export["manifest_sha256"])
             exported = selected_export
@@ -355,11 +395,7 @@ def run(args):
             path = extracted / name
             path.parent.mkdir(parents=True, exist_ok=True)
             body = archive.read(item)
-            if path.exists():
-                require(path.read_bytes() == body, "The earlier independent package member changed")
-            else:
-                path.write_bytes(body)
-            path.chmod(0o600)
+            retain_original_file(path, body)
     cold = root / (receiving_prefix + "independent-workspace")
     receipt = receive_package(extracted, cold, expected_manifest_sha256=exported["manifest_sha256"],
                               expected_workspace_id=workspace_id)
