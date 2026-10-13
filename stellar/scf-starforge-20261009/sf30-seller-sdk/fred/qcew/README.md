@@ -242,3 +242,62 @@ Original references:
 - [BLS average weekly wage calculation](https://www.bls.gov/cew/publications/factsheets/fluctuations-in-average-weekly-wages.htm)
 - [Original CPIAUCSL public table](https://fred.stlouisfed.org/data/CPIAUCSL)
 - [Original NEED San Francisco county wage report](https://www.needecon.org/RegionalReports/San_Francisco_County/QCEWWages_San_Francisco_County.pdf)
+
+## Select a regional production programme
+
+The complete native journey accepts an explicit programme alongside the production profile. The profile selects the geography, industry rows, calculations and publication conventions; the programme selects the operation identity and the two report periods. Both editions, the replay of the original production request, the complete project export, and independent receiving use the existing source, calculation and transaction models.
+
+The included `examples/philadelphia-profile.json` selects Philadelphia, Bucks, Chester, Delaware and Montgomery counties as one focus region, with Pennsylvania and the United States as comparators. It retains the total and twelve original BLS supersectors, quarterly mean employment, average weekly wages calculated from summed original wages and employment, nominal dollars and complete disclosure coverage. Employment is summed across disjoint county and ownership rows before division; a withheld component remains unavailable. The same-quarter baseline and historical table start in 2025.
+
+The companion `examples/philadelphia-programme.json` selects 2025 Q1 and 2026 Q1. Use the current original BLS files for both years so that the earlier period includes the publisher's released revisions. The complete source manifest and original members remain in the received project.
+
+Collect the selected original annual by-area members:
+
+```sh
+python3 stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/source_fetch.py \
+  --directory /absolute/owned/philadelphia-original-intake \
+  --years 2025:2026 \
+  --areas 42017,42029,42045,42091,42101,42000,US000
+```
+
+Use the collector's complete original intake. Its retained manifest distinguishes the diagnostic API slice from the annual original members used for reports. Continue the same unfinished intake only while its original archive representations are unchanged.
+
+Run both report editions and the complete receiving journey:
+
+```sh
+node stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/native-journey.mjs \
+  --directory /absolute/owned/philadelphia-production \
+  --intake-directory /absolute/owned/philadelphia-original-intake \
+  --cpi stellar/scf-starforge-20261009/sf30-seller-sdk/fred/sources/cpiaucsl-20261012.public-table.json \
+  --profile stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/examples/philadelphia-profile.json \
+  --programme stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/examples/philadelphia-programme.json \
+  --chromium /absolute/chromium \
+  --pdfinfo /absolute/pdfinfo
+```
+
+Replace the absolute paths with the operation's actual owned directories and installed executables. The retained original CPI wrapper remains part of the complete FRED project. This nominal-dollar profile applies no price-adjustment factor. Add `--original-project /absolute/existing-complete-project.json` when continuing from a complete exported economic project.
+
+The programme document has this complete shape:
+
+```json
+{
+  "schema": "stellar-forge.qcew-native-programme.v1",
+  "operation": "PHILADELPHIA-QCEW-TWO-EDITION-PRODUCTION",
+  "initial": {
+    "year": 2025,
+    "quarter": 1
+  },
+  "successor": {
+    "year": 2026,
+    "quarter": 1
+  }
+}
+```
+
+The operation is a stable identifier of at most 160 letters, digits, underscores, periods, colons or hyphens, beginning with a letter or digit. The successor must follow the initial period. Unsupported programme fields and invalid periods are rejected before production begins. The complete programme file is limited to 64 KiB.
+
+The operation journal retains the exact programme-file SHA together with the normalized selections, complete profile identity and original input identities. Purpose-specific request IDs derive from that programme SHA. An unchanged repeated invocation reuses the original imports and production requests. Keep its directory through interruption; a different programme or profile belongs in a separately selected operation directory. Editing even the formatting of the selected programme changes its exact input identity.
+
+Omitting `--programme` retains the existing NEED operation identity, original request IDs, 2025 Q4 initial edition, 2026 Q1 successor and original journal selection shape. Existing native operations therefore resume under their original identity.
+
+The completed directory includes `journey.json`, `native-result.json`, the complete source project, both report editions, `complete-project.json` and an independently received project. Each edition retains its full report model, HTML, native PDF when requested, calculation CSV, original selected rows and methodology; the successor also retains its predecessor comparison. The received project reopens the original files and exports the same complete project content. Customer authoring, saved edition history, downloaded originals and the paid receiving workflow remain part of the same product.
