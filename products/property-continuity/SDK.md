@@ -138,3 +138,26 @@ Host shutdown drains pending calls and readers; it never stops the managed prope
 The entire 22-file original application travels unchanged in app/. ADOPTION.json records every original path, length and hash against Commons merge a64e69c1. The additive managed lifecycle, client and agent source are separately reviewable here. The complete Installation profile and source chapter remain in the maintained SCF discovery paths.
 
 Source syntax and interface review are distinct from operating evidence. The original Bluewave programme and actual image inspection remain with the one equipped receiving request. Continue that exact operation and preserve its original native results; a source merge is not a claim that a customer load, browser course or managed runtime has executed.
+
+
+## Assigned review API and merchant tools
+
+All operations below retain the exact selectedBranch (portable workspace ID **and physical directory**). No method chooses a different received branch automatically.
+
+| Client method | Original native route and result |
+| --- | --- |
+| reviewExchanges(id?) | GET /api/review-exchanges; {workspaceRevision,view} with complete records or one detail |
+| reviewCompare(returnId,editionId,adoptionId?) | GET /api/review-compare; live or frozen historical comparison plus separately observed current workspaceRevision |
+| prepareReviewIssue(command,expectedRevision) | Complete source-bound preparation; returns exact compact command, expectedRevision, issued JSON/HTML descriptors |
+| prepareReviewReturnFile(path,descriptor,expectedRevision) | Reads exact complete selected file and submits atomic raw-file/evidence preparation |
+| prepareReviewReturnBytes(buffer,descriptor,expectedRevision) | Same complete-file contract for retained bytes |
+| prepareReviewReturn(descriptor,expectedRevision) | Preparation from a complete raw file already retained in the original blob store |
+| download({kind:"review",id,role,expectedSha256,expectedBytes},onChunk) | Streams and verifies every byte of exact issued_json, issued_html or returned_file |
+
+An issue preparation command is {requestId,kind:"review.issue",actor,at,body:{id,reconciliationId,findingIds,reviewer,note}}. The returned compact envelope retains the same request UUID/actor/time, with {id,issued,html}. Persist the returned command and revision before client.command. Retain and recover the original UUID after uncertain dispatch. Neither preparation method commits a business decision.
+
+A return descriptor is exactly {sha256,bytes,name,mediaType}. The receiving preview returns issueId, workingCopyId, all named edition identities, complete unfinished draft, original file descriptor and evidence metadata. Submit an authored original review.receive with {id,file}. Adopt with authored review.adopt body {id,returnId,editionId,reviewSha256,choices:[{findingId,action:"KEEP"|"APPLY",resolution:"CURRENT"|"RETURNED"}]}. Keep/current and apply/returned are the supported pairs. Choices cover every assigned finding; an undecided reviewer item cannot be applied.
+
+Four additive merchant tools expose the same boundaries: merchant_property_continuity_review_exchanges, merchant_property_continuity_review_compare, merchant_property_continuity_review_prepare_issue, and merchant_property_continuity_review_prepare_return. Each takes the existing workspace, workspaceId, workspaceDirectory scope. The return preparation tool takes an already configured fileAlias, exact descriptor and expected revision; it cannot read arbitrary agent-supplied paths. The existing merchant_property_continuity_command executes the compact command. The existing file_read tool accepts the new review selection with exact SHA/byte count and streams its complete immutable file through the original retained-file reader.
+
+The standalone editor's arbitrary unfinished controls are preserved separately from strict named decisions. The native receiver validates every named edition and complete attached evidence. Historical adoptionId reads never expose active apply controls. File identities include their original metadata, while blob deduplication remains by exact content hash. Complete evidence is preserved through the original full workspace archive and receiving validator.

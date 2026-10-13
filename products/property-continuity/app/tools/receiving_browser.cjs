@@ -1,6 +1,7 @@
 "use strict";
-/* Read-only review of the actual supplied-input receiving workspace.
- * This programme never creates customer data, decisions or application requests. */
+/* Read-only review of the original supplied-input workspace. Optional reviewerCopy
+ * operates the offline editor using caller-supplied decisions; native adoption remains
+ * in the original receiving programme. One retained browser owner and operation. */
 const fs=require("node:fs"),path=require("node:path"),crypto=require("node:crypto");
 const input=JSON.parse(fs.readFileSync(process.argv[2],"utf8"));
 const root=path.resolve(input.directory);fs.mkdirSync(root,{recursive:true,mode:0o700});
@@ -18,12 +19,24 @@ function retain(name,value,immutable=true){
 function saved(name){const p=path.join(root,name);return fs.existsSync(p)?JSON.parse(fs.readFileSync(p,"utf8")):null;}
 const identity=Object.fromEntries(["operationId","sourceSha256","workspaceId","workspaceDirectory","basis","playwrightModule","executablePath","actor"].map(k=>[k,input[k]]));
 need(input.schema==="bluewave.commissioning-browser.v1","Use the original browser input schema");
+if(Object.prototype.hasOwnProperty.call(input,"reviewerCopy")){
+ const r=input.reviewerCopy;
+ need(r&&typeof r==="object"&&!Array.isArray(r)&&stable(Object.keys(r).sort())===stable(["issuedHtmlPath","reviewer","decisions","attachmentFile"].sort()),"reviewerCopy requires exactly issuedHtmlPath, reviewer, decisions and attachmentFile");
+ need(typeof r.issuedHtmlPath==="string"&&path.isAbsolute(r.issuedHtmlPath)&&typeof r.attachmentFile==="string"&&path.isAbsolute(r.attachmentFile),"Select complete original absolute reviewer input paths");
+ need(r.reviewer&&typeof r.reviewer==="object"&&stable(Object.keys(r.reviewer).sort())===stable(["id","name"])&&typeof r.reviewer.id==="string"&&r.reviewer.id.length>0&&r.reviewer.id.length<=128&&typeof r.reviewer.name==="string"&&r.reviewer.name.length>0&&r.reviewer.name.length<=160,"Select the actual assigned reviewer");
+ need(Array.isArray(r.decisions)&&r.decisions.length===2,"Provide exactly two complete explicitly authored named decisions");
+ for(const e of r.decisions){
+  need(e&&typeof e==="object"&&stable(Object.keys(e).sort())===stable(["name","at","note","items"].sort())&&typeof e.name==="string"&&e.name.length>0&&e.name.length<=240&&typeof e.at==="string"&&Number.isFinite(Date.parse(e.at))&&typeof e.note==="string"&&e.note.length<=8000&&Array.isArray(e.items)&&e.items.length>0&&e.items.length<=1000,"Use complete explicit named-edition fields");
+  for(const item of e.items)need(item&&typeof item==="object"&&stable(Object.keys(item).sort())===stable(["findingId","disposition","reason","evidence"].sort())&&/^[a-f0-9]{64}$/.test(item.findingId)&&[null,"ACCEPT_EXCEPTION","REQUIRE_CORRECTION"].includes(item.disposition)&&typeof item.reason==="string"&&item.reason.length<=8000&&Array.isArray(item.evidence)&&item.evidence.length<=64&&new Set(item.evidence).size===item.evidence.length&&item.evidence.every(x=>/^[a-f0-9]{64}$/.test(x)),"Use the complete original finding decision and evidence identifiers");
+ }
+ identity.reviewerCopy=JSON.parse(stable(r));
+}
 retain("input.json",identity);
 const inputSha256=sha(Buffer.from(stable(identity)));
 const launch=new URL(input.url),token=launch.searchParams.get("token");
 need(token&&launch.origin===input.origin,"Use the original private application launch URL");
 const errors=[],httpErrors=[],violations=[],screenshots=[],geometry=[],downloads=[];
-let owner=null,page=null,launchReceipt=null,launchName=null,closing=null;
+let owner=null,page=null,launchReceipt=null,launchName=null,closing=null,launchPending=null,reviewerContext=null;
 const profile=path.join(root,"profile");
 function environmentIdentity(){
  need(process.platform==="linux","Original browser custody requires Linux process identity");
@@ -63,8 +76,9 @@ function prepareLaunch(){
  need(profileProcesses().length===0,"Selected original browser profile is already owned");
  const attempt=prior?prior.attempt+1:0;launchName="launches/"+String(attempt).padStart(5,"0")+".json";
  launchReceipt={schema:"bluewave.browser-owner.v1",state:"STARTING",attempt,recordPath:launchName,
-   operationId:input.operationId,environment:env,owner:processIdentity(process.pid),profile,
+   operationId:input.operationId,environment:env,owner:processIdentity(Number(path.basename(fs.readlinkSync("/proc/self")))),profile,
    executable:fs.realpathSync(input.executablePath),at:new Date().toISOString(),processes:[]};
+ need(launchReceipt.owner,"Cannot retain this actual Node process identity");
  retain(launchName,launchReceipt);retain("browser-owner.json",launchReceipt,false);
 }
 function acceptedLaunch(){
@@ -74,7 +88,10 @@ function acceptedLaunch(){
  retain(launchName,launchReceipt,false);retain("browser-owner.json",launchReceipt,false);
 }
 async function closeOwnerOnce(){
- if(owner){await owner.close();owner=null;}
+ if(launchPending){try{await launchPending;}catch{}launchPending=null;}
+ const closeErrors=[];if(reviewerContext){try{await reviewerContext.close();reviewerContext=null;}catch(e){closeErrors.push(e);}}
+ if(owner){try{await owner.close();owner=null;}catch(e){closeErrors.push(e);}}
+ need(closeErrors.length===0,"Owned original browser contexts did not all close: "+closeErrors.map(String).join("; "));
  if(launchReceipt){
   need(stable(environmentIdentity())===stable(launchReceipt.environment),"Browser closure namespace changed");
   need(profileProcesses().length===0,"Original browser process remains after context close");
@@ -124,20 +141,37 @@ async function openApp(){
  await page.goto(input.url,{waitUntil:"domcontentloaded"});
  await page.locator('nav button[data-screen="overview"]').waitFor();await settled();
 }
+function reviewerPlaywrightRuntime(){
+ const entry=fs.realpathSync(require.resolve(input.playwrightModule));let directory=path.dirname(entry);
+ for(;;){
+  const manifest=path.join(directory,"package.json");
+  if(fs.existsSync(manifest)){
+   const raw=fs.readFileSync(manifest),pkg=JSON.parse(raw.toString("utf8"));
+   if(["playwright","playwright-core","@playwright/test"].includes(pkg.name)){
+    const version=String(pkg.version||""),parts=/^(\d+)\.(\d+)\.(\d+)(?:\+[^\s]+)?$/.exec(version);
+    need(parts&&(Number(parts[1])>1||Number(parts[1])===1&&Number(parts[2])>=55),"The optional reviewer course requires an actual stable Playwright package >=1.55.0 before browser launch");
+    return {name:pkg.name,version,entry,packageFile:fs.realpathSync(manifest),packageBytes:raw.length,packageSha256:sha(raw)};
+   }
+  }
+  const parent=path.dirname(directory);need(parent!==directory,"Cannot establish the selected Playwright package/version before reviewer launch");directory=parent;
+ }
+}
 async function main(){
  const prior=saved("result.json");
  if(prior){
   need(prior.state==="COMPLETE"&&prior.inputSha256===inputSha256&&prior.allOwnedResourcesClosed===true,"Original complete browser input differs");
   need(saved("browser-owner.json")?.state==="CLOSED","Original browser closure is not retained");
-  for(const f of [...prior.screenshots,...prior.downloads]){const actual=measure(f.path);need(actual.bytes===f.bytes&&actual.sha256===f.sha256,"Original reviewed output differs");}
+  for(const f of [...prior.screenshots,...prior.downloads,...(prior.reviewerCopy?.artifacts||[]).map(x=>({...x,path:path.join(root,"reviewer-copy",x.path)}))]){const actual=measure(f.path);need(actual.bytes===f.bytes&&actual.sha256===f.sha256,"Original reviewed output differs");}
   return prior;
  }
+ const reviewerRuntime=input.reviewerCopy?reviewerPlaywrightRuntime():null;
+ if(reviewerRuntime)retain("reviewer-runtime.json",reviewerRuntime);
  const playwright=require(input.playwrightModule);
  try{
   prepareLaunch();
-  owner=await playwright.chromium.launchPersistentContext(profile,{executablePath:input.executablePath,headless:true,
-   args:["--no-sandbox","--disable-gpu"],viewport:{width:1440,height:1000},deviceScaleFactor:1,acceptDownloads:true});
-  acceptedLaunch();
+  launchPending=playwright.chromium.launchPersistentContext(profile,{executablePath:input.executablePath,headless:true,
+   args:["--no-sandbox","--disable-gpu"],viewport:{width:1440,height:1000},deviceScaleFactor:1,acceptDownloads:true}).then(context=>{owner=context;return context;});
+  await launchPending;launchPending=null;acceptedLaunch();need(!stopping,"Original browser received a stop signal during launch");
   await owner.route("**/*",async route=>{
    const request=route.request(),url=new URL(request.url());
    if(!["http:","https:"].includes(url.protocol))return route.continue();
@@ -161,6 +195,7 @@ async function main(){
   const selected=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("bw-operator")||"null"));
   need(stable(selected)===stable(input.actor),"Actual operator selector changed the original supplied identity");
   const sections=["overview","sources","mappings","reconciliations","rehearsals","cutovers","handovers","history","requests","transfers"];
+  const assignedReviews=await page.locator('nav button[data-screen="reviews"]').count();if(input.reviewerCopy)need(assignedReviews===1,"The selected current application must expose its actual Assigned reviews screen");if(assignedReviews)sections.splice(6,0,"reviews");
   for(const viewport of [{name:"desktop",width:1440,height:1000},{name:"phone",width:390,height:844}]){
    await page.setViewportSize({width:viewport.width,height:viewport.height});
    for(const section of sections){
@@ -186,17 +221,32 @@ async function main(){
    await page.goto(input.origin+"/guide",{waitUntil:"networkidle"});await photograph(viewport.name+"-staff-guide","main");
    if(viewport.name==="desktop")await openApp();
   }
+  let reviewerCopy=null;
+  if(input.reviewerCopy){
+   need(!stopping,"Original browser is stopping");
+   const browser=owner.browser();need(browser,"The existing persistent owner does not expose its original browser");
+   reviewerContext=await browser.newContext({viewport:{width:1440,height:1000},deviceScaleFactor:1,acceptDownloads:true});
+   await reviewerContext.route("**/*",route=>{const url=new URL(route.request().url());if(["http:","https:"].includes(url.protocol)){violations.push({path:url.pathname,reason:"Offline reviewer context attempted a network request"});return route.abort();}return route.continue();});
+   const reviewerPage=await reviewerContext.newPage();reviewerPage.setDefaultTimeout(60000);reviewerPage.setDefaultNavigationTimeout(90000);
+   reviewerPage.on("pageerror",error=>errors.push(String(error)));
+   const {runPropertyReviewerCopy}=await import(require("node:url").pathToFileURL(path.join(__dirname,"reviewer-copy-browser.mjs")).href);
+   // Named editions and all actual conflict copies remain in the one original
+   // persistent owner. The temporary context is only unfinished/cold receiving.
+   reviewerCopy=await runPropertyReviewerCopy({page:reviewerPage,independentContext:owner,issuedHtmlPath:identity.reviewerCopy.issuedHtmlPath,outputDirectory:path.join(root,"reviewer-copy"),operationId:input.operationId,reviewer:identity.reviewerCopy.reviewer,decisions:identity.reviewerCopy.decisions,attachmentFile:identity.reviewerCopy.attachmentFile});
+   need(reviewerCopy.status==="COMPLETE"&&reviewerCopy.ownedPagesClosed===true,"The complete original reviewer course did not settle its pages");
+   await reviewerContext.close();reviewerContext=null;
+  }
   const after=await state();
   need(errors.length===0&&httpErrors.length===0&&violations.length===0,"Actual browser errors: "+JSON.stringify({errors,httpErrors,violations}));
   await closeOwner();
   const result={schema:"bluewave.commissioning-browser-result.v1",state:"COMPLETE",operationId:input.operationId,inputSha256,
    sourceSha256:identity.sourceSha256,workspaceId:identity.workspaceId,workspaceDirectory:identity.workspaceDirectory,
    before:{revision:before.revision,sha256:before.sha256},after:{revision:after.revision,sha256:after.sha256},
-   screenshots,geometry,downloads,errors,httpErrors,violations,browserOwner:launchReceipt,allOwnedResourcesClosed:true,completedAt:new Date().toISOString()};
+   screenshots,geometry,downloads,errors,httpErrors,violations,...(reviewerCopy?{reviewerCopy,reviewerRuntime}:{}),browserOwner:launchReceipt,allOwnedResourcesClosed:true,completedAt:new Date().toISOString()};
   retain("result.json",result);return result;
  }catch(error){
   retain("interrupted.json",{state:"INTERRUPTED",operationId:input.operationId,inputSha256,error:String(error.stack||error),errors,httpErrors,violations,screenshots,at:new Date().toISOString()},false);throw error;
- }finally{if(owner)await closeOwner();}
+ }finally{if(owner||reviewerContext||launchPending)await closeOwner();}
 }
 let stopping=false;
 for(const signal of ["SIGTERM","SIGINT"])process.on(signal,()=>{if(stopping)return;stopping=true;closeOwner().then(()=>{process.exitCode=2;}).catch(e=>{process.stderr.write(String(e)+"\n");process.exitCode=2;});});

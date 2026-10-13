@@ -11,6 +11,7 @@ COLLECTIONS=("sourceEditions","mappings","approvals","reconciliations","decision
 PLATFORMS=("LEGACY","SALESFORCE","DOCUSIGN_CLM","CENTROS","ARCGIS","OTHER")
 FAMILIES=("PROPERTY","RENTAL_SPACE","LEASE","PROJECT","DOCUMENT","FINANCE","SPATIAL","PARTY","PERMISSION","OTHER")
 KINDS={"source.import":"sourceEditions","mapping.save":"mappings","mapping.review":"approvals","reconciliation.create":"reconciliations","finding.decide":"decisions","rehearsal.record":"rehearsals","cutover.plan":"cutovers","cutover.decide":"cutovers","cutover.close":"cutovers","handover.record":"handovers"}
+KINDS.update({kind:"reviewExchanges" for kind in ("review.issue","review.receive","review.adopt")})
 LIMITS={"blobBytes":64*1024*1024,"aggregateBlobBytes":256*1024*1024,"stateBytes":8*1024*1024,"rowsPerDataset":25000,"rowsPerReconciliation":100000,"reportBytes":64*1024*1024,"sources":256,"fieldsPerMapping":256,"pairs":32,"events":4096}
 AUTHORITIES={"SALESFORCE":"Reviewed PMS records, process and metadata; no tenant writes from this application.","DOCUSIGN_CLM":"Controlled document originals, versions, signatures and associations.","CENTROS":"Financial authority; a PMS mirror or request acknowledgement is not a posting.","ARCGIS":"Spatial and sizing authority; references retain supplied CRS and units.","KPN":"Capital-project identity is separate from property hierarchy.","LEASE":"At most one explicitly LIVE/ACTIVE lease per rental space at an instant."}
 MISSING=object()
@@ -70,7 +71,7 @@ def _find(state,collection,item_id):
     found=next((x for x in state[collection] if x["id"]==item_id),None)
     require(found is not None,"NOT_FOUND","Original "+collection+" entry is absent.")
     return found
-def _all(state):return sorted((x for c in COLLECTIONS for x in state[c]),key=lambda x:x["sequence"])
+def _all(state):return sorted((x for c in (*COLLECTIONS,"reviewExchanges") for x in state.get(c,[])),key=lambda x:x["sequence"])
 class _SourceNumber(str):
     """Original non-integer JSON token, never converted through binary float."""
 def _source_json(value):
@@ -230,8 +231,8 @@ def _approved(state,mapping_id):
 def _cohort(state,reconciliation):
     return sorted(_pair_scope(state,p)for p in reconciliation["body"]["pairs"])
 def _record(state,command,result):
-    body=command["body"];record={"id":body["id"],"kind":command["kind"],"body":copy.deepcopy(body),"createdAt":command["at"],"actor":copy.deepcopy(command["actor"]),"requestId":command["requestId"],"sequence":sum(len(state[c])for c in COLLECTIONS)+1,"result":result}
-    record["sha256"]=digest(record);state[KINDS[command["kind"]]].append(record);return record
+    body=command["body"];record={"id":body["id"],"kind":command["kind"],"body":copy.deepcopy(body),"createdAt":command["at"],"actor":copy.deepcopy(command["actor"]),"requestId":command["requestId"],"sequence":len(_all(state))+1,"result":result}
+    record["sha256"]=digest(record);state.setdefault(KINDS[command["kind"]],[]).append(record);return record
 def new_state(workspace_id,title,created_at):
     identifier(workspace_id);text(title,"Workspace title",240);_time(created_at)
     return {"schema":SCHEMA,"id":workspace_id,"title":title,"createdAt":created_at,**{key:[]for key in COLLECTIONS}}
@@ -408,7 +409,10 @@ def _core(state,command,read_blob,cache):
     require(not any(x["id"]==b["id"] or x["requestId"]==command["requestId"]for x in events),"IDENTITY_REUSE","Use the original store request lookup for replay; saved event IDs cannot be rewritten.")
     require(_time(command["at"])>=_time(events[-1]["createdAt"]if events else state["createdAt"]),"COMMAND_TIME","Command observation cannot precede its retained workspace history.")
     kind=command["kind"];result={}
-    if kind=="source.import":
+    if kind.startswith("review."):
+        from . import review_exchange
+        result=review_exchange._core(state,command,read_blob,cache)
+    elif kind=="source.import":
         _keys(b,("id","label","role","platform","family","format","blob","jsonPointer","csv","extraction","note"),"Source edition")
         text(b["label"],"Source label",240);_note(b["note"]);_pointer(b["jsonPointer"])
         require(len(state["sourceEditions"])<LIMITS["sources"],"SOURCE_LIMIT","Original source edition limit reached.")
@@ -572,6 +576,8 @@ def _core(state,command,read_blob,cache):
         text(b["recipient"],"Actual receiving operator",240);text(b["correctionRef"],"Original independent correction/reopen reference",2000);_note(b["note"]);_evidence(b["evidence"],read_blob,cache,1)
         require(_time(cutover["createdAt"])<=_time(b["receivedAt"])<=_time(b["reopenedAt"])<=_time(command["at"]),"HANDOVER_TIME","Retain actual ordered handover and independent reopen times.")
         result={"cutoverSha256":cutover["sha256"]}
+    require(len(_all(state))<LIMITS["events"],"STATE_LIMIT","Complete retained event history reached its explicit local limit.")
+    require(not any(x["id"]==b["id"] or x["requestId"]==command["requestId"] for x in _all(state)),"IDENTITY_REUSE","An atomic child cannot consume its parent identity.")
     saved=_record(state,command,result)
     require(len(canonical(state))<=LIMITS["stateBytes"],"STATE_LIMIT","Complete state exceeds the portable local working-cohort bound.")
     return {"id":saved["id"],"sha256":saved["sha256"],"kind":kind,**result}
@@ -585,23 +591,41 @@ def _mapping_descends(state,current,ancestor):
         require(current["id"]not in seen,"MAPPING_EDITION","Mapping history contains a cycle.");seen.add(current["id"])
         previous=current["body"]["previousId"];current=_find(state,"mappings",previous)if previous else None
     return False
-def validate_state(state,read_blob):
-    _keys(state,("schema","id","title","createdAt",*COLLECTIONS),"Complete workspace state")
+def _replay(state,read_blob,stop_before_request=None):
+    from . import review_exchange
+    base_keys={"schema","id","title","createdAt",*COLLECTIONS}
+    require(isinstance(state,dict) and set(state) in (base_keys,base_keys|{"reviewExchanges"}),"SHAPE","Complete workspace has unexpected or missing fields.")
     require(state["schema"]==SCHEMA,"SCHEMA","Unknown property-continuity workspace.")
     require(len(canonical(state))<=LIMITS["stateBytes"],"STATE_LIMIT","Complete imported state exceeds its bound.")
-    for collection in COLLECTIONS:_list(state[collection],collection,LIMITS["events"])
+    for collection in (*COLLECTIONS,"reviewExchanges"):
+        if collection in state:_list(state[collection],collection,LIMITS["events"])
+    if "reviewExchanges" in state:require(bool(state["reviewExchanges"]),"HISTORY","Review extension is initialized only by its first actual command.")
     events=_all(state);require(len(events)<=LIMITS["events"],"STATE_LIMIT","Complete imported event history exceeds its bound.")
+    generated={}
+    for event in state.get("reviewExchanges",[]):
+        if event.get("kind")=="review.adopt":
+            for request_id in review_exchange.child_requests(event):
+                require(request_id not in generated,"HISTORY","An adopted original decision has repeated ownership.")
+                generated[request_id]=event["requestId"]
     original=new_state(state["id"],state["title"],state["createdAt"]);cache={}
     for sequence,event in enumerate(events,1):
         _keys(event,("id","kind","body","createdAt","actor","requestId","sequence","result","sha256"),"Saved original event")
         require(event["sequence"]==sequence and event["kind"]in KINDS,"HISTORY","Original operating events must be complete and consecutive.")
         require(event in state[KINDS[event["kind"]]],"HISTORY","Original event is in the wrong collection.")
         identity={k:v for k,v in event.items()if k!="sha256"};require(digest(identity)==event["sha256"],"HISTORY","Original operating event bytes differ.")
+        if event["requestId"] in generated:
+            require(event["kind"]=="finding.decide","HISTORY","An atomic adopted child must be an original finding decision.")
+            continue
+        if event["requestId"]==stop_before_request:return original
         command={"requestId":event["requestId"],"kind":event["kind"],"actor":event["actor"],"at":event["createdAt"],"body":event["body"]}
         _core(original,command,read_blob,cache)
         require(canonical(original[KINDS[event["kind"]]][-1])==canonical(event),"HISTORY","Saved result differs from its complete original sources and command.")
-    require(canonical(original)==canonical(state),"HISTORY","Imported state differs from its full original operating history.")
-    return {"events":len(events),"sources":len(state["sourceEditions"]),"reconciliations":len(state["reconciliations"]),"sha256":digest(state)}
+    require(stop_before_request is None,"HISTORY","Selected historical original request is absent.")
+    require(canonical(original)==canonical(state),"HISTORY","Imported state differs from its full original operating history, including atomic decisions.")
+    return original
+def validate_state(state,read_blob):
+    _replay(state,read_blob)
+    return {"events":len(_all(state)),"sources":len(state["sourceEditions"]),"reconciliations":len(state["reconciliations"]),"sha256":digest(state)}
 def apply(state,command,read_blob):
     validate_state(state,read_blob)
     result=copy.deepcopy(state);outcome=_core(result,command,read_blob,{})
@@ -646,7 +670,7 @@ def view(state,read_blob,as_of=None):
     if accepted_second:stage="SECOND_REHEARSAL_ACCEPTED"
     if accepted_cutovers:stage="CUTOVER_ACCEPTED"
     if state["handovers"]:stage="EDITABLE_HANDOVER_RECORDED"
-    return {**copy.deepcopy(state),"summary":{"stage":stage,"sourceEditions":len(state["sourceEditions"]),"mappingEditions":len(state["mappings"]),"reconciliations":len(state["reconciliations"]),"events":sum(len(state[c])for c in COLLECTIONS),"latestReconciliationId":latest["id"]if latest else None,"latestCounts":copy.deepcopy(latest["result"]["counts"])if latest else None,"latestBlocking":latest["result"]["blocking"]if latest else None,"acceptedFirstRehearsals":len(accepted_first),"acceptedSecondRehearsals":len(accepted_second),"acceptedCutovers":len(accepted_cutovers),"handovers":len(state["handovers"])},"commands":list(KINDS),"limits":copy.deepcopy(LIMITS),"authorities":copy.deepcopy(AUTHORITIES),"asOf":as_of}
+    return {**copy.deepcopy(state),"summary":{"stage":stage,"sourceEditions":len(state["sourceEditions"]),"mappingEditions":len(state["mappings"]),"reconciliations":len(state["reconciliations"]),"events":len(_all(state)),"latestReconciliationId":latest["id"]if latest else None,"latestCounts":copy.deepcopy(latest["result"]["counts"])if latest else None,"latestBlocking":latest["result"]["blocking"]if latest else None,"acceptedFirstRehearsals":len(accepted_first),"acceptedSecondRehearsals":len(accepted_second),"acceptedCutovers":len(accepted_cutovers),"handovers":len(state["handovers"])},"commands":list(KINDS),"limits":copy.deepcopy(LIMITS),"authorities":copy.deepcopy(AUTHORITIES),"asOf":as_of}
 def report_html(state,reconciliation_id,read_blob):
     from html import escape
     value=report(state,reconciliation_id,read_blob);entry=_find(state,"reconciliations",reconciliation_id)

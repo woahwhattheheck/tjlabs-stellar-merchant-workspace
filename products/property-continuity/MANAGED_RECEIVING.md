@@ -1,6 +1,6 @@
 # Managed Applications receiving continuation
 
-This continuation completes the SCF integration around the same Bluewave commissioning operation. Run it after the original supplied-input programme has produced a complete native result and closed its browser and HTTP owners. The installed product includes the unchanged 22-file application, its original guides and source selection. The managed course uses that operation's real source files, complete reports and pre-authored received-branch command envelopes.
+This continuation completes the SCF integration around the same Bluewave commissioning operation. Run it after the original supplied-input programme has produced a complete native result and closed its browser and HTTP owners. The installed product includes the current complete review-enabled application, guides and source selection. The original 22-file source edition remains the historical basis of the original commissioning input and native result. The managed course uses that operation's real source files, complete reports and pre-authored received-branch command envelopes.
 
 ## Select the installed runtime and the original operation
 
@@ -21,7 +21,7 @@ The inputs are the original `input.json`, `native-result.json` and `completed-jo
 
 ## Complete operating path
 
-The course selects the actual READY runtime and uses the maintained RuntimeWorkspace Applications APIs to review, save and connect a Property Continuity application. It retains the original review and request identities before dispatch. The managed application starts through the normal framework launcher and verifies its private connection, actual live process identity, original workspace ID, physical directory and unchanged native source.
+The course selects the actual READY runtime and uses the maintained RuntimeWorkspace Applications APIs to review, save and connect a Property Continuity application. It retains the original review and request identities before dispatch. The managed application starts through the normal framework launcher and verifies its private connection, actual live process identity, original workspace ID, physical directory and current installed source selection. The retained original commissioning input is checked against its separate historical source selection.
 
 Its first managed lifetime reads every native source page and command history page, then compares all reconciliation rows and findings with the complete original native JSON reports. Full report files are compared using their exact saved byte hashes. The original first command is replayed under its existing request UUID to confirm first-result recovery.
 
@@ -29,7 +29,7 @@ The current original workspace is exported under a frozen revision and publicati
 
 The first managed lifetime is stopped through Applications and its actual closure is observed. The second lifetime reopens the same saved application through another retained run request. The merchant tools read the actual original branch, upload an exact host-declared source file, recover the original first command and download every byte of the exported archive through the maintained retained-file reader. The original cold receiver is registered again through its unchanged receive operation; its later state is checked after opening. The second lifetime is then stopped and observed closed.
 
-The application is unchanged, so its original completed browser images remain the visual evidence for the native staff screens. The managed course adds actual lifecycle, authenticated client and agent operating evidence. A source review or completed data programme alone does not establish that a reviewer inspected the rendered screenshots.
+Original completed browser images remain evidence of the original application edition and observed screens. The new Assigned reviews controls and independent reviewer copy require the following review course's actual desktop and narrow-screen observations. The managed course adds actual lifecycle, authenticated client and agent operating evidence. A source review or completed data programme alone does not establish that a reviewer inspected the current rendered screens.
 
 ## Resume the same operation
 
@@ -43,4 +43,10 @@ No managed native result or customer-ready claim is implied by the presence of t
 
 ## Complete report custody
 
-Before managed dispatch, the wrapper verifies the unchanged native source selection and freezes every original and received report descriptor. Both JSON and HTML reports and each Complete_Command_History.json travel in the final delivery. Missing local report copies are restored from their exact original retained files or through the unchanged Workspace.read_blob API; hashes and sizes must match. The final archive enumerates this complete frozen inventory and fails on a missing or changed member. Model closure completes before the managed result can claim COMPLETE.
+Before managed dispatch, the wrapper verifies the current installed source selection, separately verifies the historical source selection of the original native input and result, and freezes every original and received report descriptor. Both JSON and HTML reports and each Complete_Command_History.json travel in the final delivery. Missing local report copies are restored from their exact original retained files or through the unchanged Workspace.read_blob API; hashes and sizes must match. The final archive enumerates this complete frozen inventory and fails on a missing or changed member. Model closure completes before the managed result can claim COMPLETE.
+
+## Following review-enabled source edition
+
+The installed binding now selects the complete review-enabled app manifest. The original commissioning plan, input SHA, completed journal and native result still identify their original source edition; they are not rewritten to the current installed source. The managed caller checks these two identities separately before any Applications continuation.
+
+For the assigned reviewer workflow, use the staged course in **app/REVIEW_EXCHANGE_RECEIVING.md** under the same original operation lock. A new source edition is not a reason to replay an old completed business programme. If the baseline is still incomplete, perform new review mutations only in a named independently received following branch, preserving the original baseline's fixed revisions. Existing runtime owner and browser custody remain authoritative.

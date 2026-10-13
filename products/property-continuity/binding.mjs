@@ -8,7 +8,7 @@ export const defaultSourceDirectory=join(dirname(fileURLToPath(import.meta.url))
 export async function inspectSource(sourceDirectory=defaultSourceDirectory){
  sourceDirectory=(await realDirectory(absolute(sourceDirectory))).path;
  const selectionPath=join(sourceDirectory,'source-selection.json'),selectionRaw=await bytes(selectionPath,2*1024*1024),selection=JSON.parse(selectionRaw);
- need(selection.schema===SOURCE_SCHEMA&&selection.sha256===SOURCE_SHA256&&Array.isArray(selection.files)&&selection.files.length===21,'SOURCE_SELECTION','Use this complete original 22-file application edition.');
+ need(selection.schema===SOURCE_SCHEMA&&selection.sha256===SOURCE_SHA256&&Array.isArray(selection.files)&&selection.files.length===31,'SOURCE_SELECTION','Use this complete selected application edition.');
  const copy={...selection};delete copy.sha256;need(sha(canonical(copy))===selection.sha256,'SOURCE_SELECTION');
  const sourceFiles=[{path:selectionPath,bytes:selectionRaw.length,sha256:sha(selectionRaw)}],seen=new Set();
  for(const item of selection.files){

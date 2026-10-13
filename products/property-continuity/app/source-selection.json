@@ -8,18 +8,28 @@
     },
     {
       "path": "OPERATING.md",
-      "bytes": 26714,
-      "sha256": "c22f67375e6b95908297f3451fe748296878b94781d21644540d5644350ba130"
+      "bytes": 32012,
+      "sha256": "3204d19c2cacd542ef5a5319be9a4682d7619599ff402d0822e3681b320b150e"
     },
     {
       "path": "README.md",
-      "bytes": 3025,
-      "sha256": "b6c1f09488d266ad479a4c92eb242404a2d6ed28c3a7971a0b4b6ae05a399817"
+      "bytes": 3905,
+      "sha256": "194ab475379e3a65b188029de4a1d2739f3153af829aaa241cd09e98639c5ff3"
     },
     {
       "path": "RECEIVING_PROGRAMME.md",
       "bytes": 10855,
       "sha256": "bf9d864044835701421b9f25df08f3739a6697f03769526eda24bdb46c5b1384"
+    },
+    {
+      "path": "REVIEW_EXCHANGE_DOMAIN.md",
+      "bytes": 21647,
+      "sha256": "4a7642d923b10d1a12b3f3bbc03a70343c1fecf7b8c75c290db7e1bb358feed3"
+    },
+    {
+      "path": "REVIEW_EXCHANGE_RECEIVING.md",
+      "bytes": 21946,
+      "sha256": "32c485fbb20174a49ba39c7ab842671d7a8175ee14b798b856fe0d53732bf09f"
     },
     {
       "path": "TRAINING.md",
@@ -33,8 +43,8 @@
     },
     {
       "path": "bluewave/cli.py",
-      "bytes": 7404,
-      "sha256": "b1b8007e55694431e811b4188764522f21401495214efda1c914ba0de774d665"
+      "bytes": 9652,
+      "sha256": "fc1f214711d6796e493cf2ea7357d9fed5b4ddee5a0be4d1aca62ea3f6f581a6"
     },
     {
       "path": "bluewave/common.py",
@@ -43,8 +53,8 @@
     },
     {
       "path": "bluewave/domain.py",
-      "bytes": 66243,
-      "sha256": "c76ebe17eeeee4c8d8ac5c2b6472ceb81141726b77e1f5b6ea5bb238ade52ee6"
+      "bytes": 68006,
+      "sha256": "f4104fdec6e31470372aa9197db20723114bd5752aa8868e52acc474618e5a27"
     },
     {
       "path": "bluewave/exchange.py",
@@ -53,18 +63,33 @@
     },
     {
       "path": "bluewave/receiving_program.py",
-      "bytes": 31919,
-      "sha256": "68e2d22b6e66d4d4534e4745762b873c7853e9ad8a2c13dca076215c3ca0760c"
+      "bytes": 33036,
+      "sha256": "afa45d671e48d0fe9224decef750909a2760e6fdc8fc39a189bb02ec1b226e4a"
+    },
+    {
+      "path": "bluewave/review_exchange.py",
+      "bytes": 28151,
+      "sha256": "169de2308d3964654fabbe71d9ed3839a28574b155b89e091c853bce064f896e"
+    },
+    {
+      "path": "bluewave/review_host.py",
+      "bytes": 4662,
+      "sha256": "6df928eac6aeb74043f451e151b36ca96f696e098e9c6c898fbd83473846ab23"
+    },
+    {
+      "path": "bluewave/review_receiving.py",
+      "bytes": 30974,
+      "sha256": "de4b92d37e0356f14e17e9da552da481fb879e33ee7a5dc4b778cdc18d2ad75e"
     },
     {
       "path": "bluewave/server.py",
-      "bytes": 16791,
-      "sha256": "7ce32d69436dac67bd92bf836aaf440f9934e0179dd1be6a39b7939520cc5d7c"
+      "bytes": 19474,
+      "sha256": "c8154ddca02cff3c4405dcc406a34dd8e2dda9bd83c76a5e6d786d7b0101c3fc"
     },
     {
       "path": "bluewave/workspace.py",
-      "bytes": 14557,
-      "sha256": "e3277f364a91b8381cac64b3a7ab8a00273f20426734c362bff0dbeda37cdd29"
+      "bytes": 16167,
+      "sha256": "e9c26dff1076e16803823a036b0b51d0fd6383642910ffb6b9216c6649b8b72d"
     },
     {
       "path": "examples/make_training_case.py",
@@ -73,18 +98,38 @@
     },
     {
       "path": "public/app.js",
-      "bytes": 50938,
-      "sha256": "72a2be46cc1ea7fdfea8218cc0fccc463da4efeca8d93a54cde9b45917f6b766"
+      "bytes": 52604,
+      "sha256": "52efb3e30321b0eb31ef908d50a84446688c2785c1fb0c93e3fd5fafae3100ec"
     },
     {
       "path": "public/guide.html",
-      "bytes": 32691,
-      "sha256": "e6c7bfd197c8465da8b3240a5d76711fd715adc5abf122bcca4918d7e98be1da"
+      "bytes": 34626,
+      "sha256": "ed56e79d986e97d7977a08cfdbfa63e5874ed6f0b657cbbc592baf3f491c6825"
     },
     {
       "path": "public/index.html",
-      "bytes": 1538,
-      "sha256": "ac0a616adea7f9965fbed9edb2ce70254a96c64f01d2a68b7660207ce8abd9aa"
+      "bytes": 1654,
+      "sha256": "346d8c8e3762e0eff6ac7759c522aa23e78d4b29f33d3ce8b651c044f05d5097"
+    },
+    {
+      "path": "public/reviewer-copy.css",
+      "bytes": 5758,
+      "sha256": "92b19420e558bb14b05a20abaefb98f37514a7306c493a7426b6766c0d35ffd1"
+    },
+    {
+      "path": "public/reviewer-copy.html",
+      "bytes": 1367,
+      "sha256": "b0b87e63aaf5c5c4e53c405b359da8e96e6eb44f4b0a22b90d617c727918a065"
+    },
+    {
+      "path": "public/reviewer-copy.js",
+      "bytes": 49861,
+      "sha256": "32bc2a930eac9c2273f0f2ef64abe69f8358c7ab00d14da310bf7e04db64947c"
+    },
+    {
+      "path": "public/reviewer-host.js",
+      "bytes": 20780,
+      "sha256": "9e0173c0abeb103837ed8b5050a0160007e9452129d913cf86e46872aa86794f"
     },
     {
       "path": "public/style.css",
@@ -103,9 +148,14 @@
     },
     {
       "path": "tools/receiving_browser.cjs",
-      "bytes": 14726,
-      "sha256": "2a2b8755bc96ce972189ba7d1c9738e7b925f2c25e4f174ff13ed42029d12b34"
+      "bytes": 20808,
+      "sha256": "923fe04515d6449749221d2d044b6c36d70d44129567f8597ae6697c181fc7e3"
+    },
+    {
+      "path": "tools/reviewer-copy-browser.mjs",
+      "bytes": 30463,
+      "sha256": "3f37276bb626b79b8b255a419e498a66613b2c8533becbd73470c6755e8aca71"
     }
   ],
-  "sha256": "cf5e60ed049ee7584d389cc8d09b2a2e361c0fa37cf00fc41af496652f641b3a"
+  "sha256": "8ea12615ad1428412a8ae254193bd4c283d26bd9411d5b76e959d0357ae7164b"
 }

@@ -5,7 +5,7 @@ from .common import *
 from .workspace import Workspace
 from .exchange import source_inventory,export_workspace,validate_archive,receive_archive
 from .server import Application
-from . import domain
+from . import domain, review_exchange, review_host
 
 def selected(root,selection_path=None):
     root=Path(root).resolve(strict=True)
@@ -45,7 +45,7 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description="Property continuity, reconciliation and receiving workspace")
     subs=parser.add_subparsers(dest="action",required=True)
     create=subs.add_parser("create");create.add_argument("--workspace",required=True);create.add_argument("--id",required=True);create.add_argument("--title",required=True);create.add_argument("--at")
-    for name in ("show","history","request","command","blob","import-source","source-rows","report","export","serve"):
+    for name in ("show","history","request","command","blob","import-source","source-rows","report","export","serve","review-prepare-issue","review-prepare-return","review-exchanges","review-compare","review-file"):
         p=subs.add_parser(name);p.add_argument("--workspace",required=True);p.add_argument("--source-root",default=str(Path(__file__).resolve().parent.parent));p.add_argument("--selection")
         if name in ("history","source-rows"):p.add_argument("--offset",type=int,default=0);p.add_argument("--limit",type=int,default=100)
         if name in ("request","source-rows","report"):p.add_argument("--id",required=True)
@@ -56,6 +56,15 @@ def main(argv=None):
             p.add_argument("--expected-revision",type=int,required=True)
         if name=="report":p.add_argument("--format",choices=("json","html","csv"),default="html");p.add_argument("--output",required=True)
         if name=="export":p.add_argument("--publication-id",required=True);p.add_argument("--revision",type=int,required=True)
+        if name=="review-prepare-issue":
+            p.add_argument("--command",required=True);p.add_argument("--expected-revision",type=int,required=True);p.add_argument("--output",required=True)
+        if name=="review-prepare-return":
+            p.add_argument("--file",required=True);p.add_argument("--descriptor");p.add_argument("--expected-revision",type=int,required=True);p.add_argument("--output",required=True)
+        if name=="review-exchanges":p.add_argument("--id")
+        if name=="review-compare":
+            p.add_argument("--return-id",required=True);p.add_argument("--edition-id",required=True);p.add_argument("--adoption-id")
+        if name=="review-file":
+            p.add_argument("--id",required=True);p.add_argument("--role",choices=("issued_json","issued_html","returned_file"),required=True);p.add_argument("--output",required=True)
         if name=="serve":p.add_argument("--host",default="127.0.0.1");p.add_argument("--port",type=int,default=0);p.add_argument("--receiving-root")
     inspect=subs.add_parser("inspect");inspect.add_argument("--archive",required=True);inspect.add_argument("--sha256");inspect.add_argument("--bytes",type=int)
     receive=subs.add_parser("receive");receive.add_argument("--archive",required=True);receive.add_argument("--destination",required=True);receive.add_argument("--operation-id",required=True);receive.add_argument("--sha256",required=True);receive.add_argument("--bytes",type=int,required=True)
@@ -82,6 +91,20 @@ def main(argv=None):
         if args.action=="report":
             data=report_bytes(workspace,args.id,args.format);atomic_file(args.output,data,immutable=True)
             return {"path":str(Path(args.output).absolute()),"bytes":len(data),"sha256":sha(data)}
+        if args.action=="review-prepare-issue":
+            result=review_host.prepare_issue(workspace,loads(read_regular(args.command)),args.expected_revision,root)
+            atomic_file(args.output,canonical(result),immutable=True);return result
+        if args.action=="review-prepare-return":
+            raw=read_regular(args.file,MAX_BLOB)
+            descriptor=loads(read_regular(args.descriptor)) if args.descriptor else {"sha256":sha(raw),"bytes":len(raw),"name":Path(args.file).name,"mediaType":mimetypes.guess_type(args.file)[0] or "application/json"}
+            result=review_host.prepare_return(workspace,raw,descriptor,args.expected_revision)
+            atomic_file(args.output,canonical(result),immutable=True);return result
+        if args.action=="review-exchanges":return review_host.view(workspace,args.id)
+        if args.action=="review-compare":return review_host.compare(workspace,args.return_id,args.edition_id,args.adoption_id)
+        if args.action=="review-file":
+            item=review_exchange.document(workspace.current()["state"],args.id,args.role,workspace.read_blob)
+            atomic_file(args.output,item["bytes"],immutable=True)
+            return {**item["descriptor"],"path":str(Path(args.output).absolute())}
         if args.action=="export":return export_workspace(workspace,args.publication_id,root,selection,args.revision)
         stop=threading.Event();app=None
         for sig in (signal.SIGINT,signal.SIGTERM):signal.signal(sig,lambda *_:stop.set())
