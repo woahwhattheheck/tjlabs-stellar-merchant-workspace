@@ -20,6 +20,8 @@ from programme import PROGRAMME_TABLES, programme_schema
 from programme_service import read_programme, programme_document
 from awards import AWARDS_TABLES, awards_schema
 from awards_service import read_awards
+from budget_planning import PLANNING_TABLES, planning_schema
+from budget_planning_service import read_planning, planning_report
 from workspace_extensions import read_http as extension_read_http, static_routes as extension_static_routes
 
 HERE = Path(__file__).resolve().parent
@@ -123,6 +125,8 @@ class Console:
                               "/awards.js": ("awards.js", "text/javascript; charset=utf-8"),
                               "/awards-exchange.js": ("awards-exchange.js", "text/javascript; charset=utf-8"),
                               "/awards.css": ("awards.css", "text/css; charset=utf-8"),
+                              "/budget-planning.js": ("budget-planning.js", "text/javascript; charset=utf-8"),
+                              "/budget-planning.css": ("budget-planning.css", "text/css; charset=utf-8"),
                               "/style.css": ("style.css", "text/css; charset=utf-8")}
                     extra_static = extension_static_routes()
                     extra_static["/awards-exchange-core.mjs"] = ("awards-exchange-core.mjs", "text/javascript; charset=utf-8")
@@ -155,8 +159,8 @@ class Console:
                         return
                     if path == "/api/schema":
                         self.send_json({"schema": SCHEMA, "workspaceId": ws.marker["workspaceId"],
-                            "actions": list(ACTIONS), "tables": [*TABLES, *PROGRAMME_TABLES, *AWARDS_TABLES], "maxPacketBytes": MAX_PACKET,
-                            "programme": programme_schema(), "awards": awards_schema(),
+                            "actions": list(ACTIONS), "tables": [*TABLES, *PROGRAMME_TABLES, *AWARDS_TABLES, *PLANNING_TABLES], "maxPacketBytes": MAX_PACKET,
+                            "programme": programme_schema(), "awards": awards_schema(), "planning": planning_schema(),
                             "maxActionBytes": MAX_JSON, "maxSources": MAX_SOURCES, "maxPageRows": 250,
                             "financialValues": "original decimal strings; independent source, currency and meaning",
                             "references": ["sourceId", "entityKey", "sha256"]})
@@ -177,6 +181,18 @@ class Console:
                     elif path == "/api/detail":
                         self.send_json(ws.detail(query.get("portfolioId"), self.integer(query, "revision"),
                                                  query.get("sourceId"), query.get("entityKey")))
+                    elif path == "/api/planning/report":
+                        data, media_type, filename = planning_report(ws, query)
+                        self.send_response(200)
+                        self.send_header("Content-Type", media_type)
+                        self.send_header("Content-Length", str(len(data)))
+                        self.send_header("Content-Disposition", 'attachment; filename="' + filename + '"')
+                        self.send_header("X-Content-SHA256", digest(data))
+                        self.send_header("ETag", '"' + digest(data) + '"')
+                        self.end_headers()
+                        self.wfile.write(data)
+                    elif path.startswith("/api/planning/"):
+                        self.send_json(read_planning(ws, path.rsplit("/", 1)[-1], query))
                     elif path.startswith("/api/awards/"):
                         self.send_json(read_awards(ws, path.rsplit("/", 1)[-1], query))
                     elif path == "/api/programme/document":

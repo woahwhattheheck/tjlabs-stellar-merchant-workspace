@@ -17,6 +17,7 @@ export class BankStatementsClient extends ReceivablesClient {
   receiveReceipt(id,value,options={}){return this.request('/transactions/'+segment(id)+'/receipt',{...options,method:'POST',body:value});}
   undo(id,value,options={}){return this.request('/transactions/'+segment(id)+'/undo',{...options,method:'POST',body:value});}
   resolve(id,value,options={}){return this.request('/transactions/'+segment(id)+'/resolve',{...options,method:'POST',body:value});}
+  previewAssembly(value,options={}){return this.request('/assembly-preview',{...options,method:'POST',body:value});}
   previewClose(value,options={}){return this.request('/close-preview',{...options,method:'POST',body:value});}
   retainClose(value,options={}){return this.request('/closes',{...options,method:'POST',body:value});}
   closeDetail(id,options={}){return this.request('/closes/'+segment(id),options);}

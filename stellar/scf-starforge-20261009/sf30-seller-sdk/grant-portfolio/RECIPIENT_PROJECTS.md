@@ -145,7 +145,9 @@ queue, credential store, payment mechanism or external submission.
 The native submit function also rebuilds the plan against its exact historical
 basis. A self-consistent action hash alone does not authorize arbitrary content.
 The original server performs its ordinary atomic revision, document and
-relationship validation.
+relationship validation. Existing budget planning remains with that same writer.
+If a new project or milestone changes the basis of an existing reviewed budget
+scenario, its normal planning rules return that scenario to working review.
 
 ## Correcting work later
 
