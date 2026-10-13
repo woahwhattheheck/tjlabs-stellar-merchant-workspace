@@ -76,7 +76,18 @@ async function reopenPackage(input){
  need(HASH.test(options.expectedManifestSha256??''),'MCP_DELIVERY_DOWNLOAD_REVIEW_REQUIRED');const selected=transport(options);
  return selected.lockedDownload(options.directory,async context=>{
   const raw=await selected.bytesAt(join(context.root,'manifest.json'),65000);need(sha(raw)===options.expectedManifestSha256,'MCP_DELIVERY_DOWNLOAD_MANIFEST_CHANGED');
-  await selected.loadContext(context,raw,selectionId(options));const file=context.manifest.files[0];
+  // Offline reopen must retain the original transport origin before loadContext
+  // can checkpoint anything. No connection is made to recover that identity.
+  let retained;
+  try{retained=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(
+   await selected.bytesAt(join(context.stateDirectory,'checkpoint.json'),32*1024*1024)));}
+  catch{need(false,'MCP_DELIVERY_DOWNLOAD_RETAINED_ENDPOINT_REQUIRED');}
+  const suffix='#collection-delivery='+options.deliveryWorkspace+(options.receivedSha256?'&origin=received':'');
+  need(typeof retained?.endpoint==='string'&&retained.endpoint.indexOf('#')>0&&
+   retained.endpoint.slice(retained.endpoint.indexOf('#'))===suffix,'MCP_DELIVERY_DOWNLOAD_ALIAS_CHANGED');
+  let endpoint;try{endpoint=new URL(retained.endpoint);}catch{need(false,'MCP_DELIVERY_DOWNLOAD_RETAINED_ENDPOINT_REQUIRED');}
+  need(['http:','https:'].includes(endpoint.protocol)&&endpoint.hostname,'MCP_DELIVERY_DOWNLOAD_RETAINED_ENDPOINT_REQUIRED');
+  await selected.loadContext(context,raw,selectionId(options),retained.endpoint);const file=context.manifest.files[0];
   await selected.verifiedFile(join(context.root,file.name),file);
   const checked=await inspectPackage(join(context.root,file.name),{expected:file});
   need(checked.manifestSha256===context.manifest.package.manifestSha256,'MCP_DELIVERY_DOWNLOAD_PACKAGE_CHANGED');
