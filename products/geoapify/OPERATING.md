@@ -1,0 +1,34 @@
+# Geoapify customer address workspace
+
+Open the full operating guide at [Geoapify address operations](../../stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/README.md). It contains the complete original source, batch, candidate review, dataset, publisher, buyer and recovery course.
+
+## Installed product
+
+Use the maintained distribution source selection:
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/build.mjs \
+  --repo /absolute/checkout --ref ORIGINAL_COMMIT \
+  --selection geoapify --out /private/geoapify-release
+~~~
+
+Select stellar/scf-starforge-20261009/distribution/selections/geoapify.json through the existing distribution builder's source-selection workflow. The selection retains Geoapify source/UI/CLI/types, original shared CSV/JSON/coordinate helpers, the original publisher, merchant tools, seller/buyer, private host and release/customer delivery components. It includes the full operating and customer onboarding guides.
+
+Installed command: geoapify. Native provider: geoapify-workspaces. Use the ordinary merchant-providers init geoapify-workspaces --options HOST_SETUP_JSON initializer for a declared private host.
+
+Direct checkout launch:
+
+~~~sh
+node stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/cli.mjs serve \
+  --dir /private/geoapify-addresses --port 0
+~~~
+
+GEOAPIFY_API_KEY remains in the existing host environment. Open the exact private URL returned by this process. See the full guide for complete file inputs, native tool setup and original commercial deployment.
+
+## Customer receiving
+
+Use one actual authorized source with original identity/coordinate fields, its actual Geoapify account, the intended source owner, merchant operator, payer and independent customer. Follow the complete source through one original job and every candidate decision into the exact selected dataset and buyer workspace. Full per-job/input/query/source hashes remain tied to the same case.
+
+A successful source build is followed by operating the exact populated interface, reviewing desktop and narrow widths, inspecting every outgoing report/data/package file, reopening the complete original workspace and exercising the selected merchant/customer continuation. Review actual returned screenshots and fix any rendering or user-flow defect before presenting the outgoing version. Preserve the exact operator and original receiving operation.
+
+Commercial scoping and the proposed customer installation workshare are in [Customer onboarding](CUSTOMER_ONBOARDING.md). The existing broader SCF pilot/customer launch plan remains in products/merchant-workspace/CUSTOMER_LAUNCH.md.
