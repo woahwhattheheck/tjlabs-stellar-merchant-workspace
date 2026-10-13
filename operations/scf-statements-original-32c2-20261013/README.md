@@ -90,3 +90,15 @@ Execution state at preparation: the complete source is retained and the JavaScri
 The controller opens current grouped navigation through the original `data-nav-section` controls, including compact phone navigation and retained collapsed groups. It also supports the original tabs when the selected immutable installation predates PR909; set `requireNavigation: true` in the private configuration to require the current desk. Cash dates, currencies and assets are set through the native `data-ca-field` controls. The full original payment/correction, account balances and source history are opened in the actual desk. Independent receiving consumes the complete ZIP downloaded through that browser.
 
 390E owns the complementary complete navigation/search receiving. After the full account operation, `navigation-handoff.json` identifies the same independently received workspace, case, invoice, original statement source IDs, source edition and normal CLI/browser entry. The account controller leaves all cash, invoice, source and request decisions intact for that continuation. The handoff contains paths to the private workspace, never its access key.
+
+## Run the handed-off Operating Desk journey
+
+The complete companion is now `continue-operating-desk.mjs`. After this original account controller closes, run it against the exact `navigation-handoff.json` and a separate private output directory:
+
+~~~sh
+node continue-operating-desk.mjs /absolute/private/statements-operation/navigation-handoff.json /absolute/private/statements-navigation
+~~~
+
+[OPERATING_DESK_CONTINUATION.md](OPERATING_DESK_CONTINUATION.md) describes the full original finder, source downloads, supplier/cash links, saved navigation, phone view and actual finance/reviewer sign-ins. The companion retains each original case fact, uses the existing staff writer for its own case-scoped profiles, and closes those profiles through the original access history. Its journal resumes the same handoff and preserves interrupted results.
+
+The original account receiver, bank files, cash allocations, correction decisions and independent ZIP receiving remain the source of this continuation's case and source identities.
