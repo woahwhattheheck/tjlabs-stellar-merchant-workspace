@@ -2,7 +2,7 @@
 
 Operation: `SCF-RECEIVABLES-NATIVE-2A51-20261012`.
 
-This route executes the existing original payment and MerchantAccounting programmes at source commit `94ad1dd33fd1616303d52faa8b1cd98745c6cfc5`. It uses the complete original receiver and source/dependency capsules. The programmes, their source inputs and the native accounting engine are unchanged.
+This route executes the existing original payment and MerchantAccounting programmes at source commit `94ad1dd33fd1616303d52faa8b1cd98745c6cfc5`. It uses the complete original receiver and source/dependency capsules. The first run preserved those exact inputs. Its payment programme passed. The next continuation keeps the original MCP programme and accounting engine, and applies the exact maintained registration schema repairs described below.
 
 ## Source and execution
 
@@ -65,6 +65,16 @@ Join all segments for the exact path in index order, decode Base64, and verify b
 The existing decoded log tool is `github_fetch_workflow_job_logs({repo_full_name,job_id})`. The original REST job log endpoint is `GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs`; follow GitHub's redirect through the established client.
 
 Native failure results are actionable source findings. Continue the original programme against an explicitly corrected source after addressing the concrete failure; keep the same operation and existing receiving owner.
+
+## Actual first result and the maintained correction
+
+[Run 38343867655](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/actions/runs/38343867655) used Node22.23.3, Python3.12.3 and the original Stellar SDK16.3.0. PAYMENT_CHECK.mjs passed its seven complete workflows, including native and issued-asset settlement, retained proofs, testnet separation and owner reopen. MCP_RECEIVABLES_CHECK.mjs stopped during original provider registration: the old Grist and SeaTable contribution command/export shapes differed from the original distribution schema.
+
+Complete original logs and twelve exact result files are retained in Git blob `80c16d4ce00247d6675fe3d7b1b9c445011cc27f`. The repository-disable restoration returned HTTP204 after the job. The first independent policy readback encountered the account core rate limit; the control operation retains that distinction.
+
+The continuation uses correction blob `93d2f87ceab7c1ba17dbbc2f2e276c3e977f3aaa`, sourced from maintained commit `1f44c8a18477bcfbb1b8890f8bd228ba52bb1306`. The two exact postimages are Grist `628fc04f8e1de10cc35c497064fa8cac8438a483` and SeaTable `8c24dca1c4f6333b4c844bd4b8ca06ba3a0b573a`. Both turn command descriptors into native source path strings and add the required ./source/ prefix to exports. The original distribution composer accepted all289 retained contributions and518 commands with these exact repairs. Every source correction records its original and replacement Git hashes.
+
+The corrected receiver capsule is `5dfec853b254e0f67dc489d650b1ec85affa0f43`; its hosted acquisition helper is `005d8ef478d681815eb7e29a48182fd909125df6`. Only the failed original MCP programme is rerun. The accepted payment result remains the first run’s original output. Each new result records the frozen base, explicit correction and unchanged selected programme together.
 
 ## Completed original run and installed-source continuation
 

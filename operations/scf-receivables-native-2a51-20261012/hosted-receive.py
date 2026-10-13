@@ -15,7 +15,8 @@ import urllib.request
 REPOSITORY = "woahwhattheheck/tjlabs-stellar-merchant-workspace"
 OPERATION = "SCF-RECEIVABLES-NATIVE-2A51-20261012"
 SOURCE_COMMIT = "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5"
-RUNNER_CAPSULE = "122d0b322fe86967ca145b61f7054d4d2614c8ce"
+RUNNER_CAPSULE = "5dfec853b254e0f67dc489d650b1ec85affa0f43"
+CORRECTION_CAPSULE = "93d2f87ceab7c1ba17dbbc2f2e276c3e977f3aaa"
 SOURCE_CAPSULE = "7fcaec7a66deb03c5d9fed00f193138218d8c323"
 DEPENDENCY_CAPSULE = "0907e1444c7418266e128db60b3e94a02496d34f"
 SDK_LOCK = "320cee72638cf1d4bc0fc1e48c4fe9b8547dc223"
@@ -23,9 +24,9 @@ MCP_PACKAGE = "25c40f788e9be3ac932b3337bbce02bf7c37e64f"
 SDK_PACKAGE = "038f1824d7e2703b449fe50a5446b988d8f3bc3f"
 PREFIX = "operations/scf-receivables-native-2a51-20261012/"
 RUNNER_FILES = {
-    "receive-capsule.py": "0c1c33cbfe95ab85213c8e18ca01ceed864d4350",
-    "source.json": "039bb54677e668d19fa685f7433a0ea4b9d5bc0d",
-    "README.md": "10df95cb7faede4b2cb394e56ad75f35c220a199",
+    "receive-capsule.py": "0abd5865264c604dae2127131e80447f27818814",
+    "source.json": "eb96f3fc67335986767266547fe00d02abbb8922",
+    "README.md": "7e0e000211b10c15173d0379a980d0d9b525a408",
 }
 
 def now():
@@ -163,6 +164,7 @@ def receive(root):
     runner_object, runner_raw = blob(RUNNER_CAPSULE)
     source_object, source_raw = blob(SOURCE_CAPSULE)
     dependency_object, dependency_raw = blob(DEPENDENCY_CAPSULE)
+    correction_object, _ = blob(CORRECTION_CAPSULE)
     runner = json.loads(runner_raw)
     source = json.loads(source_raw)
     dependencies = json.loads(dependency_raw)
@@ -190,6 +192,7 @@ def receive(root):
     inputs.mkdir()
     save_json(inputs / "original-capsule-object.json", source_object)
     save_json(inputs / "original-dependencies-object.json", dependency_object)
+    save_json(inputs / "maintained-correction-object.json", correction_object)
     sdk = root / "sdk-dependencies"
     sdk.mkdir()
     sdk_profile = package_from_capsules([source, dependencies],
@@ -220,10 +223,13 @@ def receive(root):
         "--sdk-node-modules", str(sdk / "node_modules"),
         "--mcp-node-modules", str(mcp / "node_modules"),
         "--node", node,
+        "--correction-object", str(inputs / "maintained-correction-object.json"),
+        "--program", "MCP_RECEIVABLES_CHECK.mjs",
     ], cwd=root, env=env)
     save_json(root / "hosted-result.json", {
         "operation": OPERATION, "sourceCommit": SOURCE_COMMIT,
         "exitCode": completed.returncode, "completedAt": now(),
+        "correctionCapsule": CORRECTION_CAPSULE, "programs": ["MCP_RECEIVABLES_CHECK.mjs"],
     })
     return completed.returncode
 
