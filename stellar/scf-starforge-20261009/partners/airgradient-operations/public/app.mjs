@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=v=>v===null||v===undefined?'—':Number(v).toLocaleString('en',{maximumFractionDigits:3});
 const measures={pm25:['PM2.5','µg/m³'],pm10:['PM10','µg/m³'],atmp:['Temperature','°C'],rhum:['Relative humidity','%'],rco2:['CO₂','ppm']};
-let state,loadedProjectId,review,receiveReview,sourceReview,receivedProjectId,definitionBase64,cataloguePage=0,poll;
+let state,loadedProjectId,review,receiveReview,sourceReview,receivedSelection,definitionBase64,cataloguePage=0,poll;
 function notice(message,error=false){$('notice').textContent=message;$('notice').dataset.error=String(error);}
 async function request(path,body,raw=false){
  const response=await fetch(path,{...(body!==undefined?{method:'POST',headers:{'content-type':raw?'application/octet-stream':'application/json'},body:raw?body:JSON.stringify(body)}:{}),credentials:'same-origin'});
@@ -128,16 +128,24 @@ $('source-use').onclick=action(async()=>{
  if(source.reportWindows[0]){$('source-window').value=source.reportWindows[0].id;$('start').value=source.reportWindows[0].start.slice(0,16);$('end').value=source.reportWindows[0].end.slice(0,16);}
  notice('Original source locations and common measurements selected for this customer project.');
 });
-$('receive-file').onchange=()=>{receiveReview=null;$('receive-commit').disabled=true;$('receiving-detail').replaceChildren();};
+function clearReceivedSelection(){receivedSelection=null;$('receive-select').hidden=true;$('receive-select').disabled=true;}
+$('receive-file').onchange=()=>{receiveReview=null;clearReceivedSelection();$('receive-commit').disabled=true;$('receiving-detail').replaceChildren();};
 $('receive-review').onclick=action(async()=>{
+ receiveReview=null;clearReceivedSelection();$('receive-commit').disabled=true;
  const file=$('receive-file').files[0];if(!file)throw new Error('Select the complete ZIP or editable JSON.');
  receiveReview=await request('/api/receive/review',file,true);$('receiving-detail').innerHTML='<h3>'+escape(receiveReview.title)+'</h3><p>'+escape(receiveReview.organisation)+' · '+receiveReview.reports+' report editions · '+receiveReview.captures+' original responses · '+number(receiveReview.sourceBytes)+' source bytes</p>'+rowTable(receiveReview.rows);$('receive-commit').disabled=false;
 });
 $('receive-commit').onclick=action(async()=>{
  if(!receiveReview)throw new Error('Review this package first.');const receipt=await request('/api/receive/commit?expected='+encodeURIComponent(receiveReview.packageSha256),$('receive-file').files[0],true);
- receivedProjectId=receipt.projectId;await refresh();$('report').value=receipt.reportId;renderReport();$('receive-select').hidden=false;$('receive-commit').disabled=true;notice('Complete customer study received. Select its project to continue the next edition.');
+ receivedSelection=Object.freeze({receivingId:receipt.id,projectId:receipt.projectId,reportId:receipt.reportId,reportSha256:receipt.reportSha256,packageId:receipt.packageId,packageSha256:receipt.packageSha256});await refresh();$('report').value=receipt.reportId;renderReport();$('receive-select').hidden=false;$('receive-select').disabled=false;$('receive-commit').disabled=true;notice('Complete customer study received. Select its project to continue the next edition.');
 });
-$('receive-select').onclick=action(async()=>{await request('/api/project/select',{id:receivedProjectId});await refresh();$('baseline').value=receiveReview.reportId;notice('Received project selected with its prior customer edition. Choose the next operating period.');});
+$('receive-select').onclick=action(async()=>{
+ const selected=receivedSelection;if(!selected)throw new Error('Receive the complete selected package first.');
+ const report=state.reports.find(v=>v.id===selected.reportId&&v.sha256===selected.reportSha256&&v.projectId===selected.projectId),plan=state.plans.find(v=>v.id===report?.planId&&v.projectId===selected.projectId);
+ if(!report||!plan)throw new Error('Reopen the committed receiving selection.');
+ await request('/api/project/select',{id:selected.projectId});await refresh();$('baseline').value=selected.reportId;$('report').value=selected.reportId;$('plan').value=plan.id;$('source-set').value=plan.sourceSetId??'';
+ renderSource();$('source-window').value='';renderPlan();renderReport();notice('Received project and its committed prior edition selected. Choose the next reporting period from the retained source or a new acquisition.');
+});
 function base64(bytes){let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(binary);}
 $('definition-fetch').onclick=action(async()=>{const result=await request('/api/definition',{});definitionBase64=result.definitionBase64;$('definition-inspection').textContent=JSON.stringify(result.inspection,null,2);notice('Official Dashboard source definition retained. The built-in Dashboard history connection follows its declared per-location history route.');});
 $('definition-file').onchange=action(async()=>{const file=$('definition-file').files[0];if(!file)return;const bytes=new Uint8Array(await file.arrayBuffer());definitionBase64=base64(bytes);$('definition-inspection').textContent=JSON.stringify(JSON.parse(new TextDecoder().decode(bytes)),null,2);});

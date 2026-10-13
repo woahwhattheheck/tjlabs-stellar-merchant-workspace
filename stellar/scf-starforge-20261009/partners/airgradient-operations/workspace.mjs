@@ -51,7 +51,7 @@ export async function openWorkspace(directory,{create=false,network={}}={}){
   need(selected.sha256===plan.connectionSha256,'PLAN_CONNECTION_CHANGED');
   return reviewReport({plan,project,connection:selected,tasks:store.tasks(planId),captures:id=>store.capture(id),baseline:plan.baselineReportId?object('report',plan.baselineReportId):null});
  }
- const summarizeReport=report=>({id:report.id,sha256:report.sha256,title:report.title,createdAt:report.createdAt,period:report.period,baselineReportId:report.baselineReportId,readiness:report.readiness,rows:report.rows});
+ const summarizeReport=report=>({id:report.id,sha256:report.sha256,planId:report.planId,projectId:report.projectId,title:report.title,createdAt:report.createdAt,period:report.period,baselineReportId:report.baselineReportId,readiness:report.readiness,rows:report.rows});
  async function acquire(plan,task,selected){
   const attemptId=store.startAttempt(plan.id,task.key);let status=null,captureId=null;
   try{
