@@ -967,6 +967,34 @@
         "collection-review-guide.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/saved-projects.html",
+      [
+        "saved-projects.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/saved-projects.mjs",
+      [
+        "saved-projects.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/saved-projects.css",
+      [
+        "saved-projects.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/saved-project-library.mjs",
+      [
+        "saved-project-library.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
