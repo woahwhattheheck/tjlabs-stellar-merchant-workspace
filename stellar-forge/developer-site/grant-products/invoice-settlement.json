@@ -1,0 +1,52 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "invoice-settlement",
+  "heading": "## Invoice reconciliation, reviewed Stellar deposits and independent customer receiving",
+  "sources": [
+    {
+      "id": "invoice-settlement-customer-operations",
+      "label": "Invoice & Settlement installed customer operations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/INVOICE_SETTLEMENT_CUSTOMER.md",
+      "editions": [
+        {
+          "commit": "c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67",
+          "bytes": 14164,
+          "sha256": "e3eb45920436198246507d6888de1187b4d1a0c47607aba6b65e0cb852f3323d",
+          "git_blob": "a14da14941d9dd79919e53cd17597a3d0992dbf6"
+        }
+      ]
+    },
+    {
+      "id": "invoice-settlement-horizon-review",
+      "label": "Original Horizon invoice review and decisions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/HORIZON_INVOICES.md",
+      "editions": [
+        {
+          "commit": "c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67",
+          "bytes": 11639,
+          "sha256": "b67e5f38b6bebcd9a4275d81056c4518a57fa003ca238e3804a8c02bb4a5f8eb",
+          "git_blob": "2b4dda51afe1b43be9712483cbe43bcffc4b1ae6"
+        }
+      ]
+    },
+    {
+      "id": "invoice-settlement-applications",
+      "label": "Invoice & Settlement application and full receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/APPLICATIONS.md",
+      "editions": [
+        {
+          "commit": "c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67",
+          "bytes": 17696,
+          "sha256": "7c3e1150dd54718a0964d833ea27d0714f47a1197f4fbc6e641e466725ff22d6",
+          "git_blob": "4b2d75acbdefa246c6d7dede96e6bbbfe1dbfb42"
+        }
+      ]
+    }
+  ]
+}

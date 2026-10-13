@@ -29,6 +29,8 @@ The maintained commercial importer remains the entry for an original customer Wo
 | INDUSTRIAL_RECONCILIATION.md | Whole source/meaning intake, original Workshare phases and fee, Installation setup, operator/CLI/MCP workflow and independent complete receiving |
 | canadabuys-bidder-desk.json | Complete procurement source → reviewed capability/evidence/decision → original publication → editable independent customer receiving |
 | CANADABUYS_INSTALLATION.md | Original Workshare/source preparation, installed MCP customer, complete download/recovery and native Installation receiving |
+| invoice-settlement.json | Actual invoice programme and complete observations → individually reviewed attribution → reconciliation/report → independent editable customer receiving |
+| INVOICE_SETTLEMENT.md | Complete original Workshare/Installation, authenticated invoice customer, native review and whole-publication receiving |
 | canadabuys-source.mjs / canadabuys-commissioning.mjs | Complete native CanadaBuys package, selected Workshare revision and explicit phase/party/working-day mapping into the original Installation reader |
 | CANADABUYS_NATIVE_WORKSHARES.md | Native Workshare selection, complete local source preparation, existing-case save/export/receive and original owner handover |
 | supplier-catalogues.json | Complete supplier editions → selected customer import → full current recipient catalogue → customer receiving |
@@ -42,6 +44,8 @@ The installed Grant Operations product exposes the same CLI as `starforge grant-
 Use the repository's maintained Linux/Node runtime. The preparation CLI uses Node's standard library; the sources command also uses Python's standard library and the original SF47 Workshare importer. These local preparation commands make no service calls. The selected customer applications retain their own native runtime/dependency requirements.
 
 ## Discover the installed customer programmes
+
+For original invoice reconciliation commissioning, select **invoice-settlement** and follow [INVOICE_SETTLEMENT.md](INVOICE_SETTLEMENT.md). It binds the actual programme, complete source population, named attribution reviewer and independent receiving to the original Workshare/Installation, preserving its commercial terms, checks and payment selections.
 
 For CanadaBuys procurement commissioning, select **canadabuys-bidder-desk** and follow [CANADABUYS_INSTALLATION.md](CANADABUYS_INSTALLATION.md). It carries the complete retained source, decision and installed customer workflow into the original Workshare/Installation; its actual execution status remains in the original receiving records.
 
