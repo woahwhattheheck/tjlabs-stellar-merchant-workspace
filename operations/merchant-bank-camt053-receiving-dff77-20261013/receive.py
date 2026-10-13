@@ -5,6 +5,7 @@ import argparse,hashlib,json,pathlib
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--artifacts",required=True,help="Directory retaining the complete case ZIP, result and transfer receipt")
 parser.add_argument("--temporary-directory",help="Writable directory for this invocation's private expanded runtime")
+parser.add_argument("--keep-runtime",action="store_true",help="Retain this stopped original installation/account for actual browser receiving")
 args=parser.parse_args()
 here=pathlib.Path(__file__).resolve().parent
 manifest=json.loads((here/"receiving-manifest.json").read_text(encoding="utf-8"))
@@ -22,6 +23,7 @@ cfg["bundesbankOriginals"]=json.loads(texts["BUNDESBANK_ORIGINALS.json"])
 cfg["nodeProgram"]=texts["receive-originals.mjs"]
 cfg["application"]["nodeProgram"]=texts["receive-application.mjs"]
 cfg["application"]["mcpProgram"]=texts["receive-account-mcp.mjs"]
+cfg["keepRuntime"]=args.keep_runtime
 cfg["artifactDirectory"]=str(pathlib.Path(args.artifacts).expanduser().resolve())
 if args.temporary_directory:
  temporary=pathlib.Path(args.temporary_directory).expanduser().resolve()
