@@ -114,7 +114,8 @@ function terminalFailure(memory, state) {
   if (!attempt) return false;
   if (attempt.rejected) return true;
   const operation = state.operation;
-  if (attempt.response?.id && operation?.id === attempt.response.id &&
+  const operationId = attempt.response?.operationId ?? attempt.response?.id;
+  if (operationId && operation?.id === operationId &&
       ['FAILED', 'CANCELLED', 'INTERRUPTED'].includes(operation.state)) {
     attempt.terminal = operation.state; attempt.failure = operation.error?.message ?? operation.error?.code ?? operation.error ?? operation.state;
     return true;
