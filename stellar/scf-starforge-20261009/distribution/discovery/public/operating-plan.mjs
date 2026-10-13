@@ -2,6 +2,8 @@
 import { searchCommandCatalog } from '/catalog.mjs';
 import { mountSupportOperatingPlan } from '/support-operating-plan.mjs';
 import { mountFredOperatingPlan } from '/fred-operating-plan.mjs';
+import { mountGrantTracker } from '/grant-tracker-editor.mjs';
+import { isGrantTracker, inspectGrantTracker } from '/grant-tracker-core/grant-tracker.mjs';
 import { installGrantReportingEditor } from '/grant-reporting-editor.mjs';
 import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapshotRegistration,
   operatingPlanDraft, operatingPlanRevision, saveOperatingPlanRevision, forkOperatingPlan,
@@ -24,7 +26,7 @@ const names = { command: 'Command', source: 'Source', feature: 'Runtime group',
 let database, savedPlans = [], catalog, current, draft, rawArguments = {}, selectedStep = '', selectedRevision = null;
 let catalogPage = 1, catalogResult, pendingImport, draftTimer, draftQueued = false, busy = false;
 let pendingDraftWrites = 0;
-let supportController = null, fredController = null;
+let supportController = null, fredController = null, grantTrackerController = null;
 let draftWrites = Promise.resolve(), pendingItemId = new URL(location.href).searchParams.get('add');
 const sessionId = crypto.randomUUID();
 let previousSessionId = null;
@@ -188,7 +190,7 @@ async function openPlan(id, { fresh = false } = {}) {
 }
 function renderEditor() {
   $('empty-plan').hidden = Boolean(current); $('plan-editor').hidden = !current;
-  supportController?.update(); fredController?.update();
+  supportController?.update(); fredController?.update(); grantTrackerController?.update();
   if (!current) return;
   const content = body(), editing = editable();
   $('plan-heading').textContent = content.title || 'Untitled operating plan';
@@ -388,12 +390,17 @@ async function savePlan() {
   if (!editable()) return;
   assertDraftReady(); await flushDraft();
   const editableDraft = clone(draft);
+  const originalForGrant = isGrantTracker(current) ? clone(current) : null;
+  const preparedGrant = originalForGrant ? completePlanCapacity(saveOperatingPlanRevision(originalForGrant, editableDraft)) : null;
+  if (preparedGrant) await inspectGrantTracker(preparedGrant);
   const saved = await transaction(['plans', 'drafts'], 'readwrite', (tx, done, abort) => {
     const plans = tx.objectStore('plans'), request = plans.get(current.id);
     request.onsuccess = () => {
       try {
         if (!request.result) throw new Error('The original saved plan is unavailable.');
-        const next = completePlanCapacity(saveOperatingPlanRevision(request.result, editableDraft)); bytes(next);
+        if (originalForGrant && JSON.stringify(request.result) !== JSON.stringify(originalForGrant))
+          throw new Error('The saved grant plan advanced. Your complete working draft remains retained.');
+        const next = preparedGrant ?? completePlanCapacity(saveOperatingPlanRevision(request.result, editableDraft)); bytes(next);
         plans.put(next); tx.objectStore('drafts').delete(draftKey(next.id)); done(next);
       } catch (error) { abort(error); }
     };
@@ -406,6 +413,7 @@ async function savePlan() {
 }
 async function addPlan(plan) {
   const saved = inspectOperatingPlan(plan); bytes(saved);
+  if (isGrantTracker(saved)) await inspectGrantTracker(saved);
   await transaction(['plans'], 'readwrite', tx => { tx.objectStore('plans').add(saved); });
   await refreshPlanList(); await openPlan(saved.id);
   broadcast?.postMessage({ id: saved.id, revision: saved.revisions.length });
@@ -419,8 +427,9 @@ async function saveCopy() {
   await addPlan(copied);
   status('Saved an independent plan with the complete original history and selected content.');
 }
-async function receivePlan(incoming) {
+async function receivePlan(incoming, { fresh = false } = {}) {
   const candidate = inspectOperatingPlan(incoming); bytes(candidate);
+  if (isGrantTracker(candidate)) await inspectGrantTracker(candidate);
   const received = await transaction(['plans'], 'readwrite', (tx, done, abort) => {
     const plans = tx.objectStore('plans'), request = plans.get(candidate.id);
     request.onsuccess = () => {
@@ -431,7 +440,7 @@ async function receivePlan(incoming) {
     };
   });
   pendingImport = null; $('import-conflict').hidden = true;
-  await refreshPlanList(); await openPlan(received.plan.id);
+  await refreshPlanList(); await openPlan(received.plan.id, { fresh });
   status(received.reused ? 'The saved plan already contains every incoming revision.'
     : 'Imported the complete plan · ' + received.addedRevisions + ' received revisions.');
   broadcast?.postMessage({ id: received.plan.id, revision: received.plan.revisions.length });
@@ -678,6 +687,36 @@ fredController = mountFredOperatingPlan({
   run, addPlan, receivePlan, retainWorkingDraft,
 });
 $('show-fred-procedure').addEventListener('click', () => fredController.open());
+function grantContext() {
+  let dirty = false;
+  if (current && draft && selectedRevision === null) {
+    dirty = draft.baseRevision !== current.revisions.length ||
+      JSON.stringify(draft.content) !== JSON.stringify(operatingPlanDraft(current).content);
+    for (const step of draft.content.steps) {
+      if (!Object.hasOwn(rawArguments, step.id)) continue;
+      try { if (JSON.stringify(JSON.parse(rawArguments[step.id])) !== JSON.stringify(step.argv)) dirty = true; }
+      catch { dirty = true; }
+    }
+  }
+  return { plan: current, revision: selectedRevision, dirty };
+}
+grantTrackerController = mountGrantTracker({
+  host: $('grant-tracker-panel'), getContext: grantContext,
+  drafts: { list: readDrafts, put: writeDraft },
+  create: plan => run(async () => {
+    await retainWorkingDraft();
+    await addPlan(plan);
+  }, { propagate: true }),
+  commit: (candidate, base) => run(async () => {
+    const selected = grantContext();
+    if (selected.revision !== null || selected.dirty || !selected.plan ||
+        JSON.stringify(selected.plan) !== JSON.stringify(base))
+      throw new Error('Reopen the unchanged current saved grant revision before recording this work. All working inputs remain retained.');
+    await retainWorkingDraft();
+    await receivePlan(candidate, { fresh: true });
+  }, { propagate: true }),
+});
+$('show-grant-tracker').addEventListener('click', () => grantTrackerController.open());
 await run(async () => {
   database = await openDatabase();
   await refreshPlanList();

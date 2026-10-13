@@ -4,6 +4,9 @@ import { createOperatingPlanReturn, inspectOperatingPlanReturn, compareOperating
   reviseOperatingPlanReturn, decideOperatingPlanReturn, applyOperatingPlanReturn,
   renderOperatingPlanReturnHTML, OPERATING_RETURN_MAX_BYTES, OPERATING_RETURN_PLAN_MAX_BYTES } from '/operating-return-core/operating-plan-return.mjs';
 
+import { isGrantTracker, inspectGrantTracker, compareGrantReturn, applyGrantReturn,
+  renderGrantReport } from '/grant-tracker-core/grant-tracker.mjs';
+
 import { inspectOperatingReturnWorking, renderOperatingReturnWorkbook, OPERATING_RETURN_WORKBOOK_ASSETS,
   OPERATING_RETURN_WORKING_SCHEMA, OPERATING_RETURN_WORKING_MAX_BYTES } from '/operating-return-core/operating-plan-return-workbook.mjs';
 
@@ -437,6 +440,7 @@ function renderProcedure() {
 }
 function renderReview() {
   renderSources();
+  renderGrantContext();
   if (!state) { blankView(); renderControls(); return; }
   report = compareOperatingPlanReturn(state.review);
   $('review-identity').textContent = 'Review ' + state.review.id + ' · Shared revision ' + report.commonRevision +
@@ -462,11 +466,60 @@ function renderReview() {
       (state.applied ? ' · saved in the original procedure' : '') : '';
   renderControls();
 }
+const grantContext = node('section');
+grantContext.setAttribute('aria-label', 'Complete grant source and obligation comparison');
+$('return-status').after(grantContext);
+let grantEpoch = 0;
+const grantReview = value => isGrantTracker(value?.current) || isGrantTracker(value?.incoming);
+async function validateGrantSources(value) {
+  if (!grantReview(value)) return;
+  if (!isGrantTracker(value.current) || !isGrantTracker(value.incoming))
+    throw new Error('Keep the complete grant-tracker identity in both original and returned procedures.');
+  await inspectGrantTracker(value.current); await inspectGrantTracker(value.incoming);
+  if (value.completion) await inspectGrantTracker(value.completion.plan);
+}
+function renderGrantContext() {
+  const generation = ++grantEpoch;
+  grantContext.replaceChildren(); grantContext.hidden = !state || !grantReview(state.review);
+  if (grantContext.hidden) return;
+  const selected = state.review;
+  grantContext.append(node('h2', 'Source-backed grant return'), node('p', 'Checking complete sources, physical rows and proposed obligation evidence…'));
+  (async () => {
+    const [current, incoming, comparison] = await Promise.all([
+      inspectGrantTracker(selected.current), inspectGrantTracker(selected.incoming), compareGrantReturn(selected),
+    ]);
+    if (generation !== grantEpoch || state?.review !== selected) return;
+    const contents = [node('h2', 'Source-backed grant return'),
+      node('p', 'Current: ' + current.rows.length + ' physical rows / ' + current.sources.length +
+        ' sources. Returned: ' + incoming.rows.length + ' physical rows / ' + incoming.sources.length +
+        ' sources. The complete plan below retains every source and reviewed obligation.')];
+    for (const issue of comparison.domainIssues) contents.push(node('p', issue.code + ': ' + issue.message));
+    for (const [label, view] of [['Current', current], ['Returned', incoming]]) {
+      const details = node('details'), summary = node('summary', label + ' grant records, exact values and evidence'), pre = node('pre');
+      details.append(summary, pre);
+      details.addEventListener('toggle', () => {
+        if (details.open && !pre.dataset.ready) {
+          pre.textContent = JSON.stringify(view.rows.map(({ step, ...row }) => row), null, 2);
+          pre.dataset.ready = 'true';
+        }
+      });
+      const reportButton = node('button', label + ' complete offline report'); reportButton.type = 'button';
+      reportButton.addEventListener('click', () => run(async () => {
+        download('grant-' + label.toLowerCase() + '-report.html', await renderGrantReport(view.plan), 'text/html');
+      }));
+      contents.push(details, reportButton);
+    }
+    grantContext.replaceChildren(...contents);
+  })().catch(value => {
+    if (generation === grantEpoch) grantContext.replaceChildren(node('h2', 'Grant source review requires attention'), node('p', value.message));
+  });
+}
 function commitDetails() {
   if (!state || state.review.completion) return;
   state.review = reviseOperatingPlanReturn(state.review, clone(state.details));
 }
 async function activate(review, { buffers = {}, details, destination = { kind: 'file' }, key = crypto.randomUUID(), applied = false, version = null } = {}) {
+  await validateGrantSources(review);
   state = { key, persistence: { key, version }, review: inspectOperatingPlanReturn(review), buffers: clone(buffers),
     details: details ? clone(details) : { reviewer: review.reviewer, notes: review.notes }, destination: clone(destination), applied };
   currentSource = clone(state.review.current); incomingSource = clone(state.review.incoming);
@@ -499,6 +552,8 @@ function download(filename, value, type = 'application/json') {
 }
 function filename(suffix) { return state.review.id + '-' + suffix; }
 async function resetSources(current, incoming, destination) {
+  if (isGrantTracker(current)) await inspectGrantTracker(current);
+  if (isGrantTracker(incoming)) await inspectGrantTracker(incoming);
   await saveNow();
   state = null; currentSource = current; incomingSource = incoming; sourceDestination = destination;
   clearTimeout(saveTimer); renderReview(); message('Sources selected. Prepare the complete comparison to begin a new review.');
@@ -591,23 +646,31 @@ $('download-html').addEventListener('click', () => run(async () => {
 $('download-plan').addEventListener('click', () => run(async () => {
   const review = inspectOperatingPlanReturn(state.review);
   if (!review.completion) throw new Error('Complete the review before downloading the reviewed procedure.');
+  if (isGrantTracker(review.completion.plan)) await inspectGrantTracker(review.completion.plan);
   download(filename('plan.json'), review.completion.plan);
   message('Reviewed operating plan downloaded in its original complete format.');
 }));
 $('complete-return').addEventListener('click', () => run(async () => {
   if (Object.keys(state.buffers).length) throw new Error('Record or discard each pending choice before completing this review.');
   commitDetails();
-  const intended = applyOperatingPlanReturn(state.review);
+  const intended = grantReview(state.review)
+    ? await applyGrantReturn(state.review) : applyOperatingPlanReturn(state.review);
   state.review = intended.review; state.details = { reviewer: intended.review.reviewer, notes: intended.review.notes };
   await saveNow(); // The complete intended result is durable before touching the original plan store.
   if (state.destination.kind === 'saved-plan') {
     const completed = clone(state.review);
+    const grantCurrent = grantReview(completed) ? await getPlan(completed.current.id) : null;
+    if (grantReview(completed) && !grantCurrent)
+      throw new Error('The saved grant procedure is unavailable. The full completed review remains retained.');
+    const grantResult = grantCurrent ? await applyGrantReturn(completed, { current: grantCurrent }) : null;
     const received = await transaction(plansDB, ['plans'], 'readwrite', (tx, done, abort) => {
       const store = tx.objectStore('plans'), request = store.get(completed.current.id);
       request.onsuccess = () => {
         try {
           if (!request.result) throw new Error('The saved original procedure is unavailable. The complete review and result remain retained.');
-          const result = applyOperatingPlanReturn(completed, { current: request.result });
+          if (grantResult && !same(request.result, grantCurrent))
+            throw new Error('The saved grant plan advanced during source validation. Keep this completed review and refresh the current plan.');
+          const result = grantResult ?? applyOperatingPlanReturn(completed, { current: request.result });
           if (!result.alreadyPresent) store.put(result.plan);
           done(result);
         } catch (value) { abort(value); }
@@ -669,7 +732,14 @@ if (broadcast) broadcast.onmessage = event => {
         }),
       ]);
       ready = true; await refreshShelves(); renderReview();
-      message('Saved procedures and retained reviews are ready.');
+      const requested = new URL(location.href).searchParams.get('plan');
+      if (requested) {
+        const selected = await getPlan(requested);
+        if (!selected) throw new Error('The requested current procedure is not saved at this browser address. Choose its complete original JSON.');
+        $('saved-plan').value = requested;
+        await resetSources(inspectOperatingPlan(selected), null, { kind: 'saved-plan', id: requested });
+        message('Current saved procedure selected. Choose the complete returned plan to review its changes.');
+      } else message('Saved procedures and retained reviews are ready.');
     }
   } catch (value) { error(value); renderControls(); }
 })();
