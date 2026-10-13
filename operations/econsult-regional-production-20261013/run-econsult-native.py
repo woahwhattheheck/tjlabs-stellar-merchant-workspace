@@ -359,10 +359,12 @@ def main():
         else:
             state = {"schema": "stellar-forge.qcew-native-controller.v1", "identity": identity,
                      "startedAt": now(), "stages": []}
-        check(not state.get("researchAgent") or options.research_agent,
-              "Continue the completed customer-agent course with --research-agent.")
-        check(not state.get("mtcSources") or options.mtc_originals,
-              "Continue the completed MTC source course with --mtc-originals and its retained original directory.")
+        agent_started = state.get("researchAgent") or any(stage.get("name") == "complete-research-agent-receiving" for stage in state["stages"])
+        mtc_started = state.get("mtcSources") or any(stage.get("name") == "complete-mtc-source-receiving" for stage in state["stages"])
+        check(not agent_started or options.research_agent,
+              "Continue the original customer-agent course with --research-agent.")
+        check(not mtc_started or options.mtc_originals,
+              "Continue the original MTC source course with --mtc-originals and its retained original directory.")
         state.update({"lastStartedAt": now(), "status": "running", "sourceEdition": source_edition,
                       "runtime": {"node": versions, "python": sys.version, "chromium": str(browser),
                                   "playwright": str(playwright)}})
