@@ -2,7 +2,7 @@
 import { constants } from 'node:fs';
 import { open, mkdir, realpath, readdir, link, unlink, rename } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
-import { resolve, join, dirname } from 'node:path';
+import { resolve, join, dirname, basename } from 'node:path';
 import { privateSupportDirectory, writePrivate } from './host-files.mjs';
 import { acquireStateLease } from '../../stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs';
 import { CanadaBuysMerchantClient, openCanadaBuysMerchantClient, canadaBuysClientError,
@@ -355,4 +355,164 @@ export async function bindCanadaBuysCustomerConnection({ connection, client: sup
       catch (error) { if (failure) failure.closeError = error; else throw error; }
     }
   }
+}
+
+
+const INTAKE_FILE_LIMIT = 192 * 1024 * 1024;
+const INTAKE_DOCUMENT_LIMIT = 64 * 1024 * 1024;
+const INTAKE_TOTAL_LIMIT = 128 * 1024 * 1024;
+function intakeRequest(value, workspaceId) {
+  need(plain(value) && Object.keys(value).every(key =>
+    ['workspaceId', 'noticeId', 'expectedRevision', 'applyRevision', 'commandId', 'documents'].includes(key))
+    && value.workspaceId === workspaceId && UUID.test(value.workspaceId)
+    && typeof value.noticeId === 'string' && value.noticeId.length > 0 && value.noticeId.length <= 256
+    && typeof value.commandId === 'string' && value.commandId.trim() && value.commandId.length <= 180
+    && !/[\x00-\x1f\x7f]/.test(value.commandId)
+    && Number.isSafeInteger(value.expectedRevision) && value.expectedRevision >= 0
+    && (value.applyRevision === undefined || Number.isSafeInteger(value.applyRevision) && value.applyRevision >= 0)
+    && Array.isArray(value.documents) && value.documents.length >= 1 && value.documents.length <= 100,
+    'Retain the complete native intake, original workspace UUID, command, notice and revisions.', 'INTAKE');
+  let total = 0;
+  for (const document of value.documents) {
+    need(plain(document) && typeof document.bodyBase64 === 'string'
+      && document.bodyBase64.length <= Math.ceil(INTAKE_DOCUMENT_LIMIT / 3) * 4,
+      'Each native intake document needs its complete original bytes.', 'INTAKE');
+    const body = Buffer.from(document.bodyBase64, 'base64');
+    need(body.toString('base64') === document.bodyBase64 && body.length <= INTAKE_DOCUMENT_LIMIT
+      && (document.sha256 === undefined || document.sha256 === sha(body))
+      && (document.bytes === undefined || document.bytes === body.length),
+      'A native intake document differs from its original byte identity.', 'INTAKE');
+    total += body.length;
+    need(total <= INTAKE_TOTAL_LIMIT, 'The complete original document set exceeds 128 MiB.', 'INTAKE');
+  }
+  return value;
+}
+async function intakeDocument(path, signal) {
+  signal?.throwIfAborted();
+  const file = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
+  try {
+    const before = await file.stat({ bigint: true });
+    need(before.isFile() && before.size <= BigInt(INTAKE_DOCUMENT_LIMIT),
+      'Select an original regular document within 64 MiB.', 'INTAKE');
+    const blocks = [], buffer = Buffer.alloc(65536); let position = 0;
+    for (;;) {
+      signal?.throwIfAborted();
+      const { bytesRead } = await file.read(buffer, 0, buffer.length, position);
+      if (!bytesRead) break;
+      position += bytesRead;
+      need(position <= INTAKE_DOCUMENT_LIMIT, 'The original document exceeded 64 MiB while being read.', 'INTAKE');
+      blocks.push(Buffer.from(buffer.subarray(0, bytesRead)));
+    }
+    const after = await file.stat({ bigint: true });
+    need(BigInt(position) === before.size
+      && ['dev', 'ino', 'size', 'mtimeNs', 'ctimeNs'].every(key => before[key] === after[key]),
+      'The original document changed while being read.', 'INTAKE');
+    const bytes = Buffer.concat(blocks, position);
+    return { bytes, sha256: sha(bytes) };
+  } finally { await file.close(); }
+}
+async function publishIntake(path, request) {
+  const selected = resolve(path), parent = await privateDirectory(dirname(selected));
+  const bytes = canadaBuysOperationBytes(request);
+  need(bytes.length <= INTAKE_FILE_LIMIT, 'The complete native intake request exceeds 192 MiB.', 'INTAKE');
+  const previous = await optional(selected, INTAKE_FILE_LIMIT);
+  if (previous) {
+    need(previous.bytes.equals(bytes), 'This saved intake already contains another complete request.', 'INTAKE');
+    return { path: selected, ...previous.identity, reused: true };
+  }
+  const temporary = join(parent, '.intake-' + randomUUID() + '.pending');
+  try {
+    await writePrivate(temporary, bytes);
+    try { await link(temporary, selected); }
+    catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      need((await readCanadaBuysCustomerJson(selected, INTAKE_FILE_LIMIT)).bytes.equals(bytes),
+        'The original intake changed during publication.', 'INTAKE');
+    }
+    await syncDirectory(parent);
+  } finally { await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; }); }
+  const saved = await readCanadaBuysCustomerJson(selected, INTAKE_FILE_LIMIT);
+  need(saved.bytes.equals(bytes), 'The published intake differs from its complete original request.', 'INTAKE');
+  return { path: selected, ...saved.identity, reused: false };
+}
+function intakeSummary(request, file) {
+  return { schema: 'stellar-forge.canadabuys-customer-intake.v1', requestFile: file,
+    workspaceId: request.workspaceId, noticeId: request.noticeId, commandId: request.commandId,
+    expectedRevision: request.expectedRevision,
+    ...(request.applyRevision === undefined ? {} : { applyRevision: request.applyRevision }),
+    documents: request.documents.map((document, index) => ({ index, title: document.title,
+      bytes: document.bytes, sha256: document.sha256 })), mutation: false };
+}
+/** Read the existing MCP workspace and local originals; create one complete native intake file. */
+export async function prepareCanadaBuysEvidenceIntake({ client, manifestPath, outputPath, signal } = {}) {
+  need(client instanceof CanadaBuysMerchantClient && client.workspaceId,
+    'Use the existing customer client bound to its observed native workspace.', 'INTAKE');
+  const manifestFile = await readCanadaBuysCustomerJson(resolve(manifestPath), 4 * 1024 * 1024);
+  const manifest = manifestFile.value;
+  need(plain(manifest) && Object.keys(manifest).every(key =>
+    ['noticeId', 'commandId', 'capturedAt', 'sourceUrl', 'documents'].includes(key))
+    && typeof manifest.noticeId === 'string' && manifest.noticeId
+    && typeof manifest.commandId === 'string' && manifest.commandId
+    && Array.isArray(manifest.documents) && manifest.documents.length > 0 && manifest.documents.length <= 100,
+    'The manifest needs its original noticeId, stable commandId and 1–100 local document selections.', 'INTAKE');
+  const before = await client.status({ limit: 1 }, { signal });
+  const selected = await client.notice({ noticeId: manifest.noticeId }, { signal });
+  need(selected.notice?.id === manifest.noticeId, 'The selected notice response changed its identity.', 'INTAKE');
+  const documents = []; let total = 0;
+  for (const item of manifest.documents) {
+    need(plain(item) && typeof item.path === 'string' && item.path.trim() && !item.path.includes('\0'),
+      'Every original document needs its selected local path.', 'INTAKE');
+    const { path, ...metadata } = item;
+    need(!Object.hasOwn(metadata, 'bodyBase64'), 'Select the original document file; do not replace its bytes in metadata.', 'INTAKE');
+    const location = resolve(dirname(resolve(manifestPath)), path), original = await intakeDocument(location, signal);
+    total += original.bytes.length;
+    need(total <= INTAKE_TOTAL_LIMIT, 'The complete document set exceeds 128 MiB.', 'INTAKE');
+    need((metadata.sha256 === undefined || metadata.sha256 === original.sha256)
+      && (metadata.bytes === undefined || metadata.bytes === original.bytes.length),
+      'An original file differs from its reviewed manifest identity.', 'INTAKE');
+    const capturedAt = metadata.capturedAt ?? manifest.capturedAt;
+    need(typeof capturedAt === 'string' && capturedAt.trim() && Number.isFinite(Date.parse(capturedAt)),
+      'Retain the actual original capture timestamp in the manifest or each document.', 'INTAKE');
+    documents.push({ title: basename(location), kind: 'OTHER', sourceUrl: manifest.sourceUrl ?? '',
+      localOrigin: location, language: 'unknown',
+      relatedNoticeIdentifiers: [selected.notice.summary?.solicitationNumber].filter(Boolean),
+      ...metadata, capturedAt, bodyBase64: original.bytes.toString('base64'),
+      bytes: original.bytes.length, sha256: original.sha256 });
+  }
+  const after = await client.status({ limit: 1 }, { signal });
+  need(before.native.id === after.native.id && before.native.revision === after.native.revision,
+    'The workspace advanced during preparation. Retain these original files and prepare against its current revision.', 'INTAKE');
+  const request = intakeRequest({ workspaceId: before.native.id, noticeId: manifest.noticeId,
+    commandId: manifest.commandId, expectedRevision: before.native.revision, documents }, client.workspaceId);
+  signal?.throwIfAborted();
+  return { ...intakeSummary(request, await publishIntake(outputPath, request)),
+    state: 'PREPARED', manifest: { path: resolve(manifestPath), ...manifestFile.identity } };
+}
+/** Keep all original request fields; only the explicitly observed save revision is added. */
+export async function refreshCanadaBuysEvidenceIntake({ client, requestPath, outputPath, signal } = {}) {
+  need(client instanceof CanadaBuysMerchantClient && client.workspaceId,
+    'Use the original bound customer client.', 'INTAKE');
+  const original = await readCanadaBuysCustomerJson(resolve(requestPath), INTAKE_FILE_LIMIT);
+  const request = intakeRequest(original.value, client.workspaceId);
+  const observed = await client.status({ limit: 1 }, { signal });
+  const refreshed = { ...request, applyRevision: observed.native.revision };
+  signal?.throwIfAborted();
+  return { ...intakeSummary(refreshed, await publishIntake(outputPath, refreshed)),
+    state: 'SAVE_REVISION_REFRESHED', originalRequest: { path: resolve(requestPath), ...original.identity } };
+}
+/** Inspect the already configured complete file, then retain one normal plan/run operation. */
+export async function prepareCanadaBuysIntakeOperation({ client, connection, directory, operationId, input,
+  expectedSha256, signal } = {}) {
+  connection = normalizeCanadaBuysCustomerConnection(connection);
+  need(client instanceof CanadaBuysMerchantClient && client.workspace === connection.workspace
+    && client.workspaceId === connection.workspaceId && new URL(client.endpoint).href === connection.url,
+    'Use this operation’s original customer connection.', 'INTAKE');
+  const inspection = await client.inspectEvidenceIntake({ input,
+    ...(expectedSha256 === undefined ? {} : { expectedSha256 }) }, { signal });
+  need(inspection.selection?.workspaceId === connection.workspaceId
+    && inspection.input === input && SHA.test(inspection.file?.sha256 ?? ''),
+    'The inspected complete intake changed its original selection.', 'INTAKE');
+  const prepared = await prepareCanadaBuysOperation({ directory, operationId, connection, tool: 'bidder_intake',
+    arguments: { input, expectedSha256: inspection.file.sha256, ...inspection.selection } });
+  return { ...prepared, inspection };
 }

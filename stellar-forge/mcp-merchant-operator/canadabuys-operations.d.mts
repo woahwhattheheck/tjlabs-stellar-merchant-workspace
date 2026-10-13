@@ -6,7 +6,7 @@ export interface CustomerConnection {
 export interface OperationRequest {
  schema: 'stellar-forge.canadabuys-customer-operation.v1'; operationId: string; connection: CustomerConnection;
  request: { name: FullToolName; arguments: Record<string, unknown> };
- replay: { replayable: boolean; basis: string; commandId?: string; captureId?: string };
+ replay: { replayable: boolean; basis: string; commandId?: string; captureId?: string; inputSha256?: string };
 }
 export interface FileIdentity { bytes: number; sha256: string }
 export interface OperationCompletion {
@@ -41,3 +41,27 @@ export declare function adoptCanadaBuysPublication(options: Omit<RunOptions, 'ti
 export declare function bindCanadaBuysCustomerConnection(options: {
  connection: CustomerConnection; client?: CanadaBuysMerchantClient; environment?: Record<string, string | undefined>; signal?: AbortSignal;
 }): Promise<{ connection: CustomerConnection; observation: import('./canadabuys-client.mjs').Status }>;
+
+export interface EvidenceIntakePreparation {
+ schema: 'stellar-forge.canadabuys-customer-intake.v1'; state: 'PREPARED' | 'SAVE_REVISION_REFRESHED';
+ requestFile: FileIdentity & { path: string; reused: boolean };
+ workspaceId: string; noticeId: string; commandId: string; expectedRevision: number; applyRevision?: number;
+ documents: Array<{ index: number; title?: string; bytes?: number; sha256?: string }>;
+ mutation: false; manifest?: FileIdentity & { path: string }; originalRequest?: FileIdentity & { path: string };
+}
+export interface EvidenceIntakeManifest {
+ noticeId: string; commandId: string; capturedAt?: string; sourceUrl?: string;
+ documents: Array<{ path: string; capturedAt?: string; sha256?: string; bytes?: number; [key: string]: unknown }>;
+}
+export declare function prepareCanadaBuysEvidenceIntake(options: {
+ client: CanadaBuysMerchantClient; manifestPath: string; outputPath: string; signal?: AbortSignal;
+}): Promise<EvidenceIntakePreparation>;
+export declare function refreshCanadaBuysEvidenceIntake(options: {
+ client: CanadaBuysMerchantClient; requestPath: string; outputPath: string; signal?: AbortSignal;
+}): Promise<EvidenceIntakePreparation>;
+export declare function prepareCanadaBuysIntakeOperation(options: {
+ client: CanadaBuysMerchantClient; connection: CustomerConnection; directory: string; operationId: string;
+ input: string; expectedSha256?: string; signal?: AbortSignal;
+}): Promise<Awaited<ReturnType<typeof prepareCanadaBuysOperation>> & {
+ inspection: import('./canadabuys-client.mjs').EvidenceIntakeInspection;
+}>;
