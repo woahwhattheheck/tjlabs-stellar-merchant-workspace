@@ -135,6 +135,7 @@ export interface TariffPreviewResult {
 
 export interface TariffWorkspaceState {
   readonly schema: 'stellar-forge.merchant-tariff-workspace.v1';
+  readonly workspaceId: string;
   readonly pricing: JsonValue;
   readonly tariffs: JsonValue;
 }
@@ -276,10 +277,70 @@ export class TariffProtocolError extends Error {
   readonly outcome: 'READ_FAILED' | 'UNKNOWN';
 }
 
+
+/** Raw editor values remain strings, including incomplete decimals and band bounds. */
+export interface TariffStudyDocument {
+  label: string;
+  draft: {
+    version: string; label: string; volumes: string;
+    tariffs: {id:string;label:string;routeId:string;mode:string;
+      tiers:{upTo:string|number|null;unitPriceUsd:string|number|null}[]}[];
+  };
+  pendingSave: TariffSaveInput | null;
+  pendingCommit: TariffCommitSelectionInput | null;
+  priceSaveRequest: JsonObject | null;
+  repricing: {version:string|null;valuations:{
+    routeId:string;paymentIndex:number;expectedAmount:string;enabled:boolean;
+    atomicUnits:string;usd:string;basis:string;
+  }[]};
+  activePlanId: string | null;
+}
+export interface TariffStudySelection { workingCopyId:string; revision?:string; }
+export interface TariffStudySave {
+  workingCopyId:string;expectedRevision:string|null;requestId:string;version:string;
+  sourceBinding?:{version:string;provenance:JsonObject};
+  document:TariffStudyDocument;
+}
+export interface TariffStudySummary {
+  workingCopyId:string;revision:string;label:string;savedAt:string;sourceVersion:string;
+  tariffCount:number;pendingOperations:('pendingSave'|'pendingCommit'|'priceSaveRequest')[];
+  receivedFrom:{workingCopyId:string;revision:string;packageSha256:string}|null;
+}
+export interface TariffStudyRecord {
+  schema:'stellar-forge.merchant-tariff-working-revision.v1';
+  workingCopyId:string;previousRevision:string|null;requestId:string;requestSha256:string;
+  savedAt:string;source:{version:string;provenance:JsonObject};document:TariffStudyDocument;
+  receivedFrom:TariffStudySummary['receivedFrom'];
+}
+export interface TariffStudyState extends TariffStudySummary {
+  schema:'stellar-forge.merchant-tariff-working-state.v1';
+  record:TariffStudyRecord;latestRevision:string;source:JsonObject;
+  history:(TariffStudySummary&{requestId:string})[];
+}
+export interface TariffStudySaved extends TariffStudySummary {
+  status:'TARIFF_WORKING_COPY_SAVED';recovered:boolean;record:TariffStudyRecord;
+}
+export interface TariffStudyPackage {
+  schema:'stellar-forge.merchant-tariff-working-copy.v1';
+  sha256:string;record:TariffStudyRecord;revision:string;
+}
+export interface TariffStudyInputs {
+  schema:'stellar-forge.merchant-tariff-working-inputs.v1';
+  source:{version:string;provenance:JsonObject};document:TariffStudyDocument;
+}
+export interface TariffStudyImport {
+  package:TariffStudyPackage|TariffStudyInputs;workingCopyId:string;requestId:string;
+}
+
 export class TariffClient {
   constructor(options: TariffClientOptions);
   readonly origin: string;
   readonly apiPrefix: '/api' | '/api/tariffs';
+  workingList(options?:TariffRequestOptions):Promise<{schema:'stellar-forge.merchant-tariff-working-list.v1';total:number;copies:TariffStudySummary[]}>;
+  workingLoad(input:TariffStudySelection,options?:TariffRequestOptions):Promise<TariffStudyState>;
+  workingSave(input:TariffStudySave,options?:TariffRequestOptions):Promise<TariffStudySaved>;
+  workingExport(input:TariffStudySelection,options?:TariffRequestOptions):Promise<TariffStudyPackage>;
+  workingImport(input:TariffStudyImport,options?:TariffRequestOptions):Promise<TariffStudySaved>;
   state(options?: TariffRequestOptions): Promise<TariffWorkspaceState>;
   source(version: string, options?: TariffRequestOptions): Promise<TariffSource>;
   preview(input: TariffPreviewInput, options?: TariffRequestOptions): Promise<TariffPreviewResult>;

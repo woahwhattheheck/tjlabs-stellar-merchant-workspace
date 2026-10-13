@@ -167,8 +167,9 @@ function restorable(name){
     new RegExp('^versions/'+uuid+'/[A-Za-z0-9_./-]+$').test(name)||
     new RegExp('^(?:successors|decision-successors)/'+hash+'\\.json$').test(name)||
     new RegExp('^staged-releases/'+uuid+'\\.json$').test(name)||
+    new RegExp('^tariff-plans/(?:selections/|selection-results/)?'+uuid+'\\.json$').test(name)||
     new RegExp('^scenario-plans/'+uuid+'\\.json$').test(name)||
-    new RegExp('^scenario-working/'+uuid+'/successors/'+hash+'\\.json$').test(name)||
+    new RegExp('^(?:scenario-working|tariff-working)/'+uuid+'/successors/'+hash+'\\.json$').test(name)||
     new RegExp('^performance/(?:reviews|review-index|service-requests|proposals|proposal-results|selections|selection-results)/'+uuid+'\\.json$').test(name)||
     new RegExp('^performance/(?:services|service-index)/[a-f0-9]{64}\\.json$').test(name)||
     new RegExp('^economics/sources/records/'+uuid+'/(?:original|source\\.json)$').test(name)||
@@ -222,6 +223,7 @@ export async function inspectCostWorkspaceRestore({archive,directory}) {
       priceChanges:distinct('decisions/'),
       scenarioPlans:distinct('scenario-plans/'),
       scenarioWorkingCopies:distinct('scenario-working/'),
+      tariffWorkingCopies:distinct('tariff-working/'),tariffPlans:distinct('tariff-plans/'),
       pricingLinks:distinct('economics/pricing-links/'),
       receivedCostReviews:distinct('economics/received/records/'),
       performanceReviews:distinct('performance/reviews/'),

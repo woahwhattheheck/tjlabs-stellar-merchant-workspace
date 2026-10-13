@@ -670,8 +670,16 @@ export async function openWorkspace({config, directory, snapshot, history:histor
     const performance=await capturePerformanceBackup({directory});
     const {captureScenarioWorkingBackup}=await import('../planning/working-copies.mjs');
     const working=await captureScenarioWorkingBackup({directory});
-    const scenario=await scenarioBackup(),files=[...scenario.files,...working.files,...performance.files],decisions=await decisionHistory(),pricingEntries=await history();
+    const {captureTariffWorkingBackup}=await import('../tariffs/working-copies.mjs');
+    const tariffWorking=await captureTariffWorkingBackup({directory});
+    const {captureTariffBackup}=await import('../tariffs/workspace.mjs');
+    const tariffs=await captureTariffBackup({directory});
+    if((tariffWorking.references??[]).some(planId=>!tariffs.plans.some(plan=>plan.planId===planId)))
+      throw fault('TARIFF_BACKUP_SOURCE_MISSING','A saved tariff study refers to a missing original completed plan.');
+    const scenario=await scenarioBackup(),files=[...scenario.files,...working.files,...tariffWorking.files,...tariffs.files,...performance.files],decisions=await decisionHistory(),pricingEntries=await history();
     const versions=new Set(pricingEntries.map(entry=>entry.value.version));
+    if([...tariffWorking.pricingVersions,...tariffs.pricingVersions].some(version=>!versions.has(version)))
+      throw fault('TARIFF_BACKUP_SOURCE_MISSING','A retained tariff study or plan has no matching original pricing review.');
     if(working.pricingVersions.some(version=>!versions.has(version)))
       throw fault('WORKING_BACKUP_SOURCE_MISSING','A saved working copy has no matching original pricing review.');
     if(performance.pricingVersions.some(version=>!versions.has(version)))
@@ -694,7 +702,7 @@ export async function openWorkspace({config, directory, snapshot, history:histor
       if(await stageReceipt(decision))files.push({name:'staged-releases/'+decision+'.json',
         read:()=>privateBytes(join(directory,'staged-releases',decision+'.json'))});
     }
-    return {files,scenarioPlans:scenario.plans,scenarioWorkingCopies:working.copies,pricingVersions:pricingEntries.map(entry=>entry.value.version),
+    return {files,scenarioPlans:scenario.plans,scenarioWorkingCopies:working.copies,tariffWorkingCopies:tariffWorking.copies,tariffPlans:tariffs.plans,tariffSelections:tariffs.selections,pricingVersions:pricingEntries.map(entry=>entry.value.version),
       requiredCostEditions:[...new Set([...pricingEntries.map(entry=>entry.value.costOrigin?.edition).filter(Boolean),...performance.requiredCostEditions])],
       performance:performance.summary,
       pricingRevision:pricingEntries.at(-1)?.revision??null,decisionRevision:decisions.at(-1)?.revision??null};

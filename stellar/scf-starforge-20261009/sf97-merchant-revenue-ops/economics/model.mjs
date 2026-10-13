@@ -239,6 +239,7 @@ export async function openEconomics({directory,pricingSource,listPricing,savePri
         snapshot:{pricingRevision:pricingSnapshot.pricingRevision,decisionRevision:pricingSnapshot.decisionRevision,
           scenarioPlans:pricingSnapshot.scenarioPlans,
           scenarioWorkingCopies:pricingSnapshot.scenarioWorkingCopies,
+          tariffWorkingCopies:pricingSnapshot.tariffWorkingCopies,tariffPlans:pricingSnapshot.tariffPlans,tariffSelections:pricingSnapshot.tariffSelections,
           performance:pricingSnapshot.performance,
           costRevision:entries.at(-1)?.revision??null},
         restore:'Restore into a new directory and reopen with original host-selected seller and observation paths.',
