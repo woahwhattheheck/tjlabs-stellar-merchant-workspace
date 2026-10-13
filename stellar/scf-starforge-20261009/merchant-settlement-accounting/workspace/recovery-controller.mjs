@@ -152,7 +152,7 @@ class AccountingMaintenance{
   normalize(kind,value,target){
     need(object(value),'ACCOUNTING_MAINTENANCE_REQUEST','Send a maintenance request object.');
     const fields={pause:[],review:[],resume:[],backup:['expectedReviewId','externalWritersStopped','label'],verify:['backupId','expectedSha256'],
-      restore:['backupId','expectedSha256','externalWritersStopped'],cancel:[]}[kind];
+      restore:['backupId','expectedSha256','externalWritersStopped','relocate','expectedWorkspaceId','expectedSourcesSha256'],cancel:[]}[kind];
     need(fields,'ACCOUNTING_MAINTENANCE_OPERATION','This maintenance operation was not found.',404);
     need(Object.keys(value).every(key=>['actor','requestId',...fields].includes(key)),'ACCOUNTING_MAINTENANCE_REQUEST','Only the declared operation fields are accepted.');
     need(UUID.test(value.requestId??''),'ACCOUNTING_MAINTENANCE_REQUEST','Supply a UUID requestId and retain it until the operation is reconciled.');
@@ -167,7 +167,15 @@ class AccountingMaintenance{
     if(kind==='verify'||kind==='restore'){
       need(CHILD.test(value.backupId??'')&&value.backupId!=='operations'&&SHA.test(value.expectedSha256??''),'ACCOUNTING_MAINTENANCE_BACKUP','Select a retained backup and its exact manifest identity.');
       Object.assign(input,{backupId:value.backupId,expectedSha256:value.expectedSha256});
-      if(kind==='restore'){need(value.externalWritersStopped===true,'ACCOUNTING_MAINTENANCE_WRITERS','Confirm the original input writers have stopped before restoring.');input.externalWritersStopped=true;}
+      if(kind==='restore'){
+        need(value.externalWritersStopped===true,'ACCOUNTING_MAINTENANCE_WRITERS','Confirm the original input writers have stopped before restoring.');input.externalWritersStopped=true;
+        if(value.relocate!==undefined){need(typeof value.relocate==='boolean','ACCOUNTING_MAINTENANCE_RELOCATION','Use an explicit boolean relocation choice.');input.relocate=value.relocate;}
+        const identitySelected=value.expectedWorkspaceId!==undefined||value.expectedSourcesSha256!==undefined;
+        if(identitySelected){
+          need(SHA.test(value.expectedWorkspaceId??'')&&SHA.test(value.expectedSourcesSha256??''),'ACCOUNTING_MAINTENANCE_BINDING','Supply both original accounting identity hashes.');
+          Object.assign(input,{expectedWorkspaceId:value.expectedWorkspaceId,expectedSourcesSha256:value.expectedSourcesSha256});
+        }
+      }
     }
     if(kind==='cancel'){need(UUID.test(target),'ACCOUNTING_MAINTENANCE_REQUEST','Select a retained operation.');input.target=target;}
     return {requestId:value.requestId,input,requestDigest:digest(input)};
@@ -195,6 +203,11 @@ class AccountingMaintenance{
     if(kind==='restore'){
       await this.refreshRecovery();need(this.recovery.status!=='RESTORE_IN_PROGRESS'||this.recovery.manifestSha256===input.expectedSha256,
         'ACCOUNTING_MAINTENANCE_RESTORE_PENDING','Resume the same backup recorded by the original incomplete restore.',409);
+      if(this.recovery.status==='RESTORE_IN_PROGRESS'){
+        need(Boolean(this.recovery.relocate)===Boolean(input.relocate),'ACCOUNTING_MAINTENANCE_RESTORE_PENDING','Continue the retained backup with its original relocation choice.',409);
+        for(const field of ['expectedWorkspaceId','expectedSourcesSha256'])if(input[field]!==undefined&&this.recovery[field]!==undefined)
+          need(input[field]===this.recovery[field],'ACCOUNTING_MAINTENANCE_RESTORE_PENDING','Continue the retained original accounting identity.',409);
+      }
     }
     if(kind==='resume'){
       await this.refreshRecovery();need(this.recovery.status==='NO_RESTORE_IN_PROGRESS','ACCOUNTING_MAINTENANCE_RESTORE_PENDING','Restore the original workspace completely before reopening it.',409);
@@ -245,7 +258,10 @@ class AccountingMaintenance{
         await phase('AUTHENTICATING_BACKUP');job.result=await verifyAccountingBackup({bundle:join(this.config.backupRoot,input.backupId),expectedSha256:input.expectedSha256,signal,...password});
         const backup=this.state.backups.find(item=>item.id===input.backupId);backup.verifiedAt=now();
       }else if(job.kind==='restore'){
-        await phase('RESTORING_ORIGINAL_PATHS');job.result=await restoreAccountingWorkspace({...base,...password,bundle:join(this.config.backupRoot,input.backupId),expectedSha256:input.expectedSha256});
+        await phase(input.relocate?'RESTORING_AT_NEW_LOCATION':'RESTORING_ORIGINAL_PATHS');
+        job.result=await restoreAccountingWorkspace({...base,...password,bundle:join(this.config.backupRoot,input.backupId),expectedSha256:input.expectedSha256,
+          ...(input.relocate!==undefined?{relocate:input.relocate}:{}),
+          ...(input.expectedWorkspaceId!==undefined?{expectedWorkspaceId:input.expectedWorkspaceId,expectedSourcesSha256:input.expectedSourcesSha256}:{})});
       }else if(job.kind==='resume'){
         await phase('REOPENING_ACCOUNTING');await this.stopRuntime();this.runtime=await this.openRuntime();this.mode='RUNNING';this.state.requestedMode='RUNNING';this.review=null;
         job.result={status:'ACCOUNTING_REOPENED',revision:this.runtime.workspace.view().revision};

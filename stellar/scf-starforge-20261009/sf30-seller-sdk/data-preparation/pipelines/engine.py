@@ -256,7 +256,8 @@ class PipelineWorkspace:
         items = [{'sequence': seq, **parse_json(body)} for seq, body in rows[:limit]]
         return {'items': items, 'nextAfter': items[-1]['sequence'] if len(rows) > limit else None}
 
-    def enqueue(self, pipeline_id, request_key, *, revision=None, inputs=None):
+    def enqueue(self, pipeline_id, request_key, *, revision=None, inputs=None, reuse_execution=None):
+        from reuse import engine_identity
         if not isinstance(request_key, str) or not request_key.strip() or len(request_key) > 200:
             raise PreparationError('Supply a stable request key of 1–200 characters; reuse it after a lost response')
         definition = self.definition(pipeline_id, revision)
@@ -265,6 +266,11 @@ class PipelineWorkspace:
             raise PreparationError('An input selection must name every declared pipeline input, without extras')
         originals = {k: self.native.get('sources', v) for k, v in bindings.items()}
         selection = {'pipelineId': pipeline_id, 'revision': definition['revision'], 'inputs': bindings}
+        if reuse_execution is not None:
+            previous = self.execution(reuse_execution)
+            if previous['status'] == 'RUNNING':
+                raise PreparationError('Select a saved, non-running prior execution for explicit result reuse')
+            selection['reuseExecution'] = previous['id']
         fingerprint = sha(selection)
         with self.connection() as db:
             db.execute('BEGIN IMMEDIATE')
@@ -275,7 +281,7 @@ class PipelineWorkspace:
                     raise PreparationError('That request key already belongs to a different pipeline edition or input selection')
                 return body
             body = {'id': 'e_' + uuid.uuid4().hex, 'requestKey': request_key, 'requestDigest': fingerprint,
-                    **selection, 'definition': definition, 'inputOriginals': originals,
+                    **selection, 'definition': definition, 'inputOriginals': originals, 'nativeEngineSha256': engine_identity(),
                     'status': 'QUEUED', 'createdAt': now(), 'stages': {s['id']: {'status': 'PENDING', 'attempts': []} for s in definition['stages']}}
             db.execute('INSERT INTO pipeline_executions VALUES(?,?,?)', (body['id'], request_key, dumps(body)))
             db.execute('INSERT INTO pipeline_events(execution,body) VALUES(?,?)',
@@ -356,7 +362,7 @@ class PipelineWorkspace:
         return result, lineage
 
     def _attempt(self, execution, stage, state):
-        if not state['attempts'] or state['attempts'][-1].get('status') in {'FAILED', 'CANCELLED', 'INTERRUPTED'}:
+        if not state['attempts'] or state['attempts'][-1].get('retiredByAdoption') or state['attempts'][-1].get('status') in {'FAILED', 'CANCELLED', 'INTERRUPTED'}:
             number = len(state['attempts']) + 1
             state['attempts'].append({'number': number, 'status': 'PLANNED', 'createdAt': now(),
                                      'token': f'pipeline:{execution["id"]}:{stage["id"]}:{number}'})
@@ -419,6 +425,10 @@ class PipelineWorkspace:
                 return execution
             if execution['status'] != 'QUEUED' and not resume:
                 raise PreparationError('Use Resume for a saved unfinished execution; its inputs remain unchanged')
+            from reuse import engine_identity, try_reuse
+            recorded_engine = execution.get('nativeEngineSha256')
+            if recorded_engine is not None and recorded_engine != engine_identity():
+                raise PreparationError('The saved unfinished execution selects another preparation version. Save a new edition and execution with the current version; the original results remain available.')
             cancel = self.cancel_root / execution_id
             if resume:
                 cancel.unlink(missing_ok=True)
@@ -437,6 +447,8 @@ class PipelineWorkspace:
                     state = execution['stages'][sid]
                     if state['status'] == 'COMPLETE':
                         self._validate_complete(state)
+                        continue
+                    if try_reuse(self, execution, sid):
                         continue
                     native = self._attempt(execution, indexed[sid], state)
                     if native is None:
@@ -494,7 +506,13 @@ class PipelineWorkspace:
                 'stages': stages, 'semantics': 'Equality compares complete ordered JSONL bytes. This is not a key-matched row diff.'}
 
     def snapshot(self, db):
-        return {'schema': SCHEMA, 'definitions': [parse_json(r[0]) for r in db.execute('SELECT body FROM pipeline_definitions ORDER BY rowid')],
+        from interop import read_origins
+        body = {'schema': SCHEMA, 'definitions': [parse_json(r[0]) for r in db.execute('SELECT body FROM pipeline_definitions ORDER BY rowid')],
                 'executions': [parse_json(r[0]) for r in db.execute('SELECT body FROM pipeline_executions ORDER BY rowid')],
                 'events': [{'sequence': seq, 'execution': execution, 'body': parse_json(body)}
                            for seq, execution, body in db.execute('SELECT sequence,execution,body FROM pipeline_events ORDER BY sequence')]}
+
+        origins = read_origins(db)
+        if origins:
+            body['origins'] = origins
+        return body

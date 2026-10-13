@@ -8,6 +8,15 @@ const status = (s) => `<span class="status ${esc(s)}">${esc(s ? s.charAt(0) + s.
 const clone = v => JSON.parse(JSON.stringify(v));
 const ui = {creationId:null,view:'pipelines', state:null, draft:null, editing:null, execution:null, stage:null, page:0, request:null};
 let poll = null;
+let reuseChoice = '';
+let receivingRequest = null;
+const unique = () => typeof crypto.randomUUID==='function' ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16)),v=>v.toString(16).padStart(2,'0')).join('');
+function reuseControl() {
+  const items=ui.state.executions.items.filter(r=>r.status!=='RUNNING');
+  return `<div class="field"><label for="reuse-execution">Prior execution for unchanged stages</label><select id="reuse-execution"><option value="">Compute every stage</option>${options(items,reuseChoice,runLabel)}</select><p class="hint">Optional. Exact SQL, parameters, original input results and the recorded engine must match. Changed stages compute normally; reused results keep their original reviews and history.</p></div>`;
+}
+function bindReuse() {const select=$('#reuse-execution');if(select)select.onchange=()=>{reuseChoice=select.value;};}
+
 async function request(path, body, raw=false) {
   const response = await fetch(path, body === undefined ? {} : {method:'POST',headers:raw ? {} : {'Content-Type':'application/json'},body:raw ? body : JSON.stringify(body)});
   const value = await response.json();
@@ -68,9 +77,10 @@ function pipelines() {
   const definitions = ui.state.pipelines.items;
   $('#content').innerHTML = head('Saved pipelines','Build a sequence of preparation steps from exact source editions.','<button id="new-pipeline" class="primary">New pipeline</button>') +
   `<div class="toolbar"><label for="pipeline-select">Open saved pipeline</label><select id="pipeline-select"><option value="">Select a saved pipeline…</option>${options(definitions,ui.editing?.id,p=>`${p.label} · edition ${p.revision}`)}</select><button id="open-pipeline">Open</button></div>`+
-  more('pipelines') +
+  more('pipelines') + `<div class="panel">${reuseControl()}${more('executions')}</div>` +
   (ui.draft ? '<div id="editor"></div>' : `<div class="metric-row"><div class="metric"><b>${count(ui.state.pipelines.total)}</b><span>Saved pipelines</span></div><div class="metric"><b>${count(ui.state.executions.total)}</b><span>Retained executions</span></div><div class="metric"><b>${count(ui.state.sources.filter(s=>!s.alias.startsWith('pipe_')).length)}</b><span>Original source editions</span></div><div class="metric"><b>${count(definitions.reduce((n,p)=>n+p.stages.length,0))}</b><span>Stages in loaded pipelines</span></div></div>`+
   (definitions.length ? definitions.map(p=>`<div class="run-card"><div><h3>${esc(p.label)}</h3><p class="muted">Edition ${p.revision} · ${p.stages.length} stages · ${p.outputs.length} outputs</p><p>${esc(p.description)}</p></div><div class="toolbar"><button data-edit="${esc(p.id)}">Edit pipeline</button><button class="primary" data-run="${esc(p.id)}">Run saved edition</button></div></div>`).join('') : '<div class="empty">Import an original input, then create your first pipeline or start from an existing saved recipe.</div>'));
+  bindReuse();
   $('#new-pipeline').onclick = ()=>edit(null);
   $('#open-pipeline').onclick = ()=>action(async()=>{ const id=$('#pipeline-select').value; if(id) edit(await request('/api/definition?id='+encodeURIComponent(id))); });
   document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>edit(definitions.find(p=>p.id===b.dataset.edit)));
@@ -131,7 +141,7 @@ function definitionContent(value) {
     stages:value.stages.map(stage=>({...stage,label:stage.label.trim(),description:stage.description||'',parameters:stage.parameters||{}})),outputs:value.outputs}));
 }
 async function saveEditor(run) {
-  readEditor();if(!ui.editing&&!ui.creationId)ui.creationId='p_'+crypto.randomUUID().replaceAll('-','');
+  readEditor();if(!ui.editing&&!ui.creationId)ui.creationId='p_'+unique().replaceAll('-','');
   const pipeline_id=ui.editing?.id||ui.creationId,expected_revision=ui.editing?.revision||0,definition=clone(ui.draft);
   let result;
   try {result=await request('/api/save',{definition,pipeline_id,expected_revision});}
@@ -149,11 +159,11 @@ async function saveEditor(run) {
 async function launch(id, revision) {
   // Retain the request key until enqueue is received; retrying a lost response
   // uses the same immutable selection instead of silently creating another run.
-  const spec={pipeline_id:id,...(revision?{revision}:{})};
-  if(!ui.request||JSON.stringify(ui.request.spec)!==JSON.stringify(spec))ui.request={spec,key:crypto.randomUUID()};
-  sessionStorage.setItem('pipeline-pending-request',JSON.stringify(ui.request));
+  const spec={pipeline_id:id,...(revision?{revision}:{}),...(reuseChoice?{reuse_execution:reuseChoice}:{})};
+  if(!ui.request||JSON.stringify(ui.request.spec)!==JSON.stringify(spec))ui.request={spec,key:unique()};
+  try{sessionStorage.setItem('pipeline-pending-request',JSON.stringify(ui.request));}catch{}
   const run=await request('/api/enqueue',{...spec,request_key:ui.request.key});
-  ui.request=null;sessionStorage.removeItem('pipeline-pending-request');
+  ui.request=null;try{sessionStorage.removeItem('pipeline-pending-request');}catch{}
   ui.execution=run.id;ui.stage=null;ui.page=0;try{await request('/api/execute',{execution_id:run.id});}finally{await refresh(false);await show('runs');}
 }
 function inputs() {
@@ -175,12 +185,13 @@ async function runs() {
 async function detail() {
   const run=await request('/api/execution?id='+encodeURIComponent(ui.execution));
   if(ui.view!=='runs'||ui.execution!==run.id||!$('#run-detail'))return;
+  const savedIndex=ui.state.executions.items.findIndex(e=>e.id===run.id);if(savedIndex>=0)ui.state.executions.items[savedIndex]=run;
   const completed=Object.values(run.stages).filter(s=>s.status==='COMPLETE');
   const resumable=!['COMPLETE','RUNNING'].includes(run.status);
   $('#run-detail').innerHTML=`<div class="metric-row"><div class="metric"><b>${completed.length} / ${run.definition.stages.length}</b><span>Completed stages</span></div><div class="metric"><b>${run.revision}</b><span>Saved pipeline edition</span></div><div class="metric"><b>${Object.keys(run.inputs).length}</b><span>Pinned original inputs</span></div><div class="metric"><b>${run.definition.outputs.length}</b><span>Selected final outputs</span></div></div>
     <div class="panel"><div class="section-title"><div><h3>${esc(run.definition.label)}</h3><p class="hint">Created ${esc(date(run.createdAt))}</p></div>${status(run.status)}</div>${run.message?`<p>${esc(run.message)}</p>`:''}
     <div class="toolbar">${resumable?'<button id="resume-execution" class="primary">Resume saved execution</button>':''}${['QUEUED','RUNNING','WAITING'].includes(run.status)?'<button id="cancel-execution">Cancel execution</button>':''}<button id="to-handover">Prepare handover</button></div>
-    <div class="scroll"><table><thead><tr><th>Stage</th><th>Status</th><th>Rows</th><th>Attempts</th><th>Output</th></tr></thead><tbody>${run.definition.order.map(sid=>{const s=run.definition.stages.find(s=>s.id===sid),state=run.stages[sid];return `<tr><td class="wrap">${state.status==='COMPLETE'?`<button class="link" data-inspect="${esc(sid)}">${esc(s.label)}</button>`:esc(s.label)}</td><td>${status(state.status)}</td><td>${state.rows===undefined?'—':count(state.rows)}</td><td>${state.attempts.length}</td><td>${run.definition.outputs.includes(sid)?'Customer result':'Intermediate'}</td></tr>`;}).join('')}</tbody></table></div>
+    <div class="scroll"><table><thead><tr><th>Stage</th><th>Status</th><th>Rows</th><th>Attempts</th><th>Output</th></tr></thead><tbody>${run.definition.order.map(sid=>{const s=run.definition.stages.find(s=>s.id===sid),state=run.stages[sid];return `<tr><td class="wrap">${state.status==='COMPLETE'?`<button class="link" data-inspect="${esc(sid)}">${esc(s.label)}</button>`:esc(s.label)}</td><td>${status(state.status)}</td><td>${state.rows===undefined?'—':count(state.rows)}</td><td>${state.reuseFrom?'Reused prior result':state.attempts.length}</td><td>${run.definition.outputs.includes(sid)?'Customer result':'Intermediate'}</td></tr>`;}).join('')}</tbody></table></div>
     <details><summary>Stage execution history</summary><div id="event-history"></div></details></div><div id="result-preview"></div>`;
   $('#to-handover').onclick=()=>show('handover');
   if($('#resume-execution'))$('#resume-execution').onclick=()=>action(async()=>{await request('/api/execute',{execution_id:run.id,resume:true});await detail();});
@@ -208,18 +219,57 @@ function comparison() {
   $('#content').innerHTML=head('Compare executions','Compare exact source selections and complete ordered stage results.')+`<div class="panel"><div class="grid"><div class="field"><label for="before-run">Before</label><select id="before-run">${options(items,items[1]?.id,runLabel)}</select></div><div class="field"><label for="after-run">After</label><select id="after-run">${options(items,items[0]?.id,runLabel)}</select></div></div><button id="compare-runs" class="primary" ${items.length?'':'disabled'}>Compare saved executions</button></div>${more('executions')}<div id="comparison"></div>`;
   $('#compare-runs').onclick=()=>action(async()=>{const value=await request('/api/compare?'+new URLSearchParams({before:$('#before-run').value,after:$('#after-run').value}));$('#comparison').innerHTML=`<div class="panel"><h3>Complete stage comparison</h3><div class="scroll"><table><thead><tr><th>Stage</th><th>Before rows</th><th>After rows</th><th>Ordered result</th></tr></thead><tbody>${value.stages.map(s=>`<tr><td class="wrap">${esc(s.label)}</td><td>${s.beforeRows===null?'—':count(s.beforeRows)}</td><td>${s.afterRows===null?'—':count(s.afterRows)}</td><td>${s.sameOrderedResult===true?'Identical':s.sameOrderedResult===false?'Changed':'Not available'}</td></tr>`).join('')}</tbody></table></div><p class="comparison-note">Equality uses the full ordered JSON Lines files, not the preview rows. A changed order counts as a changed result; this is not a key-matched row comparison.</p><h3>Input edition changes</h3>${value.inputChanges.length?value.inputChanges.map(c=>`<p><strong>${esc(c.input)}</strong>: ${esc(ui.state.sources.find(s=>s.id===c.before)?.label||'Absent')} → ${esc(ui.state.sources.find(s=>s.id===c.after)?.label||'Absent')}</p>`).join(''):'<p>The exact original input editions are unchanged.</p>'}</div>`;});
 }
-function handover() {
+async function handover() {
   const items=ui.state.executions.items;const selected=items.find(r=>r.id===ui.execution)||items[0];
   $('#content').innerHTML=head('Customer handover','Receive complete results or reopen the whole editable preparation project.')+`<div class="panel"><h3>Select the execution</h3><div class="field"><label for="handover-run">Saved execution</label><select id="handover-run">${options(items,selected?.id,runLabel)}</select></div>${more('executions')}<div id="handover-actions"></div></div><div class="panel"><h3>Editable project</h3><p>Includes every retained original, saved recipe and pipeline edition, intermediate and final dataset, result review, and execution history.</p><button id="export-project" class="primary">Download complete project</button><div class="delivery-links" id="project-link"></div><div class="help"><h3>Independent receiving</h3><p>Use the pipeline source package and a new destination directory:</p><pre>python3 cli.py --workspace ./received receive ./project.zip
 python3 cli.py --workspace ./received serve --port 8777</pre><p>The receiver reconstructs the original source tables and result indexes, keeps all saved editions, and opens the same pipeline editor. It does not execute saved queries during import.</p></div></div>`;
+  $('#content').insertAdjacentHTML('beforeend', `<div class="panel"><h3>Receive an editable project</h3><p>Upload a current pipeline project or an earlier saved pipeline project. The receiver preserves its complete original records and opens a separate workspace; this workspace and any running jobs remain unchanged.</p><form id="receive-form"><div class="field"><label for="project-file">Complete project ZIP</label><input id="project-file" type="file" accept=".zip" required></div><button class="primary" type="submit">Receive independent project</button></form><div id="receive-info" class="delivery-links"></div><h3>Previously received projects</h3><div id="received-projects"></div></div>`);
+  const receiveForm=$('#receive-form'), projectFile=$('#project-file'), receiveInfo=$('#receive-info');
+  const receivedProjects=$('#received-projects'), handoverRun=$('#handover-run'), handoverActions=$('#handover-actions');
+  const exportButton=$('#export-project'), projectLink=$('#project-link');
+  function completedDownload(container, value, description) {
+    const link=document.createElement('a');
+    link.href=value.download;link.textContent=description+' ('+count(value.bytes)+' bytes)';
+    const current=container.isConnected;
+    if(current)container.replaceChildren(link);
+    else{link.hidden=true;document.body.append(link);}
+    link.click();
+    if(!current)link.remove();
+  }
+  let receivedListGeneration=0;
+  async function receivedList() {
+    if(!receivedProjects.isConnected)return;
+    const generation=++receivedListGeneration;
+    const data=await request('/api/received');
+    if(!receivedProjects.isConnected||generation!==receivedListGeneration)return;
+    receivedProjects.innerHTML=data.items.length?data.items.map(p=>`<div class="run-card"><div><strong>${esc(p.label)}</strong><p class="hint">${count(p.executions)} executions · ${count(p.sources)} retained source editions</p></div><button data-open-received="${esc(p.id)}">Open independent workspace</button></div>`).join(''):'<p class="hint">No projects have been received here.</p>';
+    receivedProjects.querySelectorAll('[data-open-received]').forEach(b=>b.onclick=()=>action(async()=>{const value=await request('/api/open-received',{id:b.dataset.openReceived});if(receiveInfo.isConnected)receiveInfo.innerHTML=`<a href="${esc(value.origin)}" target="_blank" rel="noopener">Open received project: ${esc(value.label)}</a>`;}));
+  }
+  receiveForm.onsubmit=event=>{event.preventDefault();action(async()=>{
+    const file=projectFile.files[0];if(!file)return;
+    const fingerprint=JSON.stringify([file.name,file.size,file.lastModified]);
+    if(!receivingRequest||receivingRequest.file!==fingerprint)receivingRequest={file:fingerprint,key:unique()};
+    try{sessionStorage.setItem('pipeline-receiving-request',JSON.stringify(receivingRequest));}catch{}
+    const pendingRequest=receivingRequest,button=receiveForm.querySelector('button');button.disabled=true;
+    try{const value=await request('/api/receive?'+new URLSearchParams({requestKey:pendingRequest.key}),file,true);
+      if(receiveInfo.isConnected)receiveInfo.innerHTML=`<p>Received ${count(value.executions)} executions with their complete original results.</p><a href="${esc(value.origin)}" target="_blank" rel="noopener">Open received project: ${esc(value.label)}</a>`;
+      if(receivingRequest?.key===pendingRequest.key){receivingRequest=null;try{sessionStorage.removeItem('pipeline-receiving-request');}catch{}}
+      await receivedList();notice('The independent project is ready. This workspace is unchanged.');
+    }finally{button.disabled=false;}
+  });};
   const renderActions=()=>{
-    const run=items.find(r=>r.id===$('#handover-run').value);if(!run){$('#handover-actions').innerHTML='<p>No saved execution yet.</p>';return;}
-    ui.execution=run.id;$('#handover-actions').innerHTML=`<p>${status(run.status)} · ${run.definition.outputs.length} final output selections</p><div class="toolbar"><button data-delivery="report">Download operating report</button><button data-delivery="deliver" ${run.status==='COMPLETE'?'':'disabled'}>Download all customer results</button></div><div class="field"><label for="merchant-stage">Original merchant dataset</label><select id="merchant-stage">${run.definition.stages.filter(s=>run.stages[s.id].status==='COMPLETE').map(s=>`<option value="${esc(s.id)}" ${run.definition.outputs.includes(s.id)?'selected':''}>${esc(s.label)} · ${count(run.stages[s.id].rows)} rows</option>`).join('')}</select></div><button data-delivery="merchant" ${Object.values(run.stages).some(s=>s.status==='COMPLETE')?'':'disabled'}>Download merchant dataset package</button><div class="delivery-links" id="result-link"></div>`;
-    document.querySelectorAll('[data-delivery]').forEach(b=>b.onclick=()=>action(async()=>{b.disabled=true;try{const value=await request('/api/'+b.dataset.delivery,{execution_id:run.id,stage_id:$('#merchant-stage').value});$('#result-link').innerHTML=`<a href="${esc(value.download)}">Open completed ${b.dataset.delivery==='report'?'report':'download'} (${count(value.bytes)} bytes)</a>`;$('#result-link a').click();}finally{b.disabled=false;}}));
+    const run=items.find(r=>r.id===handoverRun.value);if(!run){handoverActions.innerHTML='<p>No saved execution yet.</p>';return;}
+    const completed=run.definition.stages.filter(s=>run.stages[s.id].status==='COMPLETE');
+    const preferred=run.definition.outputs.find(id=>completed.some(s=>s.id===id&&run.stages[id].rows>0))??run.definition.order.find(id=>completed.some(s=>s.id===id))??completed[0]?.id;
+    ui.execution=run.id;handoverActions.innerHTML=`<p>${status(run.status)} · ${run.definition.outputs.length} final output selections</p><div class="toolbar"><button data-delivery="report">Download operating report</button><button data-delivery="deliver" ${run.status==='COMPLETE'?'':'disabled'}>Download all customer results</button></div><div class="field"><label for="merchant-stage">Original merchant dataset</label><select id="merchant-stage">${completed.map(s=>`<option value="${esc(s.id)}" ${s.id===preferred?'selected':''}>${esc(s.label)} · ${count(run.stages[s.id].rows)} ${run.stages[s.id].rows===1?'row':'rows'}</option>`).join('')}</select></div><button data-delivery="merchant" ${Object.values(run.stages).some(s=>s.status==='COMPLETE')?'':'disabled'}>Download merchant dataset package</button><div class="delivery-links" id="result-link"></div>`;
+    const merchantStage=handoverActions.querySelector('#merchant-stage'),resultLink=handoverActions.querySelector('#result-link');
+    handoverActions.querySelectorAll('[data-delivery]').forEach(b=>b.onclick=()=>action(async()=>{b.disabled=true;try{const value=await request('/api/'+b.dataset.delivery,{execution_id:run.id,stage_id:merchantStage.value});completedDownload(resultLink,value,'Open completed '+(b.dataset.delivery==='report'?'report':'download'));}finally{b.disabled=false;}}));
   };
-  $('#handover-run').onchange=renderActions;renderActions();$('#export-project').onclick=()=>action(async()=>{const b=$('#export-project');b.disabled=true;try{const value=await request('/api/export',{});$('#project-link').innerHTML=`<a href="${esc(value.download)}">Open complete editable project (${count(value.bytes)} bytes)</a>`;$('#project-link a').click();}finally{b.disabled=false;}});
+  handoverRun.onchange=renderActions;renderActions();exportButton.onclick=()=>action(async()=>{const b=exportButton;b.disabled=true;try{const value=await request('/api/export',{});completedDownload(projectLink,value,'Open complete editable project');}finally{b.disabled=false;}});
+  await receivedList();
 }
 document.querySelectorAll('nav button').forEach(button=>button.onclick=()=>action(async()=>{if(ui.view==='pipelines'&&ui.draft&&$('#editor'))readEditor();await show(button.dataset.view);}));
 $('#refresh').onclick=()=>action(async()=>{if(ui.view==='pipelines'&&ui.draft&&$('#editor'))readEditor();await refresh();});
 try { const saved=sessionStorage.getItem('pipeline-pending-request');if(saved)ui.request=JSON.parse(saved); } catch { /* A malformed local draft never changes stored work. */ }
+try {const saved=sessionStorage.getItem('pipeline-receiving-request');if(saved)receivingRequest=JSON.parse(saved);}catch{}
 action(()=>refresh());

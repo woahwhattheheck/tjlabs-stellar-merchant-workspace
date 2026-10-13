@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+export const ACTIONS=Object.freeze(['contract.save','provider.reconcile','capture.fetch','capture.import','capture.reconcile','report.prepare','report.review','report.export',
+  'dataset.prepare','release.prepare','release.activate','release.start','release.stop','release.rollback','release.reconcile','buyer.receive','project.export','project.receive']);
 // Forecast values retain their exact source number tokens; only safe timestamps are converted.
 import {createHash} from 'node:crypto';
 import {parseExactJSON} from '../stellar-expert/exact-json.mjs';

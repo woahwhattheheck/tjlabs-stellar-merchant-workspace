@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { MerchantFredWorkspaces } from './fred-workspace.mjs';
 import { fredFileSelection } from './catalog/fred-workspace.mjs';
 import { FredWorkspaceClient, FredWorkspaceError, FRED_WORKSPACE_CONNECTION_SCHEMA, readFredWorkspaceConfiguration,
-  readFredHostFile, canonicalFredJSON, saveFredFile, receiveFredWorkspaceFile } from './fred-workspace-client.mjs';
+  readFredHostFile, canonicalFredJSON, saveFredFile, inspectFredWorkspaceFile, receiveFredWorkspaceFile } from './fred-workspace-client.mjs';
 
 export const FRED_WORKSPACE_HELP = [
   'Starforge economic workspace customer',
@@ -25,7 +25,8 @@ export const FRED_WORKSPACE_HELP = [
   'Inspect and review:',
   '  status | inputs | input-inspect --input ALIAS',
   '  records --kind captures|reviews|publications|operations|briefingTemplates|briefingSuccessors',
-  '      |releaseCaptures|releaseWatches|releasePlans [--offset 0 --limit 50 --revision N]',
+  '      |releaseCaptures|releaseWatches|releasePlans|ddpCrosswalks|ddpPackages|ddpMigrations|ddpReceivings',
+  '      [--offset 0 --limit 50 --revision N]',
   '  record --kind KIND --id ID [--revision N]',
   '  operation --id ORIGINAL_ID | wait --id ORIGINAL_ID [--wait-ms 60000]',
   '  observations --capture SHA [--series UNRATE --offset 0]',
@@ -70,6 +71,37 @@ export const FRED_WORKSPACE_HELP = [
   '  release-plan --plan PLAN_ID [--section acquisitions|calendarChanges|vintageChanges|events|schedule --offset 0 --limit 100]',
   '  release-vintage-capture --id ID --revision N --plan PLAN_ID --as-of YYYY-MM-DD',
   '',
+  "DDP package migration and completed reconciliation:",
+  "  ddp-sources [--kind crosswalks|packages|migrations|receivings --offset 0 --limit 50 --revision N]",
+  "  ddp-crosswalk --crosswalk CROSSWALK_ID [--release H15 --query TEXT --offset 0 --limit 100]",
+  "  ddp-crosswalk-import --id ID --revision N --input CROSSWALK_ALIAS [--sha256 FILE_SHA --crosswalk ID]",
+  "  ddp-crosswalk-acquire --id ID --revision N [--url ORIGINAL_OFFICIAL_CSV_URL]",
+  "  ddp-package --package PACKAGE_ID [--section series|observations --package-series ORIGINAL_SERIES_ID]",
+  "      [--frequency ORIGINAL_FREQUENCY --query TEXT --offset 0 --limit 100]",
+  "  ddp-package-import --id ID --revision N --input PACKAGE_ALIAS [--sha256 FILE_SHA --package ID]",
+  "      Resume either staged source import using the same --id, --revision and original source ID.",
+  "  ddp-migration-preview --package PACKAGE_ID --crosswalk CROSSWALK_ID --name NAME --as-of YYYY-MM-DD",
+  "      [--window-file WINDOW.json --decisions-file DECISIONS.json --bindings-file BINDINGS.json]",
+  "      [--bookmark ORIGINAL_DDP_URL --note-file TEXT --page-size 1000 --max-rows 1000000]",
+  "      [--section series|acquisitions|mappings --offset 0 --limit 100]",
+  "  ddp-migration-save --args-file EXACT_REVIEWED_SELECTION.json --id ID --revision N --preview-id SHA",
+  "  ddp-migration --migration MIGRATION_ID [--section series|acquisitions|mappings --offset 0 --limit 100]",
+  "  ddp-migration-acquire --id ID --revision N --migration MIGRATION_ID",
+  "      One original operation owns every native FRED batch and its completed receiving.",
+  "  ddp-receiving --receiving RECEIVING_ID [--package-series ORIGINAL_SERIES_ID]",
+  "      [--changes-only true|false --offset 0 --limit 100]",
+  "",
+  'Complete current-publication editions:',
+  '  published-operations [--offset 0 --limit 100]',
+  '  published-operation --id ORIGINAL_PUBLICATION',
+  '  published-start --id ORIGINAL_PUBLICATION --migration ORIGINAL_PLAN --revision ORIGINAL_REVISION',
+  '  published-report --id ORIGINAL_PUBLICATION [--query TEXT --offset 0 --limit 100]',
+  '  published-rows --id ORIGINAL_PUBLICATION --comparison ORIGINAL_COMPARISON',
+  '      [--series-id ORIGINAL_SERIES --result-status DIFFERENT --offset 0 --limit 100]',
+  '  published-file-read --id ORIGINAL_PUBLICATION --name EXACT_LISTED_PATH --sha256 EXACT_SHA',
+  '      [--offset 0 --limit 196608]',
+  '  published-download --id ORIGINAL_PUBLICATION --name edition-package.tar.gz --sha256 EXACT_SHA --out NEW_FILE',
+  '',
   'Run the configured merchant and original customer:',
   '  merchant-start --publication SHA | merchant-stop --publication SHA',
   '  publication --publication SHA',
@@ -84,11 +116,16 @@ export const FRED_WORKSPACE_HELP = [
   '  download --kind source --capture SHA --out NEW_FILE [--sha256 FILE_SHA]',
   '  download --kind release-source --release-capture SHA --out NEW_CAPTURE.json [--sha256 FILE_SHA]',
   '  download --kind release-plan --plan PLAN_ID --out NEW_PLAN.json [--sha256 FILE_SHA]',
+  '  download --kind ddp-crosswalk --crosswalk CROSSWALK_ID --out ORIGINAL_CROSSWALK.json',
+  '  download --kind ddp-package --package PACKAGE_ID --out ORIGINAL_PACKAGE.json',
+  '  download --kind ddp-migration --migration MIGRATION_ID --out COMPLETE_PLAN.json',
+  '  download --kind ddp-receiving --receiving RECEIVING_ID --format json|csv|html --out COMPLETE_REPORT',
   '  download --kind comparison --before SHA --after SHA --out NEW_FILE',
   '  download --kind briefing --review SHA --format html|csv|json|manifest --out NEW_FILE',
   '  download --kind briefing-successor --successor SUCCESSOR_ID --format html|csv|json --out NEW_FILE',
   '  download --kind customer --publication SHA --intent ORIGINAL_ID --out NEW_FILE',
   '  download --kind project --out NEW_PROJECT_BUNDLE.json',
+  '  bundle-inspect --source ORIGINAL_PROJECT_BUNDLE.json [--sha256 FILE_SHA]',
   '  receive --source ORIGINAL_PROJECT_BUNDLE.json --project EMPTY_PRIVATE_DIRECTORY [--sha256 FILE_SHA]',
   '  disconnect',
   '',
@@ -106,14 +143,19 @@ const remote = new Set(['workspaces','status','inputs','input-inspect','records'
   'publication','requests','preview','prepare','buy','recover','disconnect',
   'briefing-templates','briefing-template-save','briefing-successor-preview','briefing-successor-save','briefing-successor',
   'release-captures','release-capture','release-import','release-acquire','release-watches','release-watch-save',
-  'release-plan-preview','release-plan-save','release-plan','release-vintage-capture']);
+  'release-plan-preview','release-plan-save','release-plan','release-vintage-capture',
+  'ddp-sources','ddp-crosswalk','ddp-crosswalk-import','ddp-crosswalk-acquire','ddp-package','ddp-package-import',
+  'ddp-migration-preview','ddp-migration-save','ddp-migration','ddp-migration-acquire','ddp-receiving',
+  'published-operations','published-operation','published-start','published-report','published-rows','published-file-read']);
 const allowed = new Set(['connection','workspace','args-file','out','console-url-file','project-id','binding-sha','label',
   'inputs-file','profiles-file','payment-file','merchant-origin','merchant-path','kind','id','capture','series','offset','limit','revision','before','after','input','sha256',
   'captures','review','profile','pending','publication','intent','query','file','accept','view-sha','selection-file',
   'policy-file','note-file','briefing-file','format','previous-file','wait-ms','source','project','help',
   'template','successor','name','window-file','previous-template','anchor-date','baseline-review','previous-successor','preview-id','changes-only',
   'release-capture','watch','plan','before-release','after-release','section','as-of','watch-series',
-  'observation-start','observation-end','baseline-as-of','catch-up','page-size','max-rows']);
+  'observation-start','observation-end','baseline-as-of','catch-up','page-size','max-rows',
+  'crosswalk','package','migration','receiving','package-series','release','frequency','bookmark','url','decisions-file','bindings-file',
+  'comparison','result-status','series-id']);
 function parse(values) {
   const argv = [...values], command = argv[0] && !argv[0].startsWith('--') ? argv.shift() : 'help', flags = {};
   while (argv.length) {
@@ -136,6 +178,13 @@ async function jsonFile(path, maximum = 16 * 1024 * 1024) {
   const bytes = await readFredHostFile(path, maximum);
   let value; try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { fail('Use complete JSON in the original input file.'); }
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail('Use a JSON object in the original input file.');
+  return value;
+}
+async function jsonArrayFile(path) {
+  const bytes = await readFredHostFile(path, 16 * 1024 * 1024);
+  let value; try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
+  catch { fail('Use a complete JSON array in the reviewed decisions or bindings file.'); }
+  if (!Array.isArray(value)) fail('Use a complete JSON array in the reviewed decisions or bindings file.');
   return value;
 }
 function only(flags, names) {
@@ -194,7 +243,10 @@ async function toolArgs(flags, workspace) {
     'anchor-date':'anchorDate', 'baseline-review':'baselineReviewId', 'previous-successor':'previousSuccessorId', 'preview-id':'previewId',
     'release-capture':'releaseCaptureId', watch:'watchId', plan:'planId', 'before-release':'beforeCaptureId',
     'after-release':'afterCaptureId', section:'section', 'as-of':'asOf', 'observation-start':'observationStart',
-    'observation-end':'observationEnd', 'baseline-as-of':'baselineAsOf', 'catch-up':'catchUp' };
+    'observation-end':'observationEnd', 'baseline-as-of':'baselineAsOf', 'catch-up':'catchUp',
+    crosswalk:'crosswalkId', package:'packageId', migration:'migrationId', receiving:'receivingId',
+    'package-series':'seriesId', release:'release', frequency:'frequency', bookmark:'bookmark', url:'url',
+    comparison:'comparisonId', 'result-status':'status', 'series-id':'seriesId' };
   for (const [flag, key] of Object.entries(strings)) if (flags[flag] !== undefined) put(key, flags[flag]);
   for (const [flag, key] of Object.entries({ offset:'offset', limit:'limit', revision:'expectedRevision', accept:'acceptIndex', 'page-size':'pageSize', 'max-rows':'maxRows' }))
     if (flags[flag] !== undefined) put(key, number(flags[flag], flag));
@@ -202,6 +254,8 @@ async function toolArgs(flags, workspace) {
   if (flags['watch-series'] !== undefined) put('series', flags['watch-series'].split(','));
   for (const [flag, key] of Object.entries({ 'selection-file':'selection', 'policy-file':'policy', 'previous-file':'previous', 'briefing-file':'briefing', 'window-file':'window' }))
     if (flags[flag] !== undefined) put(key, await jsonFile(flags[flag]));
+  for (const [flag, key] of Object.entries({ 'decisions-file':'decisions', 'bindings-file':'bindings' }))
+    if (flags[flag] !== undefined) put(key, await jsonArrayFile(flags[flag]));
   if (flags['note-file'] !== undefined) put('note', (await readFredHostFile(flags['note-file'], 32768)).toString('utf8'));
   if (flags['changes-only'] !== undefined) {
     if (!['true', 'false'].includes(flags['changes-only'])) fail('Use --changes-only true or --changes-only false.');
@@ -214,22 +268,32 @@ export async function runFredWorkspaceCLI(argv, { write = value => process.stdou
   const done = value => { write(JSON.stringify(value, null, 2) + '\n'); return value; };
   if (command === 'help' || flags.help) { write(FRED_WORKSPACE_HELP); return { help: true }; }
   if (command === 'connection-init') return done(await connectionInit(flags));
+  if (command === 'bundle-inspect') {
+    only(flags, ['source','sha256']);
+    return done(await inspectFredWorkspaceFile(required(flags, 'source'), { expectedSha256: flags.sha256 }));
+  }
   if (command === 'receive') {
     only(flags, ['source','project','sha256']);
     return done(await receiveFredWorkspaceFile(required(flags, 'source'), required(flags, 'project'), { expectedSha256: flags.sha256 }));
   }
-  if (!remote.has(command) && !['download', 'wait'].includes(command)) fail('Choose an economic-workspace command from --help.');
+  if (!remote.has(command) && !['download', 'published-download', 'wait'].includes(command)) fail('Choose an economic-workspace command from --help.');
   const config = await readFredWorkspaceConfiguration(required(flags, 'connection'));
   const aliases = Object.keys(config.workspaces);
   const workspace = flags.workspace ?? (aliases.length === 1 ? aliases[0] : undefined);
   if (command !== 'workspaces' && (!workspace || !config.workspaces[workspace])) fail('Choose --workspace from this original connection.');
   const args = await toolArgs(flags, command === 'workspaces' ? undefined : workspace);
   const setupFlags = ['out','console-url-file','project-id','binding-sha','label','inputs-file','profiles-file','payment-file','merchant-origin','merchant-path','source','project'];
-  if (command !== 'download' && setupFlags.some(key => flags[key] !== undefined)) fail('A setup or download option was supplied to a remote operation.');
+  if (!['download', 'published-download'].includes(command) && setupFlags.some(key => flags[key] !== undefined)) fail('A setup or download option was supplied to a remote operation.');
   if (flags['wait-ms'] !== undefined && command !== 'wait') fail('Use wait with the same original project operation ID.');
-  if (command === 'download' || command === 'wait') {
+  if (command === 'download' || command === 'published-download' || command === 'wait') {
     const client = new FredWorkspaceClient(config.workspaces[workspace]);
     try {
+      if (command === 'published-download') {
+        if (Object.keys(args).some(key => !['workspace', 'id', 'name', 'expectedSha256'].includes(key)) ||
+            setupFlags.filter(key => key !== 'out').some(key => flags[key] !== undefined))
+          fail('Download the exact listed original publication member into a new file.');
+        return done(await client.downloadPublishedFile({ id: args.id, name: args.name, expectedSha256: args.expectedSha256 }, required(flags, 'out')));
+      }
       if (command === 'wait') {
         if (Object.keys(args).some(key => !['workspace', 'id'].includes(key))) fail('Wait selects only the original operation ID.');
         return done(await client.wait(args.id, { timeoutMs: flags['wait-ms'] ? number(flags['wait-ms'], 'wait-ms') : 60000 }));

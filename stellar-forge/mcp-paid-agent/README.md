@@ -16,6 +16,7 @@ files through the [native workspace](NATIVE_WORKSPACE.md).
 | Connect a desktop, editor or agent host | [Stdio launcher and client configuration](STDIO.md) |
 | Run a private HTTP MCP workspace | `serve.mjs`, with the configuration below |
 | Browse, review quotes and use complete results in a local browser | [Buyer operator console](CONSOLE.md), on the same server at `/console/` |
+| Select among trusted original discovery providers and retain their source identity | [Configured catalogs](CATALOGS.md) |
 | Browse or search every source page and prepare declared inputs from Node | [Discovery workflow and typed client](DISCOVERY.md) |
 | Discover and purchase remote MCP tools | [Remote MCP buyer and native operator](REMOTE_MCP.md) |
 | Expose an existing merchant function as a paid MCP tool | [Native paid tool server](PAID_TOOLS.md) |
@@ -37,6 +38,7 @@ described in [REMOTE_MCP.md](REMOTE_MCP.md) before using native remote tools.
 
 | Tool | Result |
 | --- | --- |
+| `bazaar_catalogs` | Read the trusted source list and default catalog. |
 | `bazaar_resources` | Browse the configured catalog with its native offset pagination and obtain temporary resource handles. |
 | `bazaar_search` | Search the configured discovery service, preserve all filters across cursor pages and obtain temporary resource handles. |
 | `bazaar_describe` | Inspect the original declaration, input schema, examples, output and complete payment alternatives. |
@@ -89,6 +91,12 @@ export MCP_STATE_DIR=/private/operator/quotes
 node stellar-forge/mcp-paid-agent/serve.mjs
 ```
 
+For several original providers, use an absolute **BAZAAR_CATALOGS_FILE** or the
+trusted operator module's **discoveryCatalogs** export. The configured list has
+stable IDs, labels, URLs and a default. If **BAZAAR_DISCOVERY_URL** is also set,
+it must match that default. See [CATALOGS.md](CATALOGS.md) for the complete schema,
+console selection, typed client and native registry workflow.
+
 The listener binds to `127.0.0.1:3210`; `MCP_PORT` selects another port. Open its
 `/console/` address and enter the same operator access token for the browser
 workflow. The static shell contains no quote data or token. Every MCP data
@@ -118,7 +126,8 @@ not silently substitute a new ledger for the existing SF36 HTTP workflow.
 Call `bazaar_describe` with a handle from browse or search. Its `bazaar` field preserves the
 original extension, including schema, input examples and output declaration.
 `accepts` retains complete eligible alternatives in the order used by preview's
-`acceptIndex`. `source` records the discovery URL, observation time and original
+`acceptIndex`. `source` records the original catalog ID, label and base URL,
+exact discovery URL, observation time and original
 resource representation. A native URL string is also represented as a resource
 object for the existing broker interface.
 

@@ -73,6 +73,7 @@ export async function startPirateServer({workspace,sourceIdentity,port=0,connect
    const input=await jsonBody(request);
    if(url.pathname==='/api/read')return send(200,await workspace.read(input.method,input.input??{}));
    if(url.pathname==='/api/action')return send(200,await workspace.act(input));
+   if(url.pathname==='/api/resume')return send(200,await workspace.resume(uuid(input.operationId)));
    if(url.pathname==='/api/file-read'){
     sha(input.id);
     const result=await reads.read({scope:instanceId,key:input.id,kind:'pirate-weather-output',directory:workspace.directory,
@@ -86,15 +87,16 @@ export async function startPirateServer({workspace,sourceIdentity,port=0,connect
     uuid(input.operationId);
     const op=await workspace.read('operation',{operationId:input.operationId});
     need(op.action==='project.receive'&&op.state==='COMPLETE','PIRATE_RECEIVING_REQUIRED','Receive the exact project before opening it.',409);
-    if(!children.has(input.operationId)){
+    const originalReceivingId=op.acceptedResult.operationId;
+    if(!children.has(originalReceivingId)){
      const opening=(async()=>{const {openReceivedProject}=await import('./package.mjs');
       const received=await openReceivedProject(workspace.directory,op.acceptedResult),{openPirateWorkspace}=await import('./core.mjs');
       const child=await openPirateWorkspace(received.workspaceDirectory,{applicationSource:received.applicationDirectory});
       try{return await startPirateServer({workspace:child,sourceIdentity,connectionFile:join(received.workspaceDirectory,'connection.json')});}
       catch(e){await child.close();throw e;}
-     })();children.set(input.operationId,opening);void opening.catch(()=>{if(children.get(input.operationId)===opening)children.delete(input.operationId);});
+     })();children.set(originalReceivingId,opening);void opening.catch(()=>{if(children.get(originalReceivingId)===opening)children.delete(originalReceivingId);});
     }
-    const child=await children.get(input.operationId);return send(200,{url:child.url,instanceId:child.instanceId,workspaceId:child.connection.workspaceId,processOwner:'this original workspace host'});
+    const child=await children.get(originalReceivingId);return send(200,{url:child.url,instanceId:child.instanceId,workspaceId:child.connection.workspaceId,processOwner:'this original workspace host'});
    }
    throw fault('PIRATE_ROUTE_NOT_FOUND','This original route does not exist.',404);
   })().catch(error=>{
@@ -112,7 +114,8 @@ export async function startPirateServer({workspace,sourceIdentity,port=0,connect
  const connection={...identity(),schema:CONNECTION_SCHEMA,directory:workspace.directory,origin,token,createdAt:new Date().toISOString()};
  try{if(connectionFile){await privateDirectory(dirname(connectionFile),{create:true});await atomicJSON(connectionFile,connection);}}
  catch(e){await new Promise(r=>server.close(r));await reads.close();if(ownsWorkspace)await workspace.close();throw e;}
- return {server,origin,url:origin+'/#token='+token,instanceId,connection,close(){
+ const done=new Promise((yes,no)=>{server.once('close',yes);server.on('error',no);});
+ return {server,origin,url:origin+'/#token='+token,instanceId,connection,connectionFile,done,publicIdentity:identity,close(){
   if(closing)return closing;draining=true;workspace.requestClose?.();
   closing=(async()=>{
    const errors=[];await new Promise((yes,no)=>{server.close(e=>e?no(e):yes());server.closeIdleConnections?.();}).catch(e=>errors.push(e));

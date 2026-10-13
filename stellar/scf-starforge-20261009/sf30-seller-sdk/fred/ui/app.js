@@ -2,6 +2,8 @@ import { mountFredBriefing } from './briefing.js';
 import { mountFredRecurring } from './recurring.js';
 import { mountFredReleases } from './releases.js';
 import { mountFredQcew } from './qcew.js';
+import { mountFredDdp } from './ddp.js';
+import { mountFredDdpPublished } from './ddp-published.js';
 // MIT. Original economic project controls; source text is rendered as text.
 const $ = id => document.getElementById(id);
 let token = location.hash.slice(1);
@@ -23,6 +25,13 @@ async function api(path, value) {
   const data = await response.json();
   if (!response.ok) throw Object.assign(new Error((data.code ? data.code + ': ' : '') + (data.message ?? 'Workspace request failed.')), { status: response.status, code: data.code });
   return data;
+}
+async function upload(path, form) {
+  const response = await fetch(path, { method: 'POST', headers: { authorization: 'Bearer ' + token }, body: form });
+  const value = await response.json();
+  if (!response.ok) throw Object.assign(new Error((value.code ? value.code + ': ' : '') + (value.message ?? 'Source upload failed.')),
+    { status: response.status, code: value.code });
+  return value;
 }
 async function download(path, filename) {
   const response = await fetch(path, { headers: { authorization: 'Bearer ' + token } });
@@ -73,7 +82,7 @@ const recurring = mountFredRecurring({ api, download, event, table, select, getS
   } });
 const releases = mountFredReleases({ api, download, table, select, getState: () => state, refresh, message,
   openObservations: async captureId => {
-    document.querySelector('[data-tab="source"]').click();
+    document.querySelector('[data-tab="editions"]').click();
     $('capture-select').value = captureId; $('row-series').value = ''; rowOffset = 0; await showRows();
     $('observations').scrollIntoView({ block: 'start' });
   },
@@ -82,6 +91,18 @@ const releases = mountFredReleases({ api, download, table, select, getState: () 
     await recurring.useCapture(selection);
     $('recurring-report-panel').scrollIntoView({ block: 'start' });
   } });
+const ddp = mountFredDdp({ api, upload, download, table, select, getState: () => state, refresh, message,
+  openObservations: async captureId => {
+    document.querySelector('[data-tab="editions"]').click();
+    $('capture-select').value = captureId; rowOffset = 0; select('row-series', [['','All original series']]); await showRows();
+    $('briefing-editor').scrollIntoView({ block: 'start' });
+  },
+  openReleaseWatch: async selection => {
+    document.querySelector('[data-tab="releases"]').click(); releases.useSelection(selection);
+    $('release-watch-form').scrollIntoView({ block: 'start' });
+  } });
+const published = mountFredDdpPublished({ api, table, select, getState: () => state,
+  getBusy: () => workspaceBusy, refresh, message });
 const qcew = mountFredQcew({ api, download, table, select, getState: () => state,
   getBusy: () => workspaceBusy, refresh, message });
 const labelCapture = item => (item.sourceMode === 'PUBLIC_TABLE' ? item.retrievalWindow ? 'Collected through ' : 'Captured ' : 'Vintage ') + item.selection.asOf + ' · ' + item.selection.series.join(', ') + ' · ' + item.rowCount + ' rows · ' + item.id.slice(0, 10);
@@ -122,6 +143,8 @@ function renderState(value) {
   recurring.onState();
   releases.onState();
   qcew.onState();
+  ddp.onState();
+  published.onState();
 }
 async function refresh() { renderState(await api('/api/state')); }
 async function action(actionName, payload = {}) {
@@ -172,6 +195,8 @@ document.querySelectorAll('[data-tab]').forEach(button => button.addEventListene
   try {
     if (button.dataset.tab === 'editions') await showRows();
     if (button.dataset.tab === 'county') await qcew.open();
+    if (button.dataset.tab === 'ddp') await ddp.onOpen();
+    if (button.dataset.tab === 'published') await published.onOpen();
     if (button.dataset.tab === 'publication') await showPublication();
     if (button.dataset.tab === 'customer') await showPublication(true);
   } catch (error) { message(error.message, true); }

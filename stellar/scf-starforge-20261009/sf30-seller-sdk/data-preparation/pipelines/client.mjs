@@ -31,7 +31,7 @@ export class PipelineClient {
     for(const stage of definition.stages||[])for(const value of Object.values(stage.parameters||{}))if(typeof value==='number'&&!Number.isSafeInteger(value))throw new TypeError('Use text for decimal amounts and integers outside the safe JavaScript range');
     return this.request('/api/save',{body:{definition,pipeline_id:pipelineId,expected_revision:expectedRevision},signal}); }
   fromRecipe(recipeId,{revision,signal}={}) { return this.request('/api/from-recipe',{body:{recipe_id:recipeId,revision},signal}); }
-  enqueue(pipelineId, requestKey, {revision,inputs,signal}={}) { return this.request('/api/enqueue',{body:{pipeline_id:pipelineId,request_key:requestKey,revision,inputs},signal}); }
+  enqueue(pipelineId, requestKey, {revision,inputs,reuseExecution,signal}={}) { return this.request('/api/enqueue',{body:{pipeline_id:pipelineId,request_key:requestKey,revision,inputs,reuse_execution:reuseExecution},signal}); }
   execute(executionId,{resume=false,signal}={}) { return this.request('/api/execute',{body:{execution_id:executionId,resume},signal}); }
   execution(id,options) { return this.request('/api/execution?'+new URLSearchParams({id}),options); }
   cancel(executionId,options={}) { return this.request('/api/cancel',{...options,body:{execution_id:executionId}}); }
@@ -56,6 +56,18 @@ export class PipelineClient {
     const response = await this.fetch(this.origin+'/api/upload?'+q,{method:'POST',headers:{'Content-Length':String(size)},body:createReadStream(path),duplex:'half',signal});
     const result = await response.json();
     if(!response.ok)throw new Error(result.error||`Upload failed (${response.status})`);
+    return result;
+  }
+  received(options) { return this.request('/api/received',options); }
+  openReceived(id,options={}) { return this.request('/api/open-received',{...options,body:{id}}); }
+  async receiveProject(path,{requestKey,signal}={}) {
+    if(typeof requestKey!=='string'||!requestKey.trim())throw new TypeError('Supply a stable receiving request key; reuse it after a lost response');
+    const {createReadStream}=await import('node:fs');
+    const size=(await stat(path)).size;
+    const response=await this.fetch(this.origin+'/api/receive?'+new URLSearchParams({requestKey}),{
+      method:'POST',headers:{'Content-Type':'application/zip','Content-Length':String(size)},
+      body:createReadStream(path),duplex:'half',signal});
+    const result=await response.json();if(!response.ok)throw new Error(result.error||`Receiving failed (${response.status})`);
     return result;
   }
   async *all(collection='pipelines', {pageSize=100,signal}={}) {

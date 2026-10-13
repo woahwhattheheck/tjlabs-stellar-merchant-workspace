@@ -19,6 +19,26 @@ Use Python 3.10 or later and the actual Node 22+ executable. The original MPP pr
 
 The installed distribution includes this directory with `mpp-channel`. A complete native channel handover also carries all six source files. Generated Python bytecode is omitted from that source closure. Use `python3 -B` for the supplied commands to keep interpreter caches out of the source directory.
 
+## Open the selected channel
+
+The Python client carries the same complete first-use setup as the browser. Read `opening-template`, complete the actual selected source, parties, deposit, refund period and funder fields, and preserve one opening ID:
+
+```python
+with ChannelClient(actual_product_directory) as channel:
+    prepared = channel.prepare_opening(original_opening_id, complete_selected_profile)
+    if prepared["state"] == "COMPLETE":
+        authorized = channel.execute_opening(original_opening_id, wait_ms=0)
+        # The original product terminal presents the complete setup and fee authority.
+        # Continue its returned native job, then read the same opening record.
+    else:
+        pending_preparation = channel.job(prepared["id"])
+    original_opening = channel.opening(original_opening_id)
+```
+
+`resume_opening` continues the retained original stage. `reconcile_opening` also accepts `rpc_url` for the same network's retained transaction history. `invoke("opening-cancel", {"openingId": original_opening_id})` cancels an unsigned opening after any signed code-upload stage is final. `ChannelError.operation_ids` retains the opening ID across a transport interruption.
+
+Use the returned complete channel identity for merchant configuration and useful recurring tasks. The selected WASM, salt, original fee authority and signed stages travel in the same complete channel handover used below. The [opening guide](../README.md#open-and-initially-fund-a-channel) gives all input fields and recovery states.
+
 ## Run useful recurring work
 
 Select and authorize the actual task in **Channel work** first. Use the selected merchant's real endpoint and input for every original purchase. Save the complete work list with schema `stellar-forge.mpp-channel-work.v1`; its `purchases` array contains each `taskId`, stable `purchaseId` and complete `request`.
@@ -91,9 +111,11 @@ Use the current revision from the actual native task record. A task correction r
 | Python method | Original application operation |
 |---|---|
 | `identity()`, `state()` | Current native product identity and channel state |
-| `task(id)`, `purchase(id)`, `contract(id)` | Complete selected original record |
+| `opening(id)`, `task(id)`, `purchase(id)`, `contract(id)` | Complete selected original record |
+| `record(kind, id)` | Original opening, funder profile, funding operation, settlement or coherent observation |
 | `job(id)` | Original native background job |
-| `invoke(action, arguments)` | Existing task, merchant, purchase, delivery, close or receiving action |
+| `invoke(action, arguments)` | Existing opening, task, merchant, purchase, delivery, funding, collection, refund, close or receiving action |
+| `prepare_opening`, `execute_opening`, `resume_opening`, `reconcile_opening` | Original selected deployment and its retained signed stages |
 | `prepare_purchase`, `execute_purchase`, `resume_purchase` | Original purchase identity and retained request |
 | `run_purchases(document)` | Complete supplied work-list object |
 | `run_file(file, result_path=…)` | Complete supplied work-list file with immutable result editions |
@@ -104,6 +126,41 @@ Use the current revision from the actual native task record. A task correction r
 All `invoke` actions come from the existing channel client. Read the action list and full input shapes in the [channel guide](../README.md) and installed `channel help`. Its return is the original native job/result envelope.
 
 The connection validates the original private product session on each operation. Calls on one Python client are serial. Closing the Python context drains and stops its own bridge attachment; the native product and its accepted jobs remain available.
+
+## Funding, merchant collection and refunds
+
+Python uses the same maintained financial operations as the browser and installed command. Select the actual stream from `state()`, save the complete original funder profile, and keep one stable ID for each funding operation.
+
+```python
+with ChannelClient(actual_product_directory) as channel:
+    prepared = channel.invoke(
+        "funding-prepare",
+        {
+            "stream": selected_stream_key,
+            "fundingId": original_funding_id,
+            "action": "top_up",
+            "amountAtomic": selected_token_amount_atomic,
+        },
+    )
+    if prepared["state"] == "COMPLETE":
+        authorization = channel.invoke(
+            "funding-execute",
+            {"fundingId": original_funding_id},
+            wait_ms=0,
+        )
+        # The original funder terminal reviews the amount and maximum fee.
+        # Read the returned native job, then reopen the same funding record.
+    else:
+        pending_preparation = channel.job(prepared["id"])
+```
+
+Use `record("funding", original_funding_id)` to reopen its durable native state. `funding-resume` continues a saved transaction. `funding-reconcile` accepts the same funding ID and an optional selected archival `rpcUrl`. A signed action keeps its original envelope across Python disconnection and native product restart.
+
+Prepare ongoing merchant collection with `collection-prepare` and `{stream, settlementId}`, then invoke `collection-execute` for that same ID. **COLLECTED** keeps the channel available for later work. A final `close-prepare` / `close-execute` uses its own ID and ends the channel. Read either through `record("settlements", original_settlement_id)`.
+
+For the funder's remaining-balance return, `funding-prepare` accepts `action:"close_start"` and later `action:"refund"`, each with its own stable funding ID and no amount field. The application observes the actual refund ledger before preparing a refund. Its original terminal selects each action and fee.
+
+`channel-observe` takes `{stream}` and returns one coherent selected-network observation. `record("observations", selected_stream_key)` reads the saved observation. Funding profiles, every original financial operation and their complete transaction recovery move through the existing `receive_channel.py` handover.
 
 ## Continue an interrupted operation
 
@@ -137,4 +194,4 @@ If a native job is still running, the helper returns that exact job and status 2
 
 For transfer across hosts, use `receive_handover` on the source host, carry that exact complete file through the existing artifact route, then call `receive_channel` on the receiving host. The complete source and native SDK selection remain those in the original bundle and receiving product.
 
-The receiver preserves all task editions, budgets, signed commitments, merchant deliveries, responses, closes, SDK state, executable source and required inputs. Its tasks reopen as RECEIVED for the receiving operator's future authority. Existing reserved or signed purchases continue under their retained original recovery path.
+The receiver preserves the complete original opening and selected WASM, plus all task editions, budgets, signed commitments, merchant deliveries, responses, closes, SDK state, executable source and required inputs. Its tasks reopen as RECEIVED for the receiving operator's future authority. Existing reserved or signed purchases continue under their retained original recovery path.

@@ -39,6 +39,7 @@ The generated registration uses the standard local-client shape:
       "args": ["/absolute/source/stellar-forge/mcp-paid-agent/stdio.mjs"],
       "env": {
         "BAZAAR_DISCOVERY_URL": "https://catalog.example/stellar",
+        "BAZAAR_CATALOGS_FILE": "",
         "MCP_STATE_DIR": "/absolute/private/starforge-buyer",
         "PAID_RESOURCE_ORIGINS": "https://merchant.example",
         "MCP_OPERATOR_MODULE": ""
@@ -70,9 +71,56 @@ creates its own ephemeral loopback port and internal bearer; those transport
 details are managed by the process. Desktop hosts receive the subprocess's MCP
 messages on stdout and operational diagnostics on stderr.
 
+## Select the original catalog
+
+The subprocess exposes **bazaar_catalogs** from the same broker as the HTTP
+workspace. The client can choose a configured **catalogId** for **bazaar_resources**
+or **bazaar_search**, then follow its complete returned continuation. Descriptions,
+quotes and native preparations retain that original catalog ID and URL.
+
+For a host-configured list, use the same generator with an absolute catalog file:
+
+```sh
+node stellar-forge/mcp-paid-agent/client-config.mjs \
+  --catalogs /absolute/private/catalogs.json \
+  --state /absolute/private/starforge-buyer \
+  --origin https://merchant.example \
+  --output /absolute/private/starforge-catalog-client.json
+```
+
+The [catalog guide](CATALOGS.md) defines the complete file schema. The generator
+validates the file's original UTF-8 JSON, size and catalog configuration before
+writing the registration. The subprocess reads the file again at startup through
+`BAZAAR_CATALOGS_FILE`. Configuration changes therefore take effect on the next
+launch, while the original quote store retains saved source and purchase history.
+
+A trusted operator module can export `discoveryCatalogs` instead. An existing
+native registry's generated `operator.mjs` supplies that original source list:
+
+```sh
+node stellar-forge/mcp-paid-agent/client-config.mjs \
+  --operator /absolute/private/native-registry/operator.mjs \
+  --state /absolute/private/starforge-buyer \
+  --origin https://merchant.example \
+  --output /absolute/private/starforge-registry-client.json
+```
+
+Repeat `--origin` for the original allowed merchants. If `--discovery` is also
+supplied, it must match the configured default; multiple host configurations must
+agree. The generated registration explicitly sets both source environment values,
+using an empty string for the unused setting, so an inherited host environment
+cannot select an unrelated catalog. The subprocess creates its own internal
+transport bearer.
+
+The programmatic `createMcpClientConfiguration()` accepts the same optional
+`catalogsFile` absolute path alongside `discoveryUrl` and `operatorModule`.
+It constructs the registration without loading the operator. The CLI checks a
+selected catalog file before writing; the workspace validates it again at launch.
+
 ## Use the existing buyer workflow
 
-1. Call `bazaar_search` with the required resource query.
+1. Read `bazaar_catalogs`, then call `bazaar_search` with the selected `catalogId`
+   and required resource query, or `bazaar_resources` to browse that source.
 2. Inspect `bazaar_describe` for the original inputs and full payment choices.
 3. Call `bazaar_preview` with the chosen handle, payment option and query input.
 4. Use the existing operator approval and signing adapter for
@@ -80,7 +128,7 @@ messages on stdout and operational diagnostics on stderr.
 5. Read `bazaar_status` or `bazaar_history` to continue the original operation.
 
 The existing buyer's supported methods, origins and payment rules apply equally
-to HTTP and stdio. The fixed tool list and response content come directly from
+to HTTP and stdio. The tool list and response content come directly from
 the maintained HTTP dispatcher, including additions by its original owners.
 
 To connect an already configured operator module, add its absolute path:

@@ -1,0 +1,48 @@
+{
+  "schema": "stellar-forge.pirate-weather-source-files.v1",
+  "sourceRoot": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather",
+  "files": [
+    "OPERATING.md",
+    "README.md",
+    "SOURCE_CONTRACT.md",
+    "application-provider.mjs",
+    "browser-assets.json",
+    "cli.mjs",
+    "client.d.mts",
+    "client.mjs",
+    "contract.mjs",
+    "core.mjs",
+    "dataset.mjs",
+    "managed.mjs",
+    "operator-provider.mjs",
+    "operator-tools.mjs",
+    "operator.mjs",
+    "package.mjs",
+    "portable.py",
+    "provider.mjs",
+    "public/app.mjs",
+    "public/index.html",
+    "public/style.css",
+    "reports.mjs",
+    "server.mjs",
+    "source-files.json"
+  ],
+  "dynamicInputs": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
+      "purpose": "Original streamed project archive, verification and resumed extraction"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
+      "purpose": "Original source archive verification and cold runtime preparation"
+    }
+  ],
+  "nativeEngines": [
+    "SF30 dataset publisher and version store",
+    "SF82 seller release store",
+    "SF88 Buyer Inbox",
+    "SF100 complete dataset receiving"
+  ],
+  "selection": "stellar/scf-starforge-20261009/distribution/selections/pirate-weather.json",
+  "sourceIdentity": "SHA256 of the ordered file path, byte count and byte SHA256 rows returned by inspectPirateSource; the built package manifest binds the complete selected runtime closure."
+}

@@ -3,10 +3,12 @@ import { connectMppProduct } from '../../../products/mpp-workspace/client.mjs';
 import { requireValue as need } from '../mpp-charge/storage.mjs';
 import { parseBundle } from './receiving.mjs';
 export const actions=Object.freeze([
+  'opening-template','opening-prepare','opening-execute','opening-resume','opening-reconcile','opening-cancel',
   'task-template','task-save','task-authorize','task-authority-resume','task-stop',
   'purchase-prepare','purchase-execute','purchase-resume','purchase-refresh','purchase-cancel',
   'merchant-save','merchant-start','merchant-stop','delivery-recover',
   'close-prepare','close-execute','close-resume','close-reconcile','close-cancel',
+  'funder-template','funder-save','channel-observe','funding-prepare','funding-execute','funding-resume','funding-reconcile','funding-cancel','collection-prepare','collection-execute','collection-resume','collection-reconcile','collection-cancel',
   'contract-fetch','export','receive'
 ]);
 export class MppChannelClient {

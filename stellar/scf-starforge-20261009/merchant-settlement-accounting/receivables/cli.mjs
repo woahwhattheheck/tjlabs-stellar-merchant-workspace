@@ -99,7 +99,7 @@ const HELP = 'Merchant receivables\n\n' +
 
 export function parseReceivablesArguments(argv) {
   const [command = 'help', ...rest] = argv, flags = {};
-  const known = new Set(["directory","outbox","proof-dir","terms","recovered-dir","port","as-of","id","run","invoice","customer","receipt","status","account","view","row-status","direction","search","source","offset","limit","action","input","name","out","expected-workspace-id","expected-sources-sha256","owner","request",'edition']);
+  const known = new Set(["directory","outbox","proof-dir","terms","recovered-dir","port","as-of","id","run","invoice","customer","receipt","status","offset","limit","action","input","name","out","expected-workspace-id","expected-sources-sha256","owner","search","request","edition","account","view","row-status","direction","source"]);
   for (let i = 0; i < rest.length; i += 2) {
     need(/^--[a-z-]+$/.test(rest[i]) && known.has(rest[i].slice(2)) && rest[i + 1] !== undefined && !rest[i + 1].startsWith('--'),
       'INVALID_RECEIVABLES_ARGUMENT', 'Use a documented option followed by its value.');

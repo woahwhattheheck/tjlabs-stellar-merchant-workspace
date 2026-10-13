@@ -8,12 +8,52 @@ Applications launcher and recovery commands remain the distribution workflow.
 
 ## Complete runtime and browser source
 
+Selecting the original merchant HTTP host also selects its complete operator
+console. This applies when the host's original `serve.mjs` is named by a base
+command, package export, support file or component, or by a selected source
+contribution. Conditional package exports use the same rule. The host's
+`--operator-console-dir` option dynamically loads this console; static Node
+import discovery alone cannot find it.
+
+The shared selector retains the original console and developer SDK components,
+requires the console's original `service.mjs`, and carries its maintained browser
+route manifest.
+The builder then follows those original static imports and mapped browser
+assets to complete the source closure. The host's imported developer client
+generator also reads three maintained source bodies at module load, rather
+than importing them: `developer/client-runtime.mjs`, `developer/request.mjs`
+and `query-parameters.mjs` in the original SF30 SDK. The shared selector carries
+these exact runtime inputs as explicit support files, together with the original
+seller developer portal's `developer/index.html`, `developer/browser.mjs` and
+`developer/style.css` bodies. This keeps the configured source/release path
+available when it loads the seller portal. Each resulting source file keeps its
+original Git blob, SHA-256 and byte count in the package manifest. Recipes
+without that original HTTP host receive no extra console capability from this
+rule. The recipe's selected commands, exports, providers, dependency groups
+and runtime profile remain its original choices.
+
+A source selection that explicitly excludes a required console/runtime input or
+mapped source still fails the existing packaged-entry/import checks. Use a
+separate product selection when omitting the HTTP host; an incomplete declared
+host cannot be repaired by removing its runtime checks. Existing archived
+packages retain their original selected source. To receive this correction,
+build a new output from the correction's complete source commit, install or
+receive that package through the maintained runtime workflow, and inspect its
+own manifest before opening the merchant host.
+
 A selected component carries the maintained browser route maps for its included
 HTTP servers. The builder uses the same JSON manifests as those servers, so a
 browser import such as `./operations.mjs` resolves through its served URL to
 the original shared module. Console, job intake and job resolution maps are
 included when their original server components are selected. Every map and
 mapped file appears in the package's ordinary source manifest.
+
+Whole SF88 components also carry the original Research customer quotations
+server and its source-owned route map. That map serves the shared Commercial
+desk's receiving, tariff and performance modules at their original browser
+import URLs. A selected product therefore receives the full shared desk source
+even when it does not register the separate Research commands. Its command and
+runtime choices remain the recipe's own declarations.
 
 Static Node imports continue to use normalized repository paths. If an
 imported production helper has an acceptance-like filename, its explicit
@@ -46,6 +86,32 @@ complete lock-bound package and dependency parts, and reopens the independently
 received runtime. Its source contract checks all 64 scientific files in both
 installations; the original scientific operation retains its own model inputs,
 runs, reports and portal receiving.
+
+## Original JSON source format
+
+An upstream serialized JSON reference can retain its original `.js` name.
+Declare its exact original path as `"json"` in the optional `sourceFormats` map
+on its contribution, the base specification or the recipe. The Zotero
+contribution owns the original `zotero/reference/zotero/itemJSON.js` declaration;
+Research and Zotero recipes inherit it by selecting that contribution. Base
+format declarations are retained only for source selected by the recipe, while
+each selected contribution and recipe carries its own complete format map.
+
+The declaration explicitly selects that original file. The builder parses
+strict UTF-8 JSON, keeps the exact bytes and records the format in the ordinary
+source manifest and registration provenance. Explicit exclusions and original
+file, directory, Git and byte checks remain in force. It rejects a missing
+source, invalid JSON, executable registration or static executable import to
+declared JSON. A JSON source cannot be a `moduleTemplates` entry; JavaScript
+template syntax remains independently validated. See [the complete format and
+installed receiving contract](BUILDING.md#original-json-source-data).
+
+Installed packages recompose their retained declarations, compare the declared
+formats with `manifest.sourceFormats`, verify each complete data file against
+its manifest hash and parse it again. The CLI's `source` view includes that same
+manifest, and `registrations --source zotero` shows the original format owner.
+No new command, runtime feature, dependency version or product entry is implied
+by a source format declaration.
 
 ## Build through the runtime workspace
 

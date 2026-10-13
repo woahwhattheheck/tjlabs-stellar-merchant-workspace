@@ -7,6 +7,7 @@ The full operator application includes source and task history, complete artifac
 Start the source CLI with `node cli.mjs workspace --workspace PRIVATE --connections HOST_JSON`, or use the installed `starforge a2a` command and managed Applications entry.
 
 - [Complete operator and deployment guide](OPERATOR.md)
+- [Customer commissioning, source review and receiving register](COMMISSIONING.md)
 - [Typed workspace API](workspace.d.mts)
 - [Full commissioning programme](receiving/commission.mjs)
 - [Maintained native analysis agent](../../../../stellar-forge/a2a-analysis-agent/README.md)

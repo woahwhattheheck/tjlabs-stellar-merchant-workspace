@@ -54,9 +54,12 @@ implementation/version and platform.
 An interrupted build can continue with the same profile, constraints,
 source-distribution selection and directory. Existing downloaded wheels
 remain available to the same builder. Each command keeps a separate
-complete log. A complete bundle is immutable. Archive export publishes the final
-TAR only after the complete file has been written, so an interrupted export can
-be repeated from that same complete bundle.
+complete log. Original metadata is written in a private .runtime-retained staging
+directory, synced, and then published atomically at its final name. An interrupted
+first selection can continue in the same directory; unfinished staging files stay
+outside the complete bundle inventory. A complete bundle is immutable. Archive
+export publishes the final TAR only after the complete file has been written, so
+an interrupted export can be repeated from that same complete bundle.
 
 ## Receive the delivered archive
 

@@ -55,6 +55,7 @@ export function captureUseCalendar(root,documentValue,ui={}){
     if(input.dataset.useField==='tranche')selected=selected===''?null:Number(selected);
     assign(value,input.dataset.useField,selected);
   }
+  const generator=root.querySelector('.use-generator');if(generator)ui.patternOpen=generator.open;
   const pattern=ui.pattern??={};
   for(const input of root.querySelectorAll('[data-use-pattern]')){
     const name=input.dataset.usePattern;
@@ -65,6 +66,8 @@ export function captureUseCalendar(root,documentValue,ui={}){
       pattern.fundingByBuyer??={};pattern.fundingByBuyer[name.slice(15)]=selected;
     }else pattern[name]=selected;
   }
+  const selectedBuyers=new Set(pattern.buyerDeploymentIds||[]);
+  pattern.fundingByBuyer=Object.fromEntries(Object.entries(pattern.fundingByBuyer||{}).filter(([id])=>selectedBuyers.has(id)));
 }
 export function useCalendarFields(documentValue,context,ui={}){
   stylesheet();
@@ -119,10 +122,12 @@ export function useCalendarFields(documentValue,context,ui={}){
     html+=action('Remove funding group','remove-settlement','data-use-index="'+index+'"')+'</details>';
   }
   html+=action('Add funding group','add-settlement','',value.settlements.length>=500);
-  const pattern=ui.pattern??={id:'ordinary-use',taskIds:tasks.slice(0,1).map(([id])=>id),buyerDeploymentIds:buyers.map(([id])=>id),
-    weekdays:[0,1,2,3,4],includeDates:[],excludeDates:[],mode:'PURCHASE',fundingByBuyer:{},replacePattern:false};
+  const pattern=ui.pattern??={};
+  for(const [key,initial] of Object.entries({id:'ordinary-use',taskIds:tasks.slice(0,1).map(([id])=>id),buyerDeploymentIds:buyers.map(([id])=>id),
+    weekdays:[0,1,2,3,4],includeDates:[],excludeDates:[],mode:'PURCHASE',fundingByBuyer:{},replacePattern:false}))
+    if(!Object.hasOwn(pattern,key))pattern[key]=initial;
   const pf=(label,path,value,settings={})=>field(label,path,value,{...settings,pattern:true});
-  html+='<details class="use-generator"><summary>Expand ordinary working dates</summary><p>The expansion creates explicit editable rows. It executes no request or payment. Reusing the same pattern preserves existing rows unless you explicitly select replacement.</p><div class="use-fields">'+
+  html+='<details class="use-generator"'+(ui.patternOpen?' open':'')+'><summary>Expand ordinary working dates</summary><p>The expansion creates explicit editable rows. It executes no request or payment. Reusing the same pattern preserves existing rows unless you explicitly select replacement.</p><div class="use-fields">'+
     pf('Retained pattern ID','id',pattern.id,{max:120})+
     pf('Useful tasks','taskIds',pattern.taskIds,{choices:tasks,multiple:true})+
     pf('Original buyers','buyerDeploymentIds',pattern.buyerDeploymentIds,{choices:buyers,multiple:true})+
@@ -130,7 +135,7 @@ export function useCalendarFields(documentValue,context,ui={}){
     pf('Use mode','mode',pattern.mode,{choices:modes.map(mode=>[mode,title(mode)])})+
     pf('Include these extra dates','includeDates',(pattern.includeDates||[]).join('\n'),{area:true,help:'YYYY-MM-DD; one date per line.'})+
     pf('Exclude these holidays or unavailable dates','excludeDates',(pattern.excludeDates||[]).join('\n'),{area:true,help:'Explicit selected dates; the application does not assume a jurisdiction’s holidays.'});
-  for(const [buyerId,label] of buyers){
+  for(const [buyerId,label] of buyers.filter(([id])=>(pattern.buyerDeploymentIds||[]).includes(id))){
     html+=pf('Prepaid funding for '+label,'fundingByBuyer.'+buyerId,pattern.fundingByBuyer?.[buyerId]||[],
       {choices:value.settlements.filter(row=>row.kind==='PREPAID'&&row.buyerDeploymentId===buyerId).map(row=>[row.id,row.date+' · '+row.id]),multiple:true,wide:true});
   }
@@ -197,6 +202,8 @@ export async function useCalendarAction(name,target,{document:documentValue,cont
   if(actionName==='remove-entry'){value.entries.splice(Number(target.dataset.useIndex),1);return {};}
   if(actionName==='expand'){
     const original=copy(documentValue),pattern=copy(ui.pattern);
+    const selectedBuyers=new Set(pattern.buyerDeploymentIds||[]);
+    pattern.fundingByBuyer=Object.fromEntries(Object.entries(pattern.fundingByBuyer||{}).filter(([id])=>selectedBuyers.has(id)));
     const result=await api(prefix+'/customer-use-calendar-expand',{expectedVersion,document:original,pattern});
     if(result.schema!==SCHEMA+'.expansion'||!result.document?.useCalendar)throw new Error('The native date expansion did not return the complete Installation document.');
     return {document:result.document,originalDocument:original,message:'Prepared '+result.generatedIds.length+' explicit dated uses across '+result.dates.length+' selected days. Review and save the whole Installation edition.'};
@@ -221,7 +228,7 @@ export function useCalendarReport(value){
       row.receipts.map(item=>esc((item.intentId||item.id)+' · '+item.settlementStatus+'/'+item.outputStatus)).join('<br>')||'No receipt linked']))+'</section>';
 }
 
-export function mountCustomerUseCalendar({container,current,api,session,onOpenInstallation,onOpenCohort}){
+export function mountCustomerUseCalendar({container,current,api,session,onOpenInstallation,onOpenCohort,onOpenPlanning}){
   stylesheet();const root=document.createElement('section');root.className='customer-use-calendar';root.setAttribute('aria-label','Customer-use calendar');container.replaceChildren(root);
   const caseId=current.program.id,prefix='/api/operations/'+caseId,storageKey='sf47.customer-use.'+caseId;
   let active=true,busy=false,hostBusy=false,generation=0,view=null,error='',notice='';
@@ -229,25 +236,49 @@ export function mountCustomerUseCalendar({container,current,api,session,onOpenIn
   if(!session.initialized){try{const saved=JSON.parse(sessionStorage.getItem(storageKey)||'null');if(saved?.caseId===caseId)Object.assign(session,saved);}catch{}session.initialized=true;}
   session.selection??=current.installations.filter(row=>row.useCalendar).map(row=>({id:row.id,revision:row.revision,sha256:row.sha256}));
   session.asOfDate??=today();session.page??=0;session.mode??='';session.search??='';session.date??='';session.groupId??='';
-  function persist(){try{sessionStorage.setItem(storageKey,JSON.stringify({caseId,selection:session.selection,asOfDate:session.asOfDate,
+  session.editionChoices??={};
+  for(const row of current.installations)if(!Object.hasOwn(session.editionChoices,row.id)){
+    const selected=session.selection.find(item=>item.id===row.id);
+    session.editionChoices[row.id]={selected:!!selected,revision:String(selected?.revision??row.revision)};
+  }
+  function persist(){try{sessionStorage.setItem(storageKey,JSON.stringify({caseId,selection:session.selection,editionChoices:session.editionChoices,asOfDate:session.asOfDate,
     page:session.page,mode:session.mode,search:session.search,date:session.date,groupId:session.groupId}));}catch{notice='The browser could not retain this view selection. Download its complete JSON before closing.';}}
   function controls(){root.setAttribute('aria-busy',String(busy||hostBusy));for(const input of root.querySelectorAll('button,input,select'))input.disabled=hostBusy||busy||input.dataset.useFixed==='true';}
-  async function run(fn){if(!available()||busy||hostBusy)return;busy=true;error='';controls();try{await fn();}catch(reason){error=reason?.message||String(reason);}finally{busy=false;if(available())render();}}
+  async function run(fn){if(!available()||busy||hostBusy)return;captureSelection();persist();busy=true;error='';controls();try{await fn();}catch(reason){error=reason?.message||String(reason);}finally{busy=false;if(available())render();}}
+  function captureSelection(){
+    for(const element of root.querySelectorAll('[data-use-select]')){
+      const id=element.dataset.useSelect,input=root.querySelector('[data-use-revision="'+CSS.escape(id)+'"]');
+      if(input)session.editionChoices[id]={selected:element.checked,revision:input.value};
+    }
+    const asOf=$('[data-use-asof]');if(asOf)session.asOfDate=asOf.value;
+  }
+  function selectedRevision(id){
+    const head=current.installations.find(row=>row.id===id),raw=session.editionChoices[id]?.revision??'';
+    const revision=Number(raw);
+    if(!head||!/^\d+$/.test(String(raw))||!Number.isSafeInteger(revision)||revision<1||revision>head.revision)
+      throw new Error('Select a saved Installation edition from 1 through '+(head?.revision??'the current edition')+'.');
+    return revision;
+  }
   function selections(){
-    const values=[];for(const element of root.querySelectorAll('[data-use-select]'))if(element.checked){
-      const id=element.dataset.useSelect,revision=Number(root.querySelector('[data-use-revision="'+CSS.escape(id)+'"]').value);
-      if(!Number.isSafeInteger(revision)||revision<1)throw new Error('Select a positive saved Installation edition.');
-      const head=current.installations.find(row=>row.id===id),old=session.selection.find(row=>row.id===id&&row.revision===revision);
+    const values=[];for(const head of current.installations)if(session.editionChoices[head.id]?.selected){
+      const id=head.id,revision=selectedRevision(id),old=session.selection.find(row=>row.id===id&&row.revision===revision);
       values.push({id,revision,...(old?.sha256?{sha256:old.sha256}:head.revision===revision?{sha256:head.sha256}:{})});
     }return values;
   }
+  function selectionChanged(){
+    if(!view)return false;
+    const selected=current.installations.filter(row=>session.editionChoices[row.id]?.selected)
+      .map(row=>({id:row.id,revision:String(session.editionChoices[row.id].revision)})).sort((a,b)=>a.id.localeCompare(b.id));
+    return session.asOfDate!==view.asOfDate||!same(selected,view.selection.map(row=>({id:row.id,revision:String(row.revision)})).sort((a,b)=>a.id.localeCompare(b.id)));
+  }
   async function read(){
-    const epoch=++generation,selection=selections(),asOfDate=$('[data-use-asof]')?.value||session.asOfDate;
+    const epoch=++generation,selection=selections(),asOfDate=session.asOfDate;
     const response=await api(prefix+'/customer-use-calendar',{expectedVersion:current.program.version,installationRefs:selection,asOfDate});
     if(!available()||epoch!==generation)return;
     if(response.schema!==SCHEMA+'.selection'||response.source.caseId!==caseId||response.source.caseVersion!==current.program.version)
       throw new Error('Reopen the original case and selected Installation editions.');
     view=response;session.selection=copy(response.selection);session.asOfDate=asOfDate;
+    for(const row of response.selection)session.editionChoices[row.id]={selected:true,revision:String(row.revision)};
     if(!view.groups.some(row=>row.id===session.groupId))session.groupId=view.groups[0]?.id||'';
     persist();
   }
@@ -272,22 +303,23 @@ export function mountCustomerUseCalendar({container,current,api,session,onOpenIn
   }
   function render(){
     if(!available())return;
-    const selected=new Map(session.selection.map(row=>[row.id,row]));
     let html='<header class="use-heading"><div><h3>Customer-use calendar</h3><p>Select the saved buyer, useful task and source schedule. Working dates, planned settlements and actual native receipts remain separate.</p></div>'+
       viewButton('Read selected calendars','read')+'</header>'+
       (error?'<p class="use-error" role="alert">'+esc(error)+'</p>':'')+(notice?'<p role="status">'+esc(notice)+'</p>':'')+
       '<details class="use-selection"'+(!view?' open':'')+'><summary>Exact Installation editions</summary><p>Changing the edition selects its complete saved source and schedule. Open the original Installation to edit or inspect history.</p>'+
       table(['Select','Original Installation','Saved edition','Open'],current.installations.map(row=>{
-        const item=selected.get(row.id);
-        return ['<input type="checkbox" data-use-select="'+esc(row.id)+'"'+(item?' checked':'')+' aria-label="Select '+esc(row.name)+'">',
+        const item=session.editionChoices[row.id];
+        return ['<input type="checkbox" data-use-select="'+esc(row.id)+'"'+(item.selected?' checked':'')+' aria-label="Select '+esc(row.name)+'">',
           esc(row.name)+'<small>'+esc(row.id)+' · current edition '+row.revision+'</small>',
-          '<input type="number" min="1" max="'+row.revision+'" data-use-revision="'+esc(row.id)+'" value="'+(item?.revision||row.revision)+'" aria-label="Saved edition for '+esc(row.name)+'">',
-          viewButton('Edit customer use','edit','data-id="'+esc(row.id)+'" data-revision="'+(item?.revision||row.revision)+'"')];
-      }))+'<label>Observation date <input type="date" data-use-asof value="'+esc(session.asOfDate)+'"></label></details>';
+          '<input type="number" min="1" max="'+row.revision+'" data-use-revision="'+esc(row.id)+'" value="'+esc(item.revision)+'" aria-label="Saved edition for '+esc(row.name)+'">',
+          viewButton('Edit customer use','edit','data-id="'+esc(row.id)+'"')];
+      }))+'<label>Observation date <input type="date" data-use-asof value="'+esc(session.asOfDate)+'"></label></details>'+
+      (selectionChanged()?'<p class="use-selection-note" role="status">The edition or observation-date selection has changed. Read selected calendars to update the displayed report, Cohort input and report downloads.</p>':'');
     if(!view){html+='<p>Save a customer-use calendar in an Installation, then read that exact edition here.</p>';root.innerHTML=html;controls();return;}
     const group=choice();
     html+='<div class="use-toolbar"><label>Saved window <select data-use-view-field="groupId">'+options(view.groups.map(row=>[row.id,row.startDate+' through '+row.endDate+' · '+(row.tranche?'tranche '+row.tranche:'ordinary use')]),session.groupId)+'</select></label>'+
       viewButton('Open original Cohort draft','cohort','',!group||group.tranche===null||group.planChanged)+
+      viewButton('Plan staffing and pricing','adoption','',!group||group.tranche===null||group.planChanged||!onOpenPlanning)+
       viewButton('JSON','export','data-format="json"')+viewButton('CSV','export','data-format="csv"')+viewButton('Calendar ICS','export','data-format="ics"')+
       viewButton('Complete editable case ZIP','case-export')+'</div>';
     if(group){
@@ -332,10 +364,13 @@ export function mountCustomerUseCalendar({container,current,api,session,onOpenIn
     root.innerHTML=html;controls();
   }
   root.addEventListener('change',event=>{
+    captureSelection();
+    if(event.target.matches('[data-use-select],[data-use-revision],[data-use-asof]')){persist();render();return;}
     const fieldName=event.target.dataset.useViewField;
     if(fieldName){session[fieldName]=event.target.value;session.page=0;persist();render();}
   });
   root.addEventListener('input',event=>{
+    if(event.target.matches('[data-use-select],[data-use-revision],[data-use-asof]')){captureSelection();persist();return;}
     if(event.target.dataset.useViewField==='search'){session.search=event.target.value;session.page=0;persist();}
   });
   root.addEventListener('click',event=>{
@@ -343,18 +378,22 @@ export function mountCustomerUseCalendar({container,current,api,session,onOpenIn
     const actionName=target.dataset.useViewAction;
     run(async()=>{
       if(actionName==='read'){session.page=0;return read();}
-      if(actionName==='edit'||actionName==='open'){persist();onOpenInstallation?.({id:target.dataset.id,revision:Number(target.dataset.revision),edit:actionName==='edit',focusUseCalendar:true});return;}
+      if(actionName==='edit'||actionName==='open'){
+        const id=target.dataset.id,revision=actionName==='edit'?selectedRevision(id):Number(target.dataset.revision);
+        persist();onOpenInstallation?.({id,revision,edit:actionName==='edit',focusUseCalendar:true});return;
+      }
       if(actionName==='page'){session.page=Number(target.dataset.page);persist();return;}
       if(actionName==='date'){session.date=target.dataset.date;session.page=0;persist();return;}
       if(actionName==='clear-date'){session.date='';session.page=0;persist();return;}
       if(!view)throw new Error('Read the complete selected calendars first.');
-      if(actionName==='cohort'){
+      if(actionName==='cohort'||actionName==='adoption'){
         const group=choice();if(!group)throw new Error('Select the original window.');
         const response=await api(prefix+'/customer-use-calendar-cohort',{expectedVersion:current.program.version,
           installationRefs:copy(view.selection),groupId:group.id,asOfAt:new Date().toISOString()});
         if(!available())return;
         if(response.source?.programId!==caseId||response.source.version!==current.program.version||response.customerUse?.groupId!==group.id)
           throw new Error('The returned Cohort draft belongs to a different source selection.');
+        if(actionName==='adoption'){onOpenPlanning({calendarSelection:copy(view),nativeSeed:copy(response)});return;}
         if(onOpenCohort)onOpenCohort(response);else download(JSON.stringify(response.inputs,null,2)+'\n',caseId+'-customer-use-cohort-input.json');
         return;
       }
@@ -372,5 +411,5 @@ export function mountCustomerUseCalendar({container,current,api,session,onOpenIn
   render();
   const ready=run(read);
   return {ready,setHostBusy(value){hostBusy=!!value;if(available())controls();},
-    dispose(){active=false;++generation;persist();}};
+    dispose(){captureSelection();active=false;++generation;persist();}};
 }

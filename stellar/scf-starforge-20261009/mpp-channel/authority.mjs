@@ -5,9 +5,9 @@ import { open } from 'node:fs/promises';
 import { createInterface } from 'node:readline/promises';
 import { checkOperatorTerminal } from '../sf81-buyer-operator-bridge/bridge.mjs';
 import { requireValue as need, now, stable, hash } from '../mpp-charge/storage.mjs';
-import { taskConfig, profileKey, streamKey } from './config.mjs';
+import { taskConfig, profileKey, streamKey, amount } from './config.mjs';
 import { groups, readTask, serialChannel, ensureStream } from './state.mjs';
-import { loadChannelNative, observeChannel } from './runtime.mjs';
+import { loadChannelNative, observeChannel, outstandingAtomic } from './runtime.mjs';
 let terminalBusy=false;
 export async function terminalConsent(label, review, confirmation) {
   need(!terminalBusy, 'MPP_CHANNEL_OPERATOR_TERMINAL_BUSY',409);
@@ -73,15 +73,19 @@ export async function authorizeTask({workspace,taskId,expectedRevision}) {
     need(observation.closeEffectiveAtLedger===null, 'MPP_CHANNEL_CLOSING',409);
     const consumed=(Object.hasOwn(current.budgets,taskId)?current.budgets[taskId]:null) ?? {committedAtomic:'0',purchases:0};
     const remaining=BigInt(task.config.budget.maximumAtomic)-BigInt(consumed.committedAtomic);
-    need(remaining>=0n && BigInt(current.highestSignedAtomic)+remaining <= BigInt(observation.balanceAtomic),
+    need(BigInt(current.highestSignedAtomic)>=BigInt(observation.withdrawnAtomic),
+      'MPP_CHANNEL_ORIGINAL_CUMULATIVE_HISTORY_REQUIRED',409);
+    const unpaidCommittedAtomic=outstandingAtomic(observation,current.highestSignedAtomic);
+    need(remaining>=0n && BigInt(unpaidCommittedAtomic)+remaining<=BigInt(observation.balanceAtomic),
       'MPP_CHANNEL_TASK_EXCEEDS_CURRENT_DEPOSIT',409);
+    amount((BigInt(current.highestSignedAtomic)+remaining).toString(),{zero:true});
     const review={schema:'stellar-forge.mpp-channel-task-authority.v1',taskId,profileId:task.profileId,
       operator:task.config.operator,title:task.config.title,usefulTask:task.config.usefulTask,
       source:task.config.source,channel:task.config.channel,request:task.config.request,
       realm:task.config.realm,merchantProfileSha256:task.config.merchantProfileSha256,offerId:task.config.offerId,
       pricedUnit:task.config.pricedUnit,budget:task.config.budget,
       alreadyCommittedAtomic:consumed.committedAtomic,remainingTaskAtomic:remaining.toString(),
-      localCumulativeAtomic:current.highestSignedAtomic,observation};
+      localCumulativeAtomic:current.highestSignedAtomic,unpaidCommittedAtomic,observation};
     const authority=await terminalConsent('Authorize recurring channel work',review,
       'AUTHORIZE '+taskId+' '+task.profileId.slice(0,12));
     // Retain the selected consent before its budget join, so a crash resumes the same authority.

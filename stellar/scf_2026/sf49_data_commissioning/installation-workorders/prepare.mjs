@@ -9,9 +9,10 @@ import {bindingTemplate, prepareInstallation, renderWorkorder} from "./prepare-c
 import {isProfileId, profileCatalog, readProfile} from "./profiles.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const usage = "node prepare.mjs profiles | template|prepare --profile PROFILE --seed ORIGINAL_SEED.json --out PRIVATE_DIRECTORY [--bindings SELECTED_BINDINGS.json]\nnode prepare.mjs sources --selection SOURCE_SELECTION.json --source-root ORIGINAL_FILES --out PRIVATE_DIRECTORY [--python python3]";
+const usage = "node prepare.mjs property COMMAND [OPTIONS]\nnode prepare.mjs profiles | template|prepare --profile PROFILE --seed ORIGINAL_SEED.json --out PRIVATE_DIRECTORY [--bindings SELECTED_BINDINGS.json]\nnode prepare.mjs sources --selection SOURCE_SELECTION.json --source-root ORIGINAL_FILES --out PRIVATE_DIRECTORY [--python python3]";
 function parse(argv) {
   const [command, ...args] = argv;
+  if (command === "property") return {command, argv: args};
   if (command === "profiles") {
     if (args.length) throw new Error(usage);
     return {command};
@@ -77,7 +78,12 @@ async function retain(path, raw) {
 }
 try {
   const args = parse(process.argv.slice(2));
-  if (args.command === "profiles") {
+  if (args.command === "property") {
+    const result = spawnSync(process.execPath, [join(here, "property-commissioning.mjs"), ...args.argv], {stdio: "inherit", env: process.env});
+    if (result.error) throw result.error;
+    if (result.signal) throw new Error("Original property preparation ended on " + result.signal + ".");
+    process.exitCode = result.status ?? 1;
+  } else if (args.command === "profiles") {
     console.log(JSON.stringify({schema: "stellar-forge.installation-workorder-catalog.v1", profiles: profileCatalog()}, null, 2));
   } else if (args.command === "sources") {
     const result = spawnSync(args.python, [join(here, "source-inputs.py"),

@@ -11,6 +11,10 @@ def register(command, mutation):
     target.add_argument("--installation", required=True)
     target.add_argument("--revision", type=int, required=True)
     target.add_argument("--sha256", required=True)
+    target = command("installation-return-review-seed", "Reopen a retained owner review and compare its staged save with the current case", case=True, output=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--review", required=True)
+    target.add_argument("--sha256", required=True)
     for name in ("installation-return-preview", "installation-return-save",
                  "installation-return-review-preview", "installation-return-stage"):
         target = command(name, "Review or retain the complete original Installation receiving selection", case=True, output=True)
@@ -32,6 +36,9 @@ def operate(ops, args, read_bytes, publish):
     elif action == "installation-return-seed":
         result = ops.seed_installation_return(args.case, {"expectedVersion": args.expected_version,
             "installationId": args.installation, "revision": args.revision, "sha256": args.sha256})
+    elif action == "installation-return-review-seed":
+        result = ops.seed_installation_return_review(args.case, {"expectedVersion": args.expected_version,
+            "retainedReview": {"id": args.review, "sha256": args.sha256}})
     elif action == "installation-return-export":
         return {"reviewId": args.review, "output": publish(args.output, ops.export_installation_return(args.case, args.review))}
     else:
