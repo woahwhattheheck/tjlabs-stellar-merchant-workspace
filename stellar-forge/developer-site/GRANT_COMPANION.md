@@ -180,3 +180,9 @@ existing developer-site component and browser manifest. The manuscript,
 source-index composition, submitted answers and grant plan stay under their
 current native editors; reading notes are retained with this reader's own
 complete original source editions.
+
+### Reopening downloaded and browser copies
+
+The offline reader validates its complete embedded workspace and the browser's saved copy against the same workspace identity. Exact equivalent copies open directly. Differing complete workspaces are presented before the reader opens: the operator chooses the downloaded copy or saved browser copy, with source, note and draft counts visible. Revision counts and timestamps do not establish which mutable reading work is newer.
+
+The copy panel keeps every alternative available for complete JSON download and explicit reopening. Before changing copies, current unsaved reading work is retained as a complete snapshot. Subsequent offline HTML downloads carry all retained alternatives. Browser persistence saves the complete alternatives before updating the selected copy; if storage capacity fails, the earlier browser copy remains intact and the open reader offers complete downloads. An invalid or differently identified browser entry is kept as downloadable original data and cannot replace the embedded reading workspace. The main workspace JSON export contains the selected working copy; the copy panel's archive and offline HTML preserve all alternatives.

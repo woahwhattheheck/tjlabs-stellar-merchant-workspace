@@ -1,11 +1,11 @@
 // MIT. Retained chapter reading, source comparison and complete workspace receiving.
-export async function mountCompanionReadingWorkspace(root,{api,reader,initialSource,initialWorkspace=null,persist=null,onOffline=null,origin=''}={}) {
+export async function mountCompanionReadingWorkspace(root,{api,reader,initialSource,initialWorkspace=null,persist=null,onOffline=null,origin='',honorInitialHash=true}={}) {
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let workspace=initialWorkspace?await api.reopen(JSON.stringify(initialWorkspace)):await api.create(initialSource,{origin});
   let serial=0,busy=false,destroyed=false,readingMount=null,comparison=null,noteChapter=workspace.reading.chapter_id,noteId='',status='';
   if(initialSource){const received=await api.receive(workspace,initialSource,{origin});workspace=received.workspace;if(!received.already_received)status='The current published edition is retained. Compare it with your selected edition before switching.';}
   const edition=()=>api.getEdition(workspace),chapters=()=>reader.parseCompanionMarkdown(edition().markdown).chapters;
-  if(typeof location!=='undefined'&&location.hash){let anchor='';try{anchor=decodeURIComponent(location.hash.slice(1));}catch{}const target=chapters().find(c=>c.id===anchor||c.headings.some(h=>h.id===anchor));if(target){workspace=api.reading(workspace,{chapter_id:target.id,query:'',show_all:false});noteChapter=target.id;}}
+  if(honorInitialHash&&typeof location!=='undefined'&&location.hash){let anchor='';try{anchor=decodeURIComponent(location.hash.slice(1));}catch{}const target=chapters().find(c=>c.id===anchor||c.headings.some(h=>h.id===anchor));if(target){workspace=api.reading(workspace,{chapter_id:target.id,query:'',show_all:false});noteChapter=target.id;}}
   const selectedNote=()=>workspace.notes.find(n=>n.id===noteId);
   const one=s=>root.querySelector(s);
   const download=(body,name,type)=>{const a=document.createElement('a'),url=URL.createObjectURL(new Blob([body],{type}));a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);};
@@ -110,18 +110,72 @@ export async function mountCompanionReadingWorkspace(root,{api,reader,initialSou
   return{getWorkspace:()=>JSON.parse(JSON.stringify(workspace)),destroy(){destroyed=true;readingMount?.destroy();root.replaceChildren();}};
 }
 
-export function offlineCompanionReadingWorkspace(workspace,{css,coreSource,editionSource,viewSource,applicationUrl='',submissionUrl=''}={}) {
+// A revision counter cannot establish ancestry for mutable drafts and reading positions.
+export async function resolveCompanionOfflineCopies(api,embedded,browserRaw='',retained=[]) {
+  const stable=value=>Array.isArray(value)?'['+value.map(stable).join(',')+']':value&&typeof value==='object'?'{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+stable(value[key])).join(',')+'}':JSON.stringify(value);
+  const original=await api.reopen(JSON.stringify(embedded)),copies=[],rejected=[],seen=new Set(),rejectedRaw=new Set();
+  const receive=async(label,raw)=>{
+    if(typeof raw!=='string')return;
+    try{
+      const workspace=await api.reopen(raw);
+      if(workspace.id!==original.id)throw new Error('This saved copy belongs to a different reading workspace.');
+      const identity=stable(workspace);if(seen.has(identity))return;
+      seen.add(identity);copies.push({label,raw:JSON.stringify(workspace),workspace});
+    }catch(error){if(!rejectedRaw.has(raw)){rejectedRaw.add(raw);rejected.push({label,raw,message:error.message||String(error)});}}
+  };
+  await receive('Downloaded workspace',JSON.stringify(original));
+  if(browserRaw)await receive('Saved browser workspace',browserRaw);
+  if(!Array.isArray(retained))throw new Error('Retained workspace copies must remain a complete list.');
+  for(const item of retained)await receive(typeof item?.label==='string'?item.label:'Retained workspace',item?.raw);
+  return{initial:copies.length===1?copies[0].workspace:null,copies,rejected};
+}
+
+export function offlineCompanionReadingWorkspace(workspace,{css,coreSource,editionSource,viewSource,applicationUrl='',submissionUrl='',recoveryCopies=[]}={}) {
   for(const value of [css,coreSource,editionSource,viewSource])if(typeof value!=='string'||!value.trim())throw new Error('Retain all complete reader sources for the offline workspace.');
-  const payload={workspace,runtime:{css,coreSource,editionSource,viewSource,applicationUrl,submissionUrl}};
+  const payload={workspace,runtime:{css,coreSource,editionSource,viewSource,applicationUrl,submissionUrl,recoveryCopies}};
   const json=JSON.stringify(payload).replaceAll('<','\\u003c').replaceAll('\u2028','\\u2028').replaceAll('\u2029','\\u2029');
   const clean=source=>source.replace(/^export /gm,'');
   const boot=String.raw`(async()=>{
     const payload=JSON.parse(document.getElementById('reading-source').textContent),root=document.getElementById('companion-reader');
     const api=createCompanionEditionModel({parseMarkdown:parseCompanionMarkdown});
-    const key='scf-companion-reading:'+payload.workspace.id;
-    let initial=payload.workspace,warning='';
-    try{const saved=localStorage.getItem(key);if(saved)initial=await api.reopen(saved);}catch(error){warning='The saved browser copy could not reopen; the complete embedded workspace is selected. '+error.message;}
-    const save=(body,name)=>{const a=document.createElement('a'),url=URL.createObjectURL(new Blob([body],{type:'text/html;charset=utf-8'}));a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);};
+    const key='scf-companion-reading:'+payload.workspace.id,copiesKey=key+':retained-copies';
+    let browserRaw='',warning='',storedCopies=[];
+    try{browserRaw=localStorage.getItem(key)||'';const raw=localStorage.getItem(copiesKey);if(raw){if(raw.length>api.maxBytes)throw new Error('The retained browser copies exceed 64 MiB.');storedCopies=JSON.parse(raw);if(!Array.isArray(storedCopies))throw new Error('Retained browser copies must remain a complete list.');}}
+    catch(error){warning='Browser work could not be fully reopened. '+error.message;storedCopies=[];}
+    const resolved=await resolveCompanionOfflineCopies(api,payload.workspace,browserRaw,[...(payload.runtime.recoveryCopies||[]),...storedCopies]);
+    let copies=resolved.copies,active=null,selected=-1,moving=false;
+    const rejected=resolved.rejected;
+    const panel=document.createElement('section');panel.className='reading-workspace';root.before(panel);
+    const save=(body,name,type='text/html;charset=utf-8')=>{const a=document.createElement('a'),url=URL.createObjectURL(new Blob([body],{type}));a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);};
+    const stable=value=>Array.isArray(value)?'['+value.map(stable).join(',')+']':value&&typeof value==='object'?'{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+stable(value[k])).join(',')+'}':JSON.stringify(value);
+    const retainCopy=(workspace,label)=>{
+      const identity=stable(workspace),prior=copies.findIndex(copy=>stable(copy.workspace)===identity);
+      if(prior>=0)return prior;
+      copies.push({label,raw:JSON.stringify(workspace),workspace});return copies.length-1;
+    };
+    const retainedSources=()=>[...copies,...rejected].map(({label,raw})=>({label,raw}));
+    const persist=workspace=>{
+      // Save all alternate complete copies first. If quota fails, the older browser copy stays intact.
+      localStorage.setItem(copiesKey,JSON.stringify(retainedSources()));
+      localStorage.setItem(key,JSON.stringify(workspace));
+    };
+    const paintCopies=()=>{
+      panel.replaceChildren();
+      const heading=document.createElement('h2');heading.textContent='Retained downloaded and browser copies';panel.append(heading);
+      const intro=document.createElement('p');intro.textContent=(active?'The selected copy is open below.':'Choose the complete workspace to continue.')+' Each alternative keeps its source editions, notes, unfinished drafts and reading position. Saving an offline HTML file retains these alternatives too.';panel.append(intro);
+      if(warning){const p=document.createElement('p');p.setAttribute('role','status');p.textContent=warning;panel.append(p);}
+      copies.forEach((copy,index)=>{
+        const row=document.createElement('section'),title=document.createElement('h3'),details=document.createElement('p');
+        title.textContent=copy.label+(index===selected?' · selected':'');
+        details.textContent=copy.workspace.updated_at+' · '+copy.workspace.editions.length+' source editions · '+copy.workspace.notes.length+' notes · '+(copy.workspace.drafts||[]).length+' unfinished drafts';
+        row.append(title,details);
+        const choose=document.createElement('button');choose.textContent=index===selected?'Reopen this retained snapshot':'Continue with this copy';choose.disabled=moving;
+        choose.onclick=()=>openCopy(index);row.append(choose);
+        const download=document.createElement('button');download.textContent='Download complete copy';download.onclick=()=>save(copy.raw+'\n','scf-companion-copy-'+(index+1)+'.json','application/json');row.append(download);panel.append(row);
+      });
+      for(const copy of rejected){const p=document.createElement('p');p.textContent=copy.label+': '+copy.message;panel.append(p);const download=document.createElement('button');download.textContent='Download original unselected browser data';download.onclick=()=>save(copy.raw,'scf-companion-unselected-browser-data.json','application/json');panel.append(download);}
+      const all=document.createElement('button');all.textContent='Download all retained complete copies';all.onclick=()=>{if(active)retainCopy(active.getWorkspace(),'Current reading work');save(JSON.stringify({schema:'stellar-forge.companion-reading-copies.v1',workspace_id:payload.workspace.id,copies:retainedSources(),unselected:rejected.map(({label,raw,message})=>({label,raw,message}))},null,2)+'\n','scf-companion-retained-copies.json','application/json');};panel.append(all);
+    };
     const markup=(model,source)=>{
       let html=companionReaderMarkup(model,source),runtime=payload.runtime;
       if(runtime.applicationUrl)html=html.replace('href="./grant.html"','href="'+runtime.applicationUrl.replaceAll('&','&amp;').replaceAll('"','&quot;')+'"');
@@ -129,8 +183,22 @@ export function offlineCompanionReadingWorkspace(workspace,{css,coreSource,editi
       if(runtime.applicationUrl)html=html.replaceAll('href="./grant-data/','href="'+runtime.applicationUrl.replace(/[^/]*$/,'')+'grant-data/');
       return html;
     };
-    await mountCompanionReadingWorkspace(root,{api,reader:{parseCompanionMarkdown,companionReaderMarkup:markup,activateCompanionReader},initialWorkspace:initial,persist:w=>localStorage.setItem(key,JSON.stringify(w)),onOffline:w=>save(offlineCompanionReadingWorkspace(w,payload.runtime),'scf-companion-reading-workspace.html')});
-    if(warning)root.querySelector('[data-reading-status]').textContent=warning;
+    async function openCopy(index) {
+      if(moving)return;moving=true;paintCopies();
+      try{
+        const next=await api.reopen(copies[index].raw);
+        if(active){retainCopy(active.getWorkspace(),'Reading work before changing copies');active.destroy();}
+        selected=index;
+        active=await mountCompanionReadingWorkspace(root,{api,reader:{parseCompanionMarkdown,companionReaderMarkup:markup,activateCompanionReader},initialWorkspace:next,honorInitialHash:false,persist,onOffline:w=>{
+          const runtime={...payload.runtime,recoveryCopies:retainedSources()};
+          save(offlineCompanionReadingWorkspace(w,runtime),'scf-companion-reading-workspace.html');
+        }});
+      }catch(error){warning=error.message||String(error);}
+      finally{moving=false;paintCopies();}
+    }
+    paintCopies();
+    if(resolved.initial)await openCopy(0);
+    else root.replaceChildren();
   })().catch(error=>{const p=document.createElement('p');p.setAttribute('role','alert');p.textContent=error.message;document.getElementById('companion-reader').append(p);});`;
   const code=[clean(coreSource),clean(editionSource),clean(viewSource),boot].join('\n').replace(/<\/script/gi,'<\\/script');
   return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SCF companion reading workspace</title><style>'+css.replace(/<\/style/gi,'<\\/style')+'</style></head><body><a class="skip-link" href="#companion-content">Skip to companion</a><div id="companion-reader"><p class="loading" role="status">Opening complete retained reading workspace…</p></div><script id="reading-source" type="application/json">'+json+'</script><script>'+code+'</script></body></html>\n';
