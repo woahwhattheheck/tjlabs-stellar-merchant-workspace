@@ -63,6 +63,11 @@ export function mountExpenseBilling({container,current,api,saveApi=api,session={
       if(['prepare','connect'].includes(original.action)&&[400,404,409,413,422].includes(error.status)&&codes.has(error.code)){
         original.definitivelyRejected=true;
       }
+      const actionCode={apply:'EXPENSE_BILLING_APPLY_REVIEW',issue:'EXPENSE_BILLING_ISSUE_REVIEW',cancel:'EXPENSE_BILLING_CANCEL_REVIEW'}[original.action];
+      if(actionCode&&error.code===actionCode&&[400,404,409,413,422].includes(error.status)){
+        original.reviewRefusal={code:error.code,status:error.status,receivedAt:new Date().toISOString()};
+        try{await reconcile();}catch(readError){original.reconciliationError=readError.message;}
+      }
       persist();throw error;
     }
     session.lastRequest={...clone(original),receivedAt:new Date().toISOString(),resultId:result.id||null};
@@ -214,7 +219,13 @@ export function mountExpenseBilling({container,current,api,saveApi=api,session={
     if(op.action==='apply'){confirmed=row.state==='APPLIED'&&row.proposalSha256===op.body.expectedProposalSha256;rejected=row.commands.length>0&&row.commands.at(-1).state==='REJECTED';}
     else if(op.action==='issue'){const c=[...row.commands].reverse().find(c=>c.action==='issue'&&c.review?.issuePreviewSha256===op.body.expectedIssuePreviewSha256);confirmed=c?.state==='ACKNOWLEDGED';rejected=c?.state==='REJECTED';}
     else if(op.action==='cancel')confirmed=row.state==='CANCELLED'&&row.history.some(h=>h.requestId===op.body.requestId);
-    if(confirmed||rejected){session.lastRequest={...clone(op),reconciledAt:new Date().toISOString(),outcome:confirmed?'ACKNOWLEDGED':'DEFINITIVELY_REJECTED'};session.requestHistory.push(clone(session.lastRequest));session.pending=null;persist(true);state.message=confirmed?'The original saved result is retained.':'The native journal records a definite refusal. Review current source or credit-control terms before a new continuation.';}
+    const refusalCode={apply:'EXPENSE_BILLING_APPLY_REVIEW',issue:'EXPENSE_BILLING_ISSUE_REVIEW',cancel:'EXPENSE_BILLING_CANCEL_REVIEW'}[op.action];
+    const reviewedRefusal=op.reviewRefusal?.code===refusalCode&&Boolean(refusalCode)&&
+      row.id===op.chargeId&&!row.commands.some(command=>command.state==='PENDING')&&
+      (op.action==='issue'||row.proposalSha256===op.body.expectedProposalSha256);
+    if(reviewedRefusal&&!confirmed)rejected=true;
+    if(rejected&&row.commands.some(command=>command.state==='PENDING'))rejected=false;
+    if(confirmed||rejected){session.lastRequest={...clone(op),reconciledAt:new Date().toISOString(),outcome:confirmed?'ACKNOWLEDGED':'DEFINITIVELY_REJECTED'};session.requestHistory.push(clone(session.lastRequest));session.pending=null;try{persist(true);}catch(error){session.pending={...op,persistenceError:error.message};persist();throw error;}state.message=confirmed?'The original saved result is retained.':reviewedRefusal?'The original review request was refused before a new native dispatch. Existing financial commands remain retained; correct the current review.':'The native journal records a definite refusal. Review current source or credit-control terms before a new continuation.';}
     else state.message='The original outcome remains unresolved. Resume the same saved request; its native ID is unchanged.';
   }
   root.addEventListener('input',event=>{capture();if(!['creditDecisionId','cancelReason'].includes(event.target.name)){state.preview=null;state.issuePreview=null;}});
@@ -256,13 +267,13 @@ export function mountExpenseBilling({container,current,api,saveApi=api,session={
         const row=state.selected;await sendOriginal({action,chargeId:row.id,endpoint:path+'/'+enc(row.id)+'/apply',body:{actor:recordingActor(),expectedProposalSha256:row.proposalSha256}});
         await refresh();state.message='The original native operations are acknowledged. An unissued draft still requires its own invoice issue review.';
       }else if(action==='cancel'){
-        const row=state.selected,body={actor:recordingActor(),expectedProposalSha256:row.proposalSha256,reason:input('cancelReason')};
+        const row=state.selected,reason=input('cancelReason');if(!reason.trim())throw new Error('Enter the reason for cancelling this original preparation.');const body={actor:recordingActor(),expectedProposalSha256:row.proposalSha256,reason};
         body.requestId=await requestId('cancel:'+row.id,body);await sendOriginal({action,chargeId:row.id,endpoint:path+'/'+enc(row.id)+'/cancel',body});await refresh();
       }else if(action==='preview-issue')state.issuePreview=await saveApi(path+'/'+enc(state.selected.id)+'/preview-issue',{});
       else if(action==='issue'){
         const review=state.issuePreview;if(!review)throw new Error('Review the exact current native invoice first.');
         const body={actor:recordingActor(),expectedIssuePreviewSha256:review.issuePreviewSha256};
-        const decision=review.retainedCommand?review.retainedCommand.body.creditDecisionId:(review.nativePreview.creditReviewRequired?input('creditDecisionId'):null);if(decision)body.creditDecisionId=decision;
+        const decision=review.retainedCommand?review.retainedCommand.body.creditDecisionId:(review.nativePreview.creditReviewRequired?input('creditDecisionId'):null);if(!review.retainedCommand&&review.nativePreview.creditReviewRequired&&!String(decision||'').trim())throw new Error('Enter the current native credit-control decision before issuing this invoice.');if(decision)body.creditDecisionId=decision;
         await sendOriginal({action,chargeId:state.selected.id,endpoint:path+'/'+enc(state.selected.id)+'/issue',body});await refresh();state.message='The original invoice issue is acknowledged by native Receivables.';
       }else if(action==='resume'){
         const original=clone(session.pending),result=await sendOriginal();if(original.action==='connect')session.inputs.endpointId=result.id;else session.chargeId=result.id||original.chargeId;
@@ -272,7 +283,7 @@ export function mountExpenseBilling({container,current,api,saveApi=api,session={
         if(!session.pending?.definitivelyRejected||!['prepare','connect'].includes(session.pending.action))throw new Error('Reconcile the original native journal before a changed financial request.');
         const refusal={...clone(session.pending),outcome:'DEFINITIVELY_REJECTED',revisedAt:new Date().toISOString()};
         session.requestHistory.push(refusal);session.lastRequest=refusal;session.pending=null;state.preview=null;state.issuePreview=null;
-        persist(true);state.message='The original refused request and complete error are retained. Refresh current sources, correct the selection and prepare a new exact preview.';
+        try{persist(true);}catch(error){session.pending={...refusal,persistenceError:error.message};persist();throw error;}state.message='The original refused request and complete error are retained. Refresh current sources, correct the selection and prepare a new exact preview.';
       }
       else if(action==='export'){
         const url=path+'/'+enc(state.selected.id)+'/export.zip';
