@@ -96,14 +96,21 @@ export async function runAttendanceBrowser(config){
   const current=await recipient.client.state(),receiveIntent={workspaceId:recipient.workspaceId,packet:sourcePacket};
   await immutable(join(root,"original-receive-intent.json"),receiveIntent);
   const incoming=await originalPending(recipient.page,recipient.workspaceId);
-  if(incoming){
+  if(incoming?.kind==="save"){
+   const imported=await recipient.client.view(core.attendance.id,reviewed.revision);
+   need(same(imported,reviewed),"Pending recipient decision lacks the complete original received edition");
+   const intent=JSON.parse(await readFile(join(root,"received-session-intent.json"),"utf8")),body=incoming.body;
+   need(intent.workspaceId===recipient.workspaceId&&intent.bookId===core.attendance.id&&intent.expectedRevision===reviewed.revision&&intent.actor===config.actor,"Retained recipient intent differs");
+   need(body&&body.id===intent.bookId&&body.expectedRevision===intent.expectedRevision&&body.actor===intent.actor&&same(body.definition,intent.definition)&&typeof body.requestId==="string"&&typeof body.at==="string","Pending recipient save differs from its retained complete intent");
+   await immutable(join(root,"received-session-request.json"),body);
+  }else if(incoming){
    need(incoming.kind==="receive"&&incoming.packet?.bytes===sourcePacket.bytes&&incoming.packet?.sha256===sourcePacket.sha256,"Independent workspace has another pending original operation");
    await recipient.page.locator("#resume").click();
   }else if(!current.reviews.some(x=>x.id===core.attendance.id)){
    await recipient.page.locator("#packet").setInputFiles(sourcePacket.path);
   }
   await until(()=>recipient.client.state(),v=>v.reviews.some(x=>x.id===core.attendance.id));
-  await recipient.page.waitForFunction(()=>document.getElementById("pending").hidden);
+  if(incoming?.kind!=="save")await recipient.page.waitForFunction(()=>document.getElementById("pending").hidden);
   files.push(await identity(join(root,"original-receive-intent.json")));
   await open(recipient.page,core.attendance.id);
   const received=await recipient.client.view(core.attendance.id,reviewed.revision);
