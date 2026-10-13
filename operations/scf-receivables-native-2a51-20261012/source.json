@@ -596,11 +596,11 @@
   "dependencyCapsuleBytes": 3583591,
   "dependencySourceFiles": 603,
   "sourceCorrection": {
-    "gitBlob": "93d2f87ceab7c1ba17dbbc2f2e276c3e977f3aaa",
+    "gitBlob": "bbc06b338f4ee7b51640ec0e241b05d39e71cee8",
     "originalResultCapsule": "80c16d4ce00247d6675fe3d7b1b9c445011cc27f",
     "programs": [
       "MCP_RECEIVABLES_CHECK.mjs"
     ],
-    "note": "The accepted PAYMENT_CHECK result remains retained. The MCP continuation uses the two exact maintained registration schema corrections; all original programme bytes remain unchanged."
+    "note": "The accepted PAYMENT_CHECK result remains retained. Resume the original MCP programme with the two maintained registration repairs and the exact frozen CLI direct host-files import. All programme and accounting engine bytes are unchanged."
   }
 }
