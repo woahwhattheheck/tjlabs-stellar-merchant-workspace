@@ -22,9 +22,21 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/server.d.mts"
   ],
   "exports": {
-    "./buyer/research": {
+    "./buyer/content-research": {
       "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/engine.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/engine.mjs"
+    },
+    "./buyer/content-research/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/client.mjs"
+    },
+    "./buyer/content-research/reports": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/reports.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/reports.mjs"
+    },
+    "./buyer/content-research/server": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/server.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/server.mjs"
     },
     "./buyer/research/client": {
       "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/client.d.mts",
@@ -33,10 +45,6 @@
     "./buyer/research/reports": {
       "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/reports.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/reports.mjs"
-    },
-    "./buyer/research/server": {
-      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/server.d.mts",
-      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/server.mjs"
     }
   }
 }

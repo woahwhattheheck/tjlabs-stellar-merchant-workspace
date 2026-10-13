@@ -10,6 +10,7 @@ import { saveExport, saveTextExport } from './write-json.mjs';
 import { renderOperatingPlanHTML, renderOperatingPlanMarkdown, inspectOperatingPlan } from './operating-plan.mjs';
 import { GRIDFABRIC_PROCEDURE_INPUT_SCHEMA, inspectGridFabricProcedureInput, prepareGridFabricProcedure } from './gridfabric-procedure.mjs';
 import { captureGridFabricProcedure, readGridFabricProcedureCapture } from './gridfabric-procedure-native.mjs';
+import { exportGridProcedureArchive, receiveGridProcedureArchive } from '../../sf30-seller-sdk/gridfabric-plaid/procedure-archive.mjs';
 
 const HELP = [
   'GridFabric customer procedures','',
@@ -23,6 +24,10 @@ const HELP = [
   '      --input INPUT_JSON --out NEW_CAPTURE_DIRECTORY [--plan COMPLETE_PLAN_JSON]',
   '      [--catalog COMPLETE_CATALOG_JSON]',
   '  starforge gridfabric-procedure show --directory CAPTURE_DIRECTORY',
+  '  starforge gridfabric-procedure archive --directory CAPTURE_DIRECTORY --out NEW_ARCHIVE_GZ',
+  '  starforge gridfabric-procedure receive --archive COMPLETE_ARCHIVE_GZ',
+  '      --sha256 ARCHIVE_SHA256 --bytes ARCHIVE_BYTES --out NEW_CAPTURE_DIRECTORY',
+  '      [--maximum-expanded-bytes BYTES]',
   '  starforge gridfabric-procedure render --plan COMPLETE_PLAN_JSON --out NEW_FILE',
   '      --format html|markdown','',
   'input reads the existing authenticated workspace and selected instance.',
@@ -30,6 +35,9 @@ const HELP = [
   'prepare retains the original installed command registration in the complete plan.',
   'capture reads the existing owner, follows complete dependent pages/files, and saves the full plan history.',
   'show reopens every declared capture member without opening a native workspace.',
+  'archive streams a complete verified capture, including files and plan history, into one new gzip file.',
+  'receive streams that archive into a new private directory and reopens it through the same capture reader.',
+  'Use archive and receive for files that exceed the browser import allowance; neither opens a Grid workspace.',
   'Import the plan JSON in Command finder → Operating Plans to edit, compare, return and save its history.',
   'All output files/directories are new; original customer files remain available.',''
 ].join('\n');
@@ -39,6 +47,8 @@ const allowed = {
   prepare:['input','out','catalog'],
   capture:['connection-file','input','out','plan','catalog'],
   show:['directory'],
+  archive:['directory','out'],
+  receive:['archive','sha256','bytes','out','maximum-expanded-bytes'],
   render:['plan','out','format']
 };
 const required = {
@@ -47,6 +57,8 @@ const required = {
   prepare:['input','out'],
   capture:['connection-file','input','out'],
   show:['directory'],
+  archive:['directory','out'],
+  receive:['archive','sha256','bytes','out'],
   render:['plan','out','format']
 };
 function argumentsFor(args) {
@@ -73,6 +85,11 @@ const absoluteOutput=value=>{
   if(!isAbsolute(value))throw new TypeError('Select an absolute new output path.');
   return resolve(value);
 };
+function byteCount(value,label) {
+  if(typeof value!=='string'||!/^\d+$/.test(value)||!Number.isSafeInteger(Number(value))||Number(value)<1)
+    throw new TypeError('Supply a positive safe integer for --'+label+'.');
+  return Number(value);
+}
 export async function mainGridFabricProcedure(args=process.argv.slice(2)) {
   const {action,options}=argumentsFor(args);
   if(action==='help'){console.log(HELP);return;}
@@ -84,6 +101,20 @@ export async function mainGridFabricProcedure(args=process.argv.slice(2)) {
   if(action==='show') {
     const result=await readGridFabricProcedureCapture(resolve(options.directory));
     console.log(JSON.stringify(result,null,2));return result;
+  }
+  if(action==='archive') {
+    const result=await exportGridProcedureArchive({directory:resolve(options.directory),outputFile:absoluteOutput(options.out)});
+    console.log(JSON.stringify(result,null,2));return result;
+  }
+  if(action==='receive') {
+    if(!/^[a-f0-9]{64}$/.test(options.sha256))throw new TypeError('Supply the complete lowercase archive SHA-256 with --sha256.');
+    const expectedBytes=byteCount(options.bytes,'bytes');
+    const maximumExpanded=options['maximum-expanded-bytes']===undefined?undefined:
+      byteCount(options['maximum-expanded-bytes'],'maximum-expanded-bytes');
+    const result=await receiveGridProcedureArchive({file:resolve(options.archive),outputDirectory:absoluteOutput(options.out),
+      expectedSha256:options.sha256,expectedBytes,...(maximumExpanded===undefined?{}:{maximumExpanded})});
+    console.log(JSON.stringify({directory:result.directory,planId:result.plan.id,revisions:result.plan.revisions.length,
+      capture:result.receipt,archive:result.archive},null,2));return result;
   }
   if(action==='render') {
     const plan=inspectOperatingPlan(await originalJSON(options.plan));

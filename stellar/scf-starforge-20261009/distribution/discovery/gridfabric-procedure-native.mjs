@@ -12,6 +12,8 @@ const NATIVE_NAMES = ['core.cjs','model.cjs','sqlite-store.mjs','files.mjs','nat
   'operator.mjs','server.mjs','delivery.mjs','cli.mjs','public/index.html','public/style.css',
   'public/app.mjs','contracts/plaid-public-contract.json','contracts/management-examples.json',
   '../../merchant-fleet-gateway/state-lease.mjs'];
+const BROWSER_NATIVE_NAMES=[...NATIVE_NAMES,'procedure-files.mjs','procedure-archive.mjs','procedure-controller.mjs',
+  'public/procedures.html','public/procedures.mjs','public/procedures.css','browser-assets.json','../../distribution/browser-assets.mjs'];
 const HELPER_NAMES = ['gridfabric-procedure-native.mjs','gridfabric-procedure-native.d.mts',
   'gridfabric-procedure.mjs','operating-plan.mjs','catalog.mjs',
   '../../sf30-seller-sdk/gridfabric-plaid/sdk/client.mjs',
@@ -92,8 +94,9 @@ function checkSource(value,expected) {
   need(value?.schema==='stellar-forge.gridfabric-native-source.v1'&&Array.isArray(value.modules)&&
     value.sha256===expected.source_sha256&&hash(JSON.stringify(value.modules))===value.sha256,
     'GRID_CAPTURE_SOURCE','The complete original source identity differs from the selected source.');
-  need(value.modules.length===NATIVE_NAMES.length&&new Set(value.modules.map(x=>x.path)).size===NATIVE_NAMES.length&&
-    value.modules.every(x=>NATIVE_NAMES.includes(x.path)&&Number.isSafeInteger(x.bytes)&&x.bytes>=0&&/^[a-f0-9]{64}$/.test(x.sha256||'')),
+  const names=value.modules.length===NATIVE_NAMES.length?NATIVE_NAMES:BROWSER_NATIVE_NAMES;
+  need(value.modules.length===names.length&&new Set(value.modules.map(x=>x.path)).size===names.length&&
+    value.modules.every(x=>names.includes(x.path)&&Number.isSafeInteger(x.bytes)&&x.bytes>=0&&/^[a-f0-9]{64}$/.test(x.sha256||'')),
     'GRID_CAPTURE_SOURCE_MEMBERS','The installed original native source roster has changed.');
 }
 function checkLaunch(value,input) {
@@ -424,7 +427,7 @@ export async function readGridFabricProcedureCapture(value) {
   const catalog=parse(await retained(capture.catalogFile),'catalog.json'),previous=inspectOperatingPlan(parse(await retained(capture.previousPlan),'plan-before.json'));
   const plan=inspectOperatingPlan(parse(await retained(capture.plan),'gridfabric-plan.json'));
   checkSource(capture.source?.identity,input.workspace);
-  need(Array.isArray(capture.source.members)&&capture.source.members.length===NATIVE_NAMES.length,
+  need(Array.isArray(capture.source.members)&&capture.source.members.length===capture.source.identity.modules.length,
     'GRID_CAPTURE_SOURCE_MEMBERS','Keep every original source member.');
   const names=new Set();
   for(const item of capture.source.members){
@@ -461,13 +464,18 @@ export async function readGridFabricProcedureCapture(value) {
     same(responseValue(capture.source.response),capture.source.identity),
     'GRID_CAPTURE_CHANGED','The retained beginning/end/source observations differ.');
   responseValue(capture.source.contracts);
+  const pageRow=(item,response)=>{
+    const entry=responseValues.get(item.path);
+    if(!entry.rowsById)entry.rowsById=new Map(response.rows.map(row=>[row?.id,row]));
+    return entry.rowsById.get(item.pageRowId);
+  };
   const associations=new Set(),recordIndex=new Map();
   for(const item of capture.records||[]){
     const key=associationKey(item.stepId,item.collection,item.id),response=responseValue(item);
     const original=item.operation==='detail'&&same(item.payload,{collection:item.collection,id:item.id})
       ? response.record : item.operation==='page'&&item.payload?.collection===item.collection&&
         item.pageRowId===item.id&&Array.isArray(response.rows)
-        ? response.rows.find(row=>row.id===item.pageRowId) : undefined;
+        ? pageRow(item,response) : undefined;
     need(STEPS.includes(item.stepId)&&TABLES.includes(item.collection)&&!associations.has(key)&&
       response.collection===item.collection&&(item.operation!=='detail'||response.id===item.id)&&
       plain(original)&&same(original,item.record)&&(item.record.instance_id===undefined||item.record.instance_id===input.instanceId),
