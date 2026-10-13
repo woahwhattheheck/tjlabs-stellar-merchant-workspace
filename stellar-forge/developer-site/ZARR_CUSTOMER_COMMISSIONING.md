@@ -1,95 +1,115 @@
-# Scientific-array customer commissioning
+# Scientific-array technical commissioning and handover
 
-Operation: `SCF-ZARR-CUSTOMER-COMMISSIONING-14F5-20261013`
+This guide accompanies the installed Zarr source workspace. It defines the technical information needed to receive an authorized complete array store, retain exact native selections, review results and comparisons, and reopen a complete installation. The companion [selection template](zarr-customer-commissioning.json) is an unfilled documentation worksheet. Its fields are not a native command request, an executable configuration or an approval to access or publish a source.
 
-This workorder joins the maintained Zarr array product to a complete customer installation and the existing SCF application. It continues the original Brightband case `brightband-ewb-model-receiving-20261012` through its existing company, scientific and receiving owners. The accompanying JSON is an editable selection worksheet and source attachment to that case.
+Use the complete current [array guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b2d6d91ac58570eb76b8c04813dd7f3c02469f90/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/README.md), [operator workflow](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b2d6d91ac58570eb76b8c04813dd7f3c02469f90/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/WORKSPACE.md), [native command contract](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b2d6d91ac58570eb76b8c04813dd7f3c02469f90/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/CLI_CONTRACT.json) and [receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b2d6d91ac58570eb76b8c04813dd7f3c02469f90/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/RECEIVING.md) for actual commands and installation. These maintained sources define the exact request shapes and authority checks. [Original engine and upstream provenance](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/UPSTREAM.md) identifies the original native decoder and development data.
 
-## Customer outcome and original agreement
+## 1. Bind the complete source and its meaning
 
-The customer can select an authorized scientific source edition, inspect its arrays and coordinate meaning, run the agreed complete task, publish a reviewed output when permitted, and deliver an editable installation to another engineer. The source and original accepted outputs remain usable when a later edition is introduced.
+Retain the authorized original local Zarr v2/v3 directory or ZIP, its complete metadata and the actual file identities. Record the source edition and the permission reference in the working installation. Keep credentials and restricted access details in the configured private environment.
 
-Brightband's existing proposal is **USD 7,200 for ten business days**, with **USD 3,600 at kickoff and USD 3,600 at accepted handover**. It includes two consolidated review rounds, a sixty-minute handover and ten business days of delivered-scope correction. Its five phases are source/science agreement, original native evaluation, operator integration, changed-edition/recovery and complete receiving/handover. Those terms and the original sender remain authoritative. The source thread records a prepared proposal; customer agreement and collections are separate events.
+Select the actual array path after inspecting the complete hierarchy. Record its native data type, shape, dimension order, attributes and units. For each axis, identify any coordinate array and its own source path, shape, units and interpretation. A source index is a position. It does not itself establish a date, location, physical level, ensemble member or unit.
 
-The scientific programme remains `BRIGHTBAND-EWB-CUSTOMER-RECEIVING-0C7A-20261012`, using the complete original application selection `e67dee9d37cc8a7118c50e5b159e6bb8c4fbd91e`. It evaluates the issued California June 7–15, 2022 case 3 with FOUR_v200_GFS and PANG_v100_GFS against ERA5 using the pinned ExtremeWeatherBench 1.1.0 engine and original MAE, peak-MAE and RMSE. The array product supplies a complementary source-edition and reviewed-delivery workflow. Original evaluation and scientific decisions remain within that programme.
+Record separately the following information when present:
 
-## Select the complete unit of work
+- Initialization time, valid time and lead time.
+- Native spatial coordinate system and coordinate values.
+- Level, member and other domain-specific dimensions.
+- Missing-value markers, masks, padding and non-finite values.
+- Source transformations already performed before this import, with their actual source and operation references.
 
-Complete these decisions in the original customer workorder before declaring its source and priced output:
+The installed native reader does not acquire remote stores, infer CF semantics, align coordinates, regrid, convert units or calculate scientific scores. Such transformations need an explicit source-native operation outside this reader, whose complete output and provenance are then received as a new source edition. Unspecified interpretation remains unspecified.
 
-| Decision | Retained selection |
+## 2. Select and execute an original native operation
+
+Choose one explicit integer index or positive-step slice for every native source axis. Retain the complete selection, the original array identity and the intended output population. Use the installed prepare/apply workflow with the original request UUID and expected workspace revision. Preserve the prepared request before applying it. After an interrupted reply, look up and resume that same retained operation; do not invent a new UUID to stand in for an uncertain result.
+
+The resulting native file retains every selected cell, its source-index vector and its exact typed value. Preserve that complete result and its byte/hash identity. A visual preview or first page does not replace the retained population.
+
+Review the exact result before creating a scalar projection. A Number projection accepts supported finite values and safe integers. Large integers, negative zero, non-finite values and compound representations need their supported explicitly reviewed representation. The original typed result remains unchanged.
+
+## 3. Compare saved results without changing their scientific interpretation
+
+The current workspace can compare two original completed native results using their exact identities and content hashes. The comparison operation stores a title and interpretation note, both source contexts, selections, array metadata and creation-time review context.
+
+Pairing is by the exact original source-index tuple. Every position in the union is retained as same, changed, left-only or right-only. Same means equal typed representations; it is not a statement that two different source editions use equivalent coordinates or scientific meaning. Check the retained coordinate and unit context before drawing a conclusion.
+
+The complete HTML, CSV and JSON reports are frozen at comparison creation. A later accepted, needs-changes or rejected comparison review is a separate retained decision. It does not accept either original result for projection or publish a resource. Installed agents can read complete report ranges with their original file identities; follow the catalogue and native contract for offsets, lengths and format names.
+
+## 4. Continue the existing source-dataset installation
+
+Where the installation includes a source-dataset publisher, attach only the deliberately reviewed frozen result. Retain the original plan, extraction, target edition, review and resource configuration. Any installation authority and resource-access settings remain those of the existing publisher. The technical template does not supply or alter them.
+
+Published rows retain the original result identity, ordinal, source-index vector and chosen scalar. Receive any coordinate arrays and source context required to interpret those rows. Downloading another format, reopening a saved result or replaying an interrupted original request preserves the same result and operation.
+
+Source, publisher, dataset, deployment and operator state are distinct complete components. An exported native source packet does not silently include every other store. Follow the full receiving guide to retain and reopen the selected installation components together.
+
+## 5. Complete handover and continuation
+
+The receiving engineer uses the exact selected application source and the original saved operation. The working record should identify:
+
+| Retained component | Required technical context |
 | --- | --- |
-| People and authority | Commissioning payer, scientific/source owner, merchant, independent buyer, receiving engineer and maintenance owner. Retain the existing company sender and original correspondence. |
-| Source and edition | Original publisher, access/right reference, exact store or complete export, source edition or immutable version, acquisition time, original archive identity and any upstream transformation. |
-| Array population | Every variable path; native axis order and shape; coordinate-array paths; actual selected indices and coordinate values; complete time, geographic, level and ensemble population. |
-| Scientific meaning | Original units, time basis/calendar, initialization and valid time, daily/instantaneous/accumulated meaning, missing/padded values, source masks and original evaluation methods. |
-| Useful output | The customer's analysis or decision, complete files/tables, required coordinate context, full expected population and original comparison/reference output. |
-| Operation and price | Exact HTTP operation or MCP tool, arguments, frozen source, returned schema, priced unit, asset/network/recipient/amount/expiry and customer spending authority. |
-| Hosting and support | Existing selected runtime and dependency pins, private source/operator locations, merchant host, secret references, backup destination, response owner and actual delivery slot. |
-| Completion and money | Customer acceptance, selected correction period, actual work effort, original milestones, invoice and collection dates, and allocation of each adaptation to the commercial workshare or a grant package. |
+| Original source store | Complete files, metadata, source edition, authorization reference and measured identities. |
+| Selected arrays | Native paths, types, shapes, dimension order, coordinates, units and interpretation limits. |
+| Native results | Original requests, complete selections, typed cells, source indices, reviews and byte/hash identities. |
+| Saved comparisons | Original left/right results, comparison population, all reports and separate review history. |
+| Publisher and deployment | Original configured stores, frozen edition, resource configuration and actual continuation records. |
+| Application source | Complete exact installed modules and guides, selected dependency versions and source identities. |
+| Receiving output | Original receiving operation and actual reopen results, including any unresolved failure or unavailable runtime. |
 
-An index vector such as `[0,2,4]` identifies source positions. Read the associated coordinate arrays to establish actual times, pressure levels, locations or ensemble labels. Preserve original ascending or descending axes and the original longitude convention. A stride records a scientifically chosen selection and its omitted coordinates explicitly. No calendar, unit, coordinate or missing-value meaning is inferred from a variable's display name.
+Reopen the complete source workspace and any separately included installation stores. Read retained results and reports in full, inspect the actual outgoing presentation, and continue an explicitly selected original operation. Preserve later compatible history and historical source editions under the receiving rules; never replace a newer workspace with a partial earlier snapshot.
 
-The present source adapter imports a complete local store or ZIP. The original customer source workflow produces that complete export with its source selection and metadata. A remote object-store URL or a Kerchunk reference alone is not a complete local store. The source owner retains the original acquisition and any selected export transformation. For an output beyond the implemented import/result limits, the commissioning scope includes the required complete-source or receiving adaptation; the accepted population remains the customer's original requirement.
+Current source packets contain the six Python modules including the comparison engine. Complete historical five-module packets and completed exports retain their original admission rules. A current application does not change the bytes or identity of a historical export.
 
-## Original operating programme
+## 6. Limits and evidence
 
-Use the [complete workspace guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/WORKSPACE.md), [native command contract](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/CLI_CONTRACT.json) and [whole-product receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/RECEIVING.md) from the selected Zarr product. Its browser, CLI, typed MCP and managed Applications route use the same source workspace.
-
-1. **Open the original installed product.** Inspect the installed Node/Python/native decoder identities. Use the host-declared source and destination, existing workspace and original operation state. Preserve the current saved workspace when reopening.
-2. **Import the complete source.** Retain the whole source directory or ZIP and exact original provenance. Apply the saved import request once. If its response is interrupted, inspect and resume its original UUID.
-3. **Inspect source and coordinates.** Read the complete hierarchy, native metadata and relevant coordinate arrays. Bind the source edition, variable and coordinate selections to the agreed scientific population.
-4. **Save and run selections.** Specify one integer or `{start,stop,step}` per source axis. Stops are exclusive; positive-step slices preserve their axes. Retain the exact request, current revision and original result for every selected variable and coordinate array.
-5. **Review the full result.** Open all result pages and the complete retained typed output. Resolve missing-value and coordinate questions against the original source and evaluator. Save the decision against that exact result hash.
-6. **Freeze the agreed scalar output.** Choose `text`, `number` or `boolean`. Text preserves native integer/float strings and explicit compound representations; Number requires the supported finite representation and safe integer range. Keep the original native result and its accepted review.
-7. **Publish through the original publisher.** Select that immutable frozen source. Save the original dataset plan, extract the complete selected query, review its target edition and publish. Preserve the actual ordering, schema, resource terms and original publisher history.
-8. **Complete the customer task.** The buyer receives every advertised row and file together with the agreed coordinate/source context. Record the original approval, any actual transfer, complete output and receiver's decision. Merchant fulfillment and customer acceptance retain their actual states.
-9. **Operate a changed edition.** Import or select the genuinely new original source; retain the prior edition and output. Review its changed metadata/population, run the agreed task and explicitly choose the following publication. Reversing result ordering remains a new dataset edition of the same source observation.
-10. **Receive and continue.** Export the original source workspace and the complete publisher/dataset/deployment/operator handover. A second engineer independently receives the original identities and files, opens the installed application, and completes the agreed change or recovery. Preserve every later edit on repeated opening.
-
-The source-only packet contains original source files, metadata, selections, typed results, reviews, frozen output, SQLite history and its native application. The final installation additionally carries publisher, dataset, deployment and operator stores. Acceptance covers the complete installation and its customer output.
-
-## Acceptance in the original five phases
-
-| Original phase | Complete customer acceptance |
+| Resource | Current explicit limit |
 | --- | --- |
-| Source/science agreement | The customer and source owner agree the full issued event or other task, exact original models/target, variables, coordinate/time/unit meanings, authorized source population and complete output. Existing EWB scientific settings remain pinned. |
-| Original native evaluation | The original evaluator completes its declared population and retains all results and actual missing/excluded source coverage. Saved requests and outputs remain attributable to the same source/configuration edition. |
-| Operator integration | The customer can inspect source metadata and all selected results, review an exact output, and use the agreed publication/customer-delivery path in the installed interface. |
-| Changed edition and recovery | The operator retains old and new source/output editions, reviews their actual change, and resumes the original interrupted operation without duplicating its work or purchase. |
-| Complete receiving/handover | A receiving engineer opens the complete portable installation, preserves the original history and files, completes a practical change or recovery, and takes the agreed support handover. |
+| Complete source import | 1 GiB |
+| A selected native result | One million cells and 32 MiB retained JSON |
+| A saved comparison | Two million union positions and 96 MiB complete JSON |
+| Each complete comparison report | 384 MiB |
+| Complete native packet | 2 GiB |
 
-The array work is assigned explicitly within those phases when selected. Any extra customer scope, service terms or scientific transformation is described in the original workshare before changing the offer. The source and native results are retained whether or not the customer chooses a paid Stellar deployment.
+An over-limit selection must be addressed through an explicit source/runtime change or a deliberately different selection. Do not silently sample, truncate or call a partial output complete.
 
-## Delivery economics and capacity
+The earlier original development operation decoded forty upstream arrays containing 338 cells, retained forty-one reviewed results including a separate strided selection, and reached workspace revision 166. Its complete 317-file packet reopened with the same identity. Those results describe that original development course. The added comparison source, browser and installed interfaces have source-level review and focused interface checks; this guide makes no new native execution, viewed report or customer acceptance claim. Record those outcomes only when the original equipped receiving operation actually produces them.
 
-The original quote remains USD 7,200. The SCF application's **USD 95 per hour** is a planning assumption, not an incurred payroll rate. It gives the following effort sensitivity before additional selected costs:
+## Technical worksheet use
 
-| Total delivery and included correction effort | Modeled labor | Remainder from USD 7,200 |
-| --- | ---: | ---: |
-| 40 hours | USD 3,800 | USD 3,400 |
-| 60 hours | USD 5,700 | USD 1,500 |
-| 80 hours | USD 7,600 | minus USD 400 |
+Copy the neutral JSON template into the installation's working records. Leave unknown values null or empty. Populate it from the complete original source and actual saved workspace, keeping source-derived facts distinct from interpretation notes. The schema names a documentation template; execute only requests prepared under the installed native contract. Its public contents must remain generic technical material. Keep restricted project inputs and operational secrets in the authorized private working environment.
 
-At that planning rate, labor-only break-even is **75.79 hours**. If the proposed kickoff installment were collected at commencement, USD 3,600 would cover **37.89 modeled hours**. Actual hosting, source access, partner charges and support effort are recorded separately; actual start, invoice and collection dates remain their original business events.
+The related grant chapter retains the existing six funded packages, 400 prospective hours, USD 38,000 and 150-day scope. This technical template adds no funded package or deployment outcome.
 
-The ten-business-day commercial plan and the grant's selected contributor calendar share named available hours once. Reuse the completed decoder, operator and receiving foundation, then estimate actual source-specific mapping, customer application changes, correction and handover. Record those hours in the original five phases. This produces an estimate for the existing offer without assuming that a testnet transfer or prepared milestone is collected revenue.
+---
 
-## Grant allocation and useful recurring work
+# Repository delivery instructions
 
-The application remains **USD 38,000 / 400 prospective hours / 150 days from actual award acceptance**. Its six packages remain 80/40 hours for T1, 70/50 for T2 and 90/70 for T3. Source/runtime and customer-output adaptation use T1; independent-provider operation and installed response use T2; mainnet service and production receiving use T3. Assign each remaining change once between an accepted commercial workshare and the selected grant installation.
+Use the current README and the existing product's build/receiving guide. Coordinate through the original implementation and receiving owners, preserve concurrent source, and carry work through its authorized delivery.
 
-A paid resource represents the agreed useful output. The workorder distinguishes a complete scientific task, its separately priced requests, actual settlements and complete returned files. Reopening saved output, an original-request retry and another format of the same acquired output preserve their existing task and payment. A fresh authorized source edition or distinct approved customer query can supply a later purchase. The original cohort calendar establishes actual customer demand and retains all attempted, partial and complete outcomes.
+## Rendered product inspection — owner instruction, 2026-10-13
 
-The grant's two independent merchants, two independent buyers, two independently operated testnet facilitators, ten useful purchases over seven days by day 90 and thirty over fourteen days by day 150 retain their current definitions. The current upstream-array results are the working development foundation. The original customer workshare determines any actual customer deployment and paid-service selection.
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
 
-## Original source and ownership
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
 
-- [Original Brightband company/science/workshare thread](https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791788467414179).
-- [Original scientific agreement and pinned APIs](https://github.com/woahwhattheheck/commons/blob/5eceeaacc2b65d7eef4331cf1c2508a2a15e15b9/opportunities/brightband_ewb_receiving_2026/SCIENCE-AND-ACCEPTANCE.md).
-- [Original complete priced workshare and two-page customer proposal](https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791796412406469?thread_ts=1791788467.414179).
-- [Complete Brightband product and commercial source](https://github.com/woahwhattheheck/commons/tree/c07cb1c1966bee6c36f604c4a8dee9d50e1568c3/opportunities/brightband_ewb_receiving_2026).
-- [Merged Zarr source and maintained limits](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/README.md).
-- [Original Zarr provenance](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3928eaf3dfd7ac1800c3cd4ef9ef57effde32f25/stellar/scf-starforge-20261009/sf30-seller-sdk/zarr/UPSTREAM.md).
-- [Existing SCF application](https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF) and [scientific-array contribution claim](https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791851317488599?thread_ts=1791733597.745419).
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
 
-0C7A work_scout retains the scientific adapter, company case, proposal and correspondence. Its original setup and scientific/browser owners retain that same EWB programme; FD06 owns shared mailbox admission. The Zarr receiving owner retains its one whole installed programme. This contribution supplies the complementary scientific-array customer agreement and the existing application's source integration.
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+## GitHub Actions zero spend — existing owner instruction
+
+Keep GitHub Actions disabled in this repository's provider settings and preserve the disabled source policy in [.github/hosted-ci-policy.json](.github/hosted-ci-policy.json). Every workflow job must retain the established literal-false condition, including manual dispatch and reusable jobs. Preserve its original condition inside the wrapper, and preserve the complete steps, commands, source and delivery artifacts.
+
+Run focused product work in the existing cloud Linux or original local receiving operation. A public repository, available free minutes, cloud admission failure or a missing green check does not authorize enabling or dispatching hosted Actions. Do not set `HOSTED_CI=on`, add scheduled hosted runs or choose a paid runner. Keep source-native receiving moving with its original owner and saved operation.
+
+Before publishing workflow changes, use the maintained Commons `tools/hosted_ci_gate.py --zero-spend REPO_ROOT` and `--check REPO_ROOT` source operation where that existing runtime is available. Its canonical wrapper is `${{ (false) && (ORIGINAL_CONDITION) }}`; the original condition is retained for native continuation. Provider disablement, the whole-account spending budget and dated billing remain separate controls; preserve current artifacts and their original custody.
+
+This carries Bryce's existing zero-spend instruction from [Commons RULES, CI and spend](https://github.com/woahwhattheheck/commons/blob/main/RULES.md#4-ci-and-spend) into this repository's consumed entry guidance. Original cost coordination: https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791755765336589 .
+
