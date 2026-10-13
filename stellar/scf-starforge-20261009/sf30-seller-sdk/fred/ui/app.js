@@ -18,7 +18,7 @@ let buyerConfigured = false, countyReceiving = null, publicationDraftProject = n
 let merchantPublicationRead = 0, customerPublicationRead = 0, countyReceivingRead = 0;
 let customerWork = null, nativeWorkspace = null, preparedPurchase = null, preparedPurchaseRead = 0, customerFormVersion = 0, refreshRead = 0;
 let customerCatalogLoading = false, adoptingCustomerWork = false, publicationSubmission = null;
-const customerFields = ['publication-kind','qcew-merchant-edition','review-select','public-origin','public-path','payment',
+const customerFields = ['publication-kind','qcew-merchant-edition','research-merchant-product','research-merchant-edition','research-merchant-note','review-select','public-origin','public-path','payment',
   'publication-select','preview-query','customer-publication','customer-file','intent','accept-index','customer-query',
   'request-select','county-purchase-directory','county-received-edition'];
 const clone = value => value === undefined ? null : structuredClone(value);
@@ -143,7 +143,13 @@ const published = mountFredDdpPublished({ api, table, select, getState: () => st
   getBusy: () => workspaceBusy, refresh, message });
 const handovers = mountFredOperatingHandovers({ api, getToken: () => token, getState: () => state,
   getBusy: () => workspaceBusy, message });
-const research = mountFredResearch({api,download,getState:()=>state,getBusy:()=>workspaceBusy,refresh,message});
+const research = mountFredResearch({api,download,getState:()=>state,getBusy:()=>workspaceBusy,refresh,message,
+  onPublishEdition:async({productId,editionId})=>{
+    $('publication-kind').value='RESEARCH';retainChoice('research-merchant-product',productId);syncResearchEditions();
+    retainChoice('research-merchant-edition',editionId);syncPublicationKind(true);retainPublicationDraft();
+    touchCustomer('Selected issued Research product');document.querySelector('[data-tab="publication"]').click();
+    $('publication-form').scrollIntoView({block:'start'});
+  }});
 const qcew = mountFredQcew({ api, download, table, select, getState: () => state,
   getBusy: () => workspaceBusy, refresh, message, onPublication: async result => {
     await acceptPublication(result,'QCEW',publicationSubmission);
@@ -189,7 +195,7 @@ async function adoptCustomerWork(value) {
     }
     await showPublication(true,{preserveResult:true});
     if (state?.id!==projectId || customerFormVersion!==version) return;
-    if ($('county-purchase-directory').value && customerPublication?.kind==='QCEW') {
+    if ($('county-purchase-directory').value && ['QCEW','RESEARCH'].includes(customerPublication?.kind)) {
       await showCountyReceiving({preserveSelection:true}).catch(error=>{
         if (error.code==='ENOENT') $('county-customer-status').textContent='The original receiving selection is retained. Open or continue it on its original customer host.';
         else throw error;
@@ -199,7 +205,7 @@ async function adoptCustomerWork(value) {
 }
 function publicationContext() {
   return {projectId:state?.id,version:customerFormVersion,
-    fields:Object.fromEntries(['publication-kind','qcew-merchant-edition','review-select','public-origin','public-path','payment'].map(id=>[id,$(id).value]))};
+    fields:Object.fromEntries(['publication-kind','qcew-merchant-edition','research-merchant-product','research-merchant-edition','research-merchant-note','review-select','public-origin','public-path','payment'].map(id=>[id,$(id).value]))};
 }
 function samePublicationContext(value) {
   if (!value || value.projectId!==state?.id || value.version!==customerFormVersion) return false;
@@ -222,11 +228,11 @@ async function acceptCustomerResult(body,result,selected) {
       originalSource:result.captureSha256,expectedFile:result.expected},null,2);
     retainChoice('request-select',result.intentId);
     message('Original request prepared. Review its terms before executing.');
-  } else if (body.action==='receive-county-purchase') {
+  } else if (['receive-county-purchase','receive-research-purchase'].includes(body.action)) {
     const value=await showPublication(true,{preserveResult:true});
     if (!value || !sameCustomerSelection(selected)) return;
     $('county-purchase-directory').value=result.directory;retainChoice('request-select',body.intentId);
-    if (await showCountyReceiving()) message('The purchased county report and original predecessor files were received.');
+    if (await showCountyReceiving()) message(customerPublication.kind === 'RESEARCH' ? 'The issued Research product and every selected original source were received.' : 'The purchased county report and original predecessor files were received.');
   } else {
     delivery=clone(result);const {page,...summary}=result;
     $('customer-result').textContent=JSON.stringify(summary,null,2);table('customer-rows',page?.rows??[]);
@@ -245,7 +251,7 @@ async function renderState(value) {
   state = value.project;
   nativeWorkspace=value.workspace??nativeWorkspace; workspaceBusy = value.busy ?? null; $('project-title').textContent = state.title + ' · revision ' + state.revision;
   $('summary').replaceChildren();
-  for (const [label, number] of [['Captures', state.captures.length], ['Saved reviews', state.reviews.length], ['Publications', state.publications.length + (state.qcew?.publications?.length ?? 0)], ['Completed actions', state.operations.length]]) {
+  for (const [label, number] of [['Captures', state.captures.length], ['Saved reviews', state.reviews.length], ['Publications', state.publications.length + (state.qcew?.publications?.length ?? 0) + (state.researchCommerce?.publications?.length ?? 0)], ['Completed actions', state.operations.length]]) {
     const node = document.createElement('div'); node.className = 'metric';
     const strong = document.createElement('strong'), span = document.createElement('span'); strong.textContent = number; span.textContent = label; node.append(strong, span); $('summary').append(node);
   }
@@ -269,8 +275,12 @@ async function renderState(value) {
   selectRetained('review-select', state.reviews.map(item => [item.id, (item.briefing?.title ? item.briefing.title + ' · ' : '') + item.id.slice(0,12) + ' · ' + item.captureId.slice(0,12) + ' · ' + item.reviewedAt]));
   selectRetained('qcew-merchant-edition', (state.qcew?.editions ?? []).map(item => [item.id,
     item.period.year + '-Q' + item.period.quarter + ' · ' + item.id.slice(0, 12)]));
+  selectRetained('research-merchant-product', (state.research?.products ?? []).map(item => [item.id,
+    item.versions.find(version => version.id === item.currentId)?.definition.title ?? item.id]));
+  syncResearchEditions();
   const publications = [...state.publications.map(item => [item.id, 'Source · ' + item.id.slice(0,12) + ' · ' + item.resource]),
-    ...(state.qcew?.publications ?? []).map(item => [item.id, 'County report · ' + item.id.slice(0,12) + ' · ' + item.resource])];
+    ...(state.qcew?.publications ?? []).map(item => [item.id, 'County report · ' + item.id.slice(0,12) + ' · ' + item.resource]),
+    ...(state.researchCommerce?.publications ?? []).map(item => [item.id, 'Research product · ' + item.productId + ' · ' + item.id.slice(0,12)])];
   selectRetained('publication-select', publications); selectRetained('customer-publication', publications);
   $('acquisition-state').textContent = JSON.stringify(state.acquisition ?? { state: state.pending?.kind === 'capture' ? 'CAPTURING' : 'IDLE' }, null, 2);
   $('pending').textContent = state.pending ? JSON.stringify(state.pending, null, 2) : 'No pending operation.';
@@ -322,19 +332,60 @@ async function compare() {
   table('comparison', changes, ['kind','series','date','before','after','delta','meaningChanges']);
   $('compare-previous').disabled = comparisonOffset === 0; $('compare-next').disabled = comparisonOffset + 100 >= comparisonPage.total;
 }
+function syncResearchEditions() {
+  const product=state?.research?.products.find(item=>item.id===$('research-merchant-product').value);
+  selectRetained('research-merchant-edition',(product?.editions??[]).map(item=>[item.id,
+    (product.versions.find(version=>version.id===item.definitionId)?.definition.title??product.id)+' · '+item.issuedAt+' · '+item.id.slice(0,12)]));
+}
+function researchPublicationTicket() {
+  if(!state)return null;
+  const raw=localStorage.getItem('fred-research-publication:'+state.id);
+  if(raw===null)return null;
+  const value=JSON.parse(raw);
+  if(value.projectId!==state.id||value.action!=='research-publish'||typeof value.id!=='string')
+    throw new Error('The retained Research publication does not match this economic project.');
+  return value;
+}
 function syncPublicationKind(changePath = false) {
-  const county = $('publication-kind').value === 'QCEW';
-  $('publication-review-field').hidden = county; $('publication-county-field').hidden = !county;
-  $('review-select').required = !county; $('qcew-merchant-edition').required = county;
-  if (changePath && ['/economic-data', '/county-reports'].includes($('public-path').value))
-    $('public-path').value = county ? '/county-reports' : '/economic-data';
-  $('publish-button').disabled = Boolean(state?.pending || workspaceBusy) ||
-    !(county ? $('qcew-merchant-edition').value : $('review-select').value);
+  const kind=$('publication-kind').value,county=kind==='QCEW',isResearch=kind==='RESEARCH';
+  $('publication-review-field').hidden=county||isResearch;
+  $('publication-county-field').hidden=!county;$('publication-research-fields').hidden=!isResearch;
+  $('review-select').required=!county&&!isResearch;$('qcew-merchant-edition').required=county;
+  $('research-merchant-product').required=$('research-merchant-edition').required=isResearch;
+  if(changePath&&['/economic-data','/county-reports','/research-products'].includes($('public-path').value))
+    $('public-path').value=county?'/county-reports':isResearch?'/research-products':'/economic-data';
+  let ticket=null;try{ticket=researchPublicationTicket();}catch(error){message(error.message,true);}
+  const pending=state?.pending?.kind==='research-publish'||Boolean(ticket);
+  $('research-publish-continue').hidden=!pending;
+  $('research-publish-continue').disabled=Boolean(workspaceBusy);
+  let failed=null;try{failed=JSON.parse(localStorage.getItem('fred-research-publication-error:'+state?.id)??'null');}catch{}
+  $('research-publication-edit').hidden=!(ticket&&failed?.id===ticket.id&&!state?.pending&& !state?.operations.some(item=>item.id===ticket.id));
+  $('publish-button').disabled=Boolean(state?.pending||workspaceBusy||isResearch&&ticket)||
+    !(county?$('qcew-merchant-edition').value:isResearch?$('research-merchant-product').value&&$('research-merchant-edition').value:$('review-select').value);
+}
+async function sendResearchPublication(request,selection) {
+  const projectId=state.id,key='fred-research-publication:'+projectId;
+  if(!request.resume)localStorage.setItem(key,JSON.stringify(request));
+  let result;
+  try{result=await api('/api/action',request,projectId);}
+  catch(error){
+    await refresh().catch(()=>{});
+    if(error.status>=400&&error.status<500&&state?.id===projectId&&!state.pending&&
+      !state.operations.some(item=>item.id===request.id))
+      localStorage.setItem('fred-research-publication-error:'+projectId,JSON.stringify({id:request.id,status:error.status,message:error.message}));
+    syncPublicationKind();throw error;
+  }
+  const retained=localStorage.getItem(key);
+  if(retained&&JSON.parse(retained).id===request.id)localStorage.removeItem(key);
+  await refresh();
+  if(state.id===projectId)await acceptPublication(result,'RESEARCH',selection);
+  message('Issued Research product and all selected original sources published.');
+  return result;
 }
 function retainPublicationDraft() {
   if (!state) return;
   try { sessionStorage.setItem('fred-publication-draft:' + state.id, JSON.stringify(
-    Object.fromEntries(['publication-kind','qcew-merchant-edition','public-origin','public-path','payment']
+    Object.fromEntries(['publication-kind','qcew-merchant-edition','research-merchant-product','research-merchant-edition','research-merchant-note','public-origin','public-path','payment']
       .map(id => [id, $(id).value])))); } catch {}
 }
 function restorePublicationDraft() {
@@ -342,7 +393,7 @@ function restorePublicationDraft() {
   publicationDraftProject = state.id;
   try {
     const saved = JSON.parse(sessionStorage.getItem('fred-publication-draft:' + state.id) ?? 'null');
-    if (saved) for (const id of ['publication-kind','qcew-merchant-edition','public-origin','public-path','payment'])
+    if (saved) for (const id of ['publication-kind','qcew-merchant-edition','research-merchant-product','research-merchant-edition','research-merchant-note','public-origin','public-path','payment'])
       if (typeof saved[id] === 'string') $(id).value = saved[id];
   } catch {}
 }
@@ -371,7 +422,11 @@ function syncCustomerResource() {
     panel.inert=adoptingCustomerWork||navigating;
   const known=Boolean(customerPublication?.plan.publicationId===$('customer-publication').value);
   const current=Boolean(known&&!customerCatalogLoading&&!adoptingCustomerWork&&customerWork?.isReady()&&!customerWork.isBusy());
-  const county=known&&customerPublication.kind==='QCEW',prepared=known&&selectedPreparedPurchase();
+  const county=known&&['QCEW','RESEARCH'].includes(customerPublication.kind),prepared=known&&selectedPreparedPurchase();
+  const isResearch=known&&customerPublication.kind==='RESEARCH';
+  $('county-purchase-heading').textContent=isResearch?'Receive the purchased Research product':'Receive the purchased county report';
+  $('county-purchase-description').textContent=isResearch?'The complete issued product carries its selected original source files, definitions and review decisions. The customer project remains separate from the producer.':'The complete report package carries the original report files and predecessor editions. Its receiving destination stays with the same purchase.';
+  $('county-receive-purchase').textContent=isResearch?'Receive or continue original Research product':'Receive or continue original report';
   const resource=current&&(!$('customer-file').value&&!county||customerPublication.plan.downloads.some(item=>item.path===$('customer-file').value));
   $('prepare').disabled=!resource;
   $('buy').disabled=$('recover').disabled=$('download-customer').disabled=!buyerConfigured||!current||!prepared;
@@ -382,7 +437,7 @@ function syncCustomerResource() {
   $('county-open-receiving').disabled=!current||!county;
   $('customer-rows').hidden=county;
   $('county-purchase-receiving').hidden=!county;
-  $('county-receive-purchase').disabled=!buyerConfigured||!current||!county||!prepared||$('customer-file').value!=='report-package.json.gz';
+  $('county-receive-purchase').disabled=!buyerConfigured||!current||!county||!prepared||$('customer-file').value!==(isResearch?'research-package.json.gz':'report-package.json.gz');
 }
 async function readOriginalPurchase({restoreFields=false}={}) {
   const selection=customerSelection(),request=++preparedPurchaseRead;
@@ -415,22 +470,23 @@ async function showPublication(customer = false,{preserveResult=false}={}) {
   try {
     const value=await api('/api/publication?'+new URLSearchParams({publication:id}),undefined,projectId);
     if (!selected()) return null;
-    const county=value.kind==='QCEW';
+    const county=value.kind==='QCEW',isResearch=value.kind==='RESEARCH',assetOnly=county||isResearch;
     if(customer){
       customerPublication=value;
-      selectRetained('customer-file',[...(county?[]:[['','Observation page']]),
-        ...value.plan.downloads.map(item=>[item.path,(item.path==='report-package.json.gz'?'Complete report package':item.path)+' · '+item.bytes+' bytes'])]);
+      selectRetained('customer-file',[...(assetOnly?[]:[['','Observation page']]),
+        ...value.plan.downloads.map(item=>[item.path,(item.path==='report-package.json.gz'?'Complete report package':item.path==='research-package.json.gz'?'Complete issued Research product':item.path)+' · '+item.bytes+' bytes'])]);
       selectRetained('request-select',value.requests.map(item=>[item.intentId,item.intentId+' · '+item.url]));
       if (!preparedPurchase || preparedPurchase.intentId!==$('intent').value || !value.requests.some(item=>item.purchaseSha256===preparedPurchase.purchaseSha256))
         await readOriginalPurchase();
       if (!selected()) return null;
       if (!preserveResult && sameCustomerSelection(originalSelection))
         $('customer-result').textContent=JSON.stringify({editionId:value.edition.editionId,
-          ...(county?{title:value.edition.title,period:value.edition.period}:{selection:value.edition.selection}),
+          ...(assetOnly?{title:value.edition.title,...(county?{period:value.edition.period}:{productId:value.edition.productId,sources:value.edition.sources})}:{selection:value.edition.selection}),
           payment:value.plan.payment,resource:value.plan.resource,sourceFiles:value.plan.downloads},null,2);
     }else{
-      publication=value;$('publication-data-preview').hidden=county;
-      table('publication-detail',county?[{title:value.edition.title,
+      publication=value;$('publication-data-preview').hidden=assetOnly;
+      table('publication-detail',isResearch?[{title:value.edition.title,product:value.edition.productId,
+        edition:value.edition.editionId,sources:value.edition.sources,resource:value.plan.resource,payment:value.plan.payment}]:county?[{title:value.edition.title,
         period:value.edition.period.year+'-Q'+value.edition.period.quarter,edition:value.edition.editionId,
         predecessor_editions:value.edition.predecessorEditions,resource:value.plan.resource,payment:value.plan.payment}]:
         [{edition:value.edition.editionId,sourceMode:value.edition.sourceMode,asOf:value.edition.selection.asOf,
@@ -447,6 +503,19 @@ function paintCountyReceiving() {
   const receiving = countyReceiving;
   if (!receiving || receiving.publicationId !== $('customer-publication').value ||
     receiving.intentId !== $('intent').value || receiving.directory !== $('county-purchase-directory').value.trim()) return;
+  if(receiving.kind==='RESEARCH') {
+    for(const file of receiving.files) {
+      const button=document.createElement('button');button.type='button';button.textContent=file.path==='research-package.json.gz'?'Complete received Research package':file.path==='manifest.json'?'Complete source manifest':file.path;
+      button.addEventListener('click',async()=>{
+        if(countyReceiving!==receiving||receiving.publicationId!==$('customer-publication').value||
+          receiving.intentId!==$('intent').value||receiving.directory!==$('county-purchase-directory').value.trim())return;
+        button.disabled=true;try{await download('/api/customer-received?'+new URLSearchParams({publication:receiving.publicationId,
+          intent:receiving.intentId,edition:receiving.edition.editionId,file:file.path}),file.path,file);}
+        catch(error){message(error.message,true);}finally{button.disabled=false;}
+      });root.append(button);
+    }
+    return;
+  }
   const edition = receiving.editions.find(item => item.manifest.editionId === $('county-received-edition').value);
   if (!edition) return;
   const files = [{ name: 'report-package.json.gz', label: 'Complete received report package' },
@@ -477,6 +546,14 @@ async function showCountyReceiving({preserveSelection=false}={}) {
   catch (error) { if (!selected()) return null; throw error; }
   if (!selected()) return null;
   countyReceiving = { ...value, publicationId, intentId };
+  if(value.kind==='RESEARCH') {
+    $('county-purchase-directory').value=value.directory;
+    $('county-customer-status').textContent=value.edition.title+' is received in '+value.directory+'.';
+    table('county-customer-receipt',[{product:value.edition.productId??value.receipt.productId,title:value.edition.title,
+      edition:value.edition.editionId,files:value.files.length,received:value.receipt.receivedAt,packageSha256:value.receipt.packageSha256}]);
+    select('county-received-edition',[[value.edition.editionId,value.edition.title+' · '+value.edition.editionId.slice(0,12)]],value.edition.editionId);
+    paintCountyReceiving();return value;
+  }
   $('county-purchase-directory').value = value.directory;
   $('county-customer-status').textContent = value.receipt.title + ' is received in ' + value.directory + '.';
   table('county-customer-receipt', [{ report: value.receipt.title,
@@ -551,11 +628,38 @@ event('publication-form', async () => {
   const terms = { origin: $('public-origin').value, path: $('public-path').value, payment: JSON.parse($('payment').value) };
   if ($('publication-kind').value === 'QCEW') {
     await qcew.publish({ editionId: $('qcew-merchant-edition').value, ...terms });
+  } else if ($('publication-kind').value === 'RESEARCH') {
+    if(researchPublicationTicket())throw new Error('Continue the saved Research publication before starting another edition.');
+    const request={action:'research-publish',id:freshId('research-publish'),projectId:state.id,expectedRevision:state.revision,
+      productId:$('research-merchant-product').value,editionId:$('research-merchant-edition').value,
+      note:$('research-merchant-note').value,...terms};
+    await sendResearchPublication(request,publicationSubmission);
   } else {
     const result = await action('publish', { reviewId: $('review-select').value, ...terms });
     await acceptPublication(result,'FRED',publicationSubmission); message('Reviewed merchant edition published.');
   }
 }, 'submit');
+event('research-publication-edit',async()=>{
+  const ticket=researchPublicationTicket();if(!ticket)throw new Error('No original publication is retained.');
+  await refresh();
+  const failed=JSON.parse(localStorage.getItem('fred-research-publication-error:'+state.id)??'null');
+  if(ticket.projectId!==state.id||failed?.id!==ticket.id||state.pending||state.operations.some(item=>item.id===ticket.id))
+    throw new Error('Continue the original native publication before changing its selection.');
+  const key='fred-research-publication-rejected:'+state.id,history=JSON.parse(localStorage.getItem(key)??'[]');
+  if(!history.some(item=>item.request.id===ticket.id))history.push({request:ticket,failure:failed,retainedAt:new Date().toISOString()});
+  localStorage.setItem(key,JSON.stringify(history));localStorage.removeItem('fred-research-publication:'+state.id);
+  syncPublicationKind();message('The complete rejected selection is retained. Edit the publication fields and submit a new original request.');
+});
+event('research-publish-continue',async()=>{
+  publicationSubmission=publicationContext();
+  const retained=researchPublicationTicket(),pending=state.pending;
+  if(retained)return sendResearchPublication(retained,publicationSubmission);
+  if(pending?.kind!=='research-publish')throw new Error('No original Research publication is pending.');
+  return sendResearchPublication({action:pending.kind,id:pending.id,expectedRevision:pending.expectedRevision,
+    projectId:state.id,resume:true},publicationSubmission);
+});
+event('research-merchant-product',()=>{syncResearchEditions();syncPublicationKind();retainPublicationDraft();},'change');
+event('research-merchant-edition',()=>{syncPublicationKind();retainPublicationDraft();},'change');
 event('publication-kind', () => { syncPublicationKind(true); retainPublicationDraft(); qcew.onState(); }, 'change');
 $('publication-form').addEventListener('input', retainPublicationDraft);
 event('qcew-merchant-edition', () => { syncPublicationKind(); retainPublicationDraft(); qcew.onState(); }, 'change');
@@ -635,7 +739,7 @@ event('open-request', async () => {
 });
 event('county-receive-purchase-form',async()=>{
   const directory=$('county-purchase-directory').value.trim();
-  await customerAction('receive-county-purchase',{receivingDirectory:directory||null});
+  await customerAction(customerPublication?.kind==='RESEARCH'?'receive-research-purchase':'receive-county-purchase',{receivingDirectory:directory||null});
 },'submit');
 event('county-open-receiving', () => showCountyReceiving());
 event('county-received-edition', paintCountyReceiving, 'change');

@@ -845,7 +845,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
         if(listed)Object.assign(listed,{version:next.program.version,state:next.program.state,updatedAt:next.program.updatedAt});
         return true;
       };
-      engagementView=mountEngagements({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-engagements]'),current:c,saveApi:transport,
+      engagementView=mountEngagements({staffContext:pinnedContext,isCurrent:()=>available()&&view.current===c,container:$('[data-ops-engagements]'),current:c,saveApi:transport,
         session:retainedEngagementSessions.get(c.program.id),mutationId,recordingActor,
         onCase:async(next,result)=>{if(receiveCase(next))render();},
         onSources:async()=>{if(!available()||view.current?.program.id!==c.program.id)return;view.tab='sources';render();},

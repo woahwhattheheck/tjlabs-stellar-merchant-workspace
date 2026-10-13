@@ -6,6 +6,7 @@ import { extractFredOperatingTar } from './archive-io.mjs';
 import { withPrivateLock } from '../../routescan/quota.mjs';
 import { exportFredProject, readFredProject, receiveFredProject } from '../project.mjs';
 import { validateResearchExtension } from '../research/bundle.mjs';
+import { validateResearchCommerceExtension } from '../research/commerce-bundle.mjs';
 import { canonicalJSONDigest } from '../canonical-stream.mjs';
 import { listFredDdpPublicationOperations, readFredDdpPublicationOperation,
   openFredDdpPublicationFile, attachFredDdpPublishedProgramme } from '../ddp/published-workspace.mjs';
@@ -31,22 +32,28 @@ export function fredOperatingHistory(state) {
   return history;
 }
 function bundleIdentity(bundle) {
-  need(bundle && /^stellar-forge\.fred-project-bundle\.v[1-7]$/.test(bundle.schema ?? '') && HASH.test(bundle.bundleSha256 ?? ''),
+  need(bundle && /^stellar-forge\.fred-project-bundle\.v[1-8]$/.test(bundle.schema ?? '') && HASH.test(bundle.bundleSha256 ?? ''),
     'Select the original complete versioned project bundle.');
   const { bundleSha256, ...core } = bundle;
   need(canonicalJSONDigest(core) === bundleSha256, 'The complete project bundle identity changed.');
   need(!bundle.state?.pending, 'Complete the original project action before freezing its handover.');
   fredOperatingHistory(bundle.state);
-  if (bundle.schema === 'stellar-forge.fred-project-bundle.v7') {
+  if (['stellar-forge.fred-project-bundle.v7','stellar-forge.fred-project-bundle.v8'].includes(bundle.schema)) {
     need(bundle.state.research !== undefined, 'The complete research project catalogue is required.');
     validateResearchExtension(bundle.research, bundle.state);
   } else need(bundle.state.research === undefined && bundle.research === undefined,
     'Research sources require the complete original version 7 project bundle.');
+  const commerceVersion = bundle.schema === 'stellar-forge.fred-project-bundle.v8';
+  need(commerceVersion === (bundle.state.researchCommerce !== undefined) &&
+    (commerceVersion || bundle.researchCommerce === undefined),
+    'Research commerce requires the complete original version 8 project bundle.');
+  validateResearchCommerceExtension(bundle.researchCommerce, bundle.state);
   return bundle;
 }
 function inventoryFor(state) {
   return { ...Object.fromEntries(INVENTORY.map(key => [key, clone(state[key] ?? [])])), qcew:clone(state.qcew ?? null),
-    ...(state.research === undefined ? {} : { research:clone(state.research) }) };
+    ...(state.research === undefined ? {} : { research:clone(state.research) }),
+    ...(state.researchCommerce === undefined ? {} : { researchCommerce:clone(state.researchCommerce) }) };
 }
 function descriptorFor(bundle, artifact, capturedAt, published) {
   bundleIdentity(bundle); const state = bundle.state, history = fredOperatingHistory(state);
@@ -64,6 +71,13 @@ function descriptorFor(bundle, artifact, capturedAt, published) {
       ...['entries','sources','reviews','products'].flatMap(family => state.research[family].map((item,index) => ({
         id:'research-' + family + '/' + index + '/' + item.id, kind:'research-' + family,
         reference:'/state/research/' + family + '/' + index, artifact
+      })))
+    ]),
+    ...(state.researchCommerce === undefined ? [] : [
+      { id:'research-commerce/' + state.id, kind:'research-commerce', reference:'/state/researchCommerce', artifact },
+      ...['publications','receivings'].flatMap(family => state.researchCommerce[family].map((item,index) => ({
+        id:'research-commerce-' + family + '/' + index + '/' + item.id, kind:'research-commerce-' + family,
+        reference:'/state/researchCommerce/' + family + '/' + index, artifact
       })))
     ]),
     ...published.filter(item => item.artifact).map(item => ({

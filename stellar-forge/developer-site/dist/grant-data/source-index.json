@@ -22194,15 +22194,147 @@
         "sha256": "8651ce04f1976bef731144a53cd89744d655e2f296e18f9abae06c0c28e30b6e",
         "bytes": 16600
       }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "9b11f1aabd2a02438157394815f539963d507004",
+      "path": "products/municipal-assets/OPERATING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9b11f1aabd2a02438157394815f539963d507004/products/municipal-assets/OPERATING.md",
+      "source_kind": "source-file",
+      "id": "municipal-assets-operating",
+      "kind": "published-source",
+      "label": "Complete municipal asset installation and original customer operation",
+      "source_registration": "municipal-assets",
+      "git_blob": "a901eddce74f5e86a4849a2b3ff715c2cc5b8844",
+      "sha256": "6e5ab7fc6239895e2b8eced8c4dedde05c46fc14593827d8452dd6aadbe3e306",
+      "bytes": 12836,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "9b11f1aabd2a02438157394815f539963d507004",
+        "path": "products/municipal-assets/OPERATING.md",
+        "git_blob": "a901eddce74f5e86a4849a2b3ff715c2cc5b8844",
+        "sha256": "6e5ab7fc6239895e2b8eced8c4dedde05c46fc14593827d8452dd6aadbe3e306",
+        "bytes": 12836
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "9b11f1aabd2a02438157394815f539963d507004",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/SOURCE_ADOPTION.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9b11f1aabd2a02438157394815f539963d507004/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/SOURCE_ADOPTION.json",
+      "source_kind": "source-file",
+      "id": "municipal-assets-source",
+      "kind": "published-source",
+      "label": "Complete original native source and composed runtime selection",
+      "source_registration": "municipal-assets",
+      "git_blob": "3a2f3c8b587c246e2b7eb17082ed10b51800af07",
+      "sha256": "55adf258818ac23b6b74543cd1d35cc763c376d5dc44796edd062076ba1ef152",
+      "bytes": 17763,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "9b11f1aabd2a02438157394815f539963d507004",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/SOURCE_ADOPTION.json",
+        "git_blob": "3a2f3c8b587c246e2b7eb17082ed10b51800af07",
+        "sha256": "55adf258818ac23b6b74543cd1d35cc763c376d5dc44796edd062076ba1ef152",
+        "bytes": 17763
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "9b11f1aabd2a02438157394815f539963d507004",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/application-provider.mjs",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9b11f1aabd2a02438157394815f539963d507004/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/application-provider.mjs",
+      "source_kind": "source-file",
+      "id": "municipal-assets-application",
+      "kind": "published-source",
+      "label": "Original managed application preparation and live instance observation",
+      "source_registration": "municipal-assets",
+      "git_blob": "a020a42b55f20b2ff1cf21f546aa3b74673f1d23",
+      "sha256": "87851c6245df5011bcf3a082fbdd71dfb4302326ac92f2f026913079915b44f0",
+      "bytes": 3567,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "9b11f1aabd2a02438157394815f539963d507004",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/application-provider.mjs",
+        "git_blob": "a020a42b55f20b2ff1cf21f546aa3b74673f1d23",
+        "sha256": "87851c6245df5011bcf3a082fbdd71dfb4302326ac92f2f026913079915b44f0",
+        "bytes": 3567
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "9b11f1aabd2a02438157394815f539963d507004",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/portable.py",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9b11f1aabd2a02438157394815f539963d507004/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/portable.py",
+      "source_kind": "source-file",
+      "id": "municipal-assets-handover",
+      "kind": "published-source",
+      "label": "Complete stopped-workspace handover and independent receiving",
+      "source_registration": "municipal-assets",
+      "git_blob": "efb19509b2433d31ebb4664c1efe71ed0a267ccf",
+      "sha256": "af88ea8e5199b3f92965a3dae28d888fe70b61b5dcf785355fc7a6c26f1e4e25",
+      "bytes": 10926,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "9b11f1aabd2a02438157394815f539963d507004",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/portable.py",
+        "git_blob": "efb19509b2433d31ebb4664c1efe71ed0a267ccf",
+        "sha256": "af88ea8e5199b3f92965a3dae28d888fe70b61b5dcf785355fc7a6c26f1e4e25",
+        "bytes": 10926
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "9b11f1aabd2a02438157394815f539963d507004",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/AGENT_OPERATING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9b11f1aabd2a02438157394815f539963d507004/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/AGENT_OPERATING.md",
+      "source_kind": "source-file",
+      "id": "municipal-assets-agent",
+      "kind": "published-source",
+      "label": "Typed original municipal client and merchant operating course",
+      "source_registration": "municipal-assets",
+      "git_blob": "f1c3e4bc8860406564d3416db3b3e011e7e520c1",
+      "sha256": "1ce535400e86d45340a93b44c4f3843854b052bdceac2169efab36dc168775fe",
+      "bytes": 11534,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "9b11f1aabd2a02438157394815f539963d507004",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/AGENT_OPERATING.md",
+        "git_blob": "f1c3e4bc8860406564d3416db3b3e011e7e520c1",
+        "sha256": "1ce535400e86d45340a93b44c4f3843854b052bdceac2169efab36dc168775fe",
+        "bytes": 11534
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "9b11f1aabd2a02438157394815f539963d507004",
+      "path": "products/municipal-assets/RECEIVING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9b11f1aabd2a02438157394815f539963d507004/products/municipal-assets/RECEIVING.md",
+      "source_kind": "source-file",
+      "id": "municipal-assets-receiving",
+      "kind": "published-source",
+      "label": "Same-programme installed and rendered customer receiving",
+      "source_registration": "municipal-assets",
+      "git_blob": "28965eda7053f6a2d8fa02583dbce54abef2a7cd",
+      "sha256": "3e4d49217214359d3010a46b2fc5193a4131b49509cd876699fdef310891ddf6",
+      "bytes": 7368,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "9b11f1aabd2a02438157394815f539963d507004",
+        "path": "products/municipal-assets/RECEIVING.md",
+        "git_blob": "28965eda7053f6a2d8fa02583dbce54abef2a7cd",
+        "sha256": "3e4d49217214359d3010a46b2fc5193a4131b49509cd876699fdef310891ddf6",
+        "bytes": 7368
+      }
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "0a979ff64a2a3a307878d88a308e8e9a85d2f098",
-    "bytes": 1589434,
-    "sha256": "8d3a4ff82e3ad32d8b16367d11fa8303a71ffdce8f2cf81b8b4b30a93eeabcff",
+    "git_blob": "cac23d68305d991eab2727af72b1c783c3b84a42",
+    "bytes": 1601616,
+    "sha256": "9b9630669c87944cf8106f10654402efe6e6a8be81781eb57abbe3e5767a0b6c",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
-    "prior_git_blob": "0500e4725be1c4b525d1200be25a22fc82fa2384"
+    "prior_git_blob": "0a979ff64a2a3a307878d88a308e8e9a85d2f098"
   },
   "narrative_source": {
     "basis": "Original manuscript author's complete October 12 reviewer answer",
@@ -22567,6 +22699,8 @@
         "Collaborative Document Workbench: native shared editing and independent customer receiving",
         "Migration Acceptance Workbench: complete native migration and independent customer receiving",
         "Replication Workbench: complete recurring data editions and independent customer receiving",
+        "API portfolio and cohort commissioning with complete operator receiving",
+        "Municipal asset migration and target receiving",
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
@@ -23717,6 +23851,24 @@
           }
         },
         {
+          "id": "municipal-assets",
+          "heading": "## Municipal asset migration and target receiving",
+          "source_ids": [
+            "municipal-assets-operating",
+            "municipal-assets-source",
+            "municipal-assets-application",
+            "municipal-assets-handover",
+            "municipal-assets-agent",
+            "municipal-assets-receiving"
+          ],
+          "definition": {
+            "path": "grant-products/municipal-assets.json",
+            "bytes": 5408,
+            "sha256": "2f210e5c447afb7e03aee4665baf780b94a2e173ec80a0ee5639709d35359c5f",
+            "git_blob": "87ac4b91a78fb83e0122da85c0e6f852a17ed200"
+          }
+        },
+        {
           "id": "oauth-support",
           "heading": "## OAuth resource operations and complete customer support",
           "source_ids": [
@@ -24823,8 +24975,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "8d3a4ff82e3ad32d8b16367d11fa8303a71ffdce8f2cf81b8b4b30a93eeabcff",
-    "source_bytes": 1589434,
+    "source_sha256": "9b9630669c87944cf8106f10654402efe6e6a8be81781eb57abbe3e5767a0b6c",
+    "source_bytes": 1601616,
     "assets": [
       "/grant-companion-editions.mjs",
       "/grant-companion-reading.mjs",

@@ -159,6 +159,11 @@ def register_static(static):
                    "/operations_support.mjs": ("operations_support.mjs", "text/javascript; charset=utf-8"),
                    "/operations_engagements.mjs": ("operations_engagements.mjs", "text/javascript; charset=utf-8"),
                    "/operations_engagements.css": ("operations_engagements.css", "text/css; charset=utf-8"),
+                   "/engagement-working-copy.mjs": ("engagement-working-copy.mjs", "text/javascript; charset=utf-8"),
+                   "/engagement-working-store.mjs": ("engagement-working-store.mjs", "text/javascript; charset=utf-8"),
+                   "/engagement-working-desk.mjs": ("engagement-working-desk.mjs", "text/javascript; charset=utf-8"),
+                   "/engagement-working-desk.css": ("engagement-working-desk.css", "text/css; charset=utf-8"),
+                   "/ENGAGEMENT_WORKING_COPIES.md": ("ENGAGEMENT_WORKING_COPIES.md", "text/markdown; charset=utf-8"),
                    "/operations.mjs": ("operations.mjs", "text/javascript; charset=utf-8"),
                    "/operations.css": ("operations.css", "text/css; charset=utf-8"),
                    "/forecast.mjs": ("forecast.mjs", "text/javascript; charset=utf-8"),
@@ -526,7 +531,7 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commissioning-seed|installation-commissioning-review|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-effort-seed|installation-effort-selection|installation-preview|completion-installations|completion-installations-preview|completion-seed|completion-preview|completion-corrections-seed|completion-corrections-preview|support-preview|buyer-preview|expense-preview|expense-request|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-request|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commissioning-seed|installation-commissioning-review|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-effort-seed|installation-effort-selection|installation-preview|completion-installations|completion-installations-preview|completion-seed|completion-preview|completion-corrections-seed|completion-corrections-preview|support-preview|buyer-preview|expense-preview|expense-request|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
@@ -543,6 +548,7 @@ def write(handler, parsed):
                    "customer-use-calendar-cohort": ops.seed_customer_use_cohort,
                    "account-reconciliation-preview": ops.account_reconciliation_preview,
                    "account-reconciliation": ops.account_reconciliation_apply,
+                   "engagement-request": ops.engagement_request,
                    "engagement-seed": ops.seed_engagement, "engagement-preview": ops.preview_engagement,
                    "engagement-forecast": ops.preview_engagement_forecast, "engagement-portfolio": ops.preview_engagement_portfolio,
                    "cash-correction-preview": ops.cash_correction_preview,

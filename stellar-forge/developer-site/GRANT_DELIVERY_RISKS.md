@@ -2,128 +2,167 @@
 
 Operation: SCF-DELIVERY-RISKS-APPLICATION-8F43-20261013.
 
-This contribution carries the complete Delivery risks operator chapter and measured source declaration into the existing SCF application. It uses the original Grant product-source registry and customer chapter receiver. The application publisher retains its current canonical manuscript, complete source population, saved submission draft and review.
+This contribution carries the complete Delivery risks assessment, working-copy and saved-edition comparison workflow into the existing SCF application. It updates the same product declaration and H2 chapter through the maintained Grant product-source registry and chapter receiver. The application publisher keeps its current canonical manuscript, cumulative source population, saved submission draft and review.
 
-## Complete source files
+## Complete source files and selected editions
 
 | File | Purpose |
 | --- | --- |
-| grant-chapters/grant-delivery-risks.md | Complete H2 chapter covering assessment, accountable actions, exact request recovery, staff roles, portable case history, source-selected receiving and the existing funded packages. |
-| grant-products/grant-delivery-risks.json | Thirteen original full-source selections with immutable commit, Git blob, byte count and SHA256. |
-| GRANT_DELIVERY_RISKS.md | This complete publisher and receiving guide. |
+| grant-chapters/grant-delivery-risks.md | Complete chapter covering assessment, accountable actions, exact save recovery, portable editable preparation, saved-edition comparison, complete native handover and the existing funded packages. |
+| grant-products/grant-delivery-risks.json | Twenty-four measured complete source selections. It preserves all thirteen original source IDs and earlier edition records, refreshes five maintained interfaces and adds eleven comparison/integration sources. |
+| GRANT_DELIVERY_RISKS.md | This publisher and operating guide, including the existing receiving operation and current source/receiving distinctions. |
 
-The product ID is grant-delivery-risks. Its exact heading is:
+The product ID remains grant-delivery-risks. Its exact heading remains:
 
-```markdown
+~~~markdown
 ## Delivery risks, accountable mitigation and complete project handover
-```
+~~~
 
-The shipped product is Merchant PR1085, merge 25b25073ccf65c17287d002e814a50f73abda5e0. The complete receiving course is PR1164, merge 37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d. Every complete changed source file in both merges was independently read back. The selected receiving programme contains 315 original runtime members, two unchanged support members and nine receiving members.
+The original assessment product is Merchant PR1085, merge 25b25073ccf65c17287d002e814a50f73abda5e0. Its complete receiving course is PR1164, merge 37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d. The original three-file grant contribution is PR1207, merge 0a7eac37149d02f770e9ae0b8cd574047ad92286.
+
+The maintained comparison and working-copy desk selected here is PR1583, merge be3410549846b3cb55074f5d83ee242592e73676. All fifteen complete changed files were independently read from that merge and matched their full byte counts, SHA-256 values and Git blobs. Its full source carrier is Merchant blob 3861971c32c48d6a950e9b7df8d98e02abd0a0d5: 2,034,315 UTF-8 JSON bytes, SHA-256 33d6fd596dc655c4310db2226d5981aba23c2b3e7d26674aec5dee4de12efbcc. It retains every complete file, original preimages, guarded joins and review/execution state.
+
+The current registration selects 1,310,493 source bytes across twenty-four source records. Fifteen records select the complete PR1583 files; the complete working-copy operating guide selects its measured edition at 46ac7e1f6b1c03075766ec2217deea8fb7bc791a. Eight records retain their earlier measured selection: the original engine and all seven original receiving selections. Historical receiving inputs are not silently upgraded to a later runtime. Every source has its complete repository path, selected commit, Git blob, byte count and SHA-256; no shortened source or digest stands in for its body.
 
 ## Receive into the same canonical application
 
-The existing manuscript is https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF . Coordinate its current serial editor in the original SF47 parent, https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791730668369819 . This contribution adds no second manuscript, submitted application or publisher.
+The canonical manuscript is https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF . Its current serial publisher coordinates in https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791733597745419 . Product ownership and the existing native case remain in the original SF47 parent, https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791730668369819 .
 
-The canonical editor receives the entire H2 chapter inside #9A, Current demonstration and operator journey, before the next H1. Compare the actual current chapter if the same heading already exists. Preserve every other chapter and the existing nine-answer front. Keep the original source links inside this chapter; they are how the maintained source registry selects each declared immutable edition.
+Find the one existing complete H2 chapter with the registered heading in the canonical manuscript and replace that whole chapter in its current location with the reviewed successor. PR1504 selects complete chapters by registration wherever the canonical owner placed them; no relocation into #9A is required. Preserve neighboring chapters, every other complete chapter, the original nine-answer front, source policy and publisher-owned edits. Do not append a second chapter with the same heading. If the live chapter differs from the retained predecessor, read and reconcile its full current contents before updating it.
 
-The original composer discovers product declarations under stellar-forge/developer-site/grant-products. Its existing command receives the complete canonical manuscript and current selected distribution:
+Keep chapter source links and the declaration together. The fifteen current links select PR1583; the original engine/guide and receiving links retain their declared historical editions. Updating a link without its measured declaration can leave a source unavailable to the original source selector. Preserve stable product and source IDs and append the new measured edition under an existing ID instead of inventing a parallel risk product.
 
-```sh
+The original composer discovers product declarations under stellar-forge/developer-site/grant-products. Its existing command receives the complete canonical manuscript and selected distribution:
+
+~~~sh
 node stellar-forge/developer-site/grant-compose.mjs \
   --directory /absolute/current-selected-dist \
   --manuscript /absolute/current-canonical.md \
   --source-pins-output /absolute/current-reader-pins.json
-```
+~~~
 
-These paths are the publisher's original inputs and output selection. Use the current cumulative source edition; keep all peer declarations and the original source index. For an older selected composer with the existing repeatable external-registration option, add:
+Use the publisher's actual current paths. For an older selected composer with its existing repeatable external-registration option, add:
 
-```sh
+~~~sh
 --product-registration /absolute/grant-delivery-risks.json
-```
+~~~
 
-Supply that complete file externally only when the same product declaration is absent from the selected default directory. The native registry admits one declaration per product. Its definition metadata binds the complete received declaration bytes.
+Supply the complete external declaration only when this product is absent from the selected default directory. The native registry admits one declaration per product. Its definition metadata binds the complete declaration bytes.
 
-The original composer produces grant.html, grant-data/application.md, grant-data/product-and-finance.md and grant-data/source-index.json. The existing companion reader supplies chapter navigation, search, printing, complete-source downloads and the offline reader. Keep those matching outputs together.
+PR1504, merge ce5cf95f, carries the original registration-driven composer and customer chapter receiver. Its complete five-file immutable carrier is Merchant 9a382f4f38734fbfd0c056464369192140d2fe26, 141,822 bytes. Use the full selected source from that implementation or its actual maintained successor. A selector dependency alone is not the complete composer/receiver, and an interface description is not a replacement implementation.
 
-Continue the saved submission workflow through its original source-package receiver:
+The composer produces grant.html, grant-data/application.md, grant-data/product-and-finance.md and grant-data/source-index.json. Keep the matching companion, chapter navigation, search, printing, complete-source downloads and offline reader with those outputs. Then continue the saved submission workflow through its original source-package receiver:
 
-```sh
+~~~sh
 starforge grant-export --draft ORIGINAL_DRAFT \
   --receive-source-package COMPLETE_SELECTED_SOURCE_PACKAGE \
   --out ORIGINAL_SELECTED_EXPORT_DIRECTORY
-```
+~~~
 
-Select the actual retained draft, source package and output directory. Reconcile its current edits through the existing review instead of replacing a saved application with this contribution's source-validation input.
+Select the actual retained draft, complete source package and output directory. Reconcile current draft edits through its existing review. Do not substitute a captured source-composition input for a saved customer application.
 
-## Measured sources and successful original composition
+The current publisher has a cumulative source edition containing work from other owners. The retained 775-, 813- and child824-source observations describe different captured inputs. None is automatically the complete current union. Use the original publisher's actual chosen input and retain its full source population. This contribution is a complete chapter/declaration successor that the current publisher can receive into that input.
 
-The registration contains thirteen complete sources totaling 510,290 bytes. Six are selected from the merged product and seven from its merged receiving programme. They cover the native risk engine, browser desk, operator guide, native CLI, original agent client and guide, complete native course, browser companion, execution owner, source preparer, original runtime selection and receiving/preparation guides.
+## What the source registration preserves
 
-The complete original grant-product-sources-core.mjs and grant-customers.mjs, together with their original imported pure helpers, were executed in the functions V8 runtime against the retained full original source index and companion at 37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d. This was the existing composition implementation operating on actual complete repository inputs.
+The original thirteen source IDs remain unchanged. The browser desk, native CLI, original agent client and agent guide now select their full PR1583 bodies while retaining every prior measured edition. The complete 22,100-byte operating guide adds its existing working-copy edition, SHA-256 a8bcc869392d536a9b31083904cd3930b1868d8096689d5c6e5855a2329e5763 and Git 4273f66c734ecedefc91a68587ff27ff46058563. The original risk engine, native course, browser companion, execution owner, preparer, frozen runtime selection and two receiving guides retain their earlier selected editions.
 
-| Observed composition | Exact result |
-| --- | --- |
-| Original source records | All 292 retained records remained byte-equivalent values. |
-| Received declaration | Thirteen measured records were added, yielding 305 for this selected input. |
-| Original companion chapters | All 65 complete existing chapters remained exact. |
-| New chapter | The whole Delivery risks chapter was received once, yielding 66 chapters. |
-| Repeated source receiving | Complete result was identical. |
-| Repeated chapter receiving | Complete companion text was identical. |
+Eleven additive sources cover the complete native comparison engine, sibling browser controller and stylesheet, comparison guide, Operations native case integration, authenticated HTTP interface, original received opening flow, typed client declarations, Merchant tool catalogue, Merchant dispatcher and current managed runtime inventory.
 
-These counts describe that captured input. The current cumulative publisher may already have more sources and chapters; preserve its full population and add this same declaration through the original consumer. This contribution does not publish the captured companion as the current canonical application.
+The two runtime selections answer different questions. The original risk-runtime-source-selection.json binds the original315 runtime members used by the existing receiving course. The maintained managed-source.json at PR1583 lists403 original runtime members including the comparison files. Receiving the latter as a product source does not rewrite the former operation's frozen selection.
 
-The original runtime/browser execution remains a distinct operation. Source review and composition establish the shipped code and reader integration, not a completed installation or user acceptance. Record the eventual native result from the existing operation's actual saved outcome.
+The first grant contribution executed the original pure selector and chapter receiver on a complete retained input. All 292 original source records remained exact and thirteen measured selections produced 305; all 65 original chapters remained exact and the new chapter produced 66. Repeating the same source and chapter receiving returned identical results. Those are historical results for that captured input.
 
-## Operate an existing project
+The unchanged production selector grant-product-sources-core.mjs (13,857 bytes, SHA-256 c65296b54e7dc7cf199d2622255d19bf704a551ffc6e90d1bf669e28e8375af4) validated this complete twenty-four-source declaration and selected this complete chapter exactly. Every declared source resolved to its explicit chapter link. These are observations from the actual author-owned chapter and declaration. A new cumulative publisher result must come from its actual current composer, complete source index and full companion. Record that actual output and its hashes when the serial publisher completes receiving. Do not copy the historical 292/65 counts into a claim about the current manuscript.
 
-Open the selected case in Grant Operations and choose Customers and delivery → Delivery risks. An owner or assigned lead may save; assigned finance and reviewer staff may inspect, seed and preview. The original contributor desk remains available.
+## Operate an existing assessment
 
-Use the native seed to select the current register, contributors, saved packages and retained source files. Record an actual risk or issue, its identification date and reasoning, the accountable contributor or explicit unassigned owner, review timing and original supporting sources. Add a mitigation action with scope, ownership, due date and progress.
+Open the selected case in Grant Operations and choose Customers and delivery → Delivery risks. An owner or assigned lead may save. Assigned finance and reviewer staff may inspect, seed and preview. Contributor staff keep their existing desk.
 
-Preview the complete document and inspect the native findings. A changed inherited entry needs its dated review. An action recorded Done or Cancelled needs its actual completion date and outcome; resolved or closed entries retain resolution evidence. Preserve stable entry/action IDs and the original predecessor.
+Use the native seed to select the current register, contributors, saved work packages and retained source files. Record an actual risk or issue with its stable ID, identification date, reasoning, accountable contributor or explicit unassigned owner, review date and original supporting sources. Add mitigation actions with stable IDs, scope, ownership, due dates and progress.
 
-Saving retains the exact original command, case version, preview and request ID. The desk's read-only request lookup reopens an accepted result before another dispatch. A failed later read or local publication retains a known success. Unknown outcome stays attached to the original command until reconciliation; a stale draft requires a deliberate current preview.
+Preview the complete document and inspect the native findings. A changed inherited entry needs its dated review. A Done or Cancelled action needs its actual completion date and outcome; resolved or closed entries retain resolution evidence. Preserve original entry/action IDs and the complete predecessor.
 
-Open the native edition/history and export the selected edition with its complete original case. The native archive carries retained sources and reviews plus selected risk JSON, CSV views and HTML. A receiving operator imports the entire case through the maintained native importer and continues its same lineage.
+Saving first retains the exact complete command, case version, preview, actor, recording note and request ID. Read-only request lookup reopens the original accepted result before another dispatch. A later display or local publication failure preserves a known success. An unknown outcome stays attached to the original command until reconciliation. A stale draft remains available for a deliberate current preview.
 
-These are operator-managed assessments and follow-up actions. They do not approve a release, hold delivery, change an existing command's availability or create money, hours, forecasts or contractual commitments.
+These are operator-managed assessments and actions. They add no release approval, delivery hold, permission gate, money, hours, forecast or contractual commitment.
 
-## Select the complete original receiving programme
+## Continue the complete editable working copy
 
-The sole integrated native operation is SCF-DELIVERY-RISKS-8F43-20261013. It creates an explicit WALKTHROUGH through the original model. Keep it separate from any actual customer's existing case, authors and private outputs.
+The working-copy file retains the full original desk preparation: draft, selected entry, filters, recording note, current register and historical observations, preview, original pending or accepted command, request observations and complete local checkpoints. It is scoped to the same exact case and signed-in staff context.
 
-Complete one-file source:
-Merchant Git blob 68596243b56bddc14c037429ece5ed1e2c32b511; 271,038 UTF-8 JSON bytes; SHA256 889ff2c8aa26dfd38123b5ae5af9fa61b1c46e0c0b77b7c9ca42e134516c1c8d. The full packet was independently fetched and verified. It contains all nine complete receiving source files, the entire original 315-source selection and the two original support identities. Source remains in the original repository.
+Download the complete working file before moving that preparation. Reading a saved file or checkpoint first stages it for inspection; it does not immediately replace the editable desk. Review its case/staff identity, selected review, request state and draft. Explicitly reopen only when this is the intended original preparation.
 
-The exact source selection is risk-runtime-source-selection.json at the PR1164 merge. It selects original application PR1085/25b25073, not a later unreviewed working tree. The source preparer takes an actual complete original checkout, a separate source copy, a separate preparation directory and a separate private case directory. It validates every original source size/Git identity, complete receiving body SHA, selected launcher bytes and mode before publication.
+Reopening reads the current native case, current register, historical review and original request table. The retained command must be the same complete original command; a claimed accepted result must match native acceptance. Imported absence or rejection does not authorize another save. A conflicting unfinished command already held by the current desk must be resolved before replacement.
 
-Use the complete packet once as a receivingPackets descriptor; do not add its constituent course/browser/execution packets again. Materialize its sourceSelection.content exactly to the selected source-selection file. Materialize the selected original execution and preparation sources with their declared modes, then follow RISK_REGISTER_PREPARATION.md. The source preparer verifies that its own complete executed file is part of the final selection.
+A successful reopen keeps the preceding complete desk and imported original as checkpoints. It recovers a real native accepted result when one exists, or retains the original unfinished request for explicit recovery. The editable draft requires a fresh native preview before a later save. Checkpoint history and imported observations remain separate from the authoritative native request history.
 
-The accepting owner supplies actual canonical Python and Node executable paths/full hashes, the existing Playwright module and browser executable/full hashes, and the complete unchanged Library upload helper cohort in its private directory. The programme does not download another runtime or substitute a new provider.
+The envelope checksum binds the complete payload; it does not certify that an assessment is true. Input and complete export are limited to 32 MiB. The desk keeps at most sixteen unnested complete checkpoints. If the inventory would exceed the limit, the operator may first download an older checkpoint and deliberately remove that local checkpoint. Native reviews and accepted commands remain unchanged.
 
-```sh
+A working copy cannot silently migrate another person's staff role or reopen under a different received case identity. Use the complete native case ZIP for independent receiving. The ordinary editable document export remains available when an operator needs to review the document separately under that receiving case's own native preview/save workflow.
+
+## Compare actual saved editions
+
+Open Compare saved editions in the original Risk desk. Select both original review IDs and SHA-256 values. The native read validates both complete saved reviews from one case snapshot and returns the original reviews, their dated reports, risk/action rows and linked source/contributor/package context.
+
+Inspect changed and unchanged records. A missing field differs from an explicitly null value. Recorded field changes, saved-date report changes and linked-context changes remain separately visible. A review becoming overdue at the later saved assessment date is not silently labelled as an edit to its description. A contributor or source change can alter context while leaving the recorded risk unchanged.
+
+Keep the selected direction explicit. Comparing a review with itself or reversing the pair is supported. Native count deltas describe the two saved reports; they do not create an improvement score, likelihood, expected loss or automatic mitigation judgment. Open either full original review through the existing desk when its underlying evidence is needed.
+
+The comparison stays inside the original case and staff session. Its browser reads, original-source downloads and exports remain owned by the original desk's in-flight operation set. Current source download is offered only where the complete historical reference matches the actual current case source identity.
+
+The complete native comparison SHA-256 is authoritative. Browser and agent consumers retain it; they do not recalculate it using a different JSON serializer. This matters for legitimate Unicode and numeric representations. The direct JSON export contains the comparison itself, not the HTTP wrapper containing comparison and current case metadata.
+
+Available exports are comparison JSON, readable HTML, risks CSV, actions CSV, context CSV and the original complete case ZIP. Every format binds the expected comparison digest. Only the full case ZIP additionally requires the expected current case version. The smaller views reject that unrelated version condition rather than presenting a misleading case-version guarantee.
+
+The original risks-compare and risks-compare-export CLI commands, typed client risk-comparison read and six download kinds, and merchant_grant_risk_comparison plus existing Merchant export route use that same native source. Read the complete RISK_COMPARISON.md and AGENT.md at PR1583 for their exact command inputs.
+
+## Receive the full original case and reopen its selected comparison
+
+The selected comparison ZIP is the original complete Operations case. It adds eight selected comparison members: the exact selection, full comparison JSON, both complete original reviews, readable HTML report and three CSV files. It keeps the native original sources, case plan, event history and review lineage.
+
+The native importer validates the original case, source and review/event history before comparison regeneration and before its first mutation. It regenerates all eight selected members from those validated reviews and compares the complete bytes. A selected report cannot substitute an unvalidated review or source.
+
+Native receiving has its own case identity while preserving the original producer reviews. The importer returns selectedRiskComparison. The existing Operations opening flow passes that complete selection to the Risk desk. The desk reconciles any original accepted save first, checks both review IDs/hashes and the native digest, then opens the exact pair. A failed read preserves the requested opening for retry.
+
+The original equipped receiving owner should operate the installed source on a real retained case with two actual saved reviews. Inspect and view the wide and narrow desk, use both selectors and filters, open both full original reviews and matching retained sources, download every format, and inspect the complete exports. Receive the complete native case, reopen the returned selected comparison and confirm the original review identities and saved context. Preserve actual findings and correct a product defect in that same source and operation.
+
+This is a customer operating and receiving workflow. It does not authorize another fixture, fake provider, artificial request failure, extra benchmark or standalone browser-proof programme. The original completed native phases are not repeated merely to create a claim about a later feature.
+
+## Preserve the complete original receiving operation
+
+The sole original integrated native operation remains SCF-DELIVERY-RISKS-8F43-20261013. Its frozen WALKTHROUGH belongs to the earlier product selection. It is separate from a customer's actual private assessment.
+
+Complete one-file original receiving source:
+Merchant blob 68596243b56bddc14c037429ece5ed1e2c32b511; 271,038 UTF-8 JSON bytes; SHA-256 889ff2c8aa26dfd38123b5ae5af9fa61b1c46e0c0b77b7c9ca42e134516c1c8d. It includes all nine receiving files, the full original 315-source selection and two unchanged support identities. Its total source selection is 326 files.
+
+Materialize the source selection and complete receiving bodies exactly once, using the existing preparation guide and actual selected Python, Node, Playwright, browser and unchanged save helpers. Keep the original paths, operation ID, complete inputs and inherited guard across reentry. Use the full packet once as a receivingPackets descriptor rather than adding its constituent course/browser/execution packets again.
+
+The historical entry point is:
+
+~~~sh
 SELECTED_PYTHON -B operations_risks_prepare.py \
   --input /absolute/private/preparation-input.json --run
-```
+~~~
 
-The input's operationId is SCF-DELIVERY-RISKS-8F43-20261013. Preserve the same selected files, paths and input across reentry. The complete preparation/execution guide in the merged workspace documents every input field and the original guard/owner lifecycle.
+The native course completed on its original case. It produced two immutable editions, read their original accepted requests, checked the changed source context and staff roles, exported the full case and completed ordinary plus reordered-review receiving. The following browser process exited -9 under confirmed shared-host memory pressure. Its actual owners closed and the same closed case was saved as version 0 for continuation.
 
-## Native, browser and receiving outcomes
+Those observations establish completed native receiving with an interrupted browser stage. They do not establish a completed third browser-created edition, all three browser downloads or a successful rendered cold reopening. Preserve the actual saved case, original request IDs and frozen source selection. A reviewed streaming/adoption successor must remain explicitly bound to that selection and its original journals; it is not a silent replacement of the old runtime or a new case.
 
-The native course creates two immutable risk editions in its original walkthrough case, reads the exact accepted requests, exercises a changed source context and original staff roles, exports the entire case and receives it twice. The second receiving uses the complete original archive with its review array reordered, verifying that the current head follows the immutable edition version.
+The original private saved-case identity is retained in the existing operation's authorized handoff. This public product guide does not copy private staff credentials, connection descriptors or case attachments. Git-backed source remains in its repository with complete reacquisition identities.
 
-The browser companion consumes that exact native handover and common source manifest. It opens real installed staff sessions, inspects the original cases and sources, saves one explicitly authorized third edition through the original lead's desk, and downloads the complete original/received/reordered-received case exports. It retains the actual original command and desk admission before dispatch and reconciles those same bytes on reentry.
+The original execution owner validates returned case ZIPs using the native archive reader, waits for actual browser/context/download/body/file owners, closes the host and workspace, and reopens the same installation on its recorded port. Non-browser original attachments remain included. Browser profiles and known operational screenshot/cache paths stay scratch.
 
-The parent execution owner validates each returned ZIP using the unchanged native archive reader and verifies the first two original reviews plus the accepted third request. It waits for the actual browser, contexts, downloads, response bodies and files, closes the original host and workspace, then reopens the same installation on its recorded port for a fresh-process native verification.
+A retained native outcome permits packaging/save continuation without another host or browser. Preserve every original provider observation when a save needs reconciliation. An accepting owner returns the final actual closure, ordered saved result and complete archive identity into that same operation.
 
-Only after those owners close does it package the complete private case. Original non-browser source attachments of every extension remain included. Operational browser profiles and known screenshot/cache paths are scratch. The original upload helper returns the actual saved file/version and full ordered result. Git-backed code is represented by its source identities rather than duplicated into private storage.
-
-If the native course has already completed, its retained NATIVE_OUTCOME permits archive/save continuation without another host or browser. Keep all original request and provider observations when a save outcome needs reconciliation. The accepting owner returns the final closure, full saved result and exact closed-case archive identity into the original operation.
+The PR1583 comparison source is a following product edition. Full native/import/API, browser, typed client and Merchant source reviews are clear; current JavaScript parsing passed. The local syntax-only Python request ended before process creation with environment_offline. Installed rendering, operator receiving and acceptance must be recorded from actual subsequent execution. A source review or unviewed image is not recorded as that result.
 
 ## Preserve grant and relationship scope
 
-The selected original planning scenario carries six prospective packages, 400 hours, USD 38,000 and 150 days. Its hourly rate is an assumption and its contributor allocation is still to be recorded. This contribution neither selects a customer nor confirms staffing, opening cash, a supplier quotation or an implementation contract.
+The original planning scenario remains six prospective packages, 400 estimated hours, USD 38,000 and 150 days. Its hourly rate is an assumption; contributor allocation, staffing availability, customer selection, opening cash and supplier/commercial commitments retain their actual unset or separately confirmed status.
 
-The chapter maps the register to existing source integration, authority handover, provider deployment, deployed threat response, mainnet rollout and production recovery work. Actual customer findings and mitigation remain in their original private cases. Reconcile all completed pre-award reusable engineering against remaining scope before an award.
+The complete chapter maps assessment and mitigation to source integration, authority handover, provider deployment, deployed threat response, mainnet rollout and production recovery. Working-copy continuation and saved-edition comparison support those same packages. They add no separate reserve, fee or staffing promise.
 
-A subsequent maintained source edition updates the explicit source selections, measured identities and matching chapter links while preserving the stable product/source IDs and earlier source packages. The current canonical editor then receives that full successor through the same original publisher and saved review. The customer receives its actual case, original evidence and the operating instructions required to continue the work.
+Reusable engineering already completed before award belongs to the pre-award foundation. Reconcile further completed pre-award work against remaining scope before an award. Do not retrospectively describe the unchanged prospective package values as payment for already merged source.
+
+A later maintained edition updates the explicit source selections and matching chapter links while retaining stable product/source IDs and prior measured editions. The serial canonical editor receives the full successor through the original composer, saved draft and review. The customer receives the actual case, complete original evidence and the operating instructions needed to continue its work.
