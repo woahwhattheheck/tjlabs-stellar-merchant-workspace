@@ -80,7 +80,13 @@ const SOURCE_FILES = [
   "stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-observation.mjs",
   "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-desk.mjs",
   "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-render.mjs",
-  "stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md"
+  "stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md",
+  "products/x402api-merchant-workspace/project-intake.mjs",
+  "products/x402api-merchant-workspace/managed-intake.mjs",
+  "products/x402api-merchant-workspace/PROJECT_INTAKE.md",
+  "products/x402api-merchant-workspace/web/intake.html",
+  "products/x402api-merchant-workspace/web/intake.css",
+  "products/x402api-merchant-workspace/web/intake.mjs"
 ];
 const SCHEMA = 'stellar-forge.x402api-merchant-handover.v1';
 const RESTORE_SCHEMA = 'stellar-forge.x402api-merchant-restoration.v1';

@@ -8,12 +8,14 @@
   "commands": {
     "x402api-merchant": "products/x402api-merchant-workspace/server.mjs",
     "x402api-merchant-project": "products/x402api-merchant-workspace/portable.mjs",
-    "x402api-merchant-review": "products/x402api-merchant-workspace/received-project-review.mjs"
+    "x402api-merchant-review": "products/x402api-merchant-workspace/received-project-review.mjs",
+    "x402api-merchant-intake": "products/x402api-merchant-workspace/project-intake.mjs"
   },
   "commandDescriptions": {
     "x402api-merchant": "Operate invoices and retained paid files; export, inspect and restore complete merchant workspaces",
     "x402api-merchant-project": "Export, inspect and receive the complete original merchant project",
-    "x402api-merchant-review": "Open an original received project in the managed read-only merchant workspace"
+    "x402api-merchant-review": "Open an original received project in the managed read-only merchant workspace",
+    "x402api-merchant-intake": "Inspect and receive a complete original project, resume its request and open its retained invoices"
   },
   "exports": {
     "./merchant/x402api": "./source/products/x402api-merchant-workspace/workspace.mjs",
@@ -25,7 +27,8 @@
     "./merchant/x402api/incident-source": "./source/stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-source.mjs",
     "./merchant/x402api/incident-capture": "./source/stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-observation.mjs",
     "./merchant/x402api/review": "./source/products/x402api-merchant-workspace/received-project-review.mjs",
-    "./merchant/x402api/invoice-register": "./source/products/x402api-merchant-workspace/invoice-register.mjs"
+    "./merchant/x402api/invoice-register": "./source/products/x402api-merchant-workspace/invoice-register.mjs",
+    "./merchant/x402api/intake": "./source/products/x402api-merchant-workspace/project-intake.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf31-buyer-client/response-file.mjs",
