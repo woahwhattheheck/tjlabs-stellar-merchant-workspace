@@ -1,5 +1,6 @@
 import { createSchemaUI } from "./schema-ui.js";
 import { installQualityDesk } from "./quality-ui.mjs";
+import { installQualityFollowupDesk } from "./quality-followup-ui.mjs";
 
 const $ = id => document.getElementById(id);
 const KINDS = { runs: "run", jobs: "job", datasets: "dataset" };
@@ -16,6 +17,8 @@ const DESCRIPTIONS = {
   diagnostics: "Original events with details to resolve before projection."
 };
 LABELS.quality = "Data quality";
+LABELS["quality-followup"] = "Quality follow-up";
+DESCRIPTIONS["quality-followup"] = "Compare saved evaluations and manage reasoned follow-up with original source and history.";
 DESCRIPTIONS.quality = "Original dataset measurements, assertion results, saved rules and review decisions.";
 const state = {
   view: null, section: "runs", edition: "", search: "", runState: "", attention: false,
@@ -350,7 +353,9 @@ function selectEntityLink(key, label = null) {
 
 function renderCatalog() {
   if (!state.view) return;
-  if (qualityDesk.render()) return;
+  const showingQuality = qualityDesk.render();
+  const showingFollowup = qualityFollowupDesk.render();
+  if (showingQuality || showingFollowup) return;
   if (state.section === "schema") { schemaUI.render($("catalog"), $("inspector")); return; }
   const host = $("catalog"), view = state.view;
   let records = (view[state.section] ?? []).filter(matching);
@@ -1004,6 +1009,19 @@ $("search-input").addEventListener("input", () => { state.search = $("search-inp
 $("state-filter").addEventListener("change", () => { state.runState = $("state-filter").value; renderCatalog(); });
 $("attention-filter").addEventListener("change", () => { state.attention = $("attention-filter").checked; renderCatalog(); });
 const qualityDesk = installQualityDesk({
+  getState: () => state, action, mutate, refresh, notify: notice, download: downloaded,
+  navigate(section) {
+    if (!state.view) return;
+    state.section = section; state.selection = null; state.detail = null; state.detailVersion++;
+    renderShell(); renderCatalog(); renderInspector();
+  },
+  openSource(id) {
+    state.section = "sources"; state.selection = null; state.detail = null; state.detailVersion++;
+    renderShell(); renderCatalog();
+    loadSelection({ kind: "source", id }).catch(error => notice(error.message, true));
+  }
+});
+const qualityFollowupDesk = installQualityFollowupDesk({
   getState: () => state, action, mutate, refresh, notify: notice, download: downloaded,
   navigate(section) {
     if (!state.view) return;

@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "openlineage-workspace",
-  "description": "OpenLineage operations with original synchronous and asynchronous producers, schema and quality review, service levels and complete customer receiving",
+  "description": "OpenLineage operations with original synchronous and asynchronous producers, schema and quality review, service levels and complete customer receiving, saved-evaluation comparison and versioned follow-up",
   "commands": {
     "openlineage": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/cli.mjs",
     "openlineage-google": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/dataplex-cli.mjs",
@@ -47,7 +47,11 @@
     "./seller/openlineage/java-runtime-receiving": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_RUNTIME_RECEIVING.mjs",
     "./seller/openlineage/airflow": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/client.mjs",
     "./seller/openlineage/airflow/plan": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/plan.mjs",
-    "./seller/openlineage/airflow/handover": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/handover.mjs"
+    "./seller/openlineage/airflow/handover": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/handover.mjs",
+    "./seller/openlineage/quality-followup": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-followup-client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-followup-client.mjs"
+    }
   },
   "applicationProviders": {
     "openlineage-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/application-provider.mjs"
