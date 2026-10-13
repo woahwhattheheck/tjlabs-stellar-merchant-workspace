@@ -4,6 +4,8 @@ import { mountForecastWorkbook, validateForecastWorkbookDeskState } from './fore
 import { signature } from './forecast-workbook.mjs';
 import { createForecastDraftStore, createForecastWorkbookHost, validateForecastDraftInputs, FORECAST_DRAFT_SCHEMA } from './forecast-workbook-host.mjs';
 import { currentStaffContext, staffDeskStorageKey } from './staff-session.mjs';
+import {mountForecastCashReview} from './forecast-cash-reconciliation-desk.mjs';
+import {validateCashDesk,validateCashReview,applyCashDraft} from './forecast-cash-reconciliation.mjs';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const usd = value => value === null || value === undefined ? 'Not entered' : new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(value));
@@ -45,7 +47,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
   function defaults(){return {name:current.program.name+' — operating forecast',asOfDate:today(),calendarStart:current.program.calendarStart||current.plan.planning.calendarStart||'',
     openingCash:{amountUsd:null,basis:'NOT_ENTERED',sourceIds:[],note:''},packageOverrides:[],invoiceOverrides:[],grantReceipts:[],commercial:[],capacity:{weeklyHours:null,note:''},note:''};}
   function status(message,error=false){if(!available())return;const node=$('[data-forecast-status]');node.textContent=message;node.setAttribute('role',error?'alert':'status');}
-  function applyBusy(){if(!available())return;const state=blocked();root.setAttribute('aria-busy',String(busy||hostBusy||restoring));root.querySelectorAll('input,select,textarea,button').forEach(node=>{if(!node.closest('[data-forecast-workbook]'))node.disabled=(recoveryAction(node)?busy||hostBusy||restoring:state)||node.dataset.forecastFixed==='true';});for(const [action,visible] of [['recover-source',!!pendingWorkbook],['recover-save',!!request]]){const control=$('[data-forecast-action='+action+']');if(control)control.hidden=!visible;}comparison?.setHostBusy();workbook?.setHostBusy();}
+  function applyBusy(){if(!available())return;const state=blocked();root.setAttribute('aria-busy',String(busy||hostBusy||restoring));root.querySelectorAll('input,select,textarea,button').forEach(node=>{if(!node.closest('[data-forecast-workbook],[data-forecast-cash-review]'))node.disabled=(recoveryAction(node)?busy||hostBusy||restoring:state)||node.dataset.forecastFixed==='true';});for(const [action,visible] of [['recover-source',!!pendingWorkbook],['recover-save',!!request]]){const control=$('[data-forecast-action='+action+']');if(control)control.hidden=!visible;}comparison?.setHostBusy();workbook?.setHostBusy();cashDesk?.setHostBusy();}
   function setBusy(state){busy=state;applyBusy();}
   function setHostBusy(state){hostBusy=!!state;applyBusy();}
   async function run(task,{recovery=false}={}){if((recovery?busy||hostBusy||restoring:blocked())||!available())return;setBusy(true);try{await task();}catch(error){status(error.message,true);}finally{if(available()){setBusy(false);persistSoon();}}}
@@ -55,6 +57,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
   const pinnedContext=currentStaffContext();
   const draftStore=createForecastDraftStore(staffDeskStorageKey('sf47.forecast-working.'+current.program.id,pinnedContext));
   let workbook=null,workbookState=null,pendingWorkbook=null,workbookHistory={},restoring=true,storeError='';
+  let cashDesk=null,cashState=null;
   let previousWorking=null,restoreNotice='',rawFields={};
   const recoveryAction=node=>['download-working','recover-source','recover-save'].includes(node.dataset.forecastAction);
   function workbookOptions(){return {caseId:current.program.id,originCaseId:current.program.origin?.programId,
@@ -111,7 +114,8 @@ export function mountForecast({container,current,api:transport,mutationId,record
     return {schema:FORECAST_DRAFT_SCHEMA,caseId:current.program.id,originCaseId:current.program.origin?.programId||null,
       planContentSha256:current.plan.contentSha256,savedAt:new Date().toISOString(),editing,selectedId:selected?.id||null,
       inputs:retentionInputs(),rawFields:captureRaw(),workbook:workbook?.snapshot()||clone(workbookState),pendingWorkbook:clone(pendingWorkbook),
-      workbookHistory:clone(workbookHistory),saveRequest:clone(request),previousWorking:clone(previousWorking)};
+      workbookHistory:clone(workbookHistory),saveRequest:clone(request),previousWorking:clone(previousWorking),
+      ...(cashDesk||cashState?{cashReview:cashDesk?.snapshot()||clone(cashState)}:{})};
   }
   async function persist(){
     if(editing&&$('[data-forecast-form]'))inputState=retentionInputs();
@@ -128,6 +132,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
       value.selectedId!==null&&!/^forecast-[a-f0-9]{32}$/.test(value.selectedId))
       throw new Error('Open the complete working forecast in its original retained case and pinned plan.');
     validateForecastDraftInputs(value.inputs);
+    if(Object.hasOwn(value,'cashReview'))validateCashDesk(value.cashReview,{caseId:current.program.id});
     if(!value.workbookHistory||typeof value.workbookHistory!=='object'||Array.isArray(value.workbookHistory))throw new Error('Retain the original workbook operation history.');
     if(value.previousWorking!==null&&value.previousWorking!==undefined){if(value.previousWorking.previousWorking)throw new Error('Retain one complete previous working edition.');validateWorking(value.previousWorking);}
     if(value.saveRequest){
@@ -187,8 +192,42 @@ export function mountForecast({container,current,api:transport,mutationId,record
       return result;
     }finally{if(available())setBusy(false);}
   }
+  async function receiveCashSources(state){
+    if(!state)return;
+    const all=[state.review,...(state.history||[]).map(x=>x.review),...(state.retainedReviews||[]).map(x=>x.review)].filter(Boolean),saved=new Map;
+    for(const review of all){if(!saved.has(review.baseline.id))saved.set(review.baseline.id,await api(path+'/forecasts/'+review.baseline.id));validateCashReview(review,{caseId:current.program.id,originalSaved:saved.get(review.baseline.id)});}
+  }
+  async function applyCashReview(selection){
+    if(blocked()||!editing)throw new Error('Open an editable Forecast and finish its original request before applying cash decisions.');
+    const original=retentionInputs();
+    if(signature(original)!==selection.beforeSignature)return {adopted:false,message:'The Forecast changed after review. Reconcile the current complete inputs again.'};
+    const verified=applyCashDraft(original,selection.current,selection.entry.review,selection.entry.decisions,{choices:selection.entry.choices,expectedSignature:selection.beforeSignature});
+    if(signature(verified)!==signature(selection.inputs))throw new Error('The complete cash proposal differs from its original review.');
+    setBusy(true);try{
+    previousWorking=snapshot();delete previousWorking.previousWorking;
+    // Preserve all unrelated raw controls. Only exact changed native field values get new controls.
+    const captured=captureRaw();
+    function rowKey(v,key,id){return v?.find(x=>x[key]===id);}
+    function atField(inputs,key){
+      const p=JSON.parse(key),name=p[p.length-1];let row=inputs;
+      for(const [attr,section,idKey] of [['data-forecast-package','packageOverrides','costId'],['data-forecast-commercial','commercial','id'],['data-forecast-invoice','invoiceOverrides','invoiceId'],['data-forecast-grant','grantReceipts','tranche']]){
+        const index=p.indexOf(attr);if(index>=0){row=rowKey(inputs[section],idKey,idKey==='tranche'?Number(p[index+1]):p[index+1]);break;}}
+      const receipt=p.indexOf('data-forecast-receipt');if(receipt>=0)row=row?.receipts?.[p[receipt+1]];
+      return row&&Object.hasOwn(row,name)?{exists:true,value:row[name]}:{exists:false,value:null};
+    }
+    for(const key of Object.keys(captured)){if(signature(atField(original,key))!==signature(atField(verified,key)))delete captured[key];}
+    updateCase(selection.current);inputState=clone(verified);rawFields=captured;selected=null;editing=true;preview=null;request=null;onSelection(null);
+    cashState=clone(selection.desk);cashDesk?.dispose();cashDesk=null;render();
+    await persist();
+    try{await doPreview();await persist();return {adopted:true,preview};}
+    catch(error){status('Reviewed cash inputs remain in the current draft. Complete the original native validation before saving: '+error.message,true);return {adopted:true,preview:null,message:error.message};}
+    }finally{if(available())setBusy(false);}
+  }
   async function receiveWorking(value,{fromFile=false}={}){
     const next=validateWorking(value);
+    const originalSignature=signature(snapshot());
+    await receiveCashSources(next.cashReview);
+    if(signature(snapshot())!==originalSignature)throw new Error('The current Forecast changed while the received cash sources were being checked. Both working files remain intact.');
     if(next.pendingWorkbook)next.pendingWorkbook=await workbookHost.validateJournal(next.pendingWorkbook);
     if(next.workbook)next.workbook=await validateForecastWorkbookDeskState(next.workbook,{...workbookOptions(),currentInputs:next.inputs});
     requireActive();
@@ -196,6 +235,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
     workbook?.dispose();workbook=null;
     inputState=clone(next.inputs);rawFields=clone(next.rawFields);selected=null;editing=next.editing;preview=null;request=clone(next.saveRequest);
     pendingWorkbook=clone(next.pendingWorkbook);workbookState=clone(next.workbook);workbookHistory=clone(next.workbookHistory||{});
+    cashDesk?.dispose();cashDesk=null;cashState=next.cashReview?clone(next.cashReview):null;
     if(!fromFile)previousWorking=clone(next.previousWorking||null);
     if(next.selectedId&&!editing)selected=await api(path+'/forecasts/'+next.selectedId);
     requireActive();onSelection(selected?.id||null);render();restoreRaw();
@@ -382,6 +422,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
   function render(){
     if(!available())return;
     comparison?.dispose();comparison=null;
+    if(cashDesk){cashState=cashDesk.snapshot();cashDesk.dispose();cashDesk=null;}
     if(workbook){workbookState=workbook.snapshot();workbook.dispose();workbook=null;}
     root.innerHTML='<div class="forecast-heading"><div><h3>Operating forecast</h3><p>Replan remaining cash and delivery work from this retained case.</p></div><div class="forecast-actions">'+button('New forecast','new')+(selected?button('Reforecast current case','reforecast'):'')+'</div></div>'
       +'<label class="forecast-saved-label">Saved forecasts<select data-forecast-selection><option value="">Current draft</option>'+current.forecasts.map(row=>'<option value="'+esc(row.id)+'"'+(selected?.id===row.id?' selected':'')+'>'+esc(row.name)+' · '+esc(row.asOfDate)+' · original v'+row.source.version+'</option>').join('')+'</select></label>'
@@ -389,8 +430,9 @@ export function mountForecast({container,current,api:transport,mutationId,record
       +'<div class="forecast-actions">'+button('Download complete working file','download-working')+button('Reopen working file','choose-working')+button('Continue original source request','recover-source')+button('Continue original save request','recover-save')+(previousWorking?button('Download previous working file','download-previous'):'')+'</div><input hidden data-forecast-working-file type="file" accept=".json,application/json">'
       +'<p data-forecast-status role="status" aria-live="polite"></p>'
       +(current.program.state==='CLOSED'?'<p class="forecast-note">This case is closed. You can inspect and preview forecasts; reopen the case in its original controls before saving a new forecast.</p>':'')
-      +'<div data-forecast-editor>'+(editing?editor(inputState||defaults()):'')+'</div><div data-forecast-workbook></div><div data-forecast-report>'+(selected&&!editing?reportHtml(selected):'')+'</div>';
+      +'<div data-forecast-editor>'+(editing?editor(inputState||defaults()):'')+'</div><div data-forecast-cash-review></div><div data-forecast-workbook></div><div data-forecast-report>'+(selected&&!editing?reportHtml(selected):'')+'</div>';
     comparison=mountForecastComparison({container:$('[data-forecast-comparison]'),caseId:current.program.id,forecasts:current.forecasts,api,available,isBlocked:blocked});
+    cashDesk=mountForecastCashReview({container:$('[data-forecast-cash-review]'),getCurrent:()=>current,getInputs:currentInputs,getRecoveryInputs:retentionInputs,api,available,isBlocked:()=>blocked()||!editing,onCurrent:async next=>{updateCase(next);invalidate();},onStateChange:state=>{cashState=clone(state);persistSoon();},onApply:applyCashReview,initialState:cashState});
     if(editing)workbook=mountForecastWorkbook({container:$('[data-forecast-workbook]'),getCurrent:()=>current,getInputs:currentInputs,getRecoveryInputs:retentionInputs,available,isBlocked:blocked,api,initialState:workbookState,onStateChange:state=>{workbookState=clone(state);persistSoon();},applyReviewedInputs:applyWorkbook});
     root.querySelectorAll('[data-forecast-commercial]').forEach(syncCommercialTiming);
     const form=$('[data-forecast-form]');if(form){currency.syncRates(form,{busy:blocked()});restoreRaw();}applyBusy();
@@ -472,5 +514,5 @@ export function mountForecast({container,current,api:transport,mutationId,record
     finally{restoring=false;if(available()){applyBusy();if(restoreNotice)status(restoreNotice);}}
   })();
   return {ready,setHostBusy,draftInputs(){if(!editing||!available())return null;persistSoon();return clone(retentionInputs());},
-    dispose(){if(active&&!restoring){try{void persist().catch(()=>{});}catch{}}active=false;comparison?.dispose();workbook?.dispose();void draftStore.close();},root};
+    dispose(){if(active&&!restoring){try{void persist().catch(()=>{});}catch{}}active=false;comparison?.dispose();workbook?.dispose();cashDesk?.dispose();void draftStore.close();},root};
 }

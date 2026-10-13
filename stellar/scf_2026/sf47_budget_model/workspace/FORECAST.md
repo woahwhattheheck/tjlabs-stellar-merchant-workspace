@@ -98,6 +98,12 @@ The forecast distributes the selected remaining hours over their inclusive calen
 
 This is a shared capacity comparison, not a staff roster. The result retains the original contributors and reports peak required hours, overloaded days, and the first and last overloaded dates. The capacity note should describe actual availability or the planning assumption being examined. Selecting a proposed customer project adds its remaining hours to the same comparison.
 
+## Reconcile the selected cash plan with actual records
+
+Use **Forecast cash reconciliation** in the editable Forecast to select one immutable original plan, read the complete current Cash/Invoice sources, and compare its dated cash with recorded receipts and expenses. Review unassigned and unvalued records, explicit next-Forecast package/customer associations, and every changed as-of/work/payment date before adopting the reviewed inputs. Current field conflicts need explicit original/current/proposed choices. The same native preview, currency-credit rules and immutable save remain authoritative.
+
+The complete working file retains original sources, unfinished reviews, current decisions and applied before/after history. The full delivery contains the complete native case and every original attachment alongside readable HTML, exact JSON and all-row CSV. See [Forecast cash reconciliation](FORECAST_CASH_RECONCILIATION.md) for the complete source, scope, recovery and receiving flow.
+
 ## Compare complete saved forecasts
 
 Open **Compare saved forecasts** in the original Operating forecast desk. Select the before and after editions, then compare their exact cash needs, balances, remaining work and capacity with the complete changed inputs and source records. Calendar dates align directly; missing dates and unknown amounts have no delta. Different as-of dates, opening cash, selected customer scope and original currency coverage remain visible. The current forecast draft stays in its existing editor.
