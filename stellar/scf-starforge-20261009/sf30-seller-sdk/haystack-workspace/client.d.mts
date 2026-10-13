@@ -1,3 +1,7 @@
+import type { VolttronActionMap, VolttronDeliveryArguments, VolttronSummary } from "./volttron-types.mjs";
+export type * from "./volttron-types.mjs";
+import type { ProjectionActionMap, ProjectionDeliveryArguments } from "./projection-types.mjs";
+export type * from "./projection-types.mjs";
 import type { HaystackAnalysis, HaystackRole } from "./haystack-index.mjs";
 import type { SemanticActionMap, SemanticDeliveryArguments } from "./semantic-types.mjs";
 export type * from "./semantic-types.mjs";
@@ -33,6 +37,8 @@ export interface Status {
   createdAt: string; sha256: string; materialSha256: string; selectedSourceIds: string[];
   sourceCount: number; editionCount: number; proposalCount: number; pendingProposals: number;
   recordCount: number; counts: Counts; diagnosticCount: number; sourceDiagnostics: number;
+  volttron: VolttronSummary;
+  projectionCounts: { projects: number; versions: number; reviews: number; publications: number; returns: number };
   semanticCounts: { intakeCount: number; modelCount: number; versionCount: number; validationCount: number; returnCount: number };
 }
 export interface Revision { expectedRevision: number }
@@ -69,9 +75,9 @@ export interface ByteRange {
   offset: number; bytes: number; totalBytes: number; nextOffset: number; complete: boolean; base64: string; chunkSha256: string;
 }
 export interface Delivery extends Outcome {
-  name: string; mediaType: string; sha256: string; bytes: number; kind: "workspace" | "register" | "diagnostics" | "native-grid" | "work-register" | "semantic-report" | "semantic-dictionary" | "semantic-output"; createdAt: string;
+  name: string; mediaType: string; sha256: string; bytes: number; kind: "workspace" | "register" | "diagnostics" | "native-grid" | "work-register" | "semantic-report" | "semantic-dictionary" | "semantic-output" | "projection-grid" | "projection-lineage" | "projection-report" | "volttron-report" | "volttron-output" | "volttron-receiving-output"; createdAt: string;
 }
-export type DeliveryArguments = SemanticDeliveryArguments | Mutation & (
+export type DeliveryArguments = SemanticDeliveryArguments | ProjectionDeliveryArguments | VolttronDeliveryArguments | Mutation & (
   { kind: "workspace" } |
   { kind: "work-register"; format?: "json" | "csv" | "html" } |
   { kind: "register" | "diagnostics"; format?: "json" | "csv" | "html"; editionId?: string; role?: Role } |
@@ -155,7 +161,7 @@ export interface ReturnSummary {
 }
 export interface ReturnRead extends ReturnSummary, Envelope { application: Json; decisions: Json[] }
 
-export interface ActionMap extends SemanticActionMap {
+export interface ActionMap extends SemanticActionMap, ProjectionActionMap, VolttronActionMap {
   "works.list": { args: Revision & Paging & { status?: WorkStatus; assignee?: string; priority?: WorkPriority; sourceId?: string; query?: string }; result: Page<WorkSummary> };
   "work.read": { args: Revision & { itemId: string }; result: WorkRead };
   "work.capture": { args: WorkCaptureArguments; result: WorkOutcome };

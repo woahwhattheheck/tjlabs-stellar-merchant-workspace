@@ -102,7 +102,7 @@ try{
     const response=await fetch(launch.url+path);assert.equal(response.status,200);assert((await response.arrayBuffer()).byteLength>0);
   }
   const bundle=await request('delivery.prepare',{kind:'workspace'}),bytes=Buffer.from(await client.deliveryBytes(bundle.operationId));
-  assert.equal(JSON.parse(bytes).format,'commons.haystack.package.v4');const verified=portable.verifyBundle(bytes);
+  assert.equal(JSON.parse(bytes).format,'commons.haystack.package.v6');const verified=portable.verifyBundle(bytes);
   assert.equal(verified.application.size,portable.APPLICATION_FILES.length);
   const received=await portable.receiveBundle(bytes,join(root,'received'));
   assert.equal((await portable.receiveBundle(bytes,join(root,'received'))).replayed,true);
@@ -111,7 +111,7 @@ try{
   assert.deepEqual((await cold.originalSource(zincImported.source.id)).bytes,derived);
   const coldGrid=(await load(join(root,'received','application'),'reports.mjs')).nativeGrid(await cold.read(),{sourceId:zincImported.source.id,editionId:reviewed.edition.id,format:'zinc'});
   sameValues(parseGrid(coldGrid.bytes,{format:'zinc'}).grid,exported.zinc);
-  result.steps.push({name:'v4-complete-portable-cold-receiving',state:'COMPLETE',applicationFiles:received.applicationFiles,packageSha256:sha256(bytes),packageBytes:bytes.length});
+  result.steps.push({name:'v6-complete-portable-cold-receiving',state:'COMPLETE',applicationFiles:received.applicationFiles,packageSha256:sha256(bytes),packageBytes:bytes.length});
   await writeFile(join(root,'received-workspace.json'),bytes);
   result.state='COMPLETE';result.revision=(await workspace.read()).revision;
 }finally{if(merchant)await merchant.close();if(launch)await launch.close();}

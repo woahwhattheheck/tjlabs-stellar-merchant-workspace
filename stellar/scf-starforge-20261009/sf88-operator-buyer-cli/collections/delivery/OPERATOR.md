@@ -61,14 +61,14 @@ Open `/customer-delivery` on its printed origin and use the same private workspa
 
 1. Select the original package and paste the sender's SHA-256.
 2. Choose **Verify and receive**.
-3. The upload proceeds in exact 64 KiB chunks. Every chunk has its own SHA-256. Complete package verification must match the sender's digest before the received result is published.
+3. The upload proceeds in exact 64 KiB chunks. Every chunk has its own SHA-256. The browser sends up to sixteen consecutive chunks (1 MiB of original bytes) per request, preserving each chunk's own offset and digest. Complete package verification must match the sender's digest before the received result is published.
 4. Inspect the original intent IDs, outcome observations, complete-output flags, file lengths and digests.
 5. Download a complete response or the customer review. The complete selected source tree and original package remain in the private receiving directory.
 6. Reopen a previously received package using its package SHA-256. Reopening verifies the retained files again.
 
 **Archive browser request** retains an exact local archived copy and clears only the active browser slot. It does not remove, cancel or replace a server-side named delivery or upload, whose outcome may still need inspection. Use a new delivery ID for a deliberately changed selection.
 
-Interrupted uploads retain committed chunks. Reselect the original file with the retained name and byte count and continue. The full final digest is authoritative; a same-sized replacement file cannot pass verification with different bytes. The upload/receiving operation keeps its original package identity. No received code is executed, no source Inbox is adopted and no payment credentials are required.
+Interrupted uploads retain committed chunks, including a durably written prefix of an interrupted batch. Reselect the original file with the retained name and byte count and continue. The full final digest is authoritative; a same-sized replacement file cannot pass verification with different bytes. The upload/receiving operation keeps its original package identity. No received code is executed, no source Inbox is adopted and no payment credentials are required.
 
 The recipient's raw package and members are under:
 
@@ -84,6 +84,14 @@ The recipient's raw package and members are under:
 ```
 
 After a successful complete receive, opening `members/review.html` offline gives the response links and review without running a server. It is the fixed application-generated viewer. Keep the entire members directory together.
+
+## Large-package transfer and recovery
+
+The upload directory remains the original source of truth: `upload.json`, the immutable offset-named `.part` files and the completed package. The running controller keeps a bounded in-memory progress index for up to four uploads and 131,072 total chunk entries. It discards an entry when the upload directory's device/inode or modification/change time changes. Another maintained writer therefore causes an original-file census before continuation. Restarting, reopening or explicitly inspecting an upload also reads and hashes the retained chunks again.
+
+An ordinary uninterrupted browser upload using 64 KiB parts reads each incoming chunk once, and assembly verifies every retained part and the sender's whole-package SHA-256. Reopening a published completed package verifies its original whole-file digest. Retrying an earlier chunk checks that exact retained part. A cache entry cannot authorize a different package or bypass final verification. In-place modification of an earlier part is detected on full inspection or final assembly; the cache does not claim continuous filesystem monitoring.
+
+The original single-chunk route and default full native `parts` result remain available. The browser uses `?progress=compact`, which returns `partCount` with the original offset/size/digest fields instead of repeatedly returning the entire growing chunk census. The additive `uploads/:sha256/chunks` action accepts `{chunks:[{offset,base64,sha256}]}` with at most sixteen consecutive chunks. Only this batch route uses the existing host's explicit 2 MiB JSON-body option; the original 256 KiB default remains for other upload actions. It validates the whole batch before its first write, then retains each chunk through the original create-only writer. A process interruption can leave a committed prefix; continuing the same package inspects that prefix and resumes its next offset. The batch is not advertised as an all-or-nothing filesystem transaction.
 
 ## CLI and automation
 

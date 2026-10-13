@@ -1,3 +1,4 @@
+import {validateGrantOperatingSelection} from './grant-operating-plan-core.mjs';
 import {validateProductSourceAuthoring,productSourceSelectionOf,restoreProductSourceSelection} from './grant-product-authoring-core.mjs';
 import {validatePlanningUpdateState,selectPlanningRevision} from './grant-plan-update-core.mjs';
 import {validateHandover,handoverSelectionOf,restoreHandoverSelection} from './grant-handover-core.mjs';
@@ -110,6 +111,10 @@ function validateFields(fields){
 }
 function validateState(state,sources,planSources=[]){
   validatePlanningState(state.planningReview,planSources);
+  if(state.planningReview?.operatingSelection!==undefined&&state.planningReview.operatingSelection!==null){
+    const source=planSources.find(item=>item.sha256===state.planningReview.sourceSha);
+    validateGrantOperatingSelection(state.planningReview.operatingSelection,source,state.planningReview.revision);
+  }
   validatePlanningUpdateState(state,planSources);
   need(sources.some(x=>x.sha256===state.currentSource),'Retain the selected source edition.');
   list(state.answers,'Answers');need(JSON.stringify(state.answers.map(x=>x.id))===JSON.stringify(ids),'Retain all nine answer identities.');

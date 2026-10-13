@@ -252,12 +252,17 @@ export async function receiveSelectedCommissioning({repository, ref, output, res
       receivables + '/xero/cash-commissioning.mjs', receivables + '/xero/cash-workspace.mjs',
       receivables + '/bank-parsers/bridge.py', receivables + '/bank-parsers/ofx_intake.py',
       receivables + '/bank-parsers/mt940_engine.py',
-      distribution + '/contributions/merchant-commissioning-collections.json');
+      distribution + '/contributions/merchant-commissioning-collections.json',
+      distribution + '/contributions/commissioning-agent.json', root + '/MCP.md');
+    required.push(...['accounting-commissioning.mjs', 'catalog/accounting-commissioning.mjs',
+      'accounting-commissioning-client.mjs', 'accounting-commissioning-client.d.mts',
+      'accounting-commissioning-cli.mjs', 'accounting-commissioning-cli.d.mts']
+      .map(name => 'stellar-forge/mcp-merchant-operator/' + name));
     const names = new Set(manifest.files.map(file => file.path));
     for (const path of required) need(names.has(path), 'PACKAGE_ENTRY',
       'The original commissioning product is missing its runtime source: ' + path);
     const contributions = new Set(manifest.distributionContributions.map(row => row.id));
-    for (const id of ['merchant-receivables', 'merchant-receivables-xero', recipe])
+    for (const id of ['merchant-receivables', 'merchant-receivables-xero', recipe, 'commissioning-agent'])
       need(contributions.has(id), 'PACKAGE_CONTRIBUTION', 'Keep the original selected contribution: ' + id);
     for (const [key, runtime, declaration] of [
       ['./merchant/receivables/commissioning/client', 'client.mjs', 'client.d.ts'],
@@ -267,6 +272,14 @@ export async function receiveSelectedCommissioning({repository, ref, output, res
       need(entry?.default === './source/' + root + '/' + runtime &&
         entry?.types === './source/' + root + '/' + declaration,
         'PACKAGE_TYPED_EXPORT', 'Keep the original installed declaration and runtime: ' + key);
+    }
+    for (const [key, runtime, declaration] of [
+      ['./merchant/accounting-commissioning', 'accounting-commissioning-client.mjs', 'accounting-commissioning-client.d.mts'],
+      ['./merchant/accounting-commissioning/operations', 'accounting-commissioning-cli.mjs', 'accounting-commissioning-cli.d.mts'],
+    ]) {
+      const entry = metadata.exports[key], prefix = './source/stellar-forge/mcp-merchant-operator/';
+      need(entry?.default === prefix + runtime && entry?.types === prefix + declaration,
+        'PACKAGE_TYPED_EXPORT', 'Keep the installed agent declaration and runtime: ' + key);
     }
     phase = 'commissioning-install';
     const consumer = join(out, 'consumer');
@@ -285,6 +298,10 @@ export async function receiveSelectedCommissioning({repository, ref, output, res
     need(['source-file', 'candidates', 'preview', 'capture', 'export', 'prepare', 'execute', 'reconcile',
       'baselineCaptureId'].every(word => help.includes(word)),
       'PACKAGE_COMMAND', 'The installed command must expose the complete source, review and recovery workflow.');
+    const agentHelp = run(executable, ['merchant-accounting-commissioning', '--help'], {cwd: consumer});
+    need(['source-inspect', 'source-import', 'capture-export', 'request-lookup', 'prepare', 'execute',
+      'reconcile', 'download'].every(word => agentHelp.includes(word)),
+      'PACKAGE_COMMAND', 'The installed agent command must expose complete original source and capture recovery.');
     phase = 'commissioning-installed-exports';
     const importProgram = [
       "import {readFile} from 'node:fs/promises';",
@@ -294,6 +311,12 @@ export async function receiveSelectedCommissioning({repository, ref, output, res
       "const prefix = name + '/merchant/receivables/commissioning';",
       "const client = await import(prefix + '/client'), operations = await import(prefix + '/operations');",
       "const workspace = await import(prefix), server = await import(prefix + '/server');",
+      "const agent = await import(name + '/merchant/accounting-commissioning');",
+      "const agentOperations = await import(name + '/merchant/accounting-commissioning/operations');",
+      "for (const key of ['createAccountingCommissioningClient','connectAccountingCommissioningClient','accountingCommissioningImportArguments','accountingCommissioningCaptureArguments'])",
+      "  if (typeof agent[key] !== 'function') throw new Error('Missing installed agent export: ' + key);",
+      "for (const key of ['prepareAccountingCommissioningOperation','runAccountingCommissioningOperation','downloadAccountingCommissioningFile'])",
+      "  if (typeof agentOperations[key] !== 'function') throw new Error('Missing installed agent operation: ' + key);",
       "for (const key of ['CommissioningCollectionsClient','CommissioningCollectionsApiError','createCommissioningCollectionsClient','commissioningImportArguments','commissioningCaptureArguments'])",
       "  if (typeof client[key] !== 'function') throw new Error('Missing installed client export: ' + key);",
       "for (const key of ['parseCommissioningCollectionsArguments','runCommissioningCollectionsCli'])",
@@ -308,7 +331,7 @@ export async function receiveSelectedCommissioning({repository, ref, output, res
       "  if (!asset?.bytes?.length) throw new Error('Missing original installed browser asset: ' + path);",
       "  assetBytes += asset.bytes.length;",
       "}",
-      "console.log(JSON.stringify({client:true,operations:true,workspace:true,server:true,applicationProvider:provider.id,assetBytes}));",
+      "console.log(JSON.stringify({client:true,operations:true,agentClient:true,agentOperations:true,workspace:true,server:true,applicationProvider:provider.id,assetBytes}));",
     ].join('\n');
     const imported = JSON.parse(run(process.execPath,
       ['--input-type=module', '--eval', importProgram, metadata.name, root], {cwd: consumer}));
@@ -327,6 +350,8 @@ export async function receiveSelectedCommissioning({repository, ref, output, res
       packagedRuntimeEntries: required.length, installedExports: imported, installedSources: installedSource,
       installedCommand: {command: 'starforge commissioning-collections --help', exitCode: 0,
         outputBytes: Buffer.byteLength(help), sha256: hash(help)},
+      installedAgentCommand: {command: 'starforge merchant-accounting-commissioning --help', exitCode: 0,
+        outputBytes: Buffer.byteLength(agentHelp), sha256: hash(agentHelp)},
       installation: {directory: consumer, outputBytes: Buffer.byteLength(installOutput)},
       completedAt: new Date().toISOString()};
     const resultFile = join(out, 'selected-commissioning-receiving-' + Date.now() + '.json');

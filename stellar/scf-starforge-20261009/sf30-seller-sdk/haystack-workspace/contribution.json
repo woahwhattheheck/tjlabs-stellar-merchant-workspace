@@ -1,14 +1,14 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "haystack-workspace",
-  "description": "Native JSON-v4 and Zinc 3.0 building grids, assigned corrective work, complete evidence, explicit review, source editions and recipient returns; original point-list mapping, reviewed semantic models and native Brick validation",
+  "description": "Native JSON-v4 and Zinc 3.0 building grids, assigned corrective work, complete evidence, explicit review, source editions and recipient returns; original point-list mapping, reviewed semantic models and native Brick validation; explicit typed-grid projections, complete source lineage, reviewed native publication and returned row decisions",
   "commands": {
     "haystack": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/cli.mjs",
     "haystack-mcp": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/mcp.mjs"
   },
   "commandDescriptions": {
-    "haystack": "Operate original building grids, corrective work, point-list mapping, saved semantic models, native Brick validation and complete contractor returns",
-    "haystack-mcp": "Serve the complete original native action catalog, including point-list modelling and contractor-return decisions, over local MCP stdio"
+    "haystack": "Operate original building grids, corrective work, point-list mapping, saved semantic models, native Brick validation and complete contractor returns; explicit typed-grid projection, original cell lineage, version review and complete returned-grid keep/adopt",
+    "haystack-mcp": "Serve the complete original native action catalog, including point-list modelling and contractor-return decisions, over local MCP stdio; typed-grid projection and original returned-row decisions"
   },
   "exports": {
     "./seller/haystack": {
@@ -36,7 +36,11 @@
     "./seller/haystack/merchant-tools": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/merchant-tools.mjs",
     "./seller/haystack/application-provider": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/application-provider.mjs",
     "./seller/haystack/semantic-receiving": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_RECEIVING.mjs",
-    "./seller/haystack/semantic-browser": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_BROWSER.mjs"
+    "./seller/haystack/semantic-browser": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_BROWSER.mjs",
+    "./seller/haystack/projection-model": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/projection-model.mjs",
+    "./seller/haystack/projection-receiving": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/PROJECTION_RECEIVING.mjs",
+    "./seller/haystack/projection-browser": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/PROJECTION_BROWSER.mjs",
+    "./seller/haystack/volttron": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/volttron-registry.mjs"
   },
   "applicationProviders": {
     "haystack-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/application-provider.mjs"

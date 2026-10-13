@@ -1391,6 +1391,26 @@ A report selected only by review ID is immutable and never includes a later adop
 
 The [Merchant return family](../../stellar-forge/mcp-merchant-operator/DOSSIER_RETURNS.md) exposes the same ten source/review/draft operations and five complete export kinds through the original attachment and retained file reader. The [receiving chapter](RECEIVING.md#21-receive-a-reviewed-dossier-return) covers the complete editable handover.
 
+## Continue customer handovers through reviewed returns
+
+Use the installed research-customer-handover-returns command when the baseline is an original customer-updates handover. It receives the published delivery, prepares each actual collaborator return, retains the full native comparison and explicit reviewed request, applies that same request through dossierReturns, and delivers a complete archive with an independently reopened editable workspace.
+
+The [complete operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/HANDOVER_RETURNS.md) defines the actual handover/current-head/source selection, original native request, cumulative inherited-plus-new item and return-round limits, recovery and full receiving. Select one stable operation directory and the current installed complete engine manifest.
+
+~~~sh
+starforge registrations --command research-customer-handover-returns
+starforge research-customer-handover-returns help
+starforge research-client customer-handover-returns help
+~~~
+
+The course uses the original customer delivery directory from createCustomerHandover or runResearchCustomerDelivery. It preserves that handover at its published delivery revision and separately exports the accepted later dossier revision. Future return files arrive one round at a time under the frozen selected scope. Every native comparison item receives an explicit allowed choice from an authorized reviewer; typed returned history remains a source-bound proposal.
+
+After a lost reply, repeat apply with the exact original reviewed file and SHA, or omit both review flags to recover the already retained request. Native request lookup precedes a new write. The original ordered decisions, current/base/returned pins and accepted historical revision remain selected even if later edits exist.
+
+Complete includes the original baseline reports/work/source, full return source and all item values, requests/receipts, accepted portable/HTML/Markdown/history, complete original engine and licence, OPEN.mjs and readable START_HERE.html. Its final COMPLETE result follows archive verification and original native cold receiving. Use the [receiving chapter](RECEIVING.md#22-receive-a-customer-handover-and-accepted-returns) for continued editing.
+
+The separate research-customer-programme --returns entry continues a genuine complete scientific customer-programme ZIP. Its PROGRAMME/schema and input authority remain those of that original producer.
+
 ## Operating source
 
 - [Citation update review, complete browser drafts and selected reports](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION-REVIEW-OPERATOR.md)
@@ -1429,3 +1449,14 @@ On the receiving workspace, import that completed upload, prepare its actual cas
 The installed `starforge research-quotes-remote` command uses the same original Research programme owner as Merchant. Declare the existing source and destination connection files and actual workspace identities, submit or resume the original native jobs, review the saved results, and stream the complete archive into the receiving workspace. The full case and customer dossier continue through their original receiving writers.
 
 The [complete remote terminal guide](../../stellar-forge/mcp-merchant-operator/RESEARCH_PROGRAMME_TERMINAL.md) covers private configuration, exact source-file inputs, two-workspace archive transfer, native receiving, retained operation recovery, complete file copies and the typed SDK. Completed local results/files reopen from their original bytes; the existing Research application owns its native listener and jobs.
+
+
+## Remote Python customer programmes
+
+The installed Python package also operates the same configured source and receiving hosts through `ResearchRemoteProgrammes`. Use it when a Python application needs the complete original job, archive transfer and customer receiving workflow. The local Python programme interface remains available for direct native directory operations.
+
+The complete [remote Python operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH-REMOTE-PROGRAMMES.md) and [two-host receiving example](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_remote_programme_receiving.py) use the original terminal's private configuration and expected workspace identities. The Node `ResearchProgrammeOperator` remains the source/destination client and streaming transfer owner. Python retains each exact configuration, argument file, call attempt and full reply; a lost reply resumes those original IDs.
+
+Every Python call has its own stable `call_id`. Saved results expose a verified complete JSON file and, for an export, the original full archive or member through `FileDelivery`. They reopen before Node, either host or an original moved donor is needed. Recover continues the same interrupted call; explicit replay uses a distinct local call ID while retaining the underlying native request. Fresh read snapshots use fresh call IDs.
+
+Run `python -m stellar_forge_buyer.research_cli --directory PRIVATE_PYTHON_JOURNAL quotes-remote-configuration --configuration PRIVATE_OPERATOR_JSON` to inspect the retained declarations. The same installed command family covers programme jobs and source selection, exact reviews, full file/archive exports, streamed source-to-receiver transfer and original case/dossier receiving. Its complete example keeps source preparation, destination review and accepted receiving as separate explicit phases.

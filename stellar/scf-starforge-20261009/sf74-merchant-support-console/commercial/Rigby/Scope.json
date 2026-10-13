@@ -1,0 +1,50 @@
+{
+  "schema": "tjlabs.rigby-workshare/1",
+  "id": "rigby-commerce-receiving-20261013-v1",
+  "state": "PROPOSED",
+  "currency": "USD",
+  "fee_cents": 920000,
+  "milestone_cents": [
+    460000,
+    460000
+  ],
+  "active_business_days": 10,
+  "scope": {
+    "customer_count": 1,
+    "flow_count": 1,
+    "source": "Existing Medusa order integration",
+    "destination": "Existing Dynamics Sales CRM",
+    "environments": [
+      "staging",
+      "production"
+    ],
+    "maximum_mapped_fields": 12,
+    "crm_entities": [
+      "Account",
+      "Contact",
+      "Opportunity"
+    ],
+    "original_ambiguity_queue": true,
+    "maximum_selected_recovery_changes": 1,
+    "receiving_session_minutes": 75
+  },
+  "acceptance_ids": [
+    "RC01",
+    "RC02",
+    "RC03",
+    "RC04",
+    "RC05",
+    "RC06",
+    "RC07",
+    "RC08"
+  ],
+  "excluded": [
+    "Dynamics F&O",
+    "Payment processing",
+    "New customer identity authority",
+    "Subscriptions",
+    "Bulk historical migration",
+    "New integration queue",
+    "24-hour operations"
+  ]
+}

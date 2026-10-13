@@ -135,3 +135,7 @@ Open **Point-list modelling** from the existing workspace. Import the complete C
 The [complete modelling guide](SEMANTIC_MODELLING.md) covers the interface, original request recovery, typed client, CLI, native reports and independent receiving. The [native standards guide](SEMANTIC_NATIVE.md) describes the separate, exact offline dependency archive and explicit local installation. Inspecting, browsing or validating never installs dependencies or fetches an ontology.
 
 `SEMANTIC_RECEIVING.mjs` runs the same complete original point-modelling operation from one retained JSON input. It includes the full 624-record Charlie source, an explicitly derived point list, exact model revisions, native validation, desktop/mobile operator work, contractor return and independent application receiving. Read its actual result to distinguish completed stages and native conformance from prepared source.
+
+## Typed Haystack projections
+
+Open **Haystack projections** to map an exact saved model and its original source columns into a reviewed native grid. Explicit conversions retain source-cell lineage, immutable mapping versions, complete reports and original returned-grid keep/adopt decisions. The [projection guide](PROJECTION.md) covers the browser, installed CLI, local publication and portable v4 receiving.

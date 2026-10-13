@@ -535,6 +535,10 @@ The **Point-list modelling** link opens the full source intake, mapping, model e
 
 Install the explicitly selected offline standard runtime only when needed, using [SEMANTIC_NATIVE.md](SEMANTIC_NATIVE.md). Physical or live-site observations are recorded with their own author and evidence; successful standard validation does not supply those observations. The complete v3 workspace package receives the original v1 and corrective v2 package inventories as well.
 
+## Reviewed typed-grid projections
+
+Use **Haystack projections** to choose a saved model version, map source columns and typed values, inspect complete lineage, review a version and deliver the native grid. The same workspace retains each corrected return and its explicit row decisions. [PROJECTION.md](PROJECTION.md) provides the full browser and CLI workflow. Complete v4 deliveries retain this projection history and receive the earlier v1, v2 and v3 application inventories.
+
 ## Zinc native grids
 
-The same native source workflow accepts explicit `zinc` imports and exports Zinc 3.0 from a selected source or saved edition. JSON-v4 remains the default, tag edits retain their typed JSON representation, and the complete original file is always downloadable. See [Zinc contract](ZINC_CONTRACT.md) for commands, normalization, unsupported representations and complete source references. New complete workspace exports use package v4 and carry the codec; receiving still validates the original v1, v2 and v3 inventories.
+The same native source workflow accepts explicit `zinc` imports and exports Zinc 3.0 from a selected source or saved edition. JSON-v4 remains the default, tag edits retain their typed JSON representation, and the complete original file is always downloadable. See [Zinc contract](ZINC_CONTRACT.md) for commands, normalization, unsupported representations and complete source references. New complete workspace exports use package v6 and carry the Zinc codec, typed-projection application and VOLTTRON registry desk together. Receiving preserves the published v1, v2, v3, v4 and v5 inventories.

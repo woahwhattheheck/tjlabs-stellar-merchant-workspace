@@ -15,6 +15,14 @@ for(const k of ['directory','sourceDirectory','gitRepository','buildDirectory','
 need(/^[a-f0-9]{40}$/.test(request.sourceCommit)&&typeof request.operationId==='string','Pin the upstream commit and original operation');
 need(typeof request.offline==='boolean','Choose the native package/network mode explicitly');
 if(request.retainedDependencies)need(request.retainedDependencies.directory===resolve(request.retainedDependencies.directory)&&/^[a-f0-9]{64}$/.test(request.retainedDependencies.lockSha256),'Pin the complete original dependency donor');
+function failure(error){
+ const result={code:error.code??'PREPARATION_ERROR',message:error.message};
+ // These fields come from the original Git source reader and identify the
+ // exact selected objects or limits needed to continue the same build.
+ for(const key of ['sourceCommit','gitBlob','paths','bytes','limitBytes','missingObjects','inspection'])
+  if(error[key]!==undefined)result[key]=error[key];
+ return result;
+}
 const root=request.directory,base='stellar/scf-starforge-20261009/distribution/';
 await mkdir(root,{mode:0o700,recursive:true});need(await realpath(root)===root&&((await lstat(root)).mode&0o077)===0,'Use a private real operation directory');
 const modulePath=p=>pathToFileURL(join(request.sourceDirectory,base+p)).href;
@@ -37,7 +45,7 @@ async function stage(name,input,work){
  need(saved.sha256===sha(json(saved.input)),'Original stage changed');
  saved.state='RUNNING';saved.startedAt??=new Date().toISOString();await persist();
  try{saved.result=await work(saved.input);saved.state='COMPLETE';saved.completedAt=new Date().toISOString();delete saved.error;await persist();process.stdout.write(json({operation:request.operationId,stage:name,state:'COMPLETE'}));return saved.result;}
- catch(e){saved.state='INTERRUPTED';saved.error={code:e.code??'PREPARATION_ERROR',message:e.message};await persist();throw e;}
+ catch(e){saved.state='INTERRUPTED';saved.error=failure(e);await persist();throw e;}
 }
 try{
  await persist();
@@ -85,5 +93,5 @@ try{
  else await atomic(casePath,receiving);
  record.state='READY';record.result={sourceBuild:built,runtimeDirectory,inspection:finalInspection,receivingCase:casePath};await persist();
  process.stdout.write(json({operation:request.operationId,state:'READY',sourceCommit:request.sourceCommit,runtimeDirectory,receivingCase:casePath}));
-}catch(e){record.state='INTERRUPTED';record.error={code:e.code??'PREPARATION_ERROR',message:e.message,stack:e.stack};await persist();process.stderr.write(json({operation:request.operationId,state:record.state,error:record.error}));process.exitCode=1;}
+}catch(e){record.state='INTERRUPTED';record.error={...failure(e),stack:e.stack};await persist();process.stderr.write(json({operation:request.operationId,state:record.state,error:record.error}));process.exitCode=1;}
 finally{await lease.close();}

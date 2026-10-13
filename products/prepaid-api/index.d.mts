@@ -241,3 +241,5 @@ export function servePrepaidCustomer(options: {
   expectedAgentSetupSha256?: string;
   expectedWorkspaceSha256?: string;
 }): Promise<PrepaidCustomerServer>;
+
+export {buildPrepaidCommissioning,preparePrepaidCommissioning,inspectPrepaidCommissioning} from './commissioning.d.mts';

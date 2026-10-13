@@ -44,7 +44,7 @@ Encoding rejects values that Zinc cannot represent without losing material conte
 
 ## Portable application and cold receiving
 
-New complete workspace exports use `commons.haystack.package.v4` and include the Zinc codec, this guide and the complete pinned source references. Receiving continues to validate the exact original v1, v2 and v3 application inventories. Zinc source history requires the v4 inventory; a caller cannot label a Zinc workspace as an older package. The original receiving marker, complete member verification, request identity and create-only file publication are unchanged.
+New complete workspace exports use `commons.haystack.package.v6` and include the Zinc codec, this guide and the complete pinned source references. Receiving continues to validate the exact original v1, v2, v3, v4 and v5 application inventories. Zinc source history requires the v6 inventory; a caller cannot label a Zinc workspace as an older package. The original receiving marker, complete member verification, request identity and create-only file publication are unchanged.
 
 ## Primary source and scope
 

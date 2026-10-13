@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "grant-workspace",
-  "description": "Original Grant Operations application, retained source preparation desk and complete customer installation workorders",
+  "description": "Original Grant Operations application, retained source preparation and commissioning capture receiving, and complete customer installation workorders",
   "applicationProviders": {
     "grant-workspace": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/grant-workspace.mjs"
   },
@@ -43,6 +43,20 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_cli.py",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_risks.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_risks.css",
-    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_OPERATOR.md"
+    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_OPERATOR.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_walkthrough.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_RECEIVING.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_browser.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_BROWSER.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/risk-browser.example.json",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_execution.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_EXECUTION.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_prepare.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_PREPARATION.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/risk-runtime-source-selection.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/commissioning-collections.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/COMMISSIONING_COLLECTIONS_INSTALLATION.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_commissioning.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_commissioning.py"
   ]
 }

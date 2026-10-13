@@ -42,8 +42,31 @@ export const recoverySelectionSchema = {
     shape('resume', {})
   ]
 };
+
+export const recoverySupportSelectionSchema={type:'object',additionalProperties:false,
+  properties:{profileId:id,id,transferId:alias,caseId:{type:'string',format:'uuid'},expectedRevision:digest,
+    slot:{enum:['before','after']},expectedReviewHash:digest,afterAttempt:{type:'integer',minimum:0}},
+  required:['profileId','id','transferId','caseId','expectedRevision','slot','expectedReviewHash','afterAttempt']};
+
 export function recoveryWorkspaceTools(tool) {
   return [
+    tool('merchant_recovery_support_cases','List existing Support cases in this host-declared profile. Select an exact case revision; this never creates a case.',
+      {...profile,q:{type:'string',maxLength:1000},offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:200}},
+      ['workspace','profileId'],read),
+    tool('merchant_recovery_support_transfers','List retained recovery-to-Support transfers, including incomplete preparations and saved original case results.',
+      profile,['workspace','profileId'],read),
+    tool('merchant_recovery_support_transfer','Read the exact original prepared transfer and saved case result after a lost review/save/export response.',
+      {...profile,transferId:alias},['workspace','profileId','transferId'],read),
+    tool('merchant_recovery_support_review','Freeze the complete saved Object recovery request and every referenced native evidence body into a review for one existing Support case revision and before/after slot. The encrypted native backup remains external. This creates only private review artifacts.',
+      {...selected,selection:recoverySupportSelectionSchema},['workspace','selection'],{idempotent:true}),
+    tool('merchant_recovery_support_save','Save only the exact confirmed recovery-to-Support review through the original case CAS. A repeated original transfer reconciles immutable history without overwriting later case edits.',
+      {...profile,transferId:alias,expectedReviewSha256:digest},['workspace','profileId','transferId','expectedReviewSha256'],{idempotent:true}),
+    tool('merchant_recovery_support_handoff','Return the complete saved Support handoff text and its exact byte/hash identity, preserving workspace and recovery evidence. It does not contain an external encrypted backup.',
+      {...profile,transferId:alias},['workspace','profileId','transferId'],read),
+    tool('merchant_recovery_support_export','Export the saved transfer through the existing full case-source-package engine, retaining original case history and any genuine attached SF49 source editions. An external native backup is included only if it exists in that actual source inventory.',
+      {...profile,transferId:alias,expectedReviewSha256:digest},['workspace','profileId','transferId','expectedReviewSha256'],{idempotent:true}),
+    tool('merchant_recovery_support_package','Verify the complete original package already exported for this transfer. This never saves or replays a recovery request.',
+      {...profile,transferId:alias},['workspace','profileId','transferId'],read),
     tool('merchant_recovery_status', 'Read the original recovery workspace, host-declared profiles, local capture plans, declared restored publishers and fleets, fleet receiving targets and current execution. The browser and MCP share this native owner.',
       selected, ['workspace'], read),
     tool('merchant_recovery_object_session', 'Inspect one host-declared original standalone Object session and retain its complete native evidence. This observes source bytes without acquisition, payment or backup dispatch.',

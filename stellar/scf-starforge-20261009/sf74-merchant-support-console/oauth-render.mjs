@@ -35,9 +35,10 @@ function table(headings,rows,label='Original OAuth observations') {
 function pairs(rows,label) {return table(['Original field','Retained value'],rows,label);}
 function details(title,body) {return '<details class="source-details"><summary>'+esc(title)+'</summary>'+body+'</details>';}
 function para(value,cls='') {return '<p'+(cls?' class="'+esc(cls)+'"':'')+'>'+esc(value)+'</p>';}
-function counters(value,label,{delta=false}={}) {
+function counters(value,label,{delta=false,attributed=false}={}) {
   if(!value)return para('No original '+label.toLowerCase()+' are available. Missing counts are not zero.','hint');
-  const heads=['Check stage',...COUNTS.map(([,title])=>title)];
+  const heads=['Check stage',...COUNTS.map(([key,title])=>
+    attributed&&key==='started'?(delta?'Attributed starts change':'Attributed starts'):title)];
   if(delta)heads.push('Outstanding before','Outstanding after');
   return table(heads,STAGES.map(([key,title])=>[
     title,...COUNTS.map(([count])=>value[key]?.[count]??null),
@@ -92,7 +93,7 @@ function issuerCounts(o) {
   if(!Array.isArray(o.issuers))return para('Original issuer check counts were not observed.','hint');
   if(!o.issuers.length)return para('No original issuer counter rows are present.','hint');
   return o.issuers.map(row=>details(row.issuer===null?'Unattributed original issuer bucket':row.issuer,
-    counters(row.counters,'Original issuer check counters')+
+    counters(row.counters,'Original issuer check counters',{attributed:true})+
     outcomes(row.counters,'Original issuer outcome codes'))).join('');
 }
 function minuteRows(o) {
@@ -145,7 +146,8 @@ export function oauthObservationHtml(o,{title='Original OAuth resource observati
     details('Complete original retained minute inventory',minuteRows(o))+
     para('Window counts use the original inclusive minute start and capture instant. The current final bucket may cover only part of its minute; complete coverage does not turn it into a full-minute count. An incomplete or empty success window cannot establish recovery.','hint');
   html+=details('Original authority and key-cache state',authority(o));
-  html+=details('Original issuer counter buckets',issuerCounts(o));
+  html+=details('Original issuer counter buckets',issuerCounts(o)+
+    para('An authentication start stays unattributed until the original verifier establishes its issuer. A successful completion moves that start to the verified issuer. Issuer starts are attribution balances; the aggregate start count and each issuer’s completed outcomes remain cumulative.','hint'));
   html+=details('Original observer state',pairs([
     ['Resource closed at capture',o.state?.closed??null],
     ['Original active requests',o.state?.activeRequests??null],
@@ -203,9 +205,11 @@ export function oauthComparisonHtml(comparison) {
       counters(o.delta.counters,'Original cumulative check differences',{delta:true})+
       outcomes(o.delta.counters,'Exact outcome differences in the compatible interval')+
       para('Stage starts and completions may refer to different requests. Outstanding counts belong to the respective original snapshots. No HTTP request total is derived from these checks.','hint');
-    if(o.delta.issuers?.length)html+=details('Issuer check interval differences',o.delta.issuers.map(row=>
+    if(o.delta.issuers?.length)html+=details('Issuer check interval differences',
+      para('Attributed starts change includes verified issuer reassignment. A negative change in the unattributed authentication bucket can reflect successful verification of an earlier pending check; it is not a negative number of new authentications. Completed outcome differences and original outstanding snapshots remain separate.','hint')+
+      o.delta.issuers.map(row=>
       '<h4>'+esc(row.issuer??'Unattributed original issuer bucket')+'</h4>'+
-      (row.counters?counters(row.counters,'Original issuer interval differences',{delta:true})+
+      (row.counters?counters(row.counters,'Original issuer interval differences',{delta:true,attributed:true})+
         outcomes(row.counters,'Original issuer interval outcomes'):
         para('This issuer bucket was not present in the before observation. Its original after counts remain visible without substituting an unobserved zero.','hint'))).join(''));
   } else html+=para('No incremental check totals are calculated for this comparison.','hint');

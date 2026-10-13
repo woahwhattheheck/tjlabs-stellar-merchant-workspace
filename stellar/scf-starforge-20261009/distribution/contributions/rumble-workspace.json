@@ -1,0 +1,56 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "rumble-workspace",
+  "description": "Original Rumble Fish source workbench, exact customer consumer, managed Applications, typed SDK, MCP and complete receiving",
+  "commands": {
+    "rumble-managed": "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/managed.mjs",
+    "rumble-workspace": "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/cli.mjs"
+  },
+  "commandDescriptions": {
+    "rumble-managed": "Open the original Rumble workspace from Applications and typed merchant tools",
+    "rumble-workspace": "Create, operate, export and receive the complete retained Rumble source and customer workbench"
+  },
+  "exports": {
+    "./seller/rumble/workspace/connection": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/connection.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/connection.mjs"
+    },
+    "./seller/rumble/workspace/managed": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/managed.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/managed.mjs"
+    },
+    "./seller/rumble/workspace/mcp": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/mcp.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/mcp.mjs"
+    },
+    "./seller/rumble/workspace": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/runner.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/runner.mjs"
+    },
+    "./seller/rumble/workspace/consumer": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/consumer.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/consumer.mjs"
+    },
+    "./seller/rumble/workspace/wallet": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/wallet.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/wallet.mjs"
+    },
+    "./seller/rumble/workspace/delivery": "./source/stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/delivery.mjs"
+  },
+  "applicationProviders": {
+    "rumble": "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "rumble-workspaces": "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/merchant-provider.mjs"
+  },
+  "components": [
+    "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench",
+    "products/rumble-fish"
+  ],
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/browser-assets.json"
+    }
+  ]
+}

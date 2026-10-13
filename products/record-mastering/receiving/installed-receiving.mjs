@@ -108,7 +108,7 @@ async function ensureApplication(slot){
   await Product.recoverMasteringProduct({directory:product,operationId:id});
  const result=await waitFor('original application '+id,async()=>{
   const value=await status(),run=value.application?.runs?.find(x=>x.id===id);
-  if(run?.result&&['FAILED','CANCELLED'].includes(run.phase))throw Object.assign(Error('Original application ended: '+JSON.stringify(run.result)),{code:'APPLICATION_RECEIVING_FAILED'});
+  if(run?.result&&(['FAILED','CANCELLED'].includes(run.phase)||(!run.active&&['EXITED','LAUNCH_FAILED'].includes(run.result.state))))throw Object.assign(Error('Original application ended: '+JSON.stringify(run.result)),{code:'APPLICATION_RECEIVING_FAILED',applicationRun:{operationId:id,phase:run.phase,result:run.result}});
   return{done:Boolean(run?.active&&run.privateUrl),value:{operationId:id,applicationId:value.saved.applicationId,url:run?.privateUrl,status:value},summary:run};
  });
  await atomic(readyPath,result);await atomic(join(root,'current-application.json'),result);return result;
@@ -288,7 +288,7 @@ try{
   process.stdout.write(json({operation:selection.operationId,state:'COMPLETE',steps:record.completed.length,result:join(root,'RESULT.json')}));
  }
 }catch(e){
- record.state='INTERRUPTED';record.error={code:e.code??'RECEIVING_ERROR',message:e.message,stack:e.stack};await checkpoint();
+ record.state='INTERRUPTED';record.error={code:e.code??'RECEIVING_ERROR',message:e.message,stack:e.stack,...(e.applicationRun?{applicationRun:e.applicationRun}:{})};await checkpoint();
  process.stderr.write(json({operation:selection.operationId,state:record.state,error:record.error,result:infoPath}));process.exitCode=1;
 }finally{
  if(browser)await browser.close().catch(()=>{});

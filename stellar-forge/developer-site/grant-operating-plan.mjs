@@ -15,6 +15,8 @@ import { CATALOG_SCHEMA, searchCommandCatalog } from '../../stellar/scf-starforg
 import { snapshotRegistration, renderOperatingPlanHTML, renderOperatingPlanMarkdown } from '../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 import { saveExport, saveTextExport } from '../../stellar/scf-starforge-20261009/distribution/discovery/write-json.mjs';
 
+import { renderOperatingPlanReturnHTML } from '../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs';
+
 export const GRANT_OPERATING_PLAN_HELP = [
   'Prepare a customer operating procedure from an original native SF47 planning file or complete saved submission.',
   '',
@@ -26,12 +28,13 @@ export const GRANT_OPERATING_PLAN_HELP = [
   '  [--format json|html|markdown|preparation|draft]',
   '',
   'Export a retained procedure: --file DRAFT.json --plan PLAN-ID --out NEW.json [--format json|html|markdown|preparation]',
-  'Receive customer work: --file DRAFT.json --receive CUSTOMER-PLAN.json --out NEXT-DRAFT.json',
+  'Export a retained complete review: --file DRAFT.json --plan PLAN-ID --review REVIEW-ID --out REVIEW.json [--format json|html]',
+  'Receive customer work: --file DRAFT.json --receive CUSTOMER-PLAN.json|COMPLETED-REVIEW.json --out NEXT-DRAFT.json',
   '  [--return-note TEXT] [--expected-revision N] [--format json|draft|comparison]',
   '',
   'Use --format draft when preparing to retain the new procedure in the complete saved submission.',
   '--plan exports the current retained customer history without preparing another plan.',
-  '--receive saves the whole original draft with the later operating revisions; comparison exports the full comparison first.',
+  '--receive saves the whole original draft with later operating revisions and both branches/decisions of a completed review; comparison previews first.',
   '',
   'JSON is the complete editable Operating plans document. Import it in Command finder → Operating plans.',
   'HTML and Markdown are readable procedures; preparation retains source identities and package totals with the plan.',
@@ -91,7 +94,7 @@ export function parseGrantOperatingArguments(args) {
     purpose: { type: 'string' }, receiving: { type: 'string' }, notes: { type: 'string' },
     id: { type: 'string' }, catalog: { type: 'string' }, bind: { type: 'string', multiple: true },
     format: { type: 'string', default: 'json' },
-    plan: { type: 'string' }, receive: { type: 'string' }, 'return-note': { type: 'string' },
+    plan: { type: 'string' }, review: { type: 'string' }, receive: { type: 'string' }, 'return-note': { type: 'string' },
     'expected-revision': { type: 'string' },
   } });
   if (values.help || args.length === 0) return { help: true };
@@ -109,6 +112,10 @@ export function parseGrantOperatingArguments(args) {
     'Receive into the complete draft, or export the return comparison.');
   else requireValue(values.format !== 'comparison', '--format comparison requires --receive.');
   if (values.plan) requireValue(values.format !== 'draft', 'Choose a procedure output format for --plan.');
+  if (values.review !== undefined) {
+    requireValue(values.plan && values.review, '--review needs the retained --plan identity and a complete review ID.');
+    requireValue(['json', 'html'].includes(values.format), 'Export a complete review as json or readable html.');
+  }
   if (values['expected-revision'] !== undefined) {
     requireValue(/^[1-9][0-9]*$/.test(values['expected-revision']), '--expected-revision must be a positive whole number.');
     values['expected-revision'] = Number(values['expected-revision']);
@@ -136,7 +143,7 @@ export async function mainGrantOperatingPlan(args = process.argv.slice(2), { log
   }
   if (options.receive) {
     const input = await completeFile(options.receive);
-    requireValue(input.bytes.length <= MAX_BYTES, 'Choose a complete returned operating plan within 16 MiB.');
+    requireValue(input.bytes.length <= MAX_BYTES, 'Choose a complete returned operating plan or completed review within the existing 16 MiB draft limit.');
     const incoming = JSON.parse(decode(input.bytes).replace(/^\uFEFF/, ''));
     const comparison = compareGrantOperatingReturn(source, review, incoming);
     if (options.format === 'comparison') {
@@ -157,13 +164,23 @@ export async function mainGrantOperatingPlan(args = process.argv.slice(2), { log
     log(JSON.stringify({ file: resolve(options.out), format: 'draft', draftId: next.id,
       planId: comparison.planId, nativeRevision: review.revision,
       incomingRevision: comparison.incomingRevision, selectedRevision: comparison.selectedRevision,
-      addedRevisions: received.addedRevisions, reused: received.reused, counts: comparison.counts }));
+      addedRevisions: received.addedRevisions, reused: received.reused, reviewAdded: received.reviewAdded,
+      reviewId: comparison.reviewedReturn?.id ?? null, counts: comparison.counts }));
     return { ...received, draft: next };
   }
   if (options.plan) {
     const selected = grantOperatingSelectionOf(review, source);
     const prepared = selected.prepared.find(item => item.plan.id === options.plan);
     requireValue(prepared, 'Choose a retained prepared plan ID from this original planning review.');
+    if (options.review) {
+      const received = (prepared.reviewedReturns ?? []).find(item => item.review.id === options.review);
+      requireValue(received, 'Choose a complete received reconciliation review ID from this retained preparation.');
+      if (options.format === 'html') await saveTextExport(options.out, renderOperatingPlanReturnHTML(received.review));
+      else await saveExport(options.out, received.review);
+      log(JSON.stringify({ file: resolve(options.out), format: options.format, planId: prepared.plan.id,
+        reviewId: received.review.id, resultRevision: received.resultRevision }));
+      return received.review;
+    }
     const current = grantOperatingContinuationPlan(prepared);
     if (options.format === 'html') await saveTextExport(options.out, renderOperatingPlanHTML(current));
     else if (options.format === 'markdown') await saveTextExport(options.out, renderOperatingPlanMarkdown(current));
