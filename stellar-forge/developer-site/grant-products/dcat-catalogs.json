@@ -169,13 +169,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_RUNTIME.md",
-      "commit": "5a8c6cb8d1b539cbb53d601540fae9c861b4f251",
+      "commit": "e08bfd33f6636dc16e8a80d9f7a0e3b8407ecb77",
       "editions": [
         {
           "commit": "5a8c6cb8d1b539cbb53d601540fae9c861b4f251",
           "git_blob": "1bd1dd1d7d35a68d87a9cff73cb2831df7534b8d",
           "sha256": "6d8b9be1c3ce13a44a2d0b89b8bdeddb73674270bf1c34dee0e73c7968b0aee7",
           "bytes": 15356
+        },
+        {
+          "commit": "e08bfd33f6636dc16e8a80d9f7a0e3b8407ecb77",
+          "git_blob": "637da5d07de0500eced406f66291ff80db836c1e",
+          "sha256": "14e8d5ff517efa4460ba8914e999c40f95fff796b62bfdc3952dd504dfe2a72a",
+          "bytes": 16348
         }
       ]
     },
@@ -217,13 +223,19 @@
       "repository": "woahwhattheheck/LocalDeviceAgent",
       "kind": "blob",
       "path": "tools/phone_driver/DCAT_HANDOVERS.md",
-      "commit": "99fae766a334d4a613c921b79e9e32d07450d1bf",
+      "commit": "062d704676b9ec3b53a8858f0ad82c1003fa9996",
       "editions": [
         {
           "commit": "99fae766a334d4a613c921b79e9e32d07450d1bf",
           "git_blob": "8729adce01b380b7e93a09f6e1bf182a9b6bf717",
           "sha256": "d3fba4c65e51182029ebca21a14628b1e241abca7fdcf30883c962680bf0854b",
           "bytes": 27155
+        },
+        {
+          "commit": "062d704676b9ec3b53a8858f0ad82c1003fa9996",
+          "git_blob": "a3b84f9e3633dc8cd8f5c45d1f0ce2dbc8fe2294",
+          "sha256": "e163d174ace0545a9cd8ddb34d83395be7446739c80266898fed6cc6f3af7a92",
+          "bytes": 38892
         }
       ]
     },
@@ -240,6 +252,70 @@
           "git_blob": "c78e6330c6f7e13e630470f43a51e26b7ce819fe",
           "sha256": "6857546b96b4f6c3683f7b32ade5e214d140186abb322a795c13ea4aa99ef0a3",
           "bytes": 15451
+        }
+      ]
+    },
+    {
+      "id": "dcat-semantic-portable-runtime-inputs",
+      "label": "Complete original source, exact wheel lock and independent recipient preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_RUNTIME_TRANSFER.md",
+      "commit": "e08bfd33f6636dc16e8a80d9f7a0e3b8407ecb77",
+      "editions": [
+        {
+          "commit": "e08bfd33f6636dc16e8a80d9f7a0e3b8407ecb77",
+          "git_blob": "4481bd9c190f3774ec7c72478f59147cbd5c8e14",
+          "sha256": "189c1eca0f368f1dce1ac82096ad4e41a573507c43dbbd0b8042b1416ada9160",
+          "bytes": 19940
+        }
+      ]
+    },
+    {
+      "id": "dcat-semantic-runtime-transfer-implementation",
+      "label": "Complete source and wheel transfer with exact content and retained inventory checks",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat_semantic_runtime_transfer.py",
+      "commit": "e08bfd33f6636dc16e8a80d9f7a0e3b8407ecb77",
+      "editions": [
+        {
+          "commit": "e08bfd33f6636dc16e8a80d9f7a0e3b8407ecb77",
+          "git_blob": "aac6c2afdfecd7ce302efff2226268723f68a8c3",
+          "sha256": "31bc384645b87c878faf531d83cc07a5b40703f3a41ee88f49b47c635d7624e7",
+          "bytes": 25872
+        }
+      ]
+    },
+    {
+      "id": "dcat-managed-application-receiving",
+      "label": "Original setup, complete catalogue, recipient runtime and Applications review/save/start",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/DCAT_RECEIVING.md",
+      "commit": "7a6d8f6f5967fb8406208ed9b6ecc70551554d98",
+      "editions": [
+        {
+          "commit": "7a6d8f6f5967fb8406208ed9b6ecc70551554d98",
+          "git_blob": "df4a26cefecb63fdbd4ffad626d9232ae4b5c557",
+          "sha256": "bee3545030f9855eedf0e7e91f1b1ff1f7df0c2a812445a01069655b5c36dd6f",
+          "bytes": 28198
+        }
+      ]
+    },
+    {
+      "id": "dcat-offline-review-return-customer-programme",
+      "label": "Complete offline review, attributed returned work, explicit reconciliation and independent cold receiving",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "operations/lda-dcat-gsa-customer-390e-20261013/OFFLINE_CUSTOMER_RECEIVING.md",
+      "commit": "062d704676b9ec3b53a8858f0ad82c1003fa9996",
+      "editions": [
+        {
+          "commit": "062d704676b9ec3b53a8858f0ad82c1003fa9996",
+          "git_blob": "e29836bb7203ba562d580e1a000d8f7255af81c3",
+          "sha256": "ab8fd38ff150bb6ee5e41eff7b79b85590b6be9e295d2abec6628da1f1f5bb44",
+          "bytes": 11399
         }
       ]
     }
