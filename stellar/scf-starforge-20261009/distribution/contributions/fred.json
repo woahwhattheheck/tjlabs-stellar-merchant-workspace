@@ -184,6 +184,7 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/merchant.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/purchase.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/MERCHANT.md",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/merchant-journey.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/merchant-journey.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/customer-work.mjs"
   ]
 }
