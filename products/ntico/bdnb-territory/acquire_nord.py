@@ -111,11 +111,32 @@ class Links(html.parser.HTMLParser):
             self.current = None
 
 class Acquisition:
-    def __init__(self, root, library_helper, max_archive_bytes):
+    def __init__(self, root, library_helper, max_archive_bytes, retained_inputs=None, delivery_mode="library"):
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
-        self.helper = Path(library_helper).resolve()
-        need(self.helper.is_file(), "Select the current original Library upload helper")
+        self.delivery_mode = delivery_mode
+        self.helper = Path(library_helper).resolve() if library_helper else None
+        need(delivery_mode in ("library", "native"), "Select the existing delivery route")
+        if delivery_mode == "library":
+            need(self.helper is not None and self.helper.is_file(),
+                 "Select the current original Library upload helper")
+        self.retained_inputs = {}
+        if retained_inputs:
+            supplied = read_json(Path(retained_inputs).resolve())
+            need(supplied.get("schema") == "commons.bdnb-retained-originals.v1"
+                 and supplied.get("operation_id") == OPERATION
+                 and isinstance(supplied.get("inputs"), list), "Retain the original source-input selection")
+            for entry in supplied["inputs"]:
+                need(isinstance(entry, dict) and isinstance(entry.get("key"), str)
+                     and entry["key"] not in self.retained_inputs, "Retained source keys must be unique")
+                need(isinstance(entry.get("bytes"), int) and entry["bytes"] > 0,
+                     "Retain the original complete source byte count")
+                need(not entry.get("sha256") or re.fullmatch(r"[0-9a-f]{64}", entry["sha256"]),
+                     "Select the actual original source SHA-256")
+                need(isinstance(entry.get("provenance"), dict) and entry["provenance"],
+                     "Retain the original file/source receiving reference")
+                public_url(entry["requested_url"])
+                self.retained_inputs[entry["key"]] = entry
         self.maximum = max_archive_bytes
         self.opener = urllib.request.build_opener(PublicRedirect())
         self.state_path = self.root / "acquisition-state.json"
@@ -127,7 +148,9 @@ class Acquisition:
         else:
             for key, value in selected.items():
                 need(self.state.get(key) == value, "The original source selection changed: " + key)
-        self.record("OPENED", pid=os.getpid(), root=str(self.root))
+        self.record("OPENED", pid=os.getpid(), root=str(self.root), delivery_mode=delivery_mode)
+        if self.retained_inputs:
+            atomic(self.root / "retained-input-selection.json", supplied)
 
     def record(self, event, **fields):
         item = {"at": now(), "event": event, **fields}
@@ -170,6 +193,32 @@ class Acquisition:
                  "Only whole owned regular files are banked")
             item = {"path": str(path.relative_to(self.root)), **identity(path)}
             key = item["sha256"] + ":" + item["path"]
+            if self.delivery_mode == "native":
+                if path.name.endswith(".partial"):
+                    observations = self.state.setdefault("native_prefix_observations", [])
+                    if not any(row["path"] == item["path"] and row["sha256"] == item["sha256"] for row in observations):
+                        observations.append({**item, "observed_at": now(), "status": "mutable_prefix",
+                            "continuation": "Original downloads slot verifies this prefix before continuing or preserves it under its prior filename"})
+                    continue
+                if key not in self.state["banks"]:
+                    retained_path = path
+                    if path.suffix.lower() == ".json":
+                        # JSON journals use atomic replacement. Retain their
+                        # exact inode before OPENED/BANK events advance them.
+                        retained_path = self.root / "native-retained-json" / item["sha256"] / path.name
+                        retained_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+                        if not retained_path.exists():
+                            os.link(path, retained_path)
+                        need(identity(retained_path) == {"bytes": item["bytes"], "sha256": item["sha256"]},
+                             "The retained native JSON changed")
+                    self.state["banks"][key] = {**item, "retained_at": now(),
+                        "retained_path": str(retained_path.relative_to(self.root)),
+                        "status": "retained_local", "delivery_mode": "native"}
+                continue
+            prior_local = self.state["banks"].get(key)
+            if prior_local and prior_local.get("status") == "retained_local":
+                self.state.setdefault("earlier_native_retention", []).append(prior_local)
+                del self.state["banks"][key]
             if key not in self.state["banks"]:
                 pending = self.state.setdefault("pending_saves", {}).get(key)
                 if pending:
@@ -191,6 +240,9 @@ class Acquisition:
                         self.state["pending_saves"].pop(key, None)
                 if key not in self.state["banks"]:
                     selected.append((path, item, key))
+        if self.delivery_mode == "native":
+            self.record("NATIVE_FILES_RETAINED", label=label, files=[str(Path(path).relative_to(self.root)) for path in paths],
+                        delivery="Return the complete original persistent root through the accepting host's existing artifact route")
         if not selected:
             return
         stamp = uuid.uuid4().hex
@@ -272,6 +324,53 @@ class Acquisition:
         need(all(key in self.state["banks"] for _, _, key in selected),
              "Source input saving needs continuation at " + str(logs))
 
+
+    def adopt_retained_input(self, key, url, relative, maximum, slot):
+        selected = self.retained_inputs.get(key)
+        if selected is None:
+            return None
+        need(selected["requested_url"] == url, "Retained file belongs to another original public source")
+        source = Path(selected["path"])
+        need(source.is_absolute() and not source.is_symlink() and source.is_file(),
+             "Select the complete original retained regular file")
+        original = identity(source)
+        need(original["bytes"] == selected["bytes"] and original["bytes"] <= maximum,
+             "Retained original byte count differs")
+        if selected.get("sha256"):
+            need(original["sha256"] == selected["sha256"], "Retained original hash differs")
+        target = self.root / relative
+        if target.exists():
+            need(not target.is_symlink() and target.is_file() and identity(target) == original,
+                 "The existing received source differs from the selected original")
+        else:
+            temporary = target.with_name(target.name + ".retained-" + uuid.uuid4().hex)
+            digest = hashlib.sha256()
+            count = 0
+            with source.open("rb") as incoming, temporary.open("xb") as out:
+                os.chmod(temporary, 0o600)
+                for block in iter(lambda: incoming.read(BLOCK), b""):
+                    need(shutil.disk_usage(target.parent).free > MIN_FREE, "Owned source receiving storage is full")
+                    out.write(block)
+                    digest.update(block)
+                    count += len(block)
+                out.flush()
+                os.fsync(out.fileno())
+            need(count == original["bytes"] and digest.hexdigest() == original["sha256"]
+                 and identity(source) == original, "Retained input changed during complete receiving")
+            os.replace(temporary, target)
+        receipt_path = relative + ".retained.json"
+        receipt = {"schema": "commons.bdnb-retained-source.v1", "operation_id": OPERATION,
+                   "key": key, "requested_url": url, "path": relative, **original,
+                   "received_at": now(), "received_from": str(source),
+                   "provenance": selected["provenance"],
+                   "verification": "Whole source byte count and SHA-256, complete received copy"}
+        atomic(self.root / receipt_path, receipt)
+        slot.update({"state": "COMPLETE", "identity": original, "receipt": receipt_path,
+                     "retained_original": receipt})
+        self.record("RETAINED_ORIGINAL_RECEIVED", key=key, path=relative, **original)
+        self.bank([target, self.root / receipt_path], key)
+        return slot
+
     def download(self, key, url, relative, maximum=None):
         public_url(url)
         maximum = self.maximum if maximum is None else maximum
@@ -284,6 +383,9 @@ class Acquisition:
             need(target.is_file() and identity(target) == slot["identity"], "Retained original file changed")
             self.bank([target, self.root / slot["receipt"]], key)
             return slot
+        adopted = self.adopt_retained_input(key, url, relative, maximum, slot)
+        if adopted is not None:
+            return adopted
         part = target.with_name(target.name + ".partial")
         saved = slot.get("partial", {})
         offset = part.stat().st_size if part.exists() else 0
@@ -481,8 +583,12 @@ class Acquisition:
             previous = read_json(manifest)
             need(previous["archive"]["sha256"] == identity(path)["sha256"], "Original archive changed")
             for table in previous["selected_tables"]:
-                need(identity(self.root / table["path"]) == {"bytes": table["bytes"], "sha256": table["sha256"]},
+                received_table = self.root / table["path"]
+                profile = directory / (table["table"] + ".profile.json")
+                need(identity(received_table) == {"bytes": table["bytes"], "sha256": table["sha256"]},
                      "Extracted original CSV changed")
+                need(read_json(profile) == table, "Retained original table profile changed")
+                self.bank([received_table, profile], directory.name + "-" + table["table"])
             self.bank([manifest], directory.name + "-archive-index")
             return previous
         entries, selected = [], []
@@ -603,6 +709,7 @@ class Acquisition:
             results.append(result)
         complete = {"schema": "commons.bdnb-nord-sources-complete.v1", "operation_id": OPERATION,
                     "department": "59", "completed_at": now(), "root": str(self.root),
+                    "delivery_mode": self.delivery_mode,
                     "editions": results, "publisher_metadata": dataset, "license": metadata_body.get("license"),
                     "saved_files": list(self.state["banks"].values()),
                     "import_contract": "Original Analysis bdnb.import; selected dictionary/null/geometry semantics remain explicit.",
@@ -657,8 +764,12 @@ def csv_profile(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", required=True)
-    parser.add_argument("--library-helper", required=True,
+    parser.add_argument("--library-helper",
                         help="Actual current unmodified Library upload helper in this native runtime")
+    parser.add_argument("--delivery-mode", choices=("library", "native"), default="library",
+                        help="Default hosted preservation, or whole persistent files returned by the existing native owner")
+    parser.add_argument("--retained-inputs", type=Path,
+                        help="Complete original files already acquired for this same source operation")
     parser.add_argument("--max-archive-bytes", type=int, default=64 * 1024**3)
     args = parser.parse_args()
     root = Path(args.root).resolve()
@@ -666,15 +777,39 @@ def main():
     lock = root / "acquisition.lock"
     with lock.open("a+b") as held:
         fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        runner = Acquisition(root, args.library_helper, args.max_archive_bytes)
+        runner = Acquisition(root, args.library_helper, args.max_archive_bytes,
+                             args.retained_inputs, args.delivery_mode)
         source = Path(__file__).resolve()
         retained_source = root / "acquire_nord.py"
-        if retained_source != source:
-            source_bytes = source.read_bytes()
-            if retained_source.exists():
-                need(retained_source.read_bytes() == source_bytes, "Resume using the original acquisition source")
+        source_bytes = source.read_bytes()
+        previous_source = None
+        if retained_source != source and retained_source.exists() and retained_source.read_bytes() != source_bytes:
+            previous_source = identity(retained_source)
+            need(previous_source == {"bytes": 39190, "sha256": "e18162e23ed7b3e173c78be3f1a1e6041a4c3cd3d2412bc0e0027b5848779adc"},
+                 "Resume from the exact authorized acquisition predecessor")
+            historical = root / "source-history" / previous_source["sha256"] / "acquire_nord.py"
+            if historical.exists():
+                need(identity(historical) == previous_source, "The retained predecessor changed")
             else:
-                atomic(retained_source, source_bytes, binary=True)
+                atomic(historical, retained_source.read_bytes(), binary=True)
+            for saved in runner.state["banks"].values():
+                if saved.get("status") == "retained_local" and saved.get("path") == "acquire_nord.py" and saved.get("sha256") == previous_source["sha256"]:
+                    saved["retained_path"] = str(historical.relative_to(root))
+            runner.state["source_successor"] = {"state": "PREPARED", "previous": previous_source,
+                "previous_path": str(historical.relative_to(root)),
+                "current": {"bytes": len(source_bytes), "sha256": hashlib.sha256(source_bytes).hexdigest()}}
+            runner.record("SOURCE_SUCCESSOR_PREPARED", **runner.state["source_successor"])
+            atomic(retained_source, source_bytes, binary=True)
+            runner.state["source_successor"]["state"] = "COMPLETE"
+            runner.record("SOURCE_SUCCESSOR_RECEIVED", **runner.state["source_successor"])
+        elif retained_source != source and not retained_source.exists():
+            atomic(retained_source, source_bytes, binary=True)
+        pending_successor = runner.state.get("source_successor")
+        if pending_successor and pending_successor["state"] == "PREPARED":
+            need(identity(retained_source) == pending_successor["current"],
+                 "Reconcile the original prepared source receiving")
+            runner.state["source_successor"]["state"] = "COMPLETE"
+            runner.record("SOURCE_SUCCESSOR_RECEIVED", **runner.state["source_successor"])
         def interrupted(signum, _frame):
             # The first signal enters the normal complete-preservation path.
             # Suppress later signals only while that same path drains its helper.
