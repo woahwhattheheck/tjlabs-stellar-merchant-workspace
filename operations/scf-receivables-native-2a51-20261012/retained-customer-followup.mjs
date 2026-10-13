@@ -4,7 +4,7 @@ import {open,mkdir,lstat,realpath,link,unlink,rename} from 'node:fs/promises';
 import {createHash,randomUUID} from 'node:crypto';
 import {join,resolve,dirname} from 'node:path';
 import {acquireStateLease} from '../../stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs';
-import {privateSupportDirectory,writePrivate} from '../../stellar-forge/mcp-merchant-operator/config.mjs';
+import {privateSupportDirectory,writePrivate} from '../../stellar-forge/mcp-merchant-operator/host-files.mjs';
 import {prepareAccountingReceivablesOperation,runAccountingReceivablesOperation,
   downloadAccountingReceivablesFile} from '../../stellar-forge/mcp-merchant-operator/accounting-receivables-cli.mjs';
 import {readDurableCaseInput,createDurableCustomerCase,captureDurableCustomerCase} from './durable-customer-case.mjs';

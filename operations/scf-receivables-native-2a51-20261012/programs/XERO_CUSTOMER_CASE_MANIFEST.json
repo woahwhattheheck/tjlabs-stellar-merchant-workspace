@@ -1,0 +1,95 @@
+{
+  "schema": "stellar-forge.xero-independent-customer-source.v1",
+  "operation": "SCF-XERO-INDEPENDENT-RECEIVING-2A51-20261013",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "sourceReadCommit": "5081babb7ca5225a3f8c82aa58f135f80ead6283",
+  "nativeSource": [
+    {
+      "path": "operations/scf-receivables-native-2a51-20261012/xero-customer-handover.mjs",
+      "sourceBytes": 28325,
+      "gitBlob": "8412f511f997fb67738b2925e06a35e56f79d5b9",
+      "sha256": "3ddb4cc8fd57a001abebfb2056517dfef9351ffbd55f99ef53fb23b7874279d2"
+    },
+    {
+      "path": "operations/scf-receivables-native-2a51-20261012/programs/XERO_CUSTOMER_CASE.mjs",
+      "sourceBytes": 14320,
+      "gitBlob": "817bd2225c49ec011defaf862704343a7d723980",
+      "sha256": "bb7e5ab00ef472cf4aeb6f66619c231a93e913d3a4554bc349ec59bcc644b9bf"
+    },
+    {
+      "path": "operations/scf-receivables-native-2a51-20261012/XERO_CUSTOMER_HANDOVER.md",
+      "sourceBytes": 11475,
+      "gitBlob": "2399256acf607cdb1633a3237803458f2db15121",
+      "sha256": "38576d1eb6a39181a5c88b3c53f1a4dcae604ceedb5cdbf5d6aaf7b40a06e881"
+    }
+  ],
+  "originals": [
+    {
+      "path": "XERO_CASH_CHECK.mjs",
+      "gitBlob": "a3969dd37542b75623279b12b41f1dbf54193467"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/recovery.mjs",
+      "gitBlob": "faf6e686a3cfcb063451e6926a7815718700e5ea"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/recovery-controller.mjs",
+      "gitBlob": "98b1d070a01a22816a469cabff91baf882748966"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/store.mjs",
+      "gitBlob": "5fdcaad4bdceb860051f9cfa100b68ef608fd3f2"
+    },
+    {
+      "path": "operations/scf-receivables-native-2a51-20261012/durable-customer-case.mjs",
+      "originalBlob": "0dc3fb72efb09152df9d6b5891a1d2d80ee154eb",
+      "gitBlob": "2f77493a0c1bfbc6476cdab7eb0a28a331a35ac6"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting.mjs",
+      "gitBlob": "a8dbaabc1a71d78a4d3a963047ba17364d8dd984"
+    }
+  ],
+  "installedIntegrationCapsule": "b1ef508f04dbda31eabccb5d061f73a4962a3473",
+  "originalReceiving": {
+    "payment": {
+      "run": 38343867655,
+      "job": 115120706940,
+      "status": "PASS",
+      "workflows": 7
+    },
+    "mcp": {
+      "run": 38359117638,
+      "job": 115168852541,
+      "status": "PASS",
+      "workflows": 8,
+      "resultCapsule": "2e7e07d3e453d5778fb866c200b8139dfe197b6e"
+    }
+  },
+  "invocation": [
+    "node",
+    "<installed sourceRoot>/operations/scf-receivables-native-2a51-20261012/programs/XERO_CUSTOMER_CASE.mjs",
+    "--release",
+    "<installed-release.json>",
+    "--out",
+    "<private operation/customer-handover>"
+  ],
+  "environment": {
+    "secretReferences": [
+      "STARFORGE_ACCOUNTING_BACKUP_PASSPHRASE"
+    ],
+    "sourceProgramControls": [
+      "SCF_CASH_KEEP=1",
+      "SCF_CASH_TMPDIR=<private original customer root>",
+      "SCF_CASH_RESULT=<private predecessor result>"
+    ]
+  },
+  "results": [
+    "XERO_CUSTOMER_CASE_RESULT.json",
+    "RETENTION.json",
+    "handover/handover.json",
+    "independent-operator/receiving.json"
+  ],
+  "receivingStatus": "SOURCE_PREPARED",
+  "sourceSyntax": "Both authored JavaScript modules parsed before source staging."
+}

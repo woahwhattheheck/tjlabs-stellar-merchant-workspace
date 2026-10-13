@@ -63,7 +63,10 @@
     "merchant-service-operations",
     "merchant-receivables-xero",
     "merchant-commissioning-collections",
-    "commissioning-agent"
+    "commissioning-agent",
+    "merchant-customer-handover",
+    "receivables-agent",
+    "customer-closing"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -88,7 +91,9 @@
     "products/merchant-receivables/README.md",
     "products/merchant-payment-plans/README.md",
     "products/merchant-service-agreements/README.md",
-    "stellar-forge/mcp-paid-agent/package.json"
+    "stellar-forge/mcp-paid-agent/package.json",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
