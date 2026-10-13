@@ -142,6 +142,24 @@ Use **Inspect JSON** to read the complete original JSON and the native selected 
 
 Removing a file changes the next draft edition. Earlier editions retain their complete original bytes. To replace a receiving filename with a different edition, remove its current selection, retain the complete replacement, then reconcile any mappings that still name the earlier byte identity.
 
+### Review and receive a complete source collection
+
+The collection panel above the single-file form keeps a whole set of original documents together before native receiving. Open the intended current source preparation, choose **Start a separate collection**, and use the multiple-file selector to choose or add complete originals. Additional selections append to the collection. Starting another collection retains the preceding complete working copy before replacing its editor.
+
+Name the collection and enter default source URL and observation time as useful starting values. Review each row's receiving filename, media type, source URL, observation time and include selection. Every row retains its complete original bytes and SHA-256, including excluded rows. **Download this original** returns those retained bytes. The existing single-file form remains available.
+
+Choose **Review current collection** against the current saved source draft. The review checks the selected incoming files together with the current native selection: receiving names, supported metadata, total limits and exact original identities. It distinguishes an identical retained file from a name or content collision. Use **Use the retained identical file** only when you intend that explicit reuse; **Clear the existing-file choice** removes that choice so you can review it again. **Review original** keeps each row's original request and receiving history available. Correct the row metadata or inclusion choices and review again when the collection changes.
+
+**Receive reviewed collection** records the reviewed originals sequentially through the existing Source Desk file requests. Each file gets its own original UUID and full durable request before dispatch, and each successful receipt produces its normal native source-draft revision. The collection is not one atomic native mutation: already recorded files remain recorded if a later file needs correction. All request IDs and prior results remain with their rows. A retained identical-file choice reuses that selected native file rather than replacing its original bytes.
+
+Use **Recover and receive remaining originals** to reconcile an interrupted collection in the same source draft. The desk retains the original pending body and actor, reads its original native status, adopts an existing receipt or retries the same unrecorded request before moving on. Another pending desk request must be reconciled first. A deliberately retired rejected request stays in history; after correcting and reviewing its row, the next attempt receives a new UUID without changing the rejected original. The existing source request status, retry and rejection controls remain available.
+
+**Pause after current file** remains usable while receiving. It lets the active original request finish its durable receipt and stops before another row starts; it does not cancel or replace an in-flight request. Closing or reloading retains the whole collection and its request inventory through the Source Desk's existing per-window working-copy storage and conflict handling.
+
+**Download complete collection and working copy** remains available during receiving and when browser persistence fails. Reopen that complete JSON through **Open complete working-copy JSON** in its original operating case, plan and installation. The receiver checks every retained collection file and request link before adopting its fields, and preserves the preceding complete editor. **Download collection inventory** is a report of the collection and its receiving history; use the complete working-copy download for editable recovery.
+
+A collection allows up to 10,000 rows and 64 MiB of staged original bytes across all rows, including excluded files. Each original must contain at least one byte and fit the existing 8 MiB file limit. Native limits still apply independently: 64 MiB of selected draft inputs, 256 MiB of retained draft blobs and 10,000 saved draft revisions. The collection never truncates a file, silently chooses a colliding name or changes an earlier source edition.
+
 ## 2. Map the whole customer scope
 
 Open **Source mapping** and choose **Add original customer**. Select the retained packet and the installed receiving profile, then choose **Review complete packet and phases**.

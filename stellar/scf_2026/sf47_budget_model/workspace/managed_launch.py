@@ -323,6 +323,7 @@ BOOT_FILES = (
     "../../sf49_data_commissioning/installation-workorders/canadabuys-bidder-desk.json",
     "operations_installation_sources.py",
     "operations_installation_sources.mjs",
+    "operations_installation_source_collection.mjs",
     "operations_installation_sources.css",
     "operations_installation_source_hash.mjs",
     "installation-source-desk.py",

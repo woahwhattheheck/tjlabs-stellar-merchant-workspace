@@ -834,6 +834,7 @@ class SourceDesk:
 def register_static(static):
     static.update({
         "/operations_installation_sources.mjs": ("operations_installation_sources.mjs", "text/javascript; charset=utf-8"),
+        "/operations_installation_source_collection.mjs": ("operations_installation_source_collection.mjs", "text/javascript; charset=utf-8"),
         "/operations_installation_commissioning.mjs": ("operations_installation_commissioning.mjs", "text/javascript; charset=utf-8"),
         "/operations_installation_sources.css": ("operations_installation_sources.css", "text/css; charset=utf-8"),
         "/operations_installation_source_hash.mjs": ("operations_installation_source_hash.mjs", "text/javascript; charset=utf-8"),
