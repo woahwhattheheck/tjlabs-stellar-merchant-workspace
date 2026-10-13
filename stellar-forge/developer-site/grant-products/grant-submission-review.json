@@ -8,7 +8,7 @@
       "label": "Original submission review, complete working copies and independent receiving",
       "kind": "blob",
       "path": "stellar-forge/developer-site/GRANT_REVIEW_ROUNDS.md",
-      "commit": "9e9cbea315c2a19ef84db8dea513f6c3c4a8417a",
+      "commit": "074dd71407f371cccdc42479ba96b604910a4086",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "editions": [
         {
@@ -16,6 +16,12 @@
           "git_blob": "e1dc1a34de9502c57f2244136fc398e21250d566",
           "sha256": "65614d67d47211df15560edf262b496471e76711b2e8dbb1b9d724ee2f485830",
           "bytes": 24764
+        },
+        {
+          "commit": "074dd71407f371cccdc42479ba96b604910a4086",
+          "git_blob": "22a82590bac2acab7a961a47d5497a04eb4b96ce",
+          "sha256": "8cd41560109d86eac31277a29e6abc969bb73f9385428408b12f17cdc50ae97a",
+          "bytes": 53917
         }
       ]
     },
@@ -104,6 +110,38 @@
           "git_blob": "64c4651363a4fcefaa69f3bff5b7cb5c8ba1f4f7",
           "bytes": 17429,
           "sha256": "07dcddb9408bee603e06586981b199164496ba4f2c4684dcaa48262eaefdd972"
+        }
+      ]
+    },
+    {
+      "id": "grant-submission-review-offline-composer",
+      "label": "Complete literal-preserving standalone named-review composition",
+      "kind": "blob",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/dist/grant-review-offline-package.mjs",
+      "commit": "074dd71407f371cccdc42479ba96b604910a4086",
+      "editions": [
+        {
+          "commit": "074dd71407f371cccdc42479ba96b604910a4086",
+          "git_blob": "a50f6b27f0cfb42d4c691a33aaa1e3bfccf71191",
+          "sha256": "0e281098ddff60ff1931cd5a3e0c7fdd16c255fe46d40e0b34b8a165e4c8baa1",
+          "bytes": 12997
+        }
+      ]
+    },
+    {
+      "id": "grant-submission-review-offline-source",
+      "label": "All 28 complete selected offline review source members",
+      "kind": "blob",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/dist/grant-review-offline-source.mjs",
+      "commit": "074dd71407f371cccdc42479ba96b604910a4086",
+      "editions": [
+        {
+          "commit": "074dd71407f371cccdc42479ba96b604910a4086",
+          "git_blob": "1d62d90042b3530ee851da4fe2f48aa819d40bfe",
+          "sha256": "e7516efb8f7b0e2fd32be8261dbad8cf08662f9622c4319fa37fd22dc8a1936c",
+          "bytes": 599727
         }
       ]
     }
