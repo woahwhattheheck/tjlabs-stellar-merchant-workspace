@@ -60,7 +60,7 @@ function programmeRecord(portfolio,name,ident){
  */
 export function prepareAwardCsvImportStructure(portfolio,input,sourceSha256){
   need(HASH.test(sourceSha256||''),'Supply the computed SHA-256 of the complete original CSV bytes.');
-  exact(input,['operationId','csv','filename','documentId','roundId','actor','mapping','identities','status'],
+  exact(input,['operationId','csv','filename','documentId','roundId','actor','mapping','identities','status','rowIndexes'],
     ['operationId','csv','filename','documentId','roundId','actor','mapping','identities']);
   need(plain(portfolio?.definition?.programme)&&Number.isSafeInteger(portfolio.revision)&&portfolio.revision>0,
     'Open the exact original programme portfolio revision.');
@@ -88,10 +88,17 @@ export function prepareAwardCsvImportStructure(portfolio,input,sourceSha256){
   need(plain(input.identities.applications)&&plain(input.identities.partners)&&
     (input.identities.projects===undefined||plain(input.identities.projects)),'Supply explicit stable application and programme identity maps.');
   const lookup=(group,key)=>{need(Object.hasOwn(input.identities[group]??{},key),'No selected '+group+' identity for '+key);return id(input.identities[group][key]);};
+  const selected=input.rowIndexes;
+  need(selected===undefined||Array.isArray(selected)&&selected.length>0&&selected.length<=parsed.rows.length&&
+    selected.every((index,position)=>Number.isSafeInteger(index)&&index>=0&&index<parsed.rows.length&&
+      (position===0||selected[position-1]<index)),
+    'Review nonempty, distinct CSV data-row indexes in their original increasing order (zero based).');
+  const selectedRows=selected===undefined?null:new Set(selected);
   const current=portfolio.definition.awards.records.applications,seen=new Set(),ids=new Set(),changes=[];
-  for(const original of parsed.rows){
+  for(const [rowIndex,original] of parsed.rows.entries()){
     const reference=original[map.reference];need(reference.trim()&&!seen.has(reference),'CSV application references must be nonempty and distinct.');
     seen.add(reference);const ident=lookup('applications',reference);need(!ids.has(ident),'Different applications cannot share one record identity.');ids.add(ident);
+    if(selectedRows&&!selectedRows.has(rowIndex))continue;
     const partnerId=lookup('partners',original[map.partnerKey]);programmeRecord(portfolio,'partners',partnerId);
     const projectId=map.projectKey&&original[map.projectKey]?lookup('projects',original[map.projectKey]):null;
     if(projectId)need(programmeRecord(portfolio,'nodes',projectId).kind==='project','Select the actual applicant project.');
@@ -120,7 +127,8 @@ export function prepareAwardCsvImportStructure(portfolio,input,sourceSha256){
   need(!document||!document.archived&&document.nodeId===round.programmeNodeId&&document.object&&
     Object.keys(descriptor).every(k=>document.object[k]===descriptor[k]),'The selected original import document ID has different bytes or programme scope.');
   const mappingEvidence={schema:SCHEMA,operationId:input.operationId,roundId:round.id,roundRevision:round.revision,
-    roundSha256:round.sha256,columns:map,rows:parsed.rows.length,source:{sha256:hash,bytes:parsed.bytes.length,filename:input.filename}};
+    roundSha256:round.sha256,columns:map,rows:parsed.rows.length,source:{sha256:hash,bytes:parsed.bytes.length,filename:input.filename},
+    ...(selected===undefined?{}:{selectedRowIndexes:[...selected],selectedRows:changes.length})};
   const mappingText=JSON.stringify(mappingEvidence,null,2);
   need(mappingText.length<=16000,'The complete column mapping must fit the original programme document content field.');
   need(!document||document.content===mappingText,'Reuse the exact original import plan, or choose a new document ID for a new mapping operation.');
@@ -138,7 +146,7 @@ export function prepareAwardCsvImportStructure(portfolio,input,sourceSha256){
     'The complete mapped action exceeds the original request limit. Prepare separate explicit import operations with retained source evidence.');
   return {schema:SCHEMA,portfolio:{id:portfolio.id,revision:portfolio.revision,snapshot:portfolio.snapshot},
     source:descriptor,documentId,round:{id:round.id,revision:round.revision,sha256:round.sha256},
-    rows:parsed.rows.length,mapping:map,action};
+    rows:changes.length,mapping:map,...(selected===undefined?{}:{sourceRows:parsed.rows.length,rowIndexes:[...selected]}),action};
 }
 function csvCell(value,spreadsheetSafe){
   let text=value===null||value===undefined?'':String(value);
