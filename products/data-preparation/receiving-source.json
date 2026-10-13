@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.data-preparation-managed-receiving-source.v1",
   "sourceRepository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-  "sourceCommit": "71e228284a6867aa4bbece9b70bbf1dc6a6d984d",
+  "sourceCommit": "68ad5adf250e9f100f84d034881ebabc9fa48117",
   "files": {
     "stellar-forge/mcp-merchant-operator/catalog/dataset-lifecycle.mjs": {
       "bytes": 2728,
@@ -220,10 +220,10 @@
       "sourceCommit": "71e228284a6867aa4bbece9b70bbf1dc6a6d984d"
     },
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/managed.py": {
-      "bytes": 33629,
-      "sha256": "397f14584611f39f939bd333a704e30b5688379eb91c66bea5d66eae51ddb6ef",
-      "blob": "4565117c391bcfc21887e97e43928cffe1fd2486",
-      "sourceCommit": "71e228284a6867aa4bbece9b70bbf1dc6a6d984d"
+      "bytes": 33664,
+      "sha256": "9f7ad8dfed90e8867f7a07c6536198bd910a22d6170bebac68e1da6663ad61b9",
+      "blob": "49b9ca469187b2c05b3603b33a8c6c780cf9705e",
+      "sourceCommit": "68ad5adf250e9f100f84d034881ebabc9fa48117"
     },
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/managed_pipelines.py": {
       "bytes": 13466,
@@ -287,15 +287,15 @@
     },
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/README.md": {
       "bytes": 15889,
-      "sha256": "21ced7f77492515c3b0bc26985a343eb109ebd2999675ae6270ffed7068a7e44",
-      "blob": "e407606c32bfb7a9bc89a81cc9bb2184b5ebb665",
-      "sourceCommit": "71e228284a6867aa4bbece9b70bbf1dc6a6d984d"
+      "sha256": "796165b87e5aa448957608d78232e0b174c40de1f0e2553e5c00951ecd043f9e",
+      "blob": "b9c5f6a818cba119da8febc6e0a3279769b2ea21",
+      "sourceCommit": "68ad5adf250e9f100f84d034881ebabc9fa48117"
     },
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/app.js": {
-      "bytes": 37539,
-      "sha256": "c324a5652fc6677f82233e67a86ec548a3789cb9a077d3d653af84b91a277fa8",
-      "blob": "a49f19451cda60101d22efea505b63246a147411",
-      "sourceCommit": "71e228284a6867aa4bbece9b70bbf1dc6a6d984d"
+      "bytes": 37623,
+      "sha256": "bc62c7c6b503f8065bc053a0f9d375eda368aa25e4e18b5a89b4971b33d1bde8",
+      "blob": "a00cb3da42998bdbfcb58252d4f0c3547bce9257",
+      "sourceCommit": "68ad5adf250e9f100f84d034881ebabc9fa48117"
     },
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/cli.mjs": {
       "bytes": 578,
@@ -322,10 +322,10 @@
       "sourceCommit": "71e228284a6867aa4bbece9b70bbf1dc6a6d984d"
     },
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/delivery.py": {
-      "bytes": 18852,
-      "sha256": "881c7c61722a20abf753e88d4433525ec96e006b1e45b233a73319462c7bf9cf",
-      "blob": "61c4f9e21b0ad50ddec902e27d5235d8bc53bc25",
-      "sourceCommit": "71e228284a6867aa4bbece9b70bbf1dc6a6d984d"
+      "bytes": 19035,
+      "sha256": "8dda659bdf54e577dc0180f7b74666cb9708da61ae0a9202e3610a6e2f534624",
+      "blob": "365e97fdc3abdee517c35e5a0e398fca4e5f63e2",
+      "sourceCommit": "68ad5adf250e9f100f84d034881ebabc9fa48117"
     },
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/engine.py": {
       "bytes": 31025,
@@ -347,9 +347,9 @@
     },
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/package.mjs": {
       "bytes": 2852,
-      "sha256": "3521b8b1da0f0b0ef2a178096fbe1a771f241b2c644e74ded2e8c625c4bb380a",
-      "blob": "e0b2ff2f046a9f42df14aea6158424ec5fd3d496",
-      "sourceCommit": "71e228284a6867aa4bbece9b70bbf1dc6a6d984d"
+      "sha256": "dec6d7e7f639b8969107185470454dc8b8de113244bdaf5359612c188af3a52d",
+      "blob": "0b2254d58d1a84a1b27d320a37d7c8c16c1fbf21",
+      "sourceCommit": "68ad5adf250e9f100f84d034881ebabc9fa48117"
     },
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/pipeline.py": {
       "bytes": 24807,
@@ -376,10 +376,10 @@
       "sourceCommit": "71e228284a6867aa4bbece9b70bbf1dc6a6d984d"
     },
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/server.py": {
-      "bytes": 14866,
-      "sha256": "a9bfc9fc77c4cb175b9fc217e0508b64bdb9f5a48f1a299e6c4bc28d8e54a3f6",
-      "blob": "ce949264f7a170456ee28ef1ecdf40ec235b4e7a",
-      "sourceCommit": "71e228284a6867aa4bbece9b70bbf1dc6a6d984d"
+      "bytes": 15059,
+      "sha256": "2b954b8bdd4943294cc5fcb908f7bf9f6403c67b911444f98b420b8e934b4fdc",
+      "blob": "105203d6294875a793ff70e3bd96871b499706d6",
+      "sourceCommit": "68ad5adf250e9f100f84d034881ebabc9fa48117"
     },
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/style.css": {
       "bytes": 7935,
