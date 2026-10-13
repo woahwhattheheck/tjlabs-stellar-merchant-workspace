@@ -1067,6 +1067,8 @@ def materialize_result_state(original, runtime, control, manifest, request_sha):
         need(result_state_files(staged_workspace) == state["files"], "RESULT_STATE_STAGE_CHANGED",
              "Keep the exact complete original result stage.")
         relocations = reservation_bridge("restore", stage=str(stage), directory=str(runtime),
+                                         database=str(original / "workspace/merchant.sqlite3"),
+                                         recordedDirectory=manifest["original"]["directory"],
                                          reservations=state["reservationMappings"])
         relocated = {**identity, "stage": str(stage), "files": result_state_files(staged_workspace),
                      "reservationRelocations": relocations}
