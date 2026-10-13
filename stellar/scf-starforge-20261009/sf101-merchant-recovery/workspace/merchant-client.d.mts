@@ -24,6 +24,7 @@ export type RecoverySelection = {
   profileId: RecoveryProfileId;
   id: RecoveryOperationId;
 } & (
+  | { action:'object-compare';beforeObjectSessionId:string;afterObjectSessionId:string;beforeExpectedRecordSha256:RecoveryDigest;afterExpectedRecordSha256:RecoveryDigest }
   | { action:'object-bundle-export';sourceRequestId:string;sourceReviewHash:RecoveryDigest;sourceAttempt:number }
   | { action:'object-bundle-receive';archiveId:string;objectSessionId:string }
   | { action: 'snapshot'; capturePlanId: string; quiesced: true; destinationName?: string }
@@ -61,6 +62,7 @@ export interface RecoverySupportSelection {
 }
 export interface RecoverySupportInput extends RecoveryProfileInput {transferId:string;}
 export interface RecoveryToolInputs {
+  merchant_recovery_comparison_artifact:RecoveryOriginalInput & {kind:'result'|'html'|'markdown';sha256:RecoveryDigest};
   merchant_recovery_bundle_inspection:RecoveryProfileInput & {archiveId:string};
   merchant_recovery_bundle_report:RecoveryOriginalInput & {kind?:'report'|'verification'|'publication'};
   merchant_recovery_bundle_artifact:RecoveryOriginalInput;

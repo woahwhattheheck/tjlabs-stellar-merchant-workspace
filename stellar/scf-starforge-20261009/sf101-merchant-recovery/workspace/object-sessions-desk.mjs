@@ -162,7 +162,7 @@ export function createObjectRecoveryDesk({root,api,post,refresh,notice,showDetai
    if(saved?.schema==='sf101-object-browser-selection.v1'&&[...source.options].some(o=>o.value===saved.source))source.value=saved.source;
    setAction(saved?.action);operation.value=ID.test(saved?.id??'')?saved.id:stamp();
    record.value=HASH.test(saved?.record??'')?saved.record:selected()?.expectedRecordSha256??'';
-   observed=null;observation.replaceChildren();presentSource();saveSelection();
+   observation.replaceChildren();presentSource();saveSelection();
   }
   sync();
  }

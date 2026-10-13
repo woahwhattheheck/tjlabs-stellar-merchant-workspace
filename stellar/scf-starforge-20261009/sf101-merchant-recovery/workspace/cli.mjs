@@ -9,6 +9,7 @@ export const HELP = 'SF101 recovery workspace\n\n' +
   'starforge merchant-recovery-remote workspace serve --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE [--port 8481]\n' +
   'starforge merchant-recovery-remote workspace show --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE\n' +
   'starforge merchant-recovery-remote workspace COMMAND --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE [OPTIONS]\n\n' +
+  'comparison-artifact Read full saved comparison/report: --profile ID --id ID --kind result|html|markdown --sha256 HASH.\n' +
   'bundle-inspection Inspect a declared encrypted archive: --profile ID --archive ID.\n' +
   'bundle-report Read full retained verification/report: --profile ID --id ID [--kind report|verification|publication].\n' +
   'bundle-artifact Read completed ciphertext artifact path/hash: --profile ID --id ID.\n' +
@@ -52,6 +53,7 @@ export const HELP = 'SF101 recovery workspace\n\n' +
   'for the full command workflow and GUIDE.md for the original host configuration.\n';
 
 const COMMAND_OPTIONS = {
+  'comparison-artifact':['profileId','id','kind','sha256'],
   'bundle-inspection':['profileId','archiveId'],'bundle-report':['profileId','id','kind'],
   'bundle-artifact':['profileId','id'],'bundle-attach':['profileId','id','transferId','expectedReviewSha256','expectedRevision','actor'],
   'bundle-case-export':['profileId','transferId','archiveSha256'],'bundle-attachment':['profileId','transferId','archiveSha256'],
@@ -68,6 +70,7 @@ const COMMAND_OPTIONS = {
   resume: ['profileId', 'id', 'expectedReviewHash', 'afterAttempt', 'quiesced'], cancel: ['profileId', 'id']
 };
 const REQUIRED_OPTIONS = {
+  'comparison-artifact':['profileId','id','kind','sha256'],
   'bundle-inspection':['profileId','archiveId'],'bundle-report':['profileId','id'],
   'bundle-artifact':['profileId','id'],'bundle-attach':['profileId','id','transferId','expectedReviewSha256','expectedRevision','actor'],
   'bundle-case-export':['profileId','transferId','archiveSha256'],'bundle-attachment':['profileId','transferId','archiveSha256'],
@@ -132,7 +135,7 @@ export function parseWorkspaceArguments(argv) {
     throw argumentError('Use the host-declared archive ID.');
   for(const key of ['expectedRevision','archiveSha256'])if(result[key]!==undefined&&!/^[a-f0-9]{64}$/.test(result[key]))
     throw argumentError('Use the complete original '+key);
-  if(result.kind!==undefined&&!['report','verification','publication'].includes(result.kind))throw argumentError('Choose report or verification.');
+  if(result.kind!==undefined&&!(command==='comparison-artifact'?['result','html','markdown']:['report','verification','publication']).includes(result.kind))throw argumentError('Choose report or verification.');
   if(result.actor!==undefined&&(!result.actor.trim()||Buffer.byteLength(result.actor)>200))throw argumentError('Use the actual operator name within200 bytes.');
   if(result.transferId!==undefined&&!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(result.transferId))
     throw argumentError('Use the original lowercase Support transfer ID.');

@@ -1,3 +1,4 @@
+import {createObjectComparisonDesk} from './object-comparisons-desk.mjs';
 import {createObjectBundleDesk} from './object-bundles-desk.mjs';
 import {createRecoverySupportDesk} from './recovery-support-desk.mjs';
 import {createObjectRecoveryDesk} from './object-sessions-desk.mjs';
@@ -655,6 +656,7 @@ function applyState(value, initialize = false) {
   objectDesk.update(value,profileId);
   supportDesk.update(value,profileId,[...requests.values()]);
   bundleDesk.update(value,profileId,[...requests.values()]);
+  comparisonDesk.update(value,profileId,[...requests.values()]);
   renderDeclaredRestores(); renderFleetRestores(); syncCapabilities();
   if (review && !localCommand(review.command) && !remoteConfigured(selected)) invalidateReview();
   $('passphrase-summary').textContent = selected.passphraseAvailable ? 'Available from host environment' :
@@ -903,13 +905,14 @@ function progressText(row) {
 }
 
 function renderRequests() {
-  if(current){objectDesk.update(current,profileId);supportDesk.update(current,profileId,[...requests.values()]);bundleDesk.update(current,profileId,[...requests.values()]);}
+  if(current){objectDesk.update(current,profileId);supportDesk.update(current,profileId,[...requests.values()]);bundleDesk.update(current,profileId,[...requests.values()]);comparisonDesk.update(current,profileId,[...requests.values()]);}
   const rows = [...requests.values()].filter(row => row.profileId === profileId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   const signature = JSON.stringify([profileId, remoteConfigured(), rows]);
   if (signature === lastRequests) return;
   lastRequests = signature;
   const children = [];
   for (const row of rows) {
+    if(comparisonDesk.isRequest(row)){children.push(comparisonDesk.requestCard(row));continue;}
     if(bundleDesk.isRequest(row)){children.push(bundleDesk.requestCard(row));continue;}
     if(objectDesk.isRequest(row)){children.push(objectDesk.requestCard(row));continue;}
     const isLocal = localCommand(row.review.command);
@@ -1132,6 +1135,7 @@ async function downloadEncryptedBundle(path,selection){
     await output.close();
   }catch(error){await reader?.cancel().catch(()=>{});await output.abort().catch(()=>{});throw error;}
 }
+const comparisonDesk=createObjectComparisonDesk({root:$('object-comparison-panel'),api,post,refresh:refreshState,notice,showDetails});
 const bundleDesk=createObjectBundleDesk({root:$('object-bundle-panel'),api,post,refresh:refreshState,notice,showDetails,download:downloadEncryptedBundle});
 const supportDesk=createRecoverySupportDesk({root:$('recovery-support-panel'),api,post,notice,showDetails});
 const objectDesk=createObjectRecoveryDesk({root:$('object-recovery-panel'),api,post,refresh:refreshState,notice,showDetails});
