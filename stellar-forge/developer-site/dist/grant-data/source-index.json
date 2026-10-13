@@ -9823,9 +9823,9 @@
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "32ce24b40b655c8dc43071330ca2a86a72232a9f",
-    "bytes": 997782,
-    "sha256": "34d716c0ac6fae76ed2e6c6e8ca9ca5d3cc7991a4e80b034780f5a24088ddf70",
+    "git_blob": "9adc345d8a59849d2586898f7a6f0d40454d0b18",
+    "bytes": 997464,
+    "sha256": "00eb69e4b7212587df452e5dd2a170560091517b5b08b5d8c7cb9117ff54084e",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "9ff11768d30ce0a77f620ed0e50cde965b3e0c4a"
   },
@@ -11322,15 +11322,18 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "34d716c0ac6fae76ed2e6c6e8ca9ca5d3cc7991a4e80b034780f5a24088ddf70",
-    "source_bytes": 997782,
+    "source_sha256": "00eb69e4b7212587df452e5dd2a170560091517b5b08b5d8c7cb9117ff54084e",
+    "source_bytes": 997464,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",
       "/grant-companion-core.mjs",
-      "/grant-companion-workspace.mjs"
+      "/grant-companion-workspace.mjs",
+      "/grant-companion-editions.mjs",
+      "/grant-companion-reading.mjs",
+      "/grant-companion-returns.mjs"
     ],
-    "behavior": "Complete original companion, chapter navigation and search, full-source downloads, selected or complete printing, and a self-contained offline reader."
+    "behavior": "Complete original companion, retained source editions, chapter comparison and reading notes, reviewed collaborator returns, full workspace downloads, printing and a self-contained offline workspace."
   },
   "customer_closing": {
     "schema": "stellar-forge.grant-customer-closing.v1",
