@@ -191,6 +191,246 @@
           "git_blob": "29df16c55ac88b90232ecd745d55d55f735083e7"
         }
       ]
+    },
+    {
+      "id": "audit-exchange-installed-recipient-guide",
+      "label": "Installed author preparation, returned review acceptance and complete receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_INSTALLED.md",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 11648,
+          "sha256": "cc75c8439a3554bef5a4aac57ca92f082bbdb82afa0063348d5c411986329827",
+          "git_blob": "192ecc443b21bf31e9b0b8860e9617f505e04b34"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-offline-recipient-guide",
+      "label": "Complete offline recipient manuscript, original source and native review return",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_REVIEW.md",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 15181,
+          "sha256": "29ea9750ec61c9eba19378efb15e6f3bd0343bfa9f91dc578ef1ad68776f3885",
+          "git_blob": "bb0238d7eeaebaaeefb754f851ae56b9883e0bd1"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-native-service",
+      "label": "Installed recipient prepare, stage, preview, apply and native custody",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/recipient_operator.py",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 15155,
+          "sha256": "c35e04e4983bfd7443a7c62d9b9efbb9e4ee3d7527e67241d88cc8a0d67c14aa",
+          "git_blob": "0c7d61c32de8d2b8c3e95d3399021f56a3910be9"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-request-engine",
+      "label": "Original full manuscript validation, native review requests and accepted-request recovery",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/audit_recipient_review.py",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 30351,
+          "sha256": "226bc66f2fd94dd164abc6d8837496cff9cf14f7fbc8382a897590e7b07009c7",
+          "git_blob": "065f7fab922ae16abd533d6d02a2cbc33035e6dc"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-native-workspace",
+      "label": "Original native transaction, request replay and complete application receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/workspace.py",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 61230,
+          "sha256": "a4b5e9e594a2e81acf710a60615a91ac98e9ceaa6ef8b9da3a05e43b34777ebe",
+          "git_blob": "5ace1cb0d697b84e21b38073594e78f4a651ea46"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-installed-browser",
+      "label": "Installed author controls and exact current-preview acceptance",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/public/recipient-operator.js",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 8882,
+          "sha256": "195a91cb14c7bb0b58f48bef5994f7d0c7171b07f714edf3b7f676c3d75a6e95",
+          "git_blob": "b2f68974a787a56eb1fc553683d195c9747b62bb"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-offline-editor",
+      "label": "Offline source-bound review manuscript and complete working-copy return",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/public/audit-recipient.js",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 24810,
+          "sha256": "d4ae516e42cedf27ec40d0e5c672e013d84dffa1525090dd5179059768aae3ca",
+          "git_blob": "a98e4042024e5416696fbe65cf1af03f5f1bdd40"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-offline-page",
+      "label": "Complete offline recipient editor and source inspection controls",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/public/audit-recipient.html",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 5413,
+          "sha256": "3e7a83bc057b3d0ae6a3aca1f06f45bf51f7559812efcc55ee8df60c3ec7406c",
+          "git_blob": "5c0e7d62ae1abb64734f7f501b6b020fb06f7502"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-client",
+      "label": "Original client request, source and full artifact transport",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/client.mjs",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 26052,
+          "sha256": "4fd4a073b66186622410f372e5b86492ffcc15b1f5cb55490a613573b8e03a15",
+          "git_blob": "a66ff938e43015ec9fe5048f496023275d034fde"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-catalogue",
+      "label": "Native action and configured complete-file contracts",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/catalog.mjs",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 41397,
+          "sha256": "e70d7e74e81edcce98c8ec39f6201e86e4bfe74f84b0eb3e522aa97127ecbe92",
+          "git_blob": "a5e0e06d006b00c4de5c1b8460e1d9f073c097c1"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-merchant",
+      "label": "Original Merchant connection and configured recipient source import",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/merchant.mjs",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 4545,
+          "sha256": "a571f2f0911dfec28e8a9a65f5dd35302e894ddff88bc520df45c75a5af16268",
+          "git_blob": "51d9a4cb369a9afb816e641e908b48f4af11cb94"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-agent-tools",
+      "label": "Configured original-workspace recipient tool calls",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/merchant-tools.mjs",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 2053,
+          "sha256": "e81ba40f8f545659c8ea6002edfd3929078f3b2d638b9c831a9b8ca715e871de",
+          "git_blob": "dc402a73866fa03e89ba3d22e4c7ca031042019e"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-source-inventory",
+      "label": "Complete seventy-two-file selected application inventory",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/SOURCE_FILES.json",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 2165,
+          "sha256": "aefe8ee3b5f56fa1d5775656210ad3f7206758c8eefe6e35c66a71bbf80a10af",
+          "git_blob": "255902f3e59c8542c583cef7bdba414cebf19b62"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-original-receiving",
+      "label": "Whole standalone recipient, native review and independent receiving course",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_RECEIVING.py",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 30233,
+          "sha256": "2b30402f8fffdba28abf2ddc2e89a7c5904741e54967cae4ed75bda2347a43fc",
+          "git_blob": "866ef88708d7e43339783e279ea2374b8eebf486"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-installed-browser-course",
+      "label": "Original pending request recovery, complete downloads and desktop/narrow course",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_INSTALLED_BROWSER.mjs",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 12998,
+          "sha256": "00c79de9dc5f959645b469007ef95542f59afd366da85868a53e3cc77d17941d",
+          "git_blob": "daccfb9d2e078923a30bcc7faffcdef12f367d9c"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-installed-native-course",
+      "label": "Preserved author snapshots, exact replay and full installed application cold receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_INSTALLED_RECEIVING.py",
+      "editions": [
+        {
+          "commit": "96f5665af58d51ea58946826614636c5965fa9c9",
+          "bytes": 17239,
+          "sha256": "0e2c184bf62a65060abafdd7da005ccd65eaf5bde2be9d0aa3b23807ad9c6b3d",
+          "git_blob": "143286f57dd038768387c6e539799c6e3f69fae1"
+        }
+      ]
     }
   ]
 }
