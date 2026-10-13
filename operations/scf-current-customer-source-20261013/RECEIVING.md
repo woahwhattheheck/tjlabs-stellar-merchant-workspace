@@ -1,5 +1,105 @@
 # Receive the complete current SCF application
 
+## Current selected edition: ten complete products and reviewed financing
+
+Continue the original cumulative publisher from **PR1820 / daea858da7b04d2abbff673a8826fdb2e7261ec5**. This following edition contains **1,488 source records, 81 selected product registrations and 103 complete companion chapters**.
+
+| Complete author contribution | Original maintained selection | Selected sources |
+| --- | --- | ---: |
+| opensearch-material-customer | PR1803 / 5ecae3dc903e6d6ed5d87d71db5ce625a7bc9607 | 26 |
+| research-dossier-returns | PR1827 / 2f43cf01aa324ed6c082d0f5afe71beddf51f871 | 34 |
+| canadabuys-bidder-desk | PR1684 / 95d0552e36c097dbbcb17aed4efabed8c998c451 | 11 |
+| dcat-catalogs | PR1837 / 09611a2c908660b3200b0db1d2a098b09fa73e7d | 25 |
+| runtime-workspace | PR1831 / 6627bbee2fa9c2bef1ef0e352b54ec65f3459afb | 95 |
+| merchant-bank-statements | PR1836 / 97bc8630ad8ef18ab00f3ed913c8d5cc6d04b136 | 116 |
+| tyk-workspace | PR1811 / 37b770dd767e45fad54193f123a65f932ca0986a | 22 |
+| recovery-commissioning | PR1813 / 285adc9cbcafba3b0d7e832087737f8db6bd17af | 91 |
+| openlineage-prepared-package | PR1835 / 0884c4ad4a33bef27f58af72267f467e37cd45b4 | 20 |
+| openfema | PR1818 / c41eba64c845fca6206598c8054f67e3f8c2a08a | 18 |
+
+All prior source IDs and every earlier measured declaration edition survive. All **1,030 source records outside these ten contributions and 92 unrelated complete companion chapters remain exact**. The Bank source record uses its original author's current label, “All ten complete offline PDF review source members.” Runtime retains the whole existing product-selection H2 and replaces only its complete original-input subsection. The existing Event35 chapter and all180 measured editions remain intact.
+
+## Read the complete application and financing together
+
+The same nine answers retain the original **USD38,000 /400 prospective hours /150 days /six funded packages** and exact597-byte budget. The capacity/payment answer now integrates 675D's reviewed grant-first decision and 140B's complete aggregate seven-workshare comparison. The five-workshare study, original table and dated curves remain explicitly historical. Existing issuer-payment and complete maintainer-handover paragraphs remain exact.
+
+The grant-only bridge is modeled at **USD17,250 /23,275 /26,600** for14/30/60-day review/payment lag. Those are sensitivities, not issuer turnaround promises. The December7 award date is a planning input. Conditional filing when ALL original criteria actually finish can reduce the14-day-lag grant-only requirement toUSD15,200; hours alone do not prove acceptance.
+
+The current seven-workshare extension is **PROPOSED**:USD48,720 /392 customer hours alongside400 grant hours, with no selected alternative, staffing agreement, accepted customer terms, observed collection or financing facility inferred. Its base contribution after the sameUSD200 allowance once isUSD10,920. A20% increase in all effort atUSD95 endsUSD4,128 short including that allowance; timing alone cannot cure the loss. The full and concise answers keep the conditional early-filing/remaining-customer-work assumptions and original cash-cost method. The known allowance remains undated in daily peaks, and other unknown costs stay unknown. Private customer amendment details and full internal inputs remain on their original internal source surfaces.
+
+The complete original24-curve component was independently reproduced by24EA, and the complete66-scenario decision was independently reproduced by its original reviewer. This publication reuses those accepted calculations; it performs no new financial model or native case mutation.
+
+| File | Complete bytes | SHA-256 |
+| --- | ---: | --- |
+| [grant.html](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant.html) | 114740 | 24e951977be0bb8adb319d1c85a0cad56d90d59228dbd7f909c559b99542de21 |
+| [application.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant-data/application.md) | 62202 | 2db42872ced56cff5d3116c2de1c6df2c4fe1fdcfc0717f21eb064a3c8129a03 |
+| [product-and-finance.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant-data/product-and-finance.md) | 1964135 | 230efd6275564d8dc52ae2c87148d04b807f493fe54ff27bd8fafc6080eef009 |
+| [source-index.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant-data/source-index.json) | 1962944 | cb28a5aa7b7737056710b594de979881c4d0b2d1a17bbd9d0833cca8924b29b9 |
+| budget.csv, unchanged | 597 | 4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00 |
+
+Immutable four-output source: **a1a19ed3af6c6c9573087734b25dacf9dc06f3f5**. The same reviewer page, current source/companion views, Prepare submission and saved-project controls remain in place. [source-selection.json](./source-selection.json) binds every complete declaration, the34 exact original executed modules, all ten matched pairs, reviewed finance source selection, seven browser sourcePins and the complete preceding publication.
+
+## Receive the complete following source at the original operation boundary
+
+[Full four-role package](./current-source-package.json): **5385618 bytes**, SHA-256 **4a6b051acdc48ead637b2223d1f0237c44ff5ba681f93f3eeccc73a003b9a1cd**, bundle **99bb14e347f58f8f93918c7365778beff3e7f6fb0919554dd39507d6c71e126d**.
+
+Use the same existing case and original source-comparison controls. This edition changes the application answer SHA as well as its complete companion/index bundle. Compare it with the actual saved draft and retain edited answers, issuer fields, requirements, planning, decisions, all source history, review rounds, attachments and correspondence. Do not replace the saved case or silently overwrite manual answers.
+
+The original makeSource, createSourceBundle and createReviewerSourcePackage functions produced the complete package. The unchanged openReviewerSourcePackage cold-opened it and verified all four complete role bytes and values. This is source execution, not a rendered/customer completion.
+
+The **22B7/81CF saved-v7/Page/profile course remains on its existing selected1,259-source input** until its actual completed/save boundary. Finish or reconcile that original phase first. Then choose this following package through the existing selected-form interface with **--expected-source-sha256 4a6b051acdc48ead637b2223d1f0237c44ff5ba681f93f3eeccc73a003b9a1cd**, retaining its original case hash, saved version, directory and controller. Do not replace an already dispatched input or create a parallel case. The merged application-return/offline colleague helpers remain with their original owners and must be received as their complete current source at that same reviewed boundary.
+
+## Preserve the separate concise choice
+
+The existing explicit concise selection carries the reviewed financing inside its original answer, while retaining all other concise answers and the same complete budget, companion and source index.
+
+| File | Complete bytes | SHA-256 |
+| --- | ---: | --- |
+| application-reviewer.md | 25990 | afec771ddf04a4908f0e47d2a9ffea213b1eb05a910e7d2406d1efd6ad7517a5 |
+| reviewer-working-index.json | 2032931 | e3451ac6c34c4651b546590f92b51e1656c2fe854bf666c8371d457c5e64448f |
+| reviewer-working-source.json | 5394251 | c33a8bc7d19205ea30ea0e3345710e3d9dd3ff1490844ee6d6cbef5f69a6a32b |
+
+Concise bundle **6a1eed47f71e8c3016b9fa80838f1592e4e3381071dc108785d45b87c7b36356**. Open **grant-submission.html?source=concise** through the original explicit choice; the full manuscript remains separately selectable. The actual composeReviewerWorkingEdition function generated these complete three files against source commita1a19ed3af6c6c9573087734b25dacf9dc06f3f5; the unchanged receiving function independently reopened them. Main URLs in that original format remain navigation; retained whole bytes, source commit, SHA and bundle bind the edition. Apply only the actual invited issuer fields and limits when that form arrives.
+
+## Current installed review and canonical finance join
+
+The fresh shared-source guard also received the complete original PR1850 offline-review registration. The current source index includes the original offline review schemas and package/source/guide routes; the selected application and all1,488 records remain exact. Its maintained module is recorded in source-selection.json.
+
+The original canonical publisher independently confirmed the complete new finance section in the SAME F0C86PRE5NF. All text outside that section remains exact; the existing relative companion link is expanded only for Slack navigation. An uncertain write result was reconciled from that actual full postimage without a repeated mutation.
+
+## Continue the maintained publisher and source custody
+
+Continue **SCF-CURRENT-CUSTOMER-SOURCE-05C7-20261013** and the same Page/Site/saved application. The ten-pair freeze was accepted in the original publisher thread at1791904116.989259. Later municipal, Runtime and other author successors remain following deliberate source choices, rather than replacements for this frozen cohort. Preserve the full current source union when receiving them.
+
+The original grant-compose.mjs, customer chapter receiver and b71687eb declaration receiver ran unchanged over the complete prior source and ten full matched incoming chapters. Standard UTF-8, SHA and Base64 host primitives supplied the same pure module operations. The original budget is exact; every selected chapter and source ID was checked. No hosted Actions, sender, native process, controller or new case was started by this publication.
+
+## Open and inspect the exact outgoing version
+
+— owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+Return the actual original case/source identity, complete saved result/archive, current saved version and viewed desktop/narrow screenshots to the original publisher thread. Inspect the exact full and concise routes, all103 companion chapters and outgoing HTML/Markdown/JSON/CSV/archive formats, operate source comparison and important controls, download/export and independently reopen. Preserve the original receiving result and report concrete defects against this exact selected edition.
+
+
+
+## Preserved preceding receiving record: PR1820
+
+The following complete prior guide is retained verbatim. Its1,277 count, previous source/bundle identities and unchanged finance wording describe that historical edition. Use the current identities above when deliberately receiving this following source.
+
+# Receive the complete current SCF application
+
 ## Current selected edition: Event, material catalogues and DCAT
 
 Continue the original publisher and saved application from PR1800/63f8a434. This following source contains **1,277 original source records, all 80 selected product registrations and 103 complete companion chapters**. Three complete author-owned chapter/declaration pairs advance together:
