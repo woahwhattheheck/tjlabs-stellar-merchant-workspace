@@ -32,6 +32,16 @@
     "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_COLLECTION_AGENT.md",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_source_collection.mjs",
     "stellar-forge/mcp-merchant-operator/grant-source-collection.mjs",
-    "stellar-forge/mcp-merchant-operator/catalog/grant-source-collection.mjs"
+    "stellar-forge/mcp-merchant-operator/catalog/grant-source-collection.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/research-installation-agent.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/research-installation-agent.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/agent-client.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/agent-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/grant-research-installation.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/grant-research-installation.mjs",
+    "stellar-forge/mcp-merchant-operator/grant-workspace.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/grant-workspace.mjs",
+    "stellar-forge/mcp-merchant-operator/providers/grant-workspaces.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/RESEARCH_INSTALLATION_AGENT.md"
   ]
 }

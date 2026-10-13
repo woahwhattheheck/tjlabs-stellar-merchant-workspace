@@ -1,0 +1,17 @@
+/* Research commissioning uses neutral, high-contrast controls in the original desk. */
+.research-source-desk{--source-ink:#202020;--source-muted:#525252;--source-line:#b8b8b8;--source-soft:#f3f3f3;--source-accent:#303030;max-width:100%;color:var(--source-ink);line-height:1.5}
+.research-source-desk h4{margin-top:28px;padding-top:18px;border-top:2px solid #777}
+.research-source-desk button,.research-source-desk input,.research-source-desk select,.research-source-desk textarea{min-height:44px;border:1px solid #888;border-radius:2px;background:#fff;color:#202020}
+.research-source-desk button:hover:not(:disabled){background:#e7e7e7;border-color:#333}
+.research-source-desk button:focus-visible,.research-source-desk input:focus-visible,.research-source-desk textarea:focus-visible,.research-source-desk select:focus-visible{outline:3px solid #444;outline-offset:3px}
+.research-source-desk button:disabled{color:#666;background:#eee;opacity:1;border-style:dashed;cursor:not-allowed}
+.research-source-desk fieldset,.research-source-desk details,.research-source-desk .source-desk-table{border-color:#aaa;border-radius:2px;background:#fff}
+.research-source-desk pre{background:#f0f0f0;color:#222;border-radius:0;max-height:30rem}
+.research-source-desk th{background:#e9e9e9}
+.research-source-desk th,.research-source-desk td{border-color:#ccc}
+.research-source-desk .source-desk-recovery{background:#eee;border:2px solid #555;border-left-width:6px;border-radius:0}
+.research-source-desk .source-desk-hint,.research-source-desk .source-desk-empty{color:#484848}
+.research-source-desk input:disabled,.research-source-desk select:disabled,.research-source-desk textarea:disabled{background:#eee;color:#666}
+.research-source-desk [data-source-action="research-prepare"],.research-source-desk [data-source-action="research-save"],.research-source-desk [data-source-action="research-attach"]{border-width:2px;font-weight:650}
+.research-source-desk .source-desk-heading{gap:16px}
+@media(max-width:600px){.research-source-desk .source-desk-fields{grid-template-columns:minmax(0,1fr)}.research-source-desk .source-desk-actions{display:grid;grid-template-columns:minmax(0,1fr)}.research-source-desk .source-desk-actions button{width:100%}.research-source-desk fieldset{padding:12px}.research-source-desk h4{margin-top:20px}}

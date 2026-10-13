@@ -1,7 +1,9 @@
-import {planFlowableSourceOperation,performFlowableSourceOperation} from './flowable-source-desk-agent.mjs';
-export * from './flowable-source-desk-agent.mjs';
+import {planResearchInstallationOperation,performResearchInstallationOperation,receiveResearchInstallationFile,researchInstallationUploadLimit,RESEARCH_INSTALLATION_MAX_ARCHIVE} from './research-installation-agent.mjs';
+export * from './research-installation-agent.mjs';
 import {planEcondbSourceOperation,performEcondbSourceOperation} from './econdb-source-desk-agent.mjs';
 export * from './econdb-source-desk-agent.mjs';
+import {planFlowableSourceOperation,performFlowableSourceOperation} from './flowable-source-desk-agent.mjs';
+export * from './flowable-source-desk-agent.mjs';
 import { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_CASE_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
 import {performGrantPlanningSourceOperation} from './source-tables-agent.mjs';
 import {planInstallationSourceOperation, performInstallationSourceOperation,
@@ -631,23 +633,26 @@ function originalSource(connection) {
     executionSourceDirectory:record.execution.sourceDirectory};
 }
 function transport(connection, route, {body, contentType = 'application/json', headers = {},
-  originalRequestId, timeoutMs = 30000, mutation = body !== undefined, maxResponseBytes = MAX_RESPONSE_BYTES} = {}) {
+  originalRequestId, timeoutMs = 30000, mutation = body !== undefined, maxResponseBytes = MAX_RESPONSE_BYTES, responseSink} = {}) {
+  const streamingResearch = typeof responseSink === 'function' && body === undefined &&
+    /^\/api\/operations\/operation-[a-f0-9]{32}\/installation-sources\/source-desk-[a-f0-9]{32}\/research\/(?:files\/research-[a-f0-9]{64}|preparations\/preparation-[a-f0-9]{64}\/archive)\?/.test(route);
+  need(responseSink === undefined || streamingResearch, 'GRANT_RESPONSE_LIMIT', 'Stream only a declared original Research file route.');
   need(Number.isSafeInteger(maxResponseBytes) && maxResponseBytes >= 1 &&
-    maxResponseBytes <= Math.max(INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES, GRANT_MAX_CASE_BUNDLE_BYTES), 'GRANT_RESPONSE_LIMIT',
+    maxResponseBytes <= (streamingResearch ? RESEARCH_INSTALLATION_MAX_ARCHIVE : Math.max(INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES, GRANT_MAX_CASE_BUNDLE_BYTES)), 'GRANT_RESPONSE_LIMIT',
     'Use the declared complete original response bound.');
   const target = new URL(route, connection.original.url), authorization = new URL(connection.url).hash.slice('#access='.length);
   need(target.origin === new URL(connection.original.url).origin && route.startsWith('/api/'),
     'GRANT_ROUTE_INVALID', 'Use an original declared grant API route.');
   const bytes = body === undefined ? undefined : Buffer.isBuffer(body) ? body : Buffer.from(JSON.stringify(body));
-  const maximumInput = /^\/api\/operations\/operation-[a-f0-9]{32}\/(?:flowable|econdb)-sources\/import$/.test(target.pathname) &&
+  const maximumInput = researchInstallationUploadLimit(target,contentType,body) ?? (/^\/api\/operations\/operation-[a-f0-9]{32}\/(?:flowable|econdb)-sources\/import$/.test(target.pathname) &&
     contentType === 'application/octet-stream' && Buffer.isBuffer(body)
     ? INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES
     : target.pathname === '/api/operations/import' && contentType === 'application/zip' && Buffer.isBuffer(body)
-      ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES;
+      ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES);
   need(bytes === undefined || bytes.length <= maximumInput, 'GRANT_INPUT_TOO_LARGE',
     'The original request exceeds its declared native receiving capacity.');
   return new Promise((resolveResult, reject) => {
-    let dispatched = false, settled = false;
+    let dispatched = false, settled = false, streamingActive = false, streamFailure = null;
     const uncertain = failure => {
       if (settled) return;
       settled = true;
@@ -663,10 +668,38 @@ function transport(connection, route, {body, contentType = 'application/json', h
       headers:{Authorization:'Bearer ' + authorization, Accept:'application/json, application/zip, application/octet-stream',
         ...(bytes === undefined ? {} : {'Content-Type':contentType, 'Content-Length':String(bytes.length)}), ...headers}},
     response => {
+      if (streamingResearch && response.statusCode >= 200 && response.statusCode < 300) {
+        streamingActive = true;
+        void (async () => {
+          try {
+            const hash = createHash('sha256'); let size = 0;
+            const length = response.headers['content-length'];
+            if (length !== undefined) need(/^\d+$/.test(String(length)) && Number(length) === maxResponseBytes,
+              'GRANT_RESPONSE_CHANGED', 'Stream the exact described Content-Length.');
+            need(!response.headers['content-encoding'] || response.headers['content-encoding'] === 'identity',
+              'GRANT_RESPONSE_CHANGED', 'Keep the original binary response unencoded.');
+            for await (const part of response) {
+              size += part.length;
+              need(size <= maxResponseBytes, 'GRANT_RESPONSE_TOO_LARGE', 'The original stream exceeds its described size.');
+              hash.update(part); await responseSink(part);
+            }
+            if (streamFailure) throw streamFailure;
+            need(size === maxResponseBytes, 'GRANT_RESPONSE_INTERRUPTED', 'Receive every byte of the described original.');
+            const sha256 = hash.digest('hex');
+            if (response.headers['x-content-sha256']) need(response.headers['x-content-sha256'] === sha256,
+              'GRANT_RESPONSE_CHANGED', 'The native original response digest differs.');
+            streamingActive = false; if (settled) return; settled = true;
+            resolveResult({bytesWritten:size,sha256,mediaType:String(response.headers['content-type']??'application/octet-stream'),
+              status:response.statusCode,source:originalSource(connection),filename:typeof response.headers['content-disposition']==='string'
+                ? response.headers['content-disposition'].match(/filename="([^"]+)"/)?.[1]??null:null});
+          } catch (failure) { streamingActive = false; response.destroy(); req.destroy(); uncertain(failure); }
+        })();
+        return;
+      }
       const chunks = []; let length = 0;
       response.on('data', chunk => {
         length += chunk.length;
-        if (length > maxResponseBytes) {
+        if (length > (streamingResearch ? Math.min(maxResponseBytes,1024*1024) : maxResponseBytes)) {
           req.destroy(error('GRANT_RESPONSE_TOO_LARGE', 'The original response exceeds its declared complete receiving bound of ' + maxResponseBytes + ' bytes.')); return;
         }
         chunks.push(chunk);
@@ -694,7 +727,7 @@ function transport(connection, route, {body, contentType = 'application/json', h
       });
     });
     req.once('finish', () => { dispatched = true; });
-    req.once('error', failure => { if (req.socket?.bytesWritten) dispatched = true; uncertain(failure); });
+    req.once('error', failure => { if (req.socket?.bytesWritten) dispatched = true; if (streamingActive) streamFailure = failure; else uncertain(failure); });
     req.setTimeout(timeoutMs, () => req.destroy(error('GRANT_REQUEST_TIMEOUT', 'The original grant request timed out.')));
     if (bytes) req.end(bytes); else req.end();
   });
@@ -1041,6 +1074,16 @@ export class GrantWorkspaceClient {
     if (body.preview !== undefined) object(body.preview,'Original worksheet selection');
     if (body.mapping !== undefined) object(body.mapping,'Original workbook mapping');
     return this.#request('/api/source-tables/workbook/' + action,{body,mutation:false});
+  }
+  researchInstallation(action, input) {
+    const plan=planResearchInstallationOperation(action,input);
+    return this.#admit(() => performResearchInstallationOperation(plan,
+      async (route,options) => transport(await this.#readLaunch(),route,options)));
+  }
+  downloadResearchInstallationFile(action,input,filename) {
+    const plan=planResearchInstallationOperation(action,input);
+    return this.#admit(() => receiveResearchInstallationFile(plan,
+      async (route,options) => transport(await this.#readLaunch(),route,options),filename));
   }
   flowableSources(action, input) {
     const plan=planFlowableSourceOperation(action,input);

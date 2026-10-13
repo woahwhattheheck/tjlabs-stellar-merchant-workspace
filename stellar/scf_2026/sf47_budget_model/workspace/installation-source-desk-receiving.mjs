@@ -115,7 +115,7 @@ async function prepareProfile(input){
   return value;
 }
 
-class BrowserReceiving{
+export class BrowserReceiving{
   constructor(input,inputSha,access){
     this.input=input;this.inputSha=inputSha;this.access=access;
     this.root=resolve(input.directory);this.path=resolve(input.output);
@@ -573,23 +573,23 @@ class BrowserReceiving{
     const path=resolve(this.networkRoot,'session-'+sha(raw)+'.json');await retain(path,raw);
     this.report.sessionSnapshot=await this.remember(path);
   }
-  async readDownload(download,expected,label){
+  async readDownload(download,expected,label,maximum=MAX){
     const problem=await download.failure();need(!problem,'The actual browser download failed: '+problem);
     const name=download.suggestedFilename();
     need(!expected?.filename||expected.filename===name,'The actual browser download changed its original filename.');
     const directory=await privateDirectory(resolve(this.downloadRoot,label));
-    need(/^[A-Za-z0-9][A-Za-z0-9_.-]{0,249}$/.test(name),'Keep the original bounded download filename.');
+    need(name&&name.length<=249&&name!=='.'&&name!=='..'&&!/[\/\\\x00-\x1f\x7f]/.test(name),'Keep the original bounded download filename.');
     const destination=resolve(directory,name),temporary=resolve(directory,'.'+name+'-'+randomUUID());
     let stream=null,handle=null,total=0;const digest=createHash('sha256');
     try{
       stream=await download.createReadStream();need(stream,'The original complete download stream is unavailable.');
       handle=await open(temporary,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);
-      for await(const raw of stream){total+=raw.length;need(total<=(expected?.bytes??MAX),'The download exceeds the original full length.');
+      for await(const raw of stream){total+=raw.length;need(total<=(expected?.bytes??maximum),'The download exceeds the original full length.');
         digest.update(raw);await handle.writeFile(raw);}
       const checksum=digest.digest('hex');
       need(!expected||total===expected.bytes&&checksum===expected.sha256,'The complete downloaded bytes differ from their native receipt.');
       await handle.sync();await handle.close();handle=null;
-      if(await exists(destination)){const old=await receipt(destination);need(old.bytes===total&&old.sha256===checksum,
+      if(await exists(destination)){const old=await receipt(destination,expected?.bytes??maximum);need(old.bytes===total&&old.sha256===checksum,
         'Keep the earlier complete downloaded artifact.');}
       else{await link(temporary,destination);await sync(directory);}
       const value=await this.remember(destination);need(value.bytes===total&&value.sha256===checksum,'The complete download did not reopen.');
@@ -601,7 +601,7 @@ class BrowserReceiving{
       await download.delete();
     }
   }
-  async downloads(click,expected,label){
+  async downloads(click,expected,label,{timeout=60000}={}){
     need(Array.isArray(expected)&&expected.length>0,'Select the complete expected download set.');
     const unnamed=expected.length===1&&expected[0]===null;
     const remaining=new Map(unnamed?[]:expected.map(value=>[value?.filename,value]));
@@ -619,7 +619,7 @@ class BrowserReceiving{
         if(arrived.length===count){done=true;resolveEvent(arrived);}
       }catch(error){problem??=error;rejectEvent(error);}
     };
-    this.page.on('download',receive);timer=setTimeout(()=>rejectEvent(new Error('The complete original browser download did not arrive.')),60000);
+    this.page.on('download',receive);timer=setTimeout(()=>rejectEvent(new Error('The complete original browser download did not arrive.')),timeout);
     try{
       const [downloads]=await Promise.all([waiting,Promise.resolve().then(click)]);
       const result=[];
@@ -1020,3 +1020,6 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   main().catch(error=>{emit({schema:SCHEMA,state:'INTERRUPTED',error:{name:error.name,message:error.message,
     status:error.status??null,code:error.code??null}});process.exitCode=1;});
 }
+
+// Maintained original helpers for a chapter on the same borrowed authenticated page.
+export const sourceDeskReceivingFiles={need,sha,stable,same,pretty,exists,inside,privateDirectory,regular,receipt,retain,replaceJSON,object,verifyReceipt};
