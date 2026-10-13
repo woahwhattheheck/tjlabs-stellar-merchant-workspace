@@ -9,7 +9,7 @@ import {readCommercialPerformanceSources,commercialPerformanceSummary,bindCommer
 export const COMMERCIAL_DOCUMENT_SCHEMA='stellar-forge.merchant-commercial-document.v1';
 export const COMMERCIAL_QUOTE_SCHEMA='stellar-forge.merchant-commercial-quote.v1';
 export const COMMERCIAL_MATERIAL_KINDS={DRAFT:'commercial-quote-draft',PRICING:'commercial-pricing-source',
-  QUOTE:'commercial-quote-edition',RESPONSE:'commercial-customer-response',PERFORMANCE:'commercial-tariff-performance-source'};
+  QUOTE:'commercial-quote-edition',RESPONSE:'commercial-customer-response',PERFORMANCE:'commercial-tariff-performance-source',ECONOMICS:'commercial-quote-economics'};
 const copy=value=>JSON.parse(JSON.stringify(value));
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const HASH=/^[a-f0-9]{64}$/;
