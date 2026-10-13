@@ -104,7 +104,8 @@ def register_static(static):
                    "/operations_statement_batch.mjs": ("operations_statement_batch.mjs", "text/javascript; charset=utf-8"),
                    "/operations_statement_batch.css": ("operations_statement_batch.css", "text/css; charset=utf-8"),
                    "/operations_statement_allocations.mjs": ("operations_statement_allocations.mjs", "text/javascript; charset=utf-8"),
-                   "/operations_statement_allocations.css": ("operations_statement_allocations.css", "text/css; charset=utf-8")})
+                   "/operations_statement_allocations.css": ("operations_statement_allocations.css", "text/css; charset=utf-8"),
+                   "/operations_statement_copies.mjs": ("operations_statement_copies.mjs", "text/javascript; charset=utf-8")})
     static.update({"/operations_payables.mjs": ("operations_payables.mjs", "text/javascript; charset=utf-8"),
                    "/operations_payables.css": ("operations_payables.css", "text/css; charset=utf-8"),
                    "/operations_ledger_intake.mjs": ("operations_ledger_intake.mjs", "text/javascript; charset=utf-8"),

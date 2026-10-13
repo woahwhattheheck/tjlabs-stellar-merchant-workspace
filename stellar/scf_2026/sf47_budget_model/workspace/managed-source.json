@@ -543,6 +543,8 @@
     "installation-source-collection-session.mjs",
     "installation-source-collection-store.mjs",
     "portfolio-working-copies-browser.mjs",
-    "PORTFOLIO_WORKING_COPIES_BROWSER.md"
+    "PORTFOLIO_WORKING_COPIES_BROWSER.md",
+    "operations_statement_copies.mjs",
+    "STATEMENT_WORKING_COPIES.md"
   ]
 }
