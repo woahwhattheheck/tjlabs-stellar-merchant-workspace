@@ -19,7 +19,11 @@ const REQUIRED=['dossier.mjs','server.mjs','portable.mjs','public/app.js','publi
  'comparison/ADOPTION.md','comparison/ADOPTION_BROWSER.md','public/comparison-adoption.js',
  'public/comparison-adoption-store.js','public/comparison-adoption.css',
  'comparison/adoption-render.mjs','comparison/adoption-handover.mjs','comparison/inspect-adoption-handover.mjs',
- 'comparison/adoption-handover-archive.py','comparison/adoption-handover-cli.mjs','comparison/ADOPTION_HANDOVER.md'];
+ 'comparison/adoption-handover-archive.py','comparison/adoption-handover-cli.mjs','comparison/ADOPTION_HANDOVER.md',
+ 'comparison/privacybench-receiving.mjs','comparison/privacybench-browser-receiving.mjs',
+ 'comparison/privacybench-receiving-fixture.json','comparison/PRIVACYBENCH_RECEIVING.md',
+ 'comparison/original-output/privacybench.mjs','comparison/original-output/privacybench-routes.mjs',
+ 'public/privacybench-output.js','public/original-output.js'];
 const MAX_SOURCE=1024*1024*1024,MAX_FILES=30000;
 const need=(ok,message)=>{if(!ok)throw Error(message);};
 const json=x=>JSON.stringify(x,null,2)+'\n';
@@ -113,6 +117,7 @@ async function runtimeSelection(options){
  return out;
 }
 export async function receiveComparisonForeground(options){
+ if(options.sourceEdition)return receivePrivacyBenchContinuation(options);
  const directory=resolve(options.directory),sourceRoot=await realpath(resolve(options.sourceRoot));
  need(isAbsolute(options.sourceRoot)&&isAbsolute(options.directory),'Absolute source and original operation directory required');
  need(relative(sourceRoot,directory).startsWith('..'+sep)||relative(sourceRoot,directory)==='..','Operation output must be outside the complete source selection');
@@ -124,9 +129,10 @@ export async function receiveComparisonForeground(options){
  await retained(join(directory,'foreground-intent.json'),intent);
  const selected=await selectSource(sourceRoot,directory),app=join(selected.directory,PREFIX);
  const completed=await optional(join(directory,'foreground-result.json'));
- if(completed){need(completed.adoption?.browser&&completed.adoption?.backend&&completed.adoption?.handovers?.length===3,'An earlier completed original course remains preserved. Receive the explicitly reviewed adoption continuation from its complete selected source before claiming this whole edition.');need(completed.sourceSha256===selected.sha256&&completed.operationId===options.operationId,'Original foreground result changed');await verifyOutputs(completed);return completed;}
+ if(completed){need(completed.privacybench?.browser&&completed.privacybench?.native,'The earlier completed course remains preserved; this source requires the explicitly selected PrivacyBench chapter before whole-edition completion.');need(completed.adoption?.browser&&completed.adoption?.backend&&completed.adoption?.handovers?.length===3,'An earlier completed original course remains preserved. Receive the explicitly reviewed adoption continuation from its complete selected source before claiming this whole edition.');need(completed.sourceSha256===selected.sha256&&completed.operationId===options.operationId,'Original foreground result changed');await verifyOutputs(completed);return completed;}
  const receive=await import(pathToFileURL(join(app,'comparison/receive.mjs')).href);
  const browserReview=await import(pathToFileURL(join(app,'comparison/browser-receiving.mjs')).href);
+ const privacybenchBrowser=await import(pathToFileURL(join(app,'comparison/privacybench-browser-receiving.mjs')).href);
  const adoptionReceive=await import(pathToFileURL(join(app,'comparison/adoption-receiving.mjs')).href);
  const adoptionBrowser=await import(pathToFileURL(join(app,'comparison/adoption-browser-receiving.mjs')).href);
  const {startDossierWorkspace}=await import(pathToFileURL(join(app,'server.mjs')).href);
@@ -170,6 +176,15 @@ export async function receiveComparisonForeground(options){
     return{url:cold.url,close:()=>closeOnce('cold',cold)};
    }});
   active();await verifySelection(selected.directory,selected.manifest);
+  const privacybench=await privacybenchBrowser.reviewPrivacyBenchBrowser({page,url:main.url,receipt:backend,
+   directory:join(directory,'privacybench'),reviewer:options.reviewer,python:runtime.python,
+   openReceived:async({directory:receivedDirectory})=>{
+    const targets=new Map(['author','contributor'].map(role=>[join(directory,'privacybench','received-privacybench-'+role),'privacybench-received-'+role]));
+    const key=targets.get(resolve(receivedDirectory));need(key&&!additionalListeners.has(key),'Only the two original selected PrivacyBench handover stores are opened');
+    const value=await listener(key,receivedDirectory);additionalListeners.set(key,value);
+    return{url:value.url,close:()=>closeOnce(key,value)};
+   }});
+  active();await verifySelection(selected.directory,selected.manifest);
   // Preserve all completed original comparison/output phases. Following adoption
   // uses separate retained directories in this same locked foreground lifetime.
   await closeOnce('cold',cold);await closeOnce('main',main);active();
@@ -192,7 +207,8 @@ export async function receiveComparisonForeground(options){
     return{url:value.url,close:()=>closeOnce(key,value)};
    }});
   active();await verifySelection(selected.directory,selected.manifest);
-  const files=[...backend.files,...browser.files,...browser.screens,...adoption.files,...adoptedBrowser.files,...adoptedBrowser.screens,
+  const files=[...backend.files,...browser.files,...browser.screens,...privacybench.files,...privacybench.screens,...privacybench.native.files,
+   await outputIdentity(join(directory,'privacybench','privacybench-browser-result.json')),...adoption.files,...adoptedBrowser.files,...adoptedBrowser.screens,
    await outputIdentity(join(adoptionDirectory,'adoption-receiving-result.json')),
    await outputIdentity(join(directory,'adoption-browser','adoption-browser-result.json')),
    await outputIdentity(join(directory,'backend','receiving-result.json')),
@@ -201,9 +217,11 @@ export async function receiveComparisonForeground(options){
    directory,sourceSha256:selected.sha256,sourceSelection:join(directory,'source-selection.json'),runtime,
    backend:{file:join(directory,'backend','receiving-result.json'),dossierId:backend.dossierId,revision:backend.revision},
    browser:{file:join(directory,'browser','browser-result.json'),status:browser.status,version:context.browser()?.version()??null},files,
+   privacybench:{browser:{file:join(directory,'privacybench','privacybench-browser-result.json'),status:privacybench.status},
+    native:{status:privacybench.native.status,planId:privacybench.native.report.planId,archive:privacybench.native.handover.exported.archive}},
    adoption:{handovers:adoption.handovers.map(h=>({label:h.label,planId:h.planId,revision:h.revision,archive:h.exported.archive,receipt:join(h.directory,'receiving-result.json')})),backend:{file:join(adoptionDirectory,'adoption-receiving-result.json'),dossierId:adoption.dossierId,revision:adoption.authorRevision},
     browser:{file:join(directory,'adoption-browser','adoption-browser-result.json'),status:adoptedBrowser.status}},
-   literalInspection:{status:'AWAITING_ACTUAL_REVIEWER_VIEW',original:browser.literalInspection,adoption:adoptedBrowser.literalInspection}};
+   literalInspection:{status:'AWAITING_ACTUAL_REVIEWER_VIEW',original:browser.literalInspection,privacybench:privacybench.literalInspection,adoption:adoptedBrowser.literalInspection}};
   // Publish completion only after both original listeners and the owned browser close.
  }catch(e){
   primary=e;try{await atomic(join(directory,'foreground-error.json'),{schema:SCHEMA,operationId:options.operationId,
@@ -217,8 +235,96 @@ export async function receiveComparisonForeground(options){
  }
  await retained(join(directory,'foreground-result.json'),result);return result;
 }
+
+/** Explicit new source edition, retaining this original operation's store,
+ * profile, lock, old source and all previously accepted output generations. */
+export async function receivePrivacyBenchContinuation(options){
+ const original=resolve(options.directory),sourceRoot=await realpath(resolve(options.sourceRoot)),key=options.sourceEdition;
+ need(isAbsolute(options.directory)&&isAbsolute(options.sourceRoot)&&/^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$/.test(key),'Explicit original directory and safe source edition required');
+ need(relative(sourceRoot,original).startsWith('..'+sep)||relative(sourceRoot,original)==='..','Receiving output must remain outside selected source');
+ const originalIntent=await optional(join(original,'foreground-intent.json')),oldSelection=await optional(join(original,'source-selection.json'));
+ need(originalIntent?.schema===SCHEMA&&oldSelection&&originalIntent.operationId===options.operationId&&originalIntent.directory===original&&originalIntent.reviewer===options.reviewer,'Original foreground operation/reviewer required');
+ const runtime=await runtimeSelection(options);need(equal(runtime,originalIntent.runtime),'Continue with the original selected runtime');
+ await verifySelection(join(original,'selected-source'),oldSelection);
+ const backend=await optional(join(original,'backend','receiving-result.json'));
+ need(backend?.status==='BACKEND_RECEIVING_COMPLETE'&&backend.operationId===options.operationId,'Original accepted backend case required');
+ await verifyOutputs(backend);
+ const phaseNames=['foreground-result.json','browser/browser-result.json','adoption-backend/adoption-receiving-result.json','adoption-browser/adoption-browser-result.json'];
+ const retainedPhases=[];
+ for(const name of phaseNames){
+  const value=await optional(join(original,name));
+  if(value){await verifyOutputs(value);for(const s of value.screens??[])await verifyOutputs({files:[s]});
+   retainedPhases.push({name,status:value.status,identity:await outputIdentity(join(original,name))});}
+ }
+ const directory=join(original,'source-editions',key);await mkdir(directory,{recursive:true,mode:0o700});
+ const selected=await selectSource(sourceRoot,directory),app=join(selected.directory,PREFIX);
+ const intent={schema:SCHEMA+'.source-continuation',operationId:options.operationId,reviewer:options.reviewer,
+  originalDirectory:original,sourceEdition:key,sourceRoot,directory,runtime,
+  originalIntent:await outputIdentity(join(original,'foreground-intent.json')),originalSelection:await outputIdentity(join(original,'source-selection.json')),
+  backend:await outputIdentity(join(original,'backend','receiving-result.json')),sourceSha256:selected.sha256};
+ await retained(join(directory,'continuation-intent.json'),intent);
+ // Earlier receipts may legitimately finish after this continuation was first
+ // selected. Preserve the first observed phase inventory, reporting it as such.
+ const observed=await optional(join(directory,'original-phase-observations.json'));
+ if(!observed)await retained(join(directory,'original-phase-observations.json'),retainedPhases);
+ const firstPhases=observed??retainedPhases;
+ for(const phase of firstPhases)await verifyOutputs({files:[phase.identity]});
+ const completed=await optional(join(directory,'continuation-result.json'));
+ if(completed){need(completed.sourceSha256===selected.sha256&&completed.operationId===options.operationId,'Original continuation result changed');await verifyOutputs(completed);return completed;}
+ const {reviewPrivacyBenchBrowser}=await import(pathToFileURL(join(app,'comparison/privacybench-browser-receiving.mjs')).href);
+ const {startDossierWorkspace}=await import(pathToFileURL(join(app,'server.mjs')).href);
+ const module=await import(pathToFileURL(runtime.playwrightModule).href),chromium=module.chromium??module.default?.chromium;
+ need(chromium,'Original Playwright Chromium unavailable');
+ const abort=new AbortController(),owned=new Map(),closers=new Map();let context=null,primary=null,result=null,signalClose=null;
+ const close=(key,value)=>{if(!value)return Promise.resolve();if(!closers.has(key))closers.set(key,Promise.resolve().then(()=>value.close()));return closers.get(key);};
+ const closing=()=>[close('browser',context),...[...owned].map(([key,value])=>close(key,value))];
+ const stop=()=>{if(abort.signal.aborted)return;abort.abort(Error('Original source continuation interrupted'));signalClose=Promise.allSettled(closing());};
+ process.once('SIGINT',stop);process.once('SIGTERM',stop);const active=()=>abort.signal.throwIfAborted();
+ const oldPorts=await optional(join(original,'listener-ports.json'))??{};
+ let ports=await optional(join(directory,'listener-ports.json'))??{};
+ async function listener(name,storeDirectory){
+  active();const value=await startDossierWorkspace({directory:storeDirectory,port:ports[name]??(name==='original'?oldPorts.original??0:0),
+   clinicalTrialsPython:runtime.python,extractionPython:runtime.python,extractionSignal:abort.signal});
+  owned.set(name,value);
+  active();const port=Number(new URL(value.url).port);need(!ports[name]||ports[name]===port,'Original continuation origin changed');
+  ports={...ports,[name]:port};await atomic(join(directory,'listener-ports.json'),ports);
+  await retained(join(directory,name+'-workspace-binding.json'),{operationId:options.operationId,directory:storeDirectory,workspaceId:value.workspaceId,port});
+  return value;
+ }
+ try{
+  const main=await listener('original',backend.storeDirectory);active();
+  const oldBinding=await optional(join(original,'original-workspace-binding.json'));
+  if(oldBinding)need(main.workspaceId===oldBinding.workspaceId&&backend.storeDirectory===oldBinding.directory,'Continuation opened another original workspace');
+  context=await chromium.launchPersistentContext(join(original,'browser-profile'),{executablePath:runtime.chromium,headless:true,acceptDownloads:true,viewport:{width:1440,height:1000}});
+  active();context.setDefaultTimeout(30000);context.setDefaultNavigationTimeout(60000);
+  const page=context.pages()[0]??await context.newPage();
+  const chapter=await reviewPrivacyBenchBrowser({page,url:main.url,receipt:backend,directory:join(directory,'privacybench'),
+   reviewer:options.reviewer,python:runtime.python,openReceived:async({directory:receivedDirectory})=>{
+    const targets=new Map(['author','contributor'].map(role=>[join(directory,'privacybench','received-privacybench-'+role),'received-'+role]));
+    const name=targets.get(resolve(receivedDirectory));need(name&&!owned.has(name),'Only original chapter receiving targets may open');
+    const value=await listener(name,receivedDirectory);return{url:value.url,close:()=>close(name,value)};
+   }});
+  active();await verifySelection(selected.directory,selected.manifest);await verifySelection(join(original,'selected-source'),oldSelection);
+  for(const phase of firstPhases)await verifyOutputs({files:[phase.identity]});
+  result={schema:SCHEMA+'.source-continuation',status:'PRIVACYBENCH_CONTINUATION_COMPLETE_REQUIRES_VISUAL_INSPECTION',
+   operationId:options.operationId,sourceEdition:key,originalDirectory:original,directory,sourceSha256:selected.sha256,
+   originalIntent:intent.originalIntent,originalSelection:intent.originalSelection,originalPhasesAtSelection:firstPhases,
+   originalDossierId:backend.dossierId,originalStoreDirectory:backend.storeDirectory,
+   privacybench:{file:join(directory,'privacybench','privacybench-browser-result.json'),status:chapter.status,nativeStatus:chapter.native.status,archive:chapter.native.handover.exported.archive},
+   files:[...chapter.files,...chapter.screens,...chapter.native.files,await outputIdentity(join(directory,'privacybench','privacybench-browser-result.json'))],
+   literalInspection:chapter.literalInspection};
+ }catch(error){primary=error;try{await atomic(join(directory,'continuation-error.json'),{operationId:options.operationId,message:error.message,stack:error.stack});}catch(e){primary=new AggregateError([error,e],'Original continuation and error retention failed',{cause:error});}throw primary;}
+ finally{
+  process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);
+  const results=await Promise.allSettled(closing());if(signalClose)await signalClose;
+  const failures=results.filter(x=>x.status==='rejected').map(x=>x.reason);
+  if(failures.length)throw new AggregateError(primary?[primary,...failures]:failures,'Owned continuation cleanup failed',{cause:primary??failures[0]});
+ }
+ await retained(join(directory,'continuation-result.json'),result);return result;
+}
+
 export async function main(argv=process.argv.slice(2)){
- const {values:v}=parseArgs({args:argv,options:Object.fromEntries(['source-root','directory','operation','reviewer','python','playwright-module','chromium'].map(k=>[k,{type:'string'}]).concat([['lock-held',{type:'boolean',default:false}]])),strict:true});
+ const {values:v}=parseArgs({args:argv,options:Object.fromEntries(['source-root','directory','operation','reviewer','python','playwright-module','chromium'].map(k=>[k,{type:'string'}]).concat([['lock-held',{type:'boolean',default:false}],['source-edition',{type:'string'}]])),strict:true});
  for(const key of ['source-root','directory','operation','reviewer','python','playwright-module','chromium'])need(v[key],'Missing --'+key);
  const directory=resolve(v.directory);await mkdir(directory,{recursive:true,mode:0o700});
  if(!v['lock-held']){
@@ -229,7 +335,7 @@ export async function main(argv=process.argv.slice(2)){
   finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}return;
  }
  const result=await receiveComparisonForeground({sourceRoot:v['source-root'],directory,operationId:v.operation,
-  reviewer:v.reviewer,python:v.python,playwrightModule:v['playwright-module'],chromium:v.chromium});
+  reviewer:v.reviewer,python:v.python,playwrightModule:v['playwright-module'],chromium:v.chromium,sourceEdition:v['source-edition']});
  process.stdout.write(json(result));
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)main().catch(e=>{

@@ -26,3 +26,10 @@
 .output-binding{border-left:2px solid #bbb;padding-left:.7rem}
 .output-dialog{width:min(48rem,calc(100vw - 3rem));max-height:85vh;overflow:auto;border:1px solid #444;padding:1rem;background:#fff;color:#111}
 @media(max-width:600px){.output-card{padding:.7rem}.output-desk{margin-top:1rem}.output-actions{gap:.45rem}.output-actions>*{width:100%}.output-desk button{min-height:2.75rem}.output-table table{min-width:39rem}.output-grid{grid-template-columns:1fr}}
+
+/* Native PrivacyBench controls share the original industrial desk. */
+.privacybench-panel h4{margin:1rem 0 .4rem;font-size:1rem}
+.privacybench-panel>.output-actions{border-top:1px solid #ccc;padding-top:.7rem}
+.privacybench-panel td:nth-child(3),.privacybench-panel td:nth-child(4){font-variant-numeric:tabular-nums}
+.privacybench-panel>details{border-top:1px solid #ccc;padding-top:.75rem;margin-top:1rem}
+.privacybench-panel>details>summary{font-size:1.05rem}

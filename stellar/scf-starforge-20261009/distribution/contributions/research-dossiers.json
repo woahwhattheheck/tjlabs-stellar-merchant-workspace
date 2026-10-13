@@ -14,7 +14,8 @@
       "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-client.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-client.mjs"
     },
-    "./buyer/research-dossiers/comparison-adoption-handover": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-handover.mjs"
+    "./buyer/research-dossiers/comparison-adoption-handover": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-handover.mjs",
+    "./buyer/research-dossiers/privacybench-output": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/privacybench.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/contracts.mjs",
@@ -84,6 +85,15 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-handover-cli.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-handover-archive.py",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/inspect-adoption-handover.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/ADOPTION_HANDOVER.md"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/ADOPTION_HANDOVER.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/privacybench.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/privacybench-routes.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/privacybench-cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/PRIVACYBENCH_DESK.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/privacybench-output.js",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/privacybench-browser-receiving.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/privacybench-receiving.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/privacybench-receiving-fixture.json",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/PRIVACYBENCH_RECEIVING.md"
   ]
 }
