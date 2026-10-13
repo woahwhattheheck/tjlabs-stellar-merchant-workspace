@@ -2,6 +2,7 @@
 // Read-only catalogue preparation; the original Installation editor remains the writer.
 import {clone,object,need,same,canonical,identity,hashBytes,originalSource,newCopy,sourceFor,
  inputValue,checkpoint,emptyState,archive,readArchive,mergeState,openStore,MAX_SOURCE,MAX_ARCHIVE} from './operations_material_catalogue_model.mjs';
+import {createMaterialFollowingDesk} from './operations_material_following.mjs';
 import {createMaterialSupplierIntakeDesk} from './operations_material_supplier_intake.mjs';
 import {pendingSupplierRequests} from './operations_material_supplier_intake_model.mjs';
 import {Sha256} from './operations_installation_source_hash.mjs';
@@ -105,8 +106,8 @@ export function mountMaterialCatalogueSourceDesk(root,host){
    if(tab==='installation'){
     let selection=null,bindings=null;try{selection=JSON.parse(c.selectionText);}catch{}try{bindings=JSON.parse(c.bindingsText);}catch{}
     const plans=s.inspection.supplierPlans,reviews=s.inspection.supplierReviews.filter(r=>r.planId===selection?.supplierPlanId);
-    panel='<h3>Prepare the original Installation</h3><p>Profile: <strong>supplier-catalogues</strong>. Receive a complete new commercial Workshare draft; review its unchanged terms and complete source bindings before handing a separate draft back to the original editor.</p>'+
-     button('Receive complete current Workshare draft','template')+
+    panel=followingDesk.panel(c)+'<h3>Prepare the original Installation</h3><p>Profile: <strong>supplier-catalogues</strong>. Receive a complete new commercial Workshare draft; review its unchanged terms and complete source bindings before handing a separate draft back to the original editor.</p>'+
+     (!c.following?button('Receive complete current Workshare draft','template'):'')+
      (c.document?details('Complete original Workshare and Installation document',c.document):'<p>No Workshare draft received.</p>')+
      (c.template?details('Original source bindings and missing source decisions',{sourceBindings:c.template.sourceBindings,missingSources:c.template.missingSources,commercialCaseId:c.template.commercialCaseId}):'')+
      (c.template?'<div class="mc-fields">'+field('Stable preparation operation ID','operation',c.operationId)+
@@ -117,7 +118,7 @@ export function mountMaterialCatalogueSourceDesk(root,host){
       '<p>Incomplete typed JSON is saved as draft text. Only a complete native preparation can be handed to the Installation editor.</p>'+button('Prepare and review complete Installation','prepare'):'')+
      (c.prepared?'<section><h4>Retained native preparation</h4><p>Case version '+c.prepared.scope.version+' · <code>'+esc(c.prepared.preparationSha256)+'</code></p>'+
       details('Original native preview',c.prepared.nativePreview)+details('Prepared document, complete source and commercial outputs',c.prepared.result)+
-      '<div class="mc-actions">'+button('Open as separate Installation draft','receive')+button('Download complete preparation','prepared-download')+
+      '<div class="mc-actions">'+button(c.following?'Open same Installation draft':'Open as separate Installation draft','receive')+button('Download complete preparation','prepared-download')+
       button('Download exact selection','selection-download')+button('Download commercial HTML','commercial-html')+button('Download commercial Markdown','commercial-md')+
       button('Download workorder Markdown','workorder-md')+button('Build and download complete customer ZIP','handover')+'</div></section>':'');
    }
@@ -207,6 +208,7 @@ export function mountMaterialCatalogueSourceDesk(root,host){
  async function template(){
   need(!reason(),'Reopen the current original case before receiving a Workshare.');
   const c=current();need(c,'Open a complete source review.');await verify();
+  need(!c.following,'Choose New Installation explicitly before receiving a new Workshare draft.');
   const target=host.currentDraft();need(target&&!target.installationId&&target.expectedRevision===0&&object(target.document?.workshare),'Receive a complete new commercial Workshare in the original Installation editor first.');
   const result=await request('template',c,{document:target.document,operationId:c.operationId});
   const next=checkpoint(c,'Before receiving current Workshare',now());next.document=clone(target.document);next.template=clone(result.result);
@@ -291,6 +293,8 @@ export function mountMaterialCatalogueSourceDesk(root,host){
    c.updatedAt=now();changed();if(['plan','review'].includes(key))render();
   }catch(e){error=e.message;render();}
  }
+ const followingDesk=createMaterialFollowingDesk({root,host,current,state:()=>state,request,verify,readSource,replaceCopy,commit,render,changed,invalidate,reason,download,
+  checkpoint:(c,label)=>checkpoint(c,label,now()),notice:value=>{notice=value;}});
  const supplierDesk=createMaterialSupplierIntakeDesk({
   state:()=>state,scope,context:host.context,api:host.api,readOnlyReason:reason,
   otherPending:()=>state.intakes.some(i=>i.state==='PREPARED'),commit,changed,render,
@@ -299,13 +303,14 @@ export function mountMaterialCatalogueSourceDesk(root,host){
    copyName=name;await openSource();supplierMode=false;tab='overview';
    notice='The exact frozen complete supplier catalogue is attached and open as a separate named source review. Existing Workshare and Installation drafts remain retained.';}
  });
- root.addEventListener('input',event=>{if(!busy&&!hostBusy&&!conflict){if(!supplierDesk.edit(event.target))edit(event.target);}});
+ root.addEventListener('input',event=>{if(!busy&&!hostBusy&&!conflict){try{if(!supplierDesk.edit(event.target)&&!followingDesk.edit(event.target))edit(event.target);}catch(e){error=e.message;render();}}});
  root.addEventListener('change',event=>{
   if(event.target.matches('[data-ms-file]')){const file=event.target.files?.[0];event.target.value='';run(()=>supplierDesk.retainFile(file));}
   if(event.target.matches('[data-mc-upload]')){const file=event.target.files?.[0];event.target.value='';run(()=>upload(file));}
   if(event.target.matches('[data-mc-import]')){const file=event.target.files?.[0],fork=event.target.dataset.fork==='true';event.target.value='';run(()=>importWork(file,fork));}
  });
  root.addEventListener('click',event=>{
+  const following=event.target.closest('[data-mf-action]');if(following&&root.contains(following)){run(()=>followingDesk.action(following.dataset.mfAction));return;}
   const raw=event.target.closest('[data-ms-action]');if(raw&&root.contains(raw)){run(()=>supplierDesk.action(raw.dataset.msAction,raw));return;}
   const el=event.target.closest('[data-mc-action]');if(!el||!root.contains(el))return;const action=el.dataset.mcAction;
   if(action==='import'||action==='import-fork'){const input=$('[data-mc-import]');input.dataset.fork=String(action==='import-fork');input.click();return;}

@@ -9,7 +9,7 @@ const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 const SELF='products/material-catalog/commissioning/';
 const ORIGINAL='stellar/scf_2026/sf49_data_commissioning/installation-workorders/';
 export const APPLICATION=[
- SELF+'core.mjs',SELF+'files.mjs',SELF+'cli.mjs',SELF+'handover.mjs',SELF+'receive.mjs',SELF+'README.md',SELF+'RECEIVING.md',
+ SELF+'core.mjs',SELF+'following.mjs',SELF+'files.mjs',SELF+'cli.mjs',SELF+'handover.mjs',SELF+'receive.mjs',SELF+'README.md',SELF+'RECEIVING.md',SELF+'FOLLOWING_INSTALLATION.md',
  'products/material-catalog/recipient/core.mjs','products/material-catalog/recipient/sha256.mjs',
  'products/material-catalog/recipient/assemble.mjs','products/material-catalog/recipient/review.mjs',
  'products/material-catalog/recipient/renewal.mjs','products/material-catalog/recipient/renewal-panel.mjs',
@@ -66,6 +66,7 @@ function inputsFrom(map){
   commissioning:parseJson(raw('commissioning.json')),packetBytes:map.get('source/receiving-packet.json')??null,
   profile:parseJson(raw('profile.json')),bindings:parseJson(raw('bindings.json')),selection:parseJson(raw('selection.json')),
   attachments:list.files.map(f=>{const bytes=map.get('attachments/'+f.filename);need(bytes&&same(identity(bytes),{bytes:f.bytes,sha256:f.sha256}),'Retain complete original additional source '+f.filename);return {path:'attachments/'+f.filename,purpose:f.purpose,bytes};})};
+ if(map.has('source/following.json')){input.following=parseJson(raw('following.json'));input.previousBundleBytes=raw('previous-catalog.jsonl');}
  return input;
 }
 async function capture(options,{template=false}={}){
@@ -74,6 +75,8 @@ async function capture(options,{template=false}={}){
  for(const [arg,name,max]of [['bundle','customer-catalog.jsonl',MAX_BUNDLE],['seed','seed.json',MAX_JSON],['case','case.json',MAX_JSON],['commissioning','commissioning.json',MAX_JSON]]){
   add(source,'source/'+name,await disk(options[arg],max));
  }
+ need(!options.previousBundle||options.following,'Select the complete --following request with --previousBundle.');
+ if(options.following){need(options.previousBundle,'Select the original --previousBundle.');add(source,'source/following.json',await disk(options.following,16*1024*1024));add(source,'source/previous-catalog.jsonl',await disk(options.previousBundle,MAX_BUNDLE));}
  if(options.packet)add(source,'source/receiving-packet.json',await disk(options.packet));
  const app=await application();add(source,'source/profile.json',app.get('application/'+ORIGINAL+'supplier-catalogues.json'));
  const attachments=options.attachments?await disk(options.attachments):json({schema:SCHEMA+'.attachments',files:[]});
@@ -94,6 +97,7 @@ async function capture(options,{template=false}={}){
    packetBytes:source.get('source/receiving-packet.json')??null,profile:parseJson(source.get('source/profile.json')),
    attachments:checkAttachmentList(parseJson(attachments)).files.map(f=>({path:'attachments/'+f.filename,purpose:f.purpose,bytes:source.get('attachments/'+f.filename)})),
    operationId:options.operation};
+  if(options.following){input.following=parseJson(source.get('source/following.json'));input.previousBundleBytes=source.get('source/previous-catalog.jsonl');}
   const value=materialInstallationTemplate(input);
   add(source,'source/bindings.json',json(value.bindings));add(source,'source/selection.json',json(value.selection));
   return {source,app,template:value};
@@ -110,6 +114,7 @@ function request(source,app){
 function derive(source,app){
  const input=inputsFrom(source),value=prepareMaterialInstallation(input),bundle=inspectMaterialSource(input.bundleBytes,input.expectedBundleSha256),out=new Map([...source,...app]);
  const put=(name,value)=>add(out,name,Buffer.isBuffer(value)?value:json(value));
+ if(value.source.following){put('FOLLOWING_REVIEW.json',value.source.following);put('FOLLOWING_COMPARISON.json',value.source.following.comparison);}
  put('derived-bindings.json',value.bindings);put('MATERIAL_CUSTOMER_SOURCE.json',value.source);put('COMMERCIAL_WORKSHARE.json',value.commercial);
  put('COMMERCIAL_WORKSHARE.md',Buffer.from(value.commercialMarkdown));put('COMMERCIAL_WORKSHARE.html',Buffer.from(value.commercialHtml));
  put('installation-input.json',value.prepared.document);put('installation-preview-input.json',value.prepared.preview);
@@ -119,7 +124,12 @@ function derive(source,app){
  const original=name=>app.get('application/products/material-catalog/recipient/'+name).toString('utf8');
  const modules=Object.fromEntries(['sha256.mjs','core.mjs','review.mjs','renewal.mjs','renewal-panel.mjs','review-panel.mjs','workspace.mjs','reader.html'].map(name=>[name,original(name)]));
  put('Material_Catalog_Reader.html',Buffer.from(assembleRecipient(modules,{name:'customer-catalog.jsonl',base64:Buffer.from(input.bundleBytes).toString('base64'),sha256:input.expectedBundleSha256})));
- put('REOPEN.md',Buffer.from('# Complete material customer commissioning\n\nOpen START_HERE.html and Material_Catalog_Reader.html. Every original input is retained under source/ and attachments/, with extracted exact original feeds under original-sources/.\n\nRun the retained complete source with an existing Node installation:\n\n~~~sh\nnode application/products/material-catalog/commissioning/cli.mjs reopen --directory .\n~~~\n\nUse an absolute directory when calling from elsewhere. Reopening verifies every file, reconstructs the native input/preview and handover from the original retained bundle, current-case snapshot, Workshare, explicit bindings and source closure, and compares exact bytes. Copy this complete directory to a distinct private receiving location and run that same command there.\n\nIn the original Operations Customer installations screen, Load input file accepts installation-input.json and performs its current-case preview. Keep the original writer, request and full-case export/independent receiving. A moved current case needs a fresh original seed and deliberate new preparation; this historical package remains unchanged.\n\nThe whole public implementation and receiving guide are retained under application/products/material-catalog/commissioning/. Open all final attachments and downloaded/reopened outputs as the recipient; producing-seat desktop/narrow image viewing remains part of actual delivery.\n'));
+ const continued=value.source.following;
+ const receiving=continued?
+  'This is a following preparation for EXISTING Installation '+value.prepared.preview.installationId+' at revision '+value.prepared.preview.expectedRevision+'. It is not a new Installation.\n\nRetain source/previous-catalog.jsonl, source/customer-catalog.jsonl and source/following.json together. In the original Material Source Desk open the following catalogue, choose Update existing saved Installation with this exact ID and previous attached catalogue, then compare its actual current case/head. Receive the saved review only against that exact comparison; any changed source, case, target or terms requires a deliberate new review. Use Open same Installation draft and the original Review/Save. Original terms, assignments and completed checks remain retained.\n\ninstallation-preview-input.json is the complete original API preview request (expectedVersion, installationId, expectedRevision, document); it is NOT a document-only Load input file. Do not import this package document into a new Installation. If using the existing editor manually, first open Edit on this exact saved ID/current revision and only then load installation-input.json; inspect the complete preview and original target before Save. Historical package identity does not authorize replacing a newer target.\n':
+  'In the original Operations Customer installations screen, Load input file accepts installation-input.json into the deliberately selected NEW Workshare draft and performs its current-case preview. Keep the original writer, request and full-case export/independent receiving. A moved current case needs a fresh original seed and deliberate new preparation; this historical package remains unchanged.\n';
+ put('REOPEN.md',Buffer.from('# Complete material customer commissioning\n\nOpen START_HERE.html and Material_Catalog_Reader.html. Every original input is retained under source/ and attachments/, with extracted exact original feeds under original-sources/.\n\nRun the retained complete source with an existing Node installation:\n\n~~~sh\nnode application/products/material-catalog/commissioning/cli.mjs reopen --directory .\n~~~\n\nUse an absolute directory when calling from elsewhere. Reopening verifies every file, reconstructs the native input/preview and handover from both retained catalogue editions when selected, current-case snapshot, Workshare, explicit review/bindings and complete source closure, and compares exact bytes. Copy this complete directory to a distinct private receiving location and run that same command there.\n\n'+receiving+'\nThe whole public implementation and receiving guide are retained under application/products/material-catalog/commissioning/. Open all final attachments and downloaded/reopened outputs as the recipient; producing-seat desktop/narrow image viewing remains part of actual delivery.\n'));
+
  const rows=[...out].map(([path,b])=>ref(path,b));
  put('START_HERE.html',Buffer.from(renderMaterialHandover(value,rows)));
  const req=request(source,app);
@@ -164,7 +174,7 @@ export async function reopenMaterialInstallation(directory){
 }
 export async function prepareMaterialInstallationFiles(options){
  const captured=await capture(options),made=derive(captured.source,captured.app),out=await target(options.out);
- for(const key of ['bundle','seed','case','commissioning','packet','bindings','selection','attachments'])if(options[key]){
+ for(const key of ['bundle','seed','case','commissioning','packet','bindings','selection','attachments','following','previousBundle'])if(options[key]){
   const p=resolve(options[key]);need(p!==out&&!p.startsWith(out+'/'),'Keep original inputs outside the owned output directory.');
  }
  if(await existing(out)){

@@ -336,6 +336,9 @@ def main(argv=None):
                          "handoverPath": str(root / "Original_Material_Catalogue.jsonl")}
         if raw_intake:
             browser_input["supplierIntake"] = supplier_input
+        from material_installation_following_receiving import capture_original, verify_native, receive_customer, verify_cold
+        if source.get("followingInstallation"):
+            browser_input["followingInstallation"] = capture_original(source["followingInstallation"], root, raw, keep)
         keep("Browser_Input.json", browser_input)
         command("original-complete-browser-course",
                 [args.node.resolve(), installed / "material-catalogue-source-desk-browser.mjs", root / "Browser_Input.json", access_path])
@@ -408,6 +411,10 @@ def main(argv=None):
             "archive": identity(customer), "members": len(members),
             "originalBytes": len(full_source), "independentReopen": "COMPLETE"}
         keep("Original_Selected_Catalogue.json", source["selection"])
+        following_result = verify_native(ops, source["caseId"], browser, source, root, raw, keep)
+        if following_result:
+            report["phases"]["following-customer"] = receive_customer(
+                following_result, root, args.node.resolve(), raw, identity, write, command, keep)
         case_export_path = root / "Complete_Operations_Case.zip"
         case_export = raw(case_export_path) if case_export_path.exists() else ops.export(source["caseId"])
         keep(case_export_path.name, case_export)
@@ -427,6 +434,7 @@ def main(argv=None):
             need(metadata["sha256"] == sha(data), "Independent receiving changed an original attachment.")
             need(data == full_source,
                  "Independent receiving changed a complete original source attachment.")
+        verify_cold(received, receiving_id, following_result, source, root, raw)
         # Replaying the original imported case must preserve its current version.
         before = received.read(receiving_id)["program"]["version"]
         replay = received.import_bundle(case_export, "Material catalogue Installation independent receiving", request_id, source["actor"])
@@ -436,6 +444,7 @@ def main(argv=None):
         workspace = Workspace(receiver, scenario)
         cold = Operations(workspace).installation(receiving_id, selected["id"], selected["revision"])
         need(cold["sha256"] == saved["sha256"], "Cold reopen changed the original Installation.")
+        verify_cold(Operations(workspace), receiving_id, following_result, source, root, raw)
         keep("Independent_Cold_Installation.json", cold)
         report["phases"]["independent-receiving"] = {"caseId": receiving_id, "installation": selected,
                                                    "sourceIds": [actual_source_id]}

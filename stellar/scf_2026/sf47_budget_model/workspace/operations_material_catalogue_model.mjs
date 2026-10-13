@@ -2,6 +2,7 @@
 // Retained review copies only. Catalogue validation and Installation writes stay native.
 import {validateSupplierState,mergeSupplierState} from './operations_material_supplier_intake_model.mjs';
 import {Sha256} from './operations_installation_source_hash.mjs';
+import {validateMaterialFollowing,materialFollowingInput} from './operations_material_following_model.mjs';
 export const SCHEMA='stellar-forge.material-catalogue-working-copies.v1';
 export const COPY='stellar-forge.material-catalogue-working-copy.v1';
 export const SELECTION='stellar-forge.material-customer-installation.v1.selection';
@@ -55,7 +56,7 @@ export function inputValue(c,s){
  need(object(c.document)&&object(c.document.workshare)&&c.template,'Receive the complete original Workshare draft first.');
  const selection=selectionOf(c,s),bindings=JSON.parse(c.bindingsText);
  need(object(bindings),'Keep complete Installation bindings as an object.');
- return {document:clone(c.document),selection,bindings};
+ return {document:clone(c.document),selection,bindings,...materialFollowingInput(c)};
 }
 export function inputHash(c,s){return identity(canonical(inputValue(c,s))).sha256;}
 export function checkpoint(c,label,at){
@@ -65,6 +66,7 @@ export function checkpoint(c,label,at){
  next.updatedAt=at;return next;
 }
 export function validateCopy(c,sources,{history=true}={}){
+ validateMaterialFollowing(c,sources);
  need(object(c)&&c.schema===COPY&&text(c.id,200)&&c.id&&text(c.name,300)&&object(c.scope)&&text(c.scope.caseId,200)&&text(c.scope.planId,200)&&text(c.scope.createdAt,100),'Keep the original complete review identity and case scope.');
  const s=sources.find(x=>x.metadata.id===c.sourceId&&x.metadata.sha256===c.sourceSha256);
  need(s&&text(c.operationId,200)&&text(c.notes,16000)&&text(c.selectionText,2*1024*1024)&&text(c.bindingsText,2*1024*1024),'Keep the original source and complete unfinished selection/binding text.');
@@ -76,6 +78,7 @@ export function validateCopy(c,sources,{history=true}={}){
   validateCopy({...h.snapshot,history:[]},sources,{history:false});
  }
  if(c.prepared){
+  if(c.following)need(same(c.preparedInput.followingReview,JSON.parse(c.following.reviewText))&&same(Object.fromEntries(Object.keys(c.following.request).map(k=>[k,c.preparedInput[k]])),c.following.request),'Changed following review needs a new original preparation.');
   need(object(c.prepared)&&object(c.prepared.scope)&&c.prepared.scope.caseId===c.scope.caseId&&object(c.prepared.source)&&c.prepared.source.id===c.sourceId&&c.prepared.source.sha256===c.sourceSha256&&object(c.preparedInput),'Keep the exact source-bound native preparation and request.');
   need(same(c.preparedInput.document,c.document)&&same(c.preparedInput.selection,JSON.parse(c.selectionText))&&same(c.preparedInput.bindings,JSON.parse(c.bindingsText)),'Changed bindings require a new preparation; retain old editions in history.');
  }

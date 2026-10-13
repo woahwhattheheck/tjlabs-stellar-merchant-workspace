@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "material-catalogue-installation",
   "title": "Material catalogue Customer Installations",
-  "description": "Complete original supplier-file intake, material catalogue operator and retained edition desk, commercial Workshare preparation and Grant Operations receiving",
+  "description": "Complete original supplier-file intake, catalogue review, commercial Workshare preparation and explicit following editions of the same saved Customer Installation",
   "base": {
     "commands": [
       "installation",
@@ -186,14 +186,19 @@
     "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/style.css",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/commercial-workshare-core.mjs",
-    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/supplier-catalogues.json"
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/supplier-catalogues.json",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_following_model.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_following.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/material-installation-following-browser.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/material_installation_following_receiving.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_INSTALLATION_FOLLOWING.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete original supplier-file intake, material catalogue operator and retained edition desk, commercial Workshare preparation and Grant Operations receiving",
+    "description": "Complete original supplier-file intake, catalogue review, commercial Workshare preparation and explicit following editions of the same saved Customer Installation",
     "readme": "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_CATALOGUE_SOURCE_DESK.md"
   }
 }
