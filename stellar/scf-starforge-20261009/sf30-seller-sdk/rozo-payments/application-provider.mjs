@@ -1,6 +1,7 @@
 // MIT. ROZO's original workspace in the maintained Applications lifecycle.
 import { createHash } from 'node:crypto';
-import { join, relative, dirname } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { join, relative, dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { inspectMerchantRuntime } from '../../sf46-release/runtime-package.mjs';
 import {
@@ -33,6 +34,12 @@ export function rozoPaymentsApplication(common = [], field = (name, label, type,
         'Choose the workspace created or received by rozo-payments init.'),
       field('connectionsFile', 'Private connection configuration', 'path', true,
         'Choose the original ROZO connection JSON. API keys and callback secrets use private environment references.'),
+      field('merchantConfigFile', 'Existing merchant host configuration', 'path', false,
+        'Select the original Accounting and Buyer host configuration to include its finance workspace.'),
+      field('accountingAlias', 'Accounting workspace alias', 'text', false,
+        'Choose the declared Accounting alias for coding, period close and accountant handoffs.'),
+      field('buyerAlias', 'Buyer expense workspace alias', 'text', false,
+        'Choose the declared Buyer alias for original purchase intake and expense coding.'),
       ...common,
     ],
   };
@@ -58,6 +65,31 @@ export async function prepareRozoPaymentsApplication(settings, { inputPath, runt
   const runtime = await inspectMerchantRuntime(absolute(runtimeDirectory), { load: false });
   const sourceRoot = absolute(runtime.sourceRoot);
   const native = await nativeSource(sourceRoot);
+  const financeArgs=[];
+  if(settings.merchantConfigFile||settings.accountingAlias||settings.buyerAlias){
+    need(settings.merchantConfigFile&&(settings.accountingAlias||settings.buyerAlias),
+      'APPLICATION_ROZO_FINANCE_CONFIGURATION','Choose an original host configuration and at least one declared finance alias.');
+    const hostFile=absolute(settings.merchantConfigFile),hostInput=await inputPath(hostFile,'file',false,true);
+    need(hostInput.bytes>0&&hostInput.bytes<=1024*1024,'APPLICATION_ROZO_FINANCE_CONFIGURATION');
+    inputs.push(hostInput);
+    const configModule=await import(pathToFileURL(join(sourceRoot,'stellar-forge/mcp-merchant-operator/config.mjs')).href);
+    const configured=await configModule.readMerchantConfig(hostFile);
+    const alias=value=>typeof value==='string'&&/^[a-z0-9][a-z0-9_-]{0,63}$/.test(value);
+    financeArgs.push('--merchant-config',hostFile);
+    if(settings.accountingAlias){
+      need(alias(settings.accountingAlias)&&Object.hasOwn(configured.accounting?.workspaces??{},settings.accountingAlias),
+        'APPLICATION_ROZO_FINANCE_CONFIGURATION','Select an Accounting alias from this original host configuration.');
+      financeArgs.push('--accounting',settings.accountingAlias);
+    }
+    if(settings.buyerAlias){
+      need(alias(settings.buyerAlias)&&Object.hasOwn(configured.buyerExpenses?.workspaces??{},settings.buyerAlias),
+        'APPLICATION_ROZO_FINANCE_CONFIGURATION','Select a Buyer alias from this original host configuration.');
+      const raw=JSON.parse(await readFile(hostFile,'utf8'));
+      need(typeof raw.buyerExpenseConnection==='string','APPLICATION_ROZO_FINANCE_CONFIGURATION');
+      inputs.push(await inputPath(resolve(dirname(hostFile),raw.buyerExpenseConnection),'file',false,true));
+      financeArgs.push('--buyer',settings.buyerAlias);
+    }
+  }
   const workspace = await native.inspectRozoWorkspace(directory);
   need(workspace?.schema === 'stellar-forge.rozo-workspace.v1' &&
     identifier(workspace.workspaceId) && identifier(workspace.originId),
@@ -90,7 +122,7 @@ export async function prepareRozoPaymentsApplication(settings, { inputPath, runt
     args: ['serve', '--workspace', directory, '--config', configuration, '--host', '127.0.0.1',
       '--expected-workspace-id', workspace.workspaceId, '--expected-origin-id', workspace.originId,
       '--source-root', sourceRoot, '--source-manifest', manifestPath,
-      '--source-sha256', source.manifestSha256],
+      '--source-sha256', source.manifestSha256,...financeArgs],
     inputs, createDirectories: [],
     resourceKey: identity({ family: 'rozo-payments', directory,
       workspaceId: workspace.workspaceId, originId: workspace.originId }),
@@ -103,7 +135,7 @@ function selection(request) {
   const args = request.args.slice(1), options = new Map();
   const required = ['--workspace', '--config', '--host', '--expected-workspace-id',
     '--expected-origin-id', '--source-root', '--source-manifest', '--source-sha256'];
-  const allowed = new Set([...required, '--port']);
+  const allowed = new Set([...required, '--port', '--merchant-config', '--accounting', '--buyer']);
   need(args.length % 2 === 0, 'APPLICATION_ROZO_STARTUP_CHANGED');
   for (let at = 0; at < args.length; at += 2) {
     need(allowed.has(args[at]) && !options.has(args[at]) && typeof args[at + 1] === 'string',
@@ -117,6 +149,13 @@ function selection(request) {
   const rawPort = options.get('--port') ?? '0';
   need(/^(0|[1-9]\d*)$/.test(rawPort) && Number(rawPort) <= 65535,
     'APPLICATION_ROZO_STARTUP_CHANGED');
+  const hasFinance=['--merchant-config','--accounting','--buyer'].some(key=>options.has(key));
+  if(hasFinance){
+    need(options.has('--merchant-config')&&(options.has('--accounting')||options.has('--buyer')),
+      'APPLICATION_ROZO_STARTUP_CHANGED');
+    for(const key of ['--accounting','--buyer'])if(options.has(key))
+      need(/^[a-z0-9][a-z0-9_-]{0,63}$/.test(options.get(key)),'APPLICATION_ROZO_STARTUP_CHANGED');
+  }
   const sourceRoot = absolute(options.get('--source-root'));
   const sourceManifest = absolute(options.get('--source-manifest'));
   need([join(sourceRoot, SOURCE, MANIFEST), join(dirname(sourceRoot), 'manifest.json'),
@@ -126,6 +165,8 @@ function selection(request) {
     directory: absolute(options.get('--workspace')), configuration: absolute(options.get('--config')),
     workspaceId: options.get('--expected-workspace-id'), originId: options.get('--expected-origin-id'),
     sourceRoot, sourceManifest, sourceSha256: options.get('--source-sha256'), port: Number(rawPort),
+    merchantConfiguration:options.has('--merchant-config')?absolute(options.get('--merchant-config')):null,
+    accountingId:options.get('--accounting')??null,buyerId:options.get('--buyer')??null,
   };
 }
 
@@ -189,6 +230,7 @@ export async function rozoPaymentsStartup(request, text) {
   const state = await liveState(url.origin, value.sessionToken);
   need(state?.schema === STATE && state.workspace?.workspaceId === selected.workspaceId &&
     state.workspace?.originId === selected.originId &&
+    (state.finance?.accountingId??null)===selected.accountingId && (state.finance?.buyerId??null)===selected.buyerId &&
     state.sourceIdentity?.manifestSha256 === source.manifestSha256 &&
     state.sourceIdentity?.selectionSha256 === source.selectionSha256 &&
     JSON.stringify(state.sourceIdentity?.packageFiles) === JSON.stringify(source.packageFiles),
@@ -197,6 +239,7 @@ export async function rozoPaymentsStartup(request, text) {
     url: url.href, workspaceId: selected.workspaceId,
     original: {
       schema: STARTUP, directory: selected.directory, configuration: selected.configuration,
+      finance:{merchantConfiguration:selected.merchantConfiguration,accountingId:selected.accountingId,buyerId:selected.buyerId},
       workspaceId: selected.workspaceId, originId: selected.originId, workspaceCreatedAt: workspace.createdAt,
       sourceRoot: selected.sourceRoot, executedSourceRoot, sourceManifest: selected.sourceManifest,
       sourceSha256: source.manifestSha256, sourceSelectionSha256: source.selectionSha256,

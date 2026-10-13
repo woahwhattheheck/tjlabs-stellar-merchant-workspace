@@ -340,3 +340,10 @@ A complete customer receiving result should identify:
 8. Final service/client drain and all complete source and received artifacts.
 
 Continue operating from the received workspace and its printed application URL. Review the original source edition and evidence in **Decision & reports**, save any next local decision, and retain that workspace with the complete download and receiving receipts.
+
+
+## Complete RFP, workbook and amendment intake
+
+The installed customer now prepares and inspects a complete original document set, then saves it through the existing native atomic intake. Use **intake-template → prepare-intake → intake-plan → run** with the Merchant host's existing configured input alias. The prepared request retains the actual native workspace, original notice, command, revision and every document byte; the immutable customer operation binds the complete input SHA256. A lost response resumes the same native command. An actual revision conflict uses **refresh-intake** to retain the original request and explicitly select only its save revision.
+
+The full operating sequence, host input declaration, source-file handling, JavaScript types and cold receiving path are in [CANADABUYS_EVIDENCE_INTAKE.md](CANADABUYS_EVIDENCE_INTAKE.md). This extends the same application and customer connection. It does not mark sources reviewed, create a purchase or change public payment terms.

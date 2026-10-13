@@ -110,6 +110,9 @@ def process_identity(pid):
         fields = raw[raw.rfind(")") + 2:].split()
         result["start_ticks"] = fields[19]
         result["process_state"] = fields[0]
+        result["parent_pid"] = int(fields[1])
+        result["process_group_id"] = int(fields[2])
+        result["session_id"] = int(fields[3])
     except (OSError, IndexError):
         pass
     return result
@@ -219,30 +222,154 @@ class NativeProcessController:
             # A detached terminal must not abandon an already accepted process.
             self.stream = False
 
+    def _observe_owned_group(self, process, phase):
+        """Retain original descendants, including separately detached browsers."""
+        group = phase["process_group"]
+        snapshot = {}
+        try:
+            for entry in Path("/proc").iterdir():
+                if not entry.name.isdecimal():
+                    continue
+                member = process_identity(int(entry.name))
+                if all(key in member for key in ("start_ticks", "parent_pid",
+                        "process_group_id", "session_id", "boot_id", "pid_namespace")):
+                    snapshot[member["pid"]] = member
+        except OSError as exc:
+            group["observation_error"] = str(exc)
+            return None
+        keys = ("pid", "host_id", "boot_id", "pid_namespace", "start_ticks")
+
+        def same(current, prior):
+            return all(key in current and key in prior and current[key] == prior[key]
+                       for key in keys)
+
+        expected = [phase["process_identity"]] + group["observed_members"]
+        # The original driver records its exact browser identity immediately
+        # after launchServer. Its owner must be this exact original phase PID,
+        # namespace and start time, including when the driver has since exited.
+        for row in phase.get("progress_processes", []):
+            owner, child = row.get("owner", {}), row.get("process", {})
+            if not isinstance(owner, dict) or not isinstance(child, dict):
+                continue
+            if (same(owner, phase["process_identity"]) and
+                    child.get("parent_pid") == owner.get("pid") and
+                    all(child.get(key) == owner.get(key)
+                        for key in ("host_id", "boot_id", "pid_namespace"))):
+                expected.append(child)
+        owned = {
+            pid: current for pid, current in snapshot.items()
+            if any(same(current, prior) for prior in expected)
+        }
+        # Follow current parentage while it still exists. Afterwards the exact
+        # retained child identities survive reparenting to the host's init.
+        changed = True
+        while changed:
+            changed = False
+            groups = {(row["process_group_id"], row["session_id"])
+                      for row in owned.values()}
+            for pid, member in snapshot.items():
+                if pid in owned:
+                    continue
+                parent = owned.get(member["parent_pid"])
+                descendant = (
+                    parent is not None and
+                    int(member["start_ticks"]) >= int(parent["start_ticks"]) and
+                    all(member[key] == parent[key]
+                        for key in ("host_id", "boot_id", "pid_namespace"))
+                )
+                same_group = (member["process_group_id"], member["session_id"]) in groups
+                if descendant or same_group:
+                    owned[pid] = member
+                    changed = True
+        # Never signal the controller's own group. A command's original session
+        # and its observed detached children have separately owned groups.
+        if any(row["process_group_id"] == os.getpgrp() for row in owned.values()):
+            group["observation_error"] = "An observed child shares the controller process group"
+            return None
+        previous_groups = {(row.get("process_group_id"), row.get("session_id"))
+                           for row in expected}
+        unanchored = [
+            row for pid, row in snapshot.items()
+            if pid not in owned and
+            (row["process_group_id"], row["session_id"]) in previous_groups
+        ]
+        group["observed_at"] = utc_now()
+        group["current_members"] = list(owned.values())
+        group["current_groups"] = sorted({
+            (row["process_group_id"], row["session_id"]) for row in owned.values()
+        })
+        if unanchored:
+            group["unanchored_members"] = unanchored
+            group["observation_error"] = "A prior group has no retained original process identity"
+            return None
+        group.pop("unanchored_members", None)
+        group.pop("observation_error", None)
+        retained = {(row.get("pid"), row.get("start_ticks")): row
+                    for row in group["observed_members"]}
+        retained.update({(row["pid"], row["start_ticks"]): row for row in owned.values()})
+        group["observed_members"] = list(retained.values())
+        return [row for row in owned.values() if row.get("process_state") not in ("Z", "X")]
+
     def _stop_owned(self, process, phase):
-        if process.poll() is not None:
-            return
-        phase["termination"] = {"requested_at": utc_now(), "signal": "SIGTERM"}
-        self._save()
-        try:
-            os.killpg(process.pid, signal.SIGTERM)
-        except ProcessLookupError:
-            return
-        try:
-            process.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            phase["termination"]["signal"] = "SIGKILL"
-            phase["termination"]["forced_at"] = utc_now()
+        if "group_cleanup_complete" in phase:
+            return phase["group_cleanup_complete"]
+        # Observe the original leader before poll() can reap it. A reaped leader
+        # does not mean its Chromium/other children have left the owned group.
+        remaining = self._observe_owned_group(process, phase)
+        if remaining == []:
+            process.poll()
+            if "termination" in phase:
+                phase["termination"].update(state="owned_group_stopped", completed_at=utc_now())
+            phase["group_cleanup_complete"] = True
+            return True
+        phase["group_cleanup_complete"] = False
+        termination = phase.setdefault("termination", {"requested_at": utc_now()})
+
+        def observe():
+            members = self._observe_owned_group(process, phase)
+            process.poll()
+            return members
+
+        def signal_and_wait(signum, label):
+            current = observe()
+            if current is None or not current:
+                return current
+            termination.update(signal=label, signaled_at=utc_now(),
+                               signaled_members=copy.deepcopy(current))
             self._save()
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                return
-            try:
-                process.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                phase["termination"]["state"] = "process_exit_pending"
-                self._save()
+            groups = sorted({row["process_group_id"] for row in current})
+            termination["signaled_groups"] = groups
+            for pgid in groups:
+                try:
+                    os.killpg(pgid, signum)
+                except ProcessLookupError:
+                    continue
+                except OSError as exc:
+                    termination["error"] = {"type": type(exc).__name__, "message": str(exc)}
+                    return None
+            deadline = time.monotonic() + 10
+            while True:
+                current = observe()
+                if current is None or not current or time.monotonic() >= deadline:
+                    return current
+                time.sleep(0.1)
+
+        if remaining is not None:
+            remaining = signal_and_wait(signal.SIGTERM, "SIGTERM")
+            if remaining:
+                termination["forced_at"] = utc_now()
+                remaining = signal_and_wait(signal.SIGKILL, "SIGKILL")
+        complete = remaining == []
+        termination.update(
+            state="owned_group_stopped" if complete else "owned_group_exit_pending",
+            observed_at=utc_now(),
+            remaining_members=copy.deepcopy(remaining),
+        )
+        if complete:
+            termination["completed_at"] = utc_now()
+        phase["group_cleanup_complete"] = complete
+        self._save()
+        return complete
 
     def run(self, name, command, log_path, *, cwd, env, timeout_seconds, progress_path=None):
         if name in self.record["phases"]:
@@ -306,6 +433,12 @@ class NativeProcessController:
                     phase["progress_issue"] = "The progress file names a different operation"
                     return False
                 phase["progress"] = value
+                process_rows = []
+                for stage in value.get("stages", []):
+                    if isinstance(stage, dict) and isinstance(stage.get("owned_processes"), list):
+                        process_rows.extend(row for row in stage["owned_processes"]
+                                            if isinstance(row, dict))
+                phase["progress_processes"] = process_rows
                 phase["progress_source"] = str(selected)
                 progress_signature = signature
                 return True
@@ -323,6 +456,11 @@ class NativeProcessController:
                 )
                 phase.update(state="RUNNING", pid=process.pid,
                              process_identity=process_identity(process.pid))
+                phase["process_group"] = {
+                    "pgid": process.pid, "session_id": process.pid,
+                    "observed_members": [],
+                }
+                self._observe_owned_group(process, phase)
                 self._save()
                 self._emit("SCF_NATIVE_PROCESS " + json.dumps({
                     "operation_id": self.record["operation_id"], "phase": name,
@@ -330,9 +468,12 @@ class NativeProcessController:
                     "record": str(self.record_path),
                 }) + "\n")
                 with log_path.open("rb") as reader:
-                    while process.poll() is None:
-                        drain(reader)
+                    while True:
                         changed = progress()
+                        self._observe_owned_group(process, phase)
+                        if process.poll() is not None:
+                            break
+                        drain(reader)
                         now = time.monotonic()
                         if now >= next_memory:
                             sample = memory_observation(process.pid)
@@ -345,10 +486,13 @@ class NativeProcessController:
                             next_heartbeat = now + 10
                         if now - began >= timeout_seconds:
                             phase["timed_out"] = True
+                            progress()
                             self._stop_owned(process, phase)
                             break
                         time.sleep(0.4)
-                    drain(reader, complete=True)
+                    progress()
+                    self._stop_owned(process, phase)
+                    drain(reader, complete=phase.get("group_cleanup_complete", False))
                     progress()
                     self._emit(decoder.decode(b"", final=True))
             except KeyboardInterrupt:
@@ -356,7 +500,8 @@ class NativeProcessController:
             except Exception as exc:
                 failure = {"type": type(exc).__name__, "message": str(exc)}
             finally:
-                if process is not None and process.poll() is None:
+                if process is not None and "process_group" in phase:
+                    progress()
                     self._stop_owned(process, phase)
                 if process is not None:
                     phase["exit_code"] = process.poll()
@@ -366,13 +511,20 @@ class NativeProcessController:
         phase["completed_utc"] = utc_now()
         phase["duration_seconds"] = round(time.monotonic() - began, 3)
         phase["maximum_observed_rss_kib"] = maximum_rss
-        phase["stdout_identity"] = file_identity(log_path)
+        if process is None or phase.get("group_cleanup_complete", False):
+            phase["stdout_identity"] = file_identity(log_path)
+        else:
+            phase["stdout_identity"] = {
+                "bytes_observed": log_path.stat().st_size, "observed_at": utc_now(),
+                "writer_exit_pending": True,
+            }
         phase["stderr_identity"] = phase["stdout_identity"]
         phase["state"] = (
             "INTERRUPTED" if interrupted else
             "TIMED_OUT" if phase["timed_out"] else
             "LAUNCH_FAILED" if process is None else
-            "FAILED" if failure or phase["exit_code"] != 0 else "COMPLETE"
+            "FAILED" if failure or phase["exit_code"] != 0 or
+                not phase.get("group_cleanup_complete", False) else "COMPLETE"
         )
         self.record["state"] = "PHASE_COMPLETE" if phase["state"] == "COMPLETE" else "INCOMPLETE"
         self._save()

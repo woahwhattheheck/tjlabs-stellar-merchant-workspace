@@ -18,9 +18,9 @@ const sources={...caseSelection,planSourceId:id('source'),expectedPlanSha256:dig
   reviewId:id('review'),expectedReviewBusinessSha256:digest};
 const selected=['workspace','caseId','expectedVersion','planSourceId','expectedPlanSha256','reviewId'];
 const changes={type:'array',minItems:1,maxItems:2000,items:{type:'object',additionalProperties:false,required:['action'],
-  properties:{action:{enum:['LINK_IDENTITY','UNLINK_IDENTITY','PLACE_INTENT','CLEAR_PLACEMENT','TITLE_NOTE']},
+  properties:{action:{enum:['LINK_IDENTITY','UNLINK_IDENTITY','PLACE_INTENT','CLEAR_PLACEMENT','TITLE_NOTE','START_COMMERCIAL','SET_COMMERCIAL','REMOVE_COMMERCIAL','RECEIVE_ORIGINAL_COSTS','REMOVE_ORIGINAL_COSTS']},
     kind:{enum:['buyer','merchant','operation','facilitator']},plannedId:nonempty(),observedId:nonempty(),
-    intentId:nonempty(),targetId:nonempty(700),note:str(),title:str(500)}}};
+    intentId:nonempty(),targetId:nonempty(700),note:str(),title:str(500),commercial:object,originalCosts:object}}};
 const tool=(verb,description,properties,required,readOnly=true,rules={})=>({
   name:'merchant_grant_cohort_delivery_'+verb,description,
   inputSchema:{type:'object',properties,required,additionalProperties:false,...rules},
@@ -29,11 +29,11 @@ const tool=(verb,description,properties,required,readOnly=true,rules={})=>({
 export const grantCohortDeliveryTools=[
   tool('seed','Acquire the whole saved adoption source and original frozen COHORT_EVALUATION review from the current native case. Verify the source bytes and selected business identity; return the complete planned-versus-recorded comparison with original identity joins, ambiguous/unmatched intents, daily/operator/target outcomes and source mode.',
     {...ws,...sources,title:str(500),note:str()},selected),
-  tool('edit','Apply explicit associations or original intent placements to the complete recorded delivery input. Keep both original sources, native completion/refund classifications and every unmatched record. Return the whole calculated successor and previous document; invalidated choices remain in editable input with the precise original constraint.',
+  tool('edit','Apply complete source-backed commercial choices, original Work/invoice cost intake (RECEIVE_ORIGINAL_COSTS with full selections, overlapReviews and explicit acceptSourceIds), explicit associations or original intent placements to the complete recorded delivery input. Keep both original sources, native completion/refund classifications and every unmatched record. Return the whole calculated successor and previous document; invalidated choices remain in editable input with the precise original constraint.',
     {...ws,...model,changes},['workspace','changes'],true,oneInput),
   tool('review','Review the complete recorded delivery comparison against its actual current case, exact original saved plan and frozen review. Retain the current case version and the complete original source selections.',
     {...ws,...caseSelection,...model},['workspace','caseId','expectedVersion'],true,oneInput),
-  tool('refresh','Select a complete original saved plan and frozen review for the current case while carrying the previous explicit identity and intent-placement choices. Retain the full previous document. When a choice no longer applies, return the complete editable input and exact constraint so cohort_delivery_edit can fix it.',
+  tool('refresh','Select a complete original saved plan and frozen review for the current case while carrying the previous explicit identity, intent-placement, commercial quantities/rates and original Work/invoice source witnesses. Retain the full previous document. When a choice no longer applies, return the complete editable input and exact constraint so cohort_delivery_edit can fix it.',
     {...ws,...sources,...model},selected,true,oneInput),
   tool('prepare','Prepare one complete native source edition for the reviewed recorded delivery comparison. Re-read its original saved adoption source and frozen review, retain exact source bytes and original request ID, and use the existing adoption request owner. Keep the original creation time and complete input on retries.',
     {...ws,...caseSelection,...model,requestId,actor:nonempty(300),note:str(12000),createdAt:{type:'string',format:'date-time'}},

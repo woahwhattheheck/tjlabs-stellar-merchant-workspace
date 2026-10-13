@@ -109,15 +109,32 @@ export async function openMerchantWorkspace({ directory, config: input, provider
     return new MerchantWorkspace({ store, config, upstream, webhookSecretsByVersion, fulfillment, clock });
   } catch (error) { await store.close(); throw error; }
 }
+/** Open saved invoices with the same complete projection and file reader.
+ * The facade has no payment or handler entry points; SQLite also enforces
+ * read-only mode beneath every retained business record.
+ */
+export async function openMerchantReview({ directory, config: input, allowLoopback = false }) {
+  need(typeof directory === 'string' && isAbsolute(directory), 'ABSOLUTE_PRIVATE_DIRECTORY_REQUIRED');
+  const config = validateConfig(input, { allowLoopback });
+  const store = await MerchantStore.open(resolve(directory), { readOnly: true });
+  const view = new MerchantWorkspace({ store, config, upstream: null,
+    webhookSecretsByVersion: {}, fulfillment: null, clock: () => Date.now() });
+  return Object.freeze({ store, config: view.config, readOnly: true,
+    publicConfig: view.publicConfig.bind(view), listOrders: view.listOrders.bind(view),
+    inspect: view.inspect.bind(view), envelope: view.envelope.bind(view),
+    result: view.result.bind(view), tick: async () => undefined, close: view.close.bind(view) });
+}
 export class MerchantWorkspace {
   constructor({ store, config, upstream, webhookSecretsByVersion, fulfillment, clock }) {
     this.store = store; this.config = config; this.upstream = upstream;
     this.webhookSecretsByVersion = webhookSecretsByVersion; this.fulfillment = fulfillment; this.clock = clock;
     this.locks = new Map(); this.returned = new Map(); this.providerReturns = new Map(); this.closing = false;
+    this.projectSnapshot = null;
   }
   _now() { return new Date(this.clock()).toISOString(); }
   async _serial(id, work) {
     need(!this.closing, 'WORKSPACE_CLOSING', 503);
+    need(!this.projectSnapshot, 'MERCHANT_PROJECT_SNAPSHOT_IN_PROGRESS', 503);
     const previous = this.locks.get(id) ?? Promise.resolve();
     const current = previous.catch(() => {}).then(work);
     this.locks.set(id, current);
@@ -381,6 +398,7 @@ export class MerchantWorkspace {
   }
   acceptWebhook(rawBody, headers) {
     need(!this.closing, 'WORKSPACE_CLOSING', 503);
+    need(!this.projectSnapshot, 'MERCHANT_PROJECT_SNAPSHOT_IN_PROGRESS', 503);
     const verified = verifyWebhook({ rawBody, headers, secretsByVersion: this.webhookSecretsByVersion,
       endpointId: this.config.webhook.endpointId, tenantId: this.config.tenantId, nowSeconds: Math.floor(this.clock() / 1000) });
     if (verified.kind === 'ownership') return { status: 200, body: verified.responseBody, accepted: false };
@@ -719,16 +737,16 @@ export class MerchantWorkspace {
     return this.inspect(id);
   }
   async tick() {
-    if (this.closing) return;
+    if (this.closing || this.projectSnapshot) return;
     const now = this.clock();
     const orders = this.store.listOrders({ private: true }).filter(order => ACTIVE.has(order.state) && (!order.nextActionAt || Date.parse(order.nextActionAt) <= now));
     for (const order of orders) {
-      if (this.closing) break;
+      if (this.closing || this.projectSnapshot) break;
       try { await this.reconcile(order.id); }
-      catch (error) { if (!this.closing) this._later(order.id, this._order(order.id).state, null, code(error)); }
+      catch (error) { if (!this.closing && !this.projectSnapshot) this._later(order.id, this._order(order.id).state, null, code(error)); }
     }
     for (const event of this.store.pendingEvents()) {
-      if (this.closing) break;
+      if (this.closing || this.projectSnapshot) break;
       if (event.kind === 'payment' && !orders.some(order => order.id === event.orderId)) {
         const order = this._order(event.orderId);
         if (!order.nextActionAt || Date.parse(order.nextActionAt) <= now) await this._processEvent(event);
@@ -739,12 +757,29 @@ export class MerchantWorkspace {
     const order = this._order(id); need(order.state === 'COMPLETE' && order.result, 'RESULT_NOT_READY', 409);
     return new MerchantResult(order.result);
   }
-  async close() {
-    this.closing = true;
-    await Promise.allSettled([...this.locks.values()]);
+  async captureProjectSnapshot(work) {
+    need(!this.closing, 'WORKSPACE_CLOSING', 503);
+    need(!this.projectSnapshot, 'MERCHANT_PROJECT_SNAPSHOT_IN_PROGRESS', 503);
+    need(typeof work === 'function', 'MERCHANT_PROJECT_CAPTURE_REQUIRED');
+    let release;
+    const pending = new Promise(resolveCapture => { release = resolveCapture; });
+    this.projectSnapshot = pending;
+    try {
+      // Existing per-invoice operations finish under the original owner lease.
+      // New updates receive a retryable response until the complete capture ends.
+      await Promise.allSettled([...this.locks.values()]);
+      await this.flushRetainedReturns();
+      return await work();
+    } finally {
+      this.projectSnapshot = null;
+      release();
+    }
+  }
+  async flushRetainedReturns() {
     // Keep the exclusive workspace lease while any actual provider return
     // still needs its original durable exchange record.
     for (const pending of [...this.providerReturns.values()]) {
+      if (this.providerReturns.get(pending.id + '\n' + pending.kind) !== pending) continue;
       await this._exchange(pending.id, pending.kind, async () => {
         throw new MerchantError('ORIGINAL_PROVIDER_RETURN_REQUIRED', 503);
       });
@@ -755,6 +790,12 @@ export class MerchantWorkspace {
       need(['RETURNED', 'COMPLETE'].includes(saved.state) && saved.sha256 === sha(returned.bytes), 'RETURN_STORAGE_PENDING', 503);
       this.returned.delete(paymentId);
     }
+  }
+  async close() {
+    this.closing = true;
+    if (this.projectSnapshot) await this.projectSnapshot;
+    await Promise.allSettled([...this.locks.values()]);
+    await this.flushRetainedReturns();
     await this.store.close();
   }
 }

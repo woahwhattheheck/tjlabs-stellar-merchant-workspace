@@ -19,6 +19,7 @@ const SOURCE_HELPERS = [
 const REQUIRED = [
   ROOT + 'dcat-cli.mjs', ROOT + 'dcat-workspace.mjs', ROOT + 'dcat_migration.py',
   ROOT + 'application-provider.mjs', ROOT + 'public/migration.mjs',
+  ROOT + 'dcat-acquisition.mjs', ROOT + 'public/dcat-sources.mjs', ROOT + 'RECURRING_CATALOGS.md',
   ROOT + 'vendor/gsa-dcat-us/source-manifest.json', ADAPTER,
   'stellar/scf-starforge-20261009/distribution/runtime-workspace/application-environment.mjs',
 ];

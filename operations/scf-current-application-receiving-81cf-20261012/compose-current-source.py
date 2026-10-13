@@ -9,6 +9,7 @@ import os
 from pathlib import Path, PurePosixPath
 import shutil
 import zipfile
+from reviewer_source_paths import reviewer_paths, verify_reviewer_paths, source_bytes
 
 OPERATION = "SCF-GRANT-CURRENT-REVIEW-81CF-20261012"
 PHASE = "SCF-SUBMISSION-SOURCE-PACKAGE-A8CE-20261012"
@@ -16,7 +17,8 @@ ROOT = Path(__file__).resolve().parent
 RUNTIME_FILES = (
     "source-phase.mjs", "receive-source-package.mjs", "receive_source.py",
     "receive_review.py", "receive_current.py", "scf_native_process.py",
-    "SOURCE_RECEIVING.md", "receive-current-source-browser.mjs",
+    "SOURCE_RECEIVING.md", "receive-current-source-browser.mjs", "receive-source-browser.cjs",
+    "reviewer_source_paths.py",
 )
 
 def sha(body):
@@ -35,9 +37,14 @@ def safe_path(value):
     return path
 
 def source_row(path, body):
-    return {"path": path, "encoding": "utf-8", "bytes": len(body),
-            "sha256": sha(body), "git_blob": blob(body),
-            "content": body.decode("utf-8", errors="strict")}
+    try:
+        content = body.decode("utf-8", errors="strict")
+        encoding = "utf-8"
+    except UnicodeDecodeError:
+        content = base64.b64encode(body).decode("ascii")
+        encoding = "base64"
+    return {"path": path, "encoding": encoding, "bytes": len(body),
+            "sha256": sha(body), "git_blob": blob(body), "content": content}
 
 def verified_asset(metadata, path):
     body = path.read_bytes()
@@ -130,7 +137,10 @@ def following_baseline(archive, directory):
     selected_root = PurePosixPath(*selected_draft.parts[:-len(expected_suffix)])
     browser_record = PurePosixPath(browser_input["originalRecordPath"]).relative_to(selected_root)
     baseline["browserRecordPath"] = str(safe_path(str(browser_record)))
-    if directory + "/browser/RESULT.json" in archive.namelist():
+    browser_prefix = directory + "/browser/"
+    browser_members = set(archive.namelist())
+    browser_complete = False
+    if directory + "/browser/RESULT.json" in browser_members:
         browser = json.loads(archive.read(directory + "/browser/RESULT.json"))
         if browser.get("state") == "COMPLETE":
             if (browser.get("operationId") != OPERATION or
@@ -147,6 +157,14 @@ def following_baseline(archive, directory):
             if (browser.get("localBrowserBinding") !=
                     {"id": saved["id"], "revision": saved["revision"]}):
                 raise ValueError("Retain the actual completed browser record and revision.")
+            browser_complete = True
+    # A retained partial browser phase may contain a committed working save,
+    # including legacy runs from before the explicit save journal existed.
+    # Finish that same phase before selecting a following native-only edition.
+    partial_browser = any(name.startswith(browser_prefix) and not name.endswith("/")
+                          for name in browser_members)
+    if partial_browser and not browser_complete:
+        raise ValueError("Reconcile and complete the preceding browser receiving phase before selecting another source edition; retain its original save intent and accepted record.")
     for value in baseline.values():
         safe_path(value)
         archive.getinfo(value)
@@ -287,6 +305,12 @@ def main():
             supplied = ROOT.joinpath("assets", *relative.parts)
             path = supplied if supplied.is_file() else ROOT.parents[1].joinpath(*relative.parts)
         assets.append(verified_asset(metadata, path))
+    selected_reviewer_paths = None
+    if "reviewerPaths" in selection:
+        selected_reviewer_paths = reviewer_paths(selection["reviewerPaths"])
+        verify_reviewer_paths(package, {row["path"]: source_bytes(row)
+                                       for row in assets if row["path"] in selected_reviewer_paths.values()},
+                              selected_reviewer_paths)
     runtime = [source_row(name, (ROOT / name).read_bytes()) for name in RUNTIME_FILES]
     asset_metadata = [
         {key: row[key] for key in ("path", "bytes", "sha256", "git_blob")}
@@ -299,6 +323,8 @@ def main():
         "currentApplicationSourceCommit": selection["currentApplicationSourceCommit"],
         "sourcePackageSha256": sha(package_body), "assets": asset_metadata,
     }
+    if selected_reviewer_paths is not None:
+        basis["reviewerPaths"] = selected_reviewer_paths
     source_selection = {"id": sha(encoded(basis).rstrip(b"\n")), **basis}
     receiving_basis = {"sourceSelection": source_selection["id"],
                        "draftSha256": sha(draft_body),

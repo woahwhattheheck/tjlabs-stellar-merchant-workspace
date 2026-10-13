@@ -88,7 +88,13 @@ export interface ResearchProgrammeSavedFile {
 export interface ResearchProgrammeDownload extends ResearchProgrammeSavedFile {
  metadata:ResearchProgrammeFileInfo|ResearchProgrammeArchive;
 }
+export interface ResearchProgrammeRange extends ResearchProgrammeOptions {
+ offset:number;limit:number;bytes:number;sha256:string;
+}
 export interface ResearchQuoteProgrammesClient {
+ /** Admit one complete SDK continuation. Every inner call drains before return; the view cannot escape its callback. */
+ withWork<T>(callback:(admitted:ResearchQuoteProgrammesClient)=>Promise<T>):Promise<T>;
+ readArchiveRange(id:string,selection:ResearchProgrammeRange):Promise<Buffer>;
  info(options?:ResearchProgrammeOptions):Promise<ResearchProgrammeInfo>;
  jobs(input?:ResearchProgrammePaging&{kind?:ResearchProgrammeJobKind},options?:ResearchProgrammeOptions):Promise<ResearchProgrammePage<ResearchProgrammeJobRow>>;
  job(id:string,options?:ResearchProgrammeOptions&{result?:boolean}):Promise<ResearchProgrammeJob>;
@@ -112,7 +118,7 @@ export interface ResearchQuoteProgrammesClient {
  finishUpload(id:string,options?:ResearchProgrammeOptions):Promise<ResearchProgrammeUpload>;
 }
 /** Factory methods use one run admission for every complete metadata/download operation.
- * request, download and upload are the original owner's admitted transport callbacks.
+ * request, download, upload and range are the original owner's admitted transport callbacks.
  * The returned client borrows its host and exposes no independent close operation.
  */
 export declare function createResearchQuoteProgrammesClient(input:{
@@ -120,4 +126,6 @@ export declare function createResearchQuoteProgrammesClient(input:{
  request:(route:string,body:unknown|undefined,options?:ResearchProgrammeOptions)=>Promise<any>;
  download:(route:string,file:string,options?:ResearchProgrammeOptions&{expectedSha256?:string})=>Promise<ResearchProgrammeSavedFile>;
  upload:(route:string,body:Uint8Array,options?:ResearchProgrammeOptions)=>Promise<ResearchProgrammeUpload>;
+ /** Verifies exact 206 range, total, length, ETag, archive SHA and complete chunk SHA before returning. */
+ range?:(route:string,selection:ResearchProgrammeRange)=>Promise<Uint8Array>;
 }):ResearchQuoteProgrammesClient;

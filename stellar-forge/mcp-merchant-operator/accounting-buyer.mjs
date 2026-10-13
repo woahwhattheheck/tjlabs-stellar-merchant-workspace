@@ -6,7 +6,7 @@ import {accountingSourceMode,inspectBuyerStartupFile,readBuyerStartup,buyerStart
 const fail=(code,message)=>Object.assign(new Error(message),{code});
 const need=(ok,code,message)=>{if(!ok)throw fail(code,message);};
 const copy=value=>structuredClone(value);
-const merchantMaps=['recoveredSources','recoveryRequests','proofFiles','termsFiles','pricingReports','collectionInputs','statementUsageInputs','cryptoworthInputs','runbookInputs','portfolioInputs','portfolioClients'];
+const merchantMaps=['recoveredSources','recoveryRequests','proofFiles','termsFiles','pricingReports','collectionInputs','statementUsageInputs','cryptoworthInputs','runbookInputs','portfolioInputs','portfolioClients','rozoSources'];
 export function configuredAccountingMode(definition){
  const mode=definition.sourceMode??'merchant';
  need(mode==='merchant'||mode==='buyer','ACCOUNTING_CONFIGURATION_ERROR','Choose sourceMode merchant or buyer.');
@@ -108,8 +108,8 @@ export function requireBuyerOperation(workspace,operation,args){
   'merchant_accounting_accountant_rows','merchant_accounting_accountant_preview','merchant_accounting_accountant_apply']);
  need(ordinary.has(operation)||operation.startsWith('merchant_accounting_buyer_')||operation.startsWith('merchant_accounting_qbo_')||operation.startsWith('merchant_accounting_xero_'),
   'ACCOUNTING_MERCHANT_SOURCE_REQUIRED','This alias retains an issued buyer period. Use its buyer, accountant, QuickBooks, Xero and recovery operations; merchant-source operations belong to a merchant alias.');
- if(operation==='merchant_accounting_file')need(['buyer-source','accountant','qbo','xero','qbo-source-change','xero-source-change'].includes(args.kind),
-  'ACCOUNTING_MERCHANT_SOURCE_REQUIRED','Choose the retained buyer source, accountant packet, original QuickBooks/Xero file or chart-change handoff for this buyer alias.');
+ if(operation==='merchant_accounting_file')need(['buyer-source','accountant','qbo','xero','qbo-source-change','xero-source-change','qbo-worksheet'].includes(args.kind),
+  'ACCOUNTING_MERCHANT_SOURCE_REQUIRED','Choose the retained buyer source, accountant packet, original QuickBooks worksheet/journal, Xero file or chart-change handoff for this buyer alias.');
 }
 export async function callBuyerAccounting(workspace,accountant,operation,args){
  const startup=await readBuyerStartup(workspace.directory,workspace.state);

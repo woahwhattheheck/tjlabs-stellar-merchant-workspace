@@ -30,6 +30,28 @@ def json_file(path, value):
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     path.chmod(0o600)
 
+def pending_writer_phases(record, label):
+    """Only the original controller can confirm its complete writer cleanup."""
+    phases = record.get("process_phases", record.get("phases"))
+    if not isinstance(phases, dict):
+        return [{"controller": label, "reason": "Original phase record is unavailable."}]
+    pending = []
+    for name, phase in phases.items():
+        writer_pending = (phase.get("stdout_identity", {}).get("writer_exit_pending") or
+                          phase.get("stderr_identity", {}).get("writer_exit_pending"))
+        if (not writer_pending and phase.get("state") in ("NOT_STARTED", "LAUNCH_FAILED") and
+                phase.get("pid") is None and not phase.get("process_identity") and
+                not phase.get("process_group")):
+            continue
+        if (phase.get("group_cleanup_complete") is not True or
+                phase.get("stdout_identity", {}).get("writer_exit_pending") or
+                phase.get("stderr_identity", {}).get("writer_exit_pending")):
+            pending.append({"controller": label, "phase": name,
+                            "pid": phase.get("pid"), "state": phase.get("state"),
+                            "process_identity": phase.get("process_identity"),
+                            "termination": phase.get("termination")})
+    return pending
+
 def checked_relative(raw):
     if not isinstance(raw, str) or not raw or "\\" in raw or "\0" in raw:
         raise ValueError("Invalid supplied source path")
@@ -241,6 +263,13 @@ def main():
         native_summary.update({key: result[key] for key in
                                ("originalDraftId", "originalReviewId", "reviewActions", "retainedOriginalActions")
                                if key in result})
+    pending = pending_writer_phases(native_summary, "current-application")
+    if pending:
+        native_summary.update(state="INCOMPLETE", archiveState="WAITING_FOR_OWNED_PROCESS_EXIT",
+                              pendingWriterPhases=pending, retainedOperationDirectory=str(root))
+        json_file(root / "native-result.json", native_summary)
+        print("SCF_NATIVE_RESULT " + json.dumps(native_summary), flush=True)
+        return 1
     json_file(root / "native-result.json", native_summary)
     archive = root / ("SCF-Current-Application-and-Review" + ("" if state == "COMPLETE" else "-Partial") + ".zip")
     with zipfile.ZipFile(archive, "x", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as bundle:

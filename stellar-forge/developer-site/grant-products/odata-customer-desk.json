@@ -1,0 +1,101 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "odata-customer-desk",
+  "heading": "## OData recurring editions: complete customer delivery and managed operation",
+  "sources": [
+    {
+      "id": "odata-subscription-product",
+      "label": "Original OData subscription publisher, customer and edition operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/SUBSCRIPTIONS.md"
+    },
+    {
+      "id": "odata-subscription-managed-receiving",
+      "label": "Original installed runtime and managed OData receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/MANAGED_RECEIVING.md"
+    },
+    {
+      "id": "odata-customer-desk-operating",
+      "label": "Recurring OData customer desk: complete operating and receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/odata-subscription-desk/OPERATOR.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b62f78ec168e2928872c01feacc3f8bd410d5ec2",
+          "git_blob": "7d29d9dbf4d30cfd631c3a06dde8c3e8093d5aa0",
+          "bytes": 19011,
+          "sha256": "e64f60e08ed0bc863e71b7cb35552a2010c6bc6494b22a3e7cabfbbd6526ef37"
+        }
+      ]
+    },
+    {
+      "id": "odata-customer-desk-workspace",
+      "label": "Original remote-client customer desk and saved request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/odata-subscription-desk/workspace.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b62f78ec168e2928872c01feacc3f8bd410d5ec2",
+          "git_blob": "5bab49a0aab7af4fe14ef3b8c1f34603f963f577",
+          "bytes": 30335,
+          "sha256": "12224500017aaa861d2a8a93624c68baf59733d7c78f93adead86f956cea32db"
+        }
+      ]
+    },
+    {
+      "id": "odata-customer-desk-portable",
+      "label": "Complete native customer output and selected-source portable receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/odata-subscription-desk/portable.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b62f78ec168e2928872c01feacc3f8bd410d5ec2",
+          "git_blob": "f056a1dc99ed6d252e92b21fd02e84715718c387",
+          "bytes": 18848,
+          "sha256": "dc61754f5cafef92bfc124ac00daf444ad570028cfc0d1e1d4c413b566eb35d8"
+        }
+      ]
+    },
+    {
+      "id": "odata-customer-desk-receiving",
+      "label": "Complete customer desk continuation for the original managed programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/odata-subscription-desk/receiving/receive.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b62f78ec168e2928872c01feacc3f8bd410d5ec2",
+          "git_blob": "1fbf65c03df6783cc8c8e8ff446c3f08cefba395",
+          "bytes": 21693,
+          "sha256": "3d041fd03505ba4deef4719ad20a5a44a4e694409fb06c12981f3e0c4d477098"
+        }
+      ]
+    },
+    {
+      "id": "odata-customer-desk-installed-selection",
+      "label": "Complete maintained OData subscriptions product selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/odata-subscriptions.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b62f78ec168e2928872c01feacc3f8bd410d5ec2",
+          "git_blob": "67674c6124d1fc0b4ef3bd2f0cbdccce29a6abcf",
+          "bytes": 5999,
+          "sha256": "cb4832a1f10cd8d42d3f631087ba1abaecaa554498e0b79a81a7dc429258509f"
+        }
+      ]
+    }
+  ]
+}

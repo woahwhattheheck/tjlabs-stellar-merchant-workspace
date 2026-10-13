@@ -24,6 +24,7 @@ if _TYPE_CHECKING:
     from .research_quotes import ResearchQuotes, ResearchQuoteExport, ResearchQuoteBundle
     from .research_quote_programmes import ResearchQuoteProgrammes, ResearchQuoteProgrammeHandover
     from .research_extraction import ResearchExtraction
+    from .research_study_flow import ResearchStudyFlow
     from .research_customer_updates import ResearchCustomerUpdates, ResearchCustomerDelivery
     from .research_customer_receiving import ResearchCustomerCancelled, run_research_customer_delivery
     from .research_documents import ResearchDocuments, ResearchPipelines, ResearchSelection, ResearchInputFile, ResearchDocumentSource
@@ -36,6 +37,7 @@ __all__ = [
     "ResearchCommerce", "ResearchCommerceArchive",
     "ResearchQuotes", "ResearchQuoteExport", "ResearchQuoteBundle",
     "ResearchQuoteProgrammes", "ResearchQuoteProgrammeHandover",
+    "ResearchStudyFlow",
     "ResearchWorkspace", "ResearchError", "ResearchExtraction", "ResearchDocuments", "ResearchPipelines",
     "ResearchSelection", "ResearchInputFile", "ResearchDocumentSource",
     "AcquisitionWorkspace", "AcquisitionResult", "AcquisitionProcess", "AcquisitionError",
@@ -66,6 +68,7 @@ _EXPORTS = {
     "ResearchWorkspace": ".research_workspace",
     "ResearchError": ".research_workspace",
     "ResearchExtraction": ".research_extraction",
+    "ResearchStudyFlow": ".research_study_flow",
     "ResearchDocuments": ".research_documents",
     "ResearchPipelines": ".research_documents",
     "ResearchSelection": ".research_documents",

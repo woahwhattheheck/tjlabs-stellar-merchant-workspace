@@ -1,3 +1,5 @@
+import {CUSTOMER_ACCOUNT_METHODS, CUSTOMER_ACCOUNT_FILE_KINDS, callCustomerAccount, customerAccountFile} from './accounting-customer-responses.mjs';
+import {FINANCIAL_CONTROL_METHODS, FINANCIAL_CONTROL_FILES, callFinancialControl, financialControlFile} from './accounting-financial-control.mjs';
 // MIT. Original receivables and invoice collection under the existing accounting owner.
 import {ReceivablesWorkspace, RECEIVABLE_REQUEST_BYTES} from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/store.mjs';
 import {json, sha, need, plain, field, identifier, dateValue, today, invoiceSummary, receiptSummary,
@@ -146,7 +148,8 @@ export class MerchantReceivables {
 
   async invoicePreview(args) {
     const result = await this.controller.preview(args.invoiceId);
-    const metadata = {workspace: args.workspace, invoiceId: args.invoiceId,
+    const {document: originalDocument, ...reviewMetadata} = result;
+    const metadata = {...reviewMetadata, workspace: args.workspace, invoiceId: args.invoiceId,
       previewSha256: result.previewSha256, expectedVersion: result.expectedVersion, revision: result.revision};
     if (args.view === 'lines') return paged(result.document.lines, args,
       {...metadata, view: 'lines', currency: result.document.currency, totals: result.document.totals});
@@ -299,6 +302,10 @@ export class MerchantReceivables {
     need(typeof operation === 'string' && operation.startsWith(PREFIX),
       'ACCOUNTING_RECEIVABLES_OPERATION', 'Choose an original receivables operation.');
     const selected = operation.slice(PREFIX.length), input = payload(args);
+    if (Object.values(FINANCIAL_CONTROL_METHODS).includes(selected))
+      return callFinancialControl(this.controller, selected, args);
+    if(Object.values(CUSTOMER_ACCOUNT_METHODS).includes(selected))
+      return callCustomerAccount(this.controller,selected,args,this.readSource);
     // Keep original exceptions, including commit uncertainty and reopen fields, intact.
     switch (selected) {
       case 'status': return this.status(args);
@@ -360,6 +367,8 @@ export class MerchantReceivables {
   }
 
   async file(args) {
+    if(CUSTOMER_ACCOUNT_FILE_KINDS.includes(args.kind))return customerAccountFile(this.controller,args);
+    if (Object.hasOwn(FINANCIAL_CONTROL_FILES, args.kind)) return financialControlFile(this.controller, args);
     if (args.kind === 'receivables-document')
       return this.controller.file(args.documentId, args.file);
     if (args.kind === 'receivables-quote')

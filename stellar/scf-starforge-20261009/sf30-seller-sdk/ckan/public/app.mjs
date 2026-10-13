@@ -393,11 +393,13 @@ async function renderWorkspace(generation) {
   if (generation !== renderGeneration) return;
   const dcat = state.dcat;
   const hasDcat = state.sourceKind === 'dcat-us' ||
-    ['catalogs', 'reviews', 'releases'].some(key => (dcat?.[key]?.length ?? 0) > 0);
+    ['catalogs', 'reviews', 'releases', 'sources', 'acquisitions'].some(key => (dcat?.[key]?.length ?? 0) > 0);
   const counts = { editions: state.editions.length, selections: state.sources.length,
     publications: state.publications.length, reviewed_refreshes: (state.refreshes ?? []).length,
     merchant_packages: state.exports.length, buyer_requests: state.buyerRequests.length };
   if (hasDcat) Object.assign(counts, {
+    dcat_sources: dcat?.sources?.length ?? 0,
+    dcat_acquisitions: dcat?.acquisitions?.length ?? 0,
     dcat_catalogues: dcat?.catalogs?.length ?? 0,
     dcat_reviews: dcat?.reviews?.length ?? 0,
     dcat_releases: dcat?.releases?.length ?? 0,
@@ -405,7 +407,7 @@ async function renderWorkspace(generation) {
   });
   view.append(heading('Workspace transfer'),
     muted('Save the retained editions, complete refresh comparisons, operator decisions, reviewed selections, publisher history, dataset versions, merchant packages, seller releases and buyer requests as one project.' +
-      (hasDcat ? ' The same archive includes all original DCAT documents, migration reviews, corrected candidates and complete release and rollback history.' : '')),
+      (hasDcat ? ' The same archive includes all DCAT source configurations and versions, retained acquisition receipts and response files, original documents, migration reviews, corrected candidates and complete release and rollback history.' : '')),
     card(heading('Export this workspace'),
       table([counts]),
       muted((state.sourceKind === 'dcat-us' && state.exports.length === 0
@@ -445,7 +447,7 @@ async function renderWorkspace(generation) {
     view.append(card(heading('Received project'),
       element('p', { class: 'mono' }, result.directory),
       muted(receivedDcat
-        ? 'Open this directory through DCAT catalog migration in Applications or the dcat serve command. The received project retains its original documents, reviews, selected catalogue release and rollback history.'
+        ? 'Open this directory through DCAT catalog migration in Applications or the dcat serve command. The received project retains its source configurations, acquired documents and HTTP history, reviews, selected catalogue release and rollback history.'
         : 'Open this directory in the existing CKAN Applications provider or the CKAN serve command. Its original seller selection is retained and can be started from its release store.'),
       pre(receivedDcat ? 'starforge dcat serve --workspace ' + quotedDirectory
         : 'starforge ckan serve --project ' + quotedDirectory + ' --port 0'),

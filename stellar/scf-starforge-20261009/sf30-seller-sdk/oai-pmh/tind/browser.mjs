@@ -156,7 +156,8 @@ function tab(name) {
   $$('[data-panel]').forEach(panel => { panel.hidden = panel.dataset.panel !== name; });
   $$('[data-tab]').forEach(button => { if (button.dataset.tab === name) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current'); });
   if (name === 'records' && data?.project) loadRecords().catch(error => message(error.message,true));
-  if (name === 'receiving' && data?.project) loadFiles().catch(error => message(error.message,true));
+  if (name === 'receiving' && data?.project) Promise.all([loadFiles(),loadAcquisitions()]).catch(error => message(error.message,true));
+  if (name === 'production') loadProduction().catch(error => message(error.message,true));
   if (name === 'source-cases') loadSourceCollections().catch(error => message(error.message,true));
 }
 function recordLink(view) {
@@ -180,7 +181,7 @@ function renderNative() {
     '<p>Request '+esc(short(item.requestBody?.sha256))+' · native result '+esc(short(item.response?.original?.sha256))+'</p></div>').join('');
   for(const job of data?.nativeJobs||[]){
     if(job.status!=='error')continue;
-    const container=job.task==='search'?$('#native-search-status'):$('#native-transfer-status');
+    const container=job.task==='source-download'?$('#source-download-list'):job.task==='search'?$('#native-search-status'):$('#native-transfer-status');
     container.insertAdjacentHTML('afterbegin','<div class="conflict" role="status"><strong>'+esc(job.operationId)+
       '</strong><p>Native operation returned: '+esc(job.error||'Open the retained operation for its result.')+'</p></div>');
   }
@@ -260,9 +261,10 @@ async function reload({preserve=false}={}) {
   history.replaceState(null,'',url.pathname+url.search);
   renderState(preserve); pendingUI();
   if(!allEditions.length || allEditions[0]?.id!==data.original.editions[0]?.id) await receiveEditions();
-  if(!$('[data-panel="receiving"]').hidden) await loadFiles();
+  if(!$('[data-panel="receiving"]').hidden){await loadFiles();await loadAcquisitions();}
   if(sourceContext!==projectId){sourceContext=projectId;sourceCollection=null;sourceCollections=null;sourcePlan=null;sourcePlanDirty=false;sourceCollectionOffset=0;$('#source-case-detail').hidden=true;}
   if(!$('[data-panel="source-cases"]').hidden) await loadSourceCollections();
+  if(!$('[data-panel="production"]').hidden) await loadProduction();
 }
 
 function sourceQuery(values={}) { return new URLSearchParams({project:projectId,...values}); }
@@ -631,6 +633,213 @@ $('#batch-list').addEventListener('click',async event=>{
   }catch(error){message(error.message,true);}
 });
 window.addEventListener('beforeunload',event=>{if(pending||recordDirty||mappingDirty||sourcePlanDirty){event.preventDefault();event.returnValue='';}});
+
+let acquisitionList=null, acquisitionOffset=0, acquisitionCurrent=null, acquisitionFileOffset=0, acquisitionContext='';
+const acquisitionChosen=new Map();
+async function loadAcquisitions() {
+  if(!data?.project){$('#source-download-list').textContent='Choose a migration first.';return;}
+  if(acquisitionContext!==projectId){
+    acquisitionContext=projectId;acquisitionCurrent=null;acquisitionFileOffset=0;acquisitionOffset=0;acquisitionChosen.clear();
+    $('#source-download-detail').hidden=true;$('#source-download-adopt-form').reset();
+  }
+  acquisitionList=await api('/api/source-downloads?'+sourceQuery({offset:String(acquisitionOffset),limit:'25'}));
+  $('#source-download-count').textContent=acquisitionList.total+' retained selections';
+  $('#source-download-list').innerHTML=acquisitionList.items.map((item,index)=>'<div class="conflict"><strong>'+esc(item.title)+'</strong><p>'+Number(item.files).toLocaleString()+' files · '+esc(item.createdAt)+' · '+esc(item.reviewer)+'</p><button type="button" data-open-acquisition="'+index+'">Open original acquisition</button></div>').join('')||'<p class="muted">Saved original document selections appear here.</p>';
+  $('#previous-source-downloads').disabled=acquisitionOffset===0;$('#next-source-downloads').disabled=acquisitionList.next==null;
+  if(acquisitionCurrent)await openAcquisition(acquisitionCurrent.id,acquisitionFileOffset,true);
+}
+async function openAcquisition(identity,position=0,preserve=false) {
+  const changed=identity!==acquisitionCurrent?.id;
+  if(changed){acquisitionChosen.clear();$('#source-download-adopt-form').reset();}
+  acquisitionFileOffset=position;
+  acquisitionCurrent=await api('/api/source-downloads?'+sourceQuery({id:identity,offset:String(position),limit:'50'}));
+  const a=acquisitionCurrent;
+  $('#source-download-detail').hidden=false;
+  $('#source-download-title').textContent=a.title;
+  $('#source-download-description').textContent=a.note+' — '+a.reviewer+' · '+a.createdAt;
+  $('#source-download-progress').textContent=Object.entries(a.counts).map(([key,value])=>key+': '+value).join(' · ')+(a.running?' · Acquisition running':'');
+  $('#run-source-downloads').disabled=a.running;$('#pause-source-downloads').disabled=!a.running;
+  $('#export-source-downloads').href='/download/source-acquisition?'+sourceQuery({id:a.id});
+  $('#source-download-rows').innerHTML=a.items.map((item,index)=>'<tr><td><input type="checkbox" aria-label="Receive '+esc(item.filename)+'" data-choose-source-file="'+index+'" '+(item.status==='complete'?'':'disabled ')+(acquisitionChosen.has(item.id)?'checked':'')+'></td><td><strong>'+esc(item.filename)+'</strong><div class="record-id">'+esc(item.identifier)+'</div><div>'+esc(item.role)+' · '+esc(item.access.files)+'</div></td><td><a href="'+esc(item.url)+'" target="_blank" rel="noreferrer">'+esc(item.url)+'</a></td><td>'+esc(item.status)+' · '+Number(item.bytes).toLocaleString()+' bytes'+(item.totalBytes!=null?' / '+Number(item.totalBytes).toLocaleString():'')+'<div>'+esc(item.actualMediaType||'')+'</div><div class="record-id">'+esc(item.sha256||item.prefixSha256)+'</div>'+(item.lastError?'<p>'+esc(item.lastError)+'</p>':'')+'</td><td><button type="button" data-source-file-history="'+index+'">Open original history</button>'+(item.status==='complete'?'<a class="button" href="/download/source-document?'+esc(sourceQuery({id:a.id,file:item.id}))+'">Download original bytes</a>':'')+'</td></tr>').join('');
+  $('#source-download-file-page').textContent=(a.items.length?position+1:0)+'–'+(position+a.items.length)+' of '+a.files;
+  $('#previous-source-download-files').disabled=position===0;$('#next-source-download-files').disabled=a.next==null;
+  if(!preserve)$('#source-download-history-body').textContent='';
+}
+formHandler('#source-download-plan-form',async(form,values)=>{
+  const files=await jsonInput(form,'files');
+  const result=await apply('source-download-plan',{title:String(values.get('title')),reviewer:String(values.get('reviewer')),
+    note:String(values.get('note')),files:Array.isArray(files)?files:files.files,
+    interval:Number(values.get('interval')),authorizationEnvironment:String(values.get('authorizationEnvironment')||'')||null});
+  if(result){await loadAcquisitions();await openAcquisition(result.result.id);}
+});
+$('#source-download-plan-form [name="file"]').addEventListener('change',async event=>{
+  try{if(event.target.files[0])$('#source-download-plan-form [name="files"]').value=await fileText(event.target.files[0]);}
+  catch(error){message(error.message,true);}
+});
+action('#refresh-source-downloads',loadAcquisitions);
+action('#previous-source-downloads',async()=>{acquisitionOffset=Math.max(0,acquisitionOffset-25);await loadAcquisitions();});
+action('#next-source-downloads',async()=>{if(acquisitionList?.next!=null){acquisitionOffset=acquisitionList.next;await loadAcquisitions();}});
+$('#source-download-list').addEventListener('click',async event=>{
+  const button=event.target.closest('[data-open-acquisition]');if(!button)return;
+  try{await openAcquisition(acquisitionList.items[Number(button.dataset.openAcquisition)].id);}catch(error){message(error.message,true);}
+});
+action('#previous-source-download-files',()=>openAcquisition(acquisitionCurrent.id,Math.max(0,acquisitionFileOffset-50),true));
+action('#next-source-download-files',async()=>{if(acquisitionCurrent?.next!=null)await openAcquisition(acquisitionCurrent.id,acquisitionCurrent.next,true);});
+$('#source-download-rows').addEventListener('change',event=>{
+  const box=event.target.closest('[data-choose-source-file]');if(!box)return;
+  const item=acquisitionCurrent.items[Number(box.dataset.chooseSourceFile)];
+  if(box.checked)acquisitionChosen.set(item.id,item);else acquisitionChosen.delete(item.id);
+});
+$('#source-download-rows').addEventListener('click',event=>{
+  const button=event.target.closest('[data-source-file-history]');if(!button)return;
+  const item=acquisitionCurrent.items[Number(button.dataset.sourceFileHistory)];
+  $('#source-download-history-body').textContent=pretty(item);$('#source-download-history').open=true;
+  $('#source-download-import-form [name="id"]').value=item.id;
+});
+action('#run-source-downloads',async()=>{
+  if(!acquisitionCurrent)throw new Error('Open the original source selection.');
+  const digest=await crypto.subtle.digest('SHA-256',encoder.encode(acquisitionCurrent.id));
+  const operationId='source-run-'+[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  const prior=(data.nativeJobs||[]).find(job=>job.operationId===operationId);
+  if(prior?.request)await submit('/api/native',prior.request);
+  else await native('source-download',{acquisitionId:acquisitionCurrent.id},operationId);
+});
+action('#pause-source-downloads',async()=>{
+  if(!acquisitionCurrent)return;
+  await api('/api/source-download/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({projectId,acquisitionId:acquisitionCurrent.id})});
+  message('Pause requested. The original stream will save its current byte checkpoint.');
+  await reload({preserve:true});
+});
+action('#prepare-source-download-receive',async()=>{
+  if(!acquisitionChosen.size)throw new Error('Select the completed original documents to receive.');
+  const rows=[...acquisitionChosen.values()].map(item=>({id:item.id,filename:item.filename,role:item.role,mediaType:item.actualMediaType||item.mediaType,access:item.access}));
+  $('#source-download-adopt-form [name="files"]').value=pretty(rows);
+  $('#source-download-adopt-form [name="reviewer"]').value=acquisitionCurrent.reviewer;
+  $('#source-download-adopt-form [name="files"]').focus();
+});
+
+formHandler('#source-download-import-form',async(form,values)=>{
+  if(!acquisitionCurrent)throw new Error('Open the original source acquisition.');
+  await apply('source-download-import',{acquisitionId:acquisitionCurrent.id,id:String(values.get('id')),path:String(values.get('path')),
+    transport:JSON.parse(form.elements.transport.value),reviewer:String(values.get('reviewer')),note:String(values.get('note'))});
+  await loadAcquisitions();
+});
+formHandler('#source-download-adopt-form',async(form,values)=>{
+  if(!acquisitionCurrent)throw new Error('Open the original source acquisition.');
+  await apply('source-download-adopt',{acquisitionId:acquisitionCurrent.id,files:JSON.parse(form.elements.files.value),
+    reviewer:String(values.get('reviewer')),note:String(values.get('note'))});
+  acquisitionChosen.clear();await loadAcquisitions();await loadFiles();
+});
+
+
+let productionContext='',productionPlans=null,productionPlan=null,productionWave=null;
+let productionPlanOffset=0,productionWaveOffset=0,productionMemberOffset=0,productionChosen=new Set();
+function productionCounts(counts){return Object.entries(counts||{}).map(([key,value])=>value+' '+key).join(' · ');}
+function productionSelectionUI(){
+  const form=$('#production-plan-form'),all=form.elements.all.checked;
+  form.querySelectorAll('[name="sets"],[name="unassigned"]').forEach(item=>{item.disabled=all;});
+}
+async function loadProduction(){
+  if(productionContext!==projectId){
+    productionContext=projectId;productionPlans=null;productionPlan=null;productionWave=null;
+    productionPlanOffset=0;productionWaveOffset=0;productionMemberOffset=0;productionChosen.clear();
+    $('#production-collections').innerHTML='';
+    $('#production-plan-detail').hidden=true;$('#production-wave-detail').hidden=true;
+  }
+  if(!data?.project){$('#production-plans').innerHTML='<tr><td colspan="4">Choose the original migration first.</td></tr>';return;}
+  const selectedSets=new Set([...$('#production-collections').querySelectorAll('input:checked')].map(item=>item.value));
+  const inventory=await api('/api/production-collections?'+sourceQuery());
+  $('#production-collection-summary').textContent=inventory.records+' original records · '+inventory.unassigned+' without a collection. '+inventory.counting;
+  $('#production-collections').innerHTML=inventory.collections.map(item=>'<label><input type="checkbox" name="sets" value="'+esc(item.set)+'"'+(selectedSets.has(item.set)?' checked':'')+'> '+esc(item.set)+' ('+item.records+')</label>').join('');
+  productionSelectionUI();
+  productionPlans=await api('/api/production-plans?'+sourceQuery({offset:String(productionPlanOffset),limit:'50'}));
+  $('#production-plans').innerHTML=productionPlans.items.map(item=>'<tr><td>'+esc(item.title)+'<div class="record-id">'+esc(item.id)+'</div></td><td>'+item.selectedRecords+' records; '+esc(productionCounts(item.initialCounts))+'</td><td>'+item.waveCount+'</td><td><button type="button" data-production-plan="'+esc(item.id)+'">Open plan</button></td></tr>').join('')||'<tr><td colspan="4">Save the first collection plan above.</td></tr>';
+  $('#production-plans-previous').disabled=productionPlanOffset===0;
+  $('#production-plans-next').disabled=productionPlans.next===null;
+  $('#production-plans-page').textContent=(productionPlanOffset+1)+'–'+(productionPlanOffset+productionPlans.items.length)+' of '+productionPlans.total;
+  if(productionPlan)await openProductionPlan(productionPlan.id,true);
+  if(productionWave)await openProductionWave(productionWave.id,true);
+}
+async function openProductionPlan(identity,preserve=false){
+  if(!preserve){productionWaveOffset=0;productionWave=null;productionChosen.clear();$('#production-wave-detail').hidden=true;}
+  productionPlan=await api('/api/production-plans?'+sourceQuery({id:identity,offset:String(productionWaveOffset),limit:'50'}));
+  $('#production-plan-detail').hidden=false;
+  $('#production-plan-title').textContent=productionPlan.title;
+  $('#production-plan-summary').textContent=productionPlan.selectedRecords+' original records; '+productionPlan.waveCount+' saved waves. Original edition '+short(productionPlan.editionId)+' · '+productionCounts(productionPlan.initialCounts)+'.';
+  $('#production-plan-download').href='/download/production-plan?'+sourceQuery({id:identity});
+  $('#production-waves').innerHTML=productionPlan.waves.map(wave=>'<tr><td>'+wave.ordinal+'. '+esc(wave.title)+'</td><td>'+wave.records+'</td><td>'+esc(wave.batchStates.map(batch=>short(batch.id)+' '+batch.status).join(' · ')||'Ready for source review')+'</td><td><button type="button" data-production-wave="'+esc(wave.id)+'">Open wave</button></td></tr>').join('')||'<tr><td colspan="4">All selected records were already received or excluded. Their complete membership remains in the plan download.</td></tr>';
+  $('#production-waves-previous').disabled=productionWaveOffset===0;
+  $('#production-waves-next').disabled=productionPlan.next===null;
+  $('#production-waves-page').textContent=(productionWaveOffset+1)+'–'+(productionWaveOffset+productionPlan.waves.length)+' of '+productionPlan.waveCount;
+}
+async function openProductionWave(identity,preserve=false){
+  if(!preserve){productionMemberOffset=0;productionChosen.clear();}
+  productionWave=await api('/api/production-wave?'+sourceQuery({id:identity,offset:String(productionMemberOffset),limit:'50'}));
+  $('#production-wave-detail').hidden=false;
+  $('#production-wave-title').textContent=productionWave.title;
+  $('#production-wave-summary').textContent=productionCounts(productionWave.counts)+'. '+(productionWave.complete?'All wave records have a completed receiving or exclusion disposition.':'Continue the original records and native batches.')+' Current edition '+short(productionWave.currentEditionId)+', revision '+productionWave.currentProjectRevision+'.';
+  $('#production-members').innerHTML=productionWave.items.map(item=>'<tr><td><input type="checkbox" data-production-member="'+esc(item.identifier)+'" aria-label="Choose '+esc(item.currentTitle)+'"'+(productionChosen.has(item.identifier)?' checked':'')+'></td><td>'+esc(item.currentTitle)+'<div class="record-id">'+esc(item.identifier)+'</div></td><td>'+esc(item.status)+'</td><td>'+esc(item.currentIssues.map(issue=>issue.message).join('; ')||'Current mapping resolved')+'</td><td><button type="button" data-production-record="'+esc(item.identifier)+'">Open record</button></td></tr>').join('');
+  $('#production-members-previous').disabled=productionMemberOffset===0;
+  $('#production-members-next').disabled=productionWave.next===null;
+  $('#production-members-page').textContent=(productionMemberOffset+1)+'–'+(productionMemberOffset+productionWave.items.length)+' of '+productionWave.total;
+  $('#production-selected').textContent=productionChosen.size+' records selected across the opened pages.';
+  if(!preserve){for(const id of ['production-wave-form','production-reconcile-form']){$('#'+id).elements.reviewer.value=productionWave.reviewer;$('#'+id).elements.note.value=productionWave.note;}}
+  $('#production-batches').innerHTML=productionWave.batchStates.map(batch=>'<div class="conflict"><strong>'+esc(short(batch.id)+' · '+batch.status)+'</strong><p>'+esc(productionCounts(batch.lastReconciliation?.counts||batch.counts))+'</p><a href="/download/batch?'+new URLSearchParams({batch:batch.id})+'">Download complete original batch</a> <button type="button" data-production-batch="'+esc(batch.id)+'">Open native delivery</button></div>').join('')||'<p>Prepare this wave after reviewing the original source and destination decisions.</p>';
+  const select=$('#production-reconcile-form').elements.batchId,prior=select.value;
+  select.innerHTML='<option value="">Choose this wave’s original batch</option>'+productionWave.batchStates.map(batch=>'<option value="'+esc(batch.id)+'">'+esc(short(batch.id)+' · '+batch.status)+'</option>').join('');
+  if(productionWave.batchStates.some(batch=>batch.id===prior))select.value=prior;
+  else if(productionWave.batchStates.length)select.value=productionWave.batchStates.at(-1).id;
+  $('#production-history').textContent=pretty({history:productionWave.history,batchIds:productionWave.batchIds,originalEditionId:productionWave.editionId});
+}
+$('#production-plan-form').elements.all.addEventListener('change',productionSelectionUI);
+formHandler('#production-plan-form',async(form,values)=>{
+  const all=form.elements.all.checked;
+  const result=await apply('production-plan',{title:String(values.get('title')),recordsPerWave:Number(values.get('recordsPerWave')),
+    reviewer:String(values.get('reviewer')),note:String(values.get('note')),selection:{all,
+      sets:all?[]:values.getAll('sets').map(String),unassigned:all?false:form.elements.unassigned.checked,
+      includeReceived:form.elements.includeReceived.checked}});
+  if(result){productionPlanOffset=0;await loadProduction();await openProductionPlan(result.result.id);}
+});
+$('#production-wave-form').addEventListener('submit',async event=>{
+  event.preventDefault();const form=event.currentTarget;if(!form.reportValidity())return;
+  try{
+    if(!productionWave)throw new Error('Open the original production wave.');
+    const mode=event.submitter?.value,values=new FormData(form);
+    const common={waveId:productionWave.id,reviewer:String(values.get('reviewer')),note:String(values.get('note'))};
+    if(mode==='review')await apply('production-review',common);
+    else if(mode==='defer'||mode==='include'){
+      if(!productionChosen.size)throw new Error('Choose original wave records.');
+      await apply('production-disposition',{...common,identifiers:[...productionChosen],disposition:mode});
+      productionChosen.clear();
+    }else if(mode==='prepare')await apply('production-prepare',{...common,readyOnly:form.elements.readyOnly.checked});
+    else throw new Error('Choose the intended wave action.');
+    await openProductionWave(common.waveId,true);
+  }catch(error){message(error.message,true);}
+});
+formHandler('#production-reconcile-form',async(form,values)=>{
+  if(!productionWave)throw new Error('Open the original production wave.');
+  const identity=productionWave.id;
+  await apply('production-reconcile',{waveId:identity,batchId:String(values.get('batchId')),reviewer:String(values.get('reviewer')),note:String(values.get('note'))});
+  await openProductionWave(identity,true);
+});
+$('#production-plans').addEventListener('click',event=>{const button=event.target.closest('[data-production-plan]');if(button)openProductionPlan(button.dataset.productionPlan).catch(error=>message(error.message,true));});
+$('#production-waves').addEventListener('click',event=>{const button=event.target.closest('[data-production-wave]');if(button)openProductionWave(button.dataset.productionWave).catch(error=>message(error.message,true));});
+$('#production-members').addEventListener('change',event=>{const box=event.target.closest('[data-production-member]');if(!box)return;if(box.checked)productionChosen.add(box.dataset.productionMember);else productionChosen.delete(box.dataset.productionMember);$('#production-selected').textContent=productionChosen.size+' records selected across the opened pages.';});
+$('#production-members').addEventListener('click',event=>{const button=event.target.closest('[data-production-record]');if(button)openRecord(button.dataset.productionRecord).catch(error=>message(error.message,true));});
+$('#production-batches').addEventListener('click',event=>{
+  const button=event.target.closest('[data-production-batch]');if(!button)return;
+  tab('batches');
+  $$('.batch-select').forEach(select=>{if(![...select.options].some(option=>option.value===button.dataset.productionBatch)){const option=document.createElement('option');option.value=button.dataset.productionBatch;option.textContent=short(option.value)+' / original production wave';select.append(option);}select.value=button.dataset.productionBatch;});
+});
+action('#production-refresh',()=>loadProduction());
+action('#production-clear',async()=>{productionChosen.clear();if(productionWave)await openProductionWave(productionWave.id,true);});
+action('#production-plans-previous',async()=>{productionPlanOffset=Math.max(0,productionPlanOffset-50);await loadProduction();});
+action('#production-plans-next',async()=>{if(productionPlans?.next!==null){productionPlanOffset=productionPlans.next;await loadProduction();}});
+action('#production-waves-previous',async()=>{productionWaveOffset=Math.max(0,productionWaveOffset-50);await openProductionPlan(productionPlan.id,true);});
+action('#production-waves-next',async()=>{if(productionPlan?.next!==null){productionWaveOffset=productionPlan.next;await openProductionPlan(productionPlan.id,true);}});
+action('#production-members-previous',async()=>{productionMemberOffset=Math.max(0,productionMemberOffset-50);await openProductionWave(productionWave.id,true);});
+action('#production-members-next',async()=>{if(productionWave?.next!==null){productionMemberOffset=productionWave.next;await openProductionWave(productionWave.id,true);}});
+
 (async()=>{
   try{
     if(!token)throw new Error('Open the complete local launch link to enter the original workspace.');

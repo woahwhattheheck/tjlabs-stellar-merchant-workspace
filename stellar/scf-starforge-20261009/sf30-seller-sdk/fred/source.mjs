@@ -1,3 +1,4 @@
+import { ALFRED_CAPTURE, fredAlfredCaptureIdentity } from './alfred/model.mjs';
 // MIT. Retained official FRED v1 responses and same-operation acquisition.
 import { createHash } from 'node:crypto';
 import { join, resolve } from 'node:path';
@@ -12,6 +13,7 @@ export async function optionalJson(path, limit = MAX_CAPTURE_BYTES * 2) {
   try { return await readPrivateJson(path, limit); } catch (error) { if (error.code === 'ENOENT') return null; throw error; }
 }
 export function captureIdentity(capture) {
+  if (capture?.schema === ALFRED_CAPTURE) return fredAlfredCaptureIdentity(capture);
   return [PUBLIC_CAPTURE, PUBLIC_SET_CAPTURE].includes(capture.schema)
     ? { schema: capture.schema, selection: capture.selection, source: capture.source }
     : { schema: CAPTURE, selection: capture.selection, records: capture.records };
@@ -23,6 +25,10 @@ export function validateCapture(capture) {
     need(Array.isArray(tables), 'Retained table inventory is missing.');
     for (const table of tables)
       need(hash(Buffer.from(table?.table_text ?? '', 'utf8')) === table?.sha256, 'The original public-table bytes changed.');
+  }
+  if (capture.schema === ALFRED_CAPTURE) for (const record of capture.source?.series ?? []) {
+    for (const source of [record.response, record.metadata?.source].filter(Boolean))
+      need(hash(Buffer.from(source.body ?? '', 'utf8')) === source.sha256, 'The original ALFRED source bytes changed.');
   }
   for (const record of capture.records ?? [])
     need(hash(Buffer.from(record.body ?? '', 'utf8')) === record.sha256, 'An original FRED response changed.');

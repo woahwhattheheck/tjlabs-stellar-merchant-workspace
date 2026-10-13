@@ -42,6 +42,7 @@ async function show(view) {
   if (view === 'runs') await runs();
   if (view === 'compare') await comparison();
   if (view === 'handover') await handover();
+  if (view === 'commissioning') await commissioning();
   bindPages();
 }
 function more(collection) {
@@ -268,6 +269,302 @@ python3 cli.py --workspace ./received serve --port 8777</pre><p>The receiver rec
   handoverRun.onchange=renderActions;renderActions();exportButton.onclick=()=>action(async()=>{const b=exportButton;b.disabled=true;try{const value=await request('/api/export',{});completedDownload(projectLink,value,'Open complete editable project');}finally{b.disabled=false;}});
   await receivedList();
 }
+
+/* Commissioning keeps source preparation, paid Request and editable results in one workspace. */
+const commission = {order:null, receiving:null, definition:null, orders:[], receivings:[],
+  orderNext:0, receivingNext:0, epoch:0, pendingOrder:null, pendingReceiving:null};
+const commissioningSession = 'preparation-commissioning:' + location.origin;
+try {
+  const saved=JSON.parse(sessionStorage.getItem(commissioningSession)||'null');
+  if(saved&&typeof saved==='object')Object.assign(commission,{
+    order:saved.order??null,receiving:saved.receiving??null,
+    pendingOrder:saved.pendingOrder??null,pendingReceiving:saved.pendingReceiving??null,pendingRequest:saved.pendingRequest??null});
+} catch {}
+function saveCommissioning(){
+  sessionStorage.setItem(commissioningSession,JSON.stringify({
+    order:commission.order,receiving:commission.receiving,
+    pendingOrder:commission.pendingOrder,pendingReceiving:commission.pendingReceiving,pendingRequest:commission.pendingRequest}));
+}
+const orderId=()=>unique().replaceAll('-','');
+const commissionStable=value=>JSON.stringify((function sorted(v){
+  return Array.isArray(v)?v.map(sorted):v&&typeof v==='object'
+    ?Object.fromEntries(Object.keys(v).sort().map(k=>[k,sorted(v[k])])):v;
+})(value));
+const commissionAPI=(path,body)=>request('/api/commissioning/'+path,body);
+const completeFile=(kind,id,file)=>'/api/commissioning/file?'+new URLSearchParams({kind,id,file});
+function commissionLinks(kind,id,files){
+  return files.map(file=>'<a download="'+esc(file)+'" href="'+esc(completeFile(kind,id,file))+'">'+esc(file)+'</a>').join(' · ');
+}
+async function commissioning(){
+  const version=++commission.epoch;
+  $('#content').innerHTML=head('Commission pipeline work',
+    'Prepare an exact saved edition, review its merchant request, and receive the complete editable result.')+
+    '<div class="panel"><h3>Prepare a saved pipeline</h3><div class="grid">'+
+    '<div class="field"><label for="commission-pipeline">Saved pipeline</label><select id="commission-pipeline"><option value="">Select a saved pipeline…</option>'+
+    options(ui.state.pipelines.items,commission.definition?.id,p=>p.label+' · latest edition '+p.revision)+'</select></div>'+
+    '<div class="field"><label for="commission-revision">Saved edition</label><input id="commission-revision" type="number" min="1" step="1" value="'+
+    esc(commission.definition?.revision??'')+'"></div></div>'+
+    '<div class="toolbar"><button id="commission-load">Load exact edition</button></div>'+more('pipelines')+
+    '<div id="commission-definition"></div></div>'+
+    '<div class="split"><section class="panel"><div class="section-title"><h3>Prepared orders</h3><button id="commission-refresh" class="small">Refresh saved work</button></div>'+
+    '<div id="commission-orders"></div><button id="commission-orders-more" hidden>Load more orders</button>'+
+    '</section><section class="panel"><h3>Received work</h3><div id="commission-receivings"></div>'+
+    '<button id="commission-receivings-more" hidden>Load more receivings</button></section></div>'+
+    '<section id="commission-order-detail"></section>'+
+    '<section class="panel"><h3>Receive a purchased result</h3><p class="muted">Select the complete result ZIP and the expected package descriptor retained by the original Jobs workspace.</p>'+
+    '<div class="grid"><div class="field"><label for="commission-result">Complete result ZIP</label><input id="commission-result" type="file" accept=".zip"></div>'+
+    '<div class="field"><label for="commission-expected">Expected package descriptor</label><input id="commission-expected" type="file" accept=".json,application/json"></div>'+
+    '<div class="field"><label for="commission-job">Expected job identity (optional)</label><input id="commission-job" type="file" accept=".json,application/json"></div>'+
+    '<div class="field"><label for="commission-order-binding">Match this prepared order</label><select id="commission-order-binding"><option value="">Independent existing job</option></select></div></div>'+
+    '<div class="toolbar"><button id="commission-receive" class="primary">Verify and receive complete result</button></div>'+
+    '<p id="commission-upload-status" role="status"></p></section><section id="commission-receiving-detail"></section>';
+  $('#commission-pipeline').onchange=()=>{
+    const selected=ui.state.pipelines.items.find(p=>p.id===$('#commission-pipeline').value);
+    $('#commission-revision').value=selected?.revision??'';
+  };
+  $('#commission-load').onclick=()=>action(async()=>{
+    const id=$('#commission-pipeline').value,revision=Number($('#commission-revision').value);
+    if(!id||!Number.isSafeInteger(revision)||revision<1)throw Error('Select one saved pipeline and a positive edition.');
+    const definition=await request('/api/definition?'+new URLSearchParams({id,revision}));
+    if(version!==commission.epoch||ui.view!=='commissioning')return;
+    commission.definition=definition;renderCommissionDefinition();
+  });
+  $('#commission-refresh').onclick=()=>action(()=>refreshCommissioning(true));
+  $('#commission-orders-more').onclick=()=>action(()=>loadCommissionRows('orders',false));
+  $('#commission-receivings-more').onclick=()=>action(()=>loadCommissionRows('receivings',false));
+  $('#commission-receive').onclick=()=>action(receiveCommissionFile);
+  renderCommissionDefinition();
+  await refreshCommissioning(true);
+}
+function renderCommissionDefinition(){
+  const panel=$('#commission-definition');if(!panel)return;
+  const d=commission.definition;if(!d){panel.innerHTML='<p class="hint">Load a saved edition to review its complete steps and choose original input editions.</p>';return;}
+  panel.innerHTML='<h3>'+esc(d.label)+' · edition '+d.revision+'</h3><p>'+esc(d.description)+'</p>'+
+    '<div class="grid"><div class="field"><label for="commission-report">Report name</label><input id="commission-report" maxlength="120" value="'+esc(d.label+' · edition '+d.revision)+'"></div>'+
+    '<div class="field"><label for="commission-reuse">Reuse matching completed stages</label><select id="commission-reuse"><option value="">Compute every stage</option>'+
+    options(ui.state.executions.items.filter(r=>r.status!=='RUNNING'),'',runLabel)+'</select></div></div>'+
+    Object.entries(d.inputs).map(([alias,source])=>'<div class="input-choice"><label>'+esc(alias)+'</label><select data-commission-input="'+esc(alias)+'">'+
+      options(ui.state.sources,source,s=>s.label+' · '+s.rows+' rows · '+s.id)+'</select></div>').join('')+
+    '<details><summary>Review saved SQL, parameters and named outputs</summary>'+
+    d.stages.map(stage=>'<h4>'+esc(stage.label||stage.id)+'</h4><pre>'+esc(stage.sql)+'</pre><p>Parameters</p><pre>'+esc(JSON.stringify(stage.parameters,null,2))+
+      '</pre><p>Bindings</p><pre>'+esc(JSON.stringify(stage.bindings,null,2))+'</pre>').join('')+
+    '<p>Named outputs: '+esc(d.outputs.join(', '))+'</p></details>'+
+    '<div class="toolbar"><button id="commission-prepare" class="primary">Prepare this complete order</button></div>';
+  $('#commission-prepare').onclick=()=>action(async()=>{
+    const button=$('#commission-prepare'),inputs=Object.create(null);
+    document.querySelectorAll('[data-commission-input]').forEach(select=>inputs[select.dataset.commissionInput]=select.value);
+    const reportName=$('#commission-report').value.trim(),reuse=$('#commission-reuse').value;
+    if(!reportName)throw Error('Choose a report name.');
+    const intent={pipelineId:d.id,revision:d.revision,reportName,inputs,...(reuse?{reuseExecution:reuse}:{})};
+    const old=commission.pendingOrder;
+    const prior=old&&Object.fromEntries(Object.entries(old).filter(([k])=>k!=='id'));
+    const same=prior&&commissionStable(prior)===commissionStable(intent);
+    const body=same?old:{id:orderId(),...intent};
+    commission.pendingOrder=body;saveCommissioning();button.disabled=true;
+    try{
+      const value=await commissionAPI('prepare',body);
+      commission.order=value.id;commission.pendingOrder=null;saveCommissioning();
+      notice('The complete order is preparing. Its original identity is saved.');
+      await refreshCommissioning(true);
+    }finally{if(button.isConnected)button.disabled=false;}
+  });
+}
+async function loadCommissionRows(kind,reset){
+  const order=kind==='orders',next=order?'orderNext':'receivingNext';
+  const version=commission.epoch,offset=reset?0:commission[next];
+  if(offset===null)return;
+  const page=await commissionAPI(kind+'?'+new URLSearchParams({offset,limit:50}));
+  if(version!==commission.epoch||ui.view!=='commissioning')return;
+  const original=reset?[]:commission[kind];
+  const values=new Map(original.map(v=>[v.id,v]));page.items.forEach(v=>values.set(v.id,v));
+  commission[kind]=[...values.values()];commission[next]=page.nextOffset;
+  const panel=$(order?'#commission-orders':'#commission-receivings');
+  panel.innerHTML=commission[kind].length?commission[kind].map(v=>'<div class="run-card"><div><button class="link" data-commission-record="'+v.id+'">'+
+    esc(order?v.intent.reportName:(v.result?.received?.pipeline?.id||'Purchased pipeline result'))+'</button><p>'+esc(v.id)+'</p></div>'+status(v.status)+'</div>').join(''):
+    '<p class="empty">'+(order?'No prepared orders yet.':'No received work yet.')+'</p>';
+  panel.querySelectorAll('[data-commission-record]').forEach(b=>b.onclick=()=>action(async()=>{
+    commission[order?'order':'receiving']=b.dataset.commissionRecord;saveCommissioning();await renderCommissionRecord(kind);
+  }));
+  $(order?'#commission-orders-more':'#commission-receivings-more').hidden=page.nextOffset===null;
+  if(order){
+    const select=$('#commission-order-binding'),previous=select.value||commission.order||'';
+    select.innerHTML='<option value="">Independent existing job</option>'+commission.orders.filter(v=>v.result?.prepared).map(v=>
+      '<option value="'+v.id+'">'+esc(v.intent.reportName)+' · '+v.id.slice(0,8)+'</option>').join('');
+    select.value=previous;
+  }
+}
+async function refreshCommissioning(reset=false){
+  if(ui.view!=='commissioning')return;
+  clearTimeout(poll);
+  await Promise.all([loadCommissionRows('orders',reset),loadCommissionRows('receivings',reset)]);
+  await Promise.all([renderCommissionRecord('orders'),renderCommissionRecord('receivings')]);
+  if(ui.view==='commissioning'&&(commission.requestActive||[...commission.orders,...commission.receivings].some(v=>v.active)))
+    poll=setTimeout(()=>action(()=>refreshCommissioning(true)),1200);
+}
+async function renderCommissionRecord(kind){
+  const order=kind==='orders',id=commission[order?'order':'receiving'];
+  const panel=$(order?'#commission-order-detail':'#commission-receiving-detail');
+  if(!panel||!id){if(panel)panel.innerHTML='';return;}
+  const version=commission.epoch,value=await commissionAPI('record?'+new URLSearchParams({kind,id}));
+  if(version!==commission.epoch||ui.view!=='commissioning'||commission[order?'order':'receiving']!==id)return;
+  const result=order?value.result?.prepared:value.result?.received;
+  if(order&&panel.contains(document.activeElement)&&document.activeElement?.matches('input,select,textarea'))return;
+  panel.className='panel';
+  panel.innerHTML='<div class="section-title"><h3>'+esc(order?value.intent.reportName:'Received pipeline work')+'</h3>'+status(value.status)+'</div>'+
+    '<p class="hint">'+esc(id)+(value.updatedAt?' · '+esc(date(value.updatedAt)):'')+'</p>'+
+    (value.message?'<p>'+esc(value.message)+'</p>':'')+
+    '<div class="toolbar">'+(value.active?'<button data-commission-command="cancel">Stop current operation</button>':
+      order?'<button data-commission-command="continue">'+(result?'Verify prepared order':'Continue original preparation')+'</button>':
+      (value.uploaded?'<button data-commission-command="'+(result?'reopen':'receive')+'" class="primary">'+
+        (result?'Verify and reopen complete result':'Receive uploaded result')+'</button>':'<p>Reselect the same complete result ZIP below to finish this receiving.</p>'))+
+      (!order&&result&&value.action==='reopen'&&value.status==='COMPLETE'?'<button data-commission-command="open">Open editable project</button>':'')+'</div>'+
+    (result?'<p class="delivery-links">'+commissionLinks(kind,id,order?Object.keys(value.result.files):result.files.map(f=>f.filename))+'</p>':'')+
+    (order&&result?'<p>Function: <strong>'+esc(result.functionId)+'</strong> · '+esc(result.pipeline.id)+' · edition '+result.pipeline.revision+'</p>'+
+      '<div class="toolbar"><button data-commission-review>Review complete saved selection</button></div><div data-commission-review-body></div>'+
+      '<div data-commission-request></div>':'')+
+    (!order&&result?'<p>'+esc(result.status)+' · original job '+esc(result.job.id)+' · execution '+esc(result.executionId)+'</p>':'');
+  panel.querySelectorAll('[data-commission-command]').forEach(button=>button.onclick=()=>action(async()=>{
+    button.disabled=true;const command=button.dataset.commissionCommand;
+    try{
+      const answer=await commissionAPI(command,command==='cancel'?{kind,id}:{id});
+      if(command==='open'){location.assign(answer.url||answer.origin);return;}
+      await refreshCommissioning(true);
+    }finally{if(button.isConnected)button.disabled=false;}
+  }));
+  const review=panel.querySelector('[data-commission-review]');
+  if(review)review.onclick=()=>action(async()=>{
+    const response=await fetch(completeFile('orders',id,'selection.json'));
+    if(!response.ok)throw Error('The original complete selection is unavailable.');
+    const selection=await response.json();
+    if(!review.isConnected)return;
+    panel.querySelector('[data-commission-review-body]').innerHTML='<p>Complete saved inputs, source identities, SQL, parameters and reuse choice</p><pre>'+
+      esc(JSON.stringify(selection,null,2))+'</pre>';
+  });
+  if(order&&result)await renderCommissionRequest(panel.querySelector('[data-commission-request]'),value);
+}
+async function jsonCommissionFile(input,optional=false){
+  const file=input.files[0];if(!file){if(optional)return {};throw Error('Select the original expected package descriptor.');}
+  if(file.size>1048576)throw Error('Use the original complete JSON file within 1 MiB.');
+  const value=JSON.parse(await file.text());
+  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('The original descriptor must be a complete JSON object.');
+  return value;
+}
+async function receiveCommissionFile(){
+  const file=$('#commission-result').files[0];
+  if(!file||file.size<=0||file.size>64*1024*1024)throw Error('Select the complete result ZIP, up to 64 MiB.');
+  const button=$('#commission-receive'),message=$('#commission-upload-status');button.disabled=true;
+  try{
+    message.textContent='Reading the complete selected file…';
+    const [raw,expected,job]=await Promise.all([file.arrayBuffer(),jsonCommissionFile($('#commission-expected')),jsonCommissionFile($('#commission-job'),true)]);
+    const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',raw)),v=>v.toString(16).padStart(2,'0')).join('');
+    const selectedOrder=$('#commission-order-binding').value;
+    const intent={...(selectedOrder?{orderId:selectedOrder}:{}),expected,job,package:{bytes:raw.byteLength,sha256:digest}};
+    const old=commission.pendingReceiving,prior=old&&Object.fromEntries(Object.entries(old).filter(([k])=>k!=='id'));
+    let body=prior&&commissionStable(prior)===commissionStable(intent)?old:{id:orderId(),...intent};
+    if(commission.receiving){
+      const current=await commissionAPI('record?'+new URLSearchParams({kind:'receivings',id:commission.receiving}));
+      const comparable=Object.fromEntries(Object.entries(current.intent).filter(([k])=>k!=='id'));
+      if(commissionStable(comparable)===commissionStable(intent))body=current.intent;
+    }
+    commission.pendingReceiving=body;saveCommissioning();
+    await commissionAPI('receive-intent',body);
+    commission.receiving=body.id;saveCommissioning();
+    message.textContent='Saving the complete original result…';
+    await request('/api/commissioning/upload?id='+body.id,raw,true);
+    await commissionAPI('receive',{id:body.id});
+    commission.pendingReceiving=null;saveCommissioning();
+    message.textContent='The saved result is being verified and opened as an independent editable project.';
+    await refreshCommissioning(true);
+  }finally{if(button.isConnected)button.disabled=false;}
+}
+async function renderCommissionRequest(panel,value){
+  if(!panel)return;
+  const version=commission.epoch;
+  const [customers,page]=await Promise.all([
+    commissionAPI('customers'),
+    commissionAPI('requests?'+new URLSearchParams({orderId:value.id,offset:0,limit:50}))
+  ]);
+  if(!panel.isConnected||version!==commission.epoch)return;
+  if(commission.requestOrder!==value.id){commission.requestOrder=value.id;commission.requestRows=[];commission.requestDraft={};}
+  commission.requestRows=page.items;commission.requestNext=page.nextOffset;
+  commission.requestActive=page.items.some(r=>r.active);
+  const draft=commission.requestDraft||{};
+  panel.innerHTML='<h4>Merchant requests</h4><p>Choose an existing customer workspace and review the merchant’s current function and price. The original Request application will retain this order and both sealed input files.</p>'+
+    (customers.items.length?'<div class="grid"><div class="field"><label for="commission-customer">Existing customer workspace</label><select id="commission-customer">'+
+      customers.items.map(c=>'<option value="'+esc(c.alias)+'" '+(draft.customerAlias===c.alias?'selected':'')+'>'+esc(c.label)+'</option>').join('')+'</select></div>'+
+      '<div class="field"><label for="commission-merchant">Merchant origin</label><input id="commission-merchant" type="url" placeholder="https://merchant.example" value="'+esc(draft.merchantOrigin||'')+'"></div>'+
+      '<div class="field"><label for="commission-reference">Request reference</label><input id="commission-reference" value="'+esc(draft.reference||'')+'" placeholder="Assigned when saved"></div>'+
+      '<div class="field"><label for="commission-label">Request label</label><input id="commission-label" maxlength="300" value="'+esc(draft.label||value.intent.reportName)+'"></div></div>'+
+      '<div class="toolbar"><button id="commission-catalog">Review merchant catalog</button></div>':
+      '<p class="hint">An existing Jobs customer can be selected in the application’s host configuration. The complete files below also work in its original Request page.</p>')+
+    '<div data-commission-request-rows></div><button data-commission-request-more hidden>Load more merchant requests</button>'+
+    '<details><summary>Prepared input and attachment slots</summary><pre>'+esc(JSON.stringify(value.result.prepared.input,null,2))+
+    '</pre><p>Attach project.zip to project and selection.json to selection.</p></details>';
+  const button=panel.querySelector('#commission-catalog');
+  if(button){
+    const readDraft=()=>({customerAlias:$('#commission-customer').value,merchantOrigin:$('#commission-merchant').value.trim(),
+      reference:$('#commission-reference').value.trim(),label:$('#commission-label').value.trim()});
+    panel.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{commission.requestDraft=readDraft();}));
+    button.onclick=()=>action(async()=>{
+      const draft=readDraft();
+      if(!draft.merchantOrigin||!draft.label)throw Error('Choose a merchant origin and request label.');
+      const old=commission.pendingRequest;
+      const intent={orderId:value.id,...draft};
+      if(!intent.reference)intent.reference=old&&old.orderId===value.id&&old.customerAlias===draft.customerAlias&&
+        old.merchantOrigin===draft.merchantOrigin?old.reference:'pipeline_'+orderId();
+      const previous=old&&Object.fromEntries(Object.entries(old).filter(([k])=>k!=='id'));
+      const body=previous&&commissionStable(previous)===commissionStable(intent)?old:{id:orderId(),...intent};
+      commission.pendingRequest=body;commission.requestDraft={...draft,reference:intent.reference};saveCommissioning();
+      button.disabled=true;
+      try{await commissionAPI('catalog',body);commission.pendingRequest=null;saveCommissioning();await refreshCommissioning(true);}
+      finally{if(button.isConnected)button.disabled=false;}
+    });
+  }
+  function renderRows(){
+    const rows=panel.querySelector('[data-commission-request-rows]');
+    rows.innerHTML=commission.requestRows.map(row=>{
+      const catalog=row.result?.catalog,handoff=row.result?.handoff,definition=catalog?.functions?.find(f=>f.id==='executePipeline');
+      const payment=definition?.payment;
+      return '<article class="stage"><div class="section-title"><strong>'+esc(row.intent.label)+'</strong>'+status(row.status)+'</div>'+
+        '<p>'+esc(row.intent.merchantOrigin)+' · '+esc(row.intent.reference)+'</p>'+
+        (payment?'<p><strong>'+esc(payment.amount)+'</strong> · '+esc(payment.network)+'</p><p>Asset: '+esc(payment.asset)+'<br>Payee: '+esc(payment.payTo)+'</p>':'')+
+        (row.message?'<p>'+esc(row.message)+'</p>':'')+
+        '<div class="toolbar">'+(row.active?'<button data-request-cancel="'+row.id+'">Stop current file operation</button>':
+          '<button data-request-review="'+row.id+'">Review complete catalog and request</button>'+
+          (handoff?'<button data-request-seed="'+row.id+'" data-catalog="'+esc(row.selectedCatalogSha256||handoff.catalogSha256)+'">Reconnect same original Request</button>'+
+            '<a data-request-open="'+row.id+'" href="'+esc(handoff.requestUrl)+'">Open original Request</a>':
+           catalog?'<button class="primary" data-request-seed="'+row.id+'" data-catalog="'+esc(row.selectedCatalogSha256||catalog.catalogSha256)+'">'+
+            (row.selectedCatalogSha256?'Continue same original Request':'Create Request with both complete files')+'</button>':
+            '<button data-request-catalog="'+row.id+'">Continue catalog read</button>'))+'</div>'+
+        '<div data-request-detail="'+row.id+'"></div></article>';
+    }).join('')||'<p class="hint">No merchant requests for this prepared order.</p>';
+    rows.querySelectorAll('[data-request-review]').forEach(button=>button.onclick=()=>action(async()=>{
+      const id=button.dataset.requestReview,record=await commissionAPI('record?'+new URLSearchParams({kind:'requests',id}));
+      if(!button.isConnected)return;
+      const target=rows.querySelector('[data-request-detail="'+id+'"]');
+      target.innerHTML='<pre>'+esc(JSON.stringify(record.result||record,null,2))+'</pre>';
+    }));
+    rows.querySelectorAll('[data-request-seed],[data-request-catalog],[data-request-cancel]').forEach(button=>button.onclick=()=>action(async()=>{
+      button.disabled=true;
+      try{
+        if(button.dataset.requestSeed)await commissionAPI('seed',{id:button.dataset.requestSeed,catalogSha256:button.dataset.catalog});
+        else if(button.dataset.requestCatalog)await commissionAPI('refresh-catalog',{id:button.dataset.requestCatalog});
+        else await commissionAPI('cancel',{kind:'requests',id:button.dataset.requestCancel});
+        await refreshCommissioning(true);
+      }finally{if(button.isConnected)button.disabled=false;}
+    }));
+    const more=panel.querySelector('[data-commission-request-more]');more.hidden=commission.requestNext===null;
+  }
+  panel.querySelector('[data-commission-request-more]').onclick=()=>action(async()=>{
+    const page=await commissionAPI('requests?'+new URLSearchParams({orderId:value.id,offset:commission.requestNext,limit:50}));
+    if(!panel.isConnected)return;
+    const seen=new Map(commission.requestRows.map(r=>[r.id,r]));page.items.forEach(r=>seen.set(r.id,r));
+    commission.requestRows=[...seen.values()];commission.requestNext=page.nextOffset;
+    commission.requestActive=commission.requestRows.some(r=>r.active);renderRows();
+  });
+  renderRows();
+}
+
 document.querySelectorAll('nav button').forEach(button=>button.onclick=()=>action(async()=>{if(ui.view==='pipelines'&&ui.draft&&$('#editor'))readEditor();await show(button.dataset.view);}));
 $('#refresh').onclick=()=>action(async()=>{if(ui.view==='pipelines'&&ui.draft&&$('#editor'))readEditor();await refresh();});
 try { const saved=sessionStorage.getItem('pipeline-pending-request');if(saved)ui.request=JSON.parse(saved); } catch { /* A malformed local draft never changes stored work. */ }

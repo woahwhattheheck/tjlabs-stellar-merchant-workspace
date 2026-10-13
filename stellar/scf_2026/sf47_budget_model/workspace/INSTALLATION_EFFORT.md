@@ -2,8 +2,6 @@
 
 Review recorded Work against the original customer phases, retain an explicit remaining-work estimate, and carry the reviewed hours into the existing Forecast and Portfolio. The complete review lives in the saved Installation edition alongside its original source, observations and delivery assignments.
 
-Named lead, finance and reviewer profiles can prepare the original effort source and remaining-work selection for their assigned cases. These requests read the current case and prepare inputs; they do not save an Installation or Forecast. Installation editions keep the existing lead/owner save permissions, and Forecast saves retain the original role, case and named-operator checks.
-
 ## Start with the original work
 
 Open the saved customer Installation from Delivery and cash operations. Its selected Workshare supplies the customer, original quote, complete phase list, phase owners and dependencies, and delivery and support terms. Keep that complete source attached when reviewing effort. The stable phase and native Work identities let a later review identify the same work after an Installation edition changes.

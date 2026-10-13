@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-let token = '', state = null, selectedId = null, busy = false, poll = null;
+let token = '', state = null, projectState = null, selectedId = null, busy = false, poll = null;
 const pendingKey = () => 'merchant.pending-invoice.v1.' + state.config.tenantId;
 const names = { CREATED: 'Draft', CHARGE_UNCERTAIN: 'Creating request', CHARGE_REJECTED: 'Request rejected',
   AWAITING_PAYMENT: 'Awaiting payment', PAYMENT_PENDING: 'Payment pending', PAYMENT_UNCERTAIN: 'Reconciling payment',
@@ -30,7 +30,9 @@ async function api(path, { method = 'GET', body, download = false } = {}) {
     let code = 'Request failed (' + response.status + ').';
     try { code = (await response.json()).error ?? code; } catch {}
     if (response.status === 401) disconnect();
-    throw new Error(code.replaceAll('_', ' '));
+    throw new Error(code === 'MERCHANT_PROJECT_SNAPSHOT_IN_PROGRESS' ?
+      'The project package is being captured. Your entered details are kept; retry when the package is ready.' :
+      code.replaceAll('_', ' '));
   }
   return download ? response : response.json();
 }
@@ -49,10 +51,11 @@ async function action(work) {
     busy = false;
     for (const button of document.querySelectorAll('button')) button.disabled = false;
     if (token && selectedId) await loadDetail().catch(error => notice(error.message));
+    applyCaptureControls();
   }
 }
 function disconnect() {
-  token = ''; selectedId = null; state = null;
+  token = ''; selectedId = null; state = null; projectState = null;
   $('detail-content').hidden = true; $('detail-empty').hidden = false;
   delete $('detail-content').dataset.orderId;
   if (poll) clearInterval(poll); poll = null;
@@ -108,16 +111,23 @@ function renderList() {
     rows.append(row);
   }
   $('empty-list').hidden = orders.length > 0;
-  $('empty-list').textContent = state.orders.length ? 'No matching invoices.' : 'Create an invoice to begin.';
+  $('empty-list').textContent = state.orders.length ? 'No matching invoices.' :
+    state.mode === 'review' ? 'This saved project contains no invoices.' : 'Create an invoice to begin.';
   $('count-total').textContent = state.orders.length;
   $('count-awaiting').textContent = state.orders.filter(order => ['CREATED', 'AWAITING_PAYMENT'].includes(order.state)).length;
   $('count-progress').textContent = state.orders.filter(order => !['CREATED', 'AWAITING_PAYMENT', 'COMPLETE', 'CHARGE_REJECTED', 'PAYMENT_FAILED'].includes(order.state)).length;
   $('count-complete').textContent = state.orders.filter(order => order.state === 'COMPLETE').length;
 }
 async function refresh() {
-  state = await api('/api/state'); renderList();
+  const requestedToken = token, received = await api('/api/state');
+  if (!requestedToken || token !== requestedToken) return;
+  state = received; renderList();
+  $('review-banner').hidden = state.mode !== 'review';
+  $('show-create').hidden = state.mode === 'review';
+  if (state.mode === 'review') $('create-panel').hidden = true;
   $('template-line').textContent = state.config.template.rails.length + ' configured payment options · Resource version ' + state.config.template.resourceVersion;
   $('tenant-label').textContent = 'Tenant ' + state.config.tenantId;
+  await refreshProject();
   if (selectedId) await loadDetail();
 }
 function fact(label, value, mono = false) {
@@ -157,12 +167,15 @@ async function loadDetail() {
     CHARGE_UNCERTAIN: 'The original charge creation is being reconciled.',
     CHARGE_REJECTED: 'Review the configured resource and this invoice’s exact terms.',
     PAYMENT_FAILED: 'The provider returned a definitive failure. Review the original authorization and payment record.' };
-  $('detail-guidance').textContent = guidance[order.state] ?? '';
-  $('create-charge').hidden = !!order.chargeId; $('create-charge').disabled = busy || order.state === 'CHARGE_REJECTED';
+  const review = state?.mode === 'review';
+  $('detail-guidance').textContent = review ? (order.state === 'COMPLETE' ?
+    'The original completed file is available from this saved project.' :
+    'The invoice and its activity show the saved project at the time of export.') : (guidance[order.state] ?? '');
+  $('create-charge').hidden = review || !!order.chargeId; $('create-charge').disabled = busy || projectState?.capturing === true || order.state === 'CHARGE_REJECTED';
   $('download-envelope').hidden = !order.chargeId; $('download-envelope').disabled = busy;
   $('download-result').hidden = order.state !== 'COMPLETE'; $('download-result').disabled = busy;
-  $('reconcile').hidden = !order.chargeId && order.state === 'CREATED'; $('reconcile').disabled = busy;
-  $('signature-form').hidden = !order.chargeId || ['COMPLETE', 'PAYMENT_FAILED'].includes(order.state) || order.signatureRetained;
+  $('reconcile').hidden = review || !order.chargeId && order.state === 'CREATED'; $('reconcile').disabled = busy || projectState?.capturing === true;
+  $('signature-form').hidden = review || !order.chargeId || ['COMPLETE', 'PAYMENT_FAILED'].includes(order.state) || order.signatureRetained;
   $('history').replaceChildren();
   for (const item of [...received.history].reverse()) {
     const row = element('li'), time = element('time', readableDate(item.createdAt)); time.dateTime = item.createdAt;
@@ -172,12 +185,108 @@ async function loadDetail() {
     $('history').append(row);
   }
 }
+function exportPendingKey() { return 'merchant.pending-project-export.v1.' + projectState.storeId; }
+function projectSize(value) {
+  const bytes = Number(value);
+  return bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + ' MB' :
+    bytes >= 1024 ? (bytes / 1024).toFixed(1) + ' KB' : bytes + ' bytes';
+}
+async function projectDownload(id) {
+  const selected = await api('/api/project/exports/' + id + '/download', { method: 'POST' });
+  if (!/^\/downloads\/project\/[0-9a-f-]{36}$/.test(selected.url)) throw new Error('The project download link is invalid.');
+  // A short-lived link lets the browser stream the complete archive directly
+  // to its download destination, without buffering the project in this page.
+  const link = element('a'); link.href = selected.url; link.download = 'merchant-project-' + id + '.zip';
+  link.referrerPolicy = 'no-referrer'; document.body.append(link); link.click(); link.remove();
+}
+async function startProjectExport(id) {
+  sessionStorage.setItem(exportPendingKey(), id);
+  const selected = await api('/api/project/exports', { method: 'POST', body: { operation: id } });
+  if (selected.operation !== id) throw new Error('The export response differs from the original project request.');
+  sessionStorage.removeItem(exportPendingKey());
+  await refreshProject();
+  notice(selected.state === 'COMPLETE' ? 'The complete project package is ready.' :
+    'Project export is running. The package will appear in Project handover.');
+}
+function applyCaptureControls() {
+  const paused = busy || projectState?.capturing === true;
+  for (const button of document.querySelectorAll('#create-form button, #signature-form button'))
+    button.disabled = paused;
+  $('export-project').disabled = paused;
+  $('reconcile').disabled = paused;
+  const order = state?.orders?.find(item => item.id === selectedId);
+  $('create-charge').disabled = paused || order?.state === 'CHARGE_REJECTED';
+}
+function renderProject() {
+  const rows = $('project-export-rows'); rows.replaceChildren();
+  const review = state?.mode === 'review', available = projectState?.available === true;
+  $('export-project').hidden = review || !available;
+  $('project-guidance').textContent = review ?
+    'Invoices, original payment activity and completed files are available in this received project.' :
+    'Package the invoices, saved results, fulfillment files and application source for another operator.';
+  $('project-state').textContent = projectState?.capturing ?
+    'Capturing the project. Current work is finishing; updates resume when the package is ready. You can keep reviewing invoices and saved files.' :
+    review ? 'Saved project review' : available ?
+    'Each export keeps a complete database snapshot and the files it references.' :
+    'Project export is available from the installed merchant application or with its configured source package.';
+  const exports = projectState?.exports ?? [];
+  $('project-exports').hidden = exports.length === 0;
+  $('project-empty').hidden = review || exports.length > 0;
+  if (available) {
+    const pending = sessionStorage.getItem(exportPendingKey());
+    if (pending && exports.some(row => row.operation === pending && ['COMPLETE', 'PREPARING'].includes(row.state)))
+      sessionStorage.removeItem(exportPendingKey());
+    $('export-project').textContent = sessionStorage.getItem(exportPendingKey()) ? 'Resume original export' : 'Export project';
+  }
+  for (const item of exports) {
+    const row = element('tr'), date = element('td', readableDate(item.createdAt));
+    date.append(element('span', item.operation, 'export-id'));
+    const details = [];
+    if (item.snapshot?.tableCounts?.merchant_orders !== undefined)
+      details.push(item.snapshot.tableCounts.merchant_orders + ' invoices');
+    if (item.archive?.members !== undefined) details.push(item.archive.members + ' archive entries');
+    if (item.archive?.bytes) details.push(projectSize(item.archive.bytes));
+    const contents = element('td', details.join(' · ') || 'Collecting original project');
+    const status = element('td');
+    const labels = { PREPARING: 'Preparing', COMPLETE: 'Ready', INTERRUPTED: 'Resume available', RETRY_REQUIRED: 'Resume available' };
+    status.append(element('span', labels[item.state] ?? item.state, 'state'));
+    if (item.error) status.append(element('p', item.error.replaceAll('_', ' '), 'muted'));
+    const files = element('td'), controls = element('div', undefined, 'actions');
+    if (item.state === 'COMPLETE') {
+      const download = element('button', 'Download project', 'secondary');
+      download.addEventListener('click', () => action(() => projectDownload(item.operation)));
+      const manifest = element('button', 'Contents', 'quiet');
+      manifest.addEventListener('click', () => action(() =>
+        downloadManifest(item.operation)));
+      controls.append(download, manifest);
+    } else if (['INTERRUPTED', 'RETRY_REQUIRED'].includes(item.state)) {
+      const resume = element('button', 'Resume export', 'secondary');
+      resume.addEventListener('click', () => action(() => startProjectExport(item.operation)));
+      controls.append(resume);
+    }
+    files.append(controls); row.append(date, contents, status, files); rows.append(row);
+  }
+}
+async function downloadManifest(id) {
+  await download('/api/project/exports/' + id + '/manifest', 'merchant-project-' + id + '-contents.json');
+}
+async function refreshProject() {
+  const requestedToken = token, received = await api('/api/project');
+  if (!requestedToken || token !== requestedToken || !state) return;
+  projectState = received; renderProject(); applyCaptureControls();
+}
+$('export-project').addEventListener('click', () => action(async () => {
+  if (!projectState?.available || projectState.capturing || state.mode === 'review') return;
+  const id = sessionStorage.getItem(exportPendingKey()) || crypto.randomUUID();
+  await startProjectExport(id);
+}));
 $('connect-form').addEventListener('submit', event => {
   event.preventDefault();
   action(async () => {
     token = $('operator-token').value; await refresh(); $('operator-token').value = '';
     $('connect-panel').hidden = true; $('workspace').hidden = false; $('disconnect').hidden = false;
-    $('connection-state').textContent = 'Connected'; renderRails();
+    $('connection-state').textContent = state.mode === 'review' ? 'Project review' : 'Connected';
+    if (state.mode !== 'review') renderRails();
     if (poll) clearInterval(poll);
     poll = setInterval(() => { if (!busy && token) refresh().catch(error => notice(error.message)); }, 15000);
   });

@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
+import { credentialHeader, representationHeader } from '../../sf88-operator-buyer-cli/collection-composer/package-format.mjs';
 
 const need = (value, code) => { if (!value) throw Object.assign(new Error(code), { code }); };
 const digest = value => createHash('sha256').update(value).digest('hex');
@@ -376,6 +377,104 @@ export async function openProductCollectionsBrowser({ playwrightModule, executab
       downloaded: { path: exported.path, bytes: exported.bytes, sha256: exported.sha256 } };
   }
 
+  async function sharePlan(current, edition, headerSelections = []) {
+    const selectedKeys = new Set();
+    for (const row of headerSelections) {
+      const request = edition.requests.find(request => request.key === row.key);
+      need(request && !selectedKeys.has(row.key) && new Set(row.names).size === row.names.length,
+        'RECEIVING_SHARED_HEADER_SELECTION_INVALID');
+      selectedKeys.add(row.key);
+      const headers = request.operation?.headers ?? {};
+      need(row.names.every(name => Object.hasOwn(headers, name)
+        && !credentialHeader(name) && !representationHeader(name)),
+      'RECEIVING_SHARED_HEADER_SELECTION_INVALID');
+    }
+    await openEdition(current, edition.collectionId);
+    const root = current.locator('#composer-panel');
+    await byName(root, 'Share plan and inputs').click();
+    await root.getByRole('heading', { name: 'Share plan and inputs', exact: true }).waitFor();
+    const selected = new Map(headerSelections.map(item => [item.key, new Set(item.names)]));
+    let checkbox = 0;
+    for (const request of edition.requests) for (const name of Object.keys(request.operation?.headers ?? {})) {
+      if (credentialHeader(name) || representationHeader(name)) continue;
+      await root.getByRole('checkbox').nth(checkbox++).setChecked(selected.get(request.key)?.has(name) === true);
+    }
+    await capture(current, 'shared-plan-source-period', root);
+    const response = current.waitForResponse(value => new URL(value.url()).pathname === '/api/composer/sharing/export'
+      && value.request().method() === 'POST');
+    let file, descriptor;
+    try {
+      file = await download(current, root, 'Create and download shared plan', edition.collectionId + '.request-plan.jsonl');
+      descriptor = await returned(await response);
+    } catch (error) { response.catch(() => {}); throw error; }
+    await idle(root);
+    need(descriptor.bytes === file.bytes && descriptor.sha256 === file.sha256
+      && descriptor.manifest.origin.collectionId === edition.collectionId
+      && descriptor.manifest.origin.editionSha256 === edition.editionSha256,
+    'RECEIVING_SHARED_PACKAGE_SOURCE_CHANGED');
+    return { packageSha256: descriptor.packageSha256, manifest: descriptor.manifest,
+      file: { path: file.path, bytes: file.bytes, sha256: file.sha256 } };
+  }
+  async function adoptSharedPlan(current, shared, input, beforeSave) {
+    const { root } = await library(current);
+    await responseFor(current, '/api/composer/sharing/packages', 'GET',
+      () => byName(root, 'Shared plans').click());
+    await idle(root);
+    const complete = await responseFor(current,
+      '/api/composer/sharing/packages/' + shared.packageSha256 + '/complete', 'POST',
+      () => root.locator('input[type="file"]').setInputFiles(shared.file.path));
+    await idle(root);
+    need(complete.phase === 'READY' && complete.packageSha256 === shared.packageSha256
+      && same(complete.manifest, shared.manifest), 'RECEIVING_COMPLETE_SHARED_PLAN_CHANGED');
+    await root.getByRole('heading', { name: 'Adopt shared plan', exact: true }).waitFor();
+    await root.getByLabel('Local plan reference', { exact: true }).fill(input.planId);
+    await root.getByLabel('Plan name', { exact: true }).fill(input.name);
+    await root.getByLabel('Description', { exact: true }).fill(input.description ?? shared.manifest.plan.description ?? '');
+    for (let index = 0; index < shared.manifest.operators.length; index++) {
+      const group = shared.manifest.operators[index], binding = input.operatorBindings.find(item => item.groupId === group.id);
+      need(binding, 'RECEIVING_LOCAL_OPERATOR_BINDING_REQUIRED');
+      const card = root.locator('section.composer-card').nth(index);
+      const key = binding.operatorWorkspace !== undefined ? 'operatorWorkspace' : 'operatorConfigFile';
+      await card.locator('select').selectOption(key);
+      await card.getByLabel('Local absolute path', { exact: true }).fill(binding[key]);
+    }
+    await root.getByLabel('Local response directory', { exact: true }).fill(input.outputDirectory);
+    await root.getByLabel('Delivery parameter', { exact: true }).fill(input.deliveryParameter);
+    await root.getByLabel('Delivery value', { exact: true }).fill(input.deliveryValue);
+    const required = shared.manifest.sources.filter(source => source.ticket || source.headers.some(item => item.kind === 'local'));
+    for (let index = 0; index < required.length; index++) {
+      const source = required[index], binding = (input.requestBindings ?? []).find(item => item.key === source.key) ?? {};
+      const card = root.locator('section.composer-card').nth(shared.manifest.operators.length + index);
+      if (source.ticket) {
+        need(typeof binding.ticketFile === 'string', 'RECEIVING_LOCAL_TICKET_REQUIRED');
+        await card.getByLabel('Local operation ticket file', { exact: true }).fill(binding.ticketFile);
+      }
+      for (const header of source.headers.filter(item => item.kind === 'local')) {
+        const omitted = (binding.omitHeaders ?? []).some(name => name.toLowerCase() === header.name.toLowerCase());
+        await card.getByLabel('Omit ' + header.name + ' in this local plan', { exact: true }).setChecked(omitted);
+        if (!omitted) {
+          const value = Object.entries(binding.headers ?? {}).find(([name]) => name.toLowerCase() === header.name.toLowerCase())?.[1];
+          need(typeof value === 'string', 'RECEIVING_LOCAL_HEADER_REQUIRED');
+          await card.getByLabel('Local ' + header.name + ' value', { exact: true }).fill(value);
+        }
+      }
+    }
+    const reviewed = await responseFor(current, '/api/composer/sharing/packages/' + shared.packageSha256 + '/review',
+      'POST', () => byName(root, 'Review local plan').click());
+    await idle(root);
+    need(reviewed.packageSha256 === shared.packageSha256, 'RECEIVING_ADOPTION_PACKAGE_CHANGED');
+    await beforeSave(reviewed);
+    await capture(current, 'recipient-local-adoption-review', root.locator('[data-adoption-review]'));
+    const adopted = await responseFor(current, '/api/composer/sharing/packages/' + shared.packageSha256 + '/adopt',
+      'POST', () => byName(root, 'Save adopted revision').click());
+    await idle(root);
+    need(adopted.adoption.reviewSha256 === reviewed.reviewSha256
+      && same(adopted.saved.plan, reviewed.plan), 'RECEIVING_ADOPTED_REVISION_CHANGED');
+    await root.locator('[data-plan-form]').waitFor({ state: 'visible' });
+    await capture(current, 'adopted-plan-original-editor', root.locator('[data-plan-form]'));
+    return adopted;
+  }
+
   async function showRecovery(current, requestId, name) {
     const root = current.locator('#recovery-panel');
     let history = await responseFor(current, '/api/recovery/history', 'POST',
@@ -394,7 +493,7 @@ export async function openProductCollectionsBrowser({ playwrightModule, executab
   }
   return { page, capture, runtimePage, sourceDiscovery, reopenSource, runtimeReady,
     collectionsPage, library, savePlan, openPlan, inspectSavedCatalog, preparePeriod, openEdition,
-    createPeriod, showCollection, showPrepared, showRecovery, showCustomerUse,
+    createPeriod, showCollection, showPrepared, showRecovery, showCustomerUse, sharePlan, adoptSharedPlan,
     async finish() {
       await writeFile(join(outputDirectory, 'browser-observations.json'),
         JSON.stringify({ artifacts: [...new Map(artifacts.map(item => [item.path, item])).values()],

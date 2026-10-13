@@ -452,3 +452,255 @@ export async function downloadHumanServicesDirectoryOperatingReturn({
     exportId:result.exportId,expectedManifestSha256:result.manifestSha256});
   return {prepared,prepareResult,result,receipt,payload};
 }
+
+
+/** Preserve one complete correction request. Preparing, previewing and accepting are separate operations. */
+export async function changeHumanServicesDirectoryCorrection({
+ client,workspace,action,input,requestOptions
+}={}){
+ checked(workspace,ALIAS,'workspace alias');
+ need(client&&typeof client.call==='function','HUMAN_SERVICES_DIRECTORY_CLIENT_REQUIRED');
+ need(['prepare','preview','apply'].includes(action),'HUMAN_SERVICES_DIRECTORY_CORRECTION_ACTION');
+ const selected={workspace,action,input};
+ try{
+  const result=retained(await client.call('directory_correction_'+action,
+   {workspace,['correction_'+action]:input},requestOptions));
+  need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_CORRECTION_REJECTED',
+   'Keep this exact original request and inspect its retained native response.',{...selected,exportId:result.exportId});
+  const record=await readHumanServicesDirectoryValue({workspace,result,client});
+  const schema={prepare:'stellar-forge.directory-correction-plan.v1',
+   preview:'stellar-forge.directory-correction-preview.v1',apply:'stellar-forge.directory-correction.v1'}[action];
+  need(record?.schema===schema&&new RegExp(SHA).test(record.id||''),
+   'HUMAN_SERVICES_DIRECTORY_CORRECTION_CHANGED');
+  if(action==='prepare')need(record.editionId===input.editionId&&record.files?.input,
+   'HUMAN_SERVICES_DIRECTORY_CORRECTION_CHANGED');
+  if(action==='preview')need(record.planId===input.planId&&new RegExp(SHA).test(record.candidateEditionId||'')&&
+   new RegExp(SHA).test(record.comparisonId||''),'HUMAN_SERVICES_DIRECTORY_CORRECTION_CHANGED');
+  if(action==='apply')need(record.stage==='accepted'&&record.previewId===input.previewId&&
+   record.beforeEditionId===input.expectedEditionId&&record.expectedEditionId===input.expectedEditionId,
+   'HUMAN_SERVICES_DIRECTORY_CORRECTION_CHANGED');
+  return {result,record};
+ }catch(error){
+  if(error&&typeof error==='object')error.details={...(error.details??{}),directoryCorrection:selected};
+  throw error;
+ }
+}
+/** Read a complete immutable correction record, retaining its exact native response. */
+export async function readHumanServicesDirectoryCorrection({client,workspace,collection,recordId,requestOptions}={}){
+ checked(workspace,ALIAS,'workspace alias');checked(recordId,SHA,'original correction record');
+ need(['correctionPlans','correctionPreviews','corrections'].includes(collection),
+  'HUMAN_SERVICES_DIRECTORY_CORRECTION_SELECTION');
+ need(client&&typeof client.call==='function','HUMAN_SERVICES_DIRECTORY_CLIENT_REQUIRED');
+ const result=retained(await client.call('directory_record',{workspace,collection,recordId},requestOptions));
+ need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_CORRECTION_READ_REJECTED');
+ const record=await readHumanServicesDirectoryValue({workspace,result,client});
+ const schema={correctionPlans:'stellar-forge.directory-correction-plan.v1',
+  correctionPreviews:'stellar-forge.directory-correction-preview.v1',corrections:'stellar-forge.directory-correction.v1'}[collection];
+ need(record?.id===recordId&&record.schema===schema,'HUMAN_SERVICES_DIRECTORY_CORRECTION_CHANGED');
+ return {result,record};
+}
+/** Receive every contiguous native edit/change page. Large unchanged originals stay in complete files. */
+export async function* iterateHumanServicesDirectoryCorrection({
+ client,workspace,collection,recordId,limit=100,requestOptions
+}={}){
+ checked(workspace,ALIAS,'workspace alias');checked(recordId,SHA,'original correction record');
+ need(client&&typeof client.call==='function','HUMAN_SERVICES_DIRECTORY_CLIENT_REQUIRED');
+ need(['correctionPlans','correctionPreviews','corrections'].includes(collection)&&
+  Number.isSafeInteger(limit)&&limit>=1&&limit<=250,'HUMAN_SERVICES_DIRECTORY_CORRECTION_SELECTION');
+ let offset=0,total;
+ while(true){
+  const result=retained(await client.call('directory_correction_rows',{workspace,collection,recordId,offset,limit},requestOptions));
+  need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_CORRECTION_PAGE_REJECTED',
+   'Read the complete retained native change response.',{recordId,offset,exportId:result.exportId});
+  const page=await readHumanServicesDirectoryValue({workspace,result,client});
+  need(page.kind===collection&&page.recordId===recordId&&page.offset===offset&&page.limit===limit&&
+   Number.isSafeInteger(page.total)&&page.total>=0&&(total===undefined||total===page.total)&&
+   Array.isArray(page.rows)&&page.rows.length<=limit&&page.byteBudget===4194304&&
+   Number.isSafeInteger(page.bytes)&&page.bytes>=0&&page.bytes<=page.byteBudget,
+   'HUMAN_SERVICES_DIRECTORY_CORRECTION_PAGE_CHANGED');
+  total=page.total;const next=offset+page.rows.length;
+  need(next<=total&&(page.nextOffset===null?next===total:
+   page.rows.length>0&&page.nextOffset===next&&next<total),'HUMAN_SERVICES_DIRECTORY_CORRECTION_PAGE_CHANGED');
+  yield {result,page};if(page.nextOffset===null)return;offset=page.nextOffset;
+ }
+}
+/** Bind the full payload to the immutable native file descriptor before complete receiving. */
+export async function downloadHumanServicesDirectoryCorrectionFile({
+ client,workspace,collection,recordId,fileKind,requestOptions,...downloadOptions
+}={}){
+ const {record,result:recordResult}=await readHumanServicesDirectoryCorrection({client,workspace,collection,recordId,requestOptions});
+ need((collection==='correctionPlans'?['input']:['changes','review']).includes(fileKind)&&record.files?.[fileKind],
+  'HUMAN_SERVICES_DIRECTORY_CORRECTION_FILE_SELECTION');
+ const result=retained(await client.call('directory_correction_file',{workspace,collection,recordId,fileKind},requestOptions));
+ need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_CORRECTION_FILE_REJECTED');
+ const inspected=await inspectHumanServicesDirectoryExport({workspace,client,exportId:result.exportId}),
+  payload=inspected.manifest.source?.payloadFile??'original-response.json',
+  original=inspected.manifest.files.find(file=>file.name===payload),expected=record.files[fileKind];
+ need(inspected.manifestSha256===result.manifestSha256&&original&&
+  original.bytes===expected.bytes&&original.sha256===expected.sha256,
+  'HUMAN_SERVICES_DIRECTORY_CORRECTION_FILE_CHANGED');
+ const receipt=await downloadHumanServicesDirectoryExport({...downloadOptions,workspace,client,
+  exportId:result.exportId,expectedManifestSha256:result.manifestSha256});
+ return {record,recordResult,result,receipt,payload};
+}
+/** Receive the complete source/review correction packet prepared by the original native engine. */
+export async function downloadHumanServicesDirectoryCorrection({
+ client,workspace,input,requestOptions,...downloadOptions
+}={}){
+ checked(workspace,ALIAS,'workspace alias');
+ need(client&&typeof client.call==='function','HUMAN_SERVICES_DIRECTORY_CLIENT_REQUIRED');
+ const prepareResult=retained(await client.call('directory_correction_export',{workspace,correction_export:input},requestOptions));
+ need(prepareResult.native?.ok,'HUMAN_SERVICES_DIRECTORY_CORRECTION_EXPORT_REJECTED');
+ const prepared=await readHumanServicesDirectoryValue({workspace,result:prepareResult,client});
+ checked(prepared.id,SHA,'native correction export');
+ need(prepared.kind==='correction'&&prepared.recordId===input.correctionId&&prepared.file,
+  'HUMAN_SERVICES_DIRECTORY_CORRECTION_EXPORT_CHANGED');
+ const result=retained(await client.call('directory_export_file',{workspace,exportId:prepared.id},requestOptions));
+ need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_CORRECTION_FILE_REJECTED');
+ const inspected=await inspectHumanServicesDirectoryExport({workspace,client,exportId:result.exportId}),
+  payload=inspected.manifest.source?.payloadFile??'original-response.json',
+  original=inspected.manifest.files.find(file=>file.name===payload);
+ need(inspected.manifestSha256===result.manifestSha256&&original&&
+  original.bytes===prepared.file.bytes&&original.sha256===prepared.file.sha256,
+  'HUMAN_SERVICES_DIRECTORY_CORRECTION_FILE_CHANGED');
+ const receipt=await downloadHumanServicesDirectoryExport({...downloadOptions,workspace,client,
+  exportId:result.exportId,expectedManifestSha256:result.manifestSha256});
+ return {prepared,prepareResult,result,receipt,payload};
+}
+
+
+const worksheetSchemas=Object.freeze({
+ correctionWorksheets:'stellar-forge.directory-correction-worksheet.v1',
+ correctionWorksheetImports:'stellar-forge.directory-correction-worksheet-import.v1',
+ correctionWorksheetReturns:'stellar-forge.directory-correction-worksheet-return-record.v1',
+ correctionWorksheetReviews:'stellar-forge.directory-correction-worksheet-review.v1'
+});
+/** Read the exact immutable worksheet record before selecting its files or review. */
+export async function readHumanServicesDirectoryWorksheet({client,workspace,collection,recordId,requestOptions}={}){
+ checked(workspace,ALIAS,'workspace');checked(recordId,SHA,'worksheet record');
+ need(client&&typeof client.call==='function'&&Object.hasOwn(worksheetSchemas,collection),
+  'HUMAN_SERVICES_DIRECTORY_WORKSHEET_SELECTION');
+ const result=retained(await client.call('directory_record',{workspace,collection,recordId},requestOptions));
+ need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_WORKSHEET_READ_REJECTED');
+ const record=await readHumanServicesDirectoryValue({workspace,result,client});
+ need(record.id===recordId&&record.schema===worksheetSchemas[collection],
+  'HUMAN_SERVICES_DIRECTORY_WORKSHEET_CHANGED');
+ return {record,result};
+}
+/** Save exact intake metadata once, then PUT a complete declared host input with the same import identity. */
+export async function receiveHumanServicesDirectoryWorksheet({
+ client,workspace,input,expectedSha256,profile,importId,requestOptions
+}={}){
+ checked(workspace,ALIAS,'workspace');checked(input,ALIAS,'host input');
+ need(client&&typeof client.call==='function','HUMAN_SERVICES_DIRECTORY_CLIENT_REQUIRED');
+ need((profile!==undefined)!==(importId!==undefined),'HUMAN_SERVICES_DIRECTORY_WORKSHEET_IMPORT_SELECTION',
+  'Select a complete immutable intake profile or its already saved import ID.');
+ let importResult;
+ if(profile!==undefined){
+  importResult=retained(await client.call('directory_correction_worksheet_import',
+   {workspace,correction_worksheet_import:profile},requestOptions));
+  need(importResult.native?.ok,'HUMAN_SERVICES_DIRECTORY_WORKSHEET_IMPORT_REJECTED');
+  const record=await readHumanServicesDirectoryValue({workspace,result:importResult,client});
+  importId=checked(record.id,SHA,'saved worksheet import');
+ }else checked(importId,SHA,'saved worksheet import');
+ try{
+  const result=retained(await client.call('directory_correction_worksheet_receive',
+   {workspace,input,importId,...(expectedSha256===undefined?{}:{expectedSha256})},requestOptions));
+  need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_WORKSHEET_RETURN_REJECTED',
+   'Read the retained native response and resume with this same import and original file.',
+   {importId,exportId:result.exportId});
+  const record=await readHumanServicesDirectoryValue({workspace,result,client});
+  need(record.schema===worksheetSchemas.correctionWorksheetReturns&&record.importId===importId&&
+   new RegExp(SHA).test(record.id),'HUMAN_SERVICES_DIRECTORY_WORKSHEET_RETURN_CHANGED');
+  return {importId,...(importResult?{importResult}:{}),result,record};
+ }catch(error){
+  if(error&&typeof error==='object')error.details={...(error.details??{}),
+   worksheetImport:{workspace,input,importId,...(importResult?{importExportId:importResult.exportId}:{})}};
+  throw error;
+ }
+}
+/** Every page remains bound to one immutable record and contiguous original order.
+ * A native oversized-row error is returned unchanged; use the full changes/decisions/rows file. */
+export async function* iterateHumanServicesDirectoryWorksheet({
+ client,workspace,collection,recordId,limit=100,rowKey,state,requestOptions
+}={}){
+ checked(workspace,ALIAS,'workspace');checked(recordId,SHA,'worksheet record');
+ need(client&&typeof client.call==='function'&&Object.hasOwn(worksheetSchemas,collection)&&
+  Number.isSafeInteger(limit)&&limit>=1&&limit<=250,'HUMAN_SERVICES_DIRECTORY_WORKSHEET_SELECTION');
+ let offset=0,total;
+ while(true){
+  const result=retained(await client.call('directory_correction_worksheet_rows',
+   {workspace,collection,recordId,offset,limit,...(rowKey===undefined?{}:{rowKey}),
+    ...(state===undefined?{}:{state})},requestOptions));
+  need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_WORKSHEET_PAGE_REJECTED',
+   'Receive the full rows, changes or decisions file when a complete row exceeds the native page budget.',
+   {recordId,collection,offset,exportId:result.exportId});
+  const page=await readHumanServicesDirectoryValue({workspace,result,client});
+  need(page.kind===collection&&page.recordId===recordId&&page.offset===offset&&page.limit===limit&&
+   Number.isSafeInteger(page.total)&&page.total>=0&&(total===undefined||total===page.total)&&
+   Array.isArray(page.rows)&&page.rows.length<=limit&&page.byteBudget===4194304&&
+   Number.isSafeInteger(page.bytes)&&page.bytes>=0&&page.bytes<=page.byteBudget,
+   'HUMAN_SERVICES_DIRECTORY_WORKSHEET_PAGE_CHANGED');
+  total=page.total;const next=offset+page.rows.length;
+  need(next<=total&&(page.nextOffset===null?next===total:
+   page.rows.length>0&&page.nextOffset===next&&next<total),'HUMAN_SERVICES_DIRECTORY_WORKSHEET_PAGE_CHANGED');
+  yield {result,page};if(page.nextOffset===null)return;offset=page.nextOffset;
+ }
+}
+/** Receive every original file byte. Generated worksheet documents are verified against their saved identity after download. */
+export async function downloadHumanServicesDirectoryWorksheetFile({
+ client,workspace,collection,recordId,fileKind,requestOptions,...downloadOptions
+}={}){
+ const {record,result:recordResult}=await readHumanServicesDirectoryWorksheet({client,workspace,collection,recordId,requestOptions});
+ const allowed={correctionWorksheets:['input','rows','worksheet'],correctionWorksheetImports:['input'],
+  correctionWorksheetReturns:['original','changes'],correctionWorksheetReviews:['input','decisions']}[collection];
+ need(allowed.includes(fileKind),'HUMAN_SERVICES_DIRECTORY_WORKSHEET_FILE_SELECTION');
+ const expected=record.files?.[fileKind];
+ need(expected||collection==='correctionWorksheets'&&fileKind==='worksheet',
+  'HUMAN_SERVICES_DIRECTORY_WORKSHEET_FILE_SELECTION');
+ const result=retained(await client.call('directory_correction_worksheet_file',
+  {workspace,collection,recordId,fileKind},requestOptions));
+ need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_WORKSHEET_FILE_REJECTED');
+ const inspected=await inspectHumanServicesDirectoryExport({workspace,client,exportId:result.exportId}),
+  payload=inspected.manifest.source?.payloadFile??'original-response.json',
+  descriptor=inspected.manifest.files.find(file=>file.name===payload);
+ need(inspected.manifestSha256===result.manifestSha256&&descriptor&&
+  (!expected||descriptor.bytes===expected.bytes&&descriptor.sha256===expected.sha256),
+  'HUMAN_SERVICES_DIRECTORY_WORKSHEET_FILE_CHANGED');
+ const receipt=await downloadHumanServicesDirectoryExport({...downloadOptions,workspace,client,
+  exportId:result.exportId,expectedManifestSha256:result.manifestSha256});
+ if(fileKind==='worksheet'){
+  const {readFile}=await import('node:fs/promises');
+  need(descriptor.bytes<=67108864,'HUMAN_SERVICES_DIRECTORY_WORKSHEET_DOCUMENT_LIMIT');
+  const raw=await readFile(join(receipt.directory,payload));
+  need(raw.length===descriptor.bytes&&digest(raw)===descriptor.sha256,'HUMAN_SERVICES_DIRECTORY_WORKSHEET_FILE_CHANGED');
+  const document=decode(raw,'complete original worksheet');
+  need(document.schema===worksheetSchemas.correctionWorksheets&&document.worksheetId===recordId&&
+   document.workspaceId===record.workspaceId&&document.editionId===record.editionId&&
+   Array.isArray(document.rows)&&document.rows.length===record.summary.rows,
+   'HUMAN_SERVICES_DIRECTORY_WORKSHEET_DOCUMENT_CHANGED');
+ }
+ return {record,recordResult,result,receipt,payload,descriptor};
+}
+/** Prepare and receive the entire portable customer package without making any review decision. */
+export async function downloadHumanServicesDirectoryWorksheet({
+ client,workspace,input,requestOptions,...downloadOptions
+}={}){
+ const prepareResult=retained(await client.call('directory_correction_worksheet_export',
+  {workspace,correction_worksheet_export:input},requestOptions));
+ need(prepareResult.native?.ok,'HUMAN_SERVICES_DIRECTORY_WORKSHEET_EXPORT_REJECTED');
+ const prepared=await readHumanServicesDirectoryValue({workspace,result:prepareResult,client});
+ checked(prepared.id,SHA,'worksheet export');
+ need(prepared.kind==='correction-worksheet'&&prepared.recordId===input.worksheetId&&prepared.file,
+  'HUMAN_SERVICES_DIRECTORY_WORKSHEET_EXPORT_CHANGED');
+ const result=retained(await client.call('directory_export_file',{workspace,exportId:prepared.id},requestOptions));
+ need(result.native?.ok,'HUMAN_SERVICES_DIRECTORY_WORKSHEET_FILE_REJECTED');
+ const inspected=await inspectHumanServicesDirectoryExport({workspace,client,exportId:result.exportId}),
+  payload=inspected.manifest.source?.payloadFile??'original-response.json',
+  descriptor=inspected.manifest.files.find(file=>file.name===payload);
+ need(inspected.manifestSha256===result.manifestSha256&&descriptor&&descriptor.bytes===prepared.file.bytes&&
+  descriptor.sha256===prepared.file.sha256,'HUMAN_SERVICES_DIRECTORY_WORKSHEET_FILE_CHANGED');
+ const receipt=await downloadHumanServicesDirectoryExport({...downloadOptions,workspace,client,
+  exportId:result.exportId,expectedManifestSha256:result.manifestSha256});
+ return {prepared,prepareResult,result,receipt,payload};
+}

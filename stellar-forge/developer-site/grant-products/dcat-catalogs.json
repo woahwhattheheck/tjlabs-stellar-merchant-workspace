@@ -1,0 +1,135 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "dcat-catalogs",
+  "heading": "## DCAT catalogue migration, accepted editions and recurring customer delivery",
+  "sources": [
+    {
+      "id": "dcat-catalog-migration-operator",
+      "label": "Complete installed catalogue import, review, correction and release",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/MIGRATION_OPERATING.md",
+      "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+      "editions": [
+        {
+          "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+          "git_blob": "30b975ddb5cbfb1883a51286718b5e61998d92fc",
+          "sha256": "020f362d2b498f8ca682f40b4249f606c2bc423243ca954283adca2d5673fbae",
+          "bytes": 32852
+        }
+      ]
+    },
+    {
+      "id": "dcat-original-converter-runtime",
+      "label": "Original converter, schema validation and complete migration review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/DCAT_ENGINE.md",
+      "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+      "editions": [
+        {
+          "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+          "git_blob": "52d6f4089d935e4014bf7229064bcd049264a49c",
+          "sha256": "32a85b3a823e0e5d827018a35b874bd530db0eea6afe9378c94954808ce6d44b",
+          "bytes": 13816
+        }
+      ]
+    },
+    {
+      "id": "dcat-portable-runtime-profile",
+      "label": "Declared Python runtime and complete original dependency selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/PORTABLE_RUNTIME.md",
+      "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+      "editions": [
+        {
+          "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+          "git_blob": "9325b535c6ca5338db537c31dd98c4bb4dec39de",
+          "sha256": "33db7bd68f51f88a947d4d1f3e1d16d6b7925190be2a8379ee6dd9aa72261ac8",
+          "bytes": 10001
+        }
+      ]
+    },
+    {
+      "id": "dcat-recurring-catalog-operator",
+      "label": "Recurring source acquisition, accepted editions and portable handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/RECURRING_CATALOGS.md",
+      "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+      "editions": [
+        {
+          "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+          "git_blob": "c2e30629d0466871e94d453908e98a91ac5edd91",
+          "sha256": "14e55a4724d9cdb63e1568448b56b7e484b66b04beea3522c0c067fdd60ff868",
+          "bytes": 20682
+        }
+      ]
+    },
+    {
+      "id": "dcat-installed-package-opening",
+      "label": "Original complete CKAN and DCAT installation entrypoint",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/ckan/PACKAGE_README.md",
+      "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+      "editions": [
+        {
+          "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+          "git_blob": "1513cb4ce613ebf9df12e8bb2399dacf30824bf2",
+          "sha256": "f0bf637074b4c5bb49929443b0b478f9703ecab681d03cdeee95c3509e431a01",
+          "bytes": 6956
+        }
+      ]
+    },
+    {
+      "id": "dcat-recurring-customer-programme",
+      "label": "Complete domain, browser, archive receiving and independent reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/dcat-recurring-catalog-390e-20261013/README.md",
+      "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+      "editions": [
+        {
+          "commit": "58ce16a5eca080b6f082d2db884ac55f34f67cc3",
+          "git_blob": "77e9ea0a17c2e3d7769893c614f36483921adb7d",
+          "sha256": "d371d02ddadea54decd5f1bd36f07dbe66fbfa0cbcdecfac83e129600a12fe6b",
+          "bytes": 11632
+        }
+      ]
+    },
+    {
+      "id": "dcat-gsa-original-native-result",
+      "label": "Completed original GSA migration, preservation and reviewed correction",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/dcat-gsa-migration-20261012-390e/NATIVE_OPERATION.json",
+      "commit": "15f308030131c33573240f5d035d52e320d24c5d",
+      "editions": [
+        {
+          "commit": "15f308030131c33573240f5d035d52e320d24c5d",
+          "git_blob": "e8555ea8cc6fe3bc3c61b74576d9696f613359db",
+          "sha256": "aeea5dd85ec170c8ee68167e4c520619ee1f9a5095f09c1aba8d422d711c1730",
+          "bytes": 9767
+        }
+      ]
+    },
+    {
+      "id": "dcat-complete-installed-customer-receiving",
+      "label": "Whole source, installed product, Applications and original customer receiving",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": ".swarm-delivery/dcat-installed-native-390e-20261012/README.md",
+      "commit": "e59de201e024ef5c8f62746464b109f095d00ef7",
+      "editions": [
+        {
+          "commit": "e59de201e024ef5c8f62746464b109f095d00ef7",
+          "git_blob": "93f878768d80f60db022ac9fa46ffde4750d6c7e",
+          "sha256": "ec1f7881563513226af3a15e57f81824ad9ec1e50d940efb88128d93d9173254",
+          "bytes": 10411
+        }
+      ]
+    }
+  ]
+}

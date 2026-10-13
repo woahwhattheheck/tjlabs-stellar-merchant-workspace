@@ -5,6 +5,7 @@ import {queueNotification, terminalNotification} from './notifications.mjs';
 import {objectObservationSignals} from './object-observation.mjs';
 import {ckanObservationSignals} from './ckan-observation.mjs';
 import {oauthObservationSignals} from './oauth-observation.mjs';
+import {x402ObservationSignals} from './x402-observation.mjs';
 
 const cumulative=['started','completed','responses','success','challenge','clientError','serverError','other','disconnected'];
 const iso=now=>new Date(now).toISOString();
@@ -29,6 +30,7 @@ export function updateConfiguration(state,config,digest,env,now) {
   state.merchants=merchants;
 }
 function signalsFor(config,merchant,observation,previous,now) {
+  if(merchant.x402)return x402ObservationSignals(merchant,observation,now,previous);
   if(merchant.object)return objectObservationSignals(merchant,observation,now,previous);
   if(merchant.ckan)return ckanObservationSignals(merchant,observation,now,previous);
   if(merchant.oauth)return oauthObservationSignals(merchant,observation,now,previous);
@@ -103,6 +105,9 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
   if(merchant.oauth&&result.packet?.oauth)row.oauthObservation={observedAt:result.packet.oauth.generatedAt,
     ...result.packet.oauth.summary,poll:{appliedAt:iso(now),fresh:result.fresh===true,
       successful:result.successful===true,reason:result.error??null}};
+  if(merchant.x402&&result.packet?.x402)row.x402Observation={observedAt:result.packet.x402.generatedAt,
+    ...result.packet.x402.summary,orders:[],orderDetails:'RETAINED_CAPTURE',selection:result.packet.x402.selection,sourceFile:result.packet.x402.source,
+    poll:{appliedAt:iso(now),fresh:result.fresh===true,successful:result.successful===true,reason:result.error??null}};
   let currentCapture;
   const capture=async()=>{
     if(currentCapture!==undefined)return currentCapture;
@@ -111,7 +116,7 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
     if(currentCapture)row.lastCapture=currentCapture;
     return currentCapture;
   };
-  if(result.packet&&(!(merchant.object||merchant.ckan||merchant.oauth)||result.successful===true)) {
+  if(result.packet&&(!(merchant.object||merchant.ckan||merchant.oauth||merchant.x402)||result.successful===true)) {
     const changedSession=row.previous?.sessionId!==result.previous.sessionId;
     if(changedSession) {
       row.sessionsSeen++;

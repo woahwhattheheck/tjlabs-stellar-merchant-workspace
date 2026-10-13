@@ -10,13 +10,23 @@ from operations import Operations, decoded
 import operations_calendar as calendar_model
 import operations_agenda_http as agenda_http
 import operations_use_calendar as use_calendar
+import operations_workflows as operating_workflows
 from operations_commercial_http import handle as commercial_http
 import operations_installation_sources as installation_sources
 from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/task-outcomes-workbook.mjs": ("task-outcomes-workbook.mjs", "text/javascript; charset=utf-8"),
+                   "/task-outcomes-workbook-desk.mjs": ("task-outcomes-workbook-desk.mjs", "text/javascript; charset=utf-8"),
+                   "/TASK_OUTCOMES_WORKBOOK.md": ("TASK_OUTCOMES_WORKBOOK.md", "text/markdown; charset=utf-8")})
+    static.update({"/operations_company_returns.mjs": ("operations_company_returns.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_company_returns.css": ("operations_company_returns.css", "text/css; charset=utf-8"),
+                   "/COMPANY_RETURN_INTAKE.md": ("COMPANY_RETURN_INTAKE.md", "text/markdown; charset=utf-8")})
     static["/operations_installation_effort.mjs"] = ("operations_installation_effort.mjs", "text/javascript; charset=utf-8")
+    static.update({"/operations_risks.mjs": ("operations_risks.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_risks.css": ("operations_risks.css", "text/css; charset=utf-8"),
+                   "/RISK_REGISTER_OPERATOR.md": ("RISK_REGISTER_OPERATOR.md", "text/markdown; charset=utf-8")})
     static.update({"/operations_navigation.mjs": ("operations_navigation.mjs", "text/javascript; charset=utf-8"),
                    "/operations_navigation_ui.mjs": ("operations_navigation_ui.mjs", "text/javascript; charset=utf-8"),
                    "/operations_navigation.css": ("operations_navigation.css", "text/css; charset=utf-8")})
@@ -58,10 +68,14 @@ def register_static(static):
                    "/operations_amendments.css": ("operations_amendments.css", "text/css; charset=utf-8")})
     static.update({"/operations_installation_returns.mjs": ("operations_installation_returns.mjs", "text/javascript; charset=utf-8"),
                    "/operations_installation_returns.css": ("operations_installation_returns.css", "text/css; charset=utf-8")})
+    static.update({"/operations_commissioning.mjs": ("operations_commissioning.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_commissioning.css": ("operations_commissioning.css", "text/css; charset=utf-8")})
     static.update({"/operations_use_calendar.mjs": ("operations_use_calendar.mjs", "text/javascript; charset=utf-8"),
                    "/operations_use_calendar.css": ("operations_use_calendar.css", "text/css; charset=utf-8")})
     static.update({"/operations_work_intake.mjs": ("operations_work_intake.mjs", "text/javascript; charset=utf-8"),
                    "/operations_work_intake.css": ("operations_work_intake.css", "text/css; charset=utf-8")})
+    static.update({"/operations_expenses.mjs": ("operations_expenses.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_expenses.css": ("operations_expenses.css", "text/css; charset=utf-8")})
     static.update({"/operations_commercial.mjs": ("operations_commercial.mjs", "text/javascript; charset=utf-8"),
                    "/operations_commercial.css": ("operations_commercial.css", "text/css; charset=utf-8")})
     static.update({"/operations_statements.mjs": ("operations_statements.mjs", "text/javascript; charset=utf-8"),
@@ -128,6 +142,34 @@ def read(handler, parsed):
     if installation_sources.handle(handler, parsed, ops, "GET"):
         return True
     path = parsed.path
+    risk_match = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/risk-register(?:/(review-[a-f0-9]{32})(/export.zip)?)?", path)
+    if risk_match:
+        ident, review_id, export = risk_match.groups()
+        if review_id is None:
+            handler.send(200, ops.list_risks(ident))
+        elif export:
+            handler.send(200, ops.export_risks(ident, review_id), "application/zip", review_id + "-risks.zip")
+        else:
+            handler.send(200, ops.risk_register(ident, review_id))
+        return True
+    risk_history_match = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/risk-register-history/([a-z][a-z0-9-]{1,99})", path)
+    if risk_history_match:
+        handler.send(200, ops.risk_history(*risk_history_match.groups()))
+        return True
+    workflow_match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/operating-workflows", path)
+    if workflow_match:
+        if set(query) != {"expectedVersion"} or len(query["expectedVersion"]) != 1:
+            raise Problem("Select the original case version for saved-workflow discovery.", 422, "INVALID_OPERATING_WORKFLOWS")
+        try:
+            expected_version = int(query["expectedVersion"][0])
+        except (ValueError, TypeError) as exc:
+            raise Problem("Use the original integer case version.", 422, "INVALID_OPERATING_WORKFLOWS") from exc
+        principal = getattr(handler, "principal", None) or {"role": "owner"}
+        handler.send(200, ops.operating_workflows(
+            workflow_match[1], expected_version, operating_workflows.visible_sections(principal.get("role"))))
+        return True
     funding_match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/cost-funding(?:/(edition|request|export.zip))?", path)
     if funding_match:
         ident, action = funding_match.groups()
@@ -161,7 +203,7 @@ def read(handler, parsed):
         else:
             handler.send(200, ops.settlement(ident, review_id))
         return True
-    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|task-outcomes(?:/task-outcomes-[a-f0-9]{32}(?:/export.zip)?)?|engagements(?:/review-[a-f0-9]{32}(?:/export.zip)?)?|amendments(?:/amendment-[a-f0-9]{32})?|installation-returns(?:/review-[a-f0-9]{32}/export.zip)?|work-intakes(?:/intake-[a-f0-9]{32})?|export.zip|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|account-reconciliation(?:/export.zip)?|account-reconciliation-statements/source-[a-f0-9]{32}/inputs|cash-account(?:/export.zip)?|supplier-account(?:/export.zip)?|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|customer-use-calendar/export\.(?:ics|csv|json)|delivery-calendar(?:/export\.(?:ics|csv|json))?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
+    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|task-outcomes(?:/task-outcomes-[a-f0-9]{32}(?:/export.zip)?)?|engagements(?:/review-[a-f0-9]{32}(?:/export.zip)?)?|amendments(?:/amendment-[a-f0-9]{32})?|installation-returns(?:/review-[a-f0-9]{32}/export.zip)?|work-intakes(?:/intake-[a-f0-9]{32})?|export.zip|expense-attribution|expense-attributions.csv|expense-sources.csv|expense-attribution.html|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|account-reconciliation(?:/export.zip)?|account-reconciliation-statements/source-[a-f0-9]{32}/inputs|cash-account(?:/export.zip)?|supplier-account(?:/export.zip)?|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|customer-use-calendar/export\.(?:ics|csv|json)|delivery-calendar(?:/export\.(?:ics|csv|json))?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
     if not match:
         raise Problem("Operations page not found.", 404, "NOT_FOUND")
     ident, action = match.groups()
@@ -207,6 +249,11 @@ def read(handler, parsed):
         except ValueError as exc:
             raise Problem("Use the saved intake edition number.", 422, "INVALID_WORK_INTAKE") from exc
         handler.send(200, ops.work_intake(ident, action.split("/")[1], revision))
+    elif action == "expense-attribution":
+        handler.send(200, ops.expense_attribution(ident))
+    elif action in ("expense-attributions.csv", "expense-sources.csv", "expense-attribution.html"):
+        media = "text/html; charset=utf-8" if action.endswith(".html") else "text/csv; charset=utf-8"
+        handler.send(200, ops.expense_file(ident, action), media, action)
     elif action == "history":
         handler.send(200, ops.history(ident, int(query.get("after", ["0"])[0]), int(query.get("limit", ["100"])[0])))
     elif action == "export.zip":
@@ -386,6 +433,19 @@ def write(handler, parsed):
         return True
     if installation_sources.handle(handler, parsed, ops, "POST"):
         return True
+    company_match = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/installation-company-return-(inspect|linked)", path)
+    if company_match:
+        method = ops.inspect_company_return if company_match.group(2) == "inspect" else ops.linked_company_return
+        handler.send(200, method(company_match.group(1), handler.json_body()))
+        return True
+    risk_match = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/(risk-register-seed|risk-register-preview|risk-register-request)", path)
+    if risk_match:
+        methods = {"risk-register-seed": ops.seed_risks, "risk-register-preview": ops.preview_risks,
+                   "risk-register-request": ops.risk_request}
+        handler.send(200, methods[risk_match.group(2)](risk_match.group(1), handler.json_body()))
+        return True
     if path == "/api/operations/import":
         query = parse_qs(parsed.query)
         result = ops.import_bundle(handler.raw_body(), query.get("name", ["Imported delivery operations"])[0],
@@ -398,7 +458,7 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-effort-seed|installation-effort-selection|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commissioning-seed|installation-commissioning-review|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-effort-seed|installation-effort-selection|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|expense-preview|expense-request|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
@@ -428,12 +488,15 @@ def write(handler, parsed):
                    "installation-effort-seed": ops.seed_installation_effort, "installation-effort-selection": ops.select_installation_effort,
                    "installation-workflows": ops.installation_workflows,
                    "installation-workflow-seed": ops.seed_workflow_installation,
+                   "installation-commissioning-seed": ops.seed_installation_commissioning,
+                   "installation-commissioning-review": ops.review_installation_commissioning,
                    "installation-commercial": ops.installation_commercial,
                    "installation-commercial-seed": ops.seed_commercial_installation,
                    "installation-workshares": ops.installation_workshares,
                    "installation-workshare-seed": ops.seed_workshare_installation,
                    "installation-preview": ops.preview_installation, "completion-seed": ops.seed_completion, "completion-preview": ops.preview_completion,
                    "support-preview": ops.preview_support, "buyer-preview": ops.preview_buyer,
+                   "expense-preview": ops.preview_expense, "expense-request": ops.expense_request,
                    "forecast-preview": ops.preview_forecast,
                    "portfolio-preview": ops.preview_portfolio, "portfolio-seed": ops.seed_portfolio,
                    "portfolio-selection": ops.select_portfolio}

@@ -36,3 +36,20 @@
 .task-reconciliation{border:2px solid #666;padding:16px;margin:24px 0}
 @media(max-width:720px){.task-fields{grid-template-columns:minmax(0,1fr)}.task-heading,.task-selected{display:block}.task-actions{margin-top:12px}.task-actions button{flex:1 1 160px}.task-work-row,.task-cost-row,.task-review{padding:10px}.task-outcomes-desk{font-size:14px}}
 @media print{.task-actions,.task-heading button,.task-outcomes-desk [data-task-action]{display:none}.task-outcomes-table{overflow:visible}.task-outcomes-desk pre{max-height:none;overflow:visible}.task-outcomes-table tr{break-inside:avoid}.task-method h4{break-after:avoid}}
+
+.task-recurring,.task-recurring-report{border-top:1px solid #aaa;margin-top:28px;padding-top:4px}.task-followup{scroll-margin-top:24px}.task-recurring a{color:inherit;text-decoration:underline;text-underline-offset:2px}.task-recurring-report>details{background:#fafafa}.task-followup>.task-method{margin-top:12px}
+
+/* Editable customer workbook review within the original task outcomes desk. */
+.task-workbook{margin:1.5rem 0;padding:1rem;border:1px solid #888;border-radius:3px;background:#fafafa}
+.task-workbook h4,.task-workbook h5{margin:.3rem 0 .75rem}
+.task-workbook .task-table{overflow:auto;max-width:100%}
+.task-workbook table{border-collapse:collapse;width:100%;font-size:.9rem}
+.task-workbook th,.task-workbook td{border:1px solid #bbb;padding:.5rem;vertical-align:top;text-align:left}
+.task-workbook th{background:#eee}
+.task-workbook td{min-width:12rem;max-width:32rem}
+.task-workbook pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:24rem;overflow:auto}
+.task-workbook summary{overflow-wrap:anywhere;cursor:pointer}
+.task-workbook small{display:block;color:#444}
+.task-workbook label{display:block;margin:.75rem 0}
+.task-workbook textarea{display:block;width:100%;box-sizing:border-box}
+@media print{.task-workbook{break-inside:auto;background:white}.task-workbook .task-actions,.task-workbook input[type=file]{display:none}}

@@ -32,9 +32,22 @@ export class PeriodWorkspace{
     check(version,'PERIOD_VERSION_NOT_FOUND','Choose an existing saved period version.',404);
     return {periodId:record.id,version:version.version,name:version.name,from:version.from,until:version.until};
   }
-  async save({revision,id,expectedVersion,name,from,until,note='',select=false,actor}){
+  async save({revision,id,expectedVersion,name,from,until,note='',select=false,actor,requestId},{beforeWrite}={}){
     const workspace=this.workspace;
+    const retained=requestId===undefined?null:{schema:'stellar-forge.accounting-period-request.v1',requestId,
+      revision,id:id??null,expectedVersion:expectedVersion??null,name,from,until,note,select,actor};
+    if(retained)check(typeof requestId==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(requestId),
+      'PERIOD_REQUEST_ID','Retain one original request identifier.');
+    const requestSha256=retained?hash(Buffer.from(JSON.stringify(retained))):null;
     return workspace.serial(async()=>{
+      if(retained){
+        const previous=(workspace.state.periodDefinitionRequests??[]).find(row=>row.id===requestId);
+        if(previous){
+          check(previous.requestSha256===requestSha256,'PERIOD_REQUEST_CONFLICT','This request ID belongs to another original period definition.',409);
+          return {...structuredClone(previous.result),requestId,reused:true,state:workspace.view()};
+        }
+      }
+      if(beforeWrite)await beforeWrite();
       workspace.expected(revision);actor=label(actor,'operator',1000);name=label(name,'period name');note=label(note,'period note',2000,true);
       check(typeof select==='boolean','INVALID_PERIOD_SELECTION','Choose whether to select the saved version.');
       const bounds=compileAccountingPeriod({from,until});
@@ -49,8 +62,15 @@ export class PeriodWorkspace{
       const version={version:record.versions.length+1,name,...bounds,note,actor,createdAt:now()};
       record.versions.push(version);
       if(select)workspace.state.periodSelection={id:record.id,version:version.version};
-      await workspace.commit('accounting_period_saved',actor,{periodId:record.id,version:version.version,from:bounds.from,until:bounds.until,selected:select});
-      return {definition:structuredClone(record),version:structuredClone(version),state:workspace.view()};
+      const result={definition:structuredClone(record),version:structuredClone(version)};
+      if(retained){
+        workspace.state.periodDefinitionRequests??=[];
+        check(workspace.state.periodDefinitionRequests.length<10000,'PERIOD_REQUEST_LIMIT','Archive the original accounting history before retaining further period requests.');
+        workspace.state.periodDefinitionRequests.push({id:requestId,requestSha256,request:retained,
+          revision:workspace.state.revision+1,result:structuredClone(result)});
+      }
+      await workspace.commit('accounting_period_saved',actor,{periodId:record.id,version:version.version,from:bounds.from,until:bounds.until,selected:select,...(retained?{requestId,requestSha256}:{})});
+      return {...result,...(retained?{requestId,reused:false}:{}),state:workspace.view()};
     });
   }
   async select({revision,selection,actor}){

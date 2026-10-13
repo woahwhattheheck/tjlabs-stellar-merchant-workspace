@@ -33,7 +33,12 @@ SCHEMA = "stellar-forge.duckdb-timescale-intake.native-receiving.v1"
 
 def _input(path):
     raw = read_original(path, 2 * 1024 * 1024)
-    value = parse(raw)
+    return raw, _binding(parse(raw))
+
+
+def _binding(value):
+    """Normalize the original complete input before execution or preparation."""
+    value = deepcopy(value)
     fields(value, ("operation_id", "source_commit", "source_root", "workspace", "workspace_id",
                    "native_workspace", "report", "baseline", "observed", "pair", "actor", "reason"))
     need(isinstance(value["operation_id"], str) and 0 < len(value["operation_id"]) <= 240,
@@ -63,7 +68,14 @@ def _input(path):
         meanings = {column["source"]: column for column in selected["interpretation"]["columns"]}
         selected["interpretation"]["columns"] = [meanings[name] for name in names]
     need(value["baseline"]["source_id"] != value["observed"]["source_id"], "TWO_ORIGINAL_SOURCES_REQUIRED")
-    fields(value["pair"], ("name", "label", "columns"), ("window_column", "windows", "notes"))
+    fields(value["pair"], ("name", "label", "columns"), ("window_column", "windows", "notes", "saved"))
+    saved_pair = value["pair"].get("saved")
+    if saved_pair is not None:
+        fields(saved_pair, ("pair_id", "revision", "definition_sha256", "request_id"))
+        hash_id(saved_pair["pair_id"]); hash_id(saved_pair["definition_sha256"])
+        request_id(saved_pair["request_id"])
+        need(type(saved_pair["revision"]) is int and saved_pair["revision"] > 0,
+             "SAVED_PAIR_REVISION_REQUIRED")
     need(isinstance(value["pair"]["columns"], list), "PAIR_MAPPING_REQUIRED")
     value["pair"].setdefault("window_column", None)
     value["pair"].setdefault("windows", [])
@@ -73,10 +85,13 @@ def _input(path):
              and bool(column["meaning"].strip()), "EXPLICIT_PAIR_MEANING_REQUIRED")
         column.setdefault("source_map", [])
         column.setdefault("target_map", [])
-        need(column["source_map"] == column["target_map"] == [], "INTAKE_PAIR_PRESERVES_NATIVE_VALUES")
+        need(isinstance(column["source_map"], list) and isinstance(column["target_map"], list),
+             "PAIR_VALUE_MAP_REQUIRED")
+        if saved_pair is None:
+            need(column["source_map"] == column["target_map"] == [], "INTAKE_PAIR_PRESERVES_NATIVE_VALUES")
     for key in ("actor", "reason"):
         need(isinstance(value[key], str) and bool(value[key].strip()), "REVIEWER_AND_REASON_REQUIRED")
-    return raw, value
+    return value
 
 
 def _original_report(workspace, binding):

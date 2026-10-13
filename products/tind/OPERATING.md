@@ -474,6 +474,102 @@ Create uses `projectId: null` and `expectedRevision: null`. Later operations sel
 
 A retained browser native-task document has `task` in place of `kind`; continue that task through its corresponding `native-search` or `native-send` CLI with the same operation ID and exact saved input. Native read and write histories remain in the workspace database across desk restarts.
 
+
+## Acquire original source documents
+
+The **Native export and files** desk can acquire the original repository documents directly into the existing migration. A saved acquisition contains the exact source record/file pairs, original HTTPS URLs, expected file names, roles and access terms. Its original selection and every returned HTTP status, final URL, validator and byte checkpoint stay in the same database.
+
+### Select and acquire the complete population
+
+In **Acquire original repository documents**, enter the selection title, selecting operator and the original acquisition authority. Import or edit the complete JSON array of document rows. The source identifier must belong to the selected migration:
+
+```json
+[
+  {
+    "identifier": "ACTUAL_ORIGINAL_OAI_IDENTIFIER",
+    "id": "original-article",
+    "filename": "article.pdf",
+    "url": "https://actual-repository.example/original-document.pdf",
+    "role": "article",
+    "mediaType": "application/pdf",
+    "access": {
+      "metadata": "public",
+      "files": "public",
+      "releaseDate": "",
+      "restriction": "",
+      "licenseURI": ""
+    }
+  }
+]
+```
+
+Use the original document's direct URL from its publisher or retained source page. Each row can also name the original `expectedSha256`, `expectedBytes`, `maximumBytes` and an array of actual `redirectOrigins`. The default allowance is the existing 1 TiB file limit. Up to 5,000 complete rows fit in one selection, subject to the original 8 MiB encoded save limit. Prepare additional selections for larger catalogues.
+
+The receiver follows HTTPS redirects within the original source origin and the explicitly selected redirect origins. It never forwards an Authorization header to another origin. A source using private query credentials should be received through its existing authenticated stable endpoint and host authorization environment. Supply the name of that environment variable in the selection; its value stays on the host.
+
+Save the selection, open it, then choose **Acquire or resume these original files**. Each document is streamed in 1 MiB chunks. Durable checkpoints flush and synchronize the original file before saving its byte count and prefix hash in SQLite. Other selected files continue when one original source returns an error.
+
+The desk shows each original HTTP result, exact bytes, checksum, actual returned media type and remaining source error. **Open original history** shows the complete selected row and all attempts. **Download original bytes** opens the completed original for inspection. A publisher login or error page that arrives as HTTP 200 is still the actual returned document: compare its bytes and actual media type with the intended file before receiving it.
+
+### Pause and continue the same acquisition
+
+Choose **Pause after saving current bytes** before exporting the workspace or moving to another original byte operation. The current read records its complete durable prefix. Reopen the same acquisition and continue its original rows after a restart. A browser save whose response was lost retains the exact operation request in the desk's existing IndexedDB queue.
+
+A resumed HTTP range uses `Range` and `If-Range` with the same strong ETag. The receiver verifies the exact starting offset and selected total length, and checks the returned validator when present. An If-Range response may omit unchanged representation headers under RFC 9110. A server that returns a new full response starts that document from byte zero. A source without a strong ETag also restarts from byte zero. Checkpoints are rehashed before reuse, and bytes written after the last durable checkpoint are truncated before continuation. The receiver checks the selected expected length and SHA-256 when supplied.
+
+The original publisher's request spacing is selected per acquisition; the default is 2.1 seconds between documents. Active source workers stop and save their stream before the application closes its database.
+
+### Receive the existing source operator's original file
+
+When the institution's existing browser or export has already acquired a document, open **Receive an original file from the existing source browser or authorized export**. Choose the acquisition row, its actual complete local file and the original HTTP receipt: requested URL, returned URL, GET/200, response header pairs and observed time. The receiver streams the file into this same acquisition, checks its declared or selected identity, and retains the original result with the receiving operator and context. Private authentication headers are omitted. A changed completed document starts a new acquisition and later follows explicit replacement receiving.
+
+The same operation is available through ordinary apply kind `source-download-import`. Its input is `{acquisitionId,id,path,transport,reviewer,note}`. Source browser downloads and authenticated exports therefore join the same file review, native batch and editable handover as direct HTTP acquisition.
+
+### Receive reviewed files into the migration
+
+Select the completed files and choose **Prepare selected completed files for receiving**. The complete receiving rows remain editable. Review the actual original bytes, file name, role, actual media type and every access/release term. Enter the receiving operator and document review note, then receive the selection.
+
+The operation copies the exact original bytes into the migration's existing bound file tree. A migration without a file tree receives them under its own private source directory and binds that directory automatically. Current native observations for the same byte identity stay with the file. Receiving changed bytes for an existing file also requires its exact current `replaceSha256` in the selected row, so the full replacement has a retained before/after source decision.
+
+The resulting files appear in the existing original-file desk and frozen native batch manifests. Their source acquisition IDs, original URLs, actual returned URL, bytes and source observations travel with the existing metadata, file access review and native receiving history. HTTP acquisition completes the original source-file stage; native file attachment and destination access continue through the existing TIND receiving workflow.
+
+### Original command operation
+
+Create the selection with the ordinary `apply` command and a saved request containing kind `source-download-plan`, the current project/revision and this input:
+
+```json
+{
+  "title": "Original institution documents",
+  "reviewer": "Actual source operator",
+  "note": "Original publisher document URLs and source access terms selected",
+  "interval": 2.1,
+  "authorizationEnvironment": null,
+  "files": ["REPLACE_WITH_THE_COMPLETE_ORIGINAL_DOCUMENT_ROWS"]
+}
+```
+
+The save returns its acquisition ID. Use the same ID throughout the original operation:
+
+```sh
+starforge tind-migration --workspace /private/repository source-downloads \
+  --project ACTUAL_PROJECT_ID
+
+starforge tind-migration --workspace /private/repository source-download-run \
+  --project ACTUAL_PROJECT_ID --id ORIGINAL_ACQUISITION_ID
+
+starforge tind-migration --workspace /private/repository source-downloads \
+  --project ACTUAL_PROJECT_ID --id ORIGINAL_ACQUISITION_ID --offset 0 --limit 50
+
+starforge tind-migration --workspace /private/repository source-download-export \
+  --project ACTUAL_PROJECT_ID --id ORIGINAL_ACQUISITION_ID
+```
+
+The run command optionally accepts `--only /private/selected-acquisition-row-ids.json` to continue an exact subset. Its original source selection remains unchanged. Receive completed files with a normal `source-download-adopt` apply operation; input contains `acquisitionId`, `reviewer`, `note` and the complete editable `files` receiving rows from the desk. Each row names its acquisition row `id` and selected file metadata, role and access.
+
+A complete editable handover includes the original acquisition database, returned source bytes and durable partial files, plus all adopted migration files. Receiving relocates this original cache with the workspace; pending acquisitions can continue from their retained byte checkpoints. A metadata-only handover omits the acquisition binary tree and the adopted source tree. Its selection and HTTP history remain available, and the original acquisition can reacquire omitted bytes on the receiving host. Bind the intended receiving file tree before adopting into a project that previously used another host's directory.
+
+HTTP range and validator behavior follows [RFC 9110, sections 13.1.5 and 14](https://www.rfc-editor.org/rfc/rfc9110.html). Original source-document acquisition remains independent from the selected institution's native Batchuploader and object-storage contracts.
+
 ## Source and native references
 
 - [Original OAI operator source](../../stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/): repository transport, reviewed editions and incremental history.
@@ -526,3 +622,67 @@ python3 /absolute/commons/opportunities/discoverygarden_msu2026112_20261012/tind
 This reuses the original received response identities, selects all eleven exact GetRecord sources, reviews and builds the actual collection, applies all eleven original staff cases, and writes the complete editable records, mapped MARCXML, native source export, operator page and whole-workspace handover. The result includes its actual collection operation, edition, build, project, review and archive identities.
 
 The existing complete Endeavors edition remains available in the same workspace. Each output directory retains its own exact receiving context, source selection and saved TIND/case requests. Continue an interrupted run with the same selected mode and output directory.
+
+
+## Operate complete production waves
+
+Production waves retain the exact original record membership selected from the repository's OAI sets. A plan captures its source edition, profile, working revision, responsible operator and scope. Each selected record appears once, including records omitted from new delivery because they were already received or deliberately excluded. A record belonging to several selected sets is assigned to the first sorted matching set, and the original complete set list stays with that record.
+
+Open **Production waves**, choose all records or the actual source collections, choose the maximum records per wave, and save the plan. The default of 500 is an application planning choice. Each wave can contain up to 10,000 records; the existing native batch still uses its selected MARCXML record/byte partitioning. The complete census and its waves are stored in the original SQLite workspace.
+
+### Review and continue the same records
+
+Open a wave to see current ready, received, excluded, changed, unresolved, deferred, prepared or receiving records. Its selected membership is stable even when the source edition advances. **Open record** uses the original metadata/access/identifier decision desk. Save corrections there, then use **Accept current source and mapping for this wave** with the responsible operator and a scope note. This records each prior/current content identity and retains the original review history.
+
+Use **Defer selected records** for exceptions that must continue separately; the record stays in the original wave with the operator's reason. **Include selected records again** restores its participation. A deferred record prevents a wave from being described as completely received. An explicit staff exclusion remains its ordinary source decision.
+
+A record is already received only when the original confirmed native batch matches its current intended fields, native identity, record access and exact file roles/bytes/access, with the original file receiving results complete. Later source, mapping, staff or file changes re-enter the work. Source timestamps alone do not force another native write when the intended received result is unchanged.
+
+### Prepare and receive the original native batch
+
+Choose **Prepare original native batch**. The wave checks its reviewed source/mapping identity and passes the exact ready identifiers to the existing frozen batch engine. A changed record requires the explicit wave review above. When selected, **Prepare the reviewed ready records now** preserves unresolved records as exceptions in the same wave while preparing the ready portion.
+
+The returned batch retains its production plan and wave identity, original MARCXML parts, full record/file intentions, source edition and destination export. Continue it through **Open native delivery**, using the existing native request, result and file/access receiving controls. A new wave preparation does not replace an unfinished original batch: complete that batch or use its existing explicit withdrawal operation first.
+
+After receiving the actual native result, complete current destination export and original file observations, choose **Reconcile this original batch** in the wave. This invokes the unchanged record/file reconciliation engine and keeps its complete report and counts. Remaining records stay in the wave; a later ready portion creates its own linked batch. Completed and withdrawn batches remain visible in history.
+
+### Source continuation, full exports and receiving
+
+A newer OAI edition can add records outside a saved plan. Create a following production plan from the current complete collections to select those records and changed work. Earlier plans, exact membership, completed native outcomes and staff decisions remain in the same project. The full plan export includes every selected member, omission, wave decision and original native batch reference as streaming JSON Lines.
+
+All production tables travel in the original complete workspace handover. The same installed application opens the saved plans after receiving the whole archive; native credentials remain in the selected runtime configuration. The full source acquisition from PR1059 continues to preserve original document bytes, HTTP history and access decisions in this same project.
+
+### Original command interface
+
+Inspect the real collections and saved waves:
+
+~~~sh
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-collections --project ORIGINAL_PROJECT_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-plans --project ORIGINAL_PROJECT_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-plans --project ORIGINAL_PROJECT_ID --id SAVED_PLAN_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-wave --project ORIGINAL_PROJECT_ID --id SAVED_WAVE_ID
+python3 /absolute/installed/oai-pmh/tind/cli.py --workspace /private/original-workspace production-export --project ORIGINAL_PROJECT_ID --id SAVED_PLAN_ID --out /private/complete-production-plan.jsonl
+~~~
+
+All list operations expose offset, limit and next. Continue until next is null. The full production-export streams all records and refuses to overwrite an existing output.
+
+Save one complete original apply request before running it. It uses the existing operationId, kind, projectId, expectedRevision and input envelope. The source state command provides the current project revision. A production-plan input has title, reviewer, note, recordsPerWave and selection:
+
+~~~json
+{"title":"Original Scholars Junction staff receiving","reviewer":"ACTUAL_OPERATOR","note":"Reviewed original collections, access cases and exact selected population","recordsPerWave":500,"selection":{"all":true,"sets":[],"unassigned":false,"includeReceived":false}}
+~~~
+
+The other operation kinds use these exact inputs:
+
+| Kind | Complete operation input |
+| --- | --- |
+| production-review | waveId, reviewer, note |
+| production-disposition | waveId, identifiers, disposition (include or defer), reviewer, note |
+| production-prepare | waveId, readyOnly, reviewer, note |
+| production-reconcile | waveId, batchId, reviewer, note |
+
+Replay an interrupted saved request unchanged. The original operation ledger returns its retained result; future changes use a new operation and current revision.
+
+### Join the existing MSU workshare
+
+The existing commissioning workorder retains its agreed work packages, effort, commercial terms and responsible delivery participants. This capability supplies its collection-wave, exception, changed-source, cutover and handover operations. The original eleven-record staff cohort and complete fifteen-record Endeavors edition remain separate selectable projects in the same Scholars Junction workspace; the seven public original-document selections retain their original receiving driver and source rights. The distinct CIIM169 case retains its own original source.

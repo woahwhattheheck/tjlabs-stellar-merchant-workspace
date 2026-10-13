@@ -118,6 +118,8 @@ class PipelineRuntime:
         self.receiving_lock = threading.RLock()
         self.received_servers = {}
         self.closed = False
+        self.commissioning = None
+        self.commissioning_lock = threading.RLock()
 
     mark_inactive = native_server.OperatorServer.mark_inactive
     receive_project = native_server.OperatorServer.receive_project
@@ -130,6 +132,10 @@ class PipelineRuntime:
 
     def open_received(self, identifier):
         record = original_module('receiving').received_project(self.workspace, identifier)
+        return self.open_received_record(record)
+
+    def open_received_record(self, record):
+        identifier = record['id']
         with self.receiving_lock:
             if self.closed or self.owner.closing:
                 raise Busy('Applications is stopping; reopen this completed receiving from its saved project')
@@ -163,6 +169,10 @@ class PipelineRuntime:
         if parsed.scheme or parsed.netloc or parsed.fragment:
             raise PreparationError('Choose a local original pipeline download')
         query = {key:values[-1] for key,values in parse_qs(parsed.query).items()}
+        if parsed.path == '/api/pipelines/commissioning/file':
+            if set(query) != {'kind','id','file'}:
+                raise PreparationError('Choose one complete commissioning file')
+            return original_module('commissioning').desk(self).download(query['kind'], query['id'], query['file'])
         if parsed.path == '/api/pipelines/result':
             if set(query) != {'id','stage','file'}:
                 raise PreparationError('Choose one original pipeline execution, stage and file')
@@ -206,6 +216,13 @@ class PipelineRuntime:
         with self.job_lock:
             jobs = list(self.jobs.items())
         errors = []
+        with self.commissioning_lock:
+            commissioning = self.commissioning
+        if commissioning is not None:
+            try:
+                commissioning.close()
+            except BaseException as exc:
+                errors.append(exc)
         for execution_id, worker in jobs:
             if worker.is_alive():
                 try:

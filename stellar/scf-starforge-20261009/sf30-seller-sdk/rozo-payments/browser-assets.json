@@ -22,6 +22,20 @@
         "style.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/finance.mjs",
+      [
+        "finance.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/finance-amendment.mjs",
+      [
+        "finance-amendment.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

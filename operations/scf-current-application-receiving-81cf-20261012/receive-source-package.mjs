@@ -140,6 +140,7 @@ async function receive(){
     currentReviewPath:path.join(output,'downloads/Current_Complete_Review.json'),
     sourcePackagePath:cfg.sourcePackagePath,sourcePackageSha256:cfg.sourcePackageSha256,
     sourceRecords:cfg.sourceRecords,originalBrowserBinding:originalBinding,
+    ...(Object.hasOwn(cfg.sourceSelection,'reviewerPaths')?{reviewerPaths:cfg.sourceSelection.reviewerPaths}:{}),
     routes:{application:'/grant.html',companion:'/grant-companion.html',
       editor:'/grant-submission.html',review:'/grant-review-round.html'},
     sourceRead:'Open the original saved draft while the initial source read is pending, receive the complete package through Source editions, save the same local record, and reopen the full current native draft and original review in another browser store.'};

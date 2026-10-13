@@ -68,6 +68,21 @@ node inspect-capture.mjs blockrun /absolute/path/blockrun-capture.json
 
 Its authored six-row example has one media-job group, three provider-reported calls and a known total of USD 0.028100000000000001. Calls come from the original summary; a visible poll may belong to a job created before this window. The complete raw capture stays beside the projection for receiving. [Full workflow and source instructions](BLOCKRUN.md)
 
+## BlockRun operator capture desk
+
+Open [BlockRun_Capture_Desk.html](BlockRun_Capture_Desk.html) for the complete offline application. It imports original capture wrappers, retains capture editions, shows exact costs and coverage, groups media/correction rows, records named operator reviews and exports a complete working HTML or JSON desk for independent receiving. Each browser tab keeps its own branch and all review history.
+
+The starting example is authored documentation data. The original projection and account authority are unchanged; the desk makes no provider request. [Complete operating and receiving guide](CAPTURE_DESK.md).
+
+To build a standalone desk from the complete source:
+
+~~~sh
+node capture-desk-build.mjs --out /absolute/private/BlockRun_Capture_Desk.html
+node capture-desk-build.mjs --input /absolute/private/received-desk.json --out /absolute/private/Received_BlockRun_Desk.html
+~~~
+
+The output parent must already be a private directory owned by the operator. The builder preserves an existing different output and reopens an identical one.
+
 ## How this becomes a complete implementation
 
 The three workshares identify the native provider actions, input owners, engineering allocation, acceptance and complete customer handover. The existing Buyer and API workspace supplies retained original requests, explicit native continuation, selected dataset delivery and portable receiving. The engagement adds the provider-specific connection and customer workflow.

@@ -11,12 +11,19 @@
     "./seller/grist/workspace/server": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/server.mjs",
     "./seller/grist/workspace/launch": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/launch.mjs",
     "./seller/grist/workspace/packet": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/packet.mjs",
-    "./seller/grist/workspace/mcp": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/mcp.mjs"
+    "./seller/grist/workspace/mcp": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/mcp.mjs",
+    "./seller/grist/workspace/operating-plan": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/operating-plan.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/operating-plan.mjs"
+    }
   },
   "applicationProviders": {
     "grist-authoring": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/application-provider.mjs"
   },
   "merchantProviders": {
     "grist-workspaces": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/merchant-provider.mjs"
+  },
+  "commandDescriptions": {
+    "grist-workspace": "Author original Grist document/table captures and reviewed source versions, publish through the existing workspace, and prepare editable customer operating plans with saved observations and complete returned-plan review."
   }
 }

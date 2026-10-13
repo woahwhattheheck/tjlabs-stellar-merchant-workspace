@@ -25,6 +25,7 @@
   <button type="button" data-tab="source-cases">Source cases</button>
   <button type="button" data-tab="mapping">Destination mapping</button>
   <button type="button" data-tab="receiving">Native export and files</button>
+  <button type="button" data-tab="production">Production waves</button>
   <button type="button" data-tab="batches">Batches and delivery</button>
   <button type="button" data-tab="handover">Editable handover</button>
 </nav>
@@ -137,6 +138,46 @@
       <div id="native-search-status"></div>
     </section>
   </div>
+  <section class="panel" id="source-document-acquisition">
+    <h2>Acquire original repository documents</h2>
+    <p>Prepare the exact original document URLs and their source records, roles and access terms. The workspace streams each original file, keeps its HTTP history and resumes saved byte prefixes when the source supports the same strong validator.</p>
+    <form id="source-download-plan-form">
+      <div class="grid two"><label>Acquisition title<input name="title" required maxlength="512"></label><label>Selecting operator<input name="reviewer" required maxlength="256"></label></div>
+      <label>Original selection and acquisition authority<textarea name="note" rows="3" required></textarea></label>
+      <label>Complete original file selection<input name="file" type="file" accept=".json,application/json"></label>
+      <label>Or edit the complete file rows<textarea name="files" rows="11" spellcheck="false" required placeholder='[{"identifier":"exact original OAI identifier","id":"article-original","filename":"article.pdf","url":"https://repository.example/original-file.pdf","role":"article","mediaType":"application/pdf","access":{"metadata":"public","files":"public","releaseDate":"","restriction":"","licenseURI":""}}]'></textarea></label>
+      <p class="muted">Optional row fields: expectedSha256, expectedBytes, maximumBytes and redirectOrigins. Include the actual redirected HTTPS origins when the publisher uses a separate file service. Credentials belong in the selected host environment.</p>
+      <div class="grid two"><label>Seconds between source documents<input name="interval" type="number" min="0" max="3600" step="0.1" value="2.1" required></label><label>Existing source authorization environment variable<input name="authorizationEnvironment" autocomplete="off"></label></div>
+      <button type="submit">Save original document selection</button>
+    </form>
+    <div class="row"><button id="refresh-source-downloads" type="button">Refresh acquisitions</button><span id="source-download-count"></span></div>
+    <div id="source-download-list"></div>
+    <div class="row"><button id="previous-source-downloads" type="button">Previous acquisitions</button><button id="next-source-downloads" type="button">Next acquisitions</button></div>
+    <section id="source-download-detail" hidden>
+      <h3 id="source-download-title"></h3><p id="source-download-description"></p>
+      <div class="actions"><button id="run-source-downloads" type="button">Acquire or resume these original files</button><button id="pause-source-downloads" type="button">Pause after saving current bytes</button><a id="export-source-downloads" class="button">Download complete acquisition</a></div>
+      <p id="source-download-progress" role="status"></p>
+      <div class="table-scroll"><table><caption class="sr-only">Original document acquisition</caption><thead><tr><th scope="col">Receive</th><th scope="col">Document and source record</th><th scope="col">Original source</th><th scope="col">Bytes and status</th><th scope="col">Review</th></tr></thead><tbody id="source-download-rows"></tbody></table></div>
+      <div class="row"><button id="previous-source-download-files" type="button">Previous documents</button><span id="source-download-file-page"></span><button id="next-source-download-files" type="button">Next documents</button></div>
+      <details id="source-download-history"><summary>Original selected file and complete HTTP history</summary><pre id="source-download-history-body"></pre></details>
+      <details><summary>Receive an original file from the existing source browser or authorized export</summary>
+        <form id="source-download-import-form">
+          <label>Original acquisition row ID<input name="id" required></label>
+          <label>Complete original file path on this machine<input name="path" required></label>
+          <label>Actual original HTTP receipt<textarea name="transport" rows="8" spellcheck="false" required placeholder='{"url":"original selected URL","finalUrl":"actual final URL","method":"GET","status":200,"headers":[["Content-Type","application/pdf"]],"observedAt":"actual ISO timestamp"}'></textarea></label>
+          <label>Source receiving operator<input name="reviewer" required></label><label>Original source receiving context<textarea name="note" rows="3" required></textarea></label>
+          <button type="submit">Receive original source file and HTTP result</button>
+        </form>
+      </details>
+      <button id="prepare-source-download-receive" type="button">Prepare selected completed files for receiving</button>
+      <form id="source-download-adopt-form">
+        <label>Complete editable receiving rows<textarea name="files" rows="10" spellcheck="false" required></textarea></label>
+        <p class="muted">Review each filename, role, media type and complete access terms against its original bytes. A replacement also names the current file's replaceSha256. Source bytes and their acquisition remain retained.</p>
+        <label>Receiving operator<input name="reviewer" required maxlength="256"></label><label>Document and access review<textarea name="note" rows="3" required></textarea></label>
+        <button type="submit">Receive reviewed documents into the migration</button>
+      </form>
+    </section>
+  </section>
   <section class="panel">
     <h2>Original file manifest and complete source tree</h2>
     <p>Each file stays tied to its exact source record, original bytes, checksum, role and access terms. Large binaries remain in the selected file tree and stream into the complete handover.</p>
@@ -169,6 +210,60 @@
       </fieldset>
       <button type="submit">Receive native file result</button>
     </form>
+  </section>
+</section>
+<section data-panel="production" hidden>
+  <section class="panel">
+    <h2>Production collections and waves</h2>
+    <p>Save exact original collection membership, then receive each wave through the existing native batches. Already received content and staff exclusions remain in the complete plan census. New source editions can start a following plan while preserving prior waves.</p>
+    <form id="production-plan-form">
+      <div class="grid two"><label>Plan title<input name="title" required maxlength="256"></label><label>Records per wave<input name="recordsPerWave" type="number" min="1" max="10000" value="500" required></label></div>
+      <fieldset><legend>Original source selection</legend>
+        <label><input name="all" type="checkbox" checked> All original repository records</label>
+        <p id="production-collection-summary" class="muted"></p>
+        <div id="production-collections"></div>
+        <label><input name="unassigned" type="checkbox"> Include records without a source collection</label>
+        <label><input name="includeReceived" type="checkbox"> Intentionally include already received records for a new delivery</label>
+      </fieldset>
+      <div class="grid two"><label>Responsible operator<input name="reviewer" required maxlength="256"></label><label>Scope and review note<textarea name="note" rows="3" required></textarea></label></div>
+      <button type="submit">Save exact production plan</button>
+    </form>
+  </section>
+  <section class="panel">
+    <div class="section-heading"><h2>Saved production plans</h2><button id="production-refresh" type="button">Refresh production</button></div>
+    <div class="table-scroll"><table><thead><tr><th scope="col">Plan</th><th scope="col">Original selection</th><th scope="col">Waves</th><th scope="col">Open</th></tr></thead><tbody id="production-plans"></tbody></table></div>
+    <div class="row"><button id="production-plans-previous" type="button">Previous plans</button><span id="production-plans-page"></span><button id="production-plans-next" type="button">More plans</button></div>
+  </section>
+  <section class="panel" id="production-plan-detail" hidden>
+    <h2 id="production-plan-title"></h2><p id="production-plan-summary"></p>
+    <p><a id="production-plan-download" href="#">Download complete plan, membership and delivery history</a></p>
+    <div class="table-scroll"><table><thead><tr><th scope="col">Wave</th><th scope="col">Records</th><th scope="col">Native batches</th><th scope="col">Open</th></tr></thead><tbody id="production-waves"></tbody></table></div>
+    <div class="row"><button id="production-waves-previous" type="button">Previous waves</button><span id="production-waves-page"></span><button id="production-waves-next" type="button">More waves</button></div>
+  </section>
+  <section class="panel" id="production-wave-detail" hidden>
+    <h2 id="production-wave-title"></h2><p id="production-wave-summary"></p>
+    <p>Review source or mapping changes in Records and decisions, then accept the current complete wave here. Deferred records retain their original membership and reason for later inclusion.</p>
+    <div class="table-scroll"><table><thead><tr><th scope="col">Choose</th><th scope="col">Original record</th><th scope="col">Current disposition</th><th scope="col">Receiving issues</th><th scope="col">Edit</th></tr></thead><tbody id="production-members"></tbody></table></div>
+    <div class="row"><button id="production-members-previous" type="button">Previous records</button><span id="production-members-page"></span><button id="production-members-next" type="button">More records</button><button id="production-clear" type="button">Clear selected records</button></div>
+    <p id="production-selected"></p>
+    <form id="production-wave-form">
+      <div class="grid two"><label>Responsible operator<input name="reviewer" required maxlength="256"></label><label>Decision and continuation note<textarea name="note" rows="3" required></textarea></label></div>
+      <label><input name="readyOnly" type="checkbox"> Prepare the reviewed ready records now and keep unresolved records in this wave</label>
+      <div class="actions">
+        <button name="action" value="review" type="submit">Accept current source and mapping for this wave</button>
+        <button name="action" value="defer" type="submit">Defer selected records</button>
+        <button name="action" value="include" type="submit">Include selected records again</button>
+        <button name="action" value="prepare" type="submit">Prepare original native batch</button>
+      </div>
+    </form>
+    <h3>Original native delivery</h3><div id="production-batches"></div>
+    <form id="production-reconcile-form">
+      <p>Receive the actual native batch result, current target export and file/access observations in the existing delivery desk, then reconcile that same batch here.</p>
+      <label>Original wave batch<select name="batchId" required></select></label>
+      <div class="grid two"><label>Receiving operator<input name="reviewer" required maxlength="256"></label><label>Receiving note<textarea name="note" rows="3" required></textarea></label></div>
+      <button type="submit">Reconcile this original batch</button>
+    </form>
+    <details><summary>Saved wave decisions and complete batch references</summary><pre id="production-history"></pre></details>
   </section>
 </section>
 <section data-panel="batches" hidden>

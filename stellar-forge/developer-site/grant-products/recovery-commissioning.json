@@ -1,0 +1,167 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "recovery-commissioning",
+  "heading": "## Recovery commissioning and complete customer receiving",
+  "sources": [
+    {
+      "id": "recovery-object-guide",
+      "label": "Complete standalone Object recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/OBJECT_SESSION_RECOVERY.md",
+      "commit": "f326d6567ca670e82c098119155ed9e2c994299e",
+      "editions": [
+        {
+          "commit": "f326d6567ca670e82c098119155ed9e2c994299e",
+          "bytes": 12604,
+          "sha256": "53ce27c42d5b15272f444da8b8129982908332a5034a9e60fcc36108505b47ab",
+          "git_blob": "9211a755845d51fc521fb82ec42d6f64d65aaef3"
+        }
+      ]
+    },
+    {
+      "id": "recovery-object-engine",
+      "label": "Original shared native recovery engine",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/workspace-recovery.mjs",
+      "commit": "f326d6567ca670e82c098119155ed9e2c994299e",
+      "editions": [
+        {
+          "commit": "f326d6567ca670e82c098119155ed9e2c994299e",
+          "bytes": 57100,
+          "sha256": "d1078030e2e828719577b0e37fd008246a608e7c0d4c711fd26fe5fb8fab92f4",
+          "git_blob": "812c7f6b703d106bb064034eba2467f8040e7111"
+        }
+      ]
+    },
+    {
+      "id": "recovery-object-sdk",
+      "label": "Typed original recovery SDK",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/workspace-recovery.mjs",
+      "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+      "editions": [
+        {
+          "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+          "bytes": 11744,
+          "sha256": "0e1729fa785a01b7ea138148be32ddf65dff07d6f86201961448c2c388e5044c",
+          "git_blob": "325a360193415a506a94d5dcf4ea0d67f7f44692"
+        }
+      ]
+    },
+    {
+      "id": "recovery-object-workspace-guide",
+      "label": "Complete SF101 browser and operator recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/OBJECT_SESSIONS.md",
+      "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+      "editions": [
+        {
+          "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+          "bytes": 9864,
+          "sha256": "1e1066cd1d83e3aaebc448f284b5a964f3009f71b056302781024a9a2982875c",
+          "git_blob": "16547aaf99d182ea33dd97467d024d01dc3ddefc"
+        }
+      ]
+    },
+    {
+      "id": "recovery-object-workspace-adapter",
+      "label": "Original workspace SDK integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/object-sessions.mjs",
+      "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+      "editions": [
+        {
+          "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+          "bytes": 23938,
+          "sha256": "33e391dc8b981067af5ebeda1d796dcaca414a3b97d2ceda2977e287f84b1ea6",
+          "git_blob": "60701fadc2d474e4bd27de55e0e135e3a582fd47"
+        }
+      ]
+    },
+    {
+      "id": "recovery-incident-guide",
+      "label": "Complete retained incident-store receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf93-seller-support-bundle/INCIDENT_RECOVERY.md",
+      "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+      "editions": [
+        {
+          "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+          "bytes": 16695,
+          "sha256": "8a37746527e595c1b7ace3df54ae501e22498785c2dd034a60f7f1f7ffd26b73",
+          "git_blob": "21d8bf19f5068a057da49b8119b4818779565629"
+        }
+      ]
+    },
+    {
+      "id": "recovery-object-monitoring",
+      "label": "Saved Object observations and complete Support case",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf93-seller-support-bundle/OBJECT_MONITORING.md",
+      "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+      "editions": [
+        {
+          "commit": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+          "bytes": 14386,
+          "sha256": "dd7c9ff3576fe61280a040a46a10b29684f10bd67b6c69df9d0f979d3d75c8cb",
+          "git_blob": "fb6f46ba71205a294389abd21d63d876788adef6"
+        }
+      ]
+    },
+    {
+      "id": "recovery-support-guide",
+      "label": "Complete existing-case recovery receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/RECOVERY_SUPPORT.md",
+      "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+      "editions": [
+        {
+          "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+          "bytes": 13079,
+          "sha256": "1502120d8094b6b742ff8f0d0c6f95e317a561ab8952f9c46cdfa679a1c92f9e",
+          "git_blob": "e49f50b6d138a120d96aba1feb09d06fbf6370d0"
+        }
+      ]
+    },
+    {
+      "id": "recovery-support-producer",
+      "label": "Original recovery capture and full Support case export",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/recovery-support.mjs",
+      "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+      "editions": [
+        {
+          "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+          "bytes": 23821,
+          "sha256": "b443c76d4efe8d0b4f2a11687e2f0437062dc89c711bd560c668f42553e4c6a4",
+          "git_blob": "5e2f992f515a77b1b1c496f83e49663722ad74f7"
+        }
+      ]
+    },
+    {
+      "id": "recovery-support-reader",
+      "label": "Complete native recovery observation and history reader",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/recovery-runtime.mjs",
+      "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+      "editions": [
+        {
+          "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+          "bytes": 25371,
+          "sha256": "e9ac09bc61c870342af4e51e5cc5d0768362c50b5b59456a64a220a632079621",
+          "git_blob": "14e698e53f3155ec47b1fdfe121da2f09cee01ca"
+        }
+      ]
+    }
+  ]
+}

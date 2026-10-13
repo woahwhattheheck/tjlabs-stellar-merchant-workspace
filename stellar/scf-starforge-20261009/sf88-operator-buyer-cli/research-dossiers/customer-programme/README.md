@@ -318,3 +318,9 @@ Python and Merchant recover the exact saved review. The browser uses the origina
 The ZIP writer checks original source while writing. Extraction validates every member and link, binds the exact archive selection and recovers its own unfinished ordinary file copies in a separate staging directory. Live connections, browser profiles and process logs stay in the private operation tree; the explicit completed delivery inventory determines the archive.
 
 Source review follows the maintained APIs. Executed programmes retain their actual native review, workbook, browser, Merchant and portable results in PROGRAMME.json and COMPLETE.json together with complete source and input identities.
+
+## Continue a completed programme with reviewed collaborator returns
+
+The same installed programme now provides `--returns` for a complete post-delivery continuation. Select the exact completed baseline ZIP, actual original workspace/dossier/head and full collaborator archives. It prepares the original native comparisons and complete values, accepts only an explicit reviewed native request, recovers by the original request ID, then creates a successor editable ZIP and independently reopens it with the complete original source. The baseline programme and its scientific/analyst outputs remain intact.
+
+Run `node programme.mjs --returns --help` from this directory. [RETURNING.md](RETURNING.md) contains the full source/selection schema, prepare → inspect → apply/recover commands, typed-proposal meanings, export identity checks, package/reopen instructions and recovery boundaries. `REVIEW_REQUIRED` identifies missing explicit decisions and does not impose a human-only approval gate; an authorized agent may inspect the actual values and author the exact native request. Source publication alone does not claim that a customer continuation has run.
