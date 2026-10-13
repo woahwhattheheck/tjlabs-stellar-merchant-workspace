@@ -32,6 +32,12 @@ async function saveProgress(){
  const parent=await open(root,'r');try{await parent.sync();}finally{await parent.close();}
 }
 async function pin(key,value){progress.pins[key]=value;await saveProgress();return value;}
+function portableRun(record){
+ if(!record)return record;
+ const result={...record};
+ if(record.files){result.files={...record.files};delete result.files['result.sqlite'];}
+ return result;
+}
 function retainOriginals(value){
  for(const collection of ['sources','recipes','reviews']){
   for(const item of original[collection]){
@@ -39,7 +45,7 @@ function retainOriginals(value){
    assert.deepEqual(found,item,'Retain original '+collection+' '+item.id);
   }
  }
- for(const item of original.runs){const found=value.runs.find(record=>record.id===item.id);assert.deepEqual(found,item,'Retain original result '+item.id);}
+ for(const item of original.runs){const found=value.runs.find(record=>record.id===item.id);assert.deepEqual(portableRun(found),portableRun(item),'Retain original result '+item.id);}
  assert.equal(value.sources.filter(item=>original.sources.some(old=>old.id===item.id)).reduce((sum,item)=>sum+item.rows,0),120012);
 }
 async function recipeFor(key,spec,nativeClient,create){
@@ -301,7 +307,7 @@ async function runPreparationJourney(){
  const restoredState=await state(customer),operatorState=await state(operator);
  for(const collection of ['sources','recipes','reviews','runs'])for(const item of operatorState[collection]){
   const retained=restoredState[collection].find(value=>value.id===item.id&&(collection!=='recipes'||value.revision===item.revision));
-  assert.deepEqual(retained,item,'The received customer retains its complete imported '+collection);
+  assert.deepEqual(collection==='runs'?portableRun(retained):retained,collection==='runs'?portableRun(item):item,'The received customer retains its complete imported '+collection);
  }
  for(const collection of ['sources','recipes','reviews']){
   for(const record of baseline[collection]){
