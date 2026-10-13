@@ -66,8 +66,18 @@ const browserPage=async()=>{
   if(!browser){const {chromium}=await import('playwright');browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage'],...(cfg.browserExecutable?{executablePath:cfg.browserExecutable}:{})});}
   const page=await browser.newPage({viewport:{width:1366,height:900},acceptDownloads:true});page.on('pageerror',error=>pageErrors.push(error.message));
   await page.goto(listener.url,{waitUntil:'networkidle'});
-  await page.getByRole('button',{name:'Capture plans',exact:true}).click();return page;
+  await page.getByRole('button',{name:'Capture plans',exact:true}).click();
+  await page.getByRole('heading',{name:'Saved acquisition plans',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Create a complete capture plan',exact:true}).waitFor();return page;
 };
+async function awaitRenderedRun(page,id,state){
+  await page.waitForFunction(({id,state})=>[...document.querySelectorAll('.card')].some(card=>
+    [...card.querySelectorAll('h3')].some(heading=>heading.textContent==='Original acquisition '+id) &&
+    [...card.querySelectorAll('.pill')].some(pill=>pill.textContent===state)),{id,state},{timeout:120000});
+  const summary=page.getByText('Retained period, source selection and capture outcome',{exact:true});
+  const details=summary.locator('..');
+  if((await details.getAttribute('open'))===null)await summary.click();
+}
 const captureDue=async()=>{
   if(!listener)listener=await startCkanServer({workbench});
   const startupFile=join(home,'private-listener.json');
@@ -169,6 +179,7 @@ try {
     await interruptedPage.getByRole('button',{name:'Open plan and complete history',exact:true}).click();
     await interruptedPage.getByRole('button',{name:'Inspect original run',exact:true}).first().click();
     await interruptedPage.getByRole('button',{name:'Resume the same source acquisition',exact:true}).waitFor();
+    await awaitRenderedRun(interruptedPage,firstId,first.state);
     await renderedView(interruptedPage,'retained-interrupted-acquisition');
     await interruptedPage.close();await browser.close();browser=null;await listener.close();listener=null;await save();
     await workbench.close();workbench=null;
@@ -194,6 +205,9 @@ try {
     const page=await browserPage();
     await page.getByRole('button',{name:'Open plan and complete history',exact:true}).click();
     await page.getByRole('button',{name:'Edit this inspected plan version',exact:true}).click();
+    await page.getByLabel('Complete capture plan configuration',{exact:true}).waitFor();
+    await until(async()=>remoteIdentity(parseRemote(await page.getByLabel('Complete capture plan configuration',{exact:true}).inputValue()))===remoteIdentity(plan.config),
+      'The browser did not render the complete inspected original plan.');
     await renderedWidths(page,'edit-original-plan');
     await page.getByRole('button',{name:'Save this plan version',exact:true}).click();
     await page.locator('#notice .error').waitFor();
@@ -280,6 +294,7 @@ try {
   await page.getByRole('button',{name:'Open plan and complete history',exact:true}).click();
   await page.getByRole('button',{name:'Inspect original run',exact:true}).last().click();
   await page.getByRole('button',{name:'Open retained edition and field dictionary',exact:true}).waitFor();
+  await awaitRenderedRun(page,secondId,'COMPLETE');
   await renderedWidths(page,'following-original-run');
   const downloadedRun=parseRemote((await userDownload(page,'Download full original run','following-run.json')).toString('utf8'));
   assert.equal(downloadedRun.id,secondId);
@@ -319,9 +334,10 @@ try {
   await receivedPage.getByRole('button',{name:'Open plan and complete history',exact:true}).click();
   await receivedPage.getByRole('button',{name:'Inspect original run',exact:true}).last().click();
   await receivedPage.getByRole('button',{name:'Open retained edition and field dictionary',exact:true}).waitFor();
+  await awaitRenderedRun(receivedPage,secondId,'COMPLETE');
   await renderedWidths(receivedPage,'cold-received-acquisition');
   const reopenedRun=parseRemote((await userDownload(receivedPage,'Download full original run','received-following-run.json')).toString('utf8'));
-  assert.equal(reopenedRun.id,secondId);assert.equal(record.requests.length,callsBeforeReceive);
+  assert.equal(reopenedRun.id,secondId);assert.equal(record.requests.length,callsBeforeReceive);assert.deepEqual(pageErrors,[]);
   await receivedPage.close();await browser.close();browser=null;await listener.close();listener=null;
   checked('Actual cold-received desktop and narrow operator screens, retained controls and reopened download were returned for producing-peer inspection.');
   record.state='PASS';record.error=null;
