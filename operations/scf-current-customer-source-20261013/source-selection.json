@@ -6,7 +6,7 @@
   "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
   "input_commit": "daea858da7b04d2abbff673a8826fdb2e7261ec5",
   "publication_base_commit": "801738d13218863449282f99eb52c0ddda46069b",
-  "output_commit": "ae570559ba1878f14b109c3e4f65dab1d947511e",
+  "output_commit": "a1a19ed3af6c6c9573087734b25dacf9dc06f3f5",
   "inputs": [
     {
       "path": "stellar-forge/developer-site/dist/grant.html",
@@ -863,24 +863,24 @@
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "bytes": 1962637,
-      "sha256": "a762abb3a5cb456aa014e9229b71cd6c6831b4761ebcf50f478b73ed40299989",
-      "git_blob": "5cf3ac14822581f90cb2ff82c1098c414b0dabcb"
+      "bytes": 1962944,
+      "sha256": "cb28a5aa7b7737056710b594de979881c4d0b2d1a17bbd9d0833cca8924b29b9",
+      "git_blob": "7800ff043cd4bccae4258aa3fdd2dd5025d39ecd"
     }
   ],
   "receiving_package": {
     "path": "operations/scf-current-customer-source-20261013/current-source-package.json",
-    "bytes": 5385210,
-    "sha256": "ef00faceef02a940ee768a72212f8eac6a7bd69d9db88c023284349c3619d398",
-    "git_blob": "40c45cdf2fb2a9ea21f6f0cac2d69c3bc3a55e73",
-    "bundle_id": "8610b5955cc3c791398d74e338fb3a94f7ca31b6b9e188229d93659941908e44",
+    "bytes": 5385618,
+    "sha256": "4a6b051acdc48ead637b2223d1f0237c44ff5ba681f93f3eeccc73a003b9a1cd",
+    "git_blob": "ae15773a718c8177c35b7fdc77d97316066beb70",
+    "bundle_id": "99bb14e347f58f8f93918c7365778beff3e7f6fb0919554dd39507d6c71e126d",
     "roles": [
       {
         "role": "application",
         "name": "application.md",
         "originalName": "application.md",
         "mediaType": "text/markdown;charset=utf-8",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ae570559ba1878f14b109c3e4f65dab1d947511e/stellar-forge/developer-site/dist/grant-data/application.md",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant-data/application.md",
         "bytes": 62202,
         "sha256": "2db42872ced56cff5d3116c2de1c6df2c4fe1fdcfc0717f21eb064a3c8129a03",
         "identityBasis": "Verified against original source-index application SHA-256, byte count and Git blob."
@@ -890,9 +890,9 @@
         "name": "source-index.json",
         "originalName": "source-index.json",
         "mediaType": "application/json",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ae570559ba1878f14b109c3e4f65dab1d947511e/stellar-forge/developer-site/dist/grant-data/source-index.json",
-        "bytes": 1962637,
-        "sha256": "a762abb3a5cb456aa014e9229b71cd6c6831b4761ebcf50f478b73ed40299989",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant-data/source-index.json",
+        "bytes": 1962944,
+        "sha256": "cb28a5aa7b7737056710b594de979881c4d0b2d1a17bbd9d0833cca8924b29b9",
         "identityBasis": "Complete received source-index bytes; its own digest is a receiving identity."
       },
       {
@@ -900,7 +900,7 @@
         "name": "budget.csv",
         "originalName": "budget.csv",
         "mediaType": "text/csv;charset=utf-8",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ae570559ba1878f14b109c3e4f65dab1d947511e/stellar-forge/developer-site/dist/grant-data/budget.csv",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant-data/budget.csv",
         "bytes": 597,
         "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00",
         "identityBasis": "Complete received budget bytes; this source index declares no independent budget-file digest."
@@ -910,7 +910,7 @@
         "name": "product-and-finance.md",
         "originalName": "product-and-finance.md",
         "mediaType": "text/markdown;charset=utf-8",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ae570559ba1878f14b109c3e4f65dab1d947511e/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
         "bytes": 1964135,
         "sha256": "230efd6275564d8dc52ae2c87148d04b807f493fe54ff27bd8fafc6080eef009",
         "identityBasis": "Verified against original source-index product_and_finance SHA-256, byte count and Git blob."
@@ -919,8 +919,8 @@
   },
   "concise": {
     "basis": "Same explicitly selected concise nine-answer edition, with the reviewed grant-first financing and historical/current workshare distinction integrated into its original capacity/payment answer.",
-    "full_output_commit": "ae570559ba1878f14b109c3e4f65dab1d947511e",
-    "bundle_id": "9452364b0e41677de4d00cec8c35d63057208afb31cf7c4eeeaefbd7a617e9e0",
+    "full_output_commit": "a1a19ed3af6c6c9573087734b25dacf9dc06f3f5",
+    "bundle_id": "6a1eed47f71e8c3016b9fa80838f1592e4e3381071dc108785d45b87c7b36356",
     "files": [
       {
         "path": "stellar-forge/developer-site/dist/grant-data/application-reviewer.md",
@@ -930,15 +930,15 @@
       },
       {
         "path": "stellar-forge/developer-site/dist/grant-data/reviewer-working-index.json",
-        "bytes": 2032624,
-        "sha256": "7476696c847c20fd80bf9b9d147016e1e708e7e48485950a1453a230bcd34ee6",
-        "git_blob": "67d61e306a64ec922eb02ceed37bf6dfa0c2c652"
+        "bytes": 2032931,
+        "sha256": "e3451ac6c34c4651b546590f92b51e1656c2fe854bf666c8371d457c5e64448f",
+        "git_blob": "bda9c445ac80db1e832b5bc338845924897cef20"
       },
       {
         "path": "stellar-forge/developer-site/dist/grant-data/reviewer-working-source.json",
-        "bytes": 5393843,
-        "sha256": "42413eae0cf9da6200a01a7487e29a192c563941cd81be5ed8a893558c94247c",
-        "git_blob": "b38a5dbac72036c3b6c160428df303c096f46991"
+        "bytes": 5394251,
+        "sha256": "c33a8bc7d19205ea30ea0e3345710e3d9dd3ff1490844ee6d6cbef5f69a6a32b",
+        "git_blob": "cca706dd6426b48f160f08fdddd6c85b42ca7836"
       }
     ],
     "opening": "grant-submission.html?source=concise"
@@ -1048,9 +1048,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-review-round.mjs",
-      "bytes": 3545,
-      "sha256": "5f62aaf2f221715571b978626879ae8ec6125cec7a237f2e77f9eef5e98435b8",
-      "git_blob": "f01851b4ef2f29a063054e03a8e97c2bf4093654"
+      "bytes": 4144,
+      "sha256": "bf5eae6f8ff027db196591ebb745c4997c9d6ca8f3004f847d3ff16cf11e7b99",
+      "git_blob": "1553b02ed973ba6ae1ad15047059e5520c4b7843"
     },
     {
       "path": "stellar-forge/developer-site/saved-projects.mjs",
@@ -1208,7 +1208,7 @@
       "sha256": "2db42872ced56cff5d3116c2de1c6df2c4fe1fdcfc0717f21eb064a3c8129a03",
       "git_blob": "a22b640c7b26814c78386385ec2389c27a9787f8"
     },
-    "adoption": "Original canonical publisher owns the narrow same-section finance adoption; concurrent detailed product H2s remain with their authors."
+    "adoption": "Original canonical publisher applied the complete frozen finance H2 in the SAME F0C86PRE5NF and independently read it back. Full target equals the selected a22b640c answer section except the established relative companion link expanded to its ordinary source URL for Slack. All text outside the finance H2 remains exact; returned internal error was reconciled by the actual complete postimage, without a resend."
   },
   "continuation": {
     "original_operation": "SCF-CURRENT-CUSTOMER-SOURCE-05C7-20261013",
@@ -5268,9 +5268,27 @@
     "/grant.html": "4b335302a8acdfe5a0c47587535169431e33766a",
     "/grant-data/application.md": "a22b640c7b26814c78386385ec2389c27a9787f8",
     "/grant-data/product-and-finance.md": "0b8c14034db931d73a4e5e2898c7a7782a5b47cc",
-    "/grant-data/source-index.json": "5cf3ac14822581f90cb2ff82c1098c414b0dabcb",
+    "/grant-data/source-index.json": "7800ff043cd4bccae4258aa3fdd2dd5025d39ecd",
     "/grant-data/application-reviewer.md": "ab06ff2c76184f823416d21c843c3d0693b27df3",
-    "/grant-data/reviewer-working-index.json": "67d61e306a64ec922eb02ceed37bf6dfa0c2c652",
-    "/grant-data/reviewer-working-source.json": "b38a5dbac72036c3b6c160428df303c096f46991"
+    "/grant-data/reviewer-working-index.json": "bda9c445ac80db1e832b5bc338845924897cef20",
+    "/grant-data/reviewer-working-source.json": "cca706dd6426b48f160f08fdddd6c85b42ca7836"
+  },
+  "concurrent_original_review_registration": {
+    "pull_request": 1850,
+    "commit": "a29aa88ea41d4fa6bdcf0bdbe2f99c572f7ab870",
+    "module": {
+      "path": "stellar-forge/developer-site/grant-review-round.mjs",
+      "bytes": 4144,
+      "sha256": "bf5eae6f8ff027db196591ebb745c4997c9d6ca8f3004f847d3ff16cf11e7b99",
+      "git_blob": "1553b02ed973ba6ae1ad15047059e5520c4b7843"
+    },
+    "effect": "Original offline review schema, package/source/guide routes composed into source-index.submission_review_round; all original source rows, answers and companion unchanged."
+  },
+  "fresh_main_guard": {
+    "commit": "6a5f62badd94f507cf5cac8c4fde13d4437dd8bf",
+    "prior": "801738d13218863449282f99eb52c0ddda46069b",
+    "changed_paths": 41,
+    "intended_output_overlap": [],
+    "composed_concurrent_module": "1553b02ed973ba6ae1ad15047059e5520c4b7843"
   }
 }

@@ -31,23 +31,23 @@ The complete original24-curve component was independently reproduced by24EA, and
 
 | File | Complete bytes | SHA-256 |
 | --- | ---: | --- |
-| [grant.html](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ae570559ba1878f14b109c3e4f65dab1d947511e/stellar-forge/developer-site/dist/grant.html) | 114740 | 24e951977be0bb8adb319d1c85a0cad56d90d59228dbd7f909c559b99542de21 |
-| [application.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ae570559ba1878f14b109c3e4f65dab1d947511e/stellar-forge/developer-site/dist/grant-data/application.md) | 62202 | 2db42872ced56cff5d3116c2de1c6df2c4fe1fdcfc0717f21eb064a3c8129a03 |
-| [product-and-finance.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ae570559ba1878f14b109c3e4f65dab1d947511e/stellar-forge/developer-site/dist/grant-data/product-and-finance.md) | 1964135 | 230efd6275564d8dc52ae2c87148d04b807f493fe54ff27bd8fafc6080eef009 |
-| [source-index.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ae570559ba1878f14b109c3e4f65dab1d947511e/stellar-forge/developer-site/dist/grant-data/source-index.json) | 1962637 | a762abb3a5cb456aa014e9229b71cd6c6831b4761ebcf50f478b73ed40299989 |
+| [grant.html](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant.html) | 114740 | 24e951977be0bb8adb319d1c85a0cad56d90d59228dbd7f909c559b99542de21 |
+| [application.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant-data/application.md) | 62202 | 2db42872ced56cff5d3116c2de1c6df2c4fe1fdcfc0717f21eb064a3c8129a03 |
+| [product-and-finance.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant-data/product-and-finance.md) | 1964135 | 230efd6275564d8dc52ae2c87148d04b807f493fe54ff27bd8fafc6080eef009 |
+| [source-index.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1a19ed3af6c6c9573087734b25dacf9dc06f3f5/stellar-forge/developer-site/dist/grant-data/source-index.json) | 1962944 | cb28a5aa7b7737056710b594de979881c4d0b2d1a17bbd9d0833cca8924b29b9 |
 | budget.csv, unchanged | 597 | 4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00 |
 
-Immutable four-output source: **ae570559ba1878f14b109c3e4f65dab1d947511e**. The same reviewer page, current source/companion views, Prepare submission and saved-project controls remain in place. [source-selection.json](./source-selection.json) binds every complete declaration, the34 exact original executed modules, all ten matched pairs, reviewed finance source selection, seven browser sourcePins and the complete preceding publication.
+Immutable four-output source: **a1a19ed3af6c6c9573087734b25dacf9dc06f3f5**. The same reviewer page, current source/companion views, Prepare submission and saved-project controls remain in place. [source-selection.json](./source-selection.json) binds every complete declaration, the34 exact original executed modules, all ten matched pairs, reviewed finance source selection, seven browser sourcePins and the complete preceding publication.
 
 ## Receive the complete following source at the original operation boundary
 
-[Full four-role package](./current-source-package.json): **5385210 bytes**, SHA-256 **ef00faceef02a940ee768a72212f8eac6a7bd69d9db88c023284349c3619d398**, bundle **8610b5955cc3c791398d74e338fb3a94f7ca31b6b9e188229d93659941908e44**.
+[Full four-role package](./current-source-package.json): **5385618 bytes**, SHA-256 **4a6b051acdc48ead637b2223d1f0237c44ff5ba681f93f3eeccc73a003b9a1cd**, bundle **99bb14e347f58f8f93918c7365778beff3e7f6fb0919554dd39507d6c71e126d**.
 
 Use the same existing case and original source-comparison controls. This edition changes the application answer SHA as well as its complete companion/index bundle. Compare it with the actual saved draft and retain edited answers, issuer fields, requirements, planning, decisions, all source history, review rounds, attachments and correspondence. Do not replace the saved case or silently overwrite manual answers.
 
 The original makeSource, createSourceBundle and createReviewerSourcePackage functions produced the complete package. The unchanged openReviewerSourcePackage cold-opened it and verified all four complete role bytes and values. This is source execution, not a rendered/customer completion.
 
-The **22B7/81CF saved-v7/Page/profile course remains on its existing selected1,259-source input** until its actual completed/save boundary. Finish or reconcile that original phase first. Then choose this following package through the existing selected-form interface with **--expected-source-sha256 ef00faceef02a940ee768a72212f8eac6a7bd69d9db88c023284349c3619d398**, retaining its original case hash, saved version, directory and controller. Do not replace an already dispatched input or create a parallel case. The merged application-return/offline colleague helpers remain with their original owners and must be received as their complete current source at that same reviewed boundary.
+The **22B7/81CF saved-v7/Page/profile course remains on its existing selected1,259-source input** until its actual completed/save boundary. Finish or reconcile that original phase first. Then choose this following package through the existing selected-form interface with **--expected-source-sha256 4a6b051acdc48ead637b2223d1f0237c44ff5ba681f93f3eeccc73a003b9a1cd**, retaining its original case hash, saved version, directory and controller. Do not replace an already dispatched input or create a parallel case. The merged application-return/offline colleague helpers remain with their original owners and must be received as their complete current source at that same reviewed boundary.
 
 ## Preserve the separate concise choice
 
@@ -56,10 +56,16 @@ The existing explicit concise selection carries the reviewed financing inside it
 | File | Complete bytes | SHA-256 |
 | --- | ---: | --- |
 | application-reviewer.md | 25990 | afec771ddf04a4908f0e47d2a9ffea213b1eb05a910e7d2406d1efd6ad7517a5 |
-| reviewer-working-index.json | 2032624 | 7476696c847c20fd80bf9b9d147016e1e708e7e48485950a1453a230bcd34ee6 |
-| reviewer-working-source.json | 5393843 | 42413eae0cf9da6200a01a7487e29a192c563941cd81be5ed8a893558c94247c |
+| reviewer-working-index.json | 2032931 | e3451ac6c34c4651b546590f92b51e1656c2fe854bf666c8371d457c5e64448f |
+| reviewer-working-source.json | 5394251 | c33a8bc7d19205ea30ea0e3345710e3d9dd3ff1490844ee6d6cbef5f69a6a32b |
 
-Concise bundle **9452364b0e41677de4d00cec8c35d63057208afb31cf7c4eeeaefbd7a617e9e0**. Open **grant-submission.html?source=concise** through the original explicit choice; the full manuscript remains separately selectable. The actual composeReviewerWorkingEdition function generated these complete three files against source commitae570559ba1878f14b109c3e4f65dab1d947511e; the unchanged receiving function independently reopened them. Main URLs in that original format remain navigation; retained whole bytes, source commit, SHA and bundle bind the edition. Apply only the actual invited issuer fields and limits when that form arrives.
+Concise bundle **6a1eed47f71e8c3016b9fa80838f1592e4e3381071dc108785d45b87c7b36356**. Open **grant-submission.html?source=concise** through the original explicit choice; the full manuscript remains separately selectable. The actual composeReviewerWorkingEdition function generated these complete three files against source commita1a19ed3af6c6c9573087734b25dacf9dc06f3f5; the unchanged receiving function independently reopened them. Main URLs in that original format remain navigation; retained whole bytes, source commit, SHA and bundle bind the edition. Apply only the actual invited issuer fields and limits when that form arrives.
+
+## Current installed review and canonical finance join
+
+The fresh shared-source guard also received the complete original PR1850 offline-review registration. The current source index includes the original offline review schemas and package/source/guide routes; the selected application and all1,488 records remain exact. Its maintained module is recorded in source-selection.json.
+
+The original canonical publisher independently confirmed the complete new finance section in the SAME F0C86PRE5NF. All text outside that section remains exact; the existing relative companion link is expanded only for Slack navigation. An uncertain write result was reconciled from that actual full postimage without a repeated mutation.
 
 ## Continue the maintained publisher and source custody
 
