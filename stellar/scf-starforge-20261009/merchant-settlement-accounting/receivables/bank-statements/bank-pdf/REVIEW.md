@@ -702,3 +702,12 @@ operating every important form with the original receiver. Inspect both desktop
 and narrow screens, original-page evidence, blocked-storage recovery, exported
 form JSON, complete project and offline reopening under the full owner instruction
 above. No additional native issuer is introduced.
+
+## Literal text and complete source in standalone exports
+
+The standalone HTML composer substitutes its original stylesheet and module boundaries in one pass. Saved notes, unfinished forms, original working history and complete source bodies are inserted as literal data. Text containing `$&`, `
+## Literal text and complete source in standalone exports
+
+The standalone HTML composer substitutes its original stylesheet and module boundaries in one pass. Saved notes, unfinished forms, original working history and complete source bodies are inserted as literal data. Text containing `$&`, ``, `$'`, `$$` or the original module tag must remain unchanged; inserted content is never scanned as another template boundary. The export retains the complete selected ten-member source project, and original eight-member projects remain supported by their existing receiving path.
+
+The focused source-composition course reopens the whole embedded project through the original PDF review validators, verifies every selected source member and recomposes the identical HTML. Its input is the retained, explicitly labeled engineering fixture, not a new extraction or evidence of PDF/browser acceptance. The original DFF77/RD12 receiving course still opens the exact outgoing HTML and project, operates its controls and downloads, and views desktop/narrow output under the complete owner instruction above. Do not mark an export ready from the source-composition result alone.

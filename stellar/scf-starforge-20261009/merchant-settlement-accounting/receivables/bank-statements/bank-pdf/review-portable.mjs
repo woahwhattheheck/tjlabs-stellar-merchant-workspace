@@ -40,11 +40,15 @@ function moduleUrl(name){
 }
 try{await import(moduleUrl('review-app.mjs'));}catch(error){const p=document.getElementById('message');p.textContent='The complete review could not open: '+error.message;p.classList.add('error');}
 `;
- let result=html.replace('<link rel="stylesheet" href="./review.css">','<style>'+css.replace(/<\/style/gi,'<\\/style')+'</style>');
- need(result!==html,'The selected HTML stylesheet join changed');
- if(result.includes('<link rel="stylesheet" href="./review-editor.css">')){need(files.has('review-editor.css'),'The complete guided editor stylesheet is missing');result=result.replace('<link rel="stylesheet" href="./review-editor.css">','<style>'+files.get('review-editor.css').content.replace(/<\/style/gi,'<\\/style')+'</style>');}
+ const cssTag='<link rel="stylesheet" href="./review.css">',editorTag='<link rel="stylesheet" href="./review-editor.css">',scriptTag='<script type="module" src="./review-app.mjs"></script>';
+ need(html.split(cssTag).length===2&&html.split(scriptTag).length===2,'The selected HTML stylesheet or module join changed');
+ const editorCount=html.split(editorTag).length-1;need(editorCount<=1,'The selected HTML repeats the guided stylesheet');
+ if(editorCount)need(files.has('review-editor.css'),'The complete guided editor stylesheet is missing');
  const script='<script type="application/json" id="pdf-review-package">'+data({desk,source:manifest})+'</script><script type="module">'+loader.replace(/<\/script/gi,'<\\/script')+'</script>';
- const before=result;result=result.replace('<script type="module" src="./review-app.mjs"></script>',script);need(result!==before,'The selected HTML module join changed');
+ const replacements=new Map([[cssTag,'<style>'+css.replace(/<\/style/gi,'<\\/style')+'</style>'],[scriptTag,script]]);
+ if(editorCount)replacements.set(editorTag,'<style>'+files.get('review-editor.css').content.replace(/<\/style/gi,'<\\/style')+'</style>');
+ // Match only the original template. Newly embedded complete source/data is literal.
+ const result=html.replace(/<link rel="stylesheet" href="\.\/review(?:-editor)?\.css">|<script type="module" src="\.\/review-app\.mjs"><\/script>/g,tag=>replacements.get(tag));
  need(new TextEncoder().encode(result).length<=PDF_DESK_MAX_BYTES,'The complete offline HTML exceeds 768 MiB; use the full working record with the installed original review source.');
  return {name:'pdf-review-'+desk.caseId+'.html',type:'text/html',content:result,sha256:await digest(result)};
 }

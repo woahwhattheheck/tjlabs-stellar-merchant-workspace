@@ -402,3 +402,14 @@ Include this complete instruction in delegated assignments and the active owner-
 
 Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
 Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+## Literal titles and complete offline source composition
+
+The offline reviewer inserts its retained review/source package, title and entry script in one pass over the original template. Values are returned by a replacement function, so `$&`, `
+## Literal titles and complete offline source composition
+
+The offline reviewer inserts its retained review/source package, title and entry script in one pass over the original template. Values are returned by a replacement function, so `$&`, ``, `$'` and `$$` remain literal user text. Newly inserted whole source or review content cannot become a later template match. The original source closure, CSP, hashes, recipient selection, recorded-review history and explicit return/author receiving remain unchanged.
+
+The focused engineering course captures the current complete nine-answer application through the original submission and review modules, builds an isolated named review with those literal characters in its title, reopens the complete embedded review and all 28 selected source members, then recomposes identical HTML. It performs no issuer submission or human acceptance. The generated source bank selects the full corrected composer; its base revision remains provenance for the starting source, not a claim that authored successors existed at that commit.
+
+Continue the original review-workspace receiver with this exact outgoing version: open the HTML, view the title and whole application, operate the original controls, download/reopen the complete review, and inspect desktop/narrow output under the full owner instruction above. Source execution does not replace actual rendered inspection.

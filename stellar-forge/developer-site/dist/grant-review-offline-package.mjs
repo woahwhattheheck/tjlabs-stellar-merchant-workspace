@@ -144,8 +144,14 @@ export async function buildOfflineReviewer({reviewText,recipientId,title,source}
   const charset=/<meta\s+charset=["']utf-8["']\s*\/?>/gi;
   need([...html.matchAll(charset)].length===1,'Expected the original explicit UTF-8 declaration.');
   // Keep charset inside the first 1,024 bytes, before the complete embedded bank.
-  html=html.replace(charset,match=>match+'\n'+header)
-    .replace(/<title>[\s\S]*?<\/title>/i,'<title>'+htmlText(title)+' — Offline review</title>')
-    .replace(/<\/body\s*>/i,'<script type="module">import '+safeJSON(VIRTUAL+source.entryModule)+';</script>\n</body>');
+  // One pass over the original transformed template: inserted complete source and
+  // user text are literal values, never replacement syntax or later match input.
+  let titleCount=0,bodyCount=0;
+  html=html.replace(/<meta\s+charset=["']utf-8["']\s*\/?>|<title>[\s\S]*?<\/title>|<\/body\s*>/gi,match=>{
+    if(/^<meta\b/i.test(match))return match+'\n'+header;
+    if(/^<title>/i.test(match)){titleCount++;return '<title>'+htmlText(title)+' — Offline review</title>';}
+    bodyCount++;return '<script type="module">import '+safeJSON(VIRTUAL+source.entryModule)+';</script>\n</body>';
+  });
+  need(titleCount===1&&bodyCount===1,'Expected one original title and body closing boundary.');
   return {html,manifest};
 }
