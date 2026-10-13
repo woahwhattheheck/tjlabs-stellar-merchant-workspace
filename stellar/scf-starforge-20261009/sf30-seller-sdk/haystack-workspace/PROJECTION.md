@@ -160,3 +160,16 @@ haystack projection-return-apply --directory /absolute/existing-workspace \
 ~~~
 
 Use `--url` or an existing `--connection` instead of `--directory` for the ordinary authenticated server. `--token-file`, original workspace/instance bindings, `--expected-revision`, `--request-file` and `replay` retain their existing semantics. List and comparison commands read all pages by default; `--page` selects one bounded page. Existing output files are reusable only when their complete bytes match.
+
+
+## Resuming the complete operator programme under constrained memory
+
+The receiving programme records phase entry and completion in `progress.ndjson`, including the original operation ID, process ID, observed time and Node memory measurements. It also writes the same progress to stderr. The retained phase requests and original action IDs remain authoritative after an interruption. Continue with the unchanged programme input and owned directory; do not initialize a replacement workspace.
+
+For a constrained native host, launch the existing programme with `node --max-old-space-size=512 --expose-gc PROJECTION_RECEIVING.mjs --input /absolute/original-input.json`. This bounds the V8 heap and permits releasing derived views at phase boundaries. Native buffers and browser processes also consume memory, so a heap limit does not guarantee that a shared host has enough capacity. Preserve the actual returned exit status and checkpoint the complete source, original inputs, phase records and working directories before moving execution to another host.
+
+A same-operation continuation reconciles the original action by its operation ID. If an interrupted process left the existing workspace writer record, the programme uses the workspace's original dead-writer recovery: it still refuses a live writer or a writer from a different host. It does not erase an uncertain writer record. Complete receiving baselines remain immutable while later recipient edits are preserved.
+
+Projection validation reuses one fully checked version for its matching returns, then releases that materialization before validating another version. Comparisons page the original entity identities before cloning selected cells. After a mutation, the workspace cache is installed only after a held-file read verifies the full published bytes and unchanged file/path identity. External changes still take the complete normal validation path.
+
+Large lineage CSV deliveries use the original CSV cell encoding, byte-order mark, column order and CRLF endings while writing bounded chunks into the existing pending delivery. The final hash, length, manifest and atomic publication remain unchanged. The operator programme likewise records every comparison row in the complete retained JSON file incrementally, then verifies its hash before publishing the artifact. It does not omit cells or histories to reduce memory use.

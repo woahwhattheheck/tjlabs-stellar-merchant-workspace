@@ -370,7 +370,10 @@ export function applyProjectionAction(state, action, args, helpers) {
   need(false, "Choose a declared projection action.", "HAYSTACK_ACTION", 404);
 }
 export function previewProjectionReturn(state, args) {
-  const { version } = selected(state, args.projectionId, args.versionId), original = versionResult(state, version);
+  const { version } = selected(state, args.projectionId, args.versionId);
+  return previewProjectionReturnFromOriginal(args, version, versionResult(state, version));
+}
+function previewProjectionReturnFromOriginal(args, version, original) {
   text(args.name, "returned original filename", 240, true); text(args.consumerReference || "", "existing consumer record reference", 4000);
   const bytes = base64(args.base64, 32 * 1024 * 1024), received = parseGrid(bytes, { format: "json-v4" });
   list(args.bindings, MAX_ROWS, "complete returned row bindings"); distinct(args.bindings, x => x.entityId, "bound entity"); distinct(args.bindings, x => x.rowIndex, "incoming row");
@@ -396,16 +399,20 @@ export function previewProjectionReturn(state, args) {
     diagnostics: received.diagnostics, changedRows: rows.filter(r => r.changes.length).length, returnSha256: digest(material) };
 }
 export function compareProjections(state, args) {
-  const before = projectionRead(state, { projectionId: args.projectionId, versionId: args.beforeVersionId });
-  const after = projectionRead(state, { projectionId: args.projectionId, versionId: args.afterVersionId });
+  const beforeVersion = selected(state, args.projectionId, args.beforeVersionId).version;
+  const afterVersion = selected(state, args.projectionId, args.afterVersionId).version;
+  const before = versionResult(state, beforeVersion), after = versionResult(state, afterVersion);
   const left = new Map(before.rows.map(r => [r.entityId, r])), right = new Map(after.rows.map(r => [r.entityId, r]));
-  const rows = [...new Set([...left.keys(), ...right.keys()])].map(entityId => {
+  // Retain the original union order and total, but materialize full comparison
+  // cells only for this requested page. Do not clone every row before slicing.
+  const selectedRows = page([...new Set([...left.keys(), ...right.keys()])], args);
+  const items = selectedRows.items.map(entityId => {
     const a = left.get(entityId), b = right.get(entityId);
     return { entityId, before: a ? clone(a) : null, after: b ? clone(b) : null,
       state: !a ? "added" : !b ? "removed" : digest(a.cells) === digest(b.cells) ? "same" : "changed" };
   });
-  return { beforeVersionId: before.version.id, afterVersionId: after.version.id,
-    beforeProfile: clone(before.profile), afterProfile: clone(after.profile), ...page(rows, args) };
+  return { beforeVersionId: beforeVersion.id, afterVersionId: afterVersion.id,
+    beforeProfile: clone(before.profile), afterProfile: clone(after.profile), ...selectedRows, items };
 }
 export function validateProjectionState(state) {
   const s = state.projections; if (s === undefined) return state;
@@ -414,7 +421,34 @@ export function validateProjectionState(state) {
   for (const key of ["projects", "versions", "reviews", "publications", "returns"]) {
     list(s[key], key === "projects" ? 200 : MAX_VERSIONS, "projection " + key); distinct(s[key], x => x.id, "retained " + key + " identity");
   }
-  const versions = new Map(s.versions.map(v => [v.id, v]));
+  const versions = new Map(s.versions.map(v => [v.id, v])), returnsByBefore = new Map();
+  for (const r of s.returns) {
+    need(versions.has(r.beforeVersionId),
+      "The return lost its complete original bytes or exact resulting version.", "HAYSTACK_PROJECTION_HISTORY", 409);
+    const rows = returnsByBefore.get(r.beforeVersionId);
+    if (rows) rows.push(r); else returnsByBefore.set(r.beforeVersionId, [r]);
+  }
+  function verifyReturn(r, before, original) {
+    const signedBody = clone(r); delete signedBody.afterVersionId; checkSigned(signedBody);
+    const bytes = base64(r.base64, 32 * 1024 * 1024);
+    const after = versions.get(r.afterVersionId);
+    need(r.format === "commons.haystack.projection-return.v1" && bytes.length === r.source.bytes && sha256(bytes) === r.source.sha256 &&
+      before?.projectionId === r.projectionId && after?.projectionId === r.projectionId &&
+      after.parents.length === 1 && after.parents[0] === before.id &&
+      after.provenance?.returnId === r.id && after.provenance.originalSourceSha256 === r.source.sha256,
+      "The return lost its complete original bytes or exact resulting version.", "HAYSTACK_PROJECTION_HISTORY", 409);
+    // Preserve the public selection checks without deriving the grid again.
+    selected(state, r.projectionId, r.beforeVersionId);
+    const incoming = previewProjectionReturnFromOriginal({ projectionId: r.projectionId, versionId: r.beforeVersionId,
+      name: r.source.name, base64: r.base64, bindings: r.bindings, consumerReference: r.consumerReference }, before, original);
+    need(incoming.returnSha256 === r.returnSha256 && digest(incoming.source) === digest(r.source),
+      "The retained return differs from its original file or complete row bindings.", "HAYSTACK_PROJECTION_HISTORY", 409);
+    const profile = returnProfile(before, incoming, r.decisions);
+    need(after.result.modelId === before.result.modelId && after.result.modelVersionId === before.result.modelVersionId &&
+      after.result.contextId === before.result.contextId && digest(after.result.profile) === digest(profile) &&
+      after.author === r.author && after.note === r.note,
+      "The resulting version differs from the exact retained keep/adopt decisions.", "HAYSTACK_PROJECTION_HISTORY", 409);
+  }
   for (const v of s.versions) {
     checkSigned(v); need(v.format === "commons.haystack.projection-version.v1", "Use a complete projection version.");
     id(v.projectionId); list(v.parents, 1, "projection parents");
@@ -422,6 +456,9 @@ export function validateProjectionState(state) {
     need(digest(projectionMaterial(rematerialized)) === digest(v.result),
       "The retained projection differs from its exact original model, context, profile or complete derived grid and cell lineage.", "HAYSTACK_PROJECTION_HISTORY", 409);
     for (const parent of v.parents) need(versions.get(parent)?.projectionId === v.projectionId && parent !== v.id, "Retain the original projection parent.");
+    // Reuse this exact checked version for all of its retained return records.
+    // Only one full derived grid/lineage is retained by this pass at a time.
+    for (const r of returnsByBefore.get(v.id) || []) verifyReturn(r, v, rematerialized);
   }
   for (const p of s.projects) { id(p.id); need(versions.get(p.headId)?.projectionId === p.id, "The projection head belongs to another project."); }
   const visited = new Set();
@@ -436,24 +473,6 @@ export function validateProjectionState(state) {
     need(v?.projectionId === r.projectionId && v.result.gridSha256 === r.sourceId && review?.versionId === v.id && review.decision === "ready" &&
       state.sources.some(x => x.id === r.sourceId && x.bytes === r.bytes), "The publication lost its reviewed grid or retained native source.");
   }
-  for (const r of s.returns) {
-    const signedBody = clone(r); delete signedBody.afterVersionId; checkSigned(signedBody);
-    const bytes = base64(r.base64, 32 * 1024 * 1024);
-    const before = versions.get(r.beforeVersionId), after = versions.get(r.afterVersionId);
-    need(r.format === "commons.haystack.projection-return.v1" && bytes.length === r.source.bytes && sha256(bytes) === r.source.sha256 &&
-      before?.projectionId === r.projectionId && after?.projectionId === r.projectionId &&
-      after.parents.length === 1 && after.parents[0] === before.id &&
-      after.provenance?.returnId === r.id && after.provenance.originalSourceSha256 === r.source.sha256,
-      "The return lost its complete original bytes or exact resulting version.", "HAYSTACK_PROJECTION_HISTORY", 409);
-    const incoming = previewProjectionReturn(state, { projectionId: r.projectionId, versionId: r.beforeVersionId,
-      name: r.source.name, base64: r.base64, bindings: r.bindings, consumerReference: r.consumerReference });
-    need(incoming.returnSha256 === r.returnSha256 && digest(incoming.source) === digest(r.source),
-      "The retained return differs from its original file or complete row bindings.", "HAYSTACK_PROJECTION_HISTORY", 409);
-    const profile = returnProfile(before, incoming, r.decisions);
-    need(after.result.modelId === before.result.modelId && after.result.modelVersionId === before.result.modelVersionId &&
-      after.result.contextId === before.result.contextId && digest(after.result.profile) === digest(profile) &&
-      after.author === r.author && after.note === r.note,
-      "The resulting version differs from the exact retained keep/adopt decisions.", "HAYSTACK_PROJECTION_HISTORY", 409);
-  }
+
   return state;
 }
