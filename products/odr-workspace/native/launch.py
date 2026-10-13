@@ -3,7 +3,7 @@
 from pathlib import Path
 import argparse,os,sys
 from files import *
-from source import read_edition,verify_node,build
+from source import read_edition,verify_node,build,locked
 import manage
 def main():
     p=argparse.ArgumentParser(description=__doc__)
