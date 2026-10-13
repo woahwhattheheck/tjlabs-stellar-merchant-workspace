@@ -876,6 +876,13 @@
         "woo.html",
         "text/html; charset=utf-8"
       ]
+    ],
+    [
+      "/source-table-intake.mjs",
+      [
+        "source-table-intake.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
