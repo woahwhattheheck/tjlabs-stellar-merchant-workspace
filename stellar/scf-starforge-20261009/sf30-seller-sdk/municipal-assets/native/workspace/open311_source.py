@@ -30,7 +30,11 @@ def same(left, right):
     # JSON/JavaScript have one numeric type: 47 and 47.0 (also -0 and 0)
     # describe the same source number. Booleans remain a separate type.
     if type(left) in (int, float) and type(right) in (int, float):
-        return math.isfinite(left) and math.isfinite(right) and left == right
+        try:
+            first, second = float(left), float(right)
+            return math.isfinite(first) and math.isfinite(second) and first == second
+        except (OverflowError, ValueError):
+            return False
     if type(left) is not type(right):
         return False
     if isinstance(left, dict):
@@ -46,9 +50,18 @@ def objects(value, label):
 
 
 def identifier(value):
-    need(isinstance(value, str) or (type(value) is int and abs(value) <= 9007199254740991),
-         "service_request_id must be a string or safe integer")
-    result = str(value).strip()
+    if isinstance(value, str):
+        result = value.strip()
+    elif type(value) in (int, float):
+        try:
+            number = float(value)
+        except (OverflowError, ValueError) as error:
+            raise InvalidData("Open311 source: service_request_id must be a safe integer") from error
+        need(math.isfinite(number) and number.is_integer() and abs(number) <= 9007199254740991,
+             "service_request_id must be a string or safe integer")
+        result = str(int(number))
+    else:
+        raise InvalidData("Open311 source: service_request_id must be a string or safe integer")
     need(bool(result), "a request identity is empty")
     return result
 
