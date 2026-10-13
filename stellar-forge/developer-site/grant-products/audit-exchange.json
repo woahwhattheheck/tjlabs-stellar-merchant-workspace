@@ -270,6 +270,12 @@
           "bytes": 61566,
           "sha256": "528d7c138d0118aa6b26c4fb741faf662f7ee9d341f8023297aea337020eda76",
           "git_blob": "5a6e3fa2cde91585b3444f0d8913c7cf60bf3b6e"
+        },
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 61902,
+          "sha256": "44b1089471980746702dcf77dae2e5371b36d5512440652d0b6393d1323a4f1e",
+          "git_blob": "8d840548210deb72a94218c64171c1392db6dc30"
         }
       ]
     },
@@ -342,6 +348,12 @@
           "bytes": 26192,
           "sha256": "fb7303831dad5bb7c9062163f6ac56193bcee3eb7c15aec70055de1f2aa08509",
           "git_blob": "7938b1de17b46108f711548b12d8d576f3462b94"
+        },
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 26294,
+          "sha256": "13707b26d58a02c58dc892ef1bcc53c4f6ca39e5c01512e2c96f85d616d5c75c",
+          "git_blob": "67ec7d5710638a5eb913fcc6396aee5bf0fe8730"
         }
       ]
     },
@@ -363,6 +375,12 @@
           "bytes": 45230,
           "sha256": "38197d0af6933c772c42d0f8ab733dc99fe72d63d9be02dd71190b0cb2189c8b",
           "git_blob": "c27a46490a285ff16f8f1b268f8c1015f9e9cc49"
+        },
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 50731,
+          "sha256": "3e03306b9417c5efbe50457e84f73478e3c77e1df24983870fb971df98f5870b",
+          "git_blob": "b29d47eb43a145dc220541bdc7bd8153f0e2a2e0"
         }
       ]
     },
@@ -414,6 +432,12 @@
           "bytes": 2339,
           "sha256": "3929f870acea3be030d4ce75c6a638622d01dcd66726978da1c07160b8776bc1",
           "git_blob": "88f50f1e706f632368c92a092721d7a0b949093e"
+        },
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 2515,
+          "sha256": "722f71277b7e4ad34140b53f8f295d7ba53c1e84e900ae03a0d70456aab61d8e",
+          "git_blob": "5aedff238905cccc778773d2ca515f68498dd750"
         }
       ]
     },
@@ -504,6 +528,12 @@
           "bytes": 36728,
           "sha256": "a9ef5b274d75756a9bc43ada52decc5e676612304674d545c90b4c57fec61ea1",
           "git_blob": "da2c7d6ca20e5157fd068f995dacfcf94607171f"
+        },
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 40858,
+          "sha256": "88fbbe2de77dd7e3b32c4d68d97adf9d8d3165309bdb64378570afa9b4b33745",
+          "git_blob": "cffc430e8afd7dd78d54ff79cc010b14c9b8203e"
         }
       ]
     },
@@ -519,6 +549,12 @@
           "bytes": 1708,
           "sha256": "db3a39530cb5041329ac2b97ab029b9f904138fee41041b26c52e60606fd23bd",
           "git_blob": "f1600e4b051e905fd3fe2c10e86b8fc425b06f02"
+        },
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 1980,
+          "sha256": "00be217f42d2806cc614fc0dd1860a452f2aa13d26708511c0d48576713d7502",
+          "git_blob": "aff912afbcf3754b597ef223ce91a123ad907f42"
         }
       ]
     },
@@ -564,6 +600,96 @@
           "bytes": 15383,
           "sha256": "a1c2a1875af8374fc3dcb1adcfd1ce086e181c1a3754c568f0a8c0f4051287cd",
           "git_blob": "0174727659e28671640fd09b34d9f42de1ebc8c4"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-revision-impact-native",
+      "label": "Native revision impact, explicit review decisions and full original source archive",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/review_transition.py",
+      "editions": [
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 12814,
+          "sha256": "2e0689c812eb4ffe57761e11f3cf5a74010fbf3927f0763e2d10d5b3eb859338",
+          "git_blob": "a909ba38303c2d934569666290106b1655b48456"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-revision-impact-staff",
+      "label": "Installed revision-impact review and complete unfinished working copies",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/public/revision-review.js",
+      "editions": [
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 20444,
+          "sha256": "280d32f36a62785d22aa7a0f30f3180ed4a81271519d45c5984e4fa5cd3f168d",
+          "git_blob": "5ef4f4ff5fa466cf92b9232485086df7d488cb83"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-revision-impact-browser-shell",
+      "label": "Original installed browser navigation, mutation and pending request recovery",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/public/app.js",
+      "editions": [
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 72542,
+          "sha256": "ce861784726d5c9a2cd0e4657821528043154aa7d40105a4402569a879ed79e0",
+          "git_blob": "6c2c7fb1fda4b6d2d1cbf718cf66edfbbbfec18b"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-revision-impact-guide",
+      "label": "Complete following review workflow, receiving and outgoing-product operation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_REVISION_REVIEW.md",
+      "editions": [
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 14423,
+          "sha256": "bec71e5c12bedea95bf34cf6802e83c2c59891892b2a9bdd2c14f3d861b69cbf",
+          "git_blob": "827ed60ad458ca39ab158295e43de4a8c0d86929"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-revision-impact-browser-course",
+      "label": "Original installed revision-review controls and interrupted-response continuation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_REVISION_REVIEW_BROWSER.mjs",
+      "editions": [
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 15577,
+          "sha256": "36b4d34aa04b1808654d95f18c2a9972a0dd936f4958382058dca412f46eb78d",
+          "git_blob": "e5f5ea02bc9b65b671d6ee3385060895b02dea50"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-revision-impact-native-course",
+      "label": "Whole original review/application receiving, source preservation and reopen",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_REVISION_REVIEW_RECEIVING.py",
+      "editions": [
+        {
+          "commit": "8f9de99a4afc2176c6044d8dc97505ffab52d6ce",
+          "bytes": 17598,
+          "sha256": "d66841ae7402da63cbd3337b25928468072c837b9bbd3f53ec65abec4d487f99",
+          "git_blob": "5e888b64957f3ed557ee5a3e1ccc9cd8d8d546e5"
         }
       ]
     }
