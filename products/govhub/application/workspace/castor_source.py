@@ -298,6 +298,32 @@ def _copy_original(source, destination, expected=None):
     return identity
 
 
+
+def _native_command(s, label, argv, mutating=False):
+    """Keep helper commands on the original Session's receipt-recovery path."""
+    from native_adapter import NativeWaiting
+    path = s.out / (label + ".command.json")
+    previous = s.read_private_json(path) if path.exists() else None
+    if previous and previous.get("phase") == "complete":
+        # The phase selection/destination is already bound by the helper journal.
+        # A moved runtime reopens the exact completed original command.
+        argv = previous["argv"]
+    try:
+        result = s.command(label, argv, mutating=mutating)
+    except NativeWaiting:
+        if path.exists():
+            record = s.read_private_json(path)
+            if record.get("phase") not in {"complete", "not_started"}:
+                s.state.update(phase="native_interrupted", pending_command=label,
+                               command_record=str(path))
+                s.save_state()
+        raise
+    if s.state.get("pending_command") == label:
+        s.state["pending_command"] = None
+        s.save_state()
+    return result
+
+
 def capture_source(session, provider_inventory, selection):
     """Retain one complete source phase without dispatching any native task."""
     s, p = session, selection
@@ -396,7 +422,7 @@ def capture_source(session, provider_inventory, selection):
     tools = {name: _executable(p.get(name + "_path") or name) for name in ("git", "docker")}
 
     def run(name, argv):
-        record = s.command("castor-source-" + key + "-" + name, argv)
+        record = _native_command(s, "castor-source-" + key + "-" + name, argv)
         stored = directory / "commands"
         stored.mkdir(mode=0o700, exist_ok=True)
         paths = {}
@@ -709,6 +735,8 @@ def capture_source(session, provider_inventory, selection):
 
 def verify_source(archive_path, max_bytes=8 * 1024**3):
     """Verify every complete package member without extracting any filesystem node."""
+    if _file(archive_path)["bytes"] > max_bytes:
+        raise ValueError("The complete original source archive exceeds the receiving bound.")
     with zipfile.ZipFile(archive_path) as archive:
         infos = archive.infolist()
         names = [info.filename for info in infos]
@@ -920,7 +948,7 @@ def reopen_source(session, received_directory, checkout_directory):
         label = "castor-reopen-" + str(index)
 
         def command(name, args, mutating=False):
-            result = s.command(label + "-" + name, [git, "-C", str(where), *args], mutating=mutating)
+            result = _native_command(s, label + "-" + name, [git, "-C", str(where), *args], mutating=mutating)
             return Path(s.private_path(result["stdout"]["path"])).read_bytes()
 
         command("init", ["init"], True)
@@ -948,8 +976,8 @@ def reopen_source(session, received_directory, checkout_directory):
             ("unstaged", ["diff", "--binary", "--full-index", "--no-ext-diff"], data / "unstaged.patch"),
         ]
         for name, arguments, original in checks:
-            record = s.command("castor-reopen-final-" + str(index) + "-" + name,
-                               [git, "-C", str(where), *arguments])
+            record = _native_command(s, "castor-reopen-final-" + str(index) + "-" + name,
+                                     [git, "-C", str(where), *arguments])
             observed = Path(s.private_path(record["stdout"]["path"])).read_bytes()
             if observed != original.read_bytes():
                 raise ValueError("Independent native Git " + name + " differs from the original.")
