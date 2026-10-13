@@ -84,6 +84,30 @@ class Workspace:
                 if self.db.in_transaction:self.db.execute("ROLLBACK")
                 raise
         return {"sha256":key,"bytes":len(data),"reused":old is not None}
+    def put_blobs(self,files):
+        """Preflight and atomically retain a complete unique batch in the original blob table."""
+        require(isinstance(files,list),"BLOB_BATCH","Use complete original source files.")
+        unique={}
+        for data in files:
+            require(isinstance(data,bytes) and len(data)<=MAX_BLOB,"FILE_LIMIT","A complete file exceeds its allowance.")
+            key=sha(data)
+            require(key not in unique or unique[key]==data,"HASH_CONFLICT","Original file identities conflict.")
+            unique[key]=data
+        with self.lock:
+            self._active();self.db.execute("BEGIN IMMEDIATE")
+            try:
+                total=self.db.execute("SELECT COALESCE(SUM(bytes),0) FROM blobs").fetchone()[0];missing=[]
+                for key,data in unique.items():
+                    old=self.db.execute("SELECT bytes FROM blobs WHERE sha256=?",(key,)).fetchone()
+                    if old:require(self.read_blob(key)==data,"HASH_CONFLICT","Saved source identity conflicts.")
+                    else:missing.append((key,len(data),data));total+=len(data)
+                require(total<=MAX_BLOBS,"WORKSPACE_CAPACITY","The complete review and all evidence exceed the remaining source allowance; no part of this batch was retained.")
+                self.db.executemany("INSERT INTO blobs VALUES(?,?,?)",missing)
+                self.db.execute("COMMIT")
+            except BaseException:
+                if self.db.in_transaction:self.db.execute("ROLLBACK")
+                raise
+        return [{"sha256":key,"bytes":len(data)} for key,data in unique.items()]
     def execute(self,command,expected_revision):
         require(type(expected_revision) is int and expected_revision>=0,"REVISION","An exact saved revision is required.")
         require(isinstance(command,dict) and set(command)=={"requestId","kind","actor","at","body"},"COMMAND","Use the complete command envelope.")

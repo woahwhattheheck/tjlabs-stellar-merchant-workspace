@@ -281,3 +281,12 @@ Original company and operating thread: https://tokenjunkielabs.slack.com/archive
 Public requirements source: https://www.etenders.gov.ie/epps/cft/downloadContractDocument.do?documentId=8912599&resourceId=8912550
 
 The SCF Applications provider contract and Installation preparation guide supply this integration’s lifecycle. The original operator, exact domain, training and receiving guides travel unchanged with the app and are registered as complete source editions in the Product and financing reader.
+
+
+## Assigned discrepancy-review continuation
+
+The installed application includes **Assigned reviews**: complete reconciliation/source issuance to a named independent reviewer; a standalone editable HTML copy with unfinished drafts, named attributed editions and local conflict recovery; exact complete return receiving; explicit issued/current/proposed decision comparison; and atomic adoption through the original finding engine. Original rehearsal, release and cutover rules remain in force.
+
+Use the existing saved Applications record, private connection and selected physical workspace. This feature borrows the same service and SQLite history. It does not start an additional server, write into a connected tenant, dispatch customer communication or accept a cutover for the user. Read [the application operating steps](app/OPERATING.md#assigned-discrepancy-reviews), [document/domain contracts](app/REVIEW_EXCHANGE_DOMAIN.md), and [the same-operation receiving continuation](app/REVIEW_EXCHANGE_RECEIVING.md).
+
+The installed app source selection advances as one complete edition. The prior source identity and original commissioning input remain historical evidence; a new source selection does not authorize re-running an accepted original programme. The managed continuation separately identifies its original native source and current installed source. Complete source and blob archives remain independently editable after receiving.

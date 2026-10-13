@@ -4,7 +4,7 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from .common import *
 from .workspace import Workspace
-from . import domain
+from . import domain, review_exchange, review_host
 from .exchange import source_inventory,export_workspace,receive_archive
 class Application:
     def __init__(self,workspace,source_root,selection,*,receiving_root=None,host="127.0.0.1",port=0):
@@ -60,6 +60,17 @@ class Application:
                             w=self._selected({"workspaceId":self.headers.get("X-Workspace-Id") or query.get("workspaceId",[None])[0],"workspaceDirectory":self.headers.get("X-Workspace-Directory") or query.get("workspaceDirectory",[None])[0]})
                         if p=="/api/state":
                             current=w.current();self._send(200,{**current,"view":domain.view(current["state"],w.read_blob,as_of=now()),"sourceSha256":app.selection["sha256"],"directory":str(w.directory),"openWorkspaces":[{"directory":path,"id":item.current()["state"]["id"],"title":item.current()["state"]["title"]} for path,item in app.workspaces.items()]})
+                        elif p=="/api/review-exchanges":
+                            self._send(200,review_host.view(w,query.get("id",[None])[0]))
+                        elif p=="/api/review-compare":
+                            self._send(200,review_host.compare(w,query.get("returnId",[None])[0],query.get("editionId",[None])[0],query.get("adoptionId",[None])[0]))
+                        elif p=="/api/review-file":
+                            with w.lock:
+                                item=review_exchange.document(w.current()["state"],query.get("id",[None])[0],query.get("role",[None])[0],w.read_blob)
+                                descriptor=item["descriptor"];raw=item["bytes"]
+                            name=re.sub(r"[^A-Za-z0-9_.-]","_",descriptor["name"])[:150]
+                            if not name or not name[0].isalnum():name="Review_"+name
+                            self._send(200,raw,descriptor["mediaType"],{"Content-Disposition":'attachment; filename="'+name+'"',"X-Content-Sha256":descriptor["sha256"]})
                         elif p=="/api/history":self._send(200,w.history(int(query.get("offset",["0"])[0]),int(query.get("limit",["50"])[0])))
                         elif p.startswith("/api/request/"):self._send(200,w.request(p.rsplit("/",1)[1]))
                         elif p.startswith("/api/blob/"):
@@ -87,9 +98,9 @@ class Application:
                             id=p.rsplit("/",1)[1];identifier(id);path=w.directory/"exports"/id/"Bluewave_Commissioning_Workspace.zip"
                             self._send(200,read_regular(path,MAX_ARCHIVE),"application/zip",{"Content-Disposition":'attachment; filename="Bluewave_Commissioning_Workspace.zip"'})
                         else:
-                            names={"/":"public/index.html","/app.js":"public/app.js","/style.css":"public/style.css","/guide":"public/guide.html"}
+                            names={"/":"public/index.html","/app.js":"public/app.js","/reviewer-host.js":"public/reviewer-host.js","/style.css":"public/style.css","/guide":"public/guide.html"}
                             require(p in names,"NOT_FOUND","This application page is unavailable.")
-                            path=app.source_root/names[p];media="text/html; charset=utf-8" if p in ("/","/guide") else "text/javascript; charset=utf-8" if p=="/app.js" else "text/css; charset=utf-8"
+                            path=app.source_root/names[p];media="text/html; charset=utf-8" if p in ("/","/guide") else "text/javascript; charset=utf-8" if p in ("/app.js","/reviewer-host.js") else "text/css; charset=utf-8"
                             self._send(200,read_regular(path),media,{"Set-Cookie":"bluewave-session="+app.token+"; HttpOnly; SameSite=Strict; Path=/"})
                 except BaseException as error:
                     try:self._error(error)
@@ -113,6 +124,11 @@ class Application:
                                 prior=w.request(request_id) if isinstance(request_id,str) else None
                                 self._send(409,{"error":{"code":error.code,"message":str(error)},"notCommitted":prior is None,"requestId":request_id})
                             else:self._send(200,outcome)
+                        elif p=="/api/review-prepare-issue":
+                            self._send(200,review_host.prepare_issue(w,body["command"],body["expectedRevision"],app.source_root))
+                        elif p=="/api/review-prepare-return":
+                            descriptor=body["file"]
+                            self._send(200,review_host.prepare_return(w,w.read_blob(descriptor["sha256"]),descriptor,body["expectedRevision"]))
                         elif p=="/api/blob":
                             raw=base64.b64decode(body["base64"],validate=True);self._send(200,w.put_blob(raw,body.get("sha256")))
                         elif p=="/api/export":
@@ -133,7 +149,17 @@ class Application:
             def do_PUT(self):
                 path=None
                 try:
-                    parsed=urllib.parse.urlsplit(self.path);self._auth(urllib.parse.parse_qs(parsed.query))
+                    parsed=urllib.parse.urlsplit(self.path);query=urllib.parse.parse_qs(parsed.query);self._auth(query)
+                    if parsed.path.startswith("/api/review-return/"):
+                        key=sha_id(parsed.path.rsplit("/",1)[1]);length=int(self.headers.get("Content-Length","-1"))
+                        require(0<=length<=MAX_BLOB,"REVIEW_CAPACITY","The complete return exceeds 64 MiB.")
+                        with app.lock:
+                            require(not app.closing,"CLOSED","Application is closing.")
+                            w=self._selected({"workspaceId":self.headers.get("X-Workspace-Id"),"workspaceDirectory":self.headers.get("X-Workspace-Directory")})
+                            raw=self.rfile.read(length);require(len(raw)==length,"UPLOAD_INCOMPLETE","The complete returned file is required.")
+                            descriptor={"sha256":key,"bytes":length,"name":query.get("name",["Returned_Review.json"])[0],"mediaType":query.get("mediaType",["application/json"])[0]}
+                            result=review_host.prepare_return(w,raw,descriptor,int(query.get("expectedRevision",["-1"])[0]))
+                        self._send(200,result);return
                     if parsed.path.startswith("/api/blob/"):
                         key=sha_id(parsed.path.rsplit("/",1)[1])
                         length=int(self.headers.get("Content-Length","-1"));require(0<=length<=MAX_BLOB,"BLOB_CAPACITY","Original file exceeds the complete file allowance.")

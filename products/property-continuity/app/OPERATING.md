@@ -251,3 +251,34 @@ Numbers, UUIDs and filenames in these command examples are placeholders for oper
 The platform responsibilities and property model are drawn from the issued [IDA Ireland Request to Participate, IDAPMS082026](https://www.etenders.gov.ie/epps/cft/downloadContractDocument.do?documentId=8912599&resourceId=8912550), particularly section 4.1.2 on page 15 and section 4.3 on pages 18–19. Section4.1.5 on page 17 describes the anticipated implementation period. The original qualification deadline is on page 1; this application prepares an implementation workstream for an authorized partner programme.
 
 The [complete Bluewave partner workshare](https://app.notion.com/p/3f8dd7723100818b98a5dbc6637714b1) retains the six delivery stages, two rehearsals, baseline scope, proposed effort and original relationship owner. Project-specific field contracts, population decisions and actual operator outcomes belong in the saved case.
+
+
+## Assigned discrepancy reviews
+
+Open **Assigned reviews** in the same workspace branch that owns the reconciliation. Select **Assign selected findings**, choose the complete original findings, identify the assigned reviewer, and record the assignment notes. **Issue complete reviewer copy** prepares the complete original JSON and standalone HTML with the selected reconciliation, exact source files, mapped rows, numeric-token locations, decision basis and evidence. It then saves the compact original issue command through the same workspace revision and request history. Open the saved issue to download its exact original HTML and JSON.
+
+Give the complete HTML or JSON to the named reviewer using the already agreed project handover. The standalone HTML includes its own code and styles. The reviewer can inspect complete source/evidence, retain unfinished fields, save attributed named editions, reopen another copy and recover competing local drafts. A named edition does not silently change the supervisor workspace. Return the complete downloaded JSON or HTML, including the original issue and every attached file; do not reconstruct it from copied screen values.
+
+In **Receive reviewer work**, select the complete returned file and use **Inspect and retain complete return**. This validates its original assignment, all named edition hashes and evidence, then retains the unique files atomically in the existing workspace. **Record this complete return** saves its original receiving command. Unfinished-only returns remain usable records, with no adopted finding decision. Open any named edition and select **Compare with current decisions**.
+
+Review the issued, current and returned decision for every assigned finding. Choose **Keep current decision** or **Apply reviewer proposal** explicitly for each item. Blocking findings remain nonwaivable. **Save explicit review adoption** uses the exact displayed comparison and workspace revision, records the supervisor's choices, and creates the selected decisions through the original finding engine in one transaction. Later changes to other decisions do not rewrite this historical comparison.
+
+Supervisor drafts use the existing browser store, scoped to the exact original or receiving directory. A competing tab edit retains both complete versions under **Draft recovery**; a pending original request cannot be bypassed. **Download visible draft** preserves unsaved values if local saving fails. **Saved requests** retains the complete prepared command and first result. Recover that same UUID after an uncertain response. Only an actually absent, definitely rejected receiving attempt can be replaced explicitly with **Review a definitely rejected attempt**.
+
+The complete workspace export includes original issue JSON, original issue HTML, returned file, all source and evidence bytes, commands and historical comparisons. Independently receive it through **Export and receive**, choose the named receiving branch and reopen **Assigned reviews** there. Original and receiving branches share portable identities but retain separate directory-bound browser drafts and requests.
+
+The complete limits remain 64 MiB for each JSON/HTML/source file, 256 MiB unique retained blob bytes, 8 MiB saved state/command capacity and the existing full-history allowance. The complete batch is rejected before partial evidence retention if it exceeds remaining capacity. No source row, named edition or attachment is silently sliced to fit. See [Review domain and document contracts](REVIEW_EXCHANGE_DOMAIN.md) and [Review receiving continuation](REVIEW_EXCHANGE_RECEIVING.md).
+
+### Original native commands
+
+Preparation retains bytes and returns a compact command; it does not commit a finding decision. Supply the actual source selection and original branch path.
+
+~~~sh
+python3 -m bluewave.cli review-prepare-issue --workspace /private/case --source-root /installed/app --command /private/issue-preparation.json --expected-revision 70 --output /private/prepared-issue.json
+python3 -m bluewave.cli review-exchanges --workspace /private/case --source-root /installed/app
+python3 -m bluewave.cli review-file --workspace /private/case --source-root /installed/app --id ISSUE_UUID --role issued_html --output /private/Reviewer.html
+python3 -m bluewave.cli review-prepare-return --workspace /private/case --source-root /installed/app --file /private/Returned.html --expected-revision 71 --output /private/returned-preview.json
+python3 -m bluewave.cli review-compare --workspace /private/case --source-root /installed/app --return-id RETURN_RECORD_UUID --edition-id NAMED_EDITION_UUID
+~~~
+
+The first command's output has command and expectedRevision. Retain them unchanged, then submit that exact command with the existing command --command FILE --expected-revision N CLI. For a received file, create one original review.receive command with {id,file:exact preview file descriptor} and retain its request UUID, actor, time and expected revision. For adoption, use the complete returned comparison's reviewSha256 and one explicit choice for every finding. The review-compare --adoption-id ADOPTION_UUID option reads the frozen historical basis after later edits. The review-file --role returned_file command retrieves the exact original received bytes.

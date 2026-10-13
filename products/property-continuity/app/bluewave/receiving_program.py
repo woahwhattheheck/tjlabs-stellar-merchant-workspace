@@ -183,11 +183,21 @@ def _reports(programme,workspace,label):
         atomic_file(Path(item["path"]),raw,immutable=True)
     return result
 
-def _browser(programme,workspace,source_root,selection,label):
+def _browser(programme,workspace,source_root,selection,label,reviewer_copy=None,expected_basis=None):
     def run(frame):
         require({k:v for k,v in workspace.current().items() if k!="state"}==frame["basis"],"BROWSER_REVISION","The selected read-only staff view changed.")
-        app=None;process=None;directory=programme.directory/"browser"/label;_directory(directory)
+        app=None;process=None;closure_pending=False;directory=programme.directory/"browser"/label;_directory(directory)
         launch=directory/"private-launch.json";stdout=directory/"stdout.log";stderr=directory/"stderr.log"
+        def drain_original_owner():
+            nonlocal closure_pending
+            if process is None or process.poll() is not None:return
+            if closure_pending:return
+            process.terminate()
+            try:process.wait(timeout=120)
+            except subprocess.TimeoutExpired:
+                closure_pending=True
+                atomic_file(directory/"closure-pending.json",canonical({"operationId":frame["operationId"],"state":"CLOSURE_PENDING","pid":process.pid,"at":now(),"browserOwner":str(directory/"browser-owner.json"),"inheritedOperationLock":str(programme.directory/"operation.lock")}))
+                fail("BROWSER_CLOSURE_PENDING","The original browser owner is draining its in-flight launch/close and retains the inherited operation lock. Continue its retained owner after actual closure.")
         try:
             app=Application(workspace,source_root,selection,receiving_root=programme.directory/"browser-receiving")
             value={**frame,"schema":BROWSER_SCHEMA,"directory":str(directory),"origin":app.origin,"url":app.url}
@@ -196,9 +206,7 @@ def _browser(programme,workspace,source_root,selection,label):
                 process=subprocess.Popen([programme.plan["browser"]["node"],str(source_root/"tools"/"receiving_browser.cjs"),str(launch)],stdin=subprocess.DEVNULL,stdout=output,stderr=error,pass_fds=(programme.fd,),env={**os.environ,"NODE_OPTIONS":"--max-old-space-size=192"})
                 try:code=process.wait(timeout=programme.plan["browser"]["timeoutSeconds"])
                 except subprocess.TimeoutExpired:
-                    process.terminate()
-                    try:process.wait(timeout=20)
-                    except subprocess.TimeoutExpired:process.kill();process.wait()
+                    drain_original_owner()
                     fail("BROWSER_INTERRUPTED","The original browser interval ended without a complete result; its retained process custody controls reentry.")
             atomic_file(directory/"last-return.json",canonical({"exitCode":code,"at":now()}))
             require(code==0,"BROWSER_INTERRUPTED","Inspect the original browser return and retained error before continuation.")
@@ -212,10 +220,7 @@ def _browser(programme,workspace,source_root,selection,label):
         finally:
             active_error=sys.exc_info()[1];closing_errors=[];closure={"at":now(),"nodeClosed":process is None,"httpClosed":app is None,"privateLaunchRemoved":False,"errors":[]}
             try:
-                if process is not None and process.poll() is None:
-                    process.terminate()
-                    try:process.wait(timeout=20)
-                    except subprocess.TimeoutExpired:process.kill();process.wait()
+                drain_original_owner()
                 closure["nodeClosed"]=process is None or process.poll() is not None
             except BaseException as error:closing_errors.append(error);closure["errors"].append({"resource":"node","error":str(error)})
             try:
@@ -230,7 +235,7 @@ def _browser(programme,workspace,source_root,selection,label):
             try:atomic_file(directory/"resource-closure.json",canonical(closure))
             except BaseException as error:closing_errors.append(error)
             if closing_errors and active_error is None:raise closing_errors[0]
-    return programme.effect(label+"-browser",lambda:{"operationId":programme.child(label+"-browser"),"sourceSha256":selection["sha256"],"workspaceId":workspace.current()["state"]["id"],"workspaceDirectory":str(workspace.directory),"basis":{k:v for k,v in workspace.current().items() if k!="state"},"playwrightModule":programme.plan["browser"]["playwrightModule"],"executablePath":programme.plan["browser"]["executablePath"],"actor":programme.plan["browser"]["actor"]},run)
+    return programme.effect(label+"-browser",lambda:{"operationId":programme.child(label+"-browser"),"sourceSha256":selection["sha256"],"workspaceId":workspace.current()["state"]["id"],"workspaceDirectory":str(workspace.directory),"basis":copy.deepcopy(expected_basis) if expected_basis is not None else {k:v for k,v in workspace.current().items() if k!="state"},"playwrightModule":programme.plan["browser"]["playwrightModule"],"executablePath":programme.plan["browser"]["executablePath"],"actor":programme.plan["browser"]["actor"],**({"reviewerCopy":copy.deepcopy(reviewer_copy)} if reviewer_copy is not None else {})},run)
 
 def _ensure_archive(programme,workspace,label,descriptor,source_root,selection):
     if Path(descriptor["path"]).exists():
@@ -360,7 +365,11 @@ def run_programme(plan,operation_directory,source_root):
 def main():
     parser=argparse.ArgumentParser(description="Run the original supplied-input property continuity receiving programme")
     parser.add_argument("--input",required=True);parser.add_argument("--operation-directory",required=True);parser.add_argument("--source-root",required=True)
+    parser.add_argument("--review-exchange-input",help="Continue this original operation with an explicit ISSUE, BROWSER, RECEIVE, COMPARE, ADOPT or ONWARD review stage")
     args=parser.parse_args()
+    if args.review_exchange_input:
+        from .review_receiving import run_review_receiving
+        return run_review_receiving(_read_json(args.input),args.operation_directory,args.source_root,_read_json(args.review_exchange_input))
     return run_programme(_read_json(args.input),args.operation_directory,args.source_root)
 if __name__=="__main__":
     try:print(canonical(main()).decode("utf-8"))

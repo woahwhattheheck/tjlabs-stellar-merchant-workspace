@@ -50,7 +50,7 @@ export class MerchantPropertyContinuity{
    reader=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW);await unlink(path);await rmdir(dir);
    const handle=reader;reader=null;
    return {readonlyFileHandle:handle,bytes:result.bytes,sha256:result.sha256,
-    name:selection.kind==='archive'?'Property_Continuity_Workspace.zip':selection.kind==='blob'?'Original_Source.bin':'Property_Continuity_Report.'+(selection.format??'json'),type:result.mediaType};
+    name:selection.kind==='archive'?'Property_Continuity_Workspace.zip':selection.kind==='blob'?'Original_Source.bin':selection.kind==='review'?'Property_Continuity_Review.'+(selection.role==='issued_html'||selection.role==='returned_file'&&result.mediaType.split(';')[0]==='text/html'?'html':'json'):'Property_Continuity_Report.'+(selection.format??'json'),type:result.mediaType};
   }finally{
    const errors=[];
    for(const close of [()=>writer?.close(),()=>reader?.close(),()=>unlink(path),()=>rmdir(dir)]){
@@ -74,6 +74,14 @@ export class MerchantPropertyContinuity{
    if(action==='source_rows')return await client.sourceRows(args.sourceId,args);
    if(action==='report_rows')return await client.reportRows(args.reconciliationId,args);
    if(action==='findings')return await client.findings(args.reconciliationId,args);
+   if(action==='review_exchanges')return await client.reviewExchanges(args.id);
+   if(action==='review_compare')return await client.reviewCompare(args.returnId,args.editionId,args.adoptionId);
+   if(action==='review_prepare_issue')return await client.prepareReviewIssue(args.command,args.expectedRevision);
+   if(action==='review_prepare_return'){
+    const file=c.files[args.fileAlias],descriptor=args.descriptor;exact(descriptor,['sha256','bytes','name','mediaType'],['sha256','bytes','name','mediaType']);
+    need(file&&file.bytes===descriptor.bytes&&file.sha256===descriptor.sha256,'FILE_CHANGED');
+    return await client.prepareReviewReturnFile(file.path,descriptor,args.expectedRevision);
+   }
    if(action==='command')return await client.command(args.command,args.expectedRevision);
    if(action==='export')return await client.exportWorkspace(args.publicationId,args.revision);
    if(action==='receive')return await client.receive(args);
@@ -82,7 +90,7 @@ export class MerchantPropertyContinuity{
     return await client.uploadFile(args.kind,file.path,{bytes:file.bytes,sha256:file.sha256});
    }
    if(action==='file_read'){
-    const selection=args.selection;exact(selection,['kind','id','format','expectedSha256','expectedBytes'],['kind','id']);
+    const selection=args.selection;exact(selection,['kind','id','format','role','expectedSha256','expectedBytes'],['kind','id']);
     const key=canonical(selection);
     return await this.#reads.read({scope,key,kind:'PROPERTY_CONTINUITY',directory:c.storageDirectory,
      expectedSha256:args.expectedSha256,offset:args.offset??0,limit:args.limit??65536,readId:args.readId,
