@@ -22,6 +22,34 @@ Use the complete [Research commissioning workflow](COMMISSIONING.md) to select t
 The quotation product carries the original customer case and published quote through a reviewed Research brief, source-linked work, frozen delivery, native paid publication, Buyer receiving and realized pricing/cost report. The [quotation operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/OPERATING.md) contains the complete browser, terminal and Merchant journey.
 
 
+## Retained quotation programme and complete receiving
+
+Use the [complete quotation programme](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/PROGRAMME.md) to keep the original customer case, native phase requests, source-bound reviews, paid delivery and realized report in one operating directory. The installed `research-quotes-programme` command operates the original Research/SF74/SF97/Buyer workflow and reopens its saved requests after the connection closes.
+
+The complete handover contains every selected native quote and supplier-cost file, the full case and customer history, all four frozen report formats, the reviewed work snapshot and the exact published paid archive. Its receiver prepares the original case transfer, retains the whole dossier before writes, and returns the actual destination case and Research identities for subsequent customer work. The original source and receiving directories preserve their own exact-request continuation.
+
+
+## Continue the quotation programme from Python
+
+Install the Python package from this complete product source and use
+`ResearchWorkspace.quote_programmes()` against the same Research connection.
+The [full Python programme guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH-QUOTE-PROGRAMMES.md)
+and its complete two-workspace example cover retained programme creation,
+original case/pricing/brief/customer-response steps, exact review application,
+frozen delivery, complete package export and destination receiving.
+
+The recipient receives the editable original case and customer dossier with their
+commercial and service histories. The package also carries every selected quote
+operation, original source input, customer report, work snapshot and original
+paid-publication file. The native source manifest binds those complete members.
+`ResearchQuoteProgrammeHandover.reopen(..., expected_manifest_sha256=...)` verifies
+and opens the package from its retained files.
+
+Use the same Python call to recover an interrupted operation. Explicit programme
+replay selects a distinct native step and preserves the original request. The
+original case transfer and dossier receivers resolve a completed save before
+later source work, keeping the customer continuation in its existing histories.
+
 ## Open the original workspace
 
 Use the existing Linux and Node 22.16+ runtime described in the [product README](../../README.md). The Research client uses Node's built-in modules. Its optional source connections use their existing host configuration.

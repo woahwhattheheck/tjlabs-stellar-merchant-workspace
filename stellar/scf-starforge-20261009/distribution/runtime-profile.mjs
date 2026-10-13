@@ -72,8 +72,8 @@ function nativeKind(name, probe, value) {
     throw new TypeError('Unsupported native runtime preparation: ' + name);
   return value;
 }
-function dependencies(definitions, group, sourcePath) {
-  if (!plain(definitions) || !Object.keys(definitions).length)
+function dependencies(definitions, group, sourcePath, { allowEmpty = false } = {}) {
+  if (!plain(definitions) || !allowEmpty && !Object.keys(definitions).length)
     throw new TypeError('Runtime dependencies missing for ' + group);
   return Object.entries(definitions).map(([name, definition]) => {
     if (!packageName.test(name)) throw new TypeError('Invalid dependency name: ' + name);
@@ -114,7 +114,11 @@ export async function runtimeCatalog({ sourceRoot = ownRoot } = {}) {
   for (const [group, definitions] of Object.entries(featurePeers)) {
     if (!featureName.test(group) || group === 'native') throw new TypeError('Invalid runtime feature: ' + group);
     groups[group] = dependencies(definitions, group, name => spec.runtimePackageManifests?.[group] ??
-      distribution.origins.featurePeers[group]?.[name]?.[0] ?? specPath);
+      distribution.origins.featurePeers[group]?.[name]?.[0] ?? specPath, {
+        // A declared package may require a host version without npm modules.
+        allowEmpty: Object.hasOwn(spec.runtimePackageManifests ?? {}, group) &&
+          /^>=\d+(?:\.\d+)?(?:\.\d+)?$/.test(engines[group] ?? ''),
+      });
   }
   const manifest = distribution.manifest;
   if (manifest) {
@@ -141,6 +145,20 @@ function runtimePackage(deps, node) {
 }
 function profileBody(profile) {
   return Object.fromEntries(Object.entries(profile).filter(([key]) => key !== 'profileId'));
+}
+
+/** Resolve the original selected feature engines for both packaging and installation. */
+export function runtimeNodeRequirement(engines = {}) {
+  if (!plain(engines)) throw new TypeError('Expected original feature Node engine requirements');
+  let nodeMinimum = '22.16.0';
+  for (const [group, engine] of Object.entries(engines)) {
+    if (!engine) continue;
+    const match = /^>=(\d+)(?:\.(\d+))?(?:\.(\d+))?$/.exec(engine);
+    if (!match) throw new TypeError('Unsupported original Node engine requirement for ' + group + ': ' + engine);
+    const minimum = match[1] + '.' + (match[2] ?? '0') + '.' + (match[3] ?? '0');
+    if (compare(minimum, nodeMinimum) > 0) nodeMinimum = minimum;
+  }
+  return '>=' + nodeMinimum;
 }
 
 /** Resolve exact versions without a registry query, dependency install, or application run. */
@@ -174,16 +192,8 @@ export async function resolveRuntimeProfile({ sourceRoot = ownRoot, native = fal
       probes: declarations.map(({ group, sourcePath, probe }) => ({ group, sourcePath, probe })),
       ...(declarations.some(item => item.native) ? { native: declarations.find(item => item.native).native } : {}) };
   });
-  let nodeMinimum = '22.16.0';
-  for (const group of groups) {
-    const engine = catalog.engines[group];
-    if (!engine) continue;
-    const match = /^>=(\d+)(?:\.(\d+))?(?:\.(\d+))?$/.exec(engine);
-    if (!match) throw new TypeError('Unsupported original Node engine requirement for ' + group + ': ' + engine);
-    const minimum = match[1] + '.' + (match[2] ?? '0') + '.' + (match[3] ?? '0');
-    if (compare(minimum, nodeMinimum) > 0) nodeMinimum = minimum;
-  }
-  const host = { node: '>=' + nodeMinimum, python: operator ? '>=3.11' : null,
+  const nodeRequirement = runtimeNodeRequirement(Object.fromEntries(groups.map(group => [group, catalog.engines[group]])));
+  const host = { node: nodeRequirement, python: operator ? '>=3.11' : null,
     platform: operator ? 'linux' : null, commands: operator ? ['flock'] : [] };
   const body = { schema: profileSchema, source: catalog.source,
     selection: { native, features: selectedFeatures, operator, pins: Object.fromEntries(Object.entries(pins).sort(([a], [b]) => a.localeCompare(b))) },

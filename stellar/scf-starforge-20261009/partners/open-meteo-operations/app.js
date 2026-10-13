@@ -1,6 +1,8 @@
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=v=>v===null||v===undefined?'—':Number(v).toLocaleString('en',{maximumFractionDigits:3});
+let renewalChoices=null,renewalInput=null,renewalReview=null,renewalResult=null,renewalBusy=false,renewalSelection=0;
 let receivingInput=null,receivingReview=null,receivingBusy=false,receivingSelection=0;
+let providerHistory=null,providerHistoryGeneration=0;
 let state,meta,tab='requests',requestId=null,captureId=null,variable='temperature_2m',decisionEdit=null,sourceView=null,sourceSelection=0,comparison=null,polling=false,lastJob=null;
 async function api(path,input){const response=await fetch(path,input===undefined?{cache:'no-store'}:{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(input)});const value=await response.json();if(!response.ok)throw Object.assign(new Error(value.error??'Request failed'),value);return value;}
 function notice(value){$('#notice').textContent=value??'';}
@@ -23,7 +25,7 @@ const option=(value,label,selected=false)=>'<option value="'+esc(value)+'"'+(sel
 const badge=text=>'<span class="badge">'+esc(text.replaceAll('_',' '))+'</span>';
 const actions=html=>'<div class="actions">'+html+'</div>';
 const button=(action,label,id,style='')=>'<button type="button" data-action="'+action+'"'+(id?' data-id="'+esc(id)+'"':'')+' class="'+style+'">'+esc(label)+'</button>';
-function render(){document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===tab?'page':'false'));$('#main').innerHTML=tab==='requests'?requestsTab():tab==='analysis'?analysisTab():tab==='reports'?reportsTab():recoveryTab();if(tab==='analysis'&&captureId)loadSource().catch(error);}
+function render(){document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===tab?'page':'false'));$('#main').innerHTML=tab==='requests'?requestsTab():tab==='analysis'?analysisTab():tab==='reports'?reportsTab():recoveryTab();if(tab==='analysis'&&captureId)loadSource().catch(error);providerHistoryGeneration++;providerHistory=null;if(tab==='requests'&&requestId)loadProviderHistory().catch(error);}
 function requestsTab(){
  if(meta.reviewMode){
   const rows=state.requests.map(q=>'<tr><td>'+button('select-request',q.spec.title,q.id)+'<br><small>'+esc(q.spec.site.name)+'</small></td><td>'+esc(q.spec.request.family)+' / '+esc(q.spec.request.model)+'</td><td>'+esc(q.spec.request.startDate)+' — '+esc(q.spec.request.endDate)+'</td></tr>').join('');
@@ -39,10 +41,47 @@ function requestDetail(){
  const q=selected();if(!q)return '';const r=q.spec.request,n=q.native;
  let controls='';
  if(meta.reviewMode||q.state==='RECEIVED'){controls='<p class="muted">This source belongs to a received report. Its original source and receiving history remain available with the editable decisions.</p>';}
- else if(!n){controls=actions(button('capture-source','Read provider source',q.id,'primary')+(q.error?.retainedRead?button('source-reprocess','Reprocess retained original bytes',q.id):''))+'<h3>Prepare through the original buyer</h3><form id="prepare-form"><div class="row"><label>Maximum payment, atomic units<input name="maxAtomic" inputmode="numeric" pattern="[1-9][0-9]*" required placeholder="Explicit budget"></label><label>Offer index<input type="number" name="acceptIndex" value="0" min="0" required></label></div>'+(meta.providerMode==='evaluation'?'<label class="check"><input name="directEvaluation" type="checkbox">Use the public evaluation endpoint for an unsigned native buyer request.</label>':'')+actions('<button'+(!['DRAFT','PREPARING'].includes(q.state)?' disabled':'')+'>Prepare and review</button>')+'</form><p class="muted">Buyer preparation uses a new draft. A provider capture remains an independently identified source read.</p>';}
+ else if(!n){controls=actions(button('capture-source','Read provider source',q.id,'primary')+(q.error?.retainedRead&&q.error.retainedRead.reprocessable!==false?button('source-reprocess','Reprocess retained original bytes',q.id):''))+'<h3>Prepare through the original buyer</h3><form id="prepare-form"><div class="row"><label>Maximum payment, atomic units<input name="maxAtomic" inputmode="numeric" pattern="[1-9][0-9]*" required placeholder="Explicit budget"></label><label>Offer index<input type="number" name="acceptIndex" value="0" min="0" required></label></div>'+(meta.providerMode==='evaluation'?'<label class="check"><input name="directEvaluation" type="checkbox">Use the public evaluation endpoint for an unsigned native buyer request.</label>':'')+actions('<button'+(!['DRAFT','PREPARING'].includes(q.state)?' disabled':'')+'>Prepare and review</button>')+'</form><p class="muted">Buyer preparation uses a new draft. A provider capture remains an independently identified source read.</p>';}
  else controls='<dl><dt>Original intent</dt><dd class="mono">'+esc(n.request.intentId)+'</dd><dt>Maximum payment</dt><dd>'+esc(n.maxAtomic)+' atomic units</dd><dt>Reviewed request</dt><dd class="mono">'+esc(n.request.url)+'</dd><dt>Configuration hash</dt><dd class="mono">'+esc(n.review?.configSha256??'Preparation in progress')+'</dd></dl>'+actions((n.review?button('execute','Execute reviewed buyer request',q.id,'primary'):'')+button('recover','Read original buyer outcome',q.id));
- return '<section class="panel"><h2>'+esc(q.spec.title)+'</h2><p>'+badge(q.state)+' · revision '+q.revision+'</p><dl><dt>Coordinates</dt><dd>'+esc(r.latitude+', '+r.longitude)+'</dd><dt>Time zone</dt><dd>'+esc(r.timezone)+'</dd><dt>Variables</dt><dd>'+esc(r.variables.join(', '))+'</dd><dt>Request digest</dt><dd class="mono">'+esc(q.specSha256)+'</dd></dl>'+controls+actions((meta.reviewMode?'':button('copy-request','Copy to new draft',q.id))+(q.captureId?button('view-source','Open retained source',q.captureId):''))+(q.error?'<pre>'+esc(JSON.stringify(q.error,null,2))+'</pre>':'')+'</section>';
+ return '<section class="panel"><h2>'+esc(q.spec.title)+'</h2><p>'+badge(q.state)+' · revision '+q.revision+'</p><dl><dt>Coordinates</dt><dd>'+esc(r.latitude+', '+r.longitude)+'</dd><dt>Time zone</dt><dd>'+esc(r.timezone)+'</dd><dt>Variables</dt><dd>'+esc(r.variables.join(', '))+'</dd><dt>Request digest</dt><dd class="mono">'+esc(q.specSha256)+'</dd></dl>'+controls+actions((meta.reviewMode?'':button('copy-request','Copy to new draft',q.id))+(q.captureId?button('view-source','Open retained source',q.captureId):''))+(q.error?'<pre>'+esc(JSON.stringify(q.error,null,2))+'</pre>':'')+'<div id="provider-history"><p class="muted">Loading provider responses…</p></div></section>';
 }
+
+async function loadProviderHistory(before){
+ const id=requestId,generation=providerHistoryGeneration;
+ const prior=before?providerHistory:null;
+ const box=$('#provider-history');if(!box)return;
+ if(before&&(!prior||prior.requestId!==id||prior.nextBefore!==before))return;
+ const more=box.querySelector('[data-action="more-source-history"]');if(more)more.disabled=true;
+ try{
+  const page=await api('/api/requests/'+encodeURIComponent(id)+'/source-history'+(before?'?before='+encodeURIComponent(before):''));
+  if(generation!==providerHistoryGeneration||requestId!==id||tab!=='requests'||!box.isConnected)return;
+  providerHistory={requestId:id,reads:[...(prior?.reads??[]),...page.reads],nextBefore:page.nextBefore};
+  const q=selected(),rows=providerHistory.reads.map(read=>{
+   const p=read.provenance,complete=p.bodyComplete!==false;
+   const outcome=p.httpStatus===200&&read.reprocessable?'Weather response':'HTTP '+String(p.httpStatus??'unknown');
+   const retry=p.retryAfter===undefined?'':'<br><small>Provider Retry-After: '+esc(p.retryAfter)+'</small>';
+   const disposition=complete?'Complete body':'Retained prefix; body incomplete';
+   const reprocess=!meta.reviewMode&&!q.native&&read.reprocessable&&['DRAFT','SOURCE_CAPTURED','SOURCE_FAILED','ACQUIRING'].includes(q.state)?
+    '<button type="button" data-action="source-reprocess" data-id="'+esc(id)+'" data-read-id="'+esc(read.id)+'">Reprocess this response</button>':'';
+   return '<tr><td>'+esc(p.retrievedAt??read.createdAt)+'<br><small class="mono">'+esc(p.sourceAttempt??read.id)+'</small></td>'+
+    '<td>'+esc(outcome)+'<br><small>'+esc(p.contentType??'application/json')+'</small>'+retry+
+    (p.readErrorCode?'<br><small>'+esc(p.readErrorCode.replaceAll('_',' '))+'</small>':'')+'</td>'+
+    '<td>'+num(read.bytes)+' bytes<br><small>'+esc(disposition)+'</small></td><td>'+
+    actions('<a class="button" href="/api/source-reads/'+encodeURIComponent(read.id)+'/raw">Download response</a>'+
+     '<a class="button" href="/api/source-reads/'+encodeURIComponent(read.id)+'" target="_blank" rel="noopener">Response details</a>'+reprocess)+'</td></tr>';
+  }).join('');
+  box.innerHTML='<h3>Provider response history</h3><p class="muted">Each response belongs to this saved request. Read provider source starts a new read; reprocessing uses the selected retained bytes.</p>'+
+   (rows?'<div class="table"><table><thead><tr><th>Read</th><th>Provider result</th><th>Retained body</th><th>Continue</th></tr></thead><tbody>'+rows+'</tbody></table></div>':
+    '<p class="empty">No provider responses have been retained for this request.</p>')+
+   (providerHistory.nextBefore?actions(button('more-source-history','Load earlier responses',providerHistory.nextBefore)):'');
+ }catch(problem){
+  if(generation===providerHistoryGeneration&&box.isConnected){
+   if(more)more.disabled=false;
+   else box.innerHTML='<h3>Provider response history</h3><p>'+esc((problem.code??problem.message).replaceAll('_',' '))+'</p>'+actions(button('reload-source-history','Reload responses'));
+  }
+ }
+}
+
 function decisionRevisionLabel(decision){
  for(const record of state.receiving??[]){
   const mapping=record.mapping.decisions.find(value=>value.local===decision.id);
@@ -92,10 +131,62 @@ function receivingHistoryPanel(){
    actions(button('continue-received','Edit received decisions',record.mapping.report.local)+'<a class="button" href="/api/receiving/'+record.packageSha256+'/original">Original received package</a><a class="button" href="/api/reports/'+record.mapping.report.local+'/download?format=handover">Editable local package</a>')+
    actions(record.mapping.captures.map(mapping=>button('view-source',record.originalSources.find(source=>source.id===mapping.original)?.request.title??'Original source',mapping.local)).join(''))+'<pre>'+esc(JSON.stringify(record.mapping,null,2))+'</pre></details>').join(''):'<p class="empty">Received packages appear here with their original report and source relationships.</p>')+'</section>';
 }
+function renewalReviewPanel(){
+ if(!renewalReview)return '';
+ const rows=renewalReview.entries.map(entry=>{
+  const before=entry.baseline,after=entry.proposed,c=entry.comparison;
+  const rule=decision=>esc(decision.rule.aggregation)+' '+esc(decision.rule.operator==='gte'?'≥':'≤')+' '+num(decision.rule.threshold)+' '+esc(decision.rule.unit);
+  return '<tr><td>'+esc(after.title)+'<br><small>'+esc(after.owner)+'</small></td><td>'+badge(before.result.outcome)+'<br>'+num(c.previousAggregate)+' '+esc(c.previousUnit)+'<br><small>'+rule(before)+'<br>'+esc(before.rule.startUtc)+'<br>'+esc(before.rule.endUtc)+'</small></td>'+
+   '<td>'+badge(after.result.outcome)+'<br>'+num(c.nextAggregate)+' '+esc(c.nextUnit)+'<br><small>'+rule(after)+'<br>'+esc(after.rule.startUtc)+'<br>'+esc(after.rule.endUtc)+'</small></td>'+
+   '<td>'+c.previousEligibleMembers+' → '+c.nextEligibleMembers+' eligible members<br>'+esc(after.disposition)+'<br><small>'+esc(c.sameUtcWindow?'Same UTC window':'Different operating windows')+(c.ruleChanges.length?'<br>Reviewed rule changed since prior edition':'')+'<br>'+esc(c.previousModel)+' → '+esc(c.nextModel)+(c.gridChanged?'<br>Selected model grid changed':'')+'</small></td></tr>';
+ }).join('');
+ const sources=renewalReview.entries.map(entry=>'<p><strong>'+esc(entry.proposed.title)+'</strong><br>'+esc(entry.comparison.previousRetrievedAt)+' → '+esc(entry.comparison.nextRetrievedAt)+'<br><small>'+esc(entry.comparison.sourceChanged?'New retained source bytes':'Same retained source bytes')+' · Grid '+esc(entry.source.metadata.grid.latitude+', '+entry.source.metadata.grid.longitude)+'</small></p>').join('');
+ return '<h3>Review the complete next edition</h3><p>'+renewalReview.summary.decisions+' decisions · '+renewalReview.summary.changedSources+' changed sources · '+renewalReview.summary.changedOutcomes+' changed outcomes · '+renewalReview.summary.insufficientCoverage+' with insufficient coverage</p>'+
+  '<div class="table"><table><thead><tr><th>Customer decision</th><th>Prior edition</th><th>Next edition</th><th>Coverage and operating choice</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+  '<details><summary>Source retrieval and model grid</summary>'+sources+'</details>'+
+  '<p class="muted">Aggregates belong to the displayed rules and windows. Returned ensemble members do not establish calibrated event probabilities. Creating the edition saves the reviewed dispositions and notes.</p>'+
+  actions('<button type="button" data-action="commit-renewal" class="primary"'+(renewalBusy?' disabled':'')+'>Create reviewed edition</button>');
+}
+function renewalPanel(){
+ if(!renewalInput||!renewalChoices){
+  if(!renewalResult)return '';
+  const report=renewalResult.report;
+  return '<section class="panel"><h2>'+esc(report.title)+'</h2><p>'+esc(renewalResult.reopened?'Reopened the same renewed edition.':'The complete next edition is saved.')+' '+report.decisions.length+' decision revisions with their original history.</p>'+actions(
+   '<a class="button" href="/api/reports/'+report.id+'/download?format=handover">Editable customer package</a><a class="button" href="/api/reports/'+report.id+'/download?format=zip">Complete ZIP</a><a class="button" href="/api/reports/'+report.id+'/download?format=html">Customer report</a>'+button('renew-report','Prepare following edition',report.id))+'</section>';
+ }
+ const entries=renewalInput.entries.map((entry,index)=>{
+  const choice=renewalChoices.entries.find(value=>value.working.id===entry.decisionId),working=choice.working;
+  return '<fieldset class="renewal-entry"><legend>'+esc(working.title)+'</legend><p>'+esc(working.owner)+' · Current revision '+working.revision+' · '+esc(meta.variables[working.rule.variable].title)+' · '+esc(working.rule.aggregation)+' '+esc(working.rule.operator==='gte'?'≥':'≤')+' '+num(working.rule.threshold)+' '+esc(working.rule.unit)+'</p>'+
+   '<label>Retained source for this edition<select name="capture-'+index+'" required>'+choice.candidates.map(c=>option(c.id,c.request.title+' · '+c.metadata.model+' · '+(c.provenance.retrievedAt??c.capturedAt),c.id===entry.captureId)).join('')+'</select></label>'+
+   '<div class="row"><label>Start UTC<input name="start-'+index+'" required value="'+esc(entry.startUtc)+'"></label><label>End UTC<input name="end-'+index+'" required value="'+esc(entry.endUtc)+'"></label></div>'+
+   '<label>Reviewed operating disposition<select name="disposition-'+index+'">'+['review','monitor','reschedule','proceed'].map(value=>option(value,value,value===entry.disposition)).join('')+'</select></label>'+
+   '<label>Edition notes<textarea name="notes-'+index+'" maxlength="10000">'+esc(entry.notes??'')+'</textarea></label></fieldset>';
+ }).join('');
+ return '<section class="panel" id="report-renewal"><h2>Prepare the next customer edition</h2><p>Prior frozen report: '+esc(renewalChoices.report.title)+' · '+esc(renewalChoices.report.createdAt)+'</p>'+
+  '<p>Choose retained sources acquired through Sites & requests, or received in a complete customer package. Current working rules keep their exact variable, unit, threshold and coverage requirement. Review the operating disposition for the new edition.</p>'+
+  '<form id="renewal-form"><fieldset class="renewal-fields"'+(renewalBusy?' disabled':'')+'><div class="row"><label>Customer report title<input name="renewalTitle" required maxlength="240" value="'+esc(renewalInput.title)+'"></label><label>Responsible operator<input name="renewalOwner" required maxlength="120" value="'+esc(renewalInput.owner)+'"></label></div>'+
+  '<label>Report notes<textarea name="renewalNotes" maxlength="10000">'+esc(renewalInput.notes??'')+'</textarea></label>'+
+  '<div class="row"><label>Shift all UTC windows, hours<input type="number" step="0.5" name="shiftHours" value="12"></label>'+button('shift-renewal','Apply UTC window shift')+'</div>'+
+  '<p class="muted">A UTC shift preserves elapsed duration. For a local calendar change across daylight saving time, enter each intended UTC boundary explicitly.</p>'+entries+
+  actions('<button class="primary">Review complete next edition</button>'+button('close-renewal','Close renewal'))+'</fieldset></form>'+
+  '<div id="renewal-review">'+renewalReviewPanel()+'</div></section>';
+}
+function readRenewalForm(form){
+ const data=new FormData(form),value=name=>String(data.get(name)??'');
+ return {...renewalInput,title:value('renewalTitle'),owner:value('renewalOwner'),notes:value('renewalNotes'),
+  entries:renewalInput.entries.map((entry,index)=>({...entry,captureId:value('capture-'+index),
+   startUtc:value('start-'+index),endUtc:value('end-'+index),disposition:value('disposition-'+index),notes:value('notes-'+index)}))};
+}
+function invalidateRenewal(event){
+ const form=event.target.closest?.('#renewal-form');if(!form||renewalBusy)return;
+ renewalInput=readRenewalForm(form);renewalReview=null;
+ const review=$('#renewal-review');if(review)review.innerHTML='';
+}
+document.addEventListener('input',invalidateRenewal);document.addEventListener('change',invalidateRenewal);
 function reportsTab(){
  const selections=state.decisions.map(d=>'<label class="check"><input type="checkbox" name="decision" value="'+d.id+'"> <span>'+esc(d.title)+' · '+esc(decisionRevisionLabel(d))+'<br><small>'+esc(d.disposition)+' · '+esc(d.result.outcome)+'</small></span></label>').join('');
- const rows=state.reports.map(r=>'<tr><td>'+esc(r.title)+'<br><small>'+esc(r.owner)+' · '+esc(r.createdAt)+'</small></td><td>'+r.decisions.length+' decisions / '+r.captures.length+' sources</td><td>'+actions('<a class="button" href="/api/reports/'+r.id+'/download?format=handover">Editable package</a><a class="button" href="/api/reports/'+r.id+'/download?format=zip">Complete ZIP</a><a class="button" href="/api/reports/'+r.id+'/download?format=html">HTML report</a><a class="button" href="/api/reports/'+r.id+'/download?format=json">JSON</a>')+'<small class="mono">'+esc(r.sha256)+'</small></td></tr>').join('');
- return receivingPanel()+'<div class="grid"><section class="panel"><h2>Freeze selected decisions</h2><form id="report-form"><label>Report title<input name="title" required></label><label>Responsible operator<input name="owner" required></label><h3>Exact decision revisions</h3>'+selections+'<label>Handover notes<textarea name="notes"></textarea></label>'+actions('<button class="primary"'+(!selections?' disabled':'')+'>Freeze report</button>')+'</form><p class="muted">The frozen report keeps these decision revisions and exact original source hashes. Subsequent operating changes remain separate.</p></section><section class="panel"><h2>Frozen reports</h2>'+(rows?'<div class="table"><table><thead><tr><th>Report</th><th>Selected content</th><th>Download</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<p class="empty">Freeze one or more decisions to prepare a handover.</p>')+'</section></div>';
+ const rows=state.reports.map(r=>'<tr><td>'+esc(r.title)+'<br><small>'+esc(r.owner)+' · '+esc(r.createdAt)+'</small></td><td>'+r.decisions.length+' decisions / '+r.captures.length+' sources</td><td>'+actions('<a class="button" href="/api/reports/'+r.id+'/download?format=handover">Editable package</a><a class="button" href="/api/reports/'+r.id+'/download?format=zip">Complete ZIP</a><a class="button" href="/api/reports/'+r.id+'/download?format=html">HTML report</a><a class="button" href="/api/reports/'+r.id+'/download?format=json">JSON</a>'+button('renew-report','Prepare next edition',r.id))+'<small class="mono">'+esc(r.sha256)+'</small></td></tr>').join('');
+ return receivingPanel()+renewalPanel()+'<div class="grid"><section class="panel"><h2>Freeze selected decisions</h2><form id="report-form"><label>Report title<input name="title" required></label><label>Responsible operator<input name="owner" required></label><h3>Exact decision revisions</h3>'+selections+'<label>Handover notes<textarea name="notes"></textarea></label>'+actions('<button class="primary"'+(!selections?' disabled':'')+'>Freeze report</button>')+'</form><p class="muted">The frozen report keeps these decision revisions and exact original source hashes. Subsequent operating changes remain separate.</p></section><section class="panel"><h2>Frozen reports</h2>'+(rows?'<div class="table"><table><thead><tr><th>Report</th><th>Selected content</th><th>Download</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<p class="empty">Freeze one or more decisions to prepare a handover.</p>')+'</section></div>';
 }
 function recoveryTab(){
  if(meta.reviewMode)return receivingHistoryPanel();
@@ -121,6 +212,43 @@ document.addEventListener('click',async e=>{
  try{
   notice('');if(target.id==='refresh'){await refresh();return;}if(target.dataset.tab){tab=target.dataset.tab;render();return;}
   const action=target.dataset.action,id=target.dataset.id;
+  if(action==='renew-report'){
+   if(renewalBusy)return;
+   const selection=++renewalSelection;renewalBusy=true;
+   try{
+    const choices=await api('/api/reports/'+encodeURIComponent(id)+'/renewal');
+    if(selection===renewalSelection){
+     renewalChoices=choices;renewalInput=JSON.parse(JSON.stringify(choices.selection));renewalReview=null;renewalResult=null;tab='reports';
+    }
+   }finally{renewalBusy=false;render();}
+   $('#report-renewal')?.scrollIntoView({block:'start'});return;
+  }
+  if(action==='close-renewal'){
+   if(renewalBusy)return;
+   renewalSelection++;renewalChoices=null;renewalInput=null;renewalReview=null;render();return;
+  }
+  if(action==='shift-renewal'){
+   if(renewalBusy||!renewalInput)return;
+   const form=$('#renewal-form'),hours=Number(new FormData(form).get('shiftHours'));
+   if(!Number.isFinite(hours)||Math.abs(hours)>8784)throw new Error('Enter a UTC shift within one year.');
+   const input=readRenewalForm(form),shift=hours*3600000;
+   input.entries=input.entries.map(entry=>{
+    const start=Date.parse(entry.startUtc),end=Date.parse(entry.endUtc);
+    if(!Number.isFinite(start)||!Number.isFinite(end))throw new Error('Enter valid UTC window boundaries.');
+    return {...entry,startUtc:new Date(start+shift).toISOString(),endUtc:new Date(end+shift).toISOString()};
+   });
+   renewalInput=input;renewalReview=null;render();return;
+  }
+  if(action==='commit-renewal'){
+   if(renewalBusy||!renewalReview)return;
+   const reviewed=renewalReview,selection=renewalSelection;renewalBusy=true;render();
+   try{
+    const result=await api('/api/renewal/commit',{selection:reviewed.selection,expectedReviewSha256:reviewed.reviewSha256});
+    if(selection===renewalSelection){renewalResult=result;renewalChoices=null;renewalInput=null;renewalReview=null;}
+    await refresh();notice(result.reopened?'Reopened the same customer edition.':'Saved all reviewed decisions and the complete next customer edition.');
+   }finally{renewalBusy=false;render();}
+   return;
+  }
   if(action==='review-handover'||action==='receive-handover'){
    if(receivingBusy||!receivingInput)return;
    const input=receivingInput,selection=receivingSelection,review=receivingReview;
@@ -149,7 +277,9 @@ document.addEventListener('click',async e=>{
   else if(action==='select-request'){requestId=id;render();}
   else if(action==='view-source'){captureId=id;await ensureSource(id);decisionEdit=null;tab='analysis';render();}
   else if(action==='capture-source'){const q=state.requests.find(q=>q.id===id);await start('source',{requestId:id,args:{expectedRevision:q.revision}});}
-  else if(action==='source-reprocess'){const q=state.requests.find(q=>q.id===id);await start('source-reprocess',{requestId:id,args:{expectedRevision:q.revision}});}
+  else if(action==='source-reprocess'){const q=state.requests.find(q=>q.id===id);await start('source-reprocess',{requestId:id,args:{expectedRevision:q.revision,...(target.dataset.readId?{sourceReadId:target.dataset.readId}:{})}});}
+  else if(action==='more-source-history')await loadProviderHistory(id);
+  else if(action==='reload-source-history')await loadProviderHistory();
   else if(action==='execute')await start('execute',{requestId:id});
   else if(action==='recover')await start('recover',{requestId:id});
   else if(action==='copy-request'){const q=state.requests.find(q=>q.id===id),r=await api('/api/requests',{siteId:q.spec.site.id,siteRevision:q.spec.site.revision,title:q.spec.title+' copy',request:q.spec.request});requestId=r.id;await refresh();}
@@ -164,7 +294,16 @@ document.addEventListener('click',async e=>{
 document.addEventListener('submit',async e=>{
  const form=e.target;if(!(form instanceof HTMLFormElement))return;e.preventDefault();const f=new FormData(form),v=k=>f.get(k);const submit=form.querySelector('button[type=submit],button:not([type])');if(submit)submit.disabled=true;
  try{notice('');
-  if(form.id==='site-form'){const site={name:v('name'),latitude:Number(v('latitude')),longitude:Number(v('longitude')),timezone:v('timezone'),cellSelection:v('cellSelection'),notes:v('notes')};if(v('elevation')!=='')site.elevation=v('elevation')==='nan'?'nan':Number(v('elevation'));await api('/api/sites',{...(v('id')?{id:v('id')}:{}),expectedRevision:Number(v('expectedRevision')),site});await refresh();}
+  if(form.id==='renewal-form'){
+   if(renewalBusy)return;
+   const input=readRenewalForm(form),selection=renewalSelection;renewalInput=input;renewalBusy=true;render();
+   try{
+    const result=await api('/api/renewal/review',input);
+    if(selection===renewalSelection){renewalReview=result;renewalInput=JSON.parse(JSON.stringify(result.selection));}
+   }finally{renewalBusy=false;render();}
+   $('#renewal-review')?.scrollIntoView({block:'start'});
+  }
+  else if(form.id==='site-form'){const site={name:v('name'),latitude:Number(v('latitude')),longitude:Number(v('longitude')),timezone:v('timezone'),cellSelection:v('cellSelection'),notes:v('notes')};if(v('elevation')!=='')site.elevation=v('elevation')==='nan'?'nan':Number(v('elevation'));await api('/api/sites',{...(v('id')?{id:v('id')}:{}),expectedRevision:Number(v('expectedRevision')),site});await refresh();}
   else if(form.id==='request-form'){const site=state.sites.find(s=>s.id===v('siteId')),q=await api('/api/requests',{siteId:site.id,siteRevision:site.revision,title:v('title'),request:{family:v('family'),model:v('model'),startDate:v('startDate'),endDate:v('endDate'),variables:f.getAll('variables'),units:{temperature:v('temperature'),wind:v('wind'),precipitation:v('precipitation')}}});requestId=q.id;await refresh();}
   else if(form.id==='prepare-form'){const q=selected();await start('prepare',{requestId:q.id,args:{expectedRevision:q.revision,maxAtomic:v('maxAtomic'),acceptIndex:Number(v('acceptIndex')),directEvaluation:f.has('directEvaluation')}});}
   else if(form.id==='decision-form'){const decision={title:v('title'),owner:v('owner'),disposition:v('disposition'),notes:v('notes'),rule:{variable,unit:sourceView.series.unit,startUtc:v('startUtc'),endUtc:v('endUtc'),aggregation:v('aggregation'),operator:v('operator'),threshold:Number(v('threshold')),minimumCoverage:Number(v('minimumCoverage'))}};await api('/api/decisions',{...(decisionEdit?{id:decisionEdit.id,expectedRevision:decisionEdit.revision}:{}),captureId,decision});decisionEdit=null;await refresh();}

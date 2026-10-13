@@ -49,7 +49,13 @@ def require(condition, message):
 def private_directory(path):
     path = Path(path)
     require(path.is_absolute(), "Use an absolute owned destination")
-    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    # Path.mkdir applies mode only to the leaf. New intermediate source
+    # directories must retain the same private custody under any caller umask.
+    previous_umask = os.umask(0o077)
+    try:
+        path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    finally:
+        os.umask(previous_umask)
     require(path.resolve() == path, "The destination must not traverse aliases")
     st = path.lstat()
     require(stat.S_ISDIR(st.st_mode) and not path.is_symlink(),

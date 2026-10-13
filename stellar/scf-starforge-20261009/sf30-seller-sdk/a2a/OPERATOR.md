@@ -262,3 +262,7 @@ The worker reads the original client and upstream service dependency declaration
 Successful completion produces `work/joint-result.json`, the upstream and merchant results, and two complete ZIPs beneath `work/delivery/`: the exact editable source/lockfile closure and the original received files/source recording/screenshots. Each ZIP includes a complete member manifest. The result delivery selects only completed native file sets and the merchant's verified export list. Host bearer credentials, live database control files, browser profiles and package caches remain private operating state.
 
 Keep that invocation alive until the complete ZIPs and their identities are preserved outside its private storage. Source materialization, installation, queue admission and scientific/business task completion are separate recorded stages. Resume the original owner, source and request journal after a confirmed interruption; do not start a second analytical task population.
+
+## Customer commissioning and receiving register
+
+The [complete customer commissioning guide](COMMISSIONING.md) connects a retained useful-work plan to actual buyer, merchant and source-period approvals, the original observed procedure catalogue, exact prepared or adopted messages, full native output editions and attributed receiving decisions. Use **Customer commissioning** in the same operator application. The register is part of the original project/request/portable history. Its local review does not establish settlement; original SF30/SF82 payment authority remains unchanged.

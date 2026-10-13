@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {readProductInput,compileWeatherDistribution,launchWeatherMerchant,initializeWeatherWithOperator} from './application.mjs';
 import {initializeWeather,initializeWeatherReview,readWeatherSettings,WeatherWorkspace,cleanResult,safeCode,verifyWeather,restoreWeather} from './workspace.mjs';
 import {exportFrozenReport} from './exports.mjs';
-import {publishJson,absolute,readPrivate} from './files.mjs';
+import {publish,publishJson,absolute,readPrivate,readJson} from './files.mjs';
 import {need,keys} from './contract.mjs';
 import {MAX_HANDOVER_BYTES,MAX_LEGACY_ARCHIVE_BYTES} from './portable.mjs';
 
@@ -28,8 +28,13 @@ const HELP=[
  'status | site-save | request-save | decision-save | report-freeze',
  '  --settings SETTINGS [--input JSON]',
  'source | source-reprocess | prepare | execute | recover | inspect --settings SETTINGS --request REQUEST_ID [--input JSON]',
+ 'source-history --settings SETTINGS --request REQUEST_ID [--input PAGE.json]',
+ 'source-export --settings SETTINGS --read-id READ_ID --output NEW_FILE',
  'series --settings SETTINGS --capture CAPTURE_ID --variable VARIABLE',
  'compare --settings SETTINGS --left CAPTURE_ID --right CAPTURE_ID --variable VARIABLE',
+ 'renewal-choices --settings SETTINGS --report REPORT_ID [--output NEW_SELECTION.json]',
+ 'renewal-review --settings SETTINGS --input SELECTION.json [--output NEW_REVIEW.json]',
+ 'renewal-commit --settings SETTINGS --input SELECTION.json --expected-sha REVIEW_SHA256',
  'report-export --settings SETTINGS --report REPORT_ID --output NEW_FILE [--format zip|html|json|handover]',
  '',
  'recovery review --settings SETTINGS',
@@ -106,7 +111,7 @@ export async function main(args=process.argv.slice(2)){
   try{const result=action==='review'?await workspace.recoveryReview():await workspace.snapshot({output:absolute(opt['--output']),passphraseEnv,signal:controller.signal});print(result);return result;}finally{await workspace.close();}
   }finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}
  }
- const opt=options(args,['--settings','--input','--request','--capture','--variable','--unit','--left','--right','--report','--output','--format','--port','--descriptor','--expected-sha']);
+ const opt=options(args,['--settings','--input','--request','--capture','--variable','--unit','--left','--right','--report','--output','--format','--port','--descriptor','--expected-sha','--read-id']);
  const workspace=await WeatherWorkspace.open(await readWeatherSettings(absolute(opt['--settings'])));
  if(command==='serve'){
   try{const {startWeatherServer}=await import('./server.mjs');const session=await startWeatherServer({workspace,port:Number(opt['--port']??0)});return serveLifetime(session,opt['--descriptor'],{schema:'stellar-forge.weather-operator-runtime.v1'});}
@@ -117,24 +122,39 @@ export async function main(args=process.argv.slice(2)){
  try{
   const isReceiving=command==='handover-review'||command==='handover-receive';
   const content=isReceiving?new TextDecoder('utf-8',{fatal:true}).decode(await readPrivate(absolute(opt['--input']),MAX_HANDOVER_BYTES)):null;
-  const input=opt['--input']&&!isReceiving?await readProductInput(absolute(opt['--input'])):{};
+  const isRenewal=command==='renewal-review'||command==='renewal-commit';
+  const input=opt['--input']&&!isReceiving?(isRenewal?await readJson(absolute(opt['--input']),1048576):await readProductInput(absolute(opt['--input']))):{};
   let result;
   if(command==='status')result=await workspace.summary();
   else if(command==='handover-review')result=await workspace.reviewHandover(content);
   else if(command==='handover-receive')result=await workspace.receiveHandover(content,{expectedSha256:opt['--expected-sha']});
+  else if(command==='renewal-choices'){
+   result=await workspace.renewalChoices(opt['--report']);
+   if(opt['--output'])result={...result,selectionFile:await publishJson(absolute(opt['--output']),result.selection)};
+  }
+  else if(command==='renewal-review'){
+   result=await workspace.reviewRenewal(input);
+   if(opt['--output'])result={...result,reviewFile:await publishJson(absolute(opt['--output']),result)};
+  }
+  else if(command==='renewal-commit')result=await workspace.commitRenewal(input,{expectedReviewSha256:opt['--expected-sha']});
   else if(command==='site-save')result=await workspace.saveSite(input);
   else if(command==='request-save')result=await workspace.saveRequest(input);
   else if(command==='decision-save')result=await workspace.saveDecision(input);
   else if(command==='report-freeze')result=await workspace.freezeReport(input);
   else if(command==='source')result=await workspace.sourceCapture(opt['--request'],{...input,signal:controller.signal});
   else if(command==='source-reprocess')result=await workspace.reprocessSource(opt['--request'],input);
+  else if(command==='source-history')result=await workspace.sourceHistory(opt['--request'],input);
+  else if(command==='source-export'){
+   const read=await workspace.providerRead(opt['--read-id']);
+   result={read:cleanResult(read),output:await publish(absolute(opt['--output']),read.raw)};
+  }
   else if(command==='prepare')result=await workspace.prepare(opt['--request'],{...input,signal:controller.signal});
   else if(command==='execute')result=await workspace.execute(opt['--request'],{signal:controller.signal});
   else if(command==='recover')result=await workspace.recover(opt['--request']);
   else if(command==='inspect')result=await workspace.inspect(opt['--request']);
   else if(command==='series')result=await workspace.series(opt['--capture'],opt['--variable'],{unit:opt['--unit']});
   else if(command==='compare')result=await workspace.compare(opt['--left'],opt['--right'],{variable:opt['--variable'],unit:opt['--unit']});
-  else if(command==='report-export')result=await workspace.serial(async()=>{const report=workspace.store.report(opt['--report']),captures=report.captures.map(c=>workspace.store.capture(c.id));return exportFrozenReport(report,captures,{output:absolute(opt['--output']),format:opt['--format']??'zip',...(opt['--format']==='handover'?{handover:workspace.store.handover(report.id)}:{}),signal:controller.signal});});
+  else if(command==='report-export')result=await workspace.serial(async()=>{const report=workspace.store.report(opt['--report']),captures=report.captures.map(c=>workspace.store.capture(c.id));return exportFrozenReport(report,captures,{output:absolute(opt['--output']),format:opt['--format']??'zip',...(opt['--format']==='handover'||(opt['--format']??'zip')==='zip'&&report.renewal?{handover:workspace.store.handover(report.id)}:{}),signal:controller.signal});});
   else need(false,'CLI_COMMAND_INVALID');
   print(result);return result;
  }finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);await workspace.close();}

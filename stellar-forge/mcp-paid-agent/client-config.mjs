@@ -3,6 +3,7 @@
 import { readFile, writeFile, stat } from 'node:fs/promises';
 import { isAbsolute, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { normalizeCatalogConfiguration, normalizeCatalogUrl } from './catalogs.mjs';
 
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const pathValue = (value, field) => {
@@ -10,12 +11,6 @@ const pathValue = (value, field) => {
     throw new TypeError(field + ' must be an absolute local path');
   return value;
 };
-function discoveryValue(value) {
-  const url = new URL(value);
-  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.hash || url.search)
-    throw new TypeError('Discovery must be an HTTP(S) base URL without credentials, query or fragment');
-  return url.href;
-}
 function originValue(value) {
   const url = new URL(value);
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password ||
@@ -26,7 +21,7 @@ function originValue(value) {
 
 /** Only named public configuration is copied. Ambient credentials are never exported. */
 export function createMcpClientConfiguration({
-  name = 'stellar-forge', discoveryUrl, stateDirectory, allowedResourceOrigins = [],
+  name = 'stellar-forge', discoveryUrl, catalogsFile = null, stateDirectory, allowedResourceOrigins = [],
   operatorModule = null, nodePath = process.execPath,
   entryPath = fileURLToPath(new URL('./stdio.mjs', import.meta.url)), existingConfiguration = {},
 } = {}) {
@@ -37,8 +32,13 @@ export function createMcpClientConfiguration({
   if (Object.hasOwn(existingConfiguration.mcpServers ?? {}, name))
     throw new TypeError('That MCP server name already exists; choose an unused name');
   if (!Array.isArray(allowedResourceOrigins)) throw new TypeError('Merchant origins must be an array');
+  if (discoveryUrl === undefined && catalogsFile === null && operatorModule === null)
+    throw new TypeError('Select a discovery URL, a catalog file, or an existing operator with catalog configuration.');
   const env = {
-    BAZAAR_DISCOVERY_URL: discoveryValue(discoveryUrl),
+    // Explicit empty values prevent an unrelated inherited source selection from
+    // changing this registration. The existing host treats an empty setting as absent.
+    BAZAAR_DISCOVERY_URL: discoveryUrl === undefined ? '' : normalizeCatalogUrl(discoveryUrl),
+    BAZAAR_CATALOGS_FILE: catalogsFile === null ? '' : pathValue(catalogsFile, 'Catalog file'),
     MCP_STATE_DIR: pathValue(stateDirectory, 'State directory'),
     PAID_RESOURCE_ORIGINS: [...new Set(allowedResourceOrigins.map(originValue))].join(','),
     // Explicit empty value keeps an unrelated inherited host adapter out of a
@@ -54,7 +54,8 @@ export function createMcpClientConfiguration({
 
 const help = `Stellar Forge MCP host configuration
 
-  node client-config.mjs --discovery URL --state ABSOLUTE_DIRECTORY
+  node client-config.mjs --state ABSOLUTE_DIRECTORY
+    [--discovery URL] [--catalogs ABSOLUTE_CATALOG_JSON]
     [--origin ORIGIN ...] [--operator ABSOLUTE_MODULE] [--name SERVER_NAME]
     [--merge EXISTING_HOST_JSON --output NEW_PRIVATE_JSON]
     [--output NEW_PRIVATE_JSON]
@@ -64,6 +65,11 @@ refer to this installed Node and source/package. The output uses mcpServers with
 command, args and env. A new file is created with mode 0600; existing files and
 existing server registrations are preserved. A merge requires a separate output
 file so unrelated host credentials stay in private local configuration.
+
+Select --discovery for one source, --catalogs for a named source list, or an existing
+--operator whose original module exports discoveryCatalogs. A catalog JSON file is
+validated before generation and read again by the host at launch. If --discovery
+is also supplied, it must match the file's configured default.
 `;
 
 export async function main(args = process.argv.slice(2)) {
@@ -71,14 +77,25 @@ export async function main(args = process.argv.slice(2)) {
     process.stdout.write(help); return;
   }
   const options = {}, origins = [];
-  const allowed = new Set(['--discovery', '--state', '--origin', '--operator', '--name', '--merge', '--output']);
+  const allowed = new Set(['--discovery', '--catalogs', '--state', '--origin', '--operator', '--name', '--merge', '--output']);
   for (let index = 0; index < args.length; index += 2) {
     const key = args[index], value = args[index + 1];
     if (!allowed.has(key) || !value || value.startsWith('--') ||
         (key !== '--origin' && Object.hasOwn(options, key))) throw new TypeError('Invalid or repeated option');
     if (key === '--origin') origins.push(value); else options[key] = value;
   }
-  if (!options['--discovery'] || !options['--state']) throw new TypeError('--discovery and --state are required');
+  if (!options['--state'] || (!options['--discovery'] && !options['--catalogs'] && !options['--operator']))
+    throw new TypeError('--state and a discovery URL, catalog file or configured operator are required');
+  if (options['--catalogs']) {
+    const filename = pathValue(options['--catalogs'], 'Catalog file');
+    const metadata = await stat(filename);
+    if (!metadata.isFile() || metadata.size > 65536)
+      throw new TypeError('Catalog configuration must be a JSON file at most 64 KiB');
+    const bytes = await readFile(filename);
+    if (bytes.length > 65536) throw new TypeError('Catalog configuration exceeds 64 KiB');
+    const discoveryCatalogs = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes));
+    normalizeCatalogConfiguration({discoveryUrl:options['--discovery'], discoveryCatalogs});
+  }
   if (options['--merge'] && !options['--output']) throw new TypeError('--merge requires a separate --output file');
   let existingConfiguration;
   if (options['--merge']) {
@@ -88,6 +105,7 @@ export async function main(args = process.argv.slice(2)) {
   }
   const name = options['--name'] ?? 'stellar-forge';
   const result = createMcpClientConfiguration({ name, discoveryUrl: options['--discovery'],
+    catalogsFile: options['--catalogs'] ?? null,
     stateDirectory: options['--state'], allowedResourceOrigins: origins,
     operatorModule: options['--operator'] ?? null, existingConfiguration });
   if (options['--output']) {

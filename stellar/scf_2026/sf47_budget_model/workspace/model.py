@@ -429,13 +429,15 @@ def inspect_planning_history(document, raw_source):
 
 
 class Workspace:
-    def __init__(self, root, source_path):
+    def __init__(self, root, source_path, *, on_created=None):
         self.root = Path(root).expanduser().resolve()
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.lock_handle = None
         self.db = None
         self.mutex = threading.RLock()
         try:
+            if on_created is not None:
+                on_created(self)
             self.lock_handle = open(self.root / "workspace.lock", "a+b")
             try:
                 fcntl.flock(self.lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -480,14 +482,12 @@ class Workspace:
 
     def close(self):
         with self.mutex:
-            try:
-                if self.db is not None:
-                    self.db.close()
-                    self.db = None
-            finally:
-                if self.lock_handle is not None:
-                    self.lock_handle.close()
-                    self.lock_handle = None
+            if self.db is not None:
+                self.db.close()
+                self.db = None
+            if self.lock_handle is not None:
+                self.lock_handle.close()
+                self.lock_handle = None
 
     def _transaction(self, request_id, payload, action):
         request_id = short_id(request_id, "Request ID")
@@ -576,7 +576,7 @@ class Workspace:
             scenario, planning, computed = report(merge_scenario(current["scenario"], patch), planning)
             return {"scenario": scenario, "planning": planning, "report": computed}
 
-    def save(self, plan_id, expected_revision, patch, planning, note, request_id):
+    def save(self, plan_id, expected_revision, patch, planning, note, request_id, *, _within_transaction=False):
         note = text(note, "Revision note", 4000, True)
         payload = {"action": "save", "id": plan_id, "expectedRevision": expected_revision,
                    "patch": patch, "planning": planning, "note": note}
@@ -588,6 +588,10 @@ class Workspace:
             if digest({"scenario": scenario, "planning": normalized}) == current["contentSha256"]:
                 return {**current, "unchanged": True}
             return self._append(plan_id, current["currentRevision"] + 1, scenario, normalized, computed, note)
+        if _within_transaction:
+            if not self.db.in_transaction:
+                raise RuntimeError("Native planning commissioning requires the original active workspace transaction.")
+            return action()
         return self._transaction(request_id, payload, action)
 
     def restore(self, plan_id, expected_revision, selected_revision, note, request_id):

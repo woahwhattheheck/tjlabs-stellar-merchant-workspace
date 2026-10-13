@@ -1,0 +1,22 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "canadabuys-bidder-desk",
+  "heading": "## CanadaBuys qualification, bid decisions and complete customer receiving",
+  "sources": [
+    {
+      "id": "canadabuys-bidder-desk",
+      "label": "CanadaBuys qualification, bid decisions and complete workspace receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/BIDDER_DESK.md",
+      "editions": [
+        {
+          "commit": "3bed4c455063ce18cf24ee50cebdc47b89f35825",
+          "bytes": 18673,
+          "sha256": "102ff20bcf8cb65aefdeb6c80d3df365496432b91f0c8ca5195710da3e965f7a",
+          "git_blob": "9e0d2ecafa3afe5399d29e593e5640ab8bbb4517"
+        }
+      ]
+    }
+  ]
+}

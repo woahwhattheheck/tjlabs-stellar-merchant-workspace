@@ -248,3 +248,27 @@ The continuation runs the actual registered application command against the exis
 The output directory contains the actual application startup record and logs, the full CSV delivered through merchant tools, the complete package reconstructed from dataset pages, and `result.json` with source identity, page/chunk counts, preserved workshare, and owned-service closure. The complete source download uses one immutable descriptor. Publication lookup reads its indexed native row directly, keeping file transfers independent of notice-view reconstruction.
 
 For programmatic use, import `operateCanadaBuysTools({sourceDirectory, caseDirectory, outputDirectory})`. The function keeps its output directory on an error and includes that path in `error.operatorToolsDirectory`, so a correction can continue the same saved case.
+
+
+### Operate the saved desk through the HTTP client
+
+`operator/OPERATING_API.mjs` performs the complete operator workflow through existing CanadaBuysClient instances: it retains the full source CSV and original notice history, saves qualification and partner workshare content with current revisions, downloads all report formats, exports the complete workspace, and receives that exact package into the selected receiving application. Supply the same output directory when explicitly continuing an interrupted operation; the original package and write receipts are retained, and saved workshare identities are reused.
+
+```js
+import { CanadaBuysClient } from '../client.mjs';
+import { operateCanadaBuysApi } from './OPERATING_API.mjs';
+
+const result = await operateCanadaBuysApi({
+  client: new CanadaBuysClient(originalOperatorUrl),
+  receivingClient: new CanadaBuysClient(originalReceivingUrl),
+  noticeId: retainedNoticeId,
+  review: actualQualification,
+  workshare: actualPartnerWorkshare,
+  outputDirectory: originalOperationDirectory
+});
+
+```
+
+Both applications are caller-owned existing workspaces. The result identifies `interface: 'http-api'` and retains the source, review, workshare, reports, complete package and receiving records. A supplied `workshareId` selects a particular saved workshare; otherwise an unambiguous workshare with the same notice, title and partner is reused before creation. Mutation failures are returned with the retained operation directory. The caller can read the existing workspace and deliberately continue the same operation.
+
+`OPERATING_TOOLS.mjs` accepts a completed original customer result with either a browser `browser` journey or an HTTP `operator` journey. It carries the actual interface name into its result, then opens the same SQLite databases through Applications and the registered 37-tool merchant provider.

@@ -1,0 +1,26 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "grant-cohort-delivery",
+  "description": "Compare saved customer adoption plans with original frozen cohort delivery in Grant Operations.",
+  "commands": {
+    "grant-cohort-delivery": "stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_cli.mjs"
+  },
+  "commandDescriptions": {
+    "grant-cohort-delivery": "Compare original adoption plans and frozen cohort reviews; retain customer identities, delivery dates and complete exports"
+  },
+  "exports": {
+    "./grant/cohort-delivery": {
+      "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_comparison.d.mts",
+      "import": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_comparison.mjs"
+    },
+    "./grant/cohort-delivery-agent": {
+      "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_agent.d.mts",
+      "import": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_delivery_agent.mjs"
+    }
+  },
+  "supportFiles": [
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_cohort_delivery.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_cohort_delivery.css",
+    "stellar/scf_2026/sf47_budget_model/workspace/COHORT-DELIVERY.md"
+  ]
+}

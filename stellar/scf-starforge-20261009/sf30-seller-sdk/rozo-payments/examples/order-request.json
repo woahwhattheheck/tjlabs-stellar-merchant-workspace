@@ -1,0 +1,18 @@
+{
+  "workspaceId": "REPLACE_WITH_ACTUAL_WORKSPACE_ID",
+  "requestId": "order:original-001",
+  "expectedRevision": 1,
+  "actor": "Selected operator",
+  "command": "order.save",
+  "payload": {
+    "id": "order-001",
+    "profileId": "merchant",
+    "orderId": "REPLACE_WITH_ORIGINAL_ORDER_ID",
+    "title": "Original merchant order",
+    "source": {
+      "chainId": "REPLACE_WITH_PROVIDER_CHAIN_ID",
+      "tokenSymbol": "REPLACE_WITH_TOKEN_SYMBOL",
+      "amount": "5.000000"
+    }
+  }
+}

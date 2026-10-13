@@ -9,6 +9,8 @@ import {fileURLToPath} from 'node:url';
 import {openAccountingWorkspace} from './stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/store.mjs';
 import {createXeroReceivablesServer} from './stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/server.mjs';
 import {XeroReceivablesClient,xeroCashCaptureArguments} from './stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/client.mjs';
+import {createCommissioningCollectionsServer} from './stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/server.mjs';
+import {CommissioningCollectionsClient,commissioningCaptureArguments,commissioningImportArguments} from './stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/client.mjs';
 import {json,sha,invoiceSummary,receiptSummary} from './stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/core.mjs';
 
 function sourceStrKey(version,fill) {
@@ -35,8 +37,9 @@ const outcomes=[],sourceHashes={},invoiceHashes={},identities={};
 const scratch=await mkdtemp(join(process.env.SCF_CASH_TMPDIR??tmpdir(),'xero-cash-original-'));
 const directory=join(scratch,'accounting'),outboxDir=join(scratch,'outbox'),
   proofDir=join(scratch,'proofs'),termsFile=join(scratch,'terms.json');
-let workspace=null,service=null,controller=null,xero=null,client=null,stage='original workspace setup',result=null;
+let workspace=null,service=null,controller=null,xero=null,client=null,commissioningService=null,commissioningClient=null,stage='original workspace setup',result=null;
 let baselineCycleId,secondCycleId,firstPackageId,secondPackageId,baselineRequest,secondRequest;
+let commissioningOriginalSourceId,commissioningSourceId,commissioningBaselineId,commissioningCaptureId,commissioningRequest;
 const persistResult=async value=>{
   const text=json(value);
   if(process.env.SCF_CASH_RESULT)await writeFile(resolve(process.env.SCF_CASH_RESULT),text,{mode:0o600});
@@ -54,6 +57,8 @@ try {
     service=await createXeroReceivablesServer({workspace,port:0,includeReceivables:false,includeCustomerStatements:false});
     controller=service.receivables;xero=service.controller;
     client=new XeroReceivablesClient({baseUrl:new URL('/api/receivables/xero',service.url).href});
+    commissioningService=await createCommissioningCollectionsServer({workspace,receivables:controller,xero,port:0});
+    commissioningClient=new CommissioningCollectionsClient({baseUrl:new URL('/api/receivables/commissioning',commissioningService.url).href});
   }
   await openOriginal();
   const op=value=>({revision:workspace.state.revision,actor,requestId:randomUUID(),...value});
@@ -471,6 +476,182 @@ try {
   for(const [id,digest] of Object.entries(invoiceHashes))assert.equal(sha((await controller.file(id,'invoice.json')).bytes),digest);
   outcomes.push('The actual HTTP client reads complete saved JSON/CSV/HTML, original source and customer advice, a complete tar handover and the deployed browser module with unchanged bytes.');
 
+
+  stage='original commissioning workshare source and native inventory';
+  const commissioningEconomicState=cashStateSha();
+  const projectSource=(id,name,fee,milestones,payments)=>({id,name,currency:'USD',fee,stage:'scope review',
+    owner:'Original private commissioning operator',case_id:'cash-commissioning-original',
+    invoiceDays:30,milestones,payments});
+  const workshares1={schema:'partner-commissioning-workshares/v1',source_date:day(-10),projects:[
+    projectSource('cash-a','Original implementation',100,['Acceptance','Implementation','Handover'],[30,40,30]),
+    projectSource('cash-b','Next original billing cycle',20,['Next-cycle delivery'],[100]),
+    projectSource('cash-prepaid','Original prepaid scope',30,['Prepaid delivery'],[100]),
+    projectSource('cash-overpaid','Original overpaid scope',20,['Delivery and original cash return'],[100])
+  ]};
+  const workshareBytes1=Buffer.from(json(workshares1)),workshareInput1={
+    file:upload('original-workshare-scopes.json',workshareBytes1),
+    label:'Original scope review',receivedAt:observed(0,'01:00:00.000')};
+  const inspection1=await commissioningClient.inspectSource(workshareInput1);
+  assert.equal(inspection1.file.sha256,sha(workshareBytes1));assert.equal(inspection1.projectCount,4);
+  assert.equal(inspection1.projects[0].id,'cash-a');
+  assert.deepEqual(inspection1.projects[0].milestones.map(row=>row.amount),['30.00','40.00','30.00']);
+  const importWorkshareRequest1=commissioningImportArguments(workshareInput1,inspection1,{actor,requestId:randomUUID()});
+  const importedWorkshare1=await commissioningClient.importSource(importWorkshareRequest1);
+  commissioningOriginalSourceId=importedWorkshare1.source.id;
+  assert.equal(importedWorkshare1.source.sha256,sha(workshareBytes1));
+  assert.equal(cashStateSha(),commissioningEconomicState);
+  assert.equal((await commissioningClient.importSource(importWorkshareRequest1)).operation.replayed,true);
+  const lookupSource=await commissioningClient.request(importWorkshareRequest1.requestId);
+  assert.equal(lookupSource.found,true);assert.equal(lookupSource.source.id,commissioningOriginalSourceId);
+  const importIntent=copy(importWorkshareRequest1);delete importIntent.revision;
+  assert.equal(lookupSource.operation.intentSha256,sha(json({action:'commissioning_source_imported',value:importIntent})));
+  const sourceProjects=await commissioningClient.source(commissioningOriginalSourceId,{view:'projects',offset:0,limit:2});
+  assert.equal(sourceProjects.total,4);assert.equal(sourceProjects.items.length,2);
+  assert.equal(sourceProjects.items[0].source.fee,'100');
+  assert.equal(sha(await body(await commissioningClient.sourceFile(commissioningOriginalSourceId,'original-workshares.json'))),
+    sha(workshareBytes1));
+  const nativeInvoices=await commissioningClient.candidates({sourceId:commissioningOriginalSourceId,
+    projectId:'cash-a',view:'invoices',customerId:customer.id,asOf,limit:200});
+  const aCandidate=nativeInvoices.items.find(row=>row.id===a.id);
+  assert.ok(aCandidate);assert.equal(aCandidate.invoiceSha256,invoiceHashes[a.id]);
+  assert.equal(aCandidate.lines[0].id,'service');assert.equal(aCandidate.paid,'90.00');
+  const nativeAllocations=await commissioningClient.candidates({view:'allocations',customerId:customer.id,asOf,limit:200});
+  assert.ok(nativeAllocations.items.some(row=>row.id===allocationAfter.id&&row.active&&row.receiptId===aReceipt.id));
+  const cyclesCandidate=await commissioningClient.candidates({view:'xeroCycles',customerId:customer.id,asOf});
+  assert.ok(cyclesCandidate.items.some(row=>row.id===secondCycleId&&row.reviewSha256===finalPreview.previewSha256));
+  const projectIds=workshares1.projects.map(row=>row.id);
+  const unbound=await commissioningClient.preview(commissioningOriginalSourceId,{
+    label:'Original scopes awaiting explicit customer and milestone bindings',asOf,projectIds,projects:[]});
+  assert.equal(unbound.review.status,'REVIEW');
+  assert.ok(unbound.review.findings.some(row=>row.code==='COMMISSIONING_CUSTOMER_BINDING'));
+  assert.equal(unbound.review.projects[0].sourceStage,'scope review');
+  assert.equal(unbound.review.projects[0].totals.invoicedNet,'0.00');
+  const commissioningBaselineRequest=commissioningCaptureArguments(unbound,{actor,requestId:randomUUID()});
+  const commissioningBaseline=await commissioningClient.capture(commissioningOriginalSourceId,commissioningBaselineRequest);
+  commissioningBaselineId=commissioningBaseline.capture.id;
+  assert.equal(commissioningBaseline.capture.status,'REVIEW');
+  sourceHashes.commissioningOriginalSource=sha(workshareBytes1);
+  sourceHashes.commissioningBaselineReview=sha(await body(await commissioningClient.file(
+    commissioningBaselineId,'commissioning-review.json')));
+  assert.equal(cashStateSha(),commissioningEconomicState);
+
+  stage='explicit original milestone, credit, physical cash and saved Xero bindings';
+  const workshares2=copy(workshares1);workshares2.source_date=asOf;
+  for(const row of workshares2.projects)row.stage='commissioning';
+  const workshareBytes2=Buffer.from(json(workshares2)),workshareInput2={
+    file:upload('original-workshare-commissioning-edition.json',workshareBytes2),
+    label:'Original commissioning edition',replacesSourceId:commissioningOriginalSourceId,
+    receivedAt:observed(0,'01:30:00.000')};
+  const inspection2=await commissioningClient.inspectSource(workshareInput2);
+  const importWorkshareRequest2=commissioningImportArguments(workshareInput2,inspection2,{actor,requestId:randomUUID()});
+  const importedWorkshare2=await commissioningClient.importSource(importWorkshareRequest2);
+  commissioningSourceId=importedWorkshare2.source.id;
+  assert.equal(importedWorkshare2.source.replacesSourceId,commissioningOriginalSourceId);
+  assert.equal((await commissioningClient.sources({projectId:'cash-a'})).total,2);
+  const invoicePart=(invoice,amount)=>({invoiceId:invoice.id,invoiceSha256:invoiceHashes[invoice.id],
+    invoiceLineId:'service',netAmount:amount,taxAmount:'0.00'});
+  const allocationPart=(allocation,amount)=>({allocationId:allocation.id,amount});
+  const milestone=(index,acceptedDate,invoice,net,allocations,credits=[])=>({
+    index,acceptedDate,plannedAcceptedDate:null,delayDays:0,invoiceLines:[invoicePart(invoice,net)],allocations,credits});
+  const scopeSelection={label:'Original scopes reconciled to dated native customer cash',asOf,projectIds,
+    baselineCaptureId:commissioningBaselineId,projects:[
+      {projectId:'cash-a',customerId:customer.id,milestones:[
+        milestone(0,day(-10),a,'30.00',[allocationPart(allocationAfter,'30.00')]),
+        milestone(1,day(-5),a,'40.00',[allocationPart(allocationAfter,'40.00')]),
+        milestone(2,day(-1),a,'30.00',[allocationPart(allocationAfter,'20.00')],
+          [{creditId:credit.id,invoiceLineId:'service',netAmount:'10.00',taxAmount:'0.00'}])
+      ],receipts:[{receiptId:aReceipt.id,amount:'100.00'}],refunds:[],xeroCycleIds:[secondCycleId]},
+      {projectId:'cash-b',customerId:customer.id,milestones:[
+        milestone(0,day(-1),nextInvoice,'20.00',[allocationPart(targetAllocation,'10.00'),allocationPart(nextPrepaid,'10.00')])
+      ],receipts:[],refunds:[],xeroCycleIds:[secondCycleId]},
+      {projectId:'cash-prepaid',customerId:customer.id,milestones:[
+        milestone(0,day(-10),p,'30.00',[allocationPart(pAllocation,'30.00')])
+      ],receipts:[{receiptId:pReceipt.id,amount:'50.00'}],refunds:[],xeroCycleIds:[secondCycleId]},
+      {projectId:'cash-overpaid',customerId:customer.id,milestones:[
+        milestone(0,day(-10),o,'20.00',[allocationPart(oAllocation,'20.00')])
+      ],receipts:[{receiptId:oReceipt.id,amount:'25.00'}],refunds:[{refundId:refund.id,amount:'2.00'}],
+        xeroCycleIds:[secondCycleId]}
+    ]};
+  const scoped=await commissioningClient.preview(commissioningSourceId,scopeSelection),
+    scopeReview=scoped.review,scopeA=scopeReview.projects.find(row=>row.projectId==='cash-a'),
+    scopeB=scopeReview.projects.find(row=>row.projectId==='cash-b'),cohort=scopeReview.currencies.find(row=>row.currency.code==='USD');
+  assert.equal(scopeReview.status,'READY',json(scopeReview.findings));
+  assert.equal(scoped.previewSha256,scopeReview.previewSha256);
+  const unsealedScope=copy(scopeReview);delete unsealedScope.previewSha256;
+  assert.equal(sha(json(unsealedScope)),scopeReview.previewSha256);
+  assert.equal(cohort.totals.sourceFeeNet,'170.00');assert.equal(cohort.totals.invoicedNet,'170.00');
+  assert.equal(cohort.totals.allocatedGross,'160.00');assert.equal(cohort.totals.creditedNet,'10.00');
+  assert.equal(cohort.totals.receivedGross,'175.00');assert.equal(cohort.totals.refundedGross,'2.00');
+  assert.equal(cohort.totals.netRecordedCash,'173.00');assert.equal(cohort.totals.reconciledNetCash,'173.00');
+  assert.deepEqual(scopeA.milestones.map(row=>row.totals.invoicedNet),['30.00','40.00','30.00']);
+  assert.deepEqual(scopeA.milestones.map(row=>row.totals.allocatedGross),['30.00','40.00','20.00']);
+  assert.equal(scopeA.milestones[2].totals.creditedNet,'10.00');
+  assert.equal(scopeA.totals.amountDueGross,'0.00');assert.equal(scopeB.totals.allocatedGross,'20.00');
+  assert.equal(scopeB.totals.receivedGross,'0.00');
+  assert.ok(scopeB.milestones[0].allocations.some(row=>row.allocationId===targetAllocation.id&&row.dispositionId===dispositionId));
+  assert.ok(scopeA.xeroCycles.some(row=>row.cycleId===secondCycleId&&row.reviewSha256===finalPreview.previewSha256));
+  assert.equal(scopeReview.baseline.captureId,commissioningBaselineId);
+  assert.ok(scopeReview.changes.some(row=>row.kind==='SOURCE_EDITION_CHANGED'));
+  assert.ok(scopeReview.changes.some(row=>row.kind==='PROJECT_AMOUNTS_CHANGED'&&row.key==='cash-a'));
+  const excessScope=copy(scopeSelection);excessScope.projects[0].milestones[2].allocations[0].amount='25.00';
+  const excessReview=await commissioningClient.preview(commissioningSourceId,excessScope);
+  assert.equal(excessReview.review.status,'REVIEW');
+  assert.ok(excessReview.review.findings.some(row=>row.code==='COMMISSIONING_SHARED_CAPACITY'&&
+    row.allocationId===allocationAfter.id&&row.capacity==='90.00'&&row.selected==='95.00'));
+  assert.equal(cashStateSha(),commissioningEconomicState);
+  assert.equal((await commissioningClient.captures()).total,1);
+  const finalScope=await commissioningClient.preview(commissioningSourceId,scopeSelection);
+  assert.equal(finalScope.previewSha256,scoped.previewSha256);
+  commissioningRequest=commissioningCaptureArguments(finalScope,{actor,requestId:randomUUID()});
+  const savedScope=await commissioningClient.capture(commissioningSourceId,commissioningRequest);
+  commissioningCaptureId=savedScope.capture.id;
+  assert.equal(savedScope.capture.status,'READY');assert.equal(savedScope.capture.baselineCaptureId,commissioningBaselineId);
+  const savedScopeReplay=await commissioningClient.capture(commissioningSourceId,commissioningRequest);
+  assert.equal(savedScopeReplay.operation.replayed,true);assert.equal(savedScopeReplay.capture.id,commissioningCaptureId);
+  const scopeLookup=await commissioningClient.request(commissioningRequest.requestId);
+  assert.equal(scopeLookup.capture.id,commissioningCaptureId);
+  const scopeIntent={...commissioningRequest,commissioningSourceId};delete scopeIntent.revision;
+  assert.equal(scopeLookup.operation.intentSha256,sha(json({action:'commissioning_collections_captured',value:scopeIntent})));
+  const savedScopeDetail=await commissioningClient.detail(commissioningCaptureId);
+  assert.equal(savedScopeDetail.capture.review.previewSha256,scopeReview.previewSha256);
+  const readScope=async(id,name)=>body(await commissioningClient.file(id,name));
+  const scopeSnapshot=JSON.parse(await readScope(commissioningCaptureId,'commissioning-account-snapshot.json')),
+    scopeOriginals=JSON.parse(await readScope(commissioningCaptureId,'commissioning-original-files.json'));
+  assert.equal(scopeSnapshot.data.receipts.length,controller.data().receipts.length);
+  assert.ok(scopeSnapshot.data.creditDispositions.some(row=>row.id===dispositionId));
+  assert.ok(scopeSnapshot.data.refunds.some(row=>row.id===refund.id));
+  assert.ok(scopeSnapshot.xeroCycles.some(row=>row.cycle.id===secondCycleId));
+  assert.ok(scopeOriginals.files.some(row=>row.kind==='XERO_CASH_CYCLE'&&row.cycleId===secondCycleId));
+  assert.ok(scopeOriginals.files.some(row=>row.kind==='CUSTOMER_CASH_ADVICE'&&row.originalName.includes('bank-')));
+  assert.ok(scopeOriginals.files.some(row=>row.kind==='CUSTOMER_CASH_ADVICE'&&row.originalName.includes(refund.id)));
+  for(const name of ['commissioning-review.json','commissioning-projects.csv','commissioning-milestones.csv',
+    'commissioning-cash.csv','commissioning-findings.csv','commissioning-handover.html']) {
+    const descriptor=savedScopeDetail.capture.files.find(row=>row.name===name),bytes=await readScope(commissioningCaptureId,name);
+    assert.ok(descriptor);assert.equal(sha(bytes),descriptor.sha256);assert.equal(bytes.length,descriptor.bytes);
+  }
+  sourceHashes.commissioningSource=sha(workshareBytes2);
+  sourceHashes.commissioningReview=sha(await readScope(commissioningCaptureId,'commissioning-review.json'));
+  sourceHashes.commissioningSnapshot=sha(await readScope(commissioningCaptureId,'commissioning-account-snapshot.json'));
+  assert.equal(sha(await body(await commissioningClient.sourceFile(commissioningOriginalSourceId,'original-workshares.json'))),
+    sourceHashes.commissioningOriginalSource);
+  assert.equal(sha(await readScope(commissioningBaselineId,'commissioning-review.json')),sourceHashes.commissioningBaselineReview);
+  const scopeManifest=await commissioningClient.export(commissioningCaptureId);
+  assert.equal(scopeManifest.id,commissioningCaptureId);
+  const scopeArchive=await commissioningClient.exportFile(commissioningCaptureId);
+  assert.match(scopeArchive.headers.get('content-type')??'',/application\/x-tar/);
+  const scopeArchiveBytes=await body(scopeArchive);
+  assert.equal(scopeArchiveBytes.length%512,0);
+  assert.ok(scopeArchiveBytes.includes(Buffer.from('commissioning-review.json')));
+  sourceHashes.commissioningHandoverTar=sha(scopeArchiveBytes);
+  const scopeAsset=await fetch(new URL('app.mjs',commissioningService.url),{redirect:'error'});
+  assert.equal(scopeAsset.status,200);assert.match(scopeAsset.headers.get('content-type')??'',/javascript/);
+  const scopeAssetBytes=await body(scopeAsset);
+  assert.equal(sha(scopeAssetBytes),sha(await readFile(join(sourceRoot,
+    'stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/commissioning-collections/public/app.mjs'))));
+  sourceHashes.commissioningBrowserModule=sha(scopeAssetBytes);
+  assert.equal(cashStateSha(),commissioningEconomicState);
+  outcomes.push('The original workshare editions retain explicit source-to-invoice-line bindings, shared milestone cash capacities, original credits and physical receipts/refunds, saved Xero cycles, complete customer advice and immutable review captures without changing the ledger.');
+
   stage='close and reopen original owner';
   const economicBeforeReopen=cashStateSha();
   // Drive the original owner's existing uncertain-commit producer before the same close/reopen.
@@ -486,6 +667,13 @@ try {
     assert.deepEqual(error.commitUncertainty,uncertainty);
     return true;
   });
+  await assert.rejects(commissioningClient.capture(commissioningSourceId,commissioningRequest),error=>{
+    assert.equal(error.code,'WORKSPACE_COMMIT_UNKNOWN');assert.equal(error.status,409);
+    assert.equal(error.message,originalRecoveryMessage);
+    assert.equal(error.outcomeUnknown,true);assert.equal(error.reopenRequired,true);
+    assert.deepEqual(error.commitUncertainty,uncertainty);return true;
+  });
+  await commissioningService.close();commissioningService=null;
   await service.close();service=null;await workspace.close();workspace=null;
   await openOriginal();
   const reopened1=await client.cashCycle(firstPackageId,baselineCycleId),
@@ -505,17 +693,44 @@ try {
   assert.equal(invoiceSummary(controller._invoice(a.id),controller.data(),asOf).paid,'90.00');
   assert.equal(receiptSummary(controller._receipt(oReceipt.id),controller.data(),asOf).available,'3.00');
   outcomes.push('Original uncertain-commit recovery fields cross the HTTP client; reopening the original owner recovers both immutable cycles and the exact mutation replay while historical and current cash remain conserved.');
+
+  const reopenedScope=await commissioningClient.detail(commissioningCaptureId),
+    reopenedScopeBaseline=await commissioningClient.detail(commissioningBaselineId);
+  assert.equal(reopenedScope.capture.status,'READY');assert.equal(reopenedScopeBaseline.capture.status,'REVIEW');
+  assert.equal(reopenedScope.capture.baselineCaptureId,commissioningBaselineId);
+  assert.equal(sha(await body(await commissioningClient.file(commissioningCaptureId,'commissioning-review.json'))),
+    sourceHashes.commissioningReview);
+  assert.equal(sha(await body(await commissioningClient.file(commissioningCaptureId,'commissioning-account-snapshot.json'))),
+    sourceHashes.commissioningSnapshot);
+  assert.equal(sha(await body(await commissioningClient.file(commissioningBaselineId,'commissioning-review.json'))),
+    sourceHashes.commissioningBaselineReview);
+  assert.equal(sha(await body(await commissioningClient.sourceFile(commissioningOriginalSourceId,'original-workshares.json'))),
+    sourceHashes.commissioningOriginalSource);
+  assert.equal(sha(await body(await commissioningClient.sourceFile(commissioningSourceId,'original-workshares.json'))),
+    sourceHashes.commissioningSource);
+  const reopenedScopeRequest=await commissioningClient.request(commissioningRequest.requestId);
+  assert.equal(reopenedScopeRequest.capture.id,commissioningCaptureId);
+  assert.equal((await commissioningClient.capture(commissioningSourceId,commissioningRequest)).operation.replayed,true);
+  assert.equal((await commissioningClient.captures({projectId:'cash-a'})).total,2);
+  assert.equal((await commissioningClient.sources()).total,2);
+  assert.equal(cashStateSha(),economicBeforeReopen);
+  outcomes.push('Both original workshare editions, baseline and final commissioning captures, complete private files and original request recovery survive the same owner close/reopen; the dated customer ledger remains unchanged.');
+
   result={schema:'stellar-forge.xero-cash-native-check.v1',status:'PASS',asOf,node:process.version,
     workspaceDirectory:directory,firstPackageId,secondPackageId,baselineCycleId,secondCycleId,
+    commissioning:{sourceId:commissioningSourceId,originalSourceId:commissioningOriginalSourceId,baselineCaptureId:commissioningBaselineId,captureId:commissioningCaptureId},
     identities,sourceHashes,invoiceHashes,outcomes,completedAt:new Date().toISOString()};
 } catch(error) {
   process.exitCode=1;
   result={schema:'stellar-forge.xero-cash-native-check.v1',status:'FAIL',asOf,node:process.version,stage,
     code:error.code??error.name,message:error.message,details:error.details??null,
     stack:String(error.stack??''),workspaceDirectory:directory,
-    firstPackageId,secondPackageId,baselineCycleId,secondCycleId,identities,sourceHashes,outcomes,
+    firstPackageId,secondPackageId,baselineCycleId,secondCycleId,
+    commissioning:{sourceId:commissioningSourceId,originalSourceId:commissioningOriginalSourceId,baselineCaptureId:commissioningBaselineId,captureId:commissioningCaptureId},
+    identities,sourceHashes,outcomes,
     completedAt:new Date().toISOString()};
 } finally {
+  try{if(commissioningService)await commissioningService.close();}catch(error){if(result?.status==='PASS'){result.status='FAIL';result.stage='close commissioning service';result.message=error.message;process.exitCode=1;}}
   try{if(service)await service.close();}catch(error){if(result?.status==='PASS'){result.status='FAIL';result.stage='close HTTP service';result.message=error.message;process.exitCode=1;}}
   try{if(workspace)await workspace.close();}catch(error){if(result?.status==='PASS'){result.status='FAIL';result.stage='close original workspace';result.message=error.message;process.exitCode=1;}}
 }

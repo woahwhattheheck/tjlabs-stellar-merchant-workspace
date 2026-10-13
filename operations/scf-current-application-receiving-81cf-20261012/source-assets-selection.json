@@ -1,0 +1,220 @@
+{
+  "schema": "stellar-forge.current-source-assets-selection.v1",
+  "operationId": "SCF-GRANT-CURRENT-REVIEW-81CF-20261012",
+  "phaseId": "SCF-SUBMISSION-SOURCE-PACKAGE-A8CE-20261012",
+  "originalSourceCommit": "1783b7f19b62567e4c4f3ed8a6693c1edd59fad8",
+  "currentRuntimeSourceCommit": "a4ce150e5082eff0e6a52dbf86d543331f585177",
+  "currentApplicationSourceCommit": "b412f1ea76bd3f243c2ef78eeb4360730b65ef80",
+  "sourcePackage": {
+    "bytes": 842747,
+    "sha256": "c3a406353cf61fe438e88b3fc7fce8a67cf01ea38640ca7e924cbad8005c8246",
+    "sourceRecords": 131
+  },
+  "readerPath": "stellar-forge/developer-site/dist/grant.html",
+  "assets": [
+    {
+      "path": "stellar-forge/developer-site/dist/drafts.mjs",
+      "bytes": 2897,
+      "sha256": "949ed8cbd78743e94fec7d3d9e98523277a01b9505376073d68fa9fc49abf7ee",
+      "git_blob": "d7f7be568fb9b212123ca7b4eecfdbb0427672c6"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/favicon.svg",
+      "bytes": 294,
+      "sha256": "44850d5125ccef85520ebb92d5334cfacfead707ea16388310346601edadc852",
+      "git_blob": "5df88c1cf1c73de99e7be3444bed8e6fea1ad85d"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-companion-core.mjs",
+      "bytes": 19389,
+      "sha256": "4c53f9d1d44aee01ac9d08385b4033f688b57671dab4afec5d895b1bd8462b80",
+      "git_blob": "5cb89f2c2f6389a219be3805a12fa3821e51867e"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-companion-workspace.mjs",
+      "bytes": 4485,
+      "sha256": "515cfa7ed9ac47947d15fab0326246e5497aa76d33613207c8a720f9eb3f3220",
+      "git_blob": "81c1ad732bc367718d63463bce63d4728f365df5"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-companion.css",
+      "bytes": 7041,
+      "sha256": "a6beafe92f59a03a197b9784c9eed75db2297b78980a07c7ce2fd09a8c603926",
+      "git_blob": "d8077c78559f6be143bb1a9ef468d6f0eaef5cc8"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-companion.html",
+      "bytes": 981,
+      "sha256": "96a8e345e7c603e908c0e6e471984a5ac5bf5c75f1a3359fecf2249226d14652",
+      "git_blob": "91fe5162174fd307f2a9fd67b0a7f2c873657944"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-entry-browser.mjs",
+      "bytes": 19087,
+      "sha256": "0934d20948b25926852b0154ec3f0873d5c216ac51f187cc7d83379b34611bed",
+      "git_blob": "30cc896158738453d61023ed3f5d8321e15af480"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-entry.css",
+      "bytes": 4420,
+      "sha256": "a0c1de6d1b4585e4889d95d9aaacb140805a11d2c20c0c8bb1b9d87bde14b85b",
+      "git_blob": "36a50c612632c4d8f1a0343f2ded25dbd2803a6b"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-handover-core.mjs",
+      "bytes": 17466,
+      "sha256": "410770b5a5a7f29dd4b45e5960bea3952d8e069e674b99e2306b8b3abaa6c022",
+      "git_blob": "3c037e0bb6f99b0ba43aa098247fb3cc33f4bea2"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-handover-source.mjs",
+      "bytes": 33245,
+      "sha256": "e6da2704ae89091fb84648de9ecb700135d72672a87c6511e2a99e95ae4a1f0a",
+      "git_blob": "f2541a024ef4ff90d8edaeee78547df0a4a3706c"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-handover-workspace.mjs",
+      "bytes": 22269,
+      "sha256": "0ee1b50661d809f089b5ac4b375d1996f796249c4911930bed15e2323c074054",
+      "git_blob": "960b4b31202e89babcce98f87992a2bd999735b8"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-operating-plan-core.d.mts",
+      "bytes": 2404,
+      "sha256": "5e2d7b0f3cd74d7e5ded2b1b32513936fa67613f6d92fb8e78dda10b96388a1a",
+      "git_blob": "a42bac382e562800ca3f5d445536ede534b481df"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-operating-plan-core.mjs",
+      "bytes": 7632,
+      "sha256": "48c284eaaa78aaf8fe20f3d4b301d075165e9e5aba2bf8bfa8ffa097589d92ae",
+      "git_blob": "7f85faafd4831c231942fc5928d1c818327fadd3"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-operating-plan-workspace.mjs",
+      "bytes": 10174,
+      "sha256": "5807ba3dbc2eef6aed5501faec13ff5e8ca85ba32d2898c1c655bfa561c2cd22",
+      "git_blob": "862be90dfd35d075baf4da18c01ad380ed06392a"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-plan-core.mjs",
+      "bytes": 16831,
+      "sha256": "7beaa9d586803a130992e34a49b3ea6fc5a2325c3063aa6d760335824efc1381",
+      "git_blob": "fae208fb0628f22731cbe1aa8fe2b9d9191f8ae6"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-plan-source.mjs",
+      "bytes": 16082,
+      "sha256": "b3a3b7fd479f4325fb384adbbf0eef68784f59732d9b0353b8379e9d6a394da3",
+      "git_blob": "11e6031949285e4fc1696312c13531db69d12f98"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-plan-update-core.mjs",
+      "bytes": 23254,
+      "sha256": "cc22e4ede64259442cc1ddbd2f0a338a0881a77a23f388143d846190fca90837",
+      "git_blob": "5854d9d0844d75ee55a13636bd16b7fbef4cc3b0"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-plan-update-workspace.mjs",
+      "bytes": 17600,
+      "sha256": "ca19bda2ab88ab96a74b338b9502c6e9edb0943cc2c5a32fc380de5e869720d5",
+      "git_blob": "16b8a23e0e80e8222a47a219bd9e34047994afcc"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-plan-workspace.mjs",
+      "bytes": 13801,
+      "sha256": "bf06b2bdfa5f14cde4da6527f581dc53a8e1c7f8e105a582dff55b43c71bf344",
+      "git_blob": "e9d7d4ebd105d9727dbe67bc5a20121695691981"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-review-round-core.mjs",
+      "bytes": 32142,
+      "sha256": "2c74fa4564842158b562663e28d8a1e630e9520ee4c5e01dc75eeb72f94d0618",
+      "git_blob": "0787c166af3365166bec2d4475d662180e109811"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-review-round-workspace.mjs",
+      "bytes": 38669,
+      "sha256": "c454b6c590093579cebc5c187c7cdb5d13e8aa9fad11824e5535d342339d1b75",
+      "git_blob": "f222f6b058c0444a66c4262d1273eabf94c1e3c6"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-review-round.css",
+      "bytes": 8665,
+      "sha256": "36795afd22e432659e6caf9799a6643af257141b6db00c0f2a5509cea7beb841",
+      "git_blob": "5a21f4de43f6089c0187f78b81ef8c63389c0794"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-review-round.html",
+      "bytes": 4670,
+      "sha256": "4aed74a02b88a4c0711c58ad750f30b0542a6f7377f382ed2fd1ca3d4dbdb005",
+      "git_blob": "d48f17b6a99d84bb55c8885042bab4d1dba0a2c5"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-submission-core.mjs",
+      "bytes": 19151,
+      "sha256": "771072f87f66fd7f682c397d9897392d721f822d71768505a0c7feec7b80fe0b",
+      "git_blob": "4573d07a7074080d30909934eaf615f7e7bc2a07"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-submission-workspace.mjs",
+      "bytes": 34695,
+      "sha256": "688c60f537a06308ecd8d6a67aa142f1572de84da5c4c2e310a865c087862878",
+      "git_blob": "bf5b9e3aba583814b588613e21d251effed12377"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-submission.css",
+      "bytes": 7814,
+      "sha256": "b0769f4e176a1b839add73708196c10c102358a52eb10711ed57b50293327a32",
+      "git_blob": "630845da5c7df9935e9bed44f2edd04816445a92"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-submission.html",
+      "bytes": 3670,
+      "sha256": "d15567dff625ef2ce34f6342ffa364736100845947294df3dc2a02bee3e15ce6",
+      "git_blob": "21e4afb10553cb205bad84361e29194569d4e094"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant.css",
+      "bytes": 9463,
+      "sha256": "89b538e12ef987a5bbc993ed77ffda0069d674d1964dc8bb573247611f132745",
+      "git_blob": "01a3767cead0e77fba53f661e83fe01abd8e28f9"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant.html",
+      "bytes": 87204,
+      "sha256": "1f98e64ce0fce9140376882c5ed155a9028c9525c96b57c0e9d6b260a13fa283",
+      "git_blob": "4ba6f40f7edf77a6f84a0f2cf4e6e7c03ded0e9c"
+    },
+    {
+      "path": "stellar-forge/developer-site/browser-assets.json",
+      "bytes": 15692,
+      "sha256": "88c194030ec8247ffad4fe40f9786e92c439c5b48004dd40ba68317c783498af",
+      "git_blob": "1a0470bb5e88597a5a6b686cab8a14f8d412ca9a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/catalog.mjs",
+      "bytes": 11267,
+      "sha256": "7d569fd76605074532e777fca763543b42cd021b4509d92010f3dd9ee5156971",
+      "git_blob": "6e768c2c90c4881366e147884c3debb45558f0fa"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs",
+      "bytes": 21725,
+      "sha256": "69eca516640d07e8305c1a7a37e83235e8a4462034ee04e6344bd761756b4fe6",
+      "git_blob": "4b533a926214e78811d02d94c7d8adf07a078be8"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/example-download.mjs",
+      "bytes": 5533,
+      "sha256": "68e45a5c5c45cff7fe51556288f2ac3393aef39cff768d4ea8574474e346791c",
+      "git_blob": "fd7051c35a08b685170bb1fc46876efa38d03cab"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-export.mjs",
+      "bytes": 15878,
+      "sha256": "b3961d9b73f8d88ca017db99bbd1f370c6aaa3e9cc08b09013b5f12351905506",
+      "git_blob": "58d829b618031bf77ddb06cc50374fbf15c13836"
+    }
+  ]
+}

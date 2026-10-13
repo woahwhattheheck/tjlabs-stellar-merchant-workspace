@@ -100,6 +100,12 @@ export function mountDeliveryCalendar({container,current,api,session,onOpen}){
   for(const key of ['startDate','endDate'])if(session[key]&&!civil(session[key]))session[key]='';
   for(const key of ['query','kind','tranche','owner','selectedId'])if(typeof session[key]!=='string')session[key]='';
   session.showInactive=session.showInactive===true;session.page=0;
+  if(session.incomingAgenda){
+    const incoming=session.incomingAgenda;
+    if(civil(incoming.asOfDate)){session.asOfDate=incoming.asOfDate;session.month=incoming.asOfDate.slice(0,7);}
+    if(typeof incoming.entryId==='string')session.selectedId=incoming.entryId;
+    delete session.incomingAgenda;
+  }
   let active=true,busy=false,hostBusy=false,epoch=0,report=null,error='',notice='';
   const available=()=>active&&root.isConnected,$=selector=>root.querySelector(selector);
   function persist(){
@@ -255,6 +261,7 @@ export function mountDeliveryCalendar({container,current,api,session,onOpen}){
       const entry=[...(report?.entries||[]),...(report?.undated||[])].find(row=>row.id===target.dataset.calendarId);
       if(entry)onOpen(originTab(entry),entry.tranche,{
         asOfDate:report.asOfDate,
+        cashId:entry.kind==='GRANT_RECEIPT'?entry.sourceId:undefined,
         receiptId:entry.kind==='SUBMISSION_DEADLINE'?entry.sourceId:entry.receiptId,
         costId:entry.costId,reviewId:entry.reviewId,
       });return;

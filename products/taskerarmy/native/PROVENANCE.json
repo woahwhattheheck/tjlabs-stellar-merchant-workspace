@@ -1,0 +1,84 @@
+{
+  "schema": "taskerarmy.reusable-source-provenance.v1",
+  "application": "TaskerArmy notification workspace",
+  "source_scope": "Complete reusable application, native installation/archive operations, and installed JSON adapter.",
+  "original_reusable_sources": [
+    {
+      "path": "notification_outbox.py",
+      "bytes": 40429,
+      "sha256": "0d4eb51f9a33b8f3cb867d5ba2bfa3750582c4b2f8005e1117eda65f172ae503",
+      "git_blob_sha": "fda8a40ebeeaeda376dcfbb7ce79510a2e412fca",
+      "adaptation": "Retained complete original source."
+    },
+    {
+      "path": "README.md",
+      "bytes": 15890,
+      "sha256": "c0c63305ac689b921e6e3651fdd16f0df822567d82c33dedc706a29b044e0378",
+      "git_blob_sha": "5006cafabafc94b0d468932dc822d689ba7d4526",
+      "adaptation": "Original guide retained with an added installed-workspace link."
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 116,
+      "sha256": "f5c7334f3c662160d99060020f1a7acc84bc8561601112dcf7a3f8a7caa44d61",
+      "git_blob_sha": "bf582e416a7ada0ec60e9526082c410705e8bc06",
+      "adaptation": "Retained complete original source."
+    },
+    {
+      "path": "operator_server.py",
+      "bytes": 19172,
+      "sha256": "340c3a6d80786192b067d2ce1984cf030722ff6f8d1224ae735ccc6dd7c7407d",
+      "git_blob_sha": "1a339f23ee5655255e7b339d0b8ae05378270f9b",
+      "adaptation": "Retained complete original source."
+    },
+    {
+      "path": "operator.html",
+      "bytes": 38177,
+      "sha256": "c8220efdfe373568126b76b6de5d074c04c7bc72795827f5222f8ae166b68458",
+      "git_blob_sha": "aa3a910980c01eb91d1d58b0023104f4cbfce177",
+      "adaptation": "Retained complete original source."
+    },
+    {
+      "path": "OPERATOR.md",
+      "bytes": 11572,
+      "sha256": "4d46a0253803c380556caab10ef99daf3bf5ecbab8b8bf091de48bf7b5bb7305",
+      "git_blob_sha": "f03a2ed91eb8a56aa521d728e8dda11c339c7789",
+      "adaptation": "Retained complete original source."
+    },
+    {
+      "path": "native/archive.py",
+      "bytes": 16282,
+      "sha256": "4db46c782ecd48fee7a2c37d369032216ca022af769b584f4032f09cd1f0be74",
+      "git_blob_sha": "7c1b1792d8d95fc06daa66c16b3192283493b710",
+      "adaptation": "Documentation header points to this reusable provenance record; executable implementation retained."
+    },
+    {
+      "path": "native/manage.py",
+      "bytes": 45608,
+      "sha256": "48dd66a7ab8cef378264aab5bdb145ef0f82c6f06cade1383a68770494283478",
+      "git_blob_sha": "1364c0d0ed4591d8d7b85aed8eff9f01cb4956b0",
+      "adaptation": "Retained complete original source."
+    },
+    {
+      "path": "native/launch_operator.py",
+      "bytes": 3010,
+      "sha256": "e1a55f10a56139c736aecfd9bfe6ebcc6ffd846376a564723b30a8abe1ecf7b8",
+      "git_blob_sha": "3efcc033a98aa29c9f47e410015b8021c666048b",
+      "adaptation": "Retained complete original source."
+    }
+  ],
+  "original_contracts": [
+    "https://taskerarmy.com/integrations/slack/",
+    "https://taskerarmy.com/developers/api/",
+    "https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/",
+    "https://docs.slack.dev/apis/web-api/rate-limits/"
+  ],
+  "installed_source": "Each prepared installation captures its complete selected file manifest and keeps its original source baseline beside the editable application. Snapshot and receiving retain both.",
+  "product_additions": [
+    "native/operations.py",
+    "native/README.md",
+    "native/API.md",
+    "configuration.empty.json",
+    "native/PROVENANCE.json"
+  ]
+}

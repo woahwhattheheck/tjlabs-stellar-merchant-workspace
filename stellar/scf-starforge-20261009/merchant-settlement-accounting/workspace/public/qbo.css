@@ -120,3 +120,14 @@
 .qbo-recovery button:focus-visible,.qbo-recovery select:focus-visible,#qbo-recovery-open:focus-visible { outline: 3px solid #555; outline-offset: 3px; }
 .qbo-recovery button:disabled { opacity: .55; cursor: not-allowed; }
 .sidebar #qbo-saved-operator { width: 100%; margin-block: .45rem .9rem; }
+
+/* Allocation worksheet inspection stays in the original responsive draft form. */
+.qbo-worksheets>summary{font-weight:650}
+.qbo-worksheets .actions{flex-wrap:wrap}
+.qbo-worksheet-table{min-width:850px;table-layout:fixed}
+.qbo-worksheet-table th:first-child{width:24%}
+.qbo-worksheet-table th:last-child{width:18%}
+.qbo-worksheet-value{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
+.qbo-worksheet-table code{overflow-wrap:anywhere;word-break:break-all}
+.qbo-worksheet-table select{width:100%;min-width:110px}
+@media(max-width:650px){.qbo-worksheets{padding:14px}.qbo-worksheets .actions button{flex:1 1 180px}}

@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "document-merchant",
-  "description": "Install a complete document merchant with source-native MintPDF, snaplab or PDFMint rendering, full-file customer input, provider usage and original paid Jobs delivery.",
+  "description": "Install a complete document merchant and customer browser: CSV/JSON datasets, document templates, original native prices, MintPDF/snaplab/PDFMint rendering, complete PDF/source receiving and portable Collections.",
   "components": [
     "products/document-merchant"
   ],
@@ -10,19 +10,75 @@
     "products/document-merchant/OPERATING.md",
     "products/document-merchant/index.d.mts",
     "products/document-merchant/examples/report.html",
-    "products/document-merchant/examples/report.md"
+    "products/document-merchant/examples/report.md",
+    "products/document-merchant/APPLICATIONS.md",
+    "products/document-merchant/launch.d.mts",
+    "products/document-merchant/COMPOSITION.md",
+    "products/document-merchant/composition.d.mts",
+    "products/document-merchant/BATCHES.md",
+    "products/document-merchant/batch.d.mts",
+    "products/document-merchant/batch-render.d.mts",
+    "products/document-merchant/examples/composition/orders.json",
+    "products/document-merchant/examples/composition/invoice.html",
+    "products/document-merchant/examples/composition/greeting.html",
+    "products/document-merchant/examples/composition/order-documents.json",
+    "products/document-merchant/examples/composition/order-lines.csv",
+    "products/document-merchant/examples/composition/grouped-order-documents.json",
+    "products/document-merchant/examples/composition/reports.csv",
+    "products/document-merchant/examples/composition/report.md",
+    "products/document-merchant/examples/composition/report-documents.json",
+    "products/document-merchant/examples/batch/invoice.html",
+    "products/document-merchant/examples/batch/greeting.html",
+    "products/document-merchant/examples/batch/order.json",
+    "products/document-merchant/examples/batch/customer-options.json",
+    "products/document-merchant/composition-browser-assets.json",
+    "products/document-merchant/composition-workspace.d.mts",
+    "products/document-merchant/composition-server.d.mts",
+    "products/document-merchant/composition-service.d.mts",
+    "products/document-merchant/GRANT.md"
   ],
   "commands": {
     "document-merchant": "products/document-merchant/cli.mjs"
   },
   "commandDescriptions": {
-    "document-merchant": "Prepare a retained document service, review its real supplier units and run the original paid Jobs operator with complete PDF and editable-source delivery."
+    "document-merchant": "Prepare and operate document merchants; use the installed customer browser or CLI to compose complete data and templates, review original native prices, render, receive and export full documents."
   },
   "exports": {
     "./document-merchant": {
       "types": "./source/products/document-merchant/index.d.mts",
       "import": "./source/products/document-merchant/index.mjs"
     },
-    "./document-merchant/cli": "./source/products/document-merchant/cli.mjs"
-  }
+    "./document-merchant/cli": "./source/products/document-merchant/cli.mjs",
+    "./document-merchant/launch": {
+      "types": "./source/products/document-merchant/launch.d.mts",
+      "import": "./source/products/document-merchant/launch.mjs"
+    },
+    "./document-merchant/composition": {
+      "types": "./source/products/document-merchant/composition.d.mts",
+      "import": "./source/products/document-merchant/composition.mjs"
+    },
+    "./document-merchant/composition/cli": "./source/products/document-merchant/composition-cli.mjs",
+    "./document-merchant/composition/workspace": {
+      "types": "./source/products/document-merchant/composition-workspace.d.mts",
+      "import": "./source/products/document-merchant/composition-workspace.mjs"
+    },
+    "./document-merchant/composition/server": {
+      "types": "./source/products/document-merchant/composition-server.d.mts",
+      "import": "./source/products/document-merchant/composition-server.mjs"
+    },
+    "./document-merchant/composition/service": {
+      "types": "./source/products/document-merchant/composition-service.d.mts",
+      "import": "./source/products/document-merchant/composition-service.mjs"
+    }
+  },
+  "applicationProviders": {
+    "document-merchant": "products/document-merchant/application-provider.mjs",
+    "document-composition": "products/document-merchant/composition-application-provider.mjs"
+  },
+  "browserAssets": [
+    {
+      "server": "products/document-merchant/composition-server.mjs",
+      "manifest": "products/document-merchant/composition-browser-assets.json"
+    }
+  ]
 }

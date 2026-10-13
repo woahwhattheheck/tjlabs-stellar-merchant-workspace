@@ -1,4 +1,6 @@
 import { mountOperations } from './operations.mjs';
+import {mountDeliveryAgenda} from './operations_agenda.mjs';
+import {readStaffSession, staffRequest, signInOwner, signOutStaff} from './staff-session.mjs';
 import { mountPlanComparison } from './plan_comparison.mjs';
 import { mountPlanningSourceTables } from './source-tables.mjs';
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -12,15 +14,21 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':
 const money = value => value === null || value === undefined || value === '' ? 'Not entered' : new Intl.NumberFormat('en-US', {style:'currency',currency:'USD',maximumFractionDigits:2}).format(Number(value));
 const amount = value => new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(Number(value || 0));
 const label = value => String(value).replace(/_/g,' ').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./, character => character.toUpperCase());
-const tabs = [['overview','Overview'],['source-tables','Source tables'],['work','Work packages'],['milestones','Milestones'],['staffing','Staffing'],['payments','Payment timing'],['delivery','Delivery plan'],['history','Saved versions'],['comparison','Compare saved plans'],['operations','Delivery operations']];
-const state = {token:null,plans:[],current:null,draft:null,tab:'overview',dirty:false,stale:false,busy:false,history:[],selectedHistory:null};
+const tabs = [['overview','Overview'],['source-tables','Source tables'],['work','Work packages'],['milestones','Milestones'],['staffing','Staffing'],['payments','Payment timing'],['delivery','Delivery plan'],['history','Saved versions'],['comparison','Compare saved plans'],['operations','Delivery operations'],['agenda','Delivery agenda']];
+const state = {principal:null,plans:[],current:null,draft:null,tab:'overview',dirty:false,stale:false,busy:false,history:[],selectedHistory:null};
+const planReadActions=new Set(['reload','export','daily','scenario','history-view']);
+const canEditPlan=()=>state.principal?.role==='owner'||state.principal?.role==='lead';
+const canCreatePlan=()=>canEditPlan()&&state.principal.caseIds.includes('*');
 let controlId = 0;
 let operationsView = null;
+let deliveryAgendaView = null;
+let initialOperationsNavigation = null;
+const deliveryAgendaSessions = new Map();
 let comparisonView = null;
 const comparisonSelections = new Map();
 let sourceTablesView = null;
 function closeSourceTables() {sourceTablesView?.dispose();sourceTablesView=null;}
-function closeOperations() {operationsView?.dispose();operationsView=null;comparisonView?.dispose();comparisonView=null;}
+function closeOperations() {operationsView?.dispose();operationsView=null;comparisonView?.dispose();comparisonView=null;deliveryAgendaView?.dispose();deliveryAgendaView=null;}
 let requestIds = {};
 try { requestIds = JSON.parse(sessionStorage.getItem('sf47.requests') || '{}'); } catch {}
 function inform(message, error = false) {
@@ -29,21 +37,23 @@ function inform(message, error = false) {
 function busy(value) {
   state.busy = value; $('#workbench').setAttribute('aria-busy',String(value));
   for(const control of document.querySelectorAll('#workbench button,#workbench input:not([type=file]),#workbench select,#workbench textarea')) {
-    if(control.closest('.operations,.plan-comparison')) continue;
-    control.disabled = value || control.dataset.fixedDisabled === 'true' || control.dataset.action === 'save' && !state.dirty;
+    if(control.closest('.operations,.plan-comparison,.delivery-agenda')) continue;
+    const action=control.dataset.action;
+    const roleDisabled=!canEditPlan()&&(control.matches('[data-path],#change-note')||action&&!planReadActions.has(action));
+    const newPlanDisabled=['clone','import'].includes(action)&&!canCreatePlan();
+    control.disabled = value || roleDisabled || newPlanDisabled || control.dataset.fixedDisabled === 'true' || action === 'save' && !state.dirty;
   }
   operationsView?.setHostBusy(value);
+  deliveryAgendaView?.setHostBusy(value);
   comparisonView?.setHostBusy(value);
   sourceTablesView?.setHostBusy(value);
 }
 async function api(path, body, options = {}) {
-  const headers = {authorization:'Bearer ' + state.token,...options.headers};
-  if(body !== undefined && !options.raw) headers['content-type'] = 'application/json';
-  const response = await fetch(path,{method:body===undefined?'GET':'POST',headers,...(body===undefined?{}:{body:options.raw?body:JSON.stringify(body)})});
-  if(options.download && response.ok) return response;
-  let result;try {result = await response.json();} catch {throw new Error('The server response was interrupted. Reopen the saved plan to continue.');}
-  if(!response.ok) {const error = new Error(result.error?.message || 'The operation did not complete.'); error.code=result.error?.code;error.status=response.status;throw error;}
-  return result;
+  try {return await staffRequest(path,body,options);}
+  catch(error) {
+    if(error.status===401) inform('Your session has ended. Sign in through Team workspace to continue.',true);
+    throw error;
+  }
 }
 async function mutationId(action, payload) {
   const bytes = new TextEncoder().encode(JSON.stringify({action,payload}));
@@ -232,12 +242,27 @@ function render(focus = false) {
   if(!state.current) return;
   controlId=0;
   $('#plan-select').innerHTML=state.plans.map(row=>'<option value="'+esc(row.id)+'"'+(row.id===state.current.id?' selected':'')+'>'+esc(row.name)+'</option>').join('');
-  $('#sections').innerHTML=tabs.map(([id,title])=>'<button type="button" data-tab="'+id+'"'+(state.tab===id?' aria-current="page"':'')+'>'+title+'</button>').join('');
-  $('.savebar').hidden=state.tab==='operations'||state.tab==='comparison';
+  $('#sections').innerHTML=tabs.filter(([id])=>canEditPlan()||id!=='source-tables').map(([id,title])=>'<button type="button" data-tab="'+id+'"'+(state.tab===id?' aria-current="page"':'')+'>'+title+'</button>').join('');
+  $('.savebar').hidden=!canEditPlan()||['operations','comparison','agenda'].includes(state.tab);
   if(state.tab==='operations') {
-    const mounted=mountOperations({container:$('#main-panel'),api,plan:state.current,inform,mutationId});
+    const navigation=initialOperationsNavigation;
+    const mounted=mountOperations({container:$('#main-panel'),api,plan:state.current,inform,mutationId,principal:state.principal,
+      initialNavigation:navigation});
     operationsView=mounted;mounted.setHostBusy(state.busy);
-    mounted.ready.catch(error=>{if(operationsView===mounted&&mounted.root.isConnected)inform(error.message,true);});
+    mounted.ready.then(()=>{if(operationsView===mounted&&initialOperationsNavigation===navigation)initialOperationsNavigation=null;})
+      .catch(error=>{if(operationsView===mounted&&mounted.root.isConnected)inform(error.message,true);});
+  } else if(state.tab==='agenda') {
+    const key=state.principal?.id||state.principal?.actor||'owner';
+    if(!deliveryAgendaSessions.has(key))deliveryAgendaSessions.set(key,{});
+    const mounted=mountDeliveryAgenda({container:$('#main-panel'),api,principal:state.principal,
+      session:deliveryAgendaSessions.get(key),
+      onOpen:async selection=>{
+        if(deliveryAgendaView!==mounted||!mounted.root.isConnected)return;
+        initialOperationsNavigation=selection;state.tab='operations';render();
+        const opened=operationsView;await opened.ready;
+      }});
+    deliveryAgendaView=mounted;mounted.setHostBusy(state.busy);
+    mounted.ready.catch(error=>{if(deliveryAgendaView===mounted&&mounted.root.isConnected)inform(error.message,true);});
   } else if(state.tab==='source-tables') {
     const mounted=mountPlanningSourceTables({container:$('#main-panel'),api,inform,run,
       getPlan:()=>state.current,getDraft:()=>state.draft,
@@ -300,6 +325,8 @@ async function run(action) {
 }
 async function onAction(buttonNode) {
   const action=buttonNode.dataset.action,index=Number(buttonNode.dataset.index),planning=state.draft.planning;
+  if(!canEditPlan()&&!planReadActions.has(action))throw new Error('Your staff role can review saved plans. A lead saves planning changes.');
+  if(['clone','import'].includes(action)&&!canCreatePlan())throw new Error('An installation-wide lead creates or imports planning alternatives.');
   if(action==='calculate') return calculate();
   if(action==='save') return save();
   if(action==='reload') return loadPlan(state.current.id);
@@ -350,11 +377,11 @@ async function onAction(buttonNode) {
 }
 $('#workbench').addEventListener('click',event=>{
   const tab=event.target.closest('[data-tab]');
-  if(tab && !state.busy){state.tab=tab.dataset.tab;render(true);return;}
+  if(tab && !state.busy){initialOperationsNavigation=null;state.tab=tab.dataset.tab;render(true);return;}
   const control=event.target.closest('[data-action]');if(control)run(()=>onAction(control));
 });
 $('#main-panel').addEventListener('input',event=>{
-  const control=event.target.closest('[data-path]');if(!control || state.busy)return;
+  const control=event.target.closest('[data-path]');if(!control || state.busy || !canEditPlan())return;
   const parts=JSON.parse(control.dataset.path);
   let value=control.value;if(control.dataset.kind==='integer' && value!=='')value=Number(value);
   setPath(parts,value);changed();
@@ -387,29 +414,51 @@ $('#import-file').addEventListener('change',event=>{
     state.tab='overview';await accept(current);inform('Imported '+current.name+' with '+current.revision+' retained revision'+(current.revision===1?'':'s')+'.');
   });
 });
-async function openAccess(token) {
-  state.token=token;
-  await api('/api/access');
-  sessionStorage.setItem('sf47.access',token);
+async function openSession() {
+  const session=await readStaffSession();
+  if(!session.authenticated){showSignIn();return;}
+  state.principal=session.principal;
+  if(state.principal.role==='contributor'){location.replace('/team');return;}
   state.plans=(await api('/api/plans')).plans;
+  $('#staff-identity').textContent=state.principal.displayName+' · '+label(state.principal.role);
   $('#access-panel').hidden=true;$('#workbench').hidden=false;$('#sign-out').hidden=false;
-  await loadPlan(state.plans[0].id,false);
+  if(!canEditPlan())state.tab='operations';
+  if(state.plans.length)await loadPlan(state.plans[0].id,false);
+  else {
+    $('#main-panel').innerHTML='<section class="panel"><h2>No assigned case</h2><p>Your installation administrator can assign an existing case from the Team workspace.</p></section>';
+    $('#plan-select').replaceChildren();$('#sections').replaceChildren();$('.savebar').hidden=true;
+  }
   $('#access-key').value='';inform('');
 }
-$('#access-form').addEventListener('submit',event=>{event.preventDefault();run(()=>openAccess($('#access-key').value.trim()));});
-$('#sign-out').addEventListener('click',()=>{
-  if(state.dirty && !confirm('Close access and discard this unsaved draft?'))return;
-  closeOperations();
-  closeSourceTables();
-  state.token=null;state.current=null;state.draft=null;state.plans=[];state.history=[];state.selectedHistory=null;state.dirty=false;
-  sessionStorage.removeItem('sf47.access');$('#main-panel').replaceChildren();$('#plan-select').replaceChildren();$('#sections').replaceChildren();
-  $('#workbench').hidden=true;$('#sign-out').hidden=true;$('#access-panel').hidden=false;$('#access-key').value='';inform('Workspace access closed. Saved revisions remain available.');
+function showSignIn() {
+  closeOperations();closeSourceTables();
+  state.principal=null;state.current=null;state.draft=null;state.plans=[];state.history=[];
+  initialOperationsNavigation=null;deliveryAgendaSessions.clear();
+  state.selectedHistory=null;state.dirty=false;state.stale=false;
+  $('#main-panel').replaceChildren();$('#plan-select').replaceChildren();$('#sections').replaceChildren();
+  $('#workbench').hidden=true;$('#sign-out').hidden=true;$('#access-panel').hidden=false;
+  $('#staff-identity').textContent='Grant workspace';$('#access-key').value='';
+}
+async function openAccess(token) {
+  await signInOwner(token);
+  await openSession();
+}
+$('#access-form').addEventListener('submit',event=>{
+  event.preventDefault();const token=$('#access-key').value.trim();$('#access-key').value='';
+  run(()=>openAccess(token));
 });
+$('#sign-out').addEventListener('click',()=>run(async()=>{
+  if(state.dirty&&!confirm('Sign out and discard this unsaved draft?'))return;
+  await signOutStaff();showSignIn();inform('Signed out. Saved work is available when you sign in again.');
+}));
 window.addEventListener('beforeunload',event=>{if(state.dirty){event.preventDefault();event.returnValue='';}});
 const fragment=new URLSearchParams(location.hash.slice(1));
-const supplied=fragment.get('access');
-if(supplied) window.history.replaceState(null,'',location.pathname+location.search);
-let stored;try {stored=sessionStorage.getItem('sf47.access');} catch {}
-if(supplied || stored) {
-  openAccess(supplied || stored).catch(error=>{state.token=null;$('#access-panel').hidden=false;inform(error.message,true);});
-} else $('#access-panel').hidden=false;
+let supplied=fragment.get('access');
+if(supplied)window.history.replaceState(null,'',location.pathname+location.search);
+try {
+  supplied ||= sessionStorage.getItem('sf47.access');
+  sessionStorage.removeItem('sf47.access');
+} catch {}
+const opening=supplied?openAccess(supplied):openSession();
+supplied=null;
+opening.catch(error=>{showSignIn();inform(error.message,true);});

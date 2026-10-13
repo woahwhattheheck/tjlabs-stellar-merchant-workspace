@@ -142,3 +142,40 @@ It creates a clearly labelled WALKTHROUGH case from the retained public proposal
 Each issued request and phase is retained in output/amendment-receiving-checkpoint.json. The result and original archives remain under output; repeated invocation uses the same completed phase results and verifies its retained artifacts. Use the ordinary operating-case import for a selected exported case. Keep the full source and output directory together when handing over the completed exercise.
 
 The original amendment workflow completed three native executions on October 12. The final execution used merged PR533 and preserved its complete source, case and output in `SF47_Grant_Amendment_Complete_Receiving_20261012.zip`: 2,717,055 bytes, 135 members, SHA-256 `446c655a71348c0302f837f251c895dbefc8338bb9fb7abcc244b34ba7ba39ac`. That execution completed all ten operating phases: revision adoption, rejection of an outdated review after a case edit, accepted-request replay, complete export and cold receiving, preservation of a later receiving-office edit, and a second receiving/reopen. It retained five amendment editions in labelled WALKTHROUGH cases. The earlier two successful executions remain separate historical results of the original workflow.
+
+
+## Continue the retained case with explicit package reassignment
+
+A completed native run can continue from its original case, first receiver, or second receiver using the same checkpoint and database. Restore the complete saved operating directory, then run the current source against that directory. For example, to continue the retained first receiver:
+
+    python3 stellar/scf_2026/sf47_budget_model/workspace/amendment_receiving.py \
+      --root /absolute/path/to/amendment-operating-work \
+      --continue-packages receiver
+
+The other selections are `original` and `second-receiver`. Select the database that contains the original work the receiving operator is continuing. The first invocation retains that route and case identity under `packageContinuation` in the existing checkpoint; subsequent invocations use that same selection. The source reader checks the selected existing SQLite case and its complete original source bytes before opening it through Workspace. A missing checkpoint or selected database requires restoring the original operating directory.
+
+This continuation starts after the ten original phases. It uses the selected case's retained invoice and work records, then saves a planned Deployment and complete Installation referencing their original package and source. A labelled WALKTHROUGH grant receipt supplies the native payment date for Completion. The full original tranche assignments and preparation retain both work-intake and Installation references. A saved native forecast and delivery portfolio preserve their original source before the amendment.
+
+The next saved planning revision replaces one referenced package identity while retaining its selected budget, scope, timing and planning assignments. The normal amendment preview, save, review and apply operations carry one explicit mapping from that package to its successor. The native comparison includes the complete original work, invoice and Deployment records. Application retains their identifiers, original quantities, cash records and sources, with complete before and after attribution in the same amendment history.
+
+The continuation reopens the database and replays the accepted application, verifies the original forecast, portfolio, Installation and preparation editions, then opens the amended Completion draft. It preserves the original assignments as `previousInputs`, reconciles every current tranche package, and saves a current preparation through the same native Completion API. Both preparations retain complete original snapshots, source references and hashes.
+
+Finally, the ordinary operating-case export carries all original source files, planning revisions, amendment editions, records, work intakes, Installation editions, forecasts, portfolios, assignments and prepared reviews. A dedicated receiving workspace imports that exact complete ZIP. The continuation preserves a later receiving-office note, replays the same import, reopens the database, and writes the full successor handover.
+
+### Retained continuation and delivery
+
+The original checkpoint's completed phases and original result remain available. The continuation retains nineteen additional phase results, its selected native planning request, every exact command body, the complete import identity, and returned native receipts. Previews and full source artifacts are written before their dependent native operations. Run the same command again after an interruption: an accepted request is replayed with its original identity, and an already completed phase is reused. A changed native source produces the original conflict together with the retained command and phase, so the receiving operator can recover the same operation.
+
+Continuation artifacts use the `Package_` filename prefix under the original `output` directory:
+
+| Artifact | Complete retained content |
+|---|---|
+| `Package_Before_Mapping.zip` | Original records, Installation, historical Completion, forecast and portfolio before reassignment |
+| `Package_Applied_Amendment.json` | Accepted native amendment and complete record attribution changes |
+| `Package_Historical_Completion_Preparation.json` and `Package_Current_Completion_Preparation.json` | The exact original and current prepared Completion snapshots |
+| `Package_Complete_Case.zip` | Full source case after mapping and current Completion |
+| `Package_First_Received_Case.zip` | Complete native receiving result before the later receiving-office edit |
+| `Package_Received_Complete_Handover.zip` | Complete successor case after import replay and database reopen |
+| `package-receiving-result.json` | Actual case selection, receipts, completed phases and artifact identities |
+
+Keep the checkpoint, selected database directories and complete output directory together for further receiving. Artifact identities use their full byte lengths and SHA-256 values. Relocated original outputs are checked by their retained filename under the restored output directory. The result records success only after the complete native case import, historical validation, source readback, accepted-request replay and final reopen have returned successfully.

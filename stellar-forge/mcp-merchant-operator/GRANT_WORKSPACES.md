@@ -367,6 +367,16 @@ The optional `implementationReviewIds` field composes with the cohort selection 
 
 Preparation retains the exact `receiptId`, calendar date, summary, preview SHA and selected frozen evidence. Submission uses the preparation's business SHA and the actual issuer form reference, submission date and source records. Read the new case version after every committed action, and recover a lost result with the unchanged request. The [Completion contract](../../stellar/scf_2026/sf47_budget_model/workspace/COMPLETION.md) and [typed-client guide](../../stellar/scf_2026/sf47_budget_model/workspace/AGENT.md) provide the exact field names and calendar behavior.
 
+## Read and export a delivery agenda across cases
+
+Use `merchant_grant_delivery_agenda` with the original `workspace` and explicit `caseIds`. Optional `asOfDate` selects the review date; optional `expectedVersions` must map every selected original case to its current version. The native service reads the selected cases in one workspace snapshot and returns each unchanged original calendar entry with its case identity.
+
+The response retains complete `cases`, `entries` and `undated` arrays through the existing snapshot and row tools. Each case includes its native calendar metadata, pinned plan and native report hash. Received copies remain independent selected cases.
+
+Use `merchant_grant_export` with `kind: "delivery-agenda"`, the same workspace alias, all fields from the returned `selection`, and `format: "ics"`, `"csv"` or `"json"`. These are the complete selected case exports. ICS keeps original event UIDs and adds case labels; CSV and JSON retain every undated row. A changed selected case returns a version conflict so the operator can refresh the whole selection.
+
+The browser, native CLI and typed client provide the same complete flow. See [Delivery agenda across cases](../../stellar/scf_2026/sf47_budget_model/workspace/DELIVERY_AGENDA.md).
+
 ## Read and export the grant delivery calendar
 
 Use `merchant_grant_delivery_calendar` with the original `workspace`, `caseId`, and optional `asOfDate`. The calendar combines the native payment-derived completion deadlines, confirmed extensions, saved deliverable assignments, planned submissions, and recorded form submissions. Entries with one known date retain the other bound as null; undated work remains in the returned `undated` array.
@@ -374,6 +384,23 @@ Use `merchant_grant_delivery_calendar` with the original `workspace`, `caseId`, 
 Use `merchant_grant_export` with `kind: "delivery-calendar"` and `format: "ics"`, `"csv"`, or `"json"`. Include the calendar's `asOfDate` and `case.version` as `expectedVersion` to export the reviewed case version. ICS contains dated all-day events; CSV and JSON also retain undated work. The existing snapshot, row paging, file download and transfer tools carry these complete exports.
 
 The typed client exposes `read('delivery-calendar', selection)` and `download('delivery-calendar', {...selection, format})`. See [Calendar operation and date meanings](../../stellar/scf_2026/sf47_budget_model/workspace/CALENDAR.md).
+
+## Receive merchant settlements and continue their corrections
+
+The settlement tools operate the existing merchant accounting and SF47 cash engines. Select the complete original plain TAR through the same declared input/whole-file SHA mechanism as other source receiving:
+
+| Tool | Native operation |
+| --- | --- |
+| merchant_grant_settlement_preview | Inspect the complete original source; supply both name and selections for its exact pre-save cash and delivery preview. |
+| merchant_grant_settlement_receive | Save the same source, name, selections, expectedPreviewSha256, case version and original request. |
+| merchant_grant_settlements / merchant_grant_settlement | Read source review editions, complete original rows, current cash and correction history. |
+| merchant_grant_settlement_correction_preview | Review the latest saved source row, expectedCashId and explicit correction. |
+| merchant_grant_settlement_correct | Save the exact reviewed correction under its original request and preview SHA. |
+| merchant_grant_export, kind settlement | Retain the complete selected review, original source and native inspection for existing download/byte paging. |
+
+Saved review IDs use settlement- followed by 32 lowercase hexadecimal characters. Receiving choices are RECORD_CASH, LINK_CASH, OBSERVE and OMIT. Cash dates, native units, asset precision, USD valuation and deployment/work associations are explicit native inputs. LINK_CASH retains the original cash values. CORRECT_CASH, LINK_CASH, VOID_CASH and RELINK create successor reviews in the existing source/event history.
+
+The complete case export retains every settlement source, correction and cash/event history. Use the original case importer to continue it in another declared workspace. [Merchant settlements](../../stellar/scf_2026/sf47_budget_model/workspace/SETTLEMENTS.md) contains all exact bodies, limits, browser operations, CLI commands, typed interfaces and recovery behavior.
 
 ## Export, transfer and receive the complete work
 
@@ -476,3 +503,15 @@ Recorded package, invoice and cash identities stay attached to their original wo
 ## Amendment delivery calendars
 
 The original amendment preview and saved-edition read include a complete native `calendarImpact` companion. `merchant_grant_amendment_calendar_export` accepts the exact draft or saved-edition selection through `inputs` or a verified input reference and returns both ICS/CSV/JSON calendars, offline comparison, original preview and complete operating case through the existing snapshot/byte-download route. Full selections and operating steps are in [AMENDMENT_CALENDAR.md](../../stellar/scf_2026/sf47_budget_model/workspace/AMENDMENT_CALENDAR.md).
+
+## Source tables and editable saved-plan workbooks
+
+The original source-table and workbook engines are available as one complete retained Merchant workflow. Open a current or exact saved source project with merchant_grant_source_snapshot. Inspect the original XLSX and project its explicit worksheet/columns with merchant_grant_workbook_inspect and merchant_grant_workbook_project, then pass that full retained projection into merchant_grant_source_workbook_receive. Complete delimited files enter through merchant_grant_source_receive. A returned native-plan workbook enters all four sheets through merchant_grant_source_workbook_return with an explicit return profile.
+
+Read the complete normalized rows and edition comparison with merchant_grant_source_read. Keep field bindings, merge/replacement choices, source-row decisions and dependent settings explicit through merchant_grant_source_configure and merchant_grant_source_select. Freeze the reviewed roles with merchant_grant_source_review, calculate the complete native result with merchant_grant_source_preview, then save that exact preview through merchant_grant_source_save. Preserve its full original preview reference, note and stable request ID to recover the native writer's same successful revision.
+
+A source-operation response contains its full project at /book. The input reference uses the whole response's SHA256 before selecting that pointer. Original workbook projections and native previews use the complete response without /book. Complete source projects, original workbook bytes, cell provenance, worksheet selections, reviews and earlier editions stay in the original immutable snapshots.
+
+merchant_grant_workbook_handover selects a saved plan ID, exact revision, content hash, explicit export profile and stable handover request. It retains the complete fifteen-member editable workbook archive plus direct planning.zip, planning.xlsx, planning-source-project.json and WORKBOOK_EXPORT.json files. A completed identical request reopens its same retained files after Merchant restart. Download those original bytes through merchant_grant_file_read; native plan import and source rebase finish receiving in another declared workspace.
+
+The existing merchant_grant_export with kind plan and the typed client's download('plan', {planId, revision}) now select that exact native revision when revision is supplied. See [SOURCE_TABLES_AGENT.md](../../stellar/scf_2026/sf47_budget_model/workspace/SOURCE_TABLES_AGENT.md) for all fifteen tools, complete profiles/references, native size limits, typed client operation and the original customer-case continuation.

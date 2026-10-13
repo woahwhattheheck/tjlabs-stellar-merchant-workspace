@@ -156,12 +156,64 @@ source links into three source-index records:
 - `iati-complete-financial-receiving`: the original complete receiving programme.
 - `iati-fcdo-wadi-original-source`: the retained FCDO/WADI source description.
 
+The same chapter also carries the complete saved Geography product. Its operator
+selects original publisher/activity scope, links an exact financial portfolio,
+reviews mapped and unmapped records, saves source-bound findings, compares complete
+revisions and receives the original editable packet independently. The original
+publisher XML and its full attribution remain with every selected handover.
+The current chapter records the actual native, client and browser receiving
+outcomes separately, so a source-ready procedure does not become an execution
+claim.
+
+The customer projector follows these additional immutable links from that same
+IATI chapter:
+
+- `iati-geography-workspace`: the original Geography product and source contract.
+- `iati-geography-operator`: complete browser and typed-client operation.
+- `iati-geography-native-receiving`: the original full native receiving programme.
+- `iati-geography-browser-receiving`: the existing browser and retained-request continuation.
+- `iati-aiddata-nigeria-attribution`: complete historical release attribution and retained discrepancies.
+- `iati-aiddata-nigeria-metadata`: original documentary and acquisition identities.
+- `iati-aiddata-nigeria-xml`: the complete unchanged historical publisher XML.
+
+Receive the newest full canonical manuscript with the original command and keep
+all four emitted reader files together. The seven source records keep the exact
+selected repository, commit and path; other IATI, customer, installation and buyer
+selections remain in the same register. The existing companion navigation and
+search expose the added geographic workflow inside its original IATI chapter.
+A saved submission or reviewer round receives the resulting complete source
+edition through its existing comparison and explicit carry-forward controls.
+No additional grant amount, hours, funded packages or publication operation are
+introduced by the geographic product.
+
 A later accepted chapter edition refreshes those records from its own links.
 The existing register retains all other product selections and clears a prior
 blob pin when its repository, commit or path changes. Composition preserves the
 original request, baseline, six funded packages, capacity, cash and submission
 fields. The reader distinguishes the completed organisation receiving and the
 recorded financial stages through the chapter's actual operating results.
+
+The same IATI chapter includes published-document evidence: exact source rows,
+dated capture, named review, publishing-link correction, edition comparison and
+complete receiving. Its full source and candidate views share the original
+organisation source. Receive that chapter through the ordinary manuscript path
+together with its customer task and financial coverage.
+
+The source receiver follows its selected immutable links into five further
+records:
+
+- `iati-document-evidence-workspace`: complete document-review operating guide.
+- `iati-document-evidence-receiving`: native, SDK, Merchant and browser programme.
+- `iati-document-following-observation`: an explicitly selected later publisher capture.
+- `iati-fcdo-document-native-result`: the operated FCDO native case.
+- `iati-fcdo-document-connected-result`: its operated connected and browser result.
+
+The worked case retains its recorded acquisition outcomes and reviewer decisions.
+A later observation continues from the selected saved recipient; its own returned
+result supplies the new capture outcome. Subsequent composition keeps earlier
+source selections until the chapter selects another immutable edition, using
+the existing source-identity refresh. All four reader files and both submission
+bindings continue through the original composer.
 
 ## Receive current delivery finance
 
@@ -181,6 +233,14 @@ valuation sensitivity remains distinct from agreed cash obligations and observed
 receipts. The nine-answer front and six funded packages retain their existing
 source and submission bindings.
 
+## Receive the complete customer service continuation
+
+The [customer closing guide](GRANT_CUSTOMER_CLOSING.md) joins the actual customer setup, original capture pair, explicit service plan, native review, saved cycle, correction/withdrawal and grouped handover to the same application and reviewer opening. Select **--customer-closing-commit <full merged commit>** with the complete canonical manuscript when receiving this chapter for the first time. Later compositions reuse **narrative_source.customer_closing_product_commit** from the same source index.
+
+**grant-customer-closing.mjs** registers the exact workbench, planner, cycle, dossier, receiving and installed-browser sources independently of the finance owner's other components. The existing financial receiver carries the complete customer subsection; the existing customer receiver carries the original demonstration chapter. The same four output files include the full chapter and the customer continuation inside the original reviewer opening. The original film, purchase workbench, submission draft and companion reader remain part of that complete edition.
+
+Keep the customer composition helper and this guide with the original developer-site source. The selected merchant receivables runtime supplies the **Customer statements** application; its own native customer operation supplies the returned customer files and browser result used by the existing demo presenter.
+
 ## Read the complete companion
 
 Choose **Product and financing** in the application navigation. The maintained
@@ -193,7 +253,7 @@ while retaining the original four-reader sourcePins contract.
 
 ## Prepare a saved draft from the command line
 
-The complete developer-site component includes [the native draft exporter](GRANT_EXPORT.md). Run `node stellar-forge/developer-site/grant-export.mjs --draft /private/scf/saved-submission.json --out /private/scf/new-export` to prepare the existing saved draft without opening another browser. It uses the same submission, planning and handover models, retains manual edits and complete history, and produces exact field text, counts, full printing and a native draft that the original workspace can reopen. Application-only receiving requires its matching source index and original URL.
+The complete developer-site component includes [the native draft exporter](GRANT_EXPORT.md). Run `node stellar-forge/developer-site/grant-export.mjs --draft /private/scf/saved-submission.json --out /private/scf/new-export` to prepare the existing saved draft without opening another browser. It uses the same submission, planning and handover models, retains manual edits and complete history, and produces exact field text, counts, full printing and a native draft that the original workspace can reopen. Application-only receiving requires its matching source index and original URL. A complete four-file export also supplies `source-package.json`. Receive that selected edition into the original saved draft with `starforge grant-export --draft /private/scf/saved-submission.json --receive-source-package /private/scf/source-package.json --out /private/scf/received-export`, or open it for comparison in the existing Source editions screen. The same draft, edited-answer baselines, issuer mapping, plans and review history continue.
 
 ## Receive installation and recurring buyer work
 
@@ -275,3 +335,138 @@ Preserve the original case identities when incorporating its native result. Prov
 ## A2A source catalogue in the current composition
 
 The existing customer-source receiver also imports `grant-a2a.mjs` and calls its receiver after selecting the A2A chapter. This completes the chapter's source catalogue and retains original dated file/source observations through public-link projection and repeated composition. The composer records `a2a_projector_git_blob` alongside the current renderer, customer projector and delivery-plan identities. The [complete A2A catalogue guide](./GRANT_A2A_CATALOGUE.md) explains the selected sources, retained file witnesses and original dated receiving. Use the same complete four-file composition and the existing publication operation.
+
+## Receive merchant invoices and complete operating projects
+
+Receive the complete canonical §9A chapter **Merchant invoices, paid fulfillment and portable operating projects** through the existing --manuscript operation. The whole-section receiver carries its full operator journey, completed commissioning, current installation and portable execution states, customer handover and existing funded-work assignment.
+
+The existing customer source receiver registers four immutable guides from that chapter:
+
+- x402api-merchant-operating selects the complete products/x402api-merchant-workspace/OPERATING.md.
+- x402api-merchant-application selects README.md in that same original product directory.
+- x402api-merchant-native-receiving selects NATIVE_RECEIVING.md.
+- x402api-merchant-installed-receiving selects INSTALLED_RECEIVING.md.
+
+Each guide retains its actual repository, commit and path. A changed identity clears an obsolete blob pin through the original receive helper. An older manuscript that has no merchant chapter or guide link preserves the existing source register. The chapter does not install a second section projector.
+
+The original native result contains five local x402api commissioning invoices and their complete received files. Keep those fixture observations separate from the canonical eighteen Stellar purchases, their 0.0411 XLM, and all independent-customer targets. The installed and portable programmes retain their own original operation IDs and actual returned completion state. Source publication or parsing does not supply a missing native receiving result.
+
+Compose this chapter and its four sources with every current chapter and registration, including the accepted Haystack and Connected Systems changes. Preserve the application's current answers, budget, six packages, prospective hours, independent merchants and buyers, purchase targets and tranches. The completed merchant foundation supports future customer-specific operating and handover work within those existing allocations.
+
+Run the original composer and retain its four source pins for grant.html, grant-data/application.md, grant-data/product-and-finance.md, and grant-data/source-index.json. Continue the same saved draft/review, Page and owner-private Site publication. The [full merchant chapter and receiving boundary](./GRANT_X402API_MERCHANT.md) explains this source contribution.
+
+## Receive SQL preparation and reusable pipelines
+
+Receive the complete canonical §9A chapter **SQL preparation, reusable pipelines and complete analyst receiving** through the existing `--manuscript` operation. The complete chapter carries the analyst’s original sources, reviewed SQL recipe, reusable pipeline, complete stage results and editable receiving project. Its Applications, typed SDK and 40 Merchant tools use the same retained operation. The original whole-H2 receiver includes every more detailed heading and the six funded-package rows.
+
+The existing customer-source receiver selects these six immutable references from that chapter:
+
+| Source ID | Selected file |
+| --- | --- |
+| `preparation-workspace-operating` | `products/data-preparation/OPERATING.md` |
+| `preparation-pipeline-original-engine` | `stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/README.md` |
+| `preparation-workspace-selection` | `stellar/scf-starforge-20261009/distribution/selections/data-preparation-workspace.json` |
+| `preparation-workspace-receiving` | `products/data-preparation/RECEIVING.md` |
+| `preparation-workspace-source` | `products/data-preparation/receiving-source.json` |
+| `preparation-workspace-native-receiving` | `products/data-preparation/receiving.py` |
+
+Each source keeps the repository, commit and path selected by the current chapter. A later source selection clears an obsolete blob pin through the original `receive` helper; a manuscript without the chapter or a particular link retains the existing selection. The source index receives the operating guide, original pipeline contract, installed selection, complete receiving guide, frozen runtime manifest and native controller together.
+
+The product is merged in PR726 at `c451614467b688b8306adb512fa6105898ac634e`. Its complete reviewed source is `b47099ffa5acf15f2c70d9d12662ee81dca0d3fe`; the receiving manifest selects runtime `68ad5adf250e9f100f84d034881ebabc9fa48117`, 91 full source files and 1,124,639 bytes. The complete receiving correction is merged in PR899 at `25dd8b0aa9b32eb99507cfb95e682248fcbf2922`, with controller/driver/guide source `ca518e3aba84eed4dbc56147fa5ac9090904424e`. Its original transfer contract keeps every portable file and saved run field while reconstructing the native SQLite descriptor. The original 120,012-row customer case supplies the current continuation. Its complete checkpoint receiver transfers the same saved operation, native identities and earlier histories to the receiving host, then uses the existing operation lock. The dated completed customer result joins this original case and chapter.
+
+Run the same complete composer described above and retain all four resulting reader pins. The original saved draft/review, Page and owner-private Site receive that cumulative edition. The chapter maps this reusable starting product into the existing six funded packages and the current independent merchant/buyer acceptance, with the same selected funding, capacity and schedule. The [complete preparation contribution](./GRANT_PREPARATION.md) retains the chapter and source-selection contract.
+
+## Receive regional labor analysis and customer data delivery
+
+The complete regional customer guide is [BLS regional analysis and recurring delivery](../../products/bls-labor/GRANT.md). Its concise accepted chapter belongs within the canonical manuscript's existing current demonstration and operator journey. The ordinary whole-chapter `--manuscript` receiver carries this H2 into the same product and finance companion.
+
+The BLS analyst product keeps LAUS resident measures and QCEW workplace measures in their original projections. Its retained NEK case supplies all original selected observations, six complete county/projection briefings and the full resident-labor change report. Source editions, revisioned analyst notes, publication history and complete editable project receiving remain one working project. Its maintained `bls-labor` selection and Applications entry are the operator opening path.
+
+The owned `grant-products/bls-labor.json` declaration registers these four immutable operating sources through the existing composer:
+
+| Source ID | Original operating content |
+| --- | --- |
+| `bls-regional-analyst-workspace` | Installed application, all-row analysis, reports and full editable handover |
+| `bls-labor-source-contract` | Original LAUS/QCEW observation definitions and source selection contract |
+| `bls-original-case-receiving` | Complete retained NEK input, reports, project export and separate reopening |
+| `bls-native-customer-receiving` | Original publisher plans/runs, dataset versions, SF88 receiving and Vitality import |
+
+Each link selects the full merged product commit and source path. The product registry preserves matching measured identities and clears obsolete file measurements when the selected repository, commit or path changes. Repeated composition updates this same chapter and source records while retaining all other accepted customer work.
+
+Use the original 4BF5/Actions BLS case for its actual native and browser result. The funded implementation contribution is customer-specific source/report configuration, existing merchant and buyer integration, complete receiving and operating handover within the current six packages. The canonical allocation remains USD38,000, 400 prospective hours and 150 days. Continue the same four-file reviewer composition, saved review and Page/Site publication.
+
+## Independent product source contributions
+
+[Product registration and complete receiving](GRANT_PRODUCT_SOURCES.md) describes the default `grant-products/*.json` declarations, optional additional received files, original source-ID continuity and exact measured-edition binding. The existing `grant-compose` command receives these definitions before its current public projection and writes the same four reader outputs. A product author can maintain its own complete source declaration alongside the accepted H2 without adding another block to the shared customer projector.
+
+## IATI customer operating procedures
+
+The maintained customer projection carries the complete IATI operating-procedure introduction into the existing IATI chapter and concise customer, product and funded-installation paragraphs into the original answers. A complete section supplied by the manuscript owner takes precedence. In the nine-answer application, the owner may consolidate the three introductions into the Working product narrative. When that narrative names Operating Plans and links the full IATI operating guide, and none of the maintained introduction prefixes remain, composition preserves the authored answer unchanged. An older partially received set of prefixed introductions is still completed through the normal receiver. The chapter joins the exact saved document case to the existing Operating Plans application, full source/catalog/plan history, Markdown and HTML, and original native ZIP receiving. Its five source registrations select the merged guide, native reader, pure procedure model, complete installed command and full IATI operator guide at `0110a7fde307112abee5be63a06291855aa72599`.
+
+Continue using the normal `grant-compose` command with the complete current application, companion, reader and index. Omit `--manuscript` when receiving these maintained additions into the already saved cumulative reader. Subsequent full-manuscript composition preserves this introduction when the original customer chapter has not yet received it; a manuscript-owned version is retained. The existing nine answer identities, all other customer chapters and six package/capacity/cash assumptions remain part of the same composition.
+
+Customer procedure creation and editing operate the exact case through the original applications. The separate original FCDO native receiving programme supplies its own dated result; follow its existing case and worker operation when updating demonstration results. The operating-procedure source and chapter describe the implemented customer capability and complete receiving sequence.
+
+## Receive Connected Systems commissioning
+
+The canonical **Connected Systems observations: customer commissioning and repeat
+use** subsection travels through the existing whole-§9A `--manuscript` receiver.
+It retains the selected observation source and returned schema, original numbers,
+units and quality fields, declared acquisition coverage, reviewed mapping,
+editions, queries, comparisons and independent customer receiving.
+
+The same selected manuscript carries its concise front-answer additions and
+complete **8. Delivery capacity and cash timing** treatment. Keep the proposed
+$9,600 / 72 engineering-hour / 12-active-day workorder and its two uncollected
+$4,800 payments distinct from the six funded packages. The commissioning payer,
+technical owner, acceptance owner, source rights, receiving environment and actual
+available contributors are established in the original customer workorder.
+
+The source receiver follows four immutable links from that complete subsection:
+
+- `connected-systems-customer-operator`: the selected `CONNECTED_SYSTEMS.md`
+  operating and installation guide.
+- `connected-systems-publisher-observation`: the publisher's original
+  `obs-simple.json` observation used by the completed native receiving example.
+- `connected-systems-commissioning-programme`: the original GeoRobotix Workshare
+  phases and Customer Installation operating guide.
+- `connected-systems-workshare-intake`: the exact maintained Python scope and plan
+  intake used by the completed native commercial operation.
+
+All four records retain their actual repository, commit and path. A later accepted
+source edition updates the existing record and clears an obsolete blob pin
+through the original receiver. Earlier manuscripts without this subsection keep
+the preceding source register. All unrelated source records and customer
+chapters remain in the same composition.
+
+The completed one-observation native example, an installed operator, a live
+collection and a selected paid merchant/buyer service have separate actual
+outcomes. Receive their current descriptions from the canonical manuscript.
+Neither a prepared implementation proposal nor a source archive adds a customer
+agreement, collected revenue or qualifying purchase.
+
+Use the same four-reader source pins and original saved draft, review, Page and
+Site publisher. The complete chapter and capacity discussion accompany the
+existing editable answers; this source addition creates no new authoring,
+application or customer-operation controller.
+
+The current canonical chapter includes the original completed commercial
+Workshare and Installation intake. Its eight engineering workorders remain
+planned, with the same $9,600 proposal, 72 hours, 12 active business days and two
+$4,800 milestones. The observation product's dependency completion, installed
+receiving and browser acceptance remain the next product stages. Receive the
+current author's complete paragraphs through the existing manuscript receiver;
+keep its live wording, source appendix and concurrent customer chapters. The
+source registration is additive and supplies no new application or native result.
+
+## Receive Calendar and Connected Systems in the cumulative edition
+
+Receive the accepted Calendar demand, product and delivery answers together with the complete **Product selection, installation and recurring buyer work** chapter. The customer projector retains the chapter's original `CUSTOMER_USE_CALENDAR.md` and `INSTALLATIONS.md` selections as `customer-use-calendar` and `customer-use-installations`. The maintained delivery-plan module carries the dated buyer/cohort schedule through its existing T1, T2 and T3 rows. Keep that producer with the received manuscript so a later normal composition preserves the reviewed wording. The original hours, costs and six funded packages remain the selected financial basis.
+
+The complete **Connected Systems observations: customer commissioning and repeat use** source selection also travels through the existing customer receiver. Its `connected-systems-customer-operator` record follows the original operating guide; `connected-systems-publisher-observation` retains the complete original observation's source repository, commit and path. Use the actual chapter's immutable links and retain both full source records. The existing public-link projection and repeated composition preserve the surrounding source catalogue.
+
+The October 13 cumulative receiving first reconciled 150 original source records and 45 chapters, then received the newer complete publisher edition with all its added chapters and source registrations. The current joined output contains 183 records and 54 chapters. Of the preceding 173 records, 166 remain byte-identical; the Geography browser procedure selects its completed continuation, and the original product registry adds only its source-kind and registration fields to the six unchanged SQL-preparation selections. The ten new records are the two original Calendar selections and all eight sources already required by the scientific-array declaration. The preceding Connected Systems source update is preserved exactly. The existing Datasette public projection is unchanged. Subsequent editions may add sources; compare complete identities and content rather than enforcing this historical count.
+
+Keep all four complete reader outputs and their `sourcePins` together. A reviewer source package uses application Markdown, source-index JSON, the original budget CSV and the complete companion; the HTML reader is a separate published output. Receive that complete package into the original saved draft with `grant-export --draft ORIGINAL --receive-source-package NEW_PACKAGE --out NEW_EXPORT`, then reopen its complete draft. Preserve its edited answers, field mapping, plans, review history and preceding source editions through the maintained source comparison.
+
+The scientific-array chapter must retain the immutable links selected by its existing `grant-products/zarr-scientific-arrays.json` declaration. Its original workspace, native contract, upstream and receiving sources accompany the pinned commissioning guide, editable worksheet and original agreement. Keep the complete declaration active in the ordinary composer; missing required links are source errors. The maintained public projection retains the agreement's authenticated-source identity while omitting its private URL from the reader.

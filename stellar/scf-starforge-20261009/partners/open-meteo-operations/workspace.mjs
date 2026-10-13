@@ -9,6 +9,7 @@ import {WeatherStore} from './store.mjs';
 import {absolute,privateDirectory,readPrivate,readJson,publish,publishJson} from './files.mjs';
 import {SCHEMA,FAMILIES,MAX_RESPONSE_BYTES,providerProfile,providerUrl,publicQuery,need,keys,sha,clone,canonical,parsePayload,ATTRIBUTION} from './contract.mjs';
 import {series,compare} from './analysis.mjs';
+import {readProviderResponse,isWeatherSourceRead} from './provider-response.mjs';
 const buyerModule=()=>native('sf88-operator-buyer-cli/node/index.mjs');
 const {createPublicHttpsFetch}=await native('sf31-buyer-client/public-transport.mjs');
 export async function initializeWeather({stateRoot,originalOperatorDirectory,sellerClient,setupDirectory,provider={mode:'evaluation'}}){
@@ -92,10 +93,15 @@ export class WeatherWorkspace{
  saveSite(input){return this.serial(()=>this.store.saveSite(input));}
  saveRequest(input){return this.serial(()=>this.store.saveRequest(input));}
  saveDecision(input){return this.serial(()=>this.store.saveDecision(input));}
+ renewalChoices(reportId){return this.serial(()=>this.store.renewalChoices(reportId));}
+ reviewRenewal(input){return this.serial(()=>this.store.reviewRenewal(input));}
+ commitRenewal(input,options){return this.serial(()=>this.store.commitRenewal(input,options));}
  freezeReport(input){return this.serial(()=>this.store.freezeReport(input));}
  report(id){return this.serial(()=>this.store.report(id));}
  events(options){return this.serial(()=>this.store.events(options));}
  capture(id){return this.serial(()=>this.store.capture(id));}
+ sourceHistory(id,options){return this.serial(()=>this.store.sourceReads(id,options));}
+ providerRead(id){return this.serial(()=>this.store.providerRead(id));}
  series(id,variable,options){return this.serial(()=>series(this.store.capture(id).view,variable,options));}
  compare(left,right,options){return this.serial(()=>compare(this.store.capture(left).view,this.store.capture(right).view,options));}
  async sourceCapture(id,{expectedRevision,signal}={}){
@@ -110,17 +116,18 @@ export class WeatherWorkspace{
    if(profile.proxyEnv)need(this.environment[profile.proxyEnv]===process.env[profile.proxyEnv],'PROVIDER_PROXY_ENVIRONMENT_CHANGED');
    const fetch=createPublicHttpsFetch(options);
     response=await fetch(privateUrl.href,{method:'GET',headers:{accept:'application/json'},redirect:'manual',signal});
-    need(response.status===200,'WEATHER_PROVIDER_HTTP_'+response.status);
-    need(/^application\/json(?:;|$)/i.test(response.headers.get('content-type')??''),'WEATHER_PROVIDER_CONTENT_TYPE');
-    const reader=response.body.getReader(),chunks=[];let count=0;
-    try{for(;;){const {done,value}=await reader.read();if(done)break;count+=value.byteLength;need(count<=MAX_RESPONSE_BYTES,'WEATHER_RESPONSE_TOO_LARGE');chunks.push(Buffer.from(value));}}
-    catch(error){await reader.cancel().catch(()=>{});throw error;}
-    const bytes=Buffer.concat(chunks);
-    const provenance={kind:'PROVIDER_CAPTURE',sourceAttempt:q.sourceAttempt,
-     sourceUrl:publicUrl.href,providerMode:profile.mode,httpStatus:200,retrievedAt:new Date().toISOString(),
+    const received=await readProviderResponse(response),bytes=received.bytes;
+    const provenance={kind:response.status===200&&received.metadata.bodyComplete&&
+     /^application\/json(?:;|$)/i.test(received.metadata.contentType)?'PROVIDER_CAPTURE':'PROVIDER_RESPONSE',
+     sourceAttempt:q.sourceAttempt,sourceUrl:publicUrl.href,providerMode:profile.mode,
+     retrievedAt:new Date().toISOString(),...received.metadata,
      requestSha256:sha(Buffer.from(publicQuery(request).toString())),httpRequests:1,
      accounting:'A provider read; local HTTP request count is not the provider billing-unit count.',attribution:ATTRIBUTION};
-    retainedRead=this.store.retainSourceRead(id,q.specSha256,bytes,provenance);
+    retainedRead={...this.store.retainSourceRead(id,q.specSha256,bytes,provenance),
+     reprocessable:isWeatherSourceRead({provenance})};
+    need(received.metadata.bodyComplete,received.metadata.readErrorCode??'WEATHER_PROVIDER_READ_INTERRUPTED');
+    need(response.status===200,'WEATHER_PROVIDER_HTTP_'+response.status);
+    need(/^application\/json(?:;|$)/i.test(received.metadata.contentType),'WEATHER_PROVIDER_CONTENT_TYPE');
     const captured=this.store.attachCapture(id,q.specSha256,bytes,provenance);
     return {request:this.store.request(id),capture:withoutRaw(captured)};
    }catch(error){
@@ -130,9 +137,10 @@ export class WeatherWorkspace{
    }
   });
  }
- reprocessSource(id,{expectedRevision}={}){
-  this.requireOperator();return this.serial(()=>{const q=this.store.request(id),read=this.store.sourceRead(id);
-   need(q.native===null&&read?.specSha256===q.specSha256,'RETAINED_PROVIDER_READ_REQUIRED');
+ reprocessSource(id,{expectedRevision,sourceReadId}={}){
+  this.requireOperator();return this.serial(()=>{const q=this.store.request(id),read=sourceReadId?this.store.providerRead(sourceReadId):this.store.sourceRead(id);
+   need(q.native===null&&read?.requestId===id&&read?.specSha256===q.specSha256,'RETAINED_PROVIDER_READ_REQUIRED');
+   need(isWeatherSourceRead(read),'RETAINED_WEATHER_RESPONSE_REQUIRED');
    this.store.beginSource(id,expectedRevision,{reprocess:true});
    try{const capture=this.store.attachCapture(id,q.specSha256,read.raw,read.provenance);return {request:this.store.request(id),capture:withoutRaw(capture),sourceHttpRequests:0};}
    catch(error){this.store.sourceFailed(id,q.specSha256,{code:safeCode(error),retainedRead:{id:read.id,sha256:read.sha256,bytes:read.bytes},observedAt:new Date().toISOString()});throw error;}

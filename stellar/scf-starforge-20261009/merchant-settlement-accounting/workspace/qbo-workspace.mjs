@@ -11,8 +11,10 @@ import {isBuyerHandoff} from '../accountant/buyer-source.mjs';
 import {qboBuyerRows,isQboBuyerPlan,qboBuyerReservation,qboBuyerReservationOverlap} from '../accountant/qbo-buyer.mjs';
 import {QboHttpClient,qboRetryAt} from '../accountant/qbo-http.mjs';
 import {accountingWorkspaceBinding} from './binding.mjs';
+import {createQboWorksheet,openQboWorksheet,inspectQboWorksheet,qboWorksheetSelections} from '../accountant/qbo-worksheet.mjs';
 
 export const QBO_REQUEST_BYTES=32*1024*1024;
+export const QBO_WORKSHEET_RESPONSE_SCHEMA='stellar-forge.qbo-worksheet-response.v1';
 const copy=value=>structuredClone(value),now=()=>new Date().toISOString();
 const records=workspace=>workspace.state.qboPlans??[];
 const digest=value=>qboHash(qboCanonical(value));
@@ -92,6 +94,56 @@ export class QboWorkspace{
     const record=this.row(planId),plan=await this.plan(planId),{parent}=await this.current(plan.handoffId);
     return {revision:this.workspace.state.revision,record:copy(record),plan,responses:copy(record.responses),expectedParentId:parent?.id??null};
   }
+
+  async worksheetContext(value,{retained=false}={}){
+    check(!this.workspace.commitUncertainty,'QBO_WORKSPACE_REOPEN_REQUIRED',
+      'Reopen the original accounting workspace before inspecting a worksheet against its source.',409);
+    const {workspaceId,sourcesSha256}=accountingWorkspaceBinding(this.workspace.directory,this.workspace.state),binding={workspaceId,sourcesSha256};
+    check(value.binding&&qboCanonical(value.binding)===qboCanonical(binding),'QBO_WORKSHEET_WORKSPACE_CHANGED',
+      'The worksheet request belongs to another original accounting workspace or source.',409);
+    const handoffId=retained?value.worksheet?.binding?.handoffId:value.handoffId;
+    const expectedParentId=retained?value.worksheet?.binding?.accountantRevisionId:value.expectedParentId;
+    const {handoff,parent}=await this.current(id(handoffId));
+    check(expectedParentId===(parent?.id??null),'QBO_STALE_ACCOUNTANT',
+      'The accountant return changed. Keep the original worksheet and export a new base from the current handoff.',409);
+    return {handoff,revision:parent,workspaceBinding:binding,companySnapshot:copy(value.companySnapshot),environment:value.environment};
+  }
+  worksheetAnswer(value){return {schema:QBO_WORKSHEET_RESPONSE_SCHEMA,binding:copy(value.binding),
+    revision:this.workspace.state.revision,...value};}
+  async exportWorksheet(value){
+    value=copy(value);const context=await this.worksheetContext(value);
+    return this.worksheetAnswer({binding:context.workspaceBinding,...createQboWorksheet({
+      id:value.id,createdAt:value.createdAt,draft:value.draft,...context})});
+  }
+  async openWorksheet(value){
+    value=copy(value);const context=await this.worksheetContext(value,{retained:true});
+    return this.worksheetAnswer({binding:context.workspaceBinding,...openQboWorksheet({worksheet:value.worksheet,...context})});
+  }
+  async inspectWorksheet(value){
+    value=copy(value);const context=await this.worksheetContext(value,{retained:true});
+    const preview=inspectQboWorksheet({worksheet:value.worksheet,csvBytes:value.csvText,currentDraft:value.currentDraft,
+      resolutions:value.resolutions??[],...context});
+    return this.worksheetAnswer({binding:context.workspaceBinding,preview});
+  }
+  async worksheetPlanInput(value){
+    value=copy(value);const context=await this.worksheetContext(value,{retained:true});
+    const preview=inspectQboWorksheet({worksheet:value.worksheet,csvBytes:value.csvText,currentDraft:value.currentDraft,
+      resolutions:value.resolutions??[],...context});
+    check(value.previewSha256===preview.integrity.sha256&&preview.readyToAdopt,'QBO_WORKSHEET_PREVIEW_CHANGED',
+      'Inspect the current worksheet return and resolve every field conflict before preparing its journal request.',409);
+    const metadata=value.plan;
+    check(metadata&&typeof metadata==='object'&&!Array.isArray(metadata)&&
+      Object.keys(metadata).every(key=>['id','name','actor','createdAt','txnDate','docNumber'].includes(key)),
+      'QBO_WORKSHEET_PLAN_REQUIRED','Provide the original journal request ID, name, operator, timestamp, posting date and optional document number.');
+    const {companySnapshot:company}=context;
+    const prepared=await this.preparePlan({...metadata,handoffId:context.handoff.id,expectedParentId:context.revision?.id??null,
+      realmId:company.realmId,companyName:company.companyName,baseCurrency:company.baseCurrency,environment:context.environment,
+      companySnapshot:company,...qboWorksheetSelections(preview.candidate)});
+    return this.worksheetAnswer({binding:context.workspaceBinding,worksheetPreviewSha256:preview.integrity.sha256,
+      request:{...prepared.request,revision:prepared.revision,previewSha256:prepared.previewSha256},
+      plan:prepared.plan,previewSha256:prepared.previewSha256});
+  }
+
   async preparePlan(value){
     const request=requestFields(value),{handoff,parent}=await this.current(request.handoffId);
     check(request.expectedParentId===(parent?.id??null),'QBO_STALE_ACCOUNTANT','Reload the selected handoff after its accountant return changed.',409);
@@ -458,10 +510,15 @@ export class QboWorkspace{
 export async function handleQboRequest(qbo,{method,path,value}){
   const parts=path.split('/').filter(Boolean);if(parts[0]!=='api'||parts[1]!=='qbo')return null;
   if(parts.length===2&&method==='GET')return {value:qbo.view()};
+  if(path==='/api/qbo/worksheets'&&method==='GET')return {value:qbo.worksheetAnswer(qbo.view())};
   if(path==='/api/qbo/connection'&&method==='GET')return {value:qbo.connection()};
   if(path==='/api/qbo/company/fetch'&&method==='POST')return {value:await qbo.fetchCompany(value)};
   if(path==='/api/qbo/company/preview'&&method==='POST')return {value:{company:normalizeQboCompany(value)}};
   if(parts.length===4&&parts[2]==='handoffs'&&method==='GET')return {value:await qbo.handoff(parts[3])};
+  if(method==='POST'&&parts.length===4&&parts[2]==='worksheets'){
+    const operation={export:'exportWorksheet',open:'openWorksheet',inspect:'inspectWorksheet','plan-input':'worksheetPlanInput'}[parts[3]];
+    if(operation)return {value:await qbo[operation](value)};
+  }
   if(path==='/api/qbo/preview'&&method==='POST')return {value:await qbo.preview(value)};
   if(path==='/api/qbo/plans'&&method==='POST')return {value:await qbo.create(value)};
   if(parts[2]==='plans'&&parts[3]){
