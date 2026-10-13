@@ -451,16 +451,21 @@ function render(){
 async function refreshSource({initial=false,edition='current'}={}){
   if(!['current','concise'].includes(edition))throw new Error('Select the current manuscript or the concise working edition.');
   cancelPublishedRead();
-  const request={controller:new AbortController(),view:view(),edition};
+  const request={controller:new AbortController(),view:view(),edition,
+    draft,savedId,savedRevision};
   publishedRead=request;sourceReadControls();clearError();
   status(edition==='concise'?'Reading the complete concise working edition. Current answers remain available.':'Reading the current application. Saved drafts and source packages remain available.');
   try{
     const received=edition==='concise'?await readWorkingEdition(request.controller.signal):await readPublished(request.controller.signal);
     if(publishedRead!==request)return;
+    const sameSelection=draft===request.draft&&savedId===request.savedId&&
+      savedRevision===request.savedRevision;
     published=received.source;publishedBundle={bundle:received.bundle,objects:received.objects};
     publishedLabel=edition==='concise'?'Concise working edition · '+received.source.receivedAt.slice(0,10):'Current application reader';
     if(!draft){draft=retainPublishedBundle(createDraft(published,{id:uid()}));dirty=false;}
-    if(!initial&&view()===request.view)$('view').value='source';
+    // A read started for another open draft may still supply a comparison,
+    // but it cannot navigate the subsequently selected working application.
+    if(!initial&&sameSelection&&view()===request.view)$('view').value='source';
     render();status(edition==='concise'?'Read the dated concise working edition with its full original manuscript, budget and companion. Compare before receiving its answers.':'Read the current application edition. Compare its complete source before receiving it.');
   }catch(error){
     if(publishedRead===request&&error.name!=='AbortError')fail(error);
