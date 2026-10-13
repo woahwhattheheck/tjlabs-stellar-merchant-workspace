@@ -1,6 +1,6 @@
 // MIT. Optional following-edition suffix inside the original recipient browser course.
 import assert from 'node:assert/strict';
-import {readFile,open,mkdir,link,unlink} from 'node:fs/promises';
+import {readFile,open,mkdir} from 'node:fs/promises';
 import {join,dirname,resolve} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
 import {openText,canonical} from './core.mjs';
@@ -109,6 +109,19 @@ export async function receiveRecipientRenewal({context,directory,record,save,ope
   assert.ok((await readFile(followingPath)).equals(afterBytes));assert.ok((await readFile(beforeSelection.path)).equals(beforeBytes));
   state.result={reviewId:result.id,reviewSha256:result.review.sha256,working:{path:working.path,bytes:working.bytes,sha256:working.sha256},report:{path:report.path,bytes:report.bytes,sha256:report.sha256},comparison:observed};
   state.status='COMPLETE';state.completedAt=new Date().toISOString();await save();return state;
- }catch(error){state.status='ERROR';state.error={code:error.code??error.name,message:error.message};await save();throw error;}
+ }catch(error){
+  // Preserve the actual current local result before closing this owned Page.
+  // A completed download is authoritative; never invent the identity of an output lost with its process.
+  if(page&&!page.isClosed()){
+   try{
+    const interrupted=await download(page,'Save complete working review','renewal-interrupted-working.json');
+    const retainedModel=openRecipientRenewal(decode(interrupted.body));
+    assert.equal(retainedModel.value.previous.text,decode(beforeBytes));assert.equal(retainedModel.value.following.text,decode(afterBytes));
+    state.checkpoint={path:interrupted.path,bytes:interrupted.bytes,sha256:interrupted.sha256};
+    state.attempts.at(-1).interruptedOutput={...state.checkpoint,completeReturns:retainedModel.value.completions.length};
+   }catch(captureError){state.attempts.at(-1).captureError={code:captureError.code??captureError.name,message:captureError.message};}
+  }
+  state.status='ERROR';state.error={code:error.code??error.name,message:error.message};await save();throw error;
+ }
  finally{if(reopened)await reopened.close().catch(()=>{});if(page)await page.close().catch(()=>{});}
 }
