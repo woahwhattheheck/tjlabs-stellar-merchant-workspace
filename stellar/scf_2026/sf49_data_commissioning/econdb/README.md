@@ -98,3 +98,7 @@ Before calling the application, report, dataset export or any attached package r
 Repair unreadable tables, clipped content, missing styling or broken behavior directly while preserving original data, computations, IDs and history. Keep the design plain, restrained and industrial. Continue through the original equipped receiver when a runtime is unavailable; provide the complete exact source and opening steps and continue independent implementation.
 
 Current execution evidence is in **EXAMPLE_RESULTS.md**. Source delivery and an observed native/rendered receiving run are distinct milestones recorded in the original case.
+
+## Complete browser projects
+
+The offline workbench now assembles and edits multi-port projects through its fifth panel. It saves all current/prior original source pairs, reopens complete projects, and exports full standalone reports and source-annotated CSV/JSON. Native builds include `browser-workspace.json`; `maritime-project-cli.mjs import-workspace --workspace SAVED.json --out NEW_PROJECT` receives a browser project into the original complete native workflow. See PROJECT_GUIDE.md for editing, undo, engine/source binding, limits and the same-operation browser/native receiving course.

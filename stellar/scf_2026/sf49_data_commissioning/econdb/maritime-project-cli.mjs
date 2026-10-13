@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import {readFile,lstat} from 'node:fs/promises';
 import {resolve,dirname} from 'node:path';
-import {buildProject,verifyProject,rebuildProject} from './maritime-project-native.mjs';
+import {buildProject,verifyProject,rebuildProject,importProjectWorkspace} from './maritime-project-native.mjs';
 
 try{
  const args=process.argv.slice(2),command=args.shift(),options={};
@@ -18,6 +18,9 @@ try{
   if(!s.isFile()||s.isSymbolicLink()||s.size>2*1024*1024)throw new Error('Project JSON must be a regular file within 2 MiB');
   const config=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await readFile(path)));
   result=await buildProject({config,baseDirectory:dirname(path),directory:need('out')});
+ }else if(command==='import-workspace'){
+  allow(['workspace','out']);
+  result=await importProjectWorkspace({workspacePath:need('workspace'),directory:need('out')});
  }else if(command==='inspect'){
   allow(['project']);
   const received=await verifyProject(need('project'));
@@ -26,6 +29,6 @@ try{
  }else if(command==='reopen'){
   allow(['project','out']);
   result=await rebuildProject({directory:need('project'),destination:need('out')});
- }else throw new Error('Commands: build --project project.json --out NEW_PROJECT; inspect --project RECEIVED_PROJECT; reopen --project RECEIVED_PROJECT --out NEW_PROJECT. Node 22+ and Linux flock are required. Existing exact completed targets are verified; changed or incomplete published targets are preserved and refused.');
+ }else throw new Error('Commands: build --project project.json --out NEW_PROJECT; import-workspace --workspace SAVED_WORKSPACE.json --out NEW_PROJECT; inspect --project RECEIVED_PROJECT; reopen --project RECEIVED_PROJECT --out NEW_PROJECT. Node 22+ and Linux flock are required. Existing exact completed targets are verified; changed or incomplete published targets are preserved and refused.');
  process.stdout.write(JSON.stringify(result,null,2)+'\n');
 }catch(error){process.stderr.write(error.message+'\n');process.exitCode=1}
