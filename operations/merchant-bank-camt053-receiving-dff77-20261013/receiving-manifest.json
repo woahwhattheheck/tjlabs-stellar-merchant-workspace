@@ -24,15 +24,15 @@
     },
     {
       "path": "producer.py",
-      "bytes": 25163,
-      "sha256": "262321992c72fc6be1b0f358a6d2df76387d86345db92e9d2a926b3e04628d15",
-      "git_blob_sha1": "568627c16668c896a44fd5dfc446abc61b153e4d"
+      "bytes": 26389,
+      "sha256": "8148a2d98775b1e54c691340c5240b70bc48cdbdddc107c14b9a3020022cee73",
+      "git_blob_sha1": "de2836fad755fd8724692b14b17ea73fb9b69586"
     },
     {
       "path": "README.md",
-      "bytes": 14201,
-      "sha256": "96fcde7424b920df1b5ba31b85f6045dfc4a7738c1bbdbbbd2452c50e5c3c78e",
-      "git_blob_sha1": "ccd7acd55ef4ea914fa7df940c0d5ea5846d9c9d"
+      "bytes": 18271,
+      "sha256": "416abc21b208db8f3c3196ae700af60e7c377c78c7e3900e182036a4e29ea18a",
+      "git_blob_sha1": "8da442a010cca53ae61b01614316976c91d42b51"
     },
     {
       "path": "BUNDESBANK_ORIGINALS.json",

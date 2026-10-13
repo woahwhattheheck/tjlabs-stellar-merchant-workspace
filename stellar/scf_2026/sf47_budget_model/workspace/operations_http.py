@@ -8,6 +8,7 @@ import json
 from model import Problem
 from operations import Operations, decoded
 import operations_calendar as calendar_model
+import forecast_comparison
 import operations_agenda_http as agenda_http
 import operations_use_calendar as use_calendar
 import operations_workflows as operating_workflows
@@ -17,6 +18,8 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static["/forecast-comparison.mjs"] = ("forecast-comparison.mjs", "text/javascript; charset=utf-8")
+    static["/FORECAST_COMPARISON.md"] = ("FORECAST_COMPARISON.md", "text/markdown; charset=utf-8")
     static["/operations_lazy.mjs"] = ("operations_lazy.mjs", "text/javascript; charset=utf-8")
     static["/DESK_LOADING.md"] = ("DESK_LOADING.md", "text/markdown; charset=utf-8")
     static.update({"/task-outcomes-workbook.mjs": ("task-outcomes-workbook.mjs", "text/javascript; charset=utf-8"),
@@ -83,7 +86,9 @@ def register_static(static):
     static.update({"/operations_statements.mjs": ("operations_statements.mjs", "text/javascript; charset=utf-8"),
                    "/operations_statements.css": ("operations_statements.css", "text/css; charset=utf-8"),
                    "/operations_statement_profiles.mjs": ("operations_statement_profiles.mjs", "text/javascript; charset=utf-8"),
-                   "/operations_statement_profiles.css": ("operations_statement_profiles.css", "text/css; charset=utf-8")})
+                   "/operations_statement_profiles.css": ("operations_statement_profiles.css", "text/css; charset=utf-8"),
+                   "/operations_statement_batch.mjs": ("operations_statement_batch.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_statement_batch.css": ("operations_statement_batch.css", "text/css; charset=utf-8")})
     static.update({"/operations_payables.mjs": ("operations_payables.mjs", "text/javascript; charset=utf-8"),
                    "/operations_payables.css": ("operations_payables.css", "text/css; charset=utf-8"),
                    "/operations_ledger_intake.mjs": ("operations_ledger_intake.mjs", "text/javascript; charset=utf-8"),
@@ -139,6 +144,8 @@ def read(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, query = store(handler), parse_qs(parsed.query)
+    if forecast_comparison.read_http(handler, parsed, ops):
+        return True
     if agenda_http.read(handler, parsed.path, parse_qs(parsed.query, keep_blank_values=True), ops):
         return True
     if award_terms_http(handler, parsed, ops, "GET"):

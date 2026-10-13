@@ -86,13 +86,16 @@ class NativeOperation{
     }
     if(method!=='GET'&&this.invoked(id))
       throw fault('DIRECTUS_RECONCILE_REQUIRED','Reconcile the original invoked mutation before another write.',409);
+    this.options.signal?.throwIfAborted();
     const token=await this.token();
+    this.options.signal?.throwIfAborted();
     await this.emit('invoking',{request});
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),this.timeout);
     try{
+      this.options.signal?.throwIfAborted();
       const response=await this.fetch(url,{method,headers:{accept:'application/json',authorization:'Bearer '+token,
         ...(bodyText===null?{}:{'content-type':'application/json'})},body:bodyText??undefined,
-        redirect:'error',signal:controller.signal});
+        redirect:'error',signal:this.options.signal?AbortSignal.any([controller.signal,this.options.signal]):controller.signal});
       const stated=response.headers.get('content-length');
       if(stated!==null&&(!/^\d+$/.test(stated)||BigInt(stated)>BigInt(MAX_SOURCE_BYTES)))
         throw fault('DIRECTUS_RESPONSE_SIZE','The native response exceeds the supported source size.');

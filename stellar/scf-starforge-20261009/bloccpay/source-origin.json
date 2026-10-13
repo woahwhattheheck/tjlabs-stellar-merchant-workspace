@@ -1,0 +1,446 @@
+{
+  "schema": "bloccpay.installed-original-source.v1",
+  "repository": "woahwhattheheck/commons",
+  "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+  "path": "opportunities/bloccpay_payroll_reconciliation_commissioning_20261013/engineering/bloccpay-payroll",
+  "sourceCarrier": {
+    "path": "opportunities/bloccpay_payroll_reconciliation_commissioning_20261013/engineering/bloccpay-payroll.source.json",
+    "gitBlob": "c9628c136843727185738b51fba869fa72875e13",
+    "bytes": 3047737,
+    "sha256": "b001fae6c1598aa659d0d088686206b9276c36ff50936560cc3045c123dc8bdb"
+  },
+  "manifest": {
+    "path": "source/source-files.json",
+    "sha256": "071f3aba8eb96517a033c42e3f656dd7157bebdb57b9026794654b4b4442c63b"
+  },
+  "files": [
+    {
+      "path": "source/bridge-cli.mjs",
+      "bytes": 6978,
+      "sha256": "5c8674c3a780927a309b0ba338fe3c67d6bdd3c9725f7413fa1c5aa0ff108677",
+      "gitBlob": "c4390de45c3c9301d6c004a6d924e8cd1572f0b6",
+      "mode": "100644"
+    },
+    {
+      "path": "source/cli.mjs",
+      "bytes": 10083,
+      "sha256": "e3176dc42362985662f625218b27c6c3c1572ed0f14140c2222f54573bf3a785",
+      "gitBlob": "c1d01f17be5d83293eea2e95c3b5d63172a860da",
+      "mode": "100755"
+    },
+    {
+      "path": "source/docs/bridge-commissioning.md",
+      "bytes": 5774,
+      "sha256": "caacd4cef335503fb3d2786fa6187dd2aeb14eabf7d6a4e07ed53733ecb46f62",
+      "gitBlob": "59a3651dacf617888baaa72334f0bca3b409a632",
+      "mode": "100644"
+    },
+    {
+      "path": "source/docs/bridge-intake.md",
+      "bytes": 17631,
+      "sha256": "a6248363b37f8115993d392a1e44a643b5d1497c55800b68f0721dca3fc8a0b2",
+      "gitBlob": "a2066ce9952d5f27d19ab6d3f4acb2dd623758c4",
+      "mode": "100644"
+    },
+    {
+      "path": "source/docs/horizon-payroll-review.md",
+      "bytes": 10156,
+      "sha256": "1d35e679d0f7441d309b7eaac3ac22e11aef116ebd3f6565098bd56b58d8c461",
+      "gitBlob": "39aa2d5f0f3484ca64dc73ef1f6b2fbc0bf9a21e",
+      "mode": "100644"
+    },
+    {
+      "path": "source/docs/invoice-sdp-integration.md",
+      "bytes": 7502,
+      "sha256": "1fad6d4ab9b939022de918f94aba8a6a504ebfa2435b0f3f7868d0d52834ceaa",
+      "gitBlob": "261f8228dfb9f1bab4a892674a0e7f9505f25e7f",
+      "mode": "100644"
+    },
+    {
+      "path": "source/docs/payroll-semantics.md",
+      "bytes": 7384,
+      "sha256": "7f502578964b146349849dad5ed673fbfbcd287361ea505b5d0976a096edb960",
+      "gitBlob": "a335a20c51d14ff50671d0b8d987eeccf5bccf8f",
+      "mode": "100644"
+    },
+    {
+      "path": "source/docs/sdp-event-commissioning.md",
+      "bytes": 5144,
+      "sha256": "29d436ee43458110feb720fa520420b7c80b111afe17d8c171da76731c5a691e",
+      "gitBlob": "c7c93778acee484e62a4f6ef6fc551d2af1e7461",
+      "mode": "100644"
+    },
+    {
+      "path": "source/docs/sdp-events-inbox.md",
+      "bytes": 13032,
+      "sha256": "de508ae3667baa957beb6def9e971fcd9b01a0953fa415119c13a827fe2002c9",
+      "gitBlob": "f75ded969681fa08791b97018528c51035fc583d",
+      "mode": "100644"
+    },
+    {
+      "path": "source/docs/sdp-events.md",
+      "bytes": 10698,
+      "sha256": "b803b1f2fe0bb4522f578fb6f01c7479e936547ba66cc7900cb1779b9c1399ec",
+      "gitBlob": "136d55f7d4d95c6c81e747951e77d2a98d630ab5",
+      "mode": "100644"
+    },
+    {
+      "path": "source/examples/configuration.example.json",
+      "bytes": 2758,
+      "sha256": "b194cd1249f9d86416fd516443de56ca4db0741145a602507d5ce6e30ae3f2fd",
+      "gitBlob": "dcb9c86a6e2de9a6ddac58b955017bffd6d7e382",
+      "mode": "100644"
+    },
+    {
+      "path": "source/examples/invoice-sdp-adapter.configuration.json",
+      "bytes": 490,
+      "sha256": "5f0d089fd94c01ad4a60a28d6594bfc24cae1d696499124d9ad40d435c9bb65b",
+      "gitBlob": "e5a9e5853467874ba9535e28685f24b67b6c1a71",
+      "mode": "100644"
+    },
+    {
+      "path": "source/examples/invoice-sdp-adapter.mjs",
+      "bytes": 2845,
+      "sha256": "f4345c916d158c9e3b3b7e27d2b685280889300d3a07f6e39fb8c2728fc4743f",
+      "gitBlob": "3815f247dff933af09eee56e0660bd4e45e26b9d",
+      "mode": "100644"
+    },
+    {
+      "path": "source/examples/payroll.headers.csv",
+      "bytes": 246,
+      "sha256": "7cce321cbf24cc01945e21fdec383a1443c6f56f27e8004705181d217b28de9d",
+      "gitBlob": "c1c689d50374197573a4d5dbafffaddb9590ebb5",
+      "mode": "100644"
+    },
+    {
+      "path": "source/examples/programme.template.json",
+      "bytes": 1286,
+      "sha256": "fe1771af148512c2a24ab9ec593d5d6ffeaf546f25b58026990646879b5d9318",
+      "gitBlob": "f91d2cf3e188df65ea4c6ac6c666433082ce02f8",
+      "mode": "100644"
+    },
+    {
+      "path": "source/horizon-payroll.mjs",
+      "bytes": 8708,
+      "sha256": "3a28cb2373fefac0c29525b0fe7bcd46670414b5ba8d9207689c86ced7b75a02",
+      "gitBlob": "e147cd726510a6d03fac5f7aa1ef4c01ad0c5420",
+      "mode": "100755"
+    },
+    {
+      "path": "source/lib/archive.mjs",
+      "bytes": 13546,
+      "sha256": "022d7b8db2454075666a85409a5ae9204d7292e6b6e842a5b647dfd52da04a34",
+      "gitBlob": "c71efb0c02c1220c94462421af063e25803a65a3",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/bridge-commissioning.mjs",
+      "bytes": 20663,
+      "sha256": "2c8991117a820e9295c0e6ff847b7722e50c1e295289e9287f337d5633f8a25e",
+      "gitBlob": "ed61915a5b0b7a657ccbda5295da18c596f567d5",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/bridge-http.mjs",
+      "bytes": 2838,
+      "sha256": "296d2f1ce79b4bf96ab25c8e35b348da7eb8df1666997a803d4e92c71f40559d",
+      "gitBlob": "3a24c80ca338b36c15304dcbe4e32e6e38fb58c6",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/bridge-intake.mjs",
+      "bytes": 23097,
+      "sha256": "0b23d9b2f411dd97d82a7dbebd4ee5e7786ed501ab7b2d0613e29094cf26b0a8",
+      "gitBlob": "43f83e43c35994cc4f659cfadd77c5132df00a54",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/catalogue.mjs",
+      "bytes": 10353,
+      "sha256": "9dc0ba771a5b1883d6438a512cd7678a25cac9caab70c9631ffabfa87de63725",
+      "gitBlob": "15c7d33ec65434adc24a6dee7ecc57f1119b3993",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/decimal.mjs",
+      "bytes": 3118,
+      "sha256": "e8839506d3e7473cf07c0c0d444d75d123792b55bea44c3182a38199be53cab4",
+      "gitBlob": "b1520ea1b15be4bcbdff028d6302ad1e536d4e71",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/files.mjs",
+      "bytes": 17662,
+      "sha256": "5bea398e519a625699e7947427e8b9c71a817c2d620548170a999077babbd96d",
+      "gitBlob": "bd0c186e447a13838ba5c4f210d5f7f2f5dffaa2",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/horizon-payroll-review.mjs",
+      "bytes": 23623,
+      "sha256": "74ac5cdb72c5ff0bf1c42e7742418aa04a45fd5b7c8871882fcd675db2d71a69",
+      "gitBlob": "8a155d81d38c4b1cdccdc616d31b8e64cf16bba1",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/native.mjs",
+      "bytes": 14284,
+      "sha256": "3c4b6122648ad16785061dc46955fce173e672fd7969ddc917c4cf1ed9cf2831",
+      "gitBlob": "fec9a5130851b44b01d465512fdabfcae88e5903",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/payroll.mjs",
+      "bytes": 31042,
+      "sha256": "ac231958164aa999916ad7655bd2ef19472b5899b76b8a92d593e85628141459",
+      "gitBlob": "e385dc3881aa20386f85715cacca4abe434bae51",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/receiving.mjs",
+      "bytes": 18849,
+      "sha256": "5014776e0d69a395a44df7cf9911a5877bba01be9b7c5c388f243340d197c97c",
+      "gitBlob": "e0c02e56bfbde84970cf3487d8ccc8e69b2e6f76",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/resources.mjs",
+      "bytes": 10439,
+      "sha256": "67cf34631760982b8563428eb2f6dffad3d661e6f402a7ead58ae110df451387",
+      "gitBlob": "92bd2cdd5c71332d5ebc71beb9d7857602fb43d5",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/runtime.mjs",
+      "bytes": 10239,
+      "sha256": "1cb998aea053885c1d2445d698ffb103e5660a902ff22e62bc80605f82409ce4",
+      "gitBlob": "37ad47d6f81cacab535389f031c46ee860d7b478",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/schema.mjs",
+      "bytes": 4948,
+      "sha256": "350ec545bf66ba2a18c6c1140ed1f922180b0c40fca5fae03446ab83a0003807",
+      "gitBlob": "1330bfac0597ff1fdef49f335b4c7e13590a562e",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/sdp-event-commissioning.mjs",
+      "bytes": 28611,
+      "sha256": "ad2e1b289e80fd53430810f114bab8213bbb6a6d8c34f158710dbc0a063eafd3",
+      "gitBlob": "499f7db0d938ca102fa5d6218b0aa28d394bac05",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/sdp-sdk-adapter.mjs",
+      "bytes": 17549,
+      "sha256": "a8cc0cf8379209c97e8185a317f6284c413c6ed86edd451759219897f42193ba",
+      "gitBlob": "967a81aec3bb8b943143aa503830bc71e83cb5ef",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/source-json.mjs",
+      "bytes": 4558,
+      "sha256": "65564476743fd5e3fe9cbbacb7653d1755b08a6c1b7c5c8c1481a287cc9eb317",
+      "gitBlob": "b852e098aae8ca5d5cf3b496a780c8503ec775f0",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/transport.mjs",
+      "bytes": 11496,
+      "sha256": "e0c78b2e49a8e3b847794f34e131358d11765186e0735b9aa9beaaed048a90cc",
+      "gitBlob": "5d01634378011a4c1c00030bc35b7600d0bab7c6",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/validation.mjs",
+      "bytes": 9647,
+      "sha256": "2058ea7adcd75a13875cb5e0646c14fd36b2d6236106b3b0216087fa4171d4d8",
+      "gitBlob": "f19e29b3e05129c305bd92c5d476a14676bfeb0a",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/webhooks.mjs",
+      "bytes": 7296,
+      "sha256": "a4bed799eaf7b606d1fab2eb20b210aaabd4dcbefe576e9c23b5eaa0c59f0c73",
+      "gitBlob": "b538bf68cb4b75b46b4e2cc89dffb067e16689a7",
+      "mode": "100644"
+    },
+    {
+      "path": "source/lib/workspace.mjs",
+      "bytes": 94159,
+      "sha256": "c24be7e94dfe5e00073e301eec71336793756d7499384b4e75c3066ca83264b5",
+      "gitBlob": "4f1f5acb45d695c1e29989f4924a531f52ee67e4",
+      "mode": "100644"
+    },
+    {
+      "path": "source/operate-bloccpay.mjs",
+      "bytes": 73548,
+      "sha256": "1b7e27d90f8b4c40ab97a728857eea9510ec147efae8cfad2c2b0bba3765b5a9",
+      "gitBlob": "e6ad552a932d73ae630394933a4196b366a70844",
+      "mode": "100644"
+    },
+    {
+      "path": "source/OPERATIONS.md",
+      "bytes": 22350,
+      "sha256": "02eacfcd6b2216a78fd5766bf12e8c3f7e6b153026da7c7339af7b2d05bdc73c",
+      "gitBlob": "8165642fac8aa00eb95c367a3c8498884ec44624",
+      "mode": "100644"
+    },
+    {
+      "path": "source/README.md",
+      "bytes": 7371,
+      "sha256": "25aaa10b9df89dd786a9e20c1b22939d1e3563971bcc0f31bafb7b1ac45ddd5a",
+      "gitBlob": "3f0613baa6ae99bff9ddec22145b157aea27d798",
+      "mode": "100644"
+    },
+    {
+      "path": "source/server.mjs",
+      "bytes": 22038,
+      "sha256": "92afa80febe7ed46c423957f6a853ff79bc18a8d8860654c616dbf9e90524121",
+      "gitBlob": "ffe8fcb4c4fda57d10c8aac1e78615170f0c918a",
+      "mode": "100644"
+    },
+    {
+      "path": "source/source-files.json",
+      "bytes": 11039,
+      "sha256": "071f3aba8eb96517a033c42e3f656dd7157bebdb57b9026794654b4b4442c63b",
+      "gitBlob": "7d35437f83b8c34f60866c0d14063052b891f15d",
+      "mode": "100644"
+    },
+    {
+      "path": "source/sources/bridge-contracts.json",
+      "bytes": 488387,
+      "sha256": "647193d47b8279259674dd3ac341c9987a466e8d41a48c89766a0d1ed1c0d17b",
+      "gitBlob": "09e2840d9e0c4530d8fe88e776cac03aadc814f9",
+      "mode": "100644"
+    },
+    {
+      "path": "source/sources/bridge-original.json",
+      "bytes": 570490,
+      "sha256": "9782c4a82932a77ce83d391171547385815b6a6b3d01784314902000d642be5c",
+      "gitBlob": "a38eda27f044075fc52b5e97830424ad0f692609",
+      "mode": "100644"
+    },
+    {
+      "path": "source/sources/horizon-original.json",
+      "bytes": 115403,
+      "sha256": "da96f63c9697fc51bb7bf372f430797e6da207670a13b9cc8b359b60de501ec9",
+      "gitBlob": "f2c322e92373352455738b74cf04a3c58bae87b9",
+      "mode": "100644"
+    },
+    {
+      "path": "source/sources/sdp-openapi.json",
+      "bytes": 341165,
+      "sha256": "1f760b5631a5561e812f7f442587fa8c25567bd5e092fc946b175c80b8f22b61",
+      "gitBlob": "b284dd4e02e37ba55b7c56b546a224c3c9b1a578",
+      "mode": "100644"
+    },
+    {
+      "path": "source/sources/sdp-original.json",
+      "bytes": 528766,
+      "sha256": "020078f9b62a614d570d0294dab2911066c79a411377edde558f304630d24439",
+      "gitBlob": "bb5efb1e4c16cfc81d1a9783387cedc0cb1c6ef5",
+      "mode": "100644"
+    },
+    {
+      "path": "source/vendor/invoice-bridge-provider-source.json",
+      "bytes": 831,
+      "sha256": "356247156a00bbaa75c79af12cddb05e41c4466159594ce504dec7295a9455f4",
+      "gitBlob": "05a5b766b31477c298e1e83c76197b79ad5b40fd",
+      "mode": "100644"
+    },
+    {
+      "path": "source/vendor/invoice-bridge-provider.mjs",
+      "bytes": 15764,
+      "sha256": "3e11e81da66e73dc5d0713a31859d4d61d505bb891848b57e8cf04286f97cb30",
+      "gitBlob": "99804e98e7fc6be505e2cef19b5a456a88c66406",
+      "mode": "100644"
+    },
+    {
+      "path": "source/web/app.mjs",
+      "bytes": 78788,
+      "sha256": "017fd31b5ca2eccc57d3c6f339825adf9ce358f2113812327bd3ff9cb09e77d7",
+      "gitBlob": "1803e4b5440e50492e67aade8252308fd78adcbb",
+      "mode": "100644"
+    },
+    {
+      "path": "source/web/bridge-desk.mjs",
+      "bytes": 22349,
+      "sha256": "15ce7064717f9f24ee2c4383b0dfa8b3e8da397b03bc7b8ddd7183bcc9a4767b",
+      "gitBlob": "e2a9fffb707503870252d34ef21bba61e3fad699",
+      "mode": "100644"
+    },
+    {
+      "path": "source/web/bridge.css",
+      "bytes": 2659,
+      "sha256": "6ec4f0aa17117982b618aa4bb066020ab26ac3678aa80647eea19d4def0a2874",
+      "gitBlob": "adc6a3fd8c0397bd95cbc1221512b8edfd109edb",
+      "mode": "100644"
+    },
+    {
+      "path": "source/web/bridge.html",
+      "bytes": 5370,
+      "sha256": "e09a4f5093b0d115ce9831cf2e5884df4f54c4c17af311658919c9a44ce53442",
+      "gitBlob": "0a00705848186932c5f9ce442887b24298bc3629",
+      "mode": "100644"
+    },
+    {
+      "path": "source/web/index.html",
+      "bytes": 21408,
+      "sha256": "eb647573df3c4ee384573ba6e4962213024fd6a0a58c07891c901132222d3946",
+      "gitBlob": "5a92b4a3ca45892bcab10ce9c6a524b2664df1b9",
+      "mode": "100644"
+    },
+    {
+      "path": "source/web/journal.mjs",
+      "bytes": 8071,
+      "sha256": "1673042edf81f20172ded34d905bfc66a45e67fa1ad9cf55752d8a99ba12c392",
+      "gitBlob": "870db866569a70596ec82384e36c6d8c5701c585",
+      "mode": "100644"
+    },
+    {
+      "path": "source/web/sdp-events.css",
+      "bytes": 3528,
+      "sha256": "a4fa1fff44f8ab46e3dd5467903d5dabbc52a45ebd508bb8f9abb6854c34126c",
+      "gitBlob": "e3d24deb29a8aa3e832870e823433487c322512e",
+      "mode": "100644"
+    },
+    {
+      "path": "source/web/sdp-events.html",
+      "bytes": 3160,
+      "sha256": "711cc7d59e5cd3fec32a2972d7c070d0fb1a26b4b3c2b947bde8505e69db7643",
+      "gitBlob": "1c44a746e8cb09a6f8442d0ba6ca4c2e72cf0b37",
+      "mode": "100644"
+    },
+    {
+      "path": "source/web/sdp-events.mjs",
+      "bytes": 24962,
+      "sha256": "40dc6ca17684fc99af5d7d9d582723c63cbc999469c006a2d37475f12abbf661",
+      "gitBlob": "d191f6a2022599296fd133e15305c4c362b7e25e",
+      "mode": "100644"
+    },
+    {
+      "path": "source/web/sha256.mjs",
+      "bytes": 3383,
+      "sha256": "fbc57cd9ad9f17f90f084d7d387ab02794c6a330b26a98392c129bbe09ef44ba",
+      "gitBlob": "2a8b86e18b3c84ed7b4494f36e43a60805b6b148",
+      "mode": "100644"
+    },
+    {
+      "path": "source/web/styles.css",
+      "bytes": 8336,
+      "sha256": "02d9986630997e164ad2389828982076c5ab7896cfbf23385934ed17e456744a",
+      "gitBlob": "7cf65ae20a20ecccbbcb2e5cf5cf0bdeb6a67369",
+      "mode": "100644"
+    },
+    {
+      "path": "source/worker.mjs",
+      "bytes": 8190,
+      "sha256": "c7d7b48520a3191952c947866b198f68717e76d8766c3279597b134ef363d1a4",
+      "gitBlob": "081f0217edcf5d28aeec5683dc51b9679e65229e",
+      "mode": "100644"
+    }
+  ],
+  "update": "Select a new complete original company source edition, retain its exact manifest and all declared files, and update this origin record together. Keep managed-provider, customer-agent and Installation integration beside source/."
+}

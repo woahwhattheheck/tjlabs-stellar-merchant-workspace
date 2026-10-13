@@ -1,0 +1,147 @@
+# Audit Exchange customer installation and engineering handover
+
+Select the maintained **audit-exchange** Installation profile to connect the original customer Workshare to the complete building-audit operation. The same customer case carries the commercial scope, source authority, technical work, named receiving operator and actual acceptance observations.
+
+The installed Audit product provides original XML intake, official validation, deliberate source correction, saved review editions, native energy analysis and complete editable turnover. The Installation records who commissioned that work, what was agreed, how it is operated and what the receiving engineer actually observed.
+
+## Original operating roles
+
+| Role | Selected responsibility |
+| --- | --- |
+| Customer source owner | Original audit and weather sources, permitted portfolio and receiving destinations, upstream correction/access authority |
+| Accountable merchant | The actual contracted service and any separately advertised resource/payment selection |
+| Audit reviewer | Schema/profile choice, source interpretation, original field corrections, findings and saved edition |
+| Energy engineer | Actual stream/building allocation, weather/timezone/units, model/period choices and interpretation |
+| Application host operator | Installed source and native dependencies, private project, backups, recovery and host access |
+| Receiving engineer | Complete archive intake, independent reopening, useful operating task and original acceptance observations |
+| Downstream operator | Selected asset table mapping or LDA collection, delivered edition, Search/Brief and further receiving |
+
+One person can perform several agreed roles. Record their actual assignments in the original Workshare and Installation. The profile does not supply a customer identity, source right, commercial agreement or payment selection.
+
+## Select the whole customer task
+
+Receive the original commercial commissioning source and its matching complete packet into the existing SF47 operating case. Keep every commercial phase, assigned owner, numeric effort, currency, fee, milestone, correction round and support term. Continue an existing Installation through its current saved edition.
+
+For a new Installation, obtain its original `installation-workshare-seed` as documented in [the complete workorder guide](README.md) and [the native Installation guide](../../sf47_budget_model/workspace/INSTALLATIONS.md). Its original case/version and selected plan digests remain the binding for preparation.
+
+The agreed scope names the portfolio and original audit editions, validation/review work, optional energy task, turnover population, independent receiving task and continuing support. A building inspection, engineering design, source audit and software receiving task each retain their actual responsible provider and contracted meaning.
+
+## Prepare and save the original Installation
+
+Run from this maintained directory, with each path naming the selected private operating files:
+
+~~~sh
+node prepare.mjs profiles
+
+node prepare.mjs template --profile audit-exchange \
+  --seed "$PRIVATE_OUTPUT/original-seed.json" \
+  --out "$PRIVATE_OUTPUT/audit-bindings"
+
+node prepare.mjs prepare --profile audit-exchange \
+  --seed "$PRIVATE_OUTPUT/original-seed.json" \
+  --bindings "$PRIVATE_OUTPUT/audit-bindings/bindings.json" \
+  --out "$PRIVATE_OUTPUT/audit-installation"
+~~~
+
+The installed equivalent is `starforge grant-installation-workorder`. Complete the actual bindings between `template` and `prepare`:
+
+| Binding | Original selection |
+| --- | --- |
+| source.reference | Actual source file/edition reference, customer scope and original Audit workspace/source identifiers |
+| source.authority | The customer's actual permitted use and receiving authority |
+| source.sourceIds | Original case attachments for complete source, scope and instructions |
+| receiving.host / operator | Actual receiving environment and named engineer |
+| receiving.sourceIds | Complete selected source/runtime/configuration and operating handover references |
+| merchantDeploymentId / buyerDeploymentIds | Actual existing operating-case deployments |
+| payment | Separately approved advertised resource, network, asset, recipient, atomic unit price, unit count, whole-task budget, authority and facilitators |
+| task / receiving | Explicit customer-specific selections that refine the maintained technical programme |
+
+Keep live access values in their existing private custody. Record configuration references and owners in the workorder. An unselected payment amount stays null; the original engineering fee is not converted into an invented resource price.
+
+Preparation returns the complete `installation-input.json`, exact `installation-preview-input.json`, readable `WORKORDER.md` and full `preparation.json`. It preserves the original commercial/funding fields, acceptance checks and Workshare linkage. It reports remaining actual selections. Changed inputs use a new preparation edition directory.
+
+Open **Customer installations → Load input file → Preview → Save** in the original case. The native preview resolves the actual case sources, deployments, selected plan and commercial binding. Retain the resulting Installation ID, revision, case version and original request. An already saved Installation continues through **Use this edition as a draft**.
+
+## Install and open Audit Exchange
+
+Follow [the installed product guide](../../../../products/audit-exchange/OPERATING.md) for the maintained source builder, Runtime installer and Applications entry. Select the complete `audit-exchange` release. Prepare Node, Python and lxml on the chosen host. Prepare the original R/nmecr installation separately when energy work is included.
+
+~~~sh
+starforge audit-exchange init \
+  --directory /absolute/private/audit-project --name "Customer audit review"
+
+starforge audit-exchange serve \
+  --directory /absolute/private/audit-project --port 8769
+~~~
+
+For an existing project, open that exact directory. The project remains outside installed source. The server announces its workspace and instance identities. Applications supplies the selected project's Start/Open/Stop lifecycle; the original browser and agent interfaces use that same project.
+
+The native MCP and typed client use the complete [Merchant guide](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/MERCHANT.md). Keep the selected host, workspace and instance identity with the original connection.
+
+## Operate the complete review
+
+| Stage | Original operation and useful result |
+| --- | --- |
+| Import | `source.import` retains the complete source XML and chosen schema/profile requirements |
+| Inspect | `source.get` / `source.page` expose actual entities, fields, relationships, streams and diagnostics |
+| Correct | `source.patch` checks original expected field values; `source.replace` receives a full deliberate revision |
+| Compare | `source.compare` lists complete scalar and relationship changes between retained revisions |
+| Validate | `source.validate` runs the retained original XSD and chosen Schematron assets |
+| Review | `review.save` records source/revision/entity, owner, state, due date, note and evidence |
+| Link | `link.save` records an explicit downstream association while retaining original XML identities |
+| Save edition | `edition.save` freezes selected revisions with the full saved review, link and analytical state |
+| Analyze | `analysis.preview` reviews selection; `analysis.run` queues the original native task; `analysis.resume` continues eligible unchanged interrupted work |
+| Turn over | `projection.preview` / `projection.save` retain the deliberate eight-table source selection |
+| Deliver | `export.create` produces original XML, review, complete workspace or full application plus workspace |
+| Receive | `workspace.receive` imports the complete editable package and retains its original receiving history |
+
+Use complete original mutation envelopes with UUID request IDs, expected workspace version, actor and note. Retain the envelope before sending. `operation.get` retrieves the saved original result after a lost response; a changed input receives a new deliberate request. Read the full original byte ranges with `source.bytes` or `export.read` until their native completion marker.
+
+The complete [operator guide](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/OPERATOR.md) describes the browser and each engineering step. Keep all original XML revisions and official validation output, including full SVRL, alongside review decisions.
+
+Native IDs resolve within their source document. Shared physical systems keep their actual building memberships. Unknown extension content, comments and original scalar literals remain in the complete source. An unresolved or ambiguous reference stays visible until an authorized source correction creates a new revision.
+
+## Commission energy work when it is part of the scope
+
+Select one original Building, Scenario, ResourceUse and exact Total-energy stream. Keep electricity energy, peak demand and cost as separate native quantities. A shared-building stream requires an actual allocation basis before single-building modelling. A volumetric fuel requires its documented calorific conversion. An explicit analysis binding to a Building preserves an originally unassigned source association.
+
+Attach the complete acquired observed-weather file. Retain its actual source/station, original bytes and hash, temperature units, interval, timezone and selected coverage. The native pipeline requires complete nonoverlapping weather intervals covering the selected meter periods; it does not replace gaps with nearest readings. Original meter boundaries and decimal values remain retained alongside the native R frame.
+
+Use the selected native model catalogue and its actual applicability. Baseline/reporting/normalization periods, balance point, day normalization, confidence and prediction policy are deliberate analytical inputs. Preserve the original fitted objects, statistics, predictions, normalization and uncertainty returns, plots, logs and model checkpoints. Read complete native outcomes: a failed or inapplicable model remains part of the original result.
+
+The [native analysis guide](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/ANALYSIS.md) defines supported intervals and all actual options. The original publisher examples are retained interchange sources; their location/time metadata and source limitations travel with them. Customer measurements remain separately identified.
+
+Saved editions freeze complete native analytical records. Earlier issued editions may contain the original browser-shaped `selectionSummary` and reading count; retain those immutable historical payloads. The complete top-level analysis keeps its original selection and readings, while each frozen edition retains the outputs and status it actually saved.
+
+## Turn over the selected physical assets
+
+Select the original physical assets and supporting audit records, then preview every required table:
+
+- `source-groups.csv`
+- `sources.csv`
+- `assets.csv`
+- `points.csv`
+- `document-links.csv`
+- `discrepancies.csv`
+- `turnover-requirements.csv`
+- `field-mapping.csv`
+
+Use the original table names and columns declared in [the native receiving contract](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/standards/AUDIT_CONTRACT.md); the complete archive retains all eight tables, including empty tables. The operator deliberately chooses physical assets. Utility streams retain their original energy meaning.
+
+The selected customer's downstream mapping names its actual asset/source IDs, required fields and review/acceptance responsibility. Preserve the original full XML, native model, validation/SVRL and selection digest with the CSVs. A projection package carries its selected turnover; a full workspace/application archive carries the complete editable project.
+
+## Deliver and receive the complete operation
+
+Export the complete current workspace or explicitly selected saved edition. A full application export also carries the selected Audit source and operating guides. Both preserve all original source/revision records, reviews, links, saved editions, analytical input/output, receiving history and ordinary exports. Read every manifest member and its full byte identity.
+
+The receiving engineer imports the complete archive into their working project, reopens the delivered selection and performs the agreed useful review. The receiver gets local operating IDs while retaining original source identity and receiving history. Deliver the managed Runtime release separately when the destination also needs the complete Applications/Merchant environment.
+
+For LDA, receive the whole workspace/application ZIP through the original Audit handover intake. Choose current or fixed delivered editions deliberately in Search and preserve the selected Brief's frozen source material. When commissioning successive-edition operation, create two real successive exports from the same original Audit workspace after the actual agreed source/review/analysis change. Preserve earlier immutable revisions and saved editions in the later archive. The complete original LDA course continues intake, comparison, Search, Brief updating, independent Brief receiving, returned notes and reopening the saved histories.
+
+## Close the original Installation and continue service
+
+Record actual receiving observations against the original commercial phase checks. Retain source attachments and real work/outcome references. Save and reopen the same Installation revision; export its complete handover and independently receive the original Operations case.
+
+The customer handover includes the complete Audit project/application, managed Runtime where required, eight-table turnover, selected downstream package, the readable workorder and original Installation export. Include named owners, source cadence, approved correction process, access renewal, backup/restore, interruption recovery and the contracted support allowance.
+
+A later customer source, analytical choice or receiving requirement advances the existing scope and source history. Keep the original agreement and actual operating outcomes with that continuing work.

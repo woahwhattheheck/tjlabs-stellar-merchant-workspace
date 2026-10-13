@@ -77,7 +77,7 @@ export function parseOriginalSourceData(path, format, bytes) {
 export function validateSourceSelection(value, path) {
   need(plain(value) && value.schema === sourceSelectionSchema &&
     Object.keys(value).every(key => ['schema', 'id', 'title', 'description', 'base',
-      'contributions', 'components', 'supportFiles', 'moduleTemplates', 'sourceFormats', 'excludeFiles', 'product'].includes(key)),
+      'contributions', 'components', 'supportFiles', 'managedSourceManifests', 'moduleTemplates', 'sourceFormats', 'excludeFiles', 'product'].includes(key)),
   'Unsupported distribution source selection');
   identifier(value.id, 'ID');
   if (path !== undefined) need(path === sourceSelectionPath(value.id),
@@ -99,6 +99,10 @@ export function validateSourceSelection(value, path) {
   list(value.contributions, 'contribution', identifier);
   list(value.components, 'component', sourcePath);
   list(value.supportFiles, 'support file', sourcePath);
+  if (value.managedSourceManifests !== undefined) list(value.managedSourceManifests, 'managed source manifest', entry => {
+    sourcePath(entry, 'managed source manifest');
+    need(entry.endsWith('.json'), 'A managed source manifest must name original JSON');
+  });
   if (value.moduleTemplates !== undefined) list(value.moduleTemplates, 'module template', entry => {
     sourcePath(entry, 'module template');
     need(/\.(?:mjs|js)$/.test(entry), 'A module template must name original JavaScript source');
@@ -146,6 +150,9 @@ export function selectDistributionSources({ base, contributions, selection }) {
   const selected = copy(base);
   selected.components = [...recipe.components];
   selected.supportFiles = [...recipe.supportFiles];
+  selected.managedSourceManifests = [...new Set([...(recipe.managedSourceManifests ?? []),
+    ...(base.managedSourceManifests ?? []).filter(path => selected.supportFiles.includes(path) ||
+      selected.components.some(root => path.startsWith(root + '/')))])];
   selected.excludeFiles = [...new Set([...(base.excludeFiles ?? []), ...(recipe.excludeFiles ?? [])])];
   selected.commands = selectMap(base.commands, recipe.base.commands, 'command');
   selected.exports = selectMap(base.exports, recipe.base.exports, 'export');

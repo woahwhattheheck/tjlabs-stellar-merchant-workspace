@@ -261,6 +261,15 @@ except Exception as error:
  out["exitCode"]=out.get("exitCode") or 1
  out["error"]={"type":type(error).__name__,"message":str(error),"traceback":traceback.format_exc()}
 finally:
+ keep_runtime=cfg.get("keepRuntime")is True
+ native_ready=out.get("exitCode")==0 and out.get("application",{}).get("result",{}).get("completed")is True
+ browser_continuation={"retained":keep_runtime,"nativeReady":native_ready,"renderedInspection":"PENDING",
+  "root":str(root),"runtimeDirectory":str(root/"installed-runtime"),"accountingDirectory":str(root/"application-result/accounting"),
+  "sourceCommit":cfg.get("application",{}).get("source_commit"),"sourceInterpretations":str(root/"application-result/source-interpretations")}
+ if keep_runtime and native_ready:
+  browser_continuation["openingCommand"]=["node",str(root/"application/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs"),
+   "run","--dir",str(root/"installed-runtime"),"--","bank-statements","serve","--directory",str(root/"application-result/accounting"),"--port","8448"]
+ out["browserContinuation"]=browser_continuation
  out["finishedAt"]=datetime.now(timezone.utc).isoformat()
  (root/"native-capture.json").write_text(json.dumps(out,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
  files=[]
@@ -279,7 +288,7 @@ finally:
   with path.open("rb")as stream:
    for block in iter(lambda:stream.read(1024*1024),b""):digest.update(block)
   return {"path":str(path),"bytes":path.stat().st_size,"sha256":digest.hexdigest()}
- short={"schema":out["schema"],"operation":out["operation"],"root":str(root),"exitCode":out.get("exitCode"),"error":out.get("error"),"stderr":out.get("stderr"),"runtime":out.get("result",{}).get("runtime"),"files":[{k:v for k,v in item.items()if k!="statements"}for item in out.get("result",{}).get("files",[])],"archive":file_identity(archive_path),"sourceFiles":files,"bundesbankOriginals":out.get("bundesbankOriginals"),"application":out.get("application")}
+ short={"schema":out["schema"],"operation":out["operation"],"root":str(root),"exitCode":out.get("exitCode"),"error":out.get("error"),"stderr":out.get("stderr"),"runtime":out.get("result",{}).get("runtime"),"files":[{k:v for k,v in item.items()if k!="statements"}for item in out.get("result",{}).get("files",[])],"archive":file_identity(archive_path),"sourceFiles":files,"bundesbankOriginals":out.get("bundesbankOriginals"),"application":out.get("application"),"browserContinuation":browser_continuation}
  summary_path=artifact_directory/(root.name+"-result.json")
  summary_path.write_text(json.dumps(short,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
  uploads=[];reservations=cfg.get("uploads",[])
@@ -302,7 +311,10 @@ finally:
   "archive":short["archive"],"result":file_identity(summary_path),"transferReceipt":str(receipt_path),"uploads":uploads,
   "sourceRuntime":short["runtime"],"originalSources":[{"name":x["name"],"status":x.get("status"),"entryCount":x.get("entryCount"),"detailCount":x.get("detailCount"),"error":x.get("error")}for x in short["files"]],
   "application":{"sourceCommit":out.get("application",{}).get("sourceCommit"),"sourceFiles":out.get("application",{}).get("sourceFiles"),"exitCode":out.get("application",{}).get("exitCode"),"completed":out.get("application",{}).get("result",{}).get("completed"),"error":out.get("application",{}).get("result",{}).get("error")}},ensure_ascii=False),flush=True)
- if len(uploads)==2 and all(item.get("complete")for item in uploads):
+ if keep_runtime:
+  print(json.dumps({"event":"CAMT_RUNTIME_RETAINED_FOR_BROWSER","browserContinuation":browser_continuation,
+   "directory":str(artifact_directory),"archive":str(archive_path),"result":str(summary_path),"transferReceipt":str(receipt_path)}),flush=True)
+ elif len(uploads)==2 and all(item.get("complete")for item in uploads):
   shutil.rmtree(root);archive_path.unlink();summary_path.unlink();receipt_path.unlink()
   print(json.dumps({"event":"CAMT_OWNED_TEMPORARY_FILES_REMOVED","root":str(root)}),flush=True)
  else:

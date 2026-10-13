@@ -82,6 +82,20 @@ The programme performs four complete stages:
 
 The controller checks that the final catalogue project preserves the original economic project identity, complete QCEW source extension, QCEW state and every FRED capture. It identifies that combined complete project in completeCustomerProject. The original two-edition report programme remains available when --research-catalogue is omitted.
 
+## Inspect the actual delivered application and reports
+
+Before presenting this customer-facing workspace, report, PDF or export as ready, the producer opens or renders the exact outgoing version, looks at its actual screens or screenshots, and operates the important controls. This requirement applies to current, future, resumed and delegated workers across providers and local or cloud runtimes.
+
+For this programme, inspect both populated regional report editions and their complete PDFs, the source catalogue and its two issued research products, and the reopened complete customer project. Use the actual presentation width and a narrow/mobile width. Operate source selection, report navigation, catalogue review, file attachments, CSV download and reimport, full-project export and reopening. Inspect the relevant empty, loading and error states as well as populated screens. Open the final attachments and exports so missing files, clipped tables, broken links and unreadable pages are repaired before delivery.
+
+Capture desktop and narrow-width screenshots with the existing receiving programme and return the actual images and rendered report pages to the producer in the original company thread. The producer must view those images; capturing them alone, code review, DOM counts, HTTP success, unit checks or another worker's approval do not replace seeing the rendered product.
+
+Fix visible and functional faults in the authorized source and repeat only the affected receiving step with its existing operation identity. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve the original data, calculations and complete project. Keep inspection tied to actual repairs; avoid broad suites, repeated checking or a separate verification product.
+
+Carry this complete requirement into assignments and the active build and receiving guidance used by every delegated worker. Preserve the original operation, retained directories, completed work and other owner controls. Historical records and third-party policies retain their original form. Use existing workers without forced restarts or new watchers. If the local runtime is unavailable, give the existing equipped receiver the complete exact version and these opening steps, review its actual rendered results, and continue independent implementation while it runs.
+
+Owner instruction: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+
 ## Completion and continuation
 
 Each child inherits the original operation lock. Logs stream into the retained private operation directory. A completed stage is reused only while its complete result bytes match the saved identity. An interrupted stage retains its original directories, requests, source and logs for continuation.

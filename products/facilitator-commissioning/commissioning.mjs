@@ -237,8 +237,31 @@ function projectReport(job,results) {
     scope:'One complete selected service on two declared independent operators. Cohort totals retain their original customer and time-window rules.'};
 }
 
+
+/** Resolve only declared source reads; retain the original command and its hash. */
+async function executionInputs(root,command,resolver) {
+  if(!resolver)return {command,originalRoot:root,outputDirectory:command.payload.outputDirectory};
+  const spec=await resolver(command);
+  if(!spec)return {command,originalRoot:root,outputDirectory:command.payload.outputDirectory};
+  need(obj(spec)&&spec.commandSha256===digest(stable(command))&&typeof spec.originalRoot==='string'&&isAbsolute(spec.originalRoot),
+    'COMMAND_SOURCE_BINDING','The receiving map must bind this exact original command.');
+  const fields=command.action==='review'?['reviewFile']:command.action==='receive'?['summaryFile','evidenceFile','outputFile']:command.action==='buyer-plan'?['templateFile']:[];
+  const payload={...command.payload};
+  need(obj(spec.inputs)&&Object.keys(spec.inputs).every(k=>fields.includes(k)),'COMMAND_SOURCE_BINDING','Only this command’s original source reads may be relocated.');
+  for(const field of fields)if(command.payload[field]!==undefined) {
+    const entry=spec.inputs[field];
+    need(obj(entry)&&entry.originalPath===command.payload[field]&&/^[a-f0-9]{64}$/.test(entry.sha256)&&Number.isSafeInteger(entry.bytes),
+      'COMMAND_SOURCE_BINDING','Retain the original path and complete source identity.');
+    const path=absolute(entry.path),raw=await readBytes(path);
+    need(raw.length===entry.bytes&&digest(raw)===entry.sha256,'COMMAND_SOURCE_CHANGED','The relocated original source bytes differ.');
+    payload[field]=path;
+  }
+  const outputDirectory=command.action==='buyer-plan'?absolute(spec.outputDirectory):undefined;
+  return {command:{...command,payload},originalRoot:spec.originalRoot,outputDirectory};
+}
+
 /** One private owner, original command identities and native release operations. */
-export async function openCommissioningJob({directory, store} = {}) {
+export async function openCommissioningJob({directory, store, resolveCommandInputs} = {}) {
   const root = absolute(directory), releaseLock = await lock(root);
   let closed = false, active = null, queue = Promise.resolve();
   try {
@@ -267,6 +290,7 @@ export async function openCommissioningJob({directory, store} = {}) {
         await publish(file,encode({...command,commandSha256:commandHash,createdAt:new Date().toISOString()}));
       }
       await foundation(job,selectedStore);
+      const execution=await executionInputs(root,command,resolveCommandInputs);
       let value;
       if(action === 'review') {
         exact(command.payload,['provider','reviewFile'],['provider']);
@@ -274,7 +298,7 @@ export async function openCommissioningJob({directory, store} = {}) {
         value=await json(path,true);
         if(!value) {
           if(command.payload.reviewFile) {
-            const ref=await attach(root,command.payload.reviewFile,process.cwd());
+            const ref=await attach(root,execution.command.payload.reviewFile,process.cwd());
             value=await readFacilitatorReview(join(root,'blobs',ref.sha256));
             need(value.source.releaseId===job.release.id && value.source.releaseDigest===job.release.digest &&
               value.proposed.id===p.releaseId && stable(value.source.source)===stable(job.release.source) &&
@@ -335,9 +359,9 @@ export async function openCommissioningJob({directory, store} = {}) {
         value={runOperationId:runId,nativeInstanceId:observation.instanceId,nativeState:status.runtime.state,
           startedAt:observation.readyAt,endedAt:observation.endedAt??null};
       } else if(action === 'buyer-plan') {
-        value=await prepareBuyerPlan(root,job,selectedStore,command);
+        value=await prepareBuyerPlan(root,job,selectedStore,command,execution);
       } else if(action === 'receive') {
-        value=await receiveResult(root,job,selectedStore,command,await records(root,'results'));
+        value=await receiveResult(root,job,selectedStore,execution.command,await records(root,'results'));
       } else throw fail('ACTION_UNSUPPORTED','Choose review, stage, select, receive-run, buyer-plan or receive.');
       const result={schema:'stellar-forge.facilitator-commissioning-command.v1',
         operationId:command.operationId,commandSha256:commandHash,action,
@@ -401,17 +425,18 @@ export async function openCommissioningJob({directory, store} = {}) {
     };
   } catch(error) { await releaseLock();throw error; }
 }
-async function prepareBuyerPlan(root,job,store,command) {
+async function prepareBuyerPlan(root,job,store,command,execution={command,originalRoot:root,outputDirectory:command.payload.outputDirectory}) {
   const p=command.payload;
   exact(p,['provider','templateFile','outputDirectory','requests'],['provider','templateFile','outputDirectory','requests']);
   const provider=providerOf(job,p.provider), release=await inspectRelease(store,provider.releaseId);
   need(release.derivedFrom?.releaseDigest===job.release.digest,'STAGED_PROVIDER_REQUIRED','Stage this provider from the original service before preparing its buyer requests.');
-  const templatePath=absolute(p.templateFile), template=await readBuyerConfig(templatePath);
+  const templatePath=absolute(execution.command.payload.templateFile), template=await readBuyerConfig(templatePath);
   validateBuyerExecution(template);
   need(!template.operation.ticketFile && !template.operation.orderReference &&
     Object.keys(template.operation.headers??{}).length===0,'EXISTING_OPERATION_HANDOFF_REQUIRED',
     'An order, private ticket or custom-header operation keeps its original merchant handoff; select a plain complete-resource buyer template here.');
-  const destination=await realpath(absolute(p.outputDirectory));await privateDir(destination);
+  const destination=await realpath(absolute(execution.outputDirectory));await privateDir(destination);
+  const originalDestination=absolute(p.outputDirectory);
   need(Array.isArray(p.requests) && p.requests.length===job.requests.length,
     'COMPLETE_REQUEST_SET_REQUIRED','Choose one original buyer intent and native payment option for every agreed request/page.');
   const seen=new Set(),intents=new Set(),selected=[];
@@ -452,14 +477,14 @@ async function prepareBuyerPlan(root,job,store,command) {
   }
   const bindingPath=join(root,'reviews',command.operationId+'.buyer.json');
   const binding={template:await attach(root,templatePath,process.cwd()),provider:provider.alias,
-    releaseDigest:release.digest,outputDirectory:destination,requests:p.requests};
+    releaseDigest:release.digest,outputDirectory:originalDestination,requests:p.requests};
   await publish(bindingPath,encode(binding));
   const files=[], totals=new Map();
   for(const {request,choice,payment,expect} of selected) {
     const prefix=command.operationId+'-'+request.id;
-    const bodyFile=request.body?join(root,'buyers',prefix+'.body'):null;
-    if(bodyFile)await publish(bodyFile,await blobValue(root,request.body));
-    const output=join(destination,prefix+'.response');
+    const bodyFile=request.body?join(execution.originalRoot,'buyers',prefix+'.body'):null;
+    if(bodyFile)await publish(join(root,'buyers',prefix+'.body'),await blobValue(root,request.body));
+    const output=join(originalDestination,prefix+'.response');
     const config={...template,operation:{intentId:choice.intentId,url:request.url,method:request.method,
       expect,
       ...(bodyFile?{bodyFile,bodyBytes:request.body.bytes,bodySha256:request.body.sha256}:{})},
@@ -471,7 +496,7 @@ async function prepareBuyerPlan(root,job,store,command) {
     const configFile=join(root,'buyers',prefix+'.json'),raw=encode(config);
     await publish(configFile,raw);
     files.push({requestId:request.id,intentId:choice.intentId,paymentOption:choice.paymentOption,
-      nativePayment:payment,configFile,configSha256:digest(raw),output,expectedOutput:request.output});
+      nativePayment:payment,configFile:join(execution.originalRoot,'buyers',prefix+'.json'),configSha256:digest(raw),output,expectedOutput:request.output});
     const key=stable({network:payment.network,asset:payment.asset});
     totals.set(key,(totals.get(key)??0n)+BigInt(payment.amount));
   }

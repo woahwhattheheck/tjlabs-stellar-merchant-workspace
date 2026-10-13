@@ -121,6 +121,150 @@
           "sha256": "aa4fbf142d7c7563e3ee752fa3b7a60588a5bdfcd16d27e9f13e8ce28cb091f5"
         }
       ]
+    },
+    {
+      "id": "worldbank-source-workspace",
+      "label": "Original World Bank acquisition, source semantics and portable editions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/worldbank/README.md",
+      "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+      "editions": [
+        {
+          "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+          "git_blob": "e6efc87bc50b155f000ff9cee3d7a7c5d1e775be",
+          "bytes": 9600,
+          "sha256": "c28bebcb6a0a72df4216f1f816e5cdb0ccd1e01625dd7d82515c4091f28f27cb"
+        }
+      ]
+    },
+    {
+      "id": "worldbank-source-merchant",
+      "label": "Original reviewed dataset release and customer acquisition",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/worldbank/NATIVE.md",
+      "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+      "editions": [
+        {
+          "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+          "git_blob": "774f4e75069805d601e29ec1f9a9f8ca1f5e04c1",
+          "bytes": 10141,
+          "sha256": "baba50ae09ed7b0f9027bf3880df98b179f58a6fefcd2dcea1ae5b1b4874924c"
+        }
+      ]
+    },
+    {
+      "id": "worldbank-analytical-delivery",
+      "label": "Original economic calculations, report/workbook files and native receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/worldbank/ANALYSIS.md",
+      "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+      "editions": [
+        {
+          "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+          "git_blob": "128b74a368f6bfb204406fc2f60c713ff5c90102",
+          "bytes": 12782,
+          "sha256": "0a1386b17eb96b0c1e26bc0a50e6e8b35f716808f67d9aae35c32417aa85b2b6"
+        }
+      ]
+    },
+    {
+      "id": "worldbank-complete-product",
+      "label": "Complete installed World Bank customer operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/worldbank/OPERATING.md",
+      "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+      "editions": [
+        {
+          "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+          "git_blob": "f15ac2a667d66b9f0eacdb3fb96e2b3696c9271b",
+          "bytes": 8427,
+          "sha256": "c9c5922c4701a4d80135f8174d74bd5557215dd2e54f7d21af34d142d47ffd78"
+        }
+      ]
+    },
+    {
+      "id": "worldbank-recurring-customer",
+      "label": "Customer-edited query, report and workbook continuation across editions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/worldbank/RECURRING.md",
+      "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+      "editions": [
+        {
+          "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+          "git_blob": "cd4b0d67e32dc049f04a85b4c657e876b31bf347",
+          "bytes": 9558,
+          "sha256": "e33bfaad6872c06440e225eb77fb655d3a473c6aa17d8487a99cac493bff63fd"
+        }
+      ]
+    },
+    {
+      "id": "worldbank-intake-operation",
+      "label": "Approved original ZIP intake and source registration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/worldbank/recurring/OPERATING.md",
+      "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+      "editions": [
+        {
+          "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+          "git_blob": "904cc868b4eb79a7e2f24fe6154ea0a4ca8d1163",
+          "bytes": 6319,
+          "sha256": "31e86141df863759d54c5c80ed44f67c020450c43b1a3fdc4473ac7e7d0e290c"
+        }
+      ]
+    },
+    {
+      "id": "worldbank-merchant-source-agent",
+      "label": "Shared source/browser and merchant agent operating contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/WORLDBANK-WORKSPACES.md",
+      "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+      "editions": [
+        {
+          "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+          "git_blob": "2cf0928329d48cff4024fa8aa89e3149850bcdff",
+          "bytes": 12426,
+          "sha256": "b0f2a1e7093dc1c38516336ff59b3f6528bc6a2b84c37bd635a33f4bd6d34159"
+        }
+      ]
+    },
+    {
+      "id": "worldbank-merchant-programme-agent",
+      "label": "Named programme agent, workflow periods and complete customer transfer",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/WORLDBANK_PROGRAMMES.md",
+      "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+      "editions": [
+        {
+          "commit": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+          "git_blob": "1503114f204e0d44c15de849d152bbee80dcc2c0",
+          "bytes": 15410,
+          "sha256": "e8f4782f44d8aa4b5dacba6ed77a41480576fe5e5c41a35ab686fae90103aab6"
+        }
+      ]
+    },
+    {
+      "id": "worldbank-customer-commissioning",
+      "label": "Complete World Bank customer commissioning, acceptance and delivery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/worldbank/CUSTOMER_DELIVERY.md",
+      "commit": "c8f0d4eae25b1138c3af3580bf2fd837162c977c",
+      "editions": [
+        {
+          "commit": "c8f0d4eae25b1138c3af3580bf2fd837162c977c",
+          "git_blob": "e7d9fbba94d7abbec49a15ad9eedae5bad71090b",
+          "bytes": 14204,
+          "sha256": "e222c769e84b4a16dd7b07e235bf409a07a4a8489fdcefca48261e82533f3f2b"
+        }
+      ]
     }
   ]
 }

@@ -133,6 +133,12 @@ const completionDate = value => {
     'GRANT_INVALID_INPUT', 'Use the native calendar date in YYYY-MM-DD form.');
   return value;
 };
+function forecastComparisonQuery(args, exported = false) {
+  const values = new URLSearchParams({beforeId:id(args.beforeId,'forecast'),afterId:id(args.afterId,'forecast')});
+  if(args.expectedComparisonSha256 !== undefined || exported)
+    values.set('expectedComparisonSha256',sha(args.expectedComparisonSha256));
+  return '?' + values.toString();
+}
 function planComparisonQuery(args, exported = false) {
   const values = new URLSearchParams({
     fromRevision:String(integer(args.fromRevision,'Before saved revision',1,1000000)),
@@ -813,6 +819,7 @@ export class GrantWorkspaceClient {
       'work-intake':() => '/api/operations/' + cid() + '/work-intakes/' + id(args.intakeId, 'intake') +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision, 'Intake edition', 1, 10000000)),
       forecasts:() => '/api/operations/' + cid() + '/forecasts',
+      'forecast-comparison':() => '/api/operations/' + cid() + '/forecast-comparison' + forecastComparisonQuery(args),
       forecast:() => '/api/operations/' + cid() + '/forecasts/' + id(args.forecastId, 'forecast'),
       portfolios:() => '/api/operations/' + cid() + '/portfolios',
       portfolio:() => '/api/operations/' + cid() + '/portfolios/' + id(args.portfolioId, 'portfolio'),
@@ -1718,6 +1725,13 @@ export class GrantWorkspaceClient {
     const routes = {
       plan:() => '/api/plans/' + id(args.planId, 'plan') + '/export.zip' +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Selected plan revision',1,1000000)),
+      'forecast-comparison':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/export.zip' + forecastComparisonQuery(args,true),
+      'forecast-comparison-report':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/report.html' + forecastComparisonQuery(args,true),
+      'forecast-comparison-json':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/comparison.json' + forecastComparisonQuery(args,true),
+      'forecast-comparison-changes':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/changes.csv' + forecastComparisonQuery(args,true),
+      'forecast-comparison-impact':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/impact.csv' + forecastComparisonQuery(args,true),
+      'forecast-comparison-daily':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/daily.csv' + forecastComparisonQuery(args,true),
+      'forecast-comparison-work':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/work.csv' + forecastComparisonQuery(args,true),
       'plan-comparison':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/export.zip' + planComparisonQuery(args,true),
       'plan-comparison-report':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/report.html' + planComparisonQuery(args,true),
       'plan-comparison-changes':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/changes.csv' + planComparisonQuery(args,true),

@@ -1,0 +1,377 @@
+{
+  "schema": "bloccpay.application-source.v1",
+  "name": "Bloccpay operations",
+  "runtime": {
+    "nodeMajor": 24
+  },
+  "entrypoints": {
+    "server": "server.mjs",
+    "cli": "cli.mjs",
+    "worker": "worker.mjs",
+    "commissioning": "operate-bloccpay.mjs",
+    "horizonPayroll": "horizon-payroll.mjs",
+    "bridge": "bridge-cli.mjs"
+  },
+  "files": [
+    {
+      "path": "bridge-cli.mjs",
+      "mode": "100644",
+      "bytes": 6978,
+      "sha256": "5c8674c3a780927a309b0ba338fe3c67d6bdd3c9725f7413fa1c5aa0ff108677"
+    },
+    {
+      "path": "cli.mjs",
+      "mode": 493,
+      "bytes": 10083,
+      "sha256": "e3176dc42362985662f625218b27c6c3c1572ed0f14140c2222f54573bf3a785"
+    },
+    {
+      "path": "docs/bridge-commissioning.md",
+      "mode": 420,
+      "bytes": 5774,
+      "sha256": "caacd4cef335503fb3d2786fa6187dd2aeb14eabf7d6a4e07ed53733ecb46f62"
+    },
+    {
+      "path": "docs/bridge-intake.md",
+      "mode": "100644",
+      "bytes": 17631,
+      "sha256": "a6248363b37f8115993d392a1e44a643b5d1497c55800b68f0721dca3fc8a0b2"
+    },
+    {
+      "path": "docs/horizon-payroll-review.md",
+      "mode": 420,
+      "bytes": 10156,
+      "sha256": "1d35e679d0f7441d309b7eaac3ac22e11aef116ebd3f6565098bd56b58d8c461"
+    },
+    {
+      "path": "docs/invoice-sdp-integration.md",
+      "mode": "100644",
+      "bytes": 7502,
+      "sha256": "1fad6d4ab9b939022de918f94aba8a6a504ebfa2435b0f3f7868d0d52834ceaa"
+    },
+    {
+      "path": "docs/payroll-semantics.md",
+      "mode": 420,
+      "bytes": 7384,
+      "sha256": "7f502578964b146349849dad5ed673fbfbcd287361ea505b5d0976a096edb960"
+    },
+    {
+      "path": "docs/sdp-event-commissioning.md",
+      "mode": "100644",
+      "bytes": 5144,
+      "sha256": "29d436ee43458110feb720fa520420b7c80b111afe17d8c171da76731c5a691e"
+    },
+    {
+      "path": "docs/sdp-events-inbox.md",
+      "mode": "100644",
+      "bytes": 13032,
+      "sha256": "de508ae3667baa957beb6def9e971fcd9b01a0953fa415119c13a827fe2002c9"
+    },
+    {
+      "path": "docs/sdp-events.md",
+      "mode": "100644",
+      "bytes": 10698,
+      "sha256": "b803b1f2fe0bb4522f578fb6f01c7479e936547ba66cc7900cb1779b9c1399ec"
+    },
+    {
+      "path": "examples/configuration.example.json",
+      "mode": 420,
+      "bytes": 2758,
+      "sha256": "b194cd1249f9d86416fd516443de56ca4db0741145a602507d5ce6e30ae3f2fd"
+    },
+    {
+      "path": "examples/invoice-sdp-adapter.configuration.json",
+      "mode": "100644",
+      "bytes": 490,
+      "sha256": "5f0d089fd94c01ad4a60a28d6594bfc24cae1d696499124d9ad40d435c9bb65b"
+    },
+    {
+      "path": "examples/invoice-sdp-adapter.mjs",
+      "mode": "100644",
+      "bytes": 2845,
+      "sha256": "f4345c916d158c9e3b3b7e27d2b685280889300d3a07f6e39fb8c2728fc4743f"
+    },
+    {
+      "path": "examples/payroll.headers.csv",
+      "mode": 420,
+      "bytes": 246,
+      "sha256": "7cce321cbf24cc01945e21fdec383a1443c6f56f27e8004705181d217b28de9d"
+    },
+    {
+      "path": "examples/programme.template.json",
+      "mode": 420,
+      "bytes": 1286,
+      "sha256": "fe1771af148512c2a24ab9ec593d5d6ffeaf546f25b58026990646879b5d9318"
+    },
+    {
+      "path": "horizon-payroll.mjs",
+      "mode": 493,
+      "bytes": 8708,
+      "sha256": "3a28cb2373fefac0c29525b0fe7bcd46670414b5ba8d9207689c86ced7b75a02"
+    },
+    {
+      "path": "lib/archive.mjs",
+      "mode": 420,
+      "bytes": 13546,
+      "sha256": "022d7b8db2454075666a85409a5ae9204d7292e6b6e842a5b647dfd52da04a34"
+    },
+    {
+      "path": "lib/bridge-commissioning.mjs",
+      "mode": 420,
+      "bytes": 20663,
+      "sha256": "2c8991117a820e9295c0e6ff847b7722e50c1e295289e9287f337d5633f8a25e"
+    },
+    {
+      "path": "lib/bridge-http.mjs",
+      "mode": "100644",
+      "bytes": 2838,
+      "sha256": "296d2f1ce79b4bf96ab25c8e35b348da7eb8df1666997a803d4e92c71f40559d"
+    },
+    {
+      "path": "lib/bridge-intake.mjs",
+      "mode": "100644",
+      "bytes": 23097,
+      "sha256": "0b23d9b2f411dd97d82a7dbebd4ee5e7786ed501ab7b2d0613e29094cf26b0a8"
+    },
+    {
+      "path": "lib/catalogue.mjs",
+      "mode": 420,
+      "bytes": 10353,
+      "sha256": "9dc0ba771a5b1883d6438a512cd7678a25cac9caab70c9631ffabfa87de63725"
+    },
+    {
+      "path": "lib/decimal.mjs",
+      "mode": 420,
+      "bytes": 3118,
+      "sha256": "e8839506d3e7473cf07c0c0d444d75d123792b55bea44c3182a38199be53cab4"
+    },
+    {
+      "path": "lib/files.mjs",
+      "mode": "100644",
+      "bytes": 17662,
+      "sha256": "5bea398e519a625699e7947427e8b9c71a817c2d620548170a999077babbd96d"
+    },
+    {
+      "path": "lib/horizon-payroll-review.mjs",
+      "mode": 420,
+      "bytes": 23623,
+      "sha256": "74ac5cdb72c5ff0bf1c42e7742418aa04a45fd5b7c8871882fcd675db2d71a69"
+    },
+    {
+      "path": "lib/native.mjs",
+      "mode": "100644",
+      "bytes": 14284,
+      "sha256": "3c4b6122648ad16785061dc46955fce173e672fd7969ddc917c4cf1ed9cf2831"
+    },
+    {
+      "path": "lib/payroll.mjs",
+      "mode": 420,
+      "bytes": 31042,
+      "sha256": "ac231958164aa999916ad7655bd2ef19472b5899b76b8a92d593e85628141459"
+    },
+    {
+      "path": "lib/receiving.mjs",
+      "mode": 420,
+      "bytes": 18849,
+      "sha256": "5014776e0d69a395a44df7cf9911a5877bba01be9b7c5c388f243340d197c97c"
+    },
+    {
+      "path": "lib/resources.mjs",
+      "mode": 420,
+      "bytes": 10439,
+      "sha256": "67cf34631760982b8563428eb2f6dffad3d661e6f402a7ead58ae110df451387"
+    },
+    {
+      "path": "lib/runtime.mjs",
+      "mode": 420,
+      "bytes": 10239,
+      "sha256": "1cb998aea053885c1d2445d698ffb103e5660a902ff22e62bc80605f82409ce4"
+    },
+    {
+      "path": "lib/schema.mjs",
+      "mode": 420,
+      "bytes": 4948,
+      "sha256": "350ec545bf66ba2a18c6c1140ed1f922180b0c40fca5fae03446ab83a0003807"
+    },
+    {
+      "path": "lib/sdp-event-commissioning.mjs",
+      "mode": "100644",
+      "bytes": 28611,
+      "sha256": "ad2e1b289e80fd53430810f114bab8213bbb6a6d8c34f158710dbc0a063eafd3"
+    },
+    {
+      "path": "lib/sdp-sdk-adapter.mjs",
+      "mode": "100644",
+      "bytes": 17549,
+      "sha256": "a8cc0cf8379209c97e8185a317f6284c413c6ed86edd451759219897f42193ba"
+    },
+    {
+      "path": "lib/source-json.mjs",
+      "mode": 420,
+      "bytes": 4558,
+      "sha256": "65564476743fd5e3fe9cbbacb7653d1755b08a6c1b7c5c8c1481a287cc9eb317"
+    },
+    {
+      "path": "lib/transport.mjs",
+      "mode": 420,
+      "bytes": 11496,
+      "sha256": "e0c78b2e49a8e3b847794f34e131358d11765186e0735b9aa9beaaed048a90cc"
+    },
+    {
+      "path": "lib/validation.mjs",
+      "mode": "100644",
+      "bytes": 9647,
+      "sha256": "2058ea7adcd75a13875cb5e0646c14fd36b2d6236106b3b0216087fa4171d4d8"
+    },
+    {
+      "path": "lib/webhooks.mjs",
+      "mode": "100644",
+      "bytes": 7296,
+      "sha256": "a4bed799eaf7b606d1fab2eb20b210aaabd4dcbefe576e9c23b5eaa0c59f0c73"
+    },
+    {
+      "path": "lib/workspace.mjs",
+      "mode": "100644",
+      "bytes": 94159,
+      "sha256": "c24be7e94dfe5e00073e301eec71336793756d7499384b4e75c3066ca83264b5"
+    },
+    {
+      "path": "operate-bloccpay.mjs",
+      "mode": "100644",
+      "bytes": 73548,
+      "sha256": "1b7e27d90f8b4c40ab97a728857eea9510ec147efae8cfad2c2b0bba3765b5a9"
+    },
+    {
+      "path": "OPERATIONS.md",
+      "mode": 420,
+      "bytes": 22350,
+      "sha256": "02eacfcd6b2216a78fd5766bf12e8c3f7e6b153026da7c7339af7b2d05bdc73c"
+    },
+    {
+      "path": "README.md",
+      "mode": 420,
+      "bytes": 7371,
+      "sha256": "25aaa10b9df89dd786a9e20c1b22939d1e3563971bcc0f31bafb7b1ac45ddd5a"
+    },
+    {
+      "path": "server.mjs",
+      "mode": "100644",
+      "bytes": 22038,
+      "sha256": "92afa80febe7ed46c423957f6a853ff79bc18a8d8860654c616dbf9e90524121"
+    },
+    {
+      "path": "sources/bridge-contracts.json",
+      "mode": 420,
+      "bytes": 488387,
+      "sha256": "647193d47b8279259674dd3ac341c9987a466e8d41a48c89766a0d1ed1c0d17b"
+    },
+    {
+      "path": "sources/bridge-original.json",
+      "mode": 420,
+      "bytes": 570490,
+      "sha256": "9782c4a82932a77ce83d391171547385815b6a6b3d01784314902000d642be5c"
+    },
+    {
+      "path": "sources/horizon-original.json",
+      "mode": 420,
+      "bytes": 115403,
+      "sha256": "da96f63c9697fc51bb7bf372f430797e6da207670a13b9cc8b359b60de501ec9"
+    },
+    {
+      "path": "sources/sdp-openapi.json",
+      "mode": 420,
+      "bytes": 341165,
+      "sha256": "1f760b5631a5561e812f7f442587fa8c25567bd5e092fc946b175c80b8f22b61"
+    },
+    {
+      "path": "sources/sdp-original.json",
+      "mode": 420,
+      "bytes": 528766,
+      "sha256": "020078f9b62a614d570d0294dab2911066c79a411377edde558f304630d24439"
+    },
+    {
+      "path": "vendor/invoice-bridge-provider-source.json",
+      "mode": "100644",
+      "bytes": 831,
+      "sha256": "356247156a00bbaa75c79af12cddb05e41c4466159594ce504dec7295a9455f4"
+    },
+    {
+      "path": "vendor/invoice-bridge-provider.mjs",
+      "mode": "100644",
+      "bytes": 15764,
+      "sha256": "3e11e81da66e73dc5d0713a31859d4d61d505bb891848b57e8cf04286f97cb30"
+    },
+    {
+      "path": "web/app.mjs",
+      "mode": 420,
+      "bytes": 78788,
+      "sha256": "017fd31b5ca2eccc57d3c6f339825adf9ce358f2113812327bd3ff9cb09e77d7"
+    },
+    {
+      "path": "web/bridge-desk.mjs",
+      "mode": "100644",
+      "bytes": 22349,
+      "sha256": "15ce7064717f9f24ee2c4383b0dfa8b3e8da397b03bc7b8ddd7183bcc9a4767b"
+    },
+    {
+      "path": "web/bridge.css",
+      "mode": "100644",
+      "bytes": 2659,
+      "sha256": "6ec4f0aa17117982b618aa4bb066020ab26ac3678aa80647eea19d4def0a2874"
+    },
+    {
+      "path": "web/bridge.html",
+      "mode": "100644",
+      "bytes": 5370,
+      "sha256": "e09a4f5093b0d115ce9831cf2e5884df4f54c4c17af311658919c9a44ce53442"
+    },
+    {
+      "path": "web/index.html",
+      "mode": "100644",
+      "bytes": 21408,
+      "sha256": "eb647573df3c4ee384573ba6e4962213024fd6a0a58c07891c901132222d3946"
+    },
+    {
+      "path": "web/journal.mjs",
+      "mode": 420,
+      "bytes": 8071,
+      "sha256": "1673042edf81f20172ded34d905bfc66a45e67fa1ad9cf55752d8a99ba12c392"
+    },
+    {
+      "path": "web/sdp-events.css",
+      "mode": "100644",
+      "bytes": 3528,
+      "sha256": "a4fa1fff44f8ab46e3dd5467903d5dabbc52a45ebd508bb8f9abb6854c34126c"
+    },
+    {
+      "path": "web/sdp-events.html",
+      "mode": "100644",
+      "bytes": 3160,
+      "sha256": "711cc7d59e5cd3fec32a2972d7c070d0fb1a26b4b3c2b947bde8505e69db7643"
+    },
+    {
+      "path": "web/sdp-events.mjs",
+      "mode": "100644",
+      "bytes": 24962,
+      "sha256": "40dc6ca17684fc99af5d7d9d582723c63cbc999469c006a2d37475f12abbf661"
+    },
+    {
+      "path": "web/sha256.mjs",
+      "mode": 420,
+      "bytes": 3383,
+      "sha256": "fbc57cd9ad9f17f90f084d7d387ab02794c6a330b26a98392c129bbe09ef44ba"
+    },
+    {
+      "path": "web/styles.css",
+      "mode": 420,
+      "bytes": 8336,
+      "sha256": "02d9986630997e164ad2389828982076c5ab7896cfbf23385934ed17e456744a"
+    },
+    {
+      "path": "worker.mjs",
+      "mode": "100644",
+      "bytes": 8190,
+      "sha256": "c7d7b48520a3191952c947866b198f68717e76d8766c3279597b134ef363d1a4"
+    }
+  ]
+}

@@ -59,6 +59,8 @@ const clean = value => String(value).replaceAll('\r\n', '\n').trim() + '\n';
 
 const NATIVE_T1_ACCEPTANCE = "For each service, its selected buyer also completes one approved Stellar testnet purchase through an existing supported facilitator, with the original approval, independently observed native transfer and complete output joined in the delivered application.";
 
+const CANONICAL_T1_ACCEPTANCE = "For each merchant, its buyer completes one approved Stellar testnet purchase through an existing supported facilitator and opens all agreed output in its actual application. Retain the original request, independently observed transfer, payment terms and source meaning.";
+
 /** Keep the first installed milestone directly connected to the Stellar network. */
 function receiveNativeStellarAcceptance(markdown) {
   const parent = '## Three funded tranches and six priced deliverables\n';
@@ -76,11 +78,20 @@ function receiveNativeStellarAcceptance(markdown) {
     if (cells.length !== 4 || !/T1/.test(cells[0]) ||
         !/Merchant-resource integration/.test(cells.slice(0, 2).join(' '))) return line;
     matches++;
-    if (cells[3].includes(NATIVE_T1_ACCEPTANCE)) {
-      if (cells[3].indexOf(NATIVE_T1_ACCEPTANCE) !== cells[3].lastIndexOf(NATIVE_T1_ACCEPTANCE))
-        throw Object.assign(new Error('Retain one first-tranche Stellar acceptance statement.'), { code: 'GRANT_DELIVERY_ACCEPTANCE_DUPLICATE' });
-      return line;
+    const canonicalCount = cells[3].split(CANONICAL_T1_ACCEPTANCE).length - 1;
+    const nativeCount = cells[3].split(NATIVE_T1_ACCEPTANCE).length - 1;
+    if (canonicalCount > 1 || nativeCount > 1)
+      throw Object.assign(new Error('Retain one first-tranche Stellar acceptance statement.'), { code: 'GRANT_DELIVERY_ACCEPTANCE_DUPLICATE' });
+    if (canonicalCount === 1) {
+      // The canonical answer already carries the complete original acceptance.
+      // Remove only our own earlier appended duplicate when receiving that edition.
+      if (nativeCount === 0) return line;
+      const at = cells[3].indexOf(NATIVE_T1_ACCEPTANCE);
+      const start = at > 0 && cells[3][at - 1] === ' ' ? at - 1 : at;
+      cells[3] = cells[3].slice(0, start) + cells[3].slice(at + NATIVE_T1_ACCEPTANCE.length);
+      return '|' + cells.join('|') + '|';
     }
+    if (nativeCount === 1) return line;
     cells[3] = cells[3].trimEnd() + ' ' + NATIVE_T1_ACCEPTANCE;
     return '|' + cells.join('|') + '|';
   }).join('\n');
