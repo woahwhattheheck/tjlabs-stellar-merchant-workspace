@@ -1,12 +1,43 @@
+# Hourly Work billing in the complete original customer course
+
+Operation: SCF-HOURLY-WORK-CUSTOMER-BILLING-20261013. Product source: PR1797, merge b79e3a8b39b5821072f9134f3af75a469af7ecd9.
+
+This edition carries the complete existing milestone and Buyer expense receiving programme forward in one authenticated private account copy. After those original operations, it opens the native Work ledger and retains explicit internal demonstration terms as an original source. The quantity is an explicitly entered engineering demonstration, never represented as customer-approved real time. It records/submits/accepts that original Work through Operations, then uses the actual customer-billing desk to save the original hourly authority and its contributor/package scopes, USD125.00 rate, EXACT rounding and 0.2000-hour/USD25.00 whole-authority cap.
+
+The browser selects 0.1600 hours/USD20.00. It records an unused preparation and corrected cancellation, then changes the original Work description through native reopen/save/submit/accept commands. Applying the older review must return its specific pre-dispatch source refusal; the operator cancels it and selects the current accepted Work edition. The original apply response is deliberately lost only after the original native response is retained; exact replay must recover the same invoice and commands. The course edits the draft, separately reviews/issues it, credits to 0.1200 hours/USD15.00, replaces to 0.0960 hours/USD12.00 and separately issues the replacement.
+
+Every mutation uses the original Operations or native Receivables APIs and journals. The course creates no payment, allocation, refund, settlement, external invoice send or customer correspondence. Original milestone and expense invoices are protected by complete before/after native detail comparisons; original paid account requests, receipts and allocations remain unchanged. All financial changes happen only in the newly authenticated private receiving copy. The original source ZIP and source-case tree remain frozen and their exact hashes are checked.
+
+The complete Operations export now includes every retained hourly authority revision, original Work/events/source bytes, preparation/cancellation request bodies, all charge histories and native command IDs. A fresh Operations workspace imports that actual UI export, replays the original authority and preparation/cancellation requests, and checks unchanged original IDs/history. The final native backup is authenticated and restored into a second private physical destination; both hourly and existing milestone/expense desks bind to the same original native identity and reopen their linked invoices. Complete linked invoice/credit files are retained even when account-as-of exports exclude a future document.
+
+Reservations and authority caps coordinate copies registered in the same Operations database. Independently restored databases must reconcile their retained histories before parallel new financial dispatch; this course does not imply a distributed lock across installations.
+
+Run the existing receiver with this edition's COMPLETE_SOURCE_RECEIVING.json, all numbered source parts and the original private Buyer Library search input. The receiver validates each whole part, decoded source, Git blob and complete selection, receives the original private archives through their existing authorized route, then executes the whole programme. The public source carrier contains code and frozen original artifact locators/hashes. Original customer/account/Buyer fixture bytes and restore key remain in the private receiving operation.
+
+## Complete current source selection
+
+The manifest for this edition retains 1,638 original source files (28,870,615 UTF-8 bytes), including all 674 declared files in the merged Grant application and the complete selected native service/support dependencies. Its ordered inventory is the source authority. Each file retains its original Git identity, size and SHA-256; the hourly postimages are exactly those merged in PR1797. The retained native dependency additions and their manifests are pinned to 961acf4896be9f64286de44bf9e86dd19f1b1a5d, with the later four declared additions pinned to 0df91b6a18c96fbf944cbaff43b7356a335cb984.
+
+The actual Receivables service opened by this course has 66 static source modules, all included, and no bare third-party import on that static boot path. The course still requires its stated installed Node/Python/Playwright runtime and original Chrome distribution. Optional seller adapters retain their original package manifests and locks where published; their PostgreSQL, gRPC, S3, MySQL, MSSQL, Redis, YAML, x402 and schema-pattern engines are not represented as installed by a source transfer. The optional bank-PDF surface retains its original PDF.js 6.4.299 configuration. This billing course does not activate those separate optional adapters. Browser-served client aliases, generated seller/handler modules and original dynamic runtime selections retain their existing native server/generator behavior.
+
+## Producing-agent observation and usable delivery
+
+The producing peer must open the exact final saved application and LOOK at every retained actual image. Inspect all populated/empty/error/recovery states, authority/rate form, source correction refusal, issue review, credit/replacement, saved desk reopening and both light/dark embedding contexts at desktop and390px. Normally use the controls, open every outgoing attachment and usable ZIP content, and inspect native invoice/credit HTML and any report/PDF pages. Source review, HTTP success, DOM counts, captures or another worker's approval do not substitute for looking at the real product. Repair any contrast, clipping, oversized controls or unusable layout directly, then continue the same operation without broad test sweeps or a new approval queue.
+
+The producer retains complete logs, original request/replies, every source and native financial observation, actual save receipts and original private case on failure. It saves the complete account before the post-package opener course, so a later opener failure remains recoverable without repeating earlier financial mutations. A complete source publication is already available; native and visual completion is reported only from the actual original run.
+
+
+---
+
 # Customer expense billing and original commercial account — complete receiving
 
 Operation: SCF-CUSTOMER-EXPENSE-BILLING-F8C1-20261013
 
 ## Current complete edition
 
-This is the full continuation of the original commercial correction account. It uses all 692 selected source files (14,693,901 original UTF-8 bytes), including the current managed Grant product and the compatible original native Receivables runtime. The full manifest names every file's Git blob, byte count and SHA-256; its sourceLineage distinguishes the original native edition from the merged expense feature and recovery correction. The complete product, original planning history, original Buyer account, retained commercial amendments, expense allocations and native requests travel together.
+This is the full continuation of the original commercial correction account. It uses every selected source file recorded in COMPLETE_SOURCE_RECEIVING.json under sourceFiles, sourceBytes and sourceInventory, including the full declared Grant product and the retained native Receivables runtime. The full manifest names every file's Git blob, byte count and SHA-256; its sourceLineage distinguishes the original native edition from the merged expense feature and recovery correction. The complete product, original planning history, original Buyer account, retained commercial amendments, expense allocations and native requests travel together.
 
-Source implementation is merged in PR1669 / 3033fe4dc85d06f25b351691db76143697ff8fde and its specific review-refusal recovery in PR1679 / 1d792709e1fa652b90080d282c88f5174b8286c9. This programme operates those original modules. Its stored source and syntax checks are separate from an actual completed native/browser run.
+Source implementation is merged in PR1669 / 3033fe4dc85d06f25b351691db76143697ff8fde and its specific review-refusal recovery in PR1679 / 1d792709e1fa652b90080d282c88f5174b8286c9. This programme preserves those original workflows through the shared journal extraction and hourly product merged in PR1797 / b79e3a8b39b5821072f9134f3af75a469af7ecd9. Its stored source and syntax checks are separate from an actual completed native/browser run.
 
 ## Receive the same original accounts
 
@@ -73,12 +104,12 @@ This directory carries the original saved Freeform Solutions billing account, th
 Use the existing authorized artifact connection, Python 3.11+, Node 22+, the installed Playwright driver and a Linux host capable of the original Chrome 155 build. Keep the source parts beside this directory and run:
 
 ~~~sh
-python3 -u -B receive_complete.py --manifest COMPLETE_SOURCE_RECEIVING.json --parts-directory parts
+python3 -u -B receive_complete.py --manifest COMPLETE_SOURCE_RECEIVING.json --parts-directory parts --buyer-search private/buyer-search.json
 ~~~
 
-The eight original parts retain 609 source files at commit 8cfdf983d5acf4520c11d3794f1b9efafe54bc5c. The receiver checks every part, every Git/content identity, the explicit source overlays and every complete course file before using them. The scoped contrast correction and ASTRA-828A’s merged PR1537 browser/guide continuation are explicit overlays on their original selected files; the original selected part is retained unchanged. The resulting current-source-selection.json records the exact served postimages.
+This current edition is defined by all numbered parts and the exact sourceInventory in COMPLETE_SOURCE_RECEIVING.json. The receiver checks every part, original Git/content identity and complete course file before execution. The resulting current-source-selection.json records the exact served merged postimages; sourceLineage preserves the earlier milestone and expense receiving editions.
 
-The complete compatible supplement from original source owner 4593 adds four mounted assets at that exact edition: DESK_LOADING.md and the customer-statements public index, app and stylesheet. All 609 donor files remain byte-identical. The resulting 613-file source contains 13,107,531 original bytes before the explicit CSS overlay. Its full AST source/route report distinguishes configured external SF88 runtimes and signers from local source; those separately selected external products retain their own configured bindings. Source and maintained-selector owners 4593/A0D5 remain authoritative for later coherent editions.
+The original compatible supplement from source owner4593 remains included: DESK_LOADING.md and the customer-statements public index, app and stylesheet. Current managed declarations and their full local dependency closure are composed at the retained commits named in sourceLineage. Source/selector ownership remains with4593/A0D5; configured external SF88 runtimes and signers retain their separate selected bindings.
 
 The maintained storage helpers select a private persistent destination with 768 MiB planned working space, 6,000 inodes and 768 MiB process memory. The original browser distribution is verified against its fixed 124,203,329-byte SHA before use if it is not already installed. Browser and native service children use task-owned process groups, private temporary paths and file-backed logs. Every owned service is closed even when another service's close fails.
 
