@@ -77,6 +77,21 @@ The [complete composition guide](COMPOSITION.md) includes JSON orders, grouped C
 starforge document-merchant compose --help
 ~~~
 
+## Customer production browser
+
+The saved **Document production** application opens the customer's existing Request, Checkout, Jobs and Resource library with a document workspace at `/documents/`. Choose complete CSV/JSON data and editable templates, prepare the exact document set, review its saved native price, and receive every finished PDF together with its source. The browser keeps the full dataset and source plan available for download and exports the original Collection for customer handover.
+
+The same customer can start this workspace from the installed command:
+
+~~~sh
+starforge document-merchant compose serve \
+  --workspace-options /srv/starforge/private/customer-options.json \
+  --provider snaplab \
+  --merchant-origin https://YOUR_MERCHANT_ORIGIN
+~~~
+
+The private options file contains the customer's complete original Jobs and nested Checkout options. Use the existing customer directory, operator and allowed file roots. The [composition guide](COMPOSITION.md) covers that configuration, saved Applications selection, complete uploads, source restoration, price review and original interrupted-job receiving.
+
 ## Customer batch fulfillment
 
 The installed `document-merchant batch` commands turn a customer's reports, invoices or cards into a complete delivered document set. They use the original Request, native Checkout, Jobs and Resource library; the saved plan binds all source files and prices before execution. See [the complete batch workflow](BATCHES.md) for configuration, price review, continuation and portable customer delivery.

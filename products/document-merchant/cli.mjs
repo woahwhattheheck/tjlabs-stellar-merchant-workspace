@@ -27,6 +27,7 @@ const HELP = [
   '  document-merchant providers',
   '  document-merchant batch --help',
   '  document-merchant compose --help',
+  '  document-merchant compose serve --workspace-options FILE [--provider ID] [--merchant-origin URL]',
   '  document-merchant template --provider mintpdf|snaplab|pdfmint [--anonymous] [--out NEW_FILE]',
   '  document-merchant review --request FILE --directory DIR',
   '  document-merchant prepare --request FILE --directory DIR',
@@ -52,6 +53,7 @@ const HELP = [
   'serve uses the already prepared original Jobs service, factory, worker and customer/operator workspaces.',
   'For native payments include --native-factory MODULE and --start-worker.',
   'jobs forwards the original status, create, work, show, outputs, output-file, retry and cancel operations.',
+  'compose serve opens Document production with complete data/template input and the original customer.',
   'The original customer Request application stages the whole source file before checkout.'
 ].join('\n');
 function commandError(message) {return documentError('DOCUMENT_COMMAND_INVALID', message);}
