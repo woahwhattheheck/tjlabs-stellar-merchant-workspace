@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { openRecoveryWorkspace } from './model.mjs';
 import { publishRecoveryWorkspaceLaunch, retireRecoveryWorkspaceLaunch, recoveryLaunchView, RECOVERY_LAUNCH_FILE } from './connection.mjs';
-import {createSourceEditionDeliveryRoutes} from '../../scf_2026/sf49_data_commissioning/source-edition-http.mjs';
+import {createSourceEditionDeliveryRoutes} from '../../../scf_2026/sf49_data_commissioning/source-edition-http.mjs';
 import { readBrowserAssets } from '../../distribution/browser-assets.mjs';
 
 const MAX_BODY = 65536;

@@ -27,7 +27,8 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
   const actions=node('div',undefined,root);actions.className='actions';
   const button=(text,fn,parent=actions)=>{const b=node('button',text,parent);b.type='button';b.addEventListener('click',()=>work(b,fn));return b;};
   const inspect=button('Inspect selected archive',async()=>{
-    const result=await api(query('/api/bundle-inspection',{profile:profile.id,archive:archive.value}));
+    const selected=uiIdentity(),result=await api(query('/api/bundle-inspection',{profile:profile.id,archive:archive.value}));
+    if(selected!==uiIdentity())return;
     showDetails('Structural archive inspection',result);
     notice('All ciphertext members were inspected. Authentication occurs during receive.');
   });
@@ -54,7 +55,8 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
     original=result;confirmed.checked=false;drawOriginal();await refresh();
   });
   const cancel=button('Stop selected transfer',async()=>{
-    if(!original)return;const result=await post('/api/cancel',{profileId:profile.id,id:original.operationId});
+    if(!original)return;const selected=uiIdentity(),result=await post('/api/cancel',{profileId:profile.id,id:original.operationId});
+    if(selected!==uiIdentity())return;
     original=result;confirmed.checked=false;drawOriginal();await refresh();
   });
   const summary=node('pre',undefined,root),outcome=node('pre',undefined,root);
@@ -63,7 +65,8 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
   const verification=button('Read full native verification',()=>readReport('verification'),reports);
   const publication=button('Read retained publication attempt',()=>readReport('publication'),reports);
   const artifact=button('Read exported archive identity',async()=>{
-    showDetails('Complete encrypted archive',await api(query('/api/bundle-artifact',{profile:profile.id,id:original.operationId})));
+    const selected=uiIdentity(),result=await api(query('/api/bundle-artifact',{profile:profile.id,id:original.operationId}));
+    if(selected===uiIdentity())showDetails('Complete encrypted archive',result);
   },reports);
   const saveFile=button('Download complete encrypted archive',async()=>{
     const selected=original,epoch=generation,selectedProfile=profile.id;
@@ -73,7 +76,8 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
         if(epoch!==generation||original?.operationId!==selected.operationId)throw new Error('The selected transfer changed before download.');
         return info;
       }});
-    notice('The complete encrypted archive was downloaded. Keep its SHA-256 and native record identity with it.');
+    if(epoch===generation&&original?.operationId===selected.operationId)
+      notice('The complete encrypted archive was downloaded. Keep its SHA-256 and native record identity with it.');
   },reports);
   const support=node('details',undefined,root);node('summary','Attach the actual archive to an existing commissioned Support case',support);
   node('p','This optional path requires an already saved recovery Support transfer and that case’s actual commissioning terms. Standalone archive receiving above does not require terms. The original textual capture stays unchanged; source delivery adds the real binary archive.',support);
@@ -92,17 +96,21 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
     supportSummary.textContent=encoded(result);
   },supportActions);
   const attach=button('Attach whole encrypted archive',async()=>{
-    const selected=attachmentSelection();await post('/api/bundle-attach',selected);
+    const context=uiIdentity(),selected=attachmentSelection();await post('/api/bundle-attach',selected);
+    if(context!==uiIdentity())return;
     attachmentConfirmed.checked=false;notice('The original case contains the complete native archive source attachment.');
     await readAttachment();
   },supportActions);
   const attachmentRead=button('Read retained attachment',readAttachment,supportActions);
   const caseExport=button('Export whole attached case',async()=>{
-    const value=await post('/api/bundle-case-export',{profileId:profile.id,transferId:transfer.value,archiveSha256:exportHash()});
+    const selected=uiIdentity(),value=await post('/api/bundle-case-export',{profileId:profile.id,transferId:transfer.value,archiveSha256:exportHash()});
+    if(selected!==uiIdentity())return;
     showDetails('Whole case with original encrypted archive',value);
     notice('The complete attached case revision, history and original binary source editions were exported.');
   },supportActions);
   const supportSummary=node('pre',undefined,support);
+  function uiIdentity(){return encoded([generation,profile?.id,action.value,id.value,source.value,
+    archive.value,destination.value,transfer.value,caseRevision.value,actor.value,original?.operationId]);}
   function clear(){
     generation++;review=null;original=null;selectedSupport=null;confirmed.checked=false;attachmentConfirmed.checked=false;
     summary.textContent='';outcome.textContent='';supportSummary.textContent='';sync();
@@ -141,7 +149,8 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
       expectedReviewSha256:selectedSupport.review.reviewSha256,expectedRevision:caseRevision.value,actor:actor.value};
   }
   async function readAttachment(){
-    const value=await api(query('/api/bundle-attachment',{profile:profile.id,id:transfer.value,sha256:exportHash()}));
+    const selected=uiIdentity(),value=await api(query('/api/bundle-attachment',{profile:profile.id,id:transfer.value,sha256:exportHash()}));
+    if(selected!==uiIdentity())return;
     supportSummary.textContent=JSON.stringify(value,null,2);attachmentConfirmed.checked=false;
   }
   function sync(){
