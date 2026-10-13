@@ -1,0 +1,40 @@
+{
+  "schema": "commons.openlineage.complete-selected-package.v1",
+  "operationId": "OPENLINEAGE-PACKAGE-EFFICIENCY-E496-20261012",
+  "sourceCommit": "09a13eab2f6cd302ca4d6b1ad2222dc09154aa8d",
+  "filename": "tokenjunkielabs-starforge-merchant-0.1.0-source.g09a13eab2f6c.selection.openlineage-operations.tgz",
+  "bytes": 3234205,
+  "sha256": "a739bbcb03447cdd8eade1d97d033944313c4f09a1266938cfdf40c624df947b",
+  "manifestSha256": "7cda4b8e47a5f850e2ef923186a89b4ccd4fc0a29cfb52f318f93b3da00e723f",
+  "manifestBytes": 360495,
+  "sourceFiles": 889,
+  "packageFiles": 893,
+  "sourceBytes": 12266084,
+  "packageBytes": 12659769,
+  "tarBytes": 13340672,
+  "closureSha256": "3d8e1f941dfd16692fecc4bc4fdf666c54f96725c2adebbf730c767b8cf5aa52",
+  "compositionSource": {
+    "builder": "9a695e159fc7dbdba724040536eaf572f10b4ce1",
+    "specification": "4f8ba3f45ee2cde88fe2e5854feca42f3f43ef4c",
+    "sourceSelection": "b2af53bae662a1746dd4afd5821b929d7e0cc4d4",
+    "productPackage": "2c668933f214f201137ac6d3c6b7410525955c9b",
+    "runtimeProfile": "a10870d4f59a3db40f7af24d86266a3b00444355",
+    "staticClosure": "Acorn from Node24.19 original upstream"
+  },
+  "verification": {
+    "gzipRoundtrip": true,
+    "ustarChecksums": true,
+    "allMembers": true,
+    "sourceGitBlobs": 889,
+    "manifestSha256Bindings": 889
+  },
+  "archiveGitBlob": "6f4b929cf3e671e1df00dddb7dc8217664556e00",
+  "verifier": {
+    "path": "runtime-unpack.py",
+    "gitBlob": "6981dc29e20a6795c9b656d8956b0976d2434ffc",
+    "bytes": 9595,
+    "sha256": "683c241e74d2ef4c6bbf1502a8aa58af40195bb53e70fb0b7731191c53795d5f"
+  },
+  "composition": "Original source-owned composition and manifest body; USTAR+gzip artifact assembly",
+  "nativeReceiving": "Original runtime-unpack.py and installed customer continuation are the next native operations"
+}
