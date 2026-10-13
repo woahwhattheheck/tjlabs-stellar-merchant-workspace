@@ -1090,6 +1090,18 @@ class Operations:
             context = self._context(identifier(program_id, "operation"))
             return seed(self, context, body)
 
+    def seed_installation_commissioning(self, program_id, body):
+        from operations_commissioning import seed
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return seed(self, context, body)
+
+    def review_installation_commissioning(self, program_id, body):
+        from operations_commissioning import review
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return review(self, context, body)
+
     def seed_installation(self, program_id, body):
         installations.object_value(body, ("expectedVersion",), "installation seed")
         with self._snapshot():
