@@ -40,5 +40,21 @@
       "request": "/PRIVATE/target-installation.json",
       "work_directory": "/PRIVATE/target-installation-work"
     }
+  },
+  "max_catalogue_bytes": 10737418240,
+  "handover": {
+    "tool": "/ABS/EXACT_RELEASE/application/tools/catalogue-project.php",
+    "archive": "/PRIVATE/original-full-native-project.native",
+    "key_file": "/PRIVATE/existing-32-byte-key",
+    "source": {
+      "configuration": "/PRIVATE/original-source-native-config.json",
+      "work_directory": "/PRIVATE/original-source-export",
+      "operation_id": "ORIGINAL_SOURCE_EXPORT_ID"
+    },
+    "target": {
+      "configuration": "/PRIVATE/original-target-native-config.json",
+      "work_directory": "/PRIVATE/original-target-receiving",
+      "operation_id": "ORIGINAL_TARGET_RECEIVE_ID"
+    }
   }
 }

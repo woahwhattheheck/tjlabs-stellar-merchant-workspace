@@ -19,6 +19,9 @@
           "approve_native_mapping": true,
           "rules": []
         }
+      },
+      "review_generations": {
+        "SELECT_ACTUAL_ORIGINAL_IDENTIFIER": 1
       }
     },
     "following-edition": {
@@ -27,6 +30,12 @@
         "receive_current_source": true
       },
       "items": {}
+    }
+  },
+  "handover": {
+    "target": {
+      "review_sha256": "EXACT_RETURNED_NATIVE_TARGET_REVIEW_SHA256",
+      "receive_original_project": true
     }
   }
 }

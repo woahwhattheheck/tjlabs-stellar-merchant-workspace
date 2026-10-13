@@ -78,11 +78,82 @@ for ($index = $start; $index < count($items); ++$index) {
 if ($end === null || $items[$end]['text'] !== $close) {
     throw new RuntimeException('Original literal bundle array is incomplete.');
 }
-$already = false;
-foreach ($items as $item) {
-    if ($item['id'] !== null && ltrim($item['text'], '\\') === $bundle) {
-        $already = true;
+// Resolve only explicit simple class imports before the literal returned array.
+// A use statement alone never constitutes bundle registration.
+$aliases = [];
+for ($i = 0; $i < $returns[0]; ++$i) {
+    if ($items[$i]['id'] !== T_USE) { continue; }
+    $use = [];
+    while (isset($items[++$i]) && $items[$i]['text'] !== ';') {
+        if ($significant($items[$i])) { $use[] = $items[$i]; }
     }
+    $name = ''; $alias = ''; $as = false;
+    foreach (array_merge($use, [['id' => null, 'text' => ',']]) as $part) {
+        if ($part['text'] === ',') {
+            if ($name !== '') {
+                $bits = explode('\\', trim($name, '\\'));
+                $aliases[$alias !== '' ? $alias : end($bits)] = trim($name, '\\');
+            }
+            $name = ''; $alias = ''; $as = false;
+        } elseif ($part['id'] === T_AS) { $as = true;
+        } elseif (in_array($part['text'], ['{', '}'], true) || in_array($part['id'], [T_FUNCTION, T_CONST], true)) {
+            throw new RuntimeException('Grouped or non-class imports require the original complete bundle postimage review.');
+        } elseif ($as) { $alias .= $part['text'];
+        } else { $name .= $part['text']; }
+    }
+}
+$entries = []; $entry = []; $depth = 0;
+for ($i = $start + 1; $i < $end; ++$i) {
+    $token = $items[$i];
+    if (!$significant($token)) { continue; }
+    if ($token['id'] === null && in_array($token['text'], ['[', '(', '{'], true)) { ++$depth; }
+    if ($token['id'] === null && in_array($token['text'], [']', ')', '}'], true)) { --$depth; }
+    if ($token['text'] === ',' && $depth === 0) { if ($entry !== []) { $entries[] = $entry; } $entry = [];
+    } else { $entry[] = $token; }
+}
+if ($entry !== []) { $entries[] = $entry; }
+$already = false;
+foreach ($entries as $entry) {
+    $arrow = null;
+    foreach ($entry as $i => $part) { if ($part['id'] === T_DOUBLE_ARROW) { $arrow = $i; break; } }
+    if ($arrow === null) { throw new RuntimeException('Every bundle entry must have an explicit literal class key.'); }
+    $key = array_slice($entry, 0, $arrow);
+    $name = implode('', array_column($key, 'text'));
+    if (str_ends_with(strtolower($name), '::class')) {
+        $name = substr($name, 0, -7);
+        $absolute = str_starts_with($name, '\\');
+        $name = ltrim($name, '\\');
+        $pieces = explode('\\', $name);
+        if (!$absolute && isset($aliases[$pieces[0]])) {
+            $first = array_shift($pieces);
+            $name = $aliases[$first] . ($pieces === [] ? '' : '\\' . implode('\\', $pieces));
+        }
+    } elseif (count($key) === 1 && $key[0]['id'] === T_CONSTANT_ENCAPSED_STRING &&
+              $name[0] === "'" && str_ends_with($name, "'")) {
+        $name = str_replace(["\\\\", "\\'"], ["\\", "'"], substr($name, 1, -1));
+        $name = ltrim($name, '\\');
+    } else {
+        throw new RuntimeException('Computed bundle keys require the original complete reviewed postimage.');
+    }
+    if ($name !== $bundle) { continue; }
+    if ($already) { throw new RuntimeException('The original bundle array contains duplicate workspace entries.'); }
+    $value = array_slice($entry, $arrow + 1);
+    $literal = implode('', array_column($value, 'text'));
+    // Do not silently enable a deliberately disabled or conditional entry.
+    if (!preg_match('/^(?:\[(.*)\]|array\((.*)\))$/s', $literal, $match)) {
+        throw new RuntimeException('Review the workspace bundle enabled environments explicitly.');
+    }
+    $inside = $match[1] !== '' ? $match[1] : ($match[2] ?? '');
+    $environmentEntries = array_filter(explode(',', $inside), static fn(string $x): bool => $x !== '');
+    $all = false;
+    foreach ($environmentEntries as $environmentEntry) {
+        if (!preg_match('/^([\'"])([A-Za-z0-9_-]+)\1=>true$/i', $environmentEntry, $environment)) {
+            throw new RuntimeException('The existing workspace bundle environment is disabled or computed; review its exact postimage.');
+        }
+        if ($environment[2] === 'all') { $all = true; }
+    }
+    if (!$all) { throw new RuntimeException('The existing workspace bundle must be explicitly enabled for all environments.'); }
+    $already = true;
 }
 $last = $end - 1;
 while ($last > $start && !$significant($items[$last])) {
