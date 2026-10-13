@@ -830,6 +830,363 @@
         }
       ],
       "commit": "58cb1940e175b180e26f89785e489c06cc437158"
+    },
+    {
+      "id": "openlineage-airflow-installation-installation-editor",
+      "label": "Original complete Installation editor and Airflow source entry",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_installations.mjs",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "fd9da4633fff5e3cf22ef80c461267e4fa83b102",
+          "bytes": 97827,
+          "sha256": "c773cd0f23a47d76f5684d18d9f4bde174df90931f6273233df3c2925178c96b"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-operations-http",
+      "label": "Original Operations routes, source actions and full member downloads",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_http.py",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "9124ef2466bc948977742526e7d0ed49ea9b7e4f",
+          "bytes": 47972,
+          "sha256": "0a5226379bb802d14dc582ba79e2e27fb95a93cf7e3ada4d4765d895d6d010cd"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-staff-host",
+      "label": "Original staff role and Airflow source routing",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/staff_http.py",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "dd9be130a960093e837e719b3002b94104b470ed",
+          "bytes": 19854,
+          "sha256": "53eb0004ec683aa5a3d9a650d4052c9cd4ed5dfdb9681818325f5f072d33144f"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-server-budget",
+      "label": "Original server request-budget integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/server.py",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "79819a278750b365c365438f685e351ebf401f9e",
+          "bytes": 19295,
+          "sha256": "9ca6d5c64c429fd276fe46aa5c803c6ad3f022e52d768ff51cf69d0e50a0a268"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-operations-cli",
+      "label": "Original Operations command registration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_cli.py",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "559d1e29e1347d7032171668fb61d4a726e01a3f",
+          "bytes": 106415,
+          "sha256": "392e1ed22fdc8bbd836443db138e63262fbbadbe76b8497c34e3513c80fac473"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-working-copy-model",
+      "label": "Full working-copy, intake and edition-comparison model",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_airflow_model.mjs",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "10578bd370ce320b003a0ed8fefbe1b6f4231056",
+          "bytes": 16662,
+          "sha256": "b5fa72ba73b5a99d1784e9d2625e01c820dede6b83f22de480ff0ba3c5e54f8f"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-desk",
+      "label": "Airflow source and original Installation operator workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_airflow.mjs",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "74fa5638dfac9017b3b4fd9df75ccb4a0816e426",
+          "bytes": 35280,
+          "sha256": "b1e8ba8fd4d68db0addb133371aa1ad060837ba41cfa13a28f8416d197b27f77"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-desk-style",
+      "label": "Responsive Airflow source desk styling",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_airflow.css",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "4c42f8443aef01b37a3ece7de329cbce69800b1d",
+          "bytes": 3818,
+          "sha256": "cd1db7abd1907d30562f2477870aa08dd8cfdbdd31e6b09c042839b72e52f37c"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-source-cli",
+      "label": "Original complete source intake and preparation CLI",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_airflow_cli.py",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "a411dc859911602ab9a07ef17f84d7c63c8445cd",
+          "bytes": 6962,
+          "sha256": "eed22e91588c8642fe13443f8b49fff260cfe1e35685d0a2b9b632138453e537"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-source-core",
+      "label": "Full saved handover inspection and commercial Installation preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/airflow-installation-core.mjs",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "5617b56ee1e5e91d68a1c5ee1ae68b7fbb2c7cc2",
+          "bytes": 13006,
+          "sha256": "c148214d9688e40fadc7f265a01e7b259d13aa528ee64922df090b675a0aa5b2"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-profile",
+      "label": "Complete Airflow commissioning and customer receiving profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/airflow-commissioning.json",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "6621a9b5bd0ccde888f836f5d66785f811c8e235",
+          "bytes": 12976,
+          "sha256": "b1ae755e423eabfbb4f53ebefa74f6fd7fe20e79cce3199d64cce9f1168f804e"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-adapter",
+      "label": "Original case, source and Workshare preparation adapter",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_airflow.py",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "8cc2b97be89c1fcedffe80286ad65673e2860faf",
+          "bytes": 6335,
+          "sha256": "9c037a211c6bd0f47a18175aa41d4493bbc0fad5425a15cd1c78a934c5f79b07"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-engine",
+      "label": "Read-only native handover and Installation source engine",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_airflow_engine.mjs",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "7ebb049f82a8494d38d9d5b770d7669eb38b6331",
+          "bytes": 1936,
+          "sha256": "83f587bae1a3199c6c0ad0c9f34f33fc680cc596c071124bb1f297669957738e"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-typed-source",
+      "label": "Typed full handover validation and shared attachment budgets",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_airflow_sources.py",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "f5287f7580499b7a89bfa30b101c2fd2a787e83d",
+          "bytes": 7279,
+          "sha256": "53b3ffe24f9f35fcb5914dd1942eb14ff589d2358ce96414874df7c39a866a7d"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-case-custody",
+      "label": "Original guarded case writer and complete export/import custody",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations.py",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "f4542626921bb759921ad9e7c400b4a729e2c1dc",
+          "bytes": 147704,
+          "sha256": "1ed34957165fa0c749d5baf7d171b84a0a6da9e96ecd404f2f140f9bc8d318f3"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-source-selection",
+      "label": "Whole maintained Airflow and Grant Operations source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/airflow-installation.json",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "689f09ef23d3ed461e0ccc83f54df110ac96b6c4",
+          "bytes": 3511,
+          "sha256": "8255887ed2a4123fec55faf2138da5680325ed9686a85e76ed3b46f9e75f778b"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-contribution",
+      "label": "Original Airflow Installation source, command and export contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/airflow-installation.json",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "0e171a4f085ff93c392d0b7455c607d476c71ac5",
+          "bytes": 1421,
+          "sha256": "43bd0be967eb1b65fdeafb5d5809b76bdf35e42f9dbf2abb813865ad5723b80b"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-native-receiving",
+      "label": "Whole selected package, native customer case and independent receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/airflow-source-desk-receiving.py",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "2bb408f78dc263bc8771d5044db78b73db88788e",
+          "bytes": 23508,
+          "sha256": "6d3d773dc59c58b4a03a27afa008f1eb8ea00bef00c3ef4aa2bdbfdf709941c0"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-browser-receiving",
+      "label": "Complete browser source, recovery, saved Installation and cold-reopen course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/airflow-source-desk-browser.mjs",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "ff045fa2f4c01bca4cd14f32fffc7b443d52931d",
+          "bytes": 22435,
+          "sha256": "dd8ffdda8e72dae0faf926a3fcfc1906d8cc218754baca1f235743689380968a"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-operating-guide",
+      "label": "Complete customer operating, source release and independent receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/AIRFLOW_SOURCE_DESK.md",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "8ea3b4e923220b262e25e1d65c61dcc732eb847a",
+          "bytes": 21389,
+          "sha256": "cb8fb5dcb952a66dd8a6c168d4a1fa94f932a34cc7246b8b28cc5595073d1737"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-airflow-installation-managed-source",
+      "label": "Complete managed application source inventory",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json",
+      "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2f739c061bfc4b5c6c5cba38087d7b10962304d9",
+          "git_blob": "b27022883daa0d50d27511534bff33545573f8a2",
+          "bytes": 52213,
+          "sha256": "91a1e8ef55070b0930356ca5c2ef76b9e014747218009b9b82fcc7b22371fbcd"
+        }
+      ]
     }
   ]
 }

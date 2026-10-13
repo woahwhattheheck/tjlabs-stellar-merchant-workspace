@@ -11,7 +11,7 @@ from staff_access import SCHEMA, MEMBER_ID, owner_principal, fail
 from operations_agenda_http import ROUTE as DELIVERY_AGENDA_ROUTE, selection as agenda_selection
 
 FINANCE_COMMANDS = {
-    "source.add", "contributor.save", "work.save", "work.submit",
+    "source.add", "airflow-source.add", "contributor.save", "work.save", "work.submit",
     "invoice.save", "invoice.review", "invoice.dispute", "invoice.reopen", "invoice.void",
     "cash.record", "cash.void", "statement.receive", "statement-setup.save", "forecast.save", "portfolio.save",
     "work-intake.upload", "work-intake.save", "work-intake.apply",
@@ -23,6 +23,7 @@ REVIEW_COMMANDS = {"review", "work.accept", "work.reopen",
                    "implementation.prepare", "cohort.prepare", "completion.prepare", "completion.corrections.save"}
 READ_POSTS = {
     "gravitee/inspect", "gravitee/member", "gravitee/template", "gravitee/prepare",
+    "airflow/inspect", "airflow/member", "airflow/template", "airflow/prepare",
     "risk-register-seed", "risk-register-preview", "risk-register-request",
     "installation-return-seed", "installation-return-preview", "installation-return-review-seed",
     "installation-return-review-preview",
@@ -240,6 +241,11 @@ def authorize(handler):
             return
         if role == "contributor":
             fail("Use the contributor desk's original work and invoice commands.")
+        if action == "airflow-source":
+            if role not in ("lead", "finance"):
+                fail("A delivery lead or finance operator retains the original source file.")
+            bind_actor(handler, body)
+            return
         if (action in READ_POSTS or re.fullmatch(
                 r"installation-sources/source-desk-[a-f0-9]{32}/files/input-[a-f0-9]{64}/inspect", action) or re.fullmatch(
                 r"installation-sources/source-desk-[a-f0-9]{32}/editions/(compare|preview)", action) or re.fullmatch(
