@@ -4,3 +4,4 @@ export {REQUEST_SCHEMA, PLAN_SCHEMA, RESULT_SCHEMA, requestTemplate,
 export {publishPrepaidApi, preparePrepaidCustomer, downloadPrepaidCustomer} from './workflow.mjs';
 export {CUSTOMER_SCHEMA, inspectPrepaidCustomerFiles, preparePrepaidCustomerWorkspace,
   inspectPrepaidCustomerWorkspace, servePrepaidCustomer} from './customer.mjs';
+export {buildPrepaidCommissioning,preparePrepaidCommissioning,inspectPrepaidCommissioning} from './commissioning-native.mjs';

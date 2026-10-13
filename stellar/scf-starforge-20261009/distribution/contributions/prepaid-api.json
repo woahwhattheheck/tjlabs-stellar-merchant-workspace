@@ -1,13 +1,17 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "prepaid-api",
-  "description": "Install and operate complete prepaid API offers and original customer purchase or access workspaces from one retained setup.",
+  "description": "Commission, install and operate complete prepaid API offers and original customer purchase or access workspaces from one retained setup.",
   "components": [
     "products/prepaid-api"
   ],
   "supportFiles": [
     "products/prepaid-api/OPERATING.md",
-    "products/prepaid-api/index.d.mts"
+    "products/prepaid-api/index.d.mts",
+    "products/prepaid-api/commissioning-shell.html",
+    "products/prepaid-api/commissioning.css",
+    "products/prepaid-api/commissioning.d.mts",
+    "products/prepaid-api/COMMISSIONING.md"
   ],
   "commands": {
     "prepaid-api": "products/prepaid-api/cli.mjs"
@@ -20,6 +24,10 @@
       "types": "./source/products/prepaid-api/index.d.mts",
       "import": "./source/products/prepaid-api/index.mjs"
     },
-    "./prepaid-api/cli": "./source/products/prepaid-api/cli.mjs"
+    "./prepaid-api/cli": "./source/products/prepaid-api/cli.mjs",
+    "./prepaid-api/commissioning": {
+      "types": "./source/products/prepaid-api/commissioning.d.mts",
+      "import": "./source/products/prepaid-api/commissioning.mjs"
+    }
   }
 }
