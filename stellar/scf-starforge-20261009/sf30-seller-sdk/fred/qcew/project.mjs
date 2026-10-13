@@ -1,5 +1,6 @@
 // MIT. Original FRED transaction journal, QCEW source editions and recurring county reports.
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
+import { readPrivateJson } from '../../routescan/quota.mjs';
 import { need, clone, canonical, period, periodOrdinal } from './model.mjs';
 import { createQcewProfile, validateQcewProfile } from './profile.mjs';
 import { createQcewCaptureContext, sealQcewIntakeWithContext, inspectQcewCapture, storeQcewCapture,
@@ -8,6 +9,8 @@ import { buildQcewReport, validateQcewReport, qcewReportRowSelection } from './c
 import { prepareQcewFiles, readQcewFiles, validateQcewFilePackage, qcewMemberBytes, qcewEditionDirectory } from './files.mjs';
 import { mutableQcewState, validateQcewState, qcewProjectSummary } from './state.mjs';
 import { readFredProject, getFredCapture, transactFredProject } from '../project.mjs';
+import { normalizeQcewMerchantTerms, qcewPublicationId, qcewPublicationRecord,
+  validateQcewMerchantPlan } from './publication-model.mjs';
 const hash=/^[a-f0-9]{64}$/;
 export async function importQcewSource({directory,id,expectedRevision,capture,inputDirectory,sourceContext=null,selections=[]}={}) {
   if(inputDirectory) {
@@ -119,4 +122,47 @@ export async function viewQcewProject({directory}={}) {
   const state=await readFredProject(resolve(directory));
   return {projectId:state.id,title:state.title,revision:state.revision,pending:state.pending?clone(state.pending):null,
     qcew:qcewProjectSummary(state)};
+}
+
+export async function publishQcewEdition({directory,id,expectedRevision,editionId,origin,path='/county-reports',payment}={}) {
+  need(hash.test(editionId??''),'Choose the complete saved county edition to publish.');
+  const terms=normalizeQcewMerchantTerms({origin,path,payment}),publicationId=qcewPublicationId({editionId,...terms});
+  const {compileHttpSellerOffer}=await import('../../seller.mjs');
+  compileHttpSellerOffer({method:'GET',url:terms.origin+terms.path+'/'+publicationId+'/files/report-package.json.gz',
+    serviceName:'County economic reports',description:'Complete saved county report',payment:terms.payment});
+  return transactFredProject(directory,{id,expectedRevision,kind:'qcew.publish',payload:{editionId,...terms}},async(state,root)=>{
+    const qcew=mutableQcewState(state),entry=qcew.editions.find(item=>item.id===editionId);
+    need(entry,'The selected county edition is not retained in this project.','QCEW_EDITION_NOT_FOUND',404);
+    const editions=[],seen=new Set();
+    let next=entry;
+    while(next) {
+      need(!seen.has(next.id),'The retained county predecessor chain repeats an edition.');seen.add(next.id);
+      editions.unshift(await readQcewFiles(root,next.id));
+      if(next.previousEditionId===null)break;
+      next=qcew.editions.find(item=>item.id===next.previousEditionId);
+      need(next,'The publication lost a complete original predecessor.');
+    }
+    const {prepareQcewMerchant,qcewPublicationDirectory}=await import('./merchant.mjs');
+    const publication=await prepareQcewMerchant({directory:qcewPublicationDirectory(root,publicationId),editions,...terms});
+    qcew.publications??=[];
+    const retained=qcew.publications.find(item=>item.id===publicationId);
+    const record=retained??qcewPublicationRecord(publication.plan,state.pending.startedAt);
+    validateQcewMerchantPlan(publication.plan,{record,edition:entry});
+    if(!retained)qcew.publications.push(record);
+    qcew.selectedPublication=publicationId;
+    validateQcewState(state);
+    return {publicationId,editionId,reportId:entry.reportId,manifestSha256:entry.manifestSha256,
+      planSha256:publication.plan.planSha256,deliverySha256:publication.plan.deliverySha256,
+      resource:publication.plan.resource,downloads:clone(publication.plan.downloads)};
+  });
+}
+export async function selectQcewPublication(directory,publicationId) {
+  need(hash.test(publicationId??''),'Choose a retained county publication.');
+  const state=await readFredProject(directory),qcew=validateQcewState(state);
+  const record=qcew?.publications?.find(item=>item.id===publicationId);
+  need(record,'This county publication does not belong to the selected project.','QCEW_PUBLICATION_NOT_FOUND',404);
+  const root=join(resolve(directory),'qcew','publications',publicationId);
+  const plan=await readPrivateJson(join(root,'merchant-plan.json'),256*1024);
+  validateQcewMerchantPlan(plan,{record,edition:qcew.editions.find(item=>item.id===record.editionId)});
+  return root;
 }

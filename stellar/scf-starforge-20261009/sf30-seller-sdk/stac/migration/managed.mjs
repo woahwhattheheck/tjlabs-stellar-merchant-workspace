@@ -38,7 +38,7 @@ async function originalEngine(python, workspace, command, payload, environment) 
   return new Promise((yes, no) => {
     const child = execFile(selected.executable, ['-B', ENGINE, '--workspace', resolve(workspace)],
       { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-        timeout: ['mapping-register','workbook-propose'].includes(command) ? 0 : 30000,
+        timeout: ['mapping-register','mapping-workbook','workbook-propose'].includes(command) ? 0 : 30000,
         windowsHide: true, env: { ...environment, PYTHONDONTWRITEBYTECODE: '1' } },
       (error, stdout, stderr) => {
         try {
@@ -215,6 +215,23 @@ export async function exportMigrationMappingRegister(options={}) {
     workspaceRevision:result.workspaceRevision,planId:result.planId,captureId:result.captureId,
     rows:result.rows,review:result.review,file};
 }
+export async function exportMigrationMappingWorkbook(options={}) {
+  const binding=await workbookBinding(options);
+  migrationIdentifier(options.planId,'saved plan ID');
+  const result=await originalEngine(binding.python,binding.directory,'mapping-workbook',
+    {planId:options.planId},options.environment??process.env);
+  requireValue(result.schema==='starforge.gis-migration-mapping-workbook-export.v1'&&
+    result.workspaceId===binding.workspaceId&&result.planId===options.planId,
+    'WORKSPACE_CHANGED','The selected original workspace or saved plan changed during workbook export.');
+  const raw=Buffer.from(result.bundleBase64,'base64');
+  requireValue(raw.toString('base64')===result.bundleBase64&&raw.length===result.file.bytes&&
+    migrationSha256(raw)===result.file.sha256,'WORKBOOK_EXPORT_CHANGED','Keep the complete native mapping workbook delivery.');
+  const file=await mappingOutput(binding,options.outputFile,raw);
+  return {schema:result.schema,state:'EXPORTED',workspaceId:result.workspaceId,
+    workspaceRevision:result.workspaceRevision,planId:result.planId,captureId:result.captureId,
+    rows:result.rows,review:result.review,build:result.build,files:result.files,file,
+    next:'Open the complete ZIP, review its XLSX, then return the edited workbook with its original Mapping-Register.json through Mapping.'};
+}
 export async function proposeMigrationMappingWorkbook(options={}) {
   const binding=await workbookBinding(options);
   const [register,workbook]=await Promise.all([mappingInput(options.registerFile),mappingInput(options.workbookFile)]);
@@ -237,6 +254,7 @@ const HELP = [
   '',
   'starforge migration-operator create --workspace DIR --python PYTHON [--title TITLE]',
   'starforge migration-operator describe --workspace DIR --python PYTHON',
+  'starforge migration-operator workbook-export --workspace DIR --python PYTHON --expected-workspace-id ID --plan-id PLAN --output Mapping-Workbook.zip',
   'starforge migration-operator workbook-register --workspace DIR --python PYTHON --expected-workspace-id ID --plan-id PLAN --output Mapping-Register.json',
   'starforge migration-operator workbook-propose --workspace DIR --python PYTHON --expected-workspace-id ID --register Mapping-Register.json --workbook Edited.xlsx --output Workbook-Return.json',
   'starforge migration-operator serve --workspace DIR --python PYTHON [--vector-python PYTHON] [--qgis-python PYTHON] [--exports DIR] [--port 0]',
@@ -278,12 +296,14 @@ export async function runMigrationOperatorCli(argv=process.argv.slice(2), { stdo
     requireValue(typeof o[key] === 'string' && o[key], 'CLI_ARGUMENTS', 'Supply --'+key+'.');
     return o[key];
   };
-  requireValue(['create','describe','serve','connect','workbook-register','workbook-propose'].includes(command),
-    'CLI_ARGUMENTS', 'Choose create, describe, serve, connect, workbook-register or workbook-propose.');
+  requireValue(['create','describe','serve','connect','workbook-export','workbook-register','workbook-propose'].includes(command),
+    'CLI_ARGUMENTS', 'Choose create, describe, serve, connect, workbook-export, workbook-register or workbook-propose.');
   const common={workspaceDirectory:get('workspace'),pythonExecutable:get('python'),environment};
   let result;
   if(command==='create')result=await createMigrationOperatorWorkspace({...common,title:o.title});
   if(command==='describe')result=await readMigrationOperatorBinding(common);
+  if(command==='workbook-export')result=await exportMigrationMappingWorkbook({...common,
+    expectedWorkspaceId:get('expected-workspace-id'),planId:get('plan-id'),outputFile:get('output')});
   if(command==='workbook-register')result=await exportMigrationMappingRegister({...common,
     expectedWorkspaceId:get('expected-workspace-id'),planId:get('plan-id'),outputFile:get('output')});
   if(command==='workbook-propose')result=await proposeMigrationMappingWorkbook({...common,

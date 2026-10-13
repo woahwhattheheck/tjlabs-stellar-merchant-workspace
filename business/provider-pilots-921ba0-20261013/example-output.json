@@ -1,0 +1,128 @@
+{
+  "notice": "Authored documentation examples. No provider request, payment, customer result, or top-up occurred.",
+  "nevermined": {
+    "payg": {
+      "schema": "tjlabs.nevermined-settlement-view.v1",
+      "evidence": "PROVIDER_REPORTED_SETTLEMENT_RESPONSE",
+      "settlementReportedSuccessful": true,
+      "billingModel": "pay-as-you-go",
+      "credits": {
+        "redeemed": "0",
+        "remaining": "0"
+      },
+      "chargeReferences": {
+        "orderTx": "example-fiat-charge-reference",
+        "transaction": null,
+        "network": null
+      },
+      "amountUsd": null,
+      "fulfillment": "NOT_ASSESSED",
+      "interpretation": "The provider reports PAYG settlement. Zero credits do not establish a free purchase.",
+      "reconciliation": {
+        "chargeReferencePresent": true,
+        "needsOriginalPlanAndChargeRecordForUsd": true,
+        "needsOriginalOutputAndAcceptanceForFulfillment": true
+      },
+      "errorReason": null
+    },
+    "credits": {
+      "schema": "tjlabs.nevermined-settlement-view.v1",
+      "evidence": "PROVIDER_REPORTED_SETTLEMENT_RESPONSE",
+      "settlementReportedSuccessful": true,
+      "billingModel": "credits",
+      "credits": {
+        "redeemed": "2",
+        "remaining": "98"
+      },
+      "chargeReferences": {
+        "orderTx": null,
+        "transaction": "example-credit-settlement-reference",
+        "network": "example-network"
+      },
+      "amountUsd": null,
+      "fulfillment": "NOT_ASSESSED",
+      "interpretation": "The provider reports credit settlement. This response alone does not price credits in USD.",
+      "reconciliation": {
+        "chargeReferencePresent": true,
+        "needsOriginalPlanAndChargeRecordForUsd": true,
+        "needsOriginalOutputAndAcceptanceForFulfillment": true
+      },
+      "errorReason": null
+    },
+    "rejected": {
+      "schema": "tjlabs.nevermined-settlement-view.v1",
+      "evidence": "PROVIDER_REPORTED_SETTLEMENT_RESPONSE",
+      "settlementReportedSuccessful": false,
+      "billingModel": "pay-as-you-go",
+      "credits": {
+        "redeemed": null,
+        "remaining": null
+      },
+      "chargeReferences": {
+        "orderTx": null,
+        "transaction": null,
+        "network": null
+      },
+      "amountUsd": null,
+      "fulfillment": "NOT_ASSESSED",
+      "interpretation": "The provider did not report successful settlement.",
+      "reconciliation": {
+        "chargeReferencePresent": false,
+        "needsOriginalPlanAndChargeRecordForUsd": true,
+        "needsOriginalOutputAndAcceptanceForFulfillment": true
+      },
+      "errorReason": "example-delegation-budget-limit"
+    }
+  },
+  "aisa": {
+    "windows": [
+      {
+        "keyReference": "example-selected-key",
+        "startTime": 1788220800,
+        "endTime": 1790899200,
+        "scope": "key",
+        "bucketWidth": "1d",
+        "method": "GET",
+        "url": "https://api.aisa.one/v1/usage?start_time=1788220800&end_time=1790899200&bucket_width=1d&scope=key"
+      },
+      {
+        "keyReference": "example-selected-key",
+        "startTime": 1790899200,
+        "endTime": 1790985600,
+        "scope": "key",
+        "bucketWidth": "1d",
+        "method": "GET",
+        "url": "https://api.aisa.one/v1/usage?start_time=1790899200&end_time=1790985600&bucket_width=1d&scope=key"
+      }
+    ],
+    "combined": {
+      "schema": "tjlabs.aisa-key-usage-summary.v1",
+      "evidence": "SUM_OF_NON_OVERLAPPING_PROVIDER_KEY_WINDOWS",
+      "keyReference": "example-selected-key",
+      "currency": "USD",
+      "selections": [
+        {
+          "keyReference": "example-selected-key",
+          "startTime": 1788220800,
+          "endTime": 1790899200,
+          "scope": "key",
+          "bucketWidth": "1d"
+        },
+        {
+          "keyReference": "example-selected-key",
+          "startTime": 1790899200,
+          "endTime": 1790985600,
+          "scope": "key",
+          "bucketWidth": "1d"
+        }
+      ],
+      "gaps": [],
+      "chargedMicrosUsd": "1750000",
+      "usageValueMicrosUsd": "2400000",
+      "chargedUsd": "1.750000",
+      "usageValueUsd": "2.400000",
+      "individualRequestOutcome": "NOT_ASSESSED",
+      "historicalTopUpOutcome": "NOT_ASSESSED"
+    }
+  }
+}

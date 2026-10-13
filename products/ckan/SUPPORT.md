@@ -208,6 +208,15 @@ continue through the existing Support tools and their original revisions.
 Notification delivery uses the destination already selected in the private
 watcher configuration.
 
+Configure a private `recoveryDirectory` on the original incident source to use
+its complete snapshot and receiving operations. The merchant catalog exposes
+`merchant_support_recovery` and the snapshot, inspect, receive, open,
+reconcile and abandon tools. Retain the original workspace identity, operation
+names and exact manifest hashes. Opening a received store returns its stable
+source ID for the ordinary incident, CKAN and case tools. See the complete
+[merchant recovery workflow](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/RECOVERY_MCP.md)
+for the host configuration and original notification reconciliation.
+
 ## Receive a complete archive and exercise Support
 
 `support-receiving.mjs` is a complete native receiving programme. It uses an
@@ -260,9 +269,25 @@ owned watcher is drained and the received copy is restored.
 With the option omitted or false, the programme carries two complete original
 observations through the same case receiving path.
 
+The programme then opens the original merchant MCP operator against the received
+project and incident store. It verifies that all seven recovery operations are
+in the configured catalog, creates and inspects a complete snapshot, receives
+that original store, and reviews its queue and configuration through the
+existing reconciliation action. It replays the same receiving request after
+that receiver edit, closes and reopens the actual MCP owner, and selects the
+same recovered source. Its named CKAN workspace remains inspectable. When the
+availability exercise produced an incident, the ordinary MCP case operation
+creates another case with the same complete workspace and capture bytes.
+
+The Support comparison reports incomplete source coverage when the before
+observation records the temporary outage. The missing project observation does
+not establish an identity change; observed contradictory identities continue
+to report their original identity condition.
+
 The final directory includes the received project, original incident store,
 both case stores, complete capture files, portable handoff JSON/HTML, merchant
-workspace, Runtime support, native phase results and a file inventory. The
+workspace, Runtime support, original recovery snapshots and received stores,
+MCP host configuration, native phase results and a file inventory. The
 final phase compares the original workbench hash with its initial received
 state. Retain this complete directory and its original source edition when
 handing operation to another seat.

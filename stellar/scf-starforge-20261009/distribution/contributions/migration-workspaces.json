@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "migration-workspaces",
-  "description": "Complete native GIS mapping, editable workbook returns, QGIS projects, corrected cartographic publication and portable receiving through the original merchant host",
+  "description": "Complete native GIS mapping, editable workbook export and returns, QGIS projects, corrected cartographic publication and portable receiving through the original merchant host",
   "commands": {
     "migration-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/receiving.mjs"
   },
@@ -59,6 +59,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/server.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/source-files.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/workbook.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/workbook_export.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/workbook_layout.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/workspace.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/OPERATIONS.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/RECEIVING_RUN.md",

@@ -1,6 +1,7 @@
 // MIT. Customer procedure controls inside the original saved SF47 planning review.
-import { grantOperatingSelectionOf, prepareGrantOperatingPlan } from './grant-operating-plan-core.mjs';
-import { retainVersion, validateDraft } from './grant-submission-core.mjs';
+import { grantOperatingSelectionOf, prepareGrantOperatingPlan, grantOperatingContinuationPlan,
+  compareGrantOperatingReturn, receiveGrantOperatingReturn } from './grant-operating-plan-core.mjs';
+import { retainVersion, validateDraft, MAX_BYTES } from './grant-submission-core.mjs';
 import { planSummary } from './grant-plan-core.mjs';
 import { CATALOG_SCHEMA, searchCommandCatalog } from
   '../../../stellar/scf-starforge-20261009/distribution/discovery/catalog.mjs';
@@ -8,6 +9,7 @@ import { snapshotRegistration, renderOperatingPlanHTML, renderOperatingPlanMarkd
   '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 
 const catalogs = new Map();
+const incomingReturns = new Map();
 const cleanName = value => String(value).replace(/[^a-zA-Z0-9._-]+/g, '-').slice(0, 120) || 'grant-operating-plan';
 const clone = value => JSON.parse(JSON.stringify(value));
 export function renderGrantOperatingPlan(root, context, { source, plan, review }) {
@@ -139,18 +141,134 @@ export function renderGrantOperatingPlan(root, context, { source, plan, review }
     const history = node('details');
     history.append(node('summary', 'Prepared customer procedures (' + selection.prepared.length + ')'));
     for (const item of [...selection.prepared].reverse()) {
-      const entry = node('article', undefined, 'card'), last = item.plan.revisions.at(-1), stem = cleanName(item.plan.id);
+      const currentPlan = grantOperatingContinuationPlan(item);
+      const entry = node('article', undefined, 'card'), last = currentPlan.revisions.at(-1), stem = cleanName(item.plan.id);
       entry.append(node('h4', last.title),
-        node('p', item.packageIds.length + ' work packages · ' + item.plan.createdAt, 'muted'));
+        node('p', item.packageIds.length + ' work packages · operating revision ' + last.revision + ' · prepared ' + item.plan.createdAt, 'muted'));
       const actions = node('div', undefined, 'row');
       actions.append(
-        button('Download operating plan JSON', () => download(JSON.stringify(item.plan, null, 2) + '\n', stem + '.json', 'application/json')),
-        button('Download procedure HTML', () => download(renderOperatingPlanHTML(item.plan), stem + '.html', 'text/html')),
-        button('Download procedure Markdown', () => download(renderOperatingPlanMarkdown(item.plan), stem + '.md', 'text/markdown')),
+        button('Download operating plan JSON', () => download(JSON.stringify(currentPlan, null, 2) + '\n', stem + '.json', 'application/json')),
+        button('Download procedure HTML', () => download(renderOperatingPlanHTML(currentPlan), stem + '.html', 'text/html')),
+        button('Download procedure Markdown', () => download(renderOperatingPlanMarkdown(currentPlan), stem + '.md', 'text/markdown')),
       );
-      entry.append(actions); history.append(entry);
+      entry.append(actions);
+      if (item.continuation) {
+        entry.append(button('Download original prepared plan', () =>
+          download(JSON.stringify(item.plan, null, 2) + '\n', stem + '-prepared.json', 'application/json')));
+        const progress = compareGrantOperatingReturn(source, context.getDraft().planningReview, currentPlan);
+        const details = node('details'); details.append(node('summary', 'Received customer work and package results'));
+        renderReturnDetails(details, context, progress);
+        const receiving = node('details'); receiving.append(node('summary', 'Procedure receiving history'));
+        for (const record of item.continuation.receipts) receiving.append(node('p',
+          record.at + ' · revisions ' + record.fromRevision + ' → ' + record.toRevision +
+          (record.filename ? ' · ' + record.filename : '') + (record.note ? '\n' + record.note : '')));
+        details.append(receiving); entry.append(details);
+      }
+      history.append(entry);
     }
     section.append(history);
+    renderReturnReceiving(section, context, source, key);
+  }
+  root.append(section);
+}
+
+
+function renderReturnDetails(root, context, comparison) {
+  const { node } = context;
+  root.append(node('p', comparison.packageIds.length + ' original work packages · ' +
+    comparison.counts.completed + ' recorded completed · ' + comparison.counts['in-progress'] +
+    ' in progress · ' + comparison.counts.planned + ' planned · ' + comparison.counts.skipped +
+    ' skipped · ' + comparison.counts.missing + ' absent from returned revision', 'muted'));
+  for (const change of comparison.planChanges) {
+    const detail = node('details'); detail.append(node('summary', 'Procedure ' + change.field + ' changed'),
+      node('h5', 'Previously selected'), node('pre', change.previous, 'source-text'),
+      node('h5', 'Returned value'), node('pre', change.returned, 'source-text'));
+    root.append(detail);
+  }
+  for (const item of comparison.packages) {
+    const card = node('article', undefined, 'card'), current = item.returned;
+    card.append(node('h4', item.packageId), node('p', item.native.remaining_work),
+      node('p', 'Original completion result: ' + item.native.measurable_proof));
+    if (!current) {
+      card.append(node('p', 'This package step is absent from the returned operating revision. Its original work and completion result remain here.', 'issues'));
+    } else {
+      card.append(node('p', 'Recorded status: ' + current.status +
+        (current.owner ? ' · owner: ' + current.owner : '') + (current.due ? ' · due: ' + current.due : '')),
+        node('h5', 'Returned result'), node('pre', current.recordedResult || 'No result entered.', 'source-text'));
+      if (item.changedFromPrepared.length) {
+        const changes = node('details'); changes.append(node('summary', 'Compare with the original package procedure'));
+        for (const field of item.changedFromPrepared) {
+          const format = value => typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+          changes.append(node('h5', field), node('p', 'Originally prepared', 'muted'),
+            node('pre', format(item.original[field]), 'source-text'), node('p', 'Returned', 'muted'),
+            node('pre', format(current[field]), 'source-text'));
+        }
+        card.append(changes);
+      }
+    }
+    root.append(card);
+  }
+  if (comparison.additionalSteps.length) {
+    const additional = node('details');
+    additional.append(node('summary', 'Additional customer operating steps (' + comparison.additionalSteps.length + ')'),
+      node('p', 'These are retained customer procedure steps alongside the original funded package mapping.'));
+    for (const step of comparison.additionalSteps) additional.append(node('h4', step.title),
+      node('pre', JSON.stringify(step, null, 2), 'source-text'));
+    root.append(additional);
+  }
+}
+
+function renderReturnReceiving(root, context, source, key) {
+  const { node, button, input, work, render, touch, download } = context;
+  const section = node('section', undefined, 'card');
+  section.append(node('h3', 'Receive customer procedure'),
+    node('p', 'Open the complete later JSON exported from Operating plans. Review its original package mapping and full recorded work, then receive its saved revisions into this same planning review.'));
+  const file = node('input'); file.type = 'file'; file.accept = '.json,application/json';
+  file.setAttribute('aria-label', 'Complete returned customer operating plan');
+  file.addEventListener('change', () => work(async () => {
+    const chosen = file.files?.[0]; if (!chosen) return;
+    if (!chosen.size || chosen.size > MAX_BYTES) throw new TypeError('Choose a complete operating plan within 16 MiB.');
+    const incoming = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await chosen.arrayBuffer()));
+    const comparison = compareGrantOperatingReturn(source, context.getDraft().planningReview, incoming);
+    incomingReturns.set(key, { incoming, filename: chosen.name, note: '', comparedRevision: comparison.previousRevision });
+    render(); context.status('Opened customer operating revision ' + comparison.incomingRevision + '. Review the complete returned work below.');
+  }));
+  section.append(file);
+  const pending = incomingReturns.get(key);
+  if (pending) {
+    try {
+      const comparison = compareGrantOperatingReturn(source, context.getDraft().planningReview, pending.incoming);
+      section.append(node('h4', comparison.incomingTitle),
+        node('p', pending.filename + ' · current operating revision ' + comparison.previousRevision +
+          ' · returned revision ' + comparison.incomingRevision + ' · ' + comparison.addedRevisions + ' later revisions', 'muted'));
+      renderReturnDetails(section, context, comparison);
+      const note = input('Receiving review note', pending.note, value => { pending.note = value; }, { area: true });
+      note.field.maxLength = 32000; section.append(note.wrap);
+      const receive = button('Receive later customer work into this planning review', () => {
+        const current = context.getDraft();
+        const received = receiveGrantOperatingReturn(source, current.planningReview, pending.incoming, {
+          filename: pending.filename, note: pending.note, expectedRevision: pending.comparedRevision,
+        });
+        if (received.reused) {
+          incomingReturns.delete(key); render(); context.status('This procedure revision is already retained.'); return;
+        }
+        const next = retainVersion(current, 'Before receiving customer operating revision ' + comparison.incomingRevision);
+        next.planningReview = received.review;
+        context.setDraft(validateDraft(next)); incomingReturns.delete(key); touch(); render();
+        context.status('Received ' + received.addedRevisions + ' original customer operating revisions. Save the original submission to keep the complete work and receiving history.');
+      });
+      const stale = pending.comparedRevision !== comparison.previousRevision;
+      receive.disabled = comparison.reused || stale;
+      if (stale) section.append(node('p', 'The selected operating procedure advanced after this file was opened. Open the returned file again to compare with its current revision.', 'issues'));
+      else if (comparison.reused) section.append(node('p', 'The current saved procedure already contains this complete returned history.', 'muted'));
+      section.append(receive,
+        button('Download full return comparison', () => download(JSON.stringify(comparison, null, 2) + '\n',
+          cleanName(comparison.planId) + '-return-comparison.json', 'application/json')),
+        button('Close returned file', () => { incomingReturns.delete(key); render(); }));
+    } catch (error) {
+      section.append(node('p', error.message, 'issues'),
+        button('Close returned file', () => { incomingReturns.delete(key); render(); }));
+    }
   }
   root.append(section);
 }

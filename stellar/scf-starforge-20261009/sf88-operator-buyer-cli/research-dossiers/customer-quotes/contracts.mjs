@@ -1,5 +1,6 @@
 // MIT. Research quotations bind native SF74 cases, Research history and SF101 offers.
 import {createHash} from 'node:crypto';
+import {MAX_HANDOFF_BYTES} from '../../../sf74-merchant-support-console/runtime-support.mjs';
 import {customerActor,customerBrief,customerIdentifier,customerRevision,customerJson} from '../customer-updates/contracts.mjs';
 import {customerUpdateDigest,customerUpdateSame} from '../customer-updates/context.mjs';
 import {publicationRequest} from '../customer-commerce/contracts.mjs';
@@ -8,6 +9,8 @@ export const QUOTE_OPERATION_SCHEMA='sf88-research-customer-quote-operation/v1';
 export const QUOTE_HOST_SCHEMA='sf88-research-customer-quotes-host/v1';
 export const QUOTE_REQUEST_LIMIT=96*1024*1024+65536;
 export const QUOTE_FILE_LIMIT=256*1024*1024;
+// One complete native case packet may include the original 192 MiB runtime attachment.
+export const QUOTE_CASE_TRANSFER_LIMIT=MAX_HANDOFF_BYTES+65536;
 export const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 export const SHA=/^[a-f0-9]{64}$/;
 export const copy=value=>structuredClone(value);
@@ -35,7 +38,7 @@ export function page(input={}){
   'RESEARCH_QUOTE_PAGE_INVALID');
  if(value.snapshot!==undefined)hash(value.snapshot);
  if(value.dossierId!==undefined)dossier(value.dossierId);
- if(value.kind!==undefined)need(['CASE','BRIEF','RESPONSE','PUBLICATION','REALIZED'].includes(value.kind),'RESEARCH_QUOTE_KIND_INVALID');
+ if(value.kind!==undefined)need(['CASE','CASE_TRANSFER','BRIEF','RESPONSE','PUBLICATION','REALIZED'].includes(value.kind),'RESEARCH_QUOTE_KIND_INVALID');
  return value;
 }
 export function briefSelection(input){

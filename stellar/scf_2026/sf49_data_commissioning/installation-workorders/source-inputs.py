@@ -71,7 +71,7 @@ def json_object(raw, label):
     return value
 
 
-def stable_file(path, maximum=MAX_FILE):
+def stable_file(path, maximum=MAX_FILE, *, sync=False):
     path = Path(path)
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
@@ -92,6 +92,8 @@ def stable_file(path, maximum=MAX_FILE):
         require(all(getattr(before, key) == getattr(after, key) for key in fields)
                 and (named.st_dev, named.st_ino) == (after.st_dev, after.st_ino)
                 and count == before.st_size, "The original source changed while being read: " + str(path))
+        if sync:
+            os.fsync(descriptor)
         return b"".join(chunks)
     finally:
         os.close(descriptor)
@@ -124,6 +126,14 @@ def installed_profile(identifier):
             "bytes": len(raw), "sha256": sha(raw)}
 
 
+def sync_directory(path):
+    descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
 def private_directory(path):
     path = Path(os.path.abspath(path))
     path.mkdir(parents=True, mode=0o700, exist_ok=True)
@@ -131,17 +141,25 @@ def private_directory(path):
     require(stat.S_ISDIR(info.st_mode) and not info.st_mode & 0o077
             and path.resolve() == path and info.st_uid == os.getuid(),
             "Use a private owned 0700 output directory without symbolic-link ancestors.")
+    # Replay also completes any parent-directory flush interrupted after mkdir.
+    current = path
+    while True:
+        sync_directory(current)
+        if current.parent == current:
+            break
+        current = current.parent
     return path
 
 
 def retain(path, raw):
     require(len(raw) <= MAX_FILE, "A prepared file exceeds the original receiver's 8 MiB input limit: " + path.name)
     try:
-        existing = stable_file(path)
+        existing = stable_file(path, sync=True)
     except FileNotFoundError:
         existing = None
     if existing is not None:
         require(existing == raw, "The retained original output differs: " + str(path))
+        sync_directory(path.parent)
     else:
         fd, temporary = tempfile.mkstemp(prefix=".source-input-", dir=path.parent)
         try:
@@ -152,14 +170,11 @@ def retain(path, raw):
             try:
                 os.link(temporary, path)
             except FileExistsError:
-                require(stable_file(path) == raw, "A concurrent original output differs: " + str(path))
-            directory = os.open(path.parent, os.O_RDONLY)
-            try:
-                os.fsync(directory)
-            finally:
-                os.close(directory)
+                require(stable_file(path, sync=True) == raw, "A concurrent original output differs: " + str(path))
+            sync_directory(path.parent)
         finally:
             os.unlink(temporary)
+            sync_directory(path.parent)
     return {"filename": path.name, "bytes": len(raw), "sha256": sha(raw)}
 
 
@@ -351,6 +366,34 @@ def selected_packet(original, original_file, amendment, known, generated, observ
     return value, metadata, receipt
 
 
+def customer_programme(value, documents, known):
+    """Retain complete source files consumed by the original Installation programme."""
+    exact_keys(value, ("schema", "calendarFile", "selectionFile", "taskBudgetFile", "nativeChangeFile"),
+               ("schema", "calendarFile"), "customer programme selection")
+    require(value["schema"] == "stellar-forge.installation-customer-programme.v1",
+            "Use the complete original customer programme selection.")
+    available = {row["filename"]: row for row in documents}
+    for key in ("calendarFile", "selectionFile", "taskBudgetFile", "nativeChangeFile"):
+        if key not in value:
+            continue
+        filename = value[key]
+        require(isinstance(filename, str) and filename in available and filename in known,
+                "Retain the complete selected " + key + " among this customer's original source files.")
+        require(available[filename].get("mediaType", "application/json") == "application/json",
+                "Retain the selected " + key + " as complete original JSON.")
+        parsed = json_object(known[filename]["raw"], key)
+        if key == "calendarFile":
+            require(parsed.get("schema") == "tjlabs.scf-purchase-calendar-input.v1",
+                    "Select the complete original recurring calendar input.")
+        elif key == "selectionFile":
+            require(parsed.get("schema") == "tjlabs.scf-recurring-commissioning.v1",
+                    "Select the complete original recurring commercial selections.")
+        elif key == "nativeChangeFile":
+            require(parsed.get("schema") == "stellar-forge.installation-programme-change.v1",
+                    "Retain the complete original native programme change.")
+    return deepcopy(value)
+
+
 def prepare(selection_path, source_root, destination):
     selection_path = Path(os.path.abspath(selection_path))
     source_root = Path(os.path.abspath(source_root))
@@ -378,7 +421,7 @@ def prepare(selection_path, source_root, destination):
     known, generated, total, case_ids, original_rows, packets, customer_rows, summaries = {}, {}, [0], set(), [], [], [], []
     profiles = {}
     for case in cases:
-        exact_keys(case, ("caseId", "profile", "packet", "planSha256", "productionEffort", "effortTotal", "files", "bindings", "phaseIdAmendment"),
+        exact_keys(case, ("caseId", "profile", "packet", "planSha256", "productionEffort", "effortTotal", "files", "bindings", "phaseIdAmendment", "programme"),
                    ("caseId", "profile", "packet", "planSha256", "productionEffort", "effortTotal", "files"), "customer selection")
         ident = case["caseId"]
         require(isinstance(ident, str) and 0 < len(ident) <= 500 and ident not in case_ids,
@@ -425,6 +468,8 @@ def prepare(selection_path, source_root, destination):
         if "bindings" in case:
             require(isinstance(case["bindings"], dict), "Use explicit original customer bindings.")
             customer["bindings"] = case["bindings"]
+        if "programme" in case:
+            customer["programme"] = customer_programme(case["programme"], documents, known)
         customer_rows.append(customer)
         summaries.append({"caseId": ident, "profile": case["profile"], "planSha256": case["planSha256"],
                           "commercial": plan["commercial"], "schedule": plan["schedule"],

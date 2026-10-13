@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // MIT. Provider-specific setup and the original paid Jobs operator command.
 import {resolve, dirname, join} from 'node:path';
+import {realpathSync} from 'node:fs';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {
   absolute, ownedDirectory, ownedBytes, writeExact, encoded, parse, digest
@@ -16,6 +17,7 @@ import {
 } from './setup.mjs';
 import {readDocumentSupplierUsage} from './renderer.mjs';
 import {runDocumentBatchCommand} from './batch-cli.mjs';
+import {runDocumentCompositionCommand} from './composition-cli.mjs';
 import {readDocumentServiceSelection, runDocumentServiceCommand} from './launch.mjs';
 
 
@@ -24,6 +26,8 @@ const HELP = [
   'Install and run a complete HTML or Markdown document service on the existing paid Jobs engine.', '',
   '  document-merchant providers',
   '  document-merchant batch --help',
+  '  document-merchant compose --help',
+  '  document-merchant compose serve --workspace-options FILE [--provider ID] [--merchant-origin URL]',
   '  document-merchant template --provider mintpdf|snaplab|pdfmint [--anonymous] [--out NEW_FILE]',
   '  document-merchant review --request FILE --directory DIR',
   '  document-merchant prepare --request FILE --directory DIR',
@@ -49,6 +53,7 @@ const HELP = [
   'serve uses the already prepared original Jobs service, factory, worker and customer/operator workspaces.',
   'For native payments include --native-factory MODULE and --start-worker.',
   'jobs forwards the original status, create, work, show, outputs, output-file, retry and cancel operations.',
+  'compose serve opens Document production with complete data/template input and the original customer.',
   'The original customer Request application stages the whole source file before checkout.'
 ].join('\n');
 function commandError(message) {return documentError('DOCUMENT_COMMAND_INVALID', message);}
@@ -120,6 +125,7 @@ export async function runDocumentCommand(argv = process.argv.slice(2), {print = 
   if (!argv.length || argv.length === 1 && ['--help', '-h', 'help'].includes(argv[0])) return print(HELP);
   const [command, ...tail] = argv;
   if (command === 'batch') return runDocumentBatchCommand(tail,{print});
+  if (command === 'compose') return runDocumentCompositionCommand(tail,{print});
   const emit = value => print(JSON.stringify(value, null, 2));
   if (command === 'providers') {
     if (tail.length) throw commandError('providers takes no options.');
@@ -197,7 +203,13 @@ export async function runDocumentCommand(argv = process.argv.slice(2), {print = 
   const value = parse(await ownedBytes(installation.customerSetup, 1048576));
   return emit(out.has('--out') ? await save(out.get('--out'), value) : value);
 }
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+function invokedDirectly() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {return false;}
+}
+if (invokedDirectly()) {
   runDocumentCommand().catch(error => {
     console.error(error.code ? error.code + ': ' + error.message : error.message);
     process.exitCode = 1;

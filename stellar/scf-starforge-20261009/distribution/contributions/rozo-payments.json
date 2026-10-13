@@ -1,0 +1,26 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "rozo-payments",
+  "description": "ROZO merchant payments, original checkout and reconciliation workspace",
+  "commands": {
+    "rozo-payments": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/cli.mjs"
+  },
+  "commandDescriptions": {
+    "rozo-payments": "Initialize, operate and receive the original ROZO merchant and checkout workspace"
+  },
+  "exports": {
+    "./seller/rozo-payments": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/index.mjs"
+  },
+  "runtimePackageManifests": {
+    "rozo-payments": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/package.json"
+  },
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/browser-assets.json"
+    }
+  ],
+  "applicationProviders": {
+    "rozo-payments": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/application-provider.mjs"
+  }
+}

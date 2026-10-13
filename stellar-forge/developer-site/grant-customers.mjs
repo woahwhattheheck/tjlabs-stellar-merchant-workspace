@@ -12,6 +12,29 @@ const CUSTOMER_WORKSHARES = '## External buyer onboarding and study-operations c
 const AIR_QUALITY = '## Air-quality reporting and complete customer receiving';
 const MUNICIPAL = '## Municipal source operations, service reporting and reviewed GIS delivery';
 const IATI = '## IATI publishing, programme finance and complete customer receiving';
+// The original IATI case supplies an ordinary editable customer procedure.
+// A complete manuscript-owned edition takes precedence over this maintained introduction.
+const IATI_OPERATING_HEADING = '### Customer operating procedures and recurring analyst handover';
+const IATI_OPERATING_CHAPTER = "### Customer operating procedures and recurring analyst handover\n\nA reviewed case becomes useful recurring work when another analyst can operate it. The [customer operating procedure](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/OPERATING_PROCEDURES.md) turns one exact saved document-evidence edition into an editable procedure in the existing Operating Plans application. The customer receives the selected case, ordered work, responsible people, original commands, saved changes and a readable handover together.\n\nThe commissioning workorder names the publisher, customer, reporting period, operating owner, reviewer and receiving destination. The operator selects the original saved document-evidence ID and revision. The procedure retains the whole selected organisation record, preceding evidence revisions, every selected document row and observation, comparisons and the current correction draft. Its [native source reader](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_source.py) reads that edition under the existing workspace lock.\n\n#### Operate the complete customer task\n\n|Customer step|Original application and receiving result|\n|---|---|\n|Select the saved edition|In IATI Document evidence, open the exact case and revision. Publisher handoff provides Download operating source with the complete selected case.|\n|Create the operating procedure|Import that JSON through Command finder → Operating plans. The application creates the ordinary editable plan and downloads the complete IATI procedure package.|\n|Assign the work|Enter the customer, owner, reporting period and receiving destination; edit the ordered work, commands and customer-specific instructions. Save those changes as a new plan revision.|\n|Resolve the selected review work|Use the original IATI controls to acquire, review, compare or correct the published material. Record the actual outcome against the corresponding task. Named review, acquisition and source correction retain their own case history.|\n|Prepare the handover|Download the complete plan, Markdown or printable HTML. Update IATI package joins the currently saved plan history to its original complete source and catalog.|\n|Receive and continue|Import the full procedure package in the receiving Operating Plans application and receive the original document-evidence ZIP through IATI. Reopen the case, retain the receiving analyst's edits and operate the next agreed reporting edition.|\n\nThe [procedure model](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_procedure.mjs) uses the maintained Operating Plans format, revision receiver and renderer. Each registered step carries the selected toolkit command, source declarations and runtime groups. The operator can inspect and edit the complete procedure using the same controls as other customer operating plans.\n\nA usable review decision enters as completed work; an explicit exclusion enters as skipped work. Deferred assessment and needed source correction remain visible tasks. Completing a plan step records the operator's work on that procedure. The acquisition response, original document and publisher correction remain in their corresponding native IATI records. A later observation or source edition creates its own explicit case revision and can supply the next procedure.\n\n#### Complete files for the next operator\n\n|File|Purpose|\n|---|---|\n|Complete IATI procedure JSON|Carries the original source edition, actual selected toolkit catalog and full saved operating-plan history. It can be received and edited on another browser or machine.|\n|Operating-plan JSON|Provides the complete ordinary plan for existing Operating Plans editing and revision receiving.|\n|Markdown and HTML handover|Give the customer the ordered work, source context, saved decisions and operating instructions in readable files.|\n|Original document-evidence ZIP|Carries the native workspace, retained document bodies and source assets, complete requests, observations, decisions, comparisons and correction material.|\n\nThese files support different parts of the same receiving task. The plan package identifies its source edition and describes the work; the original native ZIP carries the underlying workspace and acquired bytes. The workorder specifies both where the receiving analyst needs to repeat the review.\n\nThe [installed IATI selection](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/distribution/selections/IATI_OPERATOR.md) supplies Command finder, Operating Plans and the document-evidence application together. The [complete procedure CLI](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence_operating_cli.mjs) exposes capture, create, show and receive for the same saved source. Its normal customer operation is `starforge iati-document-procedure`; the guide gives the complete arguments for the original connection, case revision, customer fields and output files. The typed SDK exposes the same source reader and pure procedure creator, receiver and renderer. The customer can therefore use the browser during review and retain the complete command-based operation for recurring work.\n\n#### Commercial output and funded adaptation\n\nA partner can commission a publisher-period review with an operating procedure, corrected source where agreed, readable report and complete analyst receiving. The workorder defines the actual publication selection, review responsibilities, useful files and acceptance owner. It also separates installation and care fees from the merchant's advertised paid resource and the buyer's approved aggregate task cost. A saved procedure step is an operating instruction; the original purchase and acquired resource retain their financial identities.\n\nThe implemented procedure is part of the pre-award product. Within the existing six grant packages, T1 binds the selected customer's real source, review roles, approved output and receiving application. T2 connects that complete task to the original purchase and delivery operation, facilitator deployments and installed recovery. T3 carries the recurring customer workflow, complete procedure and original workspace into production receiving, restoration and maintainer handover. Each remaining adaptation belongs to its existing package or a separately commissioned workorder.\n\nCustomer acceptance means opening the complete selected source, saving a meaningful change in the procedure, performing the corresponding native task, explaining its actual review outcome and continuing the full case on the receiving installation. The operator can then measure active effort, corrections and time to accepted output over successive reporting editions, using the existing customer-value and recurring-use measures.\n";
+const IATI_OPERATING_APPLICATION = [{"heading":"## Customer problem, need and adoption","prefix":"**IATI customer operating procedure.**","text":"**IATI customer operating procedure.** A recurring publisher review also needs instructions another analyst can use. The installed IATI workflow turns an exact saved document-evidence edition into an editable Operating Plans procedure with the customer, owner, reporting period, ordered work and receiving destination. Its complete package carries the original case and saved plan history into the next analyst's application."},{"heading":"## Working product and demonstrated results","prefix":"**Implemented IATI procedure and handover.**","text":"**Implemented IATI procedure and handover.** The merged [customer operating procedure](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0110a7fde307112abee5be63a06291855aa72599/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/OPERATING_PROCEDURES.md) joins the original document case to editable Operating Plans, the installed CLI and typed SDK. The customer can retain the selected source, catalog, ordered work and complete plan revisions, then export Markdown/HTML and receive the full package. The original IATI ZIP supplies the native workspace and acquired document bytes."},{"heading":"## Three funded tranches and six priced deliverables","prefix":"**IATI procedure in the funded installation.**","text":"**IATI procedure in the funded installation.** The merged operating-procedure component supplies the starting product. T1 binds customer sources, review roles and receiving instructions; T2 joins the complete task to its original purchase, deployed delivery and recovery; T3 delivers recurring production operation and complete maintainer receiving. These adaptations use the existing packages and allocation."}];
+function receiveIatiOperatingCompanion(value) {
+  const current = section(value, IATI);
+  if (!current || current.text.includes(IATI_OPERATING_HEADING)) return value;
+  const anchor = '### Recurring customer work and the purchased output';
+  const at = current.text.indexOf(anchor);
+  const text = at < 0 ? clean(current.text) + '\n' + IATI_OPERATING_CHAPTER :
+    current.text.slice(0, at) + IATI_OPERATING_CHAPTER + '\n' + current.text.slice(at);
+  return installSection(value, IATI, text);
+}
+function receiveIatiOperatingApplication(value) {
+  for (const item of IATI_OPERATING_APPLICATION) {
+    if (paragraph(value, item.prefix)) continue;
+    const current = section(value, item.heading);
+    if (current) value = installSection(value, item.heading, clean(current.text) + '\n' + item.text + '\n');
+  }
+  return value;
+}
+
 const INSTITUTIONAL_REPOSITORY = '## Institutional repository services and complete scholarly receiving';
 const JOURNEY = '# 9A. Current demonstration and operator journey';
 const BILLING = '## Merchant settlement, customer billing and accountant receiving';
@@ -71,6 +94,7 @@ export function projectGrantMarkdown(markdown, { application = false } = {}) {
     .replace(/ \. /g, '. ').replace(/\.\s*·\s*\[/g, '. [')
     .replaceAll('enterprise@openfn.org', 'OpenFn’s published enterprise mailbox');
   if (application) {
+    value = receiveIatiOperatingApplication(value);
     value = currentGrantCompanionLinks(value);
     // Canvas authoring uses an absolute public link; installed readers keep the sibling file.
     value = value.replace(/\]\(https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/main\/stellar-forge\/developer-site\/dist\/grant-data\/(product-and-finance\.md)(?=[#)])/g, '](./$1');
@@ -90,6 +114,7 @@ export function projectGrantMarkdown(markdown, { application = false } = {}) {
     (whole, lead, fence, language, body) => lead + fence + language + '\n' +
       body.replace(/^([ \u00a0]*\u00a0[ \u00a0]*)(?=--[A-Za-z0-9-]+(?:[ \t]|$))/gm,
         indentation => indentation.replaceAll('\u00a0', ' ')) + '\n' + fence);
+  if (!application) value = receiveIatiOperatingCompanion(value);
   return clean(projectPrivateSourceLinks(value, { application }));
 }
 
@@ -182,7 +207,7 @@ export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscri
     const received = deliveryFinance.text.replace('# 8. Delivery capacity and cash timing', financeHeading);
     companion = installSection(companion, financeHeading, projectGrantMarkdown(received));
   }
-  return projectGrantMarkdown(companion);
+  return projectGrantMarkdown(receiveIatiOperatingCompanion(companion));
 }
 
 /** Public index projection preserves source identities and measured file metadata. */
@@ -368,7 +393,17 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/open311\/gis\/INSTALL\.md)/, municipal);
   receive('municipal-native-format-interchange', 'Municipal GIS original format interchange result',
     /https:\/\/github\.com\/woahwhattheheck\/public-commons-sprint-2026\/blob\/([a-f0-9]{40})\/(operations\/open311-gis-8e5f-\d{8}\/format-interchange-result\.json)/, municipal);
-  const iati = section(companion, IATI)?.text || '';
+  const iati = section(receiveIatiOperatingCompanion(companion), IATI)?.text || '';
+  receive("iati-document-operating-procedures", "IATI customer operating procedure and complete analyst handover",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/document_evidence\/OPERATING_PROCEDURES\.md)/, iati);
+  receive("iati-document-operating-source", "IATI complete original saved-case source reader",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/document_evidence\/operating_source\.py)/, iati);
+  receive("iati-document-operating-model", "IATI editable procedure, original plan receiver and renderer",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/document_evidence\/operating_procedure\.mjs)/, iati);
+  receive("iati-document-operating-cli", "IATI installed procedure capture, create, show and receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/document_evidence_operating_cli\.mjs)/, iati);
+  receive("iati-complete-installed-operator", "IATI complete installed applications and operating handover",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/selections\/IATI_OPERATOR\.md)/, iati);
   receive('iati-organisation-financial-workspace', 'IATI organisation and programme financial review',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/ORGANISATION_RECONCILIATION\.md)/, iati);
   receive('iati-complete-financial-receiving', 'IATI complete source and financial customer receiving',
@@ -385,6 +420,20 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-organisation-2026\/document-evidence-native-result\.json)/, iati);
   receive("iati-fcdo-document-connected-result", "FCDO document evidence original SDK, Merchant and browser result",
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-organisation-2026\/document-evidence-connected-result\.json)/, iati);
+  receive('iati-geography-workspace', 'IATI saved geography review and complete source contract',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/GEOGRAPHY\.md)/, iati);
+  receive('iati-geography-operator', 'IATI geographic review, browser and typed client',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/GEOGRAPHY_UI\.md)/, iati);
+  receive('iati-geography-native-receiving', 'Complete original geography native and customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/receiving\/geography\.py)/, iati);
+  receive('iati-geography-browser-receiving', 'Original geography browser and saved-request continuation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/receiving\/GEOGRAPHY_BROWSER\.md)/, iati);
+  receive('iati-aiddata-nigeria-attribution', 'Original AidData Nigeria research source and attribution',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/aiddata-nigeria-2016\/AIDDATA_NIGERIA\.md)/, iati);
+  receive('iati-aiddata-nigeria-metadata', 'Original AidData Nigeria documentary source identities',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/aiddata-nigeria-2016\/aiddata-nigeria\.json)/, iati);
+  receive('iati-aiddata-nigeria-xml', 'Complete original AidData Nigeria IATI publication',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/aiddata-nigeria-2016\/iati_2\.03_NigeriaAIMS_GeocodedResearchRelease\.xml)/, iati);
   const institutionalRepository = section(companion, INSTITUTIONAL_REPOSITORY)?.text || '';
   receive('tind-institutional-migration', 'Institutional repository migration and complete customer receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/tind\/OPERATING\.md)/, institutionalRepository);
@@ -401,6 +450,34 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/gleif\/SOURCE_CONTRACT\.md)/, companyResearch);
   receive('gleif-company-grant-workflow', 'Company research service, customer commissioning and existing funded packages',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/gleif\/GRANT\.md)/, companyResearch);
+  const x402apiMerchant = section(companion, '## Merchant invoices, paid fulfillment and portable operating projects')?.text || '';
+  receive('x402api-merchant-operating', 'Merchant invoices, installed application and operator handover',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/OPERATING\.md)/, x402apiMerchant);
+  receive('x402api-merchant-application', 'Merchant invoice, payment, fulfillment and result interfaces',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/README\.md)/, x402apiMerchant);
+  receive('x402api-merchant-native-receiving', 'Original complete merchant protocol commissioning and receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/NATIVE_RECEIVING\.md)/, x402apiMerchant);
+  receive('x402api-merchant-installed-receiving', 'Installed merchant Applications and completed-workspace receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INSTALLED_RECEIVING\.md)/, x402apiMerchant);
+  const preparation = section(companion, "## SQL preparation, reusable pipelines and complete analyst receiving")?.text || '';
+  receive("preparation-workspace-operating", "Complete installed SQL preparation and managed pipeline operation",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/OPERATING\.md)/, preparation);
+  receive("preparation-pipeline-original-engine", "Original saved pipeline, stage execution and complete delivery",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/data-preparation\/pipelines\/README\.md)/, preparation);
+  receive("preparation-workspace-selection", "Complete installed data-preparation product selection",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/distribution\/selections\/data-preparation-workspace\.json)/, preparation);
+  receive("preparation-workspace-receiving", "Original complete preparation and pipeline customer receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/RECEIVING\.md)/, preparation);
+  receive("preparation-workspace-source", "Complete frozen source for original customer receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/receiving-source\.json)/, preparation);
+  receive("preparation-workspace-native-receiving", "Native original-case continuation, shutdown and complete preservation",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/receiving\.py)/, preparation);
+
+  const connectedSystems = section(companion, '## Connected Systems observations: customer commissioning and repeat use')?.text || '';
+  receive('connected-systems-customer-operator', 'Connected Systems source, operator installation and complete customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/selections\/CONNECTED_SYSTEMS\.md)/, connectedSystems);
+  receive('connected-systems-publisher-observation', 'Original publisher observation used by the native receiving example',
+    /https:\/\/github\.com\/opengeospatial\/ogcapi-connected-systems\/blob\/([a-f0-9]{40})\/(api\/part2\/openapi\/examples\/observations\/obs-simple\.json)/, connectedSystems);
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),

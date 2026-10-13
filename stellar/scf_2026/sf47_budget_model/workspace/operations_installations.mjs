@@ -1,5 +1,6 @@
 // Complete customer installations in the original SF47 operating case.
 import {mountCommercialInstallations} from './operations_commercial_installations.mjs';
+import {mountInstallationSources} from './operations_installation_sources.mjs';
 import { workflowBoundCheck, workflowReportView, workflowIntakePanel } from './operations_installation_workflows.mjs';
 import {captureUseCalendar,useCalendarFields,useCalendarAction,useCalendarReport} from './operations_use_calendar.mjs';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -38,7 +39,8 @@ function assign(object,path,value){
 export function mountInstallations({container,current,api,saveApi,session,mutationId,recordingActor,onCase,onSources}){
   const root=document.createElement('section');root.className='installation-desk';
   const commercialRoot=document.createElement('section');commercialRoot.hidden=true;
-  root.setAttribute('aria-label','Customer installations');container.replaceChildren(commercialRoot,root);
+  const sourceRoot=document.createElement('section');sourceRoot.hidden=true;
+  root.setAttribute('aria-label','Customer installations');container.replaceChildren(commercialRoot,sourceRoot,root);
   if(!document.querySelector('link[data-installation-style]')){
     const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_installations.css';
     link.dataset.installationStyle='true';document.head.append(link);
@@ -62,7 +64,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     inflight:null,notice:'',error:'',filter:'',workshareIntake:{open:false,sourceId:'',packetSourceId:'',caseId:'',target:'new'},
     workflowIntake:{open:false,sourceId:'',target:'new',cycleIds:[]},commercialOpen:false,commercialIntake:{}}))if(!Object.hasOwn(session,key))session[key]=value;
   let active=true,hostBusy=false,busy=false,generation=0,caseValue=current,selectedRow=null,historyRows=[],nextBefore=null;
-  let preview=null,previewDraft=null,loading=false,workshareInventory=null,workflowInventory=null,commercialView=null;
+  let preview=null,previewDraft=null,loading=false,workshareInventory=null,workflowInventory=null,commercialView=null,sourceView=null;
   const $=selector=>root.querySelector(selector),available=()=>active&&root.isConnected;
   const draft=()=>session.draftKey?session.drafts[session.draftKey]:null;
   const editable=()=>caseValue.program.state==='OPEN'&&!hostBusy;
@@ -332,6 +334,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       button('New installation','new','',!editable()||!!session.pending||!!session.accepted)+
       button('Receive accepted quotation','commercial-open','',!editable()||!!session.pending||!!session.accepted)+
       button('Receive commercial Workshare','workshare-open','',!editable()||!!session.pending||!!session.accepted)+
+      button('Prepare original source workshares','source-open','',!editable()||!!session.pending||!!session.accepted)+
       button('Receive customer periods','workflow-open','',!editable()||!!session.pending||!!session.accepted))+
       '<p class="installation-message" role="'+(session.error?'alert':'status')+'" aria-live="polite">'+esc(session.error||session.notice)+'</p>'+
       (session.storageNotice?note(session.storageNotice):'')+worksharePanel()+workflowPanel()+
@@ -357,6 +360,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         selectedRow?savedView(selectedRow):empty('Open a saved installation or prepare a new one from this case.'))+
       '</div></div><input type="file" data-installation-file hidden accept=".json,application/json">';
     controls();
+    sourceView?.setHostBusy(hostBusy||busy||!!session.inflight);sourceView?.refresh();
     commercialRoot.hidden=!session.commercialOpen;
     if(session.commercialOpen){ensureCommercial();commercialView.refresh();}
   }
@@ -446,6 +450,39 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         else {closeCommercial();render();}
       }
     },session.commercialIntake);
+  }
+
+  function ensureSourceDesk(){
+    if(sourceView)return sourceView;
+    sourceView=mountInstallationSources(sourceRoot,{
+      context:()=>({caseId,planId:caseValue.program.planId,createdAt:caseValue.program.createdAt,version:caseValue.program.version}),
+      caseData:()=>caseValue,api,saveApi,recordingActor,
+      readOnlyReason:commercialReadOnly,
+      refreshCase:reloadCase,
+      close:()=>root.scrollIntoView({block:'start'}),
+      receiveDraft:async input=>{
+        const reason=commercialReadOnly();if(reason)return {applied:false,message:reason};
+        capture();
+        if(input.scope.caseId!==caseId||input.scope.version!==caseValue.program.version||
+           input.preview?.source.caseId!==caseId||input.preview.source.version!==caseValue.program.version||
+           !same(input.preview.document,input.document))
+          return {applied:false,message:'The original complete case or reviewed source changed. Review the current preparation again.'};
+        const key='source-'+crypto.randomUUID();
+        session.drafts[key]={key,token:crypto.randomUUID(),label:input.document.name+' · source preparation',
+          installationId:null,expectedRevision:0,document:copy(input.document),
+          note:'Receive complete source preparation '+input.sourcePreparationId+' for original Workshare '+input.workshareCaseId,dirty:true};
+        session.draftKey=key;session.mode='edit';session.selected=null;selectedRow=null;
+        preview=null;previewDraft=null;loading=false;
+        session.notice='Prepared the complete original source Workshare as a separate Installation draft. Review and save its native edition.';
+        persist();render();
+        let retained;try{retained=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch{}
+        if(retained?.drafts?.[key]?.token!==session.drafts[key].token)
+          return {applied:false,message:'The complete draft is open, but browser persistence failed. Download it or recover browser storage before leaving; the source preparation remains retained.'};
+        return {applied:true,draftKey:key};
+      }
+    });
+    sourceView.ready.catch(error=>{if(available())failure(error);});
+    return sourceView;
   }
 
   const sameWorkshareSource=(a,b)=>['sourceId','expectedSourceSha256','packetSourceId','expectedPacketSha256'].every(key=>a?.[key]===b?.[key]);
@@ -812,6 +849,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     run(async()=>{
       if(action==='queued-open'&&session.requestOpen)return openQueueRequest(session.requestOpen);
       if(action==='new')return newDraft();
+      if(action==='source-open'){capture();persist();const view=ensureSourceDesk();await view.open();return;}
       if(action==='workflow-open')return openWorkflow();
       if(action==='workflow-close'){capture();session.workflowIntake.open=false;persist();return;}
       if(action==='workflow-sources'){capture();persist();onSources?.();return;}
@@ -927,6 +965,6 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   render();
   const ready=initialize().catch(error=>{failure(error);});
-  return {ready,setHostBusy(value){hostBusy=!!value;controls();commercialView?.refresh();},
-    dispose(){capture();active=false;++generation;commercialView?.destroy();persist();}};
+  return {ready,setHostBusy(value){hostBusy=!!value;controls();commercialView?.refresh();sourceView?.setHostBusy(hostBusy||busy||!!session.inflight);},
+    dispose(){capture();active=false;++generation;commercialView?.destroy();sourceView?.dispose();persist();}};
 }

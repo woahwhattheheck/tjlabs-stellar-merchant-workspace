@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 /** Receive complete customer Workshares through the original SF47 Operations CLI. */
 import {readFileSync, writeFileSync, openSync, closeSync, fsyncSync, linkSync, unlinkSync,
-  existsSync, mkdirSync, lstatSync, realpathSync} from "node:fs";
+  existsSync, mkdirSync, lstatSync, fstatSync, realpathSync, constants} from "node:fs";
 import {dirname, join, resolve} from "node:path";
 import {createHash, randomUUID} from "node:crypto";
 import {spawnSync} from "node:child_process";
 import {bindingTemplate, prepareInstallation, renderWorkorder} from "./prepare-core.mjs";
 import {profileCatalog, readProfile} from "./profiles.mjs";
+import {PROGRAMME_FIELDS, PROGRAMME_SCHEMA, composeCustomerProgramme,
+  programmeFiles} from "./customer-programme-core.mjs";
 
 const schema = "stellar-forge.installation-workshare-receiving.v1";
 const usage = "node receive.mjs --operations-cli /absolute/workspace/cli.py --workspace /absolute/original-workspace --case operation-ID --plan plan-ID --inputs PAIR_RECEIVING.json --source-root /absolute/original-files --out /absolute/private-output --receiving-workspace /absolute/receiving-workspace --actor ACTUAL_OPERATOR [--receiving-actor ACTUAL_RECEIVER] [--python python3]";
@@ -44,10 +46,28 @@ function regular(path, maximum = 8 * 1024 * 1024) {
     fail("Use the complete regular source file: " + path);
   return readFileSync(path);
 }
+function syncDirectory(path) {
+  const fd = openSync(path, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+  try { fsyncSync(fd); } finally { closeSync(fd); }
+}
+function syncRetained(path, bytes) {
+  const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  try {
+    const before = fstatSync(fd);
+    if (!before.isFile() || before.size > 128 * 1024 * 1024 ||
+        !readFileSync(fd).equals(bytes))
+      fail("The retained operation file differs: " + path);
+    const after = fstatSync(fd), named = lstatSync(path);
+    if (["dev", "ino", "size", "mtimeMs", "ctimeMs"].some(key => before[key] !== after[key]) ||
+        named.dev !== after.dev || named.ino !== after.ino)
+      fail("The retained operation file changed while being read: " + path);
+    fsyncSync(fd);
+  } finally { closeSync(fd); }
+}
 function retain(path, bytes) {
   if (existsSync(path)) {
-    if (!regular(path, 128 * 1024 * 1024).equals(bytes))
-      fail("The retained operation file differs: " + path);
+    syncRetained(path, bytes);
+    syncDirectory(dirname(path));
   } else {
     const temporary = path + "." + randomUUID() + ".tmp";
     const fd = openSync(temporary, "wx", 0o600);
@@ -55,11 +75,15 @@ function retain(path, bytes) {
       writeFileSync(fd, bytes); fsyncSync(fd);
       try { linkSync(temporary, path); }
       catch (error) {
-        if (error.code !== "EEXIST" || !regular(path, 128 * 1024 * 1024).equals(bytes)) throw error;
+        if (error.code !== "EEXIST") throw error;
+        syncRetained(path, bytes);
       }
-      const directory = openSync(dirname(path), "r");
-      try { fsyncSync(directory); } finally { closeSync(directory); }
-    } finally { closeSync(fd); unlinkSync(temporary); }
+      syncDirectory(dirname(path));
+    } finally {
+      closeSync(fd);
+      unlinkSync(temporary);
+      syncDirectory(dirname(path));
+    }
   }
   return {path, bytes: bytes.length, sha256: hash(bytes)};
 }
@@ -68,6 +92,11 @@ function privateDirectory(path) {
   const stat = lstatSync(path);
   if (!stat.isDirectory() || stat.isSymbolicLink() || (stat.mode & 0o077) || realpathSync(path) !== path)
     fail("Use a private 0700 output directory without symbolic-link ancestors: " + path);
+  // Complete the same parent flushes when an earlier mkdir attempt was interrupted.
+  for (let current = path; ; current = dirname(current)) {
+    syncDirectory(current);
+    if (dirname(current) === current) break;
+  }
 }
 function native(args, workspace = options.workspace) {
   const command = [options["operations-cli"], "operations", "--workspace", workspace, ...args];
@@ -192,22 +221,110 @@ function appliedBindings(base, supplied, sourceIds) {
   result.receiving.sourceIds = [...new Set([...(result.receiving.sourceIds || []), ...sourceIds])];
   return result;
 }
-function receiveCustomer(customer, attached) {
+
+function programmeInputs(customer, attached) {
+  if (customer.programme === undefined) return null;
+  const selected = customer.programme;
+  const names = ["schema", "calendarFile", "selectionFile", "taskBudgetFile", "nativeChangeFile"];
+  if (!record(selected) || selected.schema !== PROGRAMME_SCHEMA ||
+      Object.keys(selected).some(key => !names.includes(key)) || typeof selected.calendarFile !== "string")
+    fail("Use the complete original customer programme file selection.");
+  const result = {};
+  for (const [key, name] of [["calendarFile", "calendarInput"], ["selectionFile", "selection"],
+      ["taskBudgetFile", "taskBudget"], ["nativeChangeFile", "nativeChange"]]) {
+    if (selected[key] === undefined) continue;
+    const matches = attached.filter(file => file.filename === selected[key] && file.mediaType === "application/json");
+    if (matches.length !== 1) fail("Select the complete " + key + " among this customer's retained original files.");
+    const raw = regular(matches[0].path);
+    if (hash(raw) !== matches[0].sha256) fail("The selected original programme file changed.");
+    result[name] = JSON.parse(raw.toString("utf8"));
+    if (!record(result[name])) fail("Retain the complete original " + key + " JSON object.");
+  }
+  return result;
+}
+function nativeCustomerSeed(customer, attached, state, before) {
+  const commissioning = attached.find(file => file.role === "commissioning");
+  const packet = attached.find(file => file.role === "packet");
+  const argv = ["installation-workshare-seed", "--case", options.case, "--expected-version", String(state.program.version),
+    "--source", commissioning.source.id, "--expected-source-sha256", commissioning.sha256,
+    "--workshare-case", customer.workshareCaseId, "--expected-revision", String(before?.revision || 0)];
+  if (packet) argv.push("--packet-source", packet.source.id, "--expected-packet-sha256", packet.sha256);
+  if (before) argv.push("--installation", before.id);
+  const seed = native(argv);
+  if (seed.workshare?.planSha256 !== customer.planSha256 ||
+      seed.document?.workshare?.caseId !== customer.workshareCaseId)
+    fail("The native seed selected a different original commercial plan.");
+  return seed;
+}
+function prepareProgramme(customer, attached) {
+  const selected = programmeInputs(customer, attached);
+  if (!selected) return null;
+  const profile = readProfile(customer.profile).value;
+  const directory = join(options.out, "customer-programmes", customer.profile);
+  privateDirectory(directory);
+  const retainedSeed = join(directory, "original-native-seed.json");
+  let seed;
+  if (existsSync(retainedSeed)) seed = JSON.parse(regular(retainedSeed).toString("utf8"));
+  else {
+    seed = retryCurrent(state => nativeCustomerSeed(customer, attached, state,
+      existingInstallation(state, customer.workshareCaseId)));
+    retain(retainedSeed, json(seed));
+  }
+  if (seed.source?.caseId !== options.case || seed.source?.planId !== options.plan ||
+      seed.workshare?.caseId !== customer.workshareCaseId || seed.workshare?.planSha256 !== customer.planSha256)
+    fail("The retained customer programme seed belongs to another original operation.");
+  const linkedSources = attached.map(file => file.source.id);
+  const document = seed.installationId ?
+    appliedBindings(seed.document, customer.bindings || {}, linkedSources) :
+    prepareInstallation(seed, profile,
+      appliedBindings(bindingTemplate(seed, profile), customer.bindings || {}, linkedSources)).document;
+  const original = attached.find(file => file.role === "commissioning");
+  const commissioning = JSON.parse(regular(original.path).toString("utf8"));
+  const value = composeCustomerProgramme({seed, document, profile, commissioning, ...selected});
+  const outputs = [];
+  for (const [name, content] of programmeFiles(value)) {
+    const bytes = Buffer.from(content, "utf8");
+    if (bytes.length > 8 * 1024 * 1024) fail("Retain the complete programme source within the native 8 MiB attachment size.");
+    const filename = customer.profile + "-" + name;
+    const mediaType = name.endsWith(".json") ? "application/json" :
+      name.endsWith(".html") ? "text/html" : name.endsWith(".csv") ? "text/csv" : "text/markdown";
+    outputs.push({...retain(join(directory, filename), bytes), filename, mediaType,
+      role: "source", sourceUrl: original.sourceUrl, observedAt: original.observedAt});
+  }
+  return {selected, value, outputs, commissioning};
+}
+function programmeResult(programme, attached, original) {
+  if (!programme) return null;
+  return {
+    schema: PROGRAMME_SCHEMA + ".receiving",
+    commercial: {currency: programme.value.commercial.commercial.currency,
+      amount: programme.value.commercial.commercial.amount,
+      priceStatus: programme.value.commercial.commercial.price_status,
+      milestones: programme.value.commercial.commercial.milestones,
+      businessDays: programme.value.commercial.schedule.business_days,
+      effortHours: programme.value.commercial.totalEffortHours,
+      phaseCount: programme.value.commercial.phaseCount},
+    calendar: {startDate: programme.value.calendar.startDate,
+      endDateInclusive: programme.value.calendar.endDateInclusive,
+      customerTasks: programme.value.customerRows.length,
+      completeCalendar: programme.value.calendar.summary},
+    taskBudget: programme.value.taskBudget,
+    sourceFiles: attached.filter(file => programme.outputs.some(output => output.sha256 === file.sha256 &&
+      output.filename === file.filename)).map(file => ({id: file.source.id, filename: file.filename,
+        bytes: file.bytes, sha256: file.sha256, mediaType: file.mediaType, path: file.path})),
+    nativeProgramme: Object.fromEntries(PROGRAMME_FIELDS.filter(key => Object.hasOwn(original.preview.document, key))
+      .map(key => [key, original.preview.document[key]])),
+    nativeCalendarReport: original.preview.report?.useCalendar || null,
+    nativeCommissioningReport: original.preview.report?.commissioning || null
+  };
+}
+
+function receiveCustomer(customer, attached, programme) {
   const profile = readProfile(customer.profile).value;
   return retryCurrent(state => {
     const before = existingInstallation(state, customer.workshareCaseId);
     const version = state.program.version;
-    const commissioning = attached.find(file => file.role === "commissioning");
-    const packet = attached.find(file => file.role === "packet");
-    const argv = ["installation-workshare-seed", "--case", options.case, "--expected-version", String(version),
-      "--source", commissioning.source.id, "--expected-source-sha256", commissioning.sha256,
-      "--workshare-case", customer.workshareCaseId, "--expected-revision", String(before?.revision || 0)];
-    if (packet) argv.push("--packet-source", packet.source.id, "--expected-packet-sha256", packet.sha256);
-    if (before) argv.push("--installation", before.id);
-    const seed = native(argv);
-    if (seed.workshare?.planSha256 !== customer.planSha256 ||
-        seed.document?.workshare?.caseId !== customer.workshareCaseId)
-      fail("The native seed selected a different original commercial plan.");
+    const seed = nativeCustomerSeed(customer, attached, state, before);
     const linkedSources = attached.map(file => file.source.id);
     let prepared, bindings;
     if (before) {
@@ -220,6 +337,8 @@ function receiveCustomer(customer, attached) {
       bindings = appliedBindings(bindingTemplate(seed, profile), customer.bindings || {}, linkedSources);
       prepared = prepareInstallation(seed, profile, bindings);
     }
+    if (programme) prepared.document = composeCustomerProgramme({seed, document: prepared.document, profile,
+      commissioning: programme.commissioning, ...programme.selected}).document;
     const tag = customer.profile + "-v" + version + "-" + hash(json(prepared.document)).slice(0, 16);
     retain(join(options.out, tag + "-seed.json"), json(seed));
     retain(join(options.out, tag + "-bindings.json"), json(bindings));
@@ -237,7 +356,8 @@ function receiveCustomer(customer, attached) {
     if (before && same(before.preview.document, preview.document)) {
       return {profile: customer.profile, workshareCaseId: customer.workshareCaseId,
         installation: {id: before.id, revision: before.revision, sha256: before.sha256},
-        document, workorder, original: before, pendingSelections: prepared.selections};
+        document, workorder, original: before, pendingSelections: prepared.selections,
+        programme: programmeResult(programme, attached, before)};
     }
     if (typeof preview.previewSha256 !== "string") fail("Retain the complete native Installation preview.");
     const requestId = operationId("installation", {caseId: options.case, version,
@@ -255,7 +375,8 @@ function receiveCustomer(customer, attached) {
       fail("The saved native Installation differs from its complete reviewed document.");
     return {profile: customer.profile, workshareCaseId: customer.workshareCaseId,
       installation: {id: opened.id, revision: opened.revision, sha256: opened.sha256},
-      document, workorder, original: opened, pendingSelections: prepared.selections};
+      document, workorder, original: opened, pendingSelections: prepared.selections,
+      programme: programmeResult(programme, attached, opened)};
   });
 }
 let options, input;
@@ -287,6 +408,19 @@ function finishReceiving(intent) {
       "--revision", String(row.installation.revision)], options["receiving-workspace"]);
     if (saved.sha256 !== row.installation.sha256 || saved.preview.document.workshare.caseId !== row.workshareCaseId)
       fail("The imported original customer Installation differs from its saved edition.");
+    if (row.programme) {
+      const selectedProgramme = Object.fromEntries(PROGRAMME_FIELDS.filter(key => Object.hasOwn(saved.preview.document, key))
+        .map(key => [key, saved.preview.document[key]]));
+      if (!same(row.programme.nativeProgramme, selectedProgramme) ||
+          !same(row.programme.nativeCalendarReport, saved.preview.report?.useCalendar || null) ||
+          !same(row.programme.nativeCommissioningReport, saved.preview.report?.commissioning || null))
+        fail("The received original customer programme differs from its saved native report.");
+      for (const file of row.programme.sourceFiles) {
+        const actual = received.sources.find(source => source.id === file.id);
+        if (!actual || actual.sha256 !== file.sha256 || actual.bytes !== file.bytes || actual.mediaType !== file.mediaType)
+          fail("The complete received customer programme source differs: " + file.filename);
+      }
+    }
   }
   const path = join(options.out, "RECEIVED.json");
   let completion;
@@ -321,12 +455,15 @@ try {
     const results = [];
     for (const customer of input.customers) {
       const attached = customer.files.map(file => ({...file, source: receiveFile(file)}));
-      results.push(receiveCustomer(customer, attached));
+      const programme = prepareProgramme(customer, attached);
+      if (programme) attached.push(...programme.outputs.map(file => ({...file, source: receiveFile(file)})));
+      results.push(receiveCustomer(customer, attached, programme));
     }
     const final = current();
     const installations = results.map(row => ({
       profile: row.profile, workshareCaseId: row.workshareCaseId, installation: row.installation,
-      document: row.document, workorder: row.workorder, pendingSelections: row.pendingSelections
+      document: row.document, workorder: row.workorder, pendingSelections: row.pendingSelections,
+      ...(row.programme ? {programme: row.programme} : {})
     }));
     const exportName = "Complete_Customer_Installations-" +
       hash(json({installations, version: final.program.version})).slice(0, 24) + ".zip";

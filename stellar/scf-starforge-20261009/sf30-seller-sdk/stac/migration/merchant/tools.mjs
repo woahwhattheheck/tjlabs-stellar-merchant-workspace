@@ -37,6 +37,8 @@ export function migrationWorkspaceTools(t) {
    {captureId:id,predecessorPlanId:id},["captureId"]);
  add("mapping_register","Export the complete mapping register and original saved plan, source inspection and review bytes.",
    {planId:id},["planId"]);
+ add("mapping_workbook","Export the complete editable XLSX, original mapping register, all declared original input files and customer guide in one native ZIP.",
+   {planId:id},["planId"]);
  add("workbook_propose","Read the edited XLSX and original register as a complete native plan proposal with every changed choice.",
    {sourceJson:text("Complete starforge.gis-migration-workbook-source.v1 JSON with registerBase64, workbookBase64 and filename.")},["sourceJson"]);
  add("source_rows","Page original native source rows and preserve exact numeric lexemes.",

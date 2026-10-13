@@ -4,15 +4,15 @@ This operation uses the original historical Del Norte study and the selected pro
 
 ## Open the original operation
 
-Keep `receive.py`, `native-journey.mjs`, `source-inputs.json`, `source-manifest.json`, `source-stream.jsonl`, `source-assets.json` and `source-unpaid-repairs.json` together. On the original Linux host, run:
+Keep `receive.py`, `native-journey.mjs`, `source-inputs.json`, `source-manifest.json`, `source-stream.jsonl`, `source-assets.json`, `source-unpaid-repairs.json` and `source-operator.json` together. On the original Linux host, run:
 
 ```sh
 python3 receive.py --source-stdin < source-stream.jsonl
 ```
 
-The base stream contains 808 selected source files, including the original OpenAQ study, native workers and SF88 package files. The adjacent `source-assets.json` supplies 19 original files that complete the eagerly loaded seller developer assets and declared runtime browser roots. Together these provide 827 files and 10,763,967 original source bytes from the selected product commit. The three explicitly pinned source corrections described below retain the same paths and bring the runtime selection to 10,774,533 bytes. The receiver verifies the fixed manifest, each file's Git blob identity, length and SHA256 before that source can run. The asset packet has its own fixed SHA256 and binds the same commit and base manifest; each asset also retains its original Git blob, length and SHA256. Exact existing files reopen; different existing bytes stop the operation.
+The base stream contains 808 selected source files, including the original OpenAQ study, native workers and SF88 package files. The adjacent `source-assets.json` supplies 19 original files that complete the eagerly loaded seller developer assets and declared runtime browser roots. Together these provide 827 files and 10,763,967 original source bytes from the selected product commit. The adjacent `source-operator.json` supplies the original SF62 console, SF54 intent adapter and SF59 reservation gate: three Python files and 18,632 bytes. Together with the three explicitly pinned source corrections described below, the complete runtime selection contains 830 files and 10,797,561 source bytes. The receiver verifies the fixed manifest, each file's Git blob identity, length and SHA256 before that source can run. The asset packet has its own fixed SHA256 and binds the same commit and base manifest; each asset also retains its original Git blob, length and SHA256. Exact existing files reopen; different existing bytes stop the operation.
 
-The receiver retains its canonical operation in `/dev/shm/921ba0-openaq-buyer-native-20261012` and mutable native records in its `native/` subdirectory. Reproducible source and dependencies use `/dev/921ba0-openaq-runtime-20261012`. The first complete stream is compressed into the canonical `source-capsule.gz`, so the same command can restore the exact source if an invocation-private `/dev` mount disappears. It then reopens the original native requests. Both the retained manifest and `source/SOURCE-SELECTION.json` are checked on every complete-source reopen. The original 808-file capsule remains intact; `CONTROL/source-assets.json` restores the additional asset leaves, and `source/SOURCE-ASSETS.json` records the combined selection.
+The receiver retains its canonical operation in `/dev/shm/921ba0-openaq-buyer-native-20261012` and mutable native records in its `native/` subdirectory. Reproducible source and dependencies use `/dev/921ba0-openaq-runtime-20261012`. The first complete stream is compressed into the canonical `source-capsule.gz`, so the same command can restore the exact source if an invocation-private `/dev` mount disappears. It then reopens the original native requests. Both the retained manifest and `source/SOURCE-SELECTION.json` are checked on every complete-source reopen. The original 808-file capsule remains intact; `CONTROL/source-assets.json` restores the additional asset leaves, and `source/SOURCE-ASSETS.json` records the combined base and asset selection. `CONTROL/source-operator.json` retains the three exact original operator modules; `source/SOURCE-OPERATOR.json` binds them to that same base manifest and asset packet. The receiver verifies each complete body and reopens existing exact files before the original ledger worker runs. The imported Governor and expired-reservation reader remain the original files already selected in the base capsule.
 
 The selected original Buyer signer imported its diagnostic reader from a module that does not export it. This continuation uses the unchanged signer adapter and imports that reader from its existing diagnostics module, matching the other original Buyer callers. The receiver accepts only the exact `053825b1862f3a5b3fc42aaa248f6b8aa6401254` preimage or `c12720ce4f432e24f4972523021d71fa9d85e2ce` corrected file at that one path. It preserves the base capsule, records the correction before applying it, and verifies the corrected bytes again. `source/SOURCE-REPAIRS.json` and the final package’s `SOURCE.json` carry both source identities. Same-directory reopens and fresh source restoration use this same correction.
 
@@ -62,7 +62,7 @@ The original run writes `NATIVE_RESULT.json` only after those phases and owner r
 
 ## Customer output
 
-On completion, the receiver publishes `OpenAQ_Original_Buyer_Workspace.zip` and `package.json` in its canonical directory. The ZIP contains the complete delivery and independent receiving trees, native result, original accounting, this programme's source, the exact three corrected source leaves, and the product operating guide. The native session archive includes the original failed attempt's complete checkout and wire history. Operator keys and local TLS/signing custody remain in their original native workspace.
+On completion, the receiver publishes `OpenAQ_Original_Buyer_Workspace.zip` and `package.json` in its canonical directory. The ZIP contains the complete delivery and independent receiving trees, native result, original accounting, this programme's source, the exact three corrected source leaves, the three original operator modules and their source selection, and the product operating guide. The native session archive includes the original failed attempt's complete checkout and wire history. Operator keys and local TLS/signing custody remain in their original native workspace.
 
 If native completion has already been recorded but package publication was interrupted, the same receiver restores any missing reproducible source and finishes that package. It does not rerun the completed Buyer journey. An already complete package reopens only after its exact length and SHA256 match.
 
@@ -70,10 +70,25 @@ For ordinary installed product use, follow the complete product guide at `stella
 
 The historical sample is Del Norte, Albuquerque, 2022-05-03: 140 measurements from six sensors. It demonstrates the receiving workflow and retains original units, review and licensing context. The current Whitehorse commercial work uses this identified sample as a software example; its scientific assessment and station source remain with the original project authority.
 
-## Retained execution state
+## Completed native execution
 
-The original reviewed study, publication/release, authenticated handoff, and Buyer preparation/reopen phases have completed under this operation. The original 827-file source selection and 46-package dependency installation also ran. PR749's native signer import correction was exercised successfully by that Buyer initialization.
+The original programme completed on 13 October 2026 at 01:00:17.863 UTC, on Node 24.19.0. The maintained receiver's native session 44945 exited zero and retained the complete result in `NATIVE_RESULT.json`. All original owners retired before package publication.
 
-The first page reached the local original HTTPS handler on 2026-10-12 at 22:59:22 UTC. Its retained unsigned transport failure identified the admission-response bug described above. That native process and its diagnostic readers have retired. This source update corrects the driver and complete unpaid history before the same attempt continues through pages, accounting, output and independent receiving. `NATIVE_RESULT.json` and `package.json` will record the actual final outcome after the full programme completes.
+| Stage | Completed result |
+|---|---|
+| Original reviewed study | Retained capture and named review; 140 historical observations; no new OpenAQ provider request |
+| Publication and release | Original Frictionless publication, SF82 staging and fixed Dataset snapshot |
+| Authenticated handoff | Complete source-bound handoff and original study archive received through the original application |
+| Buyer preparation | Same original reviewed request, configuration and Dataset session reopened |
+| HTTP pages | Three successful native pages, 140 rows; four total HTTP requests including the first failed GET |
+| Native accounting | Three original `NO_PAYMENT_REQUIRED` entries; zero approvals and settlements |
+| Complete output | CSV, JSONL, HTML review, original study, complete session archive and accounting; 22 PM2.5 rows |
+| Independent receiving | Source owners closed; complete archives received and all 140 rows cold-reopened with no additional HTTP request |
 
-The selected base is `c7ac4399e3bb419fafd42395841bace7d089036a`; product PR593 is merged as `ece595782a2ece95485200e4cb6f573ed1aefbab`, the complete source intake PR705 as `2778cfcbefcf134b6c00f948fe4bd88f175b1d3f`, and signer correction PR749 as `0ad4c1be410db604f0a11150f896ae1ed74d83af`. This continuation preserves that base capsule, the original operation, study, handoff, customer and page identities.
+Replaying the completed acquisition also made zero additional HTTP requests. The first `ECONNRESET` attempt remains in the original unpaid history, with its complete wire and SF82 checkout source and retirement identities. The successful continuation used the same page intent and original Dataset/SF36 authorities.
+
+The final 136-member customer ZIP is `OpenAQ_Original_Buyer_Workspace.zip`, 376,833 bytes, SHA256 `a5955daf68b1b62a709519080c528b52905ea27f63d8f1d884a4fa5ced17d2f7`. It contains 1,861,656 expanded bytes of complete delivery, independent receiving, original history, typed outputs, guides and source selections. The complete native result is 12,359 bytes, SHA256 `b2c2c768980b3e0644ffb12618d496f7b0dcc1f0b46f985c7965c13744df4036`. Both are saved as the original customer deliverables.
+
+The source-native fixture used unsigned HTTP200 responses: its accounting records `NO_PAYMENT_REQUIRED`, with zero new provider calls, payment approvals or settlements. The historical sample remains Del Norte, Albuquerque, 3 May 2022. It demonstrates a complete installed customer workflow while preserving the separate seller's paid purchase authority and the original study provenance.
+
+The selected base is `c7ac4399e3bb419fafd42395841bace7d089036a`; product PR593 is merged as `ece595782a2ece95485200e4cb6f573ed1aefbab`, complete source intake PR705 as `2778cfcbefcf134b6c00f948fe4bd88f175b1d3f`, signer correction PR749 as `0ad4c1be410db604f0a11150f896ae1ed74d83af`, and the complete unpaid-history continuation PR821 as `8cfa8469f271db5e88e1342b8c65837b8e3a3349`. The original operation, study, handoff, customer and page identities are unchanged.

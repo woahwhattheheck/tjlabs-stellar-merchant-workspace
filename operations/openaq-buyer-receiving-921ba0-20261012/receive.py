@@ -376,7 +376,29 @@ def receive_unpaid_repairs(source,inline=None):
  exact(source/"SOURCE-UNPAID-REPAIRS.json",encoded(UNPAID_SOURCE_REPAIR))
  say({"phase":"ORIGINAL_UNPAID_HISTORY_SOURCE_READY","files":2,"packetSha256":UNPAID_SOURCE_REPAIR["packetSha256"]})
 
-def main(journey,stream_source=False,assets=None,repairs=None):
+SOURCE_OPERATOR_SELECTION={"schema":"stellar-forge.openaq-buyer-original-operator-source.v1","repository":"woahwhattheheck/tjlabs-stellar-merchant-workspace","baseCommit":"c7ac4399e3bb419fafd42395841bace7d089036a","sourceManifestSha256":"6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c","assetsSha256":"6b2dbcd5dacf9e8ecb280611772da607198731e0f73bb526c7a4c75504a9dcbc","files":[{"path":"stellar/scf-starforge-20261009/sf62-human-approval-cli/console.py","gitBlob":"9edcb4f9ac15a4659438bf82e781bbaf76b2b122","bytes":10763,"sha256":"67abdaf937e11211bb6b2d1862b613488e966a98d7f42a93a088960ac86fdbc7","encoding":"utf-8"},{"path":"stellar/scf-starforge-20261009/sf54-buyer-governor-intent/intent_adapter.py","gitBlob":"6d61d651b7137ba411d2b24cb69f0639080e1515","bytes":4084,"sha256":"873b576c1738dfcba7fe32cb1afcc514d827f95c950a7b1e6e511d474460a836","encoding":"utf-8"},{"path":"stellar/scf-starforge-20261009/sf59-operator-reservation-gate/operator_gate.py","gitBlob":"9817043b7f74d6f570905c09c0592e442bfa85cb","bytes":3785,"sha256":"e14bea10b2cfb7c5cfbeea142f339e0939b39a1863212465a61d0b2ba59c36ce","encoding":"utf-8"}],"packetSha256":"df6a22deeba2837845775f1759f78c48500492e29b2ed6da40f8740af914819d"}
+def receive_operator_sources(source,raw=None):
+ retained=CONTROL/"source-operator.json"
+ if raw is None:
+  if not retained.exists():raise RuntimeError("ORIGINAL_OPERATOR_SOURCE_PACKET_REQUIRED")
+  raw=retained.read_bytes()
+ if digest(raw)!=SOURCE_OPERATOR_SELECTION["packetSha256"]:raise RuntimeError("ORIGINAL_OPERATOR_SOURCE_PACKET_CHANGED")
+ value=json.loads(raw)
+ expected={k:v for k,v in SOURCE_OPERATOR_SELECTION.items() if k not in ("packetSha256","files")}
+ if {k:v for k,v in value.items() if k!="files"}!=expected or len(value.get("files",[]))!=len(SOURCE_OPERATOR_SELECTION["files"]):raise RuntimeError("ORIGINAL_OPERATOR_SOURCE_SELECTION_CHANGED")
+ paths=set()
+ for item,selected in zip(value["files"],SOURCE_OPERATOR_SELECTION["files"]):
+  if {k:v for k,v in item.items() if k!="content"}!=selected or item["path"] in paths:raise RuntimeError("ORIGINAL_OPERATOR_SOURCE_MEMBER_CHANGED")
+  paths.add(item["path"])
+  body=item["content"].encode("utf-8")
+  if item["encoding"]!="utf-8" or not source_body_matches(body,item):raise RuntimeError("ORIGINAL_OPERATOR_SOURCE_BODY_CHANGED")
+  target=source_parent(source,item["path"])
+  if not verify_source_file(target,item):exact(target,body)
+ exact(retained,raw)
+ exact(source/"SOURCE-OPERATOR.json",encoded(SOURCE_OPERATOR_SELECTION))
+ say({"phase":"ORIGINAL_OPERATOR_SOURCE_READY","files":len(value["files"]),"packetSha256":SOURCE_OPERATOR_SELECTION["packetSha256"]})
+
+def main(journey,stream_source=False,assets=None,repairs=None,operator_sources=None):
  CONTROL.mkdir(mode=0o700,exist_ok=True);owned(CONTROL)
  fd=os.open(CONTROL/"operation.lock",os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
  fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -445,6 +467,7 @@ def main(journey,stream_source=False,assets=None,repairs=None):
     for line in dirty.splitlines():
      path=line[3:]
      if not line.startswith(" M ") or path not in allowed or not source_body_matches(source_parent(source,path).read_bytes(),allowed[path]):raise RuntimeError("ORIGINAL_TRACKED_SOURCE_CHANGED")
+  receive_operator_sources(source,operator_sources)
   apply_signer_source_repair(source)
   receive_unpaid_repairs(source,repairs)
   if not completed:
@@ -502,9 +525,12 @@ def main(journey,stream_source=False,assets=None,repairs=None):
     if (native/name).exists():archive.write(native/name,name)
    for repair in [SIGNER_SOURCE_REPAIR]+UNPAID_SOURCE_REPAIR["files"]:
     archive.write(source/repair["after"]["path"],"source-corrections/"+repair["after"]["path"])
+   for item in SOURCE_OPERATOR_SELECTION["files"]:
+    archive.write(source/item["path"],"source-original-operator/"+item["path"])
+   archive.write(source/"SOURCE-OPERATOR.json","SOURCE-OPERATOR.json")
    archive.write(source/"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study/OPERATING.md","OPERATING.md")
    archive.writestr("SOURCE.json",encoded({"repository":REPOSITORY,"commit":COMMIT,"operator":expected["operation"],
-    "product":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study","journeySha256":expected["journeySha256"],"sourceRepair":SIGNER_SOURCE_REPAIR,"unpaidSourceRepair":UNPAID_SOURCE_REPAIR}))
+    "product":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study","journeySha256":expected["journeySha256"],"sourceRepair":SIGNER_SOURCE_REPAIR,"unpaidSourceRepair":UNPAID_SOURCE_REPAIR,"originalOperatorSource":SOURCE_OPERATOR_SELECTION}))
   temporary.chmod(0o600)
   data=temporary.read_bytes()
   if target.exists():
@@ -521,4 +547,5 @@ if __name__=="__main__":
  if digest(source)!="f3940401de94c25b38f5f98e95a1066b6390597a384535f0d6e7ab0ba76cdb07":raise RuntimeError("ORIGINAL_JOURNEY_SOURCE_CHANGED")
  if sys.argv[1:] not in ([],["--source-stdin"]):raise RuntimeError("ORIGINAL_RECEIVER_ARGUMENT_INVALID")
  main(source,stream_source=bool(sys.argv[1:]),assets=Path(__file__).with_name("source-assets.json").read_bytes() if sys.argv[1:] else None,
-  repairs=Path(__file__).with_name("source-unpaid-repairs.json").read_bytes())
+  repairs=Path(__file__).with_name("source-unpaid-repairs.json").read_bytes(),
+  operator_sources=Path(__file__).with_name("source-operator.json").read_bytes())

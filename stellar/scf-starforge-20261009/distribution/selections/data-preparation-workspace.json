@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "data-preparation-workspace",
   "title": "Data preparation workspace",
-  "description": "Retain CSV and JSONL source editions, join them with saved SQL recipes, review complete results and deliver independently editable customer projects through Applications and 21 typed merchant tools.",
+  "description": "Retain original source editions, prepare saved SQL and multistage pipelines, review complete results and receive independently editable customer projects through Applications and 40 typed merchant tools.",
   "base": {
     "commands": [
       "installation",
@@ -186,7 +186,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Retain CSV and JSONL source editions, join them with saved SQL recipes, review complete results and deliver independently editable customer projects through Applications and 21 typed merchant tools.",
+    "description": "Retain original source editions, prepare saved SQL and multistage pipelines, review complete results and receive independently editable customer projects through Applications and 40 typed merchant tools.",
     "readme": "products/data-preparation/OPERATING.md",
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"

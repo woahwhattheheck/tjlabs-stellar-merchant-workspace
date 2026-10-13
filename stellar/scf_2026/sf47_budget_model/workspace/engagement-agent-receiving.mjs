@@ -9,6 +9,7 @@ import {setTimeout as delay} from 'node:timers/promises';
 
 export const ENGAGEMENT_AGENT_SCHEMA = 'stellar-forge.sf47-engagement-agent-receiving.v1';
 export const ENGAGEMENT_AGENT_SOURCE_SCHEMA = 'stellar-forge.sf47-engagement-agent-source.v1';
+export const ENGAGEMENT_AGENT_EXECUTION_SCHEMA = 'stellar-forge.sf47-engagement-agent-execution-continuation.v1';
 const NATIVE = 'stellar-forge.sf47-engagement-native-receiving.v1';
 const PREFIX = 'stellar/scf_2026/sf47_budget_model/workspace/';
 const PROVIDER = 'stellar-forge/mcp-merchant-operator/';
@@ -330,9 +331,99 @@ async function publish(ctx, guard, root, name, bytes, {replace = false, expected
 }
 
 
+async function executionContinuation(ctx, spec, nativeJournal, sourceRows, root, output) {
+  if (spec.agentExecutionContinuation === undefined) return null;
+  const file = await selectedFile(ctx, spec.agentExecutionContinuation,
+    {retain:true, privateFile:true, maximum:256 * 1024});
+  const document = strictJSON(file.data);
+  exact(document, ['schema','operationId','reason','original','corrections']);
+  need(document.schema === ENGAGEMENT_AGENT_EXECUTION_SCHEMA &&
+    document.operationId === spec.operationId && typeof document.reason === 'string' &&
+    document.reason.trim().length > 0 && document.reason.length <= 4000,
+    'EXECUTION_CONTINUATION', 'Retain the complete explicit reason and original operation for this source continuation.');
+  exact(document.original, ['sourceManifest','agentSourceManifest','nativeSelectionSha256',
+    'agentSelectionSha256','native','agentJournal']);
+  const prior = document.original;
+  need(same(prior.sourceManifest, nativeJournal.selection.sourceManifest) &&
+    same(prior.agentSourceManifest, spec.sourceManifest) && same(prior.native, spec.native) &&
+    prior.nativeSelectionSha256 === sha(Buffer.from(canonical(nativeJournal.selection))) &&
+    HEX.test(prior.agentSelectionSha256),
+    'EXECUTION_CONTINUATION', 'Preserve the original source manifests, native selection and completed native files.');
+  metadata(prior.agentJournal);
+  need(prior.agentJournal.path === join(output, 'JOURNAL.json'),
+    'EXECUTION_CONTINUATION', 'Bind the exact preceding agent journal from this original observation directory.');
+  exact(document.corrections, ['python','node']);
+  for (const [name, member] of [['python', PREFIX + 'operations_engagements_receiving.py'], ['node', SELF]]) {
+    const correction = document.corrections[name]; exact(correction, ['prior','current']);
+    const expected = sourceRows.get(member);
+    need(expected && same(correction.prior, {path:join(root, member), bytes:expected.bytes,
+      sha256:expected.sha256, mode:expected.mode}),
+      'EXECUTION_CONTINUATION', 'Keep each complete original execution preimage in the unchanged source selection.');
+    const current = correction.current;
+    exact(current, ['path','bytes','sha256','mode']);
+    metadata({path:current.path, bytes:current.bytes, sha256:current.sha256});
+    need(!inside(root, current.path) && current.path !== root &&
+      Number.isInteger(current.mode) && current.mode >= 0 && current.mode <= 0o777,
+      'EXECUTION_CONTINUATION', 'Stage each complete correction outside the original source directory.');
+    const actual = await selectedFile(ctx, {path:current.path, bytes:current.bytes, sha256:current.sha256});
+    need(actual.mode === current.mode, 'EXECUTION_CONTINUATION',
+      'The explicitly selected execution source mode changed.');
+    if (name === 'node') need(fileURLToPath(import.meta.url) === current.path,
+      'EXECUTED_SOURCE', 'Execute the exact companion selected by this explicit continuation.');
+  }
+  need(document.corrections.python.current.path !== document.corrections.node.current.path,
+    'EXECUTION_CONTINUATION', 'Retain distinct complete Python and Node execution files.');
+  return {file, record:{reference:{path:file.path, bytes:file.bytes, sha256:file.sha256}, document}};
+}
+async function retainExecutionContinuation(o, {adopt = false} = {}) {
+  const continuation = o.executionContinuation;
+  if (!continuation) {
+    need(o.state.executionContinuation === undefined, 'EXECUTION_CONTINUATION',
+      'Resume with the same explicit source continuation already retained by this observation.');
+    return;
+  }
+  const prior = continuation.document.original.agentJournal;
+  const prefix = 'execution-continuations/' + continuation.reference.sha256 + '/';
+  const priorName = prefix + 'prior-agent-journal.json', selectionName = prefix + 'execution-continuation.json';
+  let original;
+  try {
+    original = await selectedFile(o.ctx, {path:join(o.output, priorName), bytes:prior.bytes, sha256:prior.sha256},
+      {retain:true, privateFile:true, maximum:MAX_JSON});
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    need(adopt && o.state.executionContinuation === undefined && o.journalSha === prior.sha256,
+      'EXECUTION_CONTINUATION', 'Retain the exact interrupted predecessor before the first execution adoption.');
+    original = await selectedFile(o.ctx, prior, {retain:true, privateFile:true, maximum:MAX_JSON});
+  }
+  const predecessor = strictJSON(original.data);
+  need(predecessor.schema === ENGAGEMENT_AGENT_SCHEMA + '.journal' &&
+    predecessor.state === 'INTERRUPTED' && same(predecessor.selection, o.selection) &&
+    predecessor.selectionSha256 === o.selectionSha256 &&
+    predecessor.executionContinuation === undefined && plain(predecessor.steps) &&
+    Object.keys(predecessor.steps).length === 0 && plain(predecessor.downloads) &&
+    Object.keys(predecessor.downloads).length === 0 && Array.isArray(predecessor.attempts) &&
+    predecessor.attempts.length > 0 && predecessor.attempts.every(attempt => attempt.state === 'INTERRUPTED'),
+    'EXECUTION_CONTINUATION', 'This correction continues the original interrupted connection admission before any agent step or download.');
+  if (o.state.executionContinuation === undefined) {
+    need(adopt && o.journalSha === prior.sha256 && same(o.state, predecessor),
+      'EXECUTION_CONTINUATION', 'The original interrupted agent journal changed before execution adoption.');
+    await publish(o.ctx, o.guard, o.output, selectionName, o.executionContinuationFile.data);
+    await publish(o.ctx, o.guard, o.output, priorName, original.data);
+    o.state.executionContinuation = continuation;
+    await o.save();
+  } else {
+    need(same(o.state.executionContinuation, continuation), 'EXECUTION_CONTINUATION',
+      'Resume the exact retained source continuation without replacing its predecessor.');
+    await selectedFile(o.ctx, {path:join(o.output, selectionName),
+      bytes:continuation.reference.bytes, sha256:continuation.reference.sha256},
+      {privateFile:true, maximum:256 * 1024});
+  }
+  o.executionAdoptionPending = false;
+}
+
 async function prepare(ctx, spec) {
   exact(spec, ['schema','operationId','repositoryRoot','sourceManifest','providerConfiguration',
-    'workspace','native','outputDirectory','parentGuard','chunkBytes'],
+    'workspace','native','outputDirectory','parentGuard','chunkBytes','agentExecutionContinuation'],
   ['schema','operationId','repositoryRoot','sourceManifest','providerConfiguration',
     'workspace','native','outputDirectory','parentGuard']);
   need(spec.schema === ENGAGEMENT_AGENT_SCHEMA && typeof spec.operationId === 'string' && ID.test(spec.operationId),
@@ -401,10 +492,13 @@ async function prepare(ctx, spec) {
   }
   need(requiredSource.every(name => sourceRows.has(name)), 'SOURCE_CLOSURE',
     'Retain the whole original client, launch, provider, catalogue and file-reader closure.');
-  const executing = await inspectFile(ctx, fileURLToPath(import.meta.url));
-  const caller = sourceRows.get(SELF);
-  need(executing.bytes === caller.bytes && executing.sha256 === caller.sha256,
-    'EXECUTED_SOURCE', 'Execute the exact complete companion from its selected source edition.');
+  const execution = await executionContinuation(ctx, spec, nativeJournal, sourceRows, root, output);
+  if (!execution) {
+    const executing = await inspectFile(ctx, fileURLToPath(import.meta.url));
+    const caller = sourceRows.get(SELF);
+    need(executing.bytes === caller.bytes && executing.sha256 === caller.sha256,
+      'EXECUTED_SOURCE', 'Execute the exact complete companion from its selected source edition.');
+  }
   const configFile = await selectedFile(ctx, spec.providerConfiguration, {retain:true, privateFile:true, maximum:1024 * 1024});
   const configuration = strictJSON(configFile.data), declared = configuration.workspaces?.[spec.workspace];
   need(configuration.schema === 'stellar-forge.sf47-workspace-connection.v1' &&
@@ -526,7 +620,10 @@ async function prepare(ctx, spec) {
       resultSha256:row.step.resultSha256, recordId:row.response.recordId, reviewSha256:row.response.reviewSha256,
     })),
   };
+  need(!execution || execution.record.document.original.agentSelectionSha256 === sha(json(selection)),
+    'EXECUTION_CONTINUATION', 'Keep the original complete agent selection and its canonical byte hash.');
   return {spec, selection, selectionSha256:sha(json(selection)), root, output, nativeRoot,
+    executionContinuation:execution?.record ?? null, executionContinuationFile:execution?.file ?? null,
     manifest, manifestFile, nativeSourceFile, sourceRows, configFile, outcomeFile, journalFile, outcome, nativeJournal,
     nativeRows, prepareCommand, receivingCommand, bookReadFile:bookRead.file,
     expectedBook, expectedForecast, expectedPortfolio, expectedReceiving, expectedHistory};
@@ -535,6 +632,7 @@ class Observation {
   constructor(ctx, guard, prepared) {
     this.ctx = ctx; this.guard = guard; Object.assign(this, prepared);
     this.state = null; this.journalSha = null;
+    this.executionAdoptionPending = Boolean(this.executionContinuation);
   }
   async initialize() {
     await privateDirectory(this.ctx, this.output, this.output);
@@ -563,6 +661,7 @@ class Observation {
         selectionSha256:this.selectionSha256, state:'PREPARED', steps:{}, downloads:{}, attempts:[], interruptions:[]};
       await this.save();
     }
+    await retainExecutionContinuation(this, {adopt:true});
   }
   async save() {
     const raw = json(this.state);
@@ -753,11 +852,11 @@ class Connections {
     await privateDirectory(o.ctx, this.providerConfig.exportsDirectory, o.output);
     this.client = new clientModule.GrantWorkspaceClient(binding);
     const direct = await this.client.open({expectedSelectionSha256:binding.selectionSha256});
-    need(direct.state === 'BORROWED_ORIGINAL_SERVICE', 'BORROWED_HOST_REQUIRED', 'Only borrow the original already-running host.');
+    need(direct.connection === 'BORROWED_ORIGINAL_SERVICE', 'BORROWED_HOST_REQUIRED', 'Only borrow the original already-running host.');
     this.provider = new providerModule.MerchantGrantWorkspaces(this.providerConfig);
     const opened = await this.provider.call('merchant_grant_open',
       {workspace:o.spec.workspace, expectedSelectionSha256:binding.selectionSha256});
-    need(opened.state === 'BORROWED_ORIGINAL_SERVICE', 'BORROWED_HOST_REQUIRED', 'The MCP provider must borrow the same original host.');
+    need(opened.connection === 'BORROWED_ORIGINAL_SERVICE', 'BORROWED_HOST_REQUIRED', 'The MCP provider must borrow the same original host.');
     const directInspect = await this.client.inspect();
     const providerInspect = await this.provider.call('merchant_grant_inspect', {workspace:o.spec.workspace});
     need(directInspect.original?.instanceId && same(directInspect.original, providerInspect.original) &&
@@ -766,7 +865,7 @@ class Connections {
     this.original = directInspect.original;
     o.ctx.check();
     return {selectionSha256:binding.selectionSha256, original:this.original,
-      direct:direct.state, provider:opened.state};
+      direct:direct.connection, provider:opened.connection};
   }
   async rotate() {
     const o = this.o, previous = this.provider;
@@ -779,9 +878,9 @@ class Connections {
     const opened = await this.provider.call('merchant_grant_open',
       {workspace:o.spec.workspace, expectedSelectionSha256:this.binding.selectionSha256});
     const inspected = await this.provider.call('merchant_grant_inspect', {workspace:o.spec.workspace});
-    need(opened.state === 'BORROWED_ORIGINAL_SERVICE' && same(inspected.original, this.original),
+    need(opened.connection === 'BORROWED_ORIGINAL_SERVICE' && same(inspected.original, this.original),
       'HOST_IDENTITY', 'Reopen the same original listener, with the same retained snapshot directory.');
-    return {state:opened.state, instanceId:inspected.original.instanceId, selectionSha256:this.binding.selectionSha256};
+    return {state:opened.connection, instanceId:inspected.original.instanceId, selectionSha256:this.binding.selectionSha256};
   }
   async close(primary = null) {
     const owners = [['provider', this.provider], ['client', this.client]].filter(([, value]) => value);
@@ -1254,13 +1353,15 @@ async function course(o, connections) {
     sourceManifest:o.spec.sourceManifest, nativeFiles:o.spec.native,
     interruption:o.state.downloads['mcp-complete-export'].interruption,
     originalCaseVersion:o.outcome.sourceCaseVersion,
+    ...(o.executionContinuation ? {executionContinuation:o.executionContinuation} : {}),
   };
 }
 
 
 function journalBasis(state) {
   return {schema:state.schema, selection:state.selection, selectionSha256:state.selectionSha256,
-    steps:state.steps, downloads:state.downloads, interruptions:state.interruptions};
+    steps:state.steps, downloads:state.downloads, interruptions:state.interruptions,
+    ...(state.executionContinuation ? {executionContinuation:state.executionContinuation} : {})};
 }
 async function treeInventory(ctx, root, excluded = new Set(), synchronize = false) {
   const rows = [], directories = []; let total = 0;
@@ -1308,6 +1409,7 @@ async function loadObservation(ctx, prepared) {
     o.state.selectionSha256 === o.selectionSha256 && same(o.state.selection, o.selection) &&
     plain(o.state.steps) && plain(o.state.downloads) && Array.isArray(o.state.attempts),
     'OBSERVATION_JOURNAL', 'Retain the complete original observation journal.');
+  await retainExecutionContinuation(o);
   return o;
 }
 function inventoryMap(rows) {
@@ -1339,7 +1441,8 @@ async function validateObservation(o, value, rows) {
     value.selectionSha256 === o.selectionSha256 && same(value.native, o.outcome) &&
     same(value.requests, o.selection.requests) && same(value.bookAdmission, o.selection.bookAdmission) &&
     same(value.sourceManifest, o.spec.sourceManifest) &&
-    same(value.nativeFiles, o.spec.native) && value.originalCaseVersion === o.outcome.sourceCaseVersion,
+    same(value.nativeFiles, o.spec.native) && value.originalCaseVersion === o.outcome.sourceCaseVersion &&
+    same(value.executionContinuation ?? null, o.executionContinuation),
     'CLOSED_OBSERVATION', 'Retain the same original complete native case, source, request and observation outcome.');
   need(Array.isArray(value.replays) && value.replays.length === o.selection.requests.length * 2 &&
     Array.isArray(value.exports) && value.exports.length === 2 && Array.isArray(value.sources),
@@ -1399,7 +1502,8 @@ async function readClosedObservation(o, {synchronize = false} = {}) {
   const closed = strictJSON(file.data);
   need(closed.schema === ENGAGEMENT_AGENT_SCHEMA + '.closed' && closed.state === 'DRAINED' &&
     closed.operationId === o.spec.operationId && closed.selectionSha256 === o.selectionSha256 &&
-    same(closed.journalBasis, journalBasis(o.state)), 'CLOSED_OBSERVATION',
+    same(closed.journalBasis, journalBasis(o.state)) &&
+    same(closed.executionContinuation ?? null, o.executionContinuation), 'CLOSED_OBSERVATION',
     'Keep the original drained outcome and its complete request/download journal.');
   inventoryMap(closed.files);
   const actual = await treeInventory(o.ctx, o.output, new Set(['JOURNAL.json', CLOSED, RESULT]), synchronize);
@@ -1415,6 +1519,7 @@ function resultValue(o, closed, files) {
     source:{repository:o.manifest.repository, revision:o.manifest.revision,
       pathBase:o.manifest.pathBase, productPath:o.manifest.productPath,
       manifest:o.spec.sourceManifest, files:o.manifest.files.length},
+    ...(o.executionContinuation ? {executionContinuation:o.executionContinuation} : {}),
     requests:o.selection.requests, bookAdmission:o.selection.bookAdmission, exports:closed.value.observation.exports,
     observation:closed.file, files,
     custody:{managedHost:'BORROWED_ORIGINAL_SERVICE', providerAndClient:'DRAINED',
@@ -1491,7 +1596,8 @@ export async function receiveEngagementAgent(spec, options = {}) {
         await validateObservation(o, observation, files);
         const closedValue = {schema:ENGAGEMENT_AGENT_SCHEMA + '.closed', state:'DRAINED',
           operationId:o.spec.operationId, selectionSha256:o.selectionSha256,
-          journalBasis:journalBasis(o.state), observation, files};
+          journalBasis:journalBasis(o.state), observation, files,
+          ...(o.executionContinuation ? {executionContinuation:o.executionContinuation} : {})};
         const closedFile = await publish(ctx, guard, o.output, CLOSED, json(closedValue));
         if (primary) throw primary;
         result = await finishClosed(o, {value:closedValue, file:closedFile});
@@ -1505,7 +1611,7 @@ export async function receiveEngagementAgent(spec, options = {}) {
     try { await fsp.lstat(join(o.output, RESULT)); resultVisible = true; }
     catch (error) { if (error.code !== 'ENOENT') { resultVisible = true; primary = noteCleanup(primary, error); } }
   }
-  if (primary && o && !resultVisible) {
+  if (primary && o && !resultVisible && !o.executionAdoptionPending) {
     try {
       o.state.state = 'INTERRUPTED';
       if (attempt) { attempt.state = 'INTERRUPTED'; attempt.stoppedAt = new Date().toISOString(); attempt.error = diagnostic(primary); }

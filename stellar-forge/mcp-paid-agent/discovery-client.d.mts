@@ -6,8 +6,26 @@ export type NativeRecord = Record<string, unknown>;
 export type DiscoveryMode = 'search' | 'resources';
 export type ResourceType = 'http' | 'mcp';
 
+export interface CatalogDescription {
+  /** Exact host-configured ID; 1–64 lowercase letters, digits or hyphens. */
+  id: string;
+  label: string;
+  /** Original HTTP(S) discovery base; supplied only by trusted host configuration. */
+  url: string;
+}
+export interface CatalogConfiguration {
+  schema: 'stellar-forge.bazaar-catalogs.v1';
+  defaultCatalogId: string;
+  catalogs: CatalogDescription[];
+}
+export interface CatalogList extends CatalogConfiguration {
+  total: number;
+}
+
 /** Asset, recipient and network values are copied from original offered terms. */
 export interface DiscoveryFilters {
+  /** Exact source from catalogs(); an omitted value selects the host default. */
+  catalogId?: string;
   type?: ResourceType;
   payTo?: string;
   network?: string;
@@ -43,6 +61,8 @@ export interface PaymentOption extends NativeRecord {
 }
 export interface ResourceSummary extends NativeRecord {
   handle: string;
+  /** Present on hosts supporting named catalogs. */
+  catalogId?: string;
   resource: NativeRecord & { url: string };
   resourceType: ResourceType;
   method: string | null;
@@ -65,6 +85,8 @@ export interface DiscoveryPage {
     observedAt: string;
     mode: DiscoveryMode;
     request: NormalizedBrowseRequest | NormalizedSearchRequest;
+    /** Actual original source, including when the request used an implicit default. */
+    catalog?: CatalogDescription;
     /** Exact retained provider page, when supplied by this server. */
     pageSha256?: string;
     pageBytes?: number;
@@ -161,6 +183,9 @@ export interface ResourceDescription extends NativeRecord {
     url: string;
     observedAt: string;
     resource: string | NativeRecord;
+    catalog?: CatalogDescription;
+    mode?: DiscoveryMode;
+    request?: NormalizedBrowseRequest | NormalizedSearchRequest;
     /** Exact retained provider response identity, when available on this server. */
     pageSha256?: string;
     pageBytes?: number;
@@ -193,6 +218,8 @@ export interface PreviewHttpRequest {
 }
 export interface PreparedQuote extends NativeRecord {
   quoteId: string;
+  /** Immutable original discovery page identity and row retained with this quote. */
+  source?: DiscoveryPage['source'] & {rowIndex:number};
   status: 'PREVIEWED';
   resource: string;
   requestUrl: string;
@@ -230,6 +257,8 @@ export type DiscoveryClientOptions = {
 );
 export interface BazaarDiscoveryClient {
   readonly endpoint: string;
+  /** Complete host-configured source list; this call makes no provider discovery request. */
+  catalogs(options?: CallOptions): Promise<CatalogList>;
   browse(request?: BrowseRequest, options?: CallOptions): Promise<DiscoveryPage>;
   search(request: SearchRequest, options?: CallOptions): Promise<DiscoveryPage>;
   /** Demand-driven pages preserve source coverage and partialResults. */

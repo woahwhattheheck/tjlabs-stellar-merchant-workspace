@@ -6,6 +6,7 @@ import {native} from './runtime.mjs';
 import {privateDirectory,privateSqliteFile} from './files.mjs';
 import {SCHEMA,need,keys,normalizeSite,normalizeRequest,parsePayload,canonical,sha,clone,text,ATTRIBUTION} from './contract.mjs';
 import {decisionInput,evaluate,reportDigest} from './analysis.mjs';
+import {isWeatherSourceRead} from './provider-response.mjs';
 import {createWeatherHandover,inspectWeatherHandover,prepareWeatherReceiving,weatherReceivingIdentity} from './portable.mjs';
 import {normalizeWeatherRenewal,reviewWeatherRenewal,weatherRenewalRecord,weatherRenewalSourceMatches} from './renewal.mjs';
 const {acquireStateLease}=await native('merchant-fleet-gateway/state-lease.mjs');
@@ -77,6 +78,32 @@ export class WeatherStore{
   if(!r)return null;
   const bytes=raw?Buffer.from(r.raw):null;if(raw)need(sha(bytes)===r.sha,'RETAINED_PROVIDER_READ_CHANGED');
   return {id:r.id,requestId:r.request_id,specSha256:r.spec_sha,sha256:r.sha,provenance:parse(r.provenance),createdAt:r.created,bytes:raw?bytes.length:r.bytes,...(raw?{raw:bytes}:{})};
+ }
+ providerRead(id,{raw=true}={}){
+  this.assert();ident(id,'read');
+  const fields=raw?'*':'id,request_id,spec_sha,sha,provenance,created,LENGTH(raw) AS bytes';
+  const row=this.db.prepare('SELECT '+fields+' FROM source_reads WHERE id=?').get(id);
+  need(row,'PROVIDER_READ_NOT_FOUND');
+  const q=this.request(row.request_id);need(q.specSha256===row.spec_sha,'RETAINED_PROVIDER_REQUEST_CHANGED');
+  const bytes=raw?Buffer.from(row.raw):null;if(raw)need(sha(bytes)===row.sha,'RETAINED_PROVIDER_READ_CHANGED');
+  const result={id:row.id,requestId:row.request_id,specSha256:row.spec_sha,sha256:row.sha,
+   provenance:parse(row.provenance),createdAt:row.created,bytes:raw?bytes.length:row.bytes,...(raw?{raw:bytes}:{})};
+  return {...result,reprocessable:isWeatherSourceRead(result)};
+ }
+ sourceReads(requestId,{before,limit=25}={}){
+  this.assert();this.request(requestId);
+  need(Number.isSafeInteger(limit)&&limit>=1&&limit<=100,'PAGINATION_INVALID');
+  let boundary=null;
+  if(before!==undefined){
+   ident(before,'read');const row=this.db.prepare('SELECT rowid,request_id FROM source_reads WHERE id=?').get(before);
+   need(row&&row.request_id===requestId,'PROVIDER_READ_CURSOR_CHANGED');boundary=row.rowid;
+  }
+  const rows=boundary===null?
+   this.db.prepare('SELECT id FROM source_reads WHERE request_id=? ORDER BY rowid DESC LIMIT ?').all(requestId,limit+1):
+   this.db.prepare('SELECT id FROM source_reads WHERE request_id=? AND rowid<? ORDER BY rowid DESC LIMIT ?').all(requestId,boundary,limit+1);
+  const selected=rows.slice(0,limit);
+  return {requestId,reads:selected.map(row=>this.providerRead(row.id,{raw:false})),
+   nextBefore:rows.length>limit?selected.at(-1).id:null};
  }
  retainSourceRead(requestId,specSha256,bytes,provenance){
   return this.transaction(()=>{const q=this.request(requestId);need(q.specSha256===specSha256&&q.state==='ACQUIRING'&&q.native===null,'SOURCE_CAPTURE_CHANGED');
