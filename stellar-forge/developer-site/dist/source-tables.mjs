@@ -2,7 +2,7 @@
 import {
   TYPES, EMPTY_POLICIES, LIMITS, createProject, addDocument, addEdition, addDocumentTable, initialMapping,
   freezeReview, importProject, inspectSource, parseTable, decodeSource, selectedEdition, selectedReview,
-  reviewIsCurrent, compareReviews, comparisonCsv, createTableArchive, SourceTableError,
+  reviewIsCurrent, selectedCorrections, recordCorrection, sourceRecords, correctionsCsv, compareReviews, comparisonCsv, createTableArchive, SourceTableError,
 } from './source-table-workspace.mjs';
 import { createDocumentTableSource, validateDocumentTableSource, inspectDocumentTables, projectDocumentTable, validateDocumentTableProjection } from './source-document-tables.mjs';
 import { importWorkspaceDraft } from './onboarding.mjs';
@@ -220,7 +220,7 @@ function render() {
   $('has-header').checked = doc.mapping.header; $('skip-empty').checked = doc.mapping.skipEmptyRecords;
   const count = resource.paymentOptions?.length || (resource.paymentMode === 'route' ? 1 : 0);
   $('resource-terms').textContent = count ? count + ' retained ordered route payment choice' + (count === 1 ? '.' : 's.') : 'This resource uses the shared native merchant terms.';
-  renderSourcePreview(doc); renderMapping(doc); renderReviews(doc);
+  renderSourcePreview(doc); renderCorrections(doc); renderMapping(doc); renderReviews(doc);
 }
 async function openDatabase() {
   if (database) return database;
@@ -675,6 +675,69 @@ $('document-download-intake').addEventListener('click',()=>perform(async()=>{
   retainDocumentPreparation();const packet=await createDocumentIntakePacket(intakeState(),project.documentTableSources||[]);
   download('Document_Table_Preparations.json',json(packet));message('Downloaded every retained extraction, unfinished table choice and earlier preparation.');
 }));
+
+
+let correctionOffset=0, correctionColumnOffset=0, correctionSelection=null, correctionDocument=null;
+function renderCorrections(doc) {
+  const context=doc.id+':'+doc.selectedEditionId+':'+JSON.stringify([doc.mapping.delimiter,doc.mapping.header,doc.mapping.skipEmptyRecords]);
+  if(correctionDocument!==context){correctionDocument=context;correctionOffset=0;correctionColumnOffset=0;correctionSelection=null;}
+  try {
+    const data=sourceRecords(doc,{offset:correctionOffset,limit:20});
+    if(correctionOffset>=data.total&&correctionOffset){correctionOffset=Math.max(0,Math.floor((data.total-1)/20)*20);return renderCorrections(doc);}
+    const start=correctionColumnOffset,end=Math.min(data.headings.length,start+6);
+    $('correction-summary').textContent=data.total+' original data records · '+data.correctedCells+' selected cell replacements · '+data.excludedRecords+' excluded rows · history revision '+data.revision;
+    $('correction-page').textContent='Records '+(data.total?correctionOffset+1:0)+'–'+Math.min(data.total,correctionOffset+20)+' of '+data.total+'; columns '+(start+1)+'–'+end+' of '+data.headings.length;
+    $('correction-prev').disabled=busy||!correctionOffset;$('correction-next').disabled=busy||correctionOffset+20>=data.total;
+    $('correction-cols-prev').disabled=busy||!start;$('correction-cols-next').disabled=busy||end>=data.headings.length;
+    const grid=element('table'),head=element('thead'),body=element('tbody'),header=element('tr');
+    for(const label of ['Original record / line','Selection',...data.headings.slice(start,end)])header.append(element('th',label));
+    head.append(header);grid.append(head,body);
+    for(const row of data.rows){
+      const tr=element('tr');tr.append(element('th',row.record+' / '+row.line),element('td',row.exclusion?'Excluded: '+row.exclusion.reason:'Included'));
+      row.cells.slice(start,end).forEach((original,relative)=>{
+        const column=start+relative,decision=row.decisions[column],td=element('td'),button=element('button',previewValue(decision?decision.value:original));
+        button.type='button';button.className='source-cell-choice';button.title='Inspect complete original record '+row.record+', column '+(column+1);button.disabled=busy;
+        if(decision)td.append(element('small','Reviewed replacement'));
+        button.addEventListener('click',()=>{correctionSelection={record:row.record,column};showCorrection(doc,row,column);});
+        td.append(button);tr.append(td);
+      });body.append(tr);
+    }
+    $('correction-grid').replaceChildren(grid);
+    $('correction-editor').hidden=!correctionSelection;
+    if(correctionSelection){
+      const parsed=parseTable(selectedEdition(doc).sourceText,doc.mapping),row=parsed.rows.find(r=>r.record===correctionSelection.record);
+      if(row)showCorrection(doc,row,correctionSelection.column,false);else correctionSelection=null;
+    }
+    const history=selectedCorrections(doc)?.history||[];
+    $('correction-history').textContent=history.length?history.map(e=>e.at+' · '+e.actor+' · '+e.action+' · record '+e.record+(e.column===undefined?'':' / column '+(e.column+1))+'\n'+e.reason+'\nOriginal: '+JSON.stringify(e.original)+'\nBefore: '+JSON.stringify(e.before)+'\nAfter: '+JSON.stringify(e.after)).join('\n\n'):'No recorded corrections for this source and parsing choice.';
+    $('correction-download').disabled=busy||!history.length;
+  } catch(error){$('correction-grid').replaceChildren(element('p',error.message));$('correction-editor').hidden=true;}
+}
+function showCorrection(doc,row,column,reset=true) {
+  const set=selectedCorrections(doc),current=set?.history||[],state=sourceRecords(doc,{offset:parseTable(selectedEdition(doc).sourceText,doc.mapping).rows.findIndex(r=>r.record===row.record),limit:1}).rows[0];
+  $('correction-editor').hidden=false;
+  $('correction-selected').textContent='Original record '+row.record+' · physical line '+row.line+' · column '+(column+1)+' · '+doc.mapping.columns.find(c=>c.index===column)?.sourceName;
+  $('correction-original').textContent=row.cells[column];
+  $('correction-current').textContent=state.decisions[column]?state.decisions[column].value:row.cells[column];
+  $('correction-row-state').textContent=state.exclusion?'This row is excluded: '+state.exclusion.reason:'This row is included.';
+  if(reset){$('correction-value').value=state.decisions[column]?.value??row.cells[column];$('correction-reason').value='';}
+  $('correction-restore-cell').disabled=busy||!state.decisions[column];
+  $('correction-exclude').disabled=busy||!!state.exclusion;
+  $('correction-restore-row').disabled=busy||!state.exclusion;
+}
+async function commitCorrection(action) {
+  const doc=currentDocument();if(!doc||!correctionSelection)throw new Error('Choose an original source cell.');
+  const input={id:'correction-'+crypto.randomUUID(),actor:$('correction-actor').value,reason:$('correction-reason').value,
+    action,record:correctionSelection.record,...(action.endsWith('cell')?{column:correctionSelection.column}:{}),
+    ...(action==='set-cell'?{value:$('correction-value').value}:{}),at:new Date().toISOString()};
+  replaceProject(recordCorrection(project,doc.id,input),doc.id);
+  message('Recorded the source decision. The original bytes and earlier reviews remain unchanged. Retain a new review to update the native output.');
+}
+for(const [id,action] of [['correction-apply','set-cell'],['correction-restore-cell','restore-cell'],['correction-exclude','exclude-row'],['correction-restore-row','restore-row']])
+  $(id).addEventListener('click',()=>perform(()=>commitCorrection(action)));
+for(const [id,kind,delta] of [['correction-prev','row',-20],['correction-next','row',20],['correction-cols-prev','column',-6],['correction-cols-next','column',6]])
+  $(id).addEventListener('click',()=>{if(kind==='row')correctionOffset+=delta;else correctionColumnOffset+=delta;renderCorrections(currentDocument());});
+$('correction-download').addEventListener('click',()=>download('Source_Correction_History.csv',correctionsCsv(selectedCorrections(currentDocument())),'text/csv;charset=utf-8'));
 
 window.addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
 render();

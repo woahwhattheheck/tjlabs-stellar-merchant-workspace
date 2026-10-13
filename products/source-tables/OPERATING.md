@@ -178,3 +178,33 @@ starforge source-tables intake-open --project another-project.json --source new-
 ```
 
 All CLI outputs use a new path and preserve their input files. Earlier projects without the optional intake field keep their original shape and behavior. Complete preparation files use the existing 128 MiB project receiving limit.
+
+
+## Reviewed corrections within an original source
+
+The **Review individual source records** panel pages through every parsed data record and source column. Select a cell to see its complete original and selected text. A named reviewer and a reason are required for a replacement, row exclusion or restoration. Empty replacement text is an explicit value; the existing field type and empty-value policy still determine the mapped result. Record numbers are physical CSV records (the header normally occupies record 1); columns in the API and CLI are zero based. The browser labels columns from 1.
+
+The correction register binds to the original source edition, its SHA-256 and the parsing choices (delimiter, header and empty-record handling). A new source edition or a changed dialect does not inherit decisions. Returning to that same edition and dialect restores its retained decisions. A mapped field rename or type change keeps decisions at their original source coordinates.
+
+Each decision retains its original value, prior selected decision, replacement or restoration, reviewer, timestamp and reason. IDs can be retried with identical content; reusing an ID for different content is rejected. Restoring a cell or row appends an event and leaves earlier reviews intact. A decision makes the current review stale. Use **Review and retain complete output** to create the successor and compare it with the previous review. The complete project and native ZIP contain original source bytes, all correction histories, every historical review and its exact correction snapshot.
+
+CLI example, after choosing the original document ID with `show`:
+
+```sh
+node stellar-forge/developer-site/dist/source-table-cli.mjs records --project project.json --document TABLE_ID --offset 0 --limit 20
+node stellar-forge/developer-site/dist/source-table-cli.mjs correct --project project.json --document TABLE_ID --decision decision.json --out corrected-project.json
+node stellar-forge/developer-site/dist/source-table-cli.mjs review --project corrected-project.json --document TABLE_ID --out reviewed-project.json
+node stellar-forge/developer-site/dist/source-table-cli.mjs corrections --project reviewed-project.json --document TABLE_ID --csv --out decision-history.csv
+```
+
+A complete decision input is:
+
+```json
+{"id":"operator-decision-001","action":"set-cell","record":3,"column":1,"value":"14.50","actor":"Receiving operator","reason":"Confirmed against the supplier correction","at":"2026-10-13T13:00:00Z"}
+```
+
+Use `exclude-row` or `restore-row` without a column/value, and `restore-cell` with a column but no value. These examples describe operator inputs; no changes to the supplied WAGO observations are preselected. Public source discrepancies stay literal until the responsible operator confirms a correction.
+
+### Installed and rendered receiving
+
+Use the existing Source Tables installation and original receiving case. Open the exact published `source-tables.html` at desktop and 390px, inspect actual pixels, and operate selection of a multiline source cell, a reasoned replacement, row exclusion, a new retained review and its comparison. Download the complete project and native ZIP, reopen the saved project, restore both decisions, retain the next review and confirm that the first review and original source are still available. Inspect text contrast, narrow actions, long source values and downloaded history. Source execution alone is not a rendered receiving result. Keep the original merchant resource, terms and native commissioning owner.

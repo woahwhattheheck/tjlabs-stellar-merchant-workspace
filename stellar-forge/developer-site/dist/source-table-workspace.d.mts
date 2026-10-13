@@ -20,7 +20,7 @@ export interface DialectOptions {
   header?: boolean;
   skipEmptyRecords?: boolean;
 }
-export interface SourceRecord { record: number; line: number; documentTable?: DocumentTableRecord }
+export interface SourceRecord { record: number; line: number; documentTable?: DocumentTableRecord; corrections?: (CorrectionDecision & {column:number;original:string})[] }
 export interface ParsedRecord extends SourceRecord { cells: string[] }
 export interface ParsedTable {
   delimiter: Delimiter; header: boolean; skipEmptyRecords: boolean; headings: string[];
@@ -66,18 +66,20 @@ export interface TabularResource {
   schema: typeof RESOURCE_SCHEMA;
   source: Pick<SourceEdition, 'filename' | 'sha256' | 'bytes'> & {
     editionId: string;
+    corrections?: SourceCorrections;
     documentTable?: DocumentTableIdentity & { sourceSha256: string; document: DocumentMetadata };
   };
   fields: ResourceField[]; keyFields: string[]; rows: ResourceRow[];
 }
 export interface ReviewSummary {
   rows: number; columns: number; sourceRecords: number; skippedEmptyRecords: number; keyFields: string[];
+  correctionRevision?:number; correctedCells?:number; excludedRecords?:number;
 }
 export interface NormalizedTable {
   data: TabularResource; dataText: string; dataBytes: number; sourceRecords: SourceRecord[]; summary: ReviewSummary;
 }
 export interface TableReview {
-  id: string; editionId: string; reviewedAt: string; mapping: TableMapping;
+  id: string; editionId: string; reviewedAt: string; mapping: TableMapping; corrections?:SourceCorrections;
   sourceSha256: string; outputSha256: string; dataText: string; dataBytes: number;
   sourceRecords: SourceRecord[]; summary: ReviewSummary;
 }
@@ -101,7 +103,7 @@ export interface NativeStarter {
 export interface TableDocument {
   id: string; label: string; resourceId: string; mapping: TableMapping;
   selectedEditionId: string; selectedReviewId: string | null; baselineReviewId: string | null;
-  editions: SourceEdition[]; reviews: TableReview[];
+  editions: SourceEdition[]; reviews: TableReview[]; correctionSets?: SourceCorrections[];
 }
 export interface TableProject {
   schema: typeof PROJECT_SCHEMA; id: string; name: string; createdAt: string;
@@ -142,6 +144,7 @@ export interface ReviewComparison {
   changes: RowChange[];
 }
 export interface MaterialDocument {
+  corrections?: {context:CorrectionContext;revision:number;record:string;history:string}[];
   id: string; label: string; resourceId: string; selectedReviewId: string;
   sources: {
     id: string; filename: string; path: string; bytes: number; sha256: string; receivedAt: string;
@@ -186,7 +189,7 @@ export function decodeSource(value: Uint8Array | ArrayBuffer): string;
 export function parseTable(input: string, options?: DialectOptions): ParsedTable;
 export function inspectSource(input: string, options?: DialectOptions): SourceInspection;
 export function initialMapping(input: string, options?: DialectOptions): TableMapping;
-export function normalizeTable(edition: SourceEdition, mapping: TableMapping): NormalizedTable;
+export function normalizeTable(edition: SourceEdition, mapping: TableMapping, corrections?:SourceCorrections|null): NormalizedTable;
 export function createProject(options?: { name?: string; starter?: NativeStarter }): TableProject;
 export function selectedEdition(document: TableDocument): SourceEdition;
 export function selectedReview(document: TableDocument): TableReview;
@@ -207,3 +210,17 @@ export function importProject(input: string | TableProject): Promise<TableProjec
 export function projectSummary(project: TableProject): ProjectSummary;
 export function createTableWorkspace(project: TableProject): Promise<TableWorkspace>;
 export function createTableArchive(project: TableProject): Promise<{ workspace: TableWorkspace; bytes: Uint8Array }>;
+
+/** Explicit operator decisions, bound to one source edition and parsing choice. */
+export interface CorrectionContext {editionId:string;sourceSha256:string;parser:{delimiter:Delimiter;header:boolean;skipEmptyRecords:boolean}}
+export interface CorrectionDecision {id:string;value?:string;reason:string;actor:string;at:string}
+export interface CorrectionEvent {id:string;at:string;actor:string;reason:string;action:'set-cell'|'restore-cell'|'exclude-row'|'restore-row';record:number;column?:number;original:string|string[];before:CorrectionDecision|null;after:CorrectionDecision|null}
+export interface SourceCorrections {schema:'stellar-forge.source-table-corrections.v1';context:CorrectionContext;revision:number;history:CorrectionEvent[]}
+export interface CorrectionInput {id:string;at?:string;actor:string;reason:string;action:CorrectionEvent['action'];record:number;column?:number;value?:string}
+export interface SourceRecordPage {context:CorrectionContext;headings:string[];total:number;offset:number;limit:number;revision:number;correctedCells:number;excludedRecords:number;rows:(ParsedRecord&{exclusion:CorrectionDecision|null;decisions:(CorrectionDecision|null)[]})[]}
+export function correctionContext(edition:SourceEdition,mapping:DialectOptions):CorrectionContext;
+export function correctionState(edition:SourceEdition,mapping:DialectOptions,value?:SourceCorrections|null):{parsed:ParsedTable;cells:Map<string,CorrectionDecision>;excluded:Map<number,CorrectionDecision>;revision:number};
+export function correctionsCsv(value?:SourceCorrections|null):string;
+export function selectedCorrections(doc:TableDocument):SourceCorrections|null;
+export function recordCorrection(project:TableProject,documentId:string,input:CorrectionInput):TableProject;
+export function sourceRecords(doc:TableDocument,options?:{offset?:number;limit?:number}):SourceRecordPage;
