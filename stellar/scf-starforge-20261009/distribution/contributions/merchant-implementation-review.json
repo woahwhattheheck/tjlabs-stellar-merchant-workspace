@@ -1,0 +1,22 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-implementation-review",
+  "description": "Original saved implementation selection, offline customer and technical observations, reviewed native return and full case receiving",
+  "components": [
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console"
+  ],
+  "commands": {
+    "merchant-implementation-review": "stellar/scf-starforge-20261009/sf74-merchant-support-console/implementation-review-cli.mjs"
+  },
+  "commandDescriptions": {
+    "merchant-implementation-review": "Prepare complete offline recipient work, compare the original return and save attributed observations in its original case"
+  },
+  "exports": {
+    "./merchant/implementation-review": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/case-implementation-review.mjs",
+    "./merchant/implementation-review-model": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/implementation-review-model.mjs",
+    "./merchant/implementation-review-cli": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/implementation-review-cli.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/IMPLEMENTATION_REVIEW.md"
+  ]
+}

@@ -167,6 +167,10 @@ function receivingSubject(state,editionId,taskIds,materialIds,indexes=subjectInd
     tasks:selectedTaskDefinitions(state,taskIds,indexes),materials:receivingMaterials(state,materialIds,indexes),
     deliverables:receivingDeliverables(state,editionId,taskIds,materialIds,indexes)};
 }
+/** Exact original receiving scope for source-bound review adapters. */
+export function commissioningReceivingSubject(state,editionId,taskIds,materialIds) {
+  return copy(receivingSubject(state,editionId,taskIds,materialIds));
+}
 export function commissioningReceivingMatches(state,row,indexes=subjectIndexes(state)) {
   return stable(row.subject)===stable(receivingSubject(state,row.editionId,row.taskIds,row.materialIds,indexes));
 }
@@ -602,6 +606,23 @@ async function receive(state,payload,context) {
   row.subjectSha256=await commissioningDigest(stable(row.subject));
   state.receiving.push(row);return {receivingId:row.id,outcome:row.outcome,kind:row.kind,subjectSha256:row.subjectSha256};
 }
+/** One recipient return, original file and all attributed observations commit
+ * through the existing command/event and the caller's one case CAS. */
+async function receivingBatch(state,payload,context) {
+  record(payload,['material','observations'],'receiving batch');
+  ensure(payload.material?.kind==='observation','Retain the returned review as an observation file');
+  array(payload.observations,1000,'returned observations');
+  ensure(payload.observations.length,'Record at least one actual observation');
+  const material=await addMaterial(state,payload.material,context),receiving=[];
+  for(const observation of payload.observations) {
+    record(observation,['actor','payload'],'attributed observation');
+    text(observation.actor,200,'original reviewer',{empty:false});
+    ensure(observation.payload?.materialIds?.includes(material.materialId),
+      'Keep the complete returned review with each original observation');
+    receiving.push(await receive(state,observation.payload,{...context,actor:observation.actor}));
+  }
+  return {material,...(receiving.length?{receiving}:{})};
+}
 function measure(state,payload,context) {
   record(payload,['id','editionId','phase','taskDefinition','comparisonKey','inputDescription','outputDescription',
     'unit','units','activeMinutes','elapsedMinutes','manualCorrections','observedAt','materialIds','reference','notes','supersedesId'],'measurement payload');
@@ -643,6 +664,7 @@ export async function applyCommissioningCommand(value,command) {
     case 'accept_source_changes':result=acceptChanges(state,command.payload);break;
     case 'add_material':result=await addMaterial(state,command.payload,context);break;
     case 'record_receiving':result=await receive(state,command.payload,context);break;
+    case 'record_receiving_batch':result=await receivingBatch(state,command.payload,context);break;
     case 'record_measurement':result=measure(state,command.payload,context);break;
     default:throw commissioningError('UNKNOWN_COMMISSIONING_OPERATION','Unknown implementation operation');
   }
