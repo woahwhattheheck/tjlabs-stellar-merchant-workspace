@@ -1,0 +1,631 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "harbour-source",
+  "heading": "## Harbour source, operating evidence and complete customer receiving",
+  "sources": [
+    {
+      "id": "harbour-source-installation-harbour-installation-core-mjs",
+      "label": "harbour-installation-core.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/harbour-installation-core.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 14577,
+          "sha256": "db5c130846adfa57c12c38f710739a9efaa11175987c379f074de1d728ecd820",
+          "git_blob": "cf14ca216756d530cf683a9d51208ad278e43500"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-installation-harbour-installation-io-mjs",
+      "label": "harbour-installation-io.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/harbour-installation-io.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 4005,
+          "sha256": "357f8a1036d9eed2aa4744409a2aead0b2af635691e9587e30ca457958ad076f",
+          "git_blob": "e9506741cd936b5ace78df906924e61591e5fc1d"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-installation-harbour-installation-mjs",
+      "label": "harbour-installation.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/harbour-installation.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 9952,
+          "sha256": "41c34604f4a61161e3c222bd63e4649f65e6e9fd05ed8da9934e84c7bd77e488",
+          "git_blob": "1d05dc7f95b3f3d55d02b8c995ec05bf4c6fc6f1"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-installation-harbour-installation-receiving-mjs",
+      "label": "harbour-installation-receiving.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/harbour-installation-receiving.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 15321,
+          "sha256": "719dc98f3e0b1485f41f5129178cf65e8dfd0e7059ec72eac86aed934a709a06",
+          "git_blob": "2e0129a1373cd1f97c89de97fbb3810700100756"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-installation-harbour-installation-operations-py",
+      "label": "harbour-installation-operations.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/harbour-installation-operations.py",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 3267,
+          "sha256": "194dab6d295b466a7e656bc38d41fa3251bedf1a04feea34c2fc4bf0c4f344cb",
+          "git_blob": "1d5385100c17ed1557f06ac393ef645291bf3eb4"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-installation-harbour-source-json",
+      "label": "harbour-source.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/harbour-source.json",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 11913,
+          "sha256": "a3b116afcabde6bc47ec38de174208aa94e216ea7e5358547e4ddd0cd0b0bd0a",
+          "git_blob": "c77e6e496cad8c93c519fc3e82d7e145e80a0b1a"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-agent-io-mjs",
+      "label": "agent-io.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/agent-io.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 3656,
+          "sha256": "106fa5c4b6cc89add861a007ed54996e36b8bdadb1a70e28ee943b86233e042c",
+          "git_blob": "b88056a3bb436eee0122af7f7fd7fa87a0564dd1"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-agent-client-mjs",
+      "label": "agent-client.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/agent-client.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 18311,
+          "sha256": "b3937150811af2ab48ac2948b6304b36be16c46a824bffd2e7d6816576bc6bc1",
+          "git_blob": "fa32815e20d99ca7a38d1089a3f61aff445305d9"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-merchant-provider-mjs",
+      "label": "merchant-provider.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/merchant-provider.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 2345,
+          "sha256": "0b66ec56a5ea89bda428e9bc7215833206d360241ea8e18b6fcffae7afbec29b",
+          "git_blob": "8af9f3db64cd840f0a487e0f35a4a9fbb60aac94"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-agent-merchant-mjs",
+      "label": "agent-merchant.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/agent-merchant.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 4514,
+          "sha256": "381994e06584576677c9cf062c53494b791c03e7c23854ab2dc6bdffb53b2d54",
+          "git_blob": "3349a2b6a70965310b2af2ecd60bb50e6f6f45c5"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-agent-setup-mjs",
+      "label": "agent-setup.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/agent-setup.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 5579,
+          "sha256": "ccbba94a64366143e63fbfeeeb66da8326bf97e43384b061ea82395636451869",
+          "git_blob": "cfa9bd91f0ff66d1fc1dbd703e70f4b292dc3997"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-agent-tools-mjs",
+      "label": "agent-tools.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/agent-tools.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 15606,
+          "sha256": "0a1b30ed15cb9d908a69dd34d247a5e1a142f746bbd4c52225451ba4deff7cc9",
+          "git_blob": "ae0829d34b7fe849a0e4245036e061d6d2e5afe4"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-agent-client-d-mts",
+      "label": "agent-client.d.mts",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/agent-client.d.mts",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 8641,
+          "sha256": "51a04d5072c37df3587064f288111d1e601771f687f6e2c52feb88665120090f",
+          "git_blob": "3a1a9664c891c548f2a277b2859b2dcca967f567"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-agent-receiving-mjs",
+      "label": "agent-receiving.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/agent-receiving.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 14758,
+          "sha256": "f845fdecc8a47e92ba6ad0559758f78ab963c77252fb558daa712dacb8adb2a6",
+          "git_blob": "23e4f5cd5ea9325cae588e86f54cd9eede37bad9"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-installation-harbour_installation-md",
+      "label": "HARBOUR_INSTALLATION.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/HARBOUR_INSTALLATION.md",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 20534,
+          "sha256": "6a1643811fcc81b178e3c719d85a2ccc469c23a7f247407b9a5f67e0ecf65982",
+          "git_blob": "f872080203b7245024a2f5e6faa86c7937d6a2f0"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-agent_operating-md",
+      "label": "AGENT_OPERATING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/AGENT_OPERATING.md",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 13049,
+          "sha256": "4b7b41d6d9087106c4255a8345f0590c7ffa1554877bcd5fa85d060df11b3bd4",
+          "git_blob": "23e56674e40f79ff9950c1842705cc115b309107"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-agent_receiving-md",
+      "label": "AGENT_RECEIVING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/AGENT_RECEIVING.md",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 7995,
+          "sha256": "4bb222c17c6bde7f936b0a0cbddae67ed1d15285e1e7a30af79b20670139e56b",
+          "git_blob": "7032ee63893c1a16bdfa1be88ecdfd3c5789f6d2"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-product-operating-md",
+      "label": "OPERATING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/harbour-source/OPERATING.md",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 5681,
+          "sha256": "fa043340bec515f5bb80e9a36369c3e043aa2e80dee7ac917170f7040a6b844e",
+          "git_blob": "c2bea72c910c689a01c17d0428fd1a11f9c33dc6"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-distribution-contribution",
+      "label": "harbour-source.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/harbour-source.json",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 4819,
+          "sha256": "6655339cb8446b4c20ce009565ff5b14d25c3df5a379088070157eb2e259ed52",
+          "git_blob": "5a38b61cf915870a5bf6f54345812fa0e8597ab8"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-distribution-selection",
+      "label": "harbour-source.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/harbour-source.json",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 22644,
+          "sha256": "14bf61ce7718bbb17d48119ac7d4ba641e5094290a872b7bad150b7e6c6d7b09",
+          "git_blob": "41bff093c5fbcdf53bc04c2463a758b07e8442e9"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-engine-mjs",
+      "label": "engine.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/engine.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 105467,
+          "sha256": "469e63afb9d603155e146d9841546c46e2c6e1f93c8a6a1e4fa5ec8a0e31cab2",
+          "git_blob": "1f5dedb6d907062a6e400ecfe539fac7b5ecbad6"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-sha256-mjs",
+      "label": "sha256.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/sha256.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 18024,
+          "sha256": "c09f19a6d03f39a4f46d4023ea5d7a90b1d472ee89975f189ebd53bf21d135a5",
+          "git_blob": "89e70f039fcb472c12540243cc9550f23b59b645"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-api-md",
+      "label": "API.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/API.md",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 9465,
+          "sha256": "068b48815a044cdf3a12d350cbc722545dacae83b6fe3e2502367e9a547ca90b",
+          "git_blob": "21f2d4f98e7a6b2f04b922772fd1376b5d005199"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-receiving-fixture-mjs",
+      "label": "receiving-fixture.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/receiving-fixture.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 12633,
+          "sha256": "4daa42cdd1b65d88f942485a829879e4664f02f875b055699d56454f63396917",
+          "git_blob": "f055a669f9338c8e6f286f834a222a52de87fbd7"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-cli-mjs",
+      "label": "cli.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/cli.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 14090,
+          "sha256": "405a5abbfe2196462e4a81dc1deec7394bd9537f659c54bf8ff7aec1bc4355eb",
+          "git_blob": "23678d1b2ed3c73f80cfa81ac0e689cb4e7a4c89"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-core_operating-md",
+      "label": "CORE_OPERATING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/CORE_OPERATING.md",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 13716,
+          "sha256": "2a00cf59c6e834937a0d16d58d8a0ad7125987721db94f27fbd54f40a0f2d60f",
+          "git_blob": "e8693e2724c12fc9ca13f75a71006db54098ab36"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-portable-mjs",
+      "label": "portable.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/portable.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 9995,
+          "sha256": "9bffc5ed1c699c6dacf63ed47cf13cbb76758ecea1fed220a20db34ba10ac0df",
+          "git_blob": "c457974e25924411fd3216128bc71fad77c17a5b"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-store-mjs",
+      "label": "store.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/store.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 5473,
+          "sha256": "5e0b15c4cbe1b27d9bdfe3d5dd1a5c69ac574deeca7a62de1d288a68c6516f84",
+          "git_blob": "3a3acc33a8d07db236f1f7e177fcfe52af653c5e"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-style-css",
+      "label": "style.css",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/style.css",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 6230,
+          "sha256": "b4e57712c89ac5ce78b903e9daa446dc8bde63f9709b60ea9a677b8cf92f77a1",
+          "git_blob": "25e90bf19228b56f41bd1d822c0cd4046f7b3704"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-template-html",
+      "label": "template.html",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/template.html",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 1026,
+          "sha256": "b1317218ec2b359f3aa3953104bc64cb82f6dc913ff0e21755da4f2d620e7d3e",
+          "git_blob": "09145bf837850f0e2368bb39575da35976d1436a"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-build-mjs",
+      "label": "build.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/build.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 6612,
+          "sha256": "e6d8a64e4d5accd3e61b497430a62dce2d0cf6412ed24108316368a1819a98d8",
+          "git_blob": "9dd2d61e4e99e0ce470c6ef60edbaf0ead5e4b16"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-app-mjs",
+      "label": "app.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/app.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 62263,
+          "sha256": "225e306db736f1fdd271902e866987960aec8fb859f48282224eccca4441d024",
+          "git_blob": "54f24d04d59acfbb42c2d6bc5752449ea7bc2f1e"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-run_browser_receiving-mjs",
+      "label": "run_browser_receiving.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/run_browser_receiving.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 38156,
+          "sha256": "d8a685bb0292cf6042d9b709da1bcf3b66490a2b396cf58bc7122035cb547c7a",
+          "git_blob": "29ad8c0c91b56a5e8a4dfff70c785382c36bb050"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-readme-md",
+      "label": "README.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/README.md",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 6713,
+          "sha256": "2ffdd519705cb4c2c1c2603d4232c31d5dac81a8190ab1340419cf8bd823e073",
+          "git_blob": "a4b419a1ca6cefcc4fad0514dc1a4064b4b773ed"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-browser_operating-md",
+      "label": "BROWSER_OPERATING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/BROWSER_OPERATING.md",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 3891,
+          "sha256": "6baee1a8cd8ca3a4e1855dc2425db67bc99670db71ebeadf8e150e76da3d4619",
+          "git_blob": "c15af36f9ce67c44679e7353888bea1523d737d6"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-app-harbour_source_workspace-html",
+      "label": "Harbour_Source_Workspace.html",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/Harbour_Source_Workspace.html",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 640738,
+          "sha256": "3560e245f1c057268ddb712a830cbb7a881a0d318e1d5ac7c4a8d18ce28892f7",
+          "git_blob": "ba391700a99af4808415d6147d1146b1630c2097"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-product-source_adoption-json",
+      "label": "SOURCE_ADOPTION.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/harbour-source/SOURCE_ADOPTION.json",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 4248,
+          "sha256": "77427195906960a266e879b42c4b096a7eab41d0c3bf7483d2fff147117eb0bd",
+          "git_blob": "3d9b2130c46fdeb2e22c4f286ee93ac4263ef579"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-browser-continuation",
+      "label": "Original caller-owned browser continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/migration-receiving/continuation.mjs",
+      "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+      "editions": [
+        {
+          "commit": "817559b68e176675498a8fae773e9dade1f111eb",
+          "bytes": 15167,
+          "sha256": "afdc8cca5af49f6de50f6195e1827c6ad5f4dd355053780455b3fef53e753142",
+          "git_blob": "37533d2bbcbecb1a8238d87c237e6f0af5434ef6"
+        }
+      ]
+    },
+    {
+      "id": "harbour-source-original-prospect-application",
+      "label": "Original separately selected prospect application",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "services/harbour-source-workspace/Harbour_Source_Workspace.html",
+      "commit": "fcb5d42f80db396a35ed1af5b2d2f007424cf7a5",
+      "editions": [
+        {
+          "commit": "fcb5d42f80db396a35ed1af5b2d2f007424cf7a5",
+          "bytes": 544580,
+          "sha256": "547d4590da142b312daeeab5b6adef07abcf555d0088b3e7e2ed547fb8153de4",
+          "git_blob": "d3b12c5812513202ffe6bceb4b645b56c1d2214e"
+        }
+      ]
+    }
+  ]
+}
