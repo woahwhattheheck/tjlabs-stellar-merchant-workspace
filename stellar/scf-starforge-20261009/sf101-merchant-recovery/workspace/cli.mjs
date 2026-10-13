@@ -9,6 +9,14 @@ export const HELP = 'SF101 recovery workspace\n\n' +
   'starforge merchant-recovery-remote workspace serve --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE [--port 8481]\n' +
   'starforge merchant-recovery-remote workspace show --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE\n' +
   'starforge merchant-recovery-remote workspace COMMAND --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE [OPTIONS]\n\n' +
+  'support-cases List existing cases: --profile ID [--limit N].\n' +
+  'support-transfers List saved/prepared transfers: --profile ID.\n' +
+  'support-transfer Read the original transfer: --profile ID --transfer-id ID.\n' +
+  'support-review Freeze complete request/evidence and case selection: --selection ABS_JSON.\n' +
+  'support-save Commit that exact review: --profile ID --transfer-id ID --expected-support-review HASH.\n' +
+  'support-handoff Read the complete saved Support handoff: --profile ID --transfer-id ID.\n' +
+  'support-export Export full case/history/source: --profile ID --transfer-id ID --expected-support-review HASH.\n' +
+  'support-package Inspect the existing whole package: --profile ID --transfer-id ID.\n' +
   'serve       Open the retained operator workspace on 127.0.0.1. Its printed URL\n' +
   '            grants this session access to the host-selected recovery profiles.\n' +
   'show        Read saved workspace and operation status without its writer lease.\n' +
@@ -39,6 +47,10 @@ export const HELP = 'SF101 recovery workspace\n\n' +
 
 const COMMAND_OPTIONS = {
   serve: ['port'], show: [], status: [],
+  'support-cases':['profileId','limit'],'support-transfers':['profileId'],
+  'support-transfer':['profileId','transferId'],'support-review':['selectionFile'],
+  'support-save':['profileId','transferId','expectedReviewSha256'],'support-handoff':['profileId','transferId'],
+  'support-export':['profileId','transferId','expectedReviewSha256'],'support-package':['profileId','transferId'],
   'object-session': ['profileId', 'objectSessionId'], 'object-evidence': ['sha256'],
   bundles: ['profileId'], inventory: ['profileId', 'cursor', 'limit'],
   requests: ['cursor', 'limit'], request: ['profileId', 'id'],
@@ -47,6 +59,10 @@ const COMMAND_OPTIONS = {
   resume: ['profileId', 'id', 'expectedReviewHash', 'afterAttempt', 'quiesced'], cancel: ['profileId', 'id']
 };
 const REQUIRED_OPTIONS = {
+  'support-cases':['profileId'],'support-transfers':['profileId'],
+  'support-transfer':['profileId','transferId'],'support-review':['selectionFile'],
+  'support-save':['profileId','transferId','expectedReviewSha256'],'support-handoff':['profileId','transferId'],
+  'support-export':['profileId','transferId','expectedReviewSha256'],'support-package':['profileId','transferId'],
   'object-session': ['profileId', 'objectSessionId'], 'object-evidence': ['sha256'],
   bundles: ['profileId'], inventory: ['profileId'],
   request: ['profileId', 'id'], operations: ['profileId'], operation: ['profileId', 'id'],
@@ -67,6 +83,7 @@ export function parseWorkspaceArguments(argv) {
   const flags = { '--config': 'configFile', '--directory': 'directory', '--port': 'port',
     '--profile': 'profileId', '--id': 'id', '--cursor': 'cursor', '--limit': 'limit',
     '--selection': 'selectionFile', '--expected-review-hash': 'expectedReviewHash',
+    '--transfer-id':'transferId','--expected-support-review':'expectedReviewSha256',
     '--object-session': 'objectSessionId', '--sha256': 'sha256', '--after-attempt': 'afterAttempt', '--quiesced': 'quiesced' };
   for (let index = 0; index < rest.length; index++) {
     const flag = rest[index];
@@ -98,6 +115,10 @@ export function parseWorkspaceArguments(argv) {
   for (const key of ['profileId', 'id', 'objectSessionId'])
     if (result[key] !== undefined && !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$/.test(result[key]))
       throw argumentError('Select the exact original ' + key);
+  if(result.transferId!==undefined&&!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(result.transferId))
+    throw argumentError('Use the original lowercase Support transfer ID.');
+  if(result.expectedReviewSha256!==undefined&&!/^[a-f0-9]{64}$/.test(result.expectedReviewSha256))
+    throw argumentError('Use the complete confirmed Support review SHA-256.');
   if (result.expectedReviewHash !== undefined && !/^[a-f0-9]{64}$/.test(result.expectedReviewHash))
     throw argumentError('Use the complete original 64-hex workspace reviewHash');
   if (result.sha256 !== undefined && !/^[a-f0-9]{64}$/.test(result.sha256))
@@ -157,7 +178,7 @@ async function callRunningWorkspace(options) {
   } } });
   try {
     const input = { workspace: 'local' };
-    for (const key of ['profileId', 'id', 'cursor', 'limit', 'expectedReviewHash', 'objectSessionId', 'sha256', 'afterAttempt', 'quiesced'])
+    for (const key of ['profileId', 'id', 'cursor', 'limit', 'expectedReviewHash', 'objectSessionId', 'sha256', 'afterAttempt', 'quiesced', 'transferId', 'expectedReviewSha256'])
       if (options[key] !== undefined) input[key] = options[key];
     if (options.selectionFile !== undefined) input.selection = await readSelection(options.selectionFile);
     return await client.call('merchant_recovery_' + options.command.replaceAll('-', '_'), input);

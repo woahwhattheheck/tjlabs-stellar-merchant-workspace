@@ -17,6 +17,9 @@ import {X402_FILES,X402_FILE_LIMIT,readX402ObservationFiles} from '../sf93-selle
 import {x402ObservationView,x402CaptureView,compareX402Captures,x402RepairQueue} from './x402-runtime.mjs';
 import {x402CaptureHtml,x402ComparisonHtml} from './x402-render.mjs';
 
+import {RECOVERY_FILES,RECOVERY_FILE_LIMIT,readRecoveryObservationFiles,recoveryCaptureView,
+  compareRecoveryCaptures,recoveryRepairQueue,recoveryCaptureHtml} from './recovery-runtime.mjs';
+
 export const RUNTIME_SCHEMA = 'stellar-forge.merchant-runtime-case.v1';
 export const HANDOFF_SCHEMA = 'stellar-forge.merchant-support-handoff.v1';
 export const MAX_RUNTIME_BYTES = 192 * 1024 * 1024;
@@ -26,7 +29,7 @@ const MAX_FILE = 2_000_000;
 const PACKET_FILES = ['bundle.json','operator-brief.md','metrics.prom','manifest.json'];
 const NATIVE_FILES = ['report.json','events.ndjson','deliveries.ndjson'];
 const PERIOD_FILES = ['history.json',...NATIVE_FILES];
-const FILES = [...PACKET_FILES,...PERIOD_FILES,...OBJECT_FILES,...CKAN_FILES,...OAUTH_FILES,...X402_FILES];
+const FILES = [...PACKET_FILES,...PERIOD_FILES,...OBJECT_FILES,...CKAN_FILES,...OAUTH_FILES,...RECOVERY_FILES,...X402_FILES];
 const INPUTS = ['resource','catalog','origin','network','payTo','method','credentialed'];
 const COUNTERS = ['started','completed','responses','inFlight','success','challenge','clientError','serverError','other','disconnected'];
 const CUMULATIVE = COUNTERS.filter(key=>key!=='inFlight');
@@ -181,6 +184,12 @@ function periodPacket(bytes) {
 }
 function readCaptureFiles(files) {
   fields(files,FILES,'runtime files');
+  if(own(files,'recovery-observation.json')) {
+    if(Object.keys(files).length!==RECOVERY_FILES.length||RECOVERY_FILES.some(name=>!own(files,name)))
+      fail('A recovery observation needs all three original files without another capture mixed into them');
+    const bytes=Object.fromEntries(RECOVERY_FILES.map(name=>[name,source(files[name],name,RECOVERY_FILE_LIMIT)]));
+    return {kind:'RECOVERY_OPERATION',bytes,original:readRecoveryObservationFiles(bytes)};
+  }
   if(own(files,'object-observation.json')) {
     if(Object.keys(files).length!==OBJECT_FILES.length||OBJECT_FILES.some(name=>!own(files,name)))
       fail('An Object observation needs all three original files without another runtime capture mixed into them');
@@ -231,6 +240,12 @@ function sample(value) {
   fields(value.scope,['inputs','routeId','path'],'runtime route mapping');
   const inputs=inputScope(value.scope.inputs),routeId=text(value.scope.routeId,80,'selected runtime route',false);
   const {kind,bytes,original,nativeCount}=readCaptureFiles(value.files);
+  if(kind==='RECOVERY_OPERATION') {
+    if(own(value.scope,'path')||routeId!==original.meta.requestId)
+      fail('Select the original recovery request identity without a runtime route path');
+    return {kind,scope:{inputs,routeId},files:value.files,original,
+      route:{id:routeId,method:null},native:null};
+  }
   if(kind==='OBJECT_SESSION') {
     if(own(value.scope,'path')||inputs.method!=='GET'||routeId!==original.meta.registration.id)
       fail('Select the registered original Object source and the GET case method');
@@ -292,6 +307,8 @@ export function parseRuntime(textValue) {
     nativeCaptures:Number(Boolean(before?.native))+Number(Boolean(after?.native)),
     files:[before,after].filter(Boolean).reduce((n,s)=>n+Object.keys(s.files).length,0),
     sourceBytes:[before,after].filter(Boolean).reduce((n,s)=>n+Object.values(s.files).reduce((k,f)=>k+f.bytes,0),0),
+    ...([before,after].some(c=>c?.kind==='RECOVERY_OPERATION')?
+      {recoveryCaptures:[before,after].filter(c=>c?.kind==='RECOVERY_OPERATION').length}: {}),
     ...([before,after].some(c=>c?.kind==='OBJECT_SESSION')?
       {objectCaptures:[before,after].filter(c=>c?.kind==='OBJECT_SESSION').length}: {}),
     ...([before,after].some(c=>c?.kind==='X402_MERCHANT')?
@@ -307,7 +324,7 @@ export function inspectRuntimeFiles({files,inputs,routeId,path}) {
   fields(files,FILES,'uploaded runtime files');
   const wrapped={},defaultMaximum=own(files,'history.json')?MAX_PERIOD_SOURCE_BYTES:MAX_FILE;
   for(const [name,data] of Object.entries(files)) {
-    const maximum=X402_FILES.includes(name)?X402_FILE_LIMIT:OAUTH_FILES.includes(name)?OAUTH_FILE_LIMIT:CKAN_FILES.includes(name)?CKAN_FILE_LIMIT:defaultMaximum;
+    const maximum=RECOVERY_FILES.includes(name)?RECOVERY_FILE_LIMIT:X402_FILES.includes(name)?X402_FILE_LIMIT:OAUTH_FILES.includes(name)?OAUTH_FILE_LIMIT:CKAN_FILES.includes(name)?CKAN_FILE_LIMIT:defaultMaximum;
     if(typeof data!=='string'||data.length>4*Math.ceil(maximum/3))fail('Invalid uploaded '+name);
     const bytes=Buffer.from(data,'base64');
     if(bytes.toString('base64')!==data)fail('Invalid source encoding for '+name);
@@ -317,6 +334,9 @@ export function inspectRuntimeFiles({files,inputs,routeId,path}) {
   // mapping for attachment. The packet itself does not claim an external origin.
   if(routeId===undefined) {
     const {kind,original}=readCaptureFiles(wrapped);
+    if(kind==='RECOVERY_OPERATION')return {kind,routes:[{id:original.meta.requestId,method:null}],
+      sessionId:original.meta.sessionId,capturedAt:original.meta.capturedAt,
+      mode:'ORIGINAL_RECOVERY_EVIDENCE',recovery:original.summary};
     if(kind==='OBJECT_SESSION')return {kind,routes:[{id:original.meta.registration.id,method:'GET'}],
       sessionId:original.meta.selection.sessionId,capturedAt:original.meta.generatedAt,
       mode:'ORIGINAL_READ_ONLY_BUYER',object:original.summary};
@@ -340,6 +360,7 @@ export function inspectRuntimeFiles({files,inputs,routeId,path}) {
 }
 function captureView(capture,currentInputs) {
   if(!capture)return null;
+  if(capture.kind==='RECOVERY_OPERATION')return recoveryCaptureView(capture,inputScope(currentInputs));
   if(capture.kind==='OBJECT_SESSION')return objectCaptureView(capture,inputScope(currentInputs));
   if(capture.kind==='X402_MERCHANT')return x402CaptureView(capture,inputScope(currentInputs));
   if(capture.kind==='OAUTH_RESOURCE')return oauthCaptureView(capture,inputScope(currentInputs));
@@ -423,6 +444,7 @@ function compareRuntime(before,after) {
   if(!isDeepStrictEqual(before.scope.inputs,after.scope.inputs)||before.scope.routeId!==after.scope.routeId||
     !before.caseMatches||!after.caseMatches)
     return {state:'SCOPE_DIFFERS',detail:'The case inputs or selected runtime route changed. Review each capture under its saved scope.',interval:null};
+  if(before.kind==='RECOVERY_OPERATION'||after.kind==='RECOVERY_OPERATION')return compareRecoveryCaptures(before,after);
   if(before.kind==='X402_MERCHANT'||after.kind==='X402_MERCHANT')return compareX402Captures(before,after);
   if(before.kind==='OAUTH_RESOURCE'||after.kind==='OAUTH_RESOURCE')return compareOAuthCaptures(before,after);
   if(before.kind==='CKAN_WORKBENCH'||after.kind==='CKAN_WORKBENCH')return compareCkanCaptures(before,after);
@@ -454,6 +476,7 @@ export function reviewRuntime(supportText,inputs) {
   const parsed=parseRuntime(supportText),before=captureView(parsed.before,inputs),after=captureView(parsed.after,inputs);
   const comparison=compareRuntime(before,after),queue=[];
   for(const [side,capture] of [['before',before],['after',after]])if(capture) {
+    if(capture.kind==='RECOVERY_OPERATION')queue.push(...recoveryRepairQueue(capture,side));
     if(capture.kind==='OBJECT_SESSION')queue.push(...objectRepairQueue(capture,side));
     if(capture.kind==='CKAN_WORKBENCH')queue.push(...ckanRepairQueue(capture,side));
     if(capture.kind==='X402_MERCHANT')queue.push(...x402RepairQueue(capture,side));
@@ -478,7 +501,9 @@ export function reviewRuntime(supportText,inputs) {
   if(observed.disconnected)queue.push({source:comparison.interval?'interval':after?'after':'before',routeId:latest.scope.routeId,kind:'http',action:`Review ${observed.disconnected} disconnected request(s), backend deadlines and caller cancellation.`});
   return {schema:'stellar-forge.merchant-runtime-review.v1',generatedAt:new Date().toISOString(),
     before,after,comparison,queue,summary:parsed.summary,
-    interpretation:[before,after].some(c=>c?.kind==='X402_MERCHANT')?
+    interpretation:[before,after].some(c=>c?.kind==='RECOVERY_OPERATION')?
+      'Recovery captures retain the exact saved operation, reviewed native source, all referenced evidence and native process/publication outcomes. They do not count HTTP traffic or prove a payment. The encrypted recovery bundle remains external unless independently retained through its original native source-delivery owner; textual evidence alone cannot restore a session.':
+      [before,after].some(c=>c?.kind==='X402_MERCHANT')?
       'Merchant observations retain complete original operational metadata. Receipt verification is the original stored outcome; result completion is the original fulfillment receipt. The observer performs no payment, ledger query, fulfillment or result-byte verification. Unknown source coverage cannot establish recovery.':
       [before,after].some(c=>c?.kind==='OAUTH_RESOURCE')?
       'OAuth observations retain the original verifier resource, reviewed configuration, authority, per-stage checks and exact source files. Authentication and authorization counts are checks, not HTTP requests. Ordinary denials remain enforcement outcomes. Only the original SF93 classifier evaluates failure and recovery conditions; other attached capture kinds retain their own source units and histories.':
@@ -541,10 +566,10 @@ function periodComparisonHtml(comparison) {
 export function runtimeHtml(report,{name='Merchant case',metadata={}}={}) {
   const sections=['before','after'].filter(side=>report[side]).map(side=>{
     const c=report[side],r=c.route;
-    return `<section><h2>${side==='before'?'Before':'After'} · ${escape(r.id)}</h2><p>${escape(c.scope.inputs.resource)} · ${escape(r.method)}</p><p>${escape(c.startedAt)} → ${escape(c.capturedAt)} · ${escape(c.mode)} · ${c.kind==='CKAN_WORKBENCH'?'Project identity '+escape(c.sessionId):c.period?c.sessionIds.length+' original sessions':'Session '+escape(c.sessionId)}</p>
-      ${c.kind==='X402_MERCHANT'?x402CaptureHtml(c):c.kind==='OAUTH_RESOURCE'?oauthCaptureHtml(c):c.kind==='CKAN_WORKBENCH'?ckanCaptureHtml(c):c.kind==='OBJECT_SESSION'?objectCaptureHtml(c):`<table><tr><th>Started</th><th>Completed</th><th>2xx</th><th>402</th><th>5xx</th><th>Disconnected</th></tr><tr>${['started','completed','success','challenge','serverError','disconnected'].map(k=>'<td>'+r[k]+'</td>').join('')}</tr></table>`}
+    return `<section><h2>${side==='before'?'Before':'After'} · ${escape(r.id)}</h2><p>${escape(c.scope.inputs.resource)} · ${c.kind==='RECOVERY_OPERATION'?'Native recovery evidence':escape(r.method)}</p><p>${escape(c.startedAt)} → ${escape(c.capturedAt)} · ${escape(c.mode)} · ${c.kind==='CKAN_WORKBENCH'?'Project identity '+escape(c.sessionId):c.period?c.sessionIds.length+' original sessions':'Session '+escape(c.sessionId)}</p>
+      ${c.kind==='RECOVERY_OPERATION'?recoveryCaptureHtml(c):c.kind==='X402_MERCHANT'?x402CaptureHtml(c):c.kind==='OAUTH_RESOURCE'?oauthCaptureHtml(c):c.kind==='CKAN_WORKBENCH'?ckanCaptureHtml(c):c.kind==='OBJECT_SESSION'?objectCaptureHtml(c):`<table><tr><th>Started</th><th>Completed</th><th>2xx</th><th>402</th><th>5xx</th><th>Disconnected</th></tr><tr>${['started','completed','success','challenge','serverError','disconnected'].map(k=>'<td>'+r[k]+'</td>').join('')}</tr></table>`}
       <p>${c.caseMatches?'Mapped to the current case inputs.':'Saved mapping differs from the current case.'}</p>
-      ${['OBJECT_SESSION','CKAN_WORKBENCH','OAUTH_RESOURCE','X402_MERCHANT'].includes(c.kind)?'':periodHtml(c)+nativeHtml(c)}
+      ${['RECOVERY_OPERATION','OBJECT_SESSION','CKAN_WORKBENCH','OAUTH_RESOURCE','X402_MERCHANT'].includes(c.kind)?'':periodHtml(c)+nativeHtml(c)}
       <details><summary>Original runtime alerts</summary><ul>${c.alerts.map(a=>'<li>'+escape(a)+'</li>').join('')}</ul></details>
       <details><summary>Original source files</summary><table><tr><th>File</th><th>Bytes</th><th>SHA-256</th></tr>${c.files.map(f=>`<tr><td>${escape(f.name)}</td><td>${f.bytes}</td><td><code>${f.sha256}</code></td></tr>`).join('')}</table></details></section>`;
   }).join('');

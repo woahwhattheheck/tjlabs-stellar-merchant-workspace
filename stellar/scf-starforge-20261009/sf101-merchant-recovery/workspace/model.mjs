@@ -10,6 +10,7 @@ import { inspectLocalCapture, readCapturedBundle, runLocalCapture, runLocalVerif
 import { acquireDeliveryLease } from '../../sf98-merchant-delivery/delivery-lock.mjs';
 import { inspectLocalFleetRestore, runLocalFleetPreparation } from './fleet.mjs';
 import { compileObjectSessions, createObjectRecoveryAdapter } from './object-sessions.mjs';
+import { createRecoverySupport } from './recovery-support.mjs';
 
 export const HOST_SCHEMA = 'stellar-forge.recovery-workspace.v1';
 const STATE_SCHEMA = 'stellar-forge.recovery-workspace-state.v1';
@@ -105,7 +106,7 @@ function compileHost(value) {
     value.profiles.length > 0 && value.profiles.length <= 32, 'WORKSPACE_HOST_CONFIG_INVALID');
   const seen = new Set();
   const profiles = value.profiles.map(input => {
-    exact(input, ['id', 'label', 'storeConfig', 'operations', 'passEnv', 'bundleRoots', 'downloadRoot', 'restoreRoot', 'capturePlans', 'publisherRestores', 'fleetRestores', 'fleetTargets', 'objectSessions'], 'profile');
+    exact(input, ['id', 'label', 'storeConfig', 'operations', 'passEnv', 'bundleRoots', 'downloadRoot', 'restoreRoot', 'capturePlans', 'publisherRestores', 'fleetRestores', 'fleetTargets', 'objectSessions', 'casesDirectory', 'caseSourceDirectory'], 'profile');
     const id = identifier(input.id, 'profile ID');
     need(!seen.has(id), 'WORKSPACE_DUPLICATE_PROFILE'); seen.add(id);
     need(PASS_ENV.test(input.passEnv ?? ''), 'WORKSPACE_PASSPHRASE_NAME_INVALID');
@@ -186,7 +187,9 @@ function compileHost(value) {
     return { id, label: label(input.label, id),
       storeConfig: input.storeConfig == null ? null : absolute(input.storeConfig, 'S3 configuration'),
       operations: absolute(input.operations, 'Original operations directory'), passEnv: input.passEnv, bundleRoots,
-      capturePlans, publisherRestores, fleetRestores, fleetTargets, objectSessions, downloadRoot, restoreRoot };
+      capturePlans, publisherRestores, fleetRestores, fleetTargets, objectSessions, downloadRoot, restoreRoot,
+      ...(input.casesDirectory===undefined?{}:{casesDirectory:absolute(input.casesDirectory,'Support cases')}),
+      ...(input.caseSourceDirectory===undefined?{}:{caseSourceDirectory:absolute(input.caseSourceDirectory,'Original case source delivery')}) };
   });
   return { schema: HOST_SCHEMA, title: label(value.title, 'Merchant recovery'), profiles };
 }
@@ -242,6 +245,15 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
       for (const path of [declaration.stateRoot,declaration.bundle])
         for (const control of [directory,...host.profiles.map(row=>row.operations)])
           need(!inside(path,control)&&!inside(control,path),'WORKSPACE_OBJECT_CONTROL_OVERLAP');
+    for(const path of [profile.casesDirectory,profile.caseSourceDirectory].filter(Boolean)) {
+      need(!inside(directory,path)&&!inside(path,directory),'WORKSPACE_SUPPORT_CONTROL_OVERLAP');
+      for(const other of [profile.operations,...profile.objectSessions.flatMap(row=>[row.stateRoot,row.bundle])])
+        need(!inside(other,path)&&!inside(path,other),'WORKSPACE_SUPPORT_SOURCE_OVERLAP');
+      await privateDirectory(path);
+    }
+    need(!profile.caseSourceDirectory||profile.casesDirectory,'WORKSPACE_SUPPORT_CASES_REQUIRED');
+    if(profile.casesDirectory&&profile.caseSourceDirectory)need(!inside(profile.casesDirectory,profile.caseSourceDirectory)&&
+      !inside(profile.caseSourceDirectory,profile.casesDirectory),'WORKSPACE_SUPPORT_SOURCE_OVERLAP');
     if (profile.storeConfig !== null) await privateBytes(profile.storeConfig);
     // Original plan files are read for fresh capture review. Retained operations can reopen after source removal.
     if (await exists(profile.operations)) await privateDirectory(profile.operations);
@@ -270,6 +282,16 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
 
   const objectAdapter = createObjectRecoveryAdapter({directory,environment:process.env,
     isClosing:()=>closing||closed,readOnly});
+  const support = createRecoverySupport({directory,workspaceId:workspaceState.id,profiles:host.profiles,currentHost,
+    readRequestBytes:async(profileId,id)=>{selectedProfile(profileId);identifier(id,'operation ID');
+      const raw=await privateBytes(requestPath(profileId,id));
+      const saved=JSON.parse(raw.toString('utf8'));
+      need(saved.schema===REQUEST_SCHEMA&&saved.review?.profileId===profileId&&saved.review?.operationId===id,
+        'WORKSPACE_REQUEST_IDENTITY_INVALID');return raw;},
+    readEvidenceBytes:async(sha256)=>{const found=await objectAdapter.evidence(sha256);
+      const raw=Buffer.from(JSON.stringify(found.evidence)+'\n');
+      need(raw.length===found.bytes&&hash(raw)===sha256,'WORKSPACE_OBJECT_EVIDENCE_CHANGED');return raw;},
+    isActive:(profileId,id)=>active?.key===requestPath(profileId,id),isClosing:()=>closing||closed,readOnly});
   const objectReviews = join(directory,'object-reviews');
   function declaredObject(profile,id) {
     identifier(id,'Object-session declaration');
@@ -979,6 +1001,7 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
       bundleRoots: clone(profile.bundleRoots), capturePlans: clone(profile.capturePlans),
       publisherRestores: clone(profile.publisherRestores), fleetRestores: clone(profile.fleetRestores),
       fleetTargets: clone(profile.fleetTargets), objectSessions:clone(profile.objectSessions),
+      supportConfigured:!!profile.casesDirectory,caseSourceConfigured:!!profile.caseSourceDirectory,
       downloadRoot: profile.downloadRoot, restoreRoot: profile.restoreRoot,
       passEnv: profile.passEnv, passphraseAvailable: typeof process.env[profile.passEnv] === 'string' && process.env[profile.passEnv].length > 0 });
     const page = await requests();
@@ -994,10 +1017,13 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
   async function close({ cancelActive = false } = {}) {
     if (closed) return;
     closing = true;
+    let supportError;
+    const supportClosed=support.close().catch(error=>{supportError=error;});
     await mutations;
+    await supportClosed;
     if (cancelActive && active) { active.cancelRequested = true; active.controller.abort(); active.store?.close(); }
     await active?.promise;
-    try { await objectAdapter.close(); } finally { closed = true; await lease?.release(); }
+    try { await objectAdapter.close(); if(supportError)throw supportError; } finally { closed = true; await lease?.release(); }
   }
   async function identity() {
     need(!closed, 'WORKSPACE_CLOSED', 'The recovery workspace is closed', 409);
@@ -1006,6 +1032,14 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
       directory, configFile, configurationSha256: configHash };
   }
   return { state, identity, localBundles, operations, operation, inventory, requests, request, objectSession, objectEvidence, review: selection,
+    supportCases:(profileId,query)=>transition(()=>support.cases(profileId,query)),
+    supportTransfers:profileId=>transition(()=>support.list(profileId)),
+    supportTransfer:(profileId,id)=>transition(()=>support.read(profileId,id)),
+    supportReview:input=>transition(()=>support.prepare(input)),
+    supportSave:input=>transition(()=>support.save(input)),
+    supportHandoff:(profileId,id)=>transition(()=>support.handoff(profileId,id)),
+    supportExport:input=>transition(()=>support.export(input)),
+    supportPackage:(profileId,id)=>transition(()=>support.inspectPackage(profileId,id)),
     start: input => transition(() => start(input)),
     resume: (profileId, id, continuation) => transition(() => resume(profileId, id, continuation)),
     cancel: (profileId, id) => transition(() => cancel(profileId, id)), close };
