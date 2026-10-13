@@ -41,6 +41,9 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/risk_study/arithmetic_fixture.py",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RISK_STUDY_OPERATING.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/risk_study/comparison_adapter.py",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RISK_STUDY_IMPORT.md"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RISK_STUDY_IMPORT.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/browser-receiving.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/foreground-receiving.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/FOREGROUND_RECEIVING.md"
   ]
 }
