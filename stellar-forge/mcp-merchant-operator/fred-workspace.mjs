@@ -1,4 +1,5 @@
 // MIT. Complete agent workflow on the original FRED economic-edition host.
+import { handlesFredOperating, callFredOperating } from './fred-operating.mjs';
 import { basename } from 'node:path';
 import { readFredAlfredMetadata } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.mjs';
 import { RetainedFileReads } from './retained-file-reads.mjs';
@@ -329,6 +330,12 @@ export class MerchantFredWorkspaces {
     fail('FRED_MCP_METHOD_UNKNOWN', 'Unknown original economic-workspace method.');
   }
   async call(name, args = {}) {
+    if (handlesFredOperating(name)) {
+      if (this.#closed) fail('FRED_MCP_CLOSED', 'The original FRED adapter is closing.');
+      return callFredOperating(name, args);
+    }
+    if (Buffer.byteLength(JSON.stringify(args)) > 131072)
+      fail('FRED_MCP_INPUT_TOO_LARGE', 'The original workspace request exceeds 128 KiB; use the configured source-file or retained file transfer.');
     const definition = definitions.get(name);
     if (!definition || !plain(args) || Object.keys(args).some(key => !Object.hasOwn(definition.properties, key)) ||
         definition.required.some(key => !Object.hasOwn(args, key)))

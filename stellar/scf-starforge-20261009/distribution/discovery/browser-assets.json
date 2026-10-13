@@ -239,6 +239,48 @@
         "../catalog.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/fred-operating-plan.mjs",
+      [
+        "fred-operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/fred-operating-plan.css",
+      [
+        "fred-operating-plan.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/fred-operating-core/fred-operating-plan.mjs",
+      [
+        "../fred-operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/fred-operating-core/operating-plan.mjs",
+      [
+        "../operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/fred-operating-core/catalog.mjs",
+      [
+        "../catalog.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/fred-operating-browser.md",
+      [
+        "../FRED_OPERATING_BROWSER.md",
+        "text/plain; charset=utf-8"
+      ]
     ]
   ]
 }
