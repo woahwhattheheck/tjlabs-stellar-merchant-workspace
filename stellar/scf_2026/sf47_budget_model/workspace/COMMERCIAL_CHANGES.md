@@ -22,6 +22,8 @@ The four actions have distinct accounting meaning:
 
 Amount-based credit preparation supports the original one-line, zero-tax milestone invoices. For a native invoice whose lines or tax were changed, use Receivables to review and issue the exact line credit, then return to prepare its replacement. Existing payments stay with their original receipts and allocations. Use the original Receivables cash workflow to review a customer credit balance, reallocation or refund.
 
+Purchase-order and invoice-note fields use the original Receivables text rules, including its whitespace normalization and native text-length limits. Earlier saved requests retain their original bytes; comparison with the native invoice uses the native text rendition. The recording operator is normalized consistently when preparing, applying and issuing a change.
+
 The original Workshare and first invoice remain in history. The change records a new customer authorization and its exact financial effect; it does not rewrite the original agreement.
 
 ## Recovery and receiving
@@ -29,6 +31,8 @@ The original Workshare and first invoice remain in history. The change records a
 A lost response keeps the same change, action and native request. Resume the retained action. Native request lookup occurs before its revision guard, so an already completed command returns its original result. A definitive stale-workspace refusal can refresh only the revision of an unchanged reviewed intent. An issue rechecks the same native document/version before refreshing that revision.
 
 An unused preparation may be cancelled, with a reason and original request ID. Once a native action is pending or acknowledged, continue its original recovery.
+
+After a failed apply or issue, the browser reads that saved change's actual journal. It releases its pending action only when the matching native command records a definitive rejection: the unused first apply step, or the exact separately reviewed issue. **Retained rejected actions** keeps the complete original request, error and native refusal, with an individual download; the whole desk download carries this history as well. Refreshing or reopening the same desk performs the same readback. A pending command, a different invoice review and a partially applied replacement keep their original pending action. The desk sends no replacement command during that readback.
 
 **Download complete desk** preserves entered source selections and the original pending request. **Open complete desk** accepts that same case, billing and milestone. Staff identity checks remain active. The desk does not automatically send a pending operation when opened.
 
