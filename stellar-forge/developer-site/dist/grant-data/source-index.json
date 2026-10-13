@@ -2163,6 +2163,94 @@
       "commit": "4424e79ea489f3bcec147aed08171f5c27959f98",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/aiddata-nigeria-2016/iati_2.03_NigeriaAIMS_GeocodedResearchRelease.xml",
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/4424e79ea489f3bcec147aed08171f5c27959f98/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/aiddata-nigeria-2016/iati_2.03_NigeriaAIMS_GeocodedResearchRelease.xml"
+    },
+    {
+      "id": "merchant-customer-closing-workbench",
+      "label": "Installed customer setup, statements and complete closing workbench",
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_WORKBENCH.md",
+      "operator_workflow": "Customer profile and original assignment, native capture import, reviewed statement cycles, lifecycle and complete customer handover.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "de02bd1d960df2cc462d62c1c71f75fee5e95dee",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de02bd1d960df2cc462d62c1c71f75fee5e95dee/stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_WORKBENCH.md",
+      "application_operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012"
+    },
+    {
+      "id": "merchant-customer-service-close-planner",
+      "label": "Explicit customer service periods and portable plans",
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_SERVICE_PLANNER.md",
+      "operator_workflow": "Original capture catalogue, customer/pass history, explicit opening and closing selection, native preview, portable plan and original saved-cycle preparation.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "de02bd1d960df2cc462d62c1c71f75fee5e95dee",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de02bd1d960df2cc462d62c1c71f75fee5e95dee/stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_SERVICE_PLANNER.md",
+      "application_operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012"
+    },
+    {
+      "id": "merchant-customer-statement-cycles",
+      "label": "Saved original customer cycles and partial delivery continuation",
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_CYCLES.md",
+      "operator_workflow": "Frozen complete native reviews, original request recovery, statement retention, complete or partial file delivery and operator archive reopening.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "de02bd1d960df2cc462d62c1c71f75fee5e95dee",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de02bd1d960df2cc462d62c1c71f75fee5e95dee/stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_CYCLES.md",
+      "application_operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012"
+    },
+    {
+      "id": "merchant-customer-statement-dossiers",
+      "label": "Grouped complete customer handover source",
+      "path": "stellar-forge/mcp-merchant-operator/accounting-statement-customer-dossier.mjs",
+      "operator_workflow": "Customer grouping, original statement/period registers, immutable complete files, current saved lifecycle and repeat export reuse.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "de02bd1d960df2cc462d62c1c71f75fee5e95dee",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de02bd1d960df2cc462d62c1c71f75fee5e95dee/stellar-forge/mcp-merchant-operator/accounting-statement-customer-dossier.mjs",
+      "application_operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012"
+    },
+    {
+      "id": "merchant-customer-closing-reference",
+      "label": "Complete original customer operating and receiving guide",
+      "path": "stellar-forge/mcp-merchant-operator/examples/CUSTOMER_CLOSING_WORKBENCH.md",
+      "operator_workflow": "Original repository customer and native captures through setup, service planning, retained cycle, correction, withdrawal, grouped handover and desktop/mobile use.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "de02bd1d960df2cc462d62c1c71f75fee5e95dee",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de02bd1d960df2cc462d62c1c71f75fee5e95dee/stellar-forge/mcp-merchant-operator/examples/CUSTOMER_CLOSING_WORKBENCH.md",
+      "application_operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012"
+    },
+    {
+      "id": "merchant-customer-closing-operation",
+      "label": "Original native customer, MCP and browser operation",
+      "path": "stellar-forge/mcp-merchant-operator/examples/customer-closing-workbench.mjs",
+      "operator_workflow": "Resume the same complete native customer operation from its original directory, request identities and saved artifacts.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "de02bd1d960df2cc462d62c1c71f75fee5e95dee",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de02bd1d960df2cc462d62c1c71f75fee5e95dee/stellar-forge/mcp-merchant-operator/examples/customer-closing-workbench.mjs",
+      "application_operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012"
+    },
+    {
+      "id": "merchant-customer-closing-installed",
+      "label": "Installed Customer statements application and typed package entry points",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/customer-closing.json",
+      "operator_workflow": "Original customer-closing command, Applications provider, typed interfaces and complete browser source selection.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "de02bd1d960df2cc462d62c1c71f75fee5e95dee",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de02bd1d960df2cc462d62c1c71f75fee5e95dee/stellar/scf-starforge-20261009/distribution/contributions/customer-closing.json",
+      "application_operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012"
+    },
+    {
+      "id": "merchant-customer-closing-browser",
+      "label": "Original customer workbench browser assets",
+      "path": "stellar-forge/mcp-merchant-operator/accounting-statement-cycle-browser-assets.json",
+      "operator_workflow": "The same served setup, cycle, customer handover and service-planner browser modules in the installed product.",
+      "kind": "maintained-product",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "source_commit": "de02bd1d960df2cc462d62c1c71f75fee5e95dee",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de02bd1d960df2cc462d62c1c71f75fee5e95dee/stellar-forge/mcp-merchant-operator/accounting-statement-cycle-browser-assets.json",
+      "application_operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012"
     }
   ],
   "product_and_finance": {
@@ -2373,7 +2461,7 @@
       "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
       "canonical_front_sha256": "87391341c01283fdd6beb9494ca1d2c0aef175e5be29e5062f469ffc70459932",
       "canonical_front_bytes": 39453,
-      "renderer_git_blob": "c3c4c9a58e036b7ba281848ab854a66cb6d1ebfa",
+      "renderer_git_blob": "29c7acaed6576601b3bded4195710267129ddcb7",
       "source_editions": [
         {
           "repository": "woahwhattheheck/public-commons-sprint-2026",
@@ -2437,7 +2525,7 @@
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-      "projector_git_blob": "e61916475bd86ae5f824d9d96012cd73f8ff6d0a",
+      "projector_git_blob": "5bcfc077cbc6fd7c9f0a2c569390137a6c83d01a",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
@@ -2526,7 +2614,9 @@
       "concurrent_product_contribution": "Complete retained Installation and recurring buyer work paragraph from the canonical source, with Source Builds and Request Collections source guides."
     },
     "datasette_customer_example": "wri-geothermal-customer-20261012",
-    "datasette_customer_example_source_commit": "84b0b2415fe9f76a654f12dc23aae07eb1c5ebc4"
+    "datasette_customer_example_source_commit": "84b0b2415fe9f76a654f12dc23aae07eb1c5ebc4",
+    "customer_closing_product_commit": "de02bd1d960df2cc462d62c1c71f75fee5e95dee",
+    "customer_closing_application_operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012"
   },
   "submission_workspace": {
     "schema": "stellar-forge.grant-submission-workspace.v1",
@@ -2618,5 +2708,42 @@
       "/grant-companion-workspace.mjs"
     ],
     "behavior": "Complete original companion, chapter navigation and search, full-source downloads, selected or complete printing, and a self-contained offline reader."
+  },
+  "customer_closing": {
+    "schema": "stellar-forge.grant-customer-closing.v1",
+    "heading": "Customer service close, corrections and complete handover",
+    "source_commit": "de02bd1d960df2cc462d62c1c71f75fee5e95dee",
+    "source_ids": [
+      "merchant-customer-closing-workbench",
+      "merchant-customer-service-close-planner",
+      "merchant-customer-statement-cycles",
+      "merchant-customer-statement-dossiers",
+      "merchant-customer-closing-reference",
+      "merchant-customer-closing-operation",
+      "merchant-customer-closing-installed",
+      "merchant-customer-closing-browser"
+    ],
+    "companion_route": "./grant-companion.html#customer-service-close-corrections-and-complete-handover",
+    "reviewer_opening": "#review-customer-close",
+    "installed_selection": "merchant-receivables",
+    "application_provider": "customer-closing",
+    "application_label": "Customer statements",
+    "installed_command": "customer-closing",
+    "operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012",
+    "native_receiving_operation": "SCF-CUSTOMER-CLOSING-5245-20261012",
+    "native_receiving_guide": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de02bd1d960df2cc462d62c1c71f75fee5e95dee/stellar-forge/mcp-merchant-operator/examples/CUSTOMER_CLOSING_WORKBENCH.md",
+    "native_receiving_entrypoint": "stellar-forge/mcp-merchant-operator/examples/customer-closing-workbench.mjs",
+    "stages": [
+      "Customer setup and original assignments",
+      "Original native capture intake",
+      "Explicit service-close selection and full preview",
+      "Portable plan and saved original cycle",
+      "Issue and resume original customer statements",
+      "Linked correction and withdrawal history",
+      "Complete grouped customer packet and operator continuation"
+    ],
+    "source_meaning": "Original purchased order, immutable pass, actual capture pair, completed accounting run, retained statement and original customer files.",
+    "financial_meaning": "Original purchase amounts, service allowance activity and separately issued invoice/receipt records retain their own financial identities.",
+    "funded_work": "Selected customer source/identity adaptation, accountable handover and production recovery within the original six priced packages."
   }
 }

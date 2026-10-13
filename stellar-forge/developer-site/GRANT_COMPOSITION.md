@@ -233,6 +233,14 @@ valuation sensitivity remains distinct from agreed cash obligations and observed
 receipts. The nine-answer front and six funded packages retain their existing
 source and submission bindings.
 
+## Receive the complete customer service continuation
+
+The [customer closing guide](GRANT_CUSTOMER_CLOSING.md) joins the actual customer setup, original capture pair, explicit service plan, native review, saved cycle, correction/withdrawal and grouped handover to the same application and reviewer opening. Select **--customer-closing-commit <full merged commit>** with the complete canonical manuscript when receiving this chapter for the first time. Later compositions reuse **narrative_source.customer_closing_product_commit** from the same source index.
+
+**grant-customer-closing.mjs** registers the exact workbench, planner, cycle, dossier, receiving and installed-browser sources independently of the finance owner's other components. The existing financial receiver carries the complete customer subsection; the existing customer receiver carries the original demonstration chapter. The same four output files include the full chapter and the customer continuation inside the original reviewer opening. The original film, purchase workbench, submission draft and companion reader remain part of that complete edition.
+
+Keep the customer composition helper and this guide with the original developer-site source. The selected merchant receivables runtime supplies the **Customer statements** application; its own native customer operation supplies the returned customer files and browser result used by the existing demo presenter.
+
 ## Read the complete companion
 
 Choose **Product and financing** in the application navigation. The maintained
