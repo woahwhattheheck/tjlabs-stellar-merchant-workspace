@@ -120,6 +120,55 @@
         "service-policy-rollout.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/customer-service-review",
+      [
+        "customer-service-review.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/customer-service-review.html",
+      [
+        "customer-service-review.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/customer-service-review.js",
+      [
+        "customer-service-review.js",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/customer-service-review.css",
+      [
+        "customer-service-review.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/review-return-ui.mjs",
+      [
+        "review-return-ui.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/review-return-drafts.mjs",
+      [
+        "review-return-drafts.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/review-return.css",
+      [
+        "review-return.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

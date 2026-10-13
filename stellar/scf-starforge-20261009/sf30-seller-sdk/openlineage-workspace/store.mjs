@@ -12,6 +12,10 @@ import { serviceLevelAction, validateServiceLevels, ServiceLevelError } from "./
 import { validateQualityState, QualityError } from "./quality.mjs";
 import { dispatchQuality } from "./quality-store.mjs";
 import { policyRolloutAction, validatePolicyRollouts } from "./service-policy-rollout.mjs";
+import { customerReviewAction, validateCustomerReviews, CustomerReviewError } from "./customer-service-review.mjs";
+import { validateReviewReturns, ReviewReturnError } from "./review-return.mjs";
+import { resolveReviewReturnSource } from "./review-return-source.mjs";
+import { dispatchReviewReturns } from "./review-return-store.mjs";
 import { validateQualityFollowup } from "./quality-followup.mjs";
 import { dispatchQualityFollowup } from "./quality-followup-store.mjs";
 
@@ -21,14 +25,18 @@ export const VERSION_2_APPLICATION_FILES = ["LICENSE","MERCHANT.md","OPENLINEAGE
 export const VERSION_3_NATIVE_APPLICATION_FILES = ["JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","LICENSE","MERCHANT.md","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","README.md","RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","server.mjs","source-encoding.mjs","store.mjs","style.css"];
 export const VERSION_3_APPLICATION_FILES = ["JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","JAVA_RECEIVING.mjs","LICENSE","MERCHANT.md","MERCHANT_PRODUCER_RECEIVING.mjs","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","README.md","RECEIVING.mjs","SCHEMA_OPERATIONS.md","SCHEMA_RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","schema-domain.mjs","schema-ui.js","schema-workflow.mjs","server.mjs","source-encoding.mjs","store.mjs","style.css"];
 export const VERSION_4_APPLICATION_FILES = ["JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","JAVA_RECEIVING.mjs","LICENSE","MERCHANT.md","MERCHANT_PRODUCER_RECEIVING.mjs","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","README.md","RECEIVING.mjs","SCHEMA_OPERATIONS.md","SCHEMA_RECEIVING.mjs","SERVICE_LEVELS.md","SERVICE_LEVELS_OPERATOR.md","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","schema-domain.mjs","schema-ui.js","schema-workflow.mjs","server.mjs","service-levels-browser.js","service-levels-catalog.mjs","service-levels-cli.mjs","service-levels-client.d.mts","service-levels-client.mjs","service-levels-example.json","service-levels.css","service-levels.html","service-levels.mjs","source-encoding.mjs","store.mjs","style.css"];
-export const APPLICATION_VERSION = 9;
+export const APPLICATION_VERSION = 11;
 export const VERSION_5_APPLICATION_FILES = ["JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","JAVA_RECEIVING.mjs","LICENSE","MERCHANT.md","MERCHANT_PRODUCER_RECEIVING.mjs","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","QUALITY_OPERATOR.md","README.md","RECEIVING.mjs","SCHEMA_OPERATIONS.md","SCHEMA_RECEIVING.mjs","SERVICE_LEVELS.md","SERVICE_LEVELS_OPERATOR.md","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","quality-catalog.mjs","quality-cli.mjs","quality-client.d.mts","quality-client.mjs","quality-reports.mjs","quality-store.mjs","quality-ui.mjs","quality.css","quality.mjs","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","schema-domain.mjs","schema-ui.js","schema-workflow.mjs","server.mjs","service-levels-browser.js","service-levels-catalog.mjs","service-levels-cli.mjs","service-levels-client.d.mts","service-levels-client.mjs","service-levels-example.json","service-levels.css","service-levels.html","service-levels.mjs","source-encoding.mjs","store.mjs","style.css"];
 export const VERSION_6_APPLICATION_FILES = ["ASYNC_PRODUCER_RECEIVING.mjs","ASYNC_PYTHON_PRODUCER.md","JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","JAVA_RECEIVING.mjs","LICENSE","MERCHANT.md","MERCHANT_PRODUCER_RECEIVING.mjs","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","QUALITY_OPERATOR.md","README.md","RECEIVING.mjs","SCHEMA_OPERATIONS.md","SCHEMA_RECEIVING.mjs","SERVICE_LEVELS.md","SERVICE_LEVELS_OPERATOR.md","SOURCE_CONTRACT.md","app.js","async-producer.mjs","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_async_producer.py","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","quality-catalog.mjs","quality-cli.mjs","quality-client.d.mts","quality-client.mjs","quality-reports.mjs","quality-store.mjs","quality-ui.mjs","quality.css","quality.mjs","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","schema-domain.mjs","schema-ui.js","schema-workflow.mjs","server.mjs","service-levels-browser.js","service-levels-catalog.mjs","service-levels-cli.mjs","service-levels-client.d.mts","service-levels-client.mjs","service-levels-example.json","service-levels.css","service-levels.html","service-levels.mjs","source-encoding.mjs","store.mjs","style.css"];
 export const VERSION_7_APPLICATION_FILES = [...VERSION_6_APPLICATION_FILES, "JAVA_RUNTIME_RECEIVING.mjs"].sort();
 export const VERSION_8_APPLICATION_FILES = [...VERSION_7_APPLICATION_FILES, "quality-followup.mjs", "quality-followup-store.mjs", "quality-followup-catalog.mjs", "quality-followup-reports.mjs", "quality-followup-client.mjs", "quality-followup-client.d.mts", "quality-followup-cli.mjs", "quality-followup-drafts.mjs", "quality-followup-ui.mjs", "quality-followup.css", "QUALITY_FOLLOWUP.md", "QUALITY_FOLLOWUP_RECEIVING.mjs", "QUALITY_FOLLOWUP_BROWSER.mjs"].sort();
-export const APPLICATION_FILES = [...VERSION_8_APPLICATION_FILES, "SERVICE_POLICY_ROLLOUT.md", "service-policy-rollout.mjs",
+export const VERSION_9_APPLICATION_FILES = [...VERSION_8_APPLICATION_FILES, "SERVICE_POLICY_ROLLOUT.md", "service-policy-rollout.mjs",
   "service-policy-rollout-catalog.mjs", "service-policy-rollout-client.mjs", "service-policy-rollout-client.d.mts",
   "service-policy-rollout-cli.mjs", "service-policy-rollout.html", "service-policy-rollout.js", "service-policy-rollout.css"].sort();
+export const VERSION_10_APPLICATION_FILES = [...VERSION_9_APPLICATION_FILES, "customer-service-review.mjs", "customer-service-review-catalog.mjs",
+  "customer-service-review-client.mjs", "customer-service-review-client.d.mts", "customer-service-review-cli.mjs", "CUSTOMER_SERVICE_REVIEW.md",
+  "customer-service-review.html", "customer-service-review.js", "customer-service-review.css", "CUSTOMER_SERVICE_REVIEW_OPERATOR.md"].sort();
+export const APPLICATION_FILES = [...VERSION_10_APPLICATION_FILES, "REVIEW_RETURNS.md", "review-return-catalog.mjs", "review-return-cli.mjs", "review-return-client.d.mts", "review-return-client.mjs", "review-return-drafts.mjs", "review-return-editor.mjs", "review-return-reports.mjs", "review-return-source.mjs", "review-return-store.mjs", "review-return-ui.mjs", "review-return.css", "review-return.mjs"].sort();
 const HASH = /^[0-9a-f]{64}$/;
 export class WorkspaceError extends Error {
   constructor(message, status = 400, details = undefined) { super(message); this.status = status; this.details = details; }
@@ -76,6 +84,10 @@ function validateQuality(state, deep = false) {
   try { validateQualityState(state, { deep }); validateQualityFollowup(state, { deep }); return state; }
   catch (error) { if (error instanceof QualityError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
 }
+function validateCustomers(state, deep = false) {
+  try { validateCustomerReviews(state, { deep }); validateReviewReturns(state, deep ? resolveReviewReturnSource : undefined); return state; }
+  catch (error) { if (error instanceof CustomerReviewError || error instanceof ReviewReturnError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
+}
 function validateState(state) {
   if (!state || state.schema !== FORMAT || typeof state.workspaceId !== "string" || (!Number.isSafeInteger(state.revision) || state.revision < 0)) throw new WorkspaceError("Invalid workspace state");
   for (const name of ["sources", "events", "editions", "reviews", "results", "operations"]) if (!Array.isArray(state[name])) throw new WorkspaceError("Invalid workspace " + name);
@@ -87,6 +99,7 @@ function validateState(state) {
   for (const edition of state.editions) if (!Array.isArray(edition.eventIds) || edition.eventIds.some(id => !events.has(id))) throw new WorkspaceError("Edition references an absent event");
   validateServices(state);
   validateQuality(state);
+  validateCustomers(state);
   return validateSchemas(state);
 }
 export class LineageWorkspace {
@@ -289,9 +302,11 @@ export class LineageWorkspace {
       qualityEvaluations: state.quality?.evaluations ?? [],
       qualityDispositions: state.quality?.dispositions ?? [],
       qualityComparisons: state.qualityFollowup?.comparisons ?? [],
-      qualityFollowups: state.qualityFollowup?.followups ?? []
+      qualityFollowups: state.qualityFollowup?.followups ?? [],
+      customerReviewRequests: state.customerReviewReturns?.requests ?? [],
+      customerReviewResponses: state.customerReviewReturns?.responses ?? []
     };
-    const globalCollections = ["operations", "schemaComparisons", "schemaReviews", "servicePolicyRollouts", ...Object.keys(qualityCollections)];
+    const globalCollections = ["operations", "schemaComparisons", "schemaReviews", "servicePolicyRollouts", "customerServiceReviews", ...Object.keys(qualityCollections)];
     if (globalCollections.includes(collection) && edition !== null)
       throw new WorkspaceError("Operation, schema, quality and policy-rollout history belong to the complete workspace; omit edition");
     const report = globalCollections.includes(collection)
@@ -321,16 +336,26 @@ export class LineageWorkspace {
     return { workspaceId: state.workspaceId, title: state.title, revision: state.revision, createdAt: state.createdAt, updatedAt: state.updatedAt,
       counts: Object.fromEntries(["jobs", "datasets", "runs", "edges", "observedEdges", "diagnostics"].map(name => [name, (view[name] ?? []).length])),
       retained: {
-        ...Object.fromEntries(["sources", "events", "editions", "reviews", "results", "operations", "schemaComparisons", "schemaReviews", "servicePolicyRollouts"].map(name => [name, (state[name] ?? []).length])),
+        ...Object.fromEntries(["sources", "events", "editions", "reviews", "results", "operations", "schemaComparisons", "schemaReviews", "servicePolicyRollouts", "customerServiceReviews"].map(name => [name, (state[name] ?? []).length])),
         qualityRules: state.quality?.rules.length ?? 0,
         qualityEvaluations: state.quality?.evaluations.length ?? 0,
         qualityDispositions: state.quality?.dispositions.length ?? 0,
         qualityComparisons: state.qualityFollowup?.comparisons.length ?? 0,
-        qualityFollowups: state.qualityFollowup?.followups.length ?? 0
+        qualityFollowups: state.qualityFollowup?.followups.length ?? 0,
+        customerReviewRequests: state.customerReviewReturns?.requests.length ?? 0,
+        customerReviewResponses: state.customerReviewReturns?.responses.length ?? 0
       } };
   }
   async dispatch(action, args = {}) {
     if (args === null || typeof args !== "object" || Array.isArray(args)) throw new WorkspaceError("Action arguments must be an object");
+    if (typeof action === "string" && action.startsWith("review-return.")) {
+      try { return await dispatchReviewReturns(this, action, args); }
+      catch (error) { if (error instanceof ReviewReturnError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
+    }
+    if (typeof action === "string" && action.startsWith("customer-review.")) {
+      try { return await customerReviewAction(this, action, args); }
+      catch (error) { if (error instanceof CustomerReviewError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
+    }
     if (typeof action === "string" && action.startsWith("service-policy-rollout.")) {
       try { return await policyRolloutAction(this, action, args); }
       catch (error) { if (error instanceof ServiceLevelError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
@@ -463,25 +488,30 @@ export function verifyBundle(bytes) {
     for (const key of review.entityKeys) entity(state, key, { edition: review.editionId });
   }
   validateSchemas(state, true);
+  validateCustomers(state, true);
   const application = new Map();
-  if (payload.applicationVersion !== undefined && ![2, 3, 4, 5, 6, 7, 8, 9].includes(payload.applicationVersion)) throw new WorkspaceError("Unsupported application source edition");
+  if (payload.applicationVersion !== undefined && ![2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(payload.applicationVersion)) throw new WorkspaceError("Unsupported application source edition");
   if (payload.applicationVersion === undefined && state.sources.some(source => source.contentEncoding === "gzip"))
     throw new WorkspaceError("Compressed sources require their complete version 2 application edition");
   const hasSchemaRecords = Boolean((state.schemaComparisons ?? []).length || (state.schemaReviews ?? []).length);
-  if (![3, 4, 5, 6, 7, 8, 9].includes(payload.applicationVersion) && hasSchemaRecords)
+  if (![3, 4, 5, 6, 7, 8, 9, 10, 11].includes(payload.applicationVersion) && hasSchemaRecords)
     throw new WorkspaceError("Saved schema comparisons and decisions require a complete schema-capable application edition");
   const hasServiceRecords = Boolean((state.serviceLevels?.policies ?? []).length ||
     (state.serviceLevels?.assessments ?? []).length || (state.serviceLevels?.incidents ?? []).length);
-  if (![4, 5, 6, 7, 8, 9].includes(payload.applicationVersion) && hasServiceRecords)
+  if (![4, 5, 6, 7, 8, 9, 10, 11].includes(payload.applicationVersion) && hasServiceRecords)
     throw new WorkspaceError("Saved service-level policies, assessments and decisions require their complete service-capable application edition");
   const hasQualityRecords = Boolean((state.quality?.rules ?? []).length ||
     (state.quality?.evaluations ?? []).length || (state.quality?.dispositions ?? []).length);
-  if (![5, 6, 7, 8, 9].includes(payload.applicationVersion) && hasQualityRecords)
+  if (![5, 6, 7, 8, 9, 10, 11].includes(payload.applicationVersion) && hasQualityRecords)
     throw new WorkspaceError("Saved quality rules, evaluations and dispositions require their complete quality-capable application edition (version 5 or later)");
-  if (![8, 9].includes(payload.applicationVersion) && ((state.qualityFollowup?.comparisons ?? []).length || (state.qualityFollowup?.followups ?? []).length))
+  if (![8, 9, 10, 11].includes(payload.applicationVersion) && ((state.qualityFollowup?.comparisons ?? []).length || (state.qualityFollowup?.followups ?? []).length))
     throw new WorkspaceError("Saved quality comparisons and follow-up require their complete version 8 or later application");
-  if (state.servicePolicyRollouts?.length && payload.applicationVersion !== 9)
+  if (state.servicePolicyRollouts?.length && ![9, 10, 11].includes(payload.applicationVersion))
     throw new WorkspaceError("Saved policy rollouts require their complete policy-rollout application edition");
+  if (state.customerServiceReviews?.length && ![10, 11].includes(payload.applicationVersion))
+    throw new WorkspaceError("Saved customer service reviews require their complete customer-review application edition");
+  if (((state.customerReviewReturns?.requests ?? []).length || (state.customerReviewReturns?.responses ?? []).length) && payload.applicationVersion !== 11)
+    throw new WorkspaceError("Saved recipient requests and responses require their complete recipient-return application edition");
   const applicationEntries = payload.application ?? [];
   if (!Array.isArray(applicationEntries)) throw new WorkspaceError("Application source must be a complete file list");
   const nativeVersion3 = payload.applicationVersion === 3 &&
@@ -490,7 +520,9 @@ export function verifyBundle(bytes) {
   if (nativeVersion3 && hasSchemaRecords)
     throw new WorkspaceError("Saved schema comparisons and decisions require the complete schema-capable application");
   const expectedApplication = nativeVersion3 ? VERSION_3_NATIVE_APPLICATION_FILES :
-    payload.applicationVersion === 9 ? APPLICATION_FILES :
+    payload.applicationVersion === 11 ? APPLICATION_FILES :
+    payload.applicationVersion === 10 ? VERSION_10_APPLICATION_FILES :
+    payload.applicationVersion === 9 ? VERSION_9_APPLICATION_FILES :
     payload.applicationVersion === 8 ? VERSION_8_APPLICATION_FILES :
     payload.applicationVersion === 7 ? VERSION_7_APPLICATION_FILES :
     payload.applicationVersion === 6 ? VERSION_6_APPLICATION_FILES :
