@@ -107,3 +107,30 @@ The receiving owner returns the actual native command/process handle, complete s
 All original sources and access receipts are in [sources/bundle.json](../../stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/bundle.json). The retained bundle was read back at **2026-10-12T12:01:14.820Z**. Its publisher XML Prepared field remains a separate timezone-less original field.
 
 Every new report carries the same source acknowledgment in HTML/JSON/CSV and both SOURCE_RIGHTS files. The original customer ZIP carries acknowledgment in its standard ZIP comment; the full OECD project includes both explicit rights files. Distribute the native dataset's returned attribution companion with the unchanged data/configuration/lineage files. [SOURCE_RIGHTS.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/SOURCE_RIGHTS.md) gives the complete retained citation and downstream acknowledgment requirement.
+
+## Actual rendered-product delivery
+
+**Applies to every current and future peer, provider, local session and cloud worker.** Before calling a client/prospect-facing app, website, dashboard, demo, report, presentation or export ready, the producing peer must open, run or render the exact outgoing version, look at its actual rendered screen or real screenshots, and operate its important user controls. Capturing screenshots without viewing them is insufficient. Inspect the actual screenshare width and narrow/mobile width where relevant; inspect populated, empty, loading and error states, downloads, exports and reopening.
+
+Fix ugly, broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized product work before presenting it. Code review, DOM counts, HTTP 200, unit checks and another peer's approval do not replace seeing the actual product. Use plain industrial design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve the real workflows, data and computation.
+
+This inspection is part of delivery and leads directly to concrete repairs. It must not replace implementation and integration, become endless rechecking, create a peer-approval gate, launch broad suites or become a separate verification product. Continue useful authorized source and product work while the exact native/rendered receiving operation proceeds; preserve the actual execution state and existing operation identity.
+
+Persist this rule in every active owner-controlled instruction surface that the provider and workers actually read: global/project AGENTS, CLAUDE, GEMINI and rules files, provider boot instructions, Commons source mirrors, cloud repository instruction copies, and current build/receiving guides. Include it in child assignments. Preserve other owner controls, historical evidence and third-party/vendor instructions. Do not force restarts, add watchers or restart owner-stopped work. Existing project-specific owner cutoffs remain in force.
+
+Bryce's placement instruction: “that rule goes in every policy file the agents read not just a slack ping” and “and not just local sessions or ones from this provider”. Original coordination transport: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999 .
+
+
+The requirement covers every outgoing attachment as well as the application. Open each final report/document/archive attachment in its actual useful form; play final audio/video where present. Keep the same source edition, original operation and actual runtime custody through this course.
+
+### Complete OECD analyst and customer browser course
+
+Use the returned `browser` and `customerBrowser` commands from the same source-only or configured receiving result. The producing peer must view the original rendered pages or the actual screenshots returned from those running processes; keep their private connection details with the operator.
+
+1. View the populated seven-country analyst workspace, actual source coverage, selected report window, original units/seasonal basis, source acknowledgment and retained source responses. Open the actual first and revised briefings.
+2. Operate country/date selection, an explicit following notes draft/save and saved-edition comparison through the visible controls. Keep the original complete source and its native edition identity; any new analyst edit uses the model's current revision.
+3. Open the standalone `briefing.html` and look at its real charts, gaps, exact values, tables, labels and acknowledgment. Inspect the full JSON, observations CSV and both SOURCE_RIGHTS files in their actual readable forms. Verify the downloaded project by opening it in the same separate customer workspace from this programme.
+4. View the reopened customer browser, saved report and original rows after closing and reopening the process. In a configured merchant/buyer course, inspect the actual retained merchant/offer, buyer result and delivered customer edition using that operation's existing resources.
+5. View normal screenshare and narrow/mobile widths, including relevant empty/loading/error and populated states. Exercise real download/export controls and reopening. Inspect long country/source labels, table/chart overflow, source-rights text and printable report layout; fix concrete defects in the same original product.
+
+The native source, merchant, buyer and project-reopen programmes retain their existing operation IDs. Actual visual inspection completes the outgoing product course alongside those original results and does not create a separate queue or approval step.
