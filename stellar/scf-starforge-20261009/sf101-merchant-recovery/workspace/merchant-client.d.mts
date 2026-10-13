@@ -56,6 +56,10 @@ export interface RecoveryPage { cursor?: string; limit?: number; }
 export interface RecoveryWorkspaceInput { workspace: RecoveryWorkspaceAlias; }
 export interface RecoveryProfileInput extends RecoveryWorkspaceInput { profileId: RecoveryProfileId; }
 export interface RecoveryOriginalInput extends RecoveryProfileInput { id: RecoveryOperationId; }
+/** Selects a saved object-snapshot, object-verify, object-restore or object-compare request.
+ * The complete request and all referenced original bodies must fit the 64 MiB Support cohort.
+ * Both encrypted bundle paths remain external for object-compare; no new native run occurs.
+ */
 export interface RecoverySupportSelection {
   profileId:RecoveryProfileId; id:RecoveryOperationId; transferId:string; caseId:string;
   expectedRevision:RecoveryDigest;slot:'before'|'after';expectedReviewHash:RecoveryDigest;afterAttempt:number;
