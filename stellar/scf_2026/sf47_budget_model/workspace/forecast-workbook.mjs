@@ -19,7 +19,7 @@ export const signature=v=>JSON.stringify(Array.isArray(v)?v.map(x=>JSON.parse(si
 const equal=(a,b)=>signature(a)===signature(b);
 const stable=v=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(v);
 const HASH=/^[a-f0-9]{64}$/;
-const ROOT=['name','asOfDate','calendarStart','openingCash','packageOverrides','invoiceOverrides','grantReceipts','commercial','capacity','note','fxRates'];
+const ROOT=['name','asOfDate','calendarStart','openingCash','packageOverrides','invoiceOverrides','grantReceipts','commercial','capacity','note','fxRates','customerFunding'];
 function safe(v,depth=0){need(depth<40,'Keep the complete original forecast within its supported nesting.');if(Array.isArray(v)){need(v.length<=5000,'A forecast list exceeds the original record limit.');v.forEach(x=>safe(x,depth+1));}else if(plain(v)){for(const [k,x]of Object.entries(v)){need(!['__proto__','prototype','constructor'].includes(k),'Use ordinary forecast field names.');safe(x,depth+1);}}else need(v===null||typeof v==='string'&&v.length<=100000||typeof v==='boolean'||typeof v==='number'&&Number.isFinite(v),'Keep original JSON values.');}
 function verifyInputs(v){need(plain(v)&&Object.keys(v).every(k=>ROOT.includes(k)),'Use the complete original Forecast input.');safe(v);need(['packageOverrides','invoiceOverrides','grantReceipts','commercial'].every(k=>Array.isArray(v[k]))&&plain(v.openingCash)&&plain(v.capacity),'Retain every original Forecast section.');need(utf8(json(v)).length<=MAX_FORECAST_WORKBOOK_BYTES,'The complete forecast exceeds its original input limit.');return copy(v);}
 function optionsValid(o){need(/^operation-[a-f0-9]{32}$/.test(o.caseId||'')&&HASH.test(o.planContentSha256||''),'Bind the workbook to its original case and selected plan content.');}
@@ -89,7 +89,7 @@ export async function receiveForecastWorkbookTables(tables,options={}){
  for(const r of sheets.get('Invoices')){const[id,op,date,include,note]=r;need(typeof id==='string'&&id.length>0,'Use the original invoice identity.');if(action(op,'Invoice')==='REMOVE'){upsert(next.invoiceOverrides,id,x=>x.invoiceId===id,null,true,'Invoice');continue;}const old=next.invoiceOverrides.find(x=>x.invoiceId===id)||{};upsert(next.invoiceOverrides,id,x=>x.invoiceId===id,{...old,invoiceId:id,dueDate:nullable(date,old.dueDate),include:bool(include,'Invoice include'),note},action(op,'Invoice')==='REMOVE','Invoice');}
  for(const r of sheets.get('Grants')){const[id,op,date,include,note]=r;need(/^[0-3]$/.test(id),'Grant tranche must be the original 0, 1, 2 or 3.');const tranche=Number(id);if(action(op,'Grant')==='REMOVE'){upsert(next.grantReceipts,id,x=>x.tranche===tranche,null,true,'Grant');continue;}const old=next.grantReceipts.find(x=>x.tranche===tranche)||{};upsert(next.grantReceipts,id,x=>x.tranche===tranche,{...old,tranche,date:nullable(date,old.date),include:bool(include,'Grant include'),note},action(op,'Grant')==='REMOVE','Grant');}
  const removed=new Set;
- for(const r of sheets.get('Customers')){const[id,op,title,caseRef,sourceUrl,sourceIds,stage,selected,pricingMode,price,cost,hours,start,end,paymentMode,cashIds,invoiceIds,directCashIds,scope,note]=r;need(stable(id),'Use a stable customer scenario identity.');if(action(op,'Customer')==='REMOVE'){need(next.commercial.some(x=>x.id===id),'Remove an existing original customer scenario.');next.commercial=next.commercial.filter(x=>x.id!==id);removed.add(id);continue;}
+ for(const r of sheets.get('Customers')){const[id,op,title,caseRef,sourceUrl,sourceIds,stage,selected,pricingMode,price,cost,hours,start,end,paymentMode,cashIds,invoiceIds,directCashIds,scope,note]=r;need(stable(id),'Use a stable customer scenario identity.');if(action(op,'Customer')==='REMOVE'){need(next.commercial.some(x=>x.id===id),'Remove an existing original customer scenario.');next.commercial=next.commercial.filter(x=>x.id!==id);if(next.customerFunding)next.customerFunding.opening=next.customerFunding.opening.filter(x=>x.commercialId!==id);removed.add(id);continue;}
   const old=next.commercial.find(x=>x.id===id)||emptyCustomer(id),v={...old,id,title,caseRef,sourceUrl,sourceIds:references(sourceIds,'Customer sources'),stage,selected:bool(selected,'Customer selected'),remainingHours:nullable(hours,old.remainingHours),startDate:nullable(start,old.startDate),endDate:nullable(end,old.endDate),paymentMode,cashIds:references(cashIds,'Customer receipts'),invoiceIds:references(invoiceIds,'Customer invoices'),directCashIds:references(directCashIds,'Customer direct expenses'),scope,note};
   need(['USD','NATIVE'].includes(pricingMode),'Choose original USD or NATIVE pricing explicitly.');
   if(pricingMode==='NATIVE'){need(price===''&&cost==='','Native pricing retains its native amounts; leave both USD price cells empty.');delete v.priceUsd;delete v.totalDeliveryCostUsd;v.nativePricing=copy(old.nativePricing||{price:{amount:'',currency:'',fxRateId:null},deliveryCost:{amount:'',currency:'',fxRateId:null},priceCredits:[],costCredits:[]});}
@@ -115,10 +115,20 @@ const MISSING=Symbol('missing');
 const view=v=>v===MISSING?{present:false}:{present:true,value:copy(v)};
 const same=(a,b)=>a===MISSING||b===MISSING?a===b:equal(a,b);
 const pointer=p=>'/'+p.map(k=>String(k).replace(/~/g,'~0').replace(/\//g,'~1')).join('/');
-function keyFields(parts){const k=parts.at(-1);return k==='packageOverrides'?['costId']:k==='invoiceOverrides'?['invoiceId']:k==='grantReceipts'?['tranche']:k==='priceCredits'?['cashId']:k==='costCredits'?['kind','id']:k==='receiptConditions'?['receiptId']:['commercial','receipts','fxRates'].includes(k)?['id']:null;}
+function keyFields(parts){const k=parts.at(-1);return k==='opening'&&parts.at(-2)==='customerFunding'?['commercialId']:k==='packageOverrides'?['costId']:k==='invoiceOverrides'?['invoiceId']:k==='grantReceipts'?['tranche']:k==='priceCredits'?['cashId']:k==='costCredits'?['kind','id']:k==='receiptConditions'?['receiptId']:['commercial','receipts','fxRates'].includes(k)?['id']:null;}
 export function reconcileForecastWorkbook(received,currentInputs,choices={}){
  need(received?.schema===FORECAST_WORKBOOK_RETURN_SCHEMA&&plain(choices),'Receive the complete forecast workbook first.');
  const base=verifyInputs(received.baseInputs),returned=verifyInputs(received.returnedInputs),current=verifyInputs(currentInputs),changes=[],conflicts=[],used=new Set;
+ // A customer removal and its dependent attribution are one reviewed decision.
+ // Preserve the attribution during field merge; prune only after the resolved customer result.
+ const mergeReturned=copy(returned),mergeCurrent=copy(current),removedCustomers=new Set(base.commercial.filter(row=>!returned.commercial.some(x=>x.id===row.id)).map(row=>row.id));
+ if(base.customerFunding&&mergeReturned.customerFunding){
+  for(const row of base.customerFunding.opening)if(removedCustomers.has(row.commercialId)&&!mergeReturned.customerFunding.opening.some(x=>x.commercialId===row.commercialId))mergeReturned.customerFunding.opening.push(copy(row));
+ }
+ if(base.customerFunding&&mergeCurrent.customerFunding){
+  for(const row of base.customerFunding.opening)if(!current.commercial.some(x=>x.id===row.commercialId)&&!mergeCurrent.customerFunding.opening.some(x=>x.commercialId===row.commercialId))mergeCurrent.customerFunding.opening.push(copy(row));
+ }
+ const fundingAt=(inputs,id)=>inputs.customerFunding?.opening.find(row=>row.commercialId===id)??MISSING;
  function merge(a,b,c,p){
   if(same(a,b))return c===MISSING?MISSING:copy(c);
   if([a,b,c].every(plain)){const out={};for(const k of new Set([...Object.keys(c),...Object.keys(b),...Object.keys(a)])){const v=merge(own(a,k)?a[k]:MISSING,own(b,k)?b[k]:MISSING,own(c,k)?c[k]:MISSING,[...p,k]);if(v!==MISSING)out[k]=v;}return out;}
@@ -129,12 +139,21 @@ export function reconcileForecastWorkbook(received,currentInputs,choices={}){
    for(const id of new Set([...c.map(k),...b.map(k),...a.map(k)])){const v=merge(...maps.map(m=>m.has(id)?m.get(id):MISSING),[...p,'@'+id]);if(v!==MISSING)out.push(v);}return out;
   }
   const path=pointer(p);
-  if(same(c,a)||same(c,b)){if(!same(c,b))changes.push({path,before:view(c),after:view(b)});return b===MISSING?MISSING:copy(b);}
+  const dependentChanged=p.length===2&&p[0]==='commercial'&&b===MISSING&&plain(a)&&plain(c)&&!same(fundingAt(base,a.id),fundingAt(current,a.id));
+  if(!dependentChanged&&(same(c,a)||same(c,b))){if(!same(c,b))changes.push({path,before:view(c),after:view(b)});return b===MISSING?MISSING:copy(b);}
   const choice=choices[path];need(choice===undefined||choice==='current'||choice==='returned','Choose current or returned for each actual conflict.');
-  conflicts.push({path,original:view(a),current:view(c),returned:view(b),choice:choice||null});
+  conflicts.push({path,original:view(dependentChanged?{...a,relatedCustomerFunding:view(fundingAt(base,a.id))}:a),current:view(dependentChanged?{...c,relatedCustomerFunding:view(fundingAt(current,a.id))}:c),returned:view(b),choice:choice||null});
   if(choice)used.add(path);if(choice==='returned'){changes.push({path,before:view(c),after:view(b),resolved:true});return b===MISSING?MISSING:copy(b);}return c===MISSING?MISSING:copy(c);
  }
- const inputs=verifyInputs(merge(base,returned,current,[]));for(const k of Object.keys(choices))need(used.has(k),'A saved conflict choice no longer matches this complete current draft.');
+ const inputs=verifyInputs(merge(base,mergeReturned,mergeCurrent,[]));
+ if(inputs.customerFunding){
+  const kept=new Set(inputs.commercial.map(row=>row.id));
+  inputs.customerFunding.opening=inputs.customerFunding.opening.filter(row=>{
+   if(kept.has(row.commercialId))return true;
+   changes.push({path:'/customerFunding/opening/@'+row.commercialId,before:view(row),after:view(MISSING),dependentCustomerRemoval:true});return false;
+  });
+ }
+ for(const k of Object.keys(choices))need(used.has(k),'A saved conflict choice no longer matches this complete current draft.');
  return{inputs,changes,conflicts,unresolved:conflicts.filter(x=>!x.choice).length,currentSignature:signature(current),returnedSignature:signature(returned)};
 }
 

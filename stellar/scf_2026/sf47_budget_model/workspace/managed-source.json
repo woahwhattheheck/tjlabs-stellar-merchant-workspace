@@ -678,6 +678,9 @@
     "WORK_BILLING.md",
     "operations_statement_rules.mjs",
     "operations_statement_rules.css",
-    "STATEMENT_RULES.md"
+    "STATEMENT_RULES.md",
+    "forecast_customer_funding.py",
+    "forecast-customer-funding.mjs",
+    "FORECAST_CUSTOMER_FUNDING.md"
   ]
 }

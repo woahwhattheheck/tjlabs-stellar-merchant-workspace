@@ -24,6 +24,8 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/forecast-customer-funding.mjs": ("forecast-customer-funding.mjs", "text/javascript; charset=utf-8"),
+                   "/FORECAST_CUSTOMER_FUNDING.md": ("FORECAST_CUSTOMER_FUNDING.md", "text/markdown; charset=utf-8")})
     static.update({"/portfolio-sequence.mjs": ("portfolio-sequence.mjs", "text/javascript; charset=utf-8"),
                    "/portfolio-sequence-desk.mjs": ("portfolio-sequence-desk.mjs", "text/javascript; charset=utf-8"),
                    "/portfolio-sequence.css": ("portfolio-sequence.css", "text/css; charset=utf-8"),
