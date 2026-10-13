@@ -1,0 +1,60 @@
+{
+  "source_assets": {
+    "fields": {
+      "id": "asset_ref",
+      "label": "name",
+      "status": "state",
+      "parent_id": "container_id",
+      "location_id": "site_id",
+      "geometry": "__geometry"
+    },
+    "status_aliases": {},
+    "trim_ids": false
+  },
+  "target_assets": {
+    "fields": {
+      "id": "external_id",
+      "label": "display_name",
+      "status": "state",
+      "parent_id": "container_key",
+      "location_id": "location_key",
+      "geometry": "shape"
+    },
+    "status_aliases": {},
+    "trim_ids": false
+  },
+  "locations": {
+    "fields": {
+      "id": "id",
+      "label": "label",
+      "geometry": "geometry"
+    },
+    "status_aliases": {},
+    "trim_ids": false
+  },
+  "requests": {
+    "fields": {
+      "id": "id",
+      "asset_id": "asset_id",
+      "location_id": "location_id",
+      "summary": "summary",
+      "status": "status",
+      "created_at": "created_at"
+    },
+    "status_aliases": {},
+    "trim_ids": false
+  },
+  "work_orders": {
+    "fields": {
+      "id": "id",
+      "asset_id": "asset_id",
+      "request_id": "request_id",
+      "summary": "summary",
+      "status": "status",
+      "revision": "revision",
+      "updated_at": "updated_at"
+    },
+    "status_aliases": {},
+    "trim_ids": false
+  }
+}

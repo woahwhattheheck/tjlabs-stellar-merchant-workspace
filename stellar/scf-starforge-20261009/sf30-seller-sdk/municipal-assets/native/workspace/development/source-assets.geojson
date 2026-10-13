@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "DEV-A100",
+      "properties": {
+        "asset_ref": "DEV-A100",
+        "name": "Development drainage network",
+        "state": "active",
+        "container_id": "",
+        "site_id": "DEV-L01"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -97.666,
+            38.371
+          ],
+          [
+            -97.665,
+            38.372
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DEV-A101",
+      "properties": {
+        "asset_ref": "DEV-A101",
+        "name": "Development culvert",
+        "state": "active",
+        "container_id": "DEV-A100",
+        "site_id": "DEV-L01"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -97.6657,
+          38.3714
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DEV-A102",
+      "properties": {
+        "asset_ref": "DEV-A102",
+        "name": "Development inspection chamber",
+        "state": "active",
+        "container_id": "DEV-A100",
+        "site_id": "DEV-L02"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -97.6651,
+          38.3719
+        ]
+      }
+    }
+  ]
+}
