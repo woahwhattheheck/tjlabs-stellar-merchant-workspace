@@ -21,7 +21,7 @@ const recoveryActions=new Map([
   ['merchant_support_recovery_abandon','abandon-snapshot'],
 ]);
 const addedNames=new Set(['merchant_support_incident_sources','merchant_support_destination','merchant_incident_view',
-  'merchant_support_service_snapshot','merchant_support_ckan_inspect','merchant_support_recovery',...recoveryActions.keys()]);
+  'merchant_support_service_snapshot','merchant_support_ckan_inspect','merchant_support_oauth_inspect','merchant_support_recovery',...recoveryActions.keys()]);
 const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const statuses=['OPEN','ACKNOWLEDGED','RECOVERED','RETIRED'];
 const notificationStates=['PENDING','RETRY','IN_FLIGHT','PAUSED','EXHAUSTED','DELIVERED','CANCELLED'];
@@ -35,7 +35,9 @@ const publicSource=value=>value?{id:value.id,label:value.label,
   ...(value.recovery?.enabled?{recovery:{enabled:true,workspaceId:value.recovery.workspaceId,
     restored:Boolean(value.recovery.restored),baseSourceId:value.recovery.baseSourceId}}:{}),
   ...(value.objectSessions?.length?{objectSessions:value.objectSessions.map(({id,label})=>({id,label}))}:{}),
-  ...(value.ckanWorkspaces?.length?{ckanWorkspaces:value.ckanWorkspaces.map(({id,label})=>({id,label}))}:{})}:null;
+  ...(value.ckanWorkspaces?.length?{ckanWorkspaces:value.ckanWorkspaces.map(({id,label})=>({id,label}))}:{}),
+  ...(value.oauthResources?.length?{oauthResources:value.oauthResources.map(({id,label,resource,configurationSha256})=>
+    ({id,label,resource,configurationSha256}))}:{})}:null;
 function pagination(args){
   const offset=integer(args.offset??0,'page offset'),limit=integer(args.limit??50,'page limit',1);
   if(limit>100)throw fail('INVALID_PARAMS','Use a page limit from 1 to 100.');
@@ -229,6 +231,10 @@ export class MerchantSupportIncidentSources {
       if(name==='merchant_support_recovery'||recoveryActions.has(name))
         return await this.#recovery(source,manager,name,args);
       switch(name){
+        case 'merchant_support_oauth_inspect':{
+          const {incidentSource,...input}=args;
+          return {...await manager.inspectOAuth(source.id,input),incidentSource:selected};
+        }
         case 'merchant_support_ckan_inspect':{
           const {incidentSource,...input}=args;
           return {...await manager.inspectCkan(source.id,input),incidentSource:selected};

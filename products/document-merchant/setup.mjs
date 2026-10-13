@@ -20,17 +20,20 @@ const HASH = /^[a-f0-9]{64}$/;
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const REQUEST_FIELDS = new Set(['schema', 'serviceName', 'publicOrigin', 'payment', 'provider',
   'formats', 'pathPrefix', 'workerCount', 'maxPending', 'maxJobs', 'memoryLimitMb', 'inputStorage',
-  'intakeKeyEnvironment']);
+  'intakeKeyEnvironment', 'assembly']);
 const fixedFiles = ['application.mjs', 'jobs.json', 'provider.json', 'supplier-price.json', 'customer-setup.json'];
-const sourceNames = {html: 'report.html', markdown: 'report.md'};
-const functionIds = {html: 'renderHtml', markdown: 'renderMarkdown'};
-const contentTypes = {html: 'text/html', markdown: 'text/markdown'};
+const sourceNames = {html: 'report.html', markdown: 'report.md', 'pdf-set':'ordered-pdfs.json'};
+const functionIds = {html: 'renderHtml', markdown: 'renderMarkdown', 'pdf-set':'assemblePdfs'};
+const contentTypes = {html: 'text/html', markdown: 'text/markdown', 'pdf-set':'application/json'};
+const formatsFor = request => [...request.formats,...(request.assembly?['pdf-set']:[])];
+const settingsFor = (provider,format) => format==='pdf-set'?{strict:true}:defaultDocumentSettings(provider);
 const json = value => encoded(value).toString('utf8');
 
 /** Complete editable template. Actual origin, settlement asset, recipient and price are merchant selections. */
-export function documentSetupTemplate(providerId = 'mintpdf', {anonymous = false} = {}) {
+export function documentSetupTemplate(providerId = 'mintpdf', {anonymous = false, assembly = false} = {}) {
   const provider = documentProvider(providerId);
   need(!anonymous || provider.anonymous, 'DOCUMENT_ANONYMOUS_UNSUPPORTED');
+  need(!assembly || providerId === 'pdfmint','DOCUMENT_ASSEMBLY_CONFIGURATION_REQUIRED');
   return {
     schema: DOCUMENT_SETUP_SCHEMA, serviceName: provider.name + ' document merchant', publicOrigin: null,
     payment: {scheme: 'exact', network: 'stellar:testnet', asset: null, payTo: null,
@@ -41,6 +44,8 @@ export function documentSetupTemplate(providerId = 'mintpdf', {anonymous = false
       ...(anonymous ? {} : {keyEnvironment: provider.defaultKeyEnvironment}),
       maxSourceBytes: provider.maxSourceBytes, maxPdfBytes: 33554432, timeoutMs: 120000
     },
+    ...(assembly?{assembly:{payment:{scheme:'exact',network:'stellar:testnet',asset:null,payTo:null,
+      amount:null,maxTimeoutSeconds:120}}}:{}),
     formats: [...provider.formats], pathPrefix: '/documents',
     workerCount: 1, maxPending: 32, maxJobs: 10000, memoryLimitMb: 256,
     inputStorage: {maxBytes: 268435456, maxUploads: 1024}, intakeKeyEnvironment: null
@@ -67,6 +72,9 @@ export function normalizeDocumentSetup(value) {
   const inputStorage = value.inputStorage ?? {maxBytes: 268435456, maxUploads: 1024};
   need(plain(inputStorage) && Object.keys(inputStorage).every(key => ['maxBytes', 'maxUploads'].includes(key)),
     'DOCUMENT_INPUT_STORAGE_INVALID');
+  if(value.assembly!==undefined)need(service.id==='pdfmint'&&plain(value.assembly)&&
+    Object.keys(value.assembly).every(key=>key==='payment')&&plain(value.assembly.payment),
+    'DOCUMENT_ASSEMBLY_CONFIGURATION_REQUIRED');
   const request = {
     schema: DOCUMENT_SETUP_SCHEMA,
     serviceName: text(value.serviceName ?? service.name + ' document merchant', 160, 'DOCUMENT_SERVICE_NAME_REQUIRED'),
@@ -81,7 +89,8 @@ export function normalizeDocumentSetup(value) {
         1099511627776, 'DOCUMENT_INPUT_STORAGE_INVALID'),
       maxUploads: integer(inputStorage.maxUploads ?? 1024, 1, 100000, 'DOCUMENT_INPUT_STORAGE_INVALID')
     },
-    intakeKeyEnvironment
+    intakeKeyEnvironment,
+    ...(value.assembly===undefined?{}:{assembly:{payment:structuredClone(value.assembly.payment)}})
   };
   // The native compiler validates every original payment term, advertised input, file and output policy.
   compileJobMerchant(jobConfiguration(request), {baseDir: ROOT});
@@ -92,17 +101,19 @@ export function normalizeDocumentSetup(value) {
 function jobConfiguration(request) {
   const provider = normalizeDocumentProvider(request.provider);
   const functions = {};
-  for (const format of request.formats) {
+  for (const format of formatsFor(request)) {
     const id = functionIds[format];
     need(id, 'DOCUMENT_SETUP_FORMATS_INVALID');
     functions[id] = {
       path: request.pathPrefix + '/' + format,
-      description: 'Render the complete customer ' + format.toUpperCase() +
+      description: format==='pdf-set'?
+        'Assemble the complete ordered PDFs into one PDF; return every original source byte, request and supplier metadata.':
+        'Render the complete customer ' + format.toUpperCase() +
         ' source into a PDF; return the PDF, unchanged source and complete request and renderer metadata.',
-      payment: structuredClone(request.payment),
+      payment: structuredClone(format==='pdf-set'?request.assembly.payment:request.payment),
       inputSchema: documentInputSchema(provider.provider, format),
       example: {title: 'Operations report', taskReference: 'example-document-task',
-        settings: defaultDocumentSettings(provider.provider)},
+        settings: settingsFor(provider.provider,format)},
       inputFiles: {slots: {
         source: {required: true, mediaTypes: [contentTypes[format]], maxBytes: provider.maxSourceBytes,
           description: 'Complete editable UTF-8 ' + format.toUpperCase() + ' document.'}
@@ -110,7 +121,7 @@ function jobConfiguration(request) {
       timeoutMs: provider.timeoutMs + 15000, maxInputBytes: 262144, maxOutputBytes: 67108864,
       output: {format: 'package', filename: 'document.zip', files: {
         pdf: {filename: 'document.pdf', contentType: 'application/pdf', required: true, maxBytes: provider.maxPdfBytes},
-        source: {filename: format === 'html' ? 'source.html' : 'source.md',
+        source: {filename: format==='pdf-set'?'source.json':format === 'html' ? 'source.html' : 'source.md',
           contentType: contentTypes[format], required: true, maxBytes: provider.maxSourceBytes},
         request: {filename: 'request.json', contentType: 'application/json', required: true, maxBytes: 1048576},
         render: {filename: 'render.json', contentType: 'application/json', required: true, maxBytes: 65536}
@@ -134,7 +145,7 @@ export function documentJobConfiguration(request) {
 }
 
 function fileNames(request) {
-  return [...fixedFiles, ...request.formats.flatMap(format =>
+  return [...fixedFiles, ...formatsFor(request).flatMap(format =>
     ['examples/' + sourceNames[format], 'examples/' + format + '-request.json'])];
 }
 function applicationModule(contracts, renderer, request) {
@@ -143,7 +154,7 @@ function applicationModule(contracts, renderer, request) {
   const complete = '// Generated from the complete selected document-merchant source; retained by the original Jobs application SHA.\n' +
     contracts + '\n' + renderer.replace(localImport, '') + '\n' +
     'const installedDocumentProvider = Object.freeze(' + JSON.stringify(request.provider) + ');\n' +
-    request.formats.map(format => 'export async function ' + functionIds[format] + '(input, context) {\n' +
+    formatsFor(request).map(format => 'export async function ' + functionIds[format] + '(input, context) {\n' +
       '  return renderPaidDocument(installedDocumentProvider, ' + JSON.stringify(format) + ', input, context);\n}\n').join('\n');
   need(Buffer.byteLength(complete) <= 4194304, 'DOCUMENT_APPLICATION_TOO_LARGE');
   return complete;
@@ -153,16 +164,17 @@ function customerSetup(request, directory) {
     schema: 'stellar-forge.document-customer-setup.v1', serviceName: request.serviceName,
     publicOrigin: request.publicOrigin, provider: request.provider.provider,
     catalogOrigin: request.publicOrigin,
-    functions: request.formats.map(format => ({
+    functions: formatsFor(request).map(format => ({
       id: functionIds[format], format, path: request.pathPrefix + '/' + format,
       input: {title: 'Your document title', taskReference: 'Your original task reference',
-        settings: defaultDocumentSettings(request.provider.provider)},
+        settings: settingsFor(request.provider.provider,format)},
       file: {slot: 'source', contentType: contentTypes[format], maxBytes: request.provider.maxSourceBytes},
       sampleFile: join(directory, 'examples', sourceNames[format]),
       sampleInputFile: join(directory, 'examples', format + '-request.json'),
       result: {package: 'document.zip', slots: ['pdf', 'source', 'request', 'render']}
     })),
     payment: structuredClone(request.payment),
+    ...(request.assembly?{assemblyPayment:structuredClone(request.assembly.payment)}:{}),
     intakeRequiresAccess: Boolean(request.intakeKeyEnvironment),
     completeWorkflow: [
       'Open the existing customer Request application and load this merchant origin.',
@@ -182,11 +194,11 @@ function generatedFiles(request, directory, completeApplication, sourceExamples)
     'supplier-price.json': json(documentPriceReview(request.provider)),
     'customer-setup.json': json(customerSetup(request, directory))
   };
-  for (const format of request.formats) {
+  for (const format of formatsFor(request)) {
     contents['examples/' + sourceNames[format]] = sourceExamples[format];
     contents['examples/' + format + '-request.json'] = json({
       title: 'Example operations report', taskReference: 'example-operations-report',
-      settings: defaultDocumentSettings(request.provider.provider)
+      settings: settingsFor(request.provider.provider,format)
     });
   }
   return fileNames(request).map(name => {
@@ -211,7 +223,7 @@ function validatePlan(plan, directory, inputSha256) {
       Buffer.byteLength(file.content) === file.bytes && digest(file.content) === file.sha256,
       'DOCUMENT_RETAINED_SETUP_CHANGED', 409);
   }
-  const examples = Object.fromEntries(request.formats.map(format =>
+  const examples = Object.fromEntries(formatsFor(request).map(format =>
     [format, plan.files.find(file => file.name === 'examples/' + sourceNames[format]).content]));
   const generated = generatedFiles(request, directory, plan.files[0].content, examples);
   need(canonical(generated) === canonical(plan.files), 'DOCUMENT_RETAINED_SETUP_CHANGED', 409);
@@ -250,7 +262,7 @@ async function proposedFiles(request, directory) {
   const decode = bytes => new TextDecoder('utf-8', {fatal: true}).decode(bytes);
   const [contracts, renderer] = await Promise.all(['contracts.mjs', 'renderer.mjs']
     .map(name => ownedBytes(join(ROOT, name), 4194304, {privateMode: false}).then(decode)));
-  const examples = Object.fromEntries(await Promise.all(request.formats.map(async format =>
+  const examples = Object.fromEntries(await Promise.all(formatsFor(request).map(async format =>
     [format, decode(await ownedBytes(join(ROOT, 'examples', sourceNames[format]), 4194304, {privateMode: false}))])));
   return generatedFiles(request, directory, applicationModule(contracts, renderer, request), examples);
 }

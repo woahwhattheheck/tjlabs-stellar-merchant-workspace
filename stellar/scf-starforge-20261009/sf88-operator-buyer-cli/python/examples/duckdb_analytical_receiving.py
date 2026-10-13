@@ -58,6 +58,8 @@ def run(args):
     from stellar_forge_buyer.storage import dump, parse, write
     for path in (Path(args.package) / "stellar_forge_buyer" / "duckdb_analytics").rglob("*.py"):
         ast.parse(path.read_bytes(), filename=str(path))
+    record["state"] = "RUNNING"
+    record.pop("completed_at", None)
     keep("source_runtime", {"python": sys.version.split()[0], "source_commit": args.source_commit, "python_parse": "passed"})
     working = root / "warehouse"
     working.mkdir(exist_ok=True)
@@ -317,7 +319,7 @@ def run(args):
             require(len(browser_bytes) == selected_export["archive"]["bytes"]
                     and digest(browser_bytes) == selected_export["archive"]["sha256"],
                     "The original complete edited-workbook download changed")
-            received_files = root / "downloaded-package"
+            received_files = root / "downloaded-edited-package"
             received_files.mkdir(exist_ok=True)
             for item in selected_export["files"]:
                 if item["name"] not in {"analytical-workbook.zip", "report.html", "manifest.json"}:
@@ -328,7 +330,10 @@ def run(args):
                 require(len(body) == item["bytes"] and digest(body) == item["sha256"],
                         "The complete received edited-workbook file changed")
                 destination = received_files / item["name"]
-                destination.write_bytes(body)
+                if destination.exists():
+                    require(destination.read_bytes() == body, "The earlier edited-workbook download changed")
+                else:
+                    destination.write_bytes(body)
                 destination.chmod(0o600)
             inspected = inspect_package(selected_export["directory"],
                                         expected_manifest_sha256=selected_export["manifest_sha256"])
@@ -340,14 +345,22 @@ def run(args):
     finally:
         server.shutdown(); server.server_close(); thread.join(); workspace.close()
     if not closed.exists(): working.rename(closed)
-    extracted = root / "independent-package"
+    browser_selection = exported.get("browser_workspace")
+    receiving_prefix = "edited-" if browser_selection is not None else ""
+    extracted = root / (receiving_prefix + "independent-package")
     with zipfile.ZipFile(received_files / "analytical-workbook.zip") as archive:
         for item in archive.infolist():
             name = Path(item.filename)
             require(not name.is_absolute() and ".." not in name.parts and not item.is_dir(), "Package member changed")
-            path = extracted / name;path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(archive.read(item));path.chmod(0o600)
-    cold = root / "independent-workspace"
+            path = extracted / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            body = archive.read(item)
+            if path.exists():
+                require(path.read_bytes() == body, "The earlier independent package member changed")
+            else:
+                path.write_bytes(body)
+            path.chmod(0o600)
+    cold = root / (receiving_prefix + "independent-workspace")
     receipt = receive_package(extracted, cold, expected_manifest_sha256=exported["manifest_sha256"],
                               expected_workspace_id=workspace_id)
     repeated = receive_package(extracted, cold, expected_manifest_sha256=exported["manifest_sha256"],
@@ -360,8 +373,8 @@ def run(args):
     completed = subprocess.run([sys.executable, "-B", "-m", "stellar_forge_buyer.duckdb_cli", "--workspace", str(cold),
                                "analytics", "record", "reports", report["report_id"]],
                               env=cli_env, capture_output=True, text=True, timeout=120)
-    (root / "cold-cli.stdout").write_text(completed.stdout)
-    (root / "cold-cli.stderr").write_text(completed.stderr)
+    (root / (receiving_prefix + "cold-cli.stdout")).write_text(completed.stdout)
+    (root / (receiving_prefix + "cold-cli.stderr")).write_text(completed.stderr)
     require(completed.returncode == 0 and json.loads(completed.stdout)["report_id"] == report["report_id"],
             "Packaged application CLI did not reopen the retained report")
     with DuckDBWorkspace(cold, memory_limit="256MB", threads=1) as independent:
@@ -371,7 +384,9 @@ def run(args):
                    for key in original_report["sources"]]
         require(all(row["matched"] for row in checked), "Independent full-result fingerprint changed")
         dictionaries = {identity: digest(independent.semantics_bytes(identity)) for identity in original_report["source_editions"]}
-        keep("independent_receiving", {"receipt": receipt, "reused": repeated["reused"],
+        keep("edited_independent_receiving" if browser_selection is not None else "independent_receiving", {
+            "receipt": receipt, "reused": repeated["reused"],
+            "package": str(extracted), "workspace": str(cold),
             "full_results": checked, "original_dictionaries": dictionaries, "packaged_cli": "passed",
             "browser_workspace": receipt["reopened"].get("browser_workspace")})
     record["state"] = "COMPLETE"

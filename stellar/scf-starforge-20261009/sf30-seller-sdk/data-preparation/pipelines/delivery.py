@@ -215,10 +215,13 @@ def receive_project(archive, destination, *, max_bytes=20 * 1024**3):
             'sources': original['sources'], 'nativeRuns': original['runs']}
 
 
-def report(workspace, execution_id, destination):
+def report(workspace, execution_id, destination, *, title=None):
     execution = workspace.execution(execution_id)
     definition = execution['definition']
     esc = lambda value: html.escape(str(value), quote=True)
+    if title is not None and (not isinstance(title, str) or not title.strip() or len(title) > 120):
+        raise PreparationError('Choose a report title of 1–120 nonempty characters')
+    heading = definition['label'] if title is None else title
     rows = []
     for sid in definition['order']:
         stage = next(s for s in definition['stages'] if s['id'] == sid)
@@ -229,9 +232,9 @@ def report(workspace, execution_id, destination):
         output_kind = 'Customer result' if sid in definition['outputs'] else 'Retained intermediate'
         rows.append(f'<section><h2>{esc(stage["label"])}</h2><p>{esc(state["status"].capitalize())} · {state.get("rows", 0):,} rows · {esc(activity)} · {esc(output_kind)}</p><p>{esc(bindings)}</p><pre>{esc(stage["sql"])}</pre><p>Parameters: {esc(canonical(stage["parameters"]))}</p></section>')
     inputs = ''.join(f'<tr><td>{esc(alias)}</td><td>{esc(src["label"])}</td><td>{src["rows"]:,}</td><td>{esc(src["originalName"])}</td></tr>' for alias, src in execution['inputOriginals'].items())
-    text = f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(definition['label'])}</title>
+    text = f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(heading)}</title>
 <style>body{{font:15px/1.6 system-ui,sans-serif;color:#222;background:#fff;max-width:1050px;margin:40px auto;padding:0 24px}}h1{{font-size:30px}}h2{{font-size:20px}}section{{border-top:1px solid #ccc;padding:20px 0}}pre{{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f3f3;padding:16px}}table{{border-collapse:collapse;width:100%}}th,td{{padding:10px;border-bottom:1px solid #ddd;text-align:left}}@media(max-width:600px){{body{{margin:20px auto;padding:0 16px}}table{{font-size:12px}}}}@media print{{section{{break-inside:avoid}}}}</style>
-<h1>{esc(definition['label'])}</h1><p>Pipeline edition {definition['revision']} · {esc(execution['status'].capitalize())}</p><p>{esc(definition['description'])}</p>
+<h1>{esc(heading)}</h1><p>{esc(definition['label'])} · Pipeline edition {definition['revision']} · {esc(execution['status'].capitalize())}</p><p>{esc(definition['description'])}</p>
 <h2>Selected original inputs</h2><table><thead><tr><th>Input</th><th>Edition label</th><th>Rows</th><th>Original filename</th></tr></thead><tbody>{inputs}</tbody></table>
 {''.join(rows)}<section><h2>Receiving this work</h2><p>The project archive contains all original inputs, saved recipe editions, complete intermediate and final results, review histories and pipeline execution history. Receive it into a new directory with the pipeline CLI, then select a saved execution or edit another pipeline edition.</p><p>JSON Lines preserves null separately from empty text. CSV renders both as empty cells. Stage arithmetic uses the original preparation engine; exact decimal functions return text. Complete ordered-result equality is available in the execution comparison.</p></section></html>'''
     destination = Path(destination).resolve()

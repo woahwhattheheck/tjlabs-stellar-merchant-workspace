@@ -1,0 +1,10 @@
+{
+  "apiPath": "/api/receivables/commissioning",
+  "uiPath": "/receivables/commissioning",
+  "receivablesApiPath": "/api/receivables",
+  "receivablesUiPath": "/receivables",
+  "xeroApiPath": "/api/receivables/xero",
+  "xeroUiPath": "/receivables/xero",
+  "requestBytes": 33554432,
+  "sourceBytes": 8388608
+}

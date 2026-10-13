@@ -56,6 +56,12 @@
           "git_blob": "d13236165fc1f1bc3d46ec379a9f5538cde03d5b",
           "sha256": "c34e1e2359fa5626f7522e725f2d09c859e2d41e3469d3881ff8374a4e66cb27",
           "bytes": 15328
+        },
+        {
+          "commit": "0a019ffe48fadbb71adf1dcd9324932ff086b7b2",
+          "git_blob": "8fe7dc8f5e10d0d3f150023ee6dcfb39732e86b0",
+          "sha256": "f41fd36de678d2351b35a92b9bb042220c4cde23e4700947b2e5d05f635969d5",
+          "bytes": 16133
         }
       ]
     },
@@ -84,6 +90,48 @@
           "git_blob": "c649f135aa51fb73013f69d234a0d9f5159e4b74",
           "sha256": "aec61f1ab05418a3c69c58f7fa44f093201d59f665b73f27fe7ce974bec78854",
           "bytes": 36792
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-commissioning",
+      "label": "Complete original paid pipeline configuration, purchase and editable customer receiving",
+      "path": "products/data-preparation/COMMISSIONING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "editions": [
+        {
+          "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+          "git_blob": "01bee215cfd9e275bedbaf4b3552dc2638a8fc51",
+          "sha256": "fd12236a6c7802ab8761c4ace166105dcfa0f9ab32841ca81ebcd192702611e1",
+          "bytes": 16716
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-jobs-selection",
+      "label": "Complete installed preparation and paid-Jobs product selection",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/data-preparation-jobs.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "editions": [
+        {
+          "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+          "git_blob": "aba6d5cc6112e4a0616a287e2fb1bd460d60be72",
+          "sha256": "35a0950ce41b2a868f825f34d6d0d373337888e8ae75c31fb73749a6d4ab0f88",
+          "bytes": 13064
+        }
+      ]
+    },
+    {
+      "id": "preparation-pipeline-jobs-customer",
+      "label": "Typed complete original result-package and editable project receiving",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs/customer.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "editions": [
+        {
+          "commit": "71e7f79171bc3c3022729208fc15a0214414d7e2",
+          "git_blob": "5c0e4363ac3aebb8bd2fd572b58468f668e16314",
+          "sha256": "5f820cdb8842ef763a14b4d98e1e6e286306489586e85b587056396106da8003",
+          "bytes": 16912
         }
       ]
     }

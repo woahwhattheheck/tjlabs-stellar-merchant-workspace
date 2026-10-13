@@ -102,3 +102,66 @@ The existing grant composer already calls **composeGrantEntry** before submissio
 Keep the complete original report files and package manifest in the existing browser manifest. When changing that report edition, update its exact manifest selection and complete byte total together with those files. The source index’s original four reader pins remain the original native application selection; these maintained browser modules join the same complete publication.
 
 Use the original native reviewer operation for desktop and phone opening, complete report download, original packet receiving, current connection-file opening and full export/reopen. The same saved application review and current Site publication receive these source changes.
+
+## Retained catalog selection into Atlas
+
+The **Search the catalog** opening loads the complete October 12, 2026 Vellar
+page and checks its original SHA-256 before search. The public browser uses the
+same pure catalog identity, schema-aware query index and Atlas capture search.
+It renders original declarations and payment alternatives as text, with exact
+source row and option indexes. It can prepare and download a complete review
+containing the entire original page, applied query and selected terms.
+
+Atlas's **Receive a catalog review** opens that file through the original capture,
+selection and request lifecycle. The original review travels with its complete
+workspace export and reopens beside the prepared request.
+
+The current composer calls `attachGrantCatalogReview` through `composeGrantEntry`.
+The additive opening preserves the film, economic report, customer-closing and
+original purchase reviewer sections. Its maintained files are:
+
+| File | Purpose |
+| --- | --- |
+| `grant-catalog.mjs` | Retained source pin, additive markup and complete browser route declarations. |
+| `dist/grant-catalog-browser.mjs` | Source loading, applied query/filter paging, original terms and complete selection download. |
+| `dist/grant-catalog.css` | Neutral responsive catalog controls. |
+| `GRANT_CATALOG.md` | Browser, installed Atlas and terminal receiving instructions. |
+
+`declareGrantEntryAssets` includes the original capture, shared Atlas/Bazaar
+modules, route identity and guide. The focused `grant-reviewer` distribution now
+selects the original Atlas contribution and commands as well as its complete
+source component. The [catalog guide](GRANT_CATALOG.md) covers that installed path.
+
+## Materialize the complete static reader
+
+The installed source server resolves every declared browser route through
+`browser-assets.json`. For the existing static publication, materialize that same
+complete mapping:
+
+```sh
+starforge grant-application export --out /private/new-static-grant-reader
+```
+
+The output contains the full current reader and every declared original asset,
+including shared catalog modules whose source files live outside `dist`. Publish
+the complete output and open `/grant.html`. A bare copy of `dist` does not include
+those mapped source aliases.
+
+`starforge-static-reader.json` records each route, content type, copied filename,
+source path and complete byte/hash identity. Its explicit `rootRoute` retains the
+server's original `/` alias without overwriting the distinct `/index.html` file.
+Use that mapping if the publishing host needs the same root route. The grant
+entry itself remains `/grant.html`.
+
+The export reads the currently selected original manifest and source files,
+streams each complete asset, and rejects source changes during the operation.
+The output directory must be new; failed output retains completed files for
+inspection. Select a new output after correcting any missing or changing source.
+No remote source is refreshed. Serve the output through the existing HTTP/HTTPS
+publisher so browser modules and the retained-source request use their normal
+same-origin routes.
+
+The application API is
+`@tokenjunkielabs/starforge-merchant/grant/static-reader`:
+`exportGrantStaticReader({ directory: absoluteNewDirectory })` returns the entry,
+complete route/file counts and exact static-manifest identity.

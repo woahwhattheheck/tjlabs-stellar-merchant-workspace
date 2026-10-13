@@ -3,11 +3,13 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startSetupServer } from './serve.mjs';
+import { exportGrantStaticReader } from './grant-static-export.mjs';
 
 const help = [
   'Stellar Discovery Trust Layer — SCF application',
   '',
   'starforge grant-application [serve] [--port PORT]',
+  'starforge grant-application export --out /absolute/new/static-reader',
   '',
   'Read the complete reviewed application, product and financing companion,',
   'six-package budget, source index and retained economic briefing.',
@@ -19,6 +21,10 @@ const help = [
   'Default: http://127.0.0.1:8787/grant.html',
   '--port 0 selects an available local port. Open the exact URL printed at startup.',
   'If a cocart-setup listener is already open, use /grant.html at that same origin.',
+  'Export materializes every declared browser route and original shared module.',
+  'Publish its /grant.html with the complete output. The returned route manifest',
+  'retains content types, original hashes and the explicit root mapping.',
+  'The output directory must be new. No external source or service is fetched.',
   'Ctrl+C closes this reader. Grant purchase workbenches retain their own lifecycle.',
 ].join('\n');
 
@@ -31,6 +37,12 @@ export async function main(argv = process.argv.slice(2)) {
     console.log(help); return;
   }
   const args = [...argv];
+  if (args[0] === 'export') {
+    if (args.length !== 3 || args[1] !== '--out')
+      throw new TypeError('Use starforge grant-application export --out /absolute/new/static-reader.');
+    const result = await exportGrantStaticReader({ directory: args[2] });
+    console.log(JSON.stringify(result, null, 2)); return result;
+  }
   if (args[0] === 'serve') args.shift();
   let port = 8787;
   if (args.length) {

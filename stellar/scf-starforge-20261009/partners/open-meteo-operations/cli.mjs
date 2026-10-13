@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {readProductInput,compileWeatherDistribution,launchWeatherMerchant,initializeWeatherWithOperator} from './application.mjs';
 import {initializeWeather,initializeWeatherReview,readWeatherSettings,WeatherWorkspace,cleanResult,safeCode,verifyWeather,restoreWeather} from './workspace.mjs';
 import {exportFrozenReport} from './exports.mjs';
-import {publishJson,absolute,readPrivate,readJson} from './files.mjs';
+import {publish,publishJson,absolute,readPrivate,readJson} from './files.mjs';
 import {need,keys} from './contract.mjs';
 import {MAX_HANDOVER_BYTES,MAX_LEGACY_ARCHIVE_BYTES} from './portable.mjs';
 
@@ -28,6 +28,8 @@ const HELP=[
  'status | site-save | request-save | decision-save | report-freeze',
  '  --settings SETTINGS [--input JSON]',
  'source | source-reprocess | prepare | execute | recover | inspect --settings SETTINGS --request REQUEST_ID [--input JSON]',
+ 'source-history --settings SETTINGS --request REQUEST_ID [--input PAGE.json]',
+ 'source-export --settings SETTINGS --read-id READ_ID --output NEW_FILE',
  'series --settings SETTINGS --capture CAPTURE_ID --variable VARIABLE',
  'compare --settings SETTINGS --left CAPTURE_ID --right CAPTURE_ID --variable VARIABLE',
  'renewal-choices --settings SETTINGS --report REPORT_ID [--output NEW_SELECTION.json]',
@@ -109,7 +111,7 @@ export async function main(args=process.argv.slice(2)){
   try{const result=action==='review'?await workspace.recoveryReview():await workspace.snapshot({output:absolute(opt['--output']),passphraseEnv,signal:controller.signal});print(result);return result;}finally{await workspace.close();}
   }finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}
  }
- const opt=options(args,['--settings','--input','--request','--capture','--variable','--unit','--left','--right','--report','--output','--format','--port','--descriptor','--expected-sha']);
+ const opt=options(args,['--settings','--input','--request','--capture','--variable','--unit','--left','--right','--report','--output','--format','--port','--descriptor','--expected-sha','--read-id']);
  const workspace=await WeatherWorkspace.open(await readWeatherSettings(absolute(opt['--settings'])));
  if(command==='serve'){
   try{const {startWeatherServer}=await import('./server.mjs');const session=await startWeatherServer({workspace,port:Number(opt['--port']??0)});return serveLifetime(session,opt['--descriptor'],{schema:'stellar-forge.weather-operator-runtime.v1'});}
@@ -141,6 +143,11 @@ export async function main(args=process.argv.slice(2)){
   else if(command==='report-freeze')result=await workspace.freezeReport(input);
   else if(command==='source')result=await workspace.sourceCapture(opt['--request'],{...input,signal:controller.signal});
   else if(command==='source-reprocess')result=await workspace.reprocessSource(opt['--request'],input);
+  else if(command==='source-history')result=await workspace.sourceHistory(opt['--request'],input);
+  else if(command==='source-export'){
+   const read=await workspace.providerRead(opt['--read-id']);
+   result={read:cleanResult(read),output:await publish(absolute(opt['--output']),read.raw)};
+  }
   else if(command==='prepare')result=await workspace.prepare(opt['--request'],{...input,signal:controller.signal});
   else if(command==='execute')result=await workspace.execute(opt['--request'],{signal:controller.signal});
   else if(command==='recover')result=await workspace.recover(opt['--request']);

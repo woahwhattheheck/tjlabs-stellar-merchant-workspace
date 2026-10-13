@@ -2,6 +2,7 @@ const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>
 const num=v=>v===null||v===undefined?'—':Number(v).toLocaleString('en',{maximumFractionDigits:3});
 let renewalChoices=null,renewalInput=null,renewalReview=null,renewalResult=null,renewalBusy=false,renewalSelection=0;
 let receivingInput=null,receivingReview=null,receivingBusy=false,receivingSelection=0;
+let providerHistory=null,providerHistoryGeneration=0;
 let state,meta,tab='requests',requestId=null,captureId=null,variable='temperature_2m',decisionEdit=null,sourceView=null,sourceSelection=0,comparison=null,polling=false,lastJob=null;
 async function api(path,input){const response=await fetch(path,input===undefined?{cache:'no-store'}:{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(input)});const value=await response.json();if(!response.ok)throw Object.assign(new Error(value.error??'Request failed'),value);return value;}
 function notice(value){$('#notice').textContent=value??'';}
@@ -24,7 +25,7 @@ const option=(value,label,selected=false)=>'<option value="'+esc(value)+'"'+(sel
 const badge=text=>'<span class="badge">'+esc(text.replaceAll('_',' '))+'</span>';
 const actions=html=>'<div class="actions">'+html+'</div>';
 const button=(action,label,id,style='')=>'<button type="button" data-action="'+action+'"'+(id?' data-id="'+esc(id)+'"':'')+' class="'+style+'">'+esc(label)+'</button>';
-function render(){document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===tab?'page':'false'));$('#main').innerHTML=tab==='requests'?requestsTab():tab==='analysis'?analysisTab():tab==='reports'?reportsTab():recoveryTab();if(tab==='analysis'&&captureId)loadSource().catch(error);}
+function render(){document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===tab?'page':'false'));$('#main').innerHTML=tab==='requests'?requestsTab():tab==='analysis'?analysisTab():tab==='reports'?reportsTab():recoveryTab();if(tab==='analysis'&&captureId)loadSource().catch(error);providerHistoryGeneration++;providerHistory=null;if(tab==='requests'&&requestId)loadProviderHistory().catch(error);}
 function requestsTab(){
  if(meta.reviewMode){
   const rows=state.requests.map(q=>'<tr><td>'+button('select-request',q.spec.title,q.id)+'<br><small>'+esc(q.spec.site.name)+'</small></td><td>'+esc(q.spec.request.family)+' / '+esc(q.spec.request.model)+'</td><td>'+esc(q.spec.request.startDate)+' — '+esc(q.spec.request.endDate)+'</td></tr>').join('');
@@ -40,10 +41,47 @@ function requestDetail(){
  const q=selected();if(!q)return '';const r=q.spec.request,n=q.native;
  let controls='';
  if(meta.reviewMode||q.state==='RECEIVED'){controls='<p class="muted">This source belongs to a received report. Its original source and receiving history remain available with the editable decisions.</p>';}
- else if(!n){controls=actions(button('capture-source','Read provider source',q.id,'primary')+(q.error?.retainedRead?button('source-reprocess','Reprocess retained original bytes',q.id):''))+'<h3>Prepare through the original buyer</h3><form id="prepare-form"><div class="row"><label>Maximum payment, atomic units<input name="maxAtomic" inputmode="numeric" pattern="[1-9][0-9]*" required placeholder="Explicit budget"></label><label>Offer index<input type="number" name="acceptIndex" value="0" min="0" required></label></div>'+(meta.providerMode==='evaluation'?'<label class="check"><input name="directEvaluation" type="checkbox">Use the public evaluation endpoint for an unsigned native buyer request.</label>':'')+actions('<button'+(!['DRAFT','PREPARING'].includes(q.state)?' disabled':'')+'>Prepare and review</button>')+'</form><p class="muted">Buyer preparation uses a new draft. A provider capture remains an independently identified source read.</p>';}
+ else if(!n){controls=actions(button('capture-source','Read provider source',q.id,'primary')+(q.error?.retainedRead&&q.error.retainedRead.reprocessable!==false?button('source-reprocess','Reprocess retained original bytes',q.id):''))+'<h3>Prepare through the original buyer</h3><form id="prepare-form"><div class="row"><label>Maximum payment, atomic units<input name="maxAtomic" inputmode="numeric" pattern="[1-9][0-9]*" required placeholder="Explicit budget"></label><label>Offer index<input type="number" name="acceptIndex" value="0" min="0" required></label></div>'+(meta.providerMode==='evaluation'?'<label class="check"><input name="directEvaluation" type="checkbox">Use the public evaluation endpoint for an unsigned native buyer request.</label>':'')+actions('<button'+(!['DRAFT','PREPARING'].includes(q.state)?' disabled':'')+'>Prepare and review</button>')+'</form><p class="muted">Buyer preparation uses a new draft. A provider capture remains an independently identified source read.</p>';}
  else controls='<dl><dt>Original intent</dt><dd class="mono">'+esc(n.request.intentId)+'</dd><dt>Maximum payment</dt><dd>'+esc(n.maxAtomic)+' atomic units</dd><dt>Reviewed request</dt><dd class="mono">'+esc(n.request.url)+'</dd><dt>Configuration hash</dt><dd class="mono">'+esc(n.review?.configSha256??'Preparation in progress')+'</dd></dl>'+actions((n.review?button('execute','Execute reviewed buyer request',q.id,'primary'):'')+button('recover','Read original buyer outcome',q.id));
- return '<section class="panel"><h2>'+esc(q.spec.title)+'</h2><p>'+badge(q.state)+' · revision '+q.revision+'</p><dl><dt>Coordinates</dt><dd>'+esc(r.latitude+', '+r.longitude)+'</dd><dt>Time zone</dt><dd>'+esc(r.timezone)+'</dd><dt>Variables</dt><dd>'+esc(r.variables.join(', '))+'</dd><dt>Request digest</dt><dd class="mono">'+esc(q.specSha256)+'</dd></dl>'+controls+actions((meta.reviewMode?'':button('copy-request','Copy to new draft',q.id))+(q.captureId?button('view-source','Open retained source',q.captureId):''))+(q.error?'<pre>'+esc(JSON.stringify(q.error,null,2))+'</pre>':'')+'</section>';
+ return '<section class="panel"><h2>'+esc(q.spec.title)+'</h2><p>'+badge(q.state)+' · revision '+q.revision+'</p><dl><dt>Coordinates</dt><dd>'+esc(r.latitude+', '+r.longitude)+'</dd><dt>Time zone</dt><dd>'+esc(r.timezone)+'</dd><dt>Variables</dt><dd>'+esc(r.variables.join(', '))+'</dd><dt>Request digest</dt><dd class="mono">'+esc(q.specSha256)+'</dd></dl>'+controls+actions((meta.reviewMode?'':button('copy-request','Copy to new draft',q.id))+(q.captureId?button('view-source','Open retained source',q.captureId):''))+(q.error?'<pre>'+esc(JSON.stringify(q.error,null,2))+'</pre>':'')+'<div id="provider-history"><p class="muted">Loading provider responses…</p></div></section>';
 }
+
+async function loadProviderHistory(before){
+ const id=requestId,generation=providerHistoryGeneration;
+ const prior=before?providerHistory:null;
+ const box=$('#provider-history');if(!box)return;
+ if(before&&(!prior||prior.requestId!==id||prior.nextBefore!==before))return;
+ const more=box.querySelector('[data-action="more-source-history"]');if(more)more.disabled=true;
+ try{
+  const page=await api('/api/requests/'+encodeURIComponent(id)+'/source-history'+(before?'?before='+encodeURIComponent(before):''));
+  if(generation!==providerHistoryGeneration||requestId!==id||tab!=='requests'||!box.isConnected)return;
+  providerHistory={requestId:id,reads:[...(prior?.reads??[]),...page.reads],nextBefore:page.nextBefore};
+  const q=selected(),rows=providerHistory.reads.map(read=>{
+   const p=read.provenance,complete=p.bodyComplete!==false;
+   const outcome=p.httpStatus===200&&read.reprocessable?'Weather response':'HTTP '+String(p.httpStatus??'unknown');
+   const retry=p.retryAfter===undefined?'':'<br><small>Provider Retry-After: '+esc(p.retryAfter)+'</small>';
+   const disposition=complete?'Complete body':'Retained prefix; body incomplete';
+   const reprocess=!meta.reviewMode&&!q.native&&read.reprocessable&&['DRAFT','SOURCE_CAPTURED','SOURCE_FAILED','ACQUIRING'].includes(q.state)?
+    '<button type="button" data-action="source-reprocess" data-id="'+esc(id)+'" data-read-id="'+esc(read.id)+'">Reprocess this response</button>':'';
+   return '<tr><td>'+esc(p.retrievedAt??read.createdAt)+'<br><small class="mono">'+esc(p.sourceAttempt??read.id)+'</small></td>'+
+    '<td>'+esc(outcome)+'<br><small>'+esc(p.contentType??'application/json')+'</small>'+retry+
+    (p.readErrorCode?'<br><small>'+esc(p.readErrorCode.replaceAll('_',' '))+'</small>':'')+'</td>'+
+    '<td>'+num(read.bytes)+' bytes<br><small>'+esc(disposition)+'</small></td><td>'+
+    actions('<a class="button" href="/api/source-reads/'+encodeURIComponent(read.id)+'/raw">Download response</a>'+
+     '<a class="button" href="/api/source-reads/'+encodeURIComponent(read.id)+'" target="_blank" rel="noopener">Response details</a>'+reprocess)+'</td></tr>';
+  }).join('');
+  box.innerHTML='<h3>Provider response history</h3><p class="muted">Each response belongs to this saved request. Read provider source starts a new read; reprocessing uses the selected retained bytes.</p>'+
+   (rows?'<div class="table"><table><thead><tr><th>Read</th><th>Provider result</th><th>Retained body</th><th>Continue</th></tr></thead><tbody>'+rows+'</tbody></table></div>':
+    '<p class="empty">No provider responses have been retained for this request.</p>')+
+   (providerHistory.nextBefore?actions(button('more-source-history','Load earlier responses',providerHistory.nextBefore)):'');
+ }catch(problem){
+  if(generation===providerHistoryGeneration&&box.isConnected){
+   if(more)more.disabled=false;
+   else box.innerHTML='<h3>Provider response history</h3><p>'+esc((problem.code??problem.message).replaceAll('_',' '))+'</p>'+actions(button('reload-source-history','Reload responses'));
+  }
+ }
+}
+
 function decisionRevisionLabel(decision){
  for(const record of state.receiving??[]){
   const mapping=record.mapping.decisions.find(value=>value.local===decision.id);
@@ -239,7 +277,9 @@ document.addEventListener('click',async e=>{
   else if(action==='select-request'){requestId=id;render();}
   else if(action==='view-source'){captureId=id;await ensureSource(id);decisionEdit=null;tab='analysis';render();}
   else if(action==='capture-source'){const q=state.requests.find(q=>q.id===id);await start('source',{requestId:id,args:{expectedRevision:q.revision}});}
-  else if(action==='source-reprocess'){const q=state.requests.find(q=>q.id===id);await start('source-reprocess',{requestId:id,args:{expectedRevision:q.revision}});}
+  else if(action==='source-reprocess'){const q=state.requests.find(q=>q.id===id);await start('source-reprocess',{requestId:id,args:{expectedRevision:q.revision,...(target.dataset.readId?{sourceReadId:target.dataset.readId}:{})}});}
+  else if(action==='more-source-history')await loadProviderHistory(id);
+  else if(action==='reload-source-history')await loadProviderHistory();
   else if(action==='execute')await start('execute',{requestId:id});
   else if(action==='recover')await start('recover',{requestId:id});
   else if(action==='copy-request'){const q=state.requests.find(q=>q.id===id),r=await api('/api/requests',{siteId:q.spec.site.id,siteRevision:q.spec.site.revision,title:q.spec.title+' copy',request:q.spec.request});requestId=r.id;await refresh();}

@@ -8,6 +8,7 @@ import json
 from model import Problem
 from operations import Operations, decoded
 import operations_calendar as calendar_model
+import operations_agenda_http as agenda_http
 import operations_use_calendar as use_calendar
 from operations_commercial_http import handle as commercial_http
 import operations_installation_sources as installation_sources
@@ -19,6 +20,11 @@ def register_static(static):
                    "/operations_navigation_ui.mjs": ("operations_navigation_ui.mjs", "text/javascript; charset=utf-8"),
                    "/operations_navigation.css": ("operations_navigation.css", "text/css; charset=utf-8")})
     installation_sources.register_static(static)
+    static.update({
+        "/operations_agenda.mjs": ("operations_agenda.mjs", "text/javascript; charset=utf-8"),
+        "/operations_agenda.css": ("operations_agenda.css", "text/css; charset=utf-8"),
+        "/DELIVERY_AGENDA.md": ("DELIVERY_AGENDA.md", "text/markdown; charset=utf-8"),
+    })
     static.update({
         "/operations_procedures.mjs": ("operations_procedures.mjs", "text/javascript; charset=utf-8"),
         "/operations_procedures.css": ("operations_procedures.css", "text/css; charset=utf-8"),
@@ -72,6 +78,7 @@ def register_static(static):
                    "/cohort_planning.mjs": ("cohort_planning.mjs", "text/javascript; charset=utf-8"),
                    "/cohort_planning_calendar.mjs": ("cohort_planning_calendar.mjs", "text/javascript; charset=utf-8"),
                    "/cohort_planning_scheduling.mjs": ("cohort_planning_scheduling.mjs", "text/javascript; charset=utf-8"),
+                   "/cohort_planning_session.mjs": ("cohort_planning_session.mjs", "text/javascript; charset=utf-8"),
                    "/operations_cohort_planning.mjs": ("operations_cohort_planning.mjs", "text/javascript; charset=utf-8"),
                    "/operations_cohort_planning.css": ("operations_cohort_planning.css", "text/css; charset=utf-8"),
                    "/operations_cohort.mjs": ("operations_cohort.mjs", "text/javascript; charset=utf-8"),
@@ -111,6 +118,8 @@ def read(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, query = store(handler), parse_qs(parsed.query)
+    if agenda_http.read(handler, parsed.path, parse_qs(parsed.query, keep_blank_values=True), ops):
+        return True
     if award_terms_http(handler, parsed, ops, "GET"):
         return True
     if commercial_http(handler, parsed, ops, "GET"):

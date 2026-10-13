@@ -129,7 +129,7 @@ export async function reopenCurrentSource({
 
 // Use the original review lifecycle to select this complete current draft.
 export async function receiveCurrentReview({
-  operationId, originalReviewText, originalDraft, currentReviewText, draftText,
+  operationId, originalReviewText, originalDraft, originalDraftText, currentReviewText, draftText,
   sourcePackageSha256, previousReviewEvents, at, actorId, review, sha256,
   onCheckpoint=async()=>{}
 }) {
@@ -139,7 +139,18 @@ export async function receiveCurrentReview({
   const baseline=await review.importReviewRound(originalReviewText);
   need(baseline.events.length===previousReviewEvents,'Retain the selected finished review revision.');
   const initial=await review.reviewRoundView(baseline);
-  need(same(initial.draft,originalDraft),'The completed review and original saved submission differ.');
+  let workingBaseline=null;
+  if(!same(initial.draft,originalDraft)){
+    need(typeof originalDraftText==='string'&&initial.draft.id===originalDraft.id&&
+      same(originalDraft.versions.slice(0,initial.draft.versions.length),initial.draft.versions)&&
+      same(originalDraft.sources.slice(0,initial.draft.sources.length),initial.draft.sources),
+      'Retain the reviewed draft history and sources in the current working submission.');
+    const opened=await review.readSubmissionExport(originalDraftText,{
+      fileName:'Original_Working_Submission.json',receivedAt:at});
+    need(same(JSON.parse(opened.exportText).draft,originalDraft),
+      'Open the complete actual working submission selected by this saved case.');
+    workingBaseline=await review.compareReviewDraft(baseline,opened);
+  }
   need(initial.participants.some(row=>row.id===actorId),'Use the original receiving participant selected for this continuation.');
   let round=currentReviewText?await review.importReviewRound(currentReviewText):baseline;
   const preserve=()=>{
@@ -197,7 +208,9 @@ export async function receiveCurrentReview({
       carriedDecisions:decisions.filter(row=>row.choice==='carry').length,
       reopenedDecisions:decisions.filter(row=>row.choice==='reopen').length,
       actionsAdded:round.events.length-baseline.events.length,
-      readiness:view.readiness,choices:decisions}};
+      readiness:view.readiness,choices:decisions,
+      workingBaseline:workingBaseline?{reviewedEdition:initial.selectedEdition,
+        rows:workingBaseline.rows}:null}};
 }
 
 export async function reopenCurrentReview({

@@ -4,6 +4,7 @@ import {activeIncident, kinds, merchantBinding} from './incident-config.mjs';
 import {queueNotification, terminalNotification} from './notifications.mjs';
 import {objectObservationSignals} from './object-observation.mjs';
 import {ckanObservationSignals} from './ckan-observation.mjs';
+import {oauthObservationSignals} from './oauth-observation.mjs';
 
 const cumulative=['started','completed','responses','success','challenge','clientError','serverError','other','disconnected'];
 const iso=now=>new Date(now).toISOString();
@@ -30,6 +31,7 @@ export function updateConfiguration(state,config,digest,env,now) {
 function signalsFor(config,merchant,observation,previous,now) {
   if(merchant.object)return objectObservationSignals(merchant,observation,now,previous);
   if(merchant.ckan)return ckanObservationSignals(merchant,observation,now,previous);
+  if(merchant.oauth)return oauthObservationSignals(merchant,observation,now,previous);
   const packet=observation.packet;
   if(!packet) return {signals:{ENDPOINT_UNAVAILABLE:{bad:true,values:{}}},error:observation.error};
   const o=packet.report.observation,captured=Date.parse(o.capturedAt),start=Date.parse(o.startedAt);
@@ -98,6 +100,9 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
     ...result.packet.ckan.summary,originalJson:JSON.stringify(result.packet.ckan.summary,null,2),
     poll:{appliedAt:iso(now),fresh:result.fresh===true,
       successful:result.successful===true,reason:result.error??null}};
+  if(merchant.oauth&&result.packet?.oauth)row.oauthObservation={observedAt:result.packet.oauth.generatedAt,
+    ...result.packet.oauth.summary,poll:{appliedAt:iso(now),fresh:result.fresh===true,
+      successful:result.successful===true,reason:result.error??null}};
   let currentCapture;
   const capture=async()=>{
     if(currentCapture!==undefined)return currentCapture;
@@ -106,7 +111,7 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
     if(currentCapture)row.lastCapture=currentCapture;
     return currentCapture;
   };
-  if(result.packet&&(!(merchant.object||merchant.ckan)||result.successful===true)) {
+  if(result.packet&&(!(merchant.object||merchant.ckan||merchant.oauth)||result.successful===true)) {
     const changedSession=row.previous?.sessionId!==result.previous.sessionId;
     if(changedSession) {
       row.sessionsSeen++;

@@ -59,6 +59,10 @@
     "./operator/grant-reporting/input": {
       "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-input.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-input.mjs"
+    },
+    "./operator/operating-plan-returns": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs"
     }
   },
   "applicationProviders": {

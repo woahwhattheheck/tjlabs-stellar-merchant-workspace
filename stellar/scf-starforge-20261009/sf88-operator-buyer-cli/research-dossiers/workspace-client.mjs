@@ -8,7 +8,9 @@ import {createRisSourceClient} from './ris-source/client.mjs';
 import {createCustomerUpdatesClient} from './customer-updates/client.mjs';
 import {createResearchCommerceClient} from './customer-commerce/client.mjs';
 import {createResearchQuotesClient} from './customer-quotes/client.mjs';
-import {QUOTE_REQUEST_LIMIT,QUOTE_CASE_TRANSFER_LIMIT} from './customer-quotes/contracts.mjs';
+import {createResearchQuoteProgrammesClient} from './customer-quotes/programme-client.mjs';
+import {RESEARCH_QUOTE_PROGRAMME_ARCHIVE_LIMIT} from './customer-quotes/programme-archive.mjs';
+import {QUOTE_REQUEST_LIMIT,QUOTE_FILE_LIMIT,QUOTE_CASE_TRANSFER_LIMIT} from './customer-quotes/contracts.mjs';
 import {createClinicalTrialsClient} from './clinical-trials-client.mjs';
 import {createStudyExtractionClient} from './study-extraction-client.mjs';
 import {createStudyFlowClient} from './study-flow/client.mjs';
@@ -100,7 +102,9 @@ export class ResearchWorkspaceClient{
   async #request(route,{body,method=body===undefined?'GET':'POST',headers={},signal,readOnly=false}={},consume=readResponse){
     const connection=await this.#connection();
     const target=new URL(route,connection.origin);
-    need(route.startsWith('/api/')&&target.origin===connection.origin&&['GET','POST'].includes(method),'RESEARCH_ROUTE_INVALID');
+    const upload=method==='PUT'&&/^\/api\/customer-quote-programmes\/uploads\/[a-f0-9-]{36}(?:\?|$)/.test(route);
+    need(route.startsWith('/api/')&&target.origin===connection.origin&&(['GET','POST'].includes(method)||upload),'RESEARCH_ROUTE_INVALID');
+    const mutating=(method==='POST'||upload)&&!readOnly;
     const lifetime=new AbortController(),timeout=AbortSignal.timeout(this.timeoutMs);
     const selectedSignal=AbortSignal.any([lifetime.signal,timeout,...(signal?[signal]:[])]);
     try{
@@ -122,13 +126,13 @@ export class ResearchWorkspaceClient{
       return await consume(response);
     }catch(error){
       if(error instanceof BuyerError){
-        if(!Number.isInteger(error.status))Object.assign(error,{outcomeUnknown:method==='POST'&&!readOnly,method,route,
-          recovery:method==='POST'&&!readOnly?'Read the original dossier revision or saved source operation before another write.':null});
+        if(!Number.isInteger(error.status))Object.assign(error,{outcomeUnknown:mutating,method,route,
+          recovery:mutating?'Read the original dossier revision or saved source operation before another write.':null});
         throw error;
       }
       const code=safeCode(error.code,'RESEARCH_CONNECTION_INTERRUPTED');
-      throw new BuyerError(code,{outcomeUnknown:method==='POST'&&!readOnly,method,route,
-        recovery:method==='POST'&&!readOnly?'Read the original dossier revision or saved source operation before another write.':null});
+      throw new BuyerError(code,{outcomeUnknown:mutating,method,route,
+        recovery:mutating?'Read the original dossier revision or saved source operation before another write.':null});
     }finally{
       // A consumer can fail before reading the response (for example a full
       // destination volume). End this request's original transport in every case.
@@ -141,12 +145,13 @@ export class ResearchWorkspaceClient{
       const templateRoute=/^\/api\/research\/dossiers\/[^/]+\/template-exchange(?:\/|\?|$)/.test(route);
       const returnRoute=/^\/api\/dossiers\/[^/]+\/returns(?:\/|\?|$)/.test(route);
       const studyFlowRoute=/^\/api\/dossiers\/[^/]+\/study-flow(?:\/|\?|$)/.test(route);
-      const maximum=studyFlowRoute?16*1024*1024:returnRoute?(/\/returns\/preview(?:\?|$)/.test(route)?1024*1024:16*1024*1024):route==='/api/customer-quotes/case-transfers/prepare'?QUOTE_CASE_TRANSFER_LIMIT:route.startsWith('/api/customer-quotes/')?QUOTE_REQUEST_LIMIT:route.startsWith('/api/customer-commerce/')?2*1024*1024:templateRoute?48*1024*1024:/^\/api\/dossiers\/[^/]+\/(?:citation-updates|eligibility|extraction(?:\/publications)?|risk-of-bias|customer-updates)\/reviews(?:\?projection=metadata)?$/.test(route)?16*1024*1024:
+      const programmeRoute=route.startsWith('/api/customer-quote-programmes/');
+      const maximum=programmeRoute?(route==='/api/customer-quote-programmes/jobs/case-transfer'?QUOTE_CASE_TRANSFER_LIMIT+65536:QUOTE_REQUEST_LIMIT+65536):studyFlowRoute?16*1024*1024:returnRoute?(/\/returns\/preview(?:\?|$)/.test(route)?1024*1024:16*1024*1024):route==='/api/customer-quotes/case-transfers/prepare'?QUOTE_CASE_TRANSFER_LIMIT:route.startsWith('/api/customer-quotes/')?QUOTE_REQUEST_LIMIT:route.startsWith('/api/customer-commerce/')?2*1024*1024:templateRoute?48*1024*1024:/^\/api\/dossiers\/[^/]+\/(?:citation-updates|eligibility|extraction(?:\/publications)?|risk-of-bias|customer-updates)\/reviews(?:\?projection=metadata)?$/.test(route)?16*1024*1024:
         /^\/api\/dossiers\/[^/]+\/source-bundles\/(?:preview|receive)(?:\?projection=metadata)?$/.test(route)
         ?128*1024*1024+65536:96*1024*1024+65536;
       need(bytes===undefined||Buffer.byteLength(bytes)<=maximum,'RESEARCH_REQUEST_TOO_LARGE');
       return this.#request(route,{...options,body:bytes,headers:{...(options.headers??{}),
-        ...(bytes===undefined?{}:{'Content-Type':'application/json'})}},async response=>parseJson(await readResponse(response,templateRoute?PORTABLE_LIMIT:studyFlowRoute?64*1024*1024:(route.startsWith('/api/europe-pmc')||route.startsWith('/api/customer-commerce/')||route.startsWith('/api/customer-quotes/')||/^\/api\/dossiers\/[^/]+\/(?:customer-updates|ris-sources|returns)(?:\/|\?|$)/.test(route))?64*1024*1024:RESEARCH_CONTROL_LIMIT)));
+        ...(bytes===undefined?{}:{'Content-Type':'application/json'})}},async response=>parseJson(await readResponse(response,programmeRoute?QUOTE_FILE_LIMIT:templateRoute?PORTABLE_LIMIT:studyFlowRoute?64*1024*1024:(route.startsWith('/api/europe-pmc')||route.startsWith('/api/customer-commerce/')||route.startsWith('/api/customer-quotes/')||/^\/api\/dossiers\/[^/]+\/(?:customer-updates|ris-sources|returns)(?:\/|\?|$)/.test(route))?64*1024*1024:RESEARCH_CONTROL_LIMIT)));
   }
   async status(options={}){
     const status=await this.#json('/api/status',undefined,options);
@@ -244,6 +249,14 @@ export class ResearchWorkspaceClient{
   }
   risSources(){return createRisSourceClient({request:(route,body,options)=>this.#json(route,body,options),
     download:(route,file,options)=>this.#download(route,file,options)});}
+  customerQuoteProgrammes(){
+    return createResearchQuoteProgrammesClient({run:work=>this.#run(work),
+      request:(route,body,options)=>this.#jsonAccepted(route,body,options),
+      download:(route,file,options)=>this.#downloadAccepted(route,file,options),
+      upload:(route,body,options)=>this.#request(route,{...options,method:'PUT',body,
+        headers:{'Content-Type':'application/octet-stream','Content-Length':String(body.length)}},
+        async response=>parseJson(await readResponse(response,65536)))});
+  }
   customerQuotes(){
     return createResearchQuotesClient({run:work=>this.#run(work),
       request:(route,body,options)=>this.#jsonAccepted(route,body,options),
@@ -361,7 +374,11 @@ export class ResearchWorkspaceClient{
   #download(route,file,options={}){return this.#run(()=>this.#downloadAccepted(route,file,options));}
   async #downloadAccepted(route,file,{signal,expectedSha256,verifySha256Header=false,request,headers={}}={}){
     const body=request===undefined?undefined:JSON.stringify(request);
-    const fileMaximum=/^\/api\/customer-quotes\/cases\/[a-f0-9-]{36}\/download$/.test(route)&&request?.kind==='CASE_RECORD'
+    const programmeArchive=/^\/api\/customer-quote-programmes\/archives\/[a-f0-9-]{36}$/.test(route),
+      programmeFile=/^\/api\/customer-quote-programmes\/(?:jobs|bundles)\/[a-f0-9-]{36}\/files(?:\?|$)/.test(route);
+    const fileMaximum=programmeArchive?RESEARCH_QUOTE_PROGRAMME_ARCHIVE_LIMIT:programmeFile?
+      Math.max(QUOTE_FILE_LIMIT,QUOTE_CASE_TRANSFER_LIMIT+65536):
+      /^\/api\/customer-quotes\/cases\/[a-f0-9-]{36}\/download$/.test(route)&&request?.kind==='CASE_RECORD'
       ?QUOTE_CASE_TRANSFER_LIMIT:PORTABLE_LIMIT;
     const maximum=route.startsWith('/api/customer-quotes/')?QUOTE_REQUEST_LIMIT:RESEARCH_CONTROL_LIMIT;
     need(body===undefined||Buffer.byteLength(body)<=maximum,'RESEARCH_REQUEST_TOO_LARGE');

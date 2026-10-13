@@ -1,3 +1,4 @@
+import {COHORT_WORKING_SESSION_MAX_BYTES,COHORT_WORKING_STATE_FIELDS,captureCohortPlanningState,cohortWorkingSessionSha256,createCohortWorkingSession,reopenCohortWorkingSession,describeCohortWorkingState,storeCohortWorkingSnapshots,loadCohortWorkingSnapshots} from './cohort_planning_session.mjs';
 import {COHORT_PLAN_SCHEMA, COHORT_PLAN_REPORT_SCHEMA, COHORT_PLAN_COMPARISON_SCHEMA, seedCohortPlan, evaluateCohortPlan, exportCohortPlanCsv, compareCohortPlans, reopenCohortPlanComparison, exportCohortPlanComparisonCsv} from './cohort_planning.mjs';
 
 import {seedCohortPlanFromCalendar} from './cohort_planning_calendar.mjs';
@@ -72,7 +73,8 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   const sourceOptions=()=>{const values=new Map();for(const item of [...(state.latestSeed?.sources||[]),...(caseValue.sources||[])])values.set(item.id,item);return [...values.values()].map(item=>[item.id,item.filename+' · '+String(item.sha256||'').slice(0,12)]);};
   const inputMatchesReport=()=>Boolean(state.report&&plan()&&state.reportInput===JSON.stringify(plan()));
   function persist(critical=false){
-    const retained={};for(const key of ['schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric','schedulingResult','schedulingInput','schedulingEditorId','schedulingOptions'])retained[key]=state[key];
+    const retained={};for(const key of ['schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric','schedulingResult','schedulingInput','schedulingEditorId','schedulingOptions','viewedSource','rejected','workingSnapshots','workingHistory','workingIncoming','workingSnapshotIds','workingStorage'])retained[key]=state[key];
+    if(state.workingStorage==='INDEXED_DB'){delete retained.workingSnapshots;retained.workingSnapshotIds=Object.keys(state.workingSnapshots||{}).length?Object.keys(state.workingSnapshots):state.workingSnapshotIds||[];}
     try{sessionStorage.setItem(storageKey,JSON.stringify(retained));state.storageWarning='';}catch(error){state.storageWarning='This browser could not retain the latest local draft. Download its JSON before closing this tab.';if(critical)throw new Error('The browser could not retain the exact source request before dispatch. Download the draft or free this site’s session storage, then save again. '+error.message);}
   }
   function controls(){
@@ -145,7 +147,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       (p?'<p class="cp-report-state" data-cp-report-state>'+esc(inputMatchesReport()?'Report matches this draft.':'Draft changed. Update the report to calculate these inputs.')+'</p>':'')+
       (state.incomingCalendar?'<aside class="cp-recovery"><h3>Received customer-use calendar</h3><p>The complete selected Installation editions and native Cohort seed are retained for an editable adoption plan.</p>'+btn('Open calendar as new plan','receive-calendar')+'</aside>':'')+
       (pending?'<aside class="cp-recovery"><h3>Original save awaiting its result</h3><p>The exact source attachment request is retained for case version '+esc(pending.payload.expectedVersion)+'. Continue it to recover the original receipt.</p><code>'+esc(pending.payload.requestId)+'</code><div class="cp-actions">'+btn('Continue original save','retry','data-cp-recovery="true"')+btn('Download retained request','pending-export','data-cp-recovery="true"')+'</div></aside>':'')+
-      (accepted?'<aside class="cp-recovery"><h3>Edition accepted</h3><p>Read back the original source file to finish this save.</p>'+btn('Read back saved source','readback','data-cp-recovery="true"')+'</aside>':'')+
+      (accepted||state.caseRefreshReceipt?'<aside class="cp-recovery"><h3>Edition accepted</h3><p>Read back the original source file to finish this save.</p>'+btn('Read back saved source','readback','data-cp-recovery="true"')+'</aside>':'')+
       (p&&p.source.programId!==caseId?'<p class="cp-alert">This imported plan belongs to '+esc(p.source.programId)+'. Its original source and report are available here. Open that original case to attach an edition.</p>':'');
   }
   function navigation(){return '<nav class="cp-tabs" aria-label="Cohort planning sections">'+tabNames.map(([key,title])=>btn(title,'tab','data-tab="'+key+'" data-cp-view="true" aria-current="'+(key===state.tab?'page':'false')+'"',!plan()&&!['setup','editions','compare'].includes(key))).join('')+'</nav>';}
@@ -516,7 +518,22 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     state.viewedSource={meta:copy(source),raw,envelope};state.accepted=null;state.caseRefreshReceipt=result;
     state.notice='Saved and reopened '+source.filename+' as a new source edition in this case.';
     try{persist(true);}catch(error){state.accepted=accepted;throw error;}
-    if(available()){state.caseRefreshReceipt=null;persist();await onCaseUpdated(next,result);if(available())inform(isComparison?'Saved the complete comparison and both original plan documents in this case.':'Saved the complete cohort plan and report as an original case source.');}
+    if(available()){await refreshRetainedCaseReceipt({next,source,raw});if(available())inform(isComparison?'Saved the complete comparison and both original plan documents in this case.':'Saved the complete cohort plan and report as an original case source.');}
+  }
+  async function refreshRetainedCaseReceipt(verified=null){
+    const result=state.caseRefreshReceipt,viewed=state.viewedSource;
+    if(!result||!available())return;
+    if(result.id!==caseId||!Number.isInteger(result.version)||result.version<1||viewed?.meta?.id!==result.recordId||typeof viewed.raw!=='string')
+      throw new Error('The retained source receipt does not match its original case and opened source.');
+    const next=verified?.next||await saveApi(prefix),source=verified?.source||next?.sources?.find(row=>row.id===result.recordId);
+    if(next?.program?.id!==caseId||next.program.version<result.version||!source)
+      throw new Error('The retained accepted source has not appeared in its original case readback.');
+    const raw=verified?verified.raw:await readSource(source);
+    if(source.id!==result.recordId||raw!==viewed.raw||source.filename!==viewed.meta.filename)
+      throw new Error('The retained source receipt differs from the exact original reopened source.');
+    if(!available()||state.caseRefreshReceipt!==result||state.viewedSource!==viewed)return;
+    caseValue=next;await onCaseUpdated(next,result);
+    if(state.caseRefreshReceipt===result){state.caseRefreshReceipt=null;persist();}
   }
   async function sendPending(){
     if(state.inflight){await state.inflight;if(state.accepted)await finishAccepted();return;}
@@ -1122,11 +1139,122 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       jsonDetail('Complete editable successor',result.candidate)+'</body></html>';
   }
 
+
+  function workingGraph(){
+    state.workingSnapshots??={};state.workingHistory??=[];state.workingIncoming??=[];
+    return {snapshots:state.workingSnapshots,history:state.workingHistory,incoming:state.workingIncoming};
+  }
+  function workingFingerprint(){
+    return JSON.stringify([captureCohortPlanningState(state),state.workingSnapshots,state.workingHistory,state.workingIncoming]);
+  }
+  async function workingDocument(selected=null){
+    workingGraph();
+    const value=selected?{...copy(state.workingSnapshots[selected.snapshotSha256]),workingSnapshots:state.workingSnapshots,
+      workingHistory:state.workingHistory,workingIncoming:state.workingIncoming}:state;
+    return createCohortWorkingSession(value,{sessionId:uid('working-session'),exportedAt:now(),transportActive:Boolean(state.inflight)});
+  }
+  async function downloadWorkingSession(selected=null){
+    const document=await workingDocument(selected),raw=JSON.stringify(document,null,2)+'\n';
+    if(new TextEncoder().encode(raw).length>COHORT_WORKING_SESSION_MAX_BYTES)
+      throw new Error('The complete readable working session exceeds 64 MiB. Keep the original case and its retained source exports.');
+    download(raw,cleanName(document.snapshots[document.current.snapshotSha256].plan?.name||caseValue.program.name)+'-working-session.json');
+  }
+  async function mergeWorkingSession(document,origin){
+    workingGraph();
+    const durable=await storeCohortWorkingSnapshots(caseId,{...state.workingSnapshots,...document.snapshots});
+    workingGraph();
+    const snapshots={...state.workingSnapshots};
+    for(const [id,snapshot] of Object.entries(document.snapshots)){
+      if(snapshots[id]&&JSON.stringify(snapshots[id])!==JSON.stringify(snapshot))
+        throw new Error('A retained snapshot identity differs from the incoming complete state.');
+      snapshots[id]=copy(snapshot);
+    }
+    const history=copy(state.workingHistory),incoming=copy(state.workingIncoming);
+    const all=new Map([...history,...incoming].map(row=>[row.id,row]));
+    const items=[['incoming',document.current],...document.history.map(row=>['history',row]),...document.incoming.map(row=>['incoming',row])];
+    for(let index=0;index<items.length;index++){
+      const [kind,row]=items[index],id='working-import-'+origin.sha256+'-'+index;
+      if(all.has(id)){if(all.get(id).snapshotSha256!==row.snapshotSha256)throw new Error('The incoming working entry differs from its prior retained source.');continue;}
+      const entry={...copy(row),id,origin:{...copy(row.origin||{}),importedFrom:{...copy(origin),sessionId:document.sessionId,
+        exportedAt:document.exportedAt,entryId:row.id}},reason:index===0?'Opened complete working session: '+origin.filename:row.reason};
+      (kind==='history'?history:incoming).push(entry);all.set(id,entry);
+    }
+    state.workingSnapshots=snapshots;state.workingHistory=history;state.workingIncoming=incoming;
+    state.workingStorage=durable?'INDEXED_DB':'INLINE';state.workingSnapshotIds=durable?Object.keys(snapshots):[];
+    state.notice='The complete incoming working session is retained in Saved editions. Review it and choose Open as working session; current edits remain selected.';
+    persist();
+  }
+  async function importWorkingSession(){
+    const file=await chooseFile('.json,application/json');if(!file)return;
+    if(file.size>COHORT_WORKING_SESSION_MAX_BYTES)throw new Error('Choose a complete working session no larger than 64 MiB.');
+    const raw=await file.text();
+    if(new TextEncoder().encode(raw).length>COHORT_WORKING_SESSION_MAX_BYTES)throw new Error('The complete working session exceeds 64 MiB.');
+    const document=await reopenCohortWorkingSession(raw.replace(/^\uFEFF/,''),{caseId});
+    const sha256=await cohortWorkingSessionSha256(raw);
+    // File reads always enter this data-only inbox. Disposed mounts share the original state object.
+    await mergeWorkingSession(document,{filename:file.name,bytes:new TextEncoder().encode(raw).length,sha256,receivedAt:now()});
+    if(available())state.tab='editions';
+    persist();
+  }
+  async function adoptWorkingSession(id){
+    workingGraph();
+    if(isPending())throw new Error('Continue the original source request before replacing its working editor.');
+    const entry=[...state.workingIncoming,...state.workingHistory].find(row=>row.id===id);
+    if(!entry)throw new Error('Choose a retained complete working session.');
+    const expected=workingFingerprint(),original=await workingDocument();
+    const next=await saveApi(prefix);
+    if(next?.program?.id!==caseId)throw new Error('The current readback belongs to a different original case.');
+    if(!available()||isPending()||workingFingerprint()!==expected)
+      throw new Error('The working selection changed during source readback. The incoming session remains in Saved editions for explicit opening.');
+    const incoming=copy(state.workingSnapshots[entry.snapshotSha256]);
+    const snapshots={...copy(state.workingSnapshots),...original.snapshots};
+    const history=copy(state.workingHistory),queued=state.workingIncoming.filter(row=>row.id!==id).map(copy);
+    history.push({...original.current,reason:'Prior work before opening '+entry.id,origin:{caseId,selectedEntryId:entry.id}});
+    if(!history.some(row=>row.id===entry.id))history.push({...copy(entry),reason:'Opened original working session: '+entry.reason});
+    const durable=await storeCohortWorkingSnapshots(caseId,snapshots);
+    if(!available()||isPending()||workingFingerprint()!==expected)throw new Error('The current editor changed while retaining the complete predecessor. The incoming working session remains selected for later review.');
+    const candidate={...incoming,workingSnapshots:snapshots,workingHistory:history,workingIncoming:queued,
+      workingStorage:durable?'INDEXED_DB':'INLINE',workingSnapshotIds:durable?Object.keys(snapshots):[],
+      inflight:null,error:'',storageWarning:'',notice:'Opened the complete retained working session. Its previous editor and all source selections remain in Saved editions.'};
+    // Persist the complete successor before replacing the shared state object. A storage failure retains both selections.
+    const retained={};for(const key of [...COHORT_WORKING_STATE_FIELDS,'workingSnapshots','workingHistory','workingIncoming','workingStorage','workingSnapshotIds'])
+      if(candidate[key]!==undefined)retained[key]=candidate[key];
+    if(durable)delete retained.workingSnapshots;
+    try{sessionStorage.setItem(storageKey,JSON.stringify(retained));}
+    catch(error){throw new Error('The browser could not retain the complete opened session. Download the working-session JSON to keep all selections; the current editor remains open. '+error.message);}
+    planningReadSequence++;comparisonReadSequence++;
+    for(const key of Object.keys(state))delete state[key];
+    Object.assign(state,candidate);caseValue=next;comparisonCacheKey='';comparisonCache=null;
+    state.tab='editions';
+  }
+  function workingSessionsView(){
+    const graph=workingGraph();
+    if([...graph.history,...graph.incoming].some(row=>!graph.snapshots[row.snapshotSha256]))return section('Complete working session',note('Opening the complete retained working archive. The current plan remains selected.')+btn('Open working-session JSON','working-import','data-cp-view="true"'));
+    const rows=values=>values.slice().reverse().map(row=>{
+      const snapshot=graph.snapshots[row.snapshotSha256],summary=describeCohortWorkingState(snapshot);
+      return [esc(row.retainedAt)+'<small>'+esc(row.reason)+'</small>',
+        '<strong>'+esc(summary.name)+'</strong><small>Tranche '+esc(summary.tranche)+' · source v'+esc(summary.sourceVersion)+'</small>'+
+        '<small>'+summary.unfinishedRows+' unfinished rows · '+summary.priorDrafts+' earlier drafts · '+summary.comparisonHistory+' comparison revisions · '+summary.incomingSources+' incoming sources</small>'+
+        (summary.allocationMethod?'<small>Allocation: '+esc(summary.allocationMethod)+'</small>':'')+
+        (summary.originalRequest?'<small>Original source request: '+esc(summary.originalRequest)+' · '+esc(summary.requestId)+'</small>':'')+
+        (row.transportActive?'<small>The original source transport was active when this state was captured. Its same-request continuation is retained.</small>':''),
+        '<span class="cp-identity">'+esc(row.snapshotSha256)+'</span><small>'+esc(row.origin?.importedFrom?.filename||row.origin?.filename||'Original working state')+'</small>',
+        btn('Open as working session','working-adopt','data-id="'+esc(row.id)+'"',isPending())+' '+btn('Download complete session','working-selected-json','data-id="'+esc(row.id)+'" data-cp-view="true"')];
+    });
+    return section('Complete working session',
+      note('Carry the entire original case editor between browsers: unfinished input text, prior drafts, both comparison sources and history, allocation choices, incoming source documents and the exact pending or accepted save request. Opening a file first retains it beside current work; opening its selected state preserves the predecessor.')+
+      '<div class="cp-actions">'+btn('Download working session','working-json','data-cp-view="true"')+
+      btn('Open working-session JSON','working-import','data-cp-view="true"')+'</div>'+
+      (graph.incoming.length?'<h4>Incoming working sessions</h4>'+table(['Retained','Complete work','Original identity',''],rows(graph.incoming)):'')+
+      (graph.history.length?'<h4>Earlier working sessions</h4>'+table(['Retained','Complete work','Original identity',''],rows(graph.history)):''));
+  }
+
+
   function editions(){
     const selected=state.viewedSource,sources=(caseValue.sources||[]).filter(row=>row.filename?.startsWith('sf47-cohort-plan-'));
     const other=(caseValue.sources||[]).filter(row=>!sources.some(value=>value.id===row.id)&&(row.mediaType==='application/json'||/\.json$/i.test(row.filename||'')));
     const actions='<div class="cp-actions">'+btn('Import plan or report JSON','import-json')+btn('Download plan JSON','export-json','data-cp-view="true"',!plan())+btn('Download editable rows CSV','rows-csv','data-cp-view="true"',!plan())+btn('Import editable rows CSV','rows-import','',!plan())+btn('Download complete case ZIP','case-export','data-cp-view="true"')+'</div>';
-    return section('Saved source editions',note('Each edition contains the complete entered plan and its calculated report. Saving adds a new original source record. The complete case ZIP includes those native sources and their existing case history.')+actions+
+    return workingSessionsView()+section('Saved source editions',note('Each edition contains the complete entered plan and its calculated report. Saving adds a new original source record. The complete case ZIP includes those native sources and their existing case history.')+actions+
       (sources.length?table(['Edition source','Captured','Bytes / identity',''],sources.map(row=>['<strong>'+esc(row.filename)+'</strong><small>'+esc(row.id)+'</small>',esc(row.createdAt||row.observedAt),esc(row.bytes)+'<small>'+esc(row.sha256)+'</small>',btn(row.filename.includes('-comparison-')?'Open comparison':'Open original plan','open-source','data-id="'+esc(row.id)+'" data-cp-view="true"')+' '+btn('Use as baseline','comparison-source-baseline','data-id="'+esc(row.id)+'"',row.filename.includes('-comparison-'))])):empty('No cohort planning source edition is attached to this case yet.'))+
       (other.length?'<details><summary>Open another retained JSON source</summary>'+table(['Original source',''],other.map(row=>[esc(row.filename)+'<small>'+esc(row.id)+'</small>',btn('Open JSON source','open-source','data-id="'+esc(row.id)+'" data-cp-view="true"')]))+'</details>':''))+
       (selected?section('Opened original source','<p><strong>'+esc(selected.meta.filename)+'</strong><br><span class="cp-identity">'+esc(selected.meta.id)+' · '+esc(selected.meta.sha256)+'</span></p>'+
@@ -1262,7 +1390,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       if(action==='evaluate'){evaluate();state.tab='report';state.notice='Calculated the named schedule, payment groups, costs, and original proposed targets.';return;}
       if(action==='save'){await saveEdition();return;}
       if(action==='retry'){await sendPending();return;}
-      if(action==='readback'){await finishAccepted();return;}
+      if(action==='readback'){if(state.accepted)await finishAccepted();else await refreshRetainedCaseReceipt();return;}
       if(action==='pending-export'){const retained=state.pending||state.accepted;if(retained)download(JSON.stringify(retained,null,2)+'\n','cohort-original-source-request.json');return;}
       if(action==='edit'||action==='copy-row'){openEditor(target.dataset.kind,target.dataset.id||null,action==='copy-row');return;}
       if(action==='editor-close'){closeEditor();return;}
@@ -1278,6 +1406,10 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       }
       if(action==='receive-calendar'){await receiveCalendar();return;}
       if(action==='calendar-original'||action==='calendar-seed'){const original=plan()?.calendarSource;if(original)download(JSON.stringify(action==='calendar-original'?original.selection:original.cohortSeed,null,2)+'\n',cleanName(plan().name)+'-'+action+'.json');return;}
+      if(action==='working-json'){await downloadWorkingSession();return;}
+      if(action==='working-import'){await importWorkingSession();return;}
+      if(action==='working-adopt'){await adoptWorkingSession(target.dataset.id);return;}
+      if(action==='working-selected-json'){workingGraph();const selected=[...state.workingIncoming,...state.workingHistory].find(row=>row.id===target.dataset.id);if(selected)await downloadWorkingSession(selected);return;}
       if(action==='import-json'){await importJson();return;}
       if(action==='export-json'){exportJson();return;}
       if(action==='rows-csv'){download(editableCsv(),cleanName(plan().name)+'-editable-rows.csv','text/csv');return;}
@@ -1301,12 +1433,16 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   const ready=(async()=>{
     busy=true;controls();
     try{
+      if(state.workingStorage==='INDEXED_DB'&&(state.workingSnapshotIds||[]).some(id=>!state.workingSnapshots?.[id])){
+        const retained=await loadCohortWorkingSnapshots(caseId,state.workingSnapshotIds);
+        state.workingSnapshots={...retained,...state.workingSnapshots};
+      }
       if(state.inflight){try{await state.inflight;}catch(error){state.error=error.message;}}
       if(state.accepted){await finishAccepted();return;}
       if(state.incomingCalendar&&!state.pending){await receiveCalendar();return;}
       if(!plan()&&!state.pending)await newPlan(state.tranche);
       else{await refreshSource();if(plan()){try{evaluate();}catch(error){state.error=error.message;}}}
-      if(state.caseRefreshReceipt&&available()){const result=state.caseRefreshReceipt;state.caseRefreshReceipt=null;persist();await onCaseUpdated(caseValue,result);}
+      if(state.caseRefreshReceipt&&available())await refreshRetainedCaseReceipt();
     }catch(error){state.error=error.message||String(error);}
     finally{busy=false;persist();if(available())render();}
   })();

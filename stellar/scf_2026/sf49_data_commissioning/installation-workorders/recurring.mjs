@@ -58,10 +58,15 @@ async function main() {
     if (command === "programme") {
       for (const key of ["document", "commissioning", "calendar"])
         if (!flags[key]) throw new Error("Select --" + key + ".");
+      const commissioning = await read(flags.commissioning, files, "original-commissioning.json");
+      const sourceSha256 = seed.document?.workshare?.sourceSha256;
+      if (typeof sourceSha256 !== "string" || !/^[a-f0-9]{64}$/.test(sourceSha256) ||
+          digest(files.get("original-commissioning.json")) !== sourceSha256)
+        throw new Error("Select the complete original commissioning file whose bytes match the native seed workshare.sourceSha256.");
       const result = composeCustomerProgramme({
         seed, profile,
         document: await read(flags.document, files, "original-installation-document.json"),
-        commissioning: await read(flags.commissioning, files, "original-commissioning.json"),
+        commissioning,
         calendarInput: await read(flags.calendar, files, "original-calendar-input.json"),
         selection: flags.selection ? await read(flags.selection, files, "original-commercial-selection.json") : undefined,
         taskBudget: flags["task-budget"] ? await read(flags["task-budget"], files, "original-task-budget.json") : undefined,
