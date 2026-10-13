@@ -199,6 +199,28 @@ apply and the ordinary customer delivery. The producer opens those exact
 normal/narrow rendered views and every downloaded attachment, uses the important
 controls, and inspects the returned screenshots before presenting the result.
 
+## Review changed event meaning before the same native continuation
+
+Open the accepted programme and its already acquired following NDJSON/manifest
+pair. Compare the complete preceding and current mappings in the original
+Event browser or source CLI. Inspect cumulative coverage and newly added events
+separately: an old field can remain present in earlier events while disappearing
+from every new event. Review missing/null values, changed JSON kinds and each
+added, removed or redirected output mapping.
+
+Keep the original comparison, reviewer, decision note and every affected output
+field's reason together. Save the complete unfinished mapping review before a
+handoff and reopen it against the same programme, baseline operation, revision,
+source pair and mapping. Programme switches preserve their separate drafts.
+The native coordinator recomputes the complete comparison before its original
+review and carries the exact attributed selection into the existing apply.
+
+The installed typed agent and source CLI receive the same full comparison and
+review record. Continue any changed workbook source through the customer
+worksheet course below, then receive the original full report, workbook and
+Analysis archive through the same Installation operation. The complete course
+is in [Event programmes](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_PROGRAMMES.md).
+
 ## Continue the customer's saved worksheet after a later source changes
 
 A selected later window can leave one of the customer's existing worksheet
@@ -373,9 +395,9 @@ all thirty preceding source IDs and every preceding measured edition, plus the
 three complete worksheet-continuation source entries. Each
 historical edition names its original repository explicitly; the current edition
 names its actual public repository, exact commit, full Git blob, UTF-8 byte
-count and SHA-256. The worksheet continuation advances its original browser,
-HTTP, operating guides and installation contribution to the selected Merchant
-source edition; the other public product sources keep their existing selection. Historical source identities remain distinct from the current public
+count and SHA-256. The mapping and worksheet continuation selects all thirty-three complete
+source bodies at one current public product commit, including its browser,
+native coordinator, typed agent, installed commands and operating guides. Historical source identities remain distinct from the current public
 source selection.
 
 The same public edition includes the complete commercial Workshare intake into
