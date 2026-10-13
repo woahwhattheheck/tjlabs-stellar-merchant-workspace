@@ -57,7 +57,7 @@ The same complete course accepts `--input-format bmecat-xml`. It sends the publi
 node stellar-forge/mcp-merchant-operator/receiving/opensearch-materials-native.mjs \
   --supplier-directory /private/receiving/supplier-bmecat \
   --directory /private/receiving/bmecat-mcp \
-  --supplier-operation supplier-bmecat-ee290 \
+  --supplier-operation supplier-bmecat-original \
   --operation bmecat-mcp-ee290 \
   --input-format bmecat-xml
 ~~~
