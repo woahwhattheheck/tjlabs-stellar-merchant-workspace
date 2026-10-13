@@ -581,6 +581,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     if(materialCatalogueView)return materialCatalogueView;
     materialCatalogueView=mountMaterialCatalogueSourceDesk(materialCatalogueRoot,{
       context:()=>({caseId,planId:caseValue.program.planId,createdAt:caseValue.program.createdAt,version:caseValue.program.version}),
+      savedInstallations:()=>copy(list()),readInstallation:id=>api(prefix+'/installations/'+id),
       caseData:()=>caseValue,api,saveApi,recordingActor,readOnlyReason:commercialReadOnly,
       refreshCase:reloadCase,close:()=>root.scrollIntoView({block:'start'}),
       currentDraft:()=>{capture();persist();const d=session.mode==='edit'?draft():null;return d?copy(d):null;},
@@ -595,9 +596,15 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
            !attached?.materialCatalogue||attached.sha256!==input.source.sha256||
            !same(reviewed.document,prepared?.document))
           return {applied:false,message:'Reopen the current complete case and review this exact material preparation.'};
+        if(reviewed.installationId){
+          const current=list().find(row=>row.id===reviewed.installationId);
+          const bound=input.result.source?.following?.comparison?.basis.installation;
+          if(!current||current.revision!==reviewed.expectedRevision||current.sha256!==bound?.sha256||bound.id!==current.id)
+            return {applied:false,message:'The saved target changed. Retain this draft and compare its current original edition.'};
+        }
         const key='material-'+crypto.randomUUID(),doc=prepared.document;
         session.drafts[key]={key,token:crypto.randomUUID(),label:doc.name+' · Material catalogue',
-          installationId:null,expectedRevision:0,document:copy(doc),
+          installationId:reviewed.installationId??null,expectedRevision:reviewed.expectedRevision??0,document:copy(doc),
           note:'Receive complete Material Catalog '+input.source.sha256+'; native preparation '+input.preparationSha256,dirty:true};
         session.draftKey=key;session.mode='edit';session.selected=null;selectedRow=null;
         preview=null;previewDraft=null;loading=false;

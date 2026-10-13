@@ -42,7 +42,7 @@ function describe(bundle){
 function originalInputs(input,raw){
  const commissioningBytes=bytes(input.commissioningBase64,8*1024*1024,'original commissioning source');
  const packetBytes=input.packetBase64===null||input.packetBase64===undefined?null:bytes(input.packetBase64,8*1024*1024,'original receiving packet');
- return {bundleBytes:raw,expectedBundleSha256:identity(raw).sha256,seed:input.seed,caseSnapshot:input.caseValue,
+ return {...(input.following?{following:input.following,previousBundleBytes:bytes(input.previousSourceBase64,MAX_SOURCE,'previous complete catalogue')}:{}),bundleBytes:raw,expectedBundleSha256:identity(raw).sha256,seed:input.seed,caseSnapshot:input.caseValue,
   profile:readProfile('supplier-catalogues').value,commissioningBytes,commissioning:JSON.parse(commissioningBytes.toString('utf8')),
   packetBytes,operationId:input.operationId,selection:input.selection,bindings:input.bindings,
   attachments:(input.attachments??[]).map(file=>{
@@ -67,6 +67,7 @@ export async function performMaterialSource(input){
   await mkdir(join(inputs,'attachments'),{mode:0o700});
   const files={'bundle.jsonl':raw,'seed.json':json(data.seed),'case.json':json(data.caseSnapshot),
    'commissioning.json':data.commissioningBytes,'bindings.json':json(data.bindings),'selection.json':json(data.selection)};
+  if(data.following){files['following.json']=json(data.following);files['previous-catalog.jsonl']=data.previousBundleBytes;}
   if(data.packetBytes)files['packet.json']=data.packetBytes;
   const attachments={schema:'stellar-forge.material-customer-installation.v1.attachments',files:data.attachments.map(file=>({filename:file.path.slice('attachments/'.length),path:file.path,purpose:file.purpose,...identity(file.bytes)}))};
   files['attachments.json']=json(attachments);
@@ -74,6 +75,7 @@ export async function performMaterialSource(input){
   for(const [name,body]of Object.entries(files))await writeFile(join(inputs,name),body,{flag:'wx',mode:0o600});
   const receipt=await prepareMaterialInstallationFiles({bundle:join(inputs,'bundle.jsonl'),sha256:sha,
    seed:join(inputs,'seed.json'),case:join(inputs,'case.json'),commissioning:join(inputs,'commissioning.json'),
+   ...(data.following?{following:join(inputs,'following.json'),previousBundle:join(inputs,'previous-catalog.jsonl')}:{}),
    ...(data.packetBytes?{packet:join(inputs,'packet.json')}:{}),bindings:join(inputs,'bindings.json'),
    selection:join(inputs,'selection.json'),attachments:join(inputs,'attachments.json'),out});
   await cp(out,cold,{recursive:true,errorOnExist:true,force:false});

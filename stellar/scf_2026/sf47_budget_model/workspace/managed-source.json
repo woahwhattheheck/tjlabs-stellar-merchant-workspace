@@ -1248,6 +1248,13 @@
     "../../../scf-starforge-20261009/sf98-merchant-delivery/destinations/storage.mjs",
     "forecast-financing-handover.mjs",
     "COMMERCIAL_WORKSHARE.md",
-    "operations_commercial_workshare_case.py"
+    "operations_commercial_workshare_case.py",
+    "operations_material_following_model.mjs",
+    "operations_material_following.mjs",
+    "material-installation-following-browser.mjs",
+    "material_installation_following_receiving.py",
+    "MATERIAL_INSTALLATION_FOLLOWING.md",
+    "../../../../products/material-catalog/commissioning/following.mjs",
+    "../../../../products/material-catalog/commissioning/FOLLOWING_INSTALLATION.md"
   ]
 }
