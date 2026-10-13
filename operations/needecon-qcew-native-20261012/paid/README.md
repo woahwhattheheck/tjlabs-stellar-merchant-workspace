@@ -14,9 +14,11 @@ This delivery contains the complete paid county-report source packet and the com
 
 The original three-file programme is already delivered at https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C8REC7QHF and the original case is https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791827742861299. The existing original controller's source-packet.json is **2,158,543 bytes**, SHA256 **d392e198af16678277b4cfe71c96cdf26a61652f42bcbe7de96980541c687ec5**, Git blob **afad6d2d88f7999a176ad5afafe33f426b63ed7f**. Keep that exact packet for --packet. The following paid packet is selected separately with --merchant-packet.
 
-**The complete paid packet contains **164 files / 2,228,387 source bytes**. Its packet is **2,323,305 bytes**, SHA256 **1ae7d0e5ac1a334ed787e43ceee496ef32e5e4b2f092ad45c2ac62c2a806ab3b**, Git blob **c453d49d45eec4091455e2ae44e0dc64f96fa3d3**. The preserved original runtime base is **0b005caa01350f7763a1905dcec9ce9edd45d781**; the selected full paid-source overlays are published at **c7781fd12f5be0032202fa37f16e750d440e5a66**. Each source member records its own exact commit and byte identity.**
+The complete paid packet contains **208 files / 2,635,825 source bytes**. Its packet is **2,788,442 bytes**, SHA256 **ff7225ca479a835481fbfdaeba263efcf84082a5fa32851f48ffaaac0c9695a5**, Git blob **260151ffe456a87a3aa2f6c516e4e5995312db25**. The preserved original runtime base is **0b005caa01350f7763a1905dcec9ce9edd45d781**. The complete county/DDP application composition is published at **db9c2e9d033174ea5c0bcd7b10e9573a1b0f49e4**, with complete current FRED/DDP support received from **5d51b802eea4ee45929985f944b1d0bccccf7e65**. Every member records its own selected source commit and complete byte identity.
 
-**The complete extended controller is **27,840 bytes**, SHA256 **932aa6d54f3f3183c998d174b097b7b5a67c3feb8640bdd0b0029751689126f2**, Git blob **e22632665a0f0251074d0309b401c1e6605492c6**.**
+This receiving edition joins the current DDP package and publication desks with the county Merchant and Customer flows in the same workspace. It includes the complete published-source CLI, collector, comparison and receiving modules, their declarations, current browser assets and the original Buyer worker resources. The native controller continues the same retained intake, project, report ancestry and purchase intentions. Its original source phase still selects the unchanged 156-file packet; the full shared application is selected separately for the paid continuation.
+
+The complete extended controller is **27,840 bytes**, SHA256 **932aa6d54f3f3183c998d174b097b7b5a67c3feb8640bdd0b0029751689126f2**, Git blob **e22632665a0f0251074d0309b401c1e6605492c6**.
 
 Receive this complete delivery into a new private receiving directory, separate from the original operation. The Canvas carrier provides the complete compressed JSON and its encoded standard-library Python receiver. The receiver verifies the whole transfer and every individual file before writing the selected files. Its final output gives the actual receiving paths.
 
@@ -47,6 +49,8 @@ The public payment JSON must contain the original seller's actual payment requir
 
 Keep the Buyer configuration in its current private installation. The programme retains its public payment terms, selected launch binding, Buyer settings hash and actual operation identifiers in the original journal. The complete private configuration is read from its selected path at runtime.
 
+The original native FRED installation is retained in the [FD06/39DA host handoff](https://tokenjunkielabs.slack.com/archives/C0C1F274SGH/p1791773418541189?thread_ts=1791768518.287349&cid=C0C1F274SGH), joined by the current source receiver in the [original county case](https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791851368700359?thread_ts=1791827742.861299&cid=C0BTTA66TK3). Its installed operator workspace supplies the selected active configuration and operator environment. Use the current private Buyer configuration and the public launch values returned by that installation's owner.
+
 ## Complete operation command
 
 Run the received new controller, keeping --packet pointed at the original received packet and selecting the new paid source separately. Replace the installed paths and the public launch values below with that accepting host's existing selection:
@@ -58,7 +62,7 @@ python3 /absolute/paid-receiving/run_native.py \
   --directory /dev/needecon48db-receiving-20261012/operation \
   --intake-directory /dev/needecon48db-receiving-20261012/original-intake \
   --merchant-packet /absolute/paid-receiving/merchant-source-packet.json \
-  --merchant-packet-sha256 1ae7d0e5ac1a334ed787e43ceee496ef32e5e4b2f092ad45c2ac62c2a806ab3b \
+  --merchant-packet-sha256 ff7225ca479a835481fbfdaeba263efcf84082a5fa32851f48ffaaac0c9695a5 \
   --node /absolute/installed/node \
   --chromium /absolute/installed/chromium \
   --playwright-module /absolute/installed/playwright/index.js \
