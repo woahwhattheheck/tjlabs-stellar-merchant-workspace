@@ -114,6 +114,17 @@ export async function odkWritePrivateJson(path, value, {replace = false} = {}) {
   } catch (error) { await unlink(temporary).catch(() => {}); throw error; }
   return {path, sha256: odkDigest(bytes), bytes: bytes.length};
 }
+/** Explicit browser origin only; forwarded request headers never configure trust. */
+export function odkExternalOrigin(value) {
+  let url;
+  try { url = new URL(value); } catch {}
+  odkNeed(typeof value === 'string' && value === value.trim() && url &&
+    url.protocol === 'https:' && !url.username && !url.password &&
+    url.pathname === '/' && !url.search && !url.hash &&
+    (value === url.origin || value === url.origin + '/'),
+  'ODK_EXTERNAL_ORIGIN_INVALID', 'Select one complete trusted external HTTPS origin without a path, query or credentials.');
+  return url.origin;
+}
 function liveUrl(value) {
   let url;
   try { url = new URL(value); } catch { throw odkFailure('ODK_CONNECTION_INVALID', 'The original private listener URL is invalid.'); }
@@ -126,7 +137,7 @@ function liveUrl(value) {
 export async function readCentralConnection(path, {directory} = {}) {
   const source = await odkReadPrivateJson(path, 32768), value = source.value;
   odkExact(value, ['schema','instanceId','directory','directoryIdentity','workspaceId',
-    'operator','pid','startedAt','origin','url'],
+    'operator','pid','startedAt','origin','url','browserOrigin','browserUrl'],
   ['schema','instanceId','directory','directoryIdentity','workspaceId','operator','pid','startedAt','origin','url']);
   const selected = await odkPrivateDirectory(value.directory);
   odkNeed(value.schema === ODK_CONNECTION_SCHEMA && ODK_UUID.test(value.instanceId ?? '') &&
@@ -141,6 +152,11 @@ export async function readCentralConnection(path, {directory} = {}) {
   'ODK_CONNECTION_CHANGED', 'The original Central workspace binding changed. Review its current connection.', 409);
   const url = liveUrl(value.url);
   odkNeed(value.origin === url.origin, 'ODK_CONNECTION_INVALID', 'The original listener origin changed.');
+  const hasBrowserOrigin = Object.hasOwn(value, 'browserOrigin'), hasBrowserUrl = Object.hasOwn(value, 'browserUrl');
+  odkNeed(hasBrowserOrigin === hasBrowserUrl, 'ODK_CONNECTION_INVALID', 'Retain the complete selected browser origin and URL.');
+  if (hasBrowserOrigin) odkNeed(odkExternalOrigin(value.browserOrigin) === value.browserOrigin &&
+    value.browserUrl === value.browserOrigin + '/' + url.hash,
+  'ODK_CONNECTION_INVALID', 'The selected browser URL must retain its exact trusted origin and original operator token.');
   return {path:source.path,sha256:source.sha256,value,token:decodeURIComponent(url.hash.slice(7))};
 }
 export function odkConnectionView(connection) {

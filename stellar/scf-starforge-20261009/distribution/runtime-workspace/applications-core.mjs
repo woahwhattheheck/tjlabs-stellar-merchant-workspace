@@ -200,7 +200,7 @@ async function runViews(root, applicationId, history, observations = null) {
     return { id: run.id, createdAt: run.createdAt, revision: run.revision, command: run.request.command,
       args: run.request.args, terminal: run.request.terminal === true,
       applicationProvider: run.request.applicationProvider ?? null, ...observed,
-      request: undefined, privateUrl: observed.active !== false && !observed.stop ? observed.url?.url ?? null : null,
+      request: undefined, privateUrl: observed.active !== false && !observed.stop ? observed.url?.browserUrl ?? observed.url?.url ?? null : null,
       privateLinks: observed.active !== false && !observed.stop && Array.isArray(observed.url?.links) ? observed.url.links : [] };
   }));
 }
