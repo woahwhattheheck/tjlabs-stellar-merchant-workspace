@@ -135,7 +135,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
   const available=()=>active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
   const defaults=()=>({source:null,accountId:'',accountLabel:'',currency:'USD',format:{delimiter:',',decimalMark:'.',groupMark:'',dateFormat:'YYYY-MM-DD',amountMode:'SIGNED',positiveDirection:'IN'},columns:{date:'',reference:'',description:'',amount:'',debit:'',credit:''},defaultCategory:'OTHER',decisions:[]});
-  const values={inputs:defaults(),headers:[],inspection:null,nativeScalesText:'USD: 2',optionsError:'',editRevision:0,preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',appliedQuery:'',pending:null,accepted:null,setupPending:null,setupChoice:'',setupName:'',setupNote:'',inflight:null,error:'',notice:'',allocationRow:null,allocationWorks:{},batchSelection:[],batchChange:{mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''},batchProposal:null,batchUndo:null,batchReviewPage:0,copyIndex:statementCopyIndex(current.program.id),copyLoaded:false,copyName:'',copyNote:'',copyQuery:'',copyAppliedQuery:'',copyPage:0,workingCopyId:null,copySelectedId:'',copySelectedRevision:1,copyReview:null};
+  const values={inputs:defaults(),headers:[],inspection:null,nativeScalesText:'USD: 2',optionsError:'',editRevision:0,preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',appliedQuery:'',pending:null,accepted:null,setupPending:null,setupChoice:'',setupName:'',setupNote:'',inflight:null,error:'',notice:'',allocationRow:null,allocationWorks:{},batchSelection:[],batchChange:{mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''},batchProposal:null,batchUndo:null,batchReviewPage:0,copyIndex:statementCopyIndex(current.program.id),copyLoaded:false,copyName:'',copyNote:'',copyQuery:'',copyAppliedQuery:'',copyPage:0,workingCopyId:null,copySelectedId:'',copySelectedRevision:1,copyDetailPage:0,copyReview:null};
   if(!Object.hasOwn(session,'appliedQuery'))session.appliedQuery=session.query||'';
   for(const [key,value] of Object.entries(values))if(!Object.hasOwn(session,key))session[key]=value;
   session.currentCaseVersion=current.program.version;
@@ -700,7 +700,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
   }
   function copiesPage(){
     return statementCopiesPanel({index:session.copyIndex,query:session.copyQuery,appliedQuery:session.copyAppliedQuery,page:session.copyPage,name:session.copyName,note:session.copyNote,
-      activeId:session.workingCopyId,review:session.copyReview,selectedId:session.copySelectedId,selectedRevision:session.copySelectedRevision});
+      activeId:session.workingCopyId,review:session.copyReview,selectedId:session.copySelectedId,selectedRevision:session.copySelectedRevision,detailPage:session.copyDetailPage});
   }
   async function selectedCopyEdition(){
     const row=session.copyIndex.copies.find(value=>value.id===session.copySelectedId),revision=session.copySelectedRevision;
@@ -723,8 +723,10 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
       session.copySelectedId=row.id;session.copySelectedRevision=row.revision;session.copyReview=null;
     }else if(action==='copies-review'){
       if(session.pending||session.accepted||session.setupPending)throw new Error('Finish the current original request before opening another statement. You can save and download its complete copy meanwhile.');
-      session.copyReview=compareStatementCopy(snapshot(),await selectedCopyEdition());
-    }else if(action==='copies-cancel')session.copyReview=null;
+      session.copyDetailPage=0;session.copyReview=compareStatementCopy(snapshot(),await selectedCopyEdition());
+    }else if(action==='copies-details-previous')session.copyDetailPage=Math.max(0,session.copyDetailPage-1);
+    else if(action==='copies-details-next')session.copyDetailPage++;
+    else if(action==='copies-cancel')session.copyReview=null;
     else if(action==='copies-open'){
       const review=session.copyReview;
       if(!review||JSON.stringify(review.current)!==JSON.stringify(snapshot()))throw new Error('The current work changed. Review the selected edition again before opening it.');
@@ -842,8 +844,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     if(mapping){
       const oldDelimiter=session.inputs.format?.delimiter,oldInspection=session.inspection;captureMapping(mapping);
       if(event.target.name==='sourceFormat'){
-        try{chooseFormat(event.target.value);}catch(error){session.headers=[];session.error=error.message;}
-        render();
+        const format=event.target.value;void run(async()=>{await preserveCurrentCopy('Before changing statement source format');chooseFormat(format);});
       }else if(event.target.name==='statementId'){
         try{selectAccount(event.target.value);}catch(error){session.error=error.message;}
         render();
