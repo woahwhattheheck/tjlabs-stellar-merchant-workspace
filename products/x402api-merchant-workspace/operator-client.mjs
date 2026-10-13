@@ -228,6 +228,31 @@ export async function createMerchantOperatorClient(input,{signal}={}) {
     },
     reconcileInvoice: (value,settings={})=>request(invoicePath(value)+'/reconcile',
       {...readSettings(settings),method:'POST',recovery:recoverInvoice(value)}),
+    intakeContext: (settings={})=>request('/api/invoice-intake/context',readSettings(settings)),
+    listIntakes: (settings={})=>request('/api/invoice-intake',readSettings(settings)),
+    inspectIntakeSource: (source,settings={})=>request('/api/invoice-intake/inspect',
+      {...readSettings(settings),method:'POST',body:{source},recovery:{kind:'intake-source',action:'inspect'}}),
+    prepareIntake: (input,settings={})=>{
+      need(object(input)&&UUID.test(input.operation??'')&&input.storeId===identity.storeId&&input.tenantId===identity.tenantId,
+        'INTAKE_OWNER_CHANGED');
+      return request('/api/invoice-intake',{...readSettings(settings),method:'POST',body:input,
+        recovery:{kind:'intake',operation:input.operation,action:'status'}});
+    },
+    readIntake: async(operation,settings={})=>{
+      const value=await request('/api/invoice-intake/'+id(operation),readSettings(settings));
+      need(value.operation===operation&&value.storeId===identity.storeId&&value.tenantId===identity.tenantId,
+        'INTAKE_OWNER_CHANGED');return value;
+    },
+    exportIntake: async(operation,settings={})=>{
+      const value=await request('/api/invoice-intake/'+id(operation)+'/export',readSettings(settings));
+      need(value.plan?.operation===operation&&value.plan?.storeId===identity.storeId&&value.plan?.tenantId===identity.tenantId,
+        'INTAKE_OWNER_CHANGED');return value;
+    },
+    runIntake: (operation,planSha256,settings={})=>{
+      need(SHA.test(planSha256??''),'INTAKE_REVIEW_REQUIRED');
+      return request('/api/invoice-intake/'+id(operation)+'/run',{...readSettings(settings),method:'POST',body:{planSha256},
+        recovery:{kind:'intake',operation,action:'status'}});
+    },
     observation: (settings={})=>request('/api/observation',readSettings(settings)),
     observationSummary: ({historySequence,signal}={})=>request('/api/observation/summary',
       {signal,headers:historySequence===undefined?{}:{'x-merchant-history-sequence':String(historySequence)}}),

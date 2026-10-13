@@ -26,7 +26,7 @@
         <div><span>In progress</span><strong id="count-progress">0</strong></div>
         <div><span>Delivered</span><strong id="count-complete">0</strong></div>
       </section>
-      <div class="toolbar"><div><h2>Invoices</h2><p id="template-line" class="muted"></p></div><div class="inline"><button id="refresh" class="secondary">Refresh</button><button id="show-create">New invoice</button></div></div>
+      <div class="toolbar"><div><h2>Invoices</h2><p id="template-line" class="muted"></p></div><div class="inline"><button id="refresh" class="secondary">Refresh</button><button id="show-intake" class="secondary">Import invoices</button><button id="show-create">New invoice</button></div></div>
       <section id="create-panel" class="panel" hidden aria-labelledby="create-title">
         <div class="section-heading"><h3 id="create-title">Create invoice</h3><button id="hide-create" class="quiet">Close</button></div>
         <form id="create-form">
@@ -34,6 +34,13 @@
           <fieldset><legend>Payment options</legend><p class="muted">Select the accepted assets and enter the exact price for each.</p><div id="rail-fields" class="rail-fields"></div></fieldset>
           <div class="form-actions"><span id="creation-note" class="muted"></span><button type="submit" id="create-submit">Save invoice</button></div>
         </form>
+      </section>
+      <section id="intake-panel" class="panel" hidden aria-labelledby="intake-title">
+        <div class="section-heading"><div><h3 id="intake-title">Import invoices</h3><p class="muted">Retain a CSV or JSON accounting export, map its columns and review every invoice. Each source row offers one configured payment option.</p></div><button id="hide-intake" class="quiet">Close</button></div>
+        <div class="form-grid"><label>Retained intake<select id="intake-list"><option value="">Choose retained intake</option></select></label><label>Original source<input id="intake-file" type="file" accept=".csv,.json,text/csv,application/json"></label><label>Source format<select id="intake-format"><option value="csv">CSV with headers</option><option value="json">JSON array of records</option></select></label></div>
+        <div class="actions"><button id="intake-inspect" class="secondary">Inspect source</button></div>
+        <section id="intake-mapping" class="subsection" hidden><h4>Source mapping</h4><p id="intake-source-summary" class="muted"></p><div id="intake-fields" class="form-grid"></div><label>Amount representation<select id="intake-amount-mode"><option value="atomic">Integer atomic strings</option><option value="decimal">Exact decimal strings in configured units</option></select></label><p class="muted">Rows sharing an invoice grouping key must retain the same reference, description and optional original UUID. Use one row for each asset option. JSON amounts must be strings.</p><button id="intake-prepare">Retain and review plan</button></section>
+        <section id="intake-review" class="subsection" hidden><h4 id="intake-identity"></h4><p id="intake-summary"></p><p id="intake-warning" class="notice"></p><div class="table-scroll"><table><thead><tr><th>Original invoice</th><th>Separate payment options</th><th>Intake result</th></tr></thead><tbody id="intake-rows"></tbody></table></div><div class="register-pagination"><button id="intake-previous" class="secondary">Previous</button><span id="intake-page"></span><button id="intake-next" class="secondary">Next</button></div><div class="actions"><button id="intake-run">Create remaining invoices</button><button id="intake-status" class="secondary">Refresh original results</button><button id="intake-export" class="secondary">Download source and results</button></div><p id="intake-digest" class="muted"></p></section>
       </section>
       <div class="work-grid">
         <section class="panel order-panel" aria-label="Invoice list">

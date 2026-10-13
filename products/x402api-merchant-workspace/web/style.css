@@ -21,3 +21,5 @@ label select{display:block;margin-top:6px;font-weight:400}
 .register-export h3{font-size:14px}.register-export .actions{margin-bottom:12px}
 #register-source{overflow-wrap:anywhere}
 @media(max-width:420px){.register-filter-grid{grid-template-columns:1fr}.register-pagination{padding:14px 10px;gap:6px}.register-pagination button{padding:8px}}
+
+#intake-panel small{display:block;overflow-wrap:anywhere;color:var(--muted,#555);margin-top:4px}#intake-panel select{max-width:100%}#intake-panel .form-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}#intake-digest,#intake-source-summary{overflow-wrap:anywhere}
