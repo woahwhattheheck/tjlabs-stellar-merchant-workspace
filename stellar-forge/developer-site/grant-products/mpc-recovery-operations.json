@@ -47,6 +47,96 @@
           "git_blob": "985f9a2d8dd8e5628cfe2a53ace491db00f24aea"
         }
       ]
+    },
+    {
+      "id": "mpc-managed-operating",
+      "label": "Complete persistent recovery application and customer operating workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/mpc-recovery-operations/OPERATING.md",
+      "editions": [
+        {
+          "commit": "4655211dc5feab86553a1425e71950ad8eb4d0ca",
+          "bytes": 24590,
+          "sha256": "12431f0f18f314c1fd26da4e74ffde40f35b14db4ad6af4a472ce7b9735090f6",
+          "git_blob": "8072555957aea660667a625642b89a67f12af531"
+        }
+      ]
+    },
+    {
+      "id": "mpc-managed-sdk",
+      "label": "Typed managed client, original records and complete agent file delivery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/mpc-recovery-operations/SDK.md",
+      "editions": [
+        {
+          "commit": "9a00ead06c17c1c711bc939f1f25d943bdafbe56",
+          "bytes": 10308,
+          "sha256": "8c31d864909f365fac2e1151804b53be27a5fb805db2c40b9a061d12e1ad66bc",
+          "git_blob": "f65e66acfee2a78d1616d8500ffde88487d3d234"
+        }
+      ]
+    },
+    {
+      "id": "mpc-managed-service",
+      "label": "Physical store, original command recovery and authenticated complete outputs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/mpc-recovery-operations/STORE_HTTP.md",
+      "editions": [
+        {
+          "commit": "4655211dc5feab86553a1425e71950ad8eb4d0ca",
+          "bytes": 12958,
+          "sha256": "2eda2d1eeea33a511d5bbc448decbe5b503e2a57d0a03c7ce8fb509b3b0bade9",
+          "git_blob": "d1c8248fabfffaeee2528b6c9dfc06b6680c5c22"
+        }
+      ]
+    },
+    {
+      "id": "mpc-managed-receiving",
+      "label": "Complete managed, browser, portable and cold-store receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "tools/mpc-recovery-operations/MANAGED_RECEIVING.md",
+      "editions": [
+        {
+          "commit": "4655211dc5feab86553a1425e71950ad8eb4d0ca",
+          "bytes": 14526,
+          "sha256": "ae376ee4d31ad8b04605d35f421f06d8c7b09a0834241423e67ab139d7adb59e",
+          "git_blob": "a28d6424c864881da06dda1281094c7bc9be536b"
+        }
+      ]
+    },
+    {
+      "id": "mpc-installation-profile",
+      "label": "Twelve-stage customer recovery Installation and sixteen complete inputs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/mpc-recovery-operations.json",
+      "editions": [
+        {
+          "commit": "9a00ead06c17c1c711bc939f1f25d943bdafbe56",
+          "bytes": 14716,
+          "sha256": "cf32a89d04859d0d81d53d640cf31b66b0c09d47b5dc55097a1a70631783f5cc",
+          "git_blob": "d167ec19e0e699399e6097d89412164744a05fda"
+        }
+      ]
+    },
+    {
+      "id": "mpc-managed-adoption",
+      "label": "Original accepted native result and explicit managed source adoption",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/mpc-recovery-operations/ADOPTION.json",
+      "editions": [
+        {
+          "commit": "4655211dc5feab86553a1425e71950ad8eb4d0ca",
+          "bytes": 3119,
+          "sha256": "d2c8e94e8421dc8715ba4951daa3fe2c8227f06ce1ed602b049244f0a8904395",
+          "git_blob": "35d6a0e592eb9600bf74ee3a48306aec3e5c6adb"
+        }
+      ]
     }
   ]
 }

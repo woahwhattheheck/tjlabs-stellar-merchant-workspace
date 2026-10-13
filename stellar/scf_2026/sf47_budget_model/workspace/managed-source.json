@@ -675,6 +675,9 @@
     "operations_work_billing_cli.py",
     "operations_work_billing.mjs",
     "operations_work_billing.css",
-    "WORK_BILLING.md"
+    "WORK_BILLING.md",
+    "operations_statement_rules.mjs",
+    "operations_statement_rules.css",
+    "STATEMENT_RULES.md"
   ]
 }

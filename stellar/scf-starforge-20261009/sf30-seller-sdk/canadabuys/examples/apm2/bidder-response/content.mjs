@@ -229,7 +229,7 @@ export const RESPONSE_CONTENT = {
     {
       "id": "operational-security",
       "title": "Security and information handling",
-      "draft": "Inventory telemetry fields by source, sensitivity, purpose and destination. Choose minimization and transformation before where supported, with an owner for the rule and a retained configuration reference. Record transport trust, service identities, token scopes, operator roles, administrative/support access and audit events. Map retention and deletion to each stored data class and backup path. The actual RFI provisions and selected deployment documents supply the security and residency obligations used in the final response.",
+      "draft": "Inventory telemetry fields by source, sensitivity, purpose and destination. Apply minimization and transformation before transmission where supported, with an owner for the rule and a retained configuration reference. Record transport trust, service identities, token scopes, operator roles, administrative/support access and audit events. Map retention and deletion to each stored data class and backup path. The actual RFI provisions and selected deployment documents supply the security and residency obligations used in the final response.",
       "inputs": [
         "Actual RFI security/residency clauses",
         "Product control documentation",

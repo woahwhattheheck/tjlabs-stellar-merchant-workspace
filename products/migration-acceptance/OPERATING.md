@@ -2,7 +2,7 @@
 
 This guide connects TJLabs' complete Migration Acceptance Workbench to the maintained Merchant Applications, customer-agent and SCF Customer installations interfaces. The original workbench, native dlt/DuckDB engine, project history, request protocol and receiving programme remain the implementation.
 
-The installed product root is `products/migration-acceptance/`; its `workbench/` directory contains all 208 unchanged original files. The source manifest is 38,692 bytes, SHA-256 `38fbf4bab1ec87dfc14c9b3d4bff3b580186bee0b78958410e8be89afa7332fc`. The original published edition is Commons commit `6720db68738b822e3c87ee10c4b58e1a2a12944f`, under `revenue/definian_migration_acceptance_20261013/`.
+The installed product root is `products/migration-acceptance/`; its `workbench/` directory contains all 205 files of the public software edition, including its source manifest. The source manifest is 38,875 bytes, SHA-256 `fbabde0b35342409e652fab1514e1892876ad865591067ddd59b4d4eb7bd90a5`. [Public source lineage](PUBLIC_SOURCE.md) records the original implementation and the removed private commercial material. All native implementation files remain byte-for-byte identical to the original.
 
 “Migration Acceptance Workbench” names TJLabs' authored offering. Original Definian module/schema names remain in source and saved projects for compatibility. They do not assert endorsement, an accepted customer contract, production deployment or completed customer receiving. The existing company case retains its own sender, terms and history.
 
@@ -420,7 +420,7 @@ After actual operation, retain the original native result and all complete artif
 
 ## 11. Funding, useful purchases and source registration
 
-The reusable 208-file workbench and original runtime are already authored. Future funded work must identify actual remaining customer adaptation, host commissioning, connector/source integration, acceptance rules, operator work and independent receiving. Assign each actual hour once through the original six funded packages or its separate commercial Workshare. This profile changes neither the original 400 hours / USD38,000 request nor its 150-day plan.
+The reusable 205-file public workbench and original runtime are already authored. Future funded work must identify actual remaining customer adaptation, host commissioning, connector/source integration, acceptance rules, operator work and independent receiving. Assign each actual hour once through the original six funded packages or its separate commercial Workshare. This profile changes neither the original 400 hours / USD38,000 request nor its 150-day plan.
 
 Build the customer's activity calendar from real source availability and needed outputs. Do not create purchases to satisfy a count. Actual settlement and complete customer task are separate observations in the existing case; a native job or exported report is not proof of settlement.
 
@@ -439,3 +439,8 @@ At handover the receiving engineer should be able to:
 - Continue the next useful customer edition using its actual source cadence and agreed support owner.
 
 The detailed unchanged engine/operator contract remains [workbench/OPERATOR.md](workbench/OPERATOR.md); exact business rules are documented in [workbench/acceptance/OPERATING.md](workbench/acceptance/OPERATING.md); the complete related-data source/native course is in [workbench/CHINOOK.md](workbench/CHINOOK.md).
+
+
+## Complete catalogue migration adaptation
+
+The [Loaded Bikes catalogue workshare](adaptations/loaded-bikes/README.md) adds a full public-source product review, controlled corrections, destination mapping, original relationship evidence, complete CSV/project/source handover, and the original native dlt/DuckDB receiving course. Its [operating guide](adaptations/loaded-bikes/OPERATING.md) and [browser receiving guide](adaptations/loaded-bikes/BROWSER_RECEIVING.md) keep one reviewed project through the catalogue application, native loading/comparison/acceptance and the copied original workbench UI. The edition includes complete source; current private capture packets and commercial terms remain in their original authorized case.

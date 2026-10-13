@@ -20,7 +20,15 @@ export async function prepareProject(project){
   const files=prepared.files.map(({content,...f})=>({...f,raw:Buffer.from(content,'utf8')}));
   const add=(path,value,role)=>{const raw=Buffer.from(json(value));files.push({path,role,raw,...pin(raw)});};
   add('review/project.json',project,'loaded-bikes-editable-review');
-  if(project.claims)add('source/source-claims.json',project.claims,'loaded-bikes-published-claims');
+  if(project.claims){
+    add('source/source-claims.json',project.claims,'loaded-bikes-published-claims');
+    for(const response of project.claims.original_response_additions??[]){
+      safeRelative(response.path);check(!files.some(f=>f.path===response.path),'Supplemental original source path collides: '+response.path);
+      const raw=Buffer.from(response.content_base64,'base64');
+      check(raw.length===response.bytes&&hash(raw)===response.sha256,'Supplemental original source identity changed.');
+      files.push({path:response.path,role:'loaded-bikes-original-response',mediaType:'application/json',raw,...pin(raw)});
+    }
+  }
   // Keep the complete editable customer review as an explicit source, including decision history.
   const {bindingSha256,...binding}=prepared.binding;
   binding.editableProject=descriptor(files.find(f=>f.path==='review/project.json'));

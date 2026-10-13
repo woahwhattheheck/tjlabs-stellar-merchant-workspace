@@ -2,8 +2,11 @@
   "schema": "tjlabs.loaded-bikes-source-manifest.v1",
   "product": "Loaded Bikes catalogue migration",
   "workbench": {
-    "manifestSha256": "38fbf4bab1ec87dfc14c9b3d4bff3b580186bee0b78958410e8be89afa7332fc",
-    "files": 208
+    "edition": "public-software-1",
+    "manifestSha256": "fbabde0b35342409e652fab1514e1892876ad865591067ddd59b4d4eb7bd90a5",
+    "files": 205,
+    "sourceCommit": "ac9975e3fc4533b28c86af67cb4868b8be1855c7",
+    "sourceRepository": "woahwhattheheck/public-commons-sprint-2026"
   },
   "files": [
     {
@@ -22,6 +25,16 @@
       "sha256": "0ddee5e937565b50543c775ed094ae4ff4869f98f98cbc4d269901dfabcd6709"
     },
     {
+      "path": "BROWSER_RECEIVING.md",
+      "bytes": 10864,
+      "sha256": "b2ad69ac41699677b5cb8077d49f18314074b8b7dc4907678816fa1b94017225"
+    },
+    {
+      "path": "browser-receive.mjs",
+      "bytes": 33411,
+      "sha256": "70c23bef06f556f2833ee205f8e816119fbd09b77256dd5b2351464a8296a10d"
+    },
+    {
       "path": "catalogue.mjs",
       "bytes": 19617,
       "sha256": "fe0487ca92919ee69cd740490f42a9f18a8aab73a1af0bb8408ac576d46c23b2"
@@ -32,14 +45,19 @@
       "sha256": "a5e1c0b7f84dbd7b286ee8c313de29d6aa29b3e512d36255964560cbbaefc7e0"
     },
     {
+      "path": "native-browser-receive.mjs",
+      "bytes": 14708,
+      "sha256": "f0ed5aa91200f76e2f208a0907b58eec39ce5d74434e4f9128beb4019bbdc28a"
+    },
+    {
       "path": "native-intake.mjs",
-      "bytes": 10202,
-      "sha256": "dd3cb770defdb522396bac6b243aec2513b0e7ec1d2de1ee8d5f30b0681c949d"
+      "bytes": 10741,
+      "sha256": "74347e0a7d2ca8e3b57ce3ed47ed41557340f15df8cc410d80972f2e983f86d5"
     },
     {
       "path": "OPERATING.md",
-      "bytes": 12170,
-      "sha256": "10d0113daa74cb3e9cb77a04aa542a0e5ec5b935a06965163e173168e63bbdb9"
+      "bytes": 16027,
+      "sha256": "8fb8adc18bc3587b2c75c1fa8411309f6820751cc15ed4329e7c9dfebb670203"
     },
     {
       "path": "prepare-project.mjs",
@@ -48,8 +66,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 7312,
-      "sha256": "6ed6cd5ebbb6933e93c4345c5c1068c4c4f996658ac3745ca579e61f29c6b9e5"
+      "bytes": 7760,
+      "sha256": "c037e72eafc095326ef57540a5bdcc4bcd216c86aa6c3182723f6fc44766c78b"
     },
     {
       "path": "receive.mjs",
@@ -58,8 +76,8 @@
     },
     {
       "path": "refresh-catalogue.mjs",
-      "bytes": 20802,
-      "sha256": "2659d78102a747a119fd65f97976054588bdba3f1886aa888cfbbd7b371ba4c5"
+      "bytes": 20959,
+      "sha256": "08433d88a917ce5fcb91dfa7e9253dd74149776c66f59ccd17bacb5b4d27fdf4"
     },
     {
       "path": "REFRESH.md",

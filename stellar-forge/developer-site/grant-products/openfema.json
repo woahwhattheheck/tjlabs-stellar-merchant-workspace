@@ -105,7 +105,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/openfema.json",
-      "commit": "79184053144aa33a94924c948e7931139aa48694",
+      "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
       "required": true,
       "editions": [
         {
@@ -118,6 +118,12 @@
           "git_blob": "e87b00ec0ec5da75d651f75aae6d426d4820d80d",
           "bytes": 7094,
           "sha256": "f66d09a69791f95aa0dc6d8490218c536d9204b55bd674a5a2fa9dc3e3ed4b69"
+        },
+        {
+          "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
+          "git_blob": "dbca91373b51ac1c5ffde9d09d5599d67ce31590",
+          "bytes": 8401,
+          "sha256": "eb658b79c2ccbf651957eedae870184dddf97066add25e0629a6dc5da855ac07"
         }
       ]
     },
@@ -127,13 +133,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/openfema/OPERATING.md",
-      "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+      "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
       "required": true,
       "editions": [
         {
           "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
           "git_blob": "82389f2b6494e9d206aaf6fd6c2500fe3c06aeb3",
           "bytes": 18239
+        },
+        {
+          "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
+          "git_blob": "83e31c27a50f9541842bc394fc36c2c8b24f5dd3",
+          "bytes": 19236,
+          "sha256": "d53d18181551c541d3137d8f6b66040e6bcd3d65b2797bb648a5e6a20d182fd7"
         }
       ]
     },
@@ -235,6 +247,74 @@
           "git_blob": "ec7a24e3ad6421145a65adeecc4432ae5f157350",
           "bytes": 18362,
           "sha256": "08e9a33b2c84a933bea55ad5080bc93917b1d6b874af8643a02b17e6fb90ccf8"
+        }
+      ]
+    },
+    {
+      "id": "openfema-installation-operating",
+      "label": "Complete Public Assistance customer Installation and independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/OPENFEMA_CUSTOMER.md",
+      "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
+          "git_blob": "ea0b53172ff3e9b5e637ff73f09a2b058131e388",
+          "bytes": 17482,
+          "sha256": "41b24e8acbcdcdafe94dd8434fa8bd6193d357d32211983e779600b44e1f2619"
+        }
+      ]
+    },
+    {
+      "id": "openfema-installation-profile",
+      "label": "Original customer task, source, payment and receiving selections",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/openfema-customer.json",
+      "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
+          "git_blob": "8c390e925ffe98c8d49646ba3160f32f0066e436",
+          "bytes": 12090,
+          "sha256": "76e99c4274dfa889ada437ac407739a96c4b7ff819ddea7010ca375461ec96ce"
+        }
+      ]
+    },
+    {
+      "id": "openfema-installation-model",
+      "label": "Original complete delivery and native Workshare composition",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/openfema-installation-core.mjs",
+      "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
+          "git_blob": "af8bc4b62940483a8e32ea65f5a9c68399b744e7",
+          "bytes": 9496,
+          "sha256": "5d8ea73a0a8c33397eeb931ef11e629e9e3b1f6ea7acebe615dfd1853e0dab6e"
+        }
+      ]
+    },
+    {
+      "id": "openfema-installation-receiver",
+      "label": "Full native archive, customer files and resumable Installation receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/openfema-installation.mjs",
+      "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
+      "required": false,
+      "editions": [
+        {
+          "commit": "ea2ca8b59433680282557d78a3bb1476cba6fa2d",
+          "git_blob": "d8ecd3312c1c25b93bafa2ab735290bbc45135bc",
+          "bytes": 17306,
+          "sha256": "b662b68e3f5acda65f5c616b009b8b05d6b3e532965c2b720a74a0773a661488"
         }
       ]
     }

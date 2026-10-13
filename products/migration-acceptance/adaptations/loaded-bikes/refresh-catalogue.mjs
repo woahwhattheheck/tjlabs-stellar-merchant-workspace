@@ -15,7 +15,7 @@ const fail=(message,details={})=>{const error=new Error(message);error.code='LOA
 const check=(condition,message,details={})=>{if(!condition)fail(message,details);};
 const utf8=bytes=>decodeURIComponent(Array.from(bytes,b=>'%'+b.toString(16).padStart(2,'0')).join(''));
 const sha256=bytes=>createSHA256().update(bytes).hex();
-const originalId=value=>{const text=String(value);check(/^[1-9][0-9]*$/.test(text),'Select literal positive original WooCommerce IDs.');return text;};
+const originalId=value=>{check(typeof value!=='number'||Number.isSafeInteger(value),'Pass an exact lexical original WooCommerce ID; unsafe numeric IDs have already lost precision.');const text=String(value);check(/^[1-9][0-9]*$/.test(text),'Select literal positive original WooCommerce IDs.');return text;};
 const chunks=(items,size)=>Array.from({length:Math.ceil(items.length/size)},(_,i)=>items.slice(i*size,(i+1)*size));
 function base64(bytes){
   const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';let text='';

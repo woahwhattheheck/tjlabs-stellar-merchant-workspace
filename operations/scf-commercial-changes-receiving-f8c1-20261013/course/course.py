@@ -110,7 +110,7 @@ def native_recovery(source,node,action,arguments,key_path,out,stop_owned):
  if child.returncode:raise RuntimeError("Native original backup/restore failed: "+errors.read_text()[-2500:])
  return json.loads(output.read_text())
 
-def cold_receive_account(*,root,source,restored,account,node,out,payload,stop_owned,checkpoint,final_change_id,prepared_id,case_receipt,snapshot,expense_result):
+def cold_receive_account(*,root,source,restored,account,node,out,payload,stop_owned,checkpoint,final_change_id,prepared_id,case_receipt,snapshot,expense_result,hourly_result):
  from model import Workspace
  from operations import Operations
  from operations_commercial_adapter import CommercialConnectionAdapter
@@ -157,6 +157,18 @@ def cold_receive_account(*,root,source,restored,account,node,out,payload,stop_ow
     (out/"cold-reopened-expense-billing.zip").write_bytes(expense_raw)
     inspect_zip(expense_raw,"cold reopened complete expense billing")
     checkpoint("cold_expense_account_and_case_reopened",{"chargeId":expense_final["id"],"nativeInvoiceId":expense_final["activeInvoiceId"],"expenseExport":file_record(out/"cold-reopened-expense-billing.zip"),"native":expense_native})
+    hourly_rows=operations.work_billing.export_rows(case_receipt["id"])
+    same(hourly_rows,hourly_result["rows"],"Cold complete hourly source/authority and original native history")
+    hourly_final=operations.work_billing.get(case_receipt["id"],hourly_result["finalChargeId"],True)
+    if hourly_final["activeInvoiceId"]!=hourly_result["finalInvoiceId"] or hourly_final["state"]!="APPLIED":raise RuntimeError("Cold hourly replacement identity differs")
+    hourly_native=operations.commercial.adapter("detail",{"endpointId":prepared["endpointId"],"invoiceId":hourly_final["activeInvoiceId"]})
+    if hourly_native["invoice"]["status"]!="ISSUED" or hourly_native["document"]["totals"]["total"]!="12.00":raise RuntimeError("Cold issued hourly replacement did not reopen")
+    hourly_export=operations.work_billing.export_bundle(case_receipt["id"],hourly_final["id"])
+    hourly_raw=base64.b64decode(hourly_export["contentBase64"],validate=True)
+    (out/"cold-reopened-hourly-billing.zip").write_bytes(hourly_raw)
+    inspect_zip(hourly_raw,"cold reopened complete hourly billing")
+    checkpoint("cold_hourly_account_and_case_reopened",{"chargeId":hourly_final["id"],"nativeInvoiceId":hourly_final["activeInvoiceId"],"hourlyExport":file_record(out/"cold-reopened-hourly-billing.zip"),"native":hourly_native})
+
     final_export=operations.export(case_receipt["id"]);(out/"cold-reopened-complete-case.zip").write_bytes(final_export)
     inspect_zip(final_export,"cold reopened complete case")
     checkpoint("cold_account_and_case_reopened",{"restore":received,"endpoint":endpoint,"caseId":case_receipt["id"],"changeId":row["id"],"nativeInvoiceId":row["activeInvoiceId"],"native":current,"caseExport":file_record(out/"cold-reopened-complete-case.zip")})
@@ -188,7 +200,7 @@ def run_course(*,root,source,restored,opened,archive,payload,node,stop_owned,emi
  native_module=source/"stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/server.mjs"
  native_before=out/"native-state-before.json";native_after=out/"native-state-after.json";ready=out/"native-ready.json"
  config=out/"native-host.json";config.write_bytes(packed({"module":str(native_module),"directory":str(account),**payload["originalIdentity"],"before":str(native_before),"after":str(native_after),"ready":str(ready)})+b"\n");config.chmod(0o600)
- native=None;server=None;thread=None;native_logs=[];workspace=None;expense_result=None
+ native=None;server=None;thread=None;native_logs=[];workspace=None;expense_result=None;hourly_result=None
  try:
   stdout=(out/"native.stdout").open("wb");stderr=(out/"native.stderr").open("wb");native_logs=[stdout,stderr]
   native=subprocess.Popen([node,str(root/"course/native-host.mjs"),str(config)],stdout=stdout,stderr=stderr,cwd=root,start_new_session=True)
@@ -273,11 +285,14 @@ def run_course(*,root,source,restored,opened,archive,payload,node,stop_owned,emi
   from expense_course import run_expense_course
   expense_result=run_expense_course(root=root,source=source,ops=ops,pid=pid,prepared=prepared,server=server,native_info=native_info,node=node,payload=payload,chrome=chrome,playwright=playwright,stop_owned=stop_owned,checkpoint=checkpoint)
   course["expenseBilling"]=expense_result
+  from hourly_course import run_hourly_course
+  hourly_result=run_hourly_course(root=root,source=source,ops=ops,pid=pid,prepared=prepared,server=server,native_info=native_info,node=node,payload=payload,chrome=chrome,playwright=playwright,stop_owned=stop_owned,checkpoint=checkpoint)
+  course["hourlyBilling"]=hourly_result
   # Retain the first milestone exports and create a complete current composition after expense activity.
   change_export=ops.commercial_changes.export_bundle(pid,final["id"])
   change_raw=base64.b64decode(change_export["contentBase64"],validate=True)
   (out/"complete-change-and-expense-account.zip").write_bytes(change_raw)
-  case_raw=(out/"expense/browser/complete-operations-case.zip").read_bytes()
+  case_raw=(out/"hourly/browser/complete-operations-case.zip").read_bytes()
   change_inventory=inspect_zip(change_raw,"complete change export");case_inventory=inspect_zip(case_raw,"complete case export")
   with zipfile.ZipFile(io.BytesIO(change_raw)) as z:
    manifest=json.loads(z.read("manifest.json"))
@@ -304,6 +319,21 @@ def run_course(*,root,source,restored,opened,archive,payload,node,stop_owned,emi
       replay_cancel=receiver.expense_billing.cancel(receipt["id"],expense_row["id"],event["body"])
       if replay_cancel["id"]!=expense_row["id"] or replay_cancel["state"]!="CANCELLED":raise RuntimeError("Original received cancellation did not replay")
    same(receiver.expense_billing.export_rows(receipt["id"]),expense_rows,"Cold request replay preserved complete expense history")
+   hourly_rows=receiver.work_billing.export_rows(receipt["id"])
+   same(hourly_rows,hourly_result["rows"],"Complete original hourly authority and native request histories")
+   for authority in hourly_rows["authorities"]:
+    replay_authority=receiver.work_billing.save_authority(receipt["id"],authority["request"]["body"])
+    same(replay_authority,authority,"Original customer authority request replay")
+   for hourly_row in hourly_rows["items"]:
+    replay=receiver.work_billing.prepare(receipt["id"],hourly_row["preparationRequest"]["body"])
+    if replay["id"]!=hourly_row["id"]:raise RuntimeError("Cold receiving changed original hourly preparation identity")
+    for event in hourly_row["history"]:
+     if event["action"]=="cancelled":
+      replay_cancel=receiver.work_billing.cancel(receipt["id"],hourly_row["id"],event["body"])
+      if replay_cancel["id"]!=hourly_row["id"] or replay_cancel["state"]!="CANCELLED":raise RuntimeError("Original hourly cancellation did not replay")
+   same(receiver.work_billing.export_rows(receipt["id"]),hourly_rows,"Cold request replay preserved complete hourly history")
+   same(digest(bytes(receiver.source(receipt["id"],hourly_result["sourceId"])[1])),digest(bytes(ops.source(pid,hourly_result["sourceId"])[1])),"Original customer hourly terms bytes")
+
    same(digest(bytes(receiver.source(receipt["id"],expense_result["sourceId"])[1])),digest(bytes(ops.source(pid,expense_result["sourceId"])[1])),"Original expense authorization bytes")
    received_prepared=receiver.commercial._plan(receipt["id"],prepared_id)
    same(received_prepared,ops.commercial._plan(pid,prepared_id),"Original prepared Workshare and milestone snapshot")
@@ -359,13 +389,13 @@ def run_course(*,root,source,restored,opened,archive,payload,node,stop_owned,emi
     same(matches[0],row,"Original native request "+row["id"])
    if course["state"]=="NATIVE_BROWSER_EXPORT_RECEIVING_COMPLETE":
     added=[row for row in after["receivables"]["requests"] if row["id"] not in original_ids]
-    expected_requests={command["requestId"] for command in commands}|set(expense_result["nativeRequestIds"])
+    expected_requests={command["requestId"] for command in commands}|set(expense_result["nativeRequestIds"])|set(hourly_result["nativeRequestIds"])
     if len(added)!=len(expected_requests) or {row["id"] for row in added}!=expected_requests:raise RuntimeError("The composed private course produced an unexpected original native request")
    course["originalNativeHistoryPreserved"]=True
   checkpoint("closed_and_preserved",{"state":course["state"],"immutableOriginal":archive_baseline,"sourceCaseFiles":len(source_baseline),"privateAccount":str(account)})
   if cleanup_errors:raise RuntimeError("Owned service cleanup did not fully complete: "+json.dumps(cleanup_errors))
  if course["state"]=="NATIVE_BROWSER_EXPORT_RECEIVING_COMPLETE":
-  course["fullAccountReceiving"]=cold_receive_account(root=root,source=source,restored=restored,account=account,node=node,out=out,payload=payload,stop_owned=stop_owned,checkpoint=checkpoint,final_change_id=final["id"],prepared_id=prepared_id,case_receipt=receipt,snapshot=course["continuationBackup"],expense_result=expense_result)
+  course["fullAccountReceiving"]=cold_receive_account(root=root,source=source,restored=restored,account=account,node=node,out=out,payload=payload,stop_owned=stop_owned,checkpoint=checkpoint,final_change_id=final["id"],prepared_id=prepared_id,case_receipt=receipt,snapshot=course["continuationBackup"],expense_result=expense_result,hourly_result=hourly_result)
   course["state"]="COMPLETE_AWAITING_PIXEL_INSPECTION"
-  checkpoint("full_correction_product_received",{"state":course["state"],"browserViews":len(browser_result["screenshots"])+len(expense_result["browser"]["screenshots"]),"paidInvoicePreserved":paid[1]["invoice"]["id"],"originalNativeIdentity":payload["originalIdentity"]})
+  checkpoint("full_correction_product_received",{"state":course["state"],"browserViews":len(browser_result["screenshots"])+len(expense_result["browser"]["screenshots"])+len(hourly_result["browser"]["screenshots"]),"paidInvoicePreserved":paid[1]["invoice"]["id"],"originalNativeIdentity":payload["originalIdentity"]})
  return course

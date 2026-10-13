@@ -639,6 +639,47 @@ The installed commands are `receivables`, `service-agreements`, `payment-plans`,
 - [Payment plans and dated collections](../merchant-payment-plans/README.md)
 - [Full merchant financial workflow](../merchant-workspace/FINANCIAL_OPERATIONS.md)
 
+## 11. Compare accepted delivery effort with the private quotation plan
+
+Open **Merchant support → Commercial quotations → Private economics** on the saved case. Select a sealed quotation edition and retain the exact quote ID and SHA-256. The existing quote remains the authority for implementation and recurring fees. The [private economics guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/ECONOMICS.md) explains the original cash-cost and contributor-time valuation inputs, complete or incomplete other-cost coverage, effort sensitivities and monthly care capacity.
+
+Enter unknown inputs as blank and explicit zero as zero. A planning value such as USD 95/hour is separate from an actual cash labor cost. Implementation costs apply once to the complete implementation; care inputs apply to one whole month. Save the reviewed assessment through the ordinary case writer with its original request UUID. Retain this sealed assessment as the selected plan for the subsequent delivery comparison.
+
+### Follow the original accepted tasks and Work records
+
+Receive the complete accepted Commercial handoff in the original SF47 Delivery operations workspace. Select its exact quote, response and accepted scope through **Customer installations**, then save the native Installation. Use the [commercial Installation guide](../../stellar/scf_2026/sf47_budget_model/workspace/COMMERCIAL_INSTALLATIONS.md) and [original effort controls](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_EFFORT.md).
+
+Read the original Work inventory, attribute explicit hours to the selected task/check identities, and enter the reviewed remaining work with its reviewer, observation date, source and current basis. Recorded hours and accepted hours remain separate. Quote prices and billing quantities do not imply quoted task hours. The interface identifies changed Work, allocations across saved Installations, changed task definitions and stale remaining reviews through the original engine. Preview and save the complete document with its original expected case version, Installation revision and preview digest. Keep that exact request when a response is interrupted.
+
+Export the **complete case for the selected Installation revision**. Its ZIP includes the original source, operating history, Work records, selected Installation and recomputed effort rendition. Do not substitute a report JSON for the complete archive.
+
+### Review and retain the observed or projected scenario
+
+The installed `merchant-commercial economics effort-preview` command uses the same [complete handoff](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/EFFORT_ECONOMICS.md) as the private receiving course. Its exact arguments select the Merchant case/revision, sealed quote, sealed planning assessment, complete ZIP and hash, Installation/revision/digest and effort-report digest.
+
+Choose **RECORDED** for the original recorded hours or **PROJECTED** for recorded hours plus complete current remaining reviews. Recorded cost-to-date is not a completed-job margin. Projected contribution is a planning scenario. Choose **UNKNOWN** to leave private cost inputs unspecified, or **REUSE_SELECTED_PLAN** to carry the exact selected plan's assumptions explicitly. This operation imports the archive into an isolated receiving workspace and recalculates the original effort report; it does not change the original Work ledger or customer quotation.
+
+Read the full comparison and its findings. Import the generated `economics-input.json` into **Private economics**, preview, and explicitly save through the existing case writer. The original `economics save` CLI is equivalent. Keep the entire handoff directory alongside the full Merchant case/source export: the assessment retains source identities, while the handoff retains the actual complete ZIP and original plan. Use `economics effort-reopen` to verify those complete originals and replay the historical assessment after later case changes.
+
+### Open a separate editable example
+
+Use the complete source checkout from the selected distribution, with its maintained SF47 source manifest, original Node/Python runtimes and private output directory:
+
+~~~sh
+node stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-example.mjs \
+  --out /ABS/private/commercial-effort-example \
+  --merchant-port 18776 --operations-port 18777 \
+  --python python3
+~~~
+
+The launcher prints the Merchant URL and original Operations access-file path. Read that private file to open SF47, choose the example plan and Delivery operations case, then open its saved Customer Installation and use the selected edition as a draft. Both original applications remain editable. The package also exports `./merchant/commercial-effort-economics-example` for the maintained programmatic entry points.
+
+This WALKTHROUGH uses an authored USD 7,200 implementation quotation and USD 600 monthly care fee, a 60-hour private plan and USD 95/hour planning valuation. Its two Work records contain 18 accepted and 24 logged hours. The 30-hour remaining estimate gives 72 projected hours: USD 6,840 of valued time plus a USD 360 referral assumption leaves zero planned implementation contribution. The cash labor rate remains unknown. Customer acceptance, sales and collected cash are not established by this internal example.
+
+With the same output directory, add `--receive --playwright /ABS/installed/playwright/index.mjs --chromium /ABS/installed/chromium` to operate the complete browser and independent receiving course. It saves a new native Installation through the actual controls, uses that browser-produced ZIP for the private assessment, transfers the whole case and handoff, and reopens historical outputs in a fresh process. Use the installed original browser binaries; source review alone does not establish native completion.
+
+Reopen the same directory and ports after interruption. Existing edits, historical editions and original requests remain available. The launcher drains only the listeners and browser it owns. Open the actual original/received views, readable exports and captured screenshots at normal and narrow widths before presenting the result. The complete [effort-economics operating guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/EFFORT_ECONOMICS.md) contains the detailed selection, recovery and receiving arguments.
+
 ## Continue the original complete receiving operation
 
 The [merchant economics receiving operation](../../operations/merchant-economics-receiving-20261012/README.md) retains the portable driver, exact published source-file manifest, original request identities, input hashes and continuation procedure for the completed Linkup quotation workspace. It restores the original full backup, exercises the native MCP and CLI cost/pricing/file workflows, and reopens the received state. The operation uses the retained observations and original cost allocation; its own saved report records each receiving stage and the actual outcome.

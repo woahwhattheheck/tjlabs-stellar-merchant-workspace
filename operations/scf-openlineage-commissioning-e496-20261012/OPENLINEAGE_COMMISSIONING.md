@@ -23,6 +23,57 @@ T1 connects that selected output to the maintained merchant resource and buyer w
 
 The [service-level operating contract](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b1f756587619d21cab44f627f5d4e9b4fa6ad72/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS.md) describes the evaluator, versioned decisions, reports and full receiving behavior. The [operator desk guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b1f756587619d21cab44f627f5d4e9b4fa6ad72/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS_OPERATOR.md) gives the complete browser workflow, connection recovery, conflict review and source downloads. The [original source contract](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b1f756587619d21cab44f627f5d4e9b4fa6ad72/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SOURCE_CONTRACT.md) identifies the upstream producer semantics and retained examples.
 
+### Commission several service policies as one reviewed rollout
+
+The following service-policy rollout source extends this same application to a complete multi-job commissioning task. The commissioning engineer can prepare one named proposal for up to 200 selected policy rows, compare the complete proposed values with the original policies and apply the reviewed change atomically. This is useful when the customer's recurring review spans several pipelines or when an agreed change to ownership, runbooks or operating intervals must be introduced consistently across that selected population.
+
+The operator opens **Service levels → Policy rollouts** and selects actual observed job identities or existing policies from the current workspace. The choice retains the complete namespace and job key; similar short names do not merge distinct jobs. Each existing policy carries the exact version selected for review. A new policy receives its permanent policy identity from the original native writer when the rollout is accepted. An existing policy whose original job is absent from the current projection can retain that historical binding; a new or changed binding requires an observed job.
+
+Each proposal records its title and reason, policy title, responsible owner, optional runbook, enabled state, effective instant, completion freshness, duration and failure-monitoring conditions. The engineer can change selected fields for several selected rows while retaining the other per-job values. The original policy normalizer governs the same conditions and time semantics used by the single-policy editor. Values come from the reviewed customer operating definition.
+
+### Preserve unfinished commissioning work and compare the complete change
+
+The browser retains named local drafts with unfinished text, original selected versions and full policy history. The engineer can switch between saved proposals, download the complete working JSON, inspect an incoming working file and open it as a separate draft. Full original histories travel at their actual size. If local storage fails, the current unfinished proposal remains available for download.
+
+A current-version review shows the selected original, the latest policy and the engineer's proposal side by side. The engineer explicitly selects the current baseline when ready to reconsider a changed policy; the proposed field values remain available. An edit in another browser tab preserves a separate draft edition instead of replacing that tab's saved work.
+
+Preview presents every selected row as a creation, update or unchanged policy. It contains the complete normalized proposal, original policies and histories, proposed fields and versions, field-by-field before and after values, original event and source selection, and the selected original job records. Its native checksum binds that full preview to the workspace revision. Unchanged selected rows retain their versions. A proposal containing only unchanged rows returns the operator to review.
+
+Applying uses one original workspace transaction. It checks the exact selected policy versions, workspace revision and full preview again before recording any change. Changed policies advance through the existing policy-history constructor, while the single saved rollout retains its title, reason, original request, complete preview and original and committed policies. A concurrent workspace change requires another explicit preview of the retained proposal.
+
+### Continue the exact original request and inspect the saved edition
+
+Before submitting, the browser retains the complete normalized apply body and its original operation ID. An interrupted connection keeps that request attached to the proposal. Reopening or resuming reconciles the same request against the original operation journal; an already accepted operation returns its original result. The CLI supports separate preview, private request preparation, read-only request lookup, apply and exact resume. Its retained request and output files are created without overwriting different existing files.
+
+The browser checks the saved result against the complete native rollout: original proposal, workspace and operation, source and committed revisions, preview identity and returned policy identities and versions. It preserves a known accepted result through a browser storage failure. Accepted follow-through creates or reopens a separate draft carrying the committed policy IDs and versions, with the admitted raw proposal retained alongside it. The browser saves that following draft and releases its own pending request in one storage transaction, preserving another tab's current draft and any different active request.
+
+Saved rollout history provides the complete original before-and-after review. JSON retains the full immutable record; CSV carries each selected policy with its full original values; printable HTML presents the selected change and original source context. Later policy edits preserve the earlier rollout. Assessments and incident decisions remain the original separately saved records, and the operator explicitly evaluates a later observation under the revised policies.
+
+A complete editable handover uses the application's existing workspace export and receiver. It includes original source objects, all policy histories, assessments, incidents, saved rollouts and operation receipts with the complete selected application. Receiving validates the rollout and preview identities, original operation receipt, policy-history membership and captured source selection, and reconstructs the original preview from its retained source and versions. Historical application inventories retain their original scope; the following rollout application travels as its own complete selected edition.
+
+### Carry the rollout into the commissioned installation
+
+Within T1-resource, the workorder names the selected pipeline population, initial policy versions, agreed service conditions, accountable operator and the complete recurring output. T1-handover covers another engineer's review of the full proposal, an explicit policy change and complete receiving. The same operating selection supplies the service definition for later provider integration and recurring production output. T3-recovery includes reopening prior rollouts and unfinished work, recovering the original accepted request and continuing the selected customer's next review within the existing allocation.
+
+The producing engineer and independent receiver operate the exact outgoing application with the retained original workspace. They inspect populated and empty selection, unfinished and reopened drafts, bulk field choices, current-version review, complete preview, accepted-request recovery, saved history, all downloaded reports and the independently received installation at desktop and narrow widths. They open the downloaded files and inspect the actual rendered screens and reports, then correct practical faults in the maintained source. The new rollout's operating results join that same receiving record when completed; the original revision-13 Service Levels result described in this chapter remains its own completed operation.
+
+### Maintained rollout source and receiving
+
+The complete service policy rollout is published as part of the original OpenLineage workspace. Its source edition is `92596081bf3117eda3b184c40fc34b75aed45c61`; the complete [operating and receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92596081bf3117eda3b184c40fc34b75aed45c61/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_POLICY_ROLLOUT.md) follows the installed operator from impact review and explicit apply through original-request recovery, report download and independent reopening. These maintained application files extend the prepared package described in this chapter; that package retains its original immutable source edition.
+
+|Maintained component|Complete source|
+|  ---  |  ---  |
+|Complete service policy rollout model and preview|[service-policy-rollout.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92596081bf3117eda3b184c40fc34b75aed45c61/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout.mjs)|
+|Service policy rollout capability catalog|[service-policy-rollout-catalog.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92596081bf3117eda3b184c40fc34b75aed45c61/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-catalog.mjs)|
+|Typed client runtime for service policy rollouts|[service-policy-rollout-client.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92596081bf3117eda3b184c40fc34b75aed45c61/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-client.mjs)|
+|Typed service policy rollout declarations|[service-policy-rollout-client.d.mts](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92596081bf3117eda3b184c40fc34b75aed45c61/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-client.d.mts)|
+|Service policy rollout command-line workflow|[service-policy-rollout-cli.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92596081bf3117eda3b184c40fc34b75aed45c61/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-cli.mjs)|
+|Service policy rollout operating and receiving guide|[SERVICE_POLICY_ROLLOUT.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92596081bf3117eda3b184c40fc34b75aed45c61/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_POLICY_ROLLOUT.md)|
+|Installed service policy rollout desk|[service-policy-rollout.js](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92596081bf3117eda3b184c40fc34b75aed45c61/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout.js)|
+|Service policy rollout screen and control structure|[service-policy-rollout.html](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92596081bf3117eda3b184c40fc34b75aed45c61/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout.html)|
+|Service policy rollout industrial screen styling|[service-policy-rollout.css](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92596081bf3117eda3b184c40fc34b75aed45c61/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout.css)|
+
+
 ### Dataset quality commissioning and recurring customer review
 
 The Quality desk extends the same operating workspace to rules over producer-reported measurements and assertions. Its complete source, operator guide and original receiving programme are supplied for the cumulative application. The commissioned review combines these decisions with the service policies and incident history under the same agreed pipeline edition and receiving destination.
@@ -46,6 +97,66 @@ Evaluation previews bind to the currently selected workspace revision, edition, 
 The operator then records a reasoned disposition against a specific finding in that saved evaluation: open, investigating, accepted or resolved. Each update preserves earlier decisions and the original finding. A subsequent producer event supports a subsequent evaluation, so the receiving engineer can inspect both the earlier result and the later correction. Supporting files can accompany that history through the application's existing complete result-attachment workflow.
 
 The recurring deliverable includes the complete selected originals, applicable dataset-rule versions, saved evaluations, reasoned findings and reports alongside the service-level assessment. JSON retains the structured evaluation; CSV carries its findings into ordinary spreadsheet work; HTML presents the review in a readable report. The editable handover retains the earlier source editions, rules, findings and decisions so the receiving engineer can inspect a correction and continue the next review.
+
+### Publish the customer's analysis lineage
+
+The original Analysis Workspace now carries retained imports, saved SQL queries, complete query exports and workbooks into an OpenLineage publication workflow. The customer inspects their dependency graph, saves and reviews the publication plan, publishes through the maintained collector client and reopens the same request after an interrupted reply. This connects the analytical result used by the customer to its original source and transformations.
+
+The complete event, collector receipt and readable HTML/ZIP handovers remain with the original workspace backup and restore history. A receiving engineer can inspect the proposed lineage, review what the collector returned and continue from the retained request. The implementation is merged in [the original Analysis product](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/65f9eb4bf35f514002d2165f2a309643ccb2481d/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/ANALYSIS_LINEAGE.md). Its [complete browser and collector receiving programme](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/65f9eb4bf35f514002d2165f2a309643ccb2481d/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/ANALYSIS_LINEAGE_NATIVE.md) continues from the already operated Analysis archive; the original operation will return its native outcome.
+
+For the selected customer, the workorder identifies the collector and its authority, which source/query/report edition may be published, and the complete lineage or business report the independent buyer receives. A later source edition or saved analytical task provides a distinct repeat-use trigger. The original service, quality and payment records continue to retain their separate meanings under the common six funded packages.
+
+### Complete the review with the receiving customer
+
+A recurring pipeline review becomes useful when the receiving customer can inspect the selected findings, ask a precise question and return an editable response that the operating team can continue. The complete following [recipient-review product source](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8c62d281376a3b5102b51b90dca2b846e4c54fa7/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/REVIEW_RETURNS.md) is published in [PR1812](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1812). Its thirteen product files and original receiving programme are authored and independently source-reviewed; the existing customer-service-review writer is composing their shared application joins. The following customer course is the acceptance work for that same source edition and original receiving operation.
+
+The commissioning workorder names the customer review owner, the person issuing the review, the recipient and their organization, and the operator authorized to receive the answer. It identifies the original saved service-review edition, pipeline population, observation period, chosen findings and permitted original material. The commercial output is one complete review with its agreed recipient response and handover. The review reference connects that delivery to the actual customer workorder. A later reporting period or revised original analysis is another explicit selected review.
+
+### Issue one complete saved review
+
+The operator chooses the existing saved customer service review. Its full source contains the selected service assessments, quality evaluations and comparisons, incidents, dispositions, follow-up records and result attachments included by that review, together with its retained original context. The issuer inspects that entire selection before choosing the recipient. The [return model](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8c62d281376a3b5102b51b90dca2b846e4c54fa7/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return.mjs) binds the request to the original workspace, saved review, source content and each selected item.
+
+The operator records their name, the recipient's name, organization and customer reference, and the exact instructions. A preview shows the retained selection and entered delivery details. Saving records a new request in the original workspace with the reviewed preview, complete source and original operation identity. An intervening workspace change requires a current preview. The earlier review remains available as the same immutable source edition.
+
+This is also the point at which the commissioning team confirms the outgoing scope. The editable recipient document contains the complete selected review and its items. The original workspace export separately carries the operating history and application needed by the maintaining engineer. The workorder names the intended destination for each of those two useful deliveries.
+
+### Give the recipient a working document they can finish
+
+The [standalone recipient editor](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8c62d281376a3b5102b51b90dca2b846e4c54fa7/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-editor.mjs) opens from its complete downloaded HTML. The recipient can read the selected source, expand the original item details and enter their name, organization and role. They choose an overall response and respond to every included item. Each item can remain not reviewed, be acknowledged, carry a question, or request a change. Questions and requested changes require their explanation. Overall acknowledgment requires acknowledgment of every item.
+
+The recipient can save the whole unfinished working copy, download an updated editable HTML file and return the complete response JSON. Reopening an unchanged downloaded working copy or response preserves its original response identity and time. Changing the entered answer produces a new response edition. The complete original source and entered text remain available when the work is continued on another ordinary browser.
+
+This makes the deliverable practical for a receiving analyst who needs to consult a colleague or complete the review later. They can keep a full local working document and return precise item-level context. The selected review is embedded in the document, and its content security policy disables external network requests.
+
+### Receive the actual answer through the original operator desk
+
+The operator imports the complete returned JSON into the [original authenticated return desk](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8c62d281376a3b5102b51b90dca2b846e4c54fa7/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-ui.mjs). Preview verifies the workspace, saved request, source selection and every item identity. The operator reads the full answer, records who received it and may add an internal receiving note. The source-bound [workspace adapter](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8c62d281376a3b5102b51b90dca2b846e4c54fa7/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-store.mjs) saves that exact returned text and normalized response through the original workspace revision and operation journal.
+
+The receiving record retains the respondent's entered name and role, the returned response time, all comments, the receiving operator and the native save time. Acknowledgment is the recipient's stated review response. Any commissioning acceptance, changed implementation scope, approved invoice or subsequent payment remains an explicit action under the original customer workorder and payment flow.
+
+The team can inspect the full history as structured JSON or readable HTML and then use the existing service, quality or customer-review workflow for the agreed follow-up. A request for a correction retains the earlier report and answer while the engineer prepares the next actual analysis or review. This provides a clear return path for recurring work without changing the original findings retrospectively.
+
+### Keep interrupted work and the receiving handover usable
+
+The desk retains its complete working selection and exact pending request before a native mutation. An interrupted reply can be inspected and replayed with the same operation identity. A definitive input error remains available with the retained request until the original operation's absence is established, after which the operator can correct the form. Conflicting browser saves keep the working copy available for download and explicit reopening.
+
+Closing the original operator waits for the return desk's active request and notification to settle. It saves changed form state and any unresolved local-history persistence before releasing the shared resources. A storage conflict keeps recovery controls available. This preserves the useful customer work through browser closure and ordinary runtime reconnection.
+
+The complete workspace export carries the saved review requests, raw returned responses, receiving notes and original operation history alongside the prior service and quality state and portable application. Independent receiving verifies the source-bound records, exact operation receipts and request-before-response order. The maintaining engineer reopens the same workspace and can inspect the historical answer before continuing a later period.
+
+### Complete the commissioned receiving course
+
+The full [original receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8c62d281376a3b5102b51b90dca2b846e4c54fa7/operations/openlineage-recipient-review-returns-e496-20261013/RECEIVING.md) joins the new course to the existing Page, authenticated client, workspace and output destination. The original operator issues the saved review, uses the actual downloaded recipient document at desktop and 390-pixel width, enters all selected item responses, downloads the full response and working documents, and reopens those files. They then import and retain that same answer through the original operator desk, open the full history and download the whole workspace.
+
+The independent receiver opens that complete export with its included source application and re-exports the unchanged case. The exact original request and response operations are replayed to recover their original results. Earlier service and quality records remain unchanged. The producing engineer personally opens and views the outgoing document, reports, working files and receiving screen, fixes concrete workflow or layout problems, and carries the corrected edition through this same course.
+
+The resulting customer handover contains the complete selected editable review, its returned answer and readable history, plus the maintaining engineer's full workspace and application. The actual source edition, workspace, review and request identities connect each output to the agreed work. The original receiving operation records the observed result as this whole course completes.
+
+### Fit the customer return into the existing funded work
+
+This continuation uses the same USD 38,000, 400-hour, 150-day plan. T1-resource connects the selected useful review and full recipient document to the existing merchant output and buyer destination. T1-handover assigns issue, response and receiving responsibilities and completes the second operator's editable handover. T2-provider carries the selected resource through the existing facilitator and ledger configuration; the original useful-purchase and independent-buyer cohort remains the common acceptance. T2-threat exercises interrupted request recovery and the actual customer's change or delivery exception.
+
+T3-mainnet carries the same complete review and returning-customer workflow into the selected production merchants. T3-recovery restores the full review, returned text and native operation history with the customer's installation and continues the next reporting period. A saved recipient answer gives the service team a concrete follow-up task; the original merchant and buyer records establish any distinct purchase under the already defined cohort. The six allocations and their existing completion targets remain unchanged.
 
 ### Completed service-level operating example
 
@@ -74,20 +185,26 @@ Select `openlineage-operations` from the existing source builder at the merged c
 The portable application uses Node 22 and its standard library. The installed product opens through **Applications → OpenLineage operations** or `starforge openlineage serve`. Open **Service levels** in the workspace header. The same original workspace is available through the CLI:
 
 ```sh
-starforge openlineage service-levels status \
-  --workspace /absolute/private/lineage
+starforge openlineage service-levels status --workspace /absolute/private/lineage
 
-starforge openlineage service-levels evaluate \
-  --workspace /absolute/private/lineage \
-  --at ORIGINAL_OBSERVATION_TIME
+starforge openlineage service-levels evaluate --workspace /absolute/private/lineage --at ORIGINAL_OBSERVATION_TIME
 
-starforge openlineage service-levels report \
-  --workspace /absolute/private/lineage \
-  --assessment ORIGINAL_ASSESSMENT_ID \
-  --format html --out /absolute/private/customer-report.html
+starforge openlineage service-levels report --workspace /absolute/private/lineage --assessment ORIGINAL_ASSESSMENT_ID --format html --out /absolute/private/customer-report.html
 ```
 
 The HTTP client uses the running workspace and instance connection. The typed `./seller/openlineage/service-levels` export and six direct or merchant tools provide the same policy, assessment, incident and report actions. The customer's source and receiving configuration remain attached to its selected installation.
+
+### Receive the complete prepared installation
+
+A commissioning engineer can now begin with the [complete prepared package](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6a25487748490364eac649ebd449f0ba7547d62a/operations/openlineage-complete-selected-package-e496-20261013/OPERATING.md), which contains the actual `openlineage-operations` selection at source `09a13eab2f6cd302ca4d6b1ad2222dc09154aa8d`. Its 3,234,205-byte archive carries all 889 selected source files and four package files. The existing merchant host, operator console, Applications lifecycle, workers, browser assets and declared dependencies travel with the lineage application. The customer receives the whole selected installation and its original operating guides.
+
+The [direct receiving command](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6a25487748490364eac649ebd449f0ba7547d62a/operations/openlineage-complete-selected-package-e496-20261013/receive.py) calls the [unchanged original package verifier](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6a25487748490364eac649ebd449f0ba7547d62a/operations/openlineage-complete-selected-package-e496-20261013/runtime-unpack.py). It checks the full archive and every manifest-bound source byte, original Git object and file permission, then opens a new received package directory. Its resume operation checks the same complete directory. The [published composition record](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6a25487748490364eac649ebd449f0ba7547d62a/operations/openlineage-complete-selected-package-e496-20261013/composition.json) and [full source manifest](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6a25487748490364eac649ebd449f0ba7547d62a/operations/openlineage-complete-selected-package-e496-20261013/manifest.json) retain the exact edition, source and archive identities. An equipped installation can consume these completed bytes immediately, eliminating Git acquisition and package assembly from that customer's receiving work.
+
+The receiving engineer then uses the original runtime's prepare, install or existing dependency-adoption flow, and its source inspection, before opening the selected application. Dependency binaries, authorized producer and merchant credentials, operational ownership and the customer's saved workspace stay with that actual installation. The prepared archive supplies the complete source and pinned declarations; the commissioned runtime still establishes its own installed readiness.
+
+This improves the practical handover in T1 and the independent restoration in T3 within the existing funded allocation. The selected workorder names who installs and maintains the runtime, who can change a service policy or dataset rule, who resolves an incident, and who receives the purchased report or editable workspace. A recurring reporting period continues the original source and decision history rather than commissioning another build of an unchanged product.
+
+The original Service Levels workspace retains revision 13 and all thirteen original operations through this following installed course. Its existing receiver opens and inspects the populated desktop and narrow views, operates policy and assessment controls, downloads the actual reports, explicitly reconnects after restart, and reopens the complete exported workspace independently. Producing engineers inspect those exact outgoing screens and attachments and repair practical layout or workflow faults in the same course.
 
 ### Apply the existing six funded packages
 

@@ -7,7 +7,7 @@ import urllib.request, uuid, zipfile
 from pathlib import Path, PurePosixPath
 
 PRODUCT = Path(__file__).resolve().parent
-MANIFEST_SHA256 = "37c20a0f517a4311afb10f8c4bcd3373717b591d070423a9d838c62f89ffc83a"
+MANIFEST_SHA256 = "b73dcb02995c22d150159709f95bab37e1b2ddec604672aed0a9fc18cd9b5574"
 RUNTIME_SCHEMA = "stellar-forge.hive-routing-runtime.v1"
 PREPARED_SCHEMA = "stellar-forge.hive-routing-preparation.v1"
 PORTABLE_SCHEMA = "stellar-forge.hive-routing-portable.v1"

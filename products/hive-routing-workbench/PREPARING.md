@@ -9,7 +9,7 @@ This installation step does not execute a routing programme. The original refere
 Use a Linux x64 or arm64 machine and one existing canonical Python 3.11 or later with its standard venv/ensurepip support. Pass its absolute path. The helper runs using that same interpreter, creates each environment in its final location with venv --copies and installs the wheel offline. It never relocates a virtual environment.
 
 The selected application is the complete 64-file source authority:
-original-source.json SHA256 37c20a0f517a4311afb10f8c4bcd3373717b591d070423a9d838c62f89ffc83a, 16,182 bytes, describing 718,351 application bytes. It preserves the original b05be1ed complete source and the two explicit maintained server/UI postimages. Both original hidden .cargo configuration and the full Cargo.lock are included.
+original-source.json SHA256 b73dcb02995c22d150159709f95bab37e1b2ddec604672aed0a9fc18cd9b5574, 16,968 bytes, describing 718,297 application bytes. It preserves the original b05be1ed complete source and the original server/UI maintenance and the additional displayed-review-revision correction. Both original hidden .cargo configuration and the full Cargo.lock are included.
 
 The two original published router selections are:
 
@@ -64,7 +64,7 @@ The complete operation writes:
 
 The archive contains only the full original application, original-source.json, original router, complete wheel and its complete portable manifest. It does not include a relocatable venv, workspace database, routing credentials, live process or fixture build cache.
 
-PREPARED.json uses schema stellar-forge.hive-routing-preparation.v1 and state READY. Its primary and receiving values each supply applicationDirectory, runtimeReadyFile, python and router. Its portable value has path, bytes and sha256; source has manifestSha256, files:64 and bytes:718351. The full request and resultPath remain bound to that exact preparation.
+PREPARED.json uses schema stellar-forge.hive-routing-preparation.v1 and state READY. Its primary and receiving values each supply applicationDirectory, runtimeReadyFile, python and router. Its portable value has path, bytes and sha256; source has manifestSha256, files:64 and bytes:718297. The full request and resultPath remain bound to that exact preparation.
 
 For a JavaScript owner, the same installed API is:
 

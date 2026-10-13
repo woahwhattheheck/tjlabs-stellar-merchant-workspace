@@ -35,6 +35,21 @@
         "sha256": "2cc181efb6d86a6fb5c95e281d0437ea219468e65c908485c7a9e76af16dbbda"
       },
       "source": "https://chatgpt.com/space/page_1a5454f5926c8191b2b30a2f56d4df6e"
+    },
+    {
+      "path": "web/app.js",
+      "reason": "Retain the displayed configuration/programme form revision when submitting dirty review decisions after background refresh, so the original workspace transaction rejects stale edits.",
+      "original": {
+        "bytes": 29994,
+        "sha256": "2cc181efb6d86a6fb5c95e281d0437ea219468e65c908485c7a9e76af16dbbda",
+        "gitBlob": "de88a05f71aacd0112cede1d71b5419b329ff0a2"
+      },
+      "selected": {
+        "bytes": 29940,
+        "sha256": "1b15af56600be8af0bc14d8d233b53eca152197456efaf1c646f3dcef27c4d95",
+        "gitBlob": "23d20b53913962ddd2c402d42f5d7c5fea91ae59"
+      },
+      "source": "https://api.github.com/repos/woahwhattheheck/public-commons-sprint-2026/git/blobs/346c90a390dbf2813a4e4399cc4dd3e2cf97284e"
     }
   ],
   "files": [
@@ -406,9 +421,9 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 29994,
-      "sha256": "2cc181efb6d86a6fb5c95e281d0437ea219468e65c908485c7a9e76af16dbbda",
-      "gitBlob": "de88a05f71aacd0112cede1d71b5419b329ff0a2"
+      "bytes": 29940,
+      "sha256": "1b15af56600be8af0bc14d8d233b53eca152197456efaf1c646f3dcef27c4d95",
+      "gitBlob": "23d20b53913962ddd2c402d42f5d7c5fea91ae59"
     },
     {
       "path": "web/index.html",

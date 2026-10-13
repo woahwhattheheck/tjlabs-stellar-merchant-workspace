@@ -11,6 +11,9 @@ export async function verifyPdfReviewSources(manifest){
  const files=new Map();
  for(const file of manifest.files){need(typeof file.path==='string'&&/^[A-Za-z0-9_.-]+$/.test(file.path)&&!files.has(file.path)&&typeof file.content==='string','Retain unique complete review source filenames');const bytes=new TextEncoder().encode(file.content);need(file.bytes===bytes.length&&await digest(bytes)===file.sha256,'A complete review source file changed: '+file.path);files.set(file.path,file);}
  for(const name of required)need(files.has(name),'The complete offline review needs '+name);
+ const guided=files.has('review-editor.mjs')||files.has('review-editor.css')||files.get('review-app.mjs').content.includes('./review-editor.mjs');
+ if(guided)for(const name of ['review-editor.mjs','review-editor.css'])need(files.has(name),'The complete guided review needs '+name);
+ for(const file of files.values())if(file.path.endsWith('.mjs'))for(const match of file.content.matchAll(/(?:from\s*|import\s*)['"]\.\/([A-Za-z0-9_.-]+)['"]/g))need(files.has(match[1]),'The complete source dependency is missing: '+match[1]);
  return files;
 }
 export async function buildPdfReviewProject(desk,manifest){
@@ -39,6 +42,7 @@ try{await import(moduleUrl('review-app.mjs'));}catch(error){const p=document.get
 `;
  let result=html.replace('<link rel="stylesheet" href="./review.css">','<style>'+css.replace(/<\/style/gi,'<\\/style')+'</style>');
  need(result!==html,'The selected HTML stylesheet join changed');
+ if(result.includes('<link rel="stylesheet" href="./review-editor.css">')){need(files.has('review-editor.css'),'The complete guided editor stylesheet is missing');result=result.replace('<link rel="stylesheet" href="./review-editor.css">','<style>'+files.get('review-editor.css').content.replace(/<\/style/gi,'<\\/style')+'</style>');}
  const script='<script type="application/json" id="pdf-review-package">'+data({desk,source:manifest})+'</script><script type="module">'+loader.replace(/<\/script/gi,'<\\/script')+'</script>';
  const before=result;result=result.replace('<script type="module" src="./review-app.mjs"></script>',script);need(result!==before,'The selected HTML module join changed');
  need(new TextEncoder().encode(result).length<=PDF_DESK_MAX_BYTES,'The complete offline HTML exceeds 768 MiB; use the full working record with the installed original review source.');

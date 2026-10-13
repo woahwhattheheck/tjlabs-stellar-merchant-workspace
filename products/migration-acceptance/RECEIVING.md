@@ -1,12 +1,12 @@
 # Merchant receiving for Migration Acceptance Workbench
 
-This course continues the **same original Definian receiving operation** through the Merchant installation, Applications and customer-agent interfaces. The complete 208-file workbench remains unchanged. Its Fruitshop and Chinook stages use the original dlt 1.31.0 runtime, pipeline state, native jobs and request history.
+This course continues the **same original Definian receiving operation** through the Merchant installation, Applications and customer-agent interfaces. The complete 205-file public workbench edition preserves the original native code. Its Fruitshop and Chinook stages use the original dlt 1.31.0 runtime, pipeline state, native jobs and request history.
 
 The Merchant extension opens the workspaces produced by that original course. It does not import a replacement project or repeat extraction, normalization, loading or verification to produce another set of results. The original receiving module decides whether an unfinished stage must continue or a completed result can be reopened.
 
 ## Original operation and source
 
-Keep the original receiving directory, runtime-ready receipt, configuration, browser selection and Node invocation. The 208-file source manifest is 38,692 bytes, SHA-256 `38fbf4bab1ec87dfc14c9b3d4bff3b580186bee0b78958410e8be89afa7332fc`. Its original source is Commons merge `6720db68738b822e3c87ee10c4b58e1a2a12944f`.
+Keep the original receiving directory, runtime-ready receipt, configuration, browser selection and Node invocation. New public installations use the 205-file source manifest, 38,875 bytes, SHA-256 `fbabde0b35342409e652fab1514e1892876ad865591067ddd59b4d4eb7bd90a5`. Its reviewed public source is Sprint PR4526, merge `ac9975e3fc4533b28c86af67cb4868b8be1855c7`, with the edition and exclusions recorded in `PUBLIC_SOURCE.md`. The native code is unchanged; three private commercial records are excluded and public technical guidance replaces two workshare documents. An earlier source-bound receiving operation retains its exact original source, journal and archive identity; a public source update does not silently rewrite that history.
 
 In Merchant, those exact files are installed under `products/migration-acceptance/workbench/`. The surrounding integration supplies the managed application, connection reader, complete-file access, customer-agent tools, Installation profile and this receiving continuation. The current integration manifest selects their actual complete source, including the original maintained dependencies used by the course.
 
@@ -77,7 +77,7 @@ The supplied course establishes application receiving and original engine integr
 
 ## Exact entry
 
-Run this entry from the source directory selected by the existing READY Merchant installation. The installation's source manifest must include the complete Migration Acceptance contribution and its unchanged 208 workbench files.
+Run this entry from the source directory selected by the existing READY Merchant installation. The installation's source manifest must include the complete Migration Acceptance contribution and its complete pinned 205-file public workbench edition.
 
 ```bash
 NODE SOURCE/products/migration-acceptance/receive.mjs \

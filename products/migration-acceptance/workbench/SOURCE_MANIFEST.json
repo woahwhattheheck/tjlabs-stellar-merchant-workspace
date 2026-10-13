@@ -1,7 +1,7 @@
 {
   "schema": "definian.complete-source-manifest.v1",
-  "operation": "DEFINIAN-MIGRATION-ACCEPTANCE-0C7A-20261013",
-  "edition": "complete-fruitshop-and-chinook",
+  "operation": "SCF-MIGRATION-ACCEPTANCE-PUBLIC-3459-20261013",
+  "edition": "public-software-1",
   "files": [
     {
       "path": "acceptance/index.mjs",
@@ -34,24 +34,9 @@
       "sha256": "9954415297a25af1ed8e4844569537b4aa50ca3b8f42eb037315df56690a0263"
     },
     {
-      "path": "commercial/FORM_INTENT.json",
-      "bytes": 2407,
-      "sha256": "2b911bfb24a16d34f470ba1ae25d6d6b1d4aa5339aef8f2972aa91f1ce2a2dcc"
-    },
-    {
-      "path": "commercial/PDF_RECEIPT.json",
-      "bytes": 524,
-      "sha256": "b285aab0bd39f6b7e04b4ea0804c78bd297dbb46a9a2e6b49afcd12fdcd57244"
-    },
-    {
-      "path": "commercial/PROPOSAL.md",
-      "bytes": 5706,
-      "sha256": "fc5ff8c6485e5d0b3d2318221ebfa9b1793c5ea9e4e389ea4bbde2ee02cd79ef"
-    },
-    {
       "path": "COMMISSIONING.md",
-      "bytes": 19677,
-      "sha256": "3e82b3174d84b80556fb3f078633fd8766d8e713e29d9d8ce544cc8fae70a9d7"
+      "bytes": 19601,
+      "sha256": "2547cd88b61d9e5e280abb040b950709818bdb0337db1138b7ddcfc8416a7ae1"
     },
     {
       "path": "integration/chinook-native-input.mjs",
@@ -110,8 +95,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 8723,
-      "sha256": "9964f88128032edc44119e661f931be7e321d3459d74de2db9c39d3dd7f97ae3"
+      "bytes": 8686,
+      "sha256": "2054d6a2345d17e9ec13becb5516c12a0a39ff32d7c8f674f6f63fa518ca0b1c"
     },
     {
       "path": "receiving/browser.mjs",
@@ -200,8 +185,8 @@
     },
     {
       "path": "SOURCE_REFERENCES.json",
-      "bytes": 3490,
-      "sha256": "680c20c9eaa009273893304e267da8ce454ded93b22ef182c279f4bd0d889694"
+      "bytes": 2637,
+      "sha256": "06b23b1f681e9e047b569f78f7e017c718dc98a5cb0c167a63ed78e13d66069b"
     },
     {
       "path": "vendor/dlt/cli.mjs",
@@ -325,8 +310,8 @@
     },
     {
       "path": "vendor/dlt/SOURCE_MANIFEST.json",
-      "bytes": 29705,
-      "sha256": "aabdafdff261b9076c9675dac49c3c1e9a0490f806a7ec59048d6324efc61cf7"
+      "bytes": 29961,
+      "sha256": "948061ee20cb8d6eaf8d5d57973e8394fd2bcf2b75917c2599cb152be33aa110"
     },
     {
       "path": "vendor/dlt/SOURCE_REFERENCES.json",
@@ -1010,8 +995,8 @@
     },
     {
       "path": "vendor/dlt/WORKSHARE.md",
-      "bytes": 5253,
-      "sha256": "2dfd7a8da25a49d52f7ab14cec5f32fda8082e8d20d13325457fc8bd71e8a22f"
+      "bytes": 3959,
+      "sha256": "c85183920862c5ee3bd30a0a1e662abf48f5d05cafe0559e506cc0642e022584"
     },
     {
       "path": "web/app.mjs",
@@ -1035,8 +1020,22 @@
     },
     {
       "path": "WORKSHARE.md",
-      "bytes": 13354,
-      "sha256": "11e717565daf2827e3b9dfd7abbdf6a185dcc3b4ba96811561950d15d79bace9"
+      "bytes": 3967,
+      "sha256": "da3ac5ca985f5320ab7791e02e228e019648cbd9b3a156fbc54f3ef07dd8ae40"
     }
-  ]
+  ],
+  "derivation": {
+    "originalSourceCommit": "6720db68738b822e3c87ee10c4b58e1a2a12944f",
+    "originalManifestSha256": "38fbf4bab1ec87dfc14c9b3d4bff3b580186bee0b78958410e8be89afa7332fc",
+    "excludedPrivateDocuments": [
+      "commercial/FORM_INTENT.json",
+      "commercial/PDF_RECEIPT.json",
+      "commercial/PROPOSAL.md"
+    ],
+    "replacedPrivateGuidance": [
+      "WORKSHARE.md",
+      "vendor/dlt/WORKSHARE.md"
+    ],
+    "meaning": "Public software derivative. Exact native implementation retained; private commercial material is not part of this public source edition. Original full source and historical manifests remain in their existing private custody."
+  }
 }

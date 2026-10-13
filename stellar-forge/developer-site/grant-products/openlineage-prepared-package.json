@@ -217,6 +217,102 @@
           "sha256": "aa0b8139dd6c5d90f2498156ea2fe1e8319fe0b7724f25df0fcc565591b6cd59"
         }
       ]
+    },
+    {
+      "id": "openlineage-recipient-return-guide",
+      "label": "Complete customer recipient review and return workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/REVIEW_RETURNS.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8c62d281376a3b5102b51b90dca2b846e4c54fa7",
+          "git_blob": "501f0461b16ec4d4712d60281cc7c8b2683b94d9",
+          "bytes": 24838,
+          "sha256": "5fe7fb3909ada679a819ce0e3923a34439c7b98c9af52e637c522c1608409e3b"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-recipient-return-model",
+      "label": "Immutable recipient request and returned response model",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8c62d281376a3b5102b51b90dca2b846e4c54fa7",
+          "git_blob": "42715b9024d6cce96c941e890ad4ae812439a837",
+          "bytes": 14305,
+          "sha256": "1576b7355796badc4c160f563c7e6e328928068ae7a67b93e0c3b314a62e6b6e"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-recipient-return-editor",
+      "label": "Complete standalone editable recipient review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-editor.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8c62d281376a3b5102b51b90dca2b846e4c54fa7",
+          "git_blob": "2f4c8f8ee5cf7f93e9145c9f10ab31051bf50b73",
+          "bytes": 15609,
+          "sha256": "54f2a46b86c20584f0e8725ca967798ca091b553712b1fb866364f570d22344b"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-recipient-return-desk",
+      "label": "Authenticated recipient return desk and working recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-ui.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8c62d281376a3b5102b51b90dca2b846e4c54fa7",
+          "git_blob": "02b368e117bb7bffd463e2975b3c7233fc3879bc",
+          "bytes": 18127,
+          "sha256": "ffa10e9446d2b14073ab5d91ef2c618202b9cd85aa303e179857b04e642d4199"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-recipient-return-store",
+      "label": "Original workspace save, replay and deep receiving adapter",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-store.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8c62d281376a3b5102b51b90dca2b846e4c54fa7",
+          "git_blob": "a5e1bea5735a75c36d86c787e8f9be1141513504",
+          "bytes": 6906,
+          "sha256": "ede62a7dad9a77126424835ddf04e8e7ea141e2b17a6abb906b5ec01301c73b2"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-recipient-return-receiving",
+      "label": "Whole recipient document and independent receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/openlineage-recipient-review-returns-e496-20261013/RECEIVING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "8c62d281376a3b5102b51b90dca2b846e4c54fa7",
+          "git_blob": "7414e7a23647f29cfba9f910fcd8a9b53f884f80",
+          "bytes": 21611,
+          "sha256": "a38fd7442aa33ff445271b9dc98042004e4154531b38bbae85ea6d0dc80f5568"
+        }
+      ]
     }
   ]
 }

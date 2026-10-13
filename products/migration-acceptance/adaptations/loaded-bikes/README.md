@@ -1,22 +1,22 @@
 # Loaded Bikes catalogue migration
 
-This customer adaptation prepares the complete retained fork-mount, adaptor, rail and fixing catalogue for the existing Migration Acceptance Workbench. It adds a plain browser review application, explicit destination mappings, source-linked corrections, an independent expected-data projection, business acceptance selections and native intake/receiving continuation. The original workbench source remains unchanged.
+This customer adaptation prepares the complete retained fork-mount, adaptor, rail and fixing catalogue for the existing Migration Acceptance Workbench. It adds a plain browser review application, explicit destination mappings, source-linked corrections, an independent expected-data projection, business acceptance selections and native intake/receiving continuation. The original native workbench implementation remains unchanged; the included public software edition is described in [PUBLIC_SOURCE.md](../../PUBLIC_SOURCE.md).
 
 ## Open the complete working edition
 
-Use the delivered source packet and the native materializer described in [OPERATING.md](OPERATING.md). The source capture is \`tjlabs.loaded-bikes.catalogue-capture.v1\`; its semantic companion is \`tjlabs.loaded-bikes.source-claims.v1\`.
+Use the delivered source packet and the native materializer described in [OPERATING.md](OPERATING.md). The source capture is `tjlabs.loaded-bikes.catalogue-capture.v1`; its semantic companion is `tjlabs.loaded-bikes.source-claims.v1`.
 
-Place \`catalogue-capture.json\` and \`source-claims.json\` beside \`index.html\`, or open a saved \`tjlabs.loaded-bikes-project.v1\` project from the application. A complete project embeds both source packets. Customer source data and review editions are delivered in the original internal opportunity; this public source directory contains the reusable implementation.
+Place `catalogue-capture.json` and `source-claims.json` beside `index.html`, or open a saved `tjlabs.loaded-bikes-project.v1` project from the application. A complete project embeds both source packets. Customer source data and review editions are delivered in the original internal opportunity; this public source directory contains the reusable implementation.
 
 Serve the containing product directory over localhost:
 
-\`\`\`sh
+```sh
 python3 -m http.server 8080 --bind 127.0.0.1
-\`\`\`
+```
 
-Open \`http://127.0.0.1:8080/adaptations/loaded-bikes/\` when the server starts in \`products/migration-acceptance\`. For a browser-exported intake ZIP, start the server in the extracted root and open \`http://127.0.0.1:8080/application/adaptations/loaded-bikes/\`.
+Open `http://127.0.0.1:8080/adaptations/loaded-bikes/` when the server starts in `products/migration-acceptance`. For a browser-exported intake ZIP, start the server in the extracted root and open `http://127.0.0.1:8080/application/adaptations/loaded-bikes/`.
 
-The application first opens a browser-saved edition. With no saved edition it opens the packaged \`project.json\`, then falls back to the original capture and semantic companion. **Open project** explicitly selects another complete edition. Browser storage failures leave the in-memory project usable and prompt a file save.
+The application first opens a browser-saved edition. With no saved edition it opens the packaged `project.json`, then falls back to the original capture and semantic companion. **Open project** explicitly selects another complete edition. Browser storage failures leave the in-memory project usable and prompt a file save.
 
 ## Work through the catalogue
 
@@ -38,7 +38,7 @@ Prices remain exact integer strings in original minor units with the declared cu
 
 **Export intake package** includes:
 
-- the complete unchanged workbench source and this customer adaptation;
+- the complete 205-file public workbench edition and this customer adaptation;
 - the exact saved project and its original capture/semantic companion;
 - every original response;
 - reviewed staging NDJSON and independent typed expected tables;
@@ -53,24 +53,26 @@ Follow [OPERATING.md](OPERATING.md) to retain the project in the original Worksp
 
 ## Developer contracts
 
-\`catalogue.mjs\` is browser compatible and exports \`sourceTables(capture)\`, \`defaultReview(capture)\`, \`prepareCatalogue({capture,review})\` and the actual retained-source binding used by the native intake.
+`catalogue.mjs` is browser compatible and exports `sourceTables(capture)`, `defaultReview(capture)`, `prepareCatalogue({capture,review})` and the actual retained-source binding used by the native intake.
 
-\`acceptance.mjs\` independently projects the original responses, validates source claims and builds the original workbench business acceptance input. Browser interpretation issues use \`sourceIssues(capture, claims)\`.
+`acceptance.mjs` independently projects the original responses, validates source claims and builds the original workbench business acceptance input. Browser interpretation issues use `sourceIssues(capture, claims)`.
 
-The project schema is \`tjlabs.loaded-bikes-project.v1\`:
+The project schema is `tjlabs.loaded-bikes-project.v1`:
 
-\`\`\`js
+```js
 {
   schema, id, title, createdAt, updatedAt, revision,
   capture, claims, review, issueDecisions, history
 }
-\`\`\`
+```
 
-\`review.tables\` retains each \`sourceTable\`, destination \`tableName\`, complete \`columns\` mapping and destination \`primaryKey\`. Each column declares \`source\`, \`name\`, \`data_type\`, \`nullable\` and optional decimal \`precision\`/\`scale\`.
+`review.tables` retains each `sourceTable`, destination `tableName`, complete `columns` mapping and destination `primaryKey`. Each column declares `source`, `name`, `data_type`, `nullable` and optional decimal `precision`/`scale`.
 
-An active correction is \`{table, sourceKey, column, previousValue, value, reviewer, reason}\`. \`sourceKey\` is an object of original key names/values. There is one active correction per original cell; the original value remains fixed while earlier corrections survive in the revision history.
+An active correction is `{table, sourceKey, column, previousValue, value, reviewer, reason}`. `sourceKey` is an object of original key names/values. There is one active correction per original cell; the original value remains fixed while earlier corrections survive in the revision history.
 
 ## Receiving the actual product
+
+The [complete browser receiving guide](BROWSER_RECEIVING.md) gives the executable order: initialize the project, operate the catalogue UI, use its exact final downloaded review in native receiving, then operate the copied original Workbench UI with `native-browser-receive.mjs`. The [refresh guide](REFRESH.md) acquires a new complete official catalogue edition while retaining the previous capture.
 
 Use the exact outgoing edition at desktop and narrow width. Open all sections, search/filter and paginate the complete tables, inspect long descriptions and source references, apply a reasoned correction and mapping revision, restore a source value and save/reopen the project. Download original responses, a complete reviewed CSV and the intake ZIP; open the extracted source application and independently reopen the same project there.
 
