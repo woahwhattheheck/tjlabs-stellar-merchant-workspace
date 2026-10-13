@@ -1,8 +1,10 @@
 // MIT. Support procedures use the existing OperatingPlan editor and retained source adapter.
 import {
-  SUPPORT_OPERATING_PHASES, createSupportOperatingPlan, inspectSupportOperatingSource, recordSupportOperatingResult,
+  SUPPORT_OPERATING_PHASES, createSupportOperatingPlan, inspectSupportOperatingSource,
 } from '/support-operating-core/support-operating-plan.mjs';
-import { inspectOperatingPlan, shellArgument } from '/operating-plan-core.mjs';
+import { inspectOperatingPlan, shellArgument, createOperatingFile } from '/operating-plan-core.mjs';
+import { recordSupportOperatingWork } from '/support-operating-core/support-operating-return.mjs';
+import { mountSupportOperatingReturn } from '/support-operating-return.mjs';
 
 const LIMIT = 32 * 1024 * 1024;
 const PHASE_LABELS = new Map([
@@ -88,7 +90,13 @@ function renderPlanPreview(parent, plan) {
     list.append(item);
   }
   parent.append(list);
-  details(parent, 'Complete original plan and saved history').textContent = JSON.stringify(selected, null, 2);
+  details(parent, 'Saved history and carried file inventory').textContent = JSON.stringify({
+    ...selected, revisions: selected.revisions.map(revision => ({...revision, steps: revision.steps.map(step => ({
+      ...step, files: step.files?.map(({content, ...file}) => file),
+    }))})),
+  }, null, 2);
+  parent.append(button('Download this complete plan and all carried files',
+    () => download(selected, 'support-operating-plan-' + selected.id + '.json')));
 }
 
 /**
@@ -110,7 +118,7 @@ export function mountSupportOperatingPlan({
   const error = text('p', '', 'support-error'); error.role = 'alert'; error.hidden = true;
   disclosure.append(intro, notice, error); host.append(disclosure);
   let createPreview = null, resultPreview = null, catalogKey = '', activePlanKey = '';
-  const registrations = new Map(), argumentsInputs = new Map();
+  const registrations = new Map(), argumentsInputs = new Map(), evidenceFiles = new Map();
 
   const invoke = action => run(async () => {
     error.hidden = true; error.textContent = '';
@@ -150,7 +158,7 @@ export function mountSupportOperatingPlan({
   disclosure.append(sourceSection);
   sourceInput.addEventListener('input', () => {
     sourceIdentity.textContent = 'Source text edited. Review this exact descriptor before use.';
-    validatedSource.textContent = ''; invalidateAll(); refreshEvidence();
+    validatedSource.textContent = ''; evidenceFiles.clear(); evidenceKey = ''; invalidateAll(); refreshEvidence();
   });
   sourceFile.addEventListener('change', () => invoke(async () => {
     const file = sourceFile.files[0]; if (!file) return;
@@ -159,7 +167,7 @@ export function mountSupportOperatingPlan({
     const raw = new TextDecoder('utf-8', {fatal: true}).decode(bytes);
     const descriptor = inspectSupportOperatingSource(parseJSON(raw, 'Source descriptor'));
     const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(x => x.toString(16).padStart(2, '0')).join('');
-    sourceInput.value = raw;
+    sourceInput.value = raw; evidenceFiles.clear(); evidenceKey = '';
     sourceIdentity.textContent = file.name + ' · ' + bytes.length + ' bytes · SHA-256 ' + digest;
     validatedSource.textContent = JSON.stringify(descriptor, null, 2);
     invalidateAll(); refreshEvidence(); notice.textContent = 'Loaded the selected source descriptor. Its complete source artifacts remain with the original Support operation.';
@@ -244,7 +252,7 @@ export function mountSupportOperatingPlan({
 
   const resultSection = text('section', undefined, 'support-section');
   resultSection.append(text('h3', '3. Record a reviewed original result'),
-    text('p', 'Open the saved Support plan, choose its exact step, and review the compact returned result with the same original source descriptor. A recorded plan status describes the operator’s work; it does not launch or authorize a Support action.', 'hint'));
+    text('p', 'Open the saved Support plan, choose its exact step, and review the compact returned result with the same original source descriptor. The saved revision carries every selected original evidence file with the reviewed result.', 'hint'));
   const selectedPlan = text('p', 'Open a saved Support procedure to record a result.', 'hint');
   resultSection.append(selectedPlan);
   const resultFields = text('div', undefined, 'support-field-grid');
@@ -254,7 +262,7 @@ export function mountSupportOperatingPlan({
   const resultOwner = field(resultFields, 'support-result-owner', 'Reviewing operator · leave blank to retain step owner', {maximum: 300});
   const resultInput = field(resultFields, 'support-result-json', 'Returned result descriptor · JSON', {rows: 5, maximum: LIMIT, required: true,
     value: JSON.stringify({summary: '', evidenceIds: []}, null, 2)});
-  resultFields.append(text('p', 'Enter a reviewed summary and the exact original evidence IDs: {"summary":"…","evidenceIds":["…"]}. Completed work requires at least one retained returned reference.', 'hint'));
+  resultFields.append(text('p', 'Enter a reviewed summary and the exact original evidence IDs: {"summary":"…","evidenceIds":["…"]}. Completed work requires at least one retained reference and its complete original file.', 'hint'));
   const evidencePanel = text('div', undefined, 'support-evidence');
   const evidenceTitle = text('h4', 'Original references available in the selected source');
   const evidenceList = text('div'); evidencePanel.append(evidenceTitle, evidenceList);
@@ -272,6 +280,36 @@ export function mountSupportOperatingPlan({
       const row = text('article', undefined, 'support-evidence-row');
       row.append(text('strong', evidence.id), text('p', evidence.role));
       details(row, 'Original artifact identity').textContent = JSON.stringify(evidence.artifact, null, 2);
+      const attached = evidenceFiles.get(evidence.id);
+      const fileStatus = text('p', attached
+        ? attached.file.name + ' · ' + attached.file.bytes + ' bytes · exact original SHA-256 matched'
+        : 'Choose the original file to carry with this result.', 'hint');
+      const upload = text('input'); upload.type = 'file'; upload.hidden = true;
+      upload.addEventListener('change', () => invoke(async () => {
+        const file = upload.files[0]; if (!file) return;
+        requireValue(file.size <= 24 * 1024 * 1024, 'Choose an original evidence file up to 24 MiB.');
+        const selectedSource = sourceInput.value, bytes = new Uint8Array(await file.arrayBuffer());
+        const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
+          .map(value => value.toString(16).padStart(2, '0')).join('');
+        requireValue(sourceInput.value === selectedSource, 'The selected source changed while the original file was opening.');
+        requireValue(bytes.length === evidence.artifact.bytes && digest === evidence.artifact.sha256,
+          'The selected file differs from this exact original evidence size or SHA-256.');
+        const carried = createOperatingFile({id: crypto.randomUUID(), name: file.name,
+          mediaType: file.type || 'application/octet-stream', bytes, note: 'Original Support evidence: ' + evidence.id});
+        evidenceFiles.set(evidence.id, {evidenceId: evidence.id, file: carried});
+        const result = parseJSON(resultInput.value, 'Returned result');
+        requireValue(typeof result.summary === 'string' && Array.isArray(result.evidenceIds),
+          'Use a result with summary text and an evidenceIds array.');
+        if (!result.evidenceIds.includes(evidence.id)) result.evidenceIds.push(evidence.id);
+        resultInput.value = JSON.stringify(result, null, 2);
+        evidenceKey = ''; invalidateResult(); refreshEvidence();
+        notice.textContent = 'Retained the complete matching file for ' + evidence.id + '. Review the result revision before saving.';
+      }));
+      row.append(fileStatus, button(attached ? 'Choose replacement original file' : 'Choose original evidence file',
+        () => { upload.value = ''; upload.click(); }), upload);
+      if (attached) row.append(button('Remove carried file selection', () => invoke(() => {
+        evidenceFiles.delete(evidence.id); evidenceKey = ''; invalidateResult(); refreshEvidence();
+      })));
       row.append(button('Include this reference', () => invoke(() => {
         const result = parseJSON(resultInput.value, 'Returned result');
         requireValue(typeof result.summary === 'string' && Array.isArray(result.evidenceIds) &&
@@ -297,13 +335,21 @@ export function mountSupportOperatingPlan({
     resultApply.disabled = true;
   }));
   resultApply.disabled = true;
-  const previewResult = button('Review result revision', () => invoke(() => {
+  const previewResult = button('Review result revision', () => invoke(async () => {
     const plan = getPlan(); requireValue(plan, 'Open the original saved Support plan first.');
     const source = inspectSupportOperatingSource(parseJSON(sourceInput.value, 'Source descriptor'));
     const result = parseJSON(resultInput.value, 'Returned result');
-    const next = recordSupportOperatingResult(plan, {source, stepId: stepInput.value,
+    requireValue(Array.isArray(result.evidenceIds), 'Select the exact original evidence IDs.');
+    const files = result.evidenceIds.map(id => {
+      const selected = evidenceFiles.get(id);
+      requireValue(selected, 'Choose the complete original file for evidence ' + id + '.');
+      return selected;
+    });
+    const fingerprint = resultFingerprint();
+    const next = await recordSupportOperatingWork(plan, {source, stepId: stepInput.value, files,
       status: statusInput.value, result, ...(resultOwner.value !== '' ? {owner: resultOwner.value} : {}), savedAt: new Date().toISOString()});
-    resultPreview = {plan: inspectOperatingPlan(next), fingerprint: resultFingerprint()};
+    requireValue(fingerprint === resultFingerprint(), 'The plan or file selection changed while its original evidence was checked.');
+    resultPreview = {plan: inspectOperatingPlan(next), fingerprint};
     renderPlanPreview(resultOutput, next); resultApply.disabled = false;
     notice.textContent = 'Review the returned source references and the proposed saved revision. No plan or native result has been changed.';
   }));
@@ -325,12 +371,17 @@ export function mountSupportOperatingPlan({
   for (const element of [stepInput, statusInput, resultOwner, resultInput]) element.addEventListener('input', invalidateResult);
   function resultFingerprint() {
     return serial({plan: getPlan(), source: sourceInput.value, step: stepInput.value,
-      status: statusInput.value, owner: resultOwner.value, result: resultInput.value});
+      status: statusInput.value, owner: resultOwner.value, result: resultInput.value,
+      files: [...evidenceFiles.values()].map(row => ({evidenceId: row.evidenceId, file: row.file}))});
   }
 
+  const returnedWork = mountSupportOperatingReturn({host: disclosure, getPlan, run, receivePlan, retainWorkingDraft,
+    getSources: () => sourceInput.value.trim()
+      ? [inspectSupportOperatingSource(parseJSON(sourceInput.value, 'Source descriptor'))] : []});
+
   const transfer = text('section', undefined, 'support-section');
-  transfer.append(text('h3', '4. Reopen and hand over'),
-    text('p', 'Use Complete editable JSON in the plan editor to retain every saved revision. Import a returned complete plan with the existing Import complete plan control. Divergent histories stay separate; the original source package and returned native artifacts travel with their own identities.'));
+  transfer.append(text('h3', '5. Reopen and hand over'),
+    text('p', 'Use Complete editable JSON in the plan editor to retain every saved revision. Receive customer changes through the returned-work review above. It retains both complete histories and source descriptors, carries original evidence files, and preserves later saved work. The complete native Support companion remains with the original case.'));
   transfer.append(button('Download current saved plan', () => invoke(() => {
     const plan = getPlan(); requireValue(plan, 'Open a saved plan first.');
     download(inspectOperatingPlan(plan), 'operating-plan-' + plan.id + '.json');
@@ -339,6 +390,7 @@ export function mountSupportOperatingPlan({
 
   function update() {
     refreshEvidence();
+    returnedWork.update();
     const catalog = getCatalog(), nextCatalogKey = serial(catalog ?? null);
     if (nextCatalogKey !== catalogKey) {
       catalogKey = nextCatalogKey; invalidateCreate();

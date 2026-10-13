@@ -1,0 +1,389 @@
+{
+  "schema": "stellar-forge.grant-environmental-evidence-summary.v1",
+  "title": "Environmental commissioning: scope, effort and receiving evidence",
+  "source_observed_at": "2026-10-13T03:59:54Z",
+  "source_operation": "SCF-ENVIRONMENTAL-INSTALLATIONS-9F77-20261013",
+  "public_operating_guide": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d18ad532aef87aad8982da1ff3c3426655ae014/stellar/scf_2026/sf49_data_commissioning/installation-workorders/ENVIRONMENTAL_INSTALLATIONS.md",
+  "summary_kind": "reviewer-readable projection of retained original source; not a native receiving selection",
+  "status": {
+    "commercial": "proposed scopes; not recorded acceptance or revenue",
+    "source": "complete authored selection and installed profiles",
+    "execution": "original native preparation, Installation receiving and customer acceptance require their actual receipts; this summary supplies no new runtime result"
+  },
+  "funding_separation": {
+    "grant_request_usd": 38000,
+    "grant_prospective_hours": 400,
+    "grant_calendar_days": 150,
+    "grant_work_packages": 6,
+    "funded_installations": 2,
+    "commercial_cohort_is_additional_grant_hours": false,
+    "commercial_cohort_is_commercial_320_hour_study": false
+  },
+  "totals": {
+    "cases": 5,
+    "phases": 25,
+    "planned_commercial_hours": 206,
+    "proposed_fees_usd": 24600,
+    "agreed_start_milestones_usd": 12300,
+    "accepted_handover_milestones_usd": 12300
+  },
+  "cases": [
+    {
+      "name": "Geotech",
+      "case_id": "geotech-enviro-data-implementation-20261012",
+      "profile": "geotech-dts8d",
+      "currency": "USD",
+      "proposed_fee_usd": 4200,
+      "agreed_start_milestone_usd": 2100,
+      "accepted_handover_milestone_usd": 2100,
+      "proposed_business_days": 8,
+      "planned_hours": 36,
+      "phases": [
+        {
+          "id": "source-target-contract",
+          "label": "Client source and Enviro Data receiving contract",
+          "hours": "6",
+          "source_pointer": "/estimate/roles/0/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Client source and Enviro Data receiving contract\" is paired in the retained plan order with original estimate role \"Client source and Enviro Data receiving contract\". Its 360 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "source-identity-review",
+          "label": "Consolidated source and reviewable identities",
+          "hours": "8",
+          "source_pointer": "/estimate/roles/1/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Consolidated source and reviewable identities\" is paired in the retained plan order with original estimate role \"Consolidated source and reviewable identities\". Its 480 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "native-import-package",
+          "label": "Reusable native import and exception workflow",
+          "hours": "12",
+          "source_pointer": "/estimate/roles/2/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Reusable native import and exception workflow\" is paired in the retained plan order with original estimate role \"Reusable native import and exception workflow\". Its 720 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "operator-native-receiving",
+          "label": "Actual Enviro Data import and receiving",
+          "hours": "6",
+          "source_pointer": "/estimate/roles/3/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Actual Enviro Data import and receiving\" is paired in the retained plan order with original estimate role \"Actual Enviro Data import and receiving\". Its 360 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "source-handover",
+          "label": "Complete source, repeat run and handover",
+          "hours": "4",
+          "source_pointer": "/estimate/roles/4/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Complete source, repeat run and handover\" is paired in the retained plan order with original estimate role \"Complete source, repeat run and handover\". Its 240 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        }
+      ],
+      "input_selection": "One client project, up to two source-export families and the client's actual DTS/import contract.",
+      "receiving_outcome": "Complete source and saved mappings, native import/exception package, actual Enviro Data receiving and repeatable handover.",
+      "original_plan_sha256": "f45c0746f208417d4ebde2c582dd73c6aadadc62ae7e3ff6c446696e7d234256",
+      "original_packet": {
+        "bytes": 1337461,
+        "sha256": "3dd9fa9f6dc9cc9b9b8d739520410d25766a50855f67e03c5afa356ec769ee3f"
+      },
+      "effort_total_source": {
+        "hours": "36",
+        "sourcePointer": "/estimate/capacity_minutes",
+        "unit": "minutes"
+      }
+    },
+    {
+      "name": "Waterborne",
+      "case_id": "waterborne-monitoring-data-handover-20261012",
+      "profile": "water-quality-analysis",
+      "currency": "USD",
+      "proposed_fee_usd": 4800,
+      "agreed_start_milestone_usd": 2400,
+      "accepted_handover_milestone_usd": 2400,
+      "proposed_business_days": 10,
+      "planned_hours": 40,
+      "phases": [
+        {
+          "id": "study-source-contract",
+          "label": "Study source, interpretation and receiving contract",
+          "hours": "6",
+          "source_pointer": "/estimate/roles/0/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Study source, interpretation and receiving contract\" is paired in the retained plan order with original estimate role \"Study source, interpretation and receiving contract\". Its 360 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "retained-study-edition",
+          "label": "Complete retained monitoring edition",
+          "hours": "8",
+          "source_pointer": "/estimate/roles/1/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Complete retained monitoring edition\" is paired in the retained plan order with original estimate role \"Complete retained monitoring edition\". Its 480 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "review-and-client-output",
+          "label": "Reviewed analysis and client output",
+          "hours": "14",
+          "source_pointer": "/estimate/roles/2/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Reviewed analysis and client output\" is paired in the retained plan order with original estimate role \"Reviewed analysis and client output\". Its 840 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "second-analyst-receiving",
+          "label": "Independent analyst receiving and correction flow",
+          "hours": "8",
+          "source_pointer": "/estimate/roles/3/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Independent analyst receiving and correction flow\" is paired in the retained plan order with original estimate role \"Independent analyst receiving and correction flow\". Its 480 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "operating-handover",
+          "label": "Source handover and study-team walkthrough",
+          "hours": "4",
+          "source_pointer": "/estimate/roles/4/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Source handover and study-team walkthrough\" is paired in the retained plan order with original estimate role \"Source handover and study-team walkthrough\". Its 240 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        }
+      ],
+      "input_selection": "One study/reporting window and up to two field/laboratory export families.",
+      "receiving_outcome": "Complete original study and limits, original/standardized analyses, report/crosswalk, edition comparison, portable project and independent analyst reopen.",
+      "original_plan_sha256": "9ce7a10fe315aafb9ec4a825258bad89204c1a5ff5e4fc5c57edc333cb595e74",
+      "original_packet": {
+        "bytes": 58363,
+        "sha256": "242b56fe760ed2d49befbf3257f6eb75f5f8f8e4b0c17614f8761038379722a1"
+      },
+      "effort_total_source": {
+        "hours": "40",
+        "sourcePointer": "/estimate/capacity_minutes",
+        "unit": "minutes"
+      }
+    },
+    {
+      "name": "McCampbell",
+      "case_id": "mccampbell-edd-receiving-20261012",
+      "profile": "laboratory-edd-reissue",
+      "currency": "USD",
+      "proposed_fee_usd": 4800,
+      "agreed_start_milestone_usd": 2400,
+      "accepted_handover_milestone_usd": 2400,
+      "proposed_business_days": 10,
+      "planned_hours": 40,
+      "phases": [
+        {
+          "id": "client-format-contract",
+          "label": "Client format and full delivery contract",
+          "hours": "4",
+          "source_pointer": "/estimate/roles/0/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Client format and full delivery contract\" is paired in the retained plan order with original estimate role \"Client format and full delivery contract\". Its 240 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "complete-source-intake",
+          "label": "Whole-family source and QC review",
+          "hours": "12",
+          "source_pointer": "/estimate/roles/1/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Whole-family source and QC review\" is paired in the retained plan order with original estimate role \"Whole-family source and QC review\". Its 720 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "native-reissue-workflow",
+          "label": "Saved decisions, native output and reissue",
+          "hours": "10",
+          "source_pointer": "/estimate/roles/2/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Saved decisions, native output and reissue\" is paired in the retained plan order with original estimate role \"Saved decisions, native output and reissue\". Its 600 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "client-edp-receiving",
+          "label": "Client EDP receiving and correction pass",
+          "hours": "8",
+          "source_pointer": "/estimate/roles/3/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Client EDP receiving and correction pass\" is paired in the retained plan order with original estimate role \"Client EDP receiving and correction pass\". Its 480 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "private-operator-handover",
+          "label": "Private installation and operating handover",
+          "hours": "6",
+          "source_pointer": "/estimate/roles/4/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Private installation and operating handover\" is paired in the retained plan order with original estimate role \"Private installation and operating handover\". Its 360 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        }
+      ],
+      "input_selection": "One current client EDD format, complete initial delivery and included reissue.",
+      "receiving_outcome": "Current/baseline inputs and saved decisions, all native output families, verified result folder, client EDP import and private handover.",
+      "original_plan_sha256": "26ec2e93c11d74f839b420f33ae7ba6081d17bde73872bfd07a3521b74de1327",
+      "original_packet": {
+        "bytes": 639443,
+        "sha256": "125c18f91814629cf395a534aebdfa46d3f625b6fb47df2df86540804962a41a"
+      },
+      "effort_total_source": {
+        "hours": "40",
+        "sourcePointer": "/estimate/capacity_minutes",
+        "unit": "minutes"
+      }
+    },
+    {
+      "name": "Phoenix",
+      "case_id": "phoenixlabs-edd-reissue-20261012",
+      "profile": "laboratory-edd-reissue",
+      "currency": "USD",
+      "proposed_fee_usd": 4800,
+      "agreed_start_milestone_usd": 2400,
+      "accepted_handover_milestone_usd": 2400,
+      "proposed_business_days": 10,
+      "planned_hours": 40,
+      "phases": [
+        {
+          "id": "client-format-contract",
+          "label": "Client format and full delivery contract",
+          "hours": "4",
+          "source_pointer": "/estimate/roles/0/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Client format and full delivery contract\" is paired in the retained plan order with original estimate role \"Client format and full delivery contract\". Its 240 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "complete-source-intake",
+          "label": "Whole-family source and QC review",
+          "hours": "12",
+          "source_pointer": "/estimate/roles/1/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Whole-family source and QC review\" is paired in the retained plan order with original estimate role \"Whole-family source and QC review\". Its 720 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "native-reissue-workflow",
+          "label": "Saved decisions, native output and reissue",
+          "hours": "10",
+          "source_pointer": "/estimate/roles/2/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Saved decisions, native output and reissue\" is paired in the retained plan order with original estimate role \"Saved decisions, native output and reissue\". Its 600 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "client-edp-receiving",
+          "label": "Client EDP receiving and correction pass",
+          "hours": "8",
+          "source_pointer": "/estimate/roles/3/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Client EDP receiving and correction pass\" is paired in the retained plan order with original estimate role \"Client EDP receiving and correction pass\". Its 480 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        },
+        {
+          "id": "private-operator-handover",
+          "label": "Private installation and operating handover",
+          "hours": "6",
+          "source_pointer": "/estimate/roles/4/minutes",
+          "source_file": "original-workshare-plan",
+          "source_unit": "minutes",
+          "basis": "Original phase \"Private installation and operating handover\" is paired in the retained plan order with original estimate role \"Private installation and operating handover\". Its 360 minutes are the stated engineering allocation; no fee-to-hours conversion is applied."
+        }
+      ],
+      "input_selection": "Phoenix's current client EQuIS four-file format and complete initial/reissue family.",
+      "receiving_outcome": "Complete QC decisions, reissue comparison, all native members, verified result folder, actual client EDP import and operator handover.",
+      "original_plan_sha256": "43eebd5d549bd6bca8b5fe6e17e96bec840321fb81fd757bcced8561c6a93486",
+      "original_packet": {
+        "bytes": 659829,
+        "sha256": "791b30232b16f15e32098a48f036810eb86b639d6309730397e4b2318652522b"
+      },
+      "effort_total_source": {
+        "hours": "40",
+        "sourcePointer": "/estimate/capacity_minutes",
+        "unit": "minutes"
+      }
+    },
+    {
+      "name": "KISTERS",
+      "case_id": "kisters-water-quality-commissioning-20261012",
+      "profile": "kiwis-water-quality",
+      "currency": "USD",
+      "proposed_fee_usd": 6000,
+      "agreed_start_milestone_usd": 3000,
+      "accepted_handover_milestone_usd": 3000,
+      "proposed_business_days": 12,
+      "planned_hours": 50,
+      "phases": [
+        {
+          "id": "programme-source-contract",
+          "label": "programme source contract",
+          "hours": "8",
+          "source_pointer": "/phases/0/hours",
+          "source_file": "KISTERS_Effort_From_Original_Plan.json",
+          "source_unit": "hours",
+          "basis": "Literal transcription of /phases/0/description in the unchanged plan bb0dfb97943d7de4458c1bfef349796c7688333766f47f720a9704705f23f81c: 'Effort allocation: 8 hours;'. The source document retains the whole exact paragraph, original RECEIVING packet identity, plan-file hash and excerpt hash."
+        },
+        {
+          "id": "source-acquisition-and-mapping",
+          "label": "source acquisition and mapping",
+          "hours": "14",
+          "source_pointer": "/phases/1/hours",
+          "source_file": "KISTERS_Effort_From_Original_Plan.json",
+          "source_unit": "hours",
+          "basis": "Literal transcription of /phases/1/description in the unchanged plan bb0dfb97943d7de4458c1bfef349796c7688333766f47f720a9704705f23f81c: 'Effort allocation: 14 hours;'. The source document retains the whole exact paragraph, original RECEIVING packet identity, plan-file hash and excerpt hash."
+        },
+        {
+          "id": "review-and-native-output",
+          "label": "review and native output",
+          "hours": "12",
+          "source_pointer": "/phases/2/hours",
+          "source_file": "KISTERS_Effort_From_Original_Plan.json",
+          "source_unit": "hours",
+          "basis": "Literal transcription of /phases/2/description in the unchanged plan bb0dfb97943d7de4458c1bfef349796c7688333766f47f720a9704705f23f81c: 'Effort allocation: 12 hours;'. The source document retains the whole exact paragraph, original RECEIVING packet identity, plan-file hash and excerpt hash."
+        },
+        {
+          "id": "deployment-and-independent-transfer",
+          "label": "deployment and independent transfer",
+          "hours": "8",
+          "source_pointer": "/phases/3/hours",
+          "source_file": "KISTERS_Effort_From_Original_Plan.json",
+          "source_unit": "hours",
+          "basis": "Literal transcription of /phases/3/description in the unchanged plan bb0dfb97943d7de4458c1bfef349796c7688333766f47f720a9704705f23f81c: 'Effort allocation: 8 hours;'. The source document retains the whole exact paragraph, original RECEIVING packet identity, plan-file hash and excerpt hash."
+        },
+        {
+          "id": "acceptance-correction-handover",
+          "label": "acceptance correction handover",
+          "hours": "8",
+          "source_pointer": "/phases/4/hours",
+          "source_file": "KISTERS_Effort_From_Original_Plan.json",
+          "source_unit": "hours",
+          "basis": "Literal transcription of /phases/4/description in the unchanged plan bb0dfb97943d7de4458c1bfef349796c7688333766f47f720a9704705f23f81c: 'Effort allocation: 8 hours;'. The source document retains the whole exact paragraph, original RECEIVING packet identity, plan-file hash and excerpt hash."
+        }
+      ],
+      "input_selection": "One KiWIS service/programme and one agreed WQX or Laboratory counterpart.",
+      "receiving_outcome": "Saved editions/comparison and all eight exports: bundle, review, decisions, observations, counterparts, correspondences, series and report; independent receiving and cold reopen.",
+      "original_plan_sha256": "bb0dfb97943d7de4458c1bfef349796c7688333766f47f720a9704705f23f81c",
+      "original_packet": {
+        "bytes": 76654,
+        "sha256": "2147758a63690da68b095c50e7c75391f82b3416b4536520e177be57c069039b"
+      },
+      "effort_total_source": {
+        "hours": "50",
+        "sourceFile": "KISTERS_Effort_From_Original_Plan.json",
+        "sourcePointer": "/total/hours",
+        "unit": "hours"
+      }
+    }
+  ],
+  "evidence": {
+    "source_selection_sha256": "03ac9387bdf601edd446c2fe9553e876c190e2277fb0d86284edb10c038d0c93",
+    "quickstart_sha256": "386641727831d135df67d549b903a160be0079c62c93da3e7c8557e24f9c1c8c",
+    "public_guide_sha256": "b8bc6e303f7484fa441818c483ad1b2deeb60d7bd2cef4cbe29a7b28fd575f0c",
+    "retained_private_originals": "Application owner retains exact source selection, full packets, plans and internal receiving records. This public summary contains no private source URLs, access details, correspondence or customer data."
+  }
+}

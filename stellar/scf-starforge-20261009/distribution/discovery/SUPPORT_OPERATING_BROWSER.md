@@ -47,24 +47,36 @@ Select the exact receiving step and a recorded work status. Enter a reviewing op
 }
 ~~~
 
-Use **Include this reference** beside an actual evidence row to add its exact ID. Inspect its complete artifact identity before using it. You can also choose a supplied returned-result JSON file. The interface does not infer completion from an artifact name, a queue row or a manual status choice. Recording completed work requires at least one valid returned evidence reference.
+Choose **Choose original evidence file** beside each selected evidence row. The browser checks the complete file against that original artifact’s byte count and SHA-256, carries its bytes in the established OperatingFile format, and adds the evidence ID to the result. Each file may be up to 24 MiB, within the existing 32 MiB complete-plan capacity. You can also choose a supplied returned-result JSON file, then attach every named original. Recording completed work requires at least one valid reference and its complete matching file. Other existing step files remain in the saved history.
 
-Choose **Review result revision** to inspect the complete proposed plan and its original history. The preview freezes the source, selected plan, step, status, result and operator. If any changes, review again.
+Choose **Review result revision** to inspect the complete proposed plan and its original history. The preview freezes the source, selected plan, step, status, result, operator and every carried file. If any changes, review again.
 
 **Save reviewed result revision** retains the existing local working draft, rechecks the selection, then uses the same complete-history receiving transaction. It does not overwrite concurrent divergent revisions. If receiving reports a conflict, the reviewed result plan remains available to download and the original editor can retain it as a separate copy. No native action or case mutation is replayed.
 
-## 4. Reopen and receive
+## 4. Review and receive customer returned work
 
-Use **Complete editable JSON** in Operating Plans, or **Download current saved plan** in the Support section, to retain every saved revision. Keep its compact Support source descriptor and original source/result package alongside it.
+Open the original saved plan as the receiving destination, then choose the customer's complete returned plan. Enter the receiving reviewer and notes. Keep the original first-plan source descriptor selected above and add every later case-descendant descriptor used by the customer's recorded results with **Add original source descriptor files**.
 
-Use **Import complete plan** for a returned complete plan. Identical history is reused, an older identical prefix preserves the newer local head, and divergent shared revisions require a separate copy. The existing browser origin, IndexedDB store, session drafts and recovery controls continue to apply.
+**Create returned-work review** verifies the two complete histories, original Support case binding and every selected source/evidence/file association. It retains the full review before presenting the comparison. Changes show the shared original value, current destination value and returned customer value. Review any unresolved difference; choose current, returned, shared original or a custom JSON value, add a note and save that exact choice. A progress choice keeps the recorded result and its associated files together.
 
-Use the same local listener address to reopen browser plans. The complete plan JSON is the portable source for another computer or browser; the native package retains the original artifacts, case and continuation separately.
+The original OperatingPlanReturn engine calculates the proposed revision. Support-specific validation also checks that the choices preserve each source-bound result and its matching carried file. Changing the reviewer or notes saves them with this same review. Full plan and wrapper JSON remain downloadable; long displayed values use a readable preview with a complete-value download.
+
+**Receive accepted work** first retains the local working draft. It then saves the complete accepted return, including its fixed completion time and plan, before calling the existing Operating Plans receiving transaction. That transaction compares against the actual stored head, preserves every earlier revision and reopens the saved result. A concurrent different history is retained for review.
+
+If the tab closes between those two saves, open the same saved review and choose **Receive accepted work** again. The retained completion is applied to the freshly opened original plan. An already received completion is reused, and later compatible saved revisions stay in place.
+
+## 5. Reopen and hand over
+
+Use **Download complete returned work** to transfer the exact source descriptors, both full histories, decisions, carried files and completion. **Download readable review and files** produces the original readable return with file downloads and its complete Support wrapper. A recipient can open the complete JSON with **Open complete returned-work package**, select the original destination plan, review and finish receiving.
+
+Use **Complete editable JSON** in Operating Plans or **Download current saved plan** to transfer every saved plan revision. Preserve the original native Support companion alongside it; the companion retains the full CaseStore source and native continuation.
+
+Use the same local listener address to reopen browser work. Saved Support return reviews live in the dedicated browser document store `starforge-support-returned-work-v1`; plan saves and working drafts remain in the existing Operating Plans store. Each review save compares its local version and exact prior value so a second tab cannot silently replace a later review. The complete JSON is the portable copy for another computer or browser.
 
 ## Maintained integration
 
-The additive browser controller is `public/support-operating-plan.mjs`. It uses the browser-safe `support-operating-plan.mjs` adapter through `/support-operating-core/support-operating-plan.mjs`. That static subtree serves the exact maintained adapter, OperatingPlan model and import-free catalog at their original relative paths; Node module imports remain unchanged.
+The original controller is `public/support-operating-plan.mjs`, with the returned-work interface in `public/support-operating-return.mjs`. The browser-safe source and returned-work models are served through `/support-operating-core/`. That subtree retains the exact adapter, original OperatingPlan and OperatingPlanReturn engines, and import-free catalog at their original relative paths.
 
-The original editor supplies its catalog, current saved plan, busy/error boundary, draft retention and existing `addPlan` / `receivePlan` transactions. There is no second plan database, scheduler, case store or execution route. Existing toolkit catalog export, Command Finder search, generic plans, customer integrations and original revision semantics remain in their existing source.
+The original editor supplies its catalog, current saved plan, busy/error boundary, draft retention and existing `addPlan` / `receivePlan` transactions. Returned-work documents have their own saved review and compact index records. Accepted plans continue through the existing plan database and transaction. Toolkit catalog export, Command Finder search, generic plans, customer integrations and revision semantics retain their existing source.
 
 A recorded plan status describes the operator’s work. Native observation identity, source completeness and original returned artifacts remain separate, explicit facts in the selected source and result.

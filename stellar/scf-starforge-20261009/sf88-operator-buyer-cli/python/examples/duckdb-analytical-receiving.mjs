@@ -49,7 +49,9 @@ try{
  await save();
 const browserInfo=await stat(input.browser);
 need(browserInfo.isFile(),'Use the original retained browser executable');
-const {chromium}=await import('/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.js');
+const playwright=await import('/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.js');
+const chromium=playwright.chromium??playwright.default?.chromium;
+need(typeof chromium?.launch==='function','Use the installed Playwright Chromium launcher');
 const browser=await chromium.launch({headless:true,executablePath:input.browser,
  args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu'],env:{...process.env,TMPDIR:input.directory}});
 const errors=[],network=[];
