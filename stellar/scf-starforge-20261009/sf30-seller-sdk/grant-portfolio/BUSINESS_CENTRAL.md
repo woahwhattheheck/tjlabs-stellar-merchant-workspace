@@ -20,8 +20,13 @@ engine recomputes its complete summary and ordered row object before projection.
    using that edition for reporting.
 4. Inspect the financial ledger or the project/grant position. The source card shows
    the original reporting period, company, original row count and findings. The source
-   detail retains the full original reconciliation summary, including incomplete metrics
-   and the native cost/billable difference definitions.
+   **Source details** view shows every project/grant/currency group as a readable
+   table, with budget cost, billable amount, usage cost, sales and the original
+   difference measures. Complete, incomplete and no-row measures remain distinct;
+   a partial subtotal is labeled explicitly. Findings and groups have independent
+   50-row pages, so the full edition stays available. Open a finding's detail for
+   its exact affected record and source context. The complete original summary and
+   source download remain available below the review.
 5. For a refreshed capture or changed allocation, receive the following complete edition,
    then use the existing source replacement workflow. Source-bound reviews and programme
    bindings become stale when their selected original record changes; review the new
