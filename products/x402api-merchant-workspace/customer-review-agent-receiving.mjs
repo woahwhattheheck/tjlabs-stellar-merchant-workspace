@@ -13,7 +13,7 @@ const hash=v=>createHash('sha256').update(v).digest('hex'),SCHEMA='stellar-forge
 const read=async p=>JSON.parse(await readFile(p,'utf8'));
 const optional=async p=>{try{return await read(p);}catch(e){if(e.code==='ENOENT')return null;throw e;}};
 const makeOwner=async path=>new MerchantInvoices({merchantInvoices:await readMerchantInvoiceConfiguration(path)});
-const actions=['status','issue','document','source','receive','compare','decide','resume','return','support'];
+const actions=['status','issue','document','source','receive','compare','decide','resume','return','support','response'];
 async function inputs(root,expectedInvoices) {
  const folder=join(root,'customer-review-course'),course=await read(join(folder,'complete.json'));
  assert.deepEqual(course.invoices,expectedInvoices);
@@ -56,7 +56,7 @@ export async function receiveMerchantReviewAgent({opening,scenario,root,expected
   const call=async(kind,a={})=>{const v=(await owner.call('merchant_invoice_'+kind,{merchant:'original',invoiceId:course.invoiceId,...a})).native;
    calls.push(kind);for(const key of ['artifact','requestArtifact'])if(v[key])artifacts.push(v[key]);return v;};
   const catalogue=merchantInvoiceTools((name,description,properties,required,annotations)=>({name,description,properties,required,annotations}));
-  assert.equal(catalogue.length,37);
+  assert.equal(catalogue.length,38);
   for(const action of actions){const t=catalogue.find(t=>t.name==='merchant_invoice_review_'+action);assert(t);assert.equal(t.annotations.openWorld,false);
    assert.equal(t.annotations.readOnly,!['issue','receive','decide','resume'].includes(action));}
   const status=await call('review_status');assert.equal(status.reviewVersion,course.reviewVersion);
@@ -80,6 +80,10 @@ export async function receiveMerchantReviewAgent({opening,scenario,root,expected
   const supportDownload=await call('review_support');
   const supportFile=course.files.find(file=>file.path===join(root,'customer-review-course','Merchant_Customer_Review_Support.json'));
   assert(supportFile);assert.equal(supportDownload.artifact.payload.sha256,supportFile.sha256);assert.equal(supportDownload.artifact.payload.bytes,supportFile.bytes);
+  if(course.customerResponse){for(const [format,path]of [['json',course.customerResponse.responsePath],['html',course.customerResponse.responseHTML]]){
+   const response=await call('review_response',{decisionId:course.customerResponse.decisionId,format}),selected=course.files.find(f=>f.path===path);
+   assert(selected);assert.equal(response.artifact.payload.sha256,selected.sha256);assert.equal(response.artifact.payload.bytes,selected.bytes);
+  }}
   const after=await client.customerReviews(course.invoiceId);assert.deepEqual(after,before);
   assert.deepEqual(await Promise.all(expectedInvoices.map(id=>client.inspectInvoice(id))),invoices);
   const full=[],seen=new Set();
@@ -111,7 +115,7 @@ export async function verifyMerchantReviewAgent(result,{root,expectedInvoices}) 
  assert.equal(result.schema,SCHEMA);assert.equal(result.state,'COMPLETE');assert.deepEqual(result.invoices,expectedInvoices);
  const original=await inputs(root,expectedInvoices);assert.deepEqual(result.owner,original.course.owner);
  for(const key of ['invoiceId','issueId','returnSha256','reviewVersion'])assert.equal(result[key],original.course[key]);
- assert.equal(result.recordedMutation,'ORIGINAL_REQUEST_REPLAY_ONLY');assert.equal(result.tools.length,37);
+ assert.equal(result.recordedMutation,'ORIGINAL_REQUEST_REPLAY_ONLY');assert([37,38].includes(result.tools.length));
  for(const file of result.originalInputs)await verifyMerchantArtifact(file.path,file);
  for(const action of ['issue','receive','decide']){
   assert.equal(result.requests[action].requestId,original.requests[action].requestId);

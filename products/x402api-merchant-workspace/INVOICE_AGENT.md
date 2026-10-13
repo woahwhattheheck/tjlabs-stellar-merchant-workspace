@@ -230,9 +230,9 @@ The original receiving input remains the existing five-invoice commissioned arch
 
 ## Customer review, merchant disposition and Support
 
-The existing invoice provider also operates the complete customer-review workflow described in [CUSTOMER_REVIEWS.md](CUSTOMER_REVIEWS.md). Its catalogue has 37 tools: the original 27 invoice/payment/project tools and ten customer-review tools. The original invoice, delivered result, return, merchant disposition and Support case keep their own identities.
+The existing invoice provider also operates the complete customer-review workflow described in [CUSTOMER_REVIEWS.md](CUSTOMER_REVIEWS.md). Its catalogue has 38 tools: the original 27 invoice/payment/project tools and eleven customer-review tools. The original invoice, delivered result, return, merchant disposition and Support case keep their own identities.
 
-Customer-entered names and contact details remain attributed statements. A merchant disposition records the operator's review of one exact returned edition. Neither action changes payment, settlement or fulfillment, and these ten tools make no external customer contact.
+Customer-entered names and contact details remain attributed statements. A merchant disposition records the operator's review of one exact returned edition. Neither action changes payment, settlement or fulfillment, and these eleven tools make no external customer contact.
 
 ### Select the complete returned file
 
@@ -268,6 +268,7 @@ A review may contain original attachments and can be up to 48 MiB. Select such a
 | `merchant_invoice_review_resume` | Explicitly replay the byte-selected original issue, receive or decide request. |
 | `merchant_invoice_review_return` | Download the exact original returned JSON bytes. |
 | `merchant_invoice_review_support` | Download the whole Support workspace with original issued sources, returns and merchant dispositions. |
+| `merchant_invoice_review_response` | Download the actual retained merchant decision as JSON or a complete editable customer response desk. |
 
 Start with `review_status` on the selected invoice. Receive its history artifact using the existing `file` tool. Choose a new request UUID and pass `invoiceId`, `requestId`, `expectedReviewVersion` and `invoiceRevision` to `review_issue`. The native owner checks that revision inside the same transaction that records the issue. Receive `review_document` using the returned issue ID. The existing authorized customer channel handles delivery.
 
@@ -300,6 +301,14 @@ Receive `review_support` as a complete file. Open it with the existing Support c
 
 The complete Merchant project archive retains the two original customer-review/request tables along with invoices, payments, attachments and source. The existing project tools can therefore hand over the operated workspace after the review operation.
 
+### Return the recorded merchant response
+
+Use `merchant_invoice_review_response` with `merchant`, `invoiceId`, the actual retained `decisionId`, and `format: "json"` or `"html"`. It reads the original decision and downloads complete verified bytes into the same private artifact store. The JSON identifies the exact prior customer edition and original returned file; the HTML includes the original customer record, earlier editions, attachments, unfinished draft and selected response.
+
+The recorded disposition reason and merchant reviewer appear in the customer-facing download. Review them before sharing through the existing relationship owner. This read-only operation sends no message. Private native request IDs and the optional Support case UUID are omitted.
+
+The recipient can import the JSON into the original desk while preserving entered work, or open the complete response HTML. The following recorded customer edition references the original response hash. When that return is selected through `reviewReturns` and received normally, the same native writer checks the response against its actual decision. Original response bytes, prior editions and later unfinished work survive Support and full-project exports. See [the complete response workflow](CUSTOMER_REVIEWS.md#merchant-response-and-following-customer-review).
+
 ### Recover the same review request
 
 The private request is saved before any review POST. For `receive`, that request contains the complete original returned text; changing or removing the host input later cannot change a pending request. For `decide`, it contains the exact selected edition, comparison, actor, disposition reason and optional original case ID.
@@ -312,11 +321,11 @@ The complete requests, response artifacts, original returned bytes, comparisons,
 
 ### Continue the original operating case
 
-`customer-review-agent-receiving.mjs` consumes the completed original customer-review course. It selects the exact retained issue, receive and decision request/result files; replays all three through this provider; compares the original native responses; receives the original review HTML, returned JSON and full Support workspace; and verifies the unchanged five invoices and review history. It generates no customer return, new invoice, payment authorization or replacement request identity.
+`customer-review-agent-receiving.mjs` consumes the completed original customer-review course. It selects the exact retained issue, receive and decision request/result files; replays all three through this provider; compares the original native responses; receives the original review HTML, returned JSON and full Support workspace; and verifies the unchanged five invoices and review history. When the original course includes the merchant-response chapter, it also receives both exact response formats and validates their retained original bytes. The agent course generates no customer return, new invoice, payment authorization or replacement request identity.
 
 The normal installed programme adds one original managed opening for this agent course after the customer-review browser course. It stops that owner through the existing Applications lifecycle, then reopens every retained artifact without a server or credential. The same installed operation still requires zero provider calls, unchanged business-table fingerprints, complete project receiving and cold reopening.
 
-An installation whose original `complete.json` was already saved can operate this addition explicitly with `--review-agent-continuation`. Run the current `installed-receiving.mjs` with the exact original `--repo`, `--source-commit`, `--original`, `--root`, browser paths and `--portable` selection, adding only that flag. Keep `--source-commit` at the original installation's source: the new consumer is selected by the current script and its separately retained complete 128-file source inventory, including the original receiving script.
+An installation whose original `complete.json` was already saved can operate this addition explicitly with `--review-agent-continuation`. Run the current `installed-receiving.mjs` with the exact original `--repo`, `--source-commit`, `--original`, `--root`, browser paths and `--portable` selection, adding only that flag. Keep `--source-commit` at the original installation's source: the new consumer is selected by the current script and its separately retained complete 129-file source inventory, including the original receiving script.
 
 That continuation records the SHA of the original completion and customer-review course, the selected consumer source inventory, original owner/invoice and exact request files. It reopens the same saved Application with its original installed source, operates the original native journal and stops that process. Its separate completion receipt follows offline artifact checks and unchanged original database fingerprints. The original root completion, source selection, customer-review completion and browser results remain intact. Repeating the continuation verifies its original stopped process and full saved files.
 

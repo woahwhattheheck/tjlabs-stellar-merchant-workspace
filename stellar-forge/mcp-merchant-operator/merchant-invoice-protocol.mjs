@@ -60,6 +60,8 @@ const defs={
  review_resume:[{merchant:alias,invoiceId:id,requestId:id,action:{type:'string',enum:['issue','receive','decide']},expectedRequestSha256:sha},
  ['merchant','invoiceId','requestId','action','expectedRequestSha256'],
  'Explicitly replay the selected complete retained review request after inspecting the same invoice history. Original request UUID, bytes, source, revision and disposition stay unchanged; the native journal returns an already completed result.'],
+ review_response:[{merchant:alias,invoiceId:id,decisionId:id,format:{type:'string',enum:['json','html']}},['merchant','invoiceId','decisionId','format'],
+ 'Receive the exact selected merchant disposition as customer response JSON or a complete editable customer desk. Preserve its original issue, returned edition and attributed response; deliver only through the authorized relationship owner.'],
  review_return:[{merchant:alias,invoiceId:id,returnSha256:sha},['merchant','invoiceId','returnSha256'],
  'Receive the exact original returned JSON bytes, including all original attachments and unfinished review work.'],
  review_support:[{merchant:alias,invoiceId:id},['merchant','invoiceId'],

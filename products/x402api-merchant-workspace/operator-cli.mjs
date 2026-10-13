@@ -84,6 +84,7 @@ customer-reviews --connection FILE --id ORIGINAL_UUID [--out FILE]
 customer-review-issue|customer-review-receive|customer-review-decide --connection FILE --request EXACT_REQUEST_JSON --out RECEIPT_JSON
 customer-review-compare --connection FILE --id ORIGINAL_UUID --revision RETURN_SHA256 --out COMPARISON_JSON
 customer-review-document --connection FILE --id ORIGINAL_UUID --operation ISSUE_UUID --out REVIEW_HTML
+customer-review-response|customer-review-response-document --connection FILE --id ORIGINAL_UUID --operation DECISION_UUID --out NEW_FILE
 customer-review-return --connection FILE --id ORIGINAL_UUID --revision RETURN_SHA256 --out RETURN_JSON
 customer-review-support --connection FILE --id ORIGINAL_UUID --out SUPPORT_WORKSPACE_JSON
 intake-context|intakes --connection FILE [--out FILE]
@@ -119,7 +120,7 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
     invoice:[...common,'id'],create:[...common,'request'],charge:[...common,'id'],
     envelope:[...common,'id'],authorize:[...common,'id','request'],reconcile:[...common,'id'],
     result:[...common,'id'],observation:common,'observation-summary':[...common,'history-sequence'],
-    'customer-reviews':[...common,'id'],'customer-review-issue':[...common,'request'],'customer-review-receive':[...common,'request'],'customer-review-decide':[...common,'request'],'customer-review-compare':[...common,'id','revision'],'customer-review-document':[...common,'id','operation'],'customer-review-return':[...common,'id','revision'],'customer-review-support':[...common,'id'],
+    'customer-reviews':[...common,'id'],'customer-review-issue':[...common,'request'],'customer-review-receive':[...common,'request'],'customer-review-decide':[...common,'request'],'customer-review-compare':[...common,'id','revision'],'customer-review-document':[...common,'id','operation'],'customer-review-response':[...common,'id','operation'],'customer-review-response-document':[...common,'id','operation'],'customer-review-return':[...common,'id','revision'],'customer-review-support':[...common,'id'],
     'intake-context':common,intakes:common,
     'intake-prepare':[...common,'source','mapping','format','operation'],
     'intake-status':[...common,'operation'],'intake-export':[...common,'operation'],'intake-run':[...common,'request'],
@@ -199,6 +200,8 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
     }
     else if(action==='customer-review-compare')result=await client.compareCustomerReview(values.id,values.revision,settings);
     else if(action==='customer-review-document'){result=await client.downloadCustomerReview(values.id,values.operation,values.out,settings);download=true;}
+    else if(action==='customer-review-response'){result=await client.downloadCustomerResponse(values.id,values.operation,values.out,settings);download=true;}
+    else if(action==='customer-review-response-document'){result=await client.downloadCustomerResponseDocument(values.id,values.operation,values.out,settings);download=true;}
     else if(action==='customer-review-return'){result=await client.downloadCustomerReturn(values.id,values.revision,values.out,settings);download=true;}
     else if(action==='customer-review-support'){result=await client.downloadCustomerReviewSupport(values.id,values.out,settings);download=true;}
     else if(action==='intake-context')result=await client.intakeContext(settings);

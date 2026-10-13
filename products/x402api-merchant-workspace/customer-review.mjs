@@ -3,7 +3,7 @@ import {createHash,randomUUID} from "node:crypto";
 import {readFile} from "node:fs/promises";
 import {fileURLToPath} from "node:url";
 import {dirname,join} from "node:path";
-import {canonical,createIssue,createReview,validateReview,parseReview,validateCapsule,compareReturn,MAX_REVIEW_BYTES,CAPSULE_SCHEMA} from "./customer-review-core.mjs";
+import {canonical,createIssue,createReview,validateReview,parseReview,validateCapsule,compareReturn,MAX_REVIEW_BYTES,CAPSULE_SCHEMA,createMerchantResponse,encodeMerchantResponse,retainMerchantResponse} from "./customer-review-core.mjs";
 import {readInvoiceDeliverySnapshot,assertInvoiceDeliveryRevision,serializeInvoiceDeliverySnapshot} from "./invoice-delivery.mjs";
 import {serializeWorkspace} from "../../stellar/scf-starforge-20261009/sf74-merchant-support-console/workspace-file.mjs";
 const ROOT=dirname(fileURLToPath(import.meta.url)),hash=v=>createHash("sha256").update(v).digest("hex");
@@ -55,8 +55,18 @@ export async function exportCustomerReviewSupport(workspace,invoiceId){const val
 export async function exportOriginalCustomerReturn(workspace,{invoiceId,returnSha256}){const records=rows(workspace,invoiceId),row=records.find(r=>r.kind==="RETURN"&&r.id===returnSha256);need(row,"CUSTOMER_REVIEW_RETURN_NOT_FOUND",404);await parseReview(row.body.text);need(hash(row.body.text)===returnSha256,"CUSTOMER_REVIEW_STORED_BYTES_CHANGED");return row.body.text;}
 export async function exportCustomerReviewDocument(workspace,{invoiceId,issueId}){const records=rows(workspace,invoiceId),issue=records.find(r=>r.kind==="ISSUE"&&r.id===issueId)?.body;need(issue,"CUSTOMER_REVIEW_ISSUE_NOT_FOUND",404);const review=await createReview(issue,{id:issue.id,at:issue.issuedAt});return renderCustomerReview(review);}
 export async function renderCustomerReview(value){const review=await validateReview(value),core=await readFile(join(ROOT,"customer-review-core.mjs"),"utf8"),ui=await readFile(join(ROOT,"web/customer-review-offline.js"),"utf8"),shell=await readFile(join(ROOT,"web/customer-review-offline.html"),"utf8"),style=await readFile(join(ROOT,"web/customer-review-offline.css"),"utf8");
- const names=["REVIEW_SCHEMA","MAX_REVIEW_BYTES","MAX_FILE_BYTES","canonical","copy","sha256","base64","validateReview","encodeReview","parseReview","recordReview","attachFile","verifyOriginal","draftChanged"];
+ const names=["REVIEW_SCHEMA","MAX_REVIEW_BYTES","MAX_FILE_BYTES","canonical","copy","sha256","base64","validateReview","encodeReview","parseReview","recordReview","attachFile","verifyOriginal","draftChanged","MAX_RESPONSE_BYTES","parseMerchantResponse","retainMerchantResponse"];
  const coreScript="window.CustomerReviewCore=(()=>{"+core.replace(/^export /gm,"")+"\nreturn {"+names.join(",")+"};})();";
  const escaped=JSON.stringify(review).replace(/</g,"\\u003c").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029");
  need(!/<\/script/i.test(coreScript+ui),"CUSTOMER_REVIEW_SCRIPT_SOURCE_INVALID");
  return shell.replace("<!--REVIEW_STYLE-->",style).replace("<!--REVIEW_DATA-->",escaped).replace("<!--REVIEW_CORE-->",coreScript).replace("<!--REVIEW_UI-->",ui);}
+
+async function selectedMerchantResponse(workspace,{invoiceId,decisionId}){
+ need(UUID.test(decisionId??""),"CUSTOMER_REVIEW_DECISION_REQUIRED",400);
+ const records=rows(workspace,invoiceId),history=await capsule(workspace,invoiceId,records),decision=history.decisions.find(d=>d.id===decisionId);
+ need(decision,"CUSTOMER_REVIEW_DECISION_NOT_FOUND",404);const original=history.returns.find(r=>r.sha256===decision.returnSha256);need(original,"CUSTOMER_REVIEW_RETURN_NOT_FOUND",404);
+ const review=await parseReview(original.text),response=await createMerchantResponse(review.issue,review.id,decision);
+ return {review,response,text:await encodeMerchantResponse(response)};
+}
+export async function exportCustomerResponse(workspace,input){return (await selectedMerchantResponse(workspace,input)).text;}
+export async function exportCustomerResponseDocument(workspace,input){const selected=await selectedMerchantResponse(workspace,input);return renderCustomerReview(await retainMerchantResponse(selected.review,selected.text,selected.response.decision.at));}

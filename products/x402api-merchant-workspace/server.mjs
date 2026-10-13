@@ -17,7 +17,7 @@ import { merchantInputFiles, reviewMerchantInputs, verifyMerchantInputFingerprin
 import { createMerchantProject, resolveMerchantProjectSource } from './portable.mjs';
 import {inspectMerchantIntakeSource,merchantIntakeContext,prepareMerchantIntake,readMerchantIntake,exportMerchantIntake,listMerchantIntakes,runMerchantIntake} from './invoice-intake.mjs';
 
-import {readCustomerReviews,issueCustomerReview,receiveCustomerReview,compareCustomerReview,decideCustomerReview,exportCustomerReviewSupport,exportOriginalCustomerReturn,exportCustomerReviewDocument} from './customer-review.mjs';
+import {readCustomerReviews,issueCustomerReview,receiveCustomerReview,compareCustomerReview,decideCustomerReview,exportCustomerReviewSupport,exportOriginalCustomerReturn,exportCustomerReviewDocument,exportCustomerResponse,exportCustomerResponseDocument} from './customer-review.mjs';
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const ASSETS = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
@@ -201,13 +201,15 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
     }
     if (parsed.search) fail('QUERY_NOT_SUPPORTED');
 
-    const review=/^\/api\/orders\/([0-9a-f-]{36})\/customer-review(?:\/(issue|receive|compare|decide|support|document|return)(?:\/([0-9a-f-]+))?)?$/i.exec(path);
+    const review=/^\/api\/orders\/([0-9a-f-]{36})\/customer-review(?:\/(issue|receive|compare|decide|support|document|return|response|response-document)(?:\/([0-9a-f-]+))?)?$/i.exec(path);
     if(review){
       const [,invoiceId,action,selection]=review;
       const file=(text,name,type)=>{const raw=Buffer.from(text);response.writeHead(200,{'Content-Type':type,'Content-Length':String(raw.length),'Content-Disposition':'attachment; filename="'+name+'"','Cache-Control':'no-store','X-Content-SHA256':createHash('sha256').update(raw).digest('hex')});return response.end(raw);};
       if(!action&&request.method==='GET')return respond(response,200,await readCustomerReviews(workspace,invoiceId));
       if(action==='support'&&!selection&&request.method==='GET')return file(await exportCustomerReviewSupport(workspace,invoiceId),'merchant-review-support-'+invoiceId+'.json','application/json');
       if(action==='document'&&selection&&request.method==='GET')return file(await exportCustomerReviewDocument(workspace,{invoiceId,issueId:selection}),'Customer_Review_'+selection+'.html','text/html; charset=utf-8');
+      if(action==='response'&&selection&&request.method==='GET')return file(await exportCustomerResponse(workspace,{invoiceId,decisionId:selection}),'Merchant_Response_'+selection+'.json','application/json');
+      if(action==='response-document'&&selection&&request.method==='GET')return file(await exportCustomerResponseDocument(workspace,{invoiceId,decisionId:selection}),'Customer_Response_'+selection+'.html','text/html; charset=utf-8');
       if(action==='return'&&selection&&request.method==='GET')return file(await exportOriginalCustomerReturn(workspace,{invoiceId,returnSha256:selection}),'Customer_Return_'+selection+'.json','application/json');
       if(action==='compare'&&selection&&request.method==='GET')return respond(response,200,await compareCustomerReview(workspace,{invoiceId,returnSha256:selection}));
       if(['issue','receive','decide'].includes(action)&&!selection&&request.method==='POST'){

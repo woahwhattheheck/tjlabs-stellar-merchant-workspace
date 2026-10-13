@@ -132,6 +132,7 @@ const SOURCE_FILES = [
   "products/x402api-merchant-workspace/customer-review-core.mjs",
   "products/x402api-merchant-workspace/customer-review.mjs",
   "products/x402api-merchant-workspace/customer-review-receiving.mjs",
+  "products/x402api-merchant-workspace/customer-response-receiving.mjs",
   "products/x402api-merchant-workspace/web/customer-review-desk.mjs",
   "products/x402api-merchant-workspace/web/customer-review-offline.js",
   "products/x402api-merchant-workspace/web/customer-review-offline.css",
