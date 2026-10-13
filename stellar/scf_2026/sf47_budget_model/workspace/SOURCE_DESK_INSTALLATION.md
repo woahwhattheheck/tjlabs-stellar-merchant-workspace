@@ -44,6 +44,16 @@ Download the complete programme files with the workorder. The programme engine k
 
 Keep the useful customer output distinct from its transports. Paging a result, saving another file format or reopening an acquired edition preserves that same task. Actual later source editions or separately requested work produce the next task. The original purchase and payment records remain the authority for paid activity.
 
+## Managed source identity for the typed and merchant agents
+
+The typed `./grant/agent` entry point imports `installation-source-desk-agent.mjs` for Source Desk reads, immutable command preparation, reviewed archive intake, execution and request reconciliation. The Python and Node launch selections bind that complete module, its TypeScript declaration and [the original agent guide](INSTALLATION_SOURCE_DESK_AGENT.md), alongside the existing client. The source inventory carries their complete bytes into an installed backup.
+
+This joins the agent implementation from PR1401 to the installed Source Desk selection from PR1402. The current selection preserves all 367 preceding entries, including the concurrent statement-setup sources, and adds those three agent files in the same order in both launchers. Changing the helper alone now changes the reviewed launch identity; the existing managed launch checks require a fresh review before that changed source can start.
+
+Keep an already-running workspace on its selected source edition. Receive the complete successor with the ordinary installation/source-selection workflow, review its current launch selection, and restart through the existing managed entry point when ready. Retain the original workspace directory, scenario, Source Desk case and draft, preparation history, and pending operation document. Reconcile that same native request after reopening; a source update does not create another customer case or reissue the business command.
+
+The installed backup already discovers JavaScript dependencies and retains workspace files. This addition binds the agent helper to managed launch review and makes its typed operating instructions explicit; it does not rewrite an earlier preparation's `SOURCE_SELECTION.json` or the restored installation's original manifest.
+
 ## Continue an interrupted operation
 
 The Source Desk saves complete request identities and payloads. When a response is interrupted, select the existing pending request and reconcile its actual saved result. Its native client supports the same process.
@@ -79,7 +89,7 @@ Download the complete preparation archive and every selected programme output. E
 
 Restore with the maintained Staff Installation receiver into the selected receiving directory. Reopen the original case and Installation, review the same source draft and preparation, and read the complete prepared files. Review the restored source selection before starting its managed launch. The original restored data continues to own its case, request and Installation identities.
 
-The source selection change in this edition is additive: 343 existing selected paths become 363, with all preceding order and entries preserved. Both Python and Node selectors contain the same 20 additions. Nineteen additions are complete already-published runtime, client, profile or guide files; the twentieth is this installed-operation guide. Each pre-existing added file was read in full at the selected source and matched its Git blob before the change.
+PR1402's original installed-source contribution added 20 paths to its 343-entry base: nineteen complete already-published runtime, client, profile or guide files and this installed-operation guide. Its merge also preserved four concurrent statement-setup paths, giving 367. The agent integration described above preserves that full selection and adds three agent files, giving 370 identical, ordered entries in both launchers. These counts describe the source editions; each managed launch and installation manifest retains its own exact original source hashes.
 
 The complete source-owned 15-phase receiving programme remains `installation-source-desk-receiving.py` and its browser companion. It exercises the original source, case, full handover, programme, native outputs, browser controls and restored workspace. Use the current whole application and actual original customer source with that receiver; an installation selection change does not require another case or another customer job.
 
