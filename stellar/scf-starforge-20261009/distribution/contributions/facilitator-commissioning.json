@@ -1,0 +1,17 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "facilitator-commissioning",
+  "description": "Complete same-service two-provider commissioning and customer receiving",
+  "components": [
+    "products/facilitator-commissioning"
+  ],
+  "commands": {
+    "facilitator-commissioning": "products/facilitator-commissioning/cli.mjs"
+  },
+  "commandDescriptions": {
+    "facilitator-commissioning": "Prepare, operate and receive one complete retained service on two original facilitator profiles"
+  },
+  "exports": {
+    "./facilitator/commissioning": "./source/products/facilitator-commissioning/commissioning.mjs"
+  }
+}
