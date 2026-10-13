@@ -1,6 +1,7 @@
 // MIT. Source-table authoring for the existing Stellar Forge merchant workspace.
 import { DEFAULT_STARTER, DEFAULT_RESOURCE, SOURCE_CONTRACT, createDatasetWorkspace, zipWorkspace } from './onboarding.mjs';
 import { validateDocumentTableSource, validateDocumentTableProjection } from './source-document-tables.mjs';
+import { validateDocumentIntake } from './source-table-intake.mjs';
 
 export const PROJECT_SCHEMA = 'stellar-forge.source-table-project.v1';
 export const MAPPING_SCHEMA = 'stellar-forge.source-table-mapping.v1';
@@ -452,6 +453,7 @@ export async function importProject(input) {
     if (documentSources.has(source.id)) fail('DOCUMENT_TABLE_SOURCE', 'A retained document source is duplicated.');
     documentSources.set(source.id, source);
   }
+  if (project.documentIntake !== undefined) project.documentIntake = await validateDocumentIntake(project.documentIntake, project.documentTableSources || []);
   const ids = new Set(), resources = new Set();
   for (const doc of project.documents) {
     if (!object(doc) || !/^table-[0-9a-f-]{36}$/.test(doc.id || '') || ids.has(doc.id) || !Array.isArray(doc.editions) || !doc.editions.length || !Array.isArray(doc.reviews))
@@ -570,6 +572,7 @@ export async function createTableWorkspace(project) {
     }
     manifest.documents.push(entry);
   }
+  if (verified.documentIntake) manifest.documentIntake = { source: 'source-tables/project.json', sources: verified.documentIntake.sources.length, tables: verified.documentIntake.sources.reduce((count, item) => count + item.tables.length, 0) };
   append('materials.json', json(manifest));
   const guide = '# ' + verified.name + ': source-table operation\n\n' +
     'This directory contains the original source editions, explicit mappings, reviewed complete outputs and editable project. The merchant uses the original seller.json and workspace.json in the parent directory.\n\n' +

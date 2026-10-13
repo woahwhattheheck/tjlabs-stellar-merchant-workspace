@@ -10,10 +10,13 @@ import {
   projectSummary, createTableArchive, SourceTableError,
 } from './source-table-workspace.mjs';
 import { importWorkspaceDraft } from './onboarding.mjs';
+import { createDocumentIntake, createDocumentIntakePacket, receiveDocumentIntakePacket } from './source-table-intake.mjs';
 import { createDocumentTableSource, validateDocumentTableSource, inspectDocumentTables, projectDocumentTable } from './source-document-tables.mjs';
 
 const HELP = 'Stellar Forge source tables\n\n' +
   'serve [--port PORT]\n' +
+  'intake-export --project PROJECT.json --out NEW_PREPARATIONS.json\n' +
+  'intake-open --project PROJECT.json --source PREPARATIONS.json --out NEW_PROJECT.json\n' +
   'inspect --source FILE [--delimiter comma|tab|semicolon|pipe] [--no-header] [--skip-empty]\n' +
   'document-inspect --source EXTRACTED_FILE_OR_SOURCE.json [--metadata JSON_FILE] [--out NEW_SOURCE.json]\n' +
   'document-init --source DOCUMENT_SOURCE.json --selection SELECTION.json [--table N] --out NEW_PROJECT.json [--name NAME] [--merchant STARTER.json] [--resource ID] [--filename CSV_NAME]\n' +
@@ -48,7 +51,9 @@ function required(options, name) { if (!options[name]) throw new Error('Provide 
 async function readText(path, limit) {
   const details = await stat(path);
   if (!details.isFile() || details.size > limit) throw new Error('Choose a regular file within the documented size limit: ' + path);
-  return decodeSource(await readFile(path));
+  const data=await readFile(path);
+  if(limit<=LIMITS.sourceBytes)return decodeSource(data);
+  try{return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(data);}catch{throw new Error('Choose a complete valid UTF-8 document preparation file.');}
 }
 async function readProject(path) {
   const details = await stat(path);
@@ -110,6 +115,8 @@ export async function runSourceTableCli(args, io = { stdout: process.stdout, std
   if (o.help) { io.stdout.write(HELP); return 0; }
   const allowed = {
     serve: ['port'],
+    'intake-export': ['project', 'out'],
+    'intake-open': ['project', 'source', 'out'],
     inspect: ['source', 'delimiter', 'no-header', 'skip-empty'],
     'document-inspect': ['source', 'metadata', 'out'],
     'document-init': ['source', 'selection', 'table', 'out', 'name', 'merchant', 'resource', 'filename'],
@@ -155,6 +162,16 @@ export async function runSourceTableCli(args, io = { stdout: process.stdout, std
     project = createProject({ name: o.name || 'Source tables', starter });
   } else project = await readProject(required(o, 'project'));
   let result;
+  if(command==='intake-export') {
+    const packet=await createDocumentIntakePacket(project.documentIntake||createDocumentIntake(),project.documentTableSources||[]);
+    io.stdout.write(json(await save(required(o,'out'),json(packet),[o.project])));return 0;
+  }
+  if(command==='intake-open') {
+    const packet=JSON.parse(await readText(required(o,'source'),LIMITS.projectBytes));
+    const received=await receiveDocumentIntakePacket(project.documentIntake||createDocumentIntake(),project.documentTableSources||[],packet);
+    project.documentIntake=received.intake;project.documentTableSources=received.sources;
+    project=await importProject(project);
+  }
   if (['document-init', 'document-add', 'document-edition'].includes(command)) {
     const retained = await documentSource(o), selection = await documentSelection(o), projection = await projectDocumentTable(retained, selection);
     result = await addDocumentTable(project, { source: retained, projection, resourceId: o.resource, filename: o.filename,

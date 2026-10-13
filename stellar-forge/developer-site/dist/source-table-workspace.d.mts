@@ -1,3 +1,4 @@
+import type { DocumentIntake } from './source-table-intake.mjs';
 /** Source-table authoring over the original native merchant workspace generator. */
 import type { DocumentTableSource, DocumentTableProjection, DocumentMetadata, ProjectedDocumentCell } from './source-document-tables.mjs';
 export interface DocumentTableIdentity { sourceId: string; projectionId: string; tableIndex: number }
@@ -107,6 +108,8 @@ export interface TableProject {
   starter: NativeStarter; documents: TableDocument[];
   /** Unique complete document extractions shared by their projected source editions. */
   documentTableSources?: DocumentTableSource[];
+  /** Complete unfinished document-table preparations; original projections still receive through the native review. */
+  documentIntake?: DocumentIntake;
 }
 export interface TableSummary {
   id: string; label: string; resourceId: string; sourceEditions: number; reviews: number;
