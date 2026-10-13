@@ -17,8 +17,8 @@ Run on Linux with Python 3.11 or newer and a Node version meeting the installed 
 Bind commands to the actual READY installation. The private installer does not add a global command to PATH:
 
 ~~~sh
-PIPELINE_RUNTIME=/srv/starforge/runtimes/pipeline-jobs
-PIPELINE_SOURCE="$PIPELINE_RUNTIME/package/source"
+export PIPELINE_RUNTIME=/srv/starforge/runtimes/pipeline-jobs
+export PIPELINE_SOURCE="$PIPELINE_RUNTIME/package/source"
 
 starforge() {
   node "$PIPELINE_SOURCE/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs" \
@@ -141,9 +141,14 @@ const delivery = await buyer.download({
   destination: '/srv/customer/downloads/period-01.zip',
 });
 const received = await receivePipelineJob({
-  source: '/srv/customer/downloads/period-01.zip',
+  source: delivery.path,
   expected: delivery,
-  job: { id: buyer.jobId },
+  job: {
+    id: delivery.jobId, functionId: delivery.functionId,
+    inputSha256: delivery.inputSha256,
+    publicOrigin: new URL(delivery.sourceUrl).origin,
+    nativeSettlement: delivery.nativeSettlement,
+  },
   packageDirectory: '/srv/customer/deliveries/period-01',
   directory: '/srv/customer/projects/period-01',
   python: '/absolute/path/to/python3',
