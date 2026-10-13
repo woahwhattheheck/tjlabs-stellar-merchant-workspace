@@ -130,7 +130,7 @@ def prepare(selection_path, source_root, destination):
     known, total, case_ids, rows, customers, summaries, profiles = {}, [0], set(), [], [], [], {}
     for case in cases:
         source.exact_keys(case,
-                          ("caseId", "profile", "handover", "planSha256", "productionEffort", "effortTotal", "files", "bindings"),
+                          ("caseId", "profile", "handover", "planSha256", "productionEffort", "effortTotal", "files", "bindings", "programme"),
                           ("caseId", "profile", "handover", "planSha256", "productionEffort", "effortTotal", "files"),
                           "customer handover selection")
         ident = case["caseId"]
@@ -163,6 +163,8 @@ def prepare(selection_path, source_root, destination):
         if "bindings" in case:
             require(isinstance(case["bindings"], dict), "Use the explicit original customer bindings.")
             customer["bindings"] = deepcopy(case["bindings"])
+        if "programme" in case:
+            customer["programme"] = source.customer_programme(case["programme"], documents, known)
         customers.append(customer)
         summaries.append({"caseId": ident, "profile": case["profile"],
                           "planSha256": case["planSha256"], "originalHandover": original,
