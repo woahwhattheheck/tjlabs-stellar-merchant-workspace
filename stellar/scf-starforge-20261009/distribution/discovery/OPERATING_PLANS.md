@@ -165,3 +165,7 @@ const handover = renderOperatingPlanHTML(revised);
 The model returns independent values and validates the complete saved history. Persisting applications should read and save the original plan in one transaction. The browser uses an IndexedDB read/write transaction; the CLI writes a new complete file. The receiveOperatingPlan function supplies the same prefix-history import behavior for other receivers.
 
 The maintained distribution/contributions/operator-discovery.json contribution registers the typed API, command, browser source and static assets with the original Command finder component. The original builder follows that component and its asset map into selected packages.
+
+## Grant reporting
+
+Select **Create Grant reporting plan** to prepare a complete procedure from the original Grant case, Source Tables project, reporting period and selected toolkit. The creation interface retains complete preparation inputs and opens its result in this same plan editor. Continue with [Grant reporting procedures](./GRANT_REPORTING.md) for preparation, native work and receiving.

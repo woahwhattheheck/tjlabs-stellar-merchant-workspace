@@ -47,7 +47,9 @@
     "grant-source-tables",
     "grant-application-handoff",
     "grant-cohort-planning",
-    "grant-issuer-terms"
+    "grant-issuer-terms",
+    "operator-discovery",
+    "grant-procedures"
   ],
   "components": [
     "stellar/scf_2026/sf47_budget_model",
