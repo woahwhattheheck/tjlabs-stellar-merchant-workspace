@@ -272,3 +272,105 @@ USD 38,000 request, 400 prospective hours, 150-day schedule, six funded packages
 and customer outcome counts. The cumulative publisher receives this chapter
 edition and its original source declaration into the existing reviewer outputs,
 saved submission and review surfaces.
+
+## Keep recurring Runtime work in a complete operating procedure
+
+Open **Operating procedures** in the original Runtime workspace. This extends the
+selected product and recovery workflow above with the maintained Operating Plan
+and Operating Plan Return engines. The customer, owner, useful result and named
+recurrence belong to the plan; a recurrence description does not start a scheduler.
+Use the original Runtime and Applications controls for actual operating work.
+
+### Prepare the work and retain selected source
+
+Choose the original runtime, operation, archive and backup/receiving IDs relevant
+to the task. If backups use another private storage directory, enter that actual
+store before refreshing the available selection. Create the procedure with its
+named owner and required useful result. The initial source capture is a complete
+JSON file carried on its original plan step.
+
+Edit the complete instructions, inputs, expected output, owner, due date and
+receiving notes. Add or retain original deliverable files where needed. Earlier
+plan revisions remain available. Saving a changed draft creates the engine’s
+next original revision against the complete current procedure identity. Browser
+drafts and pending requests retain their original workspace and procedure IDs.
+
+After performing work through the original product controls, select the saved
+step and the actual resulting source records. Record the operator, assessment
+and observed result explicitly. The capture includes its selection and collection
+interval. A missing process probe remains an unknown observation. A source capture,
+plan status or download by itself does not establish a deployment, purchase or
+independent customer acceptance.
+
+### Hand over, receive and review returned work
+
+Download the complete Runtime procedure JSON and readable HTML. JSON contains the
+original plan, complete carried files, captures, request history and returned-work
+reviews. The HTML also provides its complete editable record. Use original plan
+JSON when the receiver works through the maintained generic Operating Plan editor.
+Large Runtime archives continue through their native transfer and backup controls;
+their source identities and original download references remain in the capture.
+
+The receiving operator inspects the full record and explicitly receives it in a
+selected private Runtime workspace. This records the original receiving request
+and retains the procedure’s identity and history. It does not attach runtimes,
+restore external locations or start applications. Subsequent local edits belong
+to that retained procedure. A later returned edition of an existing procedure is
+compared by the original Return engine rather than replacing current history.
+
+The owner opens the complete returned plan or procedure, names the reviewer and
+reads the original three-way comparison. Resolve conflicts explicitly, then apply
+the reviewed work. If the destination plan changed, preserve the complete return
+and prepare a fresh comparison against the actual current plan. The full review
+retains current and incoming histories and the decisions that produced the result.
+
+### Continue exact requests through the installed command
+
+The existing installed command is `starforge runtime-workspace`. Read the state
+with `procedure-state --workspace DIRECTORY`; open a retained record with
+`procedure-open --workspace DIRECTORY --procedure-id UUID`. A mutation uses a
+complete private JSON request file through `--request FILE`. Generate its UUID
+once and retain the unchanged full request before dispatch. Distinct edits use
+the latest `recordSha256`; retries retain the original request and input.
+
+The commands are `procedure-create`, `procedure-save`, `procedure-record`,
+`procedure-return`, `procedure-decide`, `procedure-apply` and
+`procedure-receive`. Export uses `procedure-export --workspace DIRECTORY
+--procedure-id UUID --format json|html|plan-json|plan-html --output NEW_FILE`.
+The [complete procedure guide](RUNTIME_PROCEDURES.md) gives the original request
+shapes, selection fields, review choices, capacity and receiving details; the
+[typed adapter](operating-procedures.d.mts) defines the matching native API.
+
+### Run the complete procedure receiving course
+
+The [procedure API/CLI course](receiving/RUNTIME_PROCEDURES_RECEIVE.md) is separate
+from the browser and from the earlier complete backup course. It uses the real
+model, the original plan/return engines, complete source bytes and the installed
+CLI in one retained private case. Invoke the complete selected Runtime source:
+
+~~~sh
+node receiving/RUNTIME_PROCEDURES_RECEIVE.mjs \
+  --source /absolute/selected-source/distribution/runtime-workspace \
+  --operation /absolute/private/retained-procedure-receiving-case
+~~~
+
+Continue with identical arguments and that original case directory. The optional
+`--workspace`, `--receiver` and `--cold-receiver` select three already initialized
+independent Runtime workspaces; `--selection` names the complete original source
+selection JSON and `--source-file` names a complete carried source file. The case
+retains request UUIDs, full results, source versions and CLI outputs. The entry
+adds its own procedure history and invokes no runtime installation or launch.
+The guide defines exact prerequisites, existing-workspace checks, continuation
+and the complete result files. Native completion is reported only from its actual
+returned result; source preparation is a separate result.
+
+### Current operating evidence
+
+This extension is published from the actual procedure source edition
+`74ec0c02b875973ca2371c1704e26eccd16544f0`. The existing backup/observation native continuation described above
+remains its original operation. Procedure source review, original-engine reuse,
+static dependency closure and parsing are reported as source checks. A completed
+native operating, returned-work and independent receiving outcome is recorded
+only when that original course returns its actual outputs. Neither the procedure
+source nor an exported handover changes the grant’s funded hours, budget,
+independent-use acceptance or purchase counts.
