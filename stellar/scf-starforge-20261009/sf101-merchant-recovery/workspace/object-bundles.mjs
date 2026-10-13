@@ -8,6 +8,8 @@ import {isDeepStrictEqual} from 'node:util';
 import {retainCaseArtifact} from '../../sf74-merchant-support-console/case-store.mjs';
 import {createRecoveryObservationFiles,readRecoveryObservationFiles,recoveryEvidenceReferences}
   from '../../sf74-merchant-support-console/recovery-runtime.mjs';
+import {createComparisonObservationFiles,readComparisonObservationFiles,comparisonArtifactReferences}
+  from '../../sf74-merchant-support-console/comparison-runtime.mjs';
 import {exportObjectRecoveryBundle,inspectObjectRecoveryBundle,receiveObjectRecoveryBundle}
   from './recovery-bundle.mjs';
 
@@ -75,13 +77,40 @@ function checkResult(result,{operation,recordSha256,objectSession,archiveSha256}
   return result;
 }
 
+
+/** Exact two-file delivery selection; no authentication or source read occurs here. */
+export function comparisonBundlePair(before,after){
+  const entries={before,after};
+  for(const side of ['before','after']){
+    const entry=entries[side],t=entry?.transport,a=entry?.archive;
+    need(t?.status==='COMPLETE'&&t.command==='object-bundle-export'&&t.authenticated===true&&
+      t.sourceComparison?.side===side&&HASH.test(t.sourceComparison.comparisonSha256??'')&&
+      HASH.test(t.originalRequest?.sha256??'')&&HASH.test(a?.sha256??'')&&
+      Number.isSafeInteger(a.bytes)&&a.bytes>0&&a.sha256===t.archive?.sha256&&a.bytes===t.archive?.bytes&&
+      t.recordSha256===t.sourceComparison[side+'RecordSha256']&&ID.test(t.workspaceOperationId??''),
+      'WORKSPACE_BUNDLE_COMPARISON_EXPORT_REQUIRED');
+  }
+  const left=before.transport,right=after.transport;
+  need(same(left.originalRequest,right.originalRequest)&&
+    left.sourceComparison.comparisonSha256===right.sourceComparison.comparisonSha256&&
+    same(left.sourceComparison.resultArtifact,right.sourceComparison.resultArtifact)&&
+    ['beforeRecordSha256','afterRecordSha256'].every(key=>left.sourceComparison[key]===right.sourceComparison[key])&&
+    left.workspaceOperationId!==right.workspaceOperationId,
+    'WORKSPACE_BUNDLE_COMPARISON_PAIR_CHANGED');
+  const value={schema:'stellar-forge.sf101.comparison-bundle-pair.v1',
+    comparisonSha256:left.sourceComparison.comparisonSha256,sourceRequest:clone(left.originalRequest),
+    archives:Object.fromEntries(Object.entries(entries).map(([side,{archive,transport}])=>[side,{
+      requestId:transport.workspaceOperationId,bytes:archive.bytes,sha256:archive.sha256,recordSha256:transport.recordSha256}]))};
+  return {...value,pairSha256:sha(json(value))};
+}
+
 /** Original workspace owns serialization, request/attempt guards and shutdown. */
 export function createObjectBundleAdapter({directory,workspaceId,readRequestBytes,readEvidenceBytes,
-  environment=process.env}){
+  readComparisonArtifactBytes,environment=process.env}){
   absolute(directory);const root=join(directory,'object-bundle-transfers');
   const folder=(profileId,id)=>join(root,sha(profileId+'\n'+id));
   async function originalSelection(profile,input){
-    exact(input,['profileId','action','id','sourceRequestId','sourceReviewHash','sourceAttempt']);
+    exact(input,['profileId','action','id','sourceRequestId','sourceReviewHash','sourceAttempt','sourceSide']);
     need(ID.test(input.sourceRequestId??'')&&HASH.test(input.sourceReviewHash??'')&&
       Number.isSafeInteger(input.sourceAttempt)&&input.sourceAttempt>=0,'WORKSPACE_BUNDLE_SOURCE_SELECTION_INVALID');
     const destination=folder(profile.id,input.id);await privateDirectory(destination);
@@ -101,6 +130,8 @@ export function createObjectBundleAdapter({directory,workspaceId,readRequestByte
       'WORKSPACE_BUNDLE_ORIGINAL_REQUEST_CHANGED');
     // Persist the exact selected request before any following read or outer review publication.
     await retainCaseArtifact(requestPath,raw);
+    if(request.review.command==='object-compare')return comparisonSelection(profile,input,destination,source,raw,request);
+    need(input.sourceSide===undefined,'WORKSPACE_BUNDLE_SIDE_NOT_APPLICABLE');
     const refs=recoveryEvidenceReferences(request),evidence=[];
     const evidenceRoot=join(destination,'original-evidence');await privateDirectory(evidenceRoot);
     for(const ref of refs){
@@ -120,6 +151,39 @@ export function createObjectBundleAdapter({directory,workspaceId,readRequestByte
     return {schema,command:input.action,objectDeclaration:clone(declaration),recordSha256:s.bundle.recordSha256,
       objectSession:clone(s.objectSession),sourceRequest:{id:s.requestId,reviewHash:s.reviewHash,attempt:s.attempts,...pin(raw)},
       lineage:{workspaceId,profileId:profile.id,requestId:s.requestId,reviewHash:s.reviewHash,requestSha256:s.requestSha256},
+      sourceFiles:Object.fromEntries(Object.entries(files).map(([name,value])=>[name,pin(value)]))};
+  }
+  async function comparisonSelection(profile,input,destination,source,raw,request){
+    need(['before','after'].includes(input.sourceSide),'WORKSPACE_BUNDLE_COMPARISON_SIDE_REQUIRED');
+    need(typeof readComparisonArtifactBytes==='function','WORKSPACE_BUNDLE_COMPARISON_SOURCE_REQUIRED');
+    const refs=comparisonArtifactReferences(request),maximum=64*1024*1024;
+    need(raw.length+refs.reduce((n,ref)=>n+4*Math.ceil(ref.bytes/3)+Buffer.byteLength(JSON.stringify({...ref,data:''}))+1,1)<=maximum,
+      'WORKSPACE_BUNDLE_COMPARISON_TOO_LARGE','The complete comparison capture exceeds 64 MiB; no original artifact or history is omitted.');
+    const artifactRoot=join(destination,'original-comparison-artifacts');await privateDirectory(artifactRoot);
+    const artifacts=[];
+    for(const ref of refs){
+      const path=join(artifactRoot,ref.sha256);let body;
+      try{body=await bytes(path,maximum);}
+      catch(error){if(error.code!=='ENOENT')throw error;body=await readComparisonArtifactBytes(ref);}
+      need(same(pin(body),{sha256:ref.sha256,bytes:ref.bytes}),'WORKSPACE_BUNDLE_COMPARISON_ARTIFACT_CHANGED');
+      await retainCaseArtifact(path,body);artifacts.push(body);
+    }
+    const files=createComparisonObservationFiles({capturedAt:request.updatedAt,workspaceId,requestBytes:raw,artifactBytes:artifacts});
+    const original=readComparisonObservationFiles(files),summary=original.summary,side=input.sourceSide;
+    need(summary.cleanCompleted,'WORKSPACE_BUNDLE_COMPLETED_COMPARISON_REQUIRED',
+      'Select the original clean completed comparison before exporting one of its authenticated editions.');
+    const resultRef=summary.result.artifacts.result;
+    const saved=original.artifacts.find(row=>row.sha256===resultRef.sha256);
+    need(saved?.observation.complete===true,'WORKSPACE_BUNDLE_COMPLETED_COMPARISON_REQUIRED');
+    const report=saved.result.native,selected=report[side],declaration=request.review.objectComparison[side];
+    need(same(profile.objectSessions.find(row=>row.id===declaration.id),declaration),'WORKSPACE_BUNDLE_DECLARATION_CHANGED');
+    for(const [name,value]of Object.entries(files))await retainCaseArtifact(join(source,name),value);
+    return {schema,command:input.action,objectDeclaration:clone(declaration),recordSha256:selected.recordSha256,
+      objectSession:clone(selected.verification.objectSession),
+      sourceRequest:{id:summary.requestId,reviewHash:summary.reviewHash,attempt:summary.attempts,...pin(raw)},
+      sourceComparison:{side,comparisonSha256:report.comparisonSha256,resultArtifact:clone(resultRef),
+        beforeRecordSha256:report.before.recordSha256,afterRecordSha256:report.after.recordSha256},
+      lineage:{workspaceId,profileId:profile.id,requestId:summary.requestId,reviewHash:summary.reviewHash,requestSha256:summary.requestSha256},
       sourceFiles:Object.fromEntries(Object.entries(files).map(([name,value])=>[name,pin(value)]))};
   }
   async function inspection(profile,archiveId,{signal}={}){
@@ -167,9 +231,22 @@ export function createObjectBundleAdapter({directory,workspaceId,readRequestByte
         const raw=await bytes(join(destination,'original-recovery',name),64*1024*1024);
         need(same(pin(raw),identity),'WORKSPACE_BUNDLE_ORIGINAL_EVIDENCE_CHANGED');files[name]=raw;
       }
-      const original=readRecoveryObservationFiles(files).summary;
-      need(original.requestSha256===reviewed.sourceRequest.sha256&&original.bundle.recordSha256===reviewed.recordSha256&&
-        same(original.objectSession,reviewed.objectSession),'WORKSPACE_BUNDLE_ORIGINAL_EVIDENCE_CHANGED');
+      if(reviewed.sourceComparison){
+        const original=readComparisonObservationFiles(files),s=original.summary,selection=reviewed.sourceComparison;
+        const result=original.artifacts.find(row=>row.sha256===selection.resultArtifact.sha256);
+        const native=result?.result?.native,side=native?.[selection.side];
+        need(s.cleanCompleted&&s.requestSha256===reviewed.sourceRequest.sha256&&
+          same(s.result.artifacts.result,selection.resultArtifact)&&
+          native?.comparisonSha256===selection.comparisonSha256&&
+          native.before.recordSha256===selection.beforeRecordSha256&&native.after.recordSha256===selection.afterRecordSha256&&
+          side?.recordSha256===reviewed.recordSha256&&same(side.verification.objectSession,reviewed.objectSession)&&
+          same(original.request.review.objectComparison[selection.side],reviewed.objectDeclaration),
+          'WORKSPACE_BUNDLE_ORIGINAL_COMPARISON_CHANGED');
+      }else{
+        const original=readRecoveryObservationFiles(files).summary;
+        need(original.requestSha256===reviewed.sourceRequest.sha256&&original.bundle.recordSha256===reviewed.recordSha256&&
+          same(original.objectSession,reviewed.objectSession),'WORKSPACE_BUNDLE_ORIGINAL_EVIDENCE_CHANGED');
+      }
     }
     const requestSha256=sha(json(request));
     if(state.objectBundleRequestSha256)need(state.objectBundleRequestSha256===requestSha256,'WORKSPACE_BUNDLE_REQUEST_CHANGED');
@@ -207,7 +284,7 @@ export function createObjectBundleAdapter({directory,workspaceId,readRequestByte
     const raw=json({...result,reopened:false});need(raw.length<=MAX_JSON,'WORKSPACE_BUNDLE_COMPACT_RESULT_TOO_LARGE');
     await retainCaseArtifact(join(destination,'result.json'),raw);
     const returned={...result,status:'COMPLETE',nativeStatus:result.status,command:reviewed.command,
-      originalRequest:reviewed.sourceRequest??null,restoreDispatched:false};
+      originalRequest:reviewed.sourceRequest??null,sourceComparison:reviewed.sourceComparison??null,restoreDispatched:false};
     state.objectBundleResult=returned;state.progress='COMPLETE';await save();return returned;
   }
   async function report(profileId,id,kind='report',retainedResult=null){

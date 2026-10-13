@@ -767,3 +767,18 @@ complete three-file capture must fit 64 MiB including encoded artifact bodies;
 the existing whole Support runtime limit is 192 MiB. Oversized native comparison
 artifacts remain available through their original exact artifact downloads;
 Support rejects the complete oversized cohort without truncating any source.
+
+## Carry the complete encrypted comparison pair
+
+The original review/start selection for `object-bundle-export` also accepts `sourceSide: "before" | "after"` when the selected source is a clean completed `object-compare` request. Use its exact `sourceRequestId`, `sourceReviewHash` and `sourceAttempt`. Each export keeps a separate original export request ID and the complete frozen comparison evidence.
+
+| Maintained tool | Exact selection |
+| --- | --- |
+| `merchant_recovery_bundle_pair` | `workspace, profileId, beforeId, afterId` |
+| `merchant_recovery_bundle_pair_attach` | Those four fields plus `transferId, expectedPairSha256, expectedReviewSha256, expectedRevision, actor` |
+| `merchant_recovery_bundle_attachment` | `workspace, profileId, transferId` plus exactly one of `pairSha256` or `archiveSha256` |
+| `merchant_recovery_bundle_case_export` | Same original attachment selector as above |
+
+`beforeId` and `afterId` name completed authenticated original export requests. Pair read returns `pairSha256`; attachment requires that exact value plus the separately saved Support review hash and actual case revision. The host derives both archive paths and original native identities from the retained queue; model-facing input cannot supply archive contents, paths or passphrase environment values.
+
+One existing SF49 delivery contains both archives, and the same attachment request reconciles an interrupted reply before upload. Full case export uses the actual attached revision, complete source inventory and original independent receiver. The standalone archive flow remains available without commercial terms. See [RECOVERY_BUNDLES.md](RECOVERY_BUNDLES.md#carry-both-encrypted-editions-from-one-comparison) for full commands, size/custody limits and installed/rendered acceptance.

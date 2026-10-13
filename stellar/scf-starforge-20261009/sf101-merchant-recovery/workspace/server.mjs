@@ -146,8 +146,10 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
             value = { ...connection, identity: await workspace.identity() }; break;
           case '/api/object-comparison-artifact': {const q=query(url,['profile','id','kind','sha256']);
             value=await workspace.comparisonArtifact(q.profile,q.id,q.kind,q.sha256);break;}
-          case '/api/bundle-attachment': {const q=query(url,['profile','id','sha256']);
-            value=await workspace.bundleAttachment({profileId:q.profile,transferId:q.id,archiveSha256:q.sha256});break;}
+          case '/api/bundle-attachment': {const q=query(url,['profile','id','sha256','pair']);
+            value=await workspace.bundleAttachment({profileId:q.profile,transferId:q.id,
+              ...(q.sha256!==undefined?{archiveSha256:q.sha256}:{}),...(q.pair!==undefined?{pairSha256:q.pair}:{})});break;}
+          case '/api/bundle-pair': {const q=query(url,['profile','before','after']);value=await workspace.bundlePair(q.profile,q.before,q.after);break;}
           case '/api/bundle-inspection': {const q=query(url,['profile','archive']);value=await workspace.bundleInspection(q.profile,q.archive);break;}
           case '/api/bundle-report': {const q=query(url,['profile','id','kind']);value=await workspace.bundleReport(q.profile,q.id,q.kind);break;}
           case '/api/bundle-artifact': {const q=query(url,['profile','id']);value=await workspace.bundleArtifact(q.profile,q.id);break;}
@@ -178,6 +180,7 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
         let result;
         switch (url.pathname) {
           case '/api/bundle-attach': result=await workspace.bundleAttach(value);break;
+          case '/api/bundle-pair-attach': result=await workspace.bundlePairAttach(value);break;
           case '/api/bundle-case-export': result=await workspace.bundleCaseExport(value);break;
           case '/api/support-review': result=await workspace.supportReview(value);break;
           case '/api/support-save': result=await workspace.supportSave(value);break;
