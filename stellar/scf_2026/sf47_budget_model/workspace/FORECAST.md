@@ -98,6 +98,12 @@ The forecast distributes the selected remaining hours over their inclusive calen
 
 This is a shared capacity comparison, not a staff roster. The result retains the original contributors and reports peak required hours, overloaded days, and the first and last overloaded dates. The capacity note should describe actual availability or the planning assumption being examined. Selecting a proposed customer project adds its remaining hours to the same comparison.
 
+## Compare complete saved forecasts
+
+Open **Compare saved forecasts** in the original Operating forecast desk. Select the before and after editions, then compare their exact cash needs, balances, remaining work and capacity with the complete changed inputs and source records. Calendar dates align directly; missing dates and unknown amounts have no delta. Different as-of dates, opening cash, selected customer scope and original currency coverage remain visible. The current forecast draft stays in its existing editor.
+
+Download the complete comparison ZIP to retain both saved forecasts and the original case. [Saved operating forecast comparison](FORECAST_COMPARISON.md) covers the full browser, CLI, typed client, original source identity and independent receiving workflow.
+
 ## Exact saved identity and receiving
 
 Every saved record contains:

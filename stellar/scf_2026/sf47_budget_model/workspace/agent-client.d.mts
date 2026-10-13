@@ -2611,6 +2611,41 @@ export interface GrantPortfolioSelection extends GrantObject {
 }
 
 /** Two explicit retained revisions; omit toPlanId to compare within the same plan. */
+export interface GrantForecastComparisonSelection {
+  caseId: string;
+  beforeId: string;
+  afterId: string;
+  expectedComparisonSha256?: string;
+}
+export interface GrantForecastComparisonExportSelection extends GrantForecastComparisonSelection {
+  expectedComparisonSha256: string;
+}
+export interface GrantForecastComparisonIdentity {
+  id: string; name: string; createdAt: string; actor: string; note: string;
+  sha256: string; previewSha256: string; reportSha256: string; engineVersion: number;
+  asOfDate: GrantCivilDate; calendarStart: GrantCivilDate; source: GrantForecastSource;
+}
+export interface GrantForecastComparison {
+  schema: 'stellar-forge.sf47.forecast-comparison.v1';
+  comparisonSha256: string;
+  case: {id: string; createdAt: string};
+  before: GrantForecastComparisonIdentity; after: GrantForecastComparisonIdentity;
+  basis: {delta: 'after - before'; reportBasis: string; dailyBasis: string; cashBasis: string; scopeBasis: string;
+    sameAsOfDate: boolean; sameCalendarStart: boolean; sameOpeningCash: boolean; sameSelectedCustomers: boolean;
+    sameOriginalCase: boolean; samePlanContent: boolean; samePlanSource: boolean; sameSourceFacts: boolean; sameEngine: boolean};
+  notices: {code: string; message: string}[];
+  summary: {assumptionChanges: number; sourceChanges: number; daysBefore: number; daysAfter: number;
+    overlapDays: number; groupChanges: Record<string, number>};
+  metrics: GrantPlanComparisonMetric[];
+  groups: Record<string, GrantPlanComparisonRow[]>;
+  sourceGroups: Record<string, GrantPlanComparisonRow[]>;
+  changes: (GrantPlanComparisonChange & {area: 'assumptions' | 'source'})[];
+  days: {date: GrantCivilDate; before: GrantObject | null; after: GrantObject | null; delta: Record<string, string | null>}[];
+  work: {date: GrantCivilDate; projectId: string; before: GrantObject | null; after: GrantObject | null; deltaHours: string | null}[];
+  coverage: {before: GrantObject; after: GrantObject};
+  snapshots: {before: GrantSavedForecast; after: GrantSavedForecast};
+}
+
 export interface GrantPlanComparisonSelection {
   planId: string;
   fromRevision: number;
@@ -3969,6 +4004,13 @@ export interface GrantCompletionPreviewInput extends GrantObject {
 }
 
 export interface GrantDownloadSelections {
+  'forecast-comparison': GrantForecastComparisonExportSelection;
+  'forecast-comparison-report': GrantForecastComparisonExportSelection;
+  'forecast-comparison-json': GrantForecastComparisonExportSelection;
+  'forecast-comparison-changes': GrantForecastComparisonExportSelection;
+  'forecast-comparison-impact': GrantForecastComparisonExportSelection;
+  'forecast-comparison-daily': GrantForecastComparisonExportSelection;
+  'forecast-comparison-work': GrantForecastComparisonExportSelection;
   plan: { planId: string; revision?: number };
   'plan-comparison': GrantPlanComparisonExportSelection;
   'plan-comparison-report': GrantPlanComparisonExportSelection;
@@ -4024,6 +4066,7 @@ export class GrantWorkspaceClient {
   browser(): Promise<{ schema: typeof GRANT_AGENT_SCHEMA; url: string; original: GrantObject }>;
   read(view: 'task-outcomes', selection: {caseId: string}): Promise<GrantJsonResponse<{comparisons: GrantTaskOutcomeSummary[]}>>;
   read(view: 'task-outcome', selection: {caseId: string; comparisonId: string; revision?: number}): Promise<GrantJsonResponse<GrantTaskOutcomeView>>;
+  read(view: 'forecast-comparison', selection: GrantForecastComparisonSelection): Promise<GrantJsonResponse<GrantForecastComparison>>;
   read(view: 'plan-comparison', selection: GrantPlanComparisonSelection): Promise<GrantJsonResponse<GrantPlanComparison>>;
   read(view: 'amendments', selection: { caseId: string }): Promise<GrantJsonResponse<GrantObject>>;
   read(view: 'amendment', selection: { caseId: string; amendmentId: string; revision?: number }): Promise<GrantJsonResponse<{ amendment: GrantAmendmentEdition; current: GrantObject; history: GrantObject[]; calendarImpact: GrantAmendmentCalendar }>>;
