@@ -6,7 +6,7 @@ Open the complete customer handover with Python 3.12 or later and Node 22.16 or 
 python3 customer-start.py --directory /absolute/private/airgradient-customer --serve
 ```
 
-Use `--node /absolute/path/to/node` when Node is outside PATH. The launcher verifies the full included source SDK and both editable packages, receives them through the original command, selects the retained indoor project and opens the private customer URL printed by the operator. Keep the same receiving directory to continue work. A repeated opening reuses the original receiving records. Allow at least 1 GiB of free memory for the full retained report operation; the launcher selects a 384 MiB Node heap.
+Use `--node /absolute/path/to/node` when Node is outside PATH. The launcher verifies the full included source SDK and both editable packages, receives them through the original command and opens the private customer URL printed by the operator. The first opening selects the retained indoor project. Keep the same receiving directory to continue work; later openings preserve its current saved project, later report editions and other verified source collections. The required original collection is checked by its exact packet identity. A repeated opening reuses the original receiving records. Allow at least 1 GiB of free memory for the full retained report operation; the launcher selects a 384 MiB Node heap.
 
 ## The complete retained installation
 

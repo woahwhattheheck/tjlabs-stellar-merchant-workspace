@@ -93,7 +93,7 @@ def main():
             raise RuntimeError(process.stderr.strip() or 'Original AirGradient command failed')
         return json.loads(process.stdout)
 
-    run(['init', '--workspace', str(workspace)])
+    initial = run(['init', '--workspace', str(workspace)])
     receipts = []
     for record in edition['packets']:
         path = private_input / Path(record['file']).name
@@ -106,16 +106,19 @@ def main():
         if receipt['reportId'] != record['reportId'] or receipt['reportSha256'] != record['reportSha256']:
             raise ValueError('The original received report changed')
         receipts.append(receipt)
-    run(['project-select', '--workspace', str(workspace), '--project', receipts[-1]['projectId']])
+    if initial['currentProject'] is None:
+        run(['project-select', '--workspace', str(workspace), '--project', receipts[-1]['projectId']])
     state = run(['status', '--workspace', str(workspace)])
     reports = {record['id']: record['sha256'] for record in state['reports']}
     for record in edition['reports']:
         if reports.get(record['id']) != record['sha256']:
             raise ValueError('The complete frozen customer history changed')
-    if len(state['sourceSets']) != 1 or state['sourceSets'][0]['packetSha256'] != edition['originalSource']['sha256']:
+    original_sources = [record for record in state['sourceSets']
+                        if record['packetSha256'] == edition['originalSource']['sha256']]
+    if len(original_sources) != 1:
         raise ValueError('The original complete source collection changed')
     print(json.dumps({'status': 'READY', 'workspaceId': state['workspaceId'], 'directory': str(workspace),
-                      'reports': len(state['reports']), 'sourceFiles': state['sourceSets'][0]['files'],
+                      'reports': len(state['reports']), 'sourceFiles': original_sources[0]['files'],
                       'receiving': [record['id'] for record in receipts]}, separators=(',', ':')), flush=True)
     if not args.serve:
         return

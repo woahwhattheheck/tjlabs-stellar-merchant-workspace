@@ -165,6 +165,7 @@ try{
         'Open the complete retained customer operator with Python 3.12+ and Node 22.16+ (node:sqlite):\n\n'
         '```sh\npython3 customer-start.py --directory /absolute/private/airgradient-customer --serve\n```\n\n'
         'Use `--node /absolute/path/to/node` when Node is outside PATH. Keep the same receiving directory for later work. '
+        'After the first opening, the launcher preserves the current saved project, later editions and other verified source collections. '
         'The opening verifies the full source SDK and both complete editable packages, receives all four original reports, '
         'retains the complete forty-one-file source collection and opens the original private customer URL. '
         'Allow 1 GiB of free memory; the launcher uses a 384 MiB Node heap.\n\n'
