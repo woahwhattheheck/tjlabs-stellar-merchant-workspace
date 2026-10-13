@@ -10,16 +10,17 @@ export function renderRequirementReviews(root,context){
   root.append(references,node('p','Criteria source reviewed '+OFFICIAL.reviewedAt+'. These are editorial decisions. The selected text and notes do not establish issuer approval.','muted'));
   const summary=node('section',undefined,'card');
   summary.append(node('h3','Review the intended output'));
+  const coverageLines=[];
+  const updateCoverage=()=>{for(const [kind,line]of coverageLines){const coverage=requirementCoverage(getDraft(),{outputKind:kind,criteria});line.textContent=(kind==='answers'?'Canonical answers':'Issuer form fields')+': '+(coverage.reviews.length-coverage.attention.length)+' of '+coverage.reviews.length+' requirements have a current recorded decision for that output. '+coverage.attention.length+' need attention.';}};
   for(const kind of ['answers','fields']){
-    const coverage=requirementCoverage(draft,{outputKind:kind,criteria});
-    summary.append(node('p',(kind==='answers'?'Canonical answers':'Issuer form fields')+': '+(coverage.reviews.length-coverage.attention.length)+' of '+coverage.reviews.length+' requirements have a current recorded decision for that output. '+coverage.attention.length+' need attention.'));
+    const line=node('p');line.dataset.requiredContentCoverage=kind;coverageLines.push([kind,line]);summary.append(line);
     summary.append(button('Download complete '+(kind==='answers'?'answer':'issuer-field')+' review',()=>{
       download(JSON.stringify(requirementCoverage(getDraft(),{outputKind:kind,criteria}),null,2)+'\n',
         'scf-required-content-'+kind+'.json');
       status('Downloaded the complete editorial decisions, reviewed text and current comparisons.');
     }));
   }
-  root.append(summary);
+  updateCoverage();root.append(summary);
   for(const rule of REQUIREMENTS){
     const review=draft.reviews.find(row=>row.id===rule.id),observed=requirementReviewStatus(draft,rule.id,{criteria});
     const card=node('section',undefined,'card');card.dataset.requirementId=rule.id;card.dataset.reviewBasisState=observed.status;
@@ -29,7 +30,10 @@ export function renderRequirementReviews(root,context){
     state.setAttribute('role','status');card.append(state);
     card.append(node('p','Recorded decision: '+review.status+(observed.actor?' · '+observed.actor+' · '+observed.reviewedAt:''),'muted'));
     if(observed.status==='unbound')card.append(node('p','The existing status and note remain historical. No exact text basis was recorded, so they have not been attached to the current wording.'));
-    if(observed.pending)card.append(node('p','An unfinished review decision is retained. Record it explicitly when ready.','muted'));
+    const pendingLine=node('p','An unfinished review decision is retained. Record it explicitly when ready.','muted');
+    pendingLine.hidden=!observed.pending;pendingLine.setAttribute('role','status');card.append(pendingLine);
+    let discardButton=null;
+    const updatePending=()=>{const pending=!!review.contentReviewDraft;pendingLine.hidden=!pending;card.dataset.reviewPending=String(pending);if(discardButton)discardButton.hidden=!pending;updateCoverage();};
     const compare=node('details');compare.append(node('summary','Read complete reviewed and current text'));
     if(!observed.basis)compare.append(node('p','No previous text-bound review is available.'),node('pre',review.note,'source-text'));
     for(const row of observed.rows){
@@ -45,7 +49,7 @@ export function renderRequirementReviews(root,context){
     if(observed.basis){const full=node('details');full.append(node('summary','Complete original basis'),node('pre',JSON.stringify(observed.basis,null,2),'source-text'));compare.append(full);}
     card.append(compare);
     const initial=requirementReviewInput(review);
-    const change=(key,value)=>{review.contentReviewDraft={...requirementReviewInput(review),[key]:value};touch('Review changes are retained as unfinished work; record the decision when ready.');};
+    const change=(key,value)=>{review.contentReviewDraft={...requirementReviewInput(review),[key]:value};touch('Review changes are retained as unfinished work; record the decision when ready.');updatePending();};
     card.append(input('Reviewer name',initial.actor,value=>change('actor',value)).wrap,
       select('Decision to record',initial.status,[['unreviewed','Choose a decision'],['covered','Covered in selected text'],['needs-edit','Needs editing'],['not-applicable','Not applicable — explain why']],value=>change('status',value)).wrap,
       input('Supporting location and decision reason',initial.note,value=>change('note',value),{area:true}).wrap);
@@ -84,10 +88,10 @@ export function renderRequirementReviews(root,context){
       setDraft(recordReview(current,rule.id,requirementReviewInput(selected)));touch();render();
       status('Recorded the named review and complete text basis. The preceding decision and draft remain in Saved versions.');
     },'primary'));
-    if(review.contentReviewDraft)controls.append(button('Discard unfinished review edits',()=>{
+    discardButton=button('Discard unfinished review edits',()=>{
       const next=context.retainVersion(getDraft(),'Before discarding unfinished requirement review');
       delete next.reviews.find(row=>row.id===rule.id).contentReviewDraft;setDraft(next);touch();render();
-    }));
+    });controls.append(discardButton);updatePending();
     card.append(controls,node('p','Recording keeps the current answer and field wording. It saves an editorial decision and retains the preceding full draft version.','muted'));
     root.append(card);
   }

@@ -1,0 +1,327 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "human-services-directory",
+  "heading": "## Referral implementation: source changes, returned outcomes and complete receiving",
+  "sources": [
+    {
+      "id": "directory-product",
+      "path": "products/human-services-directory/README.md",
+      "label": "Product entry points and complete customer workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 7204,
+          "sha256": "57f0e1f5a2f5c4e88ef2c8844186f8924edc7fd9244885e87e8feebd09204d37",
+          "git_blob": "ac8f8ab41cfc75eaa1a04e1a388caa93183aa581"
+        }
+      ]
+    },
+    {
+      "id": "directory-installed-application",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/APPLICATIONS.md",
+      "label": "Installed Applications setup, start, reopen and complete receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 12722,
+          "sha256": "e764552d857d1d6a70e991b28f33e01f2ef80841bb2d616ae4b4d4de7d0d087f",
+          "git_blob": "eb30d0c1c50539a2c3e7f9b66c4eca8a32c6f11e"
+        }
+      ]
+    },
+    {
+      "id": "directory-conformance",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/CONFORMANCE.md",
+      "label": "Standards editions, complete assessments and retained findings",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 15460,
+          "sha256": "419b22e6b8f3d5ebf5c09fdb20e204721f7ee2b3bbb22adb2e8cfa30f4671e14",
+          "git_blob": "5a74a3be1e6741b05c3f3b3d25eae616b28939ff"
+        }
+      ]
+    },
+    {
+      "id": "directory-foreign-keys",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/CONFORMANCE_FOREIGN_KEYS.md",
+      "label": "Declared tabular relationships, complete candidate sets and coverage",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 15202,
+          "sha256": "0f11a7388838dc7ed65f8bc54496c354630207458d6a70a8a7326a98014ef484",
+          "git_blob": "59f1371aa6c0450ebd15534f6880d78ff0547a4c"
+        }
+      ]
+    },
+    {
+      "id": "directory-operating-plans",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/OPERATING_PLANS.md",
+      "label": "Original-model operating procedures and immutable plan history",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 20280,
+          "sha256": "98612cd1e5eeb84068e84c4fb3b7f86e499be62e4fd4f5d4bf62662a08fbd40c",
+          "git_blob": "002e85e22c605066dd633fb67a42593086ed6901"
+        }
+      ]
+    },
+    {
+      "id": "directory-operating-returns",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/OPERATING_RETURNS.md",
+      "label": "Returned operating procedures and explicit reviewed receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 12690,
+          "sha256": "0d2e6529174f73ffe561e739cb01ff9f207c81d00d8919c00d151dbcc3a68f7d",
+          "git_blob": "6e9a6b68cc61de1efcec3c3409a0c14c1ab11bbf"
+        }
+      ]
+    },
+    {
+      "id": "directory-source-corrections",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/SOURCE_CORRECTIONS.md",
+      "label": "Original JSON and physical CSV corrections with separate acceptance",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 10623,
+          "sha256": "1dd1a0352cc4510c5bde81683f602e176234a3b02d4577048220af65bb3fb764",
+          "git_blob": "c49fcd80e12717c48cdf204b7a08313f6e33f1dc"
+        }
+      ]
+    },
+    {
+      "id": "directory-customer-worksheets",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/CORRECTION_WORKSHEETS.md",
+      "label": "Complete offline customer worksheets and retained returned bytes",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 10531,
+          "sha256": "c085a9de902e03dcdca3d10382b7f6a8eaac4d61d330dec8cfbc1d4c16e2770f",
+          "git_blob": "c646a7f3495fd3211e243bedf396c88f9df0b3bb"
+        }
+      ]
+    },
+    {
+      "id": "directory-current-edition-reconciliation",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/WORKSHEET_RECONCILIATION.md",
+      "label": "Base, proposed and current values with explicit per-change decisions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 10588,
+          "sha256": "09377d5dd95973cec940927c7a40fd744d64edf6d48febf7b5f84e0d15e45a3f",
+          "git_blob": "828c6982826e284ee5f8d0790ae7308f883ffdac"
+        }
+      ]
+    },
+    {
+      "id": "directory-reconciliation-engine",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/directory_correction_worksheet_reconciliation.py",
+      "label": "Native reconciliation, ordinary current-edition plans and full graph receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 34671,
+          "sha256": "7480afbe58c3bbff0e354eaa6be03444a85d51700a0c4e4ce6ced1ebde1a4a04",
+          "git_blob": "e60595a9ea1ec5a58cc71205fc63777e904d4173"
+        }
+      ]
+    },
+    {
+      "id": "directory-connected-operation",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/connected/README.md",
+      "label": "Typed client, MCP tools, original file custody and host input",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 24401,
+          "sha256": "b51b2b3180989ae38c85cd5cbe45aa79f242eb9b742a5f907dd4b48ae7461b92",
+          "git_blob": "88b8bfb95fc588b6e2254dab40130a2a56132037"
+        }
+      ]
+    },
+    {
+      "id": "directory-typed-client",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/connected/client.mjs",
+      "label": "Complete typed source, findings, worksheet and reconciliation transport",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 57089,
+          "sha256": "48f92b3e51de039a3d3b9fd4d6e205419ccc6f6ef3258b2efbeba37eb9aeff57",
+          "git_blob": "1a68d2ed92ccce0eb28cf30c09eb4ba2c8e2c8da"
+        }
+      ]
+    },
+    {
+      "id": "directory-merchant-catalogue",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/connected/catalog.mjs",
+      "label": "Original schemas and exact Merchant tool argument catalogue",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 26960,
+          "sha256": "289619a42ff202f7eeb95905d4011fb6638e11c4a3a1f6feedda25094a270d8f",
+          "git_blob": "8a3a9d0c822a902da0d99f5dadc02dfee59cd55b"
+        }
+      ]
+    },
+    {
+      "id": "directory-applications-bridge",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/application.mjs",
+      "label": "Same-workspace Applications lifecycle and source configuration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 7570,
+          "sha256": "5a3d9037af5d892f4697328f254eb6eddfd7edef1f24e1bfca5c4150e855a328",
+          "git_blob": "bda8c40737c7e5563026e578e983ff9826a53fb8"
+        }
+      ]
+    },
+    {
+      "id": "directory-installed-selection",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/human-services-directory-connected.json",
+      "label": "Installed product, SDK, MCP and complete support-file selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 10583,
+          "sha256": "8542e457a97b0f7a70bcc494fa9daebaee1774698896765f94aba967c185a129",
+          "git_blob": "445ab5ac6dd5184600b02ac9f78d894d1e789e6f"
+        }
+      ]
+    },
+    {
+      "id": "directory-reconciliation-native-course",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/operate_correction_worksheet_reconciliation.py",
+      "label": "Original worksheet return against later accepted editions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 36722,
+          "sha256": "e07d9709189a85eb66e6f92405f4d68a298a108cd925f1df42b10b9cf41f8d1f",
+          "git_blob": "2d10347c2211c415248f6e0f449b67ab03d6b49a"
+        }
+      ]
+    },
+    {
+      "id": "directory-reconciliation-client-course",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/operate_correction_worksheet_reconciliation_clients.mjs",
+      "label": "Offline customer, browser, Merchant and independent customer course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 68728,
+          "sha256": "f5bcc25b04871a2fb6355b9bd1898c198a7d490d02878058e8aa631531d6ddcc",
+          "git_blob": "b3b527bde6ee6887d4ef50903b3cd01ee52fa450"
+        }
+      ]
+    },
+    {
+      "id": "directory-reconciliation-native-guide",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/CORRECTION_WORKSHEET_RECONCILIATION_OPERATING.md",
+      "label": "Complete original input, native course and restoration instructions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 7255,
+          "sha256": "3e765ee62ec5b11f74859c11cfad6b22cc7f1f4db7014212f32e93140bc9d45f",
+          "git_blob": "f10099a3d53b4252ed7e75ad8b809991ef6b8976"
+        }
+      ]
+    },
+    {
+      "id": "directory-reconciliation-client-guide",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_directory/CORRECTION_WORKSHEET_RECONCILIATION_CLIENTS.md",
+      "label": "Complete browser/client/customer receiving instructions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+      "editions": [
+        {
+          "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
+          "bytes": 7109,
+          "sha256": "770a164f3bbc422048875fcde3e41c05cde34d4febbaefcb34d77f5fbab69879",
+          "git_blob": "eb8469c627fc8dc6685ce991f89c059cba1f760b"
+        }
+      ]
+    },
+    {
+      "id": "directory-original-operating-evidence",
+      "label": "Completed original Directory receiving and distinct later programme status",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/human-services-directory/GRANT_EVIDENCE.json",
+      "commit": "24f73d4a454fca6f6f8e5498a5b5a6c7c8022aec",
+      "editions": [
+        {
+          "commit": "24f73d4a454fca6f6f8e5498a5b5a6c7c8022aec",
+          "bytes": 13846,
+          "sha256": "badfaf5ac822c5963444bdacb8a76c805d9790ef0457906d5f1f8adb28f15a15",
+          "git_blob": "4759d9d05df988723b5cda6906b5121e32b7e421"
+        }
+      ]
+    }
+  ]
+}

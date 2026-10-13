@@ -589,7 +589,8 @@ def projection_context(model, entities, financial):
     for row in idx["grants"].values():
         grant_children[row.get("parentGrantId")].append(row["id"])
     for row in financial:
-        financial_by_entity[(row["sourceId"], row["entityKey"])].append(row)
+        for key in sorted({row["entityKey"], *row.get("relatedEntityKeys", [])}):
+            financial_by_entity[(row["sourceId"], key)].append(row)
     return {"index": idx, "nodeChildren": node_children, "grantChildren": grant_children,
             "bindings": source_bindings(model, entities), "results": indicator_results(model),
             "financialByEntity": financial_by_entity}

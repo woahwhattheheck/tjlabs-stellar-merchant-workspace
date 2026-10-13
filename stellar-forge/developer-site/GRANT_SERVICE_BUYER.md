@@ -39,17 +39,17 @@ The composer receives the complete original chapter and source identities before
 
 ## Select the complete current native source
 
-Use the maintained builder at the immutable product commit:
+Use the maintained builder at the immutable cumulative source commit:
 
 ```bash
 node stellar/scf-starforge-20261009/distribution/build.mjs \
   --repo /absolute/source-repository \
-  --ref 7c46e9d72ba3bf5adc4eb2bd1faa3b4f2fc43b03 \
+  --ref 776423bbe47337c1aa5e8bfc3152d07308dd9adf \
   --selection merchant-support \
   --out /absolute/current-service-distribution
 ```
 
-The selected cumulative build includes merged PR1267: matching pack/unpack capacity for the complete source, the corrected Groundwater CLI export and Zotero's original JSON-data declaration. The repository must contain the actual commit, tree and required blobs. A partial clone can have a commit while required file bodies are still absent. The maintained builder must finish its original selection and dependency closure before a source packet is selected for native execution.
+The selected cumulative build includes merged PR1267: matching pack/unpack capacity for the complete source, the corrected Groundwater CLI export and Zotero's original JSON-data declaration. It also includes merged PR1310: the original Git source reader uses bounded batches and a bounded cache; dependency discovery retains source identities; materialization reads and verifies one complete file at a time. The package keeps every selected source byte, original mode, manifest identity and dependency while releasing temporary source buffers before packaging. The repository must contain the actual commit, tree and required blobs. A partial clone can have a commit while required file bodies are still absent. The maintained builder must finish its original selection and dependency closure before a source packet is selected for native execution.
 
 Use the existing complete Service carrier and original seven-file input package under operation SCF-SERVICE-ADJUSTMENT-HANDOVER-24EA-20261012. Its current source producer verifies the built manifest, all source members and complete distribution metadata, and carries them in the same original native archive. A previous complete source edition remains retained for custody recovery. Native source selection names the current complete packet hash and immutable source commit.
 

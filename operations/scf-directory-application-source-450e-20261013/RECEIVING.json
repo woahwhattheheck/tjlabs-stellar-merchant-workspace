@@ -1,0 +1,122 @@
+{
+  "operation": "SCF-DIRECTORY-ASSEMBLY-450E-20261013",
+  "basis": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "36f1063dc7f4622b50ebc42074051c35cf2beb60",
+    "sourcePackage": {
+      "path": "operations/scf-grant-cumulative-source-25fd-20261013/source-package.json",
+      "bytes": 2142836,
+      "sha256": "0e7990991ad82345cac67623ac5a67dda8f83357a573b07ca33a055fda422563",
+      "gitBlob": "23999b55a964637bfe616bad89a68eeb2c5ee075"
+    },
+    "fullSourceCarrier": {
+      "git_blob": "0c2c4b6e30284b0b78ae70577b4a026aaae5048a",
+      "bytes": 7745042,
+      "sha256": "0e48e055193477b60beafce53e1ccde82678df5c796bd509227b687baebc515e"
+    }
+  },
+  "originalSources": 486,
+  "currentSources": 506,
+  "preservedOriginalSources": 486,
+  "changedOriginalSources": [],
+  "chaptersBefore": 78,
+  "chaptersAfter": 78,
+  "changedSubsection": "Service-directory commissioning and referral destinations",
+  "otherCompleteH2ChaptersUnchanged": 77,
+  "applicationByteIdentical": true,
+  "htmlByteIdentical": true,
+  "budget": {
+    "bytes": 597,
+    "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00",
+    "git_blob": "c62afa352e881c2cf81fe937649fe63fea3ceab5"
+  },
+  "budgetByteIdentical": true,
+  "selectedDeclarations": 44,
+  "registeredDirectorySources": 20,
+  "completeFourOutputReplayExact": true,
+  "executionEnvironment": "Original complete composer and original product registry executed in the connected JavaScript runtime with UTF-8/hash primitives; no filesystem, product process, browser, saved draft or Site was opened.",
+  "chapterReceiving": {
+    "schema": "stellar-forge.directory-grant-chapter-receiving.v1",
+    "parentHeading": "## Referral implementation: source changes, returned outcomes and complete receiving",
+    "heading": "### Service-directory commissioning and referral destinations",
+    "before": {
+      "bytes": 13268,
+      "sha256": "8a4acd8a948f870d7dcaa094c14052a8149a6b85839121995e7436ed3eea15c7"
+    },
+    "after": {
+      "bytes": 23568,
+      "sha256": "50245fa5863919c56fdaa4670b8b0dc09d0abf9b8e97b15e9c368e8d9ee1a5a5"
+    },
+    "prefixSha256": "f81adc0373e898dbfbd868316e1e9218f4f8867a24ca2b8b99c335d493b64ac0",
+    "suffixSha256": "367069c4542ffb4733496d064d8f339aeb2446bd8c03374164db6eb8ff9526ba",
+    "reused": false
+  },
+  "outputs": [
+    {
+      "path": "grant.html",
+      "bytes": 96472,
+      "sha256": "ce91d58ca77daa914f1f7c72defa0de438bfa2f37550e30c109792b1f7d0c806",
+      "git_blob": "6efbf15efd035c9efc7b8a3a0b028b15a784242f"
+    },
+    {
+      "path": "grant-data/application.md",
+      "bytes": 47371,
+      "sha256": "b9d27b29bb9c2d603b2bd013f07a1b8eb397cb8bca17ac57cae4da28a2b1abc1",
+      "git_blob": "ce39ca42245839be7d2b841703e92b714a5dd241"
+    },
+    {
+      "path": "grant-data/product-and-finance.md",
+      "bytes": 935804,
+      "sha256": "28520f68104c4a72100d06ff7eed9fbace04dee4c1d69e857c075d39d22940a8",
+      "git_blob": "99b6a525c312cdc2e21a493425ce67a4c06c05f9"
+    },
+    {
+      "path": "grant-data/source-index.json",
+      "bytes": 628350,
+      "sha256": "219b45cbce1d92fab9e4d1ef5dd58f9ba16735034852b49efbf0c15efaca3dd4",
+      "git_blob": "4bac0b8cf4b726df887c55e6d8f5c5a720b7bf57"
+    }
+  ],
+  "originalSourcePackageApi": {
+    "verified": true,
+    "functions": [
+      "createSourceBundle",
+      "createReviewerSourcePackage",
+      "openReviewerSourcePackage"
+    ],
+    "sourcePackage": {
+      "bytes": 2200232,
+      "sha256": "fe0eba32084bb488cbde374611e4125cea42c58bc1bed8a4413c979b012186cc",
+      "gitBlob": "d3c1953ff34ddfebb7239e680567004451e4b0f9"
+    },
+    "bundleId": "b87b943bd1a1447db25bc9a88a9c41d0a08e5a126a11b9e07e8e167057ed9ce3"
+  },
+  "completeSourceCarrier": {
+    "files": 271,
+    "decodedBytes": 7783600,
+    "bytes": 8289431,
+    "sha256": "e4b0ffbae0cd9b6e57e26e20a340391f0ce4a204fd2bd014d713ef563f0dbe28",
+    "gitBlob": "0e002a8517f78c4c785f03cfdf74a1b33e9833b0",
+    "previous247Retained": true,
+    "selectedDirectoryFiles": 19,
+    "assemblyFiles": 5,
+    "originalBinaryUnchanged": true
+  },
+  "nativeRun": false,
+  "publicationMeaning": "Complete source composition and original package API receiving, for the existing cumulative publisher and original saved-case/Site operation.",
+  "sourceCorrespondenceCorrection": {
+    "source": "The exact selected e963 product contribution was re-read after independent full-source correspondence found a different retained programme description.",
+    "path": "stellar/scf-starforge-20261009/distribution/contributions/human-services-directory-connected.json",
+    "selected": {
+      "bytes": 10583,
+      "sha256": "8542e457a97b0f7a70bcc494fa9daebaee1774698896765f94aba967c185a129",
+      "git_blob": "445ab5ac6dd5184600b02ac9f78d894d1e789e6f"
+    },
+    "priorRetainedProgramme": {
+      "bytes": 10845,
+      "sha256": "15b18413d3d6edcc68c54560338ef3ab93d881a792fe4def030098d6eb3a2671",
+      "git_blob": "a15d3eb184f6bf618323f4321c78af1b3c94d943"
+    },
+    "scope": "Select the actual product source. The separate 354-file native programme remains unchanged and retains its own source edition."
+  }
+}

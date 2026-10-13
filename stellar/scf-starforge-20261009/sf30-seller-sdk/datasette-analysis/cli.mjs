@@ -9,6 +9,7 @@ import { inspectPythonInstallation } from '../../distribution/python-runtime/wor
 import { absolute, canonical, digest, json, need, plain, regular } from '../../distribution/runtime-workspace/storage.mjs';
 
 export const DATASETTE_ANALYSIS_SOURCE = 'stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/';
+export const BDNB_PRODUCT_SOURCE = 'products/ntico/bdnb-territory/';
 export const SUPPLIER_REPORT_SOURCE = 'products/conapi/supplier-report/';
 const SCHEMA = 'stellar-forge.datasette-analysis-python-selection.v1';
 const HASH = /^[a-f0-9]{64}$/;
@@ -18,14 +19,16 @@ const CORE = ['cli.mjs', 'cli.py', 'model.py', 'source.py', 'recipes.py',
   'workflow_app.html', 'workflow_app.mjs', 'workflow_app.css', 'WORKFLOW.md', 'WORKFLOW_ANALYSIS.md',
   'operator_client.pyi', 'edition_bridge.mjs', 'receiving.py',
   'nld_contract.py', 'nld_task.py', 'nld_worker.py', 'nld_adapter.py',
-  'nld_cli.py', 'nld_receiving.py', 'nld_operator.mjs', 'NLD.md', 'NLD_SOURCE_CONTRACT.json'];
+  'nld_cli.py', 'nld_receiving.py', 'nld_operator.mjs', 'NLD.md', 'NLD_SOURCE_CONTRACT.json',
+  'bdnb_source.py', 'bdnb_adapter.py', 'bdnb_dictionary.json', 'bdnb_contract.json', 'BDNB_SOURCE.md',
+  'bdnb_products.py', 'bdnb_workflow.py', 'bdnb_receiving.py', 'bdnb_operator.mjs'];
 const OPTIONS = new Map([
   ['--runtime-workspace', 'root'], ['--runtime-directory', 'runtimeDirectory'],
   ['--runtime-id', 'runtimeId'], ['--installation-id', 'installationId'],
   ['--expected-binding-sha256', 'expectedBindingSha256'],
 ]);
 const COMMANDS = new Set(['serve', 'status', 'prepare', 'rows', 'compare', 'export',
-  'call', 'request', 'download', 'receive', 'workflow', 'nld', 'nld-receive']);
+  'call', 'request', 'download', 'receive', 'workflow', 'nld', 'nld-receive', 'bdnb-receive']);
 const fingerprint = value => digest(json(canonical(value)));
 
 export function parseDatasetteAnalysisCommand(args) {
@@ -90,6 +93,8 @@ export async function inspectDatasetteAnalysisInstallation(root, {
   const files = new Map(manifest.files.map(file => [file.path, file]));
   need(files.size === manifest.files.length, 'DATASETTE_ANALYSIS_SOURCE_CHANGED');
   const required = new Set(CORE.map(name => DATASETTE_ANALYSIS_SOURCE + name));
+  for (const name of ['README.md', 'WORKFLOW.md', 'RECEIVING.md', 'cli.mjs', 'receiving.py', 'workflow.template.json'])
+    required.add(BDNB_PRODUCT_SOURCE + name);
   // The selected source manifest carries the complete workflow and its native
   // Kestra flows, publisher source and receiving guides in the same binding.
   for (const path of files.keys()) {
@@ -103,8 +108,8 @@ export async function inspectDatasetteAnalysisInstallation(root, {
   // Supplier modules, editable browser, rules and source examples travel in
   // the original selected product. Bind every selected component member.
   for (const path of files.keys()) {
-    if (typeof path !== 'string' || !path.startsWith(SUPPLIER_REPORT_SOURCE)) continue;
-    const name = path.slice(SUPPLIER_REPORT_SOURCE.length);
+    if (typeof path !== 'string' || !path.startsWith(SUPPLIER_REPORT_SOURCE) && !path.startsWith(BDNB_PRODUCT_SOURCE)) continue;
+    const name = path.slice(path.startsWith(BDNB_PRODUCT_SOURCE) ? BDNB_PRODUCT_SOURCE.length : SUPPLIER_REPORT_SOURCE.length);
     need(!name.includes('\\') && name.split('/').every(part => part && part !== '.' && part !== '..'),
       'DATASETTE_ANALYSIS_SOURCE_CHANGED');
     required.add(path);
@@ -143,7 +148,8 @@ export async function resolveDatasetteAnalysisCommand(args, { leaseFd } = {}) {
   }
   const entryName = workflow ? 'workflow_cli.py'
     : commandArgs[0] === 'nld' ? 'nld_cli.py'
-    : commandArgs[0] === 'nld-receive' ? 'nld_receiving.py' : 'cli.py';
+    : commandArgs[0] === 'nld-receive' ? 'nld_receiving.py'
+    : commandArgs[0] === 'bdnb-receive' ? 'bdnb_receiving.py' : 'cli.py';
   if (!workflow && entryName !== 'cli.py') commandArgs.shift();
   const entry = join(selected.binding.sourceRoot, DATASETTE_ANALYSIS_SOURCE, entryName);
   return { executable: selected.installation.python, args: ['-I', entry, ...commandArgs],

@@ -125,3 +125,7 @@ The contribution exports the operator module and installs the CLI command. Compl
 The server's new owner checks are additive and do not change the store schema, original payment receipts, fulfillment reservations or writer scope. The client never opens the merchant database. Commissioning the client and reading/exporting the existing five-invoice case can be done against the actual read-only application with the original business rows retained.
 
 For customer operation, retain the connection descriptor, reviewed register page and exported/downloaded files together. Their bytes and digests identify the files that were received. Do not put operator credentials, buyer authorizations or one-use download URLs into shared messages.
+
+## Complete invoice intake
+
+The same owner-bound connection supports `intake-context`, `intakes`, `intake-prepare`, `intake-status`, `intake-run` and `intake-export`. Preparation retains original CSV/JSON bytes and a complete reviewed plan before invoice creation. Run uses that saved review digest; interruption recovery reads the same operation and original invoice IDs. See [INVOICE_INTAKE.md](./INVOICE_INTAKE.md) for the complete browser, CLI and typed client course.

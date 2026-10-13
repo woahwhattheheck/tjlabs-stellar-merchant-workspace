@@ -21,7 +21,7 @@ The review retains complete selected text; it does not infer evidence from keywo
 
 An unselected answer or field is outside that decision. A review of one selected field does not establish that every other field is complete. **Covered** is the named reviewer's assessment; the application exposes exactly what was reviewed.
 
-Published guidance is available from the original [SCF submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria), [budget guidance](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-guidelines) and [official rules](https://communityfund.stellar.org/official-rules). The criteria require a complete, self-contained submission. Use the currently published issuer instructions and actual form; these local records do not perform submission.
+Published guidance is available from the original [SCF submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria), [budget guidance](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines) and [official rules](https://stellar.gitbook.io/scf-handbook/scf-awards/official-rules-for-submissions). The criteria require a complete, self-contained submission. Use the currently published issuer instructions and actual form; these local records do not perform submission.
 
 ## Unfinished work and recovery
 
@@ -47,7 +47,7 @@ The readable prepared report reconstructs its complete review text and compariso
 - **requirementReviewStatus(draft,id,{criteria?})** returns the complete basis/current values and changes, with unbound, changed or current state.
 - **requirementCoverage(draft,{outputKind,criteria?,includeText?})** maps every original requirement to its exact current editorial state for answers or fields.
 - **dist/grant-requirement-review-workspace.mjs** borrows the original editor callbacks and uses the same Required content view.
-- The existing **grant-submission.mjs** registers both additive browser modules and declares this review in the original source index.
+- The existing **grant-submission.mjs** registers both additive browser modules and declares this review in the original source index. The actual static **browser-assets.json** also includes both routes for the maintained server and installed application.
 - The original handover producer and verifier freeze/recompute coverage; the existing whole draft export remains **stellar-forge.grant-submission-export.v1**.
 
 Operation: **SCF-REQUIRED-CONTENT-REVIEW-7108-20261013**. The existing cumulative source publisher and original saved-draft receiving owner retain publication/native execution. Source-function verification is reported separately from actual Page/IndexedDB receiving.

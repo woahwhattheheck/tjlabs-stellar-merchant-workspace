@@ -696,6 +696,10 @@ class DatasetteAnalysis:
 
     @contextmanager
     def open_download(self, name, *, edition_id=None, export_id=None):
+        if isinstance(name, str) and name.startswith("bdnb-"):
+            with _sibling("bdnb_adapter").open_bdnb_download(self, name) as selected:
+                yield selected
+            return
         if isinstance(name, str) and name.startswith("nld-"):
             with _sibling("nld_adapter").open_nld_download(self, name) as selected:
                 yield selected
@@ -739,6 +743,11 @@ class DatasetteAnalysis:
     def dispatch(self, action, body=None):
         body = {} if body is None else body
         require(isinstance(body, dict), "DATASETTE_REQUEST_OBJECT_REQUIRED")
+        if action in {"bdnb.schema", "bdnb.status", "bdnb.get", "bdnb.rows"}:
+            return _sibling("bdnb_adapter").DatasetteBdnb(self).dispatch(action, body)
+        if isinstance(action, str) and action.startswith("bdnb."):
+            with self._mutex:
+                return _sibling("bdnb_adapter").DatasetteBdnb(self).dispatch(action, body)
         if action in {"nld.status", "nld.rows"}:
             return _sibling("nld_adapter").DatasetteNld(self).dispatch(action, body)
         if isinstance(action, str) and action.startswith("nld."):

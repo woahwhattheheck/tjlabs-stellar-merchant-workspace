@@ -1,0 +1,162 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "tind",
+  "heading": "## Institutional repository services and complete scholarly receiving",
+  "sources": [
+    {
+      "id": "tind-institutional-migration",
+      "label": "Institutional repository migration and complete customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "products/tind/OPERATING.md",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "0dd5dff9eb5b9883b3e1dfee07efe93bf9bb5817",
+          "bytes": 79126,
+          "sha256": "b407a56500832bf1add4b542d4e55cbb1c906131ef1484d0c8dfd8ef1f71e0ee",
+          "git_blob": "86e553c26fe43f78e3c8d9f0c4d3cc34a76883a1"
+        }
+      ]
+    },
+    {
+      "id": "oai-original-record-collections",
+      "label": "Original scholarly response intake and complete record selections",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/README.md",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "0dd5dff9eb5b9883b3e1dfee07efe93bf9bb5817",
+          "bytes": 33580,
+          "sha256": "0cf9bda07b3cfedd622852d3908ffc633e782d5ea6a3a84746c75a9addb9f065",
+          "git_blob": "ba77eb861b52d7980103b50f4a106db5cf420f47"
+        }
+      ]
+    },
+    {
+      "id": "tind-msu-original-source-receiving",
+      "label": "Original MSU source cases and complete institutional receiving",
+      "repository": "woahwhattheheck/commons",
+      "path": "opportunities/discoverygarden_msu2026112_20261012/tind-operator/OPERATOR_CASES.md",
+      "kind": "blob",
+      "commit": "8d3106025c2640253d7d18f4414376189b1fcca0"
+    },
+    {
+      "id": "tind-institutional-repository-contribution",
+      "label": "Repository commissioning, recurring service and funded contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "products/tind/GRANT.md",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "0dd5dff9eb5b9883b3e1dfee07efe93bf9bb5817",
+          "bytes": 16673,
+          "sha256": "c9d47c2a806c99bde51bb992595ef3712ceb41aca63e8b3fce97d1bbbbcca961",
+          "git_blob": "0b57f223758b954af34776acf6b3b206d4b96b58"
+        },
+        {
+          "commit": "81de07473f9596312ee47c1ff81e2f8dbb1371c8",
+          "bytes": 25415,
+          "sha256": "da07ea02f04ed37f139e43229c1f491a96db0b737a32ad80e72b71f1d940143e",
+          "git_blob": "96a3eced7595bb6108897d85d90d044b7f5f05e8"
+        }
+      ]
+    },
+    {
+      "id": "tind-original-document-receiving",
+      "label": "Original document acquisition, exact-byte adoption and access review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/source_files.py",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "0dd5dff9eb5b9883b3e1dfee07efe93bf9bb5817",
+          "bytes": 31976,
+          "sha256": "dd0846e5b14d51aab690a26be8be5bbad10f4a2ab85a60caea8a053c2dd8dbbf",
+          "git_blob": "01e38c5e9db0caff04d0c5fa3f1dd48e443d5020"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "tind-production-wave-receiving",
+      "label": "Saved production census, wave decisions and original-batch receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/production_waves.py",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "0dd5dff9eb5b9883b3e1dfee07efe93bf9bb5817",
+          "bytes": 23579,
+          "sha256": "ae5802951940d9853fddb49ecd8eab9222a8c77b06fb06015ba0267d774df711",
+          "git_blob": "55c953d6ee7b7f343bf2935b429bb459a612e00f"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "tind-destination-job-receiving",
+      "label": "Original destination-job observations and reviewed native results",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/native_jobs.py",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "0dd5dff9eb5b9883b3e1dfee07efe93bf9bb5817",
+          "bytes": 25047,
+          "sha256": "5b6ddb2dfdd2e0f7aea4f66bcee0fb209b59f7591d0c2b7342b563f7c40a5302",
+          "git_blob": "118a895d8781a9a7e5fd7a555be5ff1ea99371ce"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "tind-customer-agent-client",
+      "label": "Typed customer client and durable original-operation recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/client.mjs",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "0dd5dff9eb5b9883b3e1dfee07efe93bf9bb5817",
+          "bytes": 27444,
+          "sha256": "0ccead5a15fe3e7a9cdabe9214fbe0d3b27bc735c8d0e0cf45a680d65e102883",
+          "git_blob": "813006f1f7bab370fb9eb893946a182e47d1f6ab"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "tind-customer-agent-runtime",
+      "label": "Same-workspace Merchant tools and complete retained-file delivery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/merchant.mjs",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "0dd5dff9eb5b9883b3e1dfee07efe93bf9bb5817",
+          "bytes": 19644,
+          "sha256": "b74ad7164798761fa7c92071e201c7f5184282a74eb45dd1bce4cc54455f7c33",
+          "git_blob": "e46caa6212a4da7fdc6311895cafa4d67702d060"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "tind-customer-agent-setup",
+      "label": "Private original-workspace connection and source-owned host setup",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/MERCHANT_SETUP.md",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "0dd5dff9eb5b9883b3e1dfee07efe93bf9bb5817",
+          "bytes": 2663,
+          "sha256": "997a54e756254272d7e00b3861b822a8488e81253135d38b78af11c41ff6fa59",
+          "git_blob": "36067a780ef5a29ce136e858cde99aba51a743be"
+        }
+      ],
+      "required": false
+    }
+  ]
+}

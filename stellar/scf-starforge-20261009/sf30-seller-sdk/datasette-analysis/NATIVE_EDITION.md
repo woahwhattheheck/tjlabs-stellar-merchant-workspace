@@ -100,3 +100,18 @@ and reopens the same saved query and result.
 Keep the source edition and both received workspaces in the customer's retained
 operation directory. Every original edition member and the full handover are
 included in the Analysis source document and its workspace transfer.
+
+
+## BDNB territory and complete customer receiving
+
+The [BDNB product entry](../../../../products/ntico/bdnb-territory/README.md) composes
+original publisher files, explicit source dictionaries, territory selections,
+edition correspondence, individual reviews and complete Analysis reports,
+workbooks, streaming annexes and workspace archives in this same application.
+The mounted **BDNB territory** operator and exact CLI requests share its native
+database and request history.
+
+Use the [complete receiving programme](../../../../products/ntico/bdnb-territory/RECEIVING.md)
+for producer → customer review → returned archive → independent reopen, and the
+[original workflow profile](../../../../products/ntico/bdnb-territory/WORKFLOW.md)
+for commissioned API/Kestra/JMS delivery and its real recipient receipt.
