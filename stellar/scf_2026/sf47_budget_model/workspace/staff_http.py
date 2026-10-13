@@ -22,6 +22,7 @@ FINANCE_COMMANDS = {
 REVIEW_COMMANDS = {"review", "work.accept", "work.reopen",
                    "implementation.prepare", "cohort.prepare", "completion.prepare", "completion.corrections.save"}
 READ_POSTS = {
+    "gravitee/inspect", "gravitee/member", "gravitee/template", "gravitee/prepare",
     "risk-register-seed", "risk-register-preview", "risk-register-request",
     "installation-return-seed", "installation-return-preview", "installation-return-review-seed",
     "installation-return-review-preview",

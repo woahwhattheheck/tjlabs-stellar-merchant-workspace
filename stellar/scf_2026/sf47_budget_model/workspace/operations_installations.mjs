@@ -1,3 +1,4 @@
+import {mountGraviteeSourceDesk} from './operations_gravitee.mjs';
 // Complete customer installations in the original SF47 operating case.
 import {mountCommercialInstallations} from './operations_commercial_installations.mjs';
 import {mountInstallationSources} from './operations_installation_sources.mjs';
@@ -43,7 +44,8 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   const root=document.createElement('section');root.className='installation-desk';
   const commercialRoot=document.createElement('section');commercialRoot.hidden=true;
   const sourceRoot=document.createElement('section');sourceRoot.hidden=true;
-  root.setAttribute('aria-label','Customer installations');container.replaceChildren(commercialRoot,sourceRoot,root);
+  const graviteeRoot=document.createElement('section');graviteeRoot.hidden=true;
+  root.setAttribute('aria-label','Customer installations');container.replaceChildren(commercialRoot,sourceRoot,graviteeRoot,root);
   if(!document.querySelector('link[data-installation-style]')){
     const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_installations.css';
     link.dataset.installationStyle='true';document.head.append(link);
@@ -68,7 +70,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     workflowIntake:{open:false,sourceId:'',target:'new',cycleIds:[]},
     effortPlanning:{open:false,forecastId:'',name:'',note:'',taskInstallations:{},forecast:null,installationChoices:[],lastSelection:null},commercialOpen:false,commercialIntake:{}}))if(!Object.hasOwn(session,key))session[key]=value;
   let active=true,hostBusy=false,busy=false,generation=0,caseValue=current,selectedRow=null,historyRows=[],nextBefore=null;
-  let preview=null,previewDraft=null,loading=false,workshareInventory=null,workflowInventory=null,commercialView=null,sourceView=null;
+  let preview=null,previewDraft=null,loading=false,workshareInventory=null,workflowInventory=null,commercialView=null,sourceView=null,graviteeView=null;
   const $=selector=>root.querySelector(selector),available=()=>active&&root.isConnected;
   const draft=()=>session.draftKey?session.drafts[session.draftKey]:null;
   const editable=()=>caseValue.program.state==='OPEN'&&!hostBusy;
@@ -351,6 +353,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       button('Receive accepted quotation','commercial-open','',!editable()||!!session.pending||!!session.accepted)+
       button('Receive commercial Workshare','workshare-open','',!editable()||!!session.pending||!!session.accepted)+
       button('Prepare original source workshares','source-open','',!editable()||!!session.pending||!!session.accepted)+
+      button('Gravitee API source','gravitee-open','',!editable()||!!session.pending||!!session.accepted)+
       button('Receive customer periods','workflow-open','',!editable()||!!session.pending||!!session.accepted)+
        button('Remaining work forecast','effort-planning-show'))+
       '<p class="installation-message" role="'+(session.error?'alert':'status')+'" aria-live="polite">'+esc(session.error||session.notice)+'</p>'+
@@ -379,6 +382,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       '</div></div><input type="file" data-installation-file hidden accept=".json,application/json">';
     controls();
     sourceView?.setHostBusy(hostBusy||busy||!!session.inflight);sourceView?.refresh();
+    graviteeView?.setHostBusy(hostBusy||busy||!!session.inflight);graviteeView?.refresh();
     commercialRoot.hidden=!session.commercialOpen;
     if(session.commercialOpen){ensureCommercial();commercialView.refresh();}
   }
@@ -501,6 +505,37 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     });
     sourceView.ready.catch(error=>{if(available())failure(error);});
     return sourceView;
+  }
+
+  function ensureGraviteeDesk(){
+    if(graviteeView)return graviteeView;
+    graviteeView=mountGraviteeSourceDesk(graviteeRoot,{
+      context:()=>({caseId,planId:caseValue.program.planId,createdAt:caseValue.program.createdAt,version:caseValue.program.version}),
+      caseData:()=>caseValue,api,saveApi,recordingActor,readOnlyReason:commercialReadOnly,
+      refreshCase:reloadCase,close:()=>root.scrollIntoView({block:'start'}),
+      currentDraft:()=>{capture();persist();const d=session.mode==='edit'?draft():null;return d?copy(d):null;},
+      receiveDraft:async input=>{
+        const reason=commercialReadOnly();if(reason)return {applied:false,message:reason};
+        capture();persist();
+        const prepared=input.result?.prepared,reviewed=input.result?.nativePreview;
+        if(input.scope?.caseId!==caseId||input.scope.version!==caseValue.program.version||
+           reviewed?.source.caseId!==caseId||reviewed.source.version!==caseValue.program.version||
+           !same(reviewed.document,prepared?.document))
+          return {applied:false,message:'Reopen the current complete case and review this exact source preparation.'};
+        const key='gravitee-'+crypto.randomUUID(),doc=prepared.document;
+        session.drafts[key]={key,token:crypto.randomUUID(),label:doc.name+' · Gravitee source',
+          installationId:null,expectedRevision:0,document:copy(doc),
+          note:'Receive complete Gravitee cohort '+input.result.snapshot.selectedCohortSource.sha256,dirty:true};
+        session.draftKey=key;session.mode='edit';session.selected=null;selectedRow=null;
+        preview=null;previewDraft=null;loading=false;
+        session.notice='Received the complete selected API source as a separate Installation draft. Review and save its original native edition.';
+        persist();render();
+        let saved;try{saved=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch{}
+        if(saved?.drafts?.[key]?.token!==session.drafts[key].token)return {applied:false,message:'The complete draft is open. Download it or recover browser persistence before leaving.'};
+        root.scrollIntoView({block:'start'});return {applied:true,draftKey:key};
+      }
+    });
+    graviteeView.ready.catch(error=>{if(available())failure(error);});return graviteeView;
   }
 
   const sameWorkshareSource=(a,b)=>['sourceId','expectedSourceSha256','packetSourceId','expectedPacketSha256'].every(key=>a?.[key]===b?.[key]);
@@ -1011,6 +1046,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       if(action==='queued-open'&&session.requestOpen)return openQueueRequest(session.requestOpen);
       if(action==='new')return newDraft();
       if(action==='source-open'){capture();persist();const view=ensureSourceDesk();await view.open();return;}
+      if(action==='gravitee-open'){capture();persist();const view=ensureGraviteeDesk();await view.open();return;}
       if(action==='workflow-open')return openWorkflow();
       if(action==='workflow-close'){capture();session.workflowIntake.open=false;persist();return;}
       if(action==='workflow-sources'){capture();persist();onSources?.();return;}
@@ -1149,6 +1185,6 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   render();
   const ready=initialize().catch(error=>{failure(error);});
-  return {ready,setHostBusy(value){hostBusy=!!value;controls();commercialView?.refresh();sourceView?.setHostBusy(hostBusy||busy||!!session.inflight);},
-    dispose(){capture();active=false;++generation;commercialView?.destroy();sourceView?.dispose();persist();}};
+  return {ready,setHostBusy(value){hostBusy=!!value;controls();commercialView?.refresh();sourceView?.setHostBusy(hostBusy||busy||!!session.inflight);graviteeView?.setHostBusy(hostBusy||busy||!!session.inflight);},
+    dispose(){capture();active=false;++generation;commercialView?.destroy();sourceView?.dispose();graviteeView?.dispose();persist();}};
 }
