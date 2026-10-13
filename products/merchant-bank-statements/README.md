@@ -1,8 +1,10 @@
 # Bank statements and cash reconciliation
 
-The bank desk connects original OFX, QFX and explicitly mapped CSV statements to the merchant workspace's existing customer receipts, invoices and refunds. It retains the original files, reviews overlapping transactions and corrections, records exact split postings, and saves a balanced close with a complete accountant handover.
+The bank desk connects original CAMT.053, OFX, QFX and explicitly mapped CSV statements to the merchant workspace's existing customer receipts, invoices and refunds. It retains the original files, reviews overlapping transactions and corrections, records exact split postings, and saves a balanced close with a complete accountant handover.
 
 Follow [Install and move the complete bank application](INSTALLATION.md) for source receiving, the selected runtime profile and managed Applications. The [operator handover](HANDOVER.md) connects original statement receiving, customer remittances, a retained account close and continued work; the [maintained complete example](EXAMPLE.md) follows its original account and saved sources.
+
+Read [The bank statement that balanced but could not close](CAMT053_ENGINEERING.md) for the CAMT source model and its read-only Node example. It follows original bank-published cases through entry/detail amounts, reversal direction, page completeness and an account with no entries.
 
 Open **Bank reconciliation** from Receivables, launch **Bank statement reconciliation** in Applications, or run:
 
