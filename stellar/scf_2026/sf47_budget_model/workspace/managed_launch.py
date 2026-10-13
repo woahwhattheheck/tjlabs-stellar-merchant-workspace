@@ -271,7 +271,7 @@ BOOT_FILES = (
     "operations_buyer.css",
     "operations_settlements.mjs",
     "operations_settlements.css",
-    "operations_completion.mjs", "operations_completion_corrections.py", "operations_completion_corrections.mjs", "COMPLETION_CORRECTIONS.md",
+    "operations_completion.mjs", "operations_completion_corrections.py", "operations_completion_corrections.mjs", "COMPLETION_CORRECTIONS.md", "operations_completion_installations.py", "operations_completion_installations.mjs", "INSTALLATION_COMPLETION.md",
     "operations_completion.css",
     "operations_calendar.mjs",
     "operations_calendar.css",
