@@ -151,7 +151,11 @@ async function exportHtml() {
   await backupNow(); await validateCorrectionProposal(proposal);
   document.querySelector('#dcat-correction-return').textContent = correctionProposalPayload(proposal);
   const clone = document.documentElement.cloneNode(true);
-  clone.querySelector('#recipient-app').replaceChildren();
+  const portableApp = clone.querySelector('#recipient-app');
+  portableApp.replaceChildren();
+  // Export runs inside protect(), which temporarily makes the live app inert.
+  // The saved document must reopen with its complete editor available.
+  portableApp.removeAttribute('inert');
   clone.querySelector('#recipient-notice').replaceChildren();
   download('<!doctype html>\n' + clone.outerHTML + '\n', 'catalogue-correction-return-' + proposal.proposalId + '.html', 'text/html');
   dirty = false;
