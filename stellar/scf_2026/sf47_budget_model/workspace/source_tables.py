@@ -157,6 +157,8 @@ def register_static(routes):
         "/source-tables-core.mjs": ("source-tables-core.mjs", "text/javascript; charset=utf-8"),
         "/source-tables.css": ("source-tables.css", "text/css; charset=utf-8"),
         "/source-tables-guide.md": ("SOURCE_TABLES.md", "text/markdown; charset=utf-8"),
+        "/stellar-forge/developer-site/dist/source-document-tables.mjs": ("../../../../stellar-forge/developer-site/dist/source-document-tables.mjs", "text/javascript; charset=utf-8"),
+        "/stellar-forge/developer-site/dist/source-table-intake.mjs": ("../../../../stellar-forge/developer-site/dist/source-table-intake.mjs", "text/javascript; charset=utf-8"),
         "/stellar-forge/developer-site/dist/source-table-workspace.mjs": ("../../../../stellar-forge/developer-site/dist/source-table-workspace.mjs", "text/javascript; charset=utf-8"),
         "/stellar-forge/developer-site/dist/onboarding.mjs": ("../../../../stellar-forge/developer-site/dist/onboarding.mjs", "text/javascript; charset=utf-8"),
         "/stellar-forge/developer-site/dist/offer.mjs": ("../../../../stellar-forge/developer-site/dist/offer.mjs", "text/javascript; charset=utf-8"),
