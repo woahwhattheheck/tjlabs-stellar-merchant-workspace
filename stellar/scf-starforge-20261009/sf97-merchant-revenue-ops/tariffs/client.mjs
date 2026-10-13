@@ -232,6 +232,13 @@ export class TariffClient {
     return this.#request('GET', path, undefined, options, name);
   }
 
+  /** Full saved-plan HTML or detailed CSV, using the original selected plan. */
+  report(planId, name = 'report.html', options) {
+    if (!['report.html','band-charges.csv','thresholds.csv'].includes(name))
+      throw new TypeError('Choose report.html, band-charges.csv or thresholds.csv');
+    return this.download(planId, name, options);
+  }
+
   bundle(options = {}) {
     const query = options.selectionRequestId === undefined ? '' : '?' + new URLSearchParams({
       selectionRequestId: nonempty(options.selectionRequestId, 'selectionRequestId')

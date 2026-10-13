@@ -65,11 +65,11 @@ function ownedReply(value,workspace) {
   return value;
 }
 function fileSelection(kind,id) {
-  return kind==='plan'?{planId:id}:kind==='portfolio'?{portfolioSha256:id}:
+  return (kind==='plan'||kind==='report')?{planId:id}:kind==='portfolio'?{portfolioSha256:id}:
     kind==='review'?{version:id}:{decision:id};
 }
 function fileOperation(kind) {
-  return kind==='plan'?'download':kind==='portfolio'?'bundle':
+  return kind==='plan'?'download':kind==='report'?'report':kind==='portfolio'?'bundle':
     kind==='review'?'downloadPricing':'downloadRepricing';
 }
 function checkedManifest(info,kind,id) {
@@ -78,7 +78,7 @@ function checkedManifest(info,kind,id) {
       file?.name!=='manifest.json'||!Number.isSafeInteger(file.bytes)||file.bytes<1||
       file.bytes>MAX_FILE_BYTES||!HASH.test(file.sha256??''))
     throw fail('MANIFEST_CHANGED','Inspect the complete original manifest for this selected artifact.');
-  const key=kind==='plan'?'planId':kind==='portfolio'?'portfolioSha256':
+  const key=(kind==='plan'||kind==='report')?'planId':kind==='portfolio'?'portfolioSha256':
     kind==='review'?'version':'decision';
   if(manifest[key]!==id)
     throw fail('MANIFEST_CHANGED','The original manifest belongs to another saved artifact.');
@@ -184,11 +184,12 @@ export class MerchantTariffClient {
     const bytes=Buffer.concat(chunks,offset);
     if(bytes.length!==file.bytes||sha(bytes)!==file.sha256)
       throw fail('FILE_CHANGED','The complete downloaded bytes differ from their original SHA-256.');
-    const contentType=name.endsWith('.json')?'application/json':name.endsWith('.csv')?'text/csv; charset=utf-8':'application/octet-stream';
+    const contentType=name.endsWith('.json')?'application/json':name.endsWith('.csv')?'text/csv; charset=utf-8':name.endsWith('.html')?'text/html; charset=utf-8':'application/octet-stream';
     return {filename:name,contentType,bytes,sha256:file.sha256,manifestSha256:info.manifestFile.sha256,
       headers:Object.freeze({'content-length':String(file.bytes),'x-content-sha256':file.sha256})};
   }
   download(planId,name,options){return this.#artifact('plan',checkedId(planId,'planId'),name,options);}
+  report(planId,name='report.html',options){return this.#artifact('report',checkedId(planId,'planId'),name,options);}
   downloadRepricing(decision,name,options){return this.#artifact('decision',checkedId(decision,'decision'),name,options);}
   downloadPricing(version,name,options){return this.#artifact('review',checkedId(version,'saved version'),name,options);}
   async bundle(options={}) {
@@ -214,6 +215,21 @@ function parsePlanManifest(bytes,id) {
     const file=value.files[name];
     if(!plain(file)||!Number.isSafeInteger(file.bytes)||file.bytes<0||file.bytes>MAX_PLAN_BYTES||
         !HASH.test(file.sha256??''))throw fail('MANIFEST_CHANGED','Retain all three original tariff plan files.');
+    return {name,bytes:file.bytes,sha256:file.sha256};
+  });
+  return {...value,exportId:id,files};
+}
+function parseReportManifest(bytes,id) {
+  const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+  const names=['report.html','band-charges.csv','thresholds.csv','plan.json','tariffs.json','comparison.csv'];
+  if(value?.schema!=='stellar-forge.merchant-tariff-report-files.v1'||value.planId!==id||
+      !UUID.test(value.version??'')||!HASH.test(value.tariffReviewSha256??'')||!plain(value.files)||
+      Object.keys(value.files).length!==names.length)
+    throw fail('MANIFEST_CHANGED','Use the complete saved-plan report manifest with all six original files.');
+  const files=names.map(name=>{
+    const file=value.files[name];
+    if(!plain(file)||!Number.isSafeInteger(file.bytes)||file.bytes<0||file.bytes>MAX_FILE_BYTES||
+        !HASH.test(file.sha256??''))throw fail('MANIFEST_CHANGED','Retain the complete original report and its plan files.');
     return {name,bytes:file.bytes,sha256:file.sha256};
   });
   return {...value,exportId:id,files};
@@ -271,7 +287,7 @@ function retainedClient(original,workspace,kind) {
 function downloader(workspace,kind) {
   checkedAlias(workspace);
   return createRetainedDownload({manifestName:'manifest.json',
-    parseManifest:kind==='plan'?parsePlanManifest:kind==='review'?parseReviewManifest:parsePortfolioManifest,
+    parseManifest:kind==='plan'?parsePlanManifest:kind==='report'?parseReportManifest:kind==='review'?parseReviewManifest:parsePortfolioManifest,
     maximumBytes:kind==='plan'?MAX_PLAN_BYTES:MAX_FILE_BYTES,
     maximumManifestBytes:kind==='review'?MAX_FILE_BYTES:65536,
     maximumCheckpointBytes:kind==='review'?MAX_FILE_BYTES:1024*1024,nestedFiles:kind==='review',
@@ -279,8 +295,8 @@ function downloader(workspace,kind) {
     resultSchema:'stellar-forge.tariff-'+kind+'-download.v1',
     toolPrefix:'merchant_pricing_tariff',errorPrefix:'PRICING_TARIFF',
     clientName:'starforge-merchant-tariffs',
-    validateExportId:value=>checkedId(value,kind==='portfolio'?'portfolioSha256':kind==='plan'?'planId':'version',kind==='portfolio'?HASH:UUID),
-    describe:value=>kind==='plan'?{planId:value.planId,version:value.version,tariffReviewSha256:value.tariffReviewSha256}:
+    validateExportId:value=>checkedId(value,kind==='portfolio'?'portfolioSha256':(kind==='plan'||kind==='report')?'planId':'version',kind==='portfolio'?HASH:UUID),
+    describe:value=>(kind==='plan'||kind==='report')?{planId:value.planId,version:value.version,tariffReviewSha256:value.tariffReviewSha256}:
       kind==='review'?{version:value.version,sellerSha256:value.sellerSha256,snapshotSha256:value.snapshotSha256}:
       {portfolioSha256:value.portfolioSha256,planCount:value.planCount,selectionCount:value.selectionCount},
     connect:async options=>retainedClient(await connected(options,workspace),workspace,kind)});
@@ -316,4 +332,12 @@ export function downloadMerchantTariffPricingReview({workspace,version,...option
 }
 export function inspectMerchantTariffPricingReview({workspace,version,...options}={}) {
   checkedId(version,'saved Pricing version');return downloader(workspace,'review').inspect({...options,exportId:version});
+}
+
+/** Receives every saved report file through the original private retained downloader. */
+export function downloadMerchantTariffReport({workspace,planId,...options}={}) {
+  checkedId(planId,'planId');return downloader(workspace,'report').download({...options,exportId:planId});
+}
+export function inspectMerchantTariffReport({workspace,planId,...options}={}) {
+  checkedId(planId,'planId');return downloader(workspace,'report').inspect({...options,exportId:planId});
 }
