@@ -7,6 +7,10 @@ export type RequestOptions={signal?:AbortSignal};
 export type BankTransactionStatus='POSTED'|'OVERLAP_REVIEW'|'CONFLICT'|'CORRECTION_REVIEW'|'INVALID'|'FOREIGN_CURRENCY'|'DUPLICATE'|'SUPERSEDED'|'DELETED'|'EXCLUDED';
 export interface BankAccount {id:string;name:string;currency:Currency;sourceIdentitySha256:string;sourceIdentity?:BankSourceAccount['identityBasis'];receiptIntakeAccountId?:string;note:string;createdAt:string;actor:string;
   importCount?:number;postedCount?:number;matchedCount?:number;reviewCount?:number;activeCloseCount?:number}
+export type CompactSourceRow=Omit<BankStatementRow,'original'>;
+/** Full CAMT original nodes remain in the retained parsed report; compact state keeps the complete entry metadata. */
+export type CompactExcludedSourceRow=Omit<BankStatementSourceReport['statements'][number]['excludedRows'][number],'original'|'row'>&{
+  original?:BankStatementSourceReport['statements'][number]['excludedRows'][number]['original'];row?:CompactSourceRow};
 export interface SourceCopy {importId:string;sourceRowId:string;source:SourceLocation}
 export interface PostingInput {kind:'RECEIPT'|'REFUND'|'FEE'|'EXPENSE'|'INCOME'|'INTEREST'|'TRANSFER'|'CAPITAL';
   amount:string;receiptId?:string;refundId?:string;targetId?:string;coverageKey?:string;note?:string;ledgerCode?:string;reference?:string}
@@ -28,12 +32,13 @@ export interface BankTransaction extends Omit<BankStatementRow,'status'|'source'
 }
 export interface FileDescriptor {name:string;type:string;bytes:number;sha256:string}
 export interface BankImport {id:string;accountId:string;statementId:string;kind:string;file:BankStatementSourceReport['file'];
+  camtMessage?:Omit<NonNullable<BankStatementSourceReport['camt']>,'sourceTree'>;camt?:BankStatementSourceReport['statements'][number]['camt'];
   format:BankStatementSourceInput['format'];reviewSha256:string;sourceAccount:BankStatementSourceReport['statements'][number]['account'];
   interpretation:BankStatementSourceReport['interpretation'];period:BankStatementSourceReport['statements'][number]['period'];
   balances:BankStatementSourceReport['statements'][number]['balances'];issues:BankStatementSourceReport['issues'];
-  sourceSummary:BankStatementSourceReport['statements'][number]['summary'];excludedRows:BankStatementSourceReport['statements'][number]['excludedRows'];
+  sourceSummary:BankStatementSourceReport['statements'][number]['summary'];excludedRows:CompactExcludedSourceRow[];
   createdAt:string;actor:string;requestId:string;files:Record<string,FileDescriptor>;rowCount?:number;pendingCount?:number;
-  rowIds?:string[];pendingRows?:BankStatementRow[];supersedesImportId?:string|null}
+  rowIds?:string[];pendingRows?:CompactSourceRow[];supersedesImportId?:string|null}
 export interface BankClose {id:string;schema:string;accountId:string;name:string;note:string;from:string;until:string;
   openingBalance:string;closingBalance:string;currency:Currency;createdAt:string;actor:string;requestId:string;reviewSha256:string;
   transactionIds:string[];matchIds:string[];files:Record<string,FileDescriptor>;
@@ -49,10 +54,11 @@ export interface BankState {schema:string;revision:number;workspaceId:string;sou
   customers:Array<{id:string;name:string;reference:string;email?:string;address?:string;[key:string]:unknown}>;
   periodCloses:Array<{id:string;name:string;period:Record<string,unknown>;runId:string;exportId:string;createdAt:string}>;
   history:Array<Record<string,unknown>>}
-export interface SourcePreview extends Omit<BankStatementSourceReport,'bytes'|'statements'> {
+export interface SourcePreview extends Omit<BankStatementSourceReport,'bytes'|'statements'|'camt'> {
+  camt?:Omit<NonNullable<BankStatementSourceReport['camt']>,'sourceTree'>;
   revision:number;workspaceId:string;reviewSha256:string;
-  statements:Array<Omit<BankStatementSourceReport['statements'][number],'rows'|'pendingRows'|'source'> & {
-    sample:Array<Omit<BankStatementRow,'original'>>;pendingCount:number}>
+  statements:Array<Omit<BankStatementSourceReport['statements'][number],'rows'|'pendingRows'|'source'|'excludedRows'> & {
+    excludedRows:CompactExcludedSourceRow[];sample:CompactSourceRow[];pendingCount:number}>
 }
 export interface TransactionPage {items:BankTransaction[];total:number;offset:number;limit:number;revision:number}
 export interface ReceiptCoverageChoice {key:string;amount:string;sources:BankReceiptSourceBinding[]}
