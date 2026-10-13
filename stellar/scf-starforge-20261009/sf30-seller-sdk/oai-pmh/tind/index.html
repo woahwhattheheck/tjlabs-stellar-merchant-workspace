@@ -27,7 +27,8 @@
   <button type="button" data-tab="receiving">Native export and files</button>
   <button type="button" data-tab="production">Production waves</button>
   <button type="button" data-tab="batches">Batches and delivery</button>
-  <button type="button" data-tab="handover">Editable handover</button>
+  <button type="button" data-tab="destination-jobs">Destination jobs</button>
+<button type="button" data-tab="handover">Editable handover</button>
 </nav>
 <main id="main">
 <section data-panel="overview">
@@ -299,6 +300,61 @@
       </form>
     </section>
   </div>
+</section>
+<section data-panel="destination-jobs" hidden>
+  <section class="panel">
+    <h2>Continue the original destination job</h2>
+    <p>Bind the actual institution job to its retained batch transfer. Read its current result or receive the original response from the institution's existing browser. Each observation stays with the original request and full migration.</p>
+    <form id="destination-job-bind">
+      <label>Original transfer operation ID<input name="transferId" required></label>
+      <div class="grid two"><label>Actual native job ID<input name="nativeJobId" required></label><label>Original job GET URL<input name="url" type="url" required></label></div>
+      <label>Original native documentation URL<input name="documentation" type="url" required></label>
+      <label>Literal non-secret GET headers<textarea name="headers" rows="3" spellcheck="false">{}</textarea></label>
+      <label>Existing authorization environment variable<input name="authorizationEnvironment" autocomplete="off"></label>
+      <div class="grid two"><label>Operator<input name="reviewer" required></label><label>Original job/contract source note<input name="note" required></label></div>
+      <button type="submit">Save this original job binding</button>
+    </form>
+  </section>
+  <section class="panel">
+    <div class="section-heading"><h2>Saved destination jobs</h2><button id="destination-job-refresh" type="button">Refresh saved jobs</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Original job</th><th>Batch file</th><th>Binding</th><th>Open</th></tr></thead><tbody id="destination-job-list"></tbody></table></div>
+    <div class="actions"><button id="destination-job-prev" type="button">Previous jobs</button><span id="destination-job-page"></span><button id="destination-job-next" type="button">Next jobs</button></div>
+  </section>
+  <section class="panel" id="destination-job-detail" hidden>
+    <h2 id="destination-job-heading"></h2><p id="destination-job-context" class="mono"></p>
+    <div class="actions"><button id="destination-job-read" type="button">Read the original job now</button><a id="destination-job-export" class="button secondary">Download complete job history</a></div>
+    <p>A read only observes the existing job. Receive the actual record outcomes below, then continue the original batch's destination/file reconciliation.</p>
+    <details><summary>Receive the existing source browser's original response</summary>
+      <form id="destination-job-import">
+        <label>Complete original response file<input name="file" type="file" required></label>
+        <label>Original HTTP receipt JSON<textarea name="transport" rows="7" spellcheck="false" required></textarea></label>
+        <p class="muted">The receipt retains method GET, exact requested url, finalURL, status, original headers as pairs and observedAt with timezone. The complete encoded save envelope must fit within 8 MiB.</p>
+        <div class="grid two"><label>Receiving operator<input name="reviewer" required></label><label>Source acquisition note<input name="note" required></label></div>
+        <button type="submit">Receive unchanged response bytes</button>
+      </form>
+    </details>
+    <h3>Original observation history</h3>
+    <div class="table-wrap"><table><thead><tr><th>Observation</th><th>HTTP / read result</th><th>Original bytes</th><th>Review</th></tr></thead><tbody id="destination-job-observations"></tbody></table></div>
+    <div class="actions"><button id="destination-observation-prev" type="button">Previous observations</button><span id="destination-observation-page"></span><button id="destination-observation-next" type="button">Next observations</button></div>
+    <section id="destination-response" hidden>
+      <h3>Selected original response</h3><p id="destination-response-identity" class="mono"></p><a id="destination-response-download">Download unchanged original response</a>
+      <details><summary>Read complete original UTF-8 response</summary><pre id="destination-response-body"></pre></details>
+      <form id="destination-job-review">
+        <div class="grid two"><label>Observed job state<select name="status"><option value="">Choose the actual observed state</option><option value="submitted">Submitted</option><option value="completed">Completed</option><option value="failed">Failed</option><option value="unknown">Unknown</option></select></label>
+        <label>Record result source<select name="mode"><option value="reviewed">Explicitly reviewed original results</option><option value="json">Declared JSON result mapping</option></select></label></div>
+        <label>Reviewed record results<textarea name="records" rows="8" spellcheck="false">[]</textarea></label>
+        <p class="muted">Each result uses its exact original source identifier and accepted, failed, pending or withdrawn status. Accepted/withdrawn rows include nativeId; failures include the original error. Keep unreported records absent.</p>
+        <label>Optional original JSON mapping<textarea name="mapping" rows="7" spellcheck="false">{}</textarea></label>
+        <p class="muted">For JSON, supply records, identifier, status and optional nativeId/error JSON Pointers, plus statuses mapping the actual returned strings to their reviewed meanings. Empty pointer selects the complete value. Paths are data, never executable code.</p>
+        <div class="grid two"><label>Reviewing operator<input name="reviewer" required></label><label>Result interpretation note<input name="note" required></label></div>
+        <button type="submit">Preview selected original outcomes</button>
+        <button id="destination-job-receive" type="button" disabled>Receive these reviewed outcomes</button>
+      </form>
+      <div id="destination-review-summary" role="status"></div>
+      <div class="table-wrap"><table><thead><tr><th>Source identifier</th><th>Native record</th><th>Result</th><th>Original error</th></tr></thead><tbody id="destination-reviewed-records"></tbody></table></div>
+    </section>
+    <h3>Saved receiving reviews</h3><div id="destination-job-reviews"></div>
+  </section>
 </section>
 <section data-panel="handover" hidden>
   <section class="panel">

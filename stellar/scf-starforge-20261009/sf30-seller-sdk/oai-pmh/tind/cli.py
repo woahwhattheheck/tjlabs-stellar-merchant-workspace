@@ -67,6 +67,13 @@ def main():
     command = sub.add_parser("native-send")
     command.add_argument("--project", required=True); command.add_argument("--id", required=True)
     command.add_argument("--request", required=True); command.add_argument("--authorization-env")
+    command = sub.add_parser("destination-jobs"); command.add_argument("--project", required=True)
+    command.add_argument("--id"); command.add_argument("--offset", type=int, default=0); command.add_argument("--limit", type=int, default=50)
+    command = sub.add_parser("job-read"); command.add_argument("--project", required=True)
+    command.add_argument("--job", required=True); command.add_argument("--id", required=True)
+    command = sub.add_parser("job-preview"); command.add_argument("--project", required=True); command.add_argument("--input", required=True)
+    command = sub.add_parser("job-export"); command.add_argument("--project", required=True)
+    command.add_argument("--job", required=True); command.add_argument("--out", required=True)
     command = sub.add_parser("source-downloads"); command.add_argument("--project", required=True)
     command.add_argument("--id"); command.add_argument("--offset", type=int, default=0); command.add_argument("--limit", type=int, default=50)
     command = sub.add_parser("source-download-run"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
@@ -146,6 +153,20 @@ def main():
                 elif args.command == "production-export":
                     from production_waves import write_export
                     result = write_export(workspace, args.project, args.id, args.out)
+                elif args.command == "destination-jobs":
+                    from native_jobs import pages, view
+                    with workspace.mutex:
+                        result = view(workspace, args.project, args.id, args.offset, args.limit) if args.id else pages(workspace, args.project, offset=args.offset, limit=args.limit)
+                elif args.command == "job-read":
+                    from native_jobs import read
+                    result = read(workspace, args.project, args.job, args.id)
+                elif args.command == "job-preview":
+                    from native_jobs import preview
+                    with workspace.mutex:
+                        result = preview(workspace, args.project, document(args.input))
+                elif args.command == "job-export":
+                    from native_jobs import write_export
+                    result = write_export(workspace, args.project, args.job, args.out)
                 elif args.command == "source-downloads":
                     from source_files import view, list_acquisitions
                     with workspace.mutex:

@@ -157,6 +157,7 @@ function tab(name) {
   $$('[data-tab]').forEach(button => { if (button.dataset.tab === name) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current'); });
   if (name === 'records' && data?.project) loadRecords().catch(error => message(error.message,true));
   if (name === 'receiving' && data?.project) Promise.all([loadFiles(),loadAcquisitions()]).catch(error => message(error.message,true));
+  if (name === 'destination-jobs') loadDestinationJobs().catch(error => message(error.message,true));
   if (name === 'production') loadProduction().catch(error => message(error.message,true));
   if (name === 'source-cases') loadSourceCollections().catch(error => message(error.message,true));
 }
@@ -265,6 +266,7 @@ async function reload({preserve=false}={}) {
   if(sourceContext!==projectId){sourceContext=projectId;sourceCollection=null;sourceCollections=null;sourcePlan=null;sourcePlanDirty=false;sourceCollectionOffset=0;$('#source-case-detail').hidden=true;}
   if(!$('[data-panel="source-cases"]').hidden) await loadSourceCollections();
   if(!$('[data-panel="production"]').hidden) await loadProduction();
+  if(!$('[data-panel="destination-jobs"]').hidden) await loadDestinationJobs();
 }
 
 function sourceQuery(values={}) { return new URLSearchParams({project:projectId,...values}); }
@@ -466,7 +468,7 @@ $$('[data-tab]').forEach(button=>button.addEventListener('click',()=>tab(button.
 $$('.now-field').forEach(input=>{input.value=now();});
 $('#project-select').addEventListener('change',async event=>{
   const next=event.target.value;
-  if((recordDirty||mappingDirty||sourcePlanDirty)&&!confirm('Discard unsaved form changes and open this migration?')){event.target.value=projectId;return;}
+  if((recordDirty||mappingDirty||sourcePlanDirty||destinationDirty)&&!confirm('Discard unsaved form changes and open this migration?')){event.target.value=projectId;return;}
   if(pending){event.target.value=projectId;message('Resume the saved operation before changing migrations.',true);return;}
   projectId=next;selected.clear();offset=0;query='';recordDirty=false;mappingDirty=false;currentRecord=null;
   filePage=null;fileOffset=0;fileQuery='';fileHistory=null;$('#file-search-form').elements.query.value='';$('#file-history').hidden=true;
@@ -632,7 +634,7 @@ $('#batch-list').addEventListener('click',async event=>{
     }
   }catch(error){message(error.message,true);}
 });
-window.addEventListener('beforeunload',event=>{if(pending||recordDirty||mappingDirty||sourcePlanDirty){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(pending||recordDirty||mappingDirty||sourcePlanDirty||destinationDirty){event.preventDefault();event.returnValue='';}});
 
 let acquisitionList=null, acquisitionOffset=0, acquisitionCurrent=null, acquisitionFileOffset=0, acquisitionContext='';
 const acquisitionChosen=new Map();
@@ -839,6 +841,131 @@ action('#production-waves-previous',async()=>{productionWaveOffset=Math.max(0,pr
 action('#production-waves-next',async()=>{if(productionPlan?.next!==null){productionWaveOffset=productionPlan.next;await openProductionPlan(productionPlan.id,true);}});
 action('#production-members-previous',async()=>{productionMemberOffset=Math.max(0,productionMemberOffset-50);await openProductionWave(productionWave.id,true);});
 action('#production-members-next',async()=>{if(productionWave?.next!==null){productionMemberOffset=productionWave.next;await openProductionWave(productionWave.id,true);}});
+
+
+let destinationContext='', destinationList=null, destinationOffset=0, destinationCurrent=null;
+let destinationObservationOffset=0, destinationSelectedObservation=null, destinationPreview=null, destinationDirty=false;
+function clearDestinationPreview() {
+  destinationPreview=null; $('#destination-job-receive').disabled=true;
+  $('#destination-review-summary').textContent='Preview the current original response and result selection before receiving.';
+  $('#destination-reviewed-records').replaceChildren();
+}
+function destinationRequired() {
+  projectRequired();
+  if(!destinationCurrent || destinationCurrent.job.projectId!==projectId) throw new Error('Open the original destination job in this migration.');
+  return destinationCurrent.job;
+}
+function destinationInput() {
+  const job=destinationRequired(),form=$('#destination-job-review');
+  if(!destinationSelectedObservation || destinationSelectedObservation.jobId!==job.id) throw new Error('Choose an original response from this job.');
+  const mode=form.elements.mode.value;
+  return {jobId:job.id,observationId:destinationSelectedObservation.id,status:form.elements.status.value,mode,
+    records:mode==='reviewed'?JSON.parse(form.elements.records.value):[],
+    mapping:mode==='json'?JSON.parse(form.elements.mapping.value):null};
+}
+async function loadDestinationJobs() {
+  if(!data?.project){$('#destination-job-list').innerHTML='<tr><td colspan="4">Choose the original migration.</td></tr>';return;}
+  if(destinationContext!==projectId){
+    destinationContext=projectId; destinationCurrent=null;destinationOffset=0;destinationObservationOffset=0;
+    destinationSelectedObservation=null;destinationDirty=false;clearDestinationPreview();
+    $('#destination-job-detail').hidden=true;
+  }
+  const selectedProject=projectId;
+  const list=await api('/api/destination-jobs?'+sourceQuery({offset:String(destinationOffset),limit:'50'}));
+  if(projectId!==selectedProject)return;
+  destinationList=list;
+  $('#destination-job-list').innerHTML=destinationList.items.map((job,i)=>'<tr><td>'+esc(job.nativeJobId)+'<div class="record-id">'+esc(job.id)+'</div></td><td>'+esc(job.file)+'</td><td>'+esc(job.reviewer)+'<div>'+esc(job.createdAt)+'</div></td><td><button type="button" data-destination-job="'+i+'">Open job</button></td></tr>').join('')||'<tr><td colspan="4">Bind the first actual destination job above.</td></tr>';
+  $('#destination-job-prev').disabled=destinationOffset===0;$('#destination-job-next').disabled=destinationList.next===null;
+  $('#destination-job-page').textContent=destinationList.total+' saved jobs';
+  if(destinationCurrent)await openDestinationJob(destinationCurrent.job.id,true);
+}
+async function openDestinationJob(identity,preserve=false) {
+  if(!preserve&&destinationDirty&&!confirm('Discard the unsaved result interpretation and open this job?'))return;
+  const selectedProject=projectId;
+  const opened=await api('/api/destination-jobs?'+sourceQuery({id:identity,offset:String(preserve?destinationObservationOffset:0),limit:'50'}));
+  if(projectId!==selectedProject)return;
+  if(!preserve){destinationObservationOffset=0;destinationSelectedObservation=null;destinationDirty=false;clearDestinationPreview();$('#destination-response').hidden=true;}
+  destinationCurrent=opened;const job=opened.job,history=opened.observations;
+  $('#destination-job-detail').hidden=false;
+  $('#destination-job-heading').textContent='Native job '+job.nativeJobId;
+  $('#destination-job-context').textContent=job.contract.url+' · original transfer '+job.transferId+' · '+job.file;
+  $('#destination-job-export').href='/download/destination-job?'+sourceQuery({id:job.id});
+  $('#destination-job-observations').innerHTML=history.items.map((row,i)=>'<tr><td>'+esc(row.finishedAt||row.startedAt)+'<div class="record-id">'+esc(row.id)+'</div></td><td>'+esc(row.status)+(row.response?' · HTTP '+row.response.status:'')+(row.error?'<div>'+esc(row.error)+'</div>':'')+'</td><td>'+(row.response?esc(row.response.original.bytes)+' bytes':'')+'</td><td>'+(row.response?'<button type="button" data-job-observation="'+i+'">Review response</button>':'')+'</td></tr>').join('')||'<tr><td colspan="4">Read the existing job or receive its original source-browser response.</td></tr>';
+  $('#destination-observation-prev').disabled=destinationObservationOffset===0;$('#destination-observation-next').disabled=history.next===null;
+  $('#destination-observation-page').textContent=history.total+' original observations';
+  $('#destination-job-reviews').innerHTML=opened.reviews.map(review=>'<p><strong>'+esc(review.reviewedAt)+'</strong> · '+esc(review.reviewer)+' · '+esc(review.preview.status)+' · '+review.preview.records.length+' record results<br>'+esc(review.note)+'<br><span class="mono">'+esc(review.receiptId)+'</span></p>').join('')||'<p>No reviewed job outcomes have been received yet.</p>';
+  if(destinationPreview&&destinationPreview.revision!==data.project.revision)clearDestinationPreview();
+}
+async function selectDestinationObservation(index) {
+  if(destinationDirty&&!confirm('Discard this unsaved interpretation and select another original response?'))return;
+  const row=destinationCurrent.observations.items[index];if(!row?.response)return;
+  destinationSelectedObservation=row;destinationDirty=false;clearDestinationPreview();
+  const link='/download/job-response?'+sourceQuery({id:row.id});
+  $('#destination-response').hidden=false;$('#destination-response-download').href=link;
+  $('#destination-response-identity').textContent=row.id+' · '+row.response.observedAt+' · HTTP '+row.response.status+' · '+row.response.original.bytes+' bytes · '+row.response.original.sha256;
+  const form=$('#destination-job-review');form.reset();
+  $('#destination-response-body').textContent='Loading original bytes…';
+  if(row.response.original.bytes>MAX){$('#destination-response-body').textContent='Download the complete response. This body exceeds the interactive 8 MiB receiving limit.';return;}
+  const selectedId=row.id,response=await fetch(link,{headers:{'X-Tind-Session':token}});
+  if(!response.ok)throw new Error('The original response bytes could not be opened: HTTP '+response.status);
+  const bytes=await response.arrayBuffer();
+  if(destinationSelectedObservation?.id!==selectedId)return;
+  try{$('#destination-response-body').textContent=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}
+  catch{$('#destination-response-body').textContent='This original response is not UTF-8 text. Its unchanged file remains available above.';}
+}
+formHandler('#destination-job-bind',async(form,values)=>{
+  const input={transferId:String(values.get('transferId')),nativeJobId:String(values.get('nativeJobId')),url:String(values.get('url')),
+    documentation:String(values.get('documentation')),headers:JSON.parse(form.elements.headers.value),
+    authorizationEnvironment:String(values.get('authorizationEnvironment'))||null,reviewer:String(values.get('reviewer')),note:String(values.get('note'))};
+  const result=await apply('native-job-bind',input);
+  if(result){await reload({preserve:true});await loadDestinationJobs();await openDestinationJob(result.result.id);message('Original destination job saved.');}
+});
+$('#destination-job-list').addEventListener('click',async event=>{
+  const button=event.target.closest('[data-destination-job]');if(!button)return;
+  try{await openDestinationJob(destinationList.items[Number(button.dataset.destinationJob)].id);}catch(error){message(error.message,true);}
+});
+$('#destination-job-observations').addEventListener('click',async event=>{
+  const button=event.target.closest('[data-job-observation]');if(!button)return;
+  try{await selectDestinationObservation(Number(button.dataset.jobObservation));}catch(error){message(error.message,true);}
+});
+action('#destination-job-read',async()=>{
+  const job=destinationRequired();await native('job-read',{jobId:job.id});await loadDestinationJobs();
+  message('Original job read saved. Its complete response appears in this job history when the current read returns.');
+});
+formHandler('#destination-job-import',async(form,values)=>{
+  const job=destinationRequired(),file=form.elements.file.files[0];
+  if(!file||file.size>6*1024*1024)throw new Error('Choose complete original response bytes that fit in the 8 MiB encoded save envelope.');
+  const bytes=new Uint8Array(await file.arrayBuffer());let binary='';
+  for(let start=0;start<bytes.length;start+=32768)binary+=String.fromCharCode(...bytes.subarray(start,start+32768));
+  const result=await apply('native-job-import',{jobId:job.id,bodyBase64:btoa(binary),transport:JSON.parse(form.elements.transport.value),
+    reviewer:String(values.get('reviewer')),note:String(values.get('note'))});
+  if(result){await reload({preserve:true});await openDestinationJob(job.id,true);message('Complete unchanged native response received.');}
+});
+$('#destination-job-review').addEventListener('input',()=>{destinationDirty=true;clearDestinationPreview();});
+formHandler('#destination-job-review',async()=>{
+  const input=destinationInput(),context=JSON.stringify(input),project=projectRequired();
+  const preview=await api('/api/destination-job-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({projectId:project.id,input})});
+  if(projectId!==project.id||context!==JSON.stringify(destinationInput()))throw new Error('The selected source or interpretation changed while previewing. Preview it again.');
+  destinationPreview=preview;
+  $('#destination-review-summary').textContent='Reviewed '+preview.records.length+' of '+preview.selectedRecords+' transferred records; '+preview.unreportedRecords+' remain unreported. '+Object.entries(preview.counts).map(([key,n])=>n+' '+key).join(' · ')+'.';
+  $('#destination-reviewed-records').innerHTML=preview.records.map(row=>'<tr><td class="record-id">'+esc(row.identifier)+'</td><td>'+esc(row.nativeId)+'</td><td>'+esc(row.status)+'</td><td>'+esc(row.error)+'</td></tr>').join('');
+  $('#destination-job-receive').disabled=false;
+});
+action('#destination-job-receive',async()=>{
+  if(!destinationPreview)throw new Error('Preview the current source and result interpretation.');
+  const job=destinationRequired(),form=$('#destination-job-review');
+  if(!form.reportValidity())return;
+  const input={...destinationInput(),expectedPreviewSha256:destinationPreview.sha256,
+    reviewer:form.elements.reviewer.value,note:form.elements.note.value};
+  const result=await apply('native-job-receive',input);
+  if(result){destinationDirty=false;clearDestinationPreview();await reload({preserve:true});await openDestinationJob(job.id,true);
+    message('Original outcomes received. Continue the same batch through current destination/file reconciliation.');}
+});
+action('#destination-job-refresh',()=>loadDestinationJobs());
+action('#destination-job-prev',async()=>{destinationOffset=Math.max(0,destinationOffset-50);await loadDestinationJobs();});
+action('#destination-job-next',async()=>{if(destinationList?.next!==null){destinationOffset=destinationList.next;await loadDestinationJobs();}});
+action('#destination-observation-prev',async()=>{destinationObservationOffset=Math.max(0,destinationObservationOffset-50);await openDestinationJob(destinationRequired().id,true);});
+action('#destination-observation-next',async()=>{if(destinationCurrent?.observations.next!==null){destinationObservationOffset=destinationCurrent.observations.next;await openDestinationJob(destinationRequired().id,true);}});
 
 (async()=>{
   try{
