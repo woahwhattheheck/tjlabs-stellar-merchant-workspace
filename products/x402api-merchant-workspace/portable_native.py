@@ -1024,7 +1024,7 @@ def validate_retained_result_files(files):
     return set(names)
 
 
-def capture_project_results(control, directory, database, request_sha, snapshot):
+def capture_project_results(control, directory, database, request_sha, snapshot, *, lease_fds=()):
     target = control / "result-files-selection.json"
     frozen = {"schema": "stellar-forge.merchant-project-result-selection.v1",
               "requestSha256": request_sha, "snapshot": pin(snapshot), "directory": str(directory)}
@@ -1032,7 +1032,7 @@ def capture_project_results(control, directory, database, request_sha, snapshot)
     if selected is None:
         files = retained_result_files(directory)
         mappings = reservation_engine("inspect", database=str(database), directory=str(directory),
-                                      recordedDirectory=str(directory))
+                                      recordedDirectory=str(directory), lease_fds=lease_fds)
         need(retained_result_files(directory) == files, "PROJECT_RESULTS_CHANGED",
              "Select one complete original result and reservation state.")
         selected = {**frozen, "files": files, "reservationMappings": mappings}
@@ -1050,7 +1050,7 @@ def verify_retained_result_files(original, manifest):
              "PROJECT_RESULTS_CHANGED", "Keep every original result file and interrupted native partial.")
 
 
-def reservation_engine(action, **values):
+def reservation_engine(action, *, lease_fds=(), **values):
     """Call the original SF31 reservation inspector/relocator with the same Node runtime."""
     node = os.environ.get("MERCHANT_PORTABLE_NODE") or os.environ.get("CODEX_PRIMARY_RUNTIME_NODE") or shutil.which("node")
     need(isinstance(node, str) and node and "\0" not in node,
@@ -1058,7 +1058,8 @@ def reservation_engine(action, **values):
     request = json.dumps({"action": action, **values}, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     need(len(request) <= 32 * CHUNK, "RESERVATION_REQUEST_TOO_LARGE", "Keep the complete original reservation selection within capacity.")
     response = subprocess.run([node, str(HERE / "portable-project-reservations.mjs")],
-                              input=request, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+                              input=request, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              pass_fds=tuple(lease_fds), check=False)
     need(response.returncode == 0, "RESERVATION_OPERATION_FAILED",
          "The original paid-file reservation operation failed.",
          {"returnCode": response.returncode, "originalError": response.stderr[-65536:].decode("utf-8", "replace")})
@@ -1139,15 +1140,15 @@ def reservation_files(mappings, directory):
     return [selected[name] for name in sorted(selected)]
 
 
-def inspect_project_reservations(database, directory, recorded_directory, mappings):
+def inspect_project_reservations(database, directory, recorded_directory, mappings, *, lease_fds=()):
     observed = reservation_engine("inspect", database=str(database), directory=str(directory),
-                                  recordedDirectory=str(recorded_directory))
+                                  recordedDirectory=str(recorded_directory), lease_fds=lease_fds)
     need(observed == mappings, "PROJECT_RESERVATIONS_CHANGED",
          "Keep every original returned payment, reservation, partial prefix and final file.")
     return observed
 
 
-def receive_project_reservations(control, original, runtime, request_sha, manifest):
+def receive_project_reservations(control, original, runtime, request_sha, manifest, *, lease_fds=()):
     """Prepare once, publish once, and preserve later live reservation progress on replay."""
     workspace = runtime / "workspace"
     original_directory = absolute(manifest["original"]["directory"])
@@ -1172,9 +1173,10 @@ def receive_project_reservations(control, original, runtime, request_sha, manife
             copy_file(original / row["path"], pending / row["path"], row)
         relocations = reservation_engine("restore", stage=str(pending), directory=str(runtime),
                                          database=str(original / "workspace/merchant.sqlite3"),
-                                         recordedDirectory=str(original_directory), reservations=mappings)
+                                         recordedDirectory=str(original_directory),
+                                         reservations=mappings, lease_fds=lease_fds)
         relocated = reservation_engine("inspect", database=str(original / "workspace/merchant.sqlite3"),
-                                       directory=str(pending / "workspace"), recordedDirectory=str(workspace))
+                                       directory=str(pending / "workspace"), recordedDirectory=str(workspace), lease_fds=lease_fds)
         need(len(relocated) == len(mappings), "PROJECT_RESERVATIONS_CHANGED",
              "Retain every original reservation in the received workspace.")
         received_files = {row["path"]: {"path": row["path"], **pin(row)}
@@ -1207,7 +1209,7 @@ def receive_project_reservations(control, original, runtime, request_sha, manife
     need(prepared["relocatedMappings"] == expected_mappings, "PROJECT_RESERVATIONS_CHANGED",
          "Relocate only the original reservation's destination and partial path.")
     inspect_project_reservations(original / "workspace/merchant.sqlite3", stage / "workspace", workspace,
-                                 expected_mappings)
+                                 expected_mappings, lease_fds=lease_fds)
     expected = {row["path"]: {"path": row["path"], **pin(row)}
                 for row in manifest.get("retainedResultFiles", manifest["results"])}
     for row in reservation_files(prepared["relocatedMappings"], workspace):
@@ -1244,7 +1246,7 @@ def export_project(request, normalized):
     request_sha = sha_bytes(request_bytes)
     archive_path = operation_root / ("Merchant_Project_" + request["operation"] + ".zip")
     result_path = control / "result.json"
-    with lock_file(control / "export.lock", create=True):
+    with lock_file(control / "export.lock", create=True) as export_lease:
         write_bytes(control / "request.json", request_bytes)
         complete = read_json(result_path, optional=True, maximum=64 * CHUNK)
         if complete is not None:
@@ -1265,9 +1267,33 @@ def export_project(request, normalized):
         need(selected["requestSha256"] == request_sha, "EXPORT_REQUEST_CHANGED", "Keep the selected export inputs.")
         manifest_path = control / "manifest.json"
         manifest = read_json(manifest_path, optional=True)
+        captured = read_json(control / "capture-selected.json", optional=True)
+        if captured is not None:
+            need(isinstance(captured, dict)
+                 and captured.get("schema") == "stellar-forge.merchant-project-capture.v1"
+                 and captured.get("requestSha256") == request_sha
+                 and captured.get("operation") == request["operation"],
+                 "PROJECT_CAPTURE_CHANGED", "Keep the original complete project capture.")
+            attempt = operation_id(captured.get("attempt"))
+            selected_manifest = captured.get("manifest")
+            need(isinstance(selected_manifest, dict)
+                 and selected_manifest.get("requestSha256") == request_sha
+                 and captured.get("manifestSha256") == sha_bytes(encoded(selected_manifest))
+                 and (manifest is None or manifest == selected_manifest),
+                 "PROJECT_CAPTURE_CHANGED", "Keep the selected snapshot and reservation files together.")
+            manifest = selected_manifest
+            payload = private_directory(operation_root / "captures" / attempt / "files")
+            write_json(manifest_path, manifest)
         if manifest is None:
+            # Nothing from an unfinished capture has been published as a project.
+            # Retry captures the now-current merchant in a new private directory;
+            # it never combines an earlier SQLite backup with later mutable locks.
+            attempt = str(uuid.uuid4())
+            capture_root = private_directory(operation_root / "captures" / attempt)
+            private_directory(capture_root / "control")
+            payload = private_directory(capture_root / "files")
             directory = private_directory(absolute(request["directory"]))
-            with lock_file(directory / "merchant-owner.lock", inherited=request.get("leaseFd")):
+            with lock_file(directory / "merchant-owner.lock", inherited=request.get("leaseFd")) as owned_lease:
                 source_info, source_parts = selected_source(absolute(request["sourceArchive"]),
                                                             request["sourceSha256"], match_current=True)
                 source_db = connect_readonly(directory / "merchant.sqlite3")
@@ -1278,7 +1304,7 @@ def export_project(request, normalized):
                 config, configuration, inputs, inventory, source = stage_inputs(
                     request, payload, source_info, source_parts)
                 del source_parts
-                snapshot = snapshot_database(request, request_sha, operation_root, payload)
+                snapshot = snapshot_database(request, request_sha, capture_root, payload)
                 need(snapshot["summary"]["storeId"] == original_identity["storeId"],
                      "STORE_ID_CHANGED", "Keep this operation's original merchant store.")
                 origins_path = directory / "portable-result-origins.json"
@@ -1294,9 +1320,10 @@ def export_project(request, normalized):
                     results = snapshot_results(database, directory, configuration, origins)
                 finally:
                     database.close()
-                result_selection = capture_project_results(control, directory,
+                result_selection = capture_project_results(capture_root / "control", directory,
                                                            payload / "workspace/merchant.sqlite3",
-                                                           request_sha, snapshot["file"])
+                                                           request_sha, snapshot["file"],
+                                                           lease_fds=(export_lease, owned_lease))
                 reservations = result_selection["reservationMappings"]
                 retained_files = result_selection["files"]
                 selected_files = {row["path"]: row for row in retained_files}
@@ -1320,7 +1347,8 @@ def export_project(request, normalized):
                         inventory[row["path"]] = {**row, "role": "original-reservation", "originalPath": str(source_path)}
                 need(retained_result_files(payload / "workspace") == retained_files,
                      "PROJECT_RESULTS_CHANGED", "Keep the exact frozen complete result inventory.")
-                inspect_project_reservations(payload / "workspace/merchant.sqlite3", payload / "workspace", directory, reservations)
+                inspect_project_reservations(payload / "workspace/merchant.sqlite3", payload / "workspace", directory,
+                                             reservations, lease_fds=(export_lease, owned_lease))
                 inventory["workspace/merchant.sqlite3"] = {
                     "path": "workspace/merchant.sqlite3", **snapshot["file"], "role": "sqlite-snapshot",
                     "originalPath": str(directory / "merchant.sqlite3")}
@@ -1343,6 +1371,14 @@ def export_project(request, normalized):
                                 "source": {"path": str(UNPACK_PATH.relative_to(SOURCE_ROOT)), "sha256": UNPACK_SHA}},
                     "receiving": {"defaultMode": "review", "changesBusinessState": False,
                                   "productionActivation": "original-application-configuration-and-recovery"}}
+                validate_manifest(manifest)
+                for row in manifest["files"]:
+                    durable_file(payload / row["path"], row)
+                write_json(control / "capture-selected.json", {
+                    "schema": "stellar-forge.merchant-project-capture.v1",
+                    "operation": request["operation"], "requestSha256": request_sha,
+                    "attempt": attempt, "manifestSha256": sha_bytes(encoded(manifest)),
+                    "manifest": manifest})
                 write_json(manifest_path, manifest)
         need(manifest.get("requestSha256") == request_sha,
              "EXPORT_REQUEST_CHANGED", "Keep the frozen original project inventory.")
@@ -1663,7 +1699,7 @@ def materialize_inputs(original, runtime, manifest):
     return paths
 
 
-def materialize_configurations(runtime, source_root, config, manifest, input_paths):
+def materialize_configurations(runtime, source_root, config, manifest, input_paths, *, preserve_activation=False):
     review = deepcopy(config)
     review["operatorTokenEnv"] = "MERCHANT_REVIEW_OPERATOR_TOKEN"
     review_path = runtime / "review-config.json"
@@ -1698,7 +1734,14 @@ def materialize_configurations(runtime, source_root, config, manifest, input_pat
                              for row in manifest["inputFiles"] if row["originalPath"] in input_paths],
                   "originalDeploymentMustBeStopped": True}
     activation_path = runtime / "activation-config.json"
-    write_json(activation_path, activation)
+    if preserve_activation:
+        # Original preparation, publication, inode and store were verified by the caller.
+        retained_activation = parse_json(read_bytes(activation_path, private=True, maximum=CHUNK),
+                                         "received activation configuration")
+        need(isinstance(retained_activation, dict), "RECEIVED_CONFIGURATION_CHANGED",
+             "Keep the received operator activation configuration.")
+    else:
+        write_json(activation_path, activation)
     return review_path, activation_path, action
 
 
@@ -2014,7 +2057,7 @@ def prepare_runtime_database(control, original, workspace, request_sha, manifest
     return publication
 
 
-def reopen_received_complete(destination, complete, request, request_sha, manifest, manifest_sha):
+def reopen_received_complete(destination, complete, request, request_sha, manifest, manifest_sha, *, lease_fds=()):
     original, runtime = destination / "original", destination / "runtime"
     workspace, control = runtime / "workspace", destination / "control"
     received = complete.get("received")
@@ -2085,13 +2128,14 @@ def reopen_received_complete(destination, complete, request, request_sha, manife
                  {"bytes": str(len(origins_raw)), "sha256": sha_bytes(origins_raw)})
     if "reservationMappings" in manifest:
         inspect_project_reservations(original / "workspace/merchant.sqlite3", original / "workspace",
-                                     absolute(manifest["original"]["directory"]), manifest["reservationMappings"])
+                                     absolute(manifest["original"]["directory"]), manifest["reservationMappings"],
+                                     lease_fds=lease_fds)
         reservation_publication = read_json(control / "reservations-published.json")
         need(received.get("reservationPublication") == reservation_publication,
              "PROJECT_RESERVATIONS_CHANGED", "Keep the original reservation receiving receipt.")
         # Verify the immutable preparation; its already-published return prevents
         # copying old locks or partial files over subsequent merchant recovery.
-        observed = receive_project_reservations(control, original, runtime, request_sha, manifest)
+        observed = receive_project_reservations(control, original, runtime, request_sha, manifest, lease_fds=lease_fds)
         need(observed == reservation_publication, "PROJECT_RESERVATIONS_CHANGED",
              "Preserve the original received reservation operation.")
     plan_raw = read_bytes(control / "relocation-plan.json", private=True, maximum=32 * CHUNK)
@@ -2125,7 +2169,7 @@ def receive_project(request, normalized):
     request_raw = encoded(normalized)
     request_sha = sha_bytes(request_raw)
     result_path = control / "result.json"
-    with lock_file(control / "receive.lock", create=True):
+    with lock_file(control / "receive.lock", create=True) as receive_lease:
         write_bytes(control / "request.json", request_raw)
         complete = read_json(result_path, optional=True, maximum=64 * CHUNK)
         if complete is not None:
@@ -2136,7 +2180,7 @@ def receive_project(request, normalized):
                  and complete.get("manifest") == manifest and complete.get("archive") == inspected["archive"],
                  "RECEIVE_REQUEST_CHANGED", "Reuse the same completed original project receiving.")
             return reopen_received_complete(destination, complete, request, request_sha,
-                                             manifest, inspected["manifestSha256"])
+                                             manifest, inspected["manifestSha256"], lease_fds=(receive_lease,))
         original = private_directory(destination / "original")
         extraction = archive_engine.extract({"archive": request["archive"], "destination": str(original)}, policy=policy)
         need(extraction["archive"] == archive_pin(inspected["archive"]) and extraction["manifest"] == manifest,
@@ -2177,24 +2221,31 @@ def receive_project(request, normalized):
                  "PROJECT_RESULTS_CHANGED", "Verify every original snapshot result and historical reference.")
             if "reservationMappings" in manifest:
                 inspect_project_reservations(original / "workspace/merchant.sqlite3", original / "workspace",
-                                             original_workspace, manifest["reservationMappings"])
+                                             original_workspace, manifest["reservationMappings"], lease_fds=(receive_lease,))
             changes = relocation_plan(original_db, manifest, workspace)
         finally:
             original_db.close()
-        with lock_file(workspace / "merchant-owner.lock", create=True):
+        with lock_file(workspace / "merchant-owner.lock", create=True) as workspace_lease:
+            resumed_publication = None
+            if read_json(control / "runtime-published.json", optional=True) is not None:
+                resumed_publication = prepare_runtime_database(
+                    control, original, workspace, request_sha, manifest, changes)
             source_root, source_inventory = materialize_source(runtime, expected, contents)
             del contents, source_parts
             source_archive = runtime / "source.tgz"
             copy_file(original / manifest["source"]["path"], source_archive, manifest["source"])
             input_paths = materialize_inputs(original, runtime, manifest)
             review_path, activation_path, activation = materialize_configurations(
-                runtime, source_root, config, manifest, input_paths)
+                runtime, source_root, config, manifest, input_paths,
+                preserve_activation=resumed_publication is not None)
             for row in manifest["results"]:
                 copy_file(original / row["path"], workspace / row["relativePath"], row)
             write_json(workspace / "portable-result-origins.json",
                        received_result_origins(manifest, workspace, request, inspected["manifestSha256"]))
-            reservation_publication = receive_project_reservations(control, original, runtime, request_sha, manifest)
-            publication = prepare_runtime_database(control, original, workspace, request_sha, manifest, changes)
+            reservation_publication = receive_project_reservations(control, original, runtime, request_sha, manifest,
+                                                                 lease_fds=(receive_lease, workspace_lease))
+            publication = resumed_publication if resumed_publication is not None else prepare_runtime_database(
+                control, original, workspace, request_sha, manifest, changes)
         source_installation = {"requestSha256": request_sha, "source": manifest["source"],
                                "sourceArchive": {"path": "source.tgz", **pin(manifest["source"])},
                                "files": source_inventory}
