@@ -239,6 +239,13 @@
         "../catalog.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/operating-return-core/operating-plan-return-workbook.mjs",
+      [
+        "../operating-plan-return-workbook.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
