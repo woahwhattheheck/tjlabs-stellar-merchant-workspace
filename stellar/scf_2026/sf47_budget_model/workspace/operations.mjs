@@ -1,37 +1,38 @@
+import {createLazyDesk} from './operations_lazy.mjs';
 import {currentStaffContext,staffDeskStorageKey} from './staff-session.mjs';
 import {defineSections,normalizeNavigationState,validateOperatingWorkflows} from './operations_navigation.mjs';
 import {mountOperationsNavigation} from './operations_navigation_ui.mjs';
-import {mountStatements} from './operations_statements.mjs';
-import {mountForecast} from './forecast.mjs';
-import {mountPortfolio} from './portfolio.mjs';
-import {mountSupportDelivery} from './operations_support.mjs';
-import {mountBuyerReceiving} from './operations_buyer.mjs';
-import {mountExpenseAttribution} from './operations_expenses.mjs';
-import {mountSettlementReceiving} from './operations_settlements.mjs';
-import {mountCompletion} from './operations_completion.mjs';
-import {mountEngagements} from './operations_engagements.mjs';
-import {mountDeliveryRisks} from './operations_risks.mjs';
-import {mountDeliveryCalendar} from './operations_calendar.mjs';
-import {mountCustomerUseCalendar} from './operations_use_calendar.mjs';
-import {mountCohort} from './operations_cohort.mjs';
-import {mountCohortPlanning} from './operations_cohort_planning.mjs';
-import {mountCohortDelivery} from './operations_cohort_delivery.mjs';
-import {mountInstallations} from './operations_installations.mjs';
-import {mountInstallationReturns} from './operations_installation_returns.mjs';
-import {mountDispatch} from './operations_dispatch.mjs';
-import {mountPerformance} from './operations_performance.mjs';
-import {mountLedgerIntake} from './operations_ledger_intake.mjs';
-import {mountPayables} from './operations_payables.mjs';
-import {mountCashAccounts} from './operations_cash_accounts.mjs';
-import {mountAccountReconciliation} from './operations_account_reconciliation.mjs';
-import {mountImplementationEvidence} from './operations_implementation.mjs';
-import {mountAmendments} from './operations_amendments.mjs';
-import {mountWorkIntake} from './operations_work_intake.mjs';
-import {mountCommercialReceivables} from './operations_commercial.mjs';
-import {mountTaskOutcomes} from './operations_task_outcomes.mjs';
-import {mountGrantProcedures} from './operations_procedures.mjs';
-import {mountFunding} from './operations_funding.mjs';
-import {mountAwardTerms} from './award-terms.mjs';
+const mountStatements=createLazyDesk({label:"Account statements",load:()=>import('./operations_statements.mjs'),exportName:"mountStatements"});
+const mountForecast=createLazyDesk({label:"Operating forecast",load:()=>import('./forecast.mjs'),exportName:"mountForecast"});
+const mountPortfolio=createLazyDesk({label:"Delivery portfolio",load:()=>import('./portfolio.mjs'),exportName:"mountPortfolio"});
+const mountSupportDelivery=createLazyDesk({label:"Support delivery",load:()=>import('./operations_support.mjs'),exportName:"mountSupportDelivery"});
+const mountBuyerReceiving=createLazyDesk({label:"Buyer receiving",load:()=>import('./operations_buyer.mjs'),exportName:"mountBuyerReceiving"});
+const mountExpenseAttribution=createLazyDesk({label:"Expense attribution",load:()=>import('./operations_expenses.mjs'),exportName:"mountExpenseAttribution"});
+const mountSettlementReceiving=createLazyDesk({label:"Settlement receiving",load:()=>import('./operations_settlements.mjs'),exportName:"mountSettlementReceiving"});
+const mountCompletion=createLazyDesk({label:"Completion",load:()=>import('./operations_completion.mjs'),exportName:"mountCompletion"});
+const mountEngagements=createLazyDesk({label:"Contributor engagements",load:()=>import('./operations_engagements.mjs'),exportName:"mountEngagements"});
+const mountDeliveryRisks=createLazyDesk({label:"Delivery risks",load:()=>import('./operations_risks.mjs'),exportName:"mountDeliveryRisks"});
+const mountDeliveryCalendar=createLazyDesk({label:"Delivery calendar",load:()=>import('./operations_calendar.mjs'),exportName:"mountDeliveryCalendar"});
+const mountCustomerUseCalendar=createLazyDesk({label:"Customer use calendar",load:()=>import('./operations_use_calendar.mjs'),exportName:"mountCustomerUseCalendar"});
+const mountCohort=createLazyDesk({label:"Cohort",load:()=>import('./operations_cohort.mjs'),exportName:"mountCohort"});
+const mountCohortPlanning=createLazyDesk({label:"Cohort planning",load:()=>import('./operations_cohort_planning.mjs'),exportName:"mountCohortPlanning"});
+const mountCohortDelivery=createLazyDesk({label:"Cohort delivery",load:()=>import('./operations_cohort_delivery.mjs'),exportName:"mountCohortDelivery"});
+const mountInstallations=createLazyDesk({label:"Customer installations",load:()=>import('./operations_installations.mjs'),exportName:"mountInstallations"});
+const mountInstallationReturns=createLazyDesk({label:"Installation returns",load:()=>import('./operations_installation_returns.mjs'),exportName:"mountInstallationReturns"});
+const mountDispatch=createLazyDesk({label:"Delivery queue",load:()=>import('./operations_dispatch.mjs'),exportName:"mountDispatch"});
+const mountPerformance=createLazyDesk({label:"Budget performance",load:()=>import('./operations_performance.mjs'),exportName:"mountPerformance"});
+const mountLedgerIntake=createLazyDesk({label:"Ledger intake",load:()=>import('./operations_ledger_intake.mjs'),exportName:"mountLedgerIntake"});
+const mountPayables=createLazyDesk({label:"Supplier accounts",load:()=>import('./operations_payables.mjs'),exportName:"mountPayables"});
+const mountCashAccounts=createLazyDesk({label:"Cash accounts",load:()=>import('./operations_cash_accounts.mjs'),exportName:"mountCashAccounts"});
+const mountAccountReconciliation=createLazyDesk({label:"Account reconciliation",load:()=>import('./operations_account_reconciliation.mjs'),exportName:"mountAccountReconciliation"});
+const mountImplementationEvidence=createLazyDesk({label:"Implementation evidence",load:()=>import('./operations_implementation.mjs'),exportName:"mountImplementationEvidence"});
+const mountAmendments=createLazyDesk({label:"Plan amendments",load:()=>import('./operations_amendments.mjs'),exportName:"mountAmendments"});
+const mountWorkIntake=createLazyDesk({label:"Work intake",load:()=>import('./operations_work_intake.mjs'),exportName:"mountWorkIntake"});
+const mountCommercialReceivables=createLazyDesk({label:"Commercial receivables",load:()=>import('./operations_commercial.mjs'),exportName:"mountCommercialReceivables"});
+const mountTaskOutcomes=createLazyDesk({label:"Task outcomes",load:()=>import('./operations_task_outcomes.mjs'),exportName:"mountTaskOutcomes"});
+const mountGrantProcedures=createLazyDesk({label:"Grant procedures",load:()=>import('./operations_procedures.mjs'),exportName:"mountGrantProcedures"});
+const mountFunding=createLazyDesk({label:"Cost funding",load:()=>import('./operations_funding.mjs'),exportName:"mountFunding"});
+const mountAwardTerms=createLazyDesk({label:"Issuer terms",load:()=>import('./award-terms.mjs'),exportName:"mountAwardTerms"});
 
 // Each mounted desk keeps the original installation and recording operator.
 const retainedOperatorDesks=new Map();
@@ -356,7 +357,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
   function applyBusy() {
     const value=localBusy||hostBusy;
     view.busy=value;root.setAttribute('aria-busy',String(value));
-    root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.closest('.operating-navigation,.operating-forecast,.portfolio,.support-delivery,.completion-desk,.grant-delivery-calendar,.customer-use-calendar,.buyer-receiving,.expense-desk,.cohort-desk,.cohort-planning,.cohort-delivery,.installation-desk,.installation-return-desk,.delivery-queue,.implementation-evidence-desk,.settlement-desk,.engagement-desk,.delivery-risk-desk,.statement-desk,.budget-performance,.ledger-intake,.supplier-accounts,.cash-account-desk,.account-reconciliation-desk,.commercial-desk,.work-intake-desk,.plan-amendments,.task-outcomes-desk,.award-terms-desk,.cost-funding-desk,.grant-procedures,.staff-earlier-desk'))el.disabled=value||el.dataset.opsFixed==='true';});
+    root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.closest('.ops-lazy-desk,.operating-navigation,.operating-forecast,.portfolio,.support-delivery,.completion-desk,.grant-delivery-calendar,.customer-use-calendar,.buyer-receiving,.expense-desk,.cohort-desk,.cohort-planning,.cohort-delivery,.installation-desk,.installation-return-desk,.delivery-queue,.implementation-evidence-desk,.settlement-desk,.engagement-desk,.delivery-risk-desk,.statement-desk,.budget-performance,.ledger-intake,.supplier-accounts,.cash-account-desk,.account-reconciliation-desk,.commercial-desk,.work-intake-desk,.plan-amendments,.task-outcomes-desk,.award-terms-desk,.cost-funding-desk,.grant-procedures,.staff-earlier-desk'))el.disabled=value||el.dataset.opsFixed==='true';});
     navigationView?.setHostBusy(value);
     forecastView?.setHostBusy(value);portfolioView?.setHostBusy(value);supportView?.setHostBusy(value);completionView?.setHostBusy(value);calendarView?.setHostBusy(value);customerUseView?.setHostBusy(value);buyerView?.setHostBusy(value);expenseView?.setHostBusy(value);cohortView?.setHostBusy(value);cohortPlanningView?.setHostBusy(value);cohortDeliveryView?.setHostBusy(value);installationView?.setHostBusy(value);installationReturnView?.setHostBusy(value);dispatchView?.setHostBusy(value);implementationView?.setHostBusy(value);settlementView?.setHostBusy(value);statementView?.setHostBusy(value);performanceView?.setHostBusy(value);engagementView?.setHostBusy(value);riskView?.setHostBusy(value);ledgerIntakeView?.setHostBusy(value);amendmentView?.setHostBusy(value);payablesView?.setHostBusy(value);cashAccountView?.setHostBusy(value);accountReconciliationView?.setHostBusy(value);commercialView?.setHostBusy(value);workIntakeView?.setHostBusy(value);taskOutcomeView?.setHostBusy(value);awardTermsView?.setHostBusy(value);fundingView?.setHostBusy(value);procedureView?.setHostBusy(value);
   }
@@ -518,13 +519,13 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     if(c&&view.tab==='forecast'){
       const retained=c.forecasts.some(row=>row.id===view.forecastId)?view.forecastId:null;
       forecastViewCase=c.program.id;
-      forecastView=mountForecast({container:$('[data-ops-forecast]'),current:c,api,mutationId,recordingActor,
+      forecastView=mountForecast({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-forecast]'),current:c,api,mutationId,recordingActor,
         initialForecastId:retained,initialInputs:retained?null:view.forecastDraft,onSelection:id=>{view.forecastId=id;if(id)view.forecastDraft=null;},
         onSaved:async result=>{if(view.current?.program.id!==c.program.id)return;view.forecastId=result.recordId;view.forecastDraft=null;forecastView?.dispose();forecastView=null;await refresh();inform('Saved the original operating forecast with its source, dated cash and remaining work.');}});
       forecastView.setHostBusy(view.busy);forecastView.ready.catch(alertError);
     }
     if(c&&view.tab==='portfolio'){
-      portfolioView=mountPortfolio({container:$('[data-ops-portfolio]'),current:c,api,mutationId,recordingActor,
+      portfolioView=mountPortfolio({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-portfolio]'),current:c,api,mutationId,recordingActor,
         initialPortfolioId:view.portfolioId,onSelection:id=>{view.portfolioId=id;},onReload:refresh,
         onSaved:async result=>{if(view.current?.program.id!==c.program.id)return;view.portfolioId=result.recordId;await refresh();inform('Saved the complete source-bound delivery allocation and original cash alternatives.');},
         onForecastInputs:async(inputs,selection)=>{if(view.current?.program.id!==c.program.id)return;view.forecastDraft=structuredClone(inputs);view.forecastId=null;view.tab='forecast';render();inform('Opened an editable forecast from '+selection.alternativeId+'. Review original collection dates before previewing and saving its cash assumptions.');}});
@@ -532,7 +533,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='statements'){
       if(!retainedStatementSessions.has(c.program.id))retainedStatementSessions.set(c.program.id,{});
-      statementView=mountStatements({container:$('[data-ops-statements]'),current:c,staffContext:pinnedContext,saveApi:transport,
+      statementView=mountStatements({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-statements]'),current:c,staffContext:pinnedContext,saveApi:transport,
         session:retainedStatementSessions.get(c.program.id),mutationId,recordingActor,
         onCash:()=>{if(!available())return;view.tab='cash';render();},
         onCase:async(next,result)=>{
@@ -546,7 +547,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='work-intake'){
       if(!retainedWorkIntakeSessions.has(c.program.id))retainedWorkIntakeSessions.set(c.program.id,{});
-      workIntakeView=mountWorkIntake({container:$('[data-ops-work-intake]'),current:c,staffContext:pinnedContext,saveApi:transport,
+      workIntakeView=mountWorkIntake({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-work-intake]'),current:c,staffContext:pinnedContext,saveApi:transport,
         session:retainedWorkIntakeSessions.get(c.program.id),mutationId,recordingActor,
         onOpen:tab=>{if(!available())return;view.tab=tab;render();},
         onCase:async(next,result)=>{
@@ -560,7 +561,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='amendments'){
       if(!retainedAmendmentSessions.has(c.program.id))retainedAmendmentSessions.set(c.program.id,{});
-      amendmentView=mountAmendments({container:$('[data-ops-amendments]'),current:c,api,saveApi:transport,
+      amendmentView=mountAmendments({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-amendments]'),current:c,api,saveApi:transport,
         session:retainedAmendmentSessions.get(c.program.id),mutationId,recordingActor,
         planningReturn:route?.caseId===c.program.id?route.planningReturn:null,
         onPlanningReturn,onOpenPlanning:lead&&onOpenPlanning?editCasePlanning:null,
@@ -577,7 +578,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='implementation'){
       if(!retainedImplementationSessions.has(c.program.id))retainedImplementationSessions.set(c.program.id,{});
-      implementationView=mountImplementationEvidence({container:$('[data-ops-implementation]'),current:c,saveApi:transport,
+      implementationView=mountImplementationEvidence({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-implementation]'),current:c,saveApi:transport,
         session:retainedImplementationSessions.get(c.program.id),mutationId,recordingActor,
         onSources:async()=>{if(!available())return;view.tab='sources';render();},
         onCase:async(next,result)=>{
@@ -591,7 +592,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='account-reconciliation'){
       if(!retainedAccountReconciliationSessions.has(c.program.id))retainedAccountReconciliationSessions.set(c.program.id,{});
-      accountReconciliationView=mountAccountReconciliation({container:$('[data-ops-account-reconciliation]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
+      accountReconciliationView=mountAccountReconciliation({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-account-reconciliation]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
         session:retainedAccountReconciliationSessions.get(c.program.id),mutationId,recordingActor,
         onOpen:(tab,detail)=>{
           if(!available()||view.current?.program.id!==c.program.id)return;
@@ -619,7 +620,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='cash'){
       if(!retainedCashAccountSessions.has(c.program.id))retainedCashAccountSessions.set(c.program.id,{});
-      cashAccountView=mountCashAccounts({container:$('[data-ops-cash-account]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
+      cashAccountView=mountCashAccounts({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-cash-account]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
         session:retainedCashAccountSessions.get(c.program.id),mutationId,recordingActor,
         onOpen:(tab,detail)=>{
           if(!available())return;
@@ -640,7 +641,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='supplier-account'){
       if(!retainedPayablesSessions.has(c.program.id))retainedPayablesSessions.set(c.program.id,{});
-      payablesView=mountPayables({container:$('[data-ops-payables]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
+      payablesView=mountPayables({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-payables]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
         session:retainedPayablesSessions.get(c.program.id),mutationId,recordingActor,
         onOpen:tab=>{if(!available())return;view.tab=tab;render();},
         onCase:async(next,result)=>{
@@ -654,7 +655,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='ledger-intake'){
       if(!retainedLedgerIntakeSessions.has(c.program.id))retainedLedgerIntakeSessions.set(c.program.id,{});
-      ledgerIntakeView=mountLedgerIntake({container:$('[data-ops-ledger-intake]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
+      ledgerIntakeView=mountLedgerIntake({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-ledger-intake]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
         session:retainedLedgerIntakeSessions.get(c.program.id),mutationId,recordingActor,
         onOpen:tab=>{if(!available())return;view.tab=tab;render();},
         onCase:async(next,result)=>{
@@ -668,14 +669,14 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='performance'){
       if(!retainedPerformanceSessions.has(c.program.id))retainedPerformanceSessions.set(c.program.id,{});
-      performanceView=mountPerformance({container:$('[data-ops-performance]'),current:c,api,
+      performanceView=mountPerformance({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-performance]'),current:c,api,
         session:retainedPerformanceSessions.get(c.program.id),
         onOpen:tab=>{if(!available())return;view.tab=tab;render();}});
       performanceView.setHostBusy(view.busy);performanceView.ready.catch(alertError);
     }
     if(c&&view.tab==='dispatch'){
       if(!retainedDispatchSessions.has(c.program.id))retainedDispatchSessions.set(c.program.id,{});
-      dispatchView=mountDispatch({container:$('[data-ops-dispatch]'),current:c,api,
+      dispatchView=mountDispatch({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-dispatch]'),current:c,api,
         session:retainedDispatchSessions.get(c.program.id),
         onOpen:(id,revision,edit,taskId)=>{
           if(!available()||view.current?.program.id!==c.program.id)return;
@@ -690,7 +691,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='award-terms'){
       if(!retainedAwardTermsSessions.has(c.program.id))retainedAwardTermsSessions.set(c.program.id,{});
-      awardTermsView=mountAwardTerms({container:$('[data-ops-award-terms]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
+      awardTermsView=mountAwardTerms({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-award-terms]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
         session:retainedAwardTermsSessions.get(c.program.id),mutationId,recordingActor,
         onSources:()=>{if(!available())return;view.tab='sources';render();},
         onCase:async(next,result)=>{
@@ -703,7 +704,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
       awardTermsView.setHostBusy(view.busy);awardTermsView.ready.catch(alertError);
     }
     if(c&&view.tab==='procedures'){
-      procedureView=mountGrantProcedures({container:$('[data-ops-procedures]'),current:c,api,saveApi:transport,
+      procedureView=mountGrantProcedures({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-procedures]'),current:c,api,saveApi:transport,
         mutationId,recordingActor,inform,onSources:()=>{if(!available())return;view.tab='sources';render();},
         onCase:async(next,result)=>{
           if(!available()||view.current?.program.id!==next.program.id)return;
@@ -716,7 +717,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='task-outcomes'){
       if(!retainedTaskOutcomeSessions.has(c.program.id))retainedTaskOutcomeSessions.set(c.program.id,{});
-      taskOutcomeView=mountTaskOutcomes({container:$('[data-ops-task-outcomes]'),current:c,api,saveApi:transport,
+      taskOutcomeView=mountTaskOutcomes({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-task-outcomes]'),current:c,api,saveApi:transport,
         session:retainedTaskOutcomeSessions.get(c.program.id),mutationId,recordingActor,
         onSources:()=>{if(!available())return;view.tab='sources';render();},
         onCase:async(next,result)=>{
@@ -730,7 +731,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='funding'){
       if(!retainedFundingSessions.has(c.program.id))retainedFundingSessions.set(c.program.id,{});
-      fundingView=mountFunding({container:$('[data-ops-funding]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
+      fundingView=mountFunding({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-funding]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
         session:retainedFundingSessions.get(c.program.id),mutationId,recordingActor,
         onSources:()=>{if(!available())return;view.tab='sources';render();},
         onCase:async(next,result)=>{
@@ -744,7 +745,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='commercial'){
       if(!retainedCommercialSessions.has(c.program.id))retainedCommercialSessions.set(c.program.id,{});
-      commercialView=mountCommercialReceivables({container:$('[data-ops-commercial]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
+      commercialView=mountCommercialReceivables({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-commercial]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
         session:retainedCommercialSessions.get(c.program.id),mutationId,recordingActor,
         onSources:()=>{view.tab='sources';render();},
         onInstallations:()=>{view.tab='installations';render();}});
@@ -752,7 +753,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='installation-returns'){
       if(!retainedInstallationReturnSessions.has(c.program.id))retainedInstallationReturnSessions.set(c.program.id,{});
-      installationReturnView=mountInstallationReturns({container:$('[data-ops-installation-returns]'),current:c,api,saveApi:transport,
+      installationReturnView=mountInstallationReturns({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-installation-returns]'),current:c,api,saveApi:transport,
         session:retainedInstallationReturnSessions.get(c.program.id),mutationId,recordingActor,
         onSources:()=>{view.tab='sources';render();},onInstallations:()=>{view.tab='installations';render();},
         onCase:async(next,result)=>{
@@ -766,7 +767,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='installations'){
       if(!retainedInstallationSessions.has(c.program.id))retainedInstallationSessions.set(c.program.id,{});
-      installationView=mountInstallations({container:$('[data-ops-installations]'),current:c,api,saveApi:transport,
+      installationView=mountInstallations({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-installations]'),current:c,api,saveApi:transport,
         session:retainedInstallationSessions.get(c.program.id),mutationId,recordingActor,
       onSources:()=>{view.tab='sources';render();},
         onForecastInputs:async(inputs,selection)=>{
@@ -787,7 +788,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='risks'){
       if(!retainedRiskSessions.has(c.program.id))retainedRiskSessions.set(c.program.id,{});
-      riskView=mountDeliveryRisks({container:$('[data-ops-risks]'),current:c,saveApi:transport,
+      riskView=mountDeliveryRisks({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-risks]'),current:c,saveApi:transport,
         session:retainedRiskSessions.get(c.program.id),mutationId,recordingActor,staffContext:pinnedContext,canSave:lead,
         onSources:async()=>{if(!available()||view.current?.program.id!==c.program.id)return;view.tab='sources';render();},
         onCase:async(next,result)=>{
@@ -808,7 +809,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
         if(listed)Object.assign(listed,{version:next.program.version,state:next.program.state,updatedAt:next.program.updatedAt});
         return true;
       };
-      engagementView=mountEngagements({container:$('[data-ops-engagements]'),current:c,saveApi:transport,
+      engagementView=mountEngagements({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-engagements]'),current:c,saveApi:transport,
         session:retainedEngagementSessions.get(c.program.id),mutationId,recordingActor,
         onCase:async(next,result)=>{if(receiveCase(next))render();},
         onSources:async()=>{if(!available()||view.current?.program.id!==c.program.id)return;view.tab='sources';render();},
@@ -828,7 +829,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='completion'){
       if(!retainedCompletionSessions.has(c.program.id))retainedCompletionSessions.set(c.program.id,{});
-      completionView=mountCompletion({container:$('[data-ops-completion]'),current:c,saveApi:transport,
+      completionView=mountCompletion({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-completion]'),current:c,saveApi:transport,
         session:retainedCompletionSessions.get(c.program.id),mutationId,recordingActor,
         onCase:async(next,result)=>{
           if(!available()||view.current?.program.id!==next.program.id)return;
@@ -841,14 +842,14 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='calendar'){
       if(!retainedCalendarSessions.has(c.program.id))retainedCalendarSessions.set(c.program.id,{});
-      calendarView=mountDeliveryCalendar({container:$('[data-ops-calendar]'),current:c,api,
+      calendarView=mountDeliveryCalendar({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-calendar]'),current:c,api,
         session:retainedCalendarSessions.get(c.program.id),
         onOpen:(tab,tranche,selection)=>openCalendarSource(c.program.id,tab,tranche,selection)});
       calendarView.setHostBusy(view.busy);calendarView.ready.catch(alertError);
     }
     if(c&&view.tab==='customer-use'){
       if(!retainedCustomerUseSessions.has(c.program.id))retainedCustomerUseSessions.set(c.program.id,{});
-      customerUseView=mountCustomerUseCalendar({container:$('[data-ops-customer-use]'),current:c,api,
+      customerUseView=mountCustomerUseCalendar({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-customer-use]'),current:c,api,
         session:retainedCustomerUseSessions.get(c.program.id),
         onOpenInstallation:request=>{
           if(!available()||view.current?.program.id!==c.program.id)return;
@@ -871,7 +872,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
       customerUseView.setHostBusy(view.busy);customerUseView.ready.catch(alertError);
     }
     if(c&&view.tab==='cohort-planning'){
-      cohortPlanningView=mountCohortPlanning({container:$('[data-ops-cohort-planning]'),current:c,saveApi:transport,
+      cohortPlanningView=mountCohortPlanning({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-cohort-planning]'),current:c,saveApi:transport,
         incomingCalendar:retainedCalendarPlanningRequests.get(c.program.id)||null,
         onCalendarReceived:requestId=>{if(retainedCalendarPlanningRequests.get(c.program.id)?.requestId===requestId)retainedCalendarPlanningRequests.delete(c.program.id);},
         getActor:recordingActor,mutationId,inform,
@@ -885,7 +886,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
       cohortPlanningView.setHostBusy(view.busy);cohortPlanningView.ready.catch(alertError);
     }
     if(c&&view.tab==='cohort-delivery'){
-      cohortDeliveryView=mountCohortDelivery({container:$('[data-ops-cohort-delivery]'),current:c,saveApi:transport,
+      cohortDeliveryView=mountCohortDelivery({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-cohort-delivery]'),current:c,saveApi:transport,
         getActor:recordingActor,mutationId,inform,
         onCaseUpdated:async(next,result)=>{
           if(!available()||view.current?.program.id!==next.program.id)return;
@@ -898,7 +899,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='cohort'){
       if(!retainedCohortSessions.has(c.program.id))retainedCohortSessions.set(c.program.id,{});
-      cohortView=mountCohort({container:$('[data-ops-cohort]'),current:c,saveApi:transport,
+      cohortView=mountCohort({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-cohort]'),current:c,saveApi:transport,
         session:retainedCohortSessions.get(c.program.id),mutationId,recordingActor,
         onCase:async(next,result)=>{
           if(!available()||view.current?.program.id!==next.program.id)return;
@@ -911,7 +912,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='settlements'){
       if(!retainedSettlementSessions.has(c.program.id))retainedSettlementSessions.set(c.program.id,{});
-      settlementView=mountSettlementReceiving({container:$('[data-ops-settlements]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
+      settlementView=mountSettlementReceiving({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-settlements]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
         session:retainedSettlementSessions.get(c.program.id),mutationId,recordingActor,onReload:refresh,
         onSaved:async result=>{
           if(!available()||view.current?.program.id!==c.program.id)return;
@@ -921,7 +922,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='expenses'){
       if(!retainedExpenseSessions.has(c.program.id))retainedExpenseSessions.set(c.program.id,{});
-      expenseView=mountExpenseAttribution({container:$('[data-ops-expenses]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
+      expenseView=mountExpenseAttribution({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-expenses]'),current:c,staffContext:pinnedContext,api,saveApi:transport,
         session:retainedExpenseSessions.get(c.program.id),mutationId,recordingActor,onBusy:setBusy,
         onSources:async()=>{if(!available())return;view.tab='sources';render();},
         onReload:refresh,onSaved:async result=>{
@@ -932,7 +933,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     }
     if(c&&view.tab==='buyer'){
       if(!retainedBuyerSessions.has(c.program.id))retainedBuyerSessions.set(c.program.id,{});
-      buyerView=mountBuyerReceiving({container:$('[data-ops-buyer]'),current:c,api,saveApi:transport,
+      buyerView=mountBuyerReceiving({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-buyer]'),current:c,api,saveApi:transport,
         session:retainedBuyerSessions.get(c.program.id),mutationId,recordingActor,
         onReload:refresh,onSaved:async result=>{
           if(view.current?.program.id!==c.program.id)return;
@@ -944,7 +945,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     if(c&&view.tab==='support'){
       const supportKey=c.program.id;
       if(!retainedSupportSessions.has(supportKey))retainedSupportSessions.set(supportKey,{});
-      supportView=mountSupportDelivery({container:$('[data-ops-support]'),current:c,api,saveApi:transport,
+      supportView=mountSupportDelivery({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-support]'),current:c,api,saveApi:transport,
         session:retainedSupportSessions.get(supportKey),mutationId,recordingActor,
         onReload:refresh,onSaved:async result=>{
           if(view.current?.program.id!==c.program.id)return;
