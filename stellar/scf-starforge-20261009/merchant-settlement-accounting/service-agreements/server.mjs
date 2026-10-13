@@ -92,6 +92,31 @@ export async function handleServiceAgreementRequest(agreements, {method, path, q
   const asOf = search.get('asOf') || undefined;
   const route = parts.join('/');
   if (method === 'GET') {
+    if (route === 'collections' || route === 'collections/export') {
+      const allowed = new Set(['asOf', 'workspaceId', 'expectedRevision', 'agreementIds',
+        ...(route.endsWith('/export') ? ['format'] : [])]);
+      for (const key of search.keys()) need(allowed.has(key) && search.getAll(key).length === 1,
+        'INVALID_COLLECTIONS_QUERY', 'Supply each declared collections selector once.');
+      let agreementIds;
+      if (search.has('agreementIds')) {
+        try { agreementIds = JSON.parse(search.get('agreementIds')); }
+        catch { need(false, 'INVALID_AGREEMENT_SELECTION', 'Supply the complete selected agreement ID array.'); }
+      }
+      const revision = search.get('expectedRevision');
+      need(revision === null || /^[1-9][0-9]*$/.test(revision) && Number.isSafeInteger(Number(revision)),
+        'INVALID_COLLECTIONS_REVISION', 'Use the reviewed accounting revision.');
+      const options = {asOf, agreementIds, workspaceId: search.get('workspaceId') ?? undefined,
+        expectedRevision: revision === null ? undefined : Number(revision)};
+      if (route === 'collections') return {value: await agreements.collections(options)};
+      const format = search.get('format') || 'tar';
+      need(['tar','json','html','invoices','periods','activity'].includes(format),
+        'INVALID_COLLECTIONS_FORMAT', 'Choose tar, json, html, invoices, periods or activity.');
+      const result = await agreements.exportCollections(options);
+      if (format === 'tar') return {file: {name: 'agreement-collections.tar',
+        type: 'application/x-tar', bytes: renderCustomerTar(result.files)}};
+      const name = ['json','html'].includes(format) ? 'collections.' + format : format + '.csv';
+      return {file: result.files.find(file => file.name === name)};
+    }
     if (route === '' || route === 'state') return {value: await agreements.state({asOf})};
     if (parts[0] === 'agreements' && parts.length === 2) return {value: await agreements.detail(parts[1], {asOf})};
     if (parts[0] === 'agreements' && parts.length === 3 && parts[2] === 'preview')

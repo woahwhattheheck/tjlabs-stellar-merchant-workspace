@@ -34,6 +34,20 @@ def fail(message, code="EXPENSE_BILLING_CONFLICT", status=409):
     raise Problem(message, status, code)
 
 
+def review_refusal(action, operation):
+    """Label only a local/read-only review or a rolled-back local transaction.
+
+    The caller must keep every native dispatch outside this wrapper. A retained
+    pending command remains authoritative and must be reconciled by the client.
+    """
+    try:
+        return operation()
+    except Problem as error:
+        if getattr(error, "status", 500) not in (400, 404, 409, 413, 422):
+            raise
+        raise Problem(str(error), error.status, "EXPENSE_BILLING_" + action + "_REVIEW") from error
+
+
 def exact(value, allowed, required=()):
     if not isinstance(value, dict) or set(value) - set(allowed) or not set(required) <= set(value):
         fail("Retain the complete declared expense billing fields.", "EXPENSE_BILLING_INPUT", 422)
@@ -623,7 +637,7 @@ class ExpenseBilling:
                 row["state"] = "RUNNING"
             self._save(row)
             return command
-        return self.billing._write(save)
+        return review_refusal("ISSUE" if step["action"] == "issue" else "APPLY", lambda: self.billing._write(save))
 
     def _dispatch(self, program_id, ident, index):
         def start():
@@ -684,17 +698,17 @@ class ExpenseBilling:
                 continue
             # Exact original replay precedes every current source/revision check.
             with self.workspace.mutex:
-                self._source_current(program_id, proposal)
+                review_refusal("APPLY", lambda: self._source_current(program_id, proposal))
             detail = self._native(proposal, "detail", {"invoiceId": proposal["invoiceId"]}) if proposal["invoiceId"] else None
             if index == 0 and detail and _fingerprint(detail) != proposal["nativeFingerprint"]:
-                fail("The reviewed invoice or payment state changed. Retain this review and prepare its explicit successor.")
+                fail("The reviewed invoice or payment state changed. Retain this review and prepare its explicit successor.", "EXPENSE_BILLING_APPLY_REVIEW")
             if index > 0 and detail:
                 if proposal["resolution"] == "VOID" and detail["invoice"]["status"] != "VOID":
-                    fail("The original invoice is not in its acknowledged void state.")
+                    fail("The original invoice is not in its acknowledged void state.", "EXPENSE_BILLING_APPLY_REVIEW")
                 if proposal["resolution"] == "CREDIT":
                     scale = proposal["currency"]["scale"]
                     if sum(money(c["document"]["totals"]["total"], scale)[1] for c in detail["credits"]) != money(detail["draft"]["totals"]["total"], scale)[1]:
-                        fail("The original invoice is no longer fully credited for replacement.")
+                        fail("The original invoice is no longer fully credited for replacement.", "EXPENSE_BILLING_APPLY_REVIEW")
             revision = detail["revision"] if detail else self._native(proposal, "customers", {})["revision"]
             if command:
                 def rebind():
@@ -706,7 +720,7 @@ class ExpenseBilling:
                     target["body"]["revision"] = revision
                     target["state"] = "PENDING"
                     self._save(current)
-                self.billing._write(rebind)
+                review_refusal("APPLY", lambda: self.billing._write(rebind))
             else:
                 made = self._new_command(program_id, ident, index, step, revision)
                 if made["index"] != index:
@@ -726,7 +740,7 @@ class ExpenseBilling:
             return copy.deepcopy(current)
         return self.billing._write(complete)
 
-    def cancel(self, program_id, ident, body):
+    def _cancel_request(self, program_id, ident, body):
         exact(body, ("requestId", "actor", "expectedProposalSha256", "reason"),
               ("requestId", "actor", "expectedProposalSha256", "reason"))
         actor, reason = _required(body["actor"], "Recording operator", 300), _required(body["reason"], "Cancellation reason", 6000)
@@ -737,7 +751,7 @@ class ExpenseBilling:
             if prior:
                 if prior["body"] != body:
                     fail("This original cancellation request identifies a different review.", "REQUEST_CONFLICT")
-                return self.get(program_id, ident)
+                return {"id": ident}
         def save():
             self._context(program_id)
             row = self._read(program_id, ident)
@@ -755,6 +769,11 @@ class ExpenseBilling:
             return {"id": ident}
         result = self.workspace._transaction(body["requestId"], {"domain": SCHEMA, "action": "cancel",
             "programId": program_id, "id": ident, "body": body}, save)
+        return result
+
+    def cancel(self, program_id, ident, body):
+        result = review_refusal("CANCEL", lambda: self._cancel_request(program_id, ident, body))
+        # A failure of the post-commit read is not a rejected cancellation.
         return self.get(program_id, result["id"])
 
     def preview_issue(self, program_id, ident):
@@ -789,11 +808,11 @@ class ExpenseBilling:
                 fail("Resume the exact retained issue review and credit-control decision.")
             self._dispatch(program_id, ident, prior["index"])
             return self.get(program_id, ident, True)
-        review = self.preview_issue(program_id, ident)
+        review = review_refusal("ISSUE", lambda: self.preview_issue(program_id, ident))
         if body["expectedIssuePreviewSha256"] != review["issuePreviewSha256"]:
-            fail("Review the current exact native invoice before issue.")
+            fail("Review the current exact native invoice before issue.", "EXPENSE_BILLING_ISSUE_REVIEW")
         native = review["nativePreview"]
-        _assert_credit_review(native, body.get("creditDecisionId"))
+        review_refusal("ISSUE", lambda: _assert_credit_review(native, body.get("creditDecisionId")))
         step = {"action": "issue", "body": {"invoiceId": row["activeInvoiceId"],
             "expectedVersion": native["expectedVersion"], "previewSha256": native["previewSha256"]}}
         if body.get("creditDecisionId"):

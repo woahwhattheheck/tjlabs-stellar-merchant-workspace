@@ -135,7 +135,7 @@ history. Downloads return the exact document or full revision record.
 To restore an earlier version, select that historical revision, enter the
 restoring editor and reason, and choose **Restore this earlier version as a new
 revision**. Restoration appends an attributed revision with the earlier exact
-document bytes. Later history remains available.
+document bytes. Its change record binds the complete preceding and target document files by revision, hash and byte count, so large restorations retain the same complete-file limit. Later history remains available.
 
 ### Interrupted requests
 
@@ -196,7 +196,7 @@ Before export and during independent receiving, the correction validator:
 
 1. Verifies each source and revision binding.
 2. Reads every complete document and revision file and checks bytes/hashes.
-3. Applies each ordered change set to its predecessor.
+3. Applies each ordered edit change set to its predecessor and binds a restoration to an already verified earlier complete document.
 4. Requires exact equality with the retained resulting document and complete
    change record.
 5. Verifies materialized catalogues against their selected saved revisions.

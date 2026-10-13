@@ -1,0 +1,44 @@
+{
+  "schema": "stellar-forge.mpc-recovery-adoption.v1",
+  "product": "mpc-recovery-operations",
+  "source": {
+    "repository": "woahwhattheheck/commons",
+    "commit": "5c2962823d313c9bbb1c37c79feb415581c7730d",
+    "prefix": "tools/mpc-recovery-operations",
+    "files": 26,
+    "sourceSelectionSha256": "9027c8b723d3870b5a09ab179de6d288a1b78df40c9b4a2ade1ecf7015aa90c8",
+    "preservation": "Every original application/source body remains byte-identical under app/. Managed HTTP serving substitutes only its branch transport and store-selection UI; offline exports return the original complete HTML."
+  },
+  "originalReceiving": {
+    "operation": "mpc-recovery-complete-receiving-20261013",
+    "session": "11912",
+    "state": "COMPLETE",
+    "completedAt": "2026-10-13T06:22:58.773Z",
+    "archive": {
+      "name": "MPC_Recovery_Complete_Receiving_20261013.zip",
+      "bytes": 654095,
+      "sha256": "c6ca635c06acb75c34792de9b62c73094f59c51140ac218b58274a03715ff8a7",
+      "libraryFileId": "libfile_a0a1c7a3371881919796ea791ec25ffc",
+      "version": 0,
+      "workspaceMember": "receiving/browser-workspace.json"
+    },
+    "meaning": "Original accepted proposal/native/browser receiving result; input to the following managed Application course, not evidence that the new integration already ran."
+  },
+  "managed": {
+    "command": "mpc-recovery-operations",
+    "applicationKind": "mpc-recovery-operations",
+    "sdk": "MpcRecoveryClient",
+    "merchantFamily": "mpcRecovery",
+    "merchantConfigurationInput": "mpcRecoveryConnection",
+    "merchantPrefix": "merchant_mpc_recovery_",
+    "nodeMinimum": 20,
+    "storeIdentity": "Independent physical UUID/directory",
+    "branchIdentity": "Independent local branch ID",
+    "portableIdentity": "Original unchanged logical workspace ID and complete history",
+    "state": "SOURCE_PREPARED_NATIVE_RECEIVING_PENDING"
+  },
+  "originalOpportunity": {
+    "thread": "https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791861335520549",
+    "scope": "Proposal support workshare, USD 3,200, 40 aggregate hours, approximately 6 principal hours, two USD 1,600 milestones. Distinct from the full backup service described by the issuer."
+  }
+}

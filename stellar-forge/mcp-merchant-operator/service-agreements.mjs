@@ -42,6 +42,26 @@ export class MerchantServiceAgreements {
     return {...bundle, asOf, files: [...bundle.files, {name: ARCHIVE_NAME, type: 'application/x-tar',
       bytes: renderCustomerTar(bundle.files)}]};
   }
+  async #collectionsBundle(controller, args) {
+    const bundle = await controller.exportCollections({asOf: args.asOf ?? today(),
+      workspaceId: args.workspaceId, expectedRevision: args.expectedRevision, agreementIds: args.agreementIds});
+    return {...bundle, files: [...bundle.files, {name: 'collections.tar', type: 'application/x-tar',
+      bytes: renderCustomerTar(bundle.files)}]};
+  }
+  async #collectionsFile(controller, workspace, args) {
+    const key = JSON.stringify([args.workspaceId, args.expectedRevision, args.asOf, args.agreementIds ?? null, args.file]);
+    const result = await this.#reads.read({scope: args.workspace, key, kind: 'agreement-collections',
+      directory: workspace.directory, readId: args.readId, expectedSha256: args.expectedSha256,
+      offset: args.offset ?? 0, limit: args.limit ?? 65536,
+      load: async () => {
+        const bundle = await this.#collectionsBundle(controller, args);
+        const file = bundle.files.find(item => item.name === args.file);
+        if (!file) throw fail('SERVICE_AGREEMENTS_FILE_NOT_FOUND', 'Choose a file from the original collections report.');
+        return file;
+      }});
+    return {workspace: args.workspace, workspaceId: args.workspaceId, revision: args.expectedRevision,
+      asOf: args.asOf, kind: 'agreement-collections', ...result};
+  }
   async #file(controller, workspace, args, kind) {
     const key = JSON.stringify([args.agreementId, kind, args.sourceId ?? null, args.asOf ?? null, args.file]);
     const result = await this.#reads.read({scope: args.workspace, key, kind,
@@ -76,6 +96,15 @@ export class MerchantServiceAgreements {
       const controller = await this.#controller(args.workspace, workspace, action === 'open');
       const {workspace: alias, agreementId, ...value} = args;
       if (action === 'open' || action === 'state') return {workspace: alias, ...await controller.state({asOf: args.asOf})};
+      if (action === 'collections') return {workspace: alias, ...await controller.collections({
+        asOf: args.asOf, workspaceId: args.workspaceId, expectedRevision: args.expectedRevision, agreementIds: args.agreementIds})};
+      if (action === 'collections_export') {
+        const bundle = await this.#collectionsBundle(controller, args);
+        return {workspace: alias, workspaceId: bundle.workspaceId, revision: bundle.revision, asOf: bundle.asOf,
+          agreementIds: bundle.report.selection.agreementIds, reportSha256: bundle.report.sha256,
+          files: bundle.files.map(({name, type, bytes}) => ({name, type, bytes: bytes.length, sha256: sha(bytes)}))};
+      }
+      if (action === 'collections_file') return this.#collectionsFile(controller, workspace, args);
       if (action === 'agreement') return {workspace: alias, ...await controller.detail(agreementId, {asOf: args.asOf})};
       if (action === 'preview') return {workspace: alias, ...await controller.preview(agreementId,
         {periodId: args.periodId, asOf: args.asOf})};

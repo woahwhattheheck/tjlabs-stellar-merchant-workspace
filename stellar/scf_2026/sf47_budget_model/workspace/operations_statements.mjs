@@ -1,3 +1,4 @@
+import {prepareStatementRecipientPacket,receiveStatementRecipientReturn,compareStatementRecipientReturn,applyStatementRecipientReturn,statementRecipientPanel,statementRecipientReviewHTML} from './operations_statement_review.mjs';
 import {statementCopyIndex,createStatementCopyStore,statementCopiesPanel,compareStatementCopy,prepareStatementCopyArchive} from './operations_statement_copies.mjs';
 import {currentStaffContext,staffDeskStorageKey,assertStaffRequestActor} from './staff-session.mjs';
 import {mountEarlierStaffDesk} from './staff-desk-recovery.mjs';
@@ -135,7 +136,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
   const available=()=>active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
   const defaults=()=>({source:null,accountId:'',accountLabel:'',currency:'USD',format:{delimiter:',',decimalMark:'.',groupMark:'',dateFormat:'YYYY-MM-DD',amountMode:'SIGNED',positiveDirection:'IN'},columns:{date:'',reference:'',description:'',amount:'',debit:'',credit:''},defaultCategory:'OTHER',decisions:[]});
-  const values={inputs:defaults(),headers:[],inspection:null,nativeScalesText:'USD: 2',optionsError:'',editRevision:0,preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',appliedQuery:'',pending:null,accepted:null,setupPending:null,setupChoice:'',setupName:'',setupNote:'',inflight:null,error:'',notice:'',allocationRow:null,allocationWorks:{},batchSelection:[],batchChange:{mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''},batchProposal:null,batchUndo:null,batchReviewPage:0,copyIndex:statementCopyIndex(current.program.id),copyLoaded:false,copyName:'',copyNote:'',copyQuery:'',copyAppliedQuery:'',copyPage:0,workingCopyId:null,copySelectedId:'',copySelectedRevision:1,copyDetailPage:0,copyReview:null};
+  const values={inputs:defaults(),headers:[],inspection:null,nativeScalesText:'USD: 2',optionsError:'',editRevision:0,preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',appliedQuery:'',pending:null,accepted:null,setupPending:null,setupChoice:'',setupName:'',setupNote:'',inflight:null,error:'',notice:'',allocationRow:null,allocationWorks:{},batchSelection:[],batchChange:{mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''},batchProposal:null,batchUndo:null,batchReviewPage:0,copyIndex:statementCopyIndex(current.program.id),copyLoaded:false,copyName:'',copyNote:'',copyQuery:'',copyAppliedQuery:'',copyPage:0,workingCopyId:null,copySelectedId:'',copySelectedRevision:1,copyDetailPage:0,copyReview:null,recipientName:'',recipientRole:'',recipientPackets:[],recipientReturn:null,recipientHistory:[],recipientComparison:null,recipientChoices:{},recipientPage:0};
   if(!Object.hasOwn(session,'appliedQuery'))session.appliedQuery=session.query||'';
   for(const [key,value] of Object.entries(values))if(!Object.hasOwn(session,key))session[key]=value;
   session.currentCaseVersion=current.program.version;
@@ -144,7 +145,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
   const locked=()=>loading||busy||hostBusy||!!session.inflight||!!session.pending||!!session.accepted||!!session.setupPending;
   const editable=()=>!locked()&&caseValue.program.state==='OPEN';
   const rowDecision=number=>session.inputs.decisions.find(row=>row.rowNumber===number);
-  function snapshot(){return {workingCopyId:session.workingCopyId,copyName:session.copyName,copyNote:session.copyNote,lastReceipt:clone(session.lastReceipt||null),schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),inspection:clone(session.inspection),nativeScalesText:session.nativeScalesText,preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),setupPending:clone(session.setupPending),setupChoice:session.setupChoice,setupName:session.setupName,setupNote:session.setupNote,originalInputHandoff:clone(session.originalInputHandoff||null),batchSelection:clone(session.batchSelection),batchChange:clone(session.batchChange),batchUndo:clone(session.batchUndo),allocationRow:session.allocationRow,allocationWorks:clone(session.allocationWorks)};}
+  function snapshot(){return {recipientName:session.recipientName,recipientRole:session.recipientRole,recipientPackets:clone(session.recipientPackets),recipientReturn:clone(session.recipientReturn),recipientHistory:clone(session.recipientHistory),workingCopyId:session.workingCopyId,copyName:session.copyName,copyNote:session.copyNote,lastReceipt:clone(session.lastReceipt||null),schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),inspection:clone(session.inspection),nativeScalesText:session.nativeScalesText,preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),setupPending:clone(session.setupPending),setupChoice:session.setupChoice,setupName:session.setupName,setupNote:session.setupNote,originalInputHandoff:clone(session.originalInputHandoff||null),batchSelection:clone(session.batchSelection),batchChange:clone(session.batchChange),batchUndo:clone(session.batchUndo),allocationRow:session.allocationRow,allocationWorks:clone(session.allocationWorks)};}
   async function persist(critical=false){
     const value=snapshot();
     persistQueue=persistQueue.catch(()=>{}).then(()=>storeDraft(current.program.id,value));
@@ -173,7 +174,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     if(!row||!sameSetupValue(statementSetupSettings(session.inputs),row.settings)){delete session.inputs.statementSetup;session.notice='The account or interpretation changed. Save this mapping as a new setup edition to retain its reusable choice.';}
   }
   function clearBatch(){session.batchSelection=[];session.batchProposal=null;session.batchUndo=null;session.batchReviewPage=0;}
-  function changed(keepBatch=false){session.copyReview=null;clearAllocationProposals();if(!keepBatch)clearBatch();session.editRevision++;session.dirty=true;session.confirmed=false;session.error='';schedulePersist();if(!keepBatch)redrawBatch();redrawAllocations();controls();}
+  function changed(keepBatch=false){session.copyReview=null;session.recipientComparison=null;session.recipientChoices={};clearAllocationProposals();if(!keepBatch)clearBatch();session.editRevision++;session.dirty=true;session.confirmed=false;session.error='';schedulePersist();if(!keepBatch)redrawBatch();redrawAllocations();controls();}
   function setDecision(number,patch){
     let decision=rowDecision(number);
     if(!decision){decision={rowNumber:number,action:'IMPORT'};session.inputs.decisions.push(decision);}
@@ -698,6 +699,66 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     if(!source()&&!session.pending&&!session.accepted&&!session.setupPending)return;
     await saveCopy({note});
   }
+  function restoreRecipientWork(saved){
+    session.recipientName=String(saved.recipientName||'').slice(0,160);session.recipientRole=String(saved.recipientRole||'').slice(0,160);
+    session.recipientPackets=Array.isArray(saved.recipientPackets)?clone(saved.recipientPackets):[];
+    session.recipientReturn=saved.recipientReturn?clone(saved.recipientReturn):null;session.recipientHistory=Array.isArray(saved.recipientHistory)?clone(saved.recipientHistory):[];
+    session.recipientComparison=null;session.recipientChoices={};session.recipientPage=0;
+  }
+  function recipientPage(){
+    return statementRecipientPanel({recipient:{name:session.recipientName,role:session.recipientRole},packets:session.recipientPackets,returned:session.recipientReturn,comparison:session.recipientComparison,choices:session.recipientChoices,page:session.recipientPage,notice:session.recipientHistory.length+' applied review decisions retained.',invoices:session.recipientPackets.find(p=>p.id===session.recipientReturn?.packetId)?.invoices||[]});
+  }
+  function recipientReady(){
+    if(session.pending||session.accepted||session.setupPending||session.inflight)throw new Error('Finish the retained original request before recipient review.');
+    if(caseValue.program.state!=='OPEN')throw new Error('Open this original case before applying statement review.');
+  }
+  function recipientActor(){const actor=typeof recordingActor==='function'?recordingActor():recordingActor;return String(actor?.name||actor||pinnedContext?.name||pinnedContext?.staffId||'Preparing operator');}
+  async function recipientSource(returned=session.recipientReturn){
+    const packet=session.recipientPackets.find(value=>value.id===returned?.packetId);
+    if(!packet)throw new Error('Open the complete original working-copy archive containing this issued review first.');
+    const edition=await copyStore.readEdition(packet.edition.id,packet.edition.revision);
+    return {packet,edition};
+  }
+  async function recipientAction(action){
+    if(action==='recipient-download-return'){download(session.recipientReturn,'statement-recipient-return.json');return;}
+    if(action==='recipient-previous'){session.recipientPage=Math.max(0,session.recipientPage-1);return;}
+    if(action==='recipient-next'){session.recipientPage++;return;}
+    recipientReady();
+    if(action==='recipient-export'){
+      if(session.dirty||!session.preview||session.preview.expectedVersion!==caseValue.program.version)throw new Error('Preview the current original statement before preparing the offline review.');
+      if(!session.recipientName.trim()||!session.recipientRole.trim())throw new Error('Enter the intended recipient’s name and role.');
+      const edition=await saveCopy({note:'Original edition issued for '+session.recipientName});
+      const packet=prepareStatementRecipientPacket(edition,caseValue,{id:'statement-review-'+crypto.randomUUID(),recipient:{name:session.recipientName,role:session.recipientRole},issuedBy:{name:recipientActor(),id:String(pinnedContext?.staffId||'')},issuedAt:new Date().toISOString()});
+      session.recipientPackets.push(packet);session.recipientComparison=null;session.recipientChoices={};
+      await persist(true);
+      download(statementRecipientReviewHTML(packet),packet.id+'-offline-review.html','text/html');
+      session.notice='Saved the original edition and downloaded the complete offline reviewer. Its returned file will be compared against this retained source.';
+    }else if(action==='recipient-import'){
+      const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
+      input.addEventListener('change',()=>{void run(async()=>{
+        recipientReady();const file=input.files?.[0];if(!file)return;if(file.size>64*1024*1024)throw new Error('Choose a complete returned review up to 64 MiB.');
+        const returned=JSON.parse(await file.text()),{packet,edition}=await recipientSource(returned);
+        session.recipientReturn=receiveStatementRecipientReturn(packet,edition,returned);session.recipientComparison=null;session.recipientChoices={};session.recipientPage=0;
+        await persist(true);session.notice='Received the complete attributed recommendations. Compare them with the original edition and current draft.';
+      });},{once:true});input.click();
+    }else if(action==='recipient-compare'){
+      const {packet,edition}=await recipientSource();
+      session.recipientChoices={};session.recipientPage=0;session.recipientComparison=compareStatementRecipientReturn(packet,edition,snapshot(),session.recipientReturn);
+      session.notice='Compared every returned recommendation with its issued edition and current original draft. Choose explicitly for each changed field.';
+    }else if(action==='recipient-apply'){
+      const {packet,edition}=await recipientSource(),currentDraft=snapshot();
+      const applied=applyStatementRecipientReturn(packet,edition,currentDraft,session.recipientComparison,session.recipientChoices,{actor:recipientActor(),appliedAt:new Date().toISOString()});
+      await saveCopy({note:'Before applying returned recommendations from '+session.recipientReturn.reviewer.name});
+      // Saving updates copy labels only. The reviewed source, decisions and request state must still be exact.
+      const afterSave=snapshot();for(const key of ['workingCopyId','copyName'])afterSave[key]=currentDraft[key];
+      if(JSON.stringify(afterSave)!==JSON.stringify(currentDraft))throw new Error('The draft changed while preserving its edition. Compare the return again.');
+      session.inputs=editingInput(applied.draft.inputs);session.recipientHistory=clone(applied.draft.recipientHistory);
+      restoreAllocationWorks(applied.draft);session.batchUndo=null;session.batchSelection=[];session.recipientComparison=null;session.recipientChoices={};
+      session.editRevision++;session.dirty=true;session.confirmed=false;session.page=0;
+      await persist(true);await saveCopy({note:'Selected recipient recommendations applied; native re-preview required'});
+      session.notice='Applied '+applied.receipt.selected.length+' selected fields. Review the original source with the existing native preview before importing any cash.';
+    }
+  }
   function copiesPage(){
     return statementCopiesPanel({index:session.copyIndex,query:session.copyQuery,appliedQuery:session.copyAppliedQuery,page:session.copyPage,name:session.copyName,note:session.copyNote,
       activeId:session.workingCopyId,review:session.copyReview,selectedId:session.copySelectedId,selectedRevision:session.copySelectedRevision,detailPage:session.copyDetailPage});
@@ -767,7 +828,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
       (session.notice?'<p class="statement-notice" role="status" aria-live="polite">'+esc(session.notice)+'</p>':'')+
       (session.storageWarning?'<p class="statement-notice">'+esc(session.storageWarning)+'</p>':'')+
       (caseValue.program.state==='CLOSED'?'<p class="statement-notice">This case is closed. Reopen the case to import additional cash movements.</p>':'')+
-      recoveryPage()+copiesPage()+originalInputPage()+sourcePage()+setupPage()+reviewPage()+
+      recoveryPage()+copiesPage()+recipientPage()+originalInputPage()+sourcePage()+setupPage()+reviewPage()+
       (session.lastReceipt?detail('Last statement import',session.lastReceipt):'');
     controls();
   }
@@ -806,7 +867,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     if(source())await preserveCurrentCopy('Before opening '+(selectedCopy?.name||file.name));
     session.workingCopyId=selectedCopy?.id||null;session.copyName=selectedCopy?.name||'';session.copyNote='';session.copyReview=null;
     session.setupPending=clone(saved.setupPending||null);session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';
-    session.originalInputHandoff=clone(saved.originalInputHandoff||null);session.lastReceipt=clone(saved.lastReceipt||null);
+    restoreRecipientWork(saved);session.originalInputHandoff=clone(saved.originalInputHandoff||null);session.lastReceipt=clone(saved.lastReceipt||null);
     const original=saved.pending?.payload||saved.accepted?.payload;
     session.inputs=editingInput(original?.data.inputs||saved.inputs);session.pending=clone(saved.pending||null);session.accepted=clone(saved.accepted||null);
     session.inspection=usableInspection(saved.inspection,session.inputs,current.program.id)?clone(saved.inspection):null;
@@ -816,6 +877,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     await persist(true);
   }
   root.addEventListener('input',event=>{
+    if(['review-recipient-name','review-recipient-role'].includes(event.target.name)){session[event.target.name==='review-recipient-name'?'recipientName':'recipientRole']=event.target.value;schedulePersist();return;}
     if(['copyName','copyNote','copyQuery'].includes(event.target.name)){session[event.target.name]=event.target.value;schedulePersist();return;}
     if(event.target.name==='copyEdition'){session.copySelectedRevision=Number(event.target.value);session.copyReview=null;return;}
     if(event.target.name==='batchReason'){session.batchChange.reason=event.target.value;session.batchProposal=null;$('[class="statement-batch-proposal"]')?.remove();schedulePersist();return;}
@@ -828,6 +890,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     if(event.target.name==='reviewQuery')session.query=event.target.value;
   });
   root.addEventListener('change',event=>{
+    if(event.target.dataset.recipientChoice){session.recipientChoices[event.target.dataset.recipientChoice]=event.target.value;const apply=$('[data-statement-action="recipient-apply"]');if(apply){apply.dataset.statementFixed=String(session.recipientComparison?.fields.some(row=>!session.recipientChoices[row.key])??true);controls();}return;}
     if(event.target.dataset.statementRowSelect){
       try{batchReady();const number=Number(event.target.dataset.statementRowSelect);
         if(event.target.checked)selectBatch([number]);else{session.batchSelection=session.batchSelection.filter(value=>value!==number);session.batchProposal=null;schedulePersist();}
@@ -873,7 +936,8 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
     if(action==='preview'||action==='inspect'){const form=$('[data-statement-mapping]');if(form)captureMapping(form);}
     if(action.startsWith('allocation-')||action==='allocations'||action==='close-allocations'){const form=$('[data-statement-allocations]');if(form)captureAllocations(form);}
     void run(async()=>{
-      if(action.startsWith('copies-'))await copyAction(action,target);
+      if(action.startsWith('recipient-'))await recipientAction(action,target);
+      else if(action.startsWith('copies-'))await copyAction(action,target);
       else if(action.startsWith('allocation-'))await allocationAction(action,target);
       else if(action.startsWith('batch-'))await batchAction(action);
       else if(action==='setup-apply')await applySetup();
@@ -921,7 +985,7 @@ export function mountStatements({container,current,api,saveApi,session,mutationI
       if(!session.loadingDraft)session.loadingDraft=(async()=>{
         try{
           const saved=await storeDraft(current.program.id);
-          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id&&draftInput(saved.inputs)){session.inputs=editingInput(saved.inputs);session.workingCopyId=saved.workingCopyId||null;session.copyName=saved.copyName||'';session.copyNote=saved.copyNote||'';session.lastReceipt=saved.lastReceipt||null;session.headers=saved.headers||[];session.inspection=usableInspection(saved.inspection,saved.inputs,current.program.id)?saved.inspection:null;session.nativeScalesText=saved.nativeScalesText??scaleText(saved.inputs.statementOptions?.currencyScales);session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.setupPending=saved.setupPending||null;session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';session.originalInputHandoff=saved.originalInputHandoff||null;session.batchSelection=statementSelection(session.preview,saved.batchSelection).map(row=>row.rowNumber);if(saved.batchChange&&typeof saved.batchChange==='object')session.batchChange={...session.batchChange,...saved.batchChange};session.batchUndo=saved.batchUndo||null;restoreAllocationWorks(saved);}
+          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id&&draftInput(saved.inputs)){restoreRecipientWork(saved);session.inputs=editingInput(saved.inputs);session.workingCopyId=saved.workingCopyId||null;session.copyName=saved.copyName||'';session.copyNote=saved.copyNote||'';session.lastReceipt=saved.lastReceipt||null;session.headers=saved.headers||[];session.inspection=usableInspection(saved.inspection,saved.inputs,current.program.id)?saved.inspection:null;session.nativeScalesText=saved.nativeScalesText??scaleText(saved.inputs.statementOptions?.currencyScales);session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.setupPending=saved.setupPending||null;session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';session.originalInputHandoff=saved.originalInputHandoff||null;session.batchSelection=statementSelection(session.preview,saved.batchSelection).map(row=>row.rowNumber);if(saved.batchChange&&typeof saved.batchChange==='object')session.batchChange={...session.batchChange,...saved.batchChange};session.batchUndo=saved.batchUndo||null;restoreAllocationWorks(saved);}
         }catch{session.storageWarning='This browser could not open its saved draft. A downloaded recovery copy can be opened here.';}
         session.loaded=true;
       })();

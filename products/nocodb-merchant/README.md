@@ -410,3 +410,31 @@ import { receiveProject } from './receive.mjs';
 `openProject` returns the original operator, live session, guarded in-process `call` and draining `close`. For a separate CLI/process, `callProject` uses the original authenticated transport. The closed-model helpers take the original project and model leases; they are not alternate writers beside the open service.
 
 Public source and licenses remain those of the selected original components. This product's additive code is MIT. The original full distribution manifest remains the complete source and dependency identity; `SOURCE_LINEAGE.json` explains the source relationship and does not replace that manifest.
+
+## Independently receive a complete editable workspace
+
+The installed product now carries the original `.ncwh` handover engine and its source identity. It preserves draft/capture/version/review/request history, private captured pages, publisher runs, the dataset and SF82 packages/releases in a named independent child. This extends the earlier same-workspace receiving programme; its original checks and source-packet semantics remain available.
+
+Declare a private input with `kind: "workspace"`, its absolute `file` and exact `sha256` in the normal project setup. The original `prepare` entry also accepts `--workspace-input WHOLE.ncwh --sha256 SHA --input ALIAS`. Host connection files, project wrapper and selected runtime are local host configuration, outside the portable authoring archive. When the project is open, the existing authenticated `call` route exposes seven `merchant_nocodb_workspace_*` controls: export, exports, transfer, receive, received, open_received and read. Opening a received workspace returns its independent `childWorkspace` and browser URL under the same parent owner. Parent close drains that child before releasing the original model.
+
+For a closed project, the same `nocodb-project` entry supports:
+
+```text
+workspace-export --directory CLOSED_PROJECT --expected-revision N --expected-selected-version N|null --request-id UUID --out WHOLE.ncwh
+workspace-download --directory CLOSED_PROJECT --request-id EXPORT_UUID --out WHOLE.ncwh
+workspace-list --directory CLOSED_PROJECT
+workspace-transfer --directory CLOSED_PROJECT --kind export|receive --request-id UUID
+workspace-receive --directory CLOSED_PROJECT --input WHOLE_INPUT_ALIAS --name CHILD_NAME --request-id UUID
+```
+
+Export/download streams exact bytes to a new private file and accepts an identical existing file on retry; different output bytes are preserved and rejected. A completed receive returns the saved child without unpacking over its later edits. A first export deliberately stops this workspace's owned services; replay of a completed export only returns its already-frozen archive. Return to normal full-row preview/version/publisher/SF82 controls for new work in the received child. No seller activates and no purchase occurs during archive receiving.
+
+The project module additionally exports `exportWholeWorkspace`, `downloadWholeWorkspace`, `listWholeWorkspaces`, `inspectWholeWorkspaceTransfer` and `receiveWholeWorkspace`. The actual native model and browser/CLI contract are in [HANDOVER.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/HANDOVER.md). Follow the complete [commissioning course](./COMMISSIONING.md) for original source selection, customer delivery, independent editing and cold reopen. The existing 14F5 native operation owns execution and viewed desktop/narrow results; source publication does not assert that newer course has run.
+
+## Reconcile the customer's returned projection
+
+The open original project exposes seven source-owned returned-review tools through its existing authenticated `call` route: `merchant_nocodb_return_capture`, `merchant_nocodb_returns`, `merchant_nocodb_return`, `merchant_nocodb_return_preview`, `merchant_nocodb_return_review`, `merchant_nocodb_return_apply` and `merchant_nocodb_return_read`. They operate on the original author or its derived `childWorkspace` using the same retained native model. No second provider, writer or project setup is required.
+
+Receive the customer's progressed complete workspace under a named child before capturing its returned draft. Review exact shared source and ordered ancestry against the author's concurrent work; save the complete choice map, refresh the resulting review revision/preview digest, then explicitly apply only the draft. Native IDs/types/encodings and source union remain validated. Existing source versions and public releases do not change automatically. Follow full-row preview, reviewed version and original publication deliberately for the corrected customer edition. Read an exact immutable review revision through retained chunks, or download it from the existing browser/CLI; the complete history also travels in `.ncwh`.
+
+The [commissioning course](./COMMISSIONING.md) describes the original one consolidated correction, author/customer decisions, exact request recovery and 60-minute handover. [HANDOVER.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/HANDOVER.md) contains the literal browser/CLI/model contract. The installed source guard includes `returns.mjs`, so a receiving host verifies the actual implementation before opening the original owner.

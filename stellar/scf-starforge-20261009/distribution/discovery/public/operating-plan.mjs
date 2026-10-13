@@ -9,6 +9,7 @@ import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapsho
   operatingPlanDraft, operatingPlanRevision, saveOperatingPlanRevision, forkOperatingPlan, previewOperatingPlanCycle, createOperatingPlanCycle,
   receiveOperatingPlan, compareOperatingPlan, summarizeOperatingPlan, shellArgument,
   renderOperatingPlanMarkdown, renderOperatingPlanHTML,
+  projectOperatingWork, createOperatingWorkSelection, inspectOperatingWorkSelection, serializeOperatingWorkSelection, renderOperatingWorkHTML, OPERATING_WORK_MAX_BYTES,
   createOperatingFile, addOperatingFile, removeOperatingFile, operatingFileBytes, OPERATING_FILE_MAX_BYTES } from '/operating-plan-core.mjs';
 
 import { IATI_OPERATING_SOURCE_SCHEMA, IATI_OPERATING_PROCEDURE_SCHEMA,
@@ -139,6 +140,7 @@ async function refreshPlanList() {
   savedPlans = savedPlans.map(inspectOperatingPlan);
   savedPlans.sort((left, right) => right.revisions.at(-1).savedAt.localeCompare(left.revisions.at(-1).savedAt));
   renderPlanList();
+  if (workReady && workScope === 'library') refreshWorkProjection();
 }
 function renderPlanList() {
   const query = $('plan-filter').value.trim().toLowerCase(), parent = $('plan-list');
@@ -516,6 +518,185 @@ async function run(action, { propagate = false } = {}) {
 }
 
 
+
+
+
+// This desk projects original saved revisions. The original editor alone saves work.
+const WORK_SETTINGS_KEY = 'starforge-operating-work-desk-v1';
+const WORK_SOURCE_KEY = 'starforge-operating-work-source-v1';
+const workFields = ['asOf', 'owner', 'customer', 'search', 'status', 'due', 'assignment'];
+let workScope = 'library', workFile = null, workPlans = [], workReport = null, workApplied = null;
+let workPage = 1, workReady = false, workStorageWarning = '';
+const localDay = () => {
+  const now = new Date();
+  return String(now.getFullYear()).padStart(4, '0') + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+};
+function workInputs() {
+  return Object.fromEntries(workFields.map(field => [field, $('work-' + field).value]));
+}
+function fillWorkInputs(value) {
+  for (const field of workFields) $('work-' + field).value = value[field] ?? '';
+}
+function retainWorkSettings() {
+  try {
+    localStorage.setItem(WORK_SETTINGS_KEY, JSON.stringify({ draft: workInputs(), applied: workApplied,
+      scope: workScope, sourceId: workFile?.storageId ?? null, page: workPage, open: $('work-desk').open }));
+  } catch { workStorageWarning = 'Browser storage could not retain these filters. Keep the complete selection download before closing.'; }
+  $('work-storage').textContent = workStorageWarning;
+}
+function workSources() { return workScope === 'file' ? workFile?.plans ?? [] : savedPlans; }
+function refreshWorkProjection() {
+  if (!workReady || !workApplied) return;
+  const sources = workSources(), report = projectOperatingWork(sources, workApplied);
+  workPlans = sources; workReport = report;
+  workPage = Math.max(1, Math.min(workPage, Math.max(1, Math.ceil(report.rows.length / 40))));
+  renderWorkDesk();
+}
+function workAction(label, action) {
+  const button = node('button', label); button.type = 'button';
+  button.addEventListener('click', () => run(action)); return button;
+}
+async function openWorkStep(row, expected) {
+  await retainWorkingDraft();
+  const actual = await readPlan(row.planId);
+  if (!actual || JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error('The selected saved source changed or is absent. Refresh the work desk, or receive the complete opened source plan through its existing comparison. Your current working draft remains retained.');
+  }
+  await openPlan(row.planId);
+  if (JSON.stringify(current) !== JSON.stringify(expected)) {
+    throw new Error('The saved source changed while opening it. Your working draft remains retained. Refresh the work desk before selecting this step again.');
+  }
+  if (draft.baseRevision !== row.revision || !draft.content.steps.some(step => step.id === row.stepId)) {
+    status('Opened the retained working draft. It differs from this saved work selection; review its recovery controls or explicitly open the current saved revision.');
+  } else {
+    selectedStep = row.stepId; renderSteps(); renderStep();
+    status('Opened saved work from revision ' + row.revision + ' in its original editor. Any retained unfinished edits remain working draft content until Save revision.');
+  }
+  $('plan-editor').scrollIntoView({ block: 'start' }); $('plan-editor').focus();
+}
+async function receiveWorkSource(plan) {
+  await retainWorkingDraft();
+  try { await receivePlan(plan); }
+  catch (error) {
+    if (['PLAN_ORIGIN_CONFLICT', 'PLAN_HISTORY_DIVERGED'].includes(error.code)) {
+      pendingImport = inspectOperatingPlan(plan); $('import-conflict').hidden = false;
+      $('import-explanation').textContent = error.message + ' Keep the complete incoming source as a copy, or return to the original saved history.';
+      $('import-conflict').scrollIntoView({ block: 'center' }); return;
+    }
+    throw error;
+  }
+  $('plan-editor').scrollIntoView({ block: 'start' });
+}
+function renderWorkDesk() {
+  if (!workReport) return;
+  const count = workReport.counts, rows = $('work-rows'); rows.replaceChildren();
+  $('work-scope').textContent = workScope === 'file'
+    ? 'Opened complete selection: ' + workFile.name + ' · ' + workPlans.length + ' retained source plans. The saved browser library is unchanged.'
+    : 'Current saved browser library · ' + count.plans + ' source plans. Unfinished drafts are retained separately in the original editor.';
+  $('work-summary').textContent = count.work + ' matching saved steps in ' + count.matchedPlans +
+    ' plans · as of ' + workReport.asOf + ' · ' + count.due.overdue + ' overdue · ' + count.due.today +
+    ' today · ' + count.due.future + ' future · ' + count.due.undated + ' undated.';
+  $('work-unapplied').hidden = JSON.stringify(workInputs()) === JSON.stringify(workApplied);
+  const byId = new Map(workPlans.map(plan => [plan.id, plan]));
+  for (const row of workReport.rows.slice((workPage - 1) * 40, workPage * 40)) {
+    const plan = byId.get(row.planId), step = plan.revisions.at(-1).steps.find(item => item.id === row.stepId);
+    const card = node('article', undefined, 'work-card'), heading = node('h3', row.title);
+    card.append(heading, node('p', row.planTitle + ' · ' + (row.customer || 'Customer not entered') + ' · ' +
+      (row.period || 'Period not entered'), 'hint'),
+    node('p', (row.owner.trim() || 'Unassigned') + ' · ' + states[row.status] + ' · ' + (row.due || 'Undated') +
+      ' · ' + row.dueState),
+    node('p', row.planId + ' / ' + row.stepId + ' · saved revision ' + row.revision + ' · step ' + row.position, 'work-identity'));
+    const actions = node('div', undefined, 'actions');
+    actions.append(workAction('Open original step', () => openWorkStep(row, plan)),
+      workAction('Complete source JSON', () => download(completePlanCapacity(plan), 'operating-plan-' + plan.id + '.json')));
+    if (workScope === 'file') actions.append(workAction('Receive source plan', () => receiveWorkSource(plan)));
+    card.append(actions);
+    const details = node('details'), summary = node('summary', 'Read complete saved work and outputs');
+    details.append(summary);
+    for (const [key, label] of [['instruction', 'Work'], ['inputs', 'Inputs'], ['expectedResult', 'Expected result'], ['recordedResult', 'Recorded result']])
+      details.append(node('h4', label), node('p', step[key] || '—', 'work-text'));
+    if (step.argv.length) details.append(node('h4', 'Original command'), node('pre', step.argv.map(shellArgument).join(' ')));
+    if (step.selection) {
+      const registration = node('details'); registration.append(node('summary', 'Original registration'), node('pre', JSON.stringify(step.selection, null, 2)));
+      details.append(registration);
+    }
+    for (const file of step.files ?? []) {
+      const item = node('div', undefined, 'work-file');
+      item.append(workAction('Download ' + file.name, () => downloadOperatingFile(file)),
+        node('p', file.bytes + ' bytes · ' + file.mediaType + (file.note ? '\n' + file.note : ''), 'work-text'));
+      details.append(item);
+    }
+    card.append(details); rows.append(card);
+  }
+  if (!workReport.rows.length) rows.append(node('p', 'No saved work matches these filters. Change the selection or open another complete source file.', 'hint'));
+  const pages = Math.max(1, Math.ceil(workReport.rows.length / 40));
+  $('work-page').textContent = 'Page ' + workPage + ' of ' + pages + ' · 40 steps per page. Downloads retain every matching step and its complete parent history.';
+  $('work-previous').disabled = workPage <= 1; $('work-next').disabled = workPage >= pages;
+  $('work-storage').textContent = workStorageWarning;
+}
+async function initializeWorkDesk() {
+  if (!database) return;
+  const defaults = { asOf: localDay(), owner: '', customer: '', search: '', status: 'unfinished', due: 'all', assignment: 'all' };
+  let retained = null;
+  try { retained = JSON.parse(localStorage.getItem(WORK_SETTINGS_KEY) || 'null'); }
+  catch { workStorageWarning = 'The saved filter state could not be read. Select the date and work explicitly.'; }
+  workApplied = defaults;
+  if (retained?.applied) try { workApplied = projectOperatingWork([], retained.applied).filters; }
+  catch { workStorageWarning = 'The saved applied filters were invalid. Complete your retained filters and apply them again.'; }
+  fillWorkInputs(retained?.draft && typeof retained.draft === 'object' ? { ...defaults, ...retained.draft } : workApplied);
+  workPage = Number.isSafeInteger(retained?.page) && retained.page > 0 ? retained.page : 1;
+  if (retained?.scope === 'file') {
+    try {
+      const saved = JSON.parse(localStorage.getItem(WORK_SOURCE_KEY) || 'null');
+      if (!saved || typeof saved.name !== 'string' || !retained.sourceId || saved.id !== retained.sourceId) throw new Error('Retain the original selection file.');
+      const selection = inspectOperatingWorkSelection(saved.selection); serializeOperatingWorkSelection(selection);
+      workFile = { storageId: saved.id, name: saved.name, ...selection }; workScope = 'file';
+    } catch { workStorageWarning = 'Reopen your original complete work-selection file. The saved browser library remains available.'; }
+  }
+  workReady = true; $('work-controls').disabled = false;
+  $('work-desk').open = retained?.open === true;
+  refreshWorkProjection();
+}
+$('show-work-desk').addEventListener('click', () => {
+  $('work-desk').open = true; $('work-desk').scrollIntoView({ block: 'start' }); retainWorkSettings();
+});
+$('work-desk').addEventListener('toggle', () => { if (workReady) retainWorkSettings(); });
+$('work-form').addEventListener('input', () => {
+  if (!workReady) return; retainWorkSettings();
+  $('work-unapplied').hidden = JSON.stringify(workInputs()) === JSON.stringify(workApplied);
+});
+$('work-form').addEventListener('submit', event => {
+  event.preventDefault(); run(() => {
+    const applied = projectOperatingWork(workSources(), workInputs()).filters;
+    workApplied = applied; workPage = 1; refreshWorkProjection(); retainWorkSettings();
+  });
+});
+$('work-refresh').addEventListener('click', () => run(async () => {
+  await flushDraft(); await refreshPlanList(); refreshWorkProjection(); retainWorkSettings();
+}));
+$('work-library').addEventListener('click', () => run(async () => {
+  await flushDraft(); workScope = 'library'; workPage = 1; await refreshPlanList(); refreshWorkProjection(); retainWorkSettings();
+}));
+$('work-open-file').addEventListener('click', () => { if (busy) return; $('work-file').value = ''; $('work-file').click(); });
+$('work-file').addEventListener('change', () => run(async () => {
+  const file = $('work-file').files[0]; if (!file) return;
+  if (file.size > OPERATING_WORK_MAX_BYTES) throw new Error('Keep the complete work selection within 32 MiB.');
+  const selection = inspectOperatingWorkSelection(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer()))); serializeOperatingWorkSelection(selection);
+  workFile = { storageId: crypto.randomUUID(), name: file.name, ...selection }; workScope = 'file'; workPage = 1; workApplied = selection.options;
+  fillWorkInputs(workApplied);
+  try { localStorage.setItem(WORK_SOURCE_KEY, JSON.stringify({ id: workFile.storageId, name: file.name, selection })); }
+  catch { workStorageWarning = 'This complete selection remains open in memory. Browser storage is full; keep the original file or download the complete selection before closing.'; }
+  refreshWorkProjection(); retainWorkSettings();
+}));
+for (const [id, direction] of [['work-previous', -1], ['work-next', 1]])
+  $(id).addEventListener('click', () => { workPage += direction; renderWorkDesk(); retainWorkSettings(); });
+for (const format of ['json', 'html'])
+  $('work-export-' + format).addEventListener('click', () => run(() => {
+    if (!workReport) throw new Error('Apply the work selection first.');
+    const value = createOperatingWorkSelection(workPlans, workApplied);
+    const content = format === 'html' ? renderOperatingWorkHTML(value) : serializeOperatingWorkSelection(value);
+    download(content, 'operating-work-' + workApplied.asOf + '.' + format, format === 'html' ? 'text/html' : 'application/json');
+  }));
 
 // Cycle preparation belongs to this editor's existing per-session working record.
 let cyclePreparation = null, cycleSource = null, cyclePreview = null, cyclePlan = null;
@@ -943,6 +1124,7 @@ await run(async () => {
   else status(savedPlans.length + ' saved operating plans. Create or open one to continue.');
 });
 await run(refreshCatalog);
+await run(initializeWorkDesk);
 
 installGrantReportingEditor({
   trigger: $('create-grant-reporting'),

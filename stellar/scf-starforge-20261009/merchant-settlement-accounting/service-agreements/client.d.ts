@@ -123,6 +123,49 @@ export interface DatedOptions extends RequestOptions { asOf?: DateOnly }
 export interface PreviewOptions extends DatedOptions { periodId: string }
 export interface ExportOptions extends DatedOptions { format?: ExportFormat }
 export interface DownloadedAgreementFile { name: string; type: string; bytes: Uint8Array }
+export interface CollectionsOptions extends DatedOptions {
+  /** Omit for all agreements; [] selects none. */ agreementIds?: string[];
+  workspaceId?: string; expectedRevision?: number;
+}
+export type CollectionsExportFormat = 'tar' | 'json' | 'html' | 'invoices' | 'periods' | 'activity';
+export interface CollectionsTotals {
+  currency: Currency; invoiceCount: number; overdueCount: number;
+  total: Money; paid: Money; credited: Money; balance: Money; amountDue: Money;
+  creditBalance: Money; overdue: Money;
+}
+export interface CollectionsBillingLink {
+  billingId: string; requestId: string; invoiceRequestId: string; periodId: string;
+  startMonth: number; endMonth: number; issueDate: DateOnly; dueDate: DateOnly;
+  periodCount: number; editionId: string; sourceId: string; createdAt: string;
+}
+export interface CollectionsAllocation {
+  id: string; receiptId: string; amount: Money; allocatedDate: DateOnly;
+  releasedDate: DateOnly | null; effective: boolean; actor: string | null;
+  reason: string | null; releaseReason: string | null;
+  receipt: {id: string; reference: string | null; kind: string | null; method: string | null; sourceKey: string | null;
+    receivedDate: DateOnly; amount: Money; currency: Currency; status: string; voidDate: DateOnly | null};
+}
+export interface CollectionsCredit {
+  id: string; number: string; creditDate: DateOnly; total: Money;
+  currency: Currency; reason: string; effective: boolean;
+}
+export interface CollectionsInvoice {
+  invoice: InvoiceSummary; effective: boolean; billingLinks: CollectionsBillingLink[];
+  currentPeriodIds: string[]; allocations: CollectionsAllocation[]; credits: CollectionsCredit[];
+}
+export interface CollectionsAgreement {
+  agreement: Pick<AgreementSummary, 'id' | 'reference' | 'title' | 'customerId' | 'customerName' |
+    'version' | 'status' | 'startDate' | 'endDate'>;
+  sources: Array<Record<string, unknown>>; periods: BillingPeriod[];
+  pendingBillings: CollectionsBillingLink[]; invoices: CollectionsInvoice[]; totals: CollectionsTotals[];
+}
+export interface AgreementCollections {
+  schema: 'stellar-forge.service-agreement-collections.v1'; workspaceId: string;
+  revision: Revision; asOf: DateOnly; sha256: string; basis: string[];
+  selection: {agreementIds: string[]}; agreements: CollectionsAgreement[]; totals: CollectionsTotals[];
+  summary: {agreements: number; invoices: number; effectiveInvoices: number; overdueInvoices: number;
+    pendingBillings: number; draftInvoices: number; futureInvoices: number; voidInvoices: number};
+}
 export interface ServiceAgreementClientOptions { baseUrl?: string; fetch?: typeof globalThis.fetch }
 export interface PreparedAgreementBillingDetails {
   agreementBillingPrepared: true; billingId: string; requestId: string; [key: string]: unknown;
@@ -138,6 +181,8 @@ export class ServiceAgreementClientError extends Error {
 }
 export interface ServiceAgreementClient {
   readonly baseUrl: string;
+  collections(options?: CollectionsOptions): Promise<AgreementCollections>;
+  exportCollections(options?: CollectionsOptions & {format?: CollectionsExportFormat}): Promise<DownloadedAgreementFile>;
   state(options?: DatedOptions): Promise<ServiceAgreementState>;
   detail(id: string, options?: DatedOptions): Promise<AgreementDetail>;
   preview(id: string, options: PreviewOptions): Promise<AgreementPreview>;

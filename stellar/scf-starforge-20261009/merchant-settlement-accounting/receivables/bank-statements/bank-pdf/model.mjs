@@ -14,7 +14,14 @@ export const canonical=v=>JSON.stringify(sort(v));
 function sort(v){if(Array.isArray(v))return v.map(sort);if(!plain(v))return v;return Object.fromEntries(Object.keys(v).sort().map(k=>[k,sort(v[k])]));}
 export async function digest(value){const bytes=typeof value==='string'?new TextEncoder().encode(value):value;return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');}
 export function encodeBase64(bytes){let out='';for(let i=0;i<bytes.length;i+=32768)out+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(out);}
-export function decodeBase64(value){need(typeof value==='string'&&value.length<=Math.ceil(PDF_LIMITS.fileBytes/3)*4&&/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value),'PDF_BYTES','Provide complete original base64 PDF bytes');const raw=atob(value),bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));need(bytes.length>0&&bytes.length<=PDF_LIMITS.fileBytes&&encodeBase64(bytes)===value,'PDF_BYTES','Original PDF exceeds the 16,000,000-byte file limit or is not canonical base64');return bytes;}
+export function decodeBase64(value){
+ need(typeof value==='string'&&value.length>0&&value.length<=Math.ceil(PDF_LIMITS.fileBytes/3)*4&&value.length%4===0,'PDF_BYTES','Provide complete original base64 PDF bytes');
+ const padding=value.endsWith('==')?2:value.endsWith('=')?1:0,end=value.length-padding;
+ for(let i=0;i<end;i++){const c=value.charCodeAt(i);need((c>=65&&c<=90)||(c>=97&&c<=122)||(c>=48&&c<=57)||c===43||c===47,'PDF_BYTES','Provide complete original base64 PDF bytes');}
+ need((value.length/4)*3-padding<=PDF_LIMITS.fileBytes,'PDF_BYTES','Original PDF exceeds the 16,000,000-byte file limit');
+ const raw=atob(value),bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));
+ need(bytes.length>0&&bytes.length<=PDF_LIMITS.fileBytes&&encodeBase64(bytes)===value,'PDF_BYTES','Original PDF exceeds the 16,000,000-byte file limit or is not canonical base64');return bytes;
+}
 export function dateValue(value,format='YMD',yearRule=null){
  const raw=String(value??'').trim(),m=raw.match(/^(\d{1,4})([-/.])(\d{1,2})(?:\2(\d{1,4}))?$/);
  need(m&&['YMD','MDY','DMY'].includes(format),'PDF_DATE','Choose a complete source calendar date and its explicit interpretation',{raw,format});

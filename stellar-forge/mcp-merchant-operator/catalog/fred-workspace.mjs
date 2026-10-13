@@ -1,4 +1,5 @@
 // MIT. Static FRED tool metadata; imports no source, merchant or buyer runtime.
+import { fredResearchCommerceTools } from './fred-research-commerce.mjs';
 import { fredResearchTools, fredResearchFileSelection } from './fred-research.mjs';
 import { fredOperatingTools } from './fred-operating.mjs';
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
@@ -12,7 +13,7 @@ const object = { type: 'object' };
 const workspace = { workspace: alias };
 const recorded = { ...workspace, id: operation, expectedRevision: revision };
 const publication = { ...workspace, publicationId: digest };
-const purchase = { ...publication, intentId: operation };
+const purchase = { ...publication, intentId: operation, expectedPurchaseSha256: digest };
 const read = { readOnly: true, idempotent: true };
 const change = { idempotent: true };
 const records = ['captures', 'reviews', 'publications', 'operations', 'briefingTemplates', 'briefingSuccessors',
@@ -106,8 +107,9 @@ export const fredDdpMigrationSelection = {
 const ddpPage = { ...releasePage, offset: { type: 'integer', minimum: 0, maximum: Number.MAX_SAFE_INTEGER } };
 
 export const fredFileSelection = {
-  kind: { type: 'string', enum: ['source', 'comparison', 'project', 'customer', 'briefing', 'briefing-successor', 'release-source', 'release-plan', 'ddp-crosswalk', 'ddp-package', 'ddp-migration', 'ddp-receiving', 'research-source', 'research-catalogue', 'research-entry', 'research-product'] },
+  kind: { type: 'string', enum: ['source', 'comparison', 'project', 'customer', 'briefing', 'briefing-successor', 'release-source', 'release-plan', 'ddp-crosswalk', 'ddp-package', 'ddp-migration', 'ddp-receiving', 'research-source', 'research-catalogue', 'research-entry', 'research-product', 'research-publication', 'research-received'] },
   ...fredResearchFileSelection,
+  file: { type: 'string', minLength: 1, maxLength: 2048 },
   captureId: digest, before: digest, after: digest, publicationId: digest, intentId: operation, reviewId: digest, successorId,
   releaseCaptureId: digest, planId: releasePlanId,
   crosswalkId: ddpCrosswalkId, packageId: ddpPackageId, migrationId: ddpMigrationId, receivingId: ddpReceivingId,
@@ -117,6 +119,7 @@ export function fredWorkspaceTools(tool) {
   return [
     ...fredOperatingTools(tool),
     ...fredResearchTools(tool),
+    ...fredResearchCommerceTools(tool),
     tool('merchant_fred_handovers','Page the original portable handover inventory. Keep the operation ID and follow nextOffset.',{
       ...workspace,offset:{type:'integer',minimum:0},limit
     },['workspace'],read),

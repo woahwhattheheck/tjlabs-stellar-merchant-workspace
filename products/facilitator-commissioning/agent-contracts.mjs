@@ -35,16 +35,22 @@ export const actionPayloads={
     supersedesOperationId:uuidSchema},['provider','requestId','runOperationId','summary','evidence','receiving']),
   'installation-template':object({sourceTransferId:uuidSchema,seed:fileRef,caseSnapshot:fileRef}),
   'installation-prepare':object({templateOperationId:uuidSchema,bindings:fileRef}),
+  'installation-preview':object({hostAlias:idSchema,preparationOperationId:uuidSchema,actor:text(300),note:text(12000),receivingName:text(300)}),
+  'installation-save':object({receivingOperationId:uuidSchema,expectedSnapshotSha256:shaSchema}),
+  'installation-export':object({receivingOperationId:uuidSchema,expectedSnapshotSha256:shaSchema}),
+  'installation-receive':object({receivingOperationId:uuidSchema,expectedSnapshotSha256:shaSchema}),
   export:object({})
 };
 export const commandSchema={anyOf:Object.entries(actionPayloads).map(([action,payload])=>object({operationId:uuidSchema,expectedRevision:integer(),action:{const:action},payload}))};
 const instance={instance:idSchema}, original={...instance,jobId:idSchema};
-const selectedFile=object({kind:{type:'string',enum:['input','blob','buyer','buyer-execution','command','report','transfer','archive','installation','installation-archive']},id:text(300),name:text(1000)},['kind']);
+const selectedFile=object({kind:{type:'string',enum:['input','blob','buyer','buyer-execution','command','report','transfer','archive','installation','installation-archive','installation-native']},id:text(300),name:text(1000),snapshotSha256:shaSchema},['kind']);
 const toolRows=[
  ['instances','List only host-declared original commissioning instances and exact job identities.',{},[],{readOnly:true,idempotent:true}],
  ['state','Inspect the same authenticated operator and complete retained customer selection.',instance,['instance'],{readOnly:true,idempotent:true}],
  ['installations','Inspect complete original Installation preparations and retained native source cuts.',original,['instance','jobId'],{readOnly:true,idempotent:true}],
  ['installation','Read complete preparation summary or every source/file page from the exact saved preparation.',{...original,operationId:uuidSchema,kind:{type:'string',enum:['summary','sources','files']},offset:integer(),limit:integer(1,250)},['instance','jobId','operationId'],{readOnly:true,idempotent:true}],
+ ['installation_receivings','List this same job’s original native Installation operations and host-declared existing services.',original,['instance','jobId'],{readOnly:true,idempotent:true}],
+ ['installation_receiving','Read the exact retained native observation, original preview or complete file pages. Preserve snapshotSha256 across every page and capture.',{...original,operationId:uuidSchema,snapshotSha256:shaSchema,kind:{type:'string',enum:['summary','files','preview','saved','received']},offset:integer(),limit:integer(1,250)},['instance','jobId','operationId','snapshotSha256'],{readOnly:true,idempotent:true}],
  ['release','Read the selected original native release before preparing the complete service.',{...instance,releaseId:idSchema},['instance','releaseId'],{readOnly:true,idempotent:true}],
  ['history','Read original results, runs or pending commands at the same exact revision; follow all pages.',{...original,kind:{type:'string',enum:['results','runs','pending']},offset:integer(),limit:integer(1,250),revision:integer()},['instance','jobId','revision'],{readOnly:true,idempotent:true}],
  ['source_begin','Retain an exact original source identity before the first upload; continue its UUID after interruption.',{...instance,upload:object({id:uuidSchema,name:text(240),bytes:integer(0,MAX_SOURCE_BYTES),sha256:shaSchema})},['instance','upload'],{idempotent:true}],

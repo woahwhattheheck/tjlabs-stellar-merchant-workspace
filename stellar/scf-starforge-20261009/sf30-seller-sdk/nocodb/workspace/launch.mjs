@@ -11,7 +11,7 @@ import { normalizeConnections } from './provider.mjs';
 export const NOCODB_STARTUP_SCHEMA = 'stellar-forge.nocodb-authoring-startup.v1';
 const WORKSPACE = 'stellar-forge.nocodb-authoring.v1';
 const HASH = /^[a-f0-9]{64}$/;
-const SOURCE_FILES = ['launch.mjs', 'model.mjs', 'cli.mjs', 'server.mjs', 'provider.mjs', 'packet.mjs', 'browser.mjs', 'index.html', 'style.css'];
+const SOURCE_FILES = ['launch.mjs', 'model.mjs', 'cli.mjs', 'server.mjs', 'provider.mjs', 'packet.mjs', 'handover.mjs', 'uploads.mjs', 'placement.mjs','returns.mjs', 'browser.mjs', 'index.html', 'style.css'];
 const SOURCE_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const changed = () => fault('NOCODB_MANAGED_INPUT_CHANGED',
   'Review the current source workspace, connection file and installed runtime before starting.', 409);

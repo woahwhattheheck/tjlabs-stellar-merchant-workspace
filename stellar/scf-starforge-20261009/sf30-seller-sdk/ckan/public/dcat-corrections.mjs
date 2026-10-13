@@ -98,6 +98,15 @@ async function retry(ctx, memory) {
   try {
     const result = await api(ctx, 'dcat/corrections/' + memory.attempt.action, memory.attempt.body);
     memory.attempt.response = result; ctx.acceptOperation(result); memory.busy = false; await ctx.refresh();
+  } catch (error) {
+    const attempt = memory.attempt;
+    if (attempt && !attempt.response && error.responseReceived && error.status >= 400 && error.status < 500) {
+      attempt.rejected = true; attempt.failure = error.message; memory.busy = false;
+      // Reconcile current saved/active state before offering a new edited request.
+      try { await ctx.refresh(); }
+      catch { if (memory.attempt === attempt) attempt.rejected = false; }
+    }
+    throw error;
   } finally { memory.busy = false; }
 }
 function terminalFailure(memory, state) {

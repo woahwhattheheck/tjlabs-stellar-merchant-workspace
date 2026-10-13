@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/FRED_RESEARCH_WORKSPACE.md",
-      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
       "required": true,
       "editions": [
         {
@@ -17,6 +17,12 @@
           "git_blob": "03833869de737d00678f690a4c5bb6861fa9fe73",
           "bytes": 16281,
           "sha256": "577d1223b430218ceabd548d5ad7071331ac5bc04e7a902334188fbe2b307433"
+        },
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "96eee277b669bc92bce80b19d748c88efabc87c3",
+          "bytes": 16850,
+          "sha256": "cd5904e963308bc16ecb23b512b15eee20c4d86928e13b1e19213ad78e8d97aa"
         }
       ]
     },
@@ -60,7 +66,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/fred-workspace-client.mjs",
-      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
       "required": true,
       "editions": [
         {
@@ -68,6 +74,12 @@
           "git_blob": "27053f4e30a9fabc701c87bef9cba0198244ba1c",
           "bytes": 121689,
           "sha256": "e8a65623d32ad343df5d4d5c22ce1669f3240df4d2cfd8d5c781347901ef97a7"
+        },
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "4b1c8c780693790088f95a9bb225397153f3657f",
+          "bytes": 126673,
+          "sha256": "dee4ea1a0fe9ccab7c7abd354af3a6f45cb3871de41e1ce292f3e7d8313447ff"
         }
       ]
     },
@@ -77,7 +89,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/providers/fred-workspaces.mjs",
-      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
       "required": true,
       "editions": [
         {
@@ -85,6 +97,12 @@
           "git_blob": "e4b5f401e69185d542bbf8aeac98ac65f0292826",
           "bytes": 10363,
           "sha256": "b8640a5857829be9c43c7050563325e109cad78132ee72d6405d707110689383"
+        },
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "5258e364b3c13a5d1130dff6ee655f908fa560f1",
+          "bytes": 11037,
+          "sha256": "60fb47df2e81a8906bce77603c82ca2b931e047cbe7f9cb00fe7fcb853e57ec7"
         }
       ]
     },
@@ -94,7 +112,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/workspace.mjs",
-      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
       "required": true,
       "editions": [
         {
@@ -102,6 +120,12 @@
           "git_blob": "0f5c7e44477b3824c43fa187c1fbaf41099f3903",
           "bytes": 34469,
           "sha256": "49b08f6906318c8329c874305c1aa616fae4c13447eb65f283dc4fde0b898f82"
+        },
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "5394e57d900e83678e0d82d06da1b24584cd11f9",
+          "bytes": 40358,
+          "sha256": "31e1adb793e79b2e32e2f65c16ee0ec48142f5c41c7be793b27f124297e6683f"
         }
       ]
     },
@@ -145,7 +169,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/fred-workspace-agent.json",
-      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
       "required": true,
       "editions": [
         {
@@ -153,6 +177,12 @@
           "git_blob": "7c2d4825564028a805a3732fb064d351f9507ad6",
           "bytes": 12300,
           "sha256": "fe62dab743f2c9a701468d21cfa9dec9b6b6cfc5155018e834a28dbd04cc6736"
+        },
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "a95a1827f3f75419266845fd72cca7c14483ede6",
+          "bytes": 13311,
+          "sha256": "659a8f0f3787ba29a0fa42cb9f2abd08dc477d057399e95349af524d85472dcd"
         }
       ]
     },
@@ -162,7 +192,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "operations/econsult-regional-production-20261013/README.md",
-      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
       "required": true,
       "editions": [
         {
@@ -170,6 +200,12 @@
           "git_blob": "f1a8644a462bb6c3f44c70528169e7d2eeb8f1bb",
           "bytes": 15963,
           "sha256": "413fc230d933705609a341f6e722682ce739113b5c772158ed9dd043cdf9b6b7"
+        },
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "b0aef384cfa8e627baaedf8017102aab3bccf84a",
+          "bytes": 22641,
+          "sha256": "00f956bed33de3b34c0f4790d9c10a65eb533a969d7ddbb8aab9be2da68818f4"
         }
       ]
     },
@@ -179,7 +215,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "operations/econsult-regional-production-20261013/run-econsult-native.py",
-      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
       "required": true,
       "editions": [
         {
@@ -187,6 +223,12 @@
           "git_blob": "ce81c66384f9d3b86de03452a79edb0823677c72",
           "bytes": 35328,
           "sha256": "00051683e017485054ca10307154707c0284ea6fac31c62e52786babeba993c8"
+        },
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "b4996174d36251ae8edabd00a814a4833bdb9525",
+          "bytes": 44422,
+          "sha256": "cb4664f26f6ff1a957b3054f2940154a60c6bc688485f1bcd2b335c327fa1dc7"
         }
       ]
     },
@@ -196,7 +238,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "operations/econsult-regional-production-20261013/execution-kit.json",
-      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
       "required": true,
       "editions": [
         {
@@ -204,6 +246,12 @@
           "git_blob": "6c207c70ae2f8ba83997137efbff619e14c7c3c1",
           "bytes": 3979484,
           "sha256": "5746b53177655242317793f868c2212bf94bd4fe246e63179a31edf5e823e5d5"
+        },
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "64484272f35f2349fcc1b188521bb6aca1a6aa59",
+          "bytes": 4241871,
+          "sha256": "a84a29757d6a1dabe50234f847ceeccbe20097f87c49ec3e63be288ed1db9462"
         }
       ]
     },
@@ -323,6 +371,227 @@
           "git_blob": "cca2806d14b75a788a28b4fdb999990c247ab176",
           "bytes": 10339,
           "sha256": "daf26940177f051102c69064c21b534d20487d4d4889c179fc77f93fe1202fed"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-delivery",
+      "label": "Complete issued product, exact original files and editable customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/delivery.mjs",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "24b2280753784c6cc41c728c0807c2657ebec017",
+          "bytes": 26086,
+          "sha256": "6c4e0817b8433cb00c996b6fdcda2dba50ceab23519757243d9be69cd5a1ddd4"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-commerce-model",
+      "label": "Original publication, receiving and commerce state",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-model.mjs",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "89bf6de3437957566f52dfe11f1e08bf9ab7ba9b",
+          "bytes": 8991,
+          "sha256": "d4bbb5f0f688ea8afb9055944ce790a54810d53da63207088c97746cc20683bd"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-native-merchant",
+      "label": "Native Research asset seller and complete offered members",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/merchant.mjs",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "612289223e551c62af201bc4c8d0fdfb4e2c1f46",
+          "bytes": 9861,
+          "sha256": "af5e96cec66885053718bf37c9064bd1c54667d2b855fe4eca507104ff64adbd"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-original-purchase",
+      "label": "Original Buyer prepare, execute, recovery and complete receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/purchase.mjs",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "fccfd2763e38870ff7dc3d223e4624b58ae480d5",
+          "bytes": 21445,
+          "sha256": "217d66ad2c21c714305ae7e51d144ae6c5bddff621599a2254b63dd52d2f031c"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-commerce-actions",
+      "label": "Frozen Research publication and original project receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce.mjs",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "d3db3511f65f11d76b25e3408f9ce4a6ae5efd38",
+          "bytes": 12274,
+          "sha256": "7aa745e40817655f174db21cf47000776eed7b3b9676ef8af71953c2baf412ff"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-commerce-transfer",
+      "label": "Complete v8 commerce project export and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-bundle.mjs",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "5458db196f59d6958c466b3213dbf13e8e4e60f5",
+          "bytes": 6048,
+          "sha256": "d23f8f09364857ed517df8915366b9aed3f9698473ee46bbaaf0da628029bc1b"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-commerce-course",
+      "label": "Native customer continuation and original paid product course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-journey.mjs",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "298c1d3667aa703aeaab69b6499e48feb912098d",
+          "bytes": 26124,
+          "sha256": "32832729da9ca981865e4efb7d203d73fec59f599726a833cd284c5e7d171cc9"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-commerce-browser",
+      "label": "Actual producer, customer, restored application and file opening course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-browser.mjs",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "c53eb7662ab04718743fe5601f9ac53e300e8aef",
+          "bytes": 22646,
+          "sha256": "02969b65f0188c71fac2b2f89100dd3fea01a6e28d353710b425cb42dbdca3ae"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-commerce-guide",
+      "label": "Complete Research product and customer operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/COMMERCE.md",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "3a83862d3021403af8a7d07a0fb7b5b025e35b1e",
+          "bytes": 18649,
+          "sha256": "53c6978356b6ae0a77aae4bf6d04baa7de427253470c1691907b1603e773fb69"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-installed-cli",
+      "label": "All twenty Research commands in the actual installed dispatcher",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/fred-workspace-cli.mjs",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "7a37ceee2460e859b2c8afce53159b6863b91f28",
+          "bytes": 31707,
+          "sha256": "53a17834f858dd5be84ebc1d893259f83b46909fddb1200b79adc2eb56deb697"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-commerce-agent",
+      "label": "Installed Research commerce action and source-page contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/fred-research-commerce.mjs",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "249fb049c1768db2fd7989da74a0898bacaf3ace",
+          "bytes": 7184,
+          "sha256": "9f294fb9b742b9d37de1ab43fafea580948b62d44a788991b0a2177a55aaac2b"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-commerce-catalogue",
+      "label": "Complete installed Research commerce tool definitions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/catalog/fred-research-commerce.mjs",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "a6f0af3e02831a983ec1521568ce951d03b30940",
+          "bytes": 3722,
+          "sha256": "98453d61f0f1031f0bfabae35c9ad9a739ab420ec584d3f293802e2901da8606"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-commerce-agent-guide",
+      "label": "Installed CLI and agent customer operating workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/FRED_RESEARCH_COMMERCE.md",
+      "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "a36c9c49892b266a7058fdf3d343e984f33c910e",
+          "git_blob": "4dc3c2d258cec6b1b5a018812d4f7c4b575caece",
+          "bytes": 15055,
+          "sha256": "028cf93d10c4131753c660a798810af56266dfa221b8a23661b0c6a0e67a5873"
         }
       ]
     }

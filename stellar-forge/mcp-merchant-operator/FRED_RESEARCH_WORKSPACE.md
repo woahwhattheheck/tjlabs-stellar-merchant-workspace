@@ -170,3 +170,7 @@ Include this complete instruction in delegated assignments and the active owner-
 
 Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
 Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+## Paid editions and editable customer receiving
+
+Issued Research products now use the same native Seller and Buyer through the installed provider. [FRED_RESEARCH_COMMERCE.md](FRED_RESEARCH_COMMERCE.md) covers exact publication selection, paged commerce/source/file/request views, original paid-intent recovery, complete configured package receiving and editable customer reopening. Research commerce projects carry the complete version 8 extension and original customer requests through full project and Operating handovers; projects without commerce keep version 7.

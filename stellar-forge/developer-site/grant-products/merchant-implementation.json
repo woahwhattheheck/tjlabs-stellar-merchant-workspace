@@ -194,6 +194,102 @@
           "sha256": "390850f4753e7a77e9c1502860e02fbd15bacc9ab9971301e98fe16f98ac4cf6"
         }
       ]
+    },
+    {
+      "id": "implementation-portfolio-model",
+      "label": "Cross-case task attention and complete source-qualified operating report",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/implementation-portfolio-model.mjs",
+      "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+      "editions": [
+        {
+          "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+          "git_blob": "620b8e2a554b7e21ad2bc847935fa82cee59418c",
+          "bytes": 9334,
+          "sha256": "7574fc4d74daf1af4ec9de557d39e10e4ff9b2a98afab301fbfb09c041d27e22"
+        }
+      ]
+    },
+    {
+      "id": "implementation-portfolio-native",
+      "label": "Pinned original case selection, task preview, native edits and request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/case-implementation-portfolio.mjs",
+      "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+      "editions": [
+        {
+          "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+          "git_blob": "9b6bd040e7b904c5433cd09f07948ceb99afb765",
+          "bytes": 19446,
+          "sha256": "a47f9a87e617468f6c3b062bc30b0a01769c494d2bc50e845e8a380db511cb1d"
+        }
+      ]
+    },
+    {
+      "id": "implementation-portfolio-browser",
+      "label": "Original-case task desk, durable working state and independent-case request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/implementation-portfolio.mjs",
+      "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+      "editions": [
+        {
+          "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+          "git_blob": "176d085e58f01e968119779fee194fe35bca6467",
+          "bytes": 36362,
+          "sha256": "4f3ccbb8f0cb4b4af28712ab0285be0918ae5fc1400bcf0be73e01b49b333d93"
+        }
+      ]
+    },
+    {
+      "id": "implementation-portfolio-cli",
+      "label": "Installed capture, task operations, status and complete report export",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/implementation-portfolio-cli.mjs",
+      "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+      "editions": [
+        {
+          "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+          "git_blob": "eea6f22b78945d3596114a447d322d5284da5342",
+          "bytes": 10015,
+          "sha256": "a64a2be21295c13490b8c701a64d8e5e35a67bf1eaeb9e5abed0db060bb00fe9"
+        }
+      ]
+    },
+    {
+      "id": "implementation-portfolio-guide",
+      "label": "Complete implementation operating desk and original-case receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/IMPLEMENTATION_PORTFOLIO.md",
+      "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+      "editions": [
+        {
+          "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+          "git_blob": "c8f6681ab25a52080988421708fe098f356c7f6e",
+          "bytes": 31945,
+          "sha256": "0427d19a69f548d2b2b399d6083cf238f3001fd673a54e6d3c1d126b08de7af6"
+        }
+      ]
+    },
+    {
+      "id": "implementation-portfolio-receiving",
+      "label": "Actual original case, browser lost-response recovery and whole-case receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/tools/receive_implementation_portfolio.mjs",
+      "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+      "editions": [
+        {
+          "commit": "d8e3c14df835950c5483066df4a3c9ead9253a23",
+          "git_blob": "d5e1bf1630b44809f593e9912eeb5e440e60d5e8",
+          "bytes": 44882,
+          "sha256": "4474672b131c9cbbc06d1ced7683f8c35884fe389b2fc507807d2c12294b2c39"
+        }
+      ]
     }
   ]
 }

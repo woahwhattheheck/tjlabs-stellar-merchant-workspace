@@ -25,7 +25,7 @@ function tab(name) {
   document.querySelectorAll('[data-view]').forEach(e => e.setAttribute('aria-current', e.dataset.view === name ? 'page' : 'false'));
 }
 function lock() {
-  $('workspace-controls').disabled = !state || busy || Boolean(pending);
+  $('workspace-controls').disabled = !state || busy || Boolean(pending) || Boolean(handoverPending);
   for (const id of ['check-operation','resume-operation','retry-operation','dismiss-operation','retry-file']) $(id).disabled = busy || recovering;
   $('retry-operation').disabled = busy || recovering || (!retryPayload && Boolean(pending?.file));
 }
@@ -101,6 +101,7 @@ async function finish(result, marker) {
   if (marker.path?.startsWith('/api/deployment/')) await refreshDeployment();
   if (marker.path === '/api/deployment/prepare') { $('stage-package').value = result.packageRequestId; $('stage-sha').value = result.sourceSha256; }
   if (marker.path === '/api/publisher/start') { tab('deploy'); renderPublisher(); }
+  await finishReturnedMutation(result,marker);
   if (pending?.requestId === marker.requestId) forget();
   notice('Saved. Original request ' + marker.requestId + '.');
 }
@@ -115,7 +116,7 @@ async function checkReceipt() {
   finally { recovering = false; lock(); }
 }
 async function mutate(path, body, label, file = null) {
-  if (pending || busy) return;
+  if (pending || busy || handoverPending) return;
   busy = true; lock(); notice('');
   try {
     const requestId = uuid(), payload = { ...clone(body), requestId };
@@ -129,14 +130,14 @@ async function mutate(path, body, label, file = null) {
       if (reply) {
         known = reply.operation; showRecovery();
         if (known?.status === 'complete') await finish(known.result, marker);
-        else if (known === null && issue.status) { forget(); notice(errorMessage(issue), true); }
+        else if (known === null && issue.status) { if(!rejectReturnedMutation(issue))forget(); notice(errorMessage(issue), true); }
       } else showRecovery('The request response is uncertain. Keep this identifier and read its original receipt.');
     }
   } catch (issue) { notice(errorMessage(issue), true); }
   finally { busy = false; lock(); }
 }
 async function readAction(action) {
-  if (busy || pending) return;
+  if (busy || pending || handoverPending) return;
   busy = true; lock(); notice('');
   try { await action(); } catch (issue) { notice(errorMessage(issue), true); } finally { busy = false; lock(); }
 }
@@ -153,7 +154,7 @@ function table(parent, headings, rows) {
   const b=node('tbody');for(const cells of rows){const r=node('tr');for(const value of cells){const c=node('td');c.append(value instanceof Node?value:node('span',shown(value)));r.append(c);}b.append(r);}t.append(b);parent.append(t);
 }
 function button(label, action) {
-  const b=node('button',label);b.type='button';b.addEventListener('click',async event=>{event.preventDefault();if(busy||pending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}});return b;
+  const b=node('button',label);b.type='button';b.addEventListener('click',async event=>{event.preventDefault();if(busy||pending||handoverPending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}});return b;
 }
 function actions(...buttons){const n=node('div');n.append(...buttons);return n;}
 function description(title, detail){const n=node('div');n.append(node('strong',title),node('small',detail));return n;}
@@ -303,7 +304,7 @@ function renderDeploymentReview(){
   $('prepare-deployment').disabled=!deploymentReview;
   if(deploymentReview)out.append(node('h4','Reviewed original publication'),jsonView(deploymentReview));
 }
-function guarded(action){return async event=>{event?.preventDefault();if(busy||pending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}};}
+function guarded(action){return async event=>{event?.preventDefault();if(busy||pending||handoverPending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}};}
 for(const b of document.querySelectorAll('[data-view]'))b.addEventListener('click',()=>tab(b.dataset.view));
 $('refresh').addEventListener('click',guarded(()=>readAction(()=>refresh())));
 $('load-current-draft').addEventListener('click',guarded(()=>readAction(async()=>{await refresh();if(state.draft)await loadDraft(state.draft,state.draftRevision);})));
@@ -419,7 +420,7 @@ $('retry-operation').addEventListener('click',async()=>{
   try{const body=retryPayload??pending.small;
     if(!body||await bodyHash(body)!==pending.bodySha256)throw new Error('The identical input is not available. Reselect its original packet or inspect the receipt.');
     const marker=pending,result=await api(marker.path,{body});await finish(result,marker);
-  }catch(issue){notice(errorMessage(issue),true);if(pending){const r=await api('/api/operation?id='+pending.requestId).catch(()=>null);if(r){known=r.operation;showRecovery();}}}
+  }catch(issue){notice(errorMessage(issue),true);if(pending){const marker=pending,r=await api('/api/operation?id='+pending.requestId).catch(()=>null);if(r){known=r.operation;showRecovery();if(known?.status==='complete')await finish(known.result,marker);else if(known===null&&issue.status)rejectReturnedMutation(issue);}}}
   finally{recovering=false;lock();}
 });
 $('dismiss-operation').addEventListener('click',async()=>{
@@ -427,8 +428,462 @@ $('dismiss-operation').addEventListener('click',async()=>{
   const original=pending.requestId;forget();await refresh().catch(issue=>notice(errorMessage(issue),true));
   notice('Recorded failure acknowledged. Original request '+original+' and its retained files remain in the workspace.');
 });
+// Whole editable workspace handover. Private archive bytes never enter browser storage.
+let handoverPending = null, handoverUpload = null, handoverFile = null, handoverAbort = null, handoverRejected = [];
+const HANDOVER_MAX = 32 * 1024 * 1024 * 1024 + 32 * 1024 * 1024 + 13, HANDOVER_CHUNK = 1024 * 1024;
+const handoverKey = () => 'stellar.nocodb.workspace-handover.v1:' + state.directory;
+function saveHandoverState() {
+  localStorage.setItem(handoverKey(), JSON.stringify({ pending: handoverPending, upload: handoverUpload, rejected:handoverRejected }));
+}
+function renderHandoverRecovery(message = '') {
+  $('handover-recovery').hidden = !handoverPending;
+  if (handoverPending) {
+    $('handover-request').textContent = handoverPending.requestId;
+    $('handover-recovery-title').textContent = handoverPending.kind === 'upload' ? 'Complete workspace upload retained' : 'Original workspace ' + handoverPending.kind + ' retained';
+    $('handover-recovery-message').textContent = message || 'Keep this original request. Check its saved receipt or continue the identical input.';
+    $('handover-reselect-label').hidden = handoverPending.kind !== 'upload';
+    $('handover-retry').textContent = handoverPending.kind === 'upload' ? 'Resume with the same file' : 'Retry original request';
+  }
+  for (const name of ['handover-check','handover-retry','handover-reselect']) $(name).disabled = busy || recovering;
+  $('handover-pause').hidden = !handoverAbort;
+  $('handover-pause').disabled = !handoverAbort;
+  lock();
+}
+function renderHandoverUpload() {
+  const out = $('handover-upload-summary'); out.replaceChildren();
+  $('handover-receive').disabled = !handoverUpload?.complete || Boolean(handoverPending);
+  if (!handoverUpload) { out.append(node('p', 'Select a whole-workspace .ncwh file. Its complete bytes remain on this host.', 'help')); return; }
+  out.append(node('p', (handoverUpload.complete ? 'Verified complete archive' : 'Retained upload') + ' · ' + handoverUpload.received + ' / ' + handoverUpload.bytes + ' bytes'));
+  if (handoverUpload.sha256) out.append(node('code', handoverUpload.sha256));
+  out.append(node('p', 'Upload ID: ' + handoverUpload.id, 'path'));
+  $('handover-receive').disabled = !handoverUpload.complete || Boolean(handoverPending);
+}
+async function handoverApi(path, { method = 'GET', body, raw, signal } = {}) {
+  const control = new AbortController(), timeout = setTimeout(() => control.abort(), 180000);
+  const abort = () => control.abort();
+  signal?.addEventListener('abort', abort, { once:true });
+  if (signal?.aborted) control.abort();
+  try {
+    const response = await fetch(path, { method, headers: {
+      'x-nocodb-workspace-token': token || '',
+      ...(raw !== undefined ? { 'content-type':'application/octet-stream' } : body !== undefined ? { 'content-type':'application/json' } : {})
+    }, ...(raw !== undefined ? { body:raw } : body !== undefined ? { body:JSON.stringify(body) } : {}), cache:'no-store', signal:control.signal });
+    const value = await response.json();
+    if (!response.ok) throw Object.assign(new Error(value.message || value.error || response.statusText), { code:value.error, status:response.status });
+    return value;
+  } catch (issue) { if (!issue.status) issue.uncertain = true; throw issue; }
+  finally { clearTimeout(timeout); signal?.removeEventListener('abort', abort); }
+}
+function rememberHandover(kind, input, file = null) {
+  const marker = { kind, requestId:input.requestId, input:clone(input), ...(file ? {file:{name:file.name,bytes:file.size}} : {}), createdAt:new Date().toISOString() };
+  // Persist the exact intent before the first native request.
+  const previous = handoverPending; handoverPending = marker;
+  try { saveHandoverState(); } catch (issue) { handoverPending = previous; throw issue; }
+  renderHandoverRecovery(); return marker;
+}
+function finishHandoverMarker(marker) {
+  if (handoverPending?.requestId !== marker.requestId) return;
+  const previous = handoverPending; handoverPending = null;
+  try { saveHandoverState(); } catch (issue) { handoverPending = previous; throw issue; }
+  renderHandoverRecovery();
+}
+async function downloadWorkspace(id) {
+  const ticket = await handoverApi('/api/workspace/download', { method:'POST', body:{id} });
+  const url = new URL(ticket.url, location.href);
+  if (url.origin !== location.origin || !url.pathname.startsWith('/api/workspace/')) throw new Error('The archive download must stay on this original workspace.');
+  const link = node('a'); link.href = url.href; link.download = ticket.filename; link.rel = 'noreferrer'; link.click();
+  $('handover-download-note').textContent = 'Download requested: ' + ticket.filename + ' · ' + ticket.bytes + ' bytes · SHA256 ' + ticket.sha256 + '. If interrupted, choose Download again for this same archive.';
+}
+function handoverCounts(value) {
+  return Object.entries(value ?? {}).map(([name,count]) => name + ': ' + shown(count)).join(' · ') || 'Full saved workspace';
+}
+async function refreshHandovers() {
+  const [exportsValue, receivedValue] = await Promise.all([
+    handoverApi('/api/workspace/exports'), handoverApi('/api/workspace/received')
+  ]);
+  table($('handover-exports'), ['Archive','Saved work','Exact identity','Actions'], exportsValue.exports.map(item => [
+    description(item.filename, item.bytes + ' bytes'), handoverCounts(item.counts),
+    node('code', item.sha256),
+    button('Download complete workspace', () => readAction(() => downloadWorkspace(item.id)))
+  ]));
+  table($('handover-received'), ['Independent workspace','Saved work','Original archive','Actions'], receivedValue.received.map(item => [
+    description(item.name, item.workspaceIdentity), handoverCounts(item.counts), node('code', item.archiveSha256),
+    button('Open received workspace', () => readAction(async () => {
+      const result = await handoverApi('/api/workspace/open', {method:'POST',body:{name:item.name}});
+      const url = new URL(result.url, location.href);
+      if (!['http:','https:'].includes(url.protocol) || !['127.0.0.1','localhost','[::1]'].includes(url.hostname) || url.username || url.password)
+        throw new Error('The received workspace must use its original private local listener.');
+      const out=$('handover-opened');out.hidden=false;out.replaceChildren(node('p','Independent workspace ' + result.name + ' is open. Its edits remain separate from this source.'));
+      const link=node('a','Open '+result.name);link.href=url.href;link.target='_blank';link.rel='noreferrer';out.append(link);
+    }))
+  ]));
+}
+async function completeHandover(result, marker) {
+  await refreshHandovers();
+  if (marker.kind === 'export') {
+    $('handover-download-note').textContent = 'Saved ' + result.filename + ' · ' + result.bytes + ' bytes · SHA256 ' + result.sha256 + '. Download the exact file from the list.';
+    await refresh();
+  } else if (marker.kind === 'receive') {
+    $('handover-opened').hidden=false;$('handover-opened').replaceChildren(node('p','Received independent workspace ' + result.name + '. Open it from the saved receiving list.'));
+  }
+  finishHandoverMarker(marker);
+  notice('Saved original whole-workspace ' + marker.kind + ' request ' + marker.requestId + '.');
+}
+async function submitHandover(marker) {
+  try {
+    const result = await handoverApi('/api/workspace/' + marker.kind, {method:'POST',body:marker.input});
+    await completeHandover(result, marker);
+  } catch (issue) {
+    if ([400,409,413,422].includes(issue.status)) {
+      const status = await handoverApi('/api/workspace/' + marker.kind + '-status?id=' + encodeURIComponent(marker.requestId)).catch(() => undefined);
+      if (status === null) {
+        handoverRejected.push({...clone(marker),rejectedAt:new Date().toISOString(),error:{code:issue.code,message:issue.message}});
+        finishHandoverMarker(marker);
+      }
+    }
+    throw issue;
+  }
+}
+async function checkHandover() {
+  if (!handoverPending || busy || recovering) return;
+  recovering=true;renderHandoverRecovery();
+  try {
+    const marker=handoverPending;
+    if(marker.kind==='upload'){
+      handoverUpload=await handoverApi('/api/workspace/upload?id='+encodeURIComponent(marker.requestId));
+      saveHandoverState();renderHandoverUpload();
+      if(!handoverUpload){renderHandoverRecovery('No original upload receipt is visible. Resume the same file and original request.');return;}
+      // Even a complete prior upload must be rechecked byte-for-byte if the response
+      // was unknown. Resume replays its full selected file from offset zero.
+      renderHandoverRecovery(handoverUpload.complete ?
+        'The complete original upload is retained. Resume with the same file to reconcile every byte before accepting this local selection.' :
+        'The original upload retains '+handoverUpload.received+' bytes. Resume rechecks every retained range before appending.');
+    }else{
+      const status=await handoverApi('/api/workspace/'+marker.kind+'-status?id='+encodeURIComponent(marker.requestId));
+      const saved=status?.operation ?? status;
+      if(saved?.status==='complete') await completeHandover(saved.result,marker);
+      else renderHandoverRecovery(saved?.error ? errorMessage(saved.error) :
+        saved ? 'Original request state: '+saved.status+'. Retry only this same retained request.' : 'No original receipt is visible. Retry this exact request.');
+    }
+  }catch(issue){notice(errorMessage(issue),true);renderHandoverRecovery('The original request remains retained. '+errorMessage(issue));}
+  finally{recovering=false;renderHandoverRecovery();}
+}
+async function streamHandoverUpload(file, marker) {
+  if(!file || file.size!==marker.file.bytes)throw new Error('Select the complete original archive with the same byte length. Every retained byte is compared by the original host.');
+  handoverAbort=new AbortController();renderHandoverRecovery('Uploading original archive…');
+  try{
+    try {
+      handoverUpload=await handoverApi('/api/workspace/upload/start',{method:'POST',body:marker.input,signal:handoverAbort.signal});
+    } catch(issue) {
+      if([400,409,413,422].includes(issue.status)){
+        const saved=await handoverApi('/api/workspace/upload?id='+encodeURIComponent(marker.requestId)).catch(()=>undefined);
+        if(saved===null){
+          handoverRejected.push({...clone(marker),rejectedAt:new Date().toISOString(),error:{code:issue.code,message:issue.message}});
+          finishHandoverMarker(marker);
+        }
+      }
+      throw issue;
+    }
+    for(let offset=0;offset<file.size;offset+=HANDOVER_CHUNK){
+      if(handoverAbort.signal.aborted)throw new Error('Upload paused. The original host retains its bytes and request.');
+      const block=file.slice(offset,Math.min(file.size,offset+HANDOVER_CHUNK));
+      handoverUpload=await handoverApi('/api/workspace/upload?'+new URLSearchParams({id:marker.requestId,offset}),{method:'PUT',raw:block,signal:handoverAbort.signal});
+      $('handover-progress').textContent='Compared / uploaded '+Math.min(file.size,offset+block.size)+' of '+file.size+' bytes.';
+      renderHandoverUpload();
+    }
+    handoverUpload=await handoverApi('/api/workspace/upload/finish',{method:'POST',body:{requestId:marker.requestId},signal:handoverAbort.signal});
+    if(!handoverUpload.complete || handoverUpload.bytes!==file.size || !/^[a-f0-9]{64}$/.test(handoverUpload.sha256))
+      throw new Error('The host has not returned a complete exact archive identity.');
+    saveHandoverState();finishHandoverMarker(marker);renderHandoverUpload();
+    $('handover-progress').textContent='Complete archive retained and verified. Review its SHA256 before receiving.';
+  }finally{handoverAbort=null;renderHandoverRecovery();}
+}
+async function runHandover(action) {
+  if(busy||recovering||pending)return;
+  busy=true;lock();renderHandoverRecovery();notice('');
+  try{await action();}catch(issue){notice(errorMessage(issue),true);renderHandoverRecovery('The original request is retained. '+errorMessage(issue));}
+  finally{busy=false;lock();renderHandoverRecovery();}
+}
+$('handover-refresh').addEventListener('click',guarded(()=>readAction(refreshHandovers)));
+$('handover-export-form').addEventListener('submit',guarded(()=>runHandover(async()=>{
+  if(handoverPending)throw new Error('Finish the retained handover request first.');
+  if(dirty)throw new Error('Save or reload the current draft before exporting the whole workspace.');
+  if(!$('handover-export-confirm').checked)throw new Error('Confirm that export closes the owned publisher and release consoles.');
+  const marker=rememberHandover('export',{requestId:uuid(),expectedDraftRevision:state.draftRevision,expectedSelectedVersion:state.selectedVersion});
+  await submitHandover(marker);
+})));
+$('handover-file').addEventListener('change',guarded(()=>{
+  handoverFile=$('handover-file').files[0]??null;
+  $('handover-file-info').textContent=handoverFile?handoverFile.name+' · '+handoverFile.size+' bytes. The complete file will be streamed in 1 MiB chunks.':'';
+}));
+$('handover-upload-form').addEventListener('submit',guarded(()=>runHandover(async()=>{
+  if(handoverPending)throw new Error('Finish the retained handover request first.');
+  if(!handoverFile||handoverFile.size<1||handoverFile.size>HANDOVER_MAX)throw new Error('Select a complete .ncwh archive within the native limit: 32 GiB of contents plus its manifest and header.');
+  const marker=rememberHandover('upload',{requestId:uuid(),sha256:null,bytes:handoverFile.size,filename:handoverFile.name},handoverFile);
+  await streamHandoverUpload(handoverFile,marker);
+})));
+$('handover-receive-form').addEventListener('submit',guarded(()=>runHandover(async()=>{
+  if(handoverPending)throw new Error('Finish the retained handover request first.');
+  if(!handoverUpload?.complete)throw new Error('Finish uploading the complete archive first.');
+  const latest=await handoverApi('/api/workspace/upload?id='+encodeURIComponent(handoverUpload.id));
+  if(!latest.complete||latest.sha256!==handoverUpload.sha256||latest.bytes!==handoverUpload.bytes)throw new Error('The retained archive identity changed. Review it again.');
+  if(!$('handover-receive-confirm').checked)throw new Error('Confirm the complete private archive and independent receiving destination.');
+  const name=$('handover-name').value.trim();
+  if(!/^[a-z][a-z0-9_-]{0,47}$/.test(name))throw new Error('Use a lowercase receiving name beginning with a letter, at most 48 characters.');
+  const marker=rememberHandover('receive',{requestId:uuid(),uploadId:latest.id,expectedSha256:latest.sha256,name});
+  await submitHandover(marker);
+})));
+$('handover-check').addEventListener('click',checkHandover);
+$('handover-reselect').addEventListener('change',()=>{
+  handoverFile=$('handover-reselect').files[0]??null;
+  renderHandoverRecovery(handoverFile?'Selected '+handoverFile.name+'. Resume will compare its complete bytes against this original upload.':'');
+});
+$('handover-retry').addEventListener('click',()=>runHandover(async()=>{
+  const marker=handoverPending;if(!marker)return;
+  if(marker.kind==='upload')await streamHandoverUpload(handoverFile,marker);else await submitHandover(marker);
+}));
+$('handover-pause').addEventListener('click',()=>handoverAbort?.abort());
+async function restoreHandoverState() {
+  const saved=localStorage.getItem(handoverKey());
+  if(saved){const value=JSON.parse(saved);handoverPending=value.pending??null;handoverUpload=value.upload??null;handoverRejected=Array.isArray(value.rejected)?value.rejected:[];}
+  renderHandoverRecovery();renderHandoverUpload();
+  await refreshHandovers();
+}
+
+
+// Source-bound review of a complete, already received independent workspace.
+// Only exact review identities, field choices and notes enter local storage.
+let returnedSelection=null, returnedPreview=null, returnedRecord=null;
+let returnedChoices=Object.create(null), returnedNote='', returnedOffset=0;
+let returnedDirty=false, returnedStale=null;
+const returnedLimit=100;
+const returnedKey=id=>'stellar.nocodb.return-review.v1:'+state.directory+':'+id;
+const returnedEqual=(a,b)=>JSON.stringify(stable(a))===JSON.stringify(stable(b));
+
+const returnedStaleCodes=new Set(['NOCODB_RETURN_CHANGED','NOCODB_RETURN_PREVIEW_CHANGED','NOCODB_DRAFT_CHANGED']);
+function rejectReturnedMutation(issue) {
+  if(!pending?.path?.startsWith('/api/return/')||!returnedStaleCodes.has(issue.code))return false;
+  localStorage.setItem(markerPrefix(pending.directory)+'rejected:'+pending.requestId,JSON.stringify({
+    ...clone(pending),rejectedAt:new Date().toISOString(),error:{code:issue.code,message:issue.message}}));
+  forget();return true;
+}
+
+function returnedSavedState() {
+  return {schema:'stellar-forge.nocodb-local-return-review.v1',reviewId:returnedSelection,
+    revision:returnedPreview.review.revision,previewSha256:returnedPreview.previewSha256,
+    choices:clone(returnedChoices),note:returnedNote,updatedAt:new Date().toISOString()};
+}
+function retainReturnedEdits() {
+  if(!returnedSelection||!returnedPreview||returnedStale)return;
+  // Persist before permitting a save or apply. Storage failures remain visible.
+  localStorage.setItem(returnedKey(returnedSelection),JSON.stringify(returnedSavedState()));
+}
+function updateReturnedDirty() {
+  returnedDirty=!returnedEqual(returnedChoices,returnedRecord?.choices??{})||returnedNote!==(returnedRecord?.note??'');
+}
+function returnedGuardDraft() {
+  if(dirty)throw new Error('Save the unsaved column edits in Review columns before capturing, reviewing or applying a returned draft. They remain in this editor.');
+}
+async function refreshReturnedInventory() {
+  const [reviews,received]=await Promise.all([api('/api/returns'),api('/api/workspace/received')]);
+  const selector=$('return-child'),old=selector.value;
+  selector.replaceChildren(node('option','Select a received independent workspace'));
+  selector.firstChild.value='';
+  for(const child of received.received??[]){
+    const option=node('option',child.name+' · '+short(child.archiveSha256)+' · '+short(child.workspaceIdentity));
+    option.value=child.name;selector.append(option);
+  }
+  if((received.received??[]).some(item=>item.name===old))selector.value=old;
+  table($('return-inventory'),['Saved review','Incoming workspace','Status','Action'],(reviews.returns??[]).map(item=>[
+    description(item.id,'Revision '+item.revision),
+    description(item.received?.name??'Original received workspace',short(item.received?.archiveSha256)),
+    item.status,button('Open returned review',()=>readAction(()=>openReturnedReview(item.id)))
+  ]));
+}
+async function readReturnedEdition(id,offset=0) {
+  const query=new URLSearchParams({id,offset,limit:returnedLimit});
+  const [record,view]=await Promise.all([api('/api/return?id='+encodeURIComponent(id)),api('/api/return/preview?'+query)]);
+  if(record.id!==id||view.review?.id!==id||record.revision!==view.review.revision)
+    throw new Error('The saved review changed while it was read. Refresh this same review.');
+  return {record,view};
+}
+async function openReturnedReview(id,offset=0) {
+  const {record,view}=await readReturnedEdition(id,offset);
+  let saved=null;const original=localStorage.getItem(returnedKey(id));
+  if(original){
+    try{saved=JSON.parse(original);}catch{throw new Error('The retained local choices cannot be decoded. Preserve this browser storage before continuing.');}
+    if(saved.reviewId!==id||!saved.choices||typeof saved.choices!=='object'||Array.isArray(saved.choices)||typeof saved.note!=='string')
+      throw new Error('The retained local choices have an invalid identity. Preserve them before continuing.');
+  }
+  returnedSelection=id;returnedRecord=record;returnedPreview=view;returnedOffset=offset;
+  returnedChoices=Object.assign(Object.create(null),record.choices??{});returnedNote=record.note??'';returnedStale=null;
+  if(saved){
+    if(saved.revision===view.review.revision&&saved.previewSha256===view.previewSha256){
+      returnedChoices=Object.assign(Object.create(null),saved.choices);returnedNote=saved.note;
+    }else returnedStale=saved;
+  }
+  updateReturnedDirty();renderReturnedReview();tab('returned');
+}
+function renderReturnedReview() {
+  const view=returnedPreview;
+  $('return-detail').hidden=!view;
+  if(!view)return;
+  $('return-title').textContent='Returned review '+view.review.id+' · revision '+view.review.revision+' · '+view.review.status;
+  $('return-identities').replaceChildren();
+  for(const side of ['base','local','returned']){
+    const identity=view[side];
+    const box=node('div',null,'return-identity');
+    box.append(node('strong',side==='base'?'Common original draft':side==='local'?'Current author draft':'Frozen returned draft'),
+      node('p',identity?'Draft revision '+identity.draftRevision:'No common draft'),
+      node('code',identity?.draftSha256??'Unavailable'));
+    $('return-identities').append(box);
+  }
+  $('return-source').replaceChildren(node('summary','Exact source and incoming workspace'),jsonView({
+    source:view.source,received:view.review.received,previewSha256:view.previewSha256}));
+  const issues=$('return-issues');issues.replaceChildren();
+  for(const issue of view.issues??[])issues.append(node('p',[issue.code,issue.message].filter(Boolean).join(': '),'error'));
+  $('return-stale').hidden=!returnedStale;
+  $('return-stale-message').textContent=returnedStale?
+    'Local choices belong to saved revision '+returnedStale.revision+' and preview '+returnedStale.previewSha256+
+    '. The current source, local draft or saved review has changed. Your local choices remain retained; save and apply are blocked until you choose how to continue.':'';
+  $('return-note').value=returnedNote;
+  $('return-note').disabled=Boolean(returnedStale);
+  $('return-review-state').textContent=returnedStale?'Retained local choices need reconciliation':
+    returnedDirty?'Unsaved review choices or note': 'Showing saved review choices';
+  $('return-summary').textContent=view.total+' changed fields · '+view.unresolved+' unresolved · '+Object.keys(returnedChoices).length+' explicit choices';
+  const cards=$('return-rows');cards.replaceChildren();
+  for(const row of view.rows??[]){
+    const card=node('article',null,'return-row'),heading=node('h4',row.path||'Whole draft');
+    heading.append(node('span',row.status,'badge'));card.append(heading);
+    const values=node('div',null,'return-values');
+    for(const side of ['base','local','returned']){
+      const entry=row[side],cell=node('div');
+      cell.append(node('strong',side==='base'?'Common original':side==='local'?'Current author':'Returned'),
+        entry?.present?jsonView(entry.value):node('p','Absent','help'));values.append(cell);
+    }
+    card.append(values);
+    const label=node('label','Field decision'),choice=node('select');
+    const empty=node('option',row.status==='conflict'?'Choose explicitly to resolve this conflict':'Use automatic comparison');
+    empty.value='';choice.append(empty);
+    for(const [side,title]of [['local','Keep current author value'],['returned','Use returned value'],['base','Use common original value']]){
+      const option=node('option',title);option.value=side;choice.append(option);
+    }
+    choice.value=returnedChoices[row.path]??'';choice.disabled=Boolean(returnedStale);
+    choice.addEventListener('change',()=>{
+      if(returnedStale||busy||pending||handoverPending)return;
+      if(choice.value)returnedChoices[row.path]=choice.value;else delete returnedChoices[row.path];
+      updateReturnedDirty();
+      try{retainReturnedEdits();}catch(issue){notice('Local choices could not be saved: '+errorMessage(issue),true);}
+      renderReturnedReview();
+    });
+    label.append(choice);card.append(label);cards.append(card);
+  }
+  if(!view.rows?.length)cards.append(node('p',view.total?'No changes on this page.':'No changed fields in this comparison.','help'));
+  $('return-page').textContent=(view.total?returnedOffset+1:0)+'–'+Math.min(returnedOffset+(view.rows?.length??0),view.total)+' of '+view.total;
+  $('return-prev').disabled=returnedOffset===0;
+  $('return-next').disabled=view.nextOffset==null;
+  $('return-save').disabled=Boolean(returnedStale)||dirty||view.review.status==='applied';
+  $('return-apply').disabled=Boolean(returnedStale)||returnedDirty||dirty||!view.canApply||view.review.status==='applied';
+  $('return-apply-help').textContent=dirty?'Save the column editor before continuing.':
+    returnedStale?'Resolve the retained local review first.':
+    returnedDirty?'Save these choices and refresh the preview before applying.':
+    view.canApply?'Applying changes only the author draft. Preview all rows and save a version separately.':
+    'Resolve the conflicts and source/ancestry issues, save the review, then inspect the refreshed preview.';
+}
+async function returnedPage(offset) {
+  retainReturnedEdits();
+  await openReturnedReview(returnedSelection,offset);
+}
+function downloadReturnedChoices() {
+  if(!returnedPreview)return;
+  const content=JSON.stringify(returnedStale??returnedSavedState(),null,2)+'\n';
+  const url=URL.createObjectURL(new Blob([content],{type:'application/json'})),a=node('a');
+  a.href=url;a.download='nocodb-return-'+returnedSelection+'-local-choices.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function archiveReturnedLocal(value) {
+  // Keep a recoverable local copy before an explicit replacement/carry operation.
+  localStorage.setItem(returnedKey(returnedSelection)+':history:'+uuid(),JSON.stringify(value));
+}
+async function useSavedReturnedReview() {
+  const id=returnedSelection,saved=returnedStale??returnedSavedState();
+  archiveReturnedLocal(saved);localStorage.removeItem(returnedKey(id));
+  await openReturnedReview(id,0);
+}
+async function carryReturnedChoices() {
+  if(!returnedStale)return;
+  const saved=clone(returnedStale),id=returnedSelection,first=await readReturnedEdition(id,0);
+  const hash=first.view.previewSha256,version=first.view.review.revision,paths=new Set(first.view.rows.map(row=>row.path));
+  let next=first.view.nextOffset;
+  while(next!=null){
+    const page=await api('/api/return/preview?'+new URLSearchParams({id,offset:next,limit:returnedLimit}));
+    if(page.previewSha256!==hash||page.review.revision!==version)throw new Error('This review changed while its pages were read. Refresh and try again.');
+    for(const row of page.rows)paths.add(row.path);
+    if(page.nextOffset!=null&&page.nextOffset<=next)throw new Error('The return preview did not advance.');
+    next=page.nextOffset;
+  }
+  const choices=Object.fromEntries(Object.entries(saved.choices).filter(([path,side])=>paths.has(path)&&['local','returned','base'].includes(side)));
+  archiveReturnedLocal(saved);
+  const adopted={...saved,revision:version,previewSha256:hash,choices,updatedAt:new Date().toISOString()};
+  localStorage.setItem(returnedKey(id),JSON.stringify(adopted));
+  await openReturnedReview(id,0);
+  notice('Carried '+Object.keys(choices).length+' explicit choices to the current comparison. '+(Object.keys(saved.choices).length-Object.keys(choices).length)+
+    ' choices no longer match changed fields; their complete original map remains in local history. Review every page and save explicitly.');
+}
+async function finishReturnedMutation(result,marker) {
+  if(!marker.path?.startsWith('/api/return/'))return;
+  const id=marker.path==='/api/return/apply'?result.review?.id:result.id;
+  if(!id)throw new Error('The original returned-review result is missing its saved identity.');
+  if(marker.path==='/api/return/review'||marker.path==='/api/return/apply'){
+    // Only clear choices after an observed durable save. Exact marker remains if a later read fails.
+    localStorage.removeItem(returnedKey(id));
+  }
+  if(marker.path==='/api/return/apply'&&!dirty&&state.draft)await loadDraft(state.draft,state.draftRevision);
+  await refreshReturnedInventory();await openReturnedReview(id,0);
+}
+$('returns-refresh').addEventListener('click',guarded(()=>readAction(async()=>{
+  await refresh();await refreshReturnedInventory();
+  if(returnedSelection)await returnedPage(returnedOffset);
+})));
+$('return-capture-form').addEventListener('submit',guarded(()=>{
+  returnedGuardDraft();const name=$('return-child').value;
+  if(!name)throw new Error('Select an existing received independent workspace.');
+  return mutate('/api/return/capture',{name,expectedDraftRevision:state.draftRevision},'Capture returned customer draft');
+}));
+$('return-refresh').addEventListener('click',guarded(()=>readAction(()=>returnedPage(returnedOffset))));
+$('return-prev').addEventListener('click',guarded(()=>readAction(()=>returnedPage(Math.max(0,returnedOffset-returnedLimit)))));
+$('return-next').addEventListener('click',guarded(()=>readAction(()=>returnedPage(returnedPreview.nextOffset))));
+$('return-note').addEventListener('input',()=>{
+  if(returnedStale||busy||pending||handoverPending)return;
+  returnedNote=$('return-note').value;updateReturnedDirty();
+  try{retainReturnedEdits();}catch(issue){notice('Local note could not be saved: '+errorMessage(issue),true);}
+  // Do not rebuild the focused textarea while typing.
+  $('return-review-state').textContent=returnedDirty?'Unsaved review choices or note':'Showing saved review choices';
+  $('return-apply').disabled=returnedDirty||dirty||!returnedPreview.canApply;
+});
+$('return-save').addEventListener('click',guarded(()=>{
+  returnedGuardDraft();if(returnedStale||!returnedPreview)throw new Error('Open and reconcile the current saved review first.');
+  retainReturnedEdits();
+  return mutate('/api/return/review',{reviewId:returnedSelection,expectedReviewRevision:returnedPreview.review.revision,
+    previewSha256:returnedPreview.previewSha256,choices:clone(returnedChoices),note:returnedNote},'Save returned draft decisions');
+}));
+$('return-apply').addEventListener('click',guarded(()=>{
+  returnedGuardDraft();
+  if(returnedStale||returnedDirty||!returnedPreview?.canApply)throw new Error('Save the resolved choices and inspect the current preview before applying.');
+  return mutate('/api/return/apply',{reviewId:returnedSelection,expectedReviewRevision:returnedPreview.review.revision,
+    previewSha256:returnedPreview.previewSha256},'Apply reviewed return to author draft');
+}));
+$('return-export').addEventListener('click',guarded(()=>readAction(()=>download('/api/return/export?'+new URLSearchParams({
+  id:returnedSelection,revision:returnedPreview.review.revision
+})))));
+$('return-local-download').addEventListener('click',guarded(downloadReturnedChoices));
+$('return-use-saved').addEventListener('click',guarded(()=>readAction(useSavedReturnedReview)));
+$('return-carry').addEventListener('click',guarded(()=>readAction(carryReturnedChoices)));
+
 try{
   await refresh();
+  await restoreHandoverState();
+  await refreshReturnedInventory();
   const active=sessionStorage.getItem(activeKey(state.directory));
   if(active){try{pending=JSON.parse(localStorage.getItem(markerPrefix(state.directory)+active));}catch{}}
   if(pending){retryPayload=pending.file?null:pending.small;showRecovery();await checkReceipt();}

@@ -12,8 +12,8 @@ export { checkNocoDBColumnTypes, encodeNocoDBRow };
 const description = query => ({ sql: query.sql, columns: query.columns, parameters: {}, parameterOrder: [],
   columnTypes: Object.entries(query.projection).map(([name, spec]) => ({ name, type: spec.type, nullable: spec.nullable })),
   source: { projection: query.projection, responseKind: 'PAGED_TABLE_READ', atomicSourceSnapshot: false } });
-export async function inspectNocoDBSource(filename) {
-  const selected = await readNocoDBSourceFile(filename); let observation = null;
+export async function inspectNocoDBSource(filename, options = {}) {
+  const selected = await readNocoDBSourceFile(filename, options); let observation = null;
   if (selected.captureFile) {
     const capture = await readNocoDBCapture(selected.captureFile, selected.config.connection.sha256);
     bindNocoDBCapture(capture, selected.config);
@@ -23,8 +23,8 @@ export async function inspectNocoDBSource(filename) {
     connectionKind: selected.config.connection.kind, source: selected.binding, observation,
     queries: Object.fromEntries(Object.entries(selected.queries).map(([name, query]) => [name, description(query)])) };
 }
-export async function openNocoDBSourceFile(filename, { env = process.env } = {}) {
-  const selected = await readNocoDBSourceFile(filename);
+export async function openNocoDBSourceFile(filename, { env = process.env, resolveCaptureFile = value => value } = {}) {
+  const selected = await readNocoDBSourceFile(filename, { resolveCaptureFile });
   const retained = selected.captureFile ? await readNocoDBCapture(selected.captureFile, selected.config.connection.sha256) : null;
   if (retained) bindNocoDBCapture(retained, selected.config);
   let closed = false, active = false; const lifetime = new AbortController();

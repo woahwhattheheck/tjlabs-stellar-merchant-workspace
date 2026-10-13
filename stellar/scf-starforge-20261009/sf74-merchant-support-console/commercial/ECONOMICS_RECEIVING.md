@@ -133,6 +133,40 @@ Required rendered review:
 
 The journey reports screenshots for owner inspection. It does not mark them visually accepted. Authored receiving inputs must be labelled as such; no authored figures should be represented as customer actuals.
 
+## Open the isolated operator example
+
+The reusable example launcher creates one labelled internal case through the original case store and quotation engine, then opens the full existing Merchant application. It gives an operator a complete working quote and editable delivery assumptions before private customer inputs are available.
+
+From the selected repository or installed source root, run:
+
+```sh
+node stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-example.mjs \
+  --out /ABS/private/economics-example --port 18774
+```
+
+Open the printed `url` in a browser, select **Private economics**, and import the printed `assumptions` file. The internal example uses a USD 7,200 implementation quote, USD 600 monthly care, 60 implementation hours, 5 monthly care hours, a separately stated USD 95/hour planning valuation and an illustrative USD 360 referral cost. Cash labor cost remains blank. Its monthly capacity assumptions are 40 available hours and 10 hours committed elsewhere. Every amount and source is explicitly labelled as an example in the original retained quotation and input.
+
+Review and change the fields, calculate, save with a named operator, and download the complete assessment and working draft. The application remains open until Ctrl+C or SIGTERM. Reopen with the **same absolute output directory and port** to retain the same case, quote, assessment history and original request identities. The launcher preserves later case edits and edits to `editable-assumptions.json`; a missing assumptions file is recovered from the original prepared input.
+
+For the complete original browser, CLI, export, independent receiving and cold-read course, supply the existing installed browser paths:
+
+```sh
+node stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-example.mjs \
+  --out /ABS/private/economics-course --port 18775 --receive \
+  --playwright /ABS/installed/playwright/index.mjs \
+  --chromium /ABS/installed/chromium --python python3
+```
+
+Use a separate private directory for the course if the interactive case has already been edited. The course retains its initial quote revision and complete two-assessment input before mutating the case. Reopening the same directory resumes the same original operation and requests. The second authored assessment uses 72 implementation hours and 6 care hours so that earlier and later assumptions can be inspected together.
+
+The output directory contains the full original seed, intent, quotation request, prepared selection, editable input and receiving input. `receiving-course/` contains the original saved CLI/browser requests, downloaded files, screenshots, full exported case, private SF47 handoff and receiving result. `received-cases/` and `received-sources/` hold the independent receiver's persistent data.
+
+Cancellation sends the original signal through CLI, browser and cold-read work, drains owned resources, and then closes the launcher's own Merchant listener. The case, quote, saved requests and output directory remain available for reopening. The launcher does not choose another port or another output directory after interruption.
+
+The published module export is `./merchant/commercial-economics-example`. `prepareEconomicsExample({directory, port})` prepares the original case without opening a listener. `openEconomicsExample({directory, port})` returns `{prepared, url, close, receive}`; an embedding owner must await `close()` in its own finalization. `receive({playwright, chromium, python, environment, signal})` invokes the same receiving course and accepts the embedding owner's AbortSignal.
+
+Open every actual screenshot and operate the resulting application before presenting the demo. The full rendered-product instruction below applies to this example and its exports.
+
 ## Complete current repository owner instructions
 
 The following complete original repository guidance is included for the delegated receiving operator. Source: root AGENTS.md at be3410549846b3cb55074f5d83ee242592e73676. Preserve current subsequent owner updates.

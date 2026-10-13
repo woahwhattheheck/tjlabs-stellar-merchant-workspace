@@ -60,6 +60,7 @@ TABLES = {
     "cases": ("id", "body"),
     "case_events": ("id", "case_id", "body"),
     "reviews": ("id", "change_id", "body"),
+    "cycle_events": ("id", "body"),
 }
 
 def sha(data: bytes) -> str:
@@ -177,6 +178,7 @@ class Domain:
                 CREATE TABLE IF NOT EXISTS os_cases(id TEXT PRIMARY KEY,body TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS os_case_events(id TEXT PRIMARY KEY,case_id TEXT NOT NULL,body TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS os_reviews(id TEXT PRIMARY KEY,change_id TEXT NOT NULL,body TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS os_cycle_events(id TEXT PRIMARY KEY,body TEXT NOT NULL);
                 CREATE INDEX IF NOT EXISTS os_alias_lookup ON os_aliases(scope,alias);
                 CREATE INDEX IF NOT EXISTS os_case_events_case ON os_case_events(case_id);
                 CREATE INDEX IF NOT EXISTS os_change_comparison ON os_changes(comparison,entity_id);
@@ -634,26 +636,81 @@ class Domain:
             return {"case": current, "history": [load_json(r[0]) for r in self.db.execute(
                 "SELECT body FROM os_case_events WHERE case_id=? ORDER BY rowid", (case_id,))]}
 
-    def impacted_cases(self, comparison):
-        """Route changed properties to the customer's two decisions, preserving prior reviews."""
+    def impacted_cases(self, comparison, *, _cases=None):
+        """Route the same original findings, indexed once per frozen population call."""
         view = self._one("comparisons", comparison)
         after, result = view["after"], []
         with self.mutex:
             all_changes = [load_json(r[0]) for r in self.db.execute("SELECT body FROM os_changes WHERE comparison=?", (comparison,))]
-            cases = [load_json(r[0]) for r in self.db.execute("SELECT body FROM os_cases")]
+            cases = _cases if _cases is not None else [load_json(r[0]) for r in self.db.execute("SELECT body FROM os_cases")]
+            # Preserve the original algorithm and original finding order. Only
+            # candidates that match an entity or a linked Sanction subject can
+            # enter its former all-findings inner loop. Cache source reads within
+            # this mutex-held call only; no mutable or cross-call trust cache.
+            source_cache, cache_sizes = {}, {}
+            cache_bytes = 0
+            missing = object()
+
+            def cached(cache_key, loader):
+                nonlocal cache_bytes
+                if cache_key in source_cache:
+                    return source_cache[cache_key]
+                value = loader()
+                weight = 1 if value is missing else len(stable(value))
+                # The optimization never grows with the full source estate.
+                # Oversized entries remain readable without being cached.
+                if weight <= 16 * 1024 * 1024:
+                    while source_cache and (len(source_cache) >= 4096 or
+                                           cache_bytes + weight > 16 * 1024 * 1024):
+                        oldest = next(iter(source_cache))
+                        source_cache.pop(oldest)
+                        cache_bytes -= cache_sizes.pop(oldest)
+                    source_cache[cache_key] = value
+                    cache_sizes[cache_key] = weight
+                    cache_bytes += weight
+                return value
+
+            def selected_entity(scope, entity_id):
+                def load():
+                    try:
+                        return self.entity(scope, entity_id)["entity"]
+                    except InputError:
+                        return missing
+                value = cached(("entity", scope, entity_id), load)
+                if value is missing:
+                    raise InputError("The selected original source entity is absent")
+                return value
+
+            def current_aliases(entity_id):
+                return cached(("aliases", after, entity_id), lambda: self.aliases(after, entity_id))
+
+            finding_index = defaultdict(list)
+            for ordinal, finding in enumerate(all_changes):
+                subjects = {finding["entityId"]}
+                for scope in (view["before"], after):
+                    try:
+                        original = selected_entity(scope, finding["entityId"])
+                    except InputError:
+                        continue
+                    if original["schema"] == "Sanction":
+                        subjects.update(original["properties"].get("entity", []))
+                for subject in subjects:
+                    finding_index[subject].append(ordinal)
             for case in cases:
                 if case["dataset"] != view["dataset"] or case.get("mergedInto"):
                     continue
                 policy = case.get("monitoring", MONITORING_DEFAULT)
                 old_id = case["candidateId"]
-                pointers = sorted({r["canonical"] for r in self.aliases(after, old_id)})
+                pointers = sorted({r["canonical"] for r in current_aliases(old_id)})
                 relevant_ids = {old_id, *case.get("resolvedCurrentIds", []), *pointers}
                 findings, identity, relevance, reasons = [], False, False, []
-                for finding in all_changes:
+                selected_findings = sorted({ordinal for entity_id in relevant_ids for ordinal in finding_index.get(entity_id, ())})
+                for ordinal in selected_findings:
+                    finding = all_changes[ordinal]
                     linked, designation_entities = False, []
                     for scope in (view["before"], after):
                         try:
-                            entity = self.entity(scope, finding["entityId"])["entity"]
+                            entity = selected_entity(scope, finding["entityId"])
                         except InputError:
                             continue
                         if entity["schema"] == "Sanction" and relevant_ids.intersection(entity["properties"].get("entity", [])):
@@ -681,7 +738,7 @@ class Domain:
                         for eid in relevant_ids:
                             for scope in (view["before"], after):
                                 try:
-                                    candidate_entities.append(self.entity(scope, eid)["entity"])
+                                    candidate_entities.append(selected_entity(scope, eid))
                                 except InputError:
                                     pass
                         in_scope = True
@@ -726,6 +783,8 @@ class Domain:
         """A complete original Workspace packet per build plus domain/source history."""
         output = Path(output)
         with self.mutex, self.ws.scratch() as temp:
+            import review_cycles
+            review_cycles.replay(self)
             state = {"schema": SCHEMA, "tables": {}}
             for table, columns in TABLES.items():
                 if table in ("indexes", "aliases", "statements"):
@@ -792,6 +851,9 @@ class Domain:
                 paths[name] = dest
             state = load_json(paths["state.json"].read_bytes())
             expected_tables = set(TABLES) - {"indexes", "aliases", "statements"}
+            # Earlier complete archives predate cycles; their exact original tables remain valid.
+            if isinstance(state.get("tables"), dict) and set(state["tables"]) == expected_tables - {"cycle_events"}:
+                state["tables"]["cycle_events"] = []
             if state.get("schema") != SCHEMA or set(state.get("tables", {})) != expected_tables:
                 raise InputError("Receiving domain state is incomplete")
             for table, rows in state["tables"].items():
@@ -860,6 +922,9 @@ class Domain:
                                 (body["id"], count, first, last, key, json_bytes(value).decode()))
                     if count != body["records"]:
                         raise InputError("Original statement population changed")
+                # Complete replay occurs inside the domain transaction, before acceptance.
+                import review_cycles
+                review_cycles.replay(self)
             # The original comparison implementation reconstructs its own closure.
             for row in state["tables"]["comparisons"]:
                 body = load_json(row["body"]); before = self._one("editions", body["before"]); after = self._one("editions", body["after"])

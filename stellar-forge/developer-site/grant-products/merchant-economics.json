@@ -230,12 +230,34 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/merchant-service-agreements/README.md",
-      "commit": "0c52fb12870b25cd057006f44ac93c0b10736a20",
+      "commit": "628326ed72c7daede7ef2ba811170eb006e9100b",
       "editions": [
         {
           "commit": "0c52fb12870b25cd057006f44ac93c0b10736a20",
           "bytes": 17512,
           "sha256": "2973d6eb600c789b507d4a522f4aef24c5e504b47ba8e8af9d5fd799aa719374"
+        },
+        {
+          "commit": "628326ed72c7daede7ef2ba811170eb006e9100b",
+          "bytes": 18848,
+          "sha256": "9c1f4e53f62f4d8d16e0e239df81ca84715ca4c1ddbd94ce3e78a7c525d5e114",
+          "git_blob": "cc1039aa3e38775aeb6e2037f0baab45e914a1a9"
+        }
+      ]
+    },
+    {
+      "id": "merchant-economics-agreement-collections",
+      "label": "Original recurring contract collections, actual invoice balances and full customer review receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/service-agreements/COLLECTIONS.md",
+      "commit": "628326ed72c7daede7ef2ba811170eb006e9100b",
+      "editions": [
+        {
+          "commit": "628326ed72c7daede7ef2ba811170eb006e9100b",
+          "bytes": 11603,
+          "sha256": "85fd621d9679f80bb018f3cba0df94ccbb0dfcfd268a23a10d4bbc68edbbfb0e",
+          "git_blob": "7df58f18953bdfe7ccf85c1bd21d140af3a40688"
         }
       ]
     },

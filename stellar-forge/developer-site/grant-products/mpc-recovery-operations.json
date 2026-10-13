@@ -1,0 +1,52 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "mpc-recovery-operations",
+  "heading": "## Recovery operations: complete proposal, protected inventory, restore programme and service handover",
+  "sources": [
+    {
+      "id": "mpc-recovery-operator",
+      "label": "Original proposal-to-operations and full receiving workflow",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "tools/mpc-recovery-operations/README.md",
+      "editions": [
+        {
+          "commit": "5c2962823d313c9bbb1c37c79feb415581c7730d",
+          "bytes": 16361,
+          "sha256": "832214e62f1aba60061d00155379bd9575d2653e28fdd00312f91b9c5002a110",
+          "git_blob": "4f807e8053700131a48beb5fc0f1ae3d5270874d"
+        }
+      ]
+    },
+    {
+      "id": "mpc-recovery-domain",
+      "label": "Recovery plans, complete provider records, corrections and service review",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "tools/mpc-recovery-operations/DOMAIN_GUIDE.md",
+      "editions": [
+        {
+          "commit": "5c2962823d313c9bbb1c37c79feb415581c7730d",
+          "bytes": 14277,
+          "sha256": "1858dac93ea08df300554ddb7ab874fe9eba46f07fd1477230ed5e7348dd452f",
+          "git_blob": "c44817c1e6ac5d86ec0ea94ce118104c95b68a2a"
+        }
+      ]
+    },
+    {
+      "id": "mpc-recovery-proposal",
+      "label": "Original capacity, transfer and proposal operating guide",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "tools/mpc-recovery-operations/proposal/README.md",
+      "editions": [
+        {
+          "commit": "5c2962823d313c9bbb1c37c79feb415581c7730d",
+          "bytes": 5237,
+          "sha256": "a8d359c4c7d8e7b4e963e43d91242d047152764e7923babdc137cc3ad02e9fe5",
+          "git_blob": "985f9a2d8dd8e5628cfe2a53ace491db00f24aea"
+        }
+      ]
+    }
+  ]
+}

@@ -190,6 +190,14 @@ This product is a candidate for one of the existing two independent merchant ins
 
 The canonical plan remains **$38,000, 400 prospective hours and 150 days from actual award acceptance**, across its original six packages and two-merchant/two-buyer cohort. Assign each actual adaptation once to its funded package or separately commissioned commercial workorder. Record the actual useful output, recurring customer use and independent technical handover as the completion outcomes.
 
+## 9. Complete the customer programme and retain unfinished preparation
+
+Use the [complete customer programme](../../../../products/openfema/CUSTOMER_PROGRAMME.md) to turn the selected cohort into an agreed reporting period, reviewed destination mapping, full returned-customer reconciliation and recurring delivery. It carries the exact customer job through the original source, analyst, merchant and receiving interfaces.
+
+The original native project retains accepted source, mappings, decisions and releases. Named browser copies retain the preparation between sessions, including complete source/schema/customer files, original request payloads and outcomes. At handover, deliver the customer's full output, the native workspace ZIP and any complete working-copy export together. Restore the original native UUID first, then import the preparation as a separate copy.
+
+The [working-copy guide](WORKING_COPIES.md) and [complete original browser receiving course](examples/working-copy-receiving.mjs) cover cold reopening, response-loss recovery with the same operation ID, import/re-export and concurrent-window recovery. Use the exact issued customer source and inspect the final rendered reports, controls, attachments and project before completing its receiving.
+
 ## Maintained references
 
 - [OpenFEMA application and commands](README.md)

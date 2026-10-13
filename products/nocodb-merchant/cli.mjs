@@ -4,7 +4,8 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { REQUEST_SCHEMA, prepareProject, openProject, inspectProject, nativeStatus,
-  importDeclaredInput, inspectOperation, resumeOperation, exportPrivateVersion } from './project.mjs';
+  importDeclaredInput, inspectOperation, resumeOperation, exportPrivateVersion,
+  exportWholeWorkspace,listWholeWorkspaces,inspectWholeWorkspaceTransfer,receiveWholeWorkspace,downloadWholeWorkspace } from './project.mjs';
 import { callProject, downloadPrivateVersion, inspectPrivateDownload } from './mcp-client.mjs';
 import { absolute, readJson, fault } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/publisher/files.mjs';
 
@@ -13,7 +14,7 @@ export const HELP = `NocoDB merchant project
   prepare --settings PRIVATE_SETUP.json
   prepare --runtime READY_RUNTIME --directory NEW_PRIVATE_PROJECT [--title TITLE]
           [--workspace EXISTING_CLOSED_AUTHORING] [--connections PRIVATE_CONNECTIONS.json]
-          [--source FROZEN_SOURCE.json | --packet PRIVATE_PACKET.json] [--sha256 SHA256] [--input ALIAS]
+          [--source FROZEN_SOURCE.json | --packet PRIVATE_PACKET.json | --workspace-input WHOLE.ncwh] [--sha256 SHA256] [--input ALIAS]
           [--seller SELLER_URL --resource RESOURCE_URL]
   open --directory PROJECT [--port 0]
   status --directory PROJECT
@@ -25,6 +26,11 @@ export const HELP = `NocoDB merchant project
   export-private --directory CLOSED_PROJECT --version N --source-sha256 SHA256 --out PRIVATE_PACKET.json
   download-private --directory OPEN_PROJECT --version N --source-sha256 SHA256 --out PRIVATE_NEW_DOWNLOAD_DIR
   inspect-download --directory PROJECT --out COMPLETE_PRIVATE_DOWNLOAD_DIR
+  workspace-export --directory CLOSED_PROJECT --expected-revision N --expected-selected-version N|null --request-id UUID --out WHOLE.ncwh
+  workspace-download --directory CLOSED_PROJECT --request-id EXPORT_UUID --out WHOLE.ncwh
+  workspace-list --directory CLOSED_PROJECT
+  workspace-transfer --directory CLOSED_PROJECT --kind export|receive --request-id UUID
+  workspace-receive --directory CLOSED_PROJECT --input WHOLE_INPUT_ALIAS --name CHILD_NAME --request-id UUID
 
 open serves the original NocoDB browser and MCP under one native workspace owner.
 Use Ctrl-C / SIGTERM to drain that owner. The next open reuses the same state.
@@ -102,7 +108,7 @@ export async function main(argv = process.argv.slice(2)) {
   const [command, ...rest] = argv;
   if (command === 'uuid') { if (rest.length) throw fault('NOCODB_PROJECT_OPTION_INVALID'); console.log(randomUUID()); return 0; }
   const allowed = {
-    prepare: ['--settings','--runtime','--directory','--title','--workspace','--connections','--source','--packet','--sha256','--input','--seller','--resource'],
+    prepare: ['--settings','--runtime','--directory','--title','--workspace','--connections','--source','--packet','--workspace-input','--sha256','--input','--seller','--resource'],
     open: ['--directory','--port'], status: ['--directory'], 'native-status': ['--directory'],
     import: ['--directory','--input','--title','--expected-revision','--request-id'],
     operation: ['--directory','--request-id'], resume: ['--directory','--request-id'],
@@ -110,6 +116,11 @@ export async function main(argv = process.argv.slice(2)) {
     'export-private': ['--directory','--version','--source-sha256','--out'],
     'download-private': ['--directory','--version','--source-sha256','--out'],
     'inspect-download': ['--directory','--out'],
+    'workspace-export':['--directory','--expected-revision','--expected-selected-version','--request-id','--out'],
+    'workspace-download':['--directory','--request-id','--out'],
+    'workspace-list':['--directory'],
+    'workspace-transfer':['--directory','--kind','--request-id'],
+    'workspace-receive':['--directory','--input','--name','--request-id'],
   }[command];
   if (!allowed) throw fault('NOCODB_PROJECT_COMMAND_INVALID', HELP);
   const args = options(rest, allowed);
@@ -119,15 +130,15 @@ export async function main(argv = process.argv.slice(2)) {
       if (Object.keys(args).length !== 1) throw fault('NOCODB_PROJECT_SETTINGS_EXCLUSIVE');
       setup = await readJson(path(args['--settings'], 'private setup file'), 1024 * 1024);
     } else {
-      if (args['--source'] && args['--packet']) throw fault('NOCODB_PROJECT_SINGLE_INPUT_REQUIRED');
-      const source = args['--source'] ?? args['--packet'];
+      if (['--source','--packet','--workspace-input'].filter(key=>args[key]).length>1) throw fault('NOCODB_PROJECT_SINGLE_INPUT_REQUIRED');
+      const source = args['--source'] ?? args['--packet'] ?? args['--workspace-input'];
       if (!source && (args['--sha256'] || args['--input'])) throw fault('NOCODB_PROJECT_INPUT_REQUIRED');
       setup = { schema: REQUEST_SCHEMA, runtimeDirectory: path(args['--runtime'], 'runtime'),
         directory: path(args['--directory'], 'project directory'),
         ...(args['--title'] ? { title: args['--title'] } : {}),
         ...(args['--workspace'] ? { workspaceDirectory: path(args['--workspace'], 'existing workspace') } : {}),
         ...(args['--connections'] ? { connectionsFile: path(args['--connections'], 'private connections') } : {}),
-        ...(source ? { inputs: { [args['--input'] ?? 'captured']: { kind: args['--source'] ? 'source' : 'packet',
+        ...(source ? { inputs: { [args['--input'] ?? 'captured']: { kind: args['--source'] ? 'source' : args['--packet'] ? 'packet' : 'workspace',
           file: path(source, 'private source input'), sha256: required(args['--sha256'], '--sha256') } } } : {}),
         ...(args['--seller'] ? { seller: args['--seller'] } : {}),
         ...(args['--resource'] ? { resource: args['--resource'] } : {}) };
@@ -136,7 +147,17 @@ export async function main(argv = process.argv.slice(2)) {
   }
   const directory = path(args['--directory'], 'project directory');
   if (command === 'open') return foreground(directory, numeric(args['--port'], '--port', 0));
-  if (command === 'status') emit(await inspectProject(directory));
+  if(command==='workspace-export'){
+    const requestId=required(args['--request-id'],'--request-id'),selected=required(args['--expected-selected-version'],'--expected-selected-version');
+    const out=path(args['--out'],'whole-workspace destination');
+    const receipt=await exportWholeWorkspace(directory,{requestId,expectedDraftRevision:numeric(args['--expected-revision'],'--expected-revision'),
+      expectedSelectedVersion:selected==='null'?null:numeric(selected,'--expected-selected-version')});
+    const file=await downloadWholeWorkspace(directory,{requestId,file:out});emit({receipt,file});
+  } else if(command==='workspace-download')emit(await downloadWholeWorkspace(directory,{requestId:required(args['--request-id'],'--request-id'),file:path(args['--out'],'whole-workspace destination')}));
+  else if(command==='workspace-list')emit(await listWholeWorkspaces(directory));
+  else if(command==='workspace-transfer')emit(await inspectWholeWorkspaceTransfer(directory,{kind:required(args['--kind'],'--kind'),requestId:required(args['--request-id'],'--request-id')}));
+  else if(command==='workspace-receive')emit(await receiveWholeWorkspace(directory,{input:required(args['--input'],'--input'),name:required(args['--name'],'--name'),requestId:required(args['--request-id'],'--request-id')}));
+  else if (command === 'status') emit(await inspectProject(directory));
   else if (command === 'native-status') emit(await nativeStatus(directory));
   else if (command === 'import') emit(await importDeclaredInput(directory, {
     input: required(args['--input'], '--input'), title: required(args['--title'], '--title'),

@@ -11,7 +11,7 @@ import {
 export const RETURN_TYPED_FAMILIES = Object.freeze([
   'citationReviews', 'eligibilityEvents', 'extractionEvents',
   'extractionPublicationEvents', 'riskOfBiasEvents', 'customerUpdateEvents',
-  'templateExchangeEvents', 'dossierReturnEvents',
+  'templateExchangeEvents', 'dossierReturnEvents', 'comparisonEvents',
 ]);
 const META = new Set(['schema', 'id', 'revision', 'previous', 'createdAt', 'updatedAt', 'change']);
 const AUTHORED = new Set(['title', 'description', 'questions', 'editions', 'selections', 'findings']);
@@ -34,6 +34,7 @@ const NAMES = Object.freeze({
   extractionEvents: 'Study extraction', extractionPublicationEvents: 'Extraction publications',
   riskOfBiasEvents: 'Risk-of-bias appraisals', customerUpdateEvents: 'Customer updates',
   templateExchangeEvents: 'Workbook returns', dossierReturnEvents: 'Dossier return history',
+  comparisonEvents: 'Model, platform and architecture comparisons',
 });
 const FIELD_NAMES = Object.freeze({
   text: 'Text', notes: 'Notes', status: 'Status', selected: 'Selected',

@@ -36,7 +36,7 @@ READ_POSTS = {
     "completion-installations", "completion-installations-preview", "completion-seed", "completion-preview", "completion-corrections-seed", "completion-corrections-preview", "support-preview", "buyer-preview",
     "forecast-preview", "portfolio-preview", "portfolio-seed", "portfolio-selection",
     "expense-preview", "expense-request",
-    "engagement-seed", "engagement-preview", "engagement-forecast", "engagement-portfolio",
+    "engagement-seed", "engagement-preview", "engagement-forecast", "engagement-portfolio", "engagement-request",
     "cash-correction-preview", "amendment-preview", "amendment-calendar-export",
     "installation-commercial", "installation-commercial-seed",
     "funding-seed", "funding-preview", "award-terms-seed", "award-terms-preview",

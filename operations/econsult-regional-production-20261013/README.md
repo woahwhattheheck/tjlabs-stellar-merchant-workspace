@@ -16,7 +16,7 @@ The maintained QCEW programme is under stellar/scf-starforge-20261009/sf30-selle
 The complete source-transfer carrier, original attachment receipts and commercial scope are indexed in the original company coordination:
 https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791871492210889
 
-The complete ten-file kit is maintained alongside this guide at execution-kit.json. Its 3979484 bytes have SHA256 5746b53177655242317793f868c2212bf94bd4fe246e63179a31edf5e823e5d5. It includes the complete 272-file application donor, original source references, complete Research agent workflow, original MTC catalogue integration, commercial workshare and the full receiving guide. Decode every complete files[] member into an owned private kit directory and use the commands below. Its application member is econsult-complete-source.json: 3789463 bytes, SHA256 685433b6fe833faf71475b1c5441e84ea8a0d6bd0b1ffc835e1f42535ef7f82a, Git blob e89107be0d01595c62b6bf523f79db02bfab1b9b. This commons.complete-source-transfer.v1 packet retains every complete UTF-8 body, full-file identity and inventory count. The controller validates the whole source before receiving its application tree.
+The complete eleven-file kit is maintained alongside this guide at execution-kit.json. Its 4241871 bytes have SHA256 a84a29757d6a1dabe50234f847ceeccbe20097f87c49ec3e63be288ed1db9462. It includes the complete 285-file application donor, original source references, complete Research agent workflow, original MTC catalogue integration, commercial workshare, full receiving guide and selected Research commerce course. Decode every complete files[] member into an owned private kit directory and use the commands below. Its application member is econsult-complete-source.json: 4034074 bytes, SHA256 4b6fe9cd3ebb970e49680d293381d699d5d2919491a933b0011c4b2a77527d8f, Git blob 63206da96ea959a71498775b7f1417b656d5dada. This commons.complete-source-transfer.v1 packet retains every complete UTF-8 body, full-file identity and inventory count. The controller validates the whole source before receiving its application tree.
 
 ## Existing native runtime
 
@@ -59,7 +59,7 @@ From the complete kit directory, select the current carrier SHA256 and actual ru
 ~~~sh
 PYTHONDONTWRITEBYTECODE=1 python3 -B run-econsult-native.py \
   --packet econsult-complete-source.json \
-  --packet-sha256 685433b6fe833faf71475b1c5441e84ea8a0d6bd0b1ffc835e1f42535ef7f82a \
+  --packet-sha256 4b6fe9cd3ebb970e49680d293381d699d5d2919491a933b0011c4b2a77527d8f \
   --directory /private/econsult-regional-production \
   --profile econsult-profile.json \
   --programme econsult-programme.json \
@@ -90,10 +90,10 @@ The controller checks that the final catalogue project preserves the original ec
 Keep its ROOT/operation.json, ROOT/source-packet.json, ROOT/source, input files, original research directory and all completed journals. Supply the original retained packet and original packet hash as the base selection. Add this complete source edition explicitly:
 
 ```sh
-PYTHONDONTWRITEBYTECODE=1 python3 -B run-econsult-native.py --packet /private/econsult-regional-production/source-packet.json --packet-sha256 ORIGINAL_PACKET_SHA256 --source-edition-packet econsult-complete-source.json --source-edition-sha256 685433b6fe833faf71475b1c5441e84ea8a0d6bd0b1ffc835e1f42535ef7f82a --directory /private/econsult-regional-production --profile econsult-profile.json --programme econsult-programme.json --received-slices /private/econsult-originals/received-slices.json --research-catalogue --research-agent --node /existing/node --chromium /existing/chromium --playwright-module /existing/playwright/index.mjs --pdfinfo /existing/pdfinfo
+PYTHONDONTWRITEBYTECODE=1 python3 -B run-econsult-native.py --packet /private/econsult-regional-production/source-packet.json --packet-sha256 ORIGINAL_PACKET_SHA256 --source-edition-packet econsult-complete-source.json --source-edition-sha256 4b6fe9cd3ebb970e49680d293381d699d5d2919491a933b0011c4b2a77527d8f --directory /private/econsult-regional-production --profile econsult-profile.json --programme econsult-programme.json --received-slices /private/econsult-originals/received-slices.json --research-catalogue --research-agent --node /existing/node --chromium /existing/chromium --playwright-module /existing/playwright/index.mjs --pdfinfo /existing/pdfinfo
 ```
 
-Read ORIGINAL_PACKET_SHA256 from that operation's retained operation.json packetSha256 field. The original selected profile, programme and received-slices files must be the same files used for its first run. The controller validates the complete original source, receives this full successor separately at ROOT/source-editions/685433b6fe833faf71475b1c5441e84ea8a0d6bd0b1ffc835e1f42535ef7f82a/source, verifies that every original selected receiving input and FRED source capture is unchanged, and uses the successor application to continue unfinished stages. Completed stage files retain their original byte identities.
+Read ORIGINAL_PACKET_SHA256 from that operation's retained operation.json packetSha256 field. The original selected profile, programme and received-slices files must be the same files used for its first run. The controller validates the complete original source, receives this full successor separately at ROOT/source-editions/4b6fe9cd3ebb970e49680d293381d699d5d2919491a933b0011c4b2a77527d8f/source, verifies that every original selected receiving input and FRED source capture is unchanged, and uses the successor application to continue unfinished stages. Completed stage files retain their original byte identities.
 
 The separate source-edition record identifies the actual executable source used. Customer-agent receiving has its own journal under the same company root; the original controller retains orchestration and archive ownership. A completed agent journal is reused unchanged.
 
@@ -107,9 +107,60 @@ Resolve the two PDF stableReference values in catalogue-input.json through the e
 python3 SOURCE/operations/econsult-regional-production-20261013/mtc-source-catalogue/receive-mtc-originals.py --catalogue-input SOURCE/operations/econsult-regional-production-20261013/mtc-source-catalogue/catalogue-input.json --download-map /private/mtc-current-download-map.json --directory /private/econsult-regional-production/mtc-original-files
 ```
 
-Use the materialized complete SOURCE directory. When continuing an older company operation, SOURCE is the complete successor under ROOT/source-editions/685433b6fe833faf71475b1c5441e84ea8a0d6bd0b1ffc835e1f42535ef7f82a/source; receive that edition with the existing controller first, or materialize its full source packet into a separate private kit source directory before this acquisition. Retain the existing source selection and complete received files across retries. View all six rendered pages and both exact source PDFs. Add --mtc-originals /private/econsult-regional-production/mtc-original-files to either complete company command above. The controller requires --research-catalogue --research-agent and continues the same ROOT/research/project after the complete customer-agent course. It imports every original source and its complete product definition, opens each saved source through the maintained native project, independently receives the whole project and verifies the reopened originals and full reexport.
+Use the materialized complete SOURCE directory. When continuing an older company operation, SOURCE is the complete successor under ROOT/source-editions/4b6fe9cd3ebb970e49680d293381d699d5d2919491a933b0011c4b2a77527d8f/source; receive that edition with the existing controller first, or materialize its full source packet into a separate private kit source directory before this acquisition. Retain the existing source selection and complete received files across retries. View all six rendered pages and both exact source PDFs. Add --mtc-originals /private/econsult-regional-production/mtc-original-files to either complete company command above. The controller requires --research-catalogue --research-agent and continues the same ROOT/research/project after the complete customer-agent course. It imports every original source and its complete product definition, opens each saved source through the maintained native project, independently receives the whole project and verifies the reopened originals and full reexport.
 
 ROOT/mtc-source-receiving/receiving-result.json identifies the exact source selection, original native requests, complete project, independent receiving and reexport. The controller selects that whole received project as completeCustomerProject. Existing native source-review and product-issue controls remain available for reviewing these originals and issuing the regional product. View all original PDF pages, source rows, table values, coverage, downloads and reopened complete project in the actual browser before presenting this edition.
+
+## Continue the issued Research product through customer receiving
+
+The complete application now includes Research publication, its existing native asset seller and Buyer, an independent editable customer receiver, complete commerce project transfer, the Merchant/Customer browser controls, the research CLI and installed customer-agent tools. Continue this as another stage of the same company programme after the retained catalogue and installed Research agent have completed.
+
+The supplied `research-commerce-selection.json` selects the already-issued `regional-source-menu` product. Its first run freezes the actual latest issued edition ID from the existing company project in `ROOT/research-commerce/original-selection.json`. An explicit `editionId` selects a particular retained edition. Later runs keep the original frozen edition even if staff have since issued another. The complete original selection file is retained in `ROOT/inputs`.
+
+Add these arguments to the same complete company command, retaining its original root, inputs and base source packet and selecting this complete source edition:
+
+```sh
+--research-commerce-selection research-commerce-selection.json --pdftoppm /existing/pdftoppm
+```
+
+The stage operates the existing `ROOT/research/project`. It carries the selected original product definition, issued edition, original source definitions, complete captured files and accepted reviews into one complete product package. The package supplies a readable standalone report, structured edition, source catalogue, source-rights information and all selected original files. Other company research and the private economic programme stay in the full private project handover.
+
+It then creates an independent native customer project, reopens the original graph and source files, saves a following editable product definition, issues a following edition through the maintained native controls, and transfers that complete customer project to another directory. Original IDs and issued definitions remain available throughout. The browser course opens the producer, customer and restored workspaces at desktop and narrow widths, operates the actual important controls, downloads the complete selected files and opens the outgoing readable reports and PDF attachments. Receive the captured images and page renders in the original company thread and LOOK at them under the inspection instruction below.
+
+The original regional source menu is already issued by the catalogue course. The separate MTC source catalogue remains available alongside it. To select the MTC product, finish its actual source review and issue its edition in the original project, then use its exact product and edition IDs in a deliberate separate product receiving selection. Preserve the completed regional course and its original selection.
+
+### Use the existing native payment installation
+
+The same selection can include the complete existing payment installation. Supply all five native payment fields together:
+
+```json
+{
+  "schema": "commons.econsult-research-commerce-selection.v1",
+  "productId": "regional-source-menu",
+  "buyerConfig": "/existing/private/buyer.json",
+  "paymentFile": "/existing/private/research-public-payment.json",
+  "origin": "https://existing-merchant.example",
+  "facilitator": "https://existing-facilitator.example",
+  "merchantPort": 4317,
+  "path": "/research-products",
+  "acceptIndex": 0,
+  "allowLocalFacilitator": false
+}
+```
+
+Replace the example paths, public HTTPS endpoints and fixed proxy port with the original installed selections. The payment file supplies the existing seller terms and Stellar testnet network for this operating course. The course reads the configured native Buyer and binds its settings, original payment bytes, public resource and selected port before dispatch. It retains its prepared request and executes the original intent once. On interruption, continue the same selection and course directory so the Buyer recovers that original intent.
+
+The native payment arm publishes the exact same selected product package, receives the paid result and every original member, and carries the publication, prepared customer requests and receiving selections through complete private project export and independent reopening. The browser then reopens that same paid intent, recovers its original result, resumes its original receiving destination and downloads its retained files. Its additional deliberately unstarted prepared request stays unstarted and travels in the final complete project.
+
+The complete selected gzip and each offered member must fit the existing native seller's 16 MiB per-file and 64 MiB aggregate asset capacities. The full selected source graph, all original files and source-rights information remain complete. Publication resolves package and offer capacity before reserving the native project transaction; an operator can retain a rejected selection, correct the selected product or terms, and submit a new original request through the Merchant controls.
+
+### Keep the full result in this company programme
+
+`ROOT/research-commerce/result.json` identifies the exact selected product and package, independent editable customer, following edition, restored customer, optional native financial result and actual browser result. `ROOT/research-commerce/complete-original-project.json` is the final complete original company project after the browser course, including any saved browser-prepared request. The controller checks this exact file against its retained descriptor and selects it as `completeCustomerProject`.
+
+`researchCommerce` in the original `archive-result.json` joins the frozen selection, native result file, independent customer, restore and optional financial course. The original controller continues to own logs, child process IDs and the full operation archive. Accepted previous stages reuse their original outputs. A started Research commerce stage requires its original selection on continuation. Native and browser journals retain each complete executable source edition separately from the original business selection. A repaired application can continue its unfinished stage from a deliberate controller source edition while preserving the completed source, receiving and payment steps.
+
+Read `SOURCE/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/COMMERCE.md` for the full operator and installed-agent instructions. The maintained browser helper is `fred/research/commerce-browser.mjs`; the native course is `fred/research/commerce-journey.mjs`. Both ship in the same complete source packet used by this original controller.
 
 ## Inspect the actual delivered application and reports
 

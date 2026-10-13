@@ -1,4 +1,11 @@
 // Complete contributor agreements and native receiving in the original SF47 case.
+import {currentStaffContext,staffDeskStorageKey} from './staff-session.mjs';
+import {ENGAGEMENT_STATE_KEYS,ENGAGEMENT_WORKING_MAX_COPIES,captureEngagementState,engagementStateShape,
+  engagementWorkingBinding,createEngagementWorkingCopy,validateEngagementWorkingCopy,encodeEngagementWorkingCopy,
+  readEngagementWorkingFile,readEngagementSessionText,inspectEngagementWorkingCopy,reconcileEngagementWorkingState,verifyEngagementPortfolioFile,
+  engagementBytesSha256,engagementBase64,engagementUnbase64,equalEngagementValue} from './engagement-working-copy.mjs';
+import {createEngagementWorkingDesk} from './engagement-working-desk.mjs';
+import {createEngagementWorkingStore} from './engagement-working-store.mjs';
 const SCHEMA='stellar-forge.sf47-contributor-engagements.v1';
 const STORAGE='sf47.engagements.v1:';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -24,10 +31,6 @@ function field(label,value,options={}){
   if(options.type==='checkbox')input='<input'+attrs(properties)+' type="checkbox"'+(value?' checked':'')+'>';
   return '<label'+(options.wide?' class="engagement-wide"':options.type==='checkbox'?' class="engagement-check"':'')+'>'+esc(label)+input+(options.help?'<small>'+esc(options.help)+'</small>':'')+'</label>';
 }
-function blobDownload(blob,name){
-  const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=name;link.click();
-  setTimeout(()=>URL.revokeObjectURL(url),10000);
-}
 function plain(value){
   if(value===null||value===undefined)return 'Unstated';
   if(typeof value==='boolean')return value?'Yes':'No';
@@ -47,25 +50,74 @@ function nativeDetails(value,depth=0){
   const scalar=Object.entries(value).filter(([,v])=>v===null||typeof v!=='object'),nested=Object.entries(value).filter(([,v])=>v!==null&&typeof v==='object');
   return (scalar.length?table(['Item','Retained value'],scalar.map(([key,v])=>[esc(words(key)),esc(plain(v))])):'')+nested.map(([key,v])=>'<details'+(depth<1?' open':'')+'><summary>'+esc(words(key))+'</summary><div>'+nativeDetails(v,depth+1)+'</div></details>').join('');
 }
-export function mountEngagements({container,current,saveApi,session,mutationId,recordingActor,onCase,onSources,onPortfolio,onForecast}){
+export function mountEngagements({container,current,saveApi,session,mutationId,recordingActor,onCase,onSources,onPortfolio,onForecast,
+  isCurrent=()=>true,staffContext=currentStaffContext()}){
   const root=document.createElement('section');root.className='engagement-desk';root.setAttribute('aria-label','Contributor engagements');container.replaceChildren(root);
   if(!document.querySelector('link[data-engagement-style]')){
     const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_engagements.css';link.dataset.engagementStyle='true';document.head.append(link);
   }
-  const programId=current.program.id,prefix='/api/operations/'+programId,storageKey=STORAGE+programId;
+  if(!document.querySelector('link[data-engagement-working-style]')){
+    const link=document.createElement('link');link.rel='stylesheet';link.href='/engagement-working-desk.css';link.dataset.engagementWorkingStyle='true';document.head.append(link);
+  }
+  const programId=current.program.id,prefix='/api/operations/'+programId,storageKey=staffDeskStorageKey(STORAGE+programId,staffContext);
+  const storage=createEngagementWorkingStore({key:storageKey});
+  let storageLoaded=false,dependenciesReady=false;
   const defaults={tab:'editor',document:null,selectedAgreement:'',search:'',acceptanceFilter:'',newContributor:'',
     preview:null,previewVersion:null,selectedReview:'',saved:null,history:[],pending:null,accepted:null,rejected:null,
-    handoff:null,receiving:null,receivingHistory:[],notice:'',error:'',storageError:'',draftVersion:null};
-  if(!session.initialized){
-    let retained=null;try{retained=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch(error){session.storageError='The saved local engagement draft could not be opened: '+error.message;}
-    if(retained?.schema==='sf47.engagement-operator.v1'&&retained.programId===programId){
-      for(const key of Object.keys(defaults))if(Object.hasOwn(retained,key))session[key]=retained[key];
+    handoff:null,receiving:null,receivingHistory:[],notice:'',error:'',storageError:'',draftVersion:null,
+    controls:{},portfolioFile:null,pendingPortfolioFile:null,storageOriginal:null,requestReceipts:[],storageBlocked:false,legacySession:null,copies:[],workingName:'Contributor preparation',workingSelected:null};
+  for(const[key,value]of Object.entries(defaults))if(!Object.hasOwn(session,key))session[key]=clone(value);
+  async function loadStoredSession(){
+    if(session.initialized){
+      const stored=await storage.read();
+      const observed=storage.inspect().revision;
+      if(session.storageRevision===undefined&&stored!==null)throw new Error('A complete stored preparation already exists alongside this retained open view. Download this current work before reopening the stored edition.');
+      if(session.storageRevision!==undefined&&session.storageRevision!==observed)throw new Error('Another window saved a newer complete preparation while this view was closed. Download the retained current work before reopening or choosing another stored edition.');
+      session.storageRevision=observed;storageLoaded=true;return;
     }
-    session.initialized=true;
+    for(const[key,value]of Object.entries(defaults))session[key]=clone(value);
+    // The full record is in IndexedDB. Only the previous complete session is
+    // read from sessionStorage; its exact key is never rewritten or deleted.
+    const retainedRecord=await storage.read();session.storageRevision=storage.inspect().revision;
+    let raw=null;
+    try{
+      let retained=retainedRecord,originalKey=storageKey;
+      if(retained===null||retained===undefined){
+        raw=sessionStorage.getItem(storageKey);
+        if(raw===null&&storageKey!==STORAGE+programId){originalKey=STORAGE+programId;raw=sessionStorage.getItem(originalKey);}
+        retained=raw?JSON.parse(raw):null;
+      }
+      if(retained){
+        if(raw&&retained.schema==='sf47.engagement-operator.v1'&&retained.programId===programId){
+          session.legacySession={key:originalKey,raw};session.storageOriginal=raw;session.storageBlocked=true;session.tab='copies';
+          session.storageError='The original browser preparation is retained unchanged. Inspect its complete conversion and explicitly open it under the current recording-staff scope.';
+        }else{
+          if(retained.schema!=='sf47.engagement-operator.v2'||retained.programId!==programId||retained.scopeKey!==storageKey)throw new Error('The retained preparation belongs to another case or staff scope.');
+          for(const key of Object.keys(defaults))if(Object.hasOwn(retained,key))session[key]=retained[key];
+          engagementStateShape(captureEngagementState(session),programId);
+          if(!Array.isArray(session.copies)||session.copies.length>ENGAGEMENT_WORKING_MAX_COPIES)throw new Error('The complete local checkpoint inventory is unavailable.');
+          for(const row of session.copies){validateEngagementWorkingCopy(row.document);if(row.id!==row.sha256||!/^[a-f0-9]{64}$/.test(row.id)||!Number.isInteger(row.bytes))throw new Error('The local checkpoint identity is incomplete.');}
+          if(session.workingSelected)validateEngagementWorkingCopy(session.workingSelected.document);
+        }
+      }
+    }catch(error){
+      for(const[key,value]of Object.entries(defaults))session[key]=clone(value);
+      session.storageOriginal=raw??JSON.stringify(retainedRecord);session.storageBlocked=true;
+      session.storageError='The original local preparation could not be opened. Its complete bytes remain retained for working-file recovery: '+error.message;
+      session.tab='copies';
+    }
+    storageLoaded=true;session.initialized=true;
   }
-  for(const[key,value]of Object.entries(defaults))if(!Object.hasOwn(session,key))session[key]=value;
   let active=true,busy=false,hostBusy=false,caseValue=current;
-  const available=()=>active&&root.isConnected;
+  const available=()=>active&&root.isConnected&&isCurrent();
+  const downloads=new Map();let closing=null;
+  const retainedCloseOwner={close:()=>dispose()};
+  function blobDownload(blob,name){
+    const url=URL.createObjectURL(blob);downloads.set(url,null);
+    try{const link=document.createElement('a');link.href=url;link.download=name;link.click();
+      downloads.set(url,setTimeout(()=>{try{URL.revokeObjectURL(url);downloads.delete(url);}catch{}},10000));
+    }catch(error){try{URL.revokeObjectURL(url);downloads.delete(url);}catch{}throw error;}
+  }
   const $=selector=>root.querySelector(selector);
   const editable=()=>caseValue.program.state==='OPEN'&&!session.saved;
   const unfinishedFlow=()=>!!session.receiving?.forecastId&&session.receiving.phase!=='COMPLETED';
@@ -79,13 +131,19 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
   const sourceOptions=()=>caseValue.sources.map(row=>[row.id,row.filename+' · '+row.sha256.slice(0,12)]);
   const contributorOptions=()=>contributors().filter(row=>row.state==='ACTIVE'||row.id===agreement()?.contributorId).map(row=>[row.id,row.name]);
   function persist(required=false){
-    const record={schema:'sf47.engagement-operator.v1',programId};
+    if(!storageLoaded){if(required)return Promise.reject(new Error('The original complete preparation has not finished opening.'));return Promise.resolve(false);}
+    if(session.storageBlocked){if(required)return Promise.reject(new Error(session.storageError||'Retain the original unreadable preparation before replacing it.'));return Promise.resolve(false);}
+    const record={schema:'sf47.engagement-operator.v2',programId,scopeKey:storageKey};
     for(const key of Object.keys(defaults))record[key]=session[key];
     record.storageError='';
-    try{sessionStorage.setItem(storageKey,JSON.stringify(record));session.storageError='';return true;}
-    catch(error){session.storageError='The browser could not retain this exact engagement request. Free browser storage or save the draft before continuing. '+error.message;if(required)throw new Error(session.storageError);return false;}
+    let pending;
+    try{pending=required?storage.write(record):storage.schedule(record);}catch(error){pending=Promise.reject(error);}
+    return Promise.resolve(pending).then(()=>{session.storageRevision=storage.inspect().revision;session.storageError='';return true;},error=>{
+      session.storageError='The browser could not commit this complete preparation. Keep it open and download the whole working file before continuing. '+error.message;
+      if(required){const failure=new Error(session.storageError);failure.code=error.code;failure.cause=error;throw failure;}return false;
+    });
   }
-  function invalidate(){session.preview=null;session.previewVersion=null;session.handoff=null;session.receiving=null;}
+  function invalidate(){session.preview=null;session.previewVersion=null;session.handoff=null;session.receiving=null;session.portfolioFile=null;session.pendingPortfolioFile=null;}
   function captureCase(next){
     if(next?.program?.id!==programId)throw new Error('The native engagement response belongs to another case.');
     if(caseValue.program.version!==next.program.version){
@@ -103,37 +161,158 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
   function keepError(error){session.error=error?.message||String(error);if(available())render();}
   function updateControls(){
     if(!available())return;
-    const running=busy||hostBusy||!!session.inflight;
+    const running=busy||hostBusy||!!session.inflight||!!session.operation;
     root.setAttribute('aria-busy',String(running));
     for(const element of root.querySelectorAll('button,input,select,textarea')){
-      const action=element.dataset.engagementAction,recovery=action==='resume-request'||action==='reconcile-receipt'||action==='export-draft';
-      element.disabled=element.dataset.engagementFixed==='true'||running||
+      const action=element.dataset.engagementAction,recovery=action==='resume-request'||action==='reconcile-receipt'||action==='export-draft'||action?.startsWith('working-')||(action==='tab'&&element.dataset.tab==='copies')||!!element.closest('.engagement-working-desk');
+      const localRecovery=(action==='export-draft'||action==='working-download-current')&&session.initialized;
+      element.disabled=element.dataset.engagementFixed==='true'||running||(!dependenciesReady&&!localRecovery)||
         ((!!session.pending||!!session.accepted)&&!recovery)||
         (element.dataset.engagementWrite==='true'&&(!editable()||!!session.pending||!!session.accepted||unfinishedFlow()))||
         (unfinishedFlow()&&['new-draft','successor'].includes(action));
     }
   }
-  async function run(fn){
-    if(!available()||busy||hostBusy||session.inflight)return;
+  async function run(fn,{localRecovery=false}={}){
+    if(!available()||(!dependenciesReady&&!(localRecovery&&session.initialized))||busy||hostBusy||session.inflight||session.operation)return;
     busy=true;session.error='';updateControls();
-    try{return await fn();}catch(error){keepError(error);}
-    finally{busy=false;persist();if(available())render();}
+    const work=(async()=>{try{return await fn();}catch(error){keepError(error);}})();
+    session.operation=work;
+    try{return await work;}
+    finally{if(session.operation===work)session.operation=null;busy=false;persist();if(available())render();}
+  }
+  function workingBinding(){return engagementWorkingBinding(caseValue,storageKey,recordingActor());}
+  function workingState(){return engagementStateShape(captureEngagementState(session),programId);}
+  function workingView(){
+    return {name:session.workingName,copies:session.copies.map(row=>({id:row.id,name:row.document.name,createdAt:row.document.createdAt,bytes:row.bytes,sha256:row.sha256,
+      summary:{agreements:row.document.state.document?.agreements.length||0,selectedReview:row.document.state.selectedReview||null,receivingPhase:row.document.state.receiving?.phase||null,pendingRequestId:row.document.state.pending?.payload?.requestId||null}})),
+      selected:session.workingSelected,storageBlocked:session.storageBlocked};
+  }
+  async function checkpoint(name,{state=workingState(),required=true}={}){
+    if(session.copies.length>=ENGAGEMENT_WORKING_MAX_COPIES)throw new Error('The desk retains 16 complete checkpoints. Download and remove one local checkpoint before retaining another; original native editions remain unchanged.');
+    const document=createEngagementWorkingCopy({name,binding:workingBinding(),state});
+    const bytes=encodeEngagementWorkingCopy(document),sha256=await engagementBytesSha256(bytes);
+    const row={id:sha256,bytes:bytes.length,sha256,document};
+    session.copies.push(row);
+    try{if(required)await persist(true);}catch(error){session.copies.pop();throw error;}
+    return row;
+  }
+  async function captureWorkingCopy(name){
+    const row=await checkpoint(name||'Contributor preparation');
+    session.workingName=row.document.name;
+    session.notice='Retained the complete named preparation, unfinished controls and original native request state.';
+  }
+  async function inspectWorkingSelection(document,file){
+    validateEngagementWorkingCopy(document);await verifyEngagementPortfolioFile(document.state);
+    const next={document:clone(document),file:clone(file),inspection:inspectEngagementWorkingCopy(document,workingBinding())};
+    session.workingSelected=next;session.tab='copies';persist();
+    return next;
+  }
+  async function inspectSavedWorkingCopy(id){
+    const row=session.copies.find(item=>item.id===id);if(!row)throw new Error('Select one retained complete working copy.');
+    const bytes=encodeEngagementWorkingCopy(row.document);
+    if(bytes.length!==row.bytes||await engagementBytesSha256(bytes)!==row.sha256)throw new Error('The complete retained checkpoint differs from its saved identity. Keep the original browser state for recovery.');
+    return inspectWorkingSelection(row.document,{name:row.document.name+'.json',bytes:row.bytes,sha256:row.sha256});
+  }
+  async function inspectWorkingFile(file){
+    const value=await readEngagementWorkingFile(file);
+    return inspectWorkingSelection(value.document,value.file);
+  }
+  async function lookupEngagementRequest(command){
+    const value=await saveApi(prefix+'/engagement-request',{command:clone(command)});
+    if(value?.schema!=='stellar-forge.sf47-engagement-request.v1'||value.programId!==programId||value.requestId!==command.requestId||typeof value.found!=='boolean')
+      throw new Error('The original request lookup returned an incomplete identity. Keep the exact retained request.');
+    return value;
+  }
+  async function reconcileCurrentWorkingState(){
+    if(!session.pending&&!session.accepted&&!session.receiving&&!session.requestReceipts.length)return;
+    const value=await reconcileEngagementWorkingState(workingState(),{programId,lookup:lookupEngagementRequest,read:path=>saveApi(prefix+'/'+path)});
+    // Publish native success in memory before local storage can fail.
+    if(value.state.accepted){session.accepted=clone(value.state.accepted);session.pending=null;}
+    await persist(true);
+    if(session.accepted)await acceptReceipt();
+  }
+  async function openWorkingSelection(){
+    const selected=session.workingSelected;if(!selected)throw new Error('Inspect one complete working copy first.');
+    if(session.pending||session.accepted)throw new Error('Reconcile the active original request before replacing its preparation.');
+    await refreshCase();
+    const inspection=inspectEngagementWorkingCopy(selected.document,workingBinding());
+    session.workingSelected.inspection=inspection;
+    if(!inspection.canOpen)throw new Error(inspection.conflicts.join(' '));
+    const reconciled=await reconcileEngagementWorkingState(selected.document.state,{programId,lookup:lookupEngagementRequest,read:path=>saveApi(prefix+'/'+path)});
+    // A read failure or conflicting receipt leaves the entire active and
+    // incoming copies untouched. Opening never dispatches a native command.
+    const next=reconciled.state;
+    if(next.pending&&next.pending.payload.actor.trim()!==recordingActor().trim())throw new Error('The pending command belongs to its original recording operator. Open this case under that operator to resume it; the request actor is never rewritten.');
+    if(selected.document.binding.caseVersion!==caseValue.program.version||inspection.sources.some(row=>row.status!=='UNCHANGED')){
+      next.preview=null;next.previewVersion=null;
+      if(next.handoff&&!next.receiving?.forecastId){next.handoff.forecastPreview=null;next.handoff.portfolioPreview=null;}
+      if(next.receiving&&!next.receiving.portfolioId&&next.receiving.portfolioVersion!==caseValue.program.version){
+        next.receiving.portfolioPreview=null;if(next.handoff)next.handoff.portfolioPreview=null;
+      }
+    }
+    const prior=workingState(),priorCopies=session.copies.slice(),priorBlocked=session.storageBlocked,priorError=session.storageError;
+    const priorName=session.workingName,priorLegacy=session.legacySession;
+    if(session.copies.length>=ENGAGEMENT_WORKING_MAX_COPIES)throw new Error('Keep room for the complete recovery checkpoint before opening another working copy. Download and remove a selected local checkpoint first.');
+    await checkpoint('Before opening · '+new Date().toISOString(),{state:prior,required:false});
+    try{
+      for(const key of ENGAGEMENT_STATE_KEYS)session[key]=clone(next[key]);
+      session.workingName=selected.document.name;session.storageBlocked=false;session.storageError='';session.legacySession=null;
+      session.preview=null;session.previewVersion=null;
+      session.tab=next.receiving?'handoff':next.saved?'editor':next.tab==='copies'?'editor':next.tab;
+      await persist(true);
+    }catch(error){
+      for(const key of ENGAGEMENT_STATE_KEYS)session[key]=prior[key];
+      session.copies=priorCopies;session.storageBlocked=priorBlocked;session.storageError=priorError;session.workingName=priorName;session.legacySession=priorLegacy;
+      throw error;
+    }
+    session.notice='Opened the complete preparation after reading its original native identities. The previous active state is retained as a recovery checkpoint. Review unsent work again before saving.';
+    if(session.accepted)await acceptReceipt();
+  }
+  async function downloadCurrentWorkingCopy(){
+    const document=createEngagementWorkingCopy({name:session.workingName||'Contributor preparation',binding:workingBinding(),state:workingState()});
+    const bytes=encodeEngagementWorkingCopy(document);
+    blobDownload(new Blob([bytes],{type:'application/json'}),'contributor-working-copy.json');
+  }
+  async function downloadSelectedWorkingCopy(){
+    if(!session.workingSelected)throw new Error('Inspect a complete working copy first.');
+    const bytes=encodeEngagementWorkingCopy(session.workingSelected.document);
+    blobDownload(new Blob([bytes],{type:'application/json'}),'contributor-selected-working-copy.json');
+  }
+  async function removeSavedWorkingCopy(id){
+    if(!session.copies.some(row=>row.id===id))throw new Error('Select a retained local checkpoint.');
+    const previous=session.copies;session.copies=session.copies.filter(row=>row.id!==id);
+    try{await persist(true);}catch(error){session.copies=previous;throw error;}
+    session.notice='Removed only the selected local checkpoint. Native editions and active preparation remain unchanged.';
+  }
+  const workingDesk=createEngagementWorkingDesk({root,view:workingView,capture:captureWorkingCopy,
+    inspectSaved:inspectSavedWorkingCopy,inspectFile:inspectWorkingFile,openSelected:openWorkingSelection,
+    downloadCurrent:downloadCurrentWorkingCopy,downloadSelected:downloadSelectedWorkingCopy,removeSaved:removeSavedWorkingCopy,
+    dismiss:()=>{session.workingSelected=null;persist();},setName:value=>{session.workingName=value;persist();}});
+
+  function retainAcceptedReceipt(accepted){
+    const prior=session.requestReceipts.find(row=>row.payload.requestId===accepted.payload.requestId);
+    if(prior){
+      if(!equalEngagementValue(prior.payload,accepted.payload)||!equalEngagementValue(prior.result,accepted.result)||!equalEngagementValue(prior.context??null,accepted.context??null))throw new Error('The original accepted request has conflicting retained receipt bytes. Keep both complete working files for reconciliation.');
+    }else session.requestReceipts.push(clone(accepted));
   }
   async function acceptReceipt(){
     const accepted=session.accepted;if(!accepted)return null;
+    const observed=await lookupEngagementRequest(accepted.payload);
+    if(!observed.found||!equalEngagementValue(observed.result,accepted.result))throw new Error('The known accepted result differs from its original native request. Keep the complete receipt for reconciliation.');
+    retainAcceptedReceipt(accepted);await persist(true);
     const next=await refreshCase();
     if(accepted.result.id!==programId||next.program.version<accepted.result.version)throw new Error('The original case has not yet returned the saved engagement version.');
     const action=accepted.payload.action;
     if(action==='engagement.prepare'){
       const detail=await saveApi(prefix+'/engagements/'+encodeURIComponent(accepted.result.recordId));
       if(detail.review?.id!==accepted.result.recordId||!detail.document)throw new Error('The complete saved engagement edition has not yet returned.');
-      session.saved=detail;session.selectedReview=detail.review.id;session.document=clone(detail.document);
+      session.saved=detail;session.selectedReview=detail.review.id;session.document=clone(detail.document);session.controls={};
       session.selectedAgreement=detail.document.agreements.find(row=>row.id===session.selectedAgreement)?.id||detail.document.agreements[0]?.id||'';
       session.preview=null;session.previewVersion=null;
       await refreshHistory();
       session.notice='Saved the complete contributor engagement edition with its original source and decisions.';
     }else await acceptHandoffReceipt(accepted,next);
-    session.accepted=null;session.rejected=null;persist(true);
+    session.accepted=null;session.rejected=null;await persist(true);
     if(available()&&(action==='engagement.prepare'||session.receiving?.phase==='COMPLETED'))await onCase(next,accepted.result);
     return accepted.result;
   }
@@ -143,15 +322,25 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
     const retained=clone(session.pending);
     const work=(async()=>{
       try{
-        const result=await saveApi(prefix+'/command',retained.payload);
+        const observation=await lookupEngagementRequest(retained.payload);
+        if(!observation.found&&retained.payload.actor.trim()!==recordingActor().trim())throw new Error('Resume this original pending command as its original recording operator; its actor is retained unchanged.');
+        let result=observation.result;
+        if(!observation.found){await persist(true);result=await saveApi(prefix+'/command',retained.payload);}
         session.accepted={payload:retained.payload,result,context:retained.context||null};
-        session.pending=null;persist(true);
+        session.pending=null;await persist(true);
         return await acceptReceipt();
       }catch(error){
         if(!session.accepted&&definite(error)){
-          session.rejected={payload:retained.payload,context:retained.context||null,code:error.code,message:error.message};
-          session.pending=null;session.notice='The native request was rejected. The complete entered draft is retained for correction.';
-          persist();
+          let observation=null;try{observation=await lookupEngagementRequest(retained.payload);}catch{}
+          if(observation?.found){
+            session.accepted={payload:retained.payload,result:observation.result,context:retained.context||null};
+            session.pending=null;persist();return await acceptReceipt();
+          }
+          const rejected=['INVALID_ENGAGEMENT','ENGAGEMENT_PREVIEW_CHANGED','OPERATIONS_CONFLICT','OPERATIONS_CLOSED','FORECAST_PREVIEW_CONFLICT','PORTFOLIO_PREVIEW_CONFLICT'];
+          if(observation?.found===false&&rejected.includes(error.code)){
+            session.rejected={payload:retained.payload,context:retained.context||null,code:error.code,message:error.message};
+            session.pending=null;session.notice='The original journal confirms no accepted result for this explicitly rejected command. The complete draft remains available for correction.';persist();
+          }
         }
         throw error;
       }
@@ -164,21 +353,21 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
     const payload={expectedVersion,actor:recordingActor(),action,data:clone(data),note};
     payload.requestId=await mutationId('operations:'+action,payload);
     session.pending={payload,context:context?clone(context):null};session.rejected=null;
-    persist(true);
+    await persist(true);
     return sendPending();
   }
   async function seed(reviewId=null){
     const body={expectedVersion:caseValue.program.version};if(reviewId)body.reviewId=reviewId;
     const value=await saveApi(prefix+'/engagement-seed',body);
     if(value.document?.schema!==SCHEMA)throw new Error('The native engagement seed is incomplete.');
-    session.document=clone(value.document);session.saved=null;session.selectedReview='';
+    session.document=clone(value.document);session.saved=null;session.selectedReview='';session.controls={};
     session.selectedAgreement=value.document.agreements[0]?.id||'';session.draftVersion=caseValue.program.version;
-    invalidate();session.tab='editor';session.notice=reviewId?'Opened a sourced successor of the selected edition.':'Opened the complete contributor engagement draft.';persist(true);
+    invalidate();session.tab='editor';session.notice=reviewId?'Opened a sourced successor of the selected edition.':'Opened the complete contributor engagement draft.';await persist(true);
   }
   async function openReview(id){
     const value=await saveApi(prefix+'/engagements/'+encodeURIComponent(id));
     if(value.review?.id!==id||value.document?.schema!==SCHEMA)throw new Error('Select an original complete engagement edition.');
-    session.saved=value;session.document=clone(value.document);session.selectedReview=id;
+    session.saved=value;session.document=clone(value.document);session.selectedReview=id;session.controls={};
     session.selectedAgreement=value.document.agreements[0]?.id||'';session.preview=null;session.previewVersion=null;session.tab='editor';persist();
   }
   function draftChanged(){
@@ -195,8 +384,8 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
   }
   function fieldsForAgreement(row){
     if(!row)return empty('Choose a contributor agreement or add a named contributor to this draft.');
-    const a=row.availability,c=row.compensation,decision=row.acceptance;
-    const f=(label,value,path,options={})=>field(label,value,{...options,attrs:{...options.attrs,'data-engagement-field':path,'data-engagement-write':'true'}});
+    const a=row.availability,c=row.compensation,decision=row.acceptance,raw=session.controls[row.id]||{};
+    const f=(label,value,path,options={})=>field(label,Object.hasOwn(raw.fields||{},path)?raw.fields[path]:value,{...options,attrs:{...options.attrs,'data-engagement-field':path,'data-engagement-write':'true'}});
     const hours=(label,value,path,options={})=>f(label,value,path,{...options,attrs:{inputmode:'decimal'},help:options.help||'Exact nonnegative decimal hours; up to four decimal places.'});
     const basis=[['HOURLY','Hourly'],['FIXED','Fixed total'],['IN_KIND','In kind'],['UNSPECIFIED','Unspecified']];
     const decisions=[['PROPOSED','Proposed'],['CONFIRMED','Confirmed'],['DECLINED','Declined'],['WITHDRAWN','Withdrawn']];
@@ -212,10 +401,10 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
       ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((day,i)=>hours(day,a.hoursByWeekday[i],'availability.hoursByWeekday.'+i,{help:'Blank: unstated. Zero: unavailable.'})).join('')+
       '</div><h4>Dated exceptions</h4>'+
       (Object.keys(a.hoursByDate).length?Object.keys(a.hoursByDate).sort().map(day=>'<div class="engagement-date-row">'+field('Date',day,{type:'date',attrs:{readonly:'readonly'}})+
-        field('Available hours',a.hoursByDate[day],{attrs:{inputmode:'decimal','data-engagement-date':day,'data-engagement-write':'true'},required:true})+
+        field('Available hours',Object.hasOwn(raw.fields||{},'dated:'+day)?raw.fields['dated:'+day]:a.hoursByDate[day],{attrs:{inputmode:'decimal','data-engagement-date':day,'data-engagement-write':'true'},required:true})+
         button('Remove exception','remove-exception',{'data-date':day,'data-engagement-write':'true'},!!session.saved)+'</div>').join(''):empty('No dated exceptions.'))+
-      '<div class="engagement-date-row">'+field('New exception date','',{type:'date',attrs:{'data-new-exception-date':'true','data-engagement-write':'true'}})+
-      field('Available hours','',{attrs:{inputmode:'decimal','data-new-exception-hours':'true','data-engagement-write':'true'}})+
+      '<div class="engagement-date-row">'+field('New exception date',raw.exceptionDate||'',{type:'date',attrs:{'data-new-exception-date':'true','data-engagement-write':'true'}})+
+      field('Available hours',raw.exceptionHours||'',{attrs:{inputmode:'decimal','data-new-exception-hours':'true','data-engagement-write':'true'}})+
       button('Add dated exception','add-exception',{'data-engagement-write':'true'},!!session.saved)+'</div>'+
       '<div class="engagement-fields">'+f('Availability note',a.note,'availability.note',{area:true,wide:true,max:12000})+sourceFields(a,'availability')+'</div></fieldset>'+
       '<fieldset><legend>Compensation and payment terms</legend><div class="engagement-fields">'+
@@ -239,7 +428,7 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
         field('Remaining cost (USD)',allocation.remainingCostUsd,{required:true,attrs:{inputmode:'decimal','data-engagement-allocation':i,'data-allocation-field':'remainingCostUsd','data-engagement-write':'true'}})+
         field('Allocation note',allocation.note,{area:true,wide:true,attrs:{'data-engagement-allocation':i,'data-allocation-field':'note','data-engagement-write':'true'}})+
         '</div>'+button('Remove this allocation','remove-allocation',{'data-index':i,'data-engagement-write':'true'},!!session.saved)+'</div>').join(''):empty('No work-package allocation selected.'))+
-      '<div class="engagement-date-row">'+field('Add original work package','',{options:[['','Choose a work package'],...packages().filter(p=>!row.allocations.some(x=>x.costId===p.id)).map(p=>[p.id,packageName(p.id)])],attrs:{'data-new-allocation':'true','data-engagement-write':'true'}})+
+      '<div class="engagement-date-row">'+field('Add original work package',raw.allocationCostId||'',{options:[['','Choose a work package'],...packages().filter(p=>!row.allocations.some(x=>x.costId===p.id)).map(p=>[p.id,packageName(p.id)])],attrs:{'data-new-allocation':'true','data-engagement-write':'true'}})+
       button('Add allocation','add-allocation',{'data-engagement-write':'true'},!!session.saved)+'</div></fieldset>'+
       '<details><summary>Complete retained source files</summary><div>'+sourceLinks([...new Set([...(row.sourceIds||[]),...(a.sourceIds||[]),...(c.sourceIds||[]),...(decision.sourceIds||[])])])+'</div></details>'+
       (session.saved?'':'<footer class="engagement-actions">'+button('Remove contributor from draft','remove-agreement',{'data-engagement-write':'true'})+
@@ -305,25 +494,36 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
     const document=session.document,confirmed=document?.agreements.filter(row=>row.acceptance.status==='CONFIRMED').length||0;
     root.innerHTML='<header class="engagement-heading"><div><h3>Contributor engagements</h3><p>Retain named availability, compensation, agreement sources and actual decisions. Review a complete edition and carry it into the original delivery and cash plan.</p></div><div class="engagement-state-list">'+status(caseValue.program.state)+'<span class="engagement-status">Case version '+esc(caseValue.program.version)+'</span></div></header>'+
       (session.error?'<p role="alert">'+esc(session.error)+'</p>':'')+(session.storageError?'<p role="alert">'+esc(session.storageError)+'</p>':'')+
+      (session.initialized?'<div class="engagement-actions">'+button('Download current preparation','export-draft')+'</div>':'')+
       (session.notice?'<p role="status">'+esc(session.notice)+'</p>':'')+pending()+
-      '<nav class="engagement-tabs" aria-label="Engagement views">'+[['editor','Agreements'],['history','Saved editions'],['handoff','Portfolio and cash handoff']].map(([id,label])=>button(label,'tab',{'data-tab':id,...(session.tab===id?{'aria-current':'page'}:{})})).join('')+'</nav>'+
+      '<nav class="engagement-tabs" aria-label="Engagement views">'+[['editor','Agreements'],['history','Saved editions'],['handoff','Portfolio and cash handoff'],['copies','Working copies']].map(([id,label])=>button(label,'tab',{'data-tab':id,...(session.tab===id?{'aria-current':'page'}:{})})).join('')+'</nav>'+
       '<div class="engagement-metrics"><div><strong>'+esc(document?.agreements.length||0)+'</strong><small>Named agreements in selection</small></div><div><strong>'+esc(confirmed)+'</strong><small>Explicitly confirmed</small></div><div><strong>'+esc(session.history.length)+'</strong><small>Saved complete editions</small></div><div><strong>'+esc(caseValue.plan.revision??caseValue.program.planRevision??'Retained')+'</strong><small>Original selected plan revision</small></div></div>'+
-      (session.tab==='editor'?editor():session.tab==='history'?history():handoffView());
+      (session.tab==='editor'?editor():session.tab==='history'?history():session.tab==='copies'?workingDesk.render():handoffView());
     updateControls();
   }
-  function exportDraft(){
-    const value={schema:'sf47.engagement-operator-draft.v1',programId,version:caseValue.program.version,
-      document:session.document,pending:session.pending,accepted:session.accepted,handoff:session.handoff,receiving:session.receiving};
-    blobDownload(new Blob([JSON.stringify(value,null,2)+'\n'],{type:'application/json'}),'contributor-engagement-draft.json');
-  }
+  async function exportDraft(){return downloadCurrentWorkingCopy();}
   function setPath(target,path,value){
     const parts=path.split('.'),last=parts.pop();let cursor=target;
     for(const key of parts)cursor=cursor[key];
     cursor[last]=value;
   }
   function inputChanged(event){
-    if(!available()||busy||hostBusy||session.pending||session.accepted||session.inflight)return;
+    if(!available()||!dependenciesReady||busy||hostBusy||session.inflight||session.operation)return;
     const input=event.target;
+    if(event.type==='change'&&input.hasAttribute('data-engagement-working-file')){
+      const selected=input.files?.[0];if(selected)void run(()=>inspectWorkingFile(selected));return;
+    }
+    if(workingDesk.input(event)){if(event.type==='change')render();return;}
+    if(session.pending||session.accepted)return;
+    if(event.type==='change'&&input.hasAttribute('data-handoff-file')){
+      const selected=input.files?.[0];if(selected)void run(()=>retainPendingPortfolioFile(selected));return;
+    }
+    if(input.hasAttribute('data-new-exception-date')||input.hasAttribute('data-new-exception-hours')||input.hasAttribute('data-new-allocation')){
+      const id=session.selectedAgreement;if(!id)return;
+      const retained=session.controls[id]||(session.controls[id]={exceptionDate:'',exceptionHours:'',allocationCostId:''});
+      const key=input.hasAttribute('data-new-exception-date')?'exceptionDate':input.hasAttribute('data-new-exception-hours')?'exceptionHours':'allocationCostId';
+      retained[key]=input.value;persist();return;
+    }
     if(input.closest('[data-engagement-handoff]')){
       if(event.type==='change'&&handoffChangedSelection(event))return;
       handoffInputChanged(event);
@@ -337,14 +537,15 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
     const row=agreement();if(!row||session.saved||unfinishedFlow())return;
     if(input.dataset.engagementField!==undefined){
       const path=input.dataset.engagementField;
+      if(!input.multiple){const raw=session.controls[row.id]||(session.controls[row.id]={});(raw.fields||={})[path]=input.value;}
       let value=input.multiple?selectedValues(input):input.value;
       if(path.startsWith('availability.hoursByWeekday.')||path==='compensation.rateUsd'||path==='compensation.totalUsd'||path==='acceptance.at')value=value.trim()===''?null:value.trim();
-      if(path==='contributorId'&&agreements().some(item=>item.id!==row.id&&item.contributorId===value)){input.value=row.contributorId;session.error='This contributor already has an agreement in the current edition.';render();return;}
+      if(path==='contributorId'&&agreements().some(item=>item.id!==row.id&&item.contributorId===value)){input.value=row.contributorId;if(session.controls[row.id]?.fields)session.controls[row.id].fields.contributorId=row.contributorId;session.error='This contributor already has an agreement in the current edition.';persist();render();return;}
       setPath(row,path,value);draftChanged();
       if(path==='acceptance.status'||path==='contributorId')render();
       return;
     }
-    if(input.dataset.engagementDate!==undefined){row.availability.hoursByDate[input.dataset.engagementDate]=input.value.trim();draftChanged();return;}
+    if(input.dataset.engagementDate!==undefined){const raw=session.controls[row.id]||(session.controls[row.id]={});(raw.fields||={})['dated:'+input.dataset.engagementDate]=input.value;row.availability.hoursByDate[input.dataset.engagementDate]=input.value.trim();draftChanged();return;}
     if(input.dataset.engagementAllocation!==undefined){const index=Number(input.dataset.engagementAllocation),allocation=row.allocations[index];if(!allocation)return;allocation[input.dataset.allocationField]=input.value;draftChanged();return;}
     handoffInputChanged(event);
   }
@@ -353,10 +554,11 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
     event.preventDefault();const action=target.dataset.engagementAction;
     await run(async()=>{
       if(action==='tab'){session.tab=target.dataset.tab;if(session.tab==='history')await refreshHistory();if(session.tab==='handoff')await ensureHandoff();return;}
-      if(action==='export-draft'){exportDraft();return;}
+      if(action==='export-draft'){await exportDraft();return;}
+      if(action.startsWith('working-')){await workingDesk.action(action,target);return;}
       if(action==='resume-request'){await sendPending();if(available()&&session.receiving)await resumeReceiving(false);return;}
       if(action==='reconcile-receipt'){await acceptReceipt();if(available()&&session.receiving)await resumeReceiving(false);return;}
-      if(action==='sources'){persist(true);if(onSources)onSources();else session.notice='Open Sources in the original Operations case; this complete engagement draft is retained.';return;}
+      if(action==='sources'){await persist(true);if(onSources)await onSources();else session.notice='Open Sources in the original Operations case; this complete engagement draft is retained.';return;}
       if(action==='new-draft'){await seed();return;}
       if(action==='refresh-history'){await refreshHistory();return;}
       if(action==='open-review'){await openReview(target.dataset.review);return;}
@@ -387,19 +589,19 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
         if(!row)return;const day=$('[data-new-exception-date]').value,hours=$('[data-new-exception-hours]').value.trim();
         if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||hours==='')throw new Error('Enter the exact exception date and available hours.');
         if(Object.hasOwn(row.availability.hoursByDate,day))throw new Error('That exception date is already retained; edit its existing row.');
-        row.availability.hoursByDate[day]=hours;draftChanged();return;
+        row.availability.hoursByDate[day]=hours;session.controls[row.id]={...(session.controls[row.id]||{}),exceptionDate:'',exceptionHours:''};draftChanged();return;
       }
       if(action==='remove-exception'){delete row.availability.hoursByDate[target.dataset.date];draftChanged();return;}
       if(action==='add-allocation'){
         const costId=$('[data-new-allocation]').value;if(!packages().some(item=>item.id===costId)||row.allocations.some(item=>item.costId===costId))throw new Error('Choose another original work package.');
-        row.allocations.push({costId,remainingHours:'',remainingCostUsd:'',note:''});draftChanged();return;
+        row.allocations.push({costId,remainingHours:'',remainingCostUsd:'',note:''});session.controls[row.id]={...(session.controls[row.id]||{}),allocationCostId:''};draftChanged();return;
       }
       if(action==='remove-allocation'){row.allocations.splice(Number(target.dataset.index),1);draftChanged();return;}
       if(action==='preview'){
         if(!$('[data-engagement-editor]').reportValidity())return;
         const value=await saveApi(prefix+'/engagement-preview',{expectedVersion:caseValue.program.version,document:clone(session.document)});
         if(value.document?.schema!==SCHEMA||typeof value.previewSha256!=='string')throw new Error('The original engagement preview is incomplete.');
-        session.document=clone(value.document);session.preview=value;session.previewVersion=caseValue.program.version;persist(true);return;
+        session.document=clone(value.document);session.preview=value;session.previewVersion=caseValue.program.version;await persist(true);return;
       }
       if(action==='prepare'){
         if(!session.preview||session.previewVersion!==caseValue.program.version)throw new Error('Review this complete edition against the current case first.');
@@ -408,21 +610,51 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
         await mutate('engagement.prepare',{document:clone(session.preview.document),expectedPreviewSha256:session.preview.previewSha256},{expectedVersion:session.previewVersion,note:reviewNote});return;
       }
       await handoffAction(action,target);
-    });
+    },{localRecovery:action==='export-draft'||action==='working-download-current'});
   }
   function submitted(event){if(event.target.matches('[data-engagement-editor]')){event.preventDefault();const target=root.querySelector('[data-engagement-action="preview"]');if(target&&!target.disabled)target.click();}}
   root.addEventListener('click',clicked);root.addEventListener('input',inputChanged);root.addEventListener('change',inputChanged);root.addEventListener('submit',submitted);
-  function dispose(){active=false;persist();root.removeEventListener('click',clicked);root.removeEventListener('input',inputChanged);root.removeEventListener('change',inputChanged);root.removeEventListener('submit',submitted);}
+  function dispose(){
+    active=false;root.removeEventListener('click',clicked);root.removeEventListener('input',inputChanged);root.removeEventListener('change',inputChanged);root.removeEventListener('submit',submitted);
+    if(closing)return closing;
+    closing=(async()=>{
+      await Promise.allSettled([ready,session.operation,session.inflight].filter(Boolean));
+      // A preceding failed close remains owned until its same owner closes.
+      if(previousCloseOwner)await previousCloseOwner.close();
+      if(storageLoaded&&!session.storageBlocked)await persist(true);
+      const errors=[];
+      for(const[url,timer]of downloads){if(timer!==null)clearTimeout(timer);try{URL.revokeObjectURL(url);downloads.delete(url);}catch(error){errors.push(error);}}
+      try{await storage.close();}catch(error){errors.push(error);}
+      if(errors.length)throw errors[0];
+    })();
+    session.closeOwner=closing;session.retiringOwner=retainedCloseOwner;
+    const attempt=closing;
+    closing.then(()=>{if(session.closeOwner===attempt)session.closeOwner=null;if(session.retiringOwner===retainedCloseOwner)session.retiringOwner=null;},()=>{if(closing===attempt)closing=null;});return closing;
+  }
   function setHostBusy(value){hostBusy=!!value;updateControls();}
+  const previousReady=session.ready,previousCloseOwner=session.retiringOwner;
   const ready=(async()=>{
     busy=true;render();
     try{
+      if(previousReady)await previousReady;
+      if(previousCloseOwner)await previousCloseOwner.close();
+      if(!active)return;
+      await loadStoredSession();dependenciesReady=true;
+      if(!active)return;
+      if(session.operation)try{await session.operation;}catch{}
       if(session.inflight)try{await session.inflight;}catch{}
       await refreshCase();await refreshHistory();
-      if(!session.document&&!session.pending&&!session.accepted&&caseValue.program.state==='OPEN')await seed();
+      if(session.legacySession&&!session.workingSelected){
+        const original=await readEngagementSessionText(session.legacySession.raw);
+        await inspectWorkingSelection(original.document,original.file);
+        session.notice='Inspected the complete earlier browser session. Its original key and bytes remain unchanged. Reconcile and open explicitly to continue as this operator.';
+      }
+      if(!session.storageBlocked)await reconcileCurrentWorkingState();
+      if(!session.document&&!session.pending&&!session.accepted&&!session.storageBlocked&&caseValue.program.state==='OPEN')await seed();
     }catch(error){keepError(error);}
     finally{busy=false;if(available())render();}
   })();
+  session.ready=ready;
   // Native handoff methods are composed below from the original engine contract.
   function handoffDraft(){
     if(!session.handoff)session.handoff={reviewId:session.saved?.review.id||'',reviewSha256:session.saved?.review.sha256||'',
@@ -505,16 +737,29 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
       h.baseForecast=value;persist();
     }
   }
+  async function retainPendingPortfolioFile(file){
+    if(portfolioLocked())throw new Error('The original receiving Portfolio is already saved.');
+    if(!file||!Number.isInteger(file.size)||file.size<1||file.size>8*1024*1024)throw new Error('Select a complete native Portfolio JSON file up to 8 MiB.');
+    const bytes=new Uint8Array(await file.arrayBuffer());
+    if(bytes.length!==file.size)throw new Error('The selected original Portfolio file was not read completely.');
+    const selected={name:file.name,type:file.type||'application/json',bytes:bytes.length,
+      sha256:await engagementBytesSha256(bytes),contentBase64:engagementBase64(bytes)};
+    session.pendingPortfolioFile=selected;await persist(true);
+    session.notice='Retained the entire selected Portfolio file. Choose Use complete selected draft to apply it; unfinished or invalid JSON remains downloadable in the working copy.';
+    return selected;
+  }
   async function usePortfolioFile(file){
     if(portfolioLocked())throw new Error('The original receiving Portfolio is already saved.');
-    if(!file)throw new Error('Select the original complete Portfolio draft or saved portfolio.json.');
-    if(file.size>8*1024*1024)throw new Error('Use a complete native Portfolio JSON file of 8 MiB or less.');
-    const bytes=await file.arrayBuffer(),raw=new TextDecoder('utf-8',{fatal:true}).decode(bytes),value=JSON.parse(raw);
+    const selected=file?await retainPendingPortfolioFile(file):session.pendingPortfolioFile;
+    if(!selected)throw new Error('Select the original complete Portfolio draft or reopen a working copy with its retained file.');
+    const bytes=engagementUnbase64(selected.contentBase64);
+    if(bytes.length!==selected.bytes||await engagementBytesSha256(bytes)!==selected.sha256)throw new Error('The selected Portfolio file differs from its original complete bytes.');
+    const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
     const inputs=value?.inputs?.schema==='stellar-forge.sf47-portfolio.v1'?value.inputs:value;
     if(inputs?.schema!=='stellar-forge.sf47-portfolio.v1'||!Array.isArray(inputs.resources)||!Array.isArray(inputs.tasks)||!Array.isArray(inputs.alternatives))throw new Error('Select the complete original Portfolio input, including resources, tasks and alternatives.');
-    const sha=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
-    const h=handoffDraft();h.portfolioDraft=clone(inputs);h.portfolioDraftSource={filename:file.name,bytes:bytes.byteLength,sha256:sha};
-    handoffChanged('portfolio');persist(true);session.notice='Retained the complete original Portfolio draft and all alternative/Installation fields.';
+    const h=handoffDraft();h.portfolioDraft=clone(inputs);h.portfolioDraftSource={filename:selected.name,bytes:selected.bytes,sha256:selected.sha256};
+    session.portfolioFile=clone(selected);session.pendingPortfolioFile=null;
+    handoffChanged('portfolio');await persist(true);session.notice='Retained the complete original Portfolio draft, exact source file and all alternative/Installation fields.';
   }
   function handoffInputChanged(event){
     const input=event.target,h=handoffDraft();
@@ -552,7 +797,7 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
     const value=await saveApi(prefix+'/engagement-forecast',{expectedVersion:caseValue.program.version,selection});
     if(!value.selection||!value.inputs||typeof value.forecast?.previewSha256!=='string')throw new Error('The native engagement Forecast preview is incomplete.');
     h.forecastPreview={...value,caseVersion:caseValue.program.version};
-    h.portfolioPreview=null;persist(true);session.notice='Reviewed the complete original cash projection and its selected agreement allocations.';
+    h.portfolioPreview=null;await persist(true);session.notice='Reviewed the complete original cash projection and its selected agreement allocations.';
   }
   async function previewAllocation(){
     const flow=session.receiving,h=handoffDraft();
@@ -562,13 +807,13 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
       agreementIds:clone(flow.forecastSelection.agreementIds),resourceMap:resourceSelection(),name:h.portfolioName,note:h.portfolioNote};
     if(h.portfolioDraft)selection.inputs=clone(h.portfolioDraft);
     flow.portfolioChoice={resourceMap:clone(selection.resourceMap),inputs:h.portfolioDraft?clone(h.portfolioDraft):null,name:h.portfolioName,note:h.portfolioNote};
-    persist(true);
+    await persist(true);
     const value=await saveApi(prefix+'/engagement-portfolio',{expectedVersion:caseValue.program.version,selection});
     if(!value.selection||!value.inputs||typeof value.portfolio?.previewSha256!=='string')throw new Error('The native engagement Portfolio preview is incomplete.');
     h.portfolioPreview={...value,caseVersion:caseValue.program.version};
     flow.portfolioSelection=clone(value.selection);flow.portfolioInputs=clone(value.inputs);
     flow.portfolioPreviewSha256=value.portfolio.previewSha256;flow.portfolioVersion=caseValue.program.version;
-    flow.portfolioPreview=clone(h.portfolioPreview);flow.phase='PORTFOLIO_REVIEWED';persist(true);
+    flow.portfolioPreview=clone(h.portfolioPreview);flow.phase='PORTFOLIO_REVIEWED';await persist(true);
     session.notice='The original allocator has reviewed the complete resource/calendar/phase selection. Inspect its findings before saving the Portfolio.';
   }
   async function acceptHandoffReceipt(accepted,next){
@@ -601,7 +846,7 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
       if(book.review?.id!==flow.reviewId)throw new Error('The original source engagement book did not reopen.');
       handoffDraft().book=book;session.notice='Completed the original engagement edition → Forecast → Portfolio receiving. All original writes and sources are retained.';
     }else throw new Error('The retained receiving step is unavailable.');
-    persist(true);
+    await persist(true);
   }
   async function startReceiving(){
     const h=handoffDraft(),preview=h.forecastPreview;
@@ -616,7 +861,7 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
       forecastId:null,portfolioId:null,receivingReviewId:null,
       portfolioChoice:{resourceMap:resourceSelection(),inputs:h.portfolioDraft?clone(h.portfolioDraft):null,name:h.portfolioName,note:h.portfolioNote},
       receipts:[],finishRequested:false,receivingNote:h.receivingNote};
-    session.receiving=flow;persist(true);
+    session.receiving=flow;await persist(true);
     await resumeReceiving(false);
   }
   async function resumeReceiving(finish=false){
@@ -624,7 +869,7 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
     if(session.pending){await sendPending();if(!available())return;}
     if(session.accepted){await acceptReceipt();if(!available())return;}
     if(flow.phase==='COMPLETED')return;
-    if(finish){flow.finishRequested=true;persist(true);}
+    if(finish){flow.finishRequested=true;await persist(true);}
     if(!flow.forecastId){
       if(flow.forecastVersion!==caseValue.program.version)throw new Error('The case changed before its original Forecast was saved. Retain this draft and review the current native projection again.');
       await mutate('forecast.save',{inputs:clone(flow.forecastInputs),expectedPreviewSha256:flow.forecastPreviewSha256},
@@ -685,6 +930,7 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
       f('New Portfolio name',h.portfolioName,'portfolioName',{required:true})+f('Portfolio note',h.portfolioNote,'portfolioNote',{area:true})+
       field('Original full Portfolio draft or saved portfolio.json','',{type:'file',wide:true,attrs:{accept:'.json,application/json','data-handoff-file':'true',...(pLocked?{'data-engagement-fixed':'true'}:{})},help:'The complete original calendar, tasks, alternatives and Installation phase arrays are retained.'})+'</div>'+
       '<div class="engagement-actions">'+button('Use complete selected draft','load-portfolio-file',{},pLocked)+(h.portfolioDraft?button('Use original native seed instead','clear-portfolio-file',{},pLocked):'')+'</div>'+
+      (session.pendingPortfolioFile?'<p class="engagement-break">Selected, not yet applied: '+esc(session.pendingPortfolioFile.name)+' · '+esc(session.pendingPortfolioFile.bytes)+' bytes · '+esc(session.pendingPortfolioFile.sha256)+'</p>':'')+
       (h.portfolioDraftSource?'<p class="engagement-break">'+esc(h.portfolioDraftSource.filename)+' · '+esc(h.portfolioDraftSource.bytes)+' bytes · '+esc(h.portfolioDraftSource.sha256)+'</p>':'')+
       (h.portfolioDraft?'<details><summary>Complete retained Portfolio draft</summary><div>'+nativeDetails(h.portfolioDraft)+'</div></details>':'')+
       '<datalist id="engagement-resources-'+esc(programId)+'">'+resources.map(([id,name])=>'<option value="'+esc(id)+'">'+esc(name)+'</option>').join('')+'</datalist>'+
@@ -707,8 +953,8 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
   }
   async function handoffAction(action,target){
     const h=handoffDraft();
-    if(action==='load-portfolio-file'){await usePortfolioFile($('[data-handoff-file]').files[0]);return;}
-    if(action==='clear-portfolio-file'){h.portfolioDraft=null;h.portfolioDraftSource=null;handoffChanged('portfolio');return;}
+    if(action==='load-portfolio-file'){await usePortfolioFile($('[data-handoff-file]')?.files?.[0]);return;}
+    if(action==='clear-portfolio-file'){h.portfolioDraft=null;h.portfolioDraftSource=null;session.portfolioFile=null;session.pendingPortfolioFile=null;handoffChanged('portfolio');return;}
     if(action==='map-contributor-ids'){for(const row of chosenAgreements())h.resourceMap[row.id]=row.contributorId;handoffChanged('portfolio');return;}
     if(action==='preview-cash'){await previewCash();return;}
     if(action==='preview-allocation'){await previewAllocation();return;}
@@ -717,16 +963,16 @@ export function mountEngagements({container,current,saveApi,session,mutationId,r
     if(action==='finish-receiving'){await resumeReceiving(true);return;}
     if(action==='new-handoff'){
       if(session.receiving?.phase!=='COMPLETED')throw new Error('Finish the original retained receiving first.');
-      session.receiving=null;h.forecastPreview=null;h.portfolioPreview=null;h.baseForecastId='';h.baseForecast=null;persist(true);return;
+      session.receiving=null;h.forecastPreview=null;h.portfolioPreview=null;h.baseForecastId='';h.baseForecast=null;await persist(true);return;
     }
     if(action==='open-forecast'){
-      persist(true);
+      await persist(true);
       if(onForecast)await onForecast({forecastId:target.dataset.forecast});
       else session.notice='Open Forecast '+target.dataset.forecast+' in the original Operating forecast tab.';
       return;
     }
     if(action==='open-portfolio'){
-      persist(true);
+      await persist(true);
       if(onPortfolio)await onPortfolio({portfolioId:target.dataset.portfolio});
       else session.notice='Open Portfolio '+target.dataset.portfolio+' in the original Delivery allocation tab.';
       return;

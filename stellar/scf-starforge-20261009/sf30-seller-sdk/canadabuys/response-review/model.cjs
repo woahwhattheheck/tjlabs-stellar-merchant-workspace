@@ -30,7 +30,15 @@ async function digest(text,options={}){
 }
 function base64Bytes(value){
  string(value,'Attachment Base64',Math.ceil(MAX_ATTACHMENT_BYTES/3)*4);
- if(!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value))fail('RESPONSE_ATTACHMENT','Use complete standard Base64 attachment bytes.');
+ // Inspect each character once; a repeated-group regex exhausts the V8 stack
+ // on valid attachments below the supported 8 MiB byte limit.
+ if(value.length%4!==0)fail('RESPONSE_ATTACHMENT','Use complete standard Base64 attachment bytes.');
+ const padding=value.endsWith('==')?2:value.endsWith('=')?1:0,dataEnd=value.length-padding;
+ for(let i=0;i<dataEnd;i++){
+  const c=value.charCodeAt(i);
+  if(!((c>=65&&c<=90)||(c>=97&&c<=122)||(c>=48&&c<=57)||c===43||c===47))fail('RESPONSE_ATTACHMENT','Use complete standard Base64 attachment bytes.');
+ }
+ if(value.length/4*3-padding>MAX_ATTACHMENT_BYTES)fail('RESPONSE_ATTACHMENT_CAPACITY','Each attached file is limited to 8 MiB.');
  const text=typeof atob==='function'?atob(value):Buffer.from(value,'base64').toString('binary');
  const bytes=Uint8Array.from(text,c=>c.charCodeAt(0));
  if(bytes.length>MAX_ATTACHMENT_BYTES)fail('RESPONSE_ATTACHMENT_CAPACITY','Each attached file is limited to 8 MiB.');

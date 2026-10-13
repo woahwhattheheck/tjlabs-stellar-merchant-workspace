@@ -1,4 +1,5 @@
 /* MIT. Original-source operator on the retained NDJSON Workspace. */
+import {mountReviewCycles} from "./review-cycles.js";
 const $ = (selector, root=document) => root.querySelector(selector);
 const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
 const pretty = value => JSON.stringify(value, null, 2);
@@ -37,7 +38,7 @@ async function api(path, body, options={}) {
   }
   let data;
   try {data=await response.json();} catch {throw new Error("The local application returned an unreadable response ("+response.status+")");}
-  if (!response.ok || data?.ok===false && data?.error) throw new Error(data.error || data.message || pretty(data));
+  if (!response.ok || data?.ok===false && data?.error) {const error=new Error(data.error || data.message || pretty(data));error.native=data;error.status=response.status;throw error;}
   return data;
 }
 async function run(label, task) {
@@ -413,4 +414,5 @@ document.addEventListener("click",event=>{
     if (action==="candidate") await reviewNativeCandidate(id,trigger.dataset.counterparty);
   });
 });
+await mountReviewCycles({api,run,navigate,inspectCase,getState:()=>state,refresh,escape,pretty});
 await run("Open retained source workspace",refresh);

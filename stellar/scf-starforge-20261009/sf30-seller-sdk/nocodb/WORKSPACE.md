@@ -330,3 +330,21 @@ const service = await serveNocoDBAuthoring({ workspace, port: 0 });
 
 The native consumer reuses the already completed provider capture. A different publication order or public dataset subset comes from the original publisher plan, without another provider observation or a fabricated newer capture.
 
+
+## Complete editable workspace handover
+
+The existing Workspace handover view and `nocodb-workspace workspace-*` commands export a complete private `.ncwh` archive. It includes the saved draft, original capture/version/review/request identities, full captured pages, original publisher, dataset and SF82 history. Source packets remain useful for moving a reviewed source into new local authoring identities; the whole-workspace format independently reopens the retained original history. It does not merge concurrent branches or repeat provider, publication or payment actions.
+
+Review and save the current draft before preparing an export. The original owner drains its owned publisher/release consoles and freezes their durable stores. Keep the original request UUID after an interruption. A completed export is immutable; replay verifies its saved archive and does not stop a service opened afterward. The private archive admits up to 32 GiB of member content plus a 32 MiB manifest and 13-byte header. Uploads use bounded 1 MiB chunks with exact retained-range comparison; downloads stream through original authenticated tickets or retained file readers.
+
+Receive into a named independent child of the existing private authoring workspace. The receiver checks all original file identities, retains original host settings in workspace-history and records explicit local placement for the source, publisher and dataset. Unchanged release/package bytes use the existing SF82 dataset-installation contract for this host, including packages staged after receiving. Credentials, installed runtime and project wrapper remain this host's configuration. Reopening this receiving host retains the author's current work and the separately progressed child. Each .ncwh exports only the selected workspace; it does not recursively include independently received children or the archive payload cache. Re-export a progressed child through its own browser or childWorkspace alias.
+
+The full operator contract is [HANDOVER.md](./HANDOVER.md); the practical source-to-customer course, actual original NocoDB acquisition, acceptance and recovery are in [COMMISSIONING.md](../../../../products/nocodb-merchant/COMMISSIONING.md).
+
+## Review a returned customer projection
+
+Receive the customer's complete progressed `.ncwh` workspace as a named independent child, then use **Returned customer review** in the original author's workspace. Capture freezes that child's saved draft and retained source/history at the current AUTHOR draft revision. The comparison establishes the actual common saved record by original request, exact capture/source, values and query/column order; equal numeric revisions alone do not establish ancestry. Page through every changed field, retain explicit local/returned/base choices for conflicts, and save the complete review before applying it.
+
+Apply changes only the author's draft in one atomic saved operation. The original native record identity, field IDs, provider types, numeric token encoding, nullable/empty policy and complete captured field union are checked by the maintained NocoDB validator. Existing captured page bytes, selected source version, publisher, dataset and SF82 history remain unchanged. Use the ordinary full-row preview, reviewed version and explicit publication course for the corrected delivery. Lost save/apply replies resolve through the same original request UUID. A changed current draft or source requires deliberate re-review.
+
+Complete reviewed-return JSON and the subsequent whole-workspace archive retain the frozen incoming history, explicit choices and each immutable review revision. [HANDOVER.md](HANDOVER.md) gives browser, CLI and seven customer-agent controls; the [commissioning course](../../../../products/nocodb-merchant/COMMISSIONING.md) places them within the original one consolidated correction and 60-minute handover.

@@ -34,6 +34,8 @@ export async function startCommissioningOperator({directory,store,setupFile,expo
       if(!equal(req.headers.authorization,'Bearer '+token)&&!cookies.some(v=>equal(v,cookie)))return reply(401,{error:'SESSION_REQUIRED',message:'Open the original private session address printed by the command.'});
       if(req.method==='GET'&&url.pathname==='/api/state')return reply(200,await operator.state());
       if(req.method==='GET'&&url.pathname==='/api/history')return reply(200,await operator.history({kind:url.searchParams.get('kind')??'results',offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??50),...(url.searchParams.has('revision')?{revision:Number(url.searchParams.get('revision'))}:{})}));
+      if(req.method==='GET'&&url.pathname==='/api/installation-receivings')return reply(200,await operator.installationReceivings());
+      if(req.method==='GET'&&url.pathname==='/api/installation-receiving')return reply(200,await operator.installationReceiving({id:url.searchParams.get('id'),kind:url.searchParams.get('kind')??'summary',offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??50),expectedSnapshotSha256:url.searchParams.get('snapshotSha256')??undefined}));
       if(req.method==='GET'&&url.pathname==='/api/installations')return reply(200,await operator.installations());
       if(req.method==='GET'&&url.pathname==='/api/installation')return reply(200,await operator.installation({id:url.searchParams.get('id'),kind:url.searchParams.get('kind')??'summary',offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??50)}));
       if(req.method==='GET'&&url.pathname==='/api/installation/archive'){
@@ -51,7 +53,7 @@ export async function startCommissioningOperator({directory,store,setupFile,expo
       if(req.method==='POST'&&url.pathname==='/api/requests')return reply(200,await operator.prepare(await json(req)));
       if(req.method==='POST'&&url.pathname==='/api/action')return reply(200,await operator.act(await json(req)));
       if(req.method==='GET'&&url.pathname==='/api/file'){
-        const file=await operator.readFile({kind:url.searchParams.get('kind'),id:url.searchParams.get('id'),name:url.searchParams.get('name')??undefined});
+        const file=await operator.readFile({kind:url.searchParams.get('kind'),id:url.searchParams.get('id'),name:url.searchParams.get('name')??undefined,snapshotSha256:url.searchParams.get('snapshotSha256')??undefined});
         res.writeHead(200,{...headers,'content-type':file.contentType,'content-length':file.bytes,'x-content-sha256':file.sha256,'content-disposition':"attachment; filename*=UTF-8''"+encodeURIComponent(file.filename).replaceAll("'",'%27')});
         if(file.body)res.end(file.body);else await pipeline(createReadStream(file.path),res);return;
       }

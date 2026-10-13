@@ -1,6 +1,6 @@
 # Source monitoring — installation, operation and receiving
 
-This product receives original OpenSanctions editions and complete delta chains, preserves customer counterparties and review history, and operates the customer's native screening requests. The existing SF30 NDJSON workspace owns the data, source projections, requests and decisions. The seven-view monitoring console, Applications and the typed operator client all use that same workspace.
+This product receives original OpenSanctions editions and complete delta chains, preserves customer counterparties and review history, and operates the customer's native screening requests. The existing SF30 NDJSON workspace owns the data, source projections, requests and decisions. The eight-view monitoring console, Applications and the typed operator client all use that same workspace.
 
 The selected product is `source-monitoring`. It includes the original monitoring and JSON Lines commands, the original customer/file-job receiving tools, the existing installer and Applications lifecycle, and `source-monitoring-client`. Install a source release; import a complete operating workspace to continue its editions and cases.
 
@@ -89,7 +89,7 @@ The original process prints its JSON startup identity and writes a private one-l
 
 `--startup-format json` supplies the authenticated `/api/launch` identity used by the client. Create/import before this managed startup. A legacy console can still open in the browser; the client uses the original JSON startup contract.
 
-The console provides Overview, Source editions, Data updates, Change review, Counterparties, Native screening and Receiving. Its Dataset workspace link opens the existing native query interface. The original workspace lease controls the server's lifetime, and its mutex and revision checks control writes.
+The console provides Overview, Source editions, Data updates, Change review, Counterparties, Native screening, Review cycles and Receiving. Its Dataset workspace link opens the existing native query interface. The original workspace lease controls the server's lifetime, and its mutex and revision checks control writes.
 
 ## 3. Open and reopen through Applications
 
@@ -255,6 +255,10 @@ The original dataset query remains:
 
 Pass that file to `post query --input`. The client forwards to the original `/api/query`; all other named operations use the existing monitoring extension.
 
+### Saved review cycles
+
+Use **Review cycles** to freeze a complete source-change population, assign case reviews, retain original evidence, record reviewer completion and obtain a versioned supervisor report. The cycle uses the same case decisions, immutable objects and complete receiving archive. Follow [Saved source review cycles](REVIEW_CYCLES.md) for the full operator, retry, reporting and independent receiving workflow.
+
 ## 7. Prepare native screening and receive its actual outcome
 
 Save the customer's actual endpoint, dataset, authentication environment reference and chosen native algorithm in **Native screening** or through `post profile`. The original supported profile fields are `label,endpoint,dataset,auth,parameters,config,weights,sourceNote`. Authentication is explicit `none`, `Bearer` or `ApiKey`; the hosted OpenSanctions endpoint requires its actual ApiKey reference.
@@ -301,7 +305,7 @@ starforge source-monitoring-client --connection /absolute/private/customer-monit
   export --out /absolute/private/Customer_Monitoring_Workspace.zip
 ~~~
 
-The full ZIP includes original NDJSON build packets, metadata and delta files, immutable objects, native service profiles and requests/responses, selected editions, comparisons, portfolios, case revisions and review history. The client streams it to a private file and returns the complete byte count and SHA-256.
+The full ZIP includes original NDJSON build packets, metadata and delta files, immutable objects, native service profiles and requests/responses, selected editions, comparisons, portfolios, case revisions, review history and immutable saved review-cycle events. The client streams it to a private file and returns the complete byte count and SHA-256.
 
 Deliver the selected source release and its manifest/installation guide with the full customer workspace ZIP and its actual identity. Include the actual selected Python/runtime, application/workspace paths, service profile/environment-reference names, current request/case identities, original data entitlement and the customer operator's receiving instructions. Keep any live credential values in their existing credential route.
 

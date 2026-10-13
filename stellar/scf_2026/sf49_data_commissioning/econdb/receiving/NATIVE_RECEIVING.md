@@ -110,3 +110,9 @@ Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/arch
 
 
 Hosted GitHub Actions remain disabled. This receiving programme never enables or dispatches them; source-native execution and account billing are separate controls.
+
+## Project dataset receiving in this same course
+
+The complete source edition now includes the project publication path described in ../SF30_PUBLICATION.md. The existing native stage runs four additive steps after original project reopening: publish the verified original project with explicit current roles; reopen the exact completed release; receive all 15 selected original example cells through the original typed loader and compare source identity/status/exact strings; initialize and reopen the original project version store. The complete-source independent copy also reopens this project publication/store. The examples remain issuer documentation with zero identified ports and one null cell. No seller, facilitator, paid capture or buyer purchase is invented.
+
+Use the complete source manifest carrying these exact source changes. Preserve the original operation lock, binding, journals and completed outputs. An already bound older source is reconciled with its original operator before continuing; do not swap source under its saved binding. Rendering and attachment use remain the same original browser course and require actual viewing, not source-only acceptance.

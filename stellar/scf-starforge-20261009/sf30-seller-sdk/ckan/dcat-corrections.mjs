@@ -107,19 +107,28 @@ async function revisionFiles(directory, draft, revision) {
 export async function validateDcatCorrectionFiles(directory, state) {
   validateDcatCorrections(state);
   for (const draft of state?.corrections?.drafts ?? []) {
-    let previous = null;
+    let previous = null; const verified = new Map();
     for (const revision of draft.revisions) {
       const value = await revisionFiles(directory, draft, revision);
       if (!previous) need(value.document.length === draft.source.bytes && digest(value.document) === draft.source.sha256 &&
         value.record.kind === 'source' && Array.isArray(value.record.operations) && value.record.operations.length === 0,
         'DCAT_CORRECTION_BASE_CHANGED');
-      else {
-        need(['edit', 'restore'].includes(value.record.kind), 'DCAT_CORRECTION_REVISION_KIND');
+      else if (value.record.kind === 'restore') {
+        const target = verified.get(value.record.targetRevisionId);
+        need(target && value.record.operations.length === 0 &&
+          target.documentSha256 === revision.documentSha256 && target.documentBytes === revision.documentBytes,
+          'DCAT_CORRECTION_RESTORE_HISTORY_CHANGED');
+        const expected = [{ op: 'restore', beforeRevisionId: previous.record.id, targetRevisionId: target.id,
+          beforeDocumentSha256: previous.record.documentSha256, beforeDocumentBytes: previous.record.documentBytes,
+          afterDocumentSha256: target.documentSha256, afterDocumentBytes: target.documentBytes }];
+        need(identity(expected) === identity(value.record.changes), 'DCAT_CORRECTION_RESTORE_HISTORY_CHANGED');
+      } else {
+        need(value.record.kind === 'edit', 'DCAT_CORRECTION_REVISION_KIND');
         const applied = applyCorrectionOperations(previous.text, value.record.operations);
         need(Buffer.from(applied.text, 'utf8').equals(value.document) &&
           identity(applied.changes) === identity(value.record.changes), 'DCAT_CORRECTION_CHANGE_HISTORY_CHANGED');
       }
-      previous = value;
+      verified.set(revision.id, revision); previous = value;
     }
   }
 }
@@ -294,15 +303,15 @@ export function createDcatCorrections({ directory, state, dcat, launch, persist 
       return { ...launch(prior ? 'reopen saved catalogue restoration' : 'restore earlier catalogue revision', async () => {
         if (prior) { await revisionFiles(directory, selected, prior); return { correctionId: selected.id, revision: complete(prior) }; }
         const head = selectedRevision(selected, input.expectedRevisionId); sameGuard(selected, head, input);
-        const target = selectedRevision(selected, input.targetRevisionId), previous = await revisionFiles(directory, selected, head),
-          targetValue = await revisionFiles(directory, selected, target);
-        const targetDocument = parseCorrectionDocument(targetValue.text);
-        const operations = [{ op: 'replace', path: '', valueText: targetValue.text.slice(targetDocument.root.start, targetDocument.root.end) }];
-        const applied = applyCorrectionOperations(previous.text, operations), raw = Buffer.from(applied.text, 'utf8');
-        need(digest(raw) === target.documentSha256, 'DCAT_CORRECTION_RESTORE_BYTES_CHANGED');
+        const target = selectedRevision(selected, input.targetRevisionId);
+        await revisionFiles(directory, selected, head);
+        const targetValue = await revisionFiles(directory, selected, target);
+        const changes = [{ op: 'restore', beforeRevisionId: head.id, targetRevisionId: target.id,
+          beforeDocumentSha256: head.documentSha256, beforeDocumentBytes: head.documentBytes,
+          afterDocumentSha256: target.documentSha256, afterDocumentBytes: target.documentBytes }];
         const journal = await pending(input, requestSha256, selected.id, id);
-        const revision = await retainRevision(selected, id, requestSha256, raw,
-          { kind: 'restore', createdAt: journal.createdAt, targetRevisionId: target.id, ...credit, operations, changes: applied.changes });
+        const revision = await retainRevision(selected, id, requestSha256, targetValue.document,
+          { kind: 'restore', createdAt: journal.createdAt, targetRevisionId: target.id, ...credit, operations: [], changes });
         finishRequest(id); await persist(); return { correctionId: selected.id, revision: complete(revision) };
       }), correctionId: selected.id, revisionId: id };
     },

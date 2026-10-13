@@ -43,7 +43,7 @@ export async function extractPdf({bytes,pdfjs,document:provided,onProgress,loadi
  checkBytes(bytes);
  need(pdfjs&&typeof pdfjs.getDocument==='function'&&pdfjs.version===PDFJS_VERSION,'PDFJS_VERSION','Use the installed PDF.js '+PDFJS_VERSION+' source and matching worker.');
  need(!provided||typeof provided.getPage==='function'&&typeof provided.getData==='function','PDF_DOCUMENT','Provide the original PDF.js document.');
- const sourceBytes=bytes.slice();
+ const sourceBytes=new Uint8Array(bytes);
  const textOptions={includeMarkedContent:true,disableNormalization:true};
  const defaultOptions={stopAtErrors:true,isEvalSupported:false,useWasm:false,enableXfa:false,disableWorkerRendering:true};
  const selectedOptions={...loadingOptions,...defaultOptions};

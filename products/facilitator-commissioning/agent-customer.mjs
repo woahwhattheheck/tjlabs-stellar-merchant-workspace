@@ -33,7 +33,7 @@ function filename(header,fallback){
 function sourcePath(file){
   if(file.kind==='installation-archive'){need(UUID.test(file.id??''),'Select the original completed Installation preparation UUID.');return'/api/installation/archive?operationId='+encodeURIComponent(file.id);}
   if(file.kind==='archive'){need(UUID.test(file.id??''),'Select the original completed export UUID.');return'/api/archive?operationId='+encodeURIComponent(file.id);}
-  const q=new URLSearchParams({kind:file.kind});if(file.id!==undefined)q.set('id',file.id);if(file.name!==undefined)q.set('name',file.name);return'/api/file?'+q;
+  const q=new URLSearchParams({kind:file.kind});if(file.id!==undefined)q.set('id',file.id);if(file.name!==undefined)q.set('name',file.name);if(file.snapshotSha256!==undefined)q.set('snapshotSha256',file.snapshotSha256);return'/api/file?'+q;
 }
 export class CommissioningCustomerAgent{
   #config;#transport;#reads=new RetainedSourceFileReads({errorPrefix:'COMMISSIONING_CUSTOMER'});
@@ -192,10 +192,27 @@ export class CommissioningCustomerAgent{
     }
     return this.#connected(args.instance,async({connection,state})=>{
       if(args.file.kind==='report')need(state.job.revision===args.reportRevision,'Refresh the original report revision.','COMMISSIONING_REPORT_CHANGED');
-      let exportReceipt,preparationReceipt;
+      let exportReceipt,preparationReceipt,nativeReceipt,nativeFile;
       if(['installation','installation-archive'].includes(args.file.kind)){
         preparationReceipt=await this.#http(connection,'/api/receive?operationId='+encodeURIComponent(args.file.id));
         need(preparationReceipt.state==='COMPLETE'&&['installation-template','installation-prepare'].includes(preparationReceipt.receipt?.action)&&preparationReceipt.receipt.operationId===args.file.id&&preparationReceipt.receipt.result.jobId===args.jobId&&preparationReceipt.receipt.result.selectionSha256===state.job.selectionSha256,'Choose a complete Installation preparation from this exact original job.','COMMISSIONING_INSTALLATION_REQUIRED');
+      }
+      if(args.file.kind==='installation-native'){
+        need(UUID.test(args.file.id??'')&&SHA.test(args.file.snapshotSha256??'')&&typeof args.file.name==='string','Select the original receiving UUID, exact snapshot and complete native filename.');
+        const base={id:args.file.id,snapshotSha256:args.file.snapshotSha256};
+        nativeReceipt=await this.#http(connection,'/api/installation-receiving?'+new URLSearchParams(base));
+        need(nativeReceipt.jobId===args.jobId&&nativeReceipt.selectionSha256===state.job.selectionSha256&&nativeReceipt.receivingOperationId===args.file.id&&nativeReceipt.snapshotSha256===args.file.snapshotSha256,'The native receiving snapshot belongs to another original selection.','COMMISSIONING_INSTALLATION_CHANGED');
+        let offset=0,total;
+        for(;;){
+          const page=await this.#http(connection,'/api/installation-receiving?'+new URLSearchParams({...base,kind:'files',offset:String(offset),limit:'250'}));
+          need(page.snapshotSha256===args.file.snapshotSha256&&page.receivingOperationId===args.file.id&&page.jobId===args.jobId&&page.offset===offset&&Array.isArray(page.items)&&
+            Number.isSafeInteger(page.total)&&(total===undefined||page.total===total),'The complete original native file page changed.','COMMISSIONING_INSTALLATION_CHANGED');
+          total=page.total;nativeFile=page.items.find(x=>x.name===args.file.name)??nativeFile;
+          if(page.next_offset===null){need(offset+page.items.length===total,'The complete native file inventory ended before its declared total.');break;}
+          need(page.next_offset===offset+page.items.length&&page.next_offset>offset&&page.next_offset<total,'The original native file cursor changed.');
+          offset=page.next_offset;
+        }
+        need(nativeFile,'Select a declared complete native file.','COMMISSIONING_INSTALLATION_CHANGED');
       }
       if(args.file.kind==='archive'){
         exportReceipt=await this.#http(connection,'/api/receive?operationId='+encodeURIComponent(args.file.id));
@@ -203,17 +220,18 @@ export class CommissioningCustomerAgent{
       }
       const {response,dispose}=await this.#http(connection,sourcePath(args.file),{binary:true});
       try{
-        const size=Number(response.headers.get('content-length')),sha=response.headers.get('x-content-sha256'),maximum=['archive','installation-archive'].includes(args.file.kind)?MAX_ARCHIVE_BYTES:MAX_SOURCE_BYTES;
+        const size=Number(response.headers.get('content-length')),sha=response.headers.get('x-content-sha256'),maximum=['archive','installation-archive'].includes(args.file.kind)?MAX_ARCHIVE_BYTES:args.file.kind==='installation-native'?512*1024*1024:MAX_SOURCE_BYTES;
         need(response.headers.get('content-length')!==null&&Number.isSafeInteger(size)&&size>=0&&size<=maximum&&SHA.test(sha??''),'The original file needs its complete bounded byte count and SHA256.','COMMISSIONING_FILE_IDENTITY');
         need((args.expectedSha256===undefined||sha===args.expectedSha256)&&(args.expectedBytes===undefined||size===args.expectedBytes),'The selected complete file identity changed.','COMMISSIONING_FILE_CHANGED');
         if(args.file.kind==='installation'){
           const selected=preparationReceipt.receipt.result.files.find(x=>x.path===args.file.name);
           need(selected&&selected.bytes===size&&selected.sha256===sha,'The selected complete Installation member changed.','COMMISSIONING_INSTALLATION_CHANGED');
         }
+        if(nativeFile)need(nativeFile.bytes===size&&nativeFile.sha256===sha,'The complete selected native file changed.','COMMISSIONING_INSTALLATION_CHANGED');
         const source={jobId:args.jobId,selectionSha256:state.job.selectionSha256,file:args.file,bytes:size,sha256:sha,
           filename:filename(response.headers.get('content-disposition'),args.file.kind==='archive'?'commissioning.tar':'original-file'),
           contentType:response.headers.get('content-type')??'application/octet-stream',
-          ...(args.file.kind==='report'?{reportRevision:args.reportRevision}:{}),...(exportReceipt?{exportReceipt}: {}),...(preparationReceipt?{preparationReceipt}:{})};
+          ...(args.file.kind==='report'?{reportRevision:args.reportRevision}:{}),...(exportReceipt?{exportReceipt}: {}),...(preparationReceipt?{preparationReceipt}:{}),...(nativeReceipt?{nativeReceipt,nativeFile}:{})};
         await writeConsoleWorkflowFile(join(directory,'source.json'),source);
         const body=await writeConsoleWorkflowStream(join(directory,'content'),async handle=>{
           const hash=createHash('sha256');let bytes=0;
@@ -287,6 +305,17 @@ export class CommissioningCustomerAgent{
         const q=new URLSearchParams({id:args.operationId,kind:args.kind??'summary',offset:String(args.offset??0),limit:String(args.limit??50)});
         const result=await this.#http(connection,'/api/installation?'+q);
         need(result.preparation?.operationId===args.operationId&&result.preparation.jobId===definition.jobId&&result.preparation.selectionSha256===state.job.selectionSha256,'The selected Installation preparation changed.','COMMISSIONING_INSTALLATION_CHANGED');
+        return{instance:args.instance,...result};
+      }
+      if(action==='installation_receivings'){
+        const result=await this.#http(connection,'/api/installation-receivings');
+        need(result.jobId===definition.jobId&&result.selectionSha256===state.job.selectionSha256,'The native Installation catalog belongs to another job.','COMMISSIONING_INSTALLATION_CHANGED');
+        return{instance:args.instance,...result};
+      }
+      if(action==='installation_receiving'){
+        const q=new URLSearchParams({id:args.operationId,snapshotSha256:args.snapshotSha256,kind:args.kind??'summary',offset:String(args.offset??0),limit:String(args.limit??50)});
+        const result=await this.#http(connection,'/api/installation-receiving?'+q);
+        need(result.jobId===definition.jobId&&result.selectionSha256===state.job.selectionSha256&&result.receivingOperationId===args.operationId&&result.snapshotSha256===args.snapshotSha256,'The exact native Installation observation changed.','COMMISSIONING_INSTALLATION_CHANGED');
         return{instance:args.instance,...result};
       }
       if(action==='release')return{instance:args.instance,release:await this.#http(connection,'/api/release?id='+encodeURIComponent(args.releaseId))};

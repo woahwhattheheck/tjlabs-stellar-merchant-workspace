@@ -26,8 +26,11 @@ import { validateQcewState, qcewStatePresent } from './qcew/state.mjs';
 import { exportQcewExtension, validateQcewExtension, receiveQcewExtension } from './qcew/bundle.mjs';
 
 import { validateResearchState } from './research/model.mjs';
+import { validateResearchCommerceState } from './research/commerce-model.mjs';
+import { exportResearchCommerceExtension, validateResearchCommerceExtension, receiveResearchCommerceExtension } from './research/commerce-bundle.mjs';
 import { exportResearchExtension, validateResearchExtension, receiveResearchExtension } from './research/bundle.mjs';
 const RESEARCH_BUNDLE = 'stellar-forge.fred-project-bundle.v7';
+const RESEARCH_COMMERCE_BUNDLE = 'stellar-forge.fred-project-bundle.v8';
 const QCEW_BUNDLE = 'stellar-forge.fred-project-bundle.v6';
 const SCHEMA = 'stellar-forge.fred-project.v1';
 const BUNDLE = 'stellar-forge.fred-project-bundle.v1';
@@ -52,6 +55,7 @@ function projectState(state) {
   validateFredDdpProjectState(state);
   validateQcewState(state);
   validateResearchState(state);
+  validateResearchCommerceState(state);
   return state;
 }
 export async function readFredProject(directory) {
@@ -912,12 +916,13 @@ export async function exportFredProject({ directory, qcewSourceContexts = null }
     const ddp = fredDdpStatePresent(state), ddpValues = ddp ? await ddpProject.exportDdp(directory, state, captures) : null;
     const qcew = await exportQcewExtension(directory, state, captures, { sourceContexts: qcewSourceContexts });
     const research = await exportResearchExtension(directory,state);
+    const researchCommerce = await exportResearchCommerceExtension(directory,state);
     const extended = ddp || qcew !== null || research !== null;
-    const bundle = { schema: research ? RESEARCH_BUNDLE : qcew ? QCEW_BUNDLE : ddp ? FRED_DDP_PROJECT_BUNDLE : release ? RELEASE_BUNDLE : recurring ? RECURRING_BUNDLE : briefings.length ? BRIEFING_BUNDLE : BUNDLE,
+    const bundle = { schema: researchCommerce ? RESEARCH_COMMERCE_BUNDLE : research ? RESEARCH_BUNDLE : qcew ? QCEW_BUNDLE : ddp ? FRED_DDP_PROJECT_BUNDLE : release ? RELEASE_BUNDLE : recurring ? RECURRING_BUNDLE : briefings.length ? BRIEFING_BUNDLE : BUNDLE,
       state, captures, publicationPlans, ...(extended || release || briefings.length ? { briefings } : {}),
       ...(extended || release ? { releaseCaptures, releasePlans } : {}),
       ...(extended ? ddpValues ?? Object.fromEntries(FRED_DDP_PROJECT_KEYS.map(key => [key, []])) : {}),
-      ...(qcew ? { qcew } : {}), ...(research ? { research } : {}) };
+      ...(qcew ? { qcew } : {}), ...(research ? { research } : {}), ...(researchCommerce ? { researchCommerce } : {}) };
     bundle.bundleSha256 = canonicalJSONDigest(bundle);
     need(canonicalJSONInfo(bundle).prettyBytes + 1 <= (extended ? FRED_DDP_PROJECT_BUNDLE_MAX_BYTES : 256 * 1024 * 1024),
       extended ? 'The complete project bundle exceeds the 480 MiB receiving capacity; export original sources separately.' :
@@ -928,10 +933,11 @@ export async function exportFredProject({ directory, qcewSourceContexts = null }
 export async function receiveFredProject({ directory, bundle, qcewSourceContexts = null } = {}) {
   const qcewContextOptions = { sourceContexts: qcewSourceContexts ?? new Map() };
   directory = await privateDirectory(resolve(directory));
-  const research = bundle?.schema === RESEARCH_BUNDLE;
+  const researchCommerce = bundle?.schema === RESEARCH_COMMERCE_BUNDLE;
+  const research = researchCommerce || bundle?.schema === RESEARCH_BUNDLE;
   const county = bundle?.schema === QCEW_BUNDLE || research && bundle?.qcew !== undefined, extended = research || county || bundle?.schema === FRED_DDP_PROJECT_BUNDLE;
   const ddpFields = FRED_DDP_PROJECT_KEYS.some(key => bundle?.[key] !== undefined), qcew = bundle?.qcew !== undefined;
-  need([BUNDLE, BRIEFING_BUNDLE, RECURRING_BUNDLE, RELEASE_BUNDLE, FRED_DDP_PROJECT_BUNDLE, QCEW_BUNDLE, RESEARCH_BUNDLE].includes(bundle?.schema) && Array.isArray(bundle.captures) &&
+  need([BUNDLE, BRIEFING_BUNDLE, RECURRING_BUNDLE, RELEASE_BUNDLE, FRED_DDP_PROJECT_BUNDLE, QCEW_BUNDLE, RESEARCH_BUNDLE, RESEARCH_COMMERCE_BUNDLE].includes(bundle?.schema) && Array.isArray(bundle.captures) &&
     Array.isArray(bundle.publicationPlans) &&
     (bundle.schema === BUNDLE ? bundle.briefings === undefined : Array.isArray(bundle.briefings) &&
       (extended || bundle.schema === RELEASE_BUNDLE || bundle.briefings.length > 0)) &&
@@ -947,11 +953,14 @@ export async function receiveFredProject({ directory, bundle, qcewSourceContexts
     ...(bundle.schema !== BUNDLE ? { briefings: bundle.briefings } : {}),
     ...(extended || bundle.schema === RELEASE_BUNDLE ? { releaseCaptures: bundle.releaseCaptures, releasePlans: bundle.releasePlans } : {}),
     ...(ddpFields ? Object.fromEntries(FRED_DDP_PROJECT_KEYS.map(key => [key, bundle[key]])) : {}),
-    ...(qcew ? { qcew: bundle.qcew } : {}), ...(research ? { research: bundle.research } : {}) };
+    ...(qcew ? { qcew: bundle.qcew } : {}), ...(research ? { research: bundle.research } : {}),
+    ...(researchCommerce ? { researchCommerce: bundle.researchCommerce } : {}) };
   need(bundle.bundleSha256 === canonicalJSONDigest(identity), 'Project bundle identity changed.');
   const original = projectState(clone(bundle.state));
   need(research === (original.research !== undefined), 'Use the complete research project bundle.');
   validateResearchExtension(bundle.research,original);
+  need(researchCommerce === (original.researchCommerce !== undefined), 'Use the complete original Research commerce project bundle.');
+  validateResearchCommerceExtension(bundle.researchCommerce,original);
   need(!original.pending, 'A receiving bundle must contain a completed project state.');
   const recurring = (original.briefingTemplates?.length ?? 0) > 0 ||
     (original.briefingSuccessors?.length ?? 0) > 0;
@@ -1037,6 +1046,7 @@ export async function receiveFredProject({ directory, bundle, qcewSourceContexts
     }
     await receiveQcewExtension(directory, bundle.qcew, original, bundle.captures, qcewContextOptions);
     await receiveResearchExtension(directory,bundle.research,original);
+    await receiveResearchCommerceExtension(directory,bundle.researchCommerce,original);
     await atomicJson(directory, 'project.json', original);
     const receipt = { schema: 'stellar-forge.fred-receiving.v1', bundleSha256: bundle.bundleSha256,
       projectId: original.id, revision: original.revision, receivedAt: new Date().toISOString() };

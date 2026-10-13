@@ -1,0 +1,80 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "mpc-recovery-operations-interfaces",
+  "description": "Complete original MPC recovery and proposal application, physical managed branch store, authenticated typed SDK and agent tools, Application lifecycle, Installation and source/funding guidance.",
+  "components": [
+    "products/mpc-recovery-operations"
+  ],
+  "supportFiles": [
+    "products/mpc-recovery-operations/ADOPTION.json",
+    "products/mpc-recovery-operations/OPERATING.md",
+    "products/mpc-recovery-operations/SDK.md",
+    "products/mpc-recovery-operations/STORE_HTTP.md",
+    "products/mpc-recovery-operations/app/DOMAIN_GUIDE.md",
+    "products/mpc-recovery-operations/app/LICENSE",
+    "products/mpc-recovery-operations/app/README.md",
+    "products/mpc-recovery-operations/app/branch-receiving.mjs",
+    "products/mpc-recovery-operations/app/cli.mjs",
+    "products/mpc-recovery-operations/app/codec.js",
+    "products/mpc-recovery-operations/app/complete-receiving.mjs",
+    "products/mpc-recovery-operations/app/delimited.mjs",
+    "products/mpc-recovery-operations/app/domain.mjs",
+    "products/mpc-recovery-operations/app/initial-snapshot.json",
+    "products/mpc-recovery-operations/app/proposal.mjs",
+    "products/mpc-recovery-operations/app/proposal/README.md",
+    "products/mpc-recovery-operations/app/proposal/acceptance-steps.json",
+    "products/mpc-recovery-operations/app/proposal/planner.cjs",
+    "products/mpc-recovery-operations/app/proposal/planner_cli.cjs",
+    "products/mpc-recovery-operations/app/proposal/requirements.json",
+    "products/mpc-recovery-operations/app/proposal/response-register.csv",
+    "products/mpc-recovery-operations/app/proposal/sources.json",
+    "products/mpc-recovery-operations/app/proposal/workspace.html",
+    "products/mpc-recovery-operations/app/recovery-operations.html",
+    "products/mpc-recovery-operations/app/run-receiving.py",
+    "products/mpc-recovery-operations/app/source-register.json",
+    "products/mpc-recovery-operations/app/source-selection.json",
+    "products/mpc-recovery-operations/app/styles.css",
+    "products/mpc-recovery-operations/app/ui.js",
+    "products/mpc-recovery-operations/app/workspace-store.js",
+    "products/mpc-recovery-operations/app/zip.js",
+    "products/mpc-recovery-operations/application-provider.mjs",
+    "products/mpc-recovery-operations/binding.mjs",
+    "products/mpc-recovery-operations/browser.mjs",
+    "products/mpc-recovery-operations/catalog.mjs",
+    "products/mpc-recovery-operations/client.d.mts",
+    "products/mpc-recovery-operations/client.mjs",
+    "products/mpc-recovery-operations/contract.mjs",
+    "products/mpc-recovery-operations/managed.mjs",
+    "products/mpc-recovery-operations/merchant-provider.mjs",
+    "products/mpc-recovery-operations/merchant.mjs",
+    "products/mpc-recovery-operations/server.mjs",
+    "products/mpc-recovery-operations/store.mjs",
+    "stellar-forge/developer-site/grant-products/mpc-recovery-operations.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/mpc-recovery-operations.json",
+    "tools/mpc-recovery-operations/MANAGED_RECEIVING.md",
+    "tools/mpc-recovery-operations/managed-browser-receiving.mjs",
+    "tools/mpc-recovery-operations/managed-receiving.mjs",
+    "tools/mpc-recovery-operations/run-managed-receiving.py"
+  ],
+  "commands": {
+    "mpc-recovery-operations": "products/mpc-recovery-operations/managed.mjs"
+  },
+  "commandDescriptions": {
+    "mpc-recovery-operations": "Create, bind and operate the original MPC recovery store, complete branches, reports and portable receiving."
+  },
+  "exports": {
+    "./mpc-recovery-operations/client": {
+      "types": "./source/products/mpc-recovery-operations/client.d.mts",
+      "default": "./source/products/mpc-recovery-operations/client.mjs"
+    },
+    "./mpc-recovery-operations/binding": "./source/products/mpc-recovery-operations/binding.mjs",
+    "./mpc-recovery-operations/application-provider": "./source/products/mpc-recovery-operations/application-provider.mjs",
+    "./mpc-recovery-operations/merchant-provider": "./source/products/mpc-recovery-operations/merchant-provider.mjs"
+  },
+  "applicationProviders": {
+    "mpc-recovery-operations": "products/mpc-recovery-operations/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "mpc-recovery-workspaces": "products/mpc-recovery-operations/merchant-provider.mjs"
+  }
+}

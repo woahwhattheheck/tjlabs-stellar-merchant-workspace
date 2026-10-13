@@ -9,6 +9,8 @@ const uuid = {type: 'string', pattern: '^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]
 const revision = {type: 'integer', minimum: 1}, date = {type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$'};
 const hash = {type: 'string', pattern: '^[a-f0-9]{64}$'};
 const workspace = {workspace: alias}, agreement = {...workspace, agreementId: uuid};
+const collections = {...workspace, asOf: date, workspaceId: hash, expectedRevision: revision,
+  agreementIds: {type: 'array', maxItems: 2000, uniqueItems: true, items: uuid}};
 const requestId = {type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$'};
 const mutation = {...workspace, revision, workspaceId: hash, actor: text(1000, 1), requestId};
 const change = {...agreement, ...mutation, expectedVersion: revision};
@@ -28,6 +30,12 @@ const descriptions = [
     {...workspace, asOf: date}, ['workspace'], true],
   ['agreement', 'Read one complete original agreement, its quotation editions, billing periods and history.',
     {...agreement, asOf: date}, ['workspace', 'agreementId'], true],
+  ['collections', 'Read selected agreements with original dated invoice balances, payment allocations, credits and distinct quoted periods.',
+    collections, ['workspace'], true],
+  ['collections_export', 'Describe the complete dated collections HTML, JSON, invoice/period/activity CSV and TAR report with exact file hashes.',
+    collections, ['workspace'], true],
+  ['collections_file', 'Read one full selected collections file using the original retained file reader and its pinned report revision.',
+    {...collections, file, ...range}, ['workspace','workspaceId','expectedRevision','asOf','file','expectedSha256'], true],
   ['preview', 'Preview the exact original billing period and retain its agreement version, digest and any existing recovery request.',
     {...agreement, periodId: text(240, 1), asOf: date}, ['workspace', 'agreementId', 'periodId'], true],
   ['create', 'Create an agreement from a complete original quotation and its accepted customer response, optionally joined to the complete accepted SF74 renewal handover.',
@@ -66,6 +74,8 @@ const byName = new Map(serviceAgreementDefinitions.map(value => [value.name, val
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 function accepted(schema, value) {
   if (schema.enum && !schema.enum.includes(value)) return false;
+  if (schema.type === 'array') return Array.isArray(value) && value.length <= (schema.maxItems ?? Infinity) &&
+    (!schema.uniqueItems || new Set(value).size === value.length) && value.every(item => accepted(schema.items, item));
   if (schema.type === 'integer') return Number.isSafeInteger(value) &&
     value >= (schema.minimum ?? 0) && value <= (schema.maximum ?? Number.MAX_SAFE_INTEGER);
   if (schema.type === 'string') return typeof value === 'string' &&

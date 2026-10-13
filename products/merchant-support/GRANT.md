@@ -1,13 +1,13 @@
 # Merchant implementation contribution to the SCF application
 
-This contribution joins the existing Merchant Support implementation, original Grafana handover and offline recipient review to the same SCF application. The chapter describes the complete customer operation; its independent declaration supplies the selected immutable source files to the maintained grant composer.
+This contribution joins the existing Merchant Support implementation, original Grafana handover, offline recipient review and cross-case Implementation desk to the same SCF application. The chapter describes the complete customer operation; its independent declaration supplies the selected immutable source files to the maintained grant composer.
 
 ## Complete authored source
 
 | File | Purpose |
 | --- | --- |
 | [merchant-implementation.md](../../stellar-forge/developer-site/grant-chapters/merchant-implementation.md) | Complete customer chapter, operating course and selected source links. |
-| [merchant-implementation.json](../../stellar-forge/developer-site/grant-products/merchant-implementation.json) | Twelve measured original sources using the existing product-registration schema. |
+| [merchant-implementation.json](../../stellar-forge/developer-site/grant-products/merchant-implementation.json) | Eighteen measured original sources using the existing product-registration schema. |
 | This guide | Canonical intake, complete native receiving, source ownership and later-edition instructions. |
 
 The product ID is `merchant-implementation`. The exact heading is:
@@ -23,8 +23,9 @@ The original source selections are:
 | Grafana project/checkpoint inspection | Commons PR37491, `ea850ded8c1db17af09103ad98c12235e509d792`. |
 | Original archive → Support task mapping → full case receiving | Merchant PR1422, `b81137ecb4e8ca27a108cb28b09ae12558bcbc86`. |
 | Offline implementation review → original receiving transaction | Merchant PR1565, `59928e62d6d521a1344d539145897668bd3e7d47`. |
+| Cross-case Implementation desk → original task edits → full report and receiving | Merchant PR1661/1664, `d8e3c14df835950c5483066df4a3c9ead9253a23`. |
 
-All measured source identities were computed from complete original file bodies already read back at their merged editions. The source registry retains each repository, path, commit, Git blob, byte count and SHA-256. The original complete distribution and matching Observability application supply the rest of each native dependency closure; these twelve selected records are the grant's source references, not a replacement installation manifest.
+All measured source identities were computed from complete original file bodies already read back at their merged editions. The source registry retains each repository, path, commit, Git blob, byte count and SHA-256. The original complete distribution and matching Observability application supply the rest of each native dependency closure; these eighteen selected records are the grant's source references, not a replacement installation manifest.
 
 ## Receive the chapter into the canonical application
 
@@ -60,19 +61,20 @@ The composer continues to produce the same four complete reviewer files:
 - `grant-data/product-and-finance.md`
 - `grant-data/source-index.json`
 
-Check the actual composition result for one present `merchant-implementation` chapter and all twelve selected source IDs. The companion must retain the complete customer journey. The index must retain unrelated sources, their identities and financial fields. Original private source references use the existing authenticated/public projection; inspect the selected outgoing reader before sharing it.
+Check the actual composition result for one present `merchant-implementation` chapter and all eighteen selected source IDs. The companion must retain the complete customer journey. The index must retain unrelated sources, their identities and financial fields. Original private source references use the existing authenticated/public projection; inspect the selected outgoing reader before sharing it.
 
 The existing cumulative publisher receives that full edition into the original saved draft, review, Page and Site. Pass the actual four source pins and complete source package through their maintained receiving path. Canonical manuscript intake and generated reader publication each retain their own returned result.
 
 ## Complete original customer operating course
 
-Use the original Support case and its actual installed source, native workorder, current terms and original technical delivery. The browser routes are `/grafana-delivery` and `/implementation-review`; the installed commands are `starforge merchant-grafana-delivery` and `starforge merchant-implementation-review`.
+Use the original Support case and its actual installed source, native workorder, current terms and original technical delivery. The browser routes are `/grafana-delivery`, `/implementation-review` and `/implementation-portfolio`; the installed commands are `starforge merchant-grafana-delivery`, `starforge merchant-implementation-review` and `starforge merchant-implementation-portfolio`.
 
 The complete guides, selected in the declaration, are:
 
 - [Grafana delivery](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/GRAFANA_CASE_DELIVERY.md).
 - [Grafana operator CLI](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/GRAFANA_CASE_DELIVERY_CLI.md).
 - [Implementation recipient review](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/IMPLEMENTATION_REVIEW.md).
+- [Implementation operating portfolio and full original-case continuation](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/IMPLEMENTATION_PORTFOLIO.md).
 
 Continue the original equipped receiving operation with these steps:
 
@@ -86,6 +88,8 @@ Continue the original equipped receiving operation with these steps:
 8. **Apply through the original native transaction.** Retain the exact returned file text, apply the reviewed complete batch, and inspect the resulting case revision, observation material and every technical/customer record. Reconcile an interrupted acknowledgement using the original request, including after a subsequent compatible case edit.
 9. **Export and independently receive the entire case.** Transfer the whole original package and native source closure. Open the receiving case in its actual local store, inspect history and original files, reopen the technical handover and retained review, and create any later review from that local case.
 
+10. **Operate the implementation portfolio.** Continue that actual completed case through the guide's original-case native course. Receive two real local copies, capture their actual heads, inspect task attention and source details, apply reviewed operational changes in one case while the other remains intact, recover the exact request after a dropped response, and compare earlier receiving after an explicit definition change. Open full desktop/narrow reports and the first retained CLI receipt. Export the complete resulting case, receive it, make a reviewed later local edit and reopen the same original receiving result without overwriting that work.
+
 For each browser portion, open the actual selected installation at a useful desktop width and a narrow width, look at the rendered result, use its controls, and inspect populated, empty, loading and error states encountered during the course. Download and reopen the actual deliverables. For an archive, extract and open its contained working project and outputs. Retain the screenshots that were viewed and the actual returned files with the same original operation.
 
 The packet and returned review each have a complete 24 MiB UTF-8 limit. Recovery JSON has a separate 64 MiB limit; the HTTP envelope also has a 64 MiB limit. The recipient receives complete selected material or an explicit external-companion reference. The workflow rejects an oversized complete selection instead of reducing it silently.
@@ -98,6 +102,7 @@ The packet and returned review each have a complete 24 MiB UTF-8 limit. Recovery
 | Recipient worked offline | Actual selected HTML, named local draft/recovery, inspected original material and complete returned JSON. |
 | Native return recorded | Original case/revision, exact returned text/hash, preview, stable request identity and single saved batch result. |
 | Historical correction recorded | Original subject, prior observation, explicit correction and resulting saved history. |
+| Implementation portfolio operated | Actual selected case heads, task details, reviewed edits, exact request/status/replay results, complete source-qualified reports and the original received-case continuation. |
 | Whole case reopened | Complete package identity, original native receiving request/result, actual local case identity and reopened source/material history. |
 | Customer accepted the delivery | The customer's actual observation and selected work, preserved in its original commercial/customer record. |
 | Reviewer application received the chapter | Current canonical chapter, declaration identity, full composed four-file edition and original draft/Page/Site receiving results. |
@@ -108,6 +113,6 @@ Source publication establishes the implemented contribution. The original native
 
 Advance a selected source only after reading its complete reviewed body at the actual new commit. Preserve each stable source ID, append its new measured edition, and update the chapter's immutable link to the same selection. Existing historical source packages remain intact.
 
-The broader merchant-support distribution, original SF49 source engine, CaseStore, workorders, native receivers, OAuth operations and recovery/comparison integrations retain their existing owners. This contribution is the grant adoption of the delivered implementation workflow. Later portfolio or customer-specific work joins its actual source and operating programme after it is delivered.
+The broader merchant-support distribution, original SF49 source engine, CaseStore, workorders, native receivers, OAuth operations and recovery/comparison integrations retain their existing owners. This contribution is the grant adoption of the delivered implementation workflow. Later customer-specific work joins its actual source and operating programme after it is delivered.
 
 The cumulative publisher continues the current application; the original receiving team continues the installed customer case. Their actual accepted outputs supply the subsequent application edition.
