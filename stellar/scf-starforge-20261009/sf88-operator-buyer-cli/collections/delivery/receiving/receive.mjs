@@ -74,7 +74,7 @@ export async function receiveCustomerDelivery({directory,collections=null,source
      const scope=window.customerDelivery.inspect().scope;
      const database=await new Promise((resolve,reject)=>{const request=indexedDB.open('sf88-customer-delivery',1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
      try{await new Promise((resolve,reject)=>{const tx=database.transaction('states','readwrite'),store=tx.objectStore('states'),read=store.get(scope);let failure;
-      read.onsuccess=()=>{const existing=read.result??null;if(existing?.pending&&JSON.stringify(existing.pending)!==JSON.stringify(pending)){failure=new Error('Another retained request owns this browser scope.');tx.abort();return;}store.put({pending,last:existing?.last??null},scope);};
+      read.onsuccess=()=>{const existing=read.result??null;if(existing?.pending&&JSON.stringify(existing.pending)!==JSON.stringify(pending)){failure=new Error('Another retained request owns this browser scope.');tx.abort();return;}store.put({...existing,pending,last:existing?.last??null},scope);};
       tx.oncomplete=resolve;tx.onerror=()=>reject(failure??tx.error);tx.onabort=()=>reject(failure??tx.error);
      });}finally{database.close();}
     },pending);
