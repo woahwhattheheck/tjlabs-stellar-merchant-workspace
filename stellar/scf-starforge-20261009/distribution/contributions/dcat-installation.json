@@ -1,0 +1,48 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "dcat-installation",
+  "description": "Complete catalogue source, explicit commissioning scope, original Workshare Installation and independent two-application receiving",
+  "components": [
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders"
+  ],
+  "commands": {
+    "dcat-installation": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation.mjs",
+    "dcat-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-receiving.mjs"
+  },
+  "commandDescriptions": {
+    "dcat-installation": "Retain complete catalogue archives and source inputs, select actual commissioned work, and prepare the original Workshare Installation",
+    "dcat-installation-receive": "Receive an actual saved catalogue Installation through both original application archives, verify every member and continue the actual browser course"
+  },
+  "applicationProviders": {
+    "dcat-installation": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-dcat-installation.mjs"
+  },
+  "exports": {
+    "./grant/dcat-installation": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-core.mjs",
+    "./grant/dcat-installation/source": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-source.mjs",
+    "./grant/dcat-installation/service": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/service.mjs",
+    "./grant/dcat-installation/server": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/server.mjs",
+    "./grant/dcat-installation/receiving": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-receiving.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-source.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-catalogues.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/profiles.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/DCAT_INSTALLATION.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/service.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/server.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/public/app.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/public/index.html",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation/public/style.css",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-dcat-installation.mjs",
+    "stellar-forge/mcp-merchant-operator/ckan-dcat-installation.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/ckan-dcat-installation.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_dcat_sources.py",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-receiving.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-operations.py",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/dcat-installation-browser.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/DCAT_INSTALLATION_RECEIVING.md"
+  ]
+}

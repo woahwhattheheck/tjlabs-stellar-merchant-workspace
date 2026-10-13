@@ -58,6 +58,7 @@ import operations_commercial_changes as commercial_changes
 import operations_expenses as expenses
 import operations_expense_billing as expense_billing
 import operations_work_billing as work_billing
+import operations_dcat_sources as dcat_sources
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
 MAX_SOURCE = 8 * 1024 * 1024
@@ -289,11 +290,12 @@ class Operations:
         self.db.execute("INSERT INTO ops_records VALUES(?,?,?,?,?) ON CONFLICT(program_id,kind,id) DO UPDATE SET state=excluded.state,body_json=excluded.body_json",
                         (program_id, kind, row["id"], row["state"], canonical(row)))
 
-    def _source_add(self, program_id, data, *, _maximum=MAX_SOURCE):
-        if _maximum not in (MAX_SOURCE, buyer.MAX_CUSTOMER_USE_HANDOFF):
+    def _source_add(self, program_id, data, *, _maximum=MAX_SOURCE, _dcat=False):
+        if ((_dcat and _maximum != dcat_sources.MAX_SOURCE) or
+                not _dcat and _maximum not in (MAX_SOURCE, buyer.MAX_CUSTOMER_USE_HANDOFF)):
             domain.fail("Use the supported original source bound.", status=413)
         content = decoded(data.get("contentBase64"), maximum=_maximum)
-        if _maximum > MAX_SOURCE:
+        if not _dcat and _maximum > MAX_SOURCE:
             if json.loads(content).get("schema") != buyer.CUSTOMER_USE_SCHEMA:
                 domain.fail("The larger source bound is reserved for the native customer-use return.", status=413)
         name = text(data.get("filename"), "Original source filename", 240, True)
@@ -302,14 +304,24 @@ class Operations:
         media = text(data.get("mediaType", "application/octet-stream"), "Source media type", 200, True)
         if not re.fullmatch(r"[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+", media):
             domain.fail("Use a plain MIME media type.")
-        total, count = self.db.execute("SELECT COALESCE(SUM(length(content)),0),COUNT(*) FROM ops_sources WHERE program_id=?", (program_id,)).fetchone()
-        if total + len(content) > MAX_SOURCES_TOTAL or count >= 200:
-            domain.fail("The case source bundle exceeds its 24 MiB / 200-file bound.", status=413)
+        retained = [{**json.loads(metadata), "bytes": size} for metadata, size in self.db.execute(
+            "SELECT metadata_json,length(content) FROM ops_sources WHERE program_id=?", (program_id,))]
+        transport = None
+        if _dcat:
+            if not name.lower().endswith(".ckanw"):
+                domain.fail("Select the complete original .ckanw source filename.")
+            expected = domain.sha(data.get("expectedSha256"), "Selected complete DCAT workspace SHA256", False)
+            if hashlib.sha256(content).hexdigest() != expected:
+                domain.fail("The selected DCAT workspace bytes differ.", "DCAT_SOURCE_CHANGED", 409)
+            transport = dcat_sources.inspect(content)
         row = {"id": generated("source"), "filename": name, "mediaType": media,
                "kind": domain.enum(data.get("kind", "other"), ("invoice", "work", "grant", "payment", "deployment", "purchase", "other"), "Source kind"),
                "sourceUrl": domain.url(data.get("sourceUrl", ""), "Original source URL"),
                "observedAt": domain.timestamp(data.get("observedAt") or now(), "Source observation"),
                "bytes": len(content), "sha256": hashlib.sha256(content).hexdigest(), "createdAt": now()}
+        if transport is not None:
+            row["dcatWorkspace"] = transport
+        dcat_sources.source_budget(retained + [row])
         self.db.execute("INSERT INTO ops_sources VALUES(?,?,?,?)", (program_id, row["id"], canonical(row), content))
         return row
 
@@ -355,6 +367,9 @@ class Operations:
             extra_receipt, source_change = {}, None
             if command == "source.add":
                 after = self._source_add(program_id, data)
+                kind, record_id = "source", after["id"]
+            elif command == dcat_sources.ACTION:
+                after = self._source_add(program_id, data, _maximum=dcat_sources.MAX_SOURCE, _dcat=True)
                 kind, record_id = "source", after["id"]
             elif command == statement_profiles.ACTION:
                 result = statement_profiles.save(self, context, data, actor, next_version, note)
@@ -1634,6 +1649,8 @@ class Operations:
             metadata, raw = json.loads(row[0]), bytes(row[1])
             if len(raw) != metadata["bytes"] or hashlib.sha256(raw).hexdigest() != metadata["sha256"]:
                 domain.fail("The retained original source differs from its stored identity.", "SOURCE_CHANGED", 409)
+            if "dcatWorkspace" in metadata:
+                dcat_sources.validate_source(metadata, raw)
             return metadata, raw
 
     @contextmanager
@@ -1653,8 +1670,10 @@ class Operations:
         with self._snapshot():
             context = self._context(program_id)
             program = context["program"]
+            bundle_limit = dcat_sources.source_budget(context["sources"].values())
             reviews = [json.loads(row[0]) for row in self.db.execute("SELECT body_json FROM ops_reviews WHERE program_id=? ORDER BY rowid", (program_id,))]
             events = [json.loads(row[0]) for row in self.db.execute("SELECT body_json FROM ops_events WHERE program_id=? ORDER BY version", (program_id,))]
+            dcat_sources.validate_events(context["sources"].values(), events)
             original = self.workspace.export(program["planId"])
             saved_forecasts = [json.loads(row[0]) for row in self.db.execute(
                 "SELECT body_json FROM ops_forecasts WHERE program_id=? ORDER BY rowid", (program_id,))]
@@ -1723,13 +1742,13 @@ class Operations:
                 files.update(task_outcomes.selected_files(self, program_id, task_outcome_id, task_outcome_revision))
             if award_terms_id is not None or award_terms_revision is not None:
                 files.update(award_terms.selected_files(self, program_id, award_terms_id, award_terms_revision))
-        if sum(len(raw) for raw in files.values()) > MAX_BUNDLE:
-            domain.fail("The complete operations bundle exceeds 32 MiB.", status=413)
+        if sum(len(raw) for raw in files.values()) > bundle_limit:
+            domain.fail("The complete operations bundle exceeds its selected ordinary/DCAT capacity.", status=413)
         manifest = {"schema": SCHEMA + ".bundle", "files": [{"path": name, "bytes": len(raw),
                     "sha256": hashlib.sha256(raw).hexdigest()} for name, raw in sorted(files.items())]}
         files["MANIFEST.json"] = (canonical(manifest) + "\n").encode()
-        if sum(len(raw) for raw in files.values()) > MAX_BUNDLE:
-            domain.fail("The complete operations bundle including its manifest exceeds 32 MiB.", status=413)
+        if sum(len(raw) for raw in files.values()) > bundle_limit:
+            domain.fail("The complete operations bundle including its manifest exceeds its selected ordinary/DCAT capacity.", status=413)
         output = io.BytesIO()
         with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
             for name, raw in sorted(files.items()):
@@ -1738,20 +1757,34 @@ class Operations:
                 info.compress_type = zipfile.ZIP_DEFLATED
                 archive.writestr(info, raw)
         raw = output.getvalue()
-        if len(raw) > MAX_BUNDLE:
-            domain.fail("The compressed complete operations bundle exceeds 32 MiB.", status=413)
+        if len(raw) > bundle_limit:
+            domain.fail("The compressed complete operations bundle exceeds its selected ordinary/DCAT capacity.", status=413)
         return raw
 
     @staticmethod
     def _unpack(raw):
-        if not isinstance(raw, bytes) or len(raw) > MAX_BUNDLE:
-            domain.fail("Use a complete operations ZIP up to 32 MiB.", status=413)
+        if not isinstance(raw, bytes) or len(raw) > dcat_sources.MAX_BUNDLE:
+            domain.fail("Use a complete operations ZIP within its selected source capacity.", status=413)
         try:
             with zipfile.ZipFile(io.BytesIO(raw)) as archive:
                 infos = archive.infolist()
                 names = [row.filename for row in infos]
-                if len(names) != len(set(names)) or len(names) > 220 or sum(row.file_size for row in infos) > MAX_BUNDLE:
+                expanded = sum(row.file_size for row in infos)
+                if len(names) != len(set(names)) or len(names) > 220 or expanded > dcat_sources.MAX_BUNDLE:
                     domain.fail("The operations bundle has duplicate, excessive or oversized entries.")
+                if (archive.getinfo("MANIFEST.json").file_size > 1024 * 1024
+                        or archive.getinfo("operations.json").file_size > MAX_BUNDLE):
+                    domain.fail("The original operations metadata exceeds its bound.", status=413)
+                document = json.loads(archive.read("operations.json"))
+                if not isinstance(document, dict) or document.get("schema") != SCHEMA:
+                    domain.fail("Select the complete original Operations document.")
+                bundle_limit = dcat_sources.source_budget(document.get("sources", []))
+                if len(raw) > bundle_limit or expanded > bundle_limit:
+                    domain.fail("The complete case exceeds its selected ordinary/DCAT bound.", status=413)
+                dcat_names = {"sources/" + row["id"] for row in document["sources"] if "dcatWorkspace" in row}
+                if any(row.file_size > (dcat_sources.MAX_SOURCE if row.filename in dcat_names else MAX_BUNDLE)
+                       for row in infos):
+                    domain.fail("An original case member exceeds its selected bound.", status=413)
                 manifest = json.loads(archive.read("MANIFEST.json"))
                 if manifest.get("schema") != SCHEMA + ".bundle":
                     domain.fail("Select a complete SF47 operations export.")
@@ -1824,8 +1857,15 @@ class Operations:
             association = item.get("buyerHandoff", {})
             maximum = buyer.MAX_CUSTOMER_USE_HANDOFF if (isinstance(association, dict)
                 and association.get("sourceSchema") == buyer.CUSTOMER_USE_SCHEMA) else MAX_SOURCE
+            if "dcatWorkspace" in item:
+                maximum = dcat_sources.MAX_SOURCE
+                if association:
+                    domain.fail("A DCAT workspace cannot impersonate a customer-use source.")
+                dcat_sources.validate_source(item, content)
             if len(content) != item["bytes"] or hashlib.sha256(content).hexdigest() != item["sha256"] or len(content) > maximum:
                 domain.fail("An original attachment differs from its source record.")
+        dcat_sources.source_budget(document["sources"])
+        dcat_sources.validate_events(document["sources"], document.get("events", []))
         installations.selection_from_files(document, files)
         task_outcomes.selection_from_files(document, files)
         award_terms.selection_from_files(document, files)
@@ -1848,13 +1888,20 @@ class Operations:
                 if existing[0] != digest(original_payload):
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
-        native_raw, supplier_selection = supplier_statements.unwrap_bundle(raw)
-        native_raw, funding_report = funding.unwrap_bundle(native_raw)
-        native_raw, reconciliation_account = account_reconciliation.unwrap_bundle(native_raw)
-        native_raw, cash_account = cash_accounts.unwrap_bundle(native_raw)
-        native_raw, supplier_account = payables.unwrap_bundle(native_raw)
-        native_raw, performance_report = performance.unwrap_bundle(native_raw)
-        native_raw, delivery_queue = dispatch.unwrap_bundle(native_raw)
+        if dcat_sources.native_bundle(raw):
+            # A native case is not a report wrapper. Its own complete importer
+            # validates the selected capacity, every source and original history.
+            native_raw = raw
+            supplier_selection = funding_report = reconciliation_account = None
+            cash_account = supplier_account = performance_report = delivery_queue = None
+        else:
+            native_raw, supplier_selection = supplier_statements.unwrap_bundle(raw)
+            native_raw, funding_report = funding.unwrap_bundle(native_raw)
+            native_raw, reconciliation_account = account_reconciliation.unwrap_bundle(native_raw)
+            native_raw, cash_account = cash_accounts.unwrap_bundle(native_raw)
+            native_raw, supplier_account = payables.unwrap_bundle(native_raw)
+            native_raw, performance_report = performance.unwrap_bundle(native_raw)
+            native_raw, delivery_queue = dispatch.unwrap_bundle(native_raw)
         document, files = self._unpack(native_raw)
         source_program, plan = document["program"], document["plan"]
         if not isinstance(source_program, dict) or not isinstance(plan, dict):
@@ -1872,8 +1919,7 @@ class Operations:
         if sum(len(values) for values in document["records"].values()) > MAX_RECORDS:
             domain.fail("The operations bundle has too many records.")
         sources = {row["id"]: row for row in document["sources"]}
-        if sum(row["bytes"] for row in sources.values()) > MAX_SOURCES_TOTAL:
-            domain.fail("The original attachment total exceeds its supported bound.", status=413)
+        dcat_sources.source_budget(sources.values())
         context = {"program": source_program, "plan": plan, "records": document["records"], "sources": sources,
                    "restoring": True, "completionPlans": document.get("completionPlans", [])}
         for kind, values in document["records"].items():

@@ -10,6 +10,7 @@ import tempfile
 
 from model import Problem, MAX_BUNDLE, canonical
 from operations import Operations, MAX_SOURCE
+import operations_dcat_sources as dcat_sources
 import operations_commercial_cli as commercial_cli
 import operations_expense_billing_cli as expense_billing_cli
 import operations_work_billing_cli as work_billing_cli
@@ -213,6 +214,12 @@ def register(subparsers, common):
     target.add_argument("--file", required=True)
     target.add_argument("--kind", choices=("invoice", "work", "grant", "payment", "deployment", "purchase", "other"), default="other")
     target.add_argument("--media-type", default="application/octet-stream")
+    target.add_argument("--source-url", default="")
+    target.add_argument("--observed-at", required=True)
+    target = command("attach-dcat", "Attach one complete hash-selected original DCAT workspace", case=True)
+    mutation(target, version=True)
+    target.add_argument("--file", required=True)
+    target.add_argument("--expected-sha256", required=True)
     target.add_argument("--source-url", default="")
     target.add_argument("--observed-at", required=True)
     target = command("source", "Export one exact retained source attachment", case=True)
@@ -1422,6 +1429,13 @@ def operate(workspace, args):
         else:
             from operations_intake import import_source_intake
             result = import_source_intake(ops, read_bytes(args.file, MAX_SOURCE), body)
+    elif action == "attach-dcat":
+        data = {"filename": Path(args.file).name,
+                "contentBase64": base64.b64encode(read_bytes(args.file, dcat_sources.MAX_SOURCE)).decode("ascii"),
+                "expectedSha256": args.expected_sha256, "kind": "other", "mediaType": "application/gzip",
+                "sourceUrl": args.source_url, "observedAt": args.observed_at}
+        result = ops.command(args.case, {"expectedVersion": args.expected_version, "requestId": args.request_id,
+            "actor": args.actor, "note": args.note, "action": dcat_sources.ACTION, "data": data})
     elif action in ("command", "attach"):
         if action == "attach":
             data = {"filename": Path(args.file).name, "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode(),
@@ -1446,7 +1460,7 @@ def operate(workspace, args):
             raw = ops.export(args.case)
         return {"case": current["program"], "output": publish(args.output, raw)}
     elif action == "import":
-        result = ops.import_bundle(read_bytes(args.file), args.name, args.request_id, args.actor)
+        result = ops.import_bundle(read_bytes(args.file, dcat_sources.MAX_BUNDLE), args.name, args.request_id, args.actor)
     else:
         raise Problem("Unknown operations action.", 422, "UNKNOWN_COMMAND")
     if getattr(args, "output", None):
