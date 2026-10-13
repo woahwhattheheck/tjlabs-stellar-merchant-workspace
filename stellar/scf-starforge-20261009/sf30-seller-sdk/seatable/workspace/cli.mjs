@@ -6,7 +6,7 @@ import { resolve, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { readJson, bytes, createFile, privateDirectory, hashPrivate, syncDirectory, fault } from '../../postgres/publisher/files.mjs';
 import { openSeaTableAuthoring } from './model.mjs';
-import { MAX_WORKSPACE_BYTES } from './handover.mjs';
+import { saveSeaTableWorkspaceArchive as saveWorkspaceArchive } from './handover.mjs';
 import { serveSeaTableAuthoring } from './server.mjs';
 import { makeSeaTableSourcePacket, MAX_PACKET_BYTES } from './packet.mjs';
 import { readSeaTableLaunchConnections, inspectSeaTableAuthoring, inspectSeaTableLaunchSource,
@@ -110,62 +110,6 @@ async function saveFile(file, content) {
   await privateDirectory(dirname(file)); await createFile(file, content);
   return { file, bytes: content.length };
 }
-
-// Stream the exact retained archive into a private output. Publication never overwrites
-// another writer's file; identical completed output is an exact replay.
-async function saveWorkspaceArchive(file, descriptor) {
-  await privateDirectory(dirname(file));
-  if (!descriptor || !Number.isSafeInteger(descriptor.bytes) || descriptor.bytes < 1 ||
-      descriptor.bytes > MAX_WORKSPACE_BYTES + 32 * 1024 * 1024 + 13 || !/^[a-f0-9]{64}$/.test(descriptor.sha256))
-    throw fault('SEATABLE_WORKSPACE_ARCHIVE_IDENTITY_REQUIRED');
-  const result = { file, bytes:descriptor.bytes, sha256:descriptor.sha256 };
-  async function exactOutput() {
-    let saved; try { saved = await hashPrivate(file, descriptor.bytes); }
-    catch (issue) { if(issue.code==='ENOENT')return false;throw issue; }
-    if(saved.bytes!==descriptor.bytes || saved.hash!==descriptor.sha256)
-      throw fault('SEATABLE_WORKSPACE_OUTPUT_CHANGED','This output already holds different bytes. Select another new private output.');
-    return true;
-  }
-  if(await exactOutput())return result;
-  const temporary=join(dirname(file),'.seatable-workspace-'+randomUUID()+'.partial');
-  let source, outputHandle, primary;
-  try {
-    source=await open(descriptor.path,constants.O_RDONLY | constants.O_NOFOLLOW);
-    const before=await source.stat();
-    if(!before.isFile()||before.nlink!==1||before.mode & 0o077||before.size!==descriptor.bytes)
-      throw fault('SEATABLE_WORKSPACE_ARCHIVE_CHANGED');
-    outputHandle=await open(temporary,'wx',0o600);
-    const hash=createHash('sha256'),buffer=Buffer.alloc(1024*1024);
-    let position=0;
-    while(position<descriptor.bytes){
-      const count=await source.read(buffer,0,Math.min(buffer.length,descriptor.bytes-position),position);
-      if(!count.bytesRead)throw fault('SEATABLE_WORKSPACE_ARCHIVE_CHANGED');
-      const block=buffer.subarray(0,count.bytesRead);hash.update(block);
-      let written=0;while(written<block.length){
-        const part=await outputHandle.write(block,written,block.length-written,position+written);
-        if(!part.bytesWritten)throw fault('SEATABLE_WORKSPACE_OUTPUT_WRITE_FAILED');
-        written+=part.bytesWritten;
-      }
-      position+=block.length;
-    }
-    const after=await source.stat();
-    if(after.size!==before.size||after.mtimeMs!==before.mtimeMs||after.ctimeMs!==before.ctimeMs||
-        after.dev!==before.dev||after.ino!==before.ino||hash.digest('hex')!==descriptor.sha256)
-      throw fault('SEATABLE_WORKSPACE_ARCHIVE_CHANGED');
-    await outputHandle.sync();await outputHandle.close();outputHandle=null;
-    try{await link(temporary,file);}
-    catch(issue){if(issue.code!=='EEXIST')throw issue;if(!await exactOutput())throw issue;}
-    await unlink(temporary);await syncDirectory(dirname(file));
-    return result;
-  } catch(issue) { primary=issue;throw issue; } finally {
-    const issues=[];
-    try{await outputHandle?.close();}catch(issue){issues.push(issue);}
-    try{await source?.close();}catch(issue){issues.push(issue);}
-    try{await unlink(temporary);}catch(issue){if(issue.code!=='ENOENT')issues.push(issue);}
-    if(issues.length && !primary)throw issues[0];
-  }
-}
-
 
 async function returnedChoicesFile(file) {
   const value=await readJson(file,1024*1024);
