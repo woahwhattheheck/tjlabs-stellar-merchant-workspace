@@ -1,4 +1,5 @@
 import { TaskDeskClient } from '/client.mjs';
+import { mountCustomerDelivery } from '/assets/customer-delivery.mjs';
 
 const client = new TaskDeskClient(location.origin);
 const $ = (selector) => document.querySelector(selector);
@@ -576,10 +577,14 @@ function renderTask() {
     (state.taskError ? errorPanel('The latest task refresh failed.',state.taskError) : '') +
     '<div id="task-progress-strip">' + progressStrip() + '</div>' +
     '<div class="tabs" role="tablist" aria-label="Task views">' +
-    [['requests','Requests & review'],['operations','Operation progress'],['packet','Response packet'],['versions','Compare editions'],['details','Task details']].map(([key,label]) => '<button id="task-tab-' + key + '" class="tab-button" type="button" role="tab" tabindex="' + (state.activeTab === key ? '0' : '-1') + '" aria-selected="' + (state.activeTab === key) + '" aria-controls="task-tab-panel" data-action="tab" data-tab="' + key + '">' + label + '</button>').join('') +
+    [['requests','Requests & review'],['operations','Operation progress'],['packet','Response packet'],['customer','Customer delivery'],['versions','Compare editions'],['details','Task details']].map(([key,label]) => '<button id="task-tab-' + key + '" class="tab-button" type="button" role="tab" tabindex="' + (state.activeTab === key ? '0' : '-1') + '" aria-selected="' + (state.activeTab === key) + '" aria-controls="task-tab-panel" data-action="tab" data-tab="' + key + '">' + label + '</button>').join('') +
     '</div><div id="task-tab-panel" role="tabpanel" aria-labelledby="task-tab-' + state.activeTab + '">' + taskTabMarkup() + '</div>';
+  if (state.activeTab === 'customer') mountCustomerDelivery(document.getElementById('customer-delivery-view'), {
+    client, taskId: state.taskId, detail: state.detail, status: state.status,
+  });
 }
 function taskTabMarkup() {
+  if (state.activeTab === 'customer') return '<div id="customer-delivery-view"></div>';
   if (state.activeTab === 'operations') return operationsMarkup();
   if (state.activeTab === 'packet') return packetMarkup();
   if (state.activeTab === 'versions') return versionsMarkup();
@@ -1096,7 +1101,7 @@ main.addEventListener('submit',(event) => {
 });
 main.addEventListener('keydown',(event) => {
   if (event.target.getAttribute('role') !== 'tab' || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
-  const keys = ['requests','operations','packet','versions','details'];
+  const keys = ['requests','operations','packet','customer','versions','details'];
   const position = keys.indexOf(state.activeTab);
   state.activeTab = event.key === 'Home' ? keys[0] : event.key === 'End' ? keys.at(-1) : keys[(position + (event.key === 'ArrowRight' ? 1 : -1) + keys.length) % keys.length];
   event.preventDefault(); renderTask(); main.querySelector('[role="tab"][aria-selected="true"]')?.focus();

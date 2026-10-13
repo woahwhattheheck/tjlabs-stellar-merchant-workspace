@@ -524,3 +524,72 @@ The client preserves the native response shapes. The status response includes th
 HTTP errors have the form `{ error: { code, message, details?, nativeResult? } }`. A successful command acceptance includes its retained operation. Read the native result and error fields to follow the original work through receiving.
 
 `locations` records `{ taskDirectory, outputDirectory, retained, mode, receiveAllowed }`. Its mode is `desk`, `original-receiving`, or `delivered-packet`. Status roots include `existingTask` and `existingOutput` when an original pair is selected, and `commerce` when the original RPC session is configured. These fields preserve the actual operating paths while the API continues to use its stable task ID.
+
+
+## Prepare a complete customer delivery from this task
+
+Select **Customer delivery** in an opened saved task. Launch with an additional separate private store:
+
+~~~sh
+starforge buyer-task-desk \
+  --runtime /absolute/original/sf88-operator-buyer-cli \
+  --state /absolute/private/buyer-state \
+  --inbox /absolute/original/inbox \
+  --tasks /absolute/private/buyer-state/tasks \
+  --outputs /absolute/private/complete-results \
+  --delivery /absolute/private/customer-deliveries
+~~~
+
+The same option is supported by the standalone `starforge-task-desk` command and `node node/agents/task-desk/cli.mjs` from the original SF88 runtime root. In **Applications → Inbox tasks**, select **Reviewed customer deliveries**. Applications reviews this original directory, reserves it for the managed desk, and checks the announced directory against the live listener. Keep it when restarting or restoring the desk.
+
+A complete delivered packet selected through `--existing-task` / `--existing-output` can also be prepared for customer delivery. The original task hash binds the selection. Preparing a package reads the saved task packet; it does not start another task receiving or issue a paid request.
+
+1. **Open the original packet.** The tab verifies the complete selected packet through the existing customer delivery reader. Each row preserves its task role, intent, original native outcome, later recovered read if selected, and full response size/hash. Choose the exact intents to deliver.
+2. **Name the delivery.** Enter a stable delivery ID, customer title and note. This ID is the native operation identity. A changed source edition or changed selection needs a new delivery ID; reopening an existing ID continues its original reviewed request.
+3. **Select the complete executing source.** Enter the absolute source root that contains the running native delivery module and the full selected application, with its LICENSE. Enter a manifest filename in an existing private directory outside that source. Private Inbox, task, response and delivery stores must stay outside the source root. **Create full source manifest** uses the existing native inventory and retains the complete file list/hash. Repeating the action accepts exact bytes; a changed source needs a new manifest filename.
+4. **Preview and review.** Preview verifies the full source census and every selected response. Review the original outcomes, separate recovered read, source file count, byte count and preview hash. The expandable complete review includes the exact native request.
+5. **Prepare once.** The browser retains that complete request before submitting it. Native preparation retains the same delivery ID, request and preview before assembling the full responses, source, review and package.
+6. **Open and download.** History is read from the original delivery store and filtered to this task hash. Opening verifies the complete native package. Download streams its full `application/x-ndjson` bytes directly to the browser; package size, SHA-256 and manifest SHA remain visible in the record.
+
+### Continue the original delivery
+
+Closing the browser or losing a POST response does not cancel preparation. Use **Open original delivery** first. If it is complete, download that same package. If it is preparing, choose **Continue original preparation once** with the retained request. No automatic mutation retry runs.
+
+If the desk restarts on another port or browser storage is unavailable, **This task’s delivery history** still discovers the native intent. Open its `PREPARING` record, then select **Continue this saved preparation** to retain and review that exact request before continuing it. The original complete source and response paths must remain available for an unfinished preparation. Completed deliveries reopen through their saved package bytes.
+
+A request saved only in this browser, before the server retained any native intent, can be released after the desk confirms that its original delivery ID is absent. An already retained native intent keeps its original selection. If another reviewed request already owns that ID, **Keep original review and choose a new delivery ID** atomically retains this browser’s original review in its earlier-review history, clears only its active pointer and proposes a fresh ID. A new preview is required before preparation. The existing native delivery stays available in its original history. Other task deliveries in the same store remain separate.
+
+### Typed client
+
+~~~js
+const selected = await desk.inspectCustomerTask(taskId);
+const preview = await desk.previewCustomerDelivery(taskId, {
+  id: "customer-task-edition-1",
+  title: "Reviewed task results",
+  note: "Selected complete responses and the application used to prepare them.",
+  intentIds: selected.intents.map(item => item.intentId),
+  sourceRoot: "/absolute/complete-installed-application",
+  sourceManifest: "/absolute/private/source-manifests/edition-1.json",
+});
+const command = {
+  request: preview.request,
+  expectedPreviewSha256: preview.previewSha256,
+};
+// Retain command in the caller's durable store before the following POST.
+const delivery = await desk.prepareCustomerDelivery(taskId, command);
+console.log(delivery.state, delivery.package);
+~~~
+
+`prepareCustomerDelivery` sends once. A transport error preserves `requestId` equal to the original delivery ID. Reconcile with `getCustomerDelivery(taskId, command.request.id)`, then explicitly continue the same command when required. `downloadCustomerDelivery` returns a streaming `Response`; browser downloads use same-origin attachment navigation. `createCustomerSourceManifest({sourceRoot,destination})` exposes the same explicit source-inventory action.
+
+| Method and route | Input | Original returned material |
+| --- | --- | --- |
+| `GET /api/tasks/:id/customer-deliveries/inspect-task` | Saved task | Native task identity and complete response selections. |
+| `GET /api/tasks/:id/customer-deliveries` | Saved task | Same-task `deliveries` and discovery `issues`. |
+| `POST /api/customer-delivery/source-manifest` | `{sourceRoot,destination}` | Complete native source inventory and SHA-256. |
+| `POST /api/tasks/:id/customer-deliveries/preview` | `{id,title,note,intentIds,sourceRoot,sourceManifest}` | Complete native preview, exact request and `previewSha256`. |
+| `POST /api/tasks/:id/customer-deliveries/prepare` | `{request,expectedPreviewSha256}` | Native `PREPARING` or `COMPLETE` delivery record. |
+| `GET /api/tasks/:id/customer-deliveries/named/:deliveryId` | Original delivery ID | Reopened original record with complete package verification. |
+| `GET /api/tasks/:id/customer-deliveries/named/:deliveryId/download` | Original delivery ID | Full native NDJSON attachment, byte count and `X-Content-SHA256`. |
+
+The original recipient workflow, independent receiving, offline review and source use are documented in `collections/delivery/OPERATOR.md`. This desk produces that same native customer package and preserves its original outcome and recovery semantics.

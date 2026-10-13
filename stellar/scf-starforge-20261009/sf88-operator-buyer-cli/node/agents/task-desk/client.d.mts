@@ -46,7 +46,7 @@ export interface TaskDeskStatus {
   instanceId: string;
   csrfToken: string;
   roots: { tasks: string; outputs: string; inbox: string;
-    existingTask?: string; existingOutput?: string; commerce?: string };
+    existingTask?: string; existingOutput?: string; commerce?: string; customerDelivery?: string };
   runningOperations: number;
   [key: string]: unknown;
 }
@@ -157,6 +157,57 @@ export interface TaskDeskWaitOptions extends TaskDeskRequestOptions {
   timeoutMs?: number;
 }
 
+
+export interface TaskDeskCustomerTaskIdentity {
+  taskSha256: string; planSha256: string; system: string; id: string; revision: string;
+}
+export interface TaskDeskCustomerInspection {
+  schema: string;
+  task: TaskDeskCustomerTaskIdentity;
+  intents: { intentId: string; role: string; jobId: string; nativeState: string;
+    originalStatus: string | null; recoveredReadId: string | null; bytes: number; sha256: string }[];
+}
+export interface TaskDeskCustomerSelection {
+  id: string; title: string; note: string; intentIds: string[];
+  /** Complete source containing the executing native delivery reader; excludes private state. */
+  sourceRoot: string;
+  /** Original full source census stored outside sourceRoot. */
+  sourceManifest: string;
+}
+export interface TaskDeskCustomerRequest extends TaskDeskCustomerSelection {
+  kind: "inbox-task"; packetDirectory: string; expectedTaskSha256: string;
+}
+export interface TaskDeskCustomerPreview {
+  schema: string; request: TaskDeskCustomerRequest; task: TaskDeskCustomerTaskIdentity;
+  capture: { sha256: string; bytes: number; capturedAt: string };
+  /** Original native outcome and any later recovered read stay separate in each row. */
+  jobs: Record<string, unknown>[];
+  packetFiles: { name: string; bytes: number; sha256: string }[];
+  source: { sha256: string; files: number; bytes: number };
+  previewSha256: string;
+}
+export interface TaskDeskCustomerPrepare {
+  request: TaskDeskCustomerRequest; expectedPreviewSha256: string;
+}
+export interface TaskDeskCustomerPackage {
+  filename: string; mediaType: "application/x-ndjson"; bytes: number; sha256: string; manifestSha256: string;
+}
+export interface TaskDeskCustomerDelivery {
+  schema: string; id: string; state: "PREPARING" | "COMPLETE";
+  request: TaskDeskCustomerRequest; previewSha256: string;
+  package?: TaskDeskCustomerPackage; manifest?: Record<string, unknown>;
+}
+export interface TaskDeskCustomerHistory {
+  deliveries: { id: string; title: string; createdAt: string; state: "PREPARING" | "COMPLETE";
+    outputsComplete: boolean; package: TaskDeskCustomerPackage | null; taskSha256: string }[];
+  issues: { id: string; code: string; message: string }[];
+}
+export interface TaskDeskCustomerSourceManifest {
+  schema: "stellar-forge.sf88.customer-delivery-source.v1";
+  files: { path: string; bytes: number; sha256: string }[];
+  bytes: number; sha256: string;
+}
+
 /**
  * Original InboxTask desk transport. Every mutation is sent once.
  * Retained native result/error fields remain available even after HTTP success.
@@ -202,6 +253,14 @@ export class TaskDeskClient {
   downloadIntentResponse(taskId: string, intentId: string, options?: TaskDeskRequestOptions): Promise<Response>;
   /** Streaming complete packet TAR; caller consumes Response.body. */
   downloadPacketArchive(taskId: string, options?: TaskDeskRequestOptions): Promise<Response>;
+  inspectCustomerTask(taskId: string, options?: TaskDeskRequestOptions): Promise<TaskDeskCustomerInspection>;
+  listCustomerDeliveries(taskId: string, options?: TaskDeskRequestOptions): Promise<TaskDeskCustomerHistory>;
+  previewCustomerDelivery(taskId: string, input: TaskDeskCustomerSelection, options?: TaskDeskRequestOptions): Promise<TaskDeskCustomerPreview>;
+  /** Same original delivery ID and exact preview request on continuation; no implicit retry. */
+  prepareCustomerDelivery(taskId: string, input: TaskDeskCustomerPrepare, options?: TaskDeskRequestOptions): Promise<TaskDeskCustomerDelivery>;
+  getCustomerDelivery(taskId: string, deliveryId: string, options?: TaskDeskRequestOptions): Promise<TaskDeskCustomerDelivery>;
+  downloadCustomerDelivery(taskId: string, deliveryId: string, options?: TaskDeskRequestOptions): Promise<Response>;
+  createCustomerSourceManifest(input: { sourceRoot: string; destination: string }, options?: TaskDeskRequestOptions): Promise<TaskDeskCustomerSourceManifest>;
   /**
    * Resolves at succeeded, failed or interrupted, retaining the original result/error.
    * Timeout and abort cancel only this polling wait, never native work.
