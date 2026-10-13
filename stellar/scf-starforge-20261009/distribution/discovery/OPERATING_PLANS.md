@@ -47,6 +47,72 @@ Each editor session saves its own draft. When another tab advances the saved pla
 Readable handovers use saved revisions; save the current work first when it belongs in the handover. The HTML export is a standalone printable document with a monochrome layout and escaped customer text. Complete JSON is the editable transfer format.
 
 
+## Review current work across saved procedures
+
+Open **Work desk** in the existing Operating Plans page to see current saved work across the browser's plan library. Set the **As of** calendar date explicitly; its first default is the browser's local calendar day. The displayed date remains fixed until you change it. A due date before that day is overdue, the same day is due today, a later date is future work, and an empty due date is undated. A missing date never becomes an overdue date.
+
+The desk uses each plan's latest saved revision. It shows the exact plan ID, revision, step identity and position beside the customer, reporting period, status and effective owner. A nonempty step owner takes precedence; otherwise the plan owner supplies the assignment. The assignment filter separates unassigned work. The initial status filter is unfinished: planned or in progress. You can select all statuses or one original status, including completed and skipped.
+
+Owner and customer filters match their text without case sensitivity. Search covers saved titles, instructions, inputs, expected and recorded results, original command arguments, file names and file notes. It does not search encoded file contents. The due-date and status filters apply together. Editing a filter retains that raw choice, but the displayed selection continues to use the last applied filters until **Apply selection** succeeds. The notice beside the controls makes an unapplied change visible.
+
+The desk orders work by overdue, today, future and undated, then due date, original plan ID and original step position. Its browser view has forty rows per page. Counts and both exports include every matching row, regardless of the displayed page. Expand a row to read its full instructions, inputs, expected result, recorded result, original arguments, registration and complete saved files.
+
+### Continue in the original editor
+
+**Open original step** first retains the current unfinished editor draft. It then requires the selected plan's complete saved source to match the work selection, including all historical revisions and file contents. If another window has changed that source, refresh the desk before opening it. The desk does not overwrite the newer source.
+
+The selected step opens in its original Operating Plans editor. A retained unfinished draft remains a draft; its content is never silently substituted for the saved work summary. If that draft has a different base revision or no longer contains the selected step, the editor explains the difference and leaves its existing recovery controls available. Save revision continues to use the original plan's revision comparison and IndexedDB transaction.
+
+Use **Refresh saved source** to reread current saved plans while retaining your working draft and last applied selection. The desk also updates its saved-library projection when the existing plan library changes through a local save or receive. It does not schedule work, execute a registered command or alter a status merely because a date has passed.
+
+### Carry the complete selected work to another operator
+
+**Complete selection JSON** creates a portable work selection containing the applied filters and the complete original parent plans for every matching row. Each included parent retains all its saved revisions, steps, original arguments, registrations, notes and complete files. Plans with no matching rows are excluded. Within an included plan, earlier or currently unmatched steps remain present as part of its complete history.
+
+The JSON file has the schema `stellar-forge.operating-work-selection.v1`. Its exact pretty-printed UTF-8 representation, including its final newline, must fit within 32 MiB. The export checks those actual bytes before offering the file, and receiving enforces the same capacity. If a selection is too large, choose a narrower complete set of parent plans, or deliver those plans individually through their original whole-plan exports.
+
+**Readable HTML with files** creates a standalone readable handover. It shows every matching current step with its complete saved instructions, results and original current file downloads. The same whole editable JSON selection is embedded as a download, so the recipient can reopen all original history and retained files. The visible matching rows are a view of that complete source. Downloading the embedded JSON does not reconstruct plans from the visible table.
+
+**Open complete selection** opens that frozen file as a separate desk source. Its filename and source-plan count are shown above the results. It leaves the saved browser library unchanged. You may change filters within the full parent plans that arrived in the file; an excluded parent cannot appear because it was never part of that selection. **Use saved library** switches back explicitly.
+
+Each opened source plan has **Receive source plan**. That action uses the existing complete-history receiver. Matching later history can advance the local plan; matching older history preserves the current later revision. Origin or history conflicts retain the full incoming plan and expose the original keep-as-copy controls. A frozen selection cannot overwrite a divergent local plan by opening a row.
+
+### Recover the desk and incomplete filter choices
+
+The browser retains the raw filter fields, last applied filters, selected page and desk visibility. It also attempts to retain the complete opened selection. That source is bound to the particular stored selection identity, so an earlier file cannot be mistaken for a newly opened file if storage failed.
+
+If local storage is unavailable or full, the visible warning tells you that the open selection and new choices currently depend on this page. Complete JSON and HTML downloads remain available. Keep a complete file before closing. On reopening, a missing or mismatched stored selection returns explicitly to the saved library with a warning; the interface never labels that library as the missing file.
+
+The ordinary saved plan database, working drafts and recovery copies keep their existing storage and receiving behavior. Desk filters are a view over those records.
+
+### Terminal and typed interfaces
+
+Create the same complete work selection from named whole-plan files:
+
+```sh
+starforge discover plan work \
+  --plan customer-a.json --plan customer-b.json \
+  --as-of 2026-10-13 --owner "Operations" \
+  --status unfinished --due overdue \
+  --out overdue-work.json
+
+starforge discover plan work-show \
+  --file overdue-work.json --format html \
+  --out overdue-work.html
+```
+
+Repeat `--plan` for each source. `--as-of` is required. Optional `--owner`, `--customer` and `--search` are text filters. Status is `unfinished`, `all`, `planned`, `in-progress`, `completed` or `skipped`; due is `all`, `overdue`, `today`, `future` or `undated`; assignment is `all`, `assigned` or `unassigned`. A repeated plan identity is rejected so two different histories cannot be silently collapsed into one source.
+
+Both commands output complete JSON by default and support `--format html`. `work-show` preserves the file's saved selection. With `--out`, the existing export writer requires a new destination and preserves existing files. Without it, the complete result is written to standard output.
+
+The existing `operating-plan.mjs` and declaration file export `projectOperatingWork`, `createOperatingWorkSelection`, `inspectOperatingWorkSelection`, `serializeOperatingWorkSelection` and `renderOperatingWorkHTML`. The projection returns source identities, complete matching row metadata and counts; the portable selection retains the full parent histories. Neither API mutates a plan or creates a separate task authority.
+
+### Inspect the exact outgoing work desk
+
+Before customer-ready delivery, run the exact selected application and look at its actual rendered desktop and narrow screens. Operate the calendar, filters, paging, populated and empty selections, file-open errors, retained unfinished filters and source switches. Open a selected step with a retained dirty draft, then exercise the original revision-conflict behavior after a second window changes the saved source.
+
+Download the complete JSON and HTML, reopen the JSON in an independent receiving profile, open the standalone HTML and download its embedded JSON and an original binary file. Compare their complete contents to the selected source, and visually inspect the readable handover and applicable document or report pages. Open usable project or ZIP contents when those are the delivered files. Repair clipped text, inaccessible controls or unreadable output before final delivery. Source checks and unviewed screenshots do not replace this actual customer course.
+
 ## Prepare the next operating cycle
 
 Use **Prepare next cycle** when a saved customer procedure should run for a new period. Select the exact saved source revision, enter the next title and period, and review the complete preparation before creating it. The new plan receives an independent identity and one new saved revision after the complete unchanged original history. Its origin records the selected original plan and revision. Choosing an older source revision retains all the later original revisions as history too.

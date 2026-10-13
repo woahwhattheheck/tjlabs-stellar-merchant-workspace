@@ -16,7 +16,7 @@
   <a class="skip" href="#plan-editor">Skip to operating plan</a>
   <header class="topbar">
     <div><p class="eyebrow">STELLAR FORGE</p><h1>Operating plans</h1></div>
-    <nav class="actions" aria-label="Workspace"><a class="button" href="/">Command finder</a><a class="button" href="/operating-plan-return.html">Returned procedures</a><button id="refresh-catalog" type="button">Refresh source</button><button id="export-catalog" type="button">Toolkit catalog JSON</button><button id="show-support-procedure" type="button">Support procedure</button><button id="show-fred-procedure" type="button">Economic procedure</button><button id="show-grant-tracker" type="button">Grant tracker</button></nav>
+    <nav class="actions" aria-label="Workspace"><a class="button" href="/">Command finder</a><a class="button" href="/operating-plan-return.html">Returned procedures</a><button id="show-work-desk" type="button">Work desk</button><button id="refresh-catalog" type="button">Refresh source</button><button id="export-catalog" type="button">Toolkit catalog JSON</button><button id="show-support-procedure" type="button">Support procedure</button><button id="show-fred-procedure" type="button">Economic procedure</button><button id="show-grant-tracker" type="button">Grant tracker</button></nav>
   </header>
   <main>
     <p class="intro">Prepare a customer procedure, keep its selected commands, and record the work as it progresses.</p>
@@ -26,6 +26,39 @@
     <section id="support-procedure" aria-label="Support operating procedure"></section>
     <section id="fred-procedure" aria-label="Economic data operating procedure"></section>
     <section id="grant-tracker-panel" aria-label="Source-backed grant tracker"></section>
+
+    <details id="work-desk" class="panel work-desk">
+      <summary>Work desk — find saved steps across operating plans</summary>
+      <p id="work-scope" class="hint">Opening the saved work library…</p>
+      <p>Choose the calendar date for this selection. Step owners take precedence; a blank step owner uses its plan owner. Undated steps stay separate from overdue work.</p>
+      <fieldset id="work-controls" disabled>
+        <legend>Work selection</legend>
+        <form id="work-form" class="work-filters">
+          <div><label for="work-asOf">As-of calendar date</label><input id="work-asOf" type="date" required></div>
+          <div><label for="work-owner">Owner contains</label><input id="work-owner" maxlength="1000"></div>
+          <div><label for="work-customer">Customer contains</label><input id="work-customer" maxlength="1000"></div>
+          <div><label for="work-search">Saved work contains</label><input id="work-search" type="search" maxlength="1000"></div>
+          <div><label for="work-status">Recorded status</label><select id="work-status"><option value="unfinished">Unfinished</option><option value="all">All</option><option value="planned">Planned</option><option value="in-progress">In progress</option><option value="completed">Completed</option><option value="skipped">Skipped</option></select></div>
+          <div><label for="work-due">Due date</label><select id="work-due"><option value="all">All dates</option><option value="overdue">Before selected date</option><option value="today">On selected date</option><option value="future">After selected date</option><option value="undated">Undated</option></select></div>
+          <div><label for="work-assignment">Assignment</label><select id="work-assignment"><option value="all">All owners</option><option value="assigned">Assigned</option><option value="unassigned">Unassigned</option></select></div>
+          <button type="submit">Apply selection</button>
+        </form>
+        <p id="work-unapplied" class="hint" hidden>These filters have not been applied. The results and downloads still use the last explicitly applied selection.</p>
+        <div class="actions">
+          <button id="work-refresh" type="button">Refresh saved source</button>
+          <button id="work-library" type="button">Use saved library</button>
+          <button id="work-open-file" type="button">Open complete selection</button>
+          <button id="work-export-json" type="button">Complete selection JSON</button>
+          <button id="work-export-html" type="button">Readable HTML with files</button>
+        </div>
+        <input id="work-file" type="file" accept=".json,application/json" hidden>
+        <p id="work-storage" class="hint" role="status"></p>
+        <p id="work-summary" role="status" aria-live="polite"></p>
+        <div id="work-rows" class="work-rows"></div>
+        <div class="actions work-pagination"><button id="work-previous" type="button">Previous work</button><span id="work-page" class="hint"></span><button id="work-next" type="button">Next work</button></div>
+      </fieldset>
+    </details>
+
     <div class="plan-layout">
       <section class="plan-shelf panel" aria-label="Saved operating plans">
         <h2>Saved plans</h2>

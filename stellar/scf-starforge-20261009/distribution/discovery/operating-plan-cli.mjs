@@ -8,11 +8,14 @@ import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapsho
   operatingPlanDraft, operatingPlanRevision, saveOperatingPlanRevision,
   createOperatingFile, addOperatingFile, removeOperatingFile, operatingFileBytes, operatingFileSummary, OPERATING_FILE_MAX_BYTES, addOperatingStep, compareOperatingPlan,
   summarizeOperatingPlan, receiveOperatingPlan, forkOperatingPlan, previewOperatingPlanCycle, createOperatingPlanCycle,
-  renderOperatingPlanMarkdown, renderOperatingPlanHTML } from './operating-plan.mjs';
+  renderOperatingPlanMarkdown, renderOperatingPlanHTML,
+  createOperatingWorkSelection, inspectOperatingWorkSelection, serializeOperatingWorkSelection, renderOperatingWorkHTML } from './operating-plan.mjs';
 
 export const OPERATING_PLAN_HELP = [
   'Customer operating plans',
   '',
+  'starforge discover plan work --plan PLAN.json [--plan PLAN.json ...] --as-of YYYY-MM-DD [--owner TEXT] [--customer TEXT] [--search TEXT] [--status unfinished|all|planned|in-progress|completed|skipped] [--due all|overdue|today|future|undated] [--assignment all|assigned|unassigned] [--format json|html] [--out NEW]',
+  'starforge discover plan work-show --file SELECTION.json [--format json|html] [--out NEW]',
   'starforge discover plan catalog [--source-root DIRECTORY] [--selection PRODUCT] [--out NEW.json]',
   'starforge discover plan create --title TITLE --out NEW.json [--step command:NAME ...]',
   'starforge discover plan show --file PLAN.json [--revision N] [--format json|markdown|html] [--out NEW]',
@@ -37,9 +40,11 @@ export const OPERATING_PLAN_HELP = [
   'Create, edit, add, receive, copy, cycle, attach, extract and remove-file require a new output filename. Existing files are preserved.',
   'The browser is available at /operating-plan.html when starforge discover serve is running.',
 ].join('\n');
-const ACTIONS = ['catalog', 'create', 'show', 'draft', 'edit', 'add', 'compare', 'receive', 'copy', 'cycle', 'cycle-preview', 'attach', 'files', 'extract', 'remove-file'];
+const ACTIONS = ['work', 'work-show', 'catalog', 'create', 'show', 'draft', 'edit', 'add', 'compare', 'receive', 'copy', 'cycle', 'cycle-preview', 'attach', 'files', 'extract', 'remove-file'];
 const COMMON = ['file', 'out'];
 const FLAGS = {
+  work: ['plan', 'as-of', 'owner', 'customer', 'search', 'status', 'due', 'assignment', 'format', 'out'],
+  'work-show': [...COMMON, 'format'],
   catalog: ['source-root', 'selection', 'out'],
   create: ['id', 'title', 'customer', 'purpose', 'period', 'owner', 'receiving', 'notes', 'step', 'source-root', 'selection', 'out'],
   show: [...COMMON, 'revision', 'format'],
@@ -61,7 +66,7 @@ export function parseOperatingPlanArguments(args) {
   if (!words.length || words.includes('--help') || words.includes('-h')) return { action: 'help', options: {} };
   const action = words.shift();
   if (!ACTIONS.includes(action)) throw new TypeError('Unknown operating-plan action: ' + action);
-  const options = {}, steps = [], attachments = [];
+  const options = {}, steps = [], attachments = [], plans = [];
   while (words.length) {
     const flag = words.shift();
     if (!flag.startsWith('--') || !FLAGS[action].includes(flag.slice(2)))
@@ -69,18 +74,22 @@ export function parseOperatingPlanArguments(args) {
     const key = flag.slice(2);
     if (!words.length || words[0].startsWith('--')) throw new TypeError('A value is required for ' + flag);
     const value = words.shift();
-    if (key === 'step') steps.push(value);
+    if (key === 'plan') plans.push(value);
+    else if (key === 'step') steps.push(value);
     else if (key === 'attachment') attachments.push(value);
     else {
       if (Object.hasOwn(options, key)) throw new TypeError('Repeated option: ' + flag);
       options[key] = value;
     }
   }
+  if (plans.length) options.plans = plans;
   if (steps.length) options.steps = steps;
   if (attachments.length) options.attachments = attachments;
-  if (!['create', 'catalog'].includes(action) && !options.file) throw new TypeError('--file is required.');
+  if (!['create', 'catalog', 'work'].includes(action) && !options.file) throw new TypeError('--file is required.');
   if (['create', 'edit', 'add', 'receive', 'copy', 'cycle', 'attach', 'extract', 'remove-file'].includes(action) && !options.out)
     throw new TypeError('--out must name a new output file.');
+  if (action === 'work' && (!plans.length || !options['as-of'])) throw new TypeError('--plan and an explicit --as-of date are required.');
+  if (['work', 'work-show'].includes(action) && options.format && !['json', 'html'].includes(options.format)) throw new TypeError('Work selections use complete json or html.');
   if (action === 'create' && !options.title) throw new TypeError('--title is required.');
   if (['cycle', 'cycle-preview'].includes(action) && (!options.title || !options.period))
     throw new TypeError('--title and --period are required for a new cycle.');
@@ -114,10 +123,19 @@ async function currentCatalog(options) {
 export async function mainOperatingPlan(args = process.argv.slice(2), { log = console.log } = {}) {
   const { action, options } = parseOperatingPlanArguments(args);
   if (action === 'help') { log(OPERATING_PLAN_HELP); return; }
-  const original = options.file ? inspectOperatingPlan(await readJSON(options.file)) : null;
+  const original = options.file && action !== 'work-show' ? inspectOperatingPlan(await readJSON(options.file)) : null;
   const reportOptions = { revision: options.revision };
   let value, plainText = null;
-  if (action === 'catalog') value = await currentCatalog(options);
+  if (action === 'work' || action === 'work-show') {
+    if (action === 'work') {
+      const plans = [];
+      for (const path of options.plans) plans.push(inspectOperatingPlan(await readJSON(path)));
+      value = createOperatingWorkSelection(plans, { asOf: options['as-of'], owner: options.owner,
+        customer: options.customer, search: options.search, status: options.status,
+        due: options.due, assignment: options.assignment });
+    } else value = inspectOperatingWorkSelection(await readJSON(options.file));
+    plainText = options.format === 'html' ? renderOperatingWorkHTML(value) : serializeOperatingWorkSelection(value);
+  } else if (action === 'catalog') value = await currentCatalog(options);
   else if (action === 'create') {
     const source = options.steps?.length ? await currentCatalog(options) : null;
     const steps = (options.steps ?? []).map(itemId => createOperatingStep({
