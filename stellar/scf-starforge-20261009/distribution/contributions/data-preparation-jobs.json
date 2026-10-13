@@ -22,6 +22,7 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/jobs"
   ],
   "supportFiles": [
-    "products/data-preparation/COMMISSIONING.md"
+    "products/data-preparation/COMMISSIONING.md",
+    "products/data-preparation/COMMISSIONING_AGENT.md"
   ]
 }

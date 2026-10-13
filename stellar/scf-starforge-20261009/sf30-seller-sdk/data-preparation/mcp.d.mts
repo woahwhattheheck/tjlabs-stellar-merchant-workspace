@@ -1,14 +1,15 @@
+import type {PreparationJobToolArguments,PreparationJobToolResults,PipelineCommissioningReadSummary} from './jobs/merchant.mjs';
 import type {RecipeInput,Source,Recipe,Run,Review,Page,RequestOptions} from './client.mjs';
 import type {PreparationConnection,PreparationCollection,DirectoryIdentity,PreparationStatus,RecordsPage,
  NativeDeliveryRequest,DeliveryRecord,ReceivedPreparation,PipelineDeliveryRequest,PipelineStatus,ManagedReceivedPipeline} from './connection.mjs';
 import type {Definition,SavedDefinition,Execution,Page as PipelinePage,RowPage,Event,Comparison,ReceivedProject} from './pipelines/client.mjs';
 export const PREPARATION_MCP_CONFIGURATION_SCHEMA:'stellar-forge.data-preparation-workspaces.v1';
 export interface PreparationInput {
- label?:string;kind:'csv'|'jsonl'|'project';file:string;sha256:string;nullToken?:string;
+ label?:string;kind:'csv'|'jsonl'|'project'|'job-result';file:string;sha256:string;nullToken?:string;
 }
 export interface PreparationDestination {label?:string;directory:string}
 export interface PreparationHostConfiguration {
- schema:typeof PREPARATION_MCP_CONFIGURATION_SCHEMA;maxFileBytes?:number;maxExpandedBytes?:number;
+ schema:typeof PREPARATION_MCP_CONFIGURATION_SCHEMA;maxFileBytes?:number;maxExpandedBytes?:number;python?:string;
  workspaces:Record<string,{
   label?:string;directory:string;workspaceSha256?:string;inputs?:Record<string,PreparationInput>;
   destinations?:Record<string,PreparationDestination>;
@@ -21,7 +22,7 @@ export interface ConfiguredPreparationWorkspace {
  destinations:Record<string,PreparationDestination&{label:string}>;
 }
 export interface ReadPreparationConfiguration {
- configuration:string;sha256:string;maxFileBytes:number;maxExpandedBytes:number;
+ configuration:string;sha256:string;maxFileBytes:number;maxExpandedBytes:number;python?:string;
  workspaces:Record<string,ConfiguredPreparationWorkspace>;
 }
 export interface PreparationMerchantConfiguration {preparationWorkspaces?:ReadPreparationConfiguration;exportsDirectory:string}
@@ -36,6 +37,7 @@ export interface PreparationFileChunk {
 export interface PreparationSummary {
  configured:boolean;connected:string[];pending:number;closing:boolean;
  activeFileReads:number;pendingFileCloses:number;snapshotBytes:number;immutableFileBytes:number;
+ commissioning:PipelineCommissioningReadSummary|null;
 }
 export interface PreparationConfiguredSummary extends PreparationSummary {
  workspaces:Array<{
@@ -50,7 +52,7 @@ export type PreparationWorkspaceStatus=(
 );
 type Scoped={workspace:string};
 type PageArguments={offset?:number;limit?:number};
-export interface PreparationToolArguments {
+export interface PreparationToolArguments extends PreparationJobToolArguments {
  merchant_preparation_pipeline_status:Scoped;
  merchant_preparation_pipeline_browser:Scoped;
  merchant_preparation_pipeline_list:Scoped&PageArguments&{collection:'pipelines'|'executions'};
@@ -96,7 +98,7 @@ export interface PreparationToolArguments {
  );
  merchant_preparation_received:Scoped&{destination:string};
 }
-export interface PreparationToolResults {
+export interface PreparationToolResults extends PreparationJobToolResults {
  merchant_preparation_pipeline_status:PipelineStatus;
  merchant_preparation_pipeline_browser:PreparationConnection&{url:string};
  merchant_preparation_pipeline_list:PipelinePage<SavedDefinition|Execution>;
