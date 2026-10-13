@@ -57,8 +57,9 @@ async function browserArtifact(path,binding,produce){
 }
 async function download(page,action,path,expected,binding){
   const result=await browserArtifact(path,{...binding,action},async()=>{
-    const event=page.waitForEvent('download');await page.locator('[data-economics-action="'+action+'"]').click();
-    const file=await event,error=await file.failure();if(error)throw new Error(error);
+    const [file]=await Promise.all([page.waitForEvent('download'),
+      page.locator('[data-economics-action="'+action+'"]').click()]);
+    const error=await file.failure();if(error)throw new Error(error);
     return {bytes:await readFile(await file.path()),filename:file.suggestedFilename()};
   });
   if(expected&&(result.bytes!==expected.bytes||result.sha256!==expected.sha256))

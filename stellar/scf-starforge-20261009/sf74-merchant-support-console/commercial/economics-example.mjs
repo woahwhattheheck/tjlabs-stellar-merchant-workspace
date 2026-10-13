@@ -118,6 +118,8 @@ export async function prepareEconomicsExample({directory,port=18774}={}){
     await retain(preparedPath,prepared);
   }
   const {revision,...retainedSelection}=prepared;
+  if(typeof revision!=='string'||!/^[a-f0-9]{64}$/.test(revision))
+    throw new Error('The original prepared example must retain its exact historical case revision.');
   same(retainedSelection,{schema:SCHEMA,directory,port,casesDirectory,caseId:intent.caseId,
     quoteId:quote.id,quoteSha256:quote.sha256,createdAt:intent.createdAt,
     cliRequestId:intent.cliRequestId,receiveRequestId:intent.receiveRequestId,
