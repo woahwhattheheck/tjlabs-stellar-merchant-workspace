@@ -3,7 +3,8 @@
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { startWorkspace } from './server.mjs';
-import { readCommercialHistory } from './model.mjs';
+import { readCommercialHistory, readSavedPlanningSource } from './model.mjs';
+import { openScenarioWorkingCopies } from '../planning/working-copies.mjs';
 import { open } from 'node:fs/promises';
 import { inspectCostWorkspaceRestore, restoreCostWorkspace } from '../economics/archive.mjs';
 export { inspectCostWorkspaceRestore };
@@ -12,15 +13,36 @@ import { readJson, merchantRoutes } from '../analyze.mjs';
 export const PRICING_WORKSPACE_LAUNCH_SCHEMA = 'stellar-forge.merchant-pricing-workspace-launch.v1';
 
 export async function main(argv = process.argv.slice(2)) {
-  const usage = 'node workspace/cli.mjs --config SELLER_JSON --state PRIVATE_DIRECTORY (--snapshot ORIGINAL_TRAFFIC_JSON [--history ORIGINAL_HISTORY_JSON] | --history ORIGINAL_HISTORY_JSON | --ops-url ORIGINAL_LOOPBACK_OPERATIONS_URL) [--native-outbox PRIVATE_SF98_DIRECTORY] [--source-package ORIGINAL_API_MERCHANT_PACKAGE] [--release-store ORIGINAL_SELLER_RELEASE_STORE] [--release-runtime HOST_RUNTIME_JSON] [--supplier-usage ORIGINAL_USAGE_JSON] [--accounting-report ORIGINAL_ACCOUNTING_JSON] [--restore-cost-workspace PRIVATE_BACKUP_TAR [--expected-cost-backup-sha256 SHA256]] [--expected-config-sha256 SHA256] [--port 8457]; inspect a complete backup without opening: --inspect-cost-workspace PRIVATE_BACKUP_TAR --state PRIVATE_DIRECTORY; browse original commercial history without opening: --commercial-history reviews|decisions --state PRIVATE_DIRECTORY [--history-query REQUEST_JSON] [--output NEW_JSON]';
+  const usage = 'node workspace/cli.mjs --config SELLER_JSON --state PRIVATE_DIRECTORY (--snapshot ORIGINAL_TRAFFIC_JSON [--history ORIGINAL_HISTORY_JSON] | --history ORIGINAL_HISTORY_JSON | --ops-url ORIGINAL_LOOPBACK_OPERATIONS_URL) [--native-outbox PRIVATE_SF98_DIRECTORY] [--source-package ORIGINAL_API_MERCHANT_PACKAGE] [--release-store ORIGINAL_SELLER_RELEASE_STORE] [--release-runtime HOST_RUNTIME_JSON] [--supplier-usage ORIGINAL_USAGE_JSON] [--accounting-report ORIGINAL_ACCOUNTING_JSON] [--restore-cost-workspace PRIVATE_BACKUP_TAR [--expected-cost-backup-sha256 SHA256]] [--expected-config-sha256 SHA256] [--port 8457]; inspect a complete backup without opening: --inspect-cost-workspace PRIVATE_BACKUP_TAR --state PRIVATE_DIRECTORY; browse original commercial history without opening: --commercial-history reviews|decisions --state PRIVATE_DIRECTORY [--history-query REQUEST_JSON] [--output NEW_JSON]; retain unfinished scenarios: --scenario-working list|load|save|export|import --state PRIVATE_DIRECTORY [--working-request REQUEST_JSON] [--output NEW_JSON]';
   if (argv.length === 1 && ['--help','-h'].includes(argv[0])) { console.log(usage); return; }
   const allowed = new Set(['--config','--state','--snapshot','--history','--ops-url','--native-outbox','--port',
     '--source-package','--release-store','--release-runtime','--supplier-usage','--accounting-report','--restore-cost-workspace',
-    '--inspect-cost-workspace','--expected-cost-backup-sha256','--expected-config-sha256','--commercial-history','--history-query','--output']), args = {};
+    '--inspect-cost-workspace','--expected-cost-backup-sha256','--expected-config-sha256','--commercial-history','--history-query','--output','--scenario-working','--working-request']), args = {};
   for (let i = 0; i < argv.length; i += 2) {
     if (!allowed.has(argv[i]) || !argv[i+1] || Object.hasOwn(args,argv[i])) throw new TypeError(usage);
     args[argv[i]] = argv[i+1];
   }
+  if(args['--scenario-working']) {
+    const action=args['--scenario-working'],methods={list:'list',load:'load',save:'save',export:'exportCopy',import:'importCopy'};
+    if(!args['--state']||!Object.hasOwn(methods,action)||
+       Object.keys(args).some(key=>!['--scenario-working','--state','--working-request','--output'].includes(key))||
+       (action!=='list'&&!args['--working-request']))throw new TypeError(usage);
+    const directory=resolve(args['--state']);
+    const input=args['--working-request']?(await readJson(resolve(args['--working-request']),'scenario working request',8*1024*1024)).value:{};
+    const working=await openScenarioWorkingCopies({directory,source:async version=>{
+      const value=await readSavedPlanningSource({directory,version});
+      return {version:value.version,label:value.label,savedAt:value.savedAt,routes:value.routes,
+        commercial:value.commercial,provenance:value.provenance,observation:value.observationSummary,
+        sellerChanged:null};
+    }});
+    const result=await working[methods[action]](input),bytes=JSON.stringify(result,null,2)+'\n';
+    if(args['--output']) {
+      const file=await open(resolve(args['--output']),'wx',0o600);
+      try{await file.writeFile(bytes);await file.sync();}finally{await file.close();}
+    }else console.log(bytes.trimEnd());
+    return result;
+  }
+  if(args['--working-request'])throw new TypeError('--working-request requires --scenario-working.');
   if(args['--commercial-history']) {
     if(!args['--state']||!['reviews','decisions'].includes(args['--commercial-history'])||
         Object.keys(args).some(key=>!['--commercial-history','--state','--history-query','--output'].includes(key)))

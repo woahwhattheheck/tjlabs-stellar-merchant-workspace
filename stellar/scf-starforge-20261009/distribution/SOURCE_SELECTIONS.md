@@ -164,6 +164,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
+| `buyer-task-desk` | Original Inbox tasks, saved RPC read selections, complete responses and reviewed customer/source delivery | Inbox tasks; Runtime management; Merchant tools | [Complete installation, original-root launch and customer receiving](../sf88-operator-buyer-cli/node/agents/task-desk/INSTALLATION.md) |
 | `tind-migration` | Original OAI editions, native TIND MARCXML and file receiving, staff metadata reconciliation, complete editable migration handover | TIND scholarly migration; OAI repository workspace; Runtime management | [Complete installation and operation](../../../products/tind/OPERATING.md) |
 | `haystack-turnover` | Native building grids, source-local equipment and points, typed tag review, saved editions and complete editable turnover receiving | Haystack building turnover; Runtime management | [Complete installed operator guide](../../../products/haystack/OPERATING.md) |
 | `groundwater-reports` | Original groundwater sources, scenarios and native results, frozen report publication, buyer receiving, Operations association and complete scientific/desk handover | Groundwater scientific and Report Desk browsers; Buyer runbook; Merchant console | [Complete installation and operation](../../../products/groundwater/OPERATING.md) |

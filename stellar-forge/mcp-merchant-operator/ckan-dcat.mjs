@@ -1,4 +1,5 @@
 // MIT. Saved DCAT migration operations through the original CKAN owner.
+import { executeCkanDcatSemantic, pageDcatSemanticState } from './ckan-dcat-semantic.mjs';
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import { failure, plain } from './config.mjs';
@@ -58,6 +59,12 @@ export function pageDcatState(value, input = {}) {
     result[key] = all.slice(offset, offset + limit);
     paging[key] = { offset, limit, total: all.length,
       nextOffset: offset + result[key].length < all.length ? offset + result[key].length : null };
+  }
+  if (value.semantic !== undefined) {
+    const selected = pageDcatSemanticState(value.semantic, { limit,
+      profilesOffset: input.semanticProfilesOffset, runsOffset: input.semanticRunsOffset,
+      reviewsOffset: input.semanticReviewsOffset });
+    result.semantic = selected.semantic; paging.semantic = selected.paging;
   }
   return { dcat: result, paging };
 }
@@ -251,6 +258,7 @@ async function openRetained(model, kind, itemId) {
 /** The caller owns the original lease, native mutation guard and retained reader. */
 export async function executeCkanDcat(context, name, input) {
   const { model, workspace, launch } = context;
+  if (name.startsWith('merchant_ckan_dcat_semantic_')) return executeCkanDcatSemantic(context, name, input);
   switch (name) {
     case 'merchant_ckan_dcat_status': {
       const native = context.native(), page = pageDcatState(dcatState(native), input);

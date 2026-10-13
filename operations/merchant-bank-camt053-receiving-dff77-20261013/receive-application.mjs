@@ -13,6 +13,7 @@ import {BankStatementsWorkspace} from './store.mjs';
 import {BankStatementsClient} from './client.mjs';
 import {readBankStatementSource} from './source.mjs';
 import {json,sha} from '../core.mjs';
+import {receiveBankMcp} from './MCP_RECEIVE.mjs';
 function sourceStrKey(version,fill) {
   const bytes=Buffer.alloc(35,fill);bytes[0]=version;let crc=0;
   for(const byte of bytes.subarray(0,33)){crc^=byte<<8;for(let i=0;i<8;i++)crc=((crc<<1)^(crc&0x8000?0x1021:0))&65535;}
@@ -39,7 +40,7 @@ const inputRoot=resolve(process.argv[2]),out=resolve(process.argv[3]);
 await mkdir(out,{recursive:true,mode:0o700});
 const inputs=JSON.parse(await readFile(join(inputRoot,'inputs.json'),'utf8')).filter(row=>row.sourceKind.endsWith('BANK_ISSUED_EXAMPLE')||row.sourceKind==='GS_ISSUER_PUBLISHED_EXAMPLE');
 const result={schema:'stellar-forge.camt053.application-receiving.v1',operation:'SCF-BANK-CAMT053-SOURCE-DFF77-20261013',
- sourceCommit:'f912a1ece05abcfeaa83882dfb86db719fd745da',startedAt:new Date().toISOString(),completed:false,node:process.version,files:[],assets:[],coldReopen:[]};
+ sourceCommit:'02175e3f0ee1e6ae4605c0b960790f6dd6e10e77',startedAt:new Date().toISOString(),completed:false,node:process.version,files:[],assets:[],coldReopen:[]};
 const save=async(name,value)=>{const target=join(out,name);await mkdir(resolve(target,'..'),{recursive:true,mode:0o700});await writeFile(target,Buffer.isBuffer(value)?value:typeof value==='string'?value:json(value),{mode:0o600});};
 const actor='Original issued CAMT application receiving';
 const serial=value=>JSON.parse(JSON.stringify(value));
@@ -52,7 +53,7 @@ await writeFile(termsFile,json({schema:'stellar-forge.merchant-accounting-terms.
 let workspace,running,client;
 const received=[],closePlans=[],retainedCloses=[];
 const operatorReview=JSON.parse(await readFile(join(inputRoot,'SAMPLE_OPERATOR_REVIEW.json'),'utf8'));
-result.edition='NORDEA_GS_BUNDESBANK_COLLECTIONS_20261013';result.closes=[];result.coldCloses=[];
+result.edition='NORDEA_GS_BUNDESBANK_PROFILES_ACCOUNT_MCP_20261013';result.closes=[];result.coldCloses=[];
 try{
  workspace=await openAccountingWorkspace({directory,outboxDir,proofDir,termsFile});
  const r=await new ReceivablesWorkspace(workspace).init();
@@ -62,15 +63,18 @@ try{
  const initial=await client.state();
  const bound=values=>({revision:workspace.state.revision,actor,requestId:randomUUID(),workspaceId:initial.workspaceId,...values});
  result.workspace={directory,workspaceId:initial.workspaceId,sourcesSha256:initial.sourcesSha256};
- const collectionOutput=join(out,'bundesbank-delivery'),collectionReceiver=fileURLToPath(new URL('./BUNDESBANK_RECEIVE.mjs',import.meta.url));
- const collectionRun=spawnSync(process.execPath,[collectionReceiver,'--workspace-id',initial.workspaceId,'--out',collectionOutput],
+ const profileOutput=join(out,'source-interpretations'),collectionOutput=join(profileOutput,'complete-original-delivery'),collectionReceiver=fileURLToPath(new URL('./SOURCE_PROFILES_RECEIVE.mjs',import.meta.url));
+ const collectionRun=spawnSync(process.execPath,[collectionReceiver,'--workspace-id',initial.workspaceId,'--out',profileOutput],
   {encoding:'utf8',maxBuffer:8_000_000,timeout:60000});
  await save('bundesbank-collection-run.json',{status:collectionRun.status,stdout:collectionRun.stdout,stderr:collectionRun.stderr,error:collectionRun.error?.message});
  assert.equal(collectionRun.status,0,collectionRun.stderr||collectionRun.error?.message);
+ result.sourceProfiles=JSON.parse(await readFile(join(profileOutput,'RECEIVING_RESULT.json'),'utf8'));
+ assert.equal(result.sourceProfiles.completed,true);assert.equal(result.sourceProfiles.workspaceId,initial.workspaceId);
+ assert.equal(result.sourceProfiles.receivingWorkspaceId,initial.workspaceId);assert.equal(result.sourceProfiles.originalFiles,22);assert.equal(result.sourceProfiles.versions,2);
  result.sourceCollection=JSON.parse(await readFile(join(collectionOutput,'RECEIVING_RESULT.json'),'utf8'));
  assert.equal(result.sourceCollection.completed,true);assert.equal(result.sourceCollection.workspaceId,initial.workspaceId);
  assert.equal(result.sourceCollection.files,22);assert.equal(result.sourceCollection.reviewedStatements,2);assert.equal(result.sourceCollection.retainedOtherReports,20);
- for(const path of ['/bank-statements/','/bank-statements/camt.mjs','/bank-statements/source-collections.mjs','/bank-statements/source-collection-model.mjs','/bank-statements/CAMT053.md','/bank-statements/sdk/client.mjs']){
+ for(const path of ['/bank-statements/','/bank-statements/camt.mjs','/bank-statements/source-collections.mjs','/bank-statements/source-collection-model.mjs','/bank-statements/source-profile-model.mjs','/bank-statements/source-profiles.mjs','/bank-statements/SOURCE_PROFILES.md','/bank-statements/CAMT053.md','/bank-statements/sdk/client.mjs']){
   const response=await fetch(origin+path);assert.equal(response.status,200,path);
   const bytes=Buffer.from(await response.arrayBuffer());assert(bytes.length>0);result.assets.push({path,bytes:bytes.length,sha256:sha(bytes)});
  }
@@ -256,6 +260,13 @@ try{
     reopened:original.reopened,requestId:original.request.requestId});
  }
  await save('COLD_STATE.json',await cold.state());result.workspace.revision=finalRevision;
+ await workspace.close();workspace=null;
+ result.accountMcp=await receiveBankMcp({directory,inputRoot,out:join(out,'account-mcp'),received,retainedCloses,closePlans,workspaceId:initial.workspaceId});
+ assert.equal(result.accountMcp.completed,true);assert.equal(result.accountMcp.final.workspaceId,initial.workspaceId);
+ workspace=await openAccountingWorkspace({directory});
+ const completeCold=await new BankStatementsWorkspace(new ReceivablesWorkspace(workspace)).init();
+ assert.equal(workspace.state.revision,result.accountMcp.final.revision);
+ await save('COMPLETE_COLD_STATE.json',await completeCold.state());result.workspace.revision=workspace.state.revision;
  result.completed=true;result.completedAt=new Date().toISOString();await save('APPLICATION_RESULT.json',result);console.log(json(result));
 }catch(error){result.error={code:error.code,message:error.message,stack:error.stack};await save('APPLICATION_RESULT.json',result);console.error(JSON.stringify(result.error));process.exitCode=1;}
 finally{if(running)await running.close();if(workspace)await workspace.close();}

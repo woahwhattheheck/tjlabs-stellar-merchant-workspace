@@ -1,0 +1,58 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "fred-operating-procedures",
+  "heading": "## Recurring economic-report installation",
+  "sources": [
+    {
+      "id": "economic-fred-operating-browser",
+      "label": "Existing economic procedure editor and original project selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/FRED_OPERATING_BROWSER.md",
+      "commit": "633b4ca8be7c45de188903284181a1338ee1d0fd",
+      "required": true,
+      "editions": [
+        {
+          "commit": "633b4ca8be7c45de188903284181a1338ee1d0fd",
+          "git_blob": "94b9da94b3e0c1acb3251b4e275bbaedfa0cac85",
+          "bytes": 6082,
+          "sha256": "d3732aebd419bc98b69c213c22f29fd9b819a702912358e4b9bcadc3ec65da90"
+        }
+      ]
+    },
+    {
+      "id": "economic-fred-operating-native",
+      "label": "Installed FRED procedure, recorded results and complete source receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/FRED_OPERATING_PLANS_CLI.md",
+      "commit": "633b4ca8be7c45de188903284181a1338ee1d0fd",
+      "required": true,
+      "editions": [
+        {
+          "commit": "633b4ca8be7c45de188903284181a1338ee1d0fd",
+          "git_blob": "d021aac27fb28102b7940744eae4d47d86feeabe",
+          "bytes": 6772,
+          "sha256": "2ae74742a6a5878397fa83a0db73c10868e38d3cd5b18dfe789e77d558441a4a"
+        }
+      ]
+    },
+    {
+      "id": "economic-fred-operating-source",
+      "label": "Complete original economic project and publication archive handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/SOURCE.md",
+      "commit": "633b4ca8be7c45de188903284181a1338ee1d0fd",
+      "required": true,
+      "editions": [
+        {
+          "commit": "633b4ca8be7c45de188903284181a1338ee1d0fd",
+          "git_blob": "74cec3bc09149d3dd5c6f230aea5adedf71f6450",
+          "bytes": 6047,
+          "sha256": "95eb7c5f37c2447fecb4b0e56229ad3fe78cdc1df8904bbeced6715a8cfc8ceb"
+        }
+      ]
+    }
+  ]
+}
