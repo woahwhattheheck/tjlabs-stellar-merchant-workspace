@@ -1,0 +1,1475 @@
+{
+  "schema": "govhub.public-product-source.v1",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "source_edition": "fb206f16b12f1b620baa1335692119b9d43f14da",
+  "application_root": "products/govhub/application",
+  "source_files": 209,
+  "source_bytes": 5345964,
+  "files": [
+    {
+      "path": "products/govhub/application/LICENSE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "git_blob_sha1": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/README.md",
+      "bytes": 2443,
+      "sha256": "f39b86e814ef4de32f7748c0e98ef42c51b1e9c26e912a6d2820e405d0a64327",
+      "git_blob_sha1": "4a09c705a89bc19b85d3748b3cc803d4e67cb244",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/START_HERE.md",
+      "bytes": 11656,
+      "sha256": "8d51a20076b2124235d31ae1c9cb9deb87bcc6dbbf1eaf0bc91ed018a0a48045",
+      "git_blob_sha1": "81b02301488891b2798a39acf781eb2ad99855f2",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/approvals.example.csv",
+      "bytes": 300,
+      "sha256": "062708264509668c2234a9c1432e3e46570798f2d524546a7ee6474ff77b852b",
+      "git_blob_sha1": "991ef88d6461ee593767c8667a5b0f4deced04e3",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/candidate.example.csv",
+      "bytes": 845,
+      "sha256": "b4799b3f13b44b084821d2bb3d9a064f36d626c0869dffba2fea8cb026b3aa0b",
+      "git_blob_sha1": "bf1ecfcb6d7a96abca232219e2a57742103c68db",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/cutover.py",
+      "bytes": 11175,
+      "sha256": "677dabb175d47ce4655a3ea0f511bde7b58ee51ecff0a4a4333377ffca5ff3a2",
+      "git_blob_sha1": "5800656de67569524560c84bdd437634f0c7f22a",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/incumbent.example.csv",
+      "bytes": 845,
+      "sha256": "c8cd5b669f39d19722e7c59e4465938bdd725c2880caa81e38842019f2029033",
+      "git_blob_sha1": "24fdb6846740bb50eff5507cb57a35968e21ba54",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/DOMAIN.md",
+      "bytes": 17775,
+      "sha256": "24b84e7abcd6a366f99597e754e67b7bf5141fe92aeed2b67e1d1974adfcdddd",
+      "git_blob_sha1": "cda0424a29826a93f5940a0294cedf2d5f3e10dd",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/LAGOON.md",
+      "bytes": 12625,
+      "sha256": "5b33e6b46b059453e208c3e4c9caea29533de1feb7fa9c684a4812cd3ed50ef6",
+      "git_blob_sha1": "e421b470ebc6aa09b3fb62e89e9e29af61f55b1e",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/NATIVE_SOURCES.md",
+      "bytes": 28210,
+      "sha256": "c8f9433398389c8266f2ce902f7c7b0e3095c10899547260342e5e7b1ec84aed",
+      "git_blob_sha1": "9afc99b0749125bf9ca2e3e345250d2f0708cd86",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/PANTHEON.md",
+      "bytes": 19774,
+      "sha256": "fea4b1e9d992c67df2c5a85f4c41e4d1e0861db2af62c2a8ca9a6db50367584a",
+      "git_blob_sha1": "cb9bc662959a68f8148bee764404e5600c4e85de",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/PANTHEON_RECEIVING.md",
+      "bytes": 27065,
+      "sha256": "794792fd225bb6910d7162c0c243dd62032a84f2bc1004a15c4bcaceb4743891",
+      "git_blob_sha1": "c1cde6fc453782b7d751610fc59352dd62d8f26f",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/README.md",
+      "bytes": 24509,
+      "sha256": "910edf89b583845b9d2edb75b43e4a4b7ec2f0da89195b2fde81de12a90c1136",
+      "git_blob_sha1": "dbf7a003b6e6331c7792c6968b5accd0e451e967",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/SKPR.md",
+      "bytes": 20846,
+      "sha256": "1c608ac8ec892482990876dab6affd1c86587ecd7f1adce9a5e3bd373a25c3b4",
+      "git_blob_sha1": "6278e355319077c7e0bc86b56ca748d10dca32e4",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/STATIC_RELEASES.md",
+      "bytes": 16410,
+      "sha256": "66ed1f514cec4821f0fa20439f7d29c868133f51751dbef4bfbcd4dcfc948b55",
+      "git_blob_sha1": "332edb2af639d5de0d30e47160f20eaa52aa0a92",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/TUGBOAT.md",
+      "bytes": 11421,
+      "sha256": "0c9882ca1a2ba798b47d160cdd81dcebad5332d7cd423d4db7101a23009fbedf",
+      "git_blob_sha1": "fb8f0d9028f58f6d1cb049750e979b32b7120dd2",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/TUGBOAT_RECEIVING.md",
+      "bytes": 13406,
+      "sha256": "9adb7906c48d7ddaa85a5a66f7480668baa682d6e9143d4f10a5c2b47691955a",
+      "git_blob_sha1": "8615d887a70e82f581a8597bc407e770a67c9c7d",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/UPSUN.md",
+      "bytes": 12062,
+      "sha256": "85e2315628f1aee9d225740659b15852f5d7d08b5c50cb275667a0d318ed0bee",
+      "git_blob_sha1": "fde78e8d1947c9f9cad60627fa272b47d721db24",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/UPSUN_NATIVE.md",
+      "bytes": 14275,
+      "sha256": "e697c8f89755b43a596011481d55398d1e101fa5bf559387f3b98e5021257cf7",
+      "git_blob_sha1": "94fa7db52662e3c20b0206b31717c7bc6bb2e581",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/UPSUN_RECEIVING.md",
+      "bytes": 15405,
+      "sha256": "dd82dfec49971961aad948ac0907a34aaddb2bb8a5c40624c643560dbcb3303e",
+      "git_blob_sha1": "f1929345377fb9baba2cf5f5555f170bce9e9edf",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/UPSUN_SOURCE.md",
+      "bytes": 12312,
+      "sha256": "6881298eab5bde399b348689790dba4a4bbda86f7cd6be051d62a66bb288ebae",
+      "git_blob_sha1": "40152a518e4426525d240a1c3bbb22cb1a874393",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/build_application.py",
+      "bytes": 24151,
+      "sha256": "2eb23bc87fc0919b110118559e97401079021a59e265f4d08a4111c250d3f69d",
+      "git_blob_sha1": "bd76ddfe94ade6079baab9d11e5475b201625fec",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/cli.py",
+      "bytes": 8084,
+      "sha256": "cdd04f583101bee873943e3fda3c389bf6d4929b947f81af46939f6b6bbdcba8",
+      "git_blob_sha1": "fb04e529eaa1dcd101978047c20cf7c87c8f9e41",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/NATIVE_SITE.md",
+      "bytes": 12828,
+      "sha256": "7c076a9ffaeceb986c192dbb90fd05e2ba1277168a2d956c975902ed0e7c70f0",
+      "git_blob_sha1": "22c879ecde91c4c017efa4c7df0bc8acad63e32d",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/README.md",
+      "bytes": 18569,
+      "sha256": "199f183ca26345723095f36c556137b6e769ae3fd25ef9481248df6670c17a2b",
+      "git_blob_sha1": "bfe0fad6a9a063bb25b26f829f11bd1c0f8f14fe",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/RECEIVING_WORKFLOW.md",
+      "bytes": 21731,
+      "sha256": "b88e365e27912c7ac90d36891c5a4e3e38f4b7f73fab860491526a101359d7eb",
+      "git_blob_sha1": "3cf5e8d5d1581096a65cec2e84a4a4bf433f563c",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/__init__.py",
+      "bytes": 80,
+      "sha256": "ebc41568f85604f87e82b6abd603eac0b93f603cef6f5f90c27312533d81e843",
+      "git_blob_sha1": "05c7e2467eac1615af89d54a78dd62a18d368849",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/compiler.py",
+      "bytes": 20008,
+      "sha256": "942ee8e79ca9657cac0779fc93843ef5c72e945f2ca591f4ac64c794afae06a4",
+      "git_blob_sha1": "c238f3734d0bf7871bac9f3ef70344948ddefc5d",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/delivery.py",
+      "bytes": 11872,
+      "sha256": "f2e2ae6461fb9ccc162128aa62cf09d9091a1572eb97d6f1c3b84350515f8631",
+      "git_blob_sha1": "4886a943a8f7d623ade1a52fa7ebcff586059901",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/drupal/NATIVE_CONTRACT.md",
+      "bytes": 21053,
+      "sha256": "f2649c92f647202ea552b694c7a74f07287700ebfb9133c531b98c7d93e70e8f",
+      "git_blob_sha1": "f817d551a64dda616db189591b8de4f09ba96909",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/drupal/__init__.py",
+      "bytes": 82,
+      "sha256": "e6c66d52198c314b15d0f0ab8b256f71a0b14e86e86cb2e93c16dba695c47fa2",
+      "git_blob_sha1": "bae4d6ed9312eb2758f8fc51eab46bab9f3dc03c",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/drupal/adapter.py",
+      "bytes": 17957,
+      "sha256": "0efd5d1b92459c545501d7392de70a39bfd863e5c27d42b0af35121b20695ca7",
+      "git_blob_sha1": "2842d7c17b7556db9ba416628af6c60579428c6a",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/drupal/govhub_consolidation/govhub_consolidation.info.yml",
+      "bytes": 241,
+      "sha256": "a66546056a663714bbdd6b89a0a5f50bce3ea152f80fb17309543cacc6688c9a",
+      "git_blob_sha1": "e7c317cbb14b9ccb9cdb0aca9c7cde04269973af",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/drupal/govhub_consolidation/govhub_consolidation.module",
+      "bytes": 579,
+      "sha256": "e7be2d3858f062b0668cc768ad8ba40b9c7837d4f013e8870a251f994acb73f0",
+      "git_blob_sha1": "20a82482f19c54425cad123e90fdefa474422e5e",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/drupal/govhub_consolidation/src/Plugin/migrate/source/GovHubRecords.php",
+      "bytes": 2234,
+      "sha256": "d2dbcbc12eafdc8427b4b8cbd0afb8db9f822c0c4bbfb4920b66ac01c049b4ad",
+      "git_blob_sha1": "a36ed42b748289f0df82792c59d040d6353d7b7e",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/drupal/govhub_consolidation/src/Registry.php",
+      "bytes": 15293,
+      "sha256": "02402c186657e99d6f57f16407902c245de1c0190112d3c9beee89089c57d732",
+      "git_blob_sha1": "6080b00046893a51861735b7bcd0448d39874697",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/drupal/govhub_consolidation/src/Runner.php",
+      "bytes": 39392,
+      "sha256": "bcc24bc89d7711378c164091e398e2d26dd7144bc43e3271cbd1379ede506798",
+      "git_blob_sha1": "f0c055cc6c2a3c3fb08765f464f545d7449920e5",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/drupal/install.py",
+      "bytes": 7011,
+      "sha256": "d16d182a22e00b430bcc6c752dcaaeb46be2e65c8e56b70efa0415b91432703a",
+      "git_blob_sha1": "e3509b65aa638dbb06076b26e685db2a2b9beba4",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/drupal/receiving.py",
+      "bytes": 24239,
+      "sha256": "59d56dabfab0a9bf73a9f4c57da918a08613fb117e6ee7d5ac4d47ffff410157",
+      "git_blob_sha1": "271cab87fa3ec12bdb349268ac07e2c2fa00ba4c",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/drupal/run.php",
+      "bytes": 2217,
+      "sha256": "e07947917afd71ff598ec6bc242c47bba468cff104f737bf10c0d65b33cfa7e4",
+      "git_blob_sha1": "8207d7f1995a7e44a1500e34af4a1300ea1dccc5",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/examples/federal_register_native.json",
+      "bytes": 1267,
+      "sha256": "ff59d8258e6b3b7ac1bbd544e042cc0db896c51052765bc708738acac1455327",
+      "git_blob_sha1": "a449feeea099742b087c4b7901490520ed587698",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/examples/federal_register_receiving.py",
+      "bytes": 10654,
+      "sha256": "38d4ee1b6a8e18d5861032c9684cef915f494956eaf1c5df88f64d7c608b7f06",
+      "git_blob_sha1": "992d69706a5d503f97eb9329210d6e1ce6cf3646",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/examples/native_receiving.py",
+      "bytes": 38412,
+      "sha256": "8ae270e0423e806ab99a39adedbb753b9caac3897bf36638bf161f5ad365e191",
+      "git_blob_sha1": "626350c02cbf578299ca29446289af8b3b3257e9",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/examples/native_site.py",
+      "bytes": 24331,
+      "sha256": "99a1e33b0ba8e433276144efa9ba513687357f4eb3270d36aa6f748e4e3d387f",
+      "git_blob_sha1": "d06002c5589819c6f8686c412833d2c29cea1ca4",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/examples/prepare_native_site.php",
+      "bytes": 6513,
+      "sha256": "5972613acec74f6b2094070a21511c9e1dcb53457831966b4b04cda39e1bffe5",
+      "git_blob_sha1": "241a33a4953867952cea852c14f200bf30f5542c",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/examples/receiving_inputs/README.md",
+      "bytes": 8388,
+      "sha256": "dbace53d1fc395dba918efd919f54ab391f957b26df2702159c39de2ded1155a",
+      "git_blob_sha1": "1adff8cfbbfcb34de9e6c7f2bc4c2892ff77e24d",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/examples/receiving_inputs/bind_inputs.py",
+      "bytes": 4626,
+      "sha256": "e5a02378f79387125a02bd51fede0cae12dfc2ce46ee325162ef4265c5544914",
+      "git_blob_sha1": "6be7206816cf4877862ce1226c3d7508d4a2698e",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/examples/run_native_federal_register.py",
+      "bytes": 24009,
+      "sha256": "a301aac2ace0f7dcf85d4eec4158685f031917875925360f01ec9d4375e6c9df",
+      "git_blob_sha1": "4653ee35909e63cab2875ced7adbd9819cd89a54",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/model.py",
+      "bytes": 8957,
+      "sha256": "15698b391b4b242e5c246d2127f01e346b9a15c2cf1b2296a1127bcbd4023180",
+      "git_blob_sha1": "77ada4d3908c7e4ff87cedaeb09945c7712190e6",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/service.py",
+      "bytes": 28340,
+      "sha256": "72527db2b00329f5360dfff66e2008c721ab06239178fb773477af5617ec4c16",
+      "git_blob_sha1": "82e333b8c4f8d9e2a61b837f5e11dd97ecfb5711",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/sources/FEDERAL_REGISTER.md",
+      "bytes": 10976,
+      "sha256": "38c49eb62e3fa5db0ddde85f802b7552bbff025be2659a72d316e4607852ff65",
+      "git_blob_sha1": "8a5240ec1272ebf844614c8fef254c9b13884b72",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/sources/__init__.py",
+      "bytes": 70,
+      "sha256": "fce393a59e2f76381f0e4bed51be00138f48b3074b16874262f2d1fe1663e364",
+      "git_blob_sha1": "e6a74154bb080d58cd971f421ae9ddf0a96179be",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/sources/captures/federal-register-20261012-initial.json",
+      "bytes": 9476,
+      "sha256": "4bccbaf80396d6a5c6b5048e020b09772915539588d20c4c9d65bc1553337a2f",
+      "git_blob_sha1": "e409817db3d55a98c3153f275ffcca86f2d080aa",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/sources/captures/federal-register-20261012-refresh.json",
+      "bytes": 8687,
+      "sha256": "e084187ef548a178feb8978fc4850ef42e02009a11c44e3cb22d287f8e8e4b57",
+      "git_blob_sha1": "f2835e79be40d8d210d0a2e6777b80a9dab035b1",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/sources/federal_register.py",
+      "bytes": 35392,
+      "sha256": "6c876388ff00722d1c8b0a11ae0b72477b8b839d30612dccd5d8700869ccf14b",
+      "git_blob_sha1": "50f25ed3dd86ab077f682c1e1fc9a2f03c7ebad3",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/sources/provision_federal_register.php",
+      "bytes": 22719,
+      "sha256": "03a6cd16ea5073f7afe00b951f715b99974af338a9ab76c2287bcf2011f08232",
+      "git_blob_sha1": "081cbe203e8958fa618abbf8d1a0a0c811056511",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/tabular.py",
+      "bytes": 4683,
+      "sha256": "7d4fe26d9f9779975ab9e0c0e0205e19604dd03c0a09b401cb0b3fd67591d21b",
+      "git_blob_sha1": "7150a71045410ff1bb944180545ce69b5be206b4",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/web/content.css",
+      "bytes": 1487,
+      "sha256": "74f7439bdec60c2029cb38f65ea9e26a6e4f0c60477031928b6279a4b0d7f459",
+      "git_blob_sha1": "798815b30c1363de0a5b53f0edc95efa1a6c670c",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/web/content.js",
+      "bytes": 42684,
+      "sha256": "f7690158cd1637960d8d2e1a2277cbdc0543f080bdb6d0041a6edff6403b5e9e",
+      "git_blob_sha1": "5795c45ff941d93fcef59f2d56eced58ed9659f3",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_consolidation/web/receiving_browser.mjs",
+      "bytes": 6932,
+      "sha256": "7ec788c39241e9a4e22b136a273333ba8a6a41e8948bdf590dc85e3335003d99",
+      "git_blob_sha1": "6f9d4f46011d36091b94ac075620af771fbbdf38",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/README.md",
+      "bytes": 17192,
+      "sha256": "249e097784820151ddd1ee599b3d97da9a4729841bfe1466ffbfdf4e2a2f564b",
+      "git_blob_sha1": "c9e49283eaa1508d8f214fa0b77d20971b4e72cf",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/__init__.py",
+      "bytes": 88,
+      "sha256": "03cbe5206b9a7bb5908090ef16dcc49b146f659ae3428b7836ec57665774af76",
+      "git_blob_sha1": "c35b4c20c34e46c80153e3ae64c4b88670dc2558",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/delivery.py",
+      "bytes": 13591,
+      "sha256": "d8fad3106a12acc1274a385e71fbf8b8390ff0a212aa871f6a34feb5a1d52aec",
+      "git_blob_sha1": "e31389ae05ea5dea179f35c7c1961b72f791666f",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/model.py",
+      "bytes": 3806,
+      "sha256": "6a404b1f3a63568a189f91903be34a1b5e2d2d7b6ea3484fb671d6c8c6047027",
+      "git_blob_sha1": "0e346423af3776c7b8da194824511ec1c6bb1f6f",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/native.py",
+      "bytes": 14366,
+      "sha256": "9fd3964baabcdc0e0cd80ce8fee6df8be4cd0bc2a0686319f208f244a9d5e498",
+      "git_blob_sha1": "bc4b8e04223f5d42a07e58d7ae995c7d3f652985",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/native/run.php",
+      "bytes": 41373,
+      "sha256": "9243f468e7e1c84b85e32b097342100250a9b3e86e325c2852478d086cea1c4d",
+      "git_blob_sha1": "7483208bd10ad7a289348ed80522c9cf21f4ef92",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/native/shutdown.php",
+      "bytes": 1962,
+      "sha256": "8ffeabd004c92f55e64cb515cb534ffc95fb5d62771d3c1e72e9026aa171cc75",
+      "git_blob_sha1": "699a9eebd171b15eeb5551d33b0c97822e31b2a2",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/native_receiving/OPERATE.md",
+      "bytes": 10502,
+      "sha256": "e78710f7a7c91a16b04caafacb3cf746d8cdc84c693370643aefe91b6e619973",
+      "git_blob_sha1": "7f8869e0c7f35a8547cfe3d0228e486a3e58c762",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/native_receiving/govhub_receiving_boundary.info.yml",
+      "bytes": 210,
+      "sha256": "d6318daf3dea97a311d806c5b8807577adbd018cb752f1afe1d6020d4364ff3e",
+      "git_blob_sha1": "ce9c8676506ae4344e0fc219c146e7be606708ae",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/native_receiving/govhub_receiving_boundary.module",
+      "bytes": 1262,
+      "sha256": "e3f54d5a79878653fcb44ae687748355488db0c30a1ecf25a976ed1ba3c2f512",
+      "git_blob_sha1": "9a1cf6ab75481086d32623b96ab36fc08d58c3d0",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/native_receiving/operate-native.py",
+      "bytes": 33028,
+      "sha256": "77e469a04a6f19a10bd2375f01d6273fd1e6af7cdba0d7b9b11666d34e7a08ea",
+      "git_blob_sha1": "6d70fa6f796a553265afc84a9dc1c8587eb2f4e9",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/native_receiving/seed-native.php",
+      "bytes": 10148,
+      "sha256": "2dda1489165cdb164574bd2296863c509b9c9a140ed225c5ee7b46ec52572fa1",
+      "git_blob_sha1": "f574733d9a10faf5d12e20a89c70635e917de5bd",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/receiving.py",
+      "bytes": 26595,
+      "sha256": "4f5d93f514a20dbd8c316fb325893e99888e3c5e55229fcfdd84dc102a403360",
+      "git_blob_sha1": "6905f3a25d650f4f664a1c53d62ade43786b378a",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/content_packages/service.py",
+      "bytes": 31635,
+      "sha256": "d987257e6c84d879f40e978a3b2d9a75c6723afb1950c895f12ed3a38c850a95",
+      "git_blob_sha1": "285aa846b5ab7afc70d62c648a2c090ede236001",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/CONNECTION_TEMPLATE.json",
+      "bytes": 1141,
+      "sha256": "7be476a0caf18351d07635e3d383d69c64c6fe23fc0886842adfcbd313492e5d",
+      "git_blob_sha1": "41ffc917a79f7898d6923a19cd4b19c801cf8ba8",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/LICENSE.txt",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "git_blob_sha1": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/NATIVE_OPERATOR.md",
+      "bytes": 7338,
+      "sha256": "a7784a828a1452145dcc4ee4c6562403f9eab8e63c7368c6d5ff97db201695a0",
+      "git_blob_sha1": "7fef32799c111614b9ec35ee792f8a87a40e2004",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/PRIMARY_SOURCES.json",
+      "bytes": 4912,
+      "sha256": "04eb33173a5fe04b4012d78c51b15d1e77907f79a382de55f28a190bdfecb61e",
+      "git_blob_sha1": "ec688f0ea5969ca046a7d0178a99fe46714a7e55",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/README.md",
+      "bytes": 7062,
+      "sha256": "df20892a7f0e451c2480833bc9d0a74e5b4ae046daea357e6b6b957e29c2db88",
+      "git_blob_sha1": "24efad6d5cbfdcd4e3162de2c2ae660f3daa9a9b",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/RECEIVING.md",
+      "bytes": 4917,
+      "sha256": "d801a2f98aa33fab06ba62ed96bb7ff02feb47f2006c4e0228d01f9f15cf4e03",
+      "git_blob_sha1": "0ce1c4e086d38c4c39be9bed7cb74375402fd6d9",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/THIRD_PARTY_NOTICES.md",
+      "bytes": 786,
+      "sha256": "f614cd7018a11ffd5859890320f83a48f1cf082b048beee7ea2aa2612d86f68a",
+      "git_blob_sha1": "b11400a93c1fd76a51d1113e5ee62c49e10fdb10",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/__init__.py",
+      "bytes": 79,
+      "sha256": "7f1f9c8c0ee5f6bf5521deacceaeb0e523a9888ee829a160903c731fa605efb8",
+      "git_blob_sha1": "6e23b30003f00786c59d2ba4abf466fbdf88f5b5",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/archive_custody.py",
+      "bytes": 11561,
+      "sha256": "df254031a465f0e98e3b6c6aea56a56bf353ede0092177d29f5406356126a7b5",
+      "git_blob_sha1": "741302091d7909dbb0c7b6f0f54680a23138f52e",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/build.py",
+      "bytes": 748,
+      "sha256": "3f69cae021398ee219a1492b20a879b8ae89428015f02e8a175556f4e170f43b",
+      "git_blob_sha1": "c7e494d2f5b04e0f3ec61522616875ec17641f77",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/delivery.py",
+      "bytes": 18785,
+      "sha256": "ab3b94907fed7190ae3c6cb9943d10e88febcc69ed98cef06355f96cda446bae",
+      "git_blob_sha1": "bee8944c257ce2fe8e579e53b56c09da5cefbf92",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/desk.py",
+      "bytes": 10784,
+      "sha256": "d78ae0a226f1acb4d2d9d3440db3a0db03e4fead06edd1849e2bd5ae20013fa2",
+      "git_blob_sha1": "bb8550ae44f216ed832324a571dfa1161c17ad2a",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/engine-lock.json",
+      "bytes": 25703,
+      "sha256": "f013c2d6eaaefc8553183d6ed92e973ad24af7e979ca0a075fcd0d9cfa6ba750",
+      "git_blob_sha1": "16b37108c7a26cd0eb012c71b386c4dcfb5fc950",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/model.py",
+      "bytes": 14922,
+      "sha256": "4e6c16740bb1898a0df877db705ff660d79ee81d809b04cce8041810e731922f",
+      "git_blob_sha1": "6ed1b7fc99377c9fffce990ecfd75b0be1c1f1a5",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/native-host.ps1",
+      "bytes": 59399,
+      "sha256": "f4badb112e6bcbd1b927c6443457dc341ef47b1a070442d9b522139d13efe72e",
+      "git_blob_sha1": "e5f2834e6e4522ea74c317b514fb0d4345342f7b",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/native-upgrade.ps1",
+      "bytes": 30706,
+      "sha256": "3eee3921f758c5120e5990d542c163cb6340512dfaccfb5d1d12b1c423d2cb8b",
+      "git_blob_sha1": "9061e561cc2ceb87ccd7c22063c1a78fcd08600e",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/native.ps1",
+      "bytes": 10444,
+      "sha256": "fd9261302a375b3b1bab35fbd199fde7f1a7418dce5dcf759c41bfaa7d255d1c",
+      "git_blob_sha1": "a53e1e0684ac45de944de48ddedee0e63686350b",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/service.py",
+      "bytes": 49733,
+      "sha256": "53770d9ae16b5b80fb0fe0c8c63644d82f60351d2807fa2cde33abd3cb86907d",
+      "git_blob_sha1": "d028615ef51870635c17176b01ec487a2eaba4ca",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/web/desk.css",
+      "bytes": 7269,
+      "sha256": "18f731886ca59fd06b0fa204fb2590d158317c61ab5373c605e5a27c2a5c4dad",
+      "git_blob_sha1": "9112215688aff101bce7d2c3096cb8ac8d0734c4",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/web/desk.js",
+      "bytes": 44747,
+      "sha256": "b3eda218b8ac09ed9cd5fba96cf119dc21ebc75313c335978cf469d570f776ef",
+      "git_blob_sha1": "5fa2451fc164ef7f1fccb89615d6c7b63e4df963",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/dnn_maintenance/web/index.html",
+      "bytes": 948,
+      "sha256": "d5dd233db4fa192e3395bd3882deeaed3687b30e7465d10975af82c97640da40",
+      "git_blob_sha1": "451e25fdf182ed65c32606576998b5fc454fece9",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/editorial_playbook/README.md",
+      "bytes": 14899,
+      "sha256": "8f5d16361bcd7188f1edaa4d00e50f84472b2512180325591c615344e38bc234",
+      "git_blob_sha1": "37f82aa9d14702c1a560153e59423bd1b406d282",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/editorial_playbook/__init__.py",
+      "bytes": 71,
+      "sha256": "6290074278357beea469124a73851fecf6ff986d1d646d8c9c060c4d48660b33",
+      "git_blob_sha1": "c0b35a6dfb8b5d213b90ccba506a30be813818b2",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/editorial_playbook/delivery.py",
+      "bytes": 23986,
+      "sha256": "4ed5501b02257a253b46a654d839c668f4c89e30b0ae4cbc67d8181212aaaf0e",
+      "git_blob_sha1": "2f724e4e0105c13f162eff3138c5936d811eb4a7",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/editorial_playbook/model.py",
+      "bytes": 20971,
+      "sha256": "9eb4b30fddf1db46d0359bf43e9d3becf8ef2b404b4e40f7f3cd20873f7b7d26",
+      "git_blob_sha1": "300a2ce5c0f7e1a48c8e78e63507a862120e363b",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/editorial_playbook/native/inventory.php",
+      "bytes": 10796,
+      "sha256": "c54235c395920994d7a530de3afde658b49de3b19d09ea386255d30d1145498a",
+      "git_blob_sha1": "917416f4af6e1a7f044c3ccea204fe90685d2661",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/editorial_playbook/service.py",
+      "bytes": 29041,
+      "sha256": "e915b0a259ee176f6ec46202d55412d20af22f58b5beff32d90b6605a10c7db5",
+      "git_blob_sha1": "98d5e5752c0eacb380550828d7a59cc1d79f85c8",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/editorial_playbook/web/playbook.css",
+      "bytes": 676,
+      "sha256": "29964397a7155a6567277f36f55c07667419334588941ad60a88ed74d0c630a1",
+      "git_blob_sha1": "8bbc03f75518abbbc5e45f6740f82ef49709d8e7",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/editorial_playbook/web/playbook.js",
+      "bytes": 22779,
+      "sha256": "56c8d5f802ff92d127992d4ac2ca62814e3711dbd521828dff892682afda404b",
+      "git_blob_sha1": "8f3e396563550913659d503b4f12600557621694",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/govhub.py",
+      "bytes": 60492,
+      "sha256": "ddfa2b45041373a2317ed25fd3f8d1636cd6b4c7287c93fa9074ef77f0acaa8c",
+      "git_blob_sha1": "a82592344a7f8ec266c470be732c2d852be7593c",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/govhub_delivery.py",
+      "bytes": 33986,
+      "sha256": "4ed3c8ba68307cc28906e3b1b90139beb5dd76c9c0d66330cd8d79e9b3764c13",
+      "git_blob_sha1": "b8711e201185015d03cbbb01be33069c3444a245",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/govhub_operations.py",
+      "bytes": 46531,
+      "sha256": "2e417450ece69d808a7c32b1420d4237a8aeb01778930f07911b384ebc14caa2",
+      "git_blob_sha1": "c5d2406cf030ed700f79385d8562d4ff5db69a81",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/govhub_schema.py",
+      "bytes": 3617,
+      "sha256": "07fecb0c7ef077c4cd2ded9e349fa455120b3f93bdcb3b288fb2f01447718db8",
+      "git_blob_sha1": "0c9d1b45048bcbb60c0a6665026641eaade414d4",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/lagoon_adapter.py",
+      "bytes": 49034,
+      "sha256": "c7159e992bbec545726cc64f2fc7129060c50a687d88e3d972eaab390a88dabf",
+      "git_blob_sha1": "9c1e0dad1706945d120a99c3e0994daad3e46453",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/TERMINUS-LICENSE.txt",
+      "bytes": 1509,
+      "sha256": "3352806202519425d7912ad22741e3cbcffa969805039ccb422fe50498c9209c",
+      "git_blob_sha1": "acc10890b9c1794a39b3516251f226f7af74dfb5",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/tugboat/SOURCE.md",
+      "bytes": 1568,
+      "sha256": "eb1a232de60289eb4e2d5360f8d54e1ad5a442e369554582886228d5050df7fa",
+      "git_blob_sha1": "71cb9324a7e37a215ca2847111eb44898330c796",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/tugboat/openapi.yaml",
+      "bytes": 322261,
+      "sha256": "e9b5bdd48ed5008523167da6bcdb1b0743e309e99bb1a75e079ebeb817603950",
+      "git_blob_sha1": "b87bf3ce52c8735a99dd2cef2f5927c31b33c27b",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/tugboat/package.json",
+      "bytes": 987,
+      "sha256": "a80fdd0a365bb2b1abb3b05e96762ea83c6dece94ddc9365c4742106e2cfed9c",
+      "git_blob_sha1": "41e108a069e8c9eaa170f3ae9e036abbd43d0297",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/tugboat/receiving.example.json",
+      "bytes": 1098,
+      "sha256": "957a51a4fcebbffef6b085d501d4ac85af5c44d56d075c19b5836e1004316a76",
+      "git_blob_sha1": "d98db4afb9c482f006a031e5aa648063bde6d186",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/SOURCE.json",
+      "bytes": 6478,
+      "sha256": "fbec0b119556965c209e7c30cd0446923b803a48014ea8cc19a96eac60b850a2",
+      "git_blob_sha1": "dda80fe845a9e60bd6d0c192b94a7da50ff44401",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/browser_receive.cjs",
+      "bytes": 15297,
+      "sha256": "54717bf9b167e224ed53b58cca7eda4c8012c615f204eb813a6931deb93b53de",
+      "git_blob_sha1": "09a75543b29aa52b81e6a47eff5a8a6384905ac8",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/client/Activity.php",
+      "bytes": 8889,
+      "sha256": "12fddff60f19cf35e9d411cbb2abd5459c8fd057ac2bfbb2877c236d60603600",
+      "git_blob_sha1": "df9e434c1661f69522b41839530842558bf14f4a",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/client/ApiResourceBase.php",
+      "bytes": 18146,
+      "sha256": "71d02ada3bfb118e8036ef42f71d8c7c03fb9756c6489041cb2eed46d645d5a8",
+      "git_blob_sha1": "a339b10412871e4ceea5d151dfb2368bcd5deeda",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/client/Environment.php",
+      "bytes": 25276,
+      "sha256": "fbf42aed54c1b4f5731d16025944fde0e065ce717f100359a6673d52df7bebe6",
+      "git_blob_sha1": "be5e6c8f72dd631da14c5b11e462b449161705c6",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/client/HasActivitiesTrait.php",
+      "bytes": 1569,
+      "sha256": "8ed37db82f8c5b92e2f1139b620759294b108830e18ff64353a61fd017a2fd78",
+      "git_blob_sha1": "9ae45c9646ad082fa927ae3ea331492bc118ea80",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/client/LICENSE",
+      "bytes": 1068,
+      "sha256": "448bc9bec4166c2de4e375d11305c963b13db0c49554fbe7fd23685c863eb54b",
+      "git_blob_sha1": "7ad2534cc00167a1a2ffef2b9a651e720c0d15c8",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/client/Result.php",
+      "bytes": 2558,
+      "sha256": "e2e9fde5426d90093d4637f31541cc12a7c465a22f5a6e9f18f4db8ac4b883d6",
+      "git_blob_sha1": "619f00b7daae412c94e90f2eb8ec5f8235105afe",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/openapispec-upsun.json",
+      "bytes": 1632400,
+      "sha256": "5ea544eec80c6c60d68ed4dfbfc2b7bc9b619d79c4c5f0ffc29d922289c4b14f",
+      "git_blob_sha1": "c956c8b7c5e1b41d61a4452e9c4ff3228f17ff0f",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/receiving.example.json",
+      "bytes": 4420,
+      "sha256": "f8017838f0430a7358f4ca781f19ff193f7e0d27987da94fa756d547ff9113e2",
+      "git_blob_sha1": "640537f8f465cf042a6d1a64d8bd8864278dae19",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/sdk/ActivitiesTask.php",
+      "bytes": 6136,
+      "sha256": "3b20dad79b1233dc2975d1ecc4ea6af4a7005794db045e573abb2b235fff1014",
+      "git_blob_sha1": "475e371df4e5640775fb6e23677a3fc77aec9eec",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/sdk/EnvironmentsTask.php",
+      "bytes": 36333,
+      "sha256": "670c7baa7791cd085fe0d428100b3c250d307cf2af819f34856a16a4cad277a3",
+      "git_blob_sha1": "c5d9a17ef3ef8b6cc074349aa9ed97cd6f0af0b9",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/sdk/LICENSE",
+      "bytes": 11357,
+      "sha256": "7b8f324b411ec165424278547ce6e04b70ffa5dbcf98d8ce4c0d4ccac930e7b3",
+      "git_blob_sha1": "2cd591d46334c44689be1a55edf8f1f5c5785285",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native/upsun/sdk/TaskBase.php",
+      "bytes": 7780,
+      "sha256": "24cc7d97ff4ed2de9879457e72fcefaa4e466ae8ca4f0b8d6b209f1b72aae7b2",
+      "git_blob_sha1": "f77d1ac19f4dc64e87e66d8efa5686934a833e9d",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native_adapter.py",
+      "bytes": 83159,
+      "sha256": "c1589d950460865e8e2234ba5b42552ad34aef66e1ed203ac8a719f06f2a8447",
+      "git_blob_sha1": "e9ea4032dfacdef22f9bede3cf1b3a707bee1eaa",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native_modules/tjl_tome_capture/native_context.php",
+      "bytes": 5291,
+      "sha256": "85aa4c949ee5f0b78332bb45cec1a4cf765f48f4451da874db12f335af0b286d",
+      "git_blob_sha1": "46ca7262482404ade628feb3eded1710dc78df66",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native_modules/tjl_tome_capture/src/BuildContext.php",
+      "bytes": 2125,
+      "sha256": "b1803a6ddc2b9ee91abe704d1e4bea0c3d48c9b6f23d266f9d0d56ca38d688b9",
+      "git_blob_sha1": "dcae11ee1f4d4a19090c16e3441b706954073b11",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native_modules/tjl_tome_capture/src/ObservedHttpKernel.php",
+      "bytes": 1365,
+      "sha256": "4ff2fbc52b00387b74a9ce97ba63e9c5a67fdc16add31ae541e2f566a1e20db7",
+      "git_blob_sha1": "ad113cfe33065c1dadac742504844dfc111b40ff",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native_modules/tjl_tome_capture/src/ObservedStaticGenerator.php",
+      "bytes": 1982,
+      "sha256": "c072a61afa0b7fe3bbc4f1b19ebfdbb6aa965347c9b7b468f05cfe919e161c2c",
+      "git_blob_sha1": "fe2840abeb982d5685cca027c87edee68e96c36e",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native_modules/tjl_tome_capture/src/ResponseSubscriber.php",
+      "bytes": 1106,
+      "sha256": "5c48dae058f4751154124605ffbf8c9240724dee63a493de4b8a7f8005d23ce7",
+      "git_blob_sha1": "cf3240a5ed2e6ea93b91c2ff0f2cfbe4da0bcc8d",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native_modules/tjl_tome_capture/src/TjlTomeCaptureServiceProvider.php",
+      "bytes": 2168,
+      "sha256": "1db53ef2af7daf13c9ffb7030727c38c12c60ba69a88dee1ebd23e2b5b696793",
+      "git_blob_sha1": "ea849c32d2fc12bd89a80c02cf4e8340452b76ed",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native_modules/tjl_tome_capture/tjl_tome_capture.info.yml",
+      "bytes": 225,
+      "sha256": "78deb81b7e3b7c4e1f4137829fce540e5fbf2f7e194fbd45e09498097aa73cad",
+      "git_blob_sha1": "b6cb85e40ce07ba818e810a965aa671fa30b5deb",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/native_modules/tjl_tome_capture/tjl_tome_capture.services.yml",
+      "bytes": 260,
+      "sha256": "1465c04bfc849b3813b40776a25567cf161bd8d12739b6f4e8a3d2ba8970180d",
+      "git_blob_sha1": "76d54983d6437ac37d54cd666adc49b0aa11a34c",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pantheon_adapter.py",
+      "bytes": 75286,
+      "sha256": "23c595d3b3530ad52aae172b9fd682a27e76d1de7a2e326848338fa39f08f9f4",
+      "git_blob_sha1": "08a5a1f4644a4d43873135ddf7efc136239db20d",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pantheon_bridge/LICENSE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "git_blob_sha1": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pantheon_bridge/PHP_BRIDGE.md",
+      "bytes": 16008,
+      "sha256": "598061116dd514b63756e6781622a28babd3a8b800d20e3c129e8fcccb9dce3a",
+      "git_blob_sha1": "528fd82799ad31ec38e362e555073e50218ef10d",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pantheon_bridge/composer.json",
+      "bytes": 472,
+      "sha256": "8b3099d7da1d2b4093ec735ae2d551b0ae5db210bf572741bf4f8d2c992dd11b",
+      "git_blob_sha1": "a32074bcc2cd6b3a72a5343a4b3f5477b9c7bba9",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pantheon_bridge/src/GovHubBridgeCommand.php",
+      "bytes": 36483,
+      "sha256": "e9c44180ebf19e27e63196407ef501eff236da5862cd89f5c09e6b80447ac664",
+      "git_blob_sha1": "2a71754123e9a633723fd40e0639ba7288d4450b",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pantheon_bridge/src/ReceiptJournal.php",
+      "bytes": 22051,
+      "sha256": "2063c1965a4924068474692698ff417eff215a36de5c969393021303c4ffab79",
+      "git_blob_sha1": "3803e5b041044a1ff0eb799500cf7fdff8cbaad7",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pantheon_bridge/src/SingleAttemptRequest.php",
+      "bytes": 4493,
+      "sha256": "b10f3e3ed3269b5148407f21cbb5355e0aa923c9772ea9dd882bf08d220cce2e",
+      "git_blob_sha1": "e0043214a83de589f658f3a4a4348ab606ec2533",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pantheon_receive.py",
+      "bytes": 53096,
+      "sha256": "d49b25dc8ad16c074877101583ddc556b222853cf5cb9c9655b0277cb259a892",
+      "git_blob_sha1": "ce22efe38b17672e13db8951bf03f81a79477666",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pots/CAPTURE.md",
+      "bytes": 20330,
+      "sha256": "6c43ac464d5ac750fc036c5c185d8948e1f06b5a84c4c51552b7e0fccdc9e961",
+      "git_blob_sha1": "1ed6345bdc0998b6ed7a08a7fa91ce0f3a9eb747",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pots/README.md",
+      "bytes": 10618,
+      "sha256": "49ad24fabf6aadeedb990a8584660a2c640fd1bfaa26af2560aab88bc3b1e66e",
+      "git_blob_sha1": "5f9609c32dd27018a6e66f95048f2643793071f9",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pots/__init__.py",
+      "bytes": 65,
+      "sha256": "996069aa67c41406446fa207cd590a5c4f9b92e057e4ac6719dadc341e424cdf",
+      "git_blob_sha1": "68ccdf1d3eb3cc24d855bc5a1eff0fb021dfbbb9",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pots/capture.php",
+      "bytes": 49205,
+      "sha256": "b5034c6f7a003c141815bbfc1cce82df05476a14f1fd4dfdcbc96aff9d7bd360",
+      "git_blob_sha1": "b8d547664b43db5efe9eea432ce0caf6b3396aa4",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pots/collector.py",
+      "bytes": 28662,
+      "sha256": "89b253a861ec1bbc6b0e013bc402859e64928b76d874287ae6239a89563f2934",
+      "git_blob_sha1": "3d82b2995cce9b7dfe3c62d29501f6ddb7951921",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pots/delivery.py",
+      "bytes": 14463,
+      "sha256": "ee882edf99d708df876ca75e584a6187d966f82e11ebd9e09893129da2abf662",
+      "git_blob_sha1": "e8f25b26ac13c8dcc6319d56d9bc7972c24eb416",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pots/model.py",
+      "bytes": 25084,
+      "sha256": "33a8e3cd10c79c58b08b6f7b8550d475457c7fb6c7728fd74f9a220f2d24348e",
+      "git_blob_sha1": "e8c90c7a4e0e328d38b6f147e851af23d2aaed66",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pots/receive.py",
+      "bytes": 4813,
+      "sha256": "09f10afaae9f7806e7a093b971156abe2c2ff47583ef0cb870a8527025d7ec25",
+      "git_blob_sha1": "73ad154d1e3dd7912d71afc6e963c470320b3f19",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pots/web/pots.css",
+      "bytes": 741,
+      "sha256": "f2e13716cba42b4c8dfbfbb28dda976f826328852f71e6cee0f1c34794154f7c",
+      "git_blob_sha1": "21599f5c233d4570623c7d7ca26044bd9b415d7f",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pots/web/pots.js",
+      "bytes": 20860,
+      "sha256": "2361f4628c3b06d07a6326a0c8f46b22f633c4952279cf7ea44ee7457c0d1bd3",
+      "git_blob_sha1": "68af4b8e40083d6690dfcce8cc79461d3d1737c2",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/pots/workspace.py",
+      "bytes": 19288,
+      "sha256": "3579a8cae2ae16d206927fac214608e35bb7d2e323830827674b5bf547166cdc",
+      "git_blob_sha1": "ccaf9a987dedda56c071770e85b62e0f6687f524",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/server.py",
+      "bytes": 19470,
+      "sha256": "e73107ee19cc005fbefbb3884fcbbf2dcd29b867d22a3e53c562e6ac7ca59ac5",
+      "git_blob_sha1": "dc81f4fcf980c2b92e7da5f751db1f6825677eb1",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/skpr_adapter.py",
+      "bytes": 71696,
+      "sha256": "4101bc46e11c98f88d738ec95f07deb8e40a4ad5fa6d5dc38a4765191625dc94",
+      "git_blob_sha1": "6f1a60771433d41f095b8d2ab2d47c8bcad42a4e",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/skpr_receive.py",
+      "bytes": 33236,
+      "sha256": "92aa0f6ea516e4ed808079e0b7bf4c1128235398715dfdb00ae7d8a1203dbf80",
+      "git_blob_sha1": "4d131c79b76c851397513304fbb2288e75a033dc",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_release_cli.py",
+      "bytes": 8499,
+      "sha256": "32e32b351137438ca86d1190bd1481db21b06b8a459c0219e0c24cf36f134afa",
+      "git_blob_sha1": "a7f42c71098fb557e553e3dc2e577b74e6d4d2d9",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/BROWSER_RECEIVING.md",
+      "bytes": 7328,
+      "sha256": "eea9eea1beccb35ef7f0c59001ac8ed9cf7b0c81440cb90c027c50f5551f7399",
+      "git_blob_sha1": "fa65c5aa943b40ee138761d38bb4831f800dc23a",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/PORTABLE_RECEIVING.md",
+      "bytes": 17187,
+      "sha256": "57755a2d2a1920af827b896bfa8d0ebede31fa4b17992c0cd8b5e9db44011e42",
+      "git_blob_sha1": "a98d30fde309ae794d1d7442595bfed0a4f29655",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/__init__.py",
+      "bytes": 77,
+      "sha256": "94fe56841a2ad818d5545b830e29809cfde32d626fb1bc80deeca5d2eb33752a",
+      "git_blob_sha1": "a64adb653407af396f1f09e44d4d64e275947a00",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/examples/run_tome_browser_receiving.mjs",
+      "bytes": 25496,
+      "sha256": "2acdb257fe4d28fb2c9866aa7fffaf0b8202205cf0f85855eb0f3b8a87f55c31",
+      "git_blob_sha1": "5193a2c3d0cf2e5d480b422b6e09347309959e55",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/examples/run_tome_portable_receiving.py",
+      "bytes": 32588,
+      "sha256": "b00850a029e31e936f154a29c943835b92d8cc87a8eecfeb5ede9498b2f29a8f",
+      "git_blob_sha1": "87e7f285ec78337b838b784827f40e19f47c61f9",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/examples/run_tome_release.py",
+      "bytes": 36283,
+      "sha256": "5190ba4f115c3ac1f3cf1f932ddd43006f0aa8ea120541e84a07d8c92a2e3e37",
+      "git_blob_sha1": "8c7bf5dfdb3b9dc73729b2c610fc4fd662deffa4",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/exporting.py",
+      "bytes": 16478,
+      "sha256": "511ce9654648629b34556101c2be0c76720b4a21a09d715de275b51eae3bbfd7",
+      "git_blob_sha1": "614a29976fbfc346ad47ac37b75cd48031fb6881",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/model.py",
+      "bytes": 6850,
+      "sha256": "27bf900c8907af343bd6295828c54402ade4753bda9d82a86d4f1f8256b54de3",
+      "git_blob_sha1": "f8ae2aa3f50238f45a4681af2b15cd66920b5f59",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/native.py",
+      "bytes": 31174,
+      "sha256": "e5cf1bed8179bffff2fc64b83e861b0ad7abf327d3570c999c33a0b743718ab1",
+      "git_blob_sha1": "61cac146678d4503587dc98d31534edfded7bca6",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/service.py",
+      "bytes": 26097,
+      "sha256": "188e6c083ba2295a0bab9a738d8b673ca5890c7e695ca21991ed286a153031d4",
+      "git_blob_sha1": "d87e01ad399afb2f41fe120fbd14f4ed620bb53b",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/web/static.css",
+      "bytes": 1433,
+      "sha256": "6f322cc48aa23b3a6eab196a0a62e23cf2061c2453dd516126006f013476ee76",
+      "git_blob_sha1": "07b593d5290ddde1cd9ecea654a585b24b29e19a",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/web/static.js",
+      "bytes": 29772,
+      "sha256": "60639e966d235eb1ded391c6997ffb86716c4a23809b589496b7f012c80b7c49",
+      "git_blob_sha1": "2dd72d9376d9c63b47ee35dd08849e9338b5a002",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/tome_native.py",
+      "bytes": 50463,
+      "sha256": "e16b0ec6ede919dba11b0f8bbd6165ff4f5032ecd7b3a335ebfb1d2d03081cf8",
+      "git_blob_sha1": "df4cb1b83d863d871d129676799963639827d25d",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/tugboat_adapter.py",
+      "bytes": 45639,
+      "sha256": "c81655a61a3287a10d9a5cd8d4e2aa21605a5f317b7f4b967a59bd3d39127899",
+      "git_blob_sha1": "d8240d448f8149bbfeab952a1882d4a8854f2a08",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/tugboat_receive.py",
+      "bytes": 21948,
+      "sha256": "9cf6f031313f37527651c244a4beb39614f98fe16d748a18f1f2ba00bc5dad94",
+      "git_blob_sha1": "45084f54c8ec68e9c94a368e1ceda6cd192955f1",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/upsun_adapter.py",
+      "bytes": 63895,
+      "sha256": "8a48c5f4543bc043f075c395979eb34175d5cfc627ee6b197cd6350317ad2826",
+      "git_blob_sha1": "2b17194b5528d920cd9b6e46af232db4aa2ed0fe",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/upsun_receive.py",
+      "bytes": 31454,
+      "sha256": "43c5ca52487b1badb400ec342e4dcab74c87469c36e7d0d9c98b69f9e60149bb",
+      "git_blob_sha1": "efdcb644a8b7eb99e55baff17e3f56d7c01e6a54",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/upsun_source.py",
+      "bytes": 44976,
+      "sha256": "ac46710cecc0fa96b07134eb2d6b36d622459aedcef2923d1dbe6672b05dc8d5",
+      "git_blob_sha1": "87801ad68d70f02281c31e0ae2436c5307a458dc",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/vendor/assessment-core/README.md",
+      "bytes": 729,
+      "sha256": "20c434c01cb5bb9bd1d56022190b8e9cb0f6af7e3684c4c7d71662d502d6619d",
+      "git_blob_sha1": "2189c0a7bf38f7ae0896bc74ed789db97cdda80a",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/vendor/assessment-core/schema.py",
+      "bytes": 17321,
+      "sha256": "6b103c7a6288d6cdc81ad6fd85d9a2421b84b336f85dacbfebba17b158b130b7",
+      "git_blob_sha1": "e36ac65ae02e9f68929a92583b4189284639b66e",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/vendor/assessment-core/workspace.py",
+      "bytes": 36866,
+      "sha256": "24dc145f628e6a9f9e96d37372814f2b9ea8a9a5f973cf7f719f9642faa77023",
+      "git_blob_sha1": "dfa803e875b5ce7b4d5394860297bf50976963c7",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/README.md",
+      "bytes": 8510,
+      "sha256": "f522b2fca6bde1abf3d64f7c68277882d6e12b8a699f01175e702fba1b9ff9b2",
+      "git_blob_sha1": "abfbb49542835a248bb510b689ce1e0138137d09",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/__init__.py",
+      "bytes": 61,
+      "sha256": "c7a76037548e4f81f5beaa4f2f354383d0e960b8cb237a644604d21982b14130",
+      "git_blob_sha1": "c8b142dca44e9e9bbfeb49735c04cbff9748fa08",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/browser-receiving.cjs",
+      "bytes": 4123,
+      "sha256": "3637577a2c0db5982b3e6d64d08d9b512132dd08f83c2918a47050428b185f39",
+      "git_blob_sha1": "72ad7fab7b4edf9bc8108b68a4ca1f2db899a785",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/delivery.py",
+      "bytes": 9832,
+      "sha256": "69b5f20118962c6e43c39ba599541be303f437badf52f74682dc0cec48fc987a",
+      "git_blob_sha1": "a3c1b3d4dc1c3be03c22ce1c6220f554ef94ff42",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/examples/three-rivers.json",
+      "bytes": 10698,
+      "sha256": "e5a554d80a67efd07dbd38795addbd10ba2dfd0189ccd97c183aafd99f164f7a",
+      "git_blob_sha1": "a18377c5cb2f5fe95eb662085deecbd982193fd7",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/model.py",
+      "bytes": 22655,
+      "sha256": "59c5ab8fd35d6fd72652d1d5fc81ba936b061dc900a7621dba036412cb84dfd5",
+      "git_blob_sha1": "7a17fed94e6a9489c7c53369a72f6a9b1bc33b8c",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/receiving.py",
+      "bytes": 19076,
+      "sha256": "0a06ce6b3a82152d30fa1e7b920c5389a37e91c3b4514ec95b558aa4ede1408c",
+      "git_blob_sha1": "971017b87229c520c818277a679c856bf2ccc05d",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/transport.py",
+      "bytes": 6693,
+      "sha256": "b2ff13b31bb1b5b1e5c4e8d664566c1c0f4bcf1cf4bd07ece56138c279ffec43",
+      "git_blob_sha1": "733bdba9326e6a3aa36d0081e0da96f83ddfb954",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/web/visitor.css",
+      "bytes": 1018,
+      "sha256": "b8dca5818872ebbfb02fb851bc5adaaf06690aacbc67a0b7ec60f0d9f0f9a561",
+      "git_blob_sha1": "e050ed81dd14d0e27a400e4da9f91fc094e41275",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/web/visitor.js",
+      "bytes": 26012,
+      "sha256": "08886325a0294ba80c841b6a4d0bef575ad7efb07f8b8958dd79e7a8b1e62395",
+      "git_blob_sha1": "cca3bdcedaa3bfea2d5bafa12961b7b58e043b90",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/workspace.py",
+      "bytes": 31246,
+      "sha256": "34aaf8f0959e0f80bcbf5b468e17769ec6662b7680e722d4ae6e6acbd5d727b2",
+      "git_blob_sha1": "02ee0defd7809c968a32b235527d215a4fd95410",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/web/app.js",
+      "bytes": 91869,
+      "sha256": "c6facc4c479296eff198900bf08e370a132a0c3d72a6ddcd2c878777e0431de3",
+      "git_blob_sha1": "df2910dc6d863106fb5542496de8edc50915ffa9",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/web/index.html",
+      "bytes": 1922,
+      "sha256": "92d13b17f0693735f78b6dfbf9e3a65e3493d2237191f1765f7717bca7c7f7cd",
+      "git_blob_sha1": "a1fa393a2b5b5b814e03be2b3acad88502afd78a",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/web/packages.css",
+      "bytes": 3769,
+      "sha256": "486d2293ca2069c3b66f9b52526e78afc3356938dbb8710148a69b1d8c0a1337",
+      "git_blob_sha1": "752d291f1ffbbdbb500464bd5411d7cdd88228ec",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/web/packages.js",
+      "bytes": 63743,
+      "sha256": "40871b3f61fc5f5f329bac497789d5e74d3add041120689f2e15a24eb190bae3",
+      "git_blob_sha1": "84c78778c7269acf7e69fa6a61aa69d929fbce7e",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/web/skpr.css",
+      "bytes": 375,
+      "sha256": "d6d8252235c6997f95f36ae48853e1f321497446c9faf075d48b6c44d5579104",
+      "git_blob_sha1": "ad7efcd2ff3ce3c45d1ec6eef2963aab762d2999",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/web/skpr.js",
+      "bytes": 13227,
+      "sha256": "4a6b1a253b988e961b77d4eae56aa4febc87ac1b4a3c7a41e4b88ecc2587b68e",
+      "git_blob_sha1": "d5e46512421a29d24d9e8cc1af6b1e91683f50f1",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/web/style.css",
+      "bytes": 11271,
+      "sha256": "f1d08ba6ffdad21f738c4f19416668d9a226d5d9686017e050d5968d0ae8b260",
+      "git_blob_sha1": "d07925e69a9daec744f9f5ec239791a574fb70f2",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/web/upsun.css",
+      "bytes": 482,
+      "sha256": "b46c87e15d3867b7b560e3ea1b6d059700615252fb724cb235e8f1134fa3af2e",
+      "git_blob_sha1": "ae9a1878a8b7b17eb2c94d849faffa6807207a90",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/web/upsun.js",
+      "bytes": 10431,
+      "sha256": "a4ca7797a28195d79ce88b7b47b989ba2a0eb16c52062c0273b6bd90d63b176b",
+      "git_blob_sha1": "de9de4ab804c57f3501c5ba78b66f98571b128d2",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/static_releases/TOME_RECEIVING.md",
+      "bytes": 8516,
+      "sha256": "af0cca59ad7cb05e4b53b6ec161bb203c4754472a6dfb640dae5ef9a85a05fca",
+      "git_blob_sha1": "5571fc393afc2eaa0cb4c3f7877fbae3a80f9e10",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application/workspace/visitor_journeys/SOURCE_COHORT.json",
+      "bytes": 4084,
+      "sha256": "205ea9ceb8c0fe6f94dc55bd48ea79b38362159ce2f361c5c788c90a32d55976",
+      "git_blob_sha1": "9e4a646e162dfe92f0213253ddcfc2fc9e7ef172",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/cli.mjs",
+      "bytes": 3201,
+      "sha256": "34059711b5145ad74364a34a8e5bf6df85436089d19f28f207c87ee509006e6f",
+      "git_blob_sha1": "4290613e4a2d377e7a90c72c8cc2cfd5aca99886",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/application-provider.mjs",
+      "bytes": 2225,
+      "sha256": "5f20651571faf015ebd3bcee3d51c1c1c8b295b255fbec6c665e93588791cf70",
+      "git_blob_sha1": "6eaf6d555f41873a7d6d71f99237c87062a4fe3c",
+      "mode": 420
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/govhub.json",
+      "bytes": 599,
+      "sha256": "efae4fd7527fcdf9e5e10157b0b066f90643072571e5a7098ebc4b8ffa58d272",
+      "git_blob_sha1": "b4be0fd0bbeb4bc0bb4a5294594eb58fd4bd38a3",
+      "mode": 420
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/selections/govhub.json",
+      "bytes": 4404,
+      "sha256": "742b937a664764c1d02da0a3a57f6e7671bf81d907d179131f770b93a2c2d03b",
+      "git_blob_sha1": "6b5811bad58a82f3a4de51c4ac635a4c704c421b",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/README.md",
+      "bytes": 3447,
+      "sha256": "6af6f51214811cb761e90fb6e917af9cf123907f956c002006888108e349526f",
+      "git_blob_sha1": "7d2ec22cf81f06bfb82d4e8b10ba2470a753024b",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/OPERATING.md",
+      "bytes": 6008,
+      "sha256": "0e9f3e5f137c46fc9b70cb4d88f84e39f032a6b686cf784ab82030cc2c41d132",
+      "git_blob_sha1": "bbc3e87e6ab4028dc2b5ba9f298c636d1cc97e89",
+      "mode": 420
+    },
+    {
+      "path": "products/govhub/RECEIVING.md",
+      "bytes": 6405,
+      "sha256": "38a94fef3b330984a0acab81d70f3eb867ab9ace0f1a1f7c45ef9e971fc42da0",
+      "git_blob_sha1": "449b8993aaadb66a7e19b4ddcc6822af61f38673",
+      "mode": 420
+    }
+  ],
+  "source_policy": "Complete generic source and native receiving; private cases, credential values, host custody routes and private runtime receipts are excluded. Generated APPLICATION_SOURCE.json is separately bound to its exact source commit.",
+  "original_packet_sha256": "210bdac8170d062862e5af44671de93277f0c14c64b619c602c52bc2e1d03ff9"
+}
