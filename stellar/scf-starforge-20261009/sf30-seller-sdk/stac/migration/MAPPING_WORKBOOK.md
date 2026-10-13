@@ -8,11 +8,24 @@ Use this workflow for a customer who reviews field names, data types, null handl
 
 Open the existing **GIS migration** application and read its Sources and Plans. Select the capture and saved plan the customer is reviewing. Keep the actual workspace ID; the operator, merchant and native engine all use that same identity.
 
-In **Mapping → Customer mapping workbook**, select the saved plan and choose **Export Mapping-Register.json**. A saved plan's detail view also offers this export. The response includes the exact original JSON file and its complete byte count and SHA-256. The browser verifies those bytes before download.
+In **Mapping → Customer mapping workbook**, select the saved plan and choose **Export complete mapping workbook**. The same action appears on the saved plan. The installed Python runtime creates one complete ZIP containing the editable XLSX, its matching Mapping-Register.json, every declared original input, the customer guide and a file manifest. The browser verifies the complete ZIP against its native byte count and SHA-256 before download.
+
+**Export Mapping-Register.json** remains available when an author needs the complete source register separately.
 
 The original plan can be a saved draft. Its actual review state is included in the register. Continue through the normal native review after the returned mapping has been saved.
 
-The installed command provides the same export:
+The installed command exports the complete workbook delivery:
+
+~~~sh
+starforge migration-operator workbook-export \
+  --workspace /absolute/original/migration-workspace \
+  --python /absolute/path/to/operator-python \
+  --expected-workspace-id ORIGINAL_WORKSPACE_ID \
+  --plan-id ORIGINAL_SAVED_PLAN_ID \
+  --output /absolute/private/workbook/Mapping-Workbook.zip
+~~~
+
+To export only the original register:
 
 ~~~sh
 starforge migration-operator workbook-register \
@@ -25,7 +38,36 @@ starforge migration-operator workbook-register \
 
 Choose the real IDs returned by the existing workspace and an output path outside that workspace. The command uses the selected ordinary Python environment and original engine. An existing output can be reopened only when its full bytes match the original result. A different exported revision uses its own output path.
 
-## 2. Build the customer's complete XLSX
+## 2. Open the complete customer workbook
+
+Extract the complete **Mapping-Workbook.zip** into a private delivery directory. Open **GIS-Mapping-Register.xlsx** and start in Overview. Keep its matching **Mapping-Register.json**, **originals/**, **Mapping-Workbook-Guide.md** and **MAPPING-WORKBOOK.json** together. The manifest describes the complete files and the exact saved workspace, plan, capture and review.
+
+The native exporter includes all 16 original worksheets:
+
+| Worksheet | Complete content |
+| --- | --- |
+| Overview | Saved plan, actual source review, source identities, counts and proposed-edit indicators |
+| Field mapping | Every field's destination, conversion, requested type, null policy, Shapefile name and note |
+| Source fields | Complete original field statistics and exact counts |
+| Layers | Every original layer, destination and geometry choice |
+| Coordinates | Separate source assignment and destination CRS choices with original WKT |
+| Keys | Each ordered member of every complete key |
+| Projects | Each complete saved project definition once |
+| Project layers | All ordered project selections and their full options |
+| Native types | Every resolved native field profile |
+| Decisions | The complete saved decision list |
+| Sources | Every original provenance descriptor |
+| Review history | The complete saved review history and original dates |
+| Original choices | The complete source-bound comparison baseline |
+| Text details | Every ordered part of each long value |
+| Original files | Every exact original file delivered beside the workbook |
+| Saved plan | Full source edition, revision and plan context |
+
+The workbook uses neutral gray source cells, white editable choices, fixed headings and filters. Source text stays literal, including values beginning with an equals sign. Counts up to 15 decimal digits are numeric; larger counts, identifiers, timestamps and precise JSON remain text. Long-value pointers preserve their full UTF-16 length and UTF-8 SHA-256 and keep every text part in Text details.
+
+The export preserves the existing 16 MiB limit for each input and the 24 MiB limit for the complete register/XLSX pair, so a delivered workbook remains eligible for the existing return workflow. The same selected source, saved revision and runtime produce repeatable complete workbook bytes; reuse the unchanged output or choose a new path for a later revision.
+
+### Original authoring renderer
 
 The unchanged original exporter and renderer are included under [mapping_workbook](mapping_workbook/README.md). The renderer creates the complete workbook, retains the identical JSON register beside it, and writes every declared original input under originals/. It also retains its original request, publication checkpoint, output manifest and available previews.
 
@@ -48,7 +90,7 @@ ln -s "$CODEX_PRIMARY_RUNTIME_NODE_MODULES" \
 
 Reuse an already correct dependency link. The link belongs beside the copied renderer because Node resolves its package imports from that source location. The supplied Node executable alone does not change that resolution.
 
-The native register export, workbook return, plan saving and customer receiving use the product's existing Python/Node environments. The supplied authoring package is needed when producing a new XLSX with this original renderer.
+The installed **workbook-export** command produces the complete editable workbook with standard Python. Use this original authoring renderer when its rendered worksheet previews and supplied spreadsheet authoring environment are useful; its source and original publication checkpoints continue unchanged.
 
 Give the customer the complete rendered output. Keep Mapping-Register.json beside Lutra-GIS-Mapping-Register.xlsx. Preserve the output directory when resuming an interrupted render; the original PENDING.json and COMPLETE.json continue the original publication from its retained files.
 
@@ -125,6 +167,7 @@ The original API commands and merchant tools expose the same workflow:
 
 | Native command | Merchant tool | Complete input |
 | --- | --- | --- |
+| mapping-workbook | merchant_migration_mapping_workbook | Selected workspace and planId; returns the complete ZIP and file descriptors |
 | mapping-register | merchant_migration_mapping_register | Selected workspace and planId |
 | workbook-propose | merchant_migration_workbook_propose | source / sourceJson with the complete register and workbook |
 | save-plan | merchant_migration_save_plan | Complete plan plus optional workbookSource / workbookSourceJson, original revision, requestId and actor |
@@ -134,7 +177,7 @@ The workbook source object has schema starforge.gis-migration-workbook-source.v1
 
 Use the returned planBase64 or the existing exact JSON codec when retaining precise numeric tokens. The merchant's save tool accepts complete planJson and keeps its original bytes. Its original result download and request-recovery paths remain available for large responses.
 
-Both export/proposal commands are read operations. Saving and review use the existing write operation and journal. The two workbook reads run to the completion of the actual original operation; the installed operator's short control-command timeout does not terminate a full workbook return.
+The complete workbook export, register export and workbook proposal commands are read operations. Saving and review use the existing write operation and journal. The workbook operations run to the completion of their actual original reads; the installed operator's short control-command timeout does not terminate a complete workbook export or return.
 
 ## 7. Deliver the complete saved workspace
 
@@ -156,4 +199,8 @@ The portable native application includes the original QGIS analyst and Field/Pos
 
 ## Source lineage
 
-The original mapping_register.py, build_mapping_register.mjs and their README are adopted without changes from the existing mapping-register source. The integration adds workbook.py and public/workbook.mjs and joins the original workspace, engine, server, managed operator and merchant tools. SOURCE_ADOPTION.json in the product directory retains the original source identities, the full native analyst source join and these integration paths.
+The original mapping_register.py, build_mapping_register.mjs and their README are adopted without changes from the existing mapping-register source. The integration adds workbook.py and public/workbook.mjs and joins the original workspace, engine, server, managed operator and merchant tools. Portable XLSX export adds workbook_export.py and workbook_layout.json. The layout carries the exact original renderer headings, widths, editable columns and section joins; the exporter checks its editable rows and columns against the current return reader before creating the complete workbook. SOURCE_ADOPTION.json in the product directory retains the original source identities, the full native analyst source join and these integration paths.
+
+## Spreadsheet format
+
+The portable writer uses the standard [SpreadsheetML workbook structure](https://learn.microsoft.com/en-us/office/open-xml/spreadsheet/structure-of-a-spreadsheetml-document) and [table parts](https://learn.microsoft.com/en-us/office/open-xml/spreadsheet/working-with-tables). Its ZIP, XML, hashes and exact original bytes use the installed Python standard library. Formula cells contain the workbook's own change indicators with their correct initial cached values and automatic recalculation; source and choice values are literal inline text.
