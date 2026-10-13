@@ -206,6 +206,30 @@ export function accountingCashPlanArguments(preview, value) {
   return {...identity(value), workspaceId: preview.workspaceId, revision: preview.revision,
     ...edit, plan: structuredClone(preview.plan), reviewSha256: preview.reviewSha256};
 }
+/** Verify the original full source-bound realization before preparing its immutable save. */
+export function accountingCashRealizationPreview(preview) {
+  need(plain(preview) && SHA.test(preview.workspaceId ?? '') && plain(preview.request) &&
+    plain(preview.report) && preview.report.schema === 'stellar-forge.merchant-cash-realization.v1' &&
+    UUID.test(preview.request.planId ?? '') && UUID.test(preview.request.editionId ?? '') &&
+    preview.report.plan?.planId === preview.request.planId && preview.report.plan?.id === preview.request.editionId &&
+    preview.report.through === preview.request.through && digest(preview.report.request) === digest(preview.request) &&
+    Array.isArray(preview.report.invoices) && Array.isArray(preview.report.receipts) &&
+    Array.isArray(preview.report.events) && Array.isArray(preview.report.dates) &&
+    Array.isArray(preview.report.currencies) && Array.isArray(preview.report.issues) &&
+    plain(preview.report.source) && digest(preview.report.source) === preview.report.sourceSha256 &&
+    SHA.test(preview.reviewSha256 ?? ''),
+    'Keep the complete original realization, frozen edition, full dated source and workspace identity.', 'PREVIEW');
+  version(preview.revision);
+  need(digest({workspaceId: preview.workspaceId, revision: preview.revision,
+    request: preview.request, report: preview.report}) === preview.reviewSha256,
+    'The complete realization differs from its reviewed original bytes.', 'PREVIEW');
+  return preview;
+}
+export function accountingCashRealizationArguments(preview, value) {
+  accountingCashRealizationPreview(preview);
+  return {...identity(value), workspaceId: preview.workspaceId, revision: preview.revision,
+    ...structuredClone(preview.request), reviewSha256: preview.reviewSha256};
+}
 export function accountingCreditAssessmentPreview(preview) {
   const assessment = preview?.assessment;
   need(plain(preview) && SHA.test(preview.workspaceId ?? '') && SHA.test(preview.assessmentSha256 ?? '') &&
@@ -374,6 +398,10 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       return client.fileBytes({kind: 'receivables-cash-plan', cashPlanId, file,
         ...(editionId === undefined ? {} : {editionId})}, options);
     },
+    cashRealizationFile({cashRealizationId, file}, options) {
+      identifier(cashRealizationId, UUID, 'original cash realization UUID');
+      return client.fileBytes({kind: 'receivables-cash-realization', cashRealizationId, file}, options);
+    },
     cashPlanComparisonFile({file, ...query}, options) {
       identifier(query.leftId, UUID, 'original left cash-plan UUID');
       identifier(query.rightId, UUID, 'original right cash-plan UUID');
@@ -519,6 +547,15 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       'The cash plan belongs to another original workspace.', 'PREVIEW');
     return result;
   };
+  const realizationPreview = client.previewCashRealization;
+  client.previewCashRealization = async (args, options) => {
+    const result = accountingCashRealizationPreview(await realizationPreview(args, options));
+    need(result.workspaceId === args.workspaceId && result.request.planId === args.planId &&
+      result.request.editionId === args.editionId && result.request.through === args.through &&
+      result.request.note === String(args.note ?? '').trim(),
+      'The realization belongs to another original workspace, edition or reviewed date/note.', 'PREVIEW');
+    return result;
+  };
   const creditPreview = client.previewCreditAssessment;
   client.previewCreditAssessment = async (args, options) => {
     const result = accountingCreditAssessmentPreview(await creditPreview(args, options));
@@ -529,7 +566,7 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
   return Object.freeze(client);
 }
 export async function connectAccountingReceivablesClient({workspace, ...options} = {}) {
-  const connection = await openMerchantFileClient({maximumResponseBytes:32*1024*1024,...options,
+  const connection = await openMerchantFileClient({maximumResponseBytes:128*1024*1024,...options,
     errorPrefix: 'ACCOUNTING_RECEIVABLES', clientName: 'starforge-accounting-receivables'});
   return Object.freeze({...createAccountingReceivablesClient({workspace, call: connection.call}), endpoint: connection.endpoint});
 }

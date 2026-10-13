@@ -1,3 +1,5 @@
+import {planFlowableSourceOperation,performFlowableSourceOperation} from './flowable-source-desk-agent.mjs';
+export * from './flowable-source-desk-agent.mjs';
 import { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_CASE_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
 import {performGrantPlanningSourceOperation} from './source-tables-agent.mjs';
 import {planInstallationSourceOperation, performInstallationSourceOperation,
@@ -635,8 +637,11 @@ function transport(connection, route, {body, contentType = 'application/json', h
   need(target.origin === new URL(connection.original.url).origin && route.startsWith('/api/'),
     'GRANT_ROUTE_INVALID', 'Use an original declared grant API route.');
   const bytes = body === undefined ? undefined : Buffer.isBuffer(body) ? body : Buffer.from(JSON.stringify(body));
-  const maximumInput = target.pathname === '/api/operations/import' && contentType === 'application/zip' && Buffer.isBuffer(body)
-    ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES;
+  const maximumInput = /^\/api\/operations\/operation-[a-f0-9]{32}\/flowable-sources\/import$/.test(target.pathname) &&
+    contentType === 'application/octet-stream' && Buffer.isBuffer(body)
+    ? INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES
+    : target.pathname === '/api/operations/import' && contentType === 'application/zip' && Buffer.isBuffer(body)
+      ? GRANT_MAX_CASE_BUNDLE_BYTES : GRANT_MAX_BUNDLE_BYTES;
   need(bytes === undefined || bytes.length <= maximumInput, 'GRANT_INPUT_TOO_LARGE',
     'The original request exceeds its declared native receiving capacity.');
   return new Promise((resolveResult, reject) => {
@@ -1035,6 +1040,11 @@ export class GrantWorkspaceClient {
     if (body.mapping !== undefined) object(body.mapping,'Original workbook mapping');
     return this.#request('/api/source-tables/workbook/' + action,{body,mutation:false});
   }
+  flowableSources(action, input) {
+    const plan=planFlowableSourceOperation(action,input);
+    return this.#admit(() => performFlowableSourceOperation(plan,
+      async (route, options) => transport(await this.#readLaunch(), route, options)));
+  }
   installationSources(action, input = {}) {
     const plan = planInstallationSourceOperation(action, input);
     if (plan.operation?.workspaceDirectory !== undefined)
@@ -1255,6 +1265,22 @@ export class GrantWorkspaceClient {
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');
     return this.#request('/api/operations/' + caseId + '/forecast-preview', {body:{expectedVersion, inputs}, mutation:false});
+  }
+  forecastOptionsPreview(caseId, expectedVersion, options) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    need(Array.isArray(options) && options.length >= 1 && options.length <= 24,
+      'GRANT_INVALID_INPUT', 'Select from one through 24 complete financing options.');
+    const seen = new Set();
+    for (const option of options) {
+      exact(option, ['id', 'name', 'inputs'], ['id', 'name', 'inputs']);
+      text(option.id, 'Financing option identity', 100);
+      need(/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(option.id) && !seen.has(option.id),
+        'GRANT_INVALID_INPUT', 'Retain unique financing option identities.');
+      seen.add(option.id); text(option.name, 'Financing option name', 200);
+      object(option.inputs, 'Complete Forecast inputs');
+    }
+    return this.#request('/api/operations/' + caseId + '/forecast-options-preview',
+      {body:{expectedVersion, options}, mutation:false});
   }
   forecastSave(caseId, body) {
     id(caseId, 'operation');

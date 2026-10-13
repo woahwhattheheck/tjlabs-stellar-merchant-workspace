@@ -4,6 +4,8 @@ This product receives original OpenSanctions editions and complete delta chains,
 
 The selected product is `source-monitoring`. It includes the original monitoring and JSON Lines commands, the original customer/file-job receiving tools, the existing installer and Applications lifecycle, and `source-monitoring-client`. Install a source release; import a complete operating workspace to continue its editions and cases.
 
+For a customer agent, use [AGENT.md](AGENT.md) for the complete scoped tool workflow and [CUSTOMER_SETUP.md](CUSTOMER_SETUP.md) to bind an existing running Application through its original managed configuration history. The agent retains exact requests, full HTTP responses and complete downloads; the original workspace remains the writer. The same reviewer receiving course can continue through that transport.
+
 ## 1. Select the complete installed source
 
 The host needs Node 22.16 or later and Python 3.11 or later. Managed installation uses Linux, `flock`, and a private local filesystem supporting locks, atomic file creation and fsync. The source-monitoring server, query engine and client use the Python and Node standard libraries. The customer's existing yente service supplies native screening.

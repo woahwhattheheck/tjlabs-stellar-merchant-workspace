@@ -1,5 +1,5 @@
 // MIT. Recurring original-source commissioning in the existing private operator.
-export function createSourceHistoryPanel({getState,perform,handle,saveEditor,changedSource,notice}){
+export function createSourceHistoryPanel({getState,perform,handle,saveEditor,changedSource,notice,intakeMapper}){
   const $=id=>document.getElementById(id),node=(tag,value)=>{const e=document.createElement(tag);if(value!==undefined)e.textContent=typeof value==='object'?JSON.stringify(value,null,2):String(value??'—');return e;};
   const detail=(title,value)=>{const e=node('details');e.append(node('summary',title),node('pre',value));return e;};
   const button=(label,key,value)=>{const e=node('button',label);e.type='button';e.dataset[key]=value;return e;};
@@ -9,7 +9,7 @@ export function createSourceHistoryPanel({getState,perform,handle,saveEditor,cha
       queryIds:[...selectedReuse],allEligible:$('reuse-all').checked};
   }
   function controls(busy=false){
-    const state=getState();$('stage-form').querySelector('button').disabled=busy||!state?.intake||!state.editions.length;
+    const state=getState();$('stage-form').querySelector('button[type=submit]').disabled=busy||!state?.intake||!state.editions.length;
     $('history-prev').disabled=busy||historyOffset===0;$('history-next').disabled=busy||!historyPage||historyOffset+25>=historyPage.total;
     $('comparison-prev').disabled=busy||!comparison||offset===0;$('comparison-next').disabled=busy||!comparison||offset+25>=comparison.total;
     $('reuse-prev').disabled=busy||!comparison||reuseOffset===0;$('reuse-next').disabled=busy||!comparison||reuseOffset+25>=comparison.reusableTotal;
@@ -82,16 +82,9 @@ export function createSourceHistoryPanel({getState,perform,handle,saveEditor,cha
     }
     renderSelected();renderComparison();
   }
-  async function original(){
-    const file=$('stage-file').files?.[0],path=$('stage-path').value.trim();
-    if(file&&path)throw new Error('Choose the original file or the original host path, not both.');
-    if(file){if(file.size>16*1024*1024)throw new Error('Use the original host path for sources larger than16MiB.');return {text:new TextDecoder('utf-8',{fatal:true}).decode(await file.arrayBuffer())};}
-    if(!path)throw new Error('Choose the complete following source.');return {path};
-  }
   $('stage-form').onsubmit=event=>{event.preventDefault();void handle(async()=>{
-    const input=await original(),map=$('stage-mapping').value.trim();
-    const result=await perform('source.stage',{...input,format:$('stage-format').value,name:$('stage-name').value,sourceURL:$('stage-url').value||null,
-      provenance:$('stage-provenance').value,baselineEditionId:$('stage-baseline').value,...(map?{mapping:JSON.parse(map)}:{})});
+    const input=await intakeMapper.payload();
+    const result=await perform('source.stage',{...input,baselineEditionId:$('stage-baseline').value});
     $('stage-file').value='';await history();await inspect(result.source.intake.sha256,{newSelection:true});
     notice('Following source retained for review. The current editor source and selected customer edition remain unchanged.');
   });};

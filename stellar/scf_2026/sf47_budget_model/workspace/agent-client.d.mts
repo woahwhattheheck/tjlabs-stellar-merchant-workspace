@@ -1,3 +1,5 @@
+import type {FlowableSourceInputs,FlowableSourceResponses} from './flowable-source-desk-agent.mjs';
+export * from './flowable-source-desk-agent.mjs';
 import type {InstallationSourceInputs,InstallationSourceResponses} from './installation-source-desk-agent.mjs';
 export * from './installation-source-desk-agent.mjs';
 // MIT. TypeScript declarations for the original SF47 client and its saved delivery workflow.
@@ -2524,6 +2526,20 @@ export interface GrantForecastPreview extends GrantObject {
   report: GrantObject;
   previewSha256: string;
 }
+export interface GrantForecastFinancingOption {
+  id: string;
+  name: string;
+  inputs: GrantObject;
+}
+export interface GrantForecastFinancingPreview {
+  schema: 'stellar-forge.forecast-financing-preview.v1';
+  source: GrantForecastSource;
+  options: Array<{id: string; name: string; inputSha256: string; preview: GrantForecastPreview}>;
+  /** Native canonical digest of the complete submitted {expectedVersion, options}. */
+  requestSha256: string;
+  /** Native canonical digest of the complete result before this sha256 member. */
+  sha256: string;
+}
 export interface GrantSavedForecast extends GrantForecastPreview {
   id: string;
   createdAt: string;
@@ -4436,6 +4452,8 @@ export function inspectGrantAgentBinding(input: GrantBindingInput): Promise<Gran
 export function readGrantAgentFile(filename: string, maximum?: number, privateOnly?: boolean): Promise<Buffer>;
 
 export class GrantWorkspaceClient {
+  /** Complete Flowable sidecar custody on this original authenticated case service. */
+  flowableSources<K extends keyof FlowableSourceInputs>(action:K,input:FlowableSourceInputs[K]):Promise<FlowableSourceResponses[K]>;
   /** Complete original Source Desk lifecycle using this client's existing owner and drain. */
   installationSources<K extends keyof InstallationSourceInputs>(action:K,input:InstallationSourceInputs[K]):Promise<InstallationSourceResponses[K]>;
   constructor(binding: GrantBinding);
@@ -4503,6 +4521,7 @@ export class GrantWorkspaceClient {
   amendmentCalendarExport(caseId: string, selection: GrantAmendmentCalendarExportSelection): Promise<GrantNativeResponse>;
   amendmentPreview<T = GrantAmendmentPreview>(caseId: string, expectedVersion: number, inputs: GrantAmendmentInputs): Promise<GrantJsonResponse<T>>;
   forecastPreview<T = GrantForecastPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
+  forecastOptionsPreview<T = GrantForecastFinancingPreview>(caseId: string, expectedVersion: number, options: GrantForecastFinancingOption[]): Promise<GrantJsonResponse<T>>;
   forecastSave<T = GrantForecastSaveReceipt>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
   portfolioSeed<T = GrantPortfolioSeed>(caseId: string, expectedVersion: number, forecastId: string, options?: GrantPortfolioSeedOptions): Promise<GrantJsonResponse<T>>;
   portfolioPreview<T = GrantPortfolioPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;

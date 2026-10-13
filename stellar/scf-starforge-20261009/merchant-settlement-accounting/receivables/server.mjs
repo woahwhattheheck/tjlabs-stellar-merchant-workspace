@@ -183,6 +183,12 @@ export async function handleReceivablesRequest(receivables, {method, path, query
     }
     else if (parts[0] === 'credit-control' && parts[1] === 'operations' && parts.length === 3)
       result = await receivables.creditControlOperation(parts[2]);
+    else if (route === 'cash-realizations') result = await receivables.cashRealizations({planId:search.get('planId')||undefined});
+    else if (parts[0] === 'cash-realizations' && parts[1] === 'operations' && parts.length === 3) result = await receivables.cashRealizationOperation(parts[2]);
+    else if (parts[0] === 'cash-realizations' && parts.length === 2) result = await receivables.cashRealization(parts[1]);
+    else if (parts[0] === 'cash-realizations' && parts[2] === 'files' && parts.length === 4) {
+      const selected=await receivables.cashRealizationFile(parts[1],parts[3]);return {file:selected,type:selected.type};
+    }
     else if (route === 'cash-plans') result = await receivables.cashPlans({status:search.get('status')||undefined,search:search.get('search')||undefined});
     else if (route === 'cash-plans/compare') result = await receivables.compareCashPlans(cashComparisonQuery());
     else if (route === 'cash-plans/compare/export') {
@@ -303,6 +309,8 @@ export async function handleReceivablesRequest(receivables, {method, path, query
       result = await receivables.saveCreditDecision(parts[2],value);
     else if (parts[0] === 'credit-control' && parts[1] === 'decisions' && parts[3] === 'withdraw' && parts.length === 4)
       result = await receivables.withdrawCreditDecision(parts[2],value);
+    else if (route === 'cash-realizations/preview') result = await receivables.previewCashRealization(value);
+    else if (route === 'cash-realizations') result = await receivables.saveCashRealization(value);
     else if (route === 'cash-plans/preview') result = await receivables.previewCashPlan(value);
     else if (route === 'cash-plans') result = await receivables.saveCashPlan(value);
     else if (parts[0] === 'cash-plans' && parts.length === 3) {

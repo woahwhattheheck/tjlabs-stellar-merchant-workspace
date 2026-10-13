@@ -8,6 +8,7 @@ const usage='Address quality workspace\n\n'+
  'node cli.mjs status --dir /private/address-workspace\n'+
  'node cli.mjs act ACTION --dir /private/address-workspace --payload /private/action.json\n\n'+
  'Actions: '+[...GEOAPIFY_ACTIONS].join(', ')+'\n\n'+
+ 'intake.preview inspects actual original bytes and explicit mapping without provider calls or source adoption. Use its source.sha256 and mapped.mappingSha256 as expectedSourceSha256/expectedMappingSha256 on import or stage. inspectionId is an in-process paging handle; a separate CLI invocation must provide the original path/text/base64 again. '+
  'Keep the first original source in intake.import; source.stage/history/compare/activate retain following editions and explicit decision reuse. Source selection is independent from the selected frozen customer edition. Provider responses retain original generic-batch input IDs and full candidates. '+
  'provider.prepare records the explicit job options and input limit; provider.run uses its original ID and SHA-256 once. provider.poll continues the returned job after its saved poll time; provider.import joins an actual original acknowledgment or result. '+
  'customer.issue freezes original source groups for an offline reviewer; customer.export retains complete HTML/JSON; customer.receive retains the original returned draft; customer.preview shows baseline/current/customer differences; customer.adopt requires an explicit current preview and resolutions or readyAll. issue/adopt retain requestId for exact uncertain-result recovery. '+

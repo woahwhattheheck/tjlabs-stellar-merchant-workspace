@@ -3,7 +3,8 @@ import type * as Collections from '../../stellar/scf-starforge-20261009/merchant
 import type * as Cash from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-planning-types.d.ts';
 import type * as Credit from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/credit-control-types.d.ts';
 import type {ReceivablesCallOptions, ReceivablesFileOptions, ReceivablesFileMetadata} from './accounting-receivables-client.mjs';
-export type {Collections, Cash, Credit};
+import type * as Realization from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-types.d.ts';
+export type {Collections, Cash, Credit, Realization};
 export interface FinancialControlArgumentsMap {
   collection_list: Collections.CollectionsQuery;
   collection_detail: {collectionCaseId:string;asOf?:string};
@@ -19,6 +20,10 @@ export interface FinancialControlArgumentsMap {
   cash_plan_archive: Cash.CashPlanStatusInput & {cashPlanId:string};
   cash_plan_reopen: Cash.CashPlanStatusInput & {cashPlanId:string};
   cash_plan_compare: Cash.CashPlanCompareQuery;
+  cash_realization_list: Realization.CashRealizationListQuery;
+  cash_realization_preview: Realization.CashRealizationPreviewInput;
+  cash_realization_detail: {cashRealizationId:string};
+  cash_realization_save: Realization.SaveCashRealizationInput;
   credit_control: Credit.CreditControlQuery;
   credit_policy_detail: {creditPolicyId:string};
   credit_policy_save: Credit.SaveCreditPolicyInput;
@@ -42,6 +47,10 @@ export interface FinancialControlResultsMap {
   cash_plan_archive: Cash.CashPlanMutationResult;
   cash_plan_reopen: Cash.CashPlanMutationResult;
   cash_plan_compare: Cash.CashPlanComparison;
+  cash_realization_list: Realization.CashRealizationList;
+  cash_realization_preview: Realization.CashRealizationPreview;
+  cash_realization_detail: Realization.CashRealizationDetail;
+  cash_realization_save: Realization.CashRealizationMutationResult;
   credit_control: Credit.CreditControlReport;
   credit_policy_detail: Credit.CreditPolicyDetail;
   credit_policy_save: Credit.CreditPolicyMutationResult;
@@ -51,7 +60,7 @@ export interface FinancialControlResultsMap {
   credit_decision_withdraw: Credit.CreditDecisionMutationResult;
 }
 export type FinancialControlOperation = keyof FinancialControlArgumentsMap;
-export type FinancialControlMutation = 'collection_save' | 'collection_activity' | 'collection_close' | 'collection_reopen' | 'cash_plan_save' | 'cash_plan_archive' | 'cash_plan_reopen' | 'credit_policy_save' | 'credit_decision_save' | 'credit_decision_withdraw';
+export type FinancialControlMutation = 'collection_save' | 'collection_activity' | 'collection_close' | 'collection_reopen' | 'cash_plan_save' | 'cash_plan_archive' | 'cash_plan_reopen' | 'cash_realization_save' | 'credit_policy_save' | 'credit_decision_save' | 'credit_decision_withdraw';
 export interface FinancialControlMethods {
   collectionCases: 'collection_list';
   collectionCase: 'collection_detail';
@@ -67,6 +76,10 @@ export interface FinancialControlMethods {
   archiveCashPlan: 'cash_plan_archive';
   reopenCashPlan: 'cash_plan_reopen';
   compareCashPlans: 'cash_plan_compare';
+  cashRealizations: 'cash_realization_list';
+  previewCashRealization: 'cash_realization_preview';
+  cashRealization: 'cash_realization_detail';
+  saveCashRealization: 'cash_realization_save';
   creditControl: 'credit_control';
   creditPolicy: 'credit_policy_detail';
   saveCreditPolicy: 'credit_policy_save';
@@ -83,6 +96,7 @@ export type FinancialControlFileSelection =
   (Collections.CollectionsQuery & {kind:'receivables-collections';file:'collections.json'|'collections.csv'}) |
   {kind:'receivables-cash-plan';cashPlanId:string;editionId?:string;file:Cash.CashPlanFileName} |
   (Cash.CashPlanCompareQuery & {kind:'receivables-cash-plan-comparison';file:'comparison.json'|'comparison.csv'}) |
+  {kind:'receivables-cash-realization';cashRealizationId:string;file:Realization.CashRealizationFileName} |
   {kind:'receivables-credit-decision';creditDecisionId:string;file:Credit.CreditDecisionFileName};
 export const FINANCIAL_CONTROL_FILES: Readonly<Record<FinancialControlFileSelection['kind'], readonly string[]>>;
 export interface FinancialControlClient {
@@ -100,6 +114,11 @@ export interface FinancialControlClient {
   archiveCashPlan(args: FinancialControlArgumentsMap['cash_plan_archive'], options?: ReceivablesCallOptions): Promise<FinancialControlResultsMap['cash_plan_archive']>;
   reopenCashPlan(args: FinancialControlArgumentsMap['cash_plan_reopen'], options?: ReceivablesCallOptions): Promise<FinancialControlResultsMap['cash_plan_reopen']>;
   compareCashPlans(args: FinancialControlArgumentsMap['cash_plan_compare'], options?: ReceivablesCallOptions): Promise<FinancialControlResultsMap['cash_plan_compare']>;
+  cashRealizations(args?:FinancialControlArgumentsMap['cash_realization_list'],options?:ReceivablesCallOptions):Promise<FinancialControlResultsMap['cash_realization_list']>;
+  previewCashRealization(args:FinancialControlArgumentsMap['cash_realization_preview'],options?:ReceivablesCallOptions):Promise<FinancialControlResultsMap['cash_realization_preview']>;
+  cashRealization(args:FinancialControlArgumentsMap['cash_realization_detail'],options?:ReceivablesCallOptions):Promise<FinancialControlResultsMap['cash_realization_detail']>;
+  saveCashRealization(args:FinancialControlArgumentsMap['cash_realization_save'],options?:ReceivablesCallOptions):Promise<FinancialControlResultsMap['cash_realization_save']>;
+  cashRealizationFile(args:Omit<Extract<FinancialControlFileSelection,{kind:'receivables-cash-realization'}>,'kind'>,options?:ReceivablesFileOptions & {maximumBytes?:number}):Promise<{bytes:Uint8Array;file:ReceivablesFileMetadata}>;
   creditControl(args?: FinancialControlArgumentsMap['credit_control'], options?: ReceivablesCallOptions): Promise<FinancialControlResultsMap['credit_control']>;
   creditPolicy(args: FinancialControlArgumentsMap['credit_policy_detail'], options?: ReceivablesCallOptions): Promise<FinancialControlResultsMap['credit_policy_detail']>;
   saveCreditPolicy(args: FinancialControlArgumentsMap['credit_policy_save'], options?: ReceivablesCallOptions): Promise<FinancialControlResultsMap['credit_policy_save']>;

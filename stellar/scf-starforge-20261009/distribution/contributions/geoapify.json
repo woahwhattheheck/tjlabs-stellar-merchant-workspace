@@ -18,7 +18,8 @@
     "./installation/geoapify": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/geoapify-installation.mjs",
     "./installation/geoapify/source": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/geoapify-installation-source.mjs",
     "./seller/geoapify/customer-review": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/customer-review-core.mjs",
-    "./seller/geoapify/customer-review/report": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/customer-review-report.mjs"
+    "./seller/geoapify/customer-review/report": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/customer-review-report.mjs",
+    "./seller/geoapify/source-inspection": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/source-inspection.mjs"
   },
   "browserAssets": [
     {
@@ -45,6 +46,7 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/customer-review-core.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/customer-review-ui.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/customer-review-report.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/CUSTOMER_REVIEW.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/CUSTOMER_REVIEW.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/source-inspection.mjs"
   ]
 }

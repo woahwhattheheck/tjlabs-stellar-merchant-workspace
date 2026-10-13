@@ -1,0 +1,322 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "tourism-series",
+  "heading": "## Tourism source series and customer receiving",
+  "sources": [
+    {
+      "id": "tourism-series-operating",
+      "label": "Complete installed tourism product and customer operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/tourism-series/OPERATING.md",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 4977,
+          "sha256": "79a7c74a3c30fda3c23fb3e7cc11df3cd01f116301f7c454e94981df59fd5542",
+          "git_blob": "894802a271496945cdb6be4d2ecfc4b5bc1fab12"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-original-source",
+      "label": "Complete unchanged original application source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/tourism-series/SOURCE_ADOPTION.json",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 4304,
+          "sha256": "810916a4328a7b944d3d9525f7a919274cefb91adf923a53e53f8412fdd40966",
+          "git_blob": "d1fde6312819f7794d2f9fd743efb7a78ade9ee0"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-engine",
+      "label": "Original source, dimensions, calculations, reports and target-return engine",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/engine.mjs",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 53796,
+          "sha256": "a5f8bc82fb053ec8ecae51692ed1179f445af672452fbf8b93b75a9c9caff227",
+          "git_blob": "68b838e7d35b91830e674b6734c3787191727f55"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-cli",
+      "label": "Original complete source-workspace and handover CLI",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/cli.mjs",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 10910,
+          "sha256": "9c801c2cc48af2f93bf9e525fa115c0e4aefd76cd543f804650a5e6d82675189",
+          "git_blob": "6a2f1dee9d1e9fece8bf19f2a7c29730842d4182"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-browser",
+      "label": "Complete original source and reporting browser controls",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/app.mjs",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 51060,
+          "sha256": "93eb43d7d1c5354ba496231182c3cae75d32a37fcd9875b9fa9cab8984d3d7a3",
+          "git_blob": "4c04b450497cb8652429d1e6bd1e1b675de77004"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-portable",
+      "label": "Full working HTML, original files, recovery and portable source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/portable.mjs",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 9809,
+          "sha256": "78aed8fed2c3ed94e3025dbe5a63bc2b35af96bc6cc1bc7dec7f1c7de250817d",
+          "git_blob": "45870547995d85f247b5f1314496849ff4cc98ea"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-builder",
+      "label": "Complete standalone application and delivery builder",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/build.mjs",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 5869,
+          "sha256": "2000bdfece4bed1b2ae3f9880fc32fd0b245f3d1ef0ce70dab349683a2c9718b",
+          "git_blob": "6681d7e02a89dad389ce9165847f89bae9ab62ba"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-api",
+      "label": "Exact original pure engine and source contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/API.md",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 4916,
+          "sha256": "df34599c2deac2fa8072cef4e3649ac384b0c8503cd7f31f85014cc6baa294f3",
+          "git_blob": "816a9821452322f332987aafeb5c87396f1754d2"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-core-guide",
+      "label": "Complete source and target receiving operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/CORE_OPERATING.md",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 10555,
+          "sha256": "e459967b93c9b9fc0bfff2a7c98278eab0268c84f44e75eb7b4eb297cbbcad5d",
+          "git_blob": "8998618e4e55e553f6640de16b71cb1234ee2ad3"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-browser-course",
+      "label": "Original complete actual-control receiving callback",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/run_browser_receiving.mjs",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 35115,
+          "sha256": "46a3384f92ee97137f5b74f5c268c31201985142d0982273dbfcee22ea54ab2d",
+          "git_blob": "c041902743152b840bdfd1ca1806d7b641c79eae"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-browser-guide",
+      "label": "Original exact-attachment and rendered receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/BROWSER_OPERATING.md",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 6821,
+          "sha256": "99afed481e4a54dad8ba92c8d13ff63f3d9b15621b7c35face1fddaa4971d4ac",
+          "git_blob": "e0d2331428e52c879ea5f47d76663dba72ea8b64"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-installation-scope",
+      "label": "Full source-edition scope and original Workshare composition",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-core.mjs",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 12588,
+          "sha256": "83a4469b3d35039caf84cbd2b58caceba0516bfb2d5ff42c906869025dfa4e32",
+          "git_blob": "1b9dcccd99b1cd83184b47c9b487fa92d80fd092"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-installation-prepare",
+      "label": "Installed original source inspection and Installation preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation.mjs",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 6180,
+          "sha256": "eb9725dc5432da78fd0dc3f057d81ddde1d309f76e11d126d98e44eb99bd8bd2",
+          "git_blob": "ea55b6d40535c31cf94dd94081e09d3a1b986f55"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-installation-custody",
+      "label": "Full original-file custody and same-operation native invocation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-io.mjs",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 4005,
+          "sha256": "5f688a649e4f9ae46ed5747f6c7a1211eef22dc4306e7e5bd20766758a343fc1",
+          "git_blob": "f16201add2240902f26c7e9da56592eafbdccd34"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-installation-archive",
+      "label": "Complete original Installation archive selection before import",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-operations.py",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 3267,
+          "sha256": "000ffecc648a94ffec0e37a8251d8844e73415210e403a4508ad63ebd656c9f6",
+          "git_blob": "201f77871324c52cc2b44e36a6da2c3c7f9cd71d"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-installation-receiving",
+      "label": "Independent complete application and saved-case receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-installation-receiving.mjs",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 13523,
+          "sha256": "2f7e8e6e7cd4c692792ed2c43a095424a5805fc3f8e2cc9b94ae6b36d0bd4d10",
+          "git_blob": "002f0dc948a5758f62417fa7309516624aa7ca0d"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-installation-profile",
+      "label": "Original commercial task and complete delivery phases",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/tourism-series.json",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 10766,
+          "sha256": "c2a507bf6e2a8757aac583c271025d5f9dec9d2ed8eabeaca0ce3b8cae1f2c95",
+          "git_blob": "bef317ec3768e402b3dde56188171dcea9db6162"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-installation-guide",
+      "label": "Whole source-to-Installation and independent receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/TOURISM_INSTALLATION.md",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 17299,
+          "sha256": "75754eaea384002b45faf970db82bf154fa3bb586a5ff7e58528049c0fbca2af",
+          "git_blob": "5df255cee34e61a3ff2a250811a06fabac522c49"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-registration",
+      "label": "Source-owned installed commands and package exports",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/tourism-series.json",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 3496,
+          "sha256": "6748025534e0c33b8775af2cfc40ade56b46d4cc19fc8145c2d7d2d8fbc92dd7",
+          "git_blob": "b5d8a1871eee5092e6c3b74880ae189dc6d92cd4"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-distribution",
+      "label": "Full Tourism and Grant Operations source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/tourism-series.json",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 22074,
+          "sha256": "0b95101ab1e9dce035b3626a9e10c3aeb1108188f603e6c56a48060f1a614a36",
+          "git_blob": "dd6459a3c425de3d90a39157ee539dbba1cd49c4"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-standalone",
+      "label": "Complete original standalone editable application",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/Tourism_Series_Workspace.html",
+      "editions": [
+        {
+          "commit": "c49193b0fa27fe80a126af6c28a85ed4d563fdc7",
+          "bytes": 383106,
+          "sha256": "41e9e4ab543af4b6c55175da051fc642000343e79536831797baf8ef76a4f3e0",
+          "git_blob": "a1b0410e97d99ab36f5a02082353cc92fb952de1"
+        }
+      ]
+    }
+  ]
+}

@@ -33,6 +33,8 @@ export interface HostHandoffOperatorCustody {
   operatorDirectory: string;
   releaseStore: string;
   exportsDirectory: string;
+  /** Derived original setup controls; retained outside captured/receiving roots. */
+  setupDirectory?: string;
 }
 export interface HostHandoffMerchantConfiguration extends HostHandoffConnection {
   connectionFile: string;

@@ -83,10 +83,80 @@ Optional `facilitators` uses the original `stellar-forge.seller-facilitators.v1`
 
 Optional merchant profiles retain the original public `origin`, endpoint `path`, and SF30 `payment` configuration. Optional buyer workspaces select their original private directories. The provider passes these declared values to the existing seller compiler and publisher, preserving their validation and financial behavior.
 
+## Inspect and map a real file before import
+
+The browser's source intake and recurring-source forms offer actual field selectors
+for a text address or structured address components. Choose identity and coordinate
+fields explicitly. Source field names and original examples are retained as supplied;
+mapping JSON remains available for advanced use. The full original file is inspected
+before source history changes.
+
+Agents use `merchant_geoapify_inspect_source` with the declared `sourceImport`.
+The alias can omit `mapping` until the original fields have been inspected. Supply
+an explicit mapping in a subsequent inspection and keep the returned normalized
+mapping with both identities. The private source file remains selected through its
+declared alias throughout this workflow.
+
+```json
+{
+  "workspace": "addresses",
+  "sourceImport": "original",
+  "mapping": {"street": "street_name", "housenumber": "house_number", "city": "borough"},
+  "fieldOffset": 0,
+  "fieldLimit": 100,
+  "fieldSearch": "",
+  "rowOffset": 0,
+  "rowLimit": 25
+}
+```
+
+The returned `result` has `source`, `rowCount`, independently paged
+`fields` and `rows`, and `mapped` when mapping was supplied. Statistics
+cover every original record. `fieldSearch` filters the field-name list only;
+`fieldsPage.unfilteredTotal` retains the complete field count. The browser
+keeps selected fields when the visible field page changes.
+
+Field `types` describes values resolved by the original mapping engine.
+`observedTypes` also includes physical occurrences that may be overridden or
+unreachable. A literal top-level key such as `address.city` takes precedence
+over nested `address` → `city`; collision records show original key segments
+and counts. Arrays and objects remain in original rows. Original numeric JSON
+tokens retain their exact text, and CSV strings retain leading zeros and whitespace.
+Examples exceeding 240 characters are explicitly marked as previews; full values
+remain in paged original rows.
+
+A valid mapped inspection includes normalized `mapping`,
+`mappingSha256`, complete query count, rows with no usable query, all rows
+with mapping problems, duplicate identity group/member counts, missing identities
+and original-coordinate coverage. A row's `params` shows its actual query.
+Invalid mappings retain the field and original-row preview with readable errors.
+`mapped.valid` means the original mapping and intake are accepted; inspect
+`invalidRows` and `problemRows` separately before deciding how to proceed.
+
+For import and successor staging pass:
+
+- `expectedSourceSha256: result.source.sha256` for the exact original bytes,
+  including any UTF-8 BOM.
+- `expectedMappingSha256: result.mapped.mappingSha256` for the normalized
+  explicit mapping.
+- The same `mapping` and current `expectedRevision`.
+
+These optional guards preserve compatibility with existing callers. Guided browser
+commits supply both. The original file is read again and both identities are checked
+before a source is written. These are distinct from the retained normalized intake
+hash used later by provider jobs, source activation and review decisions.
+
+The native `intake.preview` keeps one parsed source snapshot per open workspace
+for repeated field and row pages. Its inspection identity binds file bytes and format;
+the display name does not change it. Upload transport preserves original bytes.
+Saved mapping setup and unfinished form inputs remain available independently of
+source import. Reopen a setup against the exact selected source and inspect the
+mapping before committing.
+
 ## Operate the complete source
 
 1. Call `merchant_geoapify_status` to see declared aliases, then `merchant_geoapify_open` with `{"workspace":"addresses"}`. Save the returned instance ID for closing.
-2. Import the original source with `merchant_geoapify_intake`, its declared `sourceImport`, and current `expectedRevision`. Review the returned counts and inspect exact rows with `merchant_geoapify_source`.
+2. Inspect the declared original file with `merchant_geoapify_inspect_source`, choose its explicit mapping, and review the complete-source counts and original rows. Import it with `merchant_geoapify_intake`, the same `sourceImport` and mapping, current `expectedRevision`, and the preview's exact `expectedSourceSha256` and `expectedMappingSha256`. Inspect retained rows with `merchant_geoapify_source`.
 3. Use `merchant_geoapify_provider` with action `prepare` and a payload containing current `expectedRevision`, `maximumInputs`, and explicit options. Prepared requests select at most 1000 distinct source-query IDs and retain every original row associated with those queries.
 4. Inspect action `request` with the returned job ID. The response includes the exact endpoint, common options, paged input IDs and saved request SHA. Download its full original JSON with `merchant_geoapify_file`, kind `provider-request`.
 5. Submit action `run` using that job ID, exact `expectedRequestSha256` and current revision. The native operator records the dispatch before contacting Geoapify. An immediate result or a returned asynchronous job remains attached to this original request.

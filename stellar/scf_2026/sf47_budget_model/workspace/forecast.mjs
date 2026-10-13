@@ -7,6 +7,8 @@ import { currentStaffContext, staffDeskStorageKey } from './staff-session.mjs';
 import {fundingEditor,fundingOpeningEditor,emptyFundingOpening,readFunding,fundingReport,handleFundingReport} from './forecast-customer-funding.mjs';
 import {mountForecastCashReview} from './forecast-cash-reconciliation-desk.mjs';
 import {validateCashDesk,validateCashReview,applyCashDraft} from './forecast-cash-reconciliation.mjs';
+import {mountForecastFinancing} from './forecast-financing-desk.mjs';
+import {validateFinancingState,verifyFinancingState} from './forecast-financing.mjs';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const usd = value => value === null || value === undefined ? 'Not entered' : new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(value));
@@ -34,7 +36,7 @@ function download(raw,filename,type='application/json') {
 export function mountForecast({container,current,api:transport,mutationId,recordingActor,onSaved,initialForecastId=null,initialInputs=null,onSelection=()=>{}}) {
   const root=document.createElement('section');root.className='operating-forecast';container.replaceChildren(root);
   let active=true,busy=false,hostBusy=false,selected=null,preview=null,editing=true,inputState=null,request=null,comparison=null;
-  const blocked=()=>busy||hostBusy||restoring||Boolean(pendingWorkbook)||Boolean(request);
+  const blocked=()=>busy||hostBusy||restoring||Boolean(pendingWorkbook)||Boolean(request)||Boolean(financingState?.pendingSource);
   const available=()=>active&&root.isConnected;
   function requireActive(){if(!available())throw new Error('This forecast view is closed. Reopen its original case to continue.');}
   async function api(...args){requireActive();const result=await transport(...args);requireActive();return result;}
@@ -48,7 +50,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
   function defaults(){return {name:current.program.name+' — operating forecast',asOfDate:today(),calendarStart:current.program.calendarStart||current.plan.planning.calendarStart||'',
     openingCash:{amountUsd:null,basis:'NOT_ENTERED',sourceIds:[],note:''},packageOverrides:[],invoiceOverrides:[],grantReceipts:[],commercial:[],capacity:{weeklyHours:null,note:''},note:''};}
   function status(message,error=false){if(!available())return;const node=$('[data-forecast-status]');node.textContent=message;node.setAttribute('role',error?'alert':'status');}
-  function applyBusy(){if(!available())return;const state=blocked();root.setAttribute('aria-busy',String(busy||hostBusy||restoring));root.querySelectorAll('input,select,textarea,button').forEach(node=>{if(!node.closest('[data-forecast-workbook],[data-forecast-cash-review]'))node.disabled=(recoveryAction(node)?busy||hostBusy||restoring:state)||node.dataset.forecastFixed==='true';});for(const [action,visible] of [['recover-source',!!pendingWorkbook],['recover-save',!!request]]){const control=$('[data-forecast-action='+action+']');if(control)control.hidden=!visible;}comparison?.setHostBusy();workbook?.setHostBusy();cashDesk?.setHostBusy();}
+  function applyBusy(){if(!available())return;const state=blocked();root.setAttribute('aria-busy',String(busy||hostBusy||restoring));root.querySelectorAll('input,select,textarea,button').forEach(node=>{if(!node.closest('[data-forecast-workbook],[data-forecast-cash-review],[data-forecast-financing]'))node.disabled=(recoveryAction(node)?busy||hostBusy||restoring:state)||node.dataset.forecastFixed==='true';});for(const [action,visible] of [['recover-source',!!pendingWorkbook],['recover-save',!!request]]){const control=$('[data-forecast-action='+action+']');if(control)control.hidden=!visible;}comparison?.setHostBusy();workbook?.setHostBusy();cashDesk?.setHostBusy();financing?.setHostBusy();}
   function setBusy(state){busy=state;applyBusy();}
   function setHostBusy(state){hostBusy=!!state;applyBusy();}
   async function run(task,{recovery=false}={}){if((recovery?busy||hostBusy||restoring:blocked())||!available())return;setBusy(true);try{await task();}catch(error){status(error.message,true);}finally{if(available()){setBusy(false);persistSoon();}}}
@@ -59,6 +61,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
   const draftStore=createForecastDraftStore(staffDeskStorageKey('sf47.forecast-working.'+current.program.id,pinnedContext));
   let workbook=null,workbookState=null,pendingWorkbook=null,workbookHistory={},restoring=true,storeError='';
   let cashDesk=null,cashState=null,renderedFunding=null;
+  let financing=null,financingState=null;
   const fundingOptions=()=>({field,sourceOptions,cashOptions:cashOptions('IN',true)});
   let previousWorking=null,restoreNotice='',rawFields={};
   const recoveryAction=node=>['download-working','recover-source','recover-save'].includes(node.dataset.forecastAction);
@@ -117,7 +120,8 @@ export function mountForecast({container,current,api:transport,mutationId,record
       planContentSha256:current.plan.contentSha256,savedAt:new Date().toISOString(),editing,selectedId:selected?.id||null,
       inputs:retentionInputs(),rawFields:captureRaw(),workbook:workbook?.snapshot()||clone(workbookState),pendingWorkbook:clone(pendingWorkbook),
       workbookHistory:clone(workbookHistory),saveRequest:clone(request),previousWorking:clone(previousWorking),
-      ...(cashDesk||cashState?{cashReview:cashDesk?.snapshot()||clone(cashState)}:{})};
+      ...(cashDesk||cashState?{cashReview:cashDesk?.snapshot()||clone(cashState)}:{}),
+      ...(financing||financingState?{financing:financing?.snapshot()||clone(financingState)}:{})};
   }
   async function persist(){
     if(editing&&$('[data-forecast-form]'))inputState=retentionInputs();
@@ -135,6 +139,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
       throw new Error('Open the complete working forecast in its original retained case and pinned plan.');
     validateForecastDraftInputs(value.inputs);
     if(Object.hasOwn(value,'cashReview'))validateCashDesk(value.cashReview,{caseId:current.program.id});
+    if(Object.hasOwn(value,'financing'))validateFinancingState(value.financing,current);
     if(!value.workbookHistory||typeof value.workbookHistory!=='object'||Array.isArray(value.workbookHistory))throw new Error('Retain the original workbook operation history.');
     if(value.previousWorking!==null&&value.previousWorking!==undefined){if(value.previousWorking.previousWorking)throw new Error('Retain one complete previous working edition.');validateWorking(value.previousWorking);}
     if(value.saveRequest){
@@ -145,7 +150,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
         signature(r.data.inputs)!==signature(value.inputs))
         throw new Error('Retain the complete original forecast save request and its exact inputs.');
     }
-    if(value.pendingWorkbook&&value.saveRequest)throw new Error('Recover one original forecast request at a time.');
+    if([value.pendingWorkbook,value.saveRequest,value.financing?.pendingSource].filter(Boolean).length>1)throw new Error('Recover one original forecast request at a time.');
     return {...clone(value),rawFields:validateRaw(value.rawFields)};
   }
   function updateCase(next){
@@ -225,12 +230,41 @@ export function mountForecast({container,current,api:transport,mutationId,record
     catch(error){status('Reviewed cash inputs remain in the current draft. Complete the original native validation before saving: '+error.message,true);return {adopted:true,preview:null,message:error.message};}
     }finally{if(available())setBusy(false);}
   }
+  async function applyFinancing(selection){
+    if(hostBusy||restoring||pendingWorkbook||request||financingState?.pendingSource)
+      throw new Error('Finish the original pending Forecast operation before adopting an option.');
+    const before={inputs:retentionInputs(),rawFields:editing?captureRaw():{}};
+    if(current.program.version!==selection.caseVersion||
+      signature(before.inputs)!==signature(selection.before.inputs)||
+      signature(before.rawFields)!==signature(selection.before.rawFields))
+      throw new Error('The original editor or case changed after option review. Review its current complete values again.');
+    const checked=validateFinancingState(selection.state,current);
+    const chosen=checked.options.find(x=>x.id===selection.optionId);
+    if(!chosen)throw new Error('The selected option is absent from its complete study.');
+    let expected=chosen.capture;
+    if(selection.comparisonId){
+      const c=checked.comparisons.find(x=>x.id===selection.comparisonId);
+      const row=c?.result.options.find(x=>x.id===selection.optionId);
+      if(!row||c.result.source.programId!==current.program.id||c.result.source.version!==current.program.version)throw new Error('Recalculate the original option against the current case before adoption.');
+      expected={inputs:row.preview.inputs,rawFields:{}};
+    }
+    if(signature(expected.inputs)!==signature(selection.after.inputs)||
+      signature(expected.rawFields)!==signature(selection.after.rawFields))
+      throw new Error('The reviewed option changed before adoption.');
+    previousWorking=snapshot();delete previousWorking.previousWorking;
+    financingState=clone(checked);financing?.dispose();financing=null;
+    inputState=clone(selection.after.inputs);rawFields=clone(selection.after.rawFields);
+    selected=null;preview=null;request=null;editing=true;onSelection(null);render();restoreRaw();await persist();
+    try{await doPreview();await persist();status('Adopted and previewed the original option. Save through the normal Forecast action to retain its immutable edition.');return {adopted:true,preview};}
+    catch(error){status('The complete option remains in the editor, including unfinished values. Complete the original preview before saving: '+error.message,true);return {adopted:true,preview:null,message:error.message};}
+  }
   async function receiveWorking(value,{fromFile=false}={}){
     const next=validateWorking(value);
     const recoverySignature=()=>{const state=snapshot();delete state.savedAt;return signature(state);};
     const originalSignature=recoverySignature();
     const checkCurrent=()=>{requireActive();if(recoverySignature()!==originalSignature)throw new Error('The current Forecast changed while the received cash sources were being checked. Both working files remain intact.');};
     await receiveCashSources(next.cashReview);checkCurrent();
+    if(next.financing){next.financing=await verifyFinancingState(next.financing,current);for(const c of next.financing.comparisons)for(const source of c.context.sources){const actual=current.sources.find(x=>x.id===source.id);if(!actual||actual.sha256!==source.sha256||actual.bytes!==source.bytes)throw new Error('The financing study needs its complete original case sources before receiving.');}checkCurrent();}
     if(next.pendingWorkbook)next.pendingWorkbook=await workbookHost.validateJournal(next.pendingWorkbook);
     if(next.workbook)next.workbook=await validateForecastWorkbookDeskState(next.workbook,{...workbookOptions(),currentInputs:next.inputs});
     checkCurrent();
@@ -248,12 +282,14 @@ export function mountForecast({container,current,api:transport,mutationId,record
     inputState=clone(next.inputs);rawFields=clone(next.rawFields);selected=null;editing=next.editing;preview=null;request=clone(next.saveRequest);
     pendingWorkbook=clone(next.pendingWorkbook);workbookState=clone(next.workbook);workbookHistory=clone(next.workbookHistory||{});
     cashDesk?.dispose();cashDesk=null;cashState=next.cashReview?clone(next.cashReview):null;
+    financing?.dispose();financing=null;financingState=next.financing?clone(next.financing):null;
     if(!fromFile)previousWorking=clone(next.previousWorking||null);
     selected=receivedSelection;
     requireActive();onSelection(selected?.id||null);render();restoreRaw();
     if(workbook)await workbook.ready;
     requireActive();await persist();
-    status(pendingWorkbook?'Reopened the complete workbook and retained source request. Continue the original source request.':
+    status(financingState?.pendingSource?'Reopened the exact pending study source save. Continue it in Financing options.':
+      pendingWorkbook?'Reopened the complete workbook and retained source request. Continue the original source request.':
       request?'Reopened the exact pending forecast save. Continue the original save request.':
       'Reopened the complete forecast inputs, returned workbook and original review.');
   }
@@ -435,16 +471,18 @@ export function mountForecast({container,current,api:transport,mutationId,record
   function render(){
     if(!available())return;
     comparison?.dispose();comparison=null;
+    if(financing){financingState=financing.snapshot();financing.dispose();financing=null;}
     if(cashDesk){cashState=cashDesk.snapshot();cashDesk.dispose();cashDesk=null;}
     if(workbook){workbookState=workbook.snapshot();workbook.dispose();workbook=null;}
     root.innerHTML='<div class="forecast-heading"><div><h3>Operating forecast</h3><p>Replan remaining cash and delivery work from this retained case.</p></div><div class="forecast-actions">'+button('New forecast','new')+(selected?button('Reforecast current case','reforecast'):'')+'</div></div>'
       +'<label class="forecast-saved-label">Saved forecasts<select data-forecast-selection><option value="">Current draft</option>'+current.forecasts.map(row=>'<option value="'+esc(row.id)+'"'+(selected?.id===row.id?' selected':'')+'>'+esc(row.name)+' · '+esc(row.asOfDate)+' · original v'+row.source.version+'</option>').join('')+'</select></label>'
-      + '<div data-forecast-comparison></div>'
+      + '<div data-forecast-comparison></div><div data-forecast-financing></div>'
       +'<div class="forecast-actions">'+button('Download complete working file','download-working')+button('Reopen working file','choose-working')+button('Continue original source request','recover-source')+button('Continue original save request','recover-save')+(previousWorking?button('Download previous working file','download-previous'):'')+'</div><input hidden data-forecast-working-file type="file" accept=".json,application/json">'
       +'<p data-forecast-status role="status" aria-live="polite"></p>'
       +(current.program.state==='CLOSED'?'<p class="forecast-note">This case is closed. You can inspect and preview forecasts; reopen the case in its original controls before saving a new forecast.</p>':'')
       +'<div data-forecast-editor>'+(editing?editor(inputState||defaults()):'')+'</div><div data-forecast-cash-review></div><div data-forecast-workbook></div><div data-forecast-report>'+(selected&&!editing?reportHtml(selected):'')+'</div>';
     comparison=mountForecastComparison({container:$('[data-forecast-comparison]'),caseId:current.program.id,forecasts:current.forecasts,api,available,isBlocked:blocked});
+    financing=mountForecastFinancing({container:$('[data-forecast-financing]'),getCurrent:()=>current,getEditor:()=>({inputs:retentionInputs(),rawFields:editing?captureRaw():{}}),api,available,isBlocked:blocked,onBusy:setBusy,onStateChange:state=>{financingState=clone(state);persistSoon();},persist,onApply:applyFinancing,onCase:next=>{updateCase(next);invalidate();},mutationId,recordingActor,initialState:financingState});
     cashDesk=mountForecastCashReview({container:$('[data-forecast-cash-review]'),getCurrent:()=>current,getInputs:currentInputs,getRecoveryInputs:retentionInputs,api,available,isBlocked:()=>blocked()||!editing,onCurrent:async next=>{updateCase(next);invalidate();},onStateChange:state=>{cashState=clone(state);persistSoon();},onApply:applyCashReview,initialState:cashState});
     if(editing)workbook=mountForecastWorkbook({container:$('[data-forecast-workbook]'),getCurrent:()=>current,getInputs:currentInputs,getRecoveryInputs:retentionInputs,available,isBlocked:blocked,api,initialState:workbookState,onStateChange:state=>{workbookState=clone(state);persistSoon();},applyReviewedInputs:applyWorkbook});
     root.querySelectorAll('[data-forecast-commercial]').forEach(syncCommercialTiming);
@@ -516,9 +554,10 @@ export function mountForecast({container,current,api:transport,mutationId,record
           previousWorking=validated;delete previousWorking.previousWorking;
           await loadSaved(initialForecastId);
         }else if(initialInputs&&signature(initialInputs)!==signature(validated.inputs)){
-          if(validated.pendingWorkbook||validated.saveRequest){
+          if(validated.pendingWorkbook||validated.saveRequest||validated.financing?.pendingSource){
             const incoming=clone(initialInputs);await receiveWorking(validated);
             previousWorking={...snapshot(),editing:true,selectedId:null,inputs:incoming,rawFields:{},pendingWorkbook:null,saveRequest:null,workbook:null,workbookHistory:{},previousWorking:null};
+            delete previousWorking.financing;
             restoreNotice='Resumed the original pending request. The separately selected input scenario is retained in Download previous working file.';
           }else{
             previousWorking=validated;delete previousWorking.previousWorking;
@@ -530,5 +569,5 @@ export function mountForecast({container,current,api:transport,mutationId,record
     finally{restoring=false;if(available()){applyBusy();if(restoreNotice)status(restoreNotice);}}
   })();
   return {ready,setHostBusy,draftInputs(){if(!editing||!available())return null;persistSoon();return clone(retentionInputs());},
-    dispose(){if(active&&!restoring){try{void persist().catch(()=>{});}catch{}}active=false;comparison?.dispose();workbook?.dispose();cashDesk?.dispose();void draftStore.close();},root};
+    dispose(){if(active&&!restoring){try{void persist().catch(()=>{});}catch{}}active=false;comparison?.dispose();workbook?.dispose();cashDesk?.dispose();financing?.dispose();void draftStore.close();},root};
 }

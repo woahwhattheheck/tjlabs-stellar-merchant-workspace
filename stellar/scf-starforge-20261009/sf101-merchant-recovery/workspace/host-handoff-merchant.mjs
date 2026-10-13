@@ -3,6 +3,7 @@ import { constants } from 'node:fs';
 import { open, lstat, realpath, readdir } from 'node:fs/promises';
 import { isAbsolute, resolve, dirname, sep } from 'node:path';
 import { createHash } from 'node:crypto';
+import { hostSetupControlDirectory } from './host-handoff-setup-state.mjs';
 
 export const HOST_HANDOFF_CONNECTION_SCHEMA = 'stellar-forge.recovery-host-handoff-connection.v1';
 const PLAN_SCHEMA = 'stellar-forge.merchant-recovery-plan.v1';
@@ -148,11 +149,12 @@ export function assertHostHandoffOperatorCustody(roots, protectedPaths) {
       'Keep the running Merchant operator, its configuration and all handoff controls outside captured or receiving roots.');
 }
 export async function readHostHandoffMerchantConfiguration(filename,
-  { operatorDirectory, releaseStore, exportsDirectory } = {}) {
+  { operatorDirectory, releaseStore, exportsDirectory, setupDirectory } = {}) {
   filename = path(filename, 'host connection');
   const raw = await privateBytes(filename, MAX_CONNECTION), value = json(raw, 'host connection');
   const custody = { operatorDirectory: path(operatorDirectory, 'operatorDirectory'),
-    releaseStore: path(releaseStore, 'releaseStore'), exportsDirectory: path(exportsDirectory, 'exportsDirectory') };
+    releaseStore: path(releaseStore, 'releaseStore'), exportsDirectory: path(exportsDirectory, 'exportsDirectory'),
+    setupDirectory:path(setupDirectory??hostSetupControlDirectory(operatorDirectory),'setupDirectory') };
   const result = { schema: HOST_HANDOFF_CONNECTION_SCHEMA, connectionFile: filename,
     connectionSha256: sha(raw), custody, hosts: normalize(value) };
   for (const selected of custodyPaths(result)) await canonical(selected);
@@ -247,9 +249,18 @@ export class MerchantHostHandoffs {
     const { readReleaseState } = await import('../../sf82-seller-pilot/releases.mjs');
     const state = await readReleaseState(root);
     const members = await readdir(root), releases = await readdir(root + sep + 'releases');
+    // Original atomic release initialization can retain an interrupted private
+    // temporary. It is inert source history, not an active/staged release.
+    for (const name of members.filter(name => /^state\.json\.[0-9a-f-]{36}\.tmp$/.test(name))) {
+      const item = await lstat(root + sep + name);
+      need(item.isFile() && !item.isSymbolicLink() && item.nlink >= 1 && item.nlink <= 2 &&
+        item.uid === process.getuid() && !(item.mode & 0o077),
+      'HOST_HANDOFF_AGENT_RELEASE_STORE_NOT_EMPTY', 'Preserve an unexpected release initialization temporary.');
+    }
     need(state.generation === 0 && state.active === null && state.previous === null &&
       Array.isArray(state.history) && state.history.length === 0 && releases.length === 0 &&
-      members.every(name => ['state.json', 'releases', '.sf82-state.lock.lifetime', '.sf82-run.lock.lifetime'].includes(name)),
+      members.every(name => ['state.json', 'releases', '.sf82-state.lock.lifetime', '.sf82-run.lock.lifetime'].includes(name) ||
+        /^state\.json\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.tmp$/.test(name)),
     'HOST_HANDOFF_AGENT_RELEASE_STORE_NOT_EMPTY',
     'Keep this dedicated operator release store empty, without a retained seller, selection, staging or runtime record.');
   }

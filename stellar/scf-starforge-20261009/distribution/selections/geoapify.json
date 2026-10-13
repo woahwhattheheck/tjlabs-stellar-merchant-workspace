@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "geoapify",
   "title": "Geoapify batch review and customer delivery",
-  "description": "Original CSV/JSON source, retained asynchronous jobs, complete candidate decisions, frozen SF30 editions, original merchant publishing and customer reopening. Complete retained customer editions prepare and reopen the original Workshare/Customer Installation. Customers can review the complete frozen query groups offline, save unfinished working files and return attributed choices for explicit current-state adoption.",
+  "description": "Original CSV/JSON source, retained asynchronous jobs, complete candidate decisions, frozen SF30 editions, original merchant publishing and customer reopening. Complete retained customer editions prepare and reopen the original Workshare/Customer Installation. Customers can review the complete frozen query groups offline, save unfinished working files and return attributed choices for explicit current-state adoption. Guided actual-file intake exposes complete field coverage and explicit source-bound mapping before import.",
   "base": {
     "commands": [
       "installation",
@@ -125,14 +125,15 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/customer-review-core.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/customer-review-ui.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/customer-review-report.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/CUSTOMER_REVIEW.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/CUSTOMER_REVIEW.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/source-inspection.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Original CSV/JSON source, retained asynchronous jobs, complete candidate decisions, frozen SF30 editions, original merchant publishing and customer reopening. Complete retained customer editions prepare and reopen the original Workshare/Customer Installation. Customers can review the complete frozen query groups offline, save unfinished working files and return attributed choices for explicit current-state adoption.",
+    "description": "Original CSV/JSON source, retained asynchronous jobs, complete candidate decisions, frozen SF30 editions, original merchant publishing and customer reopening. Complete retained customer editions prepare and reopen the original Workshare/Customer Installation. Customers can review the complete frozen query groups offline, save unfinished working files and return attributed choices for explicit current-state adoption. Guided actual-file intake exposes complete field coverage and explicit source-bound mapping before import.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

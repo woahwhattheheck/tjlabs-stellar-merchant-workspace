@@ -175,7 +175,7 @@ async function completeFile(root,client,issueId,role,filename,expected){
   if(expected)need(actual.sha256===expected.sha256&&actual.bytes===expected.bytes,'The downloaded complete exchange file differs.');
   return actual;
 }
-export async function receiveReviewerExchange({connectionFile,pythonCommand,output,selection,operateCopy=null}){
+export async function receiveReviewerExchange({connectionFile,pythonCommand,output,selection,operateCopy=null,clientFactory=null}){
   need(selection?.schema===SCHEMA&&typeof selection.operationId==='string'&&selection.operationId.length>0,'Select the original following receiving operation and complete specification.');
   for(const value of [connectionFile,pythonCommand,output])need(typeof value==='string'&&isAbsolute(value),'Use actual absolute connection, Python and following output paths.');
   need(typeof selection.workspace==='string'&&isAbsolute(selection.workspace),'Select the exact original physical workspace.');
@@ -188,7 +188,9 @@ export async function receiveReviewerExchange({connectionFile,pythonCommand,outp
     for(const item of result.artifacts){const actual=await inspect(item.path,1024*1024*1024);need(stable(actual)===stable(item),'A completed original receiving artifact changed.');}
     return result;
   }
-  const client=new MonitoringClient({connectionFile,expectedWorkspace:selection.workspace,timeoutMs:120000});
+  need(clientFactory===null||typeof clientFactory==='function','Use the original selected transport factory.');
+  const clientOptions={connectionFile,expectedWorkspace:selection.workspace,timeoutMs:120000};
+  const client=clientFactory?await clientFactory(clientOptions):new MonitoringClient(clientOptions);
   let clientClosed=false;
   try{
     const identity=await client.inspect();

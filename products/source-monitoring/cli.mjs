@@ -14,6 +14,8 @@ const HELP = [
   '    --startup-format json --connection-file CONNECTION',
   '',
   'starforge source-monitoring-client --connection CONNECTION COMMAND',
+  'starforge source-monitoring-client customer-setup --help',
+  'starforge source-monitoring-client customer-receive --help',
   '',
   '  inspect                                      Read the current native identity',
   '  get OPERATION [--params JSON_FILE]            Read the original console',
@@ -48,6 +50,8 @@ function emit(value) {
   return { raw };
 }
 export async function main(argv = process.argv.slice(2)) {
+  if (argv[0] === 'customer-setup') return (await import('./customer-setup.mjs')).customerSetupMain(argv.slice(1));
+  if (argv[0] === 'customer-receive') return (await import('./receiving/customer-agent.mjs')).main(argv.slice(1));
   if (!argv.length || argv.includes('--help') || argv[0] === 'help') {
     process.stdout.write(HELP);
     return 0;
