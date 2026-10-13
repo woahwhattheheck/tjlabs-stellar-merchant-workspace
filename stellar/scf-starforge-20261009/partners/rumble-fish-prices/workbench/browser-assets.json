@@ -1,6 +1,6 @@
 {
   "schema": "stellar-forge.browser-assets.v1",
-  "root": "./ui",
+  "root": "./ui/",
   "routes": [
     [
       "/_prices",
