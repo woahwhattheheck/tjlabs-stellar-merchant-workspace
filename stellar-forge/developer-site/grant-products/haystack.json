@@ -9,7 +9,21 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/haystack/OPERATING.md",
-      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+          "git_blob": "dca5a7158ce6e698c7c997c005f8dcbec686e463",
+          "bytes": 14803,
+          "sha256": "75032cb097a318a9143506d32768ee58ba67e7dbe9a856e0f06369720faa5928"
+        },
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "8507d8179fc9a5ed45c74e0573f804d1681c56f5",
+          "sha256": "bc9be8cd6dbb7cd71497429fa40be6257658a8af3c1e6b88f2f40ab085bb58a0",
+          "bytes": 18986
+        }
+      ]
     },
     {
       "id": "haystack-point-modelling",
@@ -82,6 +96,518 @@
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_BROWSER.mjs",
       "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+    },
+    {
+      "id": "haystack-consumer-operating",
+      "label": "Complete consumer plan, target-result and acceptance operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CONSUMER_OPERATING.md",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "18612b4bbd2630c7dbb055030753ec64913bfae9",
+          "sha256": "f87f6b4fabad33fd8fcab9c398a7ec68adabb80bd8843767b9ac345723958dff",
+          "bytes": 19354
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-domain",
+      "label": "Frozen expectations, exact identities, target evidence and explicit acceptance",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-acceptance.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "9a2cf7979e26c7c576f2d25ab9542bc4765203d5",
+          "sha256": "0d700da9cdc9f9e8f08c459bfab442aa0cae5044addd684fb16d0b2292740e9c",
+          "bytes": 50684
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-actions",
+      "label": "All sixteen consumer action schemas and original mutation fields",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-actions.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "1e3af9bebc22fc6ab24aa7f2db0780c73e951343",
+          "sha256": "1885ea0d98b288ed904641d3332845bdd2c13e05a4056af740f3890b41d4c638",
+          "bytes": 6444
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-cli",
+      "label": "Eighteen consumer commands through original saved-request lifecycle",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-cli.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "3b30b383920ada0486d420d75a36a66920b8b08f",
+          "sha256": "742b7bfbaf260e0c461d8d016d5745fbcfc83038b91e345256b57ca02b3c54e9",
+          "bytes": 8741
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-types",
+      "label": "Complete consumer plans, runs, files, previews and decisions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-types.d.mts",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "34f1583944e25ba0b32599286754eb2efd7fa506",
+          "sha256": "8bbb7eb6cb40c05fa151a17fe9451cc24fdd1e00170911e853ad86b9bd97225a",
+          "bytes": 11117
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-reports",
+      "label": "Full consumer reports and original-run return packages",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-reports.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "ba783b4cac41b59a460439d2dc9b6ccf7b3114e0",
+          "sha256": "082e66c8e76a85f964cf2e99d3b584204be1e7ffd0f8867dbcc0c8e68d77c9a6",
+          "bytes": 12747
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-browser-document",
+      "label": "Consumer receiving operator forms and complete review surface",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer.html",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "003b7def39702680b20f15eb411af23764ef13df",
+          "sha256": "a92e65934029d89e58cac5647394581b3dc1a197e0cdc446a2088014f6cdf726",
+          "bytes": 12637
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-browser-controller",
+      "label": "Retained browser drafts, exact requests and customer return controls",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer.js",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "bc02b66d4d9f1c3dc38ae79f2a98c533fad8bc78",
+          "sha256": "e4d98cf9f081e57c61ddbb3772a3f4305c56886f2024dfc8a84fc231a94a781e",
+          "bytes": 48500
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-browser-style",
+      "label": "Responsive industrial consumer receiving layout",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer.css",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "96e601c07c2642ec8b027534ada5b1415c7a6672",
+          "sha256": "1e417b44521a14b0fbd4b8b8ac64ec814a4a4cbcb5e31f698e8eea2372774358",
+          "bytes": 6161
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-native-receiving",
+      "label": "Original complete consumer receiving programme and recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CONSUMER_RECEIVING.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "00fe2891b17002669356e336ba4c9e44cdbebe3a",
+          "sha256": "0030267a528a05a9217ba9c9e6d7ff04d278c923a169bfb9c8cc5b87f0da9769",
+          "bytes": 31508
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-browser-receiving",
+      "label": "Original consumer desktop/mobile and independent receiving continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CONSUMER_BROWSER.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "d9988cd98c04d88c6c8bd591261ed6c7c83e3e91",
+          "sha256": "303cb60b7c3d7d9b2fecf06cf6f9489bb662af1b5a5112336238e86d34fe73a3",
+          "bytes": 37025
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-workspace-model",
+      "label": "Consumer state validation joined to the original workspace model",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/model.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "e56bb1708730e4b3d0b394973e9f94c9dd174045",
+          "sha256": "7ac35cdc3d8ef39e4d99c84df8e13ed126d1ac8b8be9c992c6f35f110e904fef",
+          "bytes": 20436
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-workspace-store",
+      "label": "Original atomic workspace writer, operation replay and consumer actions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/store.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "23c9485602a8c12dfc17c5d5712673f617b61a0a",
+          "sha256": "75fd01fc487122944f28bec3cc27b5ff69bcf073bf11a9cb0acd6330c13ff732",
+          "bytes": 48260
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-portable-workspace",
+      "label": "Complete v7 editable application and original v1–v6 receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/portable.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "c8aec7e83278b4aaaaf6392f573b054cb1672f25",
+          "sha256": "af9aa007b5616af91419f9e30790066f3ebefcf3e007ce294a181171f5c247b6",
+          "bytes": 11688
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-projection-evidence",
+      "label": "Original signed projection return and resulting-version verifier",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/projection-model.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "53d3a177617cf793b832cd221892cb40454326ca",
+          "sha256": "44c795cbea8b0fa973ee967ee722997d5168b47fa1689d1dd087fbf833891edf",
+          "bytes": 37892
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-projection-reports",
+      "label": "Consumer status joined to complete native projection reports",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/projection-reports.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "2513f60adcdf7410bd9843a23f591accb7e02044",
+          "sha256": "c413c34a1ef5d108998e614ab39e1adb4b9e96a7e39e10872a9906ea64b93852",
+          "bytes": 9161
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-action-catalog",
+      "label": "Consumer actions in the existing native catalogue",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/catalog.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "cd480b658572b26c07a18837615b7e49c9cecdc9",
+          "sha256": "e1c5e7e1b79087e8756c246cbba8ca4c1989bedaa788eb8217650518758cac85",
+          "bytes": 12270
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-command-entry",
+      "label": "Installed original CLI dispatch and retained request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/cli.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "c7226130c307b1293c7035ca4db68fb1a238dccf",
+          "sha256": "83f40caa83922eaa4b3f03b8d8f37372eb7915409ed73d8329be97423376e132",
+          "bytes": 44288
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-typed-client",
+      "label": "Complete original-client actions, evidence and delivery ranges",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/client.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "2e8da98a35905363c13ab932a024c121b538dcb7",
+          "sha256": "858473eea657c8d8bba87ebb368f942eef5227870f7c611264c07b247a6dbcb6",
+          "bytes": 9388
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-client-declarations",
+      "label": "Deep typed action/result map for the cumulative workspace",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/client.d.mts",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "015986744e4b7610432a87c22bbfa64881d2880f",
+          "sha256": "1e2f9b390eac050239c3bbb8897069cb4d19d4dbc3507585f2c953433fbcea26",
+          "bytes": 16661
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-agent-configuration",
+      "label": "Configured workspace and host-pinned consumer source aliases",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/merchant.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "966d6b71b424cfaa334e51ec9a46f9002bcce8c5",
+          "sha256": "c970c660564c046f62b1315fbf1a253e7f7b6dbf039770402fc2f1f8b3b7d306",
+          "bytes": 14477
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-agent-client",
+      "label": "Configured full-file mutations and SHA-bound large view reads",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/merchant-client.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "65f90736031b6a46eced6f4986b10682f623ff15",
+          "sha256": "41b911168a14256e7631d7038b32f38d5f36a2fba74891048520952dcc5e312a",
+          "bytes": 18313
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-agent-tools",
+      "label": "All consumer actions and configured-file tools in Merchant",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/merchant-tools.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "ced4086645826c988a5c7de94fa8631195b8e063",
+          "sha256": "c1c875b4c5144827a7519638224e445f88846336404f2b949a846a311bd0e334",
+          "bytes": 7322
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-application-provider",
+      "label": "Consumer route in the original managed application",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/application-provider.mjs",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "f8d47b568d233407ec0cef57329f653e99d3b3f4",
+          "sha256": "9c06997e913e251d1123d4a201b91418007b63df0ad1e2104069caf65a91dc13",
+          "bytes": 6683
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-installed-contribution",
+      "label": "Installed CLI, exported API and support-source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/contribution.json",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "bee9f4a498597ab4c39ae705eb90c463826118ad",
+          "sha256": "455a47e778dd9a3976b812ef3f1e792cfb3ed39c807bb704518128cbb260382c",
+          "bytes": 5659
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-browser-inventory",
+      "label": "Complete consumer assets in the original browser inventory",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/browser-assets.json",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "1e0e05877405d9d2d3e0a26447fd3770612b17df",
+          "sha256": "499bb7cc7bd2682a4129be821d733004d514156121b98df914b8558a6cbd2e87",
+          "bytes": 3105
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-navigation",
+      "label": "Consumer receiving link in the original workspace",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/index.html",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "019bf42297e0b5a66ba8cb538fc0d651f8f89116",
+          "sha256": "784177526b641fb09185c6b86bf8a51e04268d7a9f7d2022c8d6b7c03b7f31f4",
+          "bytes": 37302
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-package-export",
+      "label": "Consumer domain export in the original package",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/package.json",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "d504dc952b14862e811da3f18bc06a7c6479772a",
+          "sha256": "c93d55ecdf81f8d752ce1a460a7156de3617916dadb5e7d766a06a9f0f84cf49",
+          "bytes": 1186
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-native-guide",
+      "label": "Whole current native API and source receiving instructions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/README.md",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "52e1b35458434acb0dc916405a6905a2e37f0595",
+          "sha256": "76c88e52df14d5c716c88a045fb69d57f83bcdad34a664f5390505e82ba99c86",
+          "bytes": 13306
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-agent-guide",
+      "label": "Current original host configuration, full files and request replay",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/MERCHANT.md",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "776039154b7c83d7816cca3628e0a3c5e4a0ec8b",
+          "sha256": "399732bc1cc4b32d49f0e72837605431bbda86b5265999d0b07e00482d437365",
+          "bytes": 16125
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-workspace-guide",
+      "label": "Whole current grid, model and consumer operator journey",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/OPERATING.md",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "cbc7128f966b79ac9fd6ff63bfe78ba88d737908",
+          "sha256": "ba0928f4b2dd7e357ae6fde664a242ae01aec59a4e009070170e42bf32963970",
+          "bytes": 30646
+        }
+      ]
+    },
+    {
+      "id": "haystack-consumer-installation-selection",
+      "label": "Complete cumulative Haystack installed source and distribution selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/haystack-turnover.json",
+      "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+      "editions": [
+        {
+          "commit": "7fec77105fa591f550c10e6407d8d66fa7f7907b",
+          "git_blob": "5b5b074483256dade4395d9fd7b1c44020f8c888",
+          "sha256": "601343086178c5e9ab0f6c951308531da1d357daaf91e0c79581eb2ece40dfd3",
+          "bytes": 4916
+        }
+      ]
     }
   ]
 }
