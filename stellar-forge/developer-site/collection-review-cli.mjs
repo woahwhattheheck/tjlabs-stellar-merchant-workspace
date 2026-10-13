@@ -11,6 +11,7 @@ import { createCollectionWorkspace,addCollectionSource,collectionDraft,saveColle
 import { renderCollectionReview } from './dist/collection-review-report.mjs';
 import { renderCollectionEditionComparison } from './dist/collection-review-edition-report.mjs';
 import { assertCollectionPublication } from './dist/collection-review-publication.mjs';
+import { runMuseumDirectory, MUSEUM_DIRECTORY_HELP } from './museum-directory.mjs';
 const json=value=>JSON.stringify(value,null,2)+'\n';
 async function read(path,limit=64*1024*1024){
  const file=await open(resolve(path),constants.O_RDONLY|(constants.O_NOFOLLOW||0)|(constants.O_NONBLOCK||0));
@@ -49,10 +50,12 @@ export const COLLECTION_REVIEW_HELP='Collection review\n\n'+
  'report --project WORKSPACE [--revision REVISION_ID] --out NEW_REVIEW.html\n'+
  'tables --project WORKSPACE [--revision REVISION_ID] --out NEW_SOURCE_TABLES_PROJECT.json\n'+
  'export --project WORKSPACE [--revision REVISION_ID] [--native] --out NEW_COLLECTION.zip\n\n'+
+ MUSEUM_DIRECTORY_HELP+'\n'+
  'Every output uses a new file. Save retries use the same prepared request. Receiving keeps the current local head and all incoming branches. Sources and linked media are never fetched by these commands.\n';
 export async function runCollectionReview(argv=[]){
  const [command='help',...rest]=argv;if(['help','--help','-h'].includes(command)){console.log(COLLECTION_REVIEW_HELP);return;}
  const o=options(rest);
+ if(['museum-action','museum-media','museum-package','museum-handover'].includes(command)){console.log(json(await runMuseumDirectory(command,o)));return;}
  if(command==='serve'){
   const port=o.port===undefined?8787:Number(o.port);if(!Number.isInteger(port)||port<0||port>65535)throw Error('Use a port from 0 through65535.');
   const handle=await startSetupServer({port,entry:'/collection-review.html'}),stop=()=>handle.stop();
