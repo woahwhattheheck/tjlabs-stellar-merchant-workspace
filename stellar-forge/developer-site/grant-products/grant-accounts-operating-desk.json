@@ -124,7 +124,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "operations/scf-statements-original-32c2-20261013/README.md",
-      "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
+      "commit": "d7b80074fddc3f8a9d5b5c6dec9f5e6fdc2913fe",
       "editions": [
         {
           "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
@@ -145,6 +145,12 @@
           "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
           "git_blob": "ab9b5631982280b69cd42bbcf698b1b85249b305",
           "bytes": 15450
+        },
+        {
+          "commit": "d7b80074fddc3f8a9d5b5c6dec9f5e6fdc2913fe",
+          "git_blob": "730ad5b49b53ac82f48418718b7ba823246b619a",
+          "sha256": "a43793348ee19c3d873fa6d859b27a57bd12c04930d82e10954f50a6d6d55d46",
+          "bytes": 20778
         }
       ]
     },
@@ -229,7 +235,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statements.mjs",
-      "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+      "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
       "editions": [
         {
           "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
@@ -245,6 +251,12 @@
           "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
           "git_blob": "c5dc84cfce3a7a0dde5de4a42d87bc355bd91dd2",
           "bytes": 89147
+        },
+        {
+          "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
+          "git_blob": "5b38cac0ee7ab794313d21d1e80443480da8048d",
+          "sha256": "d4863059fcc4eb003b143102ad879bae114b0edf9e7dd2cd54fec3fd5056e352",
+          "bytes": 96743
         }
       ]
     },
@@ -284,7 +296,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "operations/scf-statements-original-32c2-20261013/operate-original-statements.mjs",
-      "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
+      "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
       "editions": [
         {
           "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
@@ -300,6 +312,12 @@
           "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
           "git_blob": "bdaccc4a6db2b69841e9431dd2f4a02422d34799",
           "bytes": 42745
+        },
+        {
+          "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
+          "git_blob": "7af88ac44f77441498e0812ebf2addbfb80eb5e0",
+          "sha256": "fcfb81d9c4e40abef6b62ff70c339132afdc03f0b13f81a1f1162b1553bc2613",
+          "bytes": 57732
         }
       ]
     },
@@ -309,7 +327,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENT_WORKING_COPIES.md",
-      "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
+      "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
       "editions": [
         {
           "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
@@ -320,6 +338,12 @@
           "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
           "git_blob": "b9f7bd67587ee14a0939aa4922fc0d6369368a6d",
           "bytes": 11943
+        },
+        {
+          "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
+          "git_blob": "c43d78f3c2a0d887952a0dbb1ce9a82891a3e82b",
+          "sha256": "ba5cdf2f8b0f6f18d4f8934a31d964e75d7a0b6e1c4377aac87c3ca57247ebf0",
+          "bytes": 12394
         }
       ]
     },
@@ -511,6 +535,54 @@
           "git_blob": "6736e6628bd2d27d82e65a08510e21380b13a66a",
           "sha256": "4098fb4f87d0d3835211cee44db80071a35149d99b5cfd897552f614c3d124f1",
           "bytes": 13100
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-recipient-review-guide",
+      "label": "Complete accountant recipient review, attributed returns and original account continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENT_RECIPIENT_REVIEW.md",
+      "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
+      "editions": [
+        {
+          "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
+          "git_blob": "f6016fa43e50249e7006f93b57527b0f56823c05",
+          "sha256": "6c63fb34495d049a0af02f92999b4217fd58c89ee22279aba1e075ed19094408",
+          "bytes": 11149
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-recipient-review-model",
+      "label": "Original-source offline review, explicit three-way comparison and selected recommendations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statement_review.mjs",
+      "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
+      "editions": [
+        {
+          "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
+          "git_blob": "93fd5dab6e1d4f893895cd4dca61b1d71baaa084",
+          "sha256": "69e43583ad2db5dcf5fcda4ce4036b6b46730cf544ef73297240337c3307e471",
+          "bytes": 27585
+        }
+      ]
+    },
+    {
+      "id": "grant-statements-recipient-receiving-course",
+      "label": "Same original case and invoice through full recipient review, archive and independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/scf-statements-original-32c2-20261013/statement-recipient-model-course.mjs",
+      "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
+      "editions": [
+        {
+          "commit": "0d47a724cf5f3441af427c3654fb65f1f78955f0",
+          "git_blob": "4dd0b1382e0dffed3c382412325d96526f175327",
+          "sha256": "e119b451d39ea956e327ee2c342051a6aa78c3b862e71eab6a29cbf9e1570572",
+          "bytes": 7753
         }
       ]
     }
