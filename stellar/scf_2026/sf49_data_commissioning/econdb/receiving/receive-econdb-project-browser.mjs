@@ -2,9 +2,8 @@ import {readFile,writeFile,mkdir,open,link,unlink,readdir,lstat} from 'node:fs/p
 import {join,dirname,relative} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
-import {execFile} from 'node:child_process';
-import {promisify} from 'node:util';
-const execute=promisify(execFile),need=(value,message)=>{if(!value)throw Error(message)};
+import {spawn} from 'node:child_process';
+const need=(value,message)=>{if(!value)throw Error(message)};
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const json=value=>JSON.stringify(value,null,2)+'\n';
 async function retain(path,body){
@@ -26,14 +25,22 @@ export async function receiveProjectBrowser({work,product,page,capture,exactOpen
  const reviewMessage=async text=>page.waitForFunction(value=>document.getElementById('message').textContent.includes(value),text);
  async function openProject(file){await page.locator('#project-workspace-file').setInputFiles(file);await click('project-open');await projectMessage('Reopened all');}
  async function native(label,args){
-  // The selected original Node runtime executes the original application CLI.
+  // Preserve the original receiving lease while a mutating CLI child remains alive.
   const invocation=[join(product,'maritime-project-cli.mjs'),...args];
-  let response;
-  try{response=await execute(process.execPath,invocation,{cwd:product,maxBuffer:16*1024*1024});}
-  catch(error){await retain(join(attempt,label+'.failed.json'),json({executable:process.execPath,args:invocation,stdout:error.stdout??'',stderr:error.stderr??'',code:error.code??null}));throw error;}
-  await retain(join(attempt,label+'.stdout.json'),response.stdout);
-  await retain(join(attempt,label+'.stderr.txt'),response.stderr);
-  const value=JSON.parse(response.stdout);checked.native.push({label,args:invocation,...value});return value;
+  const stdoutPath=join(attempt,label+'.stdout.json'),stderrPath=join(attempt,label+'.stderr.txt');
+  const stdout=await open(stdoutPath,'wx',0o600),stderr=await open(stderrPath,'wx',0o600);
+  let exit;
+  try{
+   const lease=Number(process.env.ECONDB_RECEIVING_LEASE_FD);
+   need(Number.isInteger(lease)&&lease>=3,'Original Econdb receiving lease descriptor is missing');
+   const child=spawn(process.execPath,invocation,{cwd:product,
+    env:{...process.env,ECONDB_RECEIVING_LEASE_FD:'3'},stdio:['ignore',stdout.fd,stderr.fd,lease]});
+   exit=await new Promise((done,reject)=>{child.once('error',reject);child.once('exit',(code,signal)=>done(signal?'signal:'+signal:code));});
+  }finally{await stdout.sync();await stderr.sync();await stdout.close();await stderr.close();}
+  await retain(join(attempt,label+'.invocation.json'),json({executable:process.execPath,args:invocation,exit,stdout:relative(work,stdoutPath),stderr:relative(work,stderrPath)}));
+  need(exit===0,'Original project CLI failed; retained stdout/stderr: '+label);
+  need((await lstat(stdoutPath)).size<=16*1024*1024,'Original project CLI response exceeds its receiving limit');
+  const value=JSON.parse(await readFile(stdoutPath,'utf8'));checked.native.push({label,args:invocation,...value});return value;
  }
  await page.setViewportSize({width:1440,height:1000});
  await page.goto(pathToFileURL(join(product,'maritime-workbench.html')).href,{waitUntil:'load'});
