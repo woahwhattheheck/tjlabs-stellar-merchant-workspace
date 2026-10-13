@@ -157,7 +157,14 @@ binding, so later work does not replace an earlier edition.
 
 Materialize the exact new source locally with the publisher's actual hashes and
 commits. The source carrier uses the existing complete `files` entries:
-`path`, `content`, `bytes`, `sha256` and `git_blob`.
+`path`, `content`, `bytes`, `sha256` and `git_blob`. Text members keep the existing
+`encoding: "utf-8"` (or omitted) representation. A binary declared browser asset,
+such as the original complete FRED example ZIP, uses `encoding: "base64"` with
+canonical padded base64 in `content`. Byte counts, SHA-256 and Git identities
+always describe the decoded file. The source preparation, original composer and
+original case receiver all carry those exact decoded bytes; the source-selection
+manifest and later edition identity retain the same complete file metadata.
+Keep the four reviewer source objects as their original UTF-8 files.
 
 ~~~sh
 python -B prepare-source-selection.py \

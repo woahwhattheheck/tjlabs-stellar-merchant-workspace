@@ -19,6 +19,20 @@ def sha(body):
 def blob(body):
     return hashlib.sha1(b"blob " + str(len(body)).encode() + b"\0" + body).hexdigest()
 
+def source_bytes(row):
+    content = row["content"]
+    if not isinstance(content, str):
+        raise ValueError("Retain a complete encoded source string: " + row["path"])
+    encoding = row.get("encoding", "utf-8")
+    if encoding in (None, "utf-8"):
+        return content.encode("utf-8")
+    if encoding == "base64":
+        body = base64.b64decode(content, validate=True)
+        if base64.b64encode(body).decode("ascii") != content:
+            raise ValueError("Retain canonical complete base64 source: " + row["path"])
+        return body
+    raise ValueError("Select UTF-8 or base64 source encoding: " + row["path"])
+
 def encoded(value):
     return (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
 
@@ -73,11 +87,12 @@ def main():
     selected = {}
     for row in source["files"]:
         name = str(exact_path(row["path"]))
-        if name in selected or row.get("encoding") not in (None, "utf-8"):
-            raise ValueError("Retain each complete UTF-8 source member once: " + name)
-        body = row["content"].encode("utf-8")
+        if name in selected:
+            raise ValueError("Retain each complete source member once: " + name)
+        body = source_bytes(row)
         metadata = {"path": name, "bytes": len(body), "sha256": sha(body), "git_blob": blob(body)}
-        if any(row.get(key) != metadata[key] for key in ("bytes", "sha256", "git_blob")):
+        if (any(row.get(key) != metadata[key] for key in ("bytes", "sha256", "git_blob")) or
+                row.get("gitBlob", metadata["git_blob"]) != metadata["git_blob"]):
             raise ValueError("The complete publisher source body differs: " + name)
         selected[name] = (metadata, body)
     received = packet.get("received", {})

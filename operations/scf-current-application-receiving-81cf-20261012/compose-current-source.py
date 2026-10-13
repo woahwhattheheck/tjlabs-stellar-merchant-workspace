@@ -35,9 +35,14 @@ def safe_path(value):
     return path
 
 def source_row(path, body):
-    return {"path": path, "encoding": "utf-8", "bytes": len(body),
-            "sha256": sha(body), "git_blob": blob(body),
-            "content": body.decode("utf-8", errors="strict")}
+    try:
+        content = body.decode("utf-8", errors="strict")
+        encoding = "utf-8"
+    except UnicodeDecodeError:
+        content = base64.b64encode(body).decode("ascii")
+        encoding = "base64"
+    return {"path": path, "encoding": encoding, "bytes": len(body),
+            "sha256": sha(body), "git_blob": blob(body), "content": content}
 
 def verified_asset(metadata, path):
     body = path.read_bytes()
