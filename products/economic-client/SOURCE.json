@@ -174,9 +174,9 @@
     {
       "path": "products/economic-client/application/public/operator.mjs",
       "mode": "100644",
-      "bytes": 14943,
-      "sha256": "988a7f2e6a6f7badd57ce44df3b56c47a1672e1a78af6a47f855acfc0eacacf7",
-      "git_blob": "0a3a9232abc3f71ed9147d7e77f3c47e3b344d63"
+      "bytes": 15148,
+      "sha256": "1d57b803907c49287b692d94f835567dd548a61f172a54ad24ad284cff51d2e5",
+      "git_blob": "e8abd381688244be2ab2533796e5dd4c38c08216"
     },
     {
       "path": "products/economic-client/application/public/reviews.mjs",
@@ -382,7 +382,7 @@
       "git_blob": "86e5f72d2da0eb26c4a5bc6403a9688f224271e6"
     }
   ],
-  "source_bytes": 524929,
+  "source_bytes": 525134,
   "native_receiving": {
     "state": "AWAITING_EXECUTION_AND_RENDERED_INSPECTION",
     "guide": "products/economic-client/application/NATIVE_RECEIVING.md",

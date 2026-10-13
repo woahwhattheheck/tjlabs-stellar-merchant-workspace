@@ -44,8 +44,12 @@ function loadDraft(draft){
  renderSelections();
 }
 async function refresh({draft=true}={}){
- if(state&&!draft)readDraft();
- state=await request('/api/state');$('identity').textContent=state.label+' · '+state.project_id+' · revision '+state.revision;
+ const observed=await request('/api/state');
+ if(state&&!draft){
+  if(state.project_id!==observed.project_id)throw new Error('The open project changed. Your visible draft remains intact; reopen its original project before continuing.');
+  readDraft();
+ }
+ state=observed;$('identity').textContent=state.label+' · '+state.project_id+' · revision '+state.revision;
  $('config').value=pretty(state.config);options('capture-list',state.captures,r=>r.id,r=>r.dataset_ref+' · '+r.id);
  options('compare-before',state.briefings,r=>r.id,r=>r.revision+' · '+r.title);options('compare-after',state.briefings,r=>r.id,r=>r.revision+' · '+r.title);
  options('reopen-companion',state.companions,r=>r.id,r=>r.label+' · '+r.briefing_id);
