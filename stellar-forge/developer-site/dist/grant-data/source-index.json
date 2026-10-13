@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 53151,
-    "sha256": "2fdbbc2947145e898ebf7b404b6d25a22a18250057e7298659b8728cf68fe5c8",
-    "git_blob": "ace88ec3a80b09de2511c4426903ccc13df5d378"
+    "bytes": 53187,
+    "sha256": "2e02c1d95117069bb1b74be3d0ae902503c1ca9b8a2ffbdefbedd7b640019603",
+    "git_blob": "097932e5c8d43be6022f219f2ba0e4a9b47c87c6"
   },
   "request": {
     "basis": "prospective",
@@ -15852,9 +15852,9 @@
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "d2b99e94a315b9283cb15ac1db6ea1c0344708bf",
-    "bytes": 1263189,
-    "sha256": "195fe402e916eb509c5295260858ac59ca5fc54e17023babc85f8f8afca58660",
+    "git_blob": "a31f23c2916170e818fcbbd0b0f35e3d23c62bb9",
+    "bytes": 1263243,
+    "sha256": "6fef0ee96979bfdd26a026051f7cf660689c61050cce739fc75eb0fe6c96ac50",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "20004dd3d33c68ebfc69f6c338a2ce44f5a3dcc9"
   },
@@ -16093,10 +16093,11 @@
           "5.3",
           "5.6",
           "5.8"
-        ]
+        ],
+        "cash_basis": "The $7,600 first-tranche financing difference is conditional on the existing full-package cash-cost model; actual contributor cash costs remain separate inputs."
       }
     ],
-    "current_application_sha256": "2fdbbc2947145e898ebf7b404b6d25a22a18250057e7298659b8728cf68fe5c8",
+    "current_application_sha256": "2e02c1d95117069bb1b74be3d0ae902503c1ca9b8a2ffbdefbedd7b640019603",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
