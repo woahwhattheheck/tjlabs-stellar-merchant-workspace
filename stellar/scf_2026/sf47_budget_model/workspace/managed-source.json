@@ -860,6 +860,21 @@
     "forecast-financing.mjs",
     "forecast-financing-desk.mjs",
     "forecast-financing.css",
-    "FORECAST_FINANCING.md"
+    "FORECAST_FINANCING.md",
+    "operations_flowable_sources.py",
+    "flowable-source-desk-agent.mjs",
+    "flowable-source-desk-agent.d.mts",
+    "operations_flowable_sources.mjs",
+    "operations_flowable_sources.css",
+    "FLOWABLE_SOURCE_DESK.md",
+    "../../sf49_data_commissioning/installation-workorders/flowable-installation/service-cli.mjs",
+    "../../sf49_data_commissioning/installation-workorders/flowable-installation/service.mjs",
+    "../../sf49_data_commissioning/installation-workorders/flowable-installation-core.mjs",
+    "../../sf49_data_commissioning/installation-workorders/flowable-installation-source.mjs",
+    "../../sf49_data_commissioning/installation-workorders/flowable-installation.mjs",
+    "../../sf49_data_commissioning/installation-workorders/flowable-installation-receiving.mjs",
+    "../../sf49_data_commissioning/installation-workorders/flowable-installation-operations.py",
+    "../../sf49_data_commissioning/installation-workorders/flowable-customer.json",
+    "../../sf49_data_commissioning/installation-workorders/FLOWABLE_CUSTOMER.md"
   ]
 }
