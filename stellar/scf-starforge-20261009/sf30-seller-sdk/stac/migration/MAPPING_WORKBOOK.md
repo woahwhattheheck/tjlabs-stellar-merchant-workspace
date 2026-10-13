@@ -38,6 +38,26 @@ starforge migration-operator workbook-register \
 
 Choose the real IDs returned by the existing workspace and an output path outside that workspace. The command uses the selected ordinary Python environment and original engine. An existing output can be reopened only when its full bytes match the original result. A different exported revision uses its own output path.
 
+### Render an already retained original register
+
+A complete Mapping-Register.json already contains its saved plan, source review, capture manifest, source inspection and declared original files. The installed Python renderer can turn that exact retained register into the same complete workbook delivery independently of the original producing workstation:
+
+~~~sh
+python3 -B /absolute/selected/stac/migration/workbook_export.py \
+  --register /absolute/private/workbook/Mapping-Register.json \
+  --expected-register-sha256 ORIGINAL_REGISTER_SHA256 \
+  --expected-workspace-id ORIGINAL_WORKSPACE_ID \
+  --expected-plan-id ORIGINAL_SAVED_PLAN_ID \
+  --output /absolute/private/workbook/Mapping-Workbook.zip \
+  --receipt /absolute/private/workbook/Rendered-Workbook.json
+~~~
+
+Use the original register's actual hash and saved identities. Keep the complete selected stac source directory together. This command uses Python's standard library, preserves the register's exact original bytes, validates every embedded original file, and produces all 16 sheets with the existing return contract. The selected source inventory in Rendered-Workbook.json identifies the complete application that rendered the workbook.
+
+The source API is `migration.workbook_export.from_register(register_bytes)`. The normal saved-workspace export uses this same implementation. `write_bundle(result, output_path)` writes the full returned ZIP or reuses its identical existing bytes. The CLI result reports the exact delivered files, original workspace/plan/capture/review and selected renderer; complete file bodies remain in the ZIP.
+
+For a recipient who needs to repeat workbook export and return, include the complete selected native source from `migration/source-files.json` alongside the workbook, then open its `migration/server.py` against the original received workspace. Keep the original producer's source directory available as its own selection. The newer application reads that workspace and uses its existing input journal and full receiving workflow.
+
 ## 2. Open the complete customer workbook
 
 Extract the complete **Mapping-Workbook.zip** into a private delivery directory. Open **GIS-Mapping-Register.xlsx** and start in Overview. Keep its matching **Mapping-Register.json**, **originals/**, **Mapping-Workbook-Guide.md** and **MAPPING-WORKBOOK.json** together. The manifest describes the complete files and the exact saved workspace, plan, capture and review.

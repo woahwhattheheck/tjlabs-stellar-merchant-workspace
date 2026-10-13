@@ -1,16 +1,26 @@
 # SPDX-License-Identifier: MIT
 """Export the complete saved mapping workbook with the installed Python runtime."""
 from __future__ import annotations
+import argparse
 import base64
 import hashlib
 import io
+import os
 import re
+import sys
+import tempfile
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from .native import files, need
-from . import workbook as reader
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from migration.native import files, need
+    from migration import workbook as reader
+else:
+    from .native import files, need
+    from . import workbook as reader
+
 
 SCHEMA = "starforge.gis-migration-mapping-workbook-export.v1"
 BUNDLE_SCHEMA = "starforge.gis-migration-mapping-workbook-bundle.v1"
@@ -504,21 +514,31 @@ The saved workspace retains five complete files together: the original register,
 MAPPING-WORKBOOK.json describes every delivered member and the original workspace, plan and capture. A new saved revision is exported into a separate complete workbook delivery. Keep the previous delivery for its original review.
 """
 
-def export(workspace, plan_id):
-    exported = reader.export(workspace, plan_id)
-    register_raw = reader._raw(exported["registerBase64"], "Mapping-Register.json")
+def from_register(register_raw):
+    """Render the complete retained register without reopening or rewriting its source."""
+    need(isinstance(register_raw, bytes) and 0 < len(register_raw) <= reader.MAX_FILE,
+         "MAPPING_WORKBOOK_REGISTER_SIZE")
     register = files.parse_json(register_raw)
+    need(isinstance(register, dict)
+         and register.get("schema") == "starforge.gis-migration-mapping-register.v1",
+         "MAPPING_WORKBOOK_REGISTER_REQUIRED")
     originals = _originals(register)
+    original_plan = files.parse_json(next(item["bytes"] for item in originals if item["key"] == "plan"))
+    need(files.digest(original_plan) == register["plan_id"]
+         and original_plan["captureId"] == register["capture_id"],
+         "MAPPING_WORKBOOK_ORIGINAL_PLAN_CHANGED")
     workbook_raw, build = _workbook(register, register_raw, originals)
     members = [
         ("Mapping-Register.json", register_raw),
         (XLSX_NAME, workbook_raw),
         ("Mapping-Workbook-Guide.md", GUIDE.encode("utf-8")),
     ] + [(item["filename"], item["bytes"]) for item in originals]
+    identity = {
+        "workspaceId": register["workspace"]["id"], "workspaceRevision": register["workspace"]["revision"],
+        "planId": register["plan_id"], "captureId": register["capture_id"],
+    }
     manifest = {
-        "schema": BUNDLE_SCHEMA,
-        "workspaceId": exported["workspaceId"], "workspaceRevision": exported["workspaceRevision"],
-        "planId": exported["planId"], "captureId": exported["captureId"], "review": exported["review"],
+        "schema": BUNDLE_SCHEMA, **identity, "review": register["review"]["latest"],
         "registerFile": "Mapping-Register.json", "workbookFile": XLSX_NAME,
         "register": reader._descriptor(register_raw, "Mapping-Register.json"),
         "build": build,
@@ -527,11 +547,87 @@ def export(workspace, plan_id):
     members.append(("MAPPING-WORKBOOK.json", files.json_bytes(manifest)))
     bundle = _zip(members, MAX_BUNDLE)
     return {
-        "schema": SCHEMA,
-        "workspaceId": exported["workspaceId"], "workspaceRevision": exported["workspaceRevision"],
-        "planId": exported["planId"], "captureId": exported["captureId"],
+        "schema": SCHEMA, **identity,
         "file": reader._descriptor(bundle, "Mapping-Workbook.zip"),
         "bundleBase64": base64.b64encode(bundle).decode("ascii"),
         "files": [reader._descriptor(raw, name) for name, raw in members],
-        "rows": exported["rows"], "review": exported["review"], "build": build,
+        "rows": {key: len(register[key]) for key in ("fields", "layers", "keys", "projects")},
+        "review": register["review"]["latest"], "build": build,
     }
+
+def export(workspace, plan_id):
+    exported = reader.export(workspace, plan_id)
+    return from_register(reader._raw(exported["registerBase64"], "Mapping-Register.json"))
+
+def write_bundle(exported, destination):
+    """Publish the complete selected bundle once, or reuse its identical retained bytes."""
+    target = Path(destination).expanduser().absolute()
+    raw = base64.b64decode(exported["bundleBase64"], validate=True)
+    expected = exported["file"]
+    need(len(raw) == expected["bytes"] and hashlib.sha256(raw).hexdigest() == expected["sha256"],
+         "MAPPING_WORKBOOK_BUNDLE_CHANGED")
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    def identical():
+        need(target.is_file() and not target.is_symlink(), "MAPPING_WORKBOOK_OUTPUT_REQUIRED", str(target))
+        with target.open("rb") as stream:
+            selected = stream.read(len(raw) + 1)
+        need(selected == raw, "MAPPING_WORKBOOK_OUTPUT_CHANGED",
+             "Choose a separate output path for a different saved workbook delivery.")
+    if target.exists() or target.is_symlink():
+        identical()
+    else:
+        fd, temporary = tempfile.mkstemp(prefix="." + target.name + ".", suffix=".writing", dir=target.parent)
+        stage = Path(temporary)
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+            try:
+                os.link(stage, target)
+            except FileExistsError:
+                identical()
+        finally:
+            stage.unlink(missing_ok=True)
+    return {**expected, "path": target.name}
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Render a retained Mapping-Register.json with the complete installed GIS application.")
+    parser.add_argument("--register", required=True)
+    parser.add_argument("--output", required=True, help="Complete Mapping-Workbook.zip destination.")
+    parser.add_argument("--expected-register-sha256")
+    parser.add_argument("--expected-workspace-id")
+    parser.add_argument("--expected-plan-id")
+    parser.add_argument("--receipt", help="Complete result and selected application file inventory.")
+    args = parser.parse_args(argv)
+    try:
+        from migration.native import source_closure
+        selected_source = source_closure()
+        with Path(args.register).expanduser().open("rb") as stream:
+            register_raw = stream.read(reader.MAX_FILE + 1)
+        if args.expected_register_sha256 is not None:
+            need(hashlib.sha256(register_raw).hexdigest() == args.expected_register_sha256,
+                 "MAPPING_WORKBOOK_REGISTER_HASH_CHANGED")
+        exported = from_register(register_raw)
+        for key, expected in (("workspaceId", args.expected_workspace_id), ("planId", args.expected_plan_id)):
+            if expected is not None:
+                need(exported[key] == expected, "MAPPING_WORKBOOK_SAVED_IDENTITY_CHANGED", key)
+        result = {
+            "schema": "starforge.gis-migration-rendered-workbook.v1", "state": "complete",
+            **{key: exported[key] for key in ("workspaceId", "workspaceRevision", "planId", "captureId",
+                                             "files", "rows", "review", "build")},
+            "register": reader._descriptor(register_raw, "Mapping-Register.json"),
+            "file": write_bundle(exported, args.output),
+            "renderer": {"kind": "installed-python", "entrypoint": "migration/workbook_export.py",
+                         "source": selected_source},
+        }
+        if args.receipt:
+            files.atomic_json(Path(args.receipt).expanduser().absolute(), result)
+        print(files.canonical({"ok": True, "result": result}), flush=True)
+        return 0
+    except (OSError, ValueError, KeyError, TypeError, ImportError) as exc:
+        print(files.canonical({"ok": False, "error": {"code": getattr(exc, "code", type(exc).__name__),
+              "message": str(exc)}}), file=sys.stderr, flush=True)
+        return 2
+
+if __name__ == "__main__":
+    raise SystemExit(main())
