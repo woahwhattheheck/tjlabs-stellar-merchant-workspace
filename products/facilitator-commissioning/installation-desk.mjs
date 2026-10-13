@@ -22,6 +22,7 @@ const need=(ok,message,status=400,code='INSTALLATION_DESK_INPUT')=>{if(!ok)throw
 const op=id=>{need(typeof id==='string'&&UUID.test(id),'Select the original operation UUID.');return id;};
 const identity=x=>object(x)&&HASH.test(x.sha256)&&Number.isSafeInteger(x.bytes)&&x.bytes>=0&&x.bytes<=MAX;
 const safePath=p=>typeof p==='string'&&!p.startsWith('/')&&!p.includes('\\')&&!/[\x00-\x1f\x7f]/.test(p)&&p.split('/').every(x=>x&&x!=='.'&&x!=='..');
+const fileStamp=s=>[s.dev,s.ino,s.size,s.mtimeNs,s.ctimeNs,s.mode,s.uid].map(String).join(':');
 const exact=(x,keys)=>need(object(x)&&keys.length===Object.keys(x).length&&keys.every(k=>Object.hasOwn(x,k)),'Use the complete original preparation fields.');
 async function read(path,optional=false){try{return parse(await readWorkflowSeriesPrivateFile(path,MAX));}catch(e){if(optional&&e.code==='ENOENT')return null;throw e;}}
 async function materialize(root,name,raw){
@@ -211,7 +212,7 @@ export function createInstallationDesk({root,ui,exportsRoot,input}){
     const octal=b=>{const v=field(b).trim();need(/^[0-7]*$/.test(v),'The complete archive header differs.',409);const n=v?parseInt(v,8):0;need(Number.isSafeInteger(n)&&n>=0,'The complete archive length differs.',409);return n;};
     const read=async(length,position)=>{const b=Buffer.alloc(length);let got=0;while(got<length){const r=await handle.read(b,got,length-got,position+got);need(r.bytesRead>0,'The whole archive is incomplete.',409);got+=r.bytesRead;}return b;};
     try{
-      const stat=await handle.stat();need(stat.isFile()&&stat.size<=8*1024*1024*1024,'Select the complete bounded preparation archive.',409);
+      const originalStat=await handle.stat({bigint:true}),stat={size:Number(originalStat.size)};need(originalStat.isFile()&&originalStat.size>=0n&&originalStat.size<=8n*1024n*1024n*1024n,'Select the complete bounded preparation archive.',409);
       let at=0,zeros=0,members=0;
       while(at<stat.size){
         const head=await read(512,at);at+=512;
@@ -230,9 +231,18 @@ export function createInstallationDesk({root,ui,exportsRoot,input}){
         at+=Math.ceil(length/512)*512;
       }
       need(zeros>=2&&seen.size===expected.size,'The whole archive is missing original members or its end.',409);
-      const after=await handle.stat();need(after.size===stat.size&&after.mtimeMs===stat.mtimeMs&&after.ctimeMs===stat.ctimeMs,'The archive changed during inspection.',409);
+      // Hash the same open file whose complete inventory was verified. Keep
+      // both descriptor and pathname bound through publication; never hash a
+      // newly opened path as if it were the inspected original.
+      const sha=createHash('sha256');let position=0;
+      while(position<stat.size){const n=Math.min(65536,stat.size-position);sha.update(await read(n,position));position+=n;}
+      const after=await handle.stat({bigint:true}),named=await lstat(path,{bigint:true});
+      need(fileStamp(after)===fileStamp(originalStat)&&fileStamp(named)===fileStamp(after),
+        'The complete archive changed during inspection.',409);
+      // Data reaches durable storage before the final name and its receipt.
+      await handle.sync();
+      return{bytes:stat.size,sha256:sha.digest('hex'),fileIdentity:fileStamp(after)};
     }finally{await handle.close();}
-    return archiveIdentity(path);
   }
   async function archive(id){
     const r=await result(id),work=await workspace(id),source=await restorePackage(id);
@@ -245,7 +255,8 @@ export function createInstallationDesk({root,ui,exportsRoot,input}){
     // Recover a completed original TAR whose publication reply/receipt was lost.
     // Validate its full content rather than regenerate a representation-dependent archive.
     try{
-      const actual=await verifyArchive(target,r.files);
+      const verified=await verifyArchive(target,r.files),{fileIdentity,...actual}=verified;
+      need(fileStamp(await lstat(target,{bigint:true}))===fileIdentity,'The original complete archive changed before publication.',409);
       await writeConsoleWorkflowFile(receiptPath,{operationId:id,nativeReceipt:r.nativeReceipt,...actual});
       return{path:target,filename:'installation-'+id+'.tar',contentType:'application/x-tar',...actual};
     }catch(e){if(e.code!=='ENOENT')throw e;}
@@ -261,10 +272,21 @@ export function createInstallationDesk({root,ui,exportsRoot,input}){
           if(error)no(error);else if(code!==0||expired)no(Object.assign(new Error('The complete source is retained; archive receiving was interrupted: '+stderr),{code:'INSTALLATION_ARCHIVE_INTERRUPTED',status:500}));else yes();});
       });
       // The native inspector and input hashes bind the same full source before publication.
-      await restorePackage(id);const actual=await verifyArchive(temp,r.files);
+      await restorePackage(id);const verified=await verifyArchive(temp,r.files),{fileIdentity,...actual}=verified;
+      need(fileStamp(await lstat(temp,{bigint:true}))===fileIdentity,'The verified TAR changed before final publication.',409);
       const {link,unlink}=await import('node:fs/promises');
-      try{await link(temp,target);}catch(e){if(e.code!=='EEXIST')throw e;const old=await archiveIdentity(target);
-        need(old.sha256===actual.sha256&&old.bytes===actual.bytes,'A retained preparation archive has different bytes.',409);}
+      let linked=false;
+      try{await link(temp,target);linked=true;}catch(e){if(e.code!=='EEXIST')throw e;
+        const retained=await verifyArchive(target,r.files);
+        need(retained.sha256===actual.sha256&&retained.bytes===actual.bytes,'A retained preparation archive has different bytes.',409);}
+      if(linked){const named=await lstat(target,{bigint:true}),sourceNamed=await lstat(temp,{bigint:true});
+        // Creating the hard link changes ctime. Compare the original device,
+        // inode and size, and require both current names to identify that file.
+        const identity=fileIdentity.split(':');
+        need(String(named.dev)===identity[0]&&String(named.ino)===identity[1]&&String(named.size)===identity[2]&&
+          String(named.mtimeNs)===identity[3]&&fileStamp(named)===fileStamp(sourceNamed),
+          'The final archive name differs from the verified original.',409);
+      }
       const directoryHandle=await open(work,'r');try{await directoryHandle.sync();}finally{await directoryHandle.close();}
       await writeConsoleWorkflowFile(receiptPath,{operationId:id,nativeReceipt:r.nativeReceipt,...actual});
       return{path:target,filename:'installation-'+id+'.tar',contentType:'application/x-tar',...actual};
