@@ -83,6 +83,8 @@ REQUIRED = {
 }
 SETTINGS = {"asOf": "date", "riskScaleMaximum": "positive", "highRiskScore": "positive"}
 GENERATED = {"reports": {"publication"}, "closures": {"positionAtRecording"}}
+from donor_reporting import FIELDS as DONOR_FIELDS
+FIELDS["reports"].update(DONOR_FIELDS)
 
 
 def date(value):
@@ -195,6 +197,9 @@ def normalize(value, spec, name):
         return None
     if spec in ("short", "text"):
         return short(value, name, 240 if spec == "short" else 16000, empty=spec == "text")
+    if spec == "donor-selection":
+        from donor_reporting import normalize_selection
+        return normalize_selection(value)
     if spec == "id":
         return identifier(value)
     if spec == "date":
@@ -285,7 +290,9 @@ def defaults(specs):
             result[key] = ""
         elif spec == "dimensions":
             result[key] = {}
-        elif isinstance(spec, str) and spec.endswith("?"):
+        elif isinstance(spec, str) and spec.endswith("?") and spec != "donor-selection?":
+            # Original requests without this later optional selection must replay
+            # to their exact original report body and complete portfolio snapshot.
             result[key] = None
     return result
 
@@ -493,6 +500,10 @@ def validate_relations(model):
                      row["grantId"] in ancestors(idx["grants"], issue["grantId"], "parentGrantId")),
                     "A remaining closure action must belong to the selected project or grant",
                     "PROGRAMME_SCOPE_CONFLICT", 409)
+
+
+    from donor_reporting import validate_reports
+    validate_reports(model)
 
 
 def source_bindings(model, entities):
@@ -764,6 +775,9 @@ def _publication(model, row, entities, financial, context):
             {"start": row["periodStart"], "end": row["periodEnd"]},
         "financialBasis": "Complete selected source positions, grouped by their original dimensions; source rows retain their own dates.",
         "resultBasis": "Indicator aggregation through the dated position; every contributing observation retains its reporting period."}
+    if row.get("donorSelection") is not None:
+        from donor_reporting import publication_statement
+        value["donorStatement"] = publication_statement(model, row, entities, financial, context)
     value["sha256"] = digest(value)
     return value
 

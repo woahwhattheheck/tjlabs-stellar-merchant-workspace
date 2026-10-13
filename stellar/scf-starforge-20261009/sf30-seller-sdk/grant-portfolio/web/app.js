@@ -537,6 +537,8 @@ function requestsView(container) {
 }
 const programmeConsole = GrantProgrammeConsole({state:() => S, node, button, field, panel, heading, metric,
   table, api, response, action, runOriginal, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
+const governanceConsole = GrantGovernanceConsole({state:() => S, node, button, field, panel, heading, metric,
+  table, api, response, runOriginal, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName, download});
 const awardsConsole = GrantAwardsConsole({state:() => S, node, button, field, panel, heading, metric,
   table, api, response, runOriginal, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
 const planningConsole = GrantBudgetPlanningConsole({state:() => S, node, button, field, panel, heading, metric,
@@ -549,6 +551,7 @@ async function render() {
   else if (S.view === "portfolios") portfoliosView(fragment);
   else if (S.view === "programme") await programmeConsole.render(fragment, epoch);
   else if (S.view === "awards") await awardsConsole.render(fragment, epoch);
+  else if (S.view === "governance") await governanceConsole.render(fragment, epoch);
   else if (S.view === "planning") await planningConsole.render(fragment, epoch);
   else if (S.view === "review") await reviewView(fragment, epoch);
   else if (S.view === "ledger") await ledgerView(fragment, epoch);

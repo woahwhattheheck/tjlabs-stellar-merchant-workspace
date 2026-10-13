@@ -67,6 +67,14 @@ def main():
     export.add_argument("--revision", required=True, type=int)
     export.add_argument("--operation-id", required=True)
     export.add_argument("--out", required=True)
+    governance = commands.add_parser("governance", help="Read exact governance editions from the original portfolio")
+    governance.add_argument("route", choices=("schema", "record", "history", "review", "position"))
+    governance.add_argument("--portfolio-id")
+    governance.add_argument("--revision", type=int)
+    governance.add_argument("--collection")
+    governance.add_argument("--id")
+    governance.add_argument("--node-id")
+    governance.add_argument("--grant-id")
     args = parser.parse_args()
     os.umask(0o077)
     if args.command == "connection":
@@ -109,6 +117,25 @@ def main():
                                     args.search, args.status, args.standard)
         elif args.command == "detail":
             result = workspace.detail(args.portfolio_id, args.revision, args.source_id, args.entity_key)
+        elif args.command == "governance":
+            from governance_service import read_governance
+            query = {}
+            if args.route != "schema":
+                require(args.portfolio_id and args.revision is not None, "Select the original portfolio and revision")
+                query = {"portfolioId": args.portfolio_id, "revision": args.revision}
+                if args.route == "position":
+                    require(args.node_id and not args.collection and not args.id, "Select only the original node/grant position")
+                    query["nodeId"] = args.node_id
+                    if args.grant_id:
+                        query["grantId"] = args.grant_id
+                else:
+                    require(args.collection and args.id and not args.node_id and not args.grant_id,
+                            "Select only the complete original collection/record")
+                    query.update({"collection": args.collection, "id": args.id})
+            else:
+                require(not any((args.portfolio_id, args.revision, args.collection, args.id, args.node_id, args.grant_id)),
+                        "Schema has no portfolio selectors")
+            result = read_governance(workspace, args.route, query)
         elif args.command == "request":
             result = workspace.request(args.id)
         elif args.command == "action":

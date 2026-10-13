@@ -19,6 +19,7 @@ from domain import *
 from native_sources import file_info, run_projection
 from programme import PROGRAMME_TABLES, apply_programme, derive_programme, programme_objects
 from awards import AWARDS_TABLES, apply_awards, derive_awards, awards_objects
+from governance import GOVERNANCE_TABLES, apply_governance, derive_governance, governance_objects
 from budget_planning import PLANNING_TABLES, apply_planning, derive_planning, reconcile_planning
 
 HERE = Path(__file__).resolve().parent
@@ -36,7 +37,7 @@ ACTIONS = ("source.receive", "portfolio.save", "review.save", "portfolio.export"
 def portfolio_documents(history):
     """Original programme objects also cover frozen award contributor editions."""
     selected = dict(programme_objects(history))
-    for object_id, descriptor in awards_objects(history).items():
+    for object_id, descriptor in [*awards_objects(history).items(), *governance_objects(history).items()]:
         require(object_id not in selected or selected[object_id] == descriptor,
                 "The original award document descriptor conflicts with its programme edition")
         selected[object_id] = descriptor
@@ -402,7 +403,7 @@ class Workspace:
 
     def _prepare_revision(self, action, payload, request, previous=None, overrides=None):
         if action == "portfolio.save":
-            shape(payload, ("id", "expectedPortfolioRevision", "name", "notes", "sources", "sourceReplacements", "review", "programme", "awards", "planning"),
+            shape(payload, ("id", "expectedPortfolioRevision", "name", "notes", "sources", "sourceReplacements", "review", "programme", "awards", "governance", "planning"),
                   ("name", "sources", "review"))
             ident = identifier(payload["id"]) if payload.get("id") else request["context"]["portfolioId"]
             if previous is None and payload.get("id"):
@@ -430,6 +431,8 @@ class Workspace:
                 definition["programme"] = previous["definition"]["programme"]
             if previous and "awards" in previous["definition"]:
                 definition["awards"] = previous["definition"]["awards"]
+            if previous and "governance" in previous["definition"]:
+                definition["governance"] = previous["definition"]["governance"]
             if previous and "planning" in previous["definition"]:
                 definition["planning"] = previous["definition"]["planning"]
             replacements = payload.get("sourceReplacements", [])
@@ -470,6 +473,14 @@ class Workspace:
             require("programme" in definition, "Create the original programme before award administration")
             definition["awards"] = apply_awards(
                 previous["definition"].get("awards") if previous else None, payload["awards"],
+                context={"at": request["createdAt"], "operationId": request["id"], "portfolioId": ident,
+                         "portfolioRevision": previous["revision"] + 1 if previous else 1},
+                programme=definition["programme"], entities=entities, financial=financial,
+                object_info=lambda object_id: file_info(self.object(object_id)))
+        if action == "portfolio.save" and "governance" in payload:
+            require("programme" in definition, "Create the original programme before governance")
+            definition["governance"] = apply_governance(
+                previous["definition"].get("governance") if previous else None, payload["governance"],
                 context={"at": request["createdAt"], "operationId": request["id"], "portfolioId": ident,
                          "portfolioRevision": previous["revision"] + 1 if previous else 1},
                 programme=definition["programme"], entities=entities, financial=financial,
@@ -553,6 +564,8 @@ class Workspace:
             tables.update(derive_programme(definition["programme"], entities, financial))
         if "awards" in definition:
             tables.update(derive_awards(definition["awards"], programme=definition.get("programme")))
+        if "governance" in definition:
+            tables.update(derive_governance(definition["governance"], definition["programme"]))
         if "planning" in definition:
             tables.update(derive_planning(definition["planning"]))
         for table, rows in tables.items():
@@ -608,7 +621,7 @@ class Workspace:
         return body
 
     def rows(self, ident, version, table, offset=0, limit=50, search="", status="", standard="", entityKey=""):
-        require(table in (*TABLES, *PROGRAMME_TABLES, *AWARDS_TABLES, *PLANNING_TABLES), "Select a portfolio table")
+        require(table in (*TABLES, *PROGRAMME_TABLES, *AWARDS_TABLES, *GOVERNANCE_TABLES, *PLANNING_TABLES), "Select a portfolio table")
         require(type(offset) is int and offset >= 0 and type(limit) is int and 1 <= limit <= 250,
                 "Use a nonnegative offset and a 1–250 row page")
         short(search, "Search", 1000, empty=True)
