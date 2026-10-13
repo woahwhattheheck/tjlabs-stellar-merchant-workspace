@@ -38,7 +38,8 @@ function completeResponse(value, name, args) {
   const committed = Number.isSafeInteger(value?.revision) && typeof args.operationId === "string" &&
     ["merchant_lineage_service_levels_policy_save", "merchant_lineage_service_levels_assessment_save", "merchant_lineage_service_levels_incident_review",
       "merchant_lineage_schema_review_save", "merchant_lineage_source_import", "merchant_lineage_edition_save", "merchant_lineage_review_save", "merchant_lineage_result_attach",
-      "merchant_lineage_import_file", "merchant_lineage_attach_file", "merchant_lineage_emit_file"].includes(name);
+      "merchant_lineage_import_file", "merchant_lineage_attach_file", "merchant_lineage_emit_file",
+      "merchant_lineage_quality_followup_comparison_save", "merchant_lineage_quality_followup_save"].includes(name);
   if (committed) {
     return {
       outcome: "CONFIRMED", workspace: args.workspace, workspaceId: value.workspaceId,
@@ -51,7 +52,9 @@ function completeResponse(value, name, args) {
         ...(value.policy?.id ? { policyId: value.policy.id } : {}),
         ...(value.assessment?.id ? { assessmentId: value.assessment.id } : {}),
         ...(value.incident?.id ? { incidentId: value.incident.id } : {}),
-        ...(value.result?.id ? { resultId: value.result.id, objectId: value.result.objectId } : {})
+        ...(value.result?.id ? { resultId: value.result.id, objectId: value.result.objectId } : {}),
+        ...(value.comparison?.id ? { comparisonId: value.comparison.id } : {}),
+        ...(value.followup?.id ? { followupId: value.followup.id, followupVersion: value.followup.version } : {})
       },
       completeResponse: {
         location: "Original workspace operation journal and complete workspace export",
