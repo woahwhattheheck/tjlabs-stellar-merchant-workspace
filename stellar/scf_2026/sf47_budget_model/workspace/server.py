@@ -61,14 +61,24 @@ class Server(ThreadingHTTPServer):
     block_on_close = True
     allow_reuse_address = True
 
-    def __init__(self, port, workspace, token):
+    def __init__(self, port, workspace, token, *, on_created=None):
         self.workspace, self.token = workspace, token
         self.staff = StaffAccess(workspace, token)
-        super().__init__(("127.0.0.1", port), Handler)
-        authority = "127.0.0.1" if self.server_port == 80 else f"127.0.0.1:{self.server_port}"
-        self.origin = "http://" + authority
-        self.allowed_hosts = {authority, f"127.0.0.1:{self.server_port}"}
-        self.allowed_origins = {self.origin, f"http://127.0.0.1:{self.server_port}"}
+        super().__init__(("127.0.0.1", port), Handler, bind_and_activate=False)
+        try:
+            # The original socket exists before binding; an owned receiving
+            # caller can retain it even when bind or activation fails.
+            if on_created is not None:
+                on_created(self)
+            self.server_bind()
+            self.server_activate()
+            authority = "127.0.0.1" if self.server_port == 80 else f"127.0.0.1:{self.server_port}"
+            self.origin = "http://" + authority
+            self.allowed_hosts = {authority, f"127.0.0.1:{self.server_port}"}
+            self.allowed_origins = {self.origin, f"http://127.0.0.1:{self.server_port}"}
+        except BaseException:
+            self.server_close()
+            raise
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -295,8 +305,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send(200, result)
 
 
-def create_server(workspace_path, source_path=None, port=0, access_file=None):
-    workspace = Workspace(workspace_path, source_path or HERE.parent / "sf10_current_candidate.json")
+def create_server(workspace_path, source_path=None, port=0, access_file=None, *, on_workspace=None, on_created=None):
+    workspace = Workspace(workspace_path, source_path or HERE.parent / "sf10_current_candidate.json",
+                          on_created=on_workspace)
     server = None
     try:
         token_path = workspace.root / "access.key"
@@ -307,7 +318,7 @@ def create_server(workspace_path, source_path=None, port=0, access_file=None):
         else:
             token = secrets.token_urlsafe(32)
             atomic_private(token_path, (token + "\n").encode())
-        server = Server(port, workspace, token)
+        server = Server(port, workspace, token, on_created=on_created)
         link = server.origin + "/#access=" + token
         access_path = Path(access_file).expanduser().resolve() if access_file else workspace.root / "open-workspace.html"
         page = ('<!doctype html><html lang="en"><meta charset="utf-8"><title>Open SF47 planning</title>'

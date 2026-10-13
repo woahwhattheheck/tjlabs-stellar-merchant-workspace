@@ -25,7 +25,7 @@ export async function staffRequest(path, body, options = {}) {
   if (body !== undefined && current?.csrfToken) headers['X-CSRF-Token'] = current.csrfToken;
   const response = await fetch(path, {
     method: body === undefined ? 'GET' : 'POST',
-    credentials:'same-origin', cache:'no-store', headers,
+    credentials:'same-origin', cache:'no-store', headers, signal:options.signal,
     body: body === undefined ? undefined : options.raw ? body : JSON.stringify(body)
   });
   if (options.download && response.ok) return response;
