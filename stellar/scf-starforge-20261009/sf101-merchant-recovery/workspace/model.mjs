@@ -11,6 +11,7 @@ import { acquireDeliveryLease } from '../../sf98-merchant-delivery/delivery-lock
 import { inspectLocalFleetRestore, runLocalFleetPreparation } from './fleet.mjs';
 import { compileObjectSessions, createObjectRecoveryAdapter } from './object-sessions.mjs';
 import { createRecoverySupport } from './recovery-support.mjs';
+import {compileObjectBundleArchives,createObjectBundleAdapter,objectBundleCommand} from './object-bundles.mjs';
 
 export const HOST_SCHEMA = 'stellar-forge.recovery-workspace.v1';
 const STATE_SCHEMA = 'stellar-forge.recovery-workspace-state.v1';
@@ -26,7 +27,7 @@ const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const clone = value => JSON.parse(JSON.stringify(value));
 const objectCommand = command => ['object-snapshot','object-verify','object-restore'].includes(command);
-const localCommand = command => objectCommand(command) || ['snapshot', 'local-verify', 'publisher-prepare', 'fleet-prepare'].includes(command);
+const localCommand = command => objectCommand(command) || objectBundleCommand(command) || ['snapshot', 'local-verify', 'publisher-prepare', 'fleet-prepare'].includes(command);
 const inside = (parent, child) => parent === child || child.startsWith(parent + sep);
 
 function need(ok, code, message = code, status = 400) {
@@ -106,7 +107,7 @@ function compileHost(value) {
     value.profiles.length > 0 && value.profiles.length <= 32, 'WORKSPACE_HOST_CONFIG_INVALID');
   const seen = new Set();
   const profiles = value.profiles.map(input => {
-    exact(input, ['id', 'label', 'storeConfig', 'operations', 'passEnv', 'bundleRoots', 'downloadRoot', 'restoreRoot', 'capturePlans', 'publisherRestores', 'fleetRestores', 'fleetTargets', 'objectSessions', 'casesDirectory', 'caseSourceDirectory'], 'profile');
+    exact(input, ['id', 'label', 'storeConfig', 'operations', 'passEnv', 'bundleRoots', 'downloadRoot', 'restoreRoot', 'capturePlans', 'publisherRestores', 'fleetRestores', 'fleetTargets', 'objectSessions', 'objectBundleArchives', 'casesDirectory', 'caseSourceDirectory'], 'profile');
     const id = identifier(input.id, 'profile ID');
     need(!seen.has(id), 'WORKSPACE_DUPLICATE_PROFILE'); seen.add(id);
     need(PASS_ENV.test(input.passEnv ?? ''), 'WORKSPACE_PASSPHRASE_NAME_INVALID');
@@ -184,10 +185,12 @@ function compileHost(value) {
     need(fleetTargets.length <= 32, 'WORKSPACE_FLEET_TARGETS_INVALID');
     const objectSessions = compileObjectSessions(input.objectSessions ?? [], {bundleRoots,downloadRoot,
       controls:[absolute(input.operations, 'Original operations directory')]});
+    const objectBundleArchives=compileObjectBundleArchives(input.objectBundleArchives,{downloadRoot,objectSessions,
+      controls:[absolute(input.operations,'Original operations directory'),...['casesDirectory','caseSourceDirectory'].filter(key=>input[key]).map(key=>absolute(input[key],key))]});
     return { id, label: label(input.label, id),
       storeConfig: input.storeConfig == null ? null : absolute(input.storeConfig, 'S3 configuration'),
       operations: absolute(input.operations, 'Original operations directory'), passEnv: input.passEnv, bundleRoots,
-      capturePlans, publisherRestores, fleetRestores, fleetTargets, objectSessions, downloadRoot, restoreRoot,
+      capturePlans, publisherRestores, fleetRestores, fleetTargets, objectSessions, objectBundleArchives, downloadRoot, restoreRoot,
       ...(input.casesDirectory===undefined?{}:{casesDirectory:absolute(input.casesDirectory,'Support cases')}),
       ...(input.caseSourceDirectory===undefined?{}:{caseSourceDirectory:absolute(input.caseSourceDirectory,'Original case source delivery')}) };
   });
@@ -241,6 +244,9 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
       need(!inside(directory, root) && !inside(root, directory), 'WORKSPACE_SOURCE_DIRECTORY_OVERLAP');
       await privateDirectory(root);
     }
+    for(const archive of profile.objectBundleArchives)
+      for(const control of [directory,...host.profiles.map(row=>row.operations)])
+        need(!inside(control,archive.path)&&!inside(archive.path,control),'WORKSPACE_BUNDLE_ARCHIVE_OVERLAP');
     for (const declaration of profile.objectSessions)
       for (const path of [declaration.stateRoot,declaration.bundle])
         for (const control of [directory,...host.profiles.map(row=>row.operations)])
@@ -282,15 +288,20 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
 
   const objectAdapter = createObjectRecoveryAdapter({directory,environment:process.env,
     isClosing:()=>closing||closed,readOnly});
+  async function originalRequestBytes(profileId,id){
+    selectedProfile(profileId);identifier(id,'operation ID');
+    const raw=await privateBytes(requestPath(profileId,id)),saved=JSON.parse(raw.toString('utf8'));
+    need(saved.schema===REQUEST_SCHEMA&&saved.review?.profileId===profileId&&saved.review?.operationId===id,
+      'WORKSPACE_REQUEST_IDENTITY_INVALID');return raw;
+  }
+  async function originalEvidenceBytes(sha256){
+    const found=await objectAdapter.evidence(sha256),raw=Buffer.from(JSON.stringify(found.evidence)+'\n');
+    need(raw.length===found.bytes&&hash(raw)===sha256,'WORKSPACE_OBJECT_EVIDENCE_CHANGED');return raw;
+  }
+  const bundleAdapter=createObjectBundleAdapter({directory,workspaceId:workspaceState.id,
+    readRequestBytes:originalRequestBytes,readEvidenceBytes:originalEvidenceBytes});
   const support = createRecoverySupport({directory,workspaceId:workspaceState.id,profiles:host.profiles,currentHost,
-    readRequestBytes:async(profileId,id)=>{selectedProfile(profileId);identifier(id,'operation ID');
-      const raw=await privateBytes(requestPath(profileId,id));
-      const saved=JSON.parse(raw.toString('utf8'));
-      need(saved.schema===REQUEST_SCHEMA&&saved.review?.profileId===profileId&&saved.review?.operationId===id,
-        'WORKSPACE_REQUEST_IDENTITY_INVALID');return raw;},
-    readEvidenceBytes:async(sha256)=>{const found=await objectAdapter.evidence(sha256);
-      const raw=Buffer.from(JSON.stringify(found.evidence)+'\n');
-      need(raw.length===found.bytes&&hash(raw)===sha256,'WORKSPACE_OBJECT_EVIDENCE_CHANGED');return raw;},
+    readRequestBytes:originalRequestBytes,readEvidenceBytes:originalEvidenceBytes,
     isActive:(profileId,id)=>active?.key===requestPath(profileId,id),isClosing:()=>closing||closed,readOnly});
   const objectReviews = join(directory,'object-reviews');
   function declaredObject(profile,id) {
@@ -311,7 +322,7 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
   async function preparedObject(input,expectedReviewHash) {
     await currentHost();
     const reviewed=await privateJSON(join(objectReviews,expectedReviewHash+'.json'));
-    need(objectCommand(reviewed.command)&&reviewed.reviewHash===expectedReviewHash&&
+    need((objectCommand(reviewed.command)||objectBundleCommand(reviewed.command))&&reviewed.reviewHash===expectedReviewHash&&
       JSON.stringify(reviewed.intent)===JSON.stringify(input)&&
       finishReview(reviewed,reviewed.intent).reviewHash===expectedReviewHash,
       'WORKSPACE_OBJECT_PREPARED_REVIEW_CHANGED','Select the exact original saved Object review',409);
@@ -342,6 +353,32 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
       'WORKSPACE_OBJECT_PREPARED_REVIEW_CHANGED');
     else await atomicJSON(file,reviewed);
     return reviewed;
+  }
+
+  async function bundleSelection(profile,input){
+    const saved=await readRequest(profile.id,input.id);
+    if(saved){
+      need(objectBundleCommand(saved.review.command)&&JSON.stringify(saved.review.intent)===JSON.stringify(input),
+        'WORKSPACE_REQUEST_SELECTION_CHANGED');
+      localPathBindings(profile,saved.review);return clone(saved.review);
+    }
+    need(!readOnly&&!closing,'WORKSPACE_READ_ONLY');
+    need(!active,'WORKSPACE_EXECUTION_ACTIVE');
+    const selected=await bundleAdapter.review(profile,input);
+    const reviewed=finishReview({profileId:profile.id,command:input.action,operationId:input.id,
+      store:null,snapshotId:selected.recordSha256,
+      source:input.action==='object-bundle-export'?selected.objectDeclaration.bundle:selected.archiveDeclaration.path,
+      destination:input.action==='object-bundle-export'?null:selected.objectDeclaration.bundle,
+      objectBundle:selected,options:{command:input.action,id:input.id,passEnv:profile.passEnv,objectBundle:selected}},input);
+    localPathBindings(profile,reviewed);await privateDirectory(objectReviews,true);
+    const file=join(objectReviews,reviewed.reviewHash+'.json');
+    if(await exists(file))need(JSON.stringify(await privateJSON(file))===JSON.stringify(reviewed),
+      'WORKSPACE_BUNDLE_PREPARED_REVIEW_CHANGED');
+    else await atomicJSON(file,reviewed);return reviewed;
+  }
+  async function bundleInspection(profileId,archiveId){
+    need(!readOnly&&!closing,'WORKSPACE_READ_ONLY');need(!active,'WORKSPACE_EXECUTION_ACTIVE');
+    await currentHost();return bundleAdapter.inspection(selectedProfile(profileId),archiveId);
   }
 
   function selectedProfile(id) {
@@ -553,6 +590,10 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
     const options = review.options;
     need(options.id === review.operationId && options.passEnv === profile.passEnv &&
       options.command === review.command, 'WORKSPACE_PROFILE_SELECTION_CHANGED');
+    if(objectBundleCommand(review.command)){
+      need(JSON.stringify(options.objectBundle)===JSON.stringify(review.objectBundle),'WORKSPACE_BUNDLE_REVIEW_CHANGED');
+      bundleAdapter.binding(profile,review.objectBundle);return;
+    }
     if (objectCommand(review.command)) {
       const declaration=declaredObject(profile,options.objectSessionId);
       need(JSON.stringify(declaration)===JSON.stringify(review.objectDeclaration)&&
@@ -639,6 +680,7 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
       'WORKSPACE_OPERATION_ID_USED', 'Select a new local operation ID; this ID already belongs to an original transfer');
     let review;
     if(objectCommand(input.action))return objectSelection(profile,input);
+    if(objectBundleCommand(input.action))return bundleSelection(profile,input);
     if (input.action === 'snapshot') {
       need(input.bundleId === undefined && input.snapshotId === undefined && input.restoreId === undefined &&
         input.publisherRestoreId === undefined && input.quiesced === true,
@@ -732,17 +774,19 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
   async function selection(input) {
     exact(input, ['profileId', 'action', 'id', 'bundleId', 'snapshotId', 'destinationName',
       'capturePlanId', 'quiesced', 'restoreId', 'publisherRestoreId', 'fleetRestoreId', 'fleetTargetId',
-      'objectSessionId','expectedRecordSha256'], 'recovery selection');
-    if(!objectCommand(input.action))need(input.objectSessionId===undefined&&input.expectedRecordSha256===undefined,
+      'objectSessionId','expectedRecordSha256','archiveId','sourceRequestId','sourceReviewHash','sourceAttempt'], 'recovery selection');
+    if(!objectBundleCommand(input.action))need(['archiveId','sourceRequestId','sourceReviewHash','sourceAttempt'].every(key=>input[key]===undefined),
+      'WORKSPACE_BUNDLE_SELECTION_NOT_APPLICABLE');
+    if(!objectCommand(input.action)&&!objectBundleCommand(input.action))need(input.objectSessionId===undefined&&input.expectedRecordSha256===undefined,
       'WORKSPACE_OBJECT_SELECTION_NOT_APPLICABLE');
     if (input.action !== 'fleet-prepare') need(input.fleetRestoreId === undefined && input.fleetTargetId === undefined,
       'WORKSPACE_FLEET_SELECTION_NOT_APPLICABLE', 'Fleet selectors belong to the fleet preparation action');
     const profile = selectedProfile(input.profileId);
     identifier(input.id, 'original operation ID');
-    need(objectCommand(input.action)||['snapshot', 'verify', 'publisher-prepare', 'fleet-prepare', 'push', 'pull', 'restore', 'resume'].includes(input.action),
+    need(objectCommand(input.action)||objectBundleCommand(input.action)||['snapshot', 'verify', 'publisher-prepare', 'fleet-prepare', 'push', 'pull', 'restore', 'resume'].includes(input.action),
       'WORKSPACE_ACTION_INVALID');
     await currentHost();
-    if (objectCommand(input.action)||['snapshot', 'verify', 'publisher-prepare', 'fleet-prepare'].includes(input.action)) return localSelection(profile, input);
+    if (objectCommand(input.action)||objectBundleCommand(input.action)||['snapshot', 'verify', 'publisher-prepare', 'fleet-prepare'].includes(input.action)) return localSelection(profile, input);
     requireRemoteStore(profile);
     need(input.capturePlanId === undefined && input.quiesced === undefined && input.restoreId === undefined &&
       input.publisherRestoreId === undefined,
@@ -878,7 +922,9 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
         const localOptions = { options: request.review.options, state: request.local,
           save: async () => { request.updatedAt = stamp(); await atomicJSON(job.key, request); },
           cancelled: () => job.cancelRequested };
-        result = objectCommand(request.review.command) ? await objectAdapter.run({
+        result = objectBundleCommand(request.review.command)?await bundleAdapter.run({profile,id:request.review.operationId,
+          review:request.review.objectBundle,state:request.local,save:localOptions.save,signal:job.controller.signal,
+          cancelled:localOptions.cancelled}):objectCommand(request.review.command) ? await objectAdapter.run({
           declaration:declaredObject(profile,request.review.options.objectSessionId),review:request.review.objectRecovery,
           state:request.local,save:localOptions.save,cancelled:localOptions.cancelled,signal:job.controller.signal,passEnv:profile.passEnv}) :
           request.review.command === 'snapshot' ?
@@ -913,7 +959,7 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
   async function start({ selection: input, expectedReviewHash } = {}) {
     need(!readOnly && !closing, 'WORKSPACE_READ_ONLY', 'This workspace is closing or was opened for reading', 409);
     need(HEX.test(expectedReviewHash ?? ''), 'WORKSPACE_REVIEW_REQUIRED', 'Review the exact selection before starting');
-    const reviewed = objectCommand(input?.action) ? await preparedObject(input,expectedReviewHash) : await selection(input);
+    const reviewed = (objectCommand(input?.action)||objectBundleCommand(input?.action)) ? await preparedObject(input,expectedReviewHash) : await selection(input);
     need(!closing, 'WORKSPACE_CLOSING', 'The workspace is closing', 409);
     need(reviewed.reviewHash === expectedReviewHash, 'WORKSPACE_REVIEW_CHANGED',
       'The selection changed. Review it again before starting.', 409);
@@ -931,7 +977,7 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
         createdAt: stamp(), updatedAt: stamp() };
       await atomicJSON(key, request);
     }
-    if (objectCommand(reviewed.command)&&retainedRequest) return requestView(request);
+    if ((objectCommand(reviewed.command)||objectBundleCommand(reviewed.command))&&retainedRequest) return requestView(request);
     if (active) {
       need(active.key === key, 'WORKSPACE_EXECUTION_ACTIVE', 'Finish or cancel the active recovery execution first', 409);
       return requestView(request);
@@ -945,7 +991,7 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
     need(!readOnly && !closing, 'WORKSPACE_READ_ONLY'); selectedProfile(profileId); identifier(id, 'operation ID');
     const request = await readRequest(profileId, id);
     need(request, 'WORKSPACE_REQUEST_NOT_FOUND', 'Review this original operation before adopting it into the workspace', 404);
-    if(objectCommand(request.review.command)) {
+    if(objectCommand(request.review.command)||objectBundleCommand(request.review.command)) {
       exact(continuation,['expectedReviewHash','afterAttempt','quiesced'],'Object continuation');
       need(continuation.expectedReviewHash===request.review.reviewHash&&Number.isSafeInteger(continuation.afterAttempt)&&
         continuation.afterAttempt>=0&&continuation.afterAttempt<=request.attempts,
@@ -1001,6 +1047,7 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
       bundleRoots: clone(profile.bundleRoots), capturePlans: clone(profile.capturePlans),
       publisherRestores: clone(profile.publisherRestores), fleetRestores: clone(profile.fleetRestores),
       fleetTargets: clone(profile.fleetTargets), objectSessions:clone(profile.objectSessions),
+      objectBundleArchives:clone(profile.objectBundleArchives),
       supportConfigured:!!profile.casesDirectory,caseSourceConfigured:!!profile.caseSourceDirectory,
       downloadRoot: profile.downloadRoot, restoreRoot: profile.restoreRoot,
       passEnv: profile.passEnv, passphraseAvailable: typeof process.env[profile.passEnv] === 'string' && process.env[profile.passEnv].length > 0 });
@@ -1031,7 +1078,23 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
     return { schema: 'stellar-forge.recovery-workspace-identity.v1', workspaceId: workspaceState.id,
       directory, configFile, configurationSha256: configHash };
   }
-  return { state, identity, localBundles, operations, operation, inventory, requests, request, objectSession, objectEvidence, review: selection,
+  return { state, identity, localBundles, operations, operation, inventory, requests, request, objectSession, objectEvidence, review:input=>transition(()=>selection(input)),
+    bundleInspection:(profileId,archiveId)=>transition(()=>bundleInspection(profileId,archiveId)),
+    bundleReport:async(profileId,id,kind)=>{await currentHost();selectedProfile(profileId);const request=await readRequest(profileId,id);need(request&&objectBundleCommand(request.review.command),'WORKSPACE_BUNDLE_REQUEST_INVALID');
+      return bundleAdapter.report(profileId,id,kind,request.result);},
+    bundleArtifact:async(profileId,id)=>{await currentHost();selectedProfile(profileId);return bundleAdapter.artifact(profileId,id);},
+    bundleAttach:input=>transition(async()=>{
+      exact(input,['profileId','id','transferId','expectedReviewSha256','expectedRevision','actor'],'encrypted bundle attachment');
+      need(!readOnly&&!closing,'WORKSPACE_READ_ONLY');need(!active,'WORKSPACE_EXECUTION_ACTIVE');
+      await currentHost();selectedProfile(input.profileId);identifier(input.id,'original bundle export request');
+      const request=await readRequest(input.profileId,input.id);
+      need(request?.review.command==='object-bundle-export'&&request.result?.status==='COMPLETE',
+        'WORKSPACE_BUNDLE_EXPORT_REQUIRED');
+      const archive=await bundleAdapter.artifact(input.profileId,input.id),{id,...selected}=input;
+      return support.attachArchive({...selected,archive,transport:{...request.result,workspaceOperationId:id}});
+    }),
+    bundleAttachment:input=>transition(()=>support.attachment(input)),
+    bundleCaseExport:input=>transition(()=>support.exportAttached(input)),
     supportCases:(profileId,query)=>transition(()=>support.cases(profileId,query)),
     supportTransfers:profileId=>transition(()=>support.list(profileId)),
     supportTransfer:(profileId,id)=>transition(()=>support.read(profileId,id)),

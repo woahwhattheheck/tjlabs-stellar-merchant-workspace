@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { openRecoveryWorkspace } from './model.mjs';
 import { publishRecoveryWorkspaceLaunch, retireRecoveryWorkspaceLaunch, recoveryLaunchView, RECOVERY_LAUNCH_FILE } from './connection.mjs';
+import {createSourceEditionDeliveryRoutes} from '../../scf_2026/sf49_data_commissioning/source-edition-http.mjs';
 import { readBrowserAssets } from '../../distribution/browser-assets.mjs';
 
 const MAX_BODY = 65536;
@@ -99,7 +100,16 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
     fail('WORKSPACE_LOOPBACK_REQUIRED', 'Recovery workspace uses an exact loopback origin');
   if (!/^[a-f0-9]{64}$/.test(token ?? '')) fail('WORKSPACE_TOKEN_INVALID', 'A generated recovery session token is required');
   const assets = new Map();
-  return async function recoveryHandler(req, res) {
+  const binaryRoutes=createSourceEditionDeliveryRoutes({service:{
+    dispatch(){fail('WORKSPACE_METHOD_INVALID','Use the original recovery request queue',405);},
+    async artifact(input){
+      fields(input,['id','kind','name']);
+      if(input.kind!=='archive')fail('WORKSPACE_BUNDLE_ARCHIVE_REQUIRED','Select a completed bundle archive');
+      return workspace.bundleArtifact(input.id,input.name);
+    },
+    async close(){}
+  }});
+  const recoveryHandler=async function recoveryHandler(req, res) {
     try {
       if (isDraining()) fail('WORKSPACE_DRAINING', 'The original recovery listener is draining; read its next launch before continuing', 503);
       if (!['127.0.0.1', '::ffff:127.0.0.1', '::1'].includes(req.socket.remoteAddress))
@@ -123,6 +133,9 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
       if (!url.pathname.startsWith('/api/')) fail('WORKSPACE_ROUTE_NOT_FOUND', 'Unknown recovery workspace route', 404);
       if (!authorized(req.headers['x-recovery-token'], token))
         fail('WORKSPACE_SESSION_REQUIRED', 'Open the current browser URL printed by workspace serve', 401);
+      if(url.pathname==='/api/commissioning/source-bundles/download'&&['GET','HEAD'].includes(req.method)){
+        await binaryRoutes.handle(req,res,{origin:expected.origin});return;
+      }
       if (req.method === 'GET') {
         let value;
         switch (url.pathname) {
@@ -131,6 +144,11 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
             query(url, []);
             if (!connection) fail('WORKSPACE_CONNECTION_NOT_AVAILABLE', 'This embedding host did not publish an original listener connection', 409);
             value = { ...connection, identity: await workspace.identity() }; break;
+          case '/api/bundle-attachment': {const q=query(url,['profile','id','sha256']);
+            value=await workspace.bundleAttachment({profileId:q.profile,transferId:q.id,archiveSha256:q.sha256});break;}
+          case '/api/bundle-inspection': {const q=query(url,['profile','archive']);value=await workspace.bundleInspection(q.profile,q.archive);break;}
+          case '/api/bundle-report': {const q=query(url,['profile','id','kind']);value=await workspace.bundleReport(q.profile,q.id,q.kind);break;}
+          case '/api/bundle-artifact': {const q=query(url,['profile','id']);value=await workspace.bundleArtifact(q.profile,q.id);break;}
           case '/api/object-session': { const q=query(url,['profile','session']); value=await workspace.objectSession(q.profile,q.session); break; }
           case '/api/object-evidence': { const q=query(url,['sha256']); value=await workspace.objectEvidence(q.sha256); break; }
           case '/api/support-cases': {const q=query(url,['profile','q','offset','limit']);const input={};
@@ -157,6 +175,8 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
         if (isDraining()) fail('WORKSPACE_DRAINING', 'The original recovery listener is draining; read the retained request before continuing', 503);
         let result;
         switch (url.pathname) {
+          case '/api/bundle-attach': result=await workspace.bundleAttach(value);break;
+          case '/api/bundle-case-export': result=await workspace.bundleCaseExport(value);break;
           case '/api/support-review': result=await workspace.supportReview(value);break;
           case '/api/support-save': result=await workspace.supportSave(value);break;
           case '/api/support-export': result=await workspace.supportExport(value);break;
@@ -176,6 +196,7 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
       send(res, status, { error: responseError(error) });
     }
   };
+  recoveryHandler.close=()=>binaryRoutes.close();return recoveryHandler;
 }
 
 export async function serveRecoveryWorkspace({ configFile, directory, port = 8481 } = {}) {
@@ -211,7 +232,7 @@ export async function serveRecoveryWorkspace({ configFile, directory, port = 848
         // A later server can then publish its own launch without an unlink race.
         try { await retireRecoveryWorkspaceLaunch({ directory, instanceId: launch.instanceId }); }
         catch (error) { retirementError = error; }
-        try { await workspace.close({ cancelActive }); await stopped; if (retirementError) throw retirementError; }
+        try { await handler?.close(); await workspace.close({ cancelActive }); await stopped; if (retirementError) throw retirementError; }
         finally { finish(); }
       })();
       return closePromise;

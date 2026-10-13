@@ -19,6 +19,9 @@ const shape = (action, properties, required = []) => ({ type: 'object', addition
   required: ['profileId', 'action', 'id', ...required] });
 export const recoverySelectionSchema = {
   oneOf: [
+    shape('object-bundle-export',{sourceRequestId:id,sourceReviewHash:digest,sourceAttempt:{type:'integer',minimum:0}},
+      ['sourceRequestId','sourceReviewHash','sourceAttempt']),
+    shape('object-bundle-receive',{archiveId:id,objectSessionId:id},['archiveId','objectSessionId']),
     shape('snapshot', { capturePlanId: id, destinationName: id, quiesced: { const: true,
       description: 'Explicitly acknowledge that the reviewed source producers are quiesced for this capture.' } },
       ['capturePlanId', 'quiesced']),
@@ -50,6 +53,19 @@ export const recoverySupportSelectionSchema={type:'object',additionalProperties:
 
 export function recoveryWorkspaceTools(tool) {
   return [
+    tool('merchant_recovery_bundle_inspection','Inspect every encrypted archive member and original manifest from a host-declared archive. This structural read retains its full report; it does not authenticate or restore.',
+      {...profile,archiveId:id},['workspace','profileId','archiveId'],{idempotent:true}),
+    tool('merchant_recovery_bundle_report','Read the exact full report or native verification result retained by a completed encrypted-bundle request.',
+      {...original,kind:{enum:['report','verification','publication']}},['workspace','profileId','id'],read),
+    tool('merchant_recovery_bundle_artifact','Read the complete original exported ciphertext archive path, bytes and SHA-256. Transfer it as binary; never convert it into model context.',
+      original,['workspace','profileId','id'],read),
+    tool('merchant_recovery_bundle_attach','Attach a completed original encrypted archive through existing SF49 source delivery to an already saved recovery Support case with actual commissioning terms. Preserve its exact original case revision and operator.',
+      {...original,transferId:alias,expectedReviewSha256:digest,expectedRevision:digest,actor:{type:'string',minLength:1,maxLength:200}},
+      ['workspace','profileId','id','transferId','expectedReviewSha256','expectedRevision','actor'],{idempotent:true}),
+    tool('merchant_recovery_bundle_attachment','Read the original binary attachment request/result after a missing response. An unfinished attachment requires explicit continuation with identical arguments.',
+      {...profile,transferId:alias,archiveSha256:digest},['workspace','profileId','transferId','archiveSha256'],read),
+    tool('merchant_recovery_bundle_case_export','Export the whole saved case revision that actually contains the original encrypted archive attachment, including the existing full source editions and history.',
+      {...profile,transferId:alias,archiveSha256:digest},['workspace','profileId','transferId','archiveSha256'],{idempotent:true}),
     tool('merchant_recovery_support_cases','List existing Support cases in this host-declared profile. Select an exact case revision; this never creates a case.',
       {...profile,q:{type:'string',maxLength:1000},offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:200}},
       ['workspace','profileId'],read),
@@ -90,7 +106,7 @@ export function recoveryWorkspaceTools(tool) {
     tool('merchant_recovery_start', 'Start only the exact native selection and expectedReviewHash returned by review. Retain its profile/operation ID. A RUNNING or PREPARED result is an accepted operation; read request until the original COMPLETE or error outcome.',
       { ...selected, selection: recoverySelectionSchema, expectedReviewHash: digest },
       ['workspace', 'selection', 'expectedReviewHash'], { idempotent: true, openWorld: true }),
-    tool('merchant_recovery_resume', 'Continue an existing workspace request with its original saved selection. First read that same request after uncertainty. Standalone Object requests require their exact expectedReviewHash and observed afterAttempt; object-snapshot additionally requires fresh quiesced:true. An older attempt returns the current retained request without another dispatch.',
+    tool('merchant_recovery_resume', 'Continue an existing workspace request with its original saved selection. First read that same request after uncertainty. Standalone Object and encrypted-bundle requests require their exact expectedReviewHash and observed afterAttempt; object-snapshot additionally requires fresh quiesced:true. An older attempt returns the current retained request without another dispatch.',
       { ...original, expectedReviewHash: digest, afterAttempt: { type: 'integer', minimum: 0 }, quiesced: { const: true } },
       ['workspace', 'profileId', 'id'], { idempotent: true, openWorld: true }),
     tool('merchant_recovery_cancel', 'Ask the original workspace to stop this execution while retaining its ID and journal. Read the same request to observe completion or interruption; local verification/restore or fleet preparation can finish after the stop request.',

@@ -36,6 +36,13 @@
         "recovery-support-desk.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/object-bundles-desk.mjs",
+      [
+        "object-bundles-desk.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
