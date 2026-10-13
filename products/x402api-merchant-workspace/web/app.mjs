@@ -1,10 +1,10 @@
+import {mountInvoiceWorking} from './invoice-working.mjs';
 import {mountMerchantIntake} from './invoice-intake.mjs';
 import {mountMerchantPayment} from './payment-desk.mjs';
 import {mountMerchantDelivery} from './customer-delivery.mjs';
 const $ = id => document.getElementById(id);
 let token = '', state = null, projectState = null, selectedId = null, busy = false, poll = null;
 let registerSelection = {}, registerRequest = 0, detailRequest = 0, detailOrder = null, ownerIdentity = null, connectionEpoch = 0;
-const pendingKey = () => 'merchant.pending-invoice.v1.' + state.config.tenantId;
 const names = { CREATED: 'Draft', CHARGE_UNCERTAIN: 'Creating request', CHARGE_REJECTED: 'Request rejected',
   AWAITING_PAYMENT: 'Awaiting payment', PAYMENT_PENDING: 'Payment pending', PAYMENT_UNCERTAIN: 'Reconciling payment',
   PAYMENT_FAILED: 'Payment failed', SETTLEMENT_CONFIRMED: 'Settled', FULFILLMENT_PENDING: 'Preparing result',
@@ -75,7 +75,7 @@ async function action(work) {
   }
 }
 function disconnect() {
-  connectionEpoch++; intake.reset(); payment.detach(); delivery.reset(); ownerIdentity = null;
+  connectionEpoch++; working.reset(); intake.reset(); payment.detach(); delivery.reset(); ownerIdentity = null;
   token = ''; selectedId = null; state = null; projectState = null; detailOrder = null;
   registerRequest++; detailRequest++; registerSelection = {}; $('register-filter-form').reset();
   $('detail-content').hidden = true; $('detail-empty').hidden = false;
@@ -85,41 +85,6 @@ function disconnect() {
   if (poll) clearInterval(poll); poll = null;
   $('workspace').hidden = true; $('connect-panel').hidden = false; $('disconnect').hidden = true;
   $('connection-state').textContent = 'Disconnected'; $('operator-token').value = ''; $('signature').value = '';
-}
-function renderRails() {
-  const container = $('rail-fields'); container.replaceChildren();
-  for (const rail of state.config.template.rails) {
-    const card = element('div', undefined, 'rail'), choice = element('label', undefined, 'rail-choice');
-    const checkbox = element('input'); checkbox.type = 'checkbox'; checkbox.name = 'rail'; checkbox.value = rail.assetId;
-    checkbox.checked = state.config.template.rails.length === 1;
-    choice.append(checkbox, element('span', rail.label)); card.append(choice, element('p', rail.network, 'muted'));
-    const input = element('input'); input.type = 'text'; input.inputMode = 'decimal'; input.autocomplete = 'off';
-    input.className = 'rail-amount'; input.placeholder = '0.00'; input.dataset.assetId = rail.assetId; input.setAttribute('aria-label', rail.label + ' amount');
-    const detail = element('div', 'Atomic units', 'rail-atomic');
-    input.addEventListener('input', () => { try { detail.textContent = atomic(input.value, rail.decimals) + ' atomic units'; } catch { detail.textContent = 'Up to ' + rail.decimals + ' decimal places'; } });
-    card.append(input, detail); container.append(card);
-  }
-  renderPendingCreation();
-}
-function renderPendingCreation() {
-  const saved = sessionStorage.getItem(pendingKey()), pending = saved ? JSON.parse(saved) : null;
-  const form = $('create-form');
-  form.elements.reference.readOnly = !!pending; form.elements.title.readOnly = !!pending;
-  if (pending) { form.elements.reference.value = pending.reference; form.elements.title.value = pending.title; }
-  for (const choice of form.querySelectorAll('input[name=rail]')) {
-    choice.disabled = !!pending;
-    if (pending) choice.checked = pending.prices.some(price => price.assetId === choice.value);
-  }
-  for (const input of form.querySelectorAll('input[data-asset-id]')) {
-    input.readOnly = !!pending;
-    if (pending) {
-      const price = pending.prices.find(item => item.assetId === input.dataset.assetId);
-      const rail = state.config.template.rails.find(item => item.assetId === input.dataset.assetId);
-      input.value = price && rail ? amount(price.amountAtomic, rail.decimals) : '';
-    }
-  }
-  $('creation-note').textContent = pending ? 'The original invoice is retained. Retry will send these same details.' : '';
-  $('create-submit').textContent = pending ? 'Retry original invoice' : 'Save invoice';
 }
 function renderList() {
   const rows = $('order-rows'); rows.replaceChildren();
@@ -296,7 +261,7 @@ function applyCaptureControls() {
   const order = detailOrder?.id === selectedId ? detailOrder : state?.orders?.find(item => item.id === selectedId);
   $('create-charge').disabled = paused || order?.state === 'CHARGE_REJECTED';
   renderRegisterControls();
-  intake.controls(); payment.controls(); delivery.controls();
+  intake.controls(); payment.controls(); delivery.controls(); working.controls();
 }
 function renderProject() {
   const rows = $('project-export-rows'); rows.replaceChildren();
@@ -369,7 +334,7 @@ $('connect-form').addEventListener('submit', event => {
     $('operator-token').value = '';
     $('connect-panel').hidden = true; $('workspace').hidden = false; $('disconnect').hidden = false;
     $('connection-state').textContent = state.mode === 'review' ? 'Project review' : 'Connected';
-    if (state.mode !== 'review') renderRails();
+    if (state.mode !== 'review') await working.connect();
     if (poll) clearInterval(poll);
     poll = setInterval(() => {
       if (!busy && token) {
@@ -394,38 +359,16 @@ $('register-next').addEventListener('click', () => action(() =>
   state?.page.next ? refresh({cursor: state.page.next}) : Promise.resolve()));
 $('register-export-csv').addEventListener('click', () => action(() => exportRegister('csv')));
 $('register-export-json').addEventListener('click', () => action(() => exportRegister('json')));
-$('show-create').addEventListener('click', () => { $('create-panel').hidden = false; $('create-form').elements.reference.focus(); });
-$('hide-create').addEventListener('click', () => { $('create-panel').hidden = true; });
-$('create-form').addEventListener('submit', event => {
-  event.preventDefault();
-  action(async () => {
-    let payload; const pending = sessionStorage.getItem(pendingKey());
-    if (pending) payload = JSON.parse(pending);
-    else {
-      const form = $('create-form'), prices = [];
-      for (const choice of form.querySelectorAll('input[name=rail]:checked')) {
-        const rail = state.config.template.rails.find(item => item.assetId === choice.value);
-        const input = [...form.querySelectorAll('input[data-asset-id]')].find(item => item.dataset.assetId === rail.assetId);
-        prices.push({ assetId: rail.assetId, amountAtomic: atomic(input.value, rail.decimals) });
-      }
-      if (!prices.length) throw new Error('Select at least one payment option.');
-      payload = { id: crypto.randomUUID(), reference: form.elements.reference.value, title: form.elements.title.value, prices };
-      sessionStorage.setItem(pendingKey(), JSON.stringify(payload));
-      renderPendingCreation();
-    }
-    const created = await api('/api/orders', { method: 'POST', body: payload });
-    sessionStorage.removeItem(pendingKey()); selectedId = created.order.id; payment.select(selectedId); delivery.select(selectedId); $('create-panel').hidden = true;
-    $('create-form').reset(); renderRails(); await refresh();
-    notice('Invoice saved. Create its payment request when the terms are ready.');
-  });
-});
-
-
+$('show-create').addEventListener('click', () => action(() => working.show()));
+$('hide-create').addEventListener('click', () => action(async () => { await working.flush(); $('create-panel').hidden = true; }));
 
 $('download-result').addEventListener('click', () => action(async () => {
   const detail = await api('/api/orders/' + selectedId);
   await download('/api/orders/' + selectedId + '/result', detail.order.result.fileName);
 }));
+const working=mountInvoiceWorking({api,action,notice,identity:()=>ownerIdentity,state:()=>state,
+ busy:()=>busy,capturing:()=>projectState?.capturing===true,
+ received:async id=>{selectedId=id;payment.select(id);delivery.select(id);await refresh();}});
 const delivery=mountMerchantDelivery({api,action,notice,identity:()=>ownerIdentity,busy:()=>busy});
 const payment=mountMerchantPayment({api,action,notice,identity:()=>ownerIdentity,state:()=>state,
  busy:()=>busy,capturing:()=>projectState?.capturing===true,changed:refresh});
