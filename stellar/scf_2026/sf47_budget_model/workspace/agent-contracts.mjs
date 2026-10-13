@@ -7,7 +7,7 @@ export const GRANT_MAX_WORKBOOK_HANDOVER_BYTES = 129 * 1024 * 1024;
 export const GRANT_TRANSFER_CHUNK_BYTES = 65536;
 
 export const GRANT_COMPLETION_ACTIONS = Object.freeze([
-  'completion.save', 'completion.prepare', 'completion.extension', 'completion.submit', 'completion.decision',
+  'completion.save', 'completion.corrections.save', 'completion.prepare', 'completion.extension', 'completion.submit', 'completion.decision',
 ]);
 
 export const GRANT_EXPENSE_ACTIONS = Object.freeze([
