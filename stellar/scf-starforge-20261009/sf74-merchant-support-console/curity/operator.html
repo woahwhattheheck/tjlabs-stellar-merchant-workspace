@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Curity audit review · Support desk</title><link rel="stylesheet" href="/curity/operator.css"><script type="module" src="/curity/operator.mjs"></script></head>
+<body><header><a href="/">Support desk</a><span>Curity audit review</span><a href="/curity/OPERATOR.md">Operator guide</a></header>
+<main><div class="intro"><p class="eyebrow">SOURCE → REVIEW → CASE → RECEIVING</p><h1>Make an audit trail useful.</h1><p>Keep the original export, inspect exactly what it says, and attach a reviewed selection to an existing support case.</p></div>
+<div id="status" role="status" aria-live="polite">Opening the original workspace…</div>
+<div id="pending" hidden><strong>A saved action needs receiving.</strong><p id="pending-description"></p><button id="retry-action">Retry the same saved action</button><button id="dismiss-action">Close a reviewed failed action</button></div>
+<nav aria-label="Workflow"><a href="#intake">1 · Original files</a><a href="#review">2 · Evidence review</a><a href="#case">3 · Support case</a><a href="#handover">4 · Complete handover</a></nav>
+<section id="intake"><div class="section-heading"><div><p class="eyebrow">1 · INTAKE</p><h2>Use the original export.</h2></div><span class="badge">Private workspace</span></div>
+<form id="source-form">
+<div class="grid"><label>Installation identity<input id="installation" required maxlength="200"></label><label>Source edition<input id="source-edition" required maxlength="200" placeholder="Exact export or selected publisher edition"></label>
+<label>Source context<select id="source-context"><option value="PUBLISHER_EXAMPLE">Publisher example · not a supplier export</option><option value="SUPPLIER_EXPORT">Supplier export · actual installation data</option></select></label>
+<label>Original JSON / NDJSON files<input id="source-files" type="file" multiple accept=".json,.ndjson,.jsonl,application/json" required></label></div>
+<div id="file-list"></div>
+<details open><summary>Mapping and explicit observation binding</summary><p>Paths are case-sensitive. A field path is a JSON array, such as <code>["audit","instant"]</code>. Keep outer timestamps separate from the audit instant.</p>
+<div class="grid"><label>Record layout<select id="layout"><option value="fields">Structured fields</option><option value="curity-message">Curity text message</option></select></label><label>Resource identity<input id="resource" required></label>
+<label>Configuration SHA-256<input id="configuration" required pattern="[a-f0-9]{64}" minlength="64" maxlength="64"></label><label>Content path<input id="content-path" value='["audit"]'></label>
+<label>Type path<input id="type-path" value='["audit","type"]'></label><label>Event ID path<input id="id-path" value='["audit","id"]'></label>
+<label>Audit instant path<input id="instant-path" value='["audit","instant"]'></label><label>Message path<input id="message-path" value='["message"]'></label>
+<label>Window start · exact RFC3339<input id="window-start" required placeholder="2026-10-13T00:00:00Z"></label><label>Window end · exact RFC3339<input id="window-end" required placeholder="2026-10-13T01:00:00Z"></label>
+<label>Outer timestamp path · optional<input id="outer-path" placeholder='["timeMillis"]'></label><label>Outer timestamp unit<select id="outer-unit"><option>milliseconds</option><option>seconds</option><option>microseconds</option><option>nanoseconds</option><option>literal-only</option></select></label>
+<label>Covered profiles · one per line<textarea id="coverage-profiles" rows="3"></textarea></label><label>Covered listeners · one per line<textarea id="coverage-listeners" rows="3"></textarea></label></div>
+<details><summary>Explicit retained observation linkage · optional</summary><p>Select only an actual configuration/window-bound observer snapshot. Audit events are not joined to minute counters or individual requests.</p><label>Original observation descriptor JSON<textarea id="observation" rows="4" placeholder='null'></textarea></label></details></details>
+<button type="submit">Retain files and inspect source</button></form></section>
+<section id="review"><div class="section-heading"><div><p class="eyebrow">2 · EVIDENCE</p><h2>Review exact source occurrences.</h2></div><button id="refresh">Refresh workspace</button></div>
+<div class="grid"><label>Retained edition<select id="edition"><option value="">Choose an edition</option></select></label><label>Named operator<input id="operator" maxlength="200" required></label></div>
+<div id="edition-summary" class="summary"></div><div class="actions"><button id="load-events">Read events</button><button id="load-findings">Read findings</button><button id="next-page" disabled>Next page</button><span id="page-summary"></span></div>
+<div id="evidence" class="evidence"></div>
+<div class="review-footer"><label>Review reason<textarea id="review-reason" rows="3" maxlength="4000" placeholder="Why this selection is relevant; explain exclusions and accepted collisions."></textarea></label>
+<p id="selection-summary">No occurrences selected.</p><button id="confirm-review">Freeze a new confirmed review edition</button></div>
+<details><summary>Original record bytes</summary><pre id="original-record">Choose “Read original” on an occurrence.</pre></details></section>
+<section id="source-comparison"><p class="eyebrow">COMPLETE SOURCE COMPARISON</p><h2>See what changed between exports.</h2><p>Compare all classifiable event identities and every retained occurrence. Malformed or incomplete source stays visible; unclassifiable bytes do not become invented events.</p>
+<div class="grid"><label>Before edition<select id="compare-before"><option value="">Choose an edition</option></select></label><label>Following edition<select id="compare-after"><option value="">Choose an edition</option></select></label></div>
+<button id="compare-sources">Compare complete source editions</button><label>Retained comparison<select id="comparison-select"><option value="">Choose a comparison</option></select></label>
+<div id="comparison-summary" class="summary">Select two retained editions to compare.</div><div id="comparison-downloads"></div></section>
+<section id="case"><p class="eyebrow">3 · NATIVE SUPPORT CASE</p><h2>Attach reviewed evidence.</h2><p>The original SF74 case retains its existing workspace and support report. A case operation records the reviewed evidence and only the field changes you select here.</p>
+<div class="grid"><label>Existing case<select id="case-select"><option value="">Choose a case</option></select></label><label>Case note<textarea id="case-note" rows="3" maxlength="4000"></textarea></label></div>
+<div id="case-summary" class="summary"></div>
+<details><summary>Selected metadata changes · optional</summary><div class="grid" id="metadata-fields"></div></details>
+<details><summary>Acknowledge an existing incident · optional</summary><p>Keep the real observer source and incident identities. Receiving a portable case does not carry notification authority.</p><div class="grid"><label>Original incident source ID<input id="incident-source"></label><label>Original incident ID<input id="incident-id"></label><label>Incident revision<input id="incident-revision" type="number" min="0"></label><label>Original configuration SHA-256<input id="incident-configuration"></label></div></details>
+<button id="prepare-case">Prepare case comparison</button>
+<pre id="case-plan">No case operation selected.</pre><div class="actions"><button id="apply-case" disabled>Apply this reviewed case operation</button><button id="compare-case" disabled>Read current field comparison</button><button id="rollback-case" disabled>Restore this operation’s unchanged fields</button><button id="ack-incident" disabled>Acknowledge selected original incident</button></div>
+<label>Retained case operation<select id="operation"><option value="">Choose an operation</option></select></label></section>
+<section id="handover"><p class="eyebrow">4 · PORTABLE RECEIVING</p><h2>Keep the complete case and source.</h2><p>Export includes every declared audit original, mapping, review, native case history, source package, and the selected readable application. Receiving reopens the native case and preserves later staff edits.</p>
+<button id="export-package">Build complete package for selected operation</button>
+<label>Complete retained package<select id="package"><option value="">Choose a package</option></select></label>
+<div class="actions"><button id="save-package">Save complete package folder</button><button id="show-downloads">Show all member downloads</button></div><div id="downloads"></div>
+<h3>Receive a complete package folder</h3><label>Original exported folder<input id="receive-folder" type="file" webkitdirectory multiple></label><button id="receive-package">Verify all members and receive native case</button><pre id="receive-result">No package received in this session.</pre></section>
+</main><footer>Original audit bytes stay with their source edition. Publisher examples, incomplete source and actual supplier exports remain visibly distinct.</footer></body></html>

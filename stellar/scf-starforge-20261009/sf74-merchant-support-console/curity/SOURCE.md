@@ -162,6 +162,16 @@ Review functions:
 
 A returned envelope contains kind per-event or bulk-acknowledgment, sourceReturn {sha256,bytes}, editionId, reviewId, case {id,revision} and optional events. Each per-event entry contains sourceRef, disposition, targetId, caseId, caseRevision and files [{sha256,bytes}]. A bulk acknowledgment remains UNVERIFIED_DETAIL; it never demonstrates per-event preservation or invents target event IDs. The SF74 case has no synthetic per-audit-event table, so its actual package comparison may truthfully lack target event IDs while proving complete companion hashes.
 
+The all-source comparison also compares complete original-file descriptors, including source occurrence/order, framing and metadata. A repeated or empty original file is retained as a distinct source occurrence even when its storage bytes are shared; descriptor changes remain visible in addedFiles and removedFiles.
+
+## Complete comparison recovery
+
+compareSourceEditions(beforeDirectory, afterDirectory, {directory}) verifies both complete source editions before work or completed-result reuse. Each new sibling .building attempt retains INPUT.json with both exact manifest hashes, source edition IDs, installation and comparison scope before it writes changes. Output is published by one directory rename only after changes.jsonl and comparison.json are complete.
+
+A lost process or acknowledgment can be continued with the same call and exact sources. If the final directory is absent, a fresh attempt computes the same comparison and preserves prior interrupted siblings. If the final directory is present, the function verifies its comparison identity, selection, fixed changes filename, full changes bytes and retained request, then returns the existing result. A concurrent completed publisher is received through those same checks. Historical completed comparison directories without INPUT.json remain readable after full result and source verification.
+
+An existing final directory without comparison.json is not a normal partial publication from this producer. It is retained and reported for inspection; the function never deletes it or overwrites unrelated or damaged files. Partial attempt siblings may be retired only through their original owner's ordinary retained-artifact workflow after the completed result is preserved.
+
 ## Existing case and portable receiving
 
 The Curity bridge uses SF74's original CaseStore revisions, artifact retention and native source-package receiver. It never inserts an arbitrary seventh source slot. The full audit edition remains a provider companion bound to the existing case, incident/source identities and reviewed selection.

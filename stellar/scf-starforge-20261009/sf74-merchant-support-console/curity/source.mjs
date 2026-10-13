@@ -318,8 +318,33 @@ export async function compareSourceEditions(beforeDirectory,afterDirectory,{dire
   const before=await openEdition(beforeDirectory),after=await openEdition(afterDirectory);
   need(before.installationId===after.installationId,'Compare source editions from the same selected installation');
   const destination=resolve(directory);await mkdir(dirname(destination),{recursive:true,mode:0o700});
-  try{await lstat(destination);throw new Error('Comparison destination exists; reopen its retained result');}catch(e){if(e.code!=='ENOENT')throw e;}
+  const request={schema:'curity.source-comparison-request/v1',scope:'ALL_CLASSIFIABLE_EVENT_IDENTITIES',
+    installationId:after.installationId,
+    before:{id:before.id,manifestSha256:hash(await readFile(await retainedPath(beforeDirectory,'manifest.json')))},
+    after:{id:after.id,manifestSha256:hash(await readFile(await retainedPath(afterDirectory,'manifest.json')))}};
+  async function completed(){
+    let selected;try{selected=await lstat(destination);}catch(error){if(error.code==='ENOENT')return null;throw error;}
+    need(selected.isDirectory()&&!selected.isSymbolicLink(),'Retain the original comparison destination; it is not an ordinary directory');
+    let old;try{old=JSON.parse(await readFile(await retainedPath(destination,'comparison.json'),'utf8'));}
+    catch(error){if(error.code==='ENOENT')throw new Error('Retain the existing comparison directory without a published result; this producer publishes only complete directories and will not replace unrelated or damaged data');throw error;}
+    const {id,...value}=old;
+    need(old.schema==='curity.complete-source-comparison/v1'&&id==='curity-comparison-'+hash(stable(value)),
+      'The retained complete comparison identity changed');
+    need(old.scope===request.scope&&old.installationId===request.installationId&&old.before===before.id&&old.after===after.id,
+      'The retained comparison belongs to another exact source selection');
+    need(old.changes?.path==='changes.jsonl','Retain the original complete changes filename');
+    const actual=await digestFile(await retainedPath(destination,'changes.jsonl'));
+    need(actual.bytes===old.changes.bytes&&actual.sha256===old.changes.sha256,'The retained complete changes bytes changed');
+    try{const originalRequest=JSON.parse(await readFile(await retainedPath(destination,'INPUT.json'),'utf8'));
+      need(stable(originalRequest)===stable(request),'The comparison request changed');}
+    catch(error){if(error.code!=='ENOENT')throw error;} // Original completed editions predate the request member.
+    return old;
+  }
+  const published=await completed();if(published)return published;
   const stage=destination+'.building-'+process.pid+'-'+randomBytes(6).toString('hex');await mkdir(stage,{mode:0o700});
+  // Each attempt retains exact source identity before output. Interrupted siblings
+  // are kept; re-entry uses a fresh attempt and never truncates their files.
+  await writeFileExclusive(join(stage,'INPUT.json'),JSON.stringify(request,null,2)+'\n');
   const {createInterface}=await import('node:readline');
   async function* rows(root){
     const stream=createReadStream(await retainedPath(root,'indexes/identities.jsonl'));
@@ -345,7 +370,8 @@ export async function compareSourceEditions(beforeDirectory,afterDirectory,{dire
     for(const old of previous.values()){counts.removed++;await write({kind:'removed',eventKey:old.eventKey,before:old,after:null});}
     await out.sync();
   }finally{await out.close();}
-  const sourceIdentity=f=>stable({sha256:f.sha256,name:f.name,sourceUri:f.sourceUri,exportId:f.exportId,sourceEdition:f.sourceEdition});
+  // Complete descriptors retain repeated/empty file occurrences, order, framing and metadata.
+  const sourceIdentity=f=>stable(f);
   const oldFiles=new Set(before.sourceFiles.map(sourceIdentity)),newFiles=new Set(after.sourceFiles.map(sourceIdentity));
   const result={schema:'curity.complete-source-comparison/v1',before:before.id,after:after.id,scope:'ALL_CLASSIFIABLE_EVENT_IDENTITIES',
     installationId:after.installationId,counts,sourceState:{before:before.state,after:after.state},
@@ -355,5 +381,9 @@ export async function compareSourceEditions(beforeDirectory,afterDirectory,{dire
       interpretation:'Complete original findings remain in each retained edition; unclassifiable internal events are not assigned invented IDs.'},
     changes:{path:'changes.jsonl',...await digestFile(join(stage,'changes.jsonl'))}};
   result.id='curity-comparison-'+hash(stable(result));await writeFileExclusive(join(stage,'comparison.json'),JSON.stringify(result,null,2)+'\n');
-  await rename(stage,destination);return result;
+  try{await rename(stage,destination);}catch(error){
+    if(!['EEXIST','ENOTEMPTY'].includes(error.code))throw error;
+    const winner=await completed();need(winner,'The comparison destination changed during publication');return winner;
+  }
+  return result;
 }
