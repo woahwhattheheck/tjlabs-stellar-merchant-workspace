@@ -1,5 +1,5 @@
 from pathlib import Path
-import os,sys,json,hashlib,zipfile,uuid,shutil
+import os,sys,json,hashlib,zipfile,uuid,shutil,stat
 root=OWNER_ROOT
 result_path=root/'records/customer-result.json'
 result=json.loads(result_path.read_bytes())
@@ -9,10 +9,23 @@ def identity(p):
  with p.open('rb') as f:
   while b:=f.read(1024*1024):h.update(b);n+=len(b)
  return {'bytes':n,'sha256':h.hexdigest()}
-def write(p,v):
+def sync_directory(p):
+ fd=os.open(p,os.O_RDONLY|os.O_DIRECTORY)
+ try:os.fsync(fd)
+ finally:os.close(fd)
+def write(p,v,*,reuse=False):
  b=(json.dumps(v,indent=2,ensure_ascii=False)+'\n').encode()
  p.parent.mkdir(exist_ok=True,parents=True,mode=0o700)
- with p.open('xb') as f:f.write(b);f.flush();os.fsync(f.fileno())
+ if p.exists() or p.is_symlink():
+  if not reuse or p.is_symlink() or not p.is_file() or p.read_bytes()!=b:raise RuntimeError('RETAINED_PACKAGE_RECORD_CHANGED '+str(p))
+  return {'path':str(p),**identity(p)}
+ temporary=p.with_name(p.name+'.preparing-'+uuid.uuid4().hex)
+ try:
+  with temporary.open('xb') as f:f.write(b);f.flush();os.fsync(f.fileno())
+  os.link(temporary,p)
+  sync_directory(p.parent)
+ finally:
+  if temporary.exists():temporary.unlink()
  return {'path':str(p),**identity(p)}
 guide=root/'RECEIVING_RESULT.md'
 if not guide.exists():
@@ -43,30 +56,67 @@ members.append(('acceptance-inputs/recovery-passphrase.txt',root/'private/recove
 member_map=[{'path':name,**identity(p)} for name,p in sorted(members)]
 manifest={'schema':'stellar-forge.standalone-object-recovery-package.v1','sourceRepository':'woahwhattheheck/tjlabs-stellar-merchant-workspace','sourceCommit':'b09765c47a6e71b552bfc7b38958d7b1b9750678',
  'operationId':result['operationId'],'customerResult':identity(result_path),'files':member_map}
-mp=root/'PACKAGE_MANIFEST.json';write(mp,manifest);members.append(('PACKAGE_MANIFEST.json',mp))
+mp=root/'PACKAGE_MANIFEST.json';write(mp,manifest,reuse=True);members.append(('PACKAGE_MANIFEST.json',mp))
 delivery=root/'delivery';delivery.mkdir(exist_ok=True,mode=0o700)
 archive=delivery/'Standalone_Object_SF101_Recovery_20261012.zip'
-if archive.exists():raise RuntimeError('EXISTING_PACKAGE_REQUIRES_ORIGINAL_RECEIPT')
-with zipfile.ZipFile(archive,'x',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as z:
- for name,p in sorted(members):
-  info=zipfile.ZipInfo(name,(2026,10,12,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=(0o100600<<16)
-  z.writestr(info,p.read_bytes())
-with archive.open('rb') as f:os.fsync(f.fileno())
-with zipfile.ZipFile(archive) as z:
- if z.testzip() is not None:raise RuntimeError('PACKAGE_CRC_FAILED')
- if len(z.infolist())!=len(members):raise RuntimeError('PACKAGE_MEMBER_COVERAGE_CHANGED')
- for row in member_map:
-  b=z.read(row['path'])
-  if len(b)!=row['bytes'] or hashlib.sha256(b).hexdigest()!=row['sha256']:raise RuntimeError('PACKAGE_MEMBER_CHANGED')
-package={'path':str(archive),**identity(archive),'members':len(members),'manifest':identity(mp)}
+expected_members={row['path']:{'bytes':row['bytes'],'sha256':row['sha256']} for row in member_map}
+expected_members['PACKAGE_MANIFEST.json']=identity(mp)
+if len(expected_members)!=len(members):raise RuntimeError('PACKAGE_MEMBER_NAME_COLLISION')
+def verify_archive(p):
+ if p.is_symlink() or not p.is_file():raise RuntimeError('PACKAGE_REGULAR_FILE_REQUIRED')
+ with zipfile.ZipFile(p) as z:
+  infos=z.infolist()
+  if len(infos)!=len(expected_members) or {i.filename for i in infos}!=set(expected_members):raise RuntimeError('PACKAGE_MEMBER_COVERAGE_CHANGED')
+  if z.testzip() is not None:raise RuntimeError('PACKAGE_CRC_FAILED')
+  for name,want in expected_members.items():
+   b=z.read(name)
+   if len(b)!=want['bytes'] or hashlib.sha256(b).hexdigest()!=want['sha256']:raise RuntimeError('PACKAGE_MEMBER_CHANGED')
+ return identity(p)
+if archive.exists() or archive.is_symlink():
+ verify_archive(archive)
+else:
+ partial=delivery/(archive.name+'.partial-'+identity(mp)['sha256'])
+ if partial.exists() or partial.is_symlink():
+  if partial.is_symlink() or not partial.is_file():raise RuntimeError('PACKAGE_PARTIAL_REGULAR_FILE_REQUIRED')
+  try:verify_archive(partial)
+  except (zipfile.BadZipFile,RuntimeError,EOFError,KeyError) as exc:
+   prior=partial.with_name(partial.name+'.incomplete-'+uuid.uuid4().hex)
+   partial.rename(prior);sync_directory(delivery)
+   OWNER_OUT({'state':'INCOMPLETE_PACKAGE_RETAINED','path':str(prior),'manifest':identity(mp),'reason':type(exc).__name__+': '+str(exc)})
+ if not partial.exists():
+  with zipfile.ZipFile(partial,'x',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as z:
+   for name,p in sorted(members):
+    body=p.read_bytes();want=expected_members[name]
+    if len(body)!=want['bytes'] or hashlib.sha256(body).hexdigest()!=want['sha256']:raise RuntimeError('PACKAGE_SOURCE_CHANGED '+name)
+    info=zipfile.ZipInfo(name,(2026,10,12,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=(0o100600<<16)
+    z.writestr(info,body)
+  with partial.open('rb') as f:os.fsync(f.fileno())
+ verify_archive(partial)
+ try:os.link(partial,archive)
+ except FileExistsError:
+  if verify_archive(archive)!=identity(partial):raise RuntimeError('PACKAGE_PUBLICATION_CONFLICT')
+ sync_directory(delivery);partial.unlink();sync_directory(delivery)
+package={'path':str(archive),**verify_archive(archive),'members':len(members),'manifest':identity(mp)}
 persistent=Path(os.environ.get('SCF_RECOVERY_DELIVERY_DIRECTORY',str(root/'completed-delivery')))
 try:
  persistent.mkdir(parents=True,exist_ok=True,mode=0o700)
  target=persistent/archive.name
- if target.exists():
-  if identity(target)!=identity(archive):raise RuntimeError('PERSISTENT_PACKAGE_CONFLICT')
+ if target.exists() or target.is_symlink():
+  if target.is_symlink() or not target.is_file() or identity(target)!=identity(archive):raise RuntimeError('PERSISTENT_PACKAGE_CONFLICT')
  else:
-  with archive.open('rb') as src,target.open('xb') as dst:shutil.copyfileobj(src,dst,1024*1024);dst.flush();os.fsync(dst.fileno())
+  temporary=target.with_name(target.name+'.preparing-'+uuid.uuid4().hex);owned=None
+  try:
+   with archive.open('rb') as src,temporary.open('xb') as dst:
+    st=os.fstat(dst.fileno());owned=(st.st_dev,st.st_ino)
+    shutil.copyfileobj(src,dst,1024*1024);dst.flush();os.fsync(dst.fileno())
+   if identity(temporary)!=identity(archive):raise RuntimeError('PERSISTENT_COPY_MISMATCH')
+   os.link(temporary,target);sync_directory(persistent)
+  finally:
+   if owned is not None:
+    try:
+     st=temporary.lstat()
+     if (st.st_dev,st.st_ino)==owned and stat.S_ISREG(st.st_mode):temporary.unlink()
+    except FileNotFoundError:pass
  if identity(target)!=identity(archive):raise RuntimeError('PERSISTENT_COPY_MISMATCH')
  archive=target;package['path']=str(archive);package['persistent']=True
 except OSError as exc:
@@ -92,7 +142,7 @@ class RecordingHostedAppsClient:
   except BaseException as exc:
    write(journal/(call+'-uncertain.private.json'),{'state':'OUTCOME_UNCERTAIN','exception':type(exc).__name__,'message':str(exc)})
    raise
-write(root/'package-dispatch.json',package)
+write(root/'package-dispatch.json',package,reuse=True)
 OWNER_OUT({'state':'NATIVE_PACKAGE_VERIFIED','package':package})
 returned=LibraryUploadWorkflow(apps_client=RecordingHostedAppsClient(HostedAppsClient()),materializer=LibraryFileMaterializer(),uploader=SignedUrlUploader(),state_parent=root).run({'uploads':[{'local_path':str(archive),'purpose':'create_library_file','library_artifact_type':'other'}]})
 write(root/'library-result.private.json',returned)

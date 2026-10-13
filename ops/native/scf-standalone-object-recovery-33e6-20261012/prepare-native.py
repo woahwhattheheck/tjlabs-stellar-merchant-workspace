@@ -1,5 +1,5 @@
 from pathlib import Path,PurePosixPath
-import json,os,hashlib,subprocess,secrets,shutil,zipfile,stat
+import json,os,hashlib,subprocess,secrets,shutil,zipfile,stat,io
 root=OWNER_ROOT
 def sha(b):return hashlib.sha256(b).hexdigest()
 def once(p,b):
@@ -18,7 +18,7 @@ if archive_path:
  archive=original.read_bytes()
  if len(archive)!=291120 or sha(archive)!='33aad8127ff99514ed990607fea1e0ab908da3a6788029708cccc48239f03957':raise RuntimeError('COMPLETE_ORIGINAL_A8E_ARCHIVE_CHANGED')
  archive_identity={'path':str(original),'bytes':len(archive),'sha256':sha(archive)}
- with zipfile.ZipFile(original) as z:
+ with zipfile.ZipFile(io.BytesIO(archive)) as z:
   infos=z.infolist()
   if len(infos)!=102 or sum(i.file_size for i in infos)>33554432:raise RuntimeError('ORIGINAL_ARCHIVE_MEMBER_COVERAGE_CHANGED')
   names=set()

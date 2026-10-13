@@ -14,7 +14,7 @@ Choose an existing equipped Linux executor. Use its original resource admission/
 
 ## Inputs and existing runtime
 
-- `source-input.json.gz`: 922,084 bytes; SHA256 `b97c270ec529225d879357e264da94011a567f8810e58bdf104137965a19cf85`. Decoded complete source input: 3,021,730 bytes; SHA256 `f96e9cf40e94c73341022dc4bd7a4ec72274b9bd9348bee92f586cd45e7fd1ea`.
+- `source-input.json.gz`: 923,023 bytes; SHA256 `c0300cf4c827d27a3a88864056fafc2ffeb1305e985a7034a71c7404f4390b6a`. Decoded complete source input: 3,024,829 bytes; SHA256 `863a7dbc361d064cdfc7b84756f41d42eff49b9b84c5f1cc88b092f5425a57ed`.
 - The private, already-saved complete original Object package `Stellar_Forge_Original_Object_Recovery_a8e6646c_20261012.zip`: **291,120 bytes**, SHA256 `33aad8127ff99514ed990607fea1e0ab908da3a6788029708cccc48239f03957`, **102 members**. Its existing file identity is supplied in the internal execution handoff. Obtain it through the original authenticated file materializer; it is an existing input, not a new data acquisition.
 - Existing absolute Node executable (the selected source is exercised with the maintained Node runtime; use Node 22 or newer), Python 3.10 or newer, and OpenSSL with `req -addext`. The programmes use Python standard-library modules and the selected original JavaScript closure. No npm installation is needed for this free-session journey.
 - Existing authenticated `LibraryUploadWorkflow` helper closure and selected transfer executable/runtime. The save uses the original preparation, transfer, finalization and local annotation path, with a private request/result recorder.
@@ -39,7 +39,7 @@ Resolve the placeholders to the accepted owner's actual canonical paths. Preserv
 ```bash
 /ABSOLUTE/python3 /ABSOLUTE/source-receiving.py \
   --source-input /ABSOLUTE/source-input.json.gz \
-  --expected-source-sha256 b97c270ec529225d879357e264da94011a567f8810e58bdf104137965a19cf85 \
+  --expected-source-sha256 c0300cf4c827d27a3a88864056fafc2ffeb1305e985a7034a71c7404f4390b6a \
   --original-object-archive /ABSOLUTE/Stellar_Forge_Original_Object_Recovery_a8e6646c_20261012.zip \
   --work-directory /ABSOLUTE/NEW-PRIVATE-WORK-DIRECTORY \
   --node /ABSOLUTE/node \
@@ -71,7 +71,11 @@ It then builds and verifies the full ZIP containing all selected source, the ori
 
 The owner emits `SOURCE_COMPLETE`, `NATIVE_STARTED`, `NATIVE_RETURNED`, `NATIVE_PACKAGE_VERIFIED`, `NATIVE_DELIVERY_COMPLETE`, and finally `FULL_NATIVE_COMPLETE`. The complete native result is `records/customer-result.json`; the final file identity is `delivery-result.json`. Return those full files, the ZIP identity, member manifest, exact host/runtime/admission and original operation identity into the same execution thread.
 
-A failed native or save stage emits `RECOVERY_REQUIRED` and keeps that owner available for the original control protocol. Supported control lines are `read`, immutable `write`, `python`, `node` and `close`; paths remain within the original work root. Do not launch a new root to clear a retained error. Preserve the first native failure and its full result.
+A failed native or save stage emits `RECOVERY_REQUIRED` and keeps that owner available while its input stream remains open. If stdin closes, the owner exits with a failure status and retains the original work directory for explicit continuation. Supported control lines are `read`, immutable `write`, `python`, `node` and `close`; paths remain within the original work root. Do not launch a new root to clear a retained error. Preserve the first native failure and its full result.
+
+SIGTERM and SIGINT unwind through the owned child cleanup: the same Node process group is terminated and its leader reaped before the owner exits. The prepare phase parses the exact archive bytes that passed the original length and SHA checks.
+
+Before any Library dispatch, the package phase can be continued in the same work root. It reuses the byte-identical member manifest and independently verifies every member of an existing complete ZIP. An interrupted ZIP stays under its original manifest-bound partial identity, and an incomplete attempt is retained separately before rebuilding from the unchanged members. The complete ZIP and persistent copy publish without replacing an existing unrelated file. This continuation does not repeat the native customer journey.
 
 The save delegate persists the exact outgoing tool call before invocation and full returned response before advancement. Any retained Library call means that its actual outcome must be reconciled; a new automatic save is refused. A truthy top-level return is insufficient: the programme requires the one matching ordered result with `status=succeeded`, exact path/purpose, file IDs and a valid returned version.
 

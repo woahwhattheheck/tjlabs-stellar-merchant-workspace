@@ -1,6 +1,10 @@
 import os,sys,json,gzip,base64,hashlib,tempfile,termios,signal,subprocess,time,traceback
 from pathlib import Path
 os.umask(0o077)
+def _signal_exit(signum, _frame):
+ raise SystemExit(128 + signum)
+for _signal in (signal.SIGTERM, signal.SIGINT):
+ signal.signal(_signal, _signal_exit)
 import argparse
 parser=argparse.ArgumentParser(description='Original complete standalone Object/SF101 receiving owner')
 parser.add_argument('--source-input')
@@ -54,20 +58,25 @@ def node(path,label):
  if root not in p.parents or '..' in Path(path).parts:raise RuntimeError('OWNED_SCRIPT_REQUIRED')
  log=root/'records'/label;before=memory();child=None;rc=None;reason=None
  with Path(str(log)+'.stdout').open('xb') as stdout,Path(str(log)+'.stderr').open('xb') as stderr:
-  child=subprocess.Popen([os.environ.get('SCF_RECOVERY_NODE','/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node'),str(p)],cwd=root,env={**os.environ,'TMPDIR':str(root),'SCF_ACCEPTANCE_ROOT':str(root)},stdin=subprocess.DEVNULL,stdout=stdout,stderr=stderr,start_new_session=True)
-  out({'state':'NATIVE_STARTED','pid':child.pid,'root':str(root),'label':label})
   try:
+   child=subprocess.Popen([os.environ.get('SCF_RECOVERY_NODE','/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node'),str(p)],cwd=root,env={**os.environ,'TMPDIR':str(root),'SCF_ACCEPTANCE_ROOT':str(root)},stdin=subprocess.DEVNULL,stdout=stdout,stderr=stderr,start_new_session=True)
+   out({'state':'NATIVE_STARTED','pid':child.pid,'root':str(root),'label':label})
    until=time.monotonic()+360
    while time.monotonic()<until:
     if os.waitid(os.P_PID,child.pid,os.WEXITED|os.WNOHANG|os.WNOWAIT):break
     time.sleep(.1)
    else:reason='TIMEOUT'
   finally:
-   for sig in [signal.SIGTERM,signal.SIGKILL]:
-    try:os.killpg(child.pid,sig)
-    except ProcessLookupError:pass
-    if sig==signal.SIGTERM:time.sleep(.2)
-   rc=child.wait()
+   if child is not None:
+    handlers={sig:signal.signal(sig,signal.SIG_IGN) for sig in (signal.SIGTERM,signal.SIGINT)}
+    try:
+     for sig in [signal.SIGTERM,signal.SIGKILL]:
+      try:os.killpg(child.pid,sig)
+      except ProcessLookupError:pass
+      if sig==signal.SIGTERM:time.sleep(.2)
+     rc=child.wait()
+    finally:
+     for sig,handler in handlers.items():signal.signal(sig,handler)
  receipt={'state':'NATIVE_RETURNED','label':label,'rc':rc,'reason':reason,'before':before,'after':memory(),'stdout':str(log)+'.stdout','stderr':str(log)+'.stderr'}
  once(Path(str(log)+'.result.json'),(json.dumps(receipt,indent=2)+'\n').encode())
  out({k:v for k,v in receipt.items() if k not in ['before','after']})
@@ -128,4 +137,6 @@ for line in sys.stdin:
   elif action=='python':py(q['path']);out({'state':'PYTHON_COMPLETE','path':q['path']})
   elif action=='node':node(q['path'],q['label'])
   else:raise RuntimeError('UNKNOWN_ACTION')
+ except SystemExit:raise
  except BaseException as e:out({'state':'RECOVERY_REQUIRED','root':str(root),'type':type(e).__name__,'message':str(e),'trace':traceback.format_exc()})
+sys.exit(1)
