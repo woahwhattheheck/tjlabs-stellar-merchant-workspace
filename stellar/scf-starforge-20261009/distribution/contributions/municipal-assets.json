@@ -1,0 +1,75 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "municipal-assets",
+  "description": "Complete original asset/GIS mappings, public source refresh, Maximo target intake, work-order reconciliation and editable customer handovers.",
+  "commands": {
+    "municipal-assets": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/cli.mjs"
+  },
+  "commandDescriptions": {
+    "municipal-assets": "Open the complete original municipal asset workspace, refresh sources, receive target results and preserve editable handovers."
+  },
+  "exports": {
+    "./seller/municipal-assets": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/managed.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/managed.mjs"
+    }
+  },
+  "components": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets",
+    "products/municipal-assets"
+  ],
+  "applicationProviders": {
+    "municipal-assets": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/application-provider.mjs"
+  },
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/cli.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/browser-assets.json"
+    }
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/LICENSE",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/SOURCE_ADOPTION.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/application-provider.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/browser-assets.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/managed.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/managed.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/acceptance/README.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/acceptance/verify.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/managed.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/maximo-profile.example.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/portable.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/BELLEVILLE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/MAXIMO.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/MAXIMO_CONTRACT.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/README.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/__init__.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/__main__.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/adapters.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/capture_intake.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/captures.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/demo.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/development/README.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/development/development-roundtrips.jsonl",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/development/locations.csv",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/development/mappings.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/development/service-requests.csv",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/development/source-assets.geojson",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/development/target-assets-corrected.csv",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/development/target-assets-needs-repair.csv",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/development/work-orders.csv",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/engine.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/geometry_capture.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/maximo_cli.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/maximo_load.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/maximo_target.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/package.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/public_refresh.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/report.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/server.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/ui/app.css",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/ui/app.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/ui/index.html"
+  ]
+}

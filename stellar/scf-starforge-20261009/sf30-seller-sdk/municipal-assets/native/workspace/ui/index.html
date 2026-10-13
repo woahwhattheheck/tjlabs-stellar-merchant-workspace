@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Municipal Asset Workspace</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="app-header">
+    <div><strong>Municipal Asset Workspace</strong><span class="subtitle">Inventory · GIS · Work orders</span></div>
+    <div id="session-tools"></div>
+  </header>
+  <div id="notice" role="status" aria-live="polite" hidden></div>
+  <section id="login" class="login" hidden>
+    <h1>Open your workspace</h1>
+    <p>Use the local operator password created during setup. Your name is retained with each change.</p>
+    <form id="login-form">
+      <label>Operator name<input name="actor" required maxlength="150" autocomplete="name"></label>
+      <label>Local password<input name="password" type="password" required autocomplete="current-password"></label>
+      <button type="submit">Sign in</button>
+    </form>
+  </section>
+  <div id="shell" class="shell" hidden>
+    <aside>
+      <h2>Projects</h2>
+      <div id="projects"></div>
+      <details class="new-project"><summary>New project</summary>
+        <form id="project-form">
+          <label>Project name<input name="title" maxlength="150" required></label>
+          <label>Input context<select name="mode"><option value="development">Development records</option><option value="public-reference">Public reference records</option><option value="vendor-authorized">Vendor-authorized records</option></select></label>
+          <button type="submit" data-mutation>Create project</button>
+        </form>
+      </details>
+      <p class="aside-note">All work stays in this local workspace until you export a handoff.</p>
+    </aside>
+    <main id="main"><h1>Select or create a project</h1></main>
+  </div>
+  <noscript>This operator workspace requires JavaScript.</noscript>
+</body>
+</html>

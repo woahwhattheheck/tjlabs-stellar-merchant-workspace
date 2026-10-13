@@ -1,0 +1,2 @@
+{"correlation_id":"DEVELOPMENT-GIS-001","asset_id":"DEV-A101","leg":"request","source_system":"DEVELOPMENT_GIS","destination_system":"DEVELOPMENT_VENDOR_ADAPTER","status":"accepted"}
+{"correlation_id":"DEVELOPMENT-GIS-001","asset_id":"DEV-A101","leg":"response","source_system":"DEVELOPMENT_VENDOR_ADAPTER","destination_system":"DEVELOPMENT_GIS","status":"ok"}

@@ -1,0 +1,470 @@
+{
+  "schema": "stellar-forge.municipal-asset-source.v1",
+  "operation": "SCF-MUNICIPAL-ASSET-ADOPTION-90ED-20261013",
+  "description": "Complete maintained original application and source-owned managed launch; private data is operator-loaded.",
+  "donors": {
+    "commons": {
+      "repository": "woahwhattheheck/commons",
+      "ref": "522290a712165b031bf3e9d61a711d9de60c4faa",
+      "prefix": "opportunities/mcpherson_ks_modular_software_2026",
+      "files": [
+        {
+          "path": "workspace/BELLEVILLE.md",
+          "git_blob_sha": "58fa8cc48c311d25f4d4ae0902a853d763d9e650",
+          "bytes": 22409
+        },
+        {
+          "path": "workspace/README.md",
+          "git_blob_sha": "c4fa1b52229762c9449e1c03f6180225fd7fe812",
+          "bytes": 12113
+        },
+        {
+          "path": "workspace/__init__.py",
+          "git_blob_sha": "186a29230e3a1b3877c5cd9a5cf10882724cbe1b",
+          "bytes": 84
+        },
+        {
+          "path": "workspace/__main__.py",
+          "git_blob_sha": "4c776ca3651e9949a2b8802a151720b49c01f383",
+          "bytes": 6395
+        },
+        {
+          "path": "workspace/adapters.py",
+          "git_blob_sha": "773efd8797957a1e2c86cdab524f91dbca1a067b",
+          "bytes": 13470
+        },
+        {
+          "path": "workspace/capture_intake.py",
+          "git_blob_sha": "be9d16d793d532147cbba2a457792bd9d25aab1c",
+          "bytes": 15241
+        },
+        {
+          "path": "workspace/captures.py",
+          "git_blob_sha": "9845236f2fc09c08a981f953ac7810c41e10cebf",
+          "bytes": 16192
+        },
+        {
+          "path": "workspace/demo.py",
+          "git_blob_sha": "7dc08df4ca761d876526472ee19c3e7489154aa2",
+          "bytes": 2181
+        },
+        {
+          "path": "workspace/development/README.md",
+          "git_blob_sha": "40ec74ba491b8b346aa5dd971176f39279d38a1a",
+          "bytes": 1385
+        },
+        {
+          "path": "workspace/development/development-roundtrips.jsonl",
+          "git_blob_sha": "de1b10eec97c1eec275cc02f59bf48d9f5ee575c",
+          "bytes": 361
+        },
+        {
+          "path": "workspace/development/locations.csv",
+          "git_blob_sha": "15ec64fc0efdd732682b470960fce56c260b2f52",
+          "bytes": 204
+        },
+        {
+          "path": "workspace/development/mappings.json",
+          "git_blob_sha": "83a64352eaf748826609a582ae6f4d624ebf2249",
+          "bytes": 1271
+        },
+        {
+          "path": "workspace/development/service-requests.csv",
+          "git_blob_sha": "5c2f7f9d40d384d8c1ea43a9bcd377fc78a5acc6",
+          "bytes": 226
+        },
+        {
+          "path": "workspace/development/source-assets.geojson",
+          "git_blob_sha": "ef8d7f25cdb51077a62224d0a423b459ff8b919b",
+          "bytes": 1311
+        },
+        {
+          "path": "workspace/development/target-assets-corrected.csv",
+          "git_blob_sha": "c9483e1e054b4761fbe9a7990d0dd6b0fab15387",
+          "bytes": 431
+        },
+        {
+          "path": "workspace/development/target-assets-needs-repair.csv",
+          "git_blob_sha": "21f253465c6b89546172864f7a1fc35093062f14",
+          "bytes": 449
+        },
+        {
+          "path": "workspace/development/work-orders.csv",
+          "git_blob_sha": "9daf7f6ef32e82c904ee6e1ef52e7401d95ba373",
+          "bytes": 230
+        },
+        {
+          "path": "workspace/engine.py",
+          "git_blob_sha": "a3ae6ed78d3cdb32344c690ee2d3f5410546c8ce",
+          "bytes": 51685
+        },
+        {
+          "path": "workspace/geometry_capture.py",
+          "git_blob_sha": "481ce11d2d12658491ed75e41fec9a4bde3f8f5c",
+          "bytes": 15732
+        },
+        {
+          "path": "workspace/package.py",
+          "git_blob_sha": "ad45fb6a94604252705caf3835c2ac5424f50b9b",
+          "bytes": 3565
+        },
+        {
+          "path": "workspace/public_refresh.py",
+          "git_blob_sha": "1e6cf73a8b735585df2ba53cb0f08178dab050eb",
+          "bytes": 32475
+        },
+        {
+          "path": "workspace/report.py",
+          "git_blob_sha": "53c10ec78bff59fd3f164524103df934ff45672c",
+          "bytes": 9631
+        },
+        {
+          "path": "workspace/server.py",
+          "git_blob_sha": "62e68526b02e542c24e87301a3d8c1ebba9e2db8",
+          "bytes": 14175
+        },
+        {
+          "path": "workspace/ui/app.css",
+          "git_blob_sha": "cddef5af3066a158791145854da83dcc35825b8a",
+          "bytes": 7051
+        },
+        {
+          "path": "workspace/ui/app.js",
+          "git_blob_sha": "384cad02e165be27730e091821a74fe161e3550d",
+          "bytes": 44587
+        },
+        {
+          "path": "workspace/ui/index.html",
+          "git_blob_sha": "fff5eab3927e6107ea3fcc7a6cbb710b13142296",
+          "bytes": 1952
+        },
+        {
+          "path": "acceptance/README.md",
+          "git_blob_sha": "4fda1ee0514879f2594f32e361e5e59aae40b856",
+          "bytes": 8613
+        },
+        {
+          "path": "acceptance/verify.py",
+          "git_blob_sha": "c7f9049f6549587bbeba5f1b8aa58ce5288ee82d",
+          "bytes": 10939
+        }
+      ]
+    },
+    "maximo": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "merge": "da0ad9c73f8dd2a74712c6f55348e25da9f4ba83",
+      "source_prefix": "services/municipal-maximo-target/",
+      "manifest": {
+        "schema": "municipal.maximo-install.v1",
+        "operation": "FAHM-MAXIMO-TARGET-RECEIVING-SCOUT-20261013",
+        "files": [
+          {
+            "path": "workspace/maximo_target.py",
+            "bytes": 37572,
+            "sha256": "faebb1844b93cb89bc74dde642d794593439c6988074d91139d57c20f8c6c393",
+            "preimage_sha256": null
+          },
+          {
+            "path": "workspace/adapters.py",
+            "bytes": 13600,
+            "sha256": "2a30ade96084589449262c752dc1c6f59deb4b3adf67800be4dc5b4b52290a60",
+            "preimage_sha256": "1030571cdac393cc0d6d3249aa2316230c50d084fd0da6b1e8372455e3c17821"
+          },
+          {
+            "path": "workspace/engine.py",
+            "bytes": 52069,
+            "sha256": "a1a262e6d4fc9baed8b986e91c4d2170527d480d47f4766fcb772fcc8485f81f",
+            "preimage_sha256": "47cfeaa6b097916d570ade8da3b85031d512a93f9110ed6bfdfc6a75b596a270"
+          },
+          {
+            "path": "workspace/maximo_load.py",
+            "bytes": 21723,
+            "sha256": "9309c2db46e50a91ad46683ad96c7dcd13fbc6ddee69e7c0814e625bcdb91af4",
+            "preimage_sha256": null
+          },
+          {
+            "path": "workspace/server.py",
+            "bytes": 18609,
+            "sha256": "b63776d75e857d7a3683334b9ca38f8f37d8f5c8e3dcc29c4e9cf0f8f3f7e3fc",
+            "preimage_sha256": "8829fe409f302d8b7c2585697f78f3de9ab9130aef3de23d62108f4374f4c848"
+          },
+          {
+            "path": "workspace/package.py",
+            "bytes": 3666,
+            "sha256": "a33ad7c986f5b9dd1ca73e5958e696f153d24f6d546ec609bd35701af3ef87fd",
+            "preimage_sha256": "99e8fb532968cd2c50399dbc5c3523f801da80da201ad0f45dbc05ac074c5a5f"
+          },
+          {
+            "path": "workspace/ui/app.js",
+            "bytes": 56425,
+            "sha256": "ec541427072f3d9556cbb33e5807533dd7259ff63fefa86c7f191fc2912f3226",
+            "preimage_sha256": "285469648dfd323ba194684161c1bedbe8bcadc810b9c7b202286408ce96895d"
+          },
+          {
+            "path": "workspace/maximo_cli.py",
+            "bytes": 5117,
+            "sha256": "5f8bcd063d29d63452c3c7042715eb56b52a8bc8d967a72aa46252668dbf880e",
+            "preimage_sha256": null
+          },
+          {
+            "path": "workspace/MAXIMO_CONTRACT.md",
+            "bytes": 12862,
+            "sha256": "6eaecab157dbea4d9ff9388b7811a61fd0c2b62e88bf4f1607d1e357d1d7abd3",
+            "preimage_sha256": null
+          },
+          {
+            "path": "workspace/MAXIMO.md",
+            "bytes": 13823,
+            "sha256": "5c9430aa6bf717dfb2ff91a73ef2d06fda2e6aedf641c0d2634990b6c2090567",
+            "preimage_sha256": null
+          }
+        ],
+        "dependencies": [
+          {
+            "path": "workspace/__main__.py",
+            "git_blob_sha": "4c776ca3651e9949a2b8802a151720b49c01f383"
+          },
+          {
+            "path": "workspace/capture_intake.py",
+            "git_blob_sha": "be9d16d793d532147cbba2a457792bd9d25aab1c"
+          },
+          {
+            "path": "workspace/captures.py",
+            "git_blob_sha": "9845236f2fc09c08a981f953ac7810c41e10cebf"
+          },
+          {
+            "path": "workspace/geometry_capture.py",
+            "git_blob_sha": "481ce11d2d12658491ed75e41fec9a4bde3f8f5c"
+          },
+          {
+            "path": "workspace/public_refresh.py",
+            "git_blob_sha": "1e6cf73a8b735585df2ba53cb0f08178dab050eb"
+          },
+          {
+            "path": "workspace/report.py",
+            "git_blob_sha": "53c10ec78bff59fd3f164524103df934ff45672c"
+          }
+        ]
+      }
+    }
+  },
+  "changes": [
+    {
+      "path": "native/workspace/package.py",
+      "prior_sha256": "a33ad7c986f5b9dd1ca73e5958e696f153d24f6d546ec609bd35701af3ef87fd",
+      "reason": "The original source package omitted its real development GeoJSON and the complete Maximo profile template; preserve both in the actual downloadable native application."
+    }
+  ],
+  "files": [
+    {
+      "path": "application-provider.mjs",
+      "bytes": 3567,
+      "sha256": "87851c6245df5011bcf3a082fbdd71dfb4302326ac92f2f026913079915b44f0"
+    },
+    {
+      "path": "browser-assets.json",
+      "bytes": 406,
+      "sha256": "cfe24a00034892cd2c4f5458c32e00d1603e5c8656471eab20440bd8eade2825"
+    },
+    {
+      "path": "cli.mjs",
+      "bytes": 2489,
+      "sha256": "ac32af416c7ff6fa8ee3f862a8eb25de84aae3e352dbc1f4da34f549c62dd45e"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1091,
+      "sha256": "2c961cd561150af9a4f94f3f48f0bad7bf271acd0f9cdaa1d354c511b94e84d8"
+    },
+    {
+      "path": "managed.d.mts",
+      "bytes": 1610,
+      "sha256": "64b2af6653f837d4b7e23ac191eb2798543e22b0e03c40dc66766bf5f5472894"
+    },
+    {
+      "path": "managed.mjs",
+      "bytes": 12079,
+      "sha256": "6d0a73962deac7dbffdff728980ad8fe33c33bad332b3ea68fab35a1c1a92ba2"
+    },
+    {
+      "path": "native/acceptance/README.md",
+      "bytes": 8613,
+      "sha256": "e6623a47b338be38f03a0ed9e00f8d71d4a4fcdbf97102712b69a1a881ca5559"
+    },
+    {
+      "path": "native/acceptance/verify.py",
+      "bytes": 10939,
+      "sha256": "32aa159204323aa85ecd0c72ba98b7bf2af1b7599aa330194e7a255646444327"
+    },
+    {
+      "path": "native/managed.py",
+      "bytes": 11388,
+      "sha256": "62d2c51eef101bf56d53b64389d82201257005e4240f8526b44be073eef8551b"
+    },
+    {
+      "path": "native/maximo-profile.example.json",
+      "bytes": 896,
+      "sha256": "cfd59e3fefac7f0538881858a348f28a13b8d646df8bbd7ac14285160a304f18"
+    },
+    {
+      "path": "native/portable.py",
+      "bytes": 10926,
+      "sha256": "af88ea8e5199b3f92965a3dae28d888fe70b61b5dcf785355fc7a6c26f1e4e25"
+    },
+    {
+      "path": "native/workspace/__init__.py",
+      "bytes": 84,
+      "sha256": "7252aed61452d0dc1291be3b6964e520ac773957d9ab446860d6f0755a379576"
+    },
+    {
+      "path": "native/workspace/__main__.py",
+      "bytes": 6395,
+      "sha256": "fe5b9d233315f7956290caf79085bed17b19328411b7d7da5d4a9f19565499b7"
+    },
+    {
+      "path": "native/workspace/adapters.py",
+      "bytes": 13600,
+      "sha256": "2a30ade96084589449262c752dc1c6f59deb4b3adf67800be4dc5b4b52290a60"
+    },
+    {
+      "path": "native/workspace/BELLEVILLE.md",
+      "bytes": 22409,
+      "sha256": "e998a3bb99060067d6b4e47b380af2cea97cf9662b4fb9dfe0deeaa36c075fe9"
+    },
+    {
+      "path": "native/workspace/capture_intake.py",
+      "bytes": 15241,
+      "sha256": "bb25d885ebe8897eebeca3eae2dfa6e413bcbf911ba77ac3b99143771e9cf13b"
+    },
+    {
+      "path": "native/workspace/captures.py",
+      "bytes": 16192,
+      "sha256": "f59ac8bd58f7bf0e8694ea57f8942f31253e7b17b8c3ee371770514d38987fe0"
+    },
+    {
+      "path": "native/workspace/demo.py",
+      "bytes": 2181,
+      "sha256": "437c25f640cadc1137cd72744808f84f8a350a6fc2f17d3fcdb442d77e421cc7"
+    },
+    {
+      "path": "native/workspace/development/development-roundtrips.jsonl",
+      "bytes": 361,
+      "sha256": "251143dbac3a0f24ba0d575d16967147d731e609c7831190655c4a568da2022c"
+    },
+    {
+      "path": "native/workspace/development/locations.csv",
+      "bytes": 204,
+      "sha256": "e17a1dfcc992910e96aafaba3f468b5b50e88859360a5d19ad788a7654440a54"
+    },
+    {
+      "path": "native/workspace/development/mappings.json",
+      "bytes": 1271,
+      "sha256": "f58d6685c835696215fcf35c6a677b02fb2f745a6b5b86e2792e378b6268d078"
+    },
+    {
+      "path": "native/workspace/development/README.md",
+      "bytes": 1385,
+      "sha256": "4f0a50b1baccfad347339e17a271a7f791ba34795520cd76c82834afbaa95c45"
+    },
+    {
+      "path": "native/workspace/development/service-requests.csv",
+      "bytes": 226,
+      "sha256": "034707de40d39d15c9cfa7fa0f0e96629da4fcca00f7b2e11dadb0e8267a5e58"
+    },
+    {
+      "path": "native/workspace/development/source-assets.geojson",
+      "bytes": 1311,
+      "sha256": "1bd3a2c7d17077ff3f19a9aca9ebbc8fc92ce9faff41f725cbe8ec0beaa08c4b"
+    },
+    {
+      "path": "native/workspace/development/target-assets-corrected.csv",
+      "bytes": 431,
+      "sha256": "93731637d83800a32d07c80743a15e93f758b1ccb0ca0f315376436af7d579f2"
+    },
+    {
+      "path": "native/workspace/development/target-assets-needs-repair.csv",
+      "bytes": 449,
+      "sha256": "31a1ce10b70b89c7a9a2e91cfc914f3b156c8504aecff9bf902ed9c6f2c5b854"
+    },
+    {
+      "path": "native/workspace/development/work-orders.csv",
+      "bytes": 230,
+      "sha256": "a1773168f3a72ca6edcf77c9e2bfd28416895c8acf844bf290c6ac37bcfafd05"
+    },
+    {
+      "path": "native/workspace/engine.py",
+      "bytes": 52069,
+      "sha256": "a1a262e6d4fc9baed8b986e91c4d2170527d480d47f4766fcb772fcc8485f81f"
+    },
+    {
+      "path": "native/workspace/geometry_capture.py",
+      "bytes": 15732,
+      "sha256": "8176025ffaae559d1d5082c4d4d977395b7810a58bb6539e1a502032f58857ab"
+    },
+    {
+      "path": "native/workspace/maximo_cli.py",
+      "bytes": 5117,
+      "sha256": "5f8bcd063d29d63452c3c7042715eb56b52a8bc8d967a72aa46252668dbf880e"
+    },
+    {
+      "path": "native/workspace/MAXIMO_CONTRACT.md",
+      "bytes": 12862,
+      "sha256": "6eaecab157dbea4d9ff9388b7811a61fd0c2b62e88bf4f1607d1e357d1d7abd3"
+    },
+    {
+      "path": "native/workspace/maximo_load.py",
+      "bytes": 21723,
+      "sha256": "9309c2db46e50a91ad46683ad96c7dcd13fbc6ddee69e7c0814e625bcdb91af4"
+    },
+    {
+      "path": "native/workspace/maximo_target.py",
+      "bytes": 37572,
+      "sha256": "faebb1844b93cb89bc74dde642d794593439c6988074d91139d57c20f8c6c393"
+    },
+    {
+      "path": "native/workspace/MAXIMO.md",
+      "bytes": 13823,
+      "sha256": "5c9430aa6bf717dfb2ff91a73ef2d06fda2e6aedf641c0d2634990b6c2090567"
+    },
+    {
+      "path": "native/workspace/package.py",
+      "bytes": 3855,
+      "sha256": "38dcf4b55d5e85039c9ce9e81858f0d04dcdd7caeaccd0359e4a27657e20f3a8"
+    },
+    {
+      "path": "native/workspace/public_refresh.py",
+      "bytes": 32475,
+      "sha256": "52bdeafb968fe8458513804369546002e300798fd5789accd30ad5e64b0f1aad"
+    },
+    {
+      "path": "native/workspace/README.md",
+      "bytes": 12113,
+      "sha256": "3c40c09e8cc6febcb0d3bfe889a96e682e0a898678ceca46c319fc0cd578c847"
+    },
+    {
+      "path": "native/workspace/report.py",
+      "bytes": 9631,
+      "sha256": "ab68fc03f311496cec74acfbc7a8487d769d9a7c794d46805994d4c17c5dbd37"
+    },
+    {
+      "path": "native/workspace/server.py",
+      "bytes": 18609,
+      "sha256": "b63776d75e857d7a3683334b9ca38f8f37d8f5c8e3dcc29c4e9cf0f8f3f7e3fc"
+    },
+    {
+      "path": "native/workspace/ui/app.css",
+      "bytes": 7051,
+      "sha256": "563c727c0e61354c76ff11599145fb840803d64837d39182742f12463d970391"
+    },
+    {
+      "path": "native/workspace/ui/app.js",
+      "bytes": 56425,
+      "sha256": "ec541427072f3d9556cbb33e5807533dd7259ff63fefa86c7f191fc2912f3226"
+    },
+    {
+      "path": "native/workspace/ui/index.html",
+      "bytes": 1952,
+      "sha256": "f9bc6e0a98cd77a2d9a33d68cac7d513376e761089b796b76309ce579beeaff8"
+    }
+  ]
+}
