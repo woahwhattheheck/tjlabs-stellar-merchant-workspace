@@ -21,25 +21,32 @@ const money=(amount,currency)=>e(currency?.code||'')+' '+e(amount??'—');
 const label=kind=>({NOTE:'Message',PROMISE:'Payment promise',DISPUTE:'Invoice dispute',PAYMENT_NOTICE:'Payment information'}[kind]||kind);
 const button=(text,action,attrs='')=>'<button type="button" data-action="'+e(action)+'" '+attrs+'>'+e(text)+'</button>';
 const download=(name,text,type='application/json')=>{const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-function units(value,currency){if(!/^\d+(?:\.\d+)?$/.test(String(value)))throw Error('Enter a positive decimal amount.');
-  const [whole,fraction='']=String(value).split('.');if(fraction.length>currency.scale)throw Error('Use at most '+currency.scale+' decimal places for '+currency.code+'.');
-  return BigInt(whole+fraction.padEnd(currency.scale,'0'));}
+function units(value,currency){if(typeof value!=='string'||!/^(0|[1-9][0-9]{0,38})(?:\.[0-9]+)?$/.test(value))throw Error('Enter an exact decimal amount without leading zeroes.');
+  const [whole,fraction='']=value.split('.');if(fraction.length>currency.scale)throw Error('Use at most '+currency.scale+' decimal places for '+currency.code+'.');
+  const result=BigInt(whole+fraction.padEnd(currency.scale,'0'));if(result>((1n<<127n)-1n))throw Error('The amount exceeds the supported invoice range.');return result;}
+function checkedDate(value){if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+  const t=Date.parse(value+'T00:00:00.000Z');return Number.isFinite(t)&&new Date(t).toISOString().slice(0,10)===value;}
+function checkedText(value,max,empty=false){return typeof value==='string'&&(empty||value.trim().length>0)&&value.trim().length<=max&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value);}
+const validId=value=>typeof value==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value);
 function validateItem(item){
+  if(!item||!validId(item.id))throw Error('Retain the original complete response entry.');
   const row=invoice(item.invoiceId);if(!row)throw Error('Choose an invoice from this account.');
   if(!['NOTE','PROMISE','DISPUTE','PAYMENT_NOTICE'].includes(item.kind))throw Error('Choose a response type.');
-  if(!String(item.note||'').trim()||item.note.length>6000)throw Error('Enter a message of at most6,000 characters.');
+  if(!checkedText(item.note,6000))throw Error('Enter a message of at most6,000 characters.');
   if(item.kind!=='NOTE'){const n=units(item.amount,row.currency);if(n<=0n)throw Error('Enter a positive amount.');
     if(item.kind!=='PAYMENT_NOTICE'&&n>units(row.amountDue,row.currency))throw Error('The proposed amount exceeds this dated account. Ask the merchant to issue a current account if needed.');}
-  if(item.kind==='PROMISE'&&(!item.dueDate||item.dueDate<S.draft.responseDate))throw Error('Choose a promise date on or after the response date.');
+  if(item.kind==='PROMISE'&&(!checkedDate(item.dueDate)||item.dueDate<S.draft.responseDate))throw Error('Choose a promise date on or after the response date.');
   if(item.kind==='DISPUTE'&&!['PRICING','DELIVERY','DUPLICATE','OTHER'].includes(item.category))throw Error('Choose a dispute category.');
-  if(item.kind==='PAYMENT_NOTICE'&&(!item.paymentDate||item.paymentDate>S.draft.responseDate||!String(item.paymentReference||'').trim()))throw Error('Retain the payment date and reference.');
+  if(item.kind==='PAYMENT_NOTICE'&&(!checkedDate(item.paymentDate)||item.paymentDate>S.draft.responseDate||!checkedText(item.paymentReference,1000)))throw Error('Retain the payment date and reference.');
 }
 function values(){const value=JSON.parse(JSON.stringify(S.draft));delete value._exported;return value;}
 function validateResponse(){
-  if(!S.draft.author.name.trim()||S.draft.author.name.length>300)throw Error('Enter the name of the person preparing this response.');
-  if(S.draft.author.reference.length>1000)throw Error('Keep the contact/reference within1,000 characters.');
-  if(!S.draft.responseDate||S.draft.responseDate<ACCOUNT.binding.asOf||S.draft.responseDate>today())throw Error('Choose a response date between this account date and today.');
+  if(!validId(S.draft.id)||(S.draft.previousResponseId&&!validId(S.draft.previousResponseId)))throw Error('Retain the original complete response identifiers.');
+  if(!checkedText(S.draft.author?.name,300))throw Error('Enter the name of the person preparing this response.');
+  if(!checkedText(S.draft.author?.reference,1000,true))throw Error('Keep the contact/reference within1,000 characters.');
+  if(!checkedDate(S.draft.responseDate)||S.draft.responseDate<ACCOUNT.binding.asOf||S.draft.responseDate>today())throw Error('Choose a response date between this account date and today.');
   if(!S.draft.items.length||S.draft.items.length>500)throw Error('Add between one and500 invoice entries.');
+  if(new Set(S.draft.items.map(item=>item?.id)).size!==S.draft.items.length)throw Error('Each retained response entry needs its original distinct identifier.');
   S.draft.items.forEach(validateItem);
 }
 function sourceLinks(row){
@@ -67,15 +74,21 @@ function invoices(){
  '</tbody></table></div>';
 }
 function payments(){
- return '<h2>Customer payments</h2><div class="table-wrap"><table><thead><tr><th>Reference</th><th>Received</th><th>Account date</th><th>Gross</th><th>Allocated</th><th>Refunded</th><th>Available</th></tr></thead><tbody>'+
+ return '<h2>Customer payments</h2><div class="table-wrap"><table><thead><tr><th>Reference</th><th>Received</th><th>Account date</th><th>Gross</th><th>Allocated</th><th>Refunded</th><th>Reserved</th><th>Available</th></tr></thead><tbody>'+
  ACCOUNT.account.receipts.map(row=>'<tr><td>'+e(row.reference||'Payment')+'<br><small>'+e(row.method)+'</small></td><td>'+e(date(row.receivedDate))+'</td>'+
  '<td>'+e(date(row.accountingDate))+'</td><td>'+money(row.amount,row.currency)+'</td><td>'+money(row.allocated,row.currency)+'</td>'+
- '<td>'+money(row.refunded,row.currency)+'</td><td>'+money(row.available,row.currency)+'</td></tr>').join('')+'</tbody></table></div>'+
+ '<td>'+money(row.refunded,row.currency)+'</td><td>'+money(row.reserved,row.currency)+'</td><td>'+money(row.available,row.currency)+'</td></tr>').join('')+'</tbody></table></div>'+
  '<h3>Invoice allocations</h3><div class="table-wrap"><table><thead><tr><th>Invoice</th><th>Receipt</th><th>Amount</th><th>Allocated</th><th>Released</th></tr></thead><tbody>'+
  ACCOUNT.account.allocations.map(row=>'<tr><td>'+e(invoice(row.invoiceId)?.number||row.invoiceId)+'</td><td>'+e(ACCOUNT.account.receipts.find(x=>x.id===row.receiptId)?.reference||row.receiptId)+'</td>'+
  '<td>'+money(row.amount,row.currency)+'</td><td>'+e(date(row.allocatedDate))+'</td><td>'+e(date(row.releasedDate))+'</td></tr>').join('')+'</tbody></table></div>'+
  '<h3>Refunds</h3><div class="table-wrap"><table><thead><tr><th>Reference</th><th>Account date</th><th>Amount</th><th>Status</th></tr></thead><tbody>'+
  ACCOUNT.account.refunds.map(row=>'<tr><td>'+e(row.reference||'Refund')+'</td><td>'+e(date(row.accountingDate||row.effectiveDate))+'</td><td>'+money(row.amount,row.currency)+'</td><td>'+e(row.effectiveStatus)+'</td></tr>').join('')+
+ '</tbody></table></div>'+
+ '<h3>Credit transfers</h3><div class="table-wrap"><table><thead><tr><th>Original payment</th><th>Effective</th><th>Released</th><th>Applied</th><th>Customer note</th></tr></thead><tbody>'+
+ ACCOUNT.account.creditDispositions.map(row=>'<tr><td>'+e(row.receiptReference)+'</td><td>'+e(date(row.effectiveDate))+'</td><td>'+money(row.released,row.currency)+'</td><td>'+money(row.allocated,row.currency)+'</td><td>'+e(row.customerNote)+'</td></tr>').join('')+
+ '</tbody></table></div>'+
+ '<h3>Verified payouts awaiting reconciliation</h3><div class="table-wrap"><table><thead><tr><th>Transaction</th><th>Ledger date</th><th>Amount</th></tr></thead><tbody>'+
+ ACCOUNT.account.receipts.flatMap(row=>row.unreconciledRefunds||[]).map(row=>'<tr><td><code>'+e(row.transaction)+'</code></td><td>'+e(date(row.closedAt))+'</td><td>'+money(row.amount,row.currency)+'</td></tr>').join('')+
  '</tbody></table></div><p>Report a payment from its invoice using Payment information. Include the original date and reference so the merchant can locate it.</p>';
 }
 function field(name,text,value,type='text',extra=''){return '<label>'+e(text)+'<input name="'+name+'" type="'+type+'" value="'+e(value??'')+'" '+extra+'></label>';}
