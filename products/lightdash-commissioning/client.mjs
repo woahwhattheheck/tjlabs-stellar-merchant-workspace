@@ -40,7 +40,10 @@ export async function connectLightdash({url,tokenEnv='MCP_ACCESS_TOKEN',environm
   manifest:'manifest',select:'select',createDraft:'draft_create',selectDraft:'draft_select',editDraft:'draft_edit',seal:'seal',
   compare:'compare',review:'review',plan:'plan',operation:'operation',execute:'execute',inspect:'inspect',content:'content',
   createHandover:'handover_create',handoverStatus:'handover_status',inspectHandover:'handover_inspect',resumeHandover:'handover_resume',
-  request:'request',readFile:'file_read',releaseFile:'file_release'};
+  request:'request',readFile:'file_read',releaseFile:'file_release',
+  operatingSource:'operating_source',operatingList:'operating_list',operatingRead:'operating_read',operatingCreate:'operating_create',operatingAdopt:'operating_adopt',
+  operatingSave:'operating_save',operatingCapture:'operating_capture',operatingReceive:'operating_receive',operatingReturnPreview:'operating_return_preview',
+  operatingReturnApply:'operating_return_apply',operatingExport:'operating_export',operatingRequest:'operating_request'};
  for(const [method,suffix]of Object.entries(methods))result[method]=(args={},options={})=>call('merchant_lightdash_'+suffix,args,options);
  result.waitOperation=async(operationId,{timeoutMs=120000,pollMs=1000,signal:waitSignal}={})=>{
   identifier(operationId);need(Number.isSafeInteger(timeoutMs)&&timeoutMs>=0&&timeoutMs<=3600000&&Number.isSafeInteger(pollMs)&&pollMs>=250&&pollMs<=10000,

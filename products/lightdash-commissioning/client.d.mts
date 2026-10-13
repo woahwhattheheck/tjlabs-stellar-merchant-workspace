@@ -1,4 +1,5 @@
 /** MIT. Native commissioning SDK. IDs, revisions and results belong to the original engine. */
+import type {Procedure,ProcedureChange,ProcedureRead,ProcedureSaved,ProcedureReceipt,NativeSelections} from './operating-plan.mjs';
 export type UUID=string;
 export type SHA256=string;
 export type NativeAction='inspect'|'run-chart'|'dbt-deps'|'dbt-build'|'compile'|'start-preview'|'stop-preview'|'validate'|'deploy'|'download'|'upload';
@@ -53,6 +54,18 @@ export interface PlanInput {
  chartPath?:string;limit?:number;pageSize?:number;applySpaceAccess?:boolean;[key:string]:unknown;
 }
 export interface LightdashClient {
+ operatingSource(args?:Record<string,never>,options?:CallOptions):Promise<{workspace:string;native:WorkspaceState['native'];nativeDispatch:false}>;
+ operatingList(args?:Record<string,never>,options?:CallOptions):Promise<{workspace:string;procedures:Array<{id:string;version:number;title:string;updatedAt:string;planRevision:number;captures:number}>}>;
+ operatingRead(args:{planId:string},options?:CallOptions):Promise<ProcedureRead>;
+ operatingCreate(args:ProcedureChange&{title:string;customer?:string;purpose?:string;period?:string;owner?:string;receiving?:string;notes?:string;selection:NativeSelections},options?:CallOptions):Promise<ProcedureSaved>;
+ operatingAdopt(args:ProcedureChange&{procedure:Procedure},options?:CallOptions):Promise<ProcedureSaved>;
+ operatingSave(args:ProcedureChange&{draft:ProcedureRead['draft']},options?:CallOptions):Promise<ProcedureSaved>;
+ operatingCapture(args:ProcedureChange&{captureId:string;stepIds:string[]},options?:CallOptions):Promise<ProcedureSaved>;
+ operatingReceive(args:ProcedureChange&{incoming:Procedure['plan']|Procedure},options?:CallOptions):Promise<ProcedureSaved>;
+ operatingReturnPreview(args:{planId:string;incoming:Procedure['plan'];reviewId:string;reviewer:string;notes?:string;decisions?:Array<{key:string;decision:unknown}>},options?:CallOptions):Promise<{workspace:string;version:number;review:Record<string,unknown>;comparison:Record<string,unknown>}>;
+ operatingReturnApply(args:ProcedureChange&{review:Record<string,unknown>},options?:CallOptions):Promise<ProcedureSaved>;
+ operatingExport(args:{planId:string;format:'json'|'plan'|'markdown'|'html'},options?:CallOptions):Promise<{workspace:string;version:number;filename:string;contentType:string;content:string;bytes:number;sha256:string}>;
+ operatingRequest(args:{planId:string;requestId:string},options?:CallOptions):Promise<{workspace:string;receipt:ProcedureReceipt|null;currentVersion:number}>;
  readonly url:string;readonly workspace:string;readonly workspaceId:UUID;readonly current:Record<string,unknown>;
  call(tool:string,args?:Record<string,unknown>,options?:CallOptions):Promise<Record<string,unknown>>;
  close():Promise<void>;
