@@ -10,9 +10,11 @@ import { prepareRuntimeInstall, installRuntime, inspectRuntimeInstall, upgradeRu
 import { runtimeCatalog, resolveRuntimeProfile } from '../runtime-profile.mjs';
 import { plain, now, digest, json, canonical, fail, need, recordId, operationId, absolute,
   privateDirectory, makePrivate, readJSON, saveJSON, workerAlive, processIdentity,
-  operationLease, operationRunning, tailFile } from './storage.mjs';
+  operationLease, operationRunning, tailFile, withWorkspaceWrite, workspaceLeaseDescriptor,
+  workspaceReceivingState } from './storage.mjs';
 
 import { createOperationReader, summarizeOperationObservations } from './operation-observations.mjs';
+import { createWorkspaceBackupAPI } from './workspace-backup.mjs';
 
 import { managedOperationFields, initializeManagedWorkspace, managedState, openManagedHome, reviewManagedAdoption,
   managedConfig, normalizeManagedOperation, executeManagedOperation, managedCommandAlive,
@@ -57,16 +59,25 @@ const asError = error => ({ code: error.code ?? 'RUNTIME_WORKSPACE_ERROR', messa
 
 async function context(directory) {
   const root = await privateDirectory(absolute(directory));
-  const config = await readJSON(join(root, 'workspace.json'));
+  const receiving = await workspaceReceivingState(root);
+  const config = await readJSON(join(root, 'workspace.json'), receiving?.phase === 'RESTORING');
+  if (!config) {
+    // The receiving marker is the actual identity while the original config is
+    // still being streamed. This observer context is never written as config.
+    return { root, receiving, config: { schema: WORKSPACE_SCHEMA,
+      workspaceId: receiving.workspaceId, directory: root, runtimeHome: null } };
+  }
   need(config.schema === WORKSPACE_SCHEMA && config.directory === root && typeof config.runtimeHome === 'string',
     'RUNTIME_WORKSPACE_CONFIG_INVALID');
-  await privateDirectory(config.runtimeHome);
-  for (const name of ['archives', 'entries', 'operations', 'observations', 'sources', 'incoming'])
-    await privateDirectory(join(root, name));
-  return { root, config };
+  if (!receiving || receiving.phase === 'BINDINGS_REVIEWED') await privateDirectory(config.runtimeHome);
+  if (receiving?.phase !== 'RESTORING')
+    for (const name of ['archives', 'entries', 'operations', 'observations', 'sources', 'incoming'])
+      await privateDirectory(join(root, name));
+  return { root, config, receiving };
 }
 export async function createRuntimeWorkspace({ directory, runtimeHome } = {}) {
   const root = await makePrivate(absolute(directory));
+  return withWorkspaceWrite(root, async () => {
   const home = runtimeHome === undefined ? join(root, 'runtimes') : absolute(runtimeHome);
   try { await makePrivate(home); } catch (error) { if (error.code !== 'EEXIST') throw error; await privateDirectory(home); }
   for (const name of ['archives', 'entries', 'operations', 'observations', 'sources', 'incoming'])
@@ -74,6 +85,7 @@ export async function createRuntimeWorkspace({ directory, runtimeHome } = {}) {
   const config = { schema: WORKSPACE_SCHEMA, workspaceId: randomUUID(), createdAt: now(), directory: root, runtimeHome: home };
   await saveJSON(join(root, 'workspace.json'), config);
   return config;
+  });
 }
 async function records(root, type) {
   const names = (await readdir(join(root, type))).filter(name => /^[a-f0-9]{24}\.json$/.test(name)).sort();
@@ -179,7 +191,8 @@ async function spawnWorker(root, id) {
     constants.O_APPEND | constants.O_CREAT | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600);
   try {
     const child = spawn(process.execPath, [WORKER, '--workspace', root, '--operation', id],
-      { detached: true, cwd: root, shell: false, stdio: ['ignore', log.fd, log.fd] });
+      { detached: true, cwd: root, shell: false,
+        stdio: ['ignore', log.fd, log.fd, workspaceLeaseDescriptor(root)] });
     await new Promise((done, reject) => { child.once('spawn', done); child.once('error', reject); });
     child.unref();
   } finally { await log.close(); }
@@ -213,13 +226,22 @@ const fields = {
 
 export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} } = {}) {
   const setupPolicy = Object.freeze({ ...openApiSetupPolicy });
-  const { root, config } = await context(directory);
-  await initializeManagedWorkspace(root);
-  await initializeApplications(root);
-  await initializeApplicationGroups(root);
-  await initializeTransferWorkspace(root);
-  await initializePythonWorkspace(root);
-  await initializeSourceBuildWorkspace(root);
+  const opened = await context(directory), { root, receiving } = opened;
+  let config = opened.config;
+  const workspaceIdentity = config.workspaceId;
+  let initialized = false;
+  async function initialize() {
+    if (initialized) return;
+    await initializeManagedWorkspace(root);
+    await initializeApplications(root);
+    await initializeApplicationGroups(root);
+    await initializeTransferWorkspace(root);
+    await initializePythonWorkspace(root);
+    await initializeSourceBuildWorkspace(root);
+    initialized = true;
+  }
+  // Opening is read-only. The first lifecycle mutation initializes optional
+  // feature directories under the shared workspace lease.
   const operationReader = createOperationReader({
     readJob: (id, observe) => jobView(root, id, observe),
     workerAlive, managedCommandAlive, operationRunning,
@@ -255,6 +277,7 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
   }
   const model = {
     directory: root,
+    ...createWorkspaceBackupAPI(root),
     async sourcePlansState(input) { return sourceProductPlansState(root, input); },
     async sourcePlanRead(input) { return readSourceProductPlan(root, input); },
     async sourcePlanRuntimes(input) {
@@ -296,7 +319,7 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
     },
     async pythonState(input) {
       const selected = await entry(root, recordId(input.runtimeId));
-      return pythonWorkspaceState(root, { ...input, runtimeDirectory: selected.directory });
+      return pythonWorkspaceState(root, { ...input, runtimeDirectory: selected.directory }, await observedOperations());
     },
     async pythonReview(input) {
       const selected = await entry(root, recordId(input.runtimeId));
@@ -500,7 +523,7 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
       const plan = await readJSON(join(selected.directory, 'runtime-install.json'));
       const command = await runtimeCommand({ directory: selected.directory, args: ['source'] });
       const activePython = await readJSON(join(selected.directory, 'python-runtime', 'active.json'), true);
-      const python = activePython ? await pythonWorkspaceState(root, { runtimeId, runtimeDirectory: selected.directory }) : null;
+      const python = activePython ? await pythonWorkspaceState(root, { runtimeId, runtimeDirectory: selected.directory }, await observedOperations()) : null;
       return { schema: 'stellar-forge.runtime-deployment-handoff.v1', createdAt: now(),
         installationId: observed.installationId, directory: observed.directory, sourceCommit: observed.sourceCommit,
         packageVersion: observed.packageVersion, profileId: observed.profileId, lockSha256: observed.lockSha256,
@@ -611,11 +634,27 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
     },
     async close() {},
   };
+  // Keep retained inspection available during receiving. All existing lifecycle
+  // methods, including reviews that persist records, share the backup gate.
+  const readMethods = new Set(["sourcePlansState","sourcePlanRead","sourcePlanRuntimes","sourcePlanHandoff","sourcePlanBriefing","sourcePlanReceiving","sourceBuildsState","sourceBuildsReadReview","pythonState","pythonDownload","transfersState","transfersDownload","imagesState","imagesDownload","state","operationStatus","catalog","review","compare","handoff","logs","applicationGroupsState","applicationsState","applicationsHistory","applicationsOutput","applicationsTerminal","managedState","close"]);
+  for (const [name, method] of Object.entries(model)) {
+    if (typeof method !== 'function' || readMethods.has(name) || name.startsWith('workspaceBackup')) continue;
+    model[name] = (...args) => withWorkspaceWrite(root, async () => {
+      const current = await context(root);
+      need(current.config.workspaceId === workspaceIdentity, 'RUNTIME_WORKSPACE_IDENTITY_CHANGED',
+        'Reopen the workspace at its current original identity.', 409);
+      config = current.config;
+      await privateDirectory(config.runtimeHome);
+      await initialize();
+      return method.apply(model, args);
+    });
+  }
   return model;
 }
 
 /** A detached operator worker keeps the original install alive across browser/server restarts. */
 export async function executeRuntimeWorkspaceOperation({ directory, operation: id }) {
+  return withWorkspaceWrite(absolute(directory), async () => {
   const { root } = await context(directory), operationDirectory = jobPath(root, id);
   await privateDirectory(operationDirectory);
   const lease = await operationLease(join(operationDirectory, 'worker.lock'));
@@ -702,4 +741,5 @@ export async function executeRuntimeWorkspaceOperation({ directory, operation: i
       return state;
     }
   } finally { await lease.close(); }
+  });
 }

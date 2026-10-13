@@ -39,9 +39,26 @@ const coding = object({ basis: sha, recognition_date: date, operator: actor, mem
     project: text(160, false), account_code: text(120, false), memo: text(1000, false)
   }, ['center_id', 'amount']) } }, ['basis', 'recognition_date', 'operator', 'allocations']);
 
-const labels = object({ assets: { type: 'array', items: object({
-  network: text(200), asset: text(200), symbol: text(24), decimals: { type: 'integer', minimum: 0, maximum: 30 }
-}, ['network', 'asset', 'symbol', 'decimals']) } }, ['assets']);
+const ordinaryLabel = object({
+  network: { ...text(200), pattern: '^(?!rozo:)[\\s\\S]*$' }, asset: text(200), symbol: text(24),
+  decimals: { type: 'integer', minimum: 0, maximum: 30 }
+}, ['network', 'asset', 'symbol', 'decimals']);
+// Escaped JSON array identities retain the original chain/network and token/precision.
+// The native Store checks exact membership and precision against the captured source.
+const rozoLabel = object({
+  network: { ...text(772), pattern: '^rozo:' }, asset: { ...text(412), pattern: '^rozo:' },
+  symbol: text(40), decimals: { type: 'integer', minimum: 0, maximum: 36 }
+}, ['network', 'asset', 'symbol', 'decimals']);
+const labels = object({ assets: { type: 'array', items: { anyOf: [ordinaryLabel, rozoLabel] } } }, ['assets']);
+
+const purchaseSelection = object({
+  schema: { type: 'string', enum: ['stellar-forge.rozo-buyer-selection.v1'] },
+  sourceId: { type: 'string', pattern: '^rozo-[0-9a-f]{64}$' },
+  purchases: { type: 'array', maxItems: 10000, items: object({
+    movementId: { type: 'string', pattern: '^rozo-movement-[0-9a-f]{64}$' },
+    basisSha256: sha, purchaseOwner: text(240), purchaseReference: text(500), reason: text(6000)
+  }, ['movementId','basisSha256','purchaseOwner','purchaseReference','reason']) }
+}, ['schema','sourceId','purchases']);
 
 const enums = values => ({ type: 'string', enum: values });
 
@@ -49,13 +66,15 @@ const SPECS = [
   ['workspaces', 'List the host-declared expense workspaces, original SF36 ledgers, MCP quote sources, exact customer receipts and accountant-return aliases.', {}, [], true],
   ['open', 'Explicitly open the original private expense server and its native lifetime lease. Opening does not capture a source or initiate payment.', workspace, ['workspace'], false],
   ['state', 'Read the original workspace revision and a paged source, cost-center, period or asset-label view.', { ...workspace, view: enums(['summary', 'sources', 'centers', 'periods', 'labels']), ...range }, ['workspace'], true],
-  ['items', 'Find native expense rows and exact coding status in the original statement projection.', { ...workspace, query: text(300, false), sourceId: record, status: enums(['ABSENT','RESERVED','UNCODED','STALE','CODED','PAYMENT_UNRESOLVED','FAILED_TRANSACTION','NO_SIGNED_DISPATCH','OBSERVATION_REVIEW','SPENDING_SOURCE_REVIEW','NO_PAYMENT_REQUIRED','ACCOUNTING_UNRESOLVED']), ...range }, ['workspace'], true],
+  ['items', 'Find native expense rows and exact coding status in the original statement projection.', { ...workspace, query: text(300, false), sourceId: record, status: enums(['ABSENT','RESERVED','UNCODED','STALE','CODED','PAYMENT_UNRESOLVED','FAILED_TRANSACTION','NO_SIGNED_DISPATCH','OBSERVATION_REVIEW','SPENDING_SOURCE_REVIEW','NO_PAYMENT_REQUIRED','ACCOUNTING_UNRESOLVED','ROZO_UNRESOLVED']), ...range }, ['workspace'], true],
   ['item', 'Inspect one original expense, or page its retained coding editions.', { ...workspace, id: record, view: enums(['current','history']), ...range }, ['workspace','id'], true],
   ['refund_packets', 'Page original customer return receipts and retained source-review decisions, including native accounting exports.', { ...workspace, ...range }, ['workspace'], true],
   ['refund_packet', 'Inspect an original receipt, all native decisions and verified returns, optional store-currency mapping, and matching retained buyer payments.', { ...workspace, id: record }, ['workspace','id'], true],
   ['refund_capture', 'Receive one host-declared customer packet through the unchanged Woo refund receiver. It retains source bytes without any merchant write or new payment.', { ...mutation, refundSource: alias }, ['workspace','requestId','expectedRevision','refundSource'], false],
   ['node_preview', 'Inspect the exact host-declared original Node operation accounting export using its original source/result validators. No ledger or payment operation is run.', {...workspace,nodeSource:alias,operator:actor}, ['workspace','nodeSource','operator'], true],
   ['node_capture', 'Retain the previewed original Node accounting export as a pending source capture in the same expense Store. Review it with capture_review; unpaid and unfinalized results create no allocated expense.', {...mutation,nodeSource:alias,operator:actor,previewSha256:sha}, ['workspace','requestId','expectedRevision','nodeSource','operator','previewSha256'], false],
+  ['rozo_preview', 'Preview a SHA-pinned host-declared original ROZO report with explicit buyer purchase selection. Empty purchases retains reference-only evidence; fees and destination payouts are not additional purchases.', {...workspace,rozoSource:alias,operator:actor,purchaseSelection}, ['workspace','rozoSource','operator','purchaseSelection'], true],
+  ['rozo_capture', 'Capture the exact previewed original ROZO source and purchase selection in the same native expense Store. Retain requestId and previewSha256; the resulting pending capture requires original capture_review.', {...mutation,rozoSource:alias,operator:actor,purchaseSelection,previewSha256:sha}, ['workspace','requestId','expectedRevision','rozoSource','operator','purchaseSelection','previewSha256'], false],
   ['adjustment_capture', 'Capture a host-declared unchanged original AdjustmentWorkspace export and selected payment/job event. It retains every native decision and verified return without merchant writes or a new payment.', { ...mutation, adjustmentSource: alias }, ['workspace','requestId','expectedRevision','adjustmentSource'], false],
   ['refund_review', 'Accept or reject an original receipt, explicitly bind a proof-backed purchase, or retain a reference-only export without creating expense or returned units.', { ...mutation, id: record,
     payload: object({decision:enums(['ACCEPT','REJECT']),operator:actor,reason,purchase_item_id:record,register_original_purchase:{type:'boolean'}},['decision','operator','reason'])
@@ -89,7 +108,7 @@ const SPECS = [
   ['accountant_preview', 'Review a host-declared SHA-pinned accountant return against its original issued buyer source and currently accepted handoffs. This does not change financial facts.', {...workspace,closeId:record,accountantSource:alias}, ['workspace','closeId','accountantSource'], true],
   ['accountant_return_save', 'Accept the reviewed original accountant return into the existing buyer Store transaction. Retain requestId for exact committed-response recovery.', {...mutation,closeId:record,accountantSource:alias,previewSha256:sha,operator:text(160),name:text(160),reason:text(2000,false),supersedes:{type:'array',maxItems:200,items:record}}, ['workspace','requestId','expectedRevision','closeId','accountantSource','previewSha256','operator','name','supersedes'], false],
   ['request', 'Recover the exact original committed response for a saved requestId after an interrupted reply or restart.', { ...workspace, requestId: request }, ['workspace','requestId'], true],
-  ['export', 'Retain an exact original project, accountant packet, source capture or issued view under a stable exportId. Complete projects and bookkeeping packets require the inspected workspace revision.', { ...workspace, exportId: alias, kind: enums(['project','accountant','capture','issued-json','issued-html','refund-packet','buyer-accountant-source','bookkeeping','accountant-return','node-operation']), recordId: record, expectedRevision: number }, ['workspace','exportId','kind'], false],
+  ['export', 'Retain an exact original project, accountant packet, source capture or issued view under a stable exportId. Complete projects and bookkeeping packets require the inspected workspace revision.', { ...workspace, exportId: alias, kind: enums(['project','accountant','capture','issued-json','issued-html','refund-packet','buyer-accountant-source','bookkeeping','accountant-return','node-operation','rozo-report']), recordId: record, expectedRevision: number }, ['workspace','exportId','kind'], false],
   ['exports', 'Page saved expense export requests and completed files after restart.', range, [], true],
   ['export_status', 'Reopen the original export request and retained completion manifest without opening a ledger.', { exportId: alias }, ['exportId'], true],
   ['manifest', 'Inspect the exact completion-manifest file for the maintained resumable download client.', { exportId: alias }, ['exportId'], true],

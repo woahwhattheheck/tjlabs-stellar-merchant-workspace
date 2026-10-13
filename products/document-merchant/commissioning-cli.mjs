@@ -9,15 +9,19 @@ import {acquireStateLease} from '../../stellar/scf-starforge-20261009/merchant-f
 import {inspectCommerceSetup} from '../../stellar/scf-starforge-20261009/sf66-demo-launcher/commerce-setup.mjs';
 import {reviewDocumentCommissioning,prepareDocumentCommissioning,inspectDocumentCommissioning,
   openCommissionedDocumentService} from './commissioning.mjs';
+import {runDocumentCommissioningApplication} from './commissioning-application.mjs';
 import {documentError} from './contracts.mjs';
 const HELP=[
-  'Document merchant commissioning from original commerce','',
+  'Document merchant commissioning from original commerce or an operator account','',
   '  document-merchant commission offers --commerce-directory DIR [--out FILE]',
   '  document-merchant commission review|prepare --commerce-directory DIR --directory DIR --intent ID',
-  '       --provider mintpdf|snaplab|pdfmint [--anonymous]',
+  '  document-merchant commission review|prepare --account-source FILE --directory DIR',
+  '       --provider mintpdf|snaplab|pdfmint [--anonymous] [--assembly-payment FILE]',
   '       (--customer-options FILE | --customer-directory DIR)',
   '       [--seller-port N] [--customer-port N] [--operator-port N] [--operations-port N]',
   '       [--expected-selection SHA] [--out FILE]',
+  '  document-merchant commission launch --options FILE --managed-source DIR --expected-selection SHA',
+  '       [--managed-launch FILE]',
   '  document-merchant commission inspect --directory DIR [--out FILE]',
   '  document-merchant commission serve --directory DIR [--expected-selection SHA]','',
   'offers and review read the retained original source without starting a payment or renderer.',
@@ -33,13 +37,14 @@ function parse(argv){
   if(!command||['--help','-h','help'].includes(command)){if(tail.length)fail('Help takes no options.');return {command:'help'};}
   const byCommand={
     offers:['commerce-directory','out'],
-    review:['commerce-directory','directory','intent','provider','anonymous','customer-options','customer-directory',
-      'seller-port','customer-port','operator-port','operations-port','out'],
-    prepare:['commerce-directory','directory','intent','provider','anonymous','customer-options','customer-directory',
-      'seller-port','customer-port','operator-port','operations-port','expected-selection','out'],
-    inspect:['directory','out'],serve:['directory','expected-selection']
+    review:['account-source','commerce-directory','directory','intent','provider','anonymous','customer-options','customer-directory',
+      'seller-port','customer-port','operator-port','operations-port','assembly-payment','out'],
+    prepare:['account-source','commerce-directory','directory','intent','provider','anonymous','customer-options','customer-directory',
+      'seller-port','customer-port','operator-port','operations-port','assembly-payment','expected-selection','out'],
+    inspect:['directory','out'],serve:['directory','expected-selection'],
+    launch:['options','managed-source','expected-selection','managed-launch']
   };
-  if(!byCommand[command])fail('Choose offers, review, prepare, inspect or serve.');
+  if(!byCommand[command])fail('Choose offers, review, prepare, inspect, serve or launch.');
   const options={};
   for(let i=0;i<tail.length;i++){
     const flag=tail[i],name=flag?.startsWith('--')?flag.slice(2):'';
@@ -48,19 +53,25 @@ function parse(argv){
     const value=tail[++i];if(!value||value.startsWith('--'))fail('Supply a value for '+flag+'.');
     options[name]=value;
   }
-  const required=command==='offers'?['commerce-directory']:['directory',
-    ...(['review','prepare'].includes(command)?['commerce-directory','intent','provider']:[])];
+  const required=command==='offers'?['commerce-directory']:command==='launch'?['options','managed-source','expected-selection']:['directory',
+    ...(['review','prepare'].includes(command)?['provider']:[])];
   for(const name of required)if(!options[name])fail('Supply --'+name+'.');
+  if(['review','prepare'].includes(command)){
+    if(options['account-source']){
+      if(options['commerce-directory']||options.intent)fail('Choose account-source or original commerce-directory and intent.');
+    }else if(!options['commerce-directory']||!options.intent)fail('Supply --account-source FILE or --commerce-directory DIR with --intent ID.');
+  }
   if(options['expected-selection']&&!/^[a-f0-9]{64}$/.test(options['expected-selection']))fail('Supply the complete selected SHA256.');
   return {command,options};
 }
 function input(options){
-  const value={commerceDirectory:absolute(resolve(options['commerce-directory'])),
-    directory:absolute(resolve(options.directory)),intentId:options.intent,provider:options.provider,
+  const value={...(options['account-source']?{accountSourceFile:absolute(resolve(options['account-source']))}:
+    {commerceDirectory:absolute(resolve(options['commerce-directory'])),intentId:options.intent}),
+    directory:absolute(resolve(options.directory)),provider:options.provider,
     anonymous:options.anonymous===true};
   if(Boolean(options['customer-options'])===Boolean(options['customer-directory']))
     fail('Select one complete --customer-options FILE or the original --customer-directory DIR.');
-  for(const [flag,key] of [['customer-options','customerOptionsFile'],['customer-directory','customerDirectory']])
+  for(const [flag,key] of [['customer-options','customerOptionsFile'],['customer-directory','customerDirectory'],['assembly-payment','assemblyPaymentFile']])
     if(options[flag])value[key]=absolute(resolve(options[flag]));
   for(const [flag,key] of [['seller-port','sellerPort'],['customer-port','customerPort'],
     ['operator-port','operatorPort'],['operations-port','operationsPort']]){
@@ -81,6 +92,11 @@ export async function runDocumentCommissioningCommand(argv=process.argv.slice(2)
 }={}){
   const {command,options}=parse(argv);if(command==='help')return print(HELP);
   const emit=async value=>{const output=options.out?await save(options.out,value):value;print(JSON.stringify(output,null,2));return value;};
+  if(command==='launch')return runDocumentCommissioningApplication({
+    optionsFile:absolute(resolve(options.options)),expectedSelection:options['expected-selection'],
+    launchSourceDirectory:absolute(resolve(options['managed-source'])),
+    launchFile:options['managed-launch']?absolute(resolve(options['managed-launch'])):null
+  },{print,environment,signal});
   if(command==='offers'){
     const source=await inspectCommerceSetup(absolute(resolve(options['commerce-directory'])));
     return emit({commerceDirectory:source.directory,operatorWorkspace:source.workspace,
@@ -101,7 +117,7 @@ export async function runDocumentCommissioningCommand(argv=process.argv.slice(2)
       expectedSelection:options['expected-selection']},{environment,signal:combined});
     const c=opened.commissioning,l=opened.launch;
     print(JSON.stringify({schema:'stellar-forge.document-commerce-launch.v1',state:'LISTENING',
-      selectionSha256:c.selectionSha256,directory:c.directory,originalOperator:c.original.operatorWorkspace,
+      selectionSha256:c.selectionSha256,directory:c.directory,originalOperator:c.original.operatorWorkspace??c.original.operatorProfile?.path,
       originalIntentId:c.original.intentId,publicOrigin:c.original.publicOrigin,
       seller:l.seller,customer:l.customer,operator:l.operator,operations:l.operations,
       customerOptions:c.customerOptions,consumerOptions:c.consumerOptions,

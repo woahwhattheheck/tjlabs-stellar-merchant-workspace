@@ -530,3 +530,51 @@ Continue the original four-file composition and the same saved review, Page and
 Site receiving operation. The complete application, product/finance companion,
 HTML reader and source index should be received together with their actual
 composition source and input identities.
+
+## Receive the complete municipal application suite
+
+The existing **Municipal source operations, service reporting and reviewed GIS
+delivery** chapter carries the six municipal Applications through the ordinary
+`grant-compose --manuscript` receiver. Keep the complete accepted chapter and its
+immutable installation, operation, receiving and workflow links together. The
+source receiver records these five selections from that chapter:
+
+| Source ID | Complete source |
+| --- | --- |
+| `municipal-suite-operating` | `products/open311/OPERATING.md`: the six Applications and their existing saved-workspace lifecycle |
+| `municipal-suite-receiving` | `products/open311/RECEIVING.md`: full editable receiving and identity rules |
+| `municipal-suite-workflows` | `products/open311/WORKFLOWS.md`: complete source and returned-file joins between the desks |
+| `municipal-service-configuration-installation` | `open311/service-configuration/INSTALL.md`: the maintained combined installation and service configuration entrypoint |
+| `municipal-suite-distribution-selection` | `distribution/selections/open311-service-configuration.json`: the exact six-application package selection |
+
+The last two paths are under the selected
+`stellar/scf-starforge-YYYYMMDD/` product source; the installation guide is in
+`sf30-seller-sdk/`. Each record takes its repository, full commit and complete
+path from the chapter's actual link. A later chapter edition updates that same
+source ID and clears an obsolete Git blob pin through the original receiver.
+An earlier manuscript without a selected link leaves its existing source record
+unchanged.
+
+The original `municipal-installed-gis-receiving` and
+`municipal-native-format-interchange` registrations remain available for their
+historical source links. All unrelated customer registrations and source records
+remain in the same composition. This registration follows the actual selected
+source; it does not infer a native run, installed application or commercial
+outcome from the presence of a guide.
+
+Receive the four complete reader outputs and their source pins through the
+existing saved draft, review, Page and Site operation. The current municipal
+chapter and these selected source identities travel together with every other
+accepted chapter and the original six funded packages.
+
+## First-tranche native Stellar acceptance and completed Geography receiving
+
+The `SCF-NATIVE-T1-ACCEPTANCE-7108-20261013` edition extends the original `grant-delivery-plan.mjs` producer and the existing nine-answer application. Its T1 merchant-resource row requires one approved Stellar testnet purchase for each selected merchant through an existing supported facilitator. The receiving result joins the approved request and complete useful output to the independently observed successful native transaction. The selected network and asset, payer, recipient and exact atomic amount remain explicit. This commissioning belongs to the existing 80-hour / $7,600 package; T2 retains its own two-independent-facilitator implementation and seven-day recurring-use cohort. The other five packages, all tranche amounts and the $38,000 / 400-hour request remain unchanged.
+
+This is the application’s concrete implementation of the [official first-deliverable guidance](https://stellar.org/blog/ecosystem/stellar-community-fund-soroban-submission-best-practices). The current [submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria) and [budget guidelines](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines) govern the self-contained application, meaningful Stellar integration, three costed tranches and verifiable completion. The first-tranche condition is written in the actual answer and component map; it does not rely on a reviewer following a companion link.
+
+The same edition restores the previously completed IATI Geography paragraph and the `40e1256a69f2f5bd1a8cc9c3f2953caee53e13d7` browser-procedure source. The retained original case completed all five byte-matched revision-5 exports, desktop/mobile review, both offline views and final CLI/independent-receiver cold reopen. Preserve that full chapter during canonical receiving. The complete engineering archive’s separate save remains owned by its original operation; this application update does not create another archive or claim a new transfer.
+
+Receive the complete four-file source package through the existing saved draft and sourcePins flow. Keep the current edited answers, original source editions, reviewer rounds, handover and source reviews. The source comparison should mark answer 6 for review and preserve all other answer bodies. The application’s pending invitation, individual-applicant/two-human clarification, actual contributor availability and unselected customer commitments remain explicit; source publication does not resolve them. The current issuer form’s exact labels and limits must be received when that original invitation exists.
+
+The complete 30-declaration selection used by this edition is retained with its source package and received through the existing composer. The Audit Exchange chapter receives its author's complete operator, Applications, programme and installer links from `GRANT_AUDIT_EXCHANGE.md`; the Cohort adoption chapter receives the author's commercial-reconciliation workflow from `GRANT_COHORT_ADOPTION_CHAPTER.md`. The latest author-supplied chapter includes the original calculation link as well as the registration. Controlled commercial exercises retain their explicit scope. The rest of the current companion and every existing source ID remain present.

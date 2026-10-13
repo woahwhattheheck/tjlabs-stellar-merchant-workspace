@@ -21,6 +21,7 @@ FINANCE_COMMANDS = {
 REVIEW_COMMANDS = {"review", "work.accept", "work.reopen",
                    "implementation.prepare", "cohort.prepare", "completion.prepare"}
 READ_POSTS = {
+    "risk-register-seed", "risk-register-preview", "risk-register-request",
     "installation-return-seed", "installation-return-preview", "installation-return-review-seed",
     "installation-return-review-preview",
     "work-intake-preview", "ledger-intake-inspect", "ledger-intake-preview", "statement-inspect", "statement-preview",

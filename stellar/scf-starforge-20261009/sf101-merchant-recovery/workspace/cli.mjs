@@ -9,10 +9,20 @@ export const HELP = 'SF101 recovery workspace\n\n' +
   'starforge merchant-recovery-remote workspace serve --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE [--port 8481]\n' +
   'starforge merchant-recovery-remote workspace show --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE\n' +
   'starforge merchant-recovery-remote workspace COMMAND --config ABS_HOST_CONFIG --directory ABS_PRIVATE_STATE [OPTIONS]\n\n' +
+  'support-cases List existing cases: --profile ID [--limit N].\n' +
+  'support-transfers List saved/prepared transfers: --profile ID.\n' +
+  'support-transfer Read the original transfer: --profile ID --transfer-id ID.\n' +
+  'support-review Freeze complete request/evidence and case selection: --selection ABS_JSON.\n' +
+  'support-save Commit that exact review: --profile ID --transfer-id ID --expected-support-review HASH.\n' +
+  'support-handoff Read the complete saved Support handoff: --profile ID --transfer-id ID.\n' +
+  'support-export Export full case/history/source: --profile ID --transfer-id ID --expected-support-review HASH.\n' +
+  'support-package Inspect the existing whole package: --profile ID --transfer-id ID.\n' +
   'serve       Open the retained operator workspace on 127.0.0.1. Its printed URL\n' +
   '            grants this session access to the host-selected recovery profiles.\n' +
   'show        Read saved workspace and operation status without its writer lease.\n' +
   'status      Attach to the original running listener and read current state.\n' +
+  'object-session Inspect the original Object source: --profile ID --object-session ID.\n' +
+  'object-evidence Read retained full native evidence: --sha256 HASH.\n' +
   'bundles     List the selected profile: --profile ID.\n' +
   'inventory   Page remote snapshots: --profile ID [--cursor ORIGINAL_CURSOR] [--limit 20].\n' +
   'requests    Page retained workspace requests: [--cursor ORIGINAL_CURSOR] [--limit 20].\n' +
@@ -22,6 +32,8 @@ export const HELP = 'SF101 recovery workspace\n\n' +
   'review      Review the complete private selection: --selection ABS_SELECTION_JSON.\n' +
   'start       Start that same selection: --selection ABS_SELECTION_JSON --expected-review-hash HASH.\n' +
   'resume      Continue the same saved request: --profile ID --id ORIGINAL_ID.\n' +
+  '            Object requests also require --expected-review-hash HASH --after-attempt N;\n' +
+  '            object-snapshot requires a fresh --quiesced acknowledgement.\n' +
   'cancel      Request a stop and retain the request: --profile ID --id ORIGINAL_ID.\n\n' +
   'Commands other than serve/show borrow the existing listener through its native\n' +
   'private launch and verify the original workspace/configuration/source identity.\n' +
@@ -35,13 +47,23 @@ export const HELP = 'SF101 recovery workspace\n\n' +
 
 const COMMAND_OPTIONS = {
   serve: ['port'], show: [], status: [],
+  'support-cases':['profileId','limit'],'support-transfers':['profileId'],
+  'support-transfer':['profileId','transferId'],'support-review':['selectionFile'],
+  'support-save':['profileId','transferId','expectedReviewSha256'],'support-handoff':['profileId','transferId'],
+  'support-export':['profileId','transferId','expectedReviewSha256'],'support-package':['profileId','transferId'],
+  'object-session': ['profileId', 'objectSessionId'], 'object-evidence': ['sha256'],
   bundles: ['profileId'], inventory: ['profileId', 'cursor', 'limit'],
   requests: ['cursor', 'limit'], request: ['profileId', 'id'],
   operations: ['profileId', 'cursor', 'limit'], operation: ['profileId', 'id'],
   review: ['selectionFile'], start: ['selectionFile', 'expectedReviewHash'],
-  resume: ['profileId', 'id'], cancel: ['profileId', 'id']
+  resume: ['profileId', 'id', 'expectedReviewHash', 'afterAttempt', 'quiesced'], cancel: ['profileId', 'id']
 };
 const REQUIRED_OPTIONS = {
+  'support-cases':['profileId'],'support-transfers':['profileId'],
+  'support-transfer':['profileId','transferId'],'support-review':['selectionFile'],
+  'support-save':['profileId','transferId','expectedReviewSha256'],'support-handoff':['profileId','transferId'],
+  'support-export':['profileId','transferId','expectedReviewSha256'],'support-package':['profileId','transferId'],
+  'object-session': ['profileId', 'objectSessionId'], 'object-evidence': ['sha256'],
   bundles: ['profileId'], inventory: ['profileId'],
   request: ['profileId', 'id'], operations: ['profileId'], operation: ['profileId', 'id'],
   review: ['selectionFile'], start: ['selectionFile', 'expectedReviewHash'],
@@ -60,7 +82,9 @@ export function parseWorkspaceArguments(argv) {
   const result = { command };
   const flags = { '--config': 'configFile', '--directory': 'directory', '--port': 'port',
     '--profile': 'profileId', '--id': 'id', '--cursor': 'cursor', '--limit': 'limit',
-    '--selection': 'selectionFile', '--expected-review-hash': 'expectedReviewHash' };
+    '--selection': 'selectionFile', '--expected-review-hash': 'expectedReviewHash',
+    '--transfer-id':'transferId','--expected-support-review':'expectedReviewSha256',
+    '--object-session': 'objectSessionId', '--sha256': 'sha256', '--after-attempt': 'afterAttempt', '--quiesced': 'quiesced' };
   for (let index = 0; index < rest.length; index++) {
     const flag = rest[index];
     if (flag === '--help' || flag === '-h') {
@@ -70,6 +94,7 @@ export function parseWorkspaceArguments(argv) {
     const key = flags[flag];
     if (!key || !['configFile', 'directory', ...COMMAND_OPTIONS[command]].includes(key) || result[key] !== undefined)
       throw argumentError('Unknown, repeated or unsupported workspace option: ' + flag);
+    if (key === 'quiesced') { result[key] = true; continue; }
     const value = rest[++index];
     if (value === undefined || value.startsWith('--'))
       throw argumentError('A value is required for ' + flag);
@@ -87,11 +112,26 @@ export function parseWorkspaceArguments(argv) {
       throw argumentError('Port must be from 0 through 65535', 'WORKSPACE_PORT_INVALID');
     result.port = Number(result.port);
   }
-  for (const key of ['profileId', 'id'])
+  for (const key of ['profileId', 'id', 'objectSessionId'])
     if (result[key] !== undefined && !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$/.test(result[key]))
       throw argumentError('Select the exact original ' + key);
+  if(result.transferId!==undefined&&!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(result.transferId))
+    throw argumentError('Use the original lowercase Support transfer ID.');
+  if(result.expectedReviewSha256!==undefined&&!/^[a-f0-9]{64}$/.test(result.expectedReviewSha256))
+    throw argumentError('Use the complete confirmed Support review SHA-256.');
   if (result.expectedReviewHash !== undefined && !/^[a-f0-9]{64}$/.test(result.expectedReviewHash))
     throw argumentError('Use the complete original 64-hex workspace reviewHash');
+  if (result.sha256 !== undefined && !/^[a-f0-9]{64}$/.test(result.sha256))
+    throw argumentError('Use the complete retained native evidence SHA-256');
+  if (result.afterAttempt !== undefined) {
+    if (!/^(0|[1-9][0-9]*)$/.test(result.afterAttempt) || !Number.isSafeInteger(Number(result.afterAttempt)))
+      throw argumentError('Use the original observed nonnegative attempt number');
+    result.afterAttempt = Number(result.afterAttempt);
+  }
+  if (command === 'resume' &&
+      (result.expectedReviewHash !== undefined || result.afterAttempt !== undefined || result.quiesced !== undefined) &&
+      (result.expectedReviewHash === undefined || result.afterAttempt === undefined))
+    throw argumentError('Object continuation requires both --expected-review-hash and --after-attempt');
   if (result.limit !== undefined) {
     if (!/^[1-9]\d{0,2}$/.test(result.limit) || Number(result.limit) > 100)
       throw argumentError('Page limit must be from 1 through 100');
@@ -138,10 +178,10 @@ async function callRunningWorkspace(options) {
   } } });
   try {
     const input = { workspace: 'local' };
-    for (const key of ['profileId', 'id', 'cursor', 'limit', 'expectedReviewHash'])
+    for (const key of ['profileId', 'id', 'cursor', 'limit', 'expectedReviewHash', 'objectSessionId', 'sha256', 'afterAttempt', 'quiesced', 'transferId', 'expectedReviewSha256'])
       if (options[key] !== undefined) input[key] = options[key];
     if (options.selectionFile !== undefined) input.selection = await readSelection(options.selectionFile);
-    return await client.call('merchant_recovery_' + options.command, input);
+    return await client.call('merchant_recovery_' + options.command.replaceAll('-', '_'), input);
   } finally { await client.close(); }
 }
 

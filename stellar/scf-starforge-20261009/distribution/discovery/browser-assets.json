@@ -204,6 +204,41 @@
         "../OPERATING_PLAN_RETURNS.md",
         "text/plain; charset=utf-8"
       ]
+    ],
+    [
+      "/support-operating-plan.mjs",
+      [
+        "support-operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-plan.css",
+      [
+        "support-operating-plan.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/support-operating-plan.mjs",
+      [
+        "../support-operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/operating-plan.mjs",
+      [
+        "../operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/catalog.mjs",
+      [
+        "../catalog.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

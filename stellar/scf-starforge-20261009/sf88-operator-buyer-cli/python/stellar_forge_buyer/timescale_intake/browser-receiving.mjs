@@ -100,7 +100,9 @@ function requestRoute(family,id){return (family==='pair'?PAIR:API)+'/requests/'+
  *   report:{path,sha256,filename},
  *   baseline:{source_id,columns,interpretation,keys},
  *   observed:{source_id,columns,interpretation,keys},
- *   pair:{name,label,columns,window_column,windows,notes},actor,reason}.
+ *   pair:{name,label,columns,window_column,windows,notes,saved?},actor,reason}.
+ * saved = {pair_id,revision,definition_sha256,request_id} reopens that exact
+ * existing pair request and keeps its reviewed mappings and numeric policies.
  *
  * The returned definition and original pair request are consumed by
  * runReconciliationBrowserReceiving. That receiver continues the same pair
@@ -135,17 +137,22 @@ export async function runTimescaleIntakeBrowserReceiving({url,input,outputDirect
    source.keys.every(key=>source.columns.some(column=>column.name===key)),
    'Keep every original field, explicit native type, meaning and empty import keys in the '+side+' mapping.');
  }
- const pairInput=input.pair;
+ const pairInput=input.pair,savedPair=pairInput.saved??null;
+ if(savedPair!==null)need(plain(savedPair)&&ID.test(savedPair.pair_id??'')&&
+  ID.test(savedPair.definition_sha256??'')&&REQUEST.test(savedPair.request_id??'')&&
+  Number.isSafeInteger(savedPair.revision)&&savedPair.revision>0,
+  'Select the original saved pair, revision, definition and request.');
  need(typeof pairInput.name==='string'&&pairInput.name.trim()&&typeof pairInput.label==='string'&&pairInput.label.trim()&&
   Array.isArray(pairInput.columns)&&pairInput.columns.length>0&&Array.isArray(pairInput.windows)&&
   (pairInput.window_column===null||typeof pairInput.window_column==='string')&&typeof pairInput.notes==='string'&&
   pairInput.columns.every(column=>plain(column)&&['name','source','target','meaning'].every(key=>typeof column[key]==='string'&&column[key].trim())&&
-   ['key','value'].includes(column.role)&&Array.isArray(column.source_map)&&column.source_map.length===0&&
-   Array.isArray(column.target_map)&&column.target_map.length===0)&&
+   ['key','value'].includes(column.role)&&Array.isArray(column.source_map)&&
+   Array.isArray(column.target_map)&&(savedPair!==null||
+    (column.source_map.length===0&&column.target_map.length===0)))&&
   pairInput.columns.some(column=>column.role==='key')&&
   pairInput.windows.every(window=>plain(window)&&typeof window.id==='string'&&window.id&&
    typeof window.start==='string'&&typeof window.end==='string'&&['native','lexical'].includes(window.basis)),
-  'Provide the complete original pair definition; this intake editor preserves values with empty source and target maps.');
+  'Provide the complete original pair definition, or select its original saved revision and request.');
  const launch=new URL(url);
  need(['http:','https:'].includes(launch.protocol)&&!launch.username&&!launch.password&&launch.hash.length>1,
   'Use the original private browser launch URL.');
@@ -337,10 +344,15 @@ export async function runTimescaleIntakeBrowserReceiving({url,input,outputDirect
    'The original browser operation has not returned its complete native result.');
   step.result=remote.result;step.complete=true;step.completed_at=new Date().toISOString();await save();return remote.result;
  }
- async function step(name,kind,body,create){
+ async function step(name,kind,body,create,originalRequestId=null){
   let item=record.steps[name];
   if(item)need(item.kind===kind&&stable(item.expected_body)===stable(body),'The prepared '+name+' operation changed.');
   else{item={kind,expected_body:body,prepared_at:new Date().toISOString()};record.steps[name]=item;await save();}
+  if(originalRequestId!==null){
+   need(REQUEST.test(originalRequestId)&&(!item.request_id||item.request_id===originalRequestId),
+    'The selected original request identity changed.');
+   item.request_id=originalRequestId;
+  }
   record.phase=name.toUpperCase();await save();
   const prior=await findRequest(item);
   if(prior)return reopen(item);
@@ -424,6 +436,25 @@ export async function runTimescaleIntakeBrowserReceiving({url,input,outputDirect
    stable(value.keys)===stable(review.keys)&&stable(value.timescale_source)===stable(review.timescale_source),
    'The imported immutable edition differs from its complete original source review.');
  }
+ async function originalSavedPair(baselineId=null,observedId=null){
+  need(savedPair!==null,'Select the original saved pair.');
+  const pair=await get(PAIR+'/pairs/'+savedPair.pair_id);
+  need(pair.pair_id===savedPair.pair_id&&pair.revision===savedPair.revision&&
+   pair.definition_sha256===savedPair.definition_sha256&&plain(pair.definition),
+   'The selected saved pair revision changed; reopen the current original pair before preparing another receiving.');
+  const selected={...pairInput};delete selected.saved;
+  const original={...pair.definition};delete original.source_edition;delete original.target_edition;
+  need(stable(selected)===stable(original)&&
+   (baselineId===null||pair.definition.source_edition===baselineId)&&
+   (observedId===null||pair.definition.target_edition===observedId),
+   'The selected saved pair must retain its complete definition and both original reviewed editions.');
+  const request=await get(requestRoute('pair',savedPair.request_id));
+  need(request.kind==='pairs'&&request.state==='COMPLETE'&&
+   request.request_id===savedPair.request_id&&request.body?.request_id===savedPair.request_id&&
+   request.body.workspace_id===input.workspace_id&&stable(request.result)===stable(pair),
+   'Reopen the exact original completed request for this saved pair revision.');
+  return {pair,body:expectedBody('pair',request.body)};
+ }
  async function preparePairUI(baseline,observed){
   await screen('pair');await visibleAction(page.getByRole('button',{name:'New pair',exact:true}));
   await page.getByLabel('Pair name',{exact:true}).fill(pairInput.name);
@@ -487,6 +518,7 @@ export async function runTimescaleIntakeBrowserReceiving({url,input,outputDirect
   await page.goto(launch.href,{waitUntil:'domcontentloaded',timeout:60000});await idle();
   need((await page.locator('#workspace-id').textContent())===input.workspace_id,'The visible browser is attached to another native workspace.');
   const identity=await get('/api/identity');need(identity.workspace_id===input.workspace_id,'The original native workspace identity changed.');
+  if(savedPair!==null)await originalSavedPair();
   const retained=await step('retain','retain',{workspace_id:input.workspace_id,filename:input.report.filename,sha256:input.report.sha256},async()=>{
    await screen('reports');await page.locator('#report-file').setInputFiles(uploadPayload());
    await visibleAction(page.getByRole('button',{name:'Retain report',exact:true}));
@@ -538,16 +570,20 @@ export async function runTimescaleIntakeBrowserReceiving({url,input,outputDirect
    checkEdition(imported[side],review);
   }
   let preparedPair=null;
-  if(!record.steps.pair)preparedPair=await preparePairUI(imported.baseline,imported.observed);
-  const pairBody=record.steps.pair?.expected_body??preparedPair;
+  const saved=savedPair===null?null:await originalSavedPair(imported.baseline.edition_id,imported.observed.edition_id);
+  if(!record.steps.pair&&!saved)preparedPair=await preparePairUI(imported.baseline,imported.observed);
+  const pairBody=record.steps.pair?.expected_body??saved?.body??preparedPair;
+  if(saved)need(stable(pairBody)===stable(saved.body),'The original selected pair request body changed.');
   const pair=await step('pair','pair',pairBody,async()=>{
+   need(!saved,'Continue the selected original saved pair request.');
    if(!preparedPair)preparedPair=await preparePairUI(imported.baseline,imported.observed);
    need(stable(preparedPair)===stable(pairBody),'The original prepared pair review changed.');
    await screen('pair');await visibleAction(page.getByRole('button',{name:'Save reviewed pair',exact:true}));
-  });
-  need(ID.test(pair.pair_id??'')&&pair.revision===1&&ID.test(pair.definition_sha256??'')&&
+  },savedPair?.request_id??null);
+  need(ID.test(pair.pair_id??'')&&pair.revision===(savedPair?.revision??1)&&ID.test(pair.definition_sha256??'')&&
    pair.definition?.source_edition===imported.baseline.edition_id&&pair.definition.target_edition===imported.observed.edition_id&&
-   stable(pair.definition)===stable(pairBody.definition),'The complete saved pair differs from the original native review.');
+   stable(pair.definition)===stable(saved?.pair.definition??pairBody.definition),
+   'The complete saved pair differs from the original native review.');
   await openSavedPair(pair);
   const screenshots=[await capture('timescale-original-pair-handover')];
   await page.setViewportSize({width:480,height:900});

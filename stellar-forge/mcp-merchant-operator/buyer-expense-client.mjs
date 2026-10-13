@@ -25,7 +25,7 @@ const downloads=createRetainedDownload({
   toolPrefix:PREFIX.slice(0,-1),
   errorPrefix:'BUYER_EXPENSE',
   clientName:'starforge-buyer-expense-download',
-  describe:manifest=>({workspace:manifest.workspace,workspaceId:manifest.workspaceId,revision:manifest.revision,kind:manifest.kind})
+  describe:manifest=>({workspace:manifest.workspace,workspaceId:manifest.workspaceId,revision:manifest.revision,kind:manifest.kind,...(manifest.kind==='rozo-report'?{originalFilename:manifest.originalFilename}:{})})
 });
 export const downloadBuyerExpenseExport=downloads.download;
 export const inspectBuyerExpenseExport=downloads.inspect;

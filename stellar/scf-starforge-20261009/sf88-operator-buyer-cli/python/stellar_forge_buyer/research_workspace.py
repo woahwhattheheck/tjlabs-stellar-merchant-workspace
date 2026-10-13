@@ -382,6 +382,10 @@ class ResearchWorkspace:
         from .research_citations import ResearchCitations
         return ResearchCitations(self, dossier_id)
 
+    def study_flow(self, dossier_id):
+        from .research_study_flow import ResearchStudyFlow
+        return ResearchStudyFlow(self, dossier_id)
+
     def extraction(self, dossier_id):
         from .research_extraction import ResearchExtraction
         return ResearchExtraction(self, dossier_id)

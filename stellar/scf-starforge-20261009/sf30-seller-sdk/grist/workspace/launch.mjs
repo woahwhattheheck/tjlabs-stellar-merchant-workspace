@@ -11,7 +11,7 @@ import { normalizeConnections } from './provider.mjs';
 export const GRIST_STARTUP_SCHEMA = 'stellar-forge.grist-authoring-startup.v1';
 const WORKSPACE = 'stellar-forge.grist-authoring.v1';
 const HASH = /^[a-f0-9]{64}$/;
-const SOURCE_FILES = ["launch.mjs","model.mjs","cli.mjs","server.mjs","provider.mjs","packet.mjs","browser.mjs","index.html","style.css","mcp.mjs","catalog.mjs","merchant-provider.mjs","application.mjs","application-provider.mjs"];
+import {SOURCE_FILES} from './source-files.mjs';
 const SOURCE_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const changed = () => fault('GRIST_MANAGED_INPUT_CHANGED',
   'Review the current source workspace, connection file and installed runtime before starting.', 409);

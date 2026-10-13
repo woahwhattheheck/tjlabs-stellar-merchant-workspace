@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Subscription customer desk</title><link rel="stylesheet" href="/style.css"><script type="module" src="/app.mjs"></script></head>
+<body><header><div><p class="eyebrow">STARFORGE · CUSTOMER WORKSPACE</p><h1>Subscription customer desk</h1><p>Review a published edition. Receive its complete data. Keep your original history.</p></div><a href="/operator-guide" target="_blank" rel="noopener">Operator guide ↗</a></header>
+<main><section id="login"><h2>Open your customer desk</h2><p>Use the local operator token printed by this installed application. Merchant credentials stay with the host.</p><form id="login-form"><label>Local operator token<input id="token" type="password" autocomplete="off" required></label><button>Open desk</button></form></section>
+<div id="workspace" hidden><section class="toolbar"><label>Customer profile<select id="profile"></select></label><div id="edition-summary" class="summary"></div><button id="refresh">Refresh saved state</button></section>
+<section id="pending" class="notice" hidden></section><p id="message" role="status" aria-live="polite"></p>
+<nav aria-label="Customer workspace"><button data-pane="overview">Customer</button><button data-pane="editions">Published editions</button><button data-pane="rows">Current rows</button><button data-pane="history">Requests & reviews</button><button data-pane="outputs">Backups & delivery</button></nav>
+<section id="content" aria-live="polite"></section></div>
+</main><dialog id="dialog"><form id="action-form"><header><h2 id="dialog-title"></h2><button type="button" id="dismiss" aria-label="Close form">×</button></header><div id="fields"></div><footer><button type="button" id="cancel-form">Cancel</button><button id="submit-action">Save original request</button></footer></form></dialog>
+<dialog id="detail"><header><h2>Complete retained record</h2><button id="close-detail" aria-label="Close details">×</button></header><pre id="detail-text"></pre><footer><button id="save-detail">Download exact displayed JSON</button></footer></dialog>
+<footer class="page-footer">Original OData subscription engine · Explicit editions · Complete native receiving</footer></body></html>

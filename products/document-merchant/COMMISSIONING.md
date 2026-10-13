@@ -1,4 +1,4 @@
-# Commission document jobs from an existing commerce setup
+# Commission document jobs from an existing account or commerce setup
 
 Use the retained commerce setup to install a document merchant with the existing payer, original operator budget, original facilitator and a specifically selected native price. This is the practical transition from an HTTP commerce installation to the paid Jobs document workflow. The earlier commerce setup does not need to contain a Jobs configuration.
 
@@ -9,6 +9,137 @@ node products/document-merchant/cli.mjs commission --help
 ~~~
 
 The selected source supplies the real merchant origin, asset, recipient, amount, payment flow and facilitator policy. The new document application uses the maintained Jobs seller, Request intake, original checkout and worker. The existing operator workspace remains the owner of its payer and spending ledger.
+
+## Commission rendering and ordered PDF assembly together
+
+A PDFMint merchant can expose HTML/Markdown rendering and ordered PDF assembly from the same original account and service lifetime. Select a complete, explicit assembly payment file when reviewing the installation. The existing buyer profile, payer, operator policy, spending ledger, facilitator policy and signer ownership remain authoritative.
+
+The assembly payment is separate from the per-render payment. Its network, asset and recipient must match this original account selection. Its amount and payment flow must fit the retained facilitator policy. The original native compiler then validates the complete terms and generated assembly function. No native amount is derived from the supplier's USD price or an exchange-rate assumption.
+
+Save the complete terms in a private UTF-8 JSON file, for example:
+
+~~~json
+{
+  "scheme": "exact",
+  "network": "stellar:testnet",
+  "asset": "ACTUAL_ORIGINAL_ASSET",
+  "payTo": "ACTUAL_ORIGINAL_RECIPIENT",
+  "amount": "ACTUAL_ASSEMBLY_ATOMIC_AMOUNT",
+  "maxTimeoutSeconds": 120,
+  "extra": {
+    "areFeesSponsored": true,
+    "paymentFlow": "authorization"
+  }
+}
+~~~
+
+Replace every placeholder with the actual selected original-account terms before review. Use the complete real extra fields required by that payment flow. The private assembly file is pinned with the original account, policy and customer configuration.
+
+~~~sh
+document-merchant commission review \
+  --account-source /private/document-account.json \
+  --directory /private/document-assembly-merchant \
+  --provider pdfmint \
+  --assembly-payment /private/document-assembly-payment.json \
+  --customer-options /private/original-customer-options.json \
+  --seller-port 8431 --customer-port 8432 \
+  --out /private/document-assembly-review.json
+~~~
+
+Inspect the whole review. \`request.payment\` is the original rendering payment; \`request.assembly.payment\` is the separate merge-volume payment. \`configurationFiles\` includes the complete assembly-payment file's path, byte count and SHA256. The original account and nested customer configuration remain unchanged.
+
+Prepare the exact reviewed selection:
+
+~~~sh
+document-merchant commission prepare \
+  --account-source /private/document-account.json \
+  --directory /private/document-assembly-merchant \
+  --provider pdfmint \
+  --assembly-payment /private/document-assembly-payment.json \
+  --customer-options /private/original-customer-options.json \
+  --seller-port 8431 --customer-port 8432 \
+  --expected-selection ACTUAL_REVIEW_SELECTION_SHA256
+~~~
+
+The equivalent complete Applications options JSON adds:
+
+~~~json
+{
+  "assemblyPaymentFile": "/private/document-assembly-payment.json"
+}
+~~~
+
+Include that property alongside the existing \`accountSourceFile\` or \`commerceDirectory\`/\`intentId\`, directory, provider, customer and listener options. The provider must be \`pdfmint\`. The same **Document merchant** entry reviews both payment sets and starts the complete service. Its **Original account commissioning JSON** field, original environment, first Start, Open, Stop and reopening behavior remain the same.
+
+The generated service exposes its original rendering routes and \`/documents/pdf-set\` under the selected path prefix. The native factory accepts only the two reviewed complete payment sets and uses one retained native facilitator for all those functions. The original Jobs owner drains before the facilitator releases signer ownership.
+
+Start the prepared merchant with the existing \`commission serve\` command or Applications. Start **Document production** with the generated \`composition-options.json\` / complete customer settings. The same origin is available for rendering and for **Bundle existing PDFs** or composition-produced **Ordered PDF bundle**. The customer still reviews the actual quote for each requested original batch.
+
+One paid assembly request represents a merged volume. A volume containing one unchanged PDF needs no merge purchase. Render requests, merge requests, original PDF count, pages, supplier credits and parent-task completion remain distinct.
+
+Choose the assembly terms while preparing the retained installation. An existing render-only installation continues to use its original function list. Prepare a selected installation containing the additional function through the normal review process, while retaining the original customer/account and all earlier paid-job records.
+
+## Use an existing operator account directly
+
+An existing native HTTP or MCP buyer can already have a complete SF88 operator profile and a native facilitator policy without an sf66 prepared-commerce directory. In that case, select the original account files directly with `--account-source`. The document customer retains that profile's payer, operator identity, policy, spending ledger and signer module. Each document creates a new request and native intent in the original customer workflow.
+
+Use the source owner's complete private operator profile accepted by the maintained Jobs checkout. Its fields are the existing `operator`, `signerModule`, `trustedPayer`, and any selected `bodyCaptureTimeoutMs`, `buyerTransport` or `requestTimeoutMs`. Keep the original `operator.python`, `actor`, `service`, `policy` and `ledger` values. A historical single-operation buyer JSON has additional operation fields and is a different input; recover the maintained reusable profile from the original owner.
+
+The signer's source remains the original configured module. It must support the selected new document operation through the existing native approval path. An SF103 configuration bound to a previous one-time purchase remains bound to that operation; the original signer setup can prepare the next operation using that same account and policy. The document preparation reads source and configuration; the native buyer's normal review and execution control the actual purchase.
+
+### Select the complete account source
+
+Create one private JSON source record beside the operator's existing configuration:
+
+~~~json
+{
+  "schema": "stellar-forge.document-account-source.v1",
+  "operatorProfileFile": "/absolute/original/operator-profile.json",
+  "facilitatorConfigFile": "/absolute/original/facilitator.json",
+  "publicOrigin": "https://ACTUAL_MERCHANT_ORIGIN",
+  "payment": {
+    "scheme": "exact",
+    "network": "stellar:testnet",
+    "asset": "ACTUAL_CONFIGURED_ASSET",
+    "payTo": "ACTUAL_CONFIGURED_RECIPIENT",
+    "amount": "ACTUAL_DOCUMENT_PRICE_IN_ATOMIC_UNITS",
+    "maxTimeoutSeconds": 120,
+    "extra": {
+      "areFeesSponsored": true,
+      "paymentFlow": "authorization"
+    }
+  }
+}
+~~~
+
+Replace each operating placeholder with the original operator's actual selected source. Preserve the complete payment requirement, including the selected timeout and every `extra` field. Select the new document price within the original buyer allowance and the actual facilitator's configured policy. The facilitator's permitted network, asset, recipient, atomic ceiling and payment flow are checked before preparation. The buyer's original policy and spending ledger govern each subsequent purchase.
+
+Use the actual public HTTPS origin routed to this document service. An original explicit proxy configuration in `buyerTransport` remains unchanged and must name that same origin. The account source, profile and facilitator JSON must be complete private files. The source record contains paths and public terms; existing key values stay in the original environment.
+
+### Review, prepare and operate
+
+~~~sh
+node "$DOCUMENT_CHECKOUT/products/document-merchant/cli.mjs" commission review \
+  --account-source /absolute/private/document-account.json \
+  --directory "$DOCUMENT_COMMISSION" \
+  --provider mintpdf --anonymous \
+  --customer-options /absolute/private/original-customer-options.json \
+  --out /absolute/private/document-account-review.json
+
+node "$DOCUMENT_CHECKOUT/products/document-merchant/cli.mjs" commission prepare \
+  --account-source /absolute/private/document-account.json \
+  --directory "$DOCUMENT_COMMISSION" \
+  --provider mintpdf --anonymous \
+  --customer-options /absolute/private/original-customer-options.json \
+  --expected-selection ACTUAL_REVIEW_SELECTION_SHA256
+~~~
+
+The complete customer options must select that same original profile as `checkout.operatorProfile`. To materialize the selected original customer directory with normal settings, use `--customer-directory "$DOCUMENT_CUSTOMER"` instead. Preparation creates the same `customer-options.json`, `case-document-options.json`, `composition-options.json`, document application and native factory as the retained-commerce route.
+
+Continue with the ordinary `commission inspect` and `commission serve` commands below, and use the existing batch, browser or saved-case customer operation. A stopped service resumes from this same commissioning directory. Changes to the selected profile, operator policy, facilitator or signer source require reviewing that changed source before a new installation is prepared.
+
+The retained mutable spending ledger is selected by its original path. Preparation leaves that journal under its original owner; completed document purchases use the same accounting identity. Historical purchase IDs remain historical, while the new document request retains the actual customer task reference throughout PDF/source receiving.
+
 
 ## 1. Recover the complete original setup
 
@@ -231,3 +362,7 @@ Keep the original saved customer store, exact pack/edition, original task refere
 | Service stops during native work | Its original close and facilitator drain retain ownership until accepted work completes |
 
 The operating [document guide](OPERATING.md), [batch guide](BATCHES.md), [composition guide](COMPOSITION.md) and [ordered PDF guide](ASSEMBLY.md) remain the downstream customer workflows.
+
+## Start and stop through the existing Applications workspace
+
+The complete commissioning options JSON can be selected directly in the existing **Document merchant** application. **Review** reads the full original account and product source; first **Start** prepares that same installation and opens the original Jobs/facilitator lifetime. **Open**, **Stop** and restart use the original managed launch and merchant resource. Follow the complete [Applications commissioning workflow](APPLICATIONS.md#commission-the-existing-account-in-applications). The direct `commission serve` route remains available for an original foreground operator.

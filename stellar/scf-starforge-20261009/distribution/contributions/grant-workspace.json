@@ -38,6 +38,21 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_agenda_cli.py",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_agenda.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_agenda.css",
-    "stellar/scf_2026/sf47_budget_model/workspace/DELIVERY_AGENDA.md"
+    "stellar/scf_2026/sf47_budget_model/workspace/DELIVERY_AGENDA.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_cli.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks.css",
+    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_OPERATOR.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_walkthrough.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_RECEIVING.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_browser.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_BROWSER.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/risk-browser.example.json",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_execution.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_EXECUTION.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_prepare.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_PREPARATION.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/risk-runtime-source-selection.json"
   ]
 }

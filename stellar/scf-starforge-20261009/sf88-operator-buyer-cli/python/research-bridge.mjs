@@ -48,6 +48,13 @@ async function dispatch(client,action,input,signal){
     case 'citation-updates':return client.citationUpdates(dossierId,options);
     case 'citation-review':return client.reviewCitationUpdate(dossierId,body);
     case 'citation-export':return exportCitationFile(client,input);
+    case 'study-flow':return client.studyFlow(dossierId,requestOptions);
+    case 'study-flow-sources':return client.studyFlowSources(dossierId,requestOptions);
+    case 'study-flow-report':return client.studyFlowReport(dossierId,requestOptions);
+    case 'study-flow-preview':return client.previewStudyFlow(dossierId,body,{signal});
+    case 'study-flow-import-counts':return client.importStudyFlowCounts(dossierId,body,{signal});
+    case 'study-flow-review':return client.reviewStudyFlow(dossierId,body,{signal});
+    case 'study-flow-export':return client.exportStudyFlow(dossierId,requestOptions);
     case 'extraction':return readResearchExtraction(client,dossierId,options,{signal});
     case 'extraction-source-values':return readResearchExtraction(client,dossierId,options,{sourceValues:true,signal});
     case 'extraction-publications':return readResearchExtraction(client,dossierId,options,{publication:true,signal});

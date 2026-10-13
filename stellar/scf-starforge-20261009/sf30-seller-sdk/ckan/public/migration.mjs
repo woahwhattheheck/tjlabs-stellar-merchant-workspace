@@ -1,4 +1,5 @@
 // MIT. Catalogue migration operator view; original values are rendered as text.
+import { renderDcatSources } from './dcat-sources.mjs';
 import { parseDcatJson, parseDcatJsonText, stringifyDcatJson, isExactCkanNumber } from './dcat-json.mjs';
 const pageSize = 25;
 const memories = new Map();
@@ -597,6 +598,10 @@ export async function renderDcatMigration(ctx) {
     row(action(ctx, 'Refresh workspace', () => ctx.refresh()),
       action(ctx, 'Open complete workspace handover', () => ctx.openWorkspace()),
       action(ctx, 'Download operating guide', () => ctx.download('dcat/guide', 'MIGRATION_OPERATING.md'))));
+  ctx.view.append(await renderDcatSources(ctx, {
+    onReviewCreated: value => { memory.selectedReview = value; memory.filters = {}; },
+  }));
+  if (!ctx.current()) return;
   ctx.view.append(uploadPanel(ctx, memory), reviewPanel(ctx, dcat, memory));
   if (dcat.catalogs.length) ctx.view.append(card(title('Retained catalogue documents'),
     table(['Label', 'Profile', 'Original source', 'Received', 'Bytes', 'SHA-256'], dcat.catalogs.map(item => [

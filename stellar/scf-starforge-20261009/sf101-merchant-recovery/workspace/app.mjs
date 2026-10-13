@@ -1,3 +1,5 @@
+import {createRecoverySupportDesk} from './recovery-support-desk.mjs';
+import {createObjectRecoveryDesk} from './object-sessions-desk.mjs';
 // MIT. Industrial operator interface; all recovery actions use the original engine.
 const $ = id => document.getElementById(id);
 const SESSION_KEY = 'starforge-recovery-session';
@@ -649,6 +651,8 @@ function applyState(value, initialize = false) {
   $('store-label').textContent = remoteConfigured(selected) ? 'Remote store' : 'Recovery mode';
   $('store-summary').textContent = remoteConfigured(selected) ?
     selected.store.bucket + '/' + selected.store.prefix + ' · ' + selected.store.region : 'Local recovery';
+  objectDesk.update(value,profileId);
+  supportDesk.update(value,profileId,[...requests.values()]);
   renderDeclaredRestores(); renderFleetRestores(); syncCapabilities();
   if (review && !localCommand(review.command) && !remoteConfigured(selected)) invalidateReview();
   $('passphrase-summary').textContent = selected.passphraseAvailable ? 'Available from host environment' :
@@ -897,12 +901,14 @@ function progressText(row) {
 }
 
 function renderRequests() {
+  if(current){objectDesk.update(current,profileId);supportDesk.update(current,profileId,[...requests.values()]);}
   const rows = [...requests.values()].filter(row => row.profileId === profileId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   const signature = JSON.stringify([profileId, remoteConfigured(), rows]);
   if (signature === lastRequests) return;
   lastRequests = signature;
   const children = [];
   for (const row of rows) {
+    if(objectDesk.isRequest(row)){children.push(objectDesk.requestCard(row));continue;}
     const isLocal = localCommand(row.review.command);
     const item = element('article', undefined, 'request'), heading = element('div', undefined, 'request-head');
     heading.append(element('h3', row.operationId, 'mono'), element('span', row.phase, 'badge'));
@@ -1104,4 +1110,6 @@ async function boot() {
     setTimeout(poll, 5000);
   } catch (error) { notice(errorText(error), true); }
 }
+const supportDesk=createRecoverySupportDesk({root:$('recovery-support-panel'),api,post,notice,showDetails});
+const objectDesk=createObjectRecoveryDesk({root:$('object-recovery-panel'),api,post,refresh:refreshState,notice,showDetails});
 boot();

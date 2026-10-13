@@ -1,7 +1,17 @@
-# Operate the grant portfolio product
+# Operate the complete grant portfolio application
 
 Use this workflow for the standalone `grant-portfolio` selection in
-`woahwhattheheck/tjlabs-stellar-merchant-workspace`.
+`woahwhattheheck/tjlabs-stellar-merchant-workspace`. The same saved application carries
+source reconciliation, programme delivery, applications and awards, staff operations,
+Dataverse deployment and continuing support. Select the current source once, then work
+through the original workspace and its complete revision history.
+
+The maintained source authority is
+[`source-files.json`](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/source-files.json).
+Installation checks every declared member against the selected package manifest. Use
+that actual roster for the chosen release; a historical file count does not describe a
+later edition. The product keeps the original workspace identity and operator-edited
+input handles when it reopens.
 
 ## 1. Build the selected source and install its runtime
 
@@ -147,7 +157,26 @@ status reports RECOVERABLE. Open the same product or review/start it in Applicat
 native launcher acquires the original workspace lease, retires that workspace's stopped
 connection and atomically publishes its new complete launch.
 
-## 4. Receive and review the complete publisher editions
+## 4. Choose the current operating workflow
+
+All of the following work belongs to the same selected portfolio and saved application.
+A programme can begin before external publisher data is received. Its later source
+intake joins the existing programme instead of creating another operational store.
+
+| Work | Original entry and maintained guide |
+| --- | --- |
+| Receive and reconcile publisher editions | **Source editions**, then the portfolio's original entity, link, decision and financial tables; [source operations](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/OPERATIONS.md). |
+| Plan and deliver a programme | **Programme delivery**; [programme guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/PROGRAMME.md). |
+| Run a funding round and administer awards | **Applications and awards**; [awards guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/AWARDS.md). |
+| Operate accountable staff decisions | The existing staff workflow and its selected authority; [staff operations](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/STAFF_OPERATIONS.md). |
+| Configure and deliver the selected Dataverse application | The original native specification, target profile and saved deployment actions; [Dataverse receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/DATAVERSE_RECEIVING.md). |
+| Continue implementation support and corrections | The joined original support application; [support guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/SUPPORT.md). |
+
+Use the selected portfolio revision when reading historical work. A record's own
+revision, the programme or awards revision and the portfolio revision serve distinct
+purposes; preserve the exact returned identities in the next saved operation.
+
+### Source editions and reconciliation
 
 Open **Source editions**, upload each complete native IATI or 360Giving packet, and retain
 its standard, publisher, edition label, authoritative URL, observation time, license and
@@ -170,6 +199,119 @@ changed. Earlier revisions and their source references remain available.
 
 The [native operator guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grant-portfolio/OPERATIONS.md)
 contains the complete field definitions, decision forms and later-edition workflow.
+
+### Programme delivery
+
+Select **Start a programme**, save the name, code, owner and reporting date, then add
+its project hierarchy, shared partners, grants and documents. The original registers
+carry workplan dependencies, results and observations, risks, issues and actions,
+reports and closure. Upload complete evidence through the existing document workflow
+and select its actual record in the relevant project or grant.
+
+For a project or grant with external financial evidence, use **Original source records**
+to select the exact received source entity. A replacement edition remains a reviewed
+portfolio change. Source bindings show whether the original is current, changed or
+outside the selected editions; the application preserves the original reference until
+that review occurs.
+
+Record result values as decimal text with their original units, reporting periods and
+dimensions. Correct an observation through its existing record. Overlapping periods,
+missing values and ambiguous latest observations remain visible in the programme
+position. Submit donor reports and record closure only with the intended contributing
+editions: those actions retain an immutable dated position, including the selected
+original financial basis and supporting documents.
+
+Open **Project QA pack** for the selected project's issued checklist and retained
+evidence. Use the joined staff workflow for accountable clearance and approval.
+The programme guide defines each register, its source scope and its current limits.
+
+### Applications, awards and complete CSV intake
+
+Create or select the programme/project, applicant partners and supporting documents,
+then open **Applications and awards**. Save a funding round using the actual approved
+criteria, dates, responsible people and scoring method. Publish its reviewed edition
+before recording applications against it.
+
+Work through the original application, eligibility and diligence, assessor disclosure
+and clearance, assessment, panel decision, agreement, claim and monitoring registers.
+Use the actual required authority and programme rules for each attributed decision.
+A recorded amount retains its currency and financial meaning; the original financial
+reconciliation selects exact source rows and their digests.
+
+To receive an application spreadsheet, open **Import application CSV**:
+
+1. Select the complete UTF-8 CSV, its original filename, the published round, recording
+   actor and draft or submitted status.
+2. Map the actual reference, title, legal name and partner-key columns. Add the project,
+   requested amount/currency, profile fields, submission date and published criterion
+   answers required by this input.
+3. Match partner and project keys to existing programme records. Review the stable
+   application identities, including any exact saved draft selected for update.
+4. Review and download the complete mapped plan, then save that same import. The
+   original CSV document and applications commit through one saved portfolio action.
+
+The browser retains the operation ID before dispatch and checks the uploaded document's
+bytes and hash. Original source, round edition and portfolio snapshot stay attached to
+the import. An interrupted request continues under the same saved operation. Published
+or submitted records use **Create following edition** for changed content; earlier
+editions remain readable.
+
+Use JSON or CSV exchange for the selected application records. The complete portfolio
+handoff is the customer delivery for all source packets, evidence, registers and
+revision history. Spreadsheet-safe CSV presentation is recorded separately from its
+original structured values.
+
+### Staff, deployment and support
+
+The current staff profile supports project initiation, formulation, QA and correction
+on the existing native project record. Review the actual source layout, target project
+and app, role GUIDs, action/clearance policy and complete installation inputs. Its
+project form retains source and financial context beside evidence editions, staff
+state and immutable command history.
+
+A submitted QA pack freezes its actual source, staff state, policy and evidence.
+Record each discipline's actual clearance, the chair decision and any later condition
+or correction through the original native command. The form uses its existing Xrm
+identity. An interrupted command keeps its original UUID and exact expected versions;
+read that operation before continuing. The staff guide contains the signed-plugin
+build, native composition and the complete selected three-project/Flagship programme.
+
+The current staff and Support profiles carry the issued SPC project process and
+service terms. Select them when that process and obligation match the commissioned
+implementation. A different customer's agreed process or correction period needs its
+explicit source adaptation; changing a label does not change the implemented policy.
+
+A Dataverse delivery begins with its complete specification and the actual target
+profile. Save and inspect the original preflight and compiled plan, then apply the
+reviewed operations, selected settings, app publication and role configuration through
+that same saved native journal. Continue an interrupted native job with its original
+request rather than constructing another import or publication action.
+
+Use the selected programme's representative operating cases and real role arrangement
+during deployment. The native delivery preserves managed and unmanaged packages,
+actual source/target results, original definitions, configurations and unresolved
+operations alongside the editable portfolio.
+
+Open **Support** at `/support/` with the same private console connection. Receive the
+original defect report, assign its component and owner, record acknowledgement,
+agree workaround/correction timing, select the actual staff correction, validate its
+completed target installation, then close or reopen that same case. Reports can enter
+before triage, calendar selection or final acceptance is complete.
+
+The current SPC profile retains twelve months of defect support from actual final
+acceptance, with the issued one/two-business-day acknowledgement targets. Select the
+actual service timezone, weekdays, non-working dates, service interval and reviewed
+counting rule. Its clock begins at the report's original receipt. Record actual
+acknowledgement and acceptance correspondence in the original case; those actions
+retain the existing communication.
+
+**Prepare handover** selects the complete native delivery for the reviewed portfolio.
+It carries the contract and every revision, each report cycle and case revision,
+later native installation/correction histories, supporting objects and a readable
+handover. **Receive handover** adopts those original records with the nested native
+application in the same workspace transaction. Its received release/correction
+selectors continue to work after reopening. Follow the maintained staff, Dataverse
+and support guides for their exact payloads and operating sequence.
 
 ## 5. Connect the original merchant tools
 
@@ -205,8 +347,12 @@ defines the exact tool payloads, typed client and source-owned provider configur
 ## 6. Deliver and reopen a complete portfolio
 
 From the selected portfolio revision choose **Export complete portfolio**. The handoff
-contains all earlier revisions, all seven row tables for each revision, original source
-packets, review decisions, origin-bound requests and the 77-file native runtime closure.
+contains all earlier revisions, each revision's actual table family, original source
+packets, review decisions, programme and award history, referenced document objects,
+origin-bound requests and the complete maintained native runtime closure. The selected
+source roster determines the files carried with that edition. Earlier source-only
+revisions retain their original seven-table layout; later programme and award revisions
+retain their own complete derived tables.
 
 The equivalent saved CLI operation is available when the console is closed:
 
@@ -225,3 +371,50 @@ can continue review, export the combined history again, stop and reopen that wor
 
 [Installed receiving](RECEIVING.md) exercises this entire path with the original Comic
 Relief publisher inputs and two independent received customer workspaces.
+
+## 7. Select the complete customer handover
+
+Choose the original delivery that matches the work actually performed:
+
+| Delivery | Contents and continuation |
+| --- | --- |
+| Complete portfolio | Source editions, review and record histories, programme/award tables, documents and maintained source; receive into an ordinary portfolio workspace and continue editing. |
+| Native Dataverse delivery | Complete portfolio plus selected native managed/unmanaged solution exports, settings, target observations and original request/result histories; receive through the original Dataverse delivery action. |
+| Support delivery | The implementation's retained support records and related complete native handover; receive through the original support course. |
+
+A received historical target profile remains part of that history. Select the
+recipient's actual local profile before an authorized target operation. Archive
+receiving reconstructs saved work and preserves its native results; the later operating
+task selects any new tenant action explicitly.
+
+After receiving, open the recipient's actual returned portfolio revision, inspect its
+source and documents, make the agreed ordinary continuation, close the owned console
+and reopen that same workspace. Use the recipient's returned IDs for onward work.
+Repeat an interrupted original receiving operation under its saved ID so completed
+receiving and later recipient edits remain intact.
+
+[Installed receiving](RECEIVING.md) links the original source, programme, award and
+deployment receiving courses. Preserve the completed course's full files and returned
+workspace identities when delivering it to another operator.
+
+## 8. Upgrade the application around the same workspace
+
+A prepared product records one exact installed runtime and native source selection.
+Build and prepare the selected following release in its own runtime directory.
+Retain the original product directory and its selected source so that its prior
+preparation remains understandable.
+
+For managed use, review the new installed source against the same native workspace in
+the original Runtime workspace's **Applications** flow. Use its **Stop** and reviewed
+start/reopen operations to change the selected running source.
+
+For a standalone product, close the owned console and prepare a new private product
+directory with the following runtime and the same absolute native `--workspace` path.
+The original `prepare` command above supports that explicit existing-workspace binding.
+Keep the original product's packet-handle input files when configuring the new
+product's handles. Its status and open commands inspect the newly selected source and
+the retained native identity.
+
+The source roster is verified dynamically for the selected release. Changing files
+inside an already prepared runtime is not the upgrade operation. Keep the actual
+release archive and source selection with the received customer handover.

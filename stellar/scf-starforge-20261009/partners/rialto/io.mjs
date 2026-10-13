@@ -66,10 +66,10 @@ export function verifyHttp(value){
  if(value.bodyUtf8!==null)need(Buffer.from(value.bodyUtf8,'utf8').equals(raw),'Original HTTP text changed');
  return value;
 }
-export async function captureGet(root,url){
+export async function captureGet(root,url,{acceptSaved=()=>true}={}){
  const dir=path.join(root,'captures');if(!await exists(dir))await fs.mkdir(dir,{mode:0o700});
  const prefix=sha(Buffer.from(url)),names=(await fs.readdir(dir)).filter(n=>n.startsWith(prefix+'-')&&n.endsWith('.json')).sort();
- for(const name of names){const v=verifyHttp(await readJson(path.join(dir,name)));need(v.url===url&&v.method==='GET','Retained GET identity changed');if(v.status===200)return{name:'captures/'+name,value:v};}
+ for(const name of names){const v=verifyHttp(await readJson(path.join(dir,name)));need(v.url===url&&v.method==='GET','Retained GET identity changed');if(v.status===200&&acceptSaved(v))return{name:'captures/'+name,value:v};}
  const value=await http(url),name=prefix+'-'+String(names.length).padStart(6,'0')+'.json';await writeNew(path.join(dir,name),json(value));
  return{name:'captures/'+name,value};
 }

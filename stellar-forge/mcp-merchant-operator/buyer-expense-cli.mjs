@@ -18,7 +18,12 @@ const HELP = [
   'Use tools to read each exact action schema. Mutations require workspace, requestId and',
   'expectedRevision. Keep the original private argument JSON after interruption; inspect',
   'the same requestId before retrying. Receiving uses the original trusted receiver and',
-  'never imports a ledger, reads a signer or replays a capture.', ''
+  'never imports a ledger, reads a signer or replays a capture.',
+  'ROZO: call rozo_preview with a configured rozoSource and explicit purchaseSelection,',
+  'then rozo_capture with the exact returned previewSha256. Use capture_review before',
+  'coding. Export kind rozo-report preserves the complete raw file and originalFilename.',
+  'ROZO argument files may be up to 96,000,000 bytes; the complete native source plus',
+  'selection envelope must also fit that limit. Other argument files remain <=2 MB.', ''
 ].join('\n');
 function fail(message){throw Object.assign(new Error(message),{code:'BUYER_EXPENSE_CLI'});}
 function options(args,allowed){
@@ -26,10 +31,11 @@ function options(args,allowed){
   for(let i=0;i<args.length;i+=2){if(!allowed.includes(args[i])||!args[i+1]||Object.hasOwn(out,args[i]))fail('Use the declared options once, each with a value.');out[args[i]]=args[i+1];}
   return out;
 }
-async function argumentsFile(path){
+async function argumentsFile(path,action){
+  const maximum=['rozo_preview','rozo_capture'].includes(action)?96_000_000:2_000_000;
   if(!path)fail('Supply the retained private argument JSON.');
   const h=await open(resolve(path),constants.O_RDONLY|constants.O_NOFOLLOW);
-  try{const s=await h.stat();if(!s.isFile()||s.size>2_000_000||s.mode&0o077)fail('Use a private regular argument file no larger than 2 MB.');return JSON.parse(await h.readFile('utf8'));}
+  try{const s=await h.stat();if(!s.isFile()||s.size>maximum||s.mode&0o077)fail('Use a private regular argument file within the '+maximum+' byte action limit.');const bytes=await h.readFile();if(bytes.length>maximum)fail('The original argument file grew beyond its action limit.');return JSON.parse(bytes.toString('utf8'));}
   finally{await h.close();}
 }
 export async function main(argv=process.argv.slice(2)){
@@ -39,7 +45,7 @@ export async function main(argv=process.argv.slice(2)){
   const o=options(rest,['--url','--action','--arguments','--token-env','--output','--export','--directory','--manifest-sha256','--archive','--sha256','--python']);
   const transport={url:o['--url'],tokenEnv:o['--token-env']};
   let result;
-  if(command==='call'){const client=await openBuyerExpenseClient(transport);result=await client.call(o['--action'],await argumentsFile(o['--arguments']));}
+  if(command==='call'){const client=await openBuyerExpenseClient(transport);result=await client.call(o['--action'],await argumentsFile(o['--arguments'],o['--action']));}
   else if(command==='inspect')result=await inspectBuyerExpenseExport({...transport,exportId:o['--export']});
   else if(command==='download')result=await downloadBuyerExpenseExport({...transport,exportId:o['--export'],directory:o['--directory'],expectedManifestSha256:o['--manifest-sha256']});
   else if(command==='receive')result=await receiveBuyerExpenseProject({archive:o['--archive'],directory:o['--directory'],expectedSha256:o['--sha256'],python:o['--python']});

@@ -1,0 +1,24 @@
+{
+  "schema": "commons.original-source-receiving-correction.v1",
+  "operation": "SCF-RECEIVABLES-NATIVE-2A51-20261012",
+  "originalSourceCommit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5",
+  "maintainedSourceCommit": "1f44c8a18477bcfbb1b8890f8bd228ba52bb1306",
+  "originalResultCapsule": "80c16d4ce00247d6675fe3d7b1b9c445011cc27f",
+  "reason": "Use the exact maintained distribution registration schema repairs for the original Grist and SeaTable descriptors. The original programmes and accounting engine remain unchanged.",
+  "files": [
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/grist-authoring.json",
+      "originalGitBlob": "b48a143dac0ec868c8aa5afc8cdbf7dca9535cab",
+      "gitBlob": "628fc04f8e1de10cc35c497064fa8cac8438a483",
+      "bytes": 1380,
+      "content": "{\n  \"schema\": \"stellar-forge.merchant-distribution-contribution.v1\",\n  \"id\": \"grist-authoring\",\n  \"description\": \"Complete Grist source authoring, explicit typed public projections, original publisher/SF82 and shared browser/MCP/Applications lifetime.\",\n  \"commands\": {\n    \"grist-workspace\": \"stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/cli.mjs\",\n    \"grist-receive\": \"stellar/scf-starforge-20261009/sf30-seller-sdk/grist/receiving.mjs\"\n  },\n  \"exports\": {\n    \"./seller/grist/workspace\": \"./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/model.mjs\",\n    \"./seller/grist/workspace/server\": \"./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/server.mjs\",\n    \"./seller/grist/workspace/launch\": \"./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/launch.mjs\",\n    \"./seller/grist/workspace/packet\": \"./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/packet.mjs\",\n    \"./seller/grist/workspace/mcp\": \"./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/mcp.mjs\"\n  },\n  \"applicationProviders\": {\n    \"grist-authoring\": \"stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/application-provider.mjs\"\n  },\n  \"merchantProviders\": {\n    \"grist-workspaces\": \"stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/merchant-provider.mjs\"\n  }\n}\n"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/seatable-authoring.json",
+      "originalGitBlob": "de2447ce789f64564cb7cc0af98adfc82e0acdd4",
+      "gitBlob": "8c24dca1c4f6333b4c844bd4b8ca06ba3a0b573a",
+      "bytes": 1426,
+      "content": "{\n  \"schema\": \"stellar-forge.merchant-distribution-contribution.v1\",\n  \"id\": \"seatable-authoring\",\n  \"description\": \"Complete SeaTable source authoring, native SQL/view capture review, original publisher/SF82 and managed browser/MCP lifecycle.\",\n  \"commands\": {\n    \"seatable-workspace\": \"stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/cli.mjs\",\n    \"seatable-receive\": \"stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/receiving.mjs\"\n  },\n  \"exports\": {\n    \"./seller/seatable/workspace\": \"./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/model.mjs\",\n    \"./seller/seatable/workspace/server\": \"./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/server.mjs\",\n    \"./seller/seatable/workspace/launch\": \"./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/launch.mjs\",\n    \"./seller/seatable/workspace/packet\": \"./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/packet.mjs\",\n    \"./seller/seatable/workspace/mcp\": \"./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/mcp.mjs\"\n  },\n  \"applicationProviders\": {\n    \"seatable-authoring\": \"stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/application-provider.mjs\"\n  },\n  \"merchantProviders\": {\n    \"seatable-workspaces\": \"stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/merchant-provider.mjs\"\n  }\n}\n"
+    }
+  ]
+}

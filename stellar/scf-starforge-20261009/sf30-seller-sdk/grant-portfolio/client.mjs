@@ -12,7 +12,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{1
 const OPERATION = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
 const TABLES = new Set(['entities','financial','links','decisions','candidates','changes','sources',
   ...['nodes','partners','grants','milestones','indicators','observations','risks','issues','documents',
-      'reports','closures','bindings','positions','results'].map(name => 'programme_' + name)]);
+      'reports','closures','bindings','positions','results'].map(name => 'programme_' + name),
+  ...['rounds','applications','checks','assignments','assessments','decisions','agreements','claims','monitoring',
+      'positions','calculations'].map(name => 'awards_' + name)]);
 const DATAVERSE_ACTIONS = new Set(["dataverse.spec.save","dataverse.profile.save","dataverse.preflight","dataverse.plan","dataverse.apply","dataverse.export","dataverse.import","dataverse.configure","dataverse.delivery.prepare","dataverse.delivery.receive","dataverse.staff.capture","dataverse.staff.programme"]);
 const SUPPORT_ACTIONS = ["support.contract.save","support.contract.acceptance","support.issue.open","support.issue.triage","support.issue.acknowledge","support.issue.plan","support.issue.workaround","support.issue.correction","support.issue.validate","support.issue.close","support.issue.reopen","support.issue.note","support.issue.clock-review","support.delivery.prepare","support.delivery.receive"];
 const ACTIONS = new Set(['source.receive','portfolio.save','review.save','portfolio.export','portfolio.receive', ...DATAVERSE_ACTIONS, ...SUPPORT_ACTIONS]);
@@ -185,6 +187,41 @@ export class GrantPortfolioClient {
     exact(input, ['portfolioId','revision','sourceId','entityKey'], ['portfolioId','revision','sourceId','entityKey']);
     return this.#json('/api/detail?' + query({...selection({portfolioId:input.portfolioId, revision:input.revision}),
       sourceId:checked(input.sourceId, HASH, 'source SHA-256'), entityKey:checked(input.entityKey, HASH, 'entity key')}), undefined, options);
+  }
+  awardsSchema(options) { return this.#json('/api/awards/schema', undefined, options); }
+  awardsRecord(input, options) { return this.#awards('record', input, options); }
+  awardsHistory(input, options) { return this.#awards('history', input, options); }
+  awardsRound(input, options) { return this.#awards('round', input, options); }
+  awardsPosition(input, options) { return this.#awards('position', input, options); }
+  awardsFinancial(input, options) { return this.#awards('financial', input, options); }
+  async #awards(route, input, options) {
+    const detail = route === 'record' || route === 'history', financial = route === 'financial';
+    const extra = detail ? ['collection','id'] : financial ? ['offset','limit','search'] : [route === 'round' ? 'roundId' : 'applicationId'];
+    exact(input, ['portfolioId','revision', ...extra], ['portfolioId','revision', ...(financial ? [] : extra)]);
+    selection({portfolioId:input.portfolioId, revision:input.revision});
+    if (detail) {
+      checked(input.id, UUID, 'award record ID');
+      need(['rounds','applications','checks','assignments','assessments','decisions','agreements','claims','monitoring'].includes(input.collection),
+        'REGISTER', 'Select a maintained award register.');
+    } else if (!financial) checked(input[extra[0]], UUID, 'award selection ID');
+    if (financial) {
+      need(input.offset === undefined || Number.isSafeInteger(input.offset) && input.offset >= 0, 'PAGE', 'Use a nonnegative row offset.');
+      need(input.limit === undefined || Number.isSafeInteger(input.limit) && input.limit >= 1 && input.limit <= 250, 'PAGE', 'Select one to 250 original rows.');
+      need(input.search === undefined || typeof input.search === 'string' && input.search.length <= 1000, 'SEARCH', 'Use the complete row search.');
+    }
+    const result = await this.#json('/api/awards/' + route + '?' + query(input), undefined, options);
+    need(plain(result) && result.schema === 'stellar-forge.grant-awards.v1' && result.portfolioId === input.portfolioId &&
+      result.revision === input.revision && HASH.test(result.snapshot ?? '') &&
+      Number.isSafeInteger(result.awardsRevision) && result.awardsRevision >= 0,
+      'AWARDS_SELECTION', 'The award read differs from the original selected portfolio revision.');
+    if (financial) need(Array.isArray(result.rows) && result.rows.length <= (input.limit ?? 50) &&
+      result.offset === (input.offset ?? 0) && Number.isSafeInteger(result.total) && result.total >= 0 &&
+      (result.nextOffset === null || result.nextOffset === result.offset + result.rows.length && result.nextOffset > result.offset) &&
+      result.rows.every(item => plain(item.record) && plain(item.reference) &&
+        HASH.test(item.reference.sha256 ?? '') && item.reference.sourceId === item.record.sourceId &&
+        item.reference.rowKey === item.record.rowKey),
+      'AWARDS_FINANCIAL', 'The complete original financial row page changed.');
+    return result;
   }
   programmeSchema(options) { return this.#json('/api/programme/schema', undefined, options); }
   programmeRecord(input, options) { return this.#programme('record', input, options); }

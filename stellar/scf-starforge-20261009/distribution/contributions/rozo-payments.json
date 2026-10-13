@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "rozo-payments",
-  "description": "ROZO merchant payments, original checkout and reconciliation workspace",
+  "description": "ROZO merchant payments, original checkout, configured accounting and buyer finance",
   "commands": {
     "rozo-payments": "stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/cli.mjs"
   },
   "commandDescriptions": {
-    "rozo-payments": "Initialize, operate and receive the original ROZO merchant and checkout workspace"
+    "rozo-payments": "Operate ROZO payments, original Accounting/Buyer finance and complete staff receiving"
   },
   "exports": {
     "./seller/rozo-payments": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments/index.mjs"

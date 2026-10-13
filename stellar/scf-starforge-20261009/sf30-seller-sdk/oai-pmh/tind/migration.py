@@ -234,6 +234,8 @@ class Migration:
         case_tables(self)
         from source_files import tables as source_file_tables
         source_file_tables(self)
+        from production_waves import tables as production_tables
+        production_tables(self)
 
     def close(self):
         self.source_download_stop.set()
@@ -309,7 +311,10 @@ class Migration:
                 "reconcile": self._reconcile, "withdraw-batch": self._withdraw_batch,
                 "source-cases": self._source_cases, "source-case-review": self._source_case_review,
                 "source-download-plan": self._source_download_plan, "source-download-adopt": self._source_download_adopt,
-                "source-download-import": self._source_download_import
+                "source-download-import": self._source_download_import,
+                "production-plan": self._production_plan, "production-review": self._production_review,
+                "production-disposition": self._production_disposition, "production-prepare": self._production_prepare,
+                "production-reconcile": self._production_reconcile
             }
             if kind not in methods:
                 raise InputError("Unknown TIND operation")
@@ -507,6 +512,26 @@ class Migration:
         file_digest(path, MAX_OBJECT)
         with path.open("rb") as source:
             return self._receive_destination(project, source, value.get("provenance"), operation)
+
+    def _production_plan(self, project, value, operation):
+        from production_waves import create_plan
+        return create_plan(self, project, value, operation)
+
+    def _production_review(self, project, value, operation):
+        from production_waves import review_wave
+        return review_wave(self, project, value, operation)
+
+    def _production_disposition(self, project, value, operation):
+        from production_waves import disposition
+        return disposition(self, project, value, operation)
+
+    def _production_prepare(self, project, value, operation):
+        from production_waves import prepare_wave
+        return prepare_wave(self, project, value, operation)
+
+    def _production_reconcile(self, project, value, operation):
+        from production_waves import reconcile_wave
+        return reconcile_wave(self, project, value, operation)
 
     def _source_download_plan(self, project, value, operation):
         from source_files import plan

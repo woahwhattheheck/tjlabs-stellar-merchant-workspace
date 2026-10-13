@@ -290,6 +290,127 @@ files per case and a 32 MiB complete case archive. Each method supports up to
 100 complete effort rows and 100 other-cost rows. The original case source
 inventory remains visible as editions accumulate.
 
+
+## 8. Continue recurring customer outcomes
+
+Use **Edit this edition → Add recurring observation** to record the next useful
+customer task in the same comparison. Keep the original baseline, task unit and
+initial installed method. Each recurring observation has its own stable identity,
+complete measurement method, source selection, scope decision, operator review,
+customer response and conclusion.
+
+The editor starts a new observation with unknown quantities and an unrecorded
+measurement basis. It keeps the installed method's name, while requiring the
+new period, source edition, population, output and quality to be entered for that
+actual run. Earlier measurements and customer responses are not copied into a
+new observation.
+
+1. Name the observation and record the original observation time, including its
+   timezone and any fractional seconds.
+2. Select its original deployments and purchase observations. Attach any new
+   source through the existing Sources section, then select those original
+   attachments in this observation.
+3. Describe the complete work unit and population, actual source edition,
+   reporting period, received output and quality. A later period may be
+   comparable, but the reviewer must explain that relationship explicitly.
+4. Enter active effort and correction/receiving work separately from whole-task
+   elapsed time. Browser session length, waiting time and agent or tool runtime
+   do not establish human person-minutes.
+5. Enter an hourly valuation only when its actual source is supplied. An
+   unvalued observation can still be reviewed and accepted. Missing valuations
+   remain unknown, while effort, completed output and quality remain visible.
+6. Make this observation's own baseline comparability decision and record its
+   customer outcome. Choose Reviewed only after the scope explanation and
+   conclusion are ready.
+7. Record the actual customer response separately: Pending, Accepted or
+   Declined. An acceptance or decline requires the actual receiving reviewer,
+   original response timestamp and response/source note. Select the original
+   response attachment where it is available.
+8. Review the complete comparison and save through the same original case
+   transaction. Open the saved edition, inspect its recurring overview and
+   export the complete case and report.
+
+The recurring directory shows every observation, review and customer response.
+Choose **Open observation** to edit or read one complete observation at a time;
+its full baseline comparison appears below. This keeps long histories usable
+without loading every observation's editable work rows together. All observations
+remain in the saved source and complete export. Editor recovery retains the
+selected observation as well as every unfinished input.
+
+**Accepted comparable observed** counts observations with all of the following:
+a Reviewed scope, a complete comparable baseline decision, OBSERVED measurement
+basis for both the baseline and recurring method, an original observation time,
+a positive completed-task count, and an Accepted customer response. Its dates
+are those observations' actual measurement dates in UTC. This count alone does
+not establish effort or monetary savings.
+
+Every recurring report compares against the same baseline in that selected
+edition. It retains material scope differences and the complete original
+measurements. Total effort/cost and elapsed differences require the same
+positive completed-task count; per-task calculations retain the existing
+explicit comparability rule. Whole-operation elapsed differences stay separate
+from active effort. The application presents each observation individually and
+does not sum overlapping work or extrapolate an annual savings figure.
+
+### Corrections and complete history
+
+A saved observation remains in later editions of the same comparison. Correct
+its method, scope decision, customer response or conclusion and save the next
+complete edition with a clear note. The earlier full source stays available
+through the original revision selector. An observation added in the current
+editor can be removed before its first save.
+
+A historical edition may predate later recurring observations. When continuing
+that older edition, reconcile the current saved document and retain its complete
+observation list before saving. The native writer requires all already saved
+observation identities; receiving validates that continuity through the entire
+source chain.
+
+**New comparison from this edition** creates a separate comparison identity.
+It retains the method inputs for review but resets recurring operator decisions,
+conclusions and customer responses to Draft / Unreviewed / Pending. It does not
+carry an accepted customer decision into the new comparison.
+
+### Existing input, client and export contracts
+
+The complete input adds one optional field, `document.followups`. Older inputs
+omit it and continue to normalize, calculate, export and receive identically.
+The existing seed, preview, save, typed client and Merchant tools accept the
+same complete input object. No additional source store or command is used.
+
+Each observation contains:
+
+~~~json
+{
+  "id": "observation-ORIGINAL_STABLE_ID",
+  "label": "Next complete customer task",
+  "method": {},
+  "comparison": {"decision": "UNREVIEWED", "reason": ""},
+  "status": "DRAFT",
+  "conclusion": "",
+  "acceptance": {"status": "PENDING", "by": "", "at": null, "note": ""},
+  "deploymentIds": [],
+  "purchaseIds": []
+}
+~~~
+
+Use the complete existing method shape for `method`, including every scope
+field, measurement, source ID and effort/cost row. At most 100 observations
+belong to one comparison. Their IDs are unique and stable.
+
+The original source snapshot includes the union of the baseline, initial
+installed and recurring attachments, deployments and purchases. Each observation
+retains its individual selection. Historical receiving checks the full selected
+attachment bytes and the original business records before their save events.
+
+The existing offline HTML includes the recurring overview, every full method,
+scope difference, calculation, actual customer response, review item and
+original selection. The original effort/cost CSVs include all recurring rows,
+identified by `method=followup:ORIGINAL_OBSERVATION_ID`. Their columns are
+unchanged. Complete JSON source editions retain the raw observation and
+calculated report. The same selected-case ZIP therefore reopens the original
+comparison and all its recurring history for the next facilitator.
+
 ## Source
 
 - operations_task_outcomes.py — one normalized model, exact calculation,
@@ -300,3 +421,7 @@ inventory remains visible as editions accumulate.
   transaction, selected native export and browser/command adapters.
 - agent-client.mjs / agent-client.d.mts and Merchant grant provider/catalog —
   original installed client and full input/output transfer.
+
+## Editable customer measurement workbook
+
+Use the complete [Customer measurement workbook](TASK_OUTCOMES_WORKBOOK.md) from the same comparison desk to prepare editable XLSX measurements, review returned cells and reconcile concurrent desk changes. Its source attachment and pending request remain in the original case. Apply the reviewed measurements to the current draft, then calculate and save through this guide’s original comparison workflow. The whole editor recovery retains unfinished workbook reviews and choices.

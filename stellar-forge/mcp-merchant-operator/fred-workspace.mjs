@@ -1,5 +1,6 @@
 // MIT. Complete agent workflow on the original FRED economic-edition host.
 import { basename } from 'node:path';
+import { readFredAlfredMetadata } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.mjs';
 import { RetainedFileReads } from './retained-file-reads.mjs';
 import { FredWorkspaceClient, FredWorkspaceError, readFredWorkspaceConfiguration, readFredHostFile,
   canonicalFredJSON, fredDigest, inspectFredReleaseCapture, inspectFredDdpCrosswalk, inspectFredDdpPackage,
@@ -119,8 +120,14 @@ export class MerchantFredWorkspaces {
     bytes = null;
     if (input.kind === 'public-table' && !['commons.retained-public-table.v1', 'commons.retained-public-table-set.v1'].includes(value?.version) ||
         input.kind === 'capture' && !['stellar-forge.fred-capture.v1', 'stellar-forge.fred-public-table-capture.v1',
-          'stellar-forge.fred-public-table-set-capture.v1'].includes(value?.schema))
+          'stellar-forge.fred-public-table-set-capture.v1', 'stellar-forge.alfred-vintage-capture.v1'].includes(value?.schema))
       fail('FRED_MCP_INPUT_INVALID', 'The complete input does not have its declared original source format.');
+    if (input.kind === 'alfred-metadata') {
+      if (!Array.isArray(value) || value.some(item => item?.schema !== 'stellar-forge.alfred-metadata-edition.v1') ||
+          new Set(value.map(item => item?.series?.value)).size !== value.length)
+        fail('FRED_MCP_INPUT_INVALID', 'Historical metadata input requires a complete JSON array of original series editions.');
+      for (const item of value) readFredAlfredMetadata(item, { series: item.series?.value, vintage: item.selectedVintage?.value });
+    }
     let release = null, ddp = null;
     if (inspect && input.kind === 'release-capture') {
       const model = inspectFredReleaseCapture(value);
@@ -159,6 +166,7 @@ export class MerchantFredWorkspaces {
         captureSha256: original.captureSha256 ?? null, selection: original.selection ?? null,
         ...(source.release ? { release: source.release } : {}),
         ...(source.ddp ? { ddp: source.ddp } : {}),
+        ...(source.input.kind === 'alfred-metadata' ? { metadataEditionCount: original.length } : {}),
         tables: Array.isArray(original.tables) ? original.tables.map(table => ({ seriesId: table.series_id,
           sourceUrl: table.source_url, retrievedAt: table.retrieved_at, bytes: table.bytes, sha256: table.sha256 })) : undefined };
     }
@@ -265,9 +273,20 @@ export class MerchantFredWorkspaces {
       }
       return client[method](input);
     }
+    if (name === 'merchant_fred_ddp_migration_acquire') {
+      const { workspace: _, metadataInput, metadataFileSha256, ...input } = args;
+      if (metadataInput !== undefined) {
+        const source = await this.#input(alias, metadataInput, metadataFileSha256);
+        if (source.input.kind !== 'alfred-metadata')
+          fail('FRED_MCP_INPUT_INVALID', 'Choose a configured alfred-metadata input containing every original edition.');
+        input.metadata = source.value;
+      } else if (metadataFileSha256 !== undefined)
+        fail('FRED_MCP_INPUT_INVALID', 'A metadata file SHA256 requires its configured input alias.');
+      return client.acquireDdpMigration(input);
+    }
     if (name === 'merchant_fred_import') {
       const source = await this.#input(alias, args.input, args.expectedSha256);
-      if (['release-capture', 'ddp-crosswalk', 'ddp-package'].includes(source.input.kind))
+      if (['release-capture', 'ddp-crosswalk', 'ddp-package', 'alfred-metadata'].includes(source.input.kind))
         fail('FRED_MCP_INPUT_INVALID', 'Use the corresponding original release or DDP source import; observation import selects an observation capture or public table.');
       return client.importCapture({ id: args.id, expectedRevision: args.expectedRevision, capture: source.value });
     }
