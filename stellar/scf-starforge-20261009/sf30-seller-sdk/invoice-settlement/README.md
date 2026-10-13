@@ -278,3 +278,9 @@ The operator executes its own source reader and the original ethers decoder. The
 ## Review native Horizon deposits
 
 The [Horizon invoice review](HORIZON_INVOICES.md) joins retained original payment observations to explicit invoice account/memo instructions. Open **Horizon deposits**, retain the original register, inspect complete captured movements and save individual approved links through the existing decision writer. The workflow carries full original sources and review choices through complete workspace receiving. It leaves external company ledgers with their original application owner.
+
+## SDP payroll batches
+
+The [SDP batch operator](sdp/README.md) prepares original recipient instructions, captures complete SDP batches, compares payment and recipient mappings, receives authenticated events, and saves its HTML receiving report in this workspace. It reuses the maintained SDP reader, source journal, financial projection, and complete application delivery.
+
+Run `node sdp/sdp-cli.mjs help` from this directory. The guide covers the existing named connection, original payroll transaction adapter, provider create/upload/status operations, full receiving, and recovery of an uncertain provider request.
