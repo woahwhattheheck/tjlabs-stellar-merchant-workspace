@@ -2176,6 +2176,49 @@ export interface GrantDeliveryCalendarDownloadSelection extends GrantDeliveryCal
   format?: 'ics' | 'csv' | 'json';
 }
 
+/** Explicit case selection in one original workspace snapshot. */
+export interface GrantDeliveryAgendaSelection {
+  caseIds: string[];
+  asOfDate?: GrantCivilDate;
+  /** When supplied, must include exactly one current version for every selected case. */
+  expectedVersions?: Record<string, number>;
+}
+export interface GrantDeliveryAgendaDownloadSelection extends GrantDeliveryAgendaSelection {
+  /** Downloads include all selected case rows, independently of browser filters. */
+  format?: 'ics' | 'csv' | 'json';
+}
+export interface GrantDeliveryAgendaCase {
+  id: string;
+  origin: GrantObject;
+  /** Complete original calendar metadata and digest, before its entry arrays are joined. */
+  calendar: Pick<GrantDeliveryCalendar,
+    'schema' | 'case' | 'asOfDate' | 'generatedAt' | 'source' | 'rule' | 'summary' | 'basis' | 'sha256'>;
+}
+export interface GrantDeliveryAgendaEntry {
+  /** Original case ID followed by ":" and the original calendar entry ID. */
+  id: string;
+  caseId: string;
+  /** Position in this case's original entries or undated array. */
+  position: number;
+  entry: GrantDeliveryCalendarEntry;
+}
+export interface GrantDeliveryAgenda extends GrantObject {
+  schema: 'stellar-forge.sf47-delivery-agenda.v1';
+  generatedAt: string;
+  asOfDate: GrantCivilDate;
+  selection: {
+    caseIds: string[];
+    asOfDate: GrantCivilDate;
+    expectedVersions: Record<string, number>;
+  };
+  cases: GrantDeliveryAgendaCase[];
+  entries: GrantDeliveryAgendaEntry[];
+  undated: GrantDeliveryAgendaEntry[];
+  summary: GrantDeliveryCalendarSummary & {cases: number};
+  basis: string[];
+  sha256: string;
+}
+
 /** Original whole-task comparison inputs. Decimal quantities remain exact strings. */
 export type GrantTaskMeasurementBasis = 'OBSERVED' | 'ESTIMATED' | 'MIXED' | 'UNRECORDED';
 export interface GrantTaskEffort {
@@ -2934,6 +2977,7 @@ export interface GrantDownloadSelections {
   portfolio: { caseId: string; portfolioId: string };
   'delivery-queue': GrantDeliveryQueueSelection;
   'delivery-calendar': GrantDeliveryCalendarDownloadSelection;
+  'delivery-agenda': GrantDeliveryAgendaDownloadSelection;
   'customer-use-calendar': GrantCustomerUseDownloadSelection;
   performance: GrantPerformanceDownloadSelection;
   'supplier-account': GrantSupplierAccountDownloadSelection;
@@ -2978,6 +3022,7 @@ export class GrantWorkspaceClient {
   read(view: 'account-reconciliation', selection: GrantAccountReconciliationSelection): Promise<GrantJsonResponse<GrantAccountReconciliationReport>>;
   read(view: 'account-reconciliation-statement-inputs', selection: {caseId: string; sourceId: string}): Promise<GrantJsonResponse<GrantAccountReconciliationStatementInputs>>;
   read(view: 'delivery-calendar', selection: GrantDeliveryCalendarSelection): Promise<GrantJsonResponse<GrantDeliveryCalendar>>;
+  read(view: 'delivery-agenda', selection: GrantDeliveryAgendaSelection): Promise<GrantJsonResponse<GrantDeliveryAgenda>>;
   read(view: 'delivery-queue', selection: GrantDeliveryQueueSelection): Promise<GrantJsonResponse<GrantDeliveryQueue>>;
   read(view: 'case', selection: { caseId: string }): Promise<GrantJsonResponse<GrantCaseView>>;
   read(view: 'settlements', selection: { caseId: string }): Promise<GrantJsonResponse<GrantSettlementList>>;

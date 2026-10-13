@@ -598,7 +598,7 @@ export class MerchantGrantWorkspaces {
       case_report:'case-report', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       settlements:'settlements',settlement:'settlement',
-      engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar',
+      engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar', delivery_agenda:'delivery-agenda',
       work_intakes:'work-intakes',work_intake:'work-intake',task_outcomes:'task-outcomes',task_outcome:'task-outcome',
       cost_funding:'cost-funding',funding_edition:'funding-edition',funding_request:'funding-request',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
