@@ -1,0 +1,103 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "cohort-adoption",
+  "heading": "## Customer adoption economics, delivery scheduling and recorded outcomes",
+  "sources": [
+    {
+      "id": "cohort-adoption-customer-calendar",
+      "label": "Saved customer-use Calendar, original task and funding selection",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/CUSTOMER_USE_CALENDAR.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+      "editions": [
+        {
+          "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+          "git_blob": "bfbc7357a3c6d5fcd0acf5ddaef269cf213f899c",
+          "bytes": 30705,
+          "sha256": "a275361dcd8d1b7a9cb31ab082478c9870965041a65ea3152a630f54a506f03b"
+        }
+      ]
+    },
+    {
+      "id": "cohort-adoption-operating",
+      "label": "Complete customer adoption pricing, capacity and scheduling operation",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/COHORT-PLANNING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+      "editions": [
+        {
+          "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+          "git_blob": "4ec3ecf18e897397cf54311e62f6f6e78a6861e0",
+          "bytes": 71019,
+          "sha256": "8b831566d21894c0f502b4d57c1535d6b242c90a02ea4de8a391c4a529249fed"
+        }
+      ]
+    },
+    {
+      "id": "cohort-adoption-allocation-engine",
+      "label": "Complete original constrained service allocation and successor calculation",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_scheduling.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+      "editions": [
+        {
+          "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+          "git_blob": "d107f5546f78539249861e8ba2b31120edb69676",
+          "bytes": 31249,
+          "sha256": "ebc7dbee0b577fb9b0b42aabdb02b39a118b593111688bfcd25c5ab43ff9a512"
+        }
+      ]
+    },
+    {
+      "id": "cohort-adoption-recorded-delivery",
+      "label": "Original intent placement, actual delivery comparison and editable receiving",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/COHORT-DELIVERY.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+      "editions": [
+        {
+          "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+          "git_blob": "0f8841b65102ec47f66f76b90995f69591ce8d3b",
+          "bytes": 18986,
+          "sha256": "ef8765e308052a38bb80526e7b9d085886806561575e3370fca7841f5ea96f1f"
+        }
+      ]
+    },
+    {
+      "id": "cohort-adoption-native-acceptance",
+      "label": "Original cohort rule, classification and actual purchase review",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-COHORT.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+      "editions": [
+        {
+          "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+          "git_blob": "04d04676025edd850b0768d99fcd04cd6bf1548b",
+          "bytes": 20659,
+          "sha256": "4bf8d85256adf32be1737f0a217260007a83914708ad8572576d76e30f1eab07"
+        }
+      ]
+    },
+    {
+      "id": "cohort-adoption-agent-operation",
+      "label": "Installed Grant workspace and complete Merchant agent receiving",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/AGENT.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+      "editions": [
+        {
+          "commit": "b923b22687b0726b86000e685c60a07cfbad5b72",
+          "git_blob": "3f3f1b57f35bc9ccefae33e44bb34fe3ee9dea72",
+          "bytes": 45280,
+          "sha256": "2230323a45f96009591e12d68479e1c55d092d9100dcee1f7c93664f8b922294"
+        }
+      ]
+    }
+  ]
+}
