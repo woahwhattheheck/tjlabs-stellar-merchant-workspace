@@ -27635,24 +27635,24 @@
     },
     {
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "a20c803f000b47a825638e32b69809f4f7541cb3",
+      "commit": "58cb1940e175b180e26f89785e489c06cc437158",
       "path": "operations/openlineage-recipient-review-returns-e496-20261013/RECEIVING.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a20c803f000b47a825638e32b69809f4f7541cb3/operations/openlineage-recipient-review-returns-e496-20261013/RECEIVING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/58cb1940e175b180e26f89785e489c06cc437158/operations/openlineage-recipient-review-returns-e496-20261013/RECEIVING.md",
       "source_kind": "source-file",
       "id": "openlineage-recipient-return-receiving",
       "kind": "published-source",
       "label": "Whole recipient document and independent receiving course",
       "source_registration": "openlineage-prepared-package",
-      "git_blob": "9a2b7d26bacd02c9a3f71ce0b7cc1f6ca921edbf",
-      "sha256": "483f125d44251f32acafd385ec6c65b3993ac091c8bea5fc0507e36f0fc150c3",
-      "bytes": 21834,
+      "git_blob": "2c5b3d384f8d514d67085dd82c9bac1e201515fe",
+      "sha256": "4e454c397a87db1cb6a8fa4848031400214cb54cc8bf640c2759fd781de059b2",
+      "bytes": 22125,
       "product_byte_identity": {
         "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "a20c803f000b47a825638e32b69809f4f7541cb3",
+        "commit": "58cb1940e175b180e26f89785e489c06cc437158",
         "path": "operations/openlineage-recipient-review-returns-e496-20261013/RECEIVING.md",
-        "git_blob": "9a2b7d26bacd02c9a3f71ce0b7cc1f6ca921edbf",
-        "sha256": "483f125d44251f32acafd385ec6c65b3993ac091c8bea5fc0507e36f0fc150c3",
-        "bytes": 21834
+        "git_blob": "2c5b3d384f8d514d67085dd82c9bac1e201515fe",
+        "sha256": "4e454c397a87db1cb6a8fa4848031400214cb54cc8bf640c2759fd781de059b2",
+        "bytes": 22125
       }
     },
     {
@@ -35957,24 +35957,24 @@
     },
     {
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "a20c803f000b47a825638e32b69809f4f7541cb3",
+      "commit": "58cb1940e175b180e26f89785e489c06cc437158",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/contribution.json",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a20c803f000b47a825638e32b69809f4f7541cb3/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/contribution.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/58cb1940e175b180e26f89785e489c06cc437158/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/contribution.json",
       "source_kind": "source-file",
       "id": "openlineage-review-workflow-contribution-json",
       "kind": "published-source",
       "label": "Complete OpenLineage customer review and recipient workflow — contribution.json",
       "source_registration": "openlineage-prepared-package",
-      "git_blob": "1fa5854d7bbc27822f9394d274c487bbfd8bae3f",
-      "sha256": "50d33b480c0a2fe92d6524db0f41513a0d328e369935f6e6ae08e93d1f19eed4",
-      "bytes": 10415,
+      "git_blob": "0e96e28140e2e9a7e008700421e449791ee77d22",
+      "sha256": "d4f6767487ea4fe782c8fb3a529cfe44a34570e94b5876e174eff6ef111a12bd",
+      "bytes": 10193,
       "product_byte_identity": {
         "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "a20c803f000b47a825638e32b69809f4f7541cb3",
+        "commit": "58cb1940e175b180e26f89785e489c06cc437158",
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/contribution.json",
-        "git_blob": "1fa5854d7bbc27822f9394d274c487bbfd8bae3f",
-        "sha256": "50d33b480c0a2fe92d6524db0f41513a0d328e369935f6e6ae08e93d1f19eed4",
-        "bytes": 10415
+        "git_blob": "0e96e28140e2e9a7e008700421e449791ee77d22",
+        "sha256": "d4f6767487ea4fe782c8fb3a529cfe44a34570e94b5876e174eff6ef111a12bd",
+        "bytes": 10193
       }
     },
     {
@@ -38362,22 +38362,88 @@
         "sha256": "bfe58fc8247759fd2bf105f5e872865839d0326557aabc2a7aba3556cae6356c",
         "bytes": 3754
       }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "58cb1940e175b180e26f89785e489c06cc437158",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/openlineage-workspace.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/58cb1940e175b180e26f89785e489c06cc437158/stellar/scf-starforge-20261009/distribution/contributions/openlineage-workspace.json",
+      "source_kind": "source-file",
+      "id": "openlineage-installed-canonical-contribution",
+      "kind": "published-source",
+      "label": "Canonical selected-package customer review and recipient-return interfaces",
+      "source_registration": "openlineage-prepared-package",
+      "git_blob": "505d416f801088cc59169ef35f2840f6a7c5c366",
+      "sha256": "b01d1c527dd0448d3cbdbf13081d2443e7088ea325b3f4b1f97f76c664e891ea",
+      "bytes": 7343,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "58cb1940e175b180e26f89785e489c06cc437158",
+        "path": "stellar/scf-starforge-20261009/distribution/contributions/openlineage-workspace.json",
+        "git_blob": "505d416f801088cc59169ef35f2840f6a7c5c366",
+        "sha256": "b01d1c527dd0448d3cbdbf13081d2443e7088ea325b3f4b1f97f76c664e891ea",
+        "bytes": 7343
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "58cb1940e175b180e26f89785e489c06cc437158",
+      "path": "products/openlineage/OPERATING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/58cb1940e175b180e26f89785e489c06cc437158/products/openlineage/OPERATING.md",
+      "source_kind": "source-file",
+      "id": "openlineage-installed-operating-guide",
+      "kind": "published-source",
+      "label": "Complete installed OpenLineage customer and recipient operating guide",
+      "source_registration": "openlineage-prepared-package",
+      "git_blob": "3b401c0dd801e2ced104a1d5e7c54c944adaec7f",
+      "sha256": "3099028ecd9e2ecb577e65b145acb107f9c4b24bfd1fec0ddf6c67c6797fe820",
+      "bytes": 36931,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "58cb1940e175b180e26f89785e489c06cc437158",
+        "path": "products/openlineage/OPERATING.md",
+        "git_blob": "3b401c0dd801e2ced104a1d5e7c54c944adaec7f",
+        "sha256": "3099028ecd9e2ecb577e65b145acb107f9c4b24bfd1fec0ddf6c67c6797fe820",
+        "bytes": 36931
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "58cb1940e175b180e26f89785e489c06cc437158",
+      "path": "products/openlineage/SELECTED_PACKAGE.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/58cb1940e175b180e26f89785e489c06cc437158/products/openlineage/SELECTED_PACKAGE.md",
+      "source_kind": "source-file",
+      "id": "openlineage-installed-selected-package-guide",
+      "kind": "published-source",
+      "label": "Complete selected OpenLineage installation and source closure guide",
+      "source_registration": "openlineage-prepared-package",
+      "git_blob": "ecfa1d9ba4f70e8c8cd63ce057241fb461a204ef",
+      "sha256": "23d7231fa479658e7e50eb2bb40d53a0cf3c411027f78ce10e6b37b01ba0fc8c",
+      "bytes": 9130,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "58cb1940e175b180e26f89785e489c06cc437158",
+        "path": "products/openlineage/SELECTED_PACKAGE.md",
+        "git_blob": "ecfa1d9ba4f70e8c8cd63ce057241fb461a204ef",
+        "sha256": "23d7231fa479658e7e50eb2bb40d53a0cf3c411027f78ce10e6b37b01ba0fc8c",
+        "bytes": 9130
+      }
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "89c0422660e7341463bb695f21376c78d81e730c",
-    "bytes": 2269783,
-    "sha256": "064f6c1f3e7d132cbef888c11304113f19295b4399b2f0e8a861bf7b21b92294",
+    "git_blob": "b7f3370330307f9d419a92ed006eb9cee1c766f4",
+    "bytes": 2273280,
+    "sha256": "c899c393ae2209180adaacb0bab621c29f70e643cbb08c6665c92b69be20d385",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "76a397cf938bc859a040babcb2900e378054efc2"
   },
   "narrative_source": {
     "basis": "Concise working edition of the complete current nine-answer application; prospective financial and delivery commitments preserved.",
     "operation": "SCF-REVIEWER-CONCISE-SOURCE-20261013-BC3D",
-    "authored_at": "2026-10-13T16:27:15.505Z",
+    "authored_at": "2026-10-13T17:12:47Z",
     "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-    "source_commit": "b22181bf9b9c1d82db2d7f6a5a603454823c9c64",
+    "source_commit": "d3c9a58f7d750fa403be07adb941014db9e68517",
     "original_application": {
       "path": "stellar-forge/developer-site/dist/grant-data/application.md",
       "bytes": 66962,
@@ -38387,9 +38453,9 @@
     },
     "original_source_index": {
       "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "bytes": 2439452,
-      "sha256": "e0163d808aef955e3956302570bd2c404d811f8c661da6ad44f01462fc8413b1",
-      "git_blob": "4d67cc56d483fcf0ff0c8e8ef1639f27011d2f58"
+      "bytes": 2443430,
+      "sha256": "a7048320b2f4894ca00d91601d79dce678ffa5110bfc3c06a0e861968c3a6b9e",
+      "git_blob": "b80f169848ca1c0f318b65854a6db57f909e6898"
     },
     "retained_canonical_narrative": {
       "basis": "Original manuscript author's complete October 12 reviewer answer",
@@ -40610,13 +40676,16 @@
               "openlineage-review-workflow-review-return-client-mjs",
               "openlineage-review-workflow-review-return-client-d-mts",
               "openlineage-review-workflow-review-return-cli-mjs",
-              "openlineage-review-workflow-recipient-returns-receiving-mjs"
+              "openlineage-review-workflow-recipient-returns-receiving-mjs",
+              "openlineage-installed-canonical-contribution",
+              "openlineage-installed-operating-guide",
+              "openlineage-installed-selected-package-guide"
             ],
             "definition": {
               "path": "grant-products/openlineage-prepared-package.json",
-              "bytes": 33024,
-              "sha256": "0cb61d2c1dc21762eb97ed79fd67a4b26563f39a309412510259897de7cf703d",
-              "git_blob": "6ec458e7cac67e8a5d3a540013e5430338174834"
+              "bytes": 35773,
+              "sha256": "95a2addb3f6dcbec7d1d6f21ecfb753dc417103e5dcf9c93926ed6c12a52ed71",
+              "git_blob": "08822dacb9c2ef06ce61d9128f9a1bb4baaeb2f7"
             }
           },
           {
@@ -42062,8 +42131,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "064f6c1f3e7d132cbef888c11304113f19295b4399b2f0e8a861bf7b21b92294",
-    "source_bytes": 2269783,
+    "source_sha256": "c899c393ae2209180adaacb0bab621c29f70e643cbb08c6665c92b69be20d385",
+    "source_bytes": 2273280,
     "assets": [
       "/grant-companion-editions.mjs",
       "/grant-companion-reading.mjs",
