@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "superset-workspace",
-  "description": "Native Superset report capture, reviewed editions, original merchant and complete customer receiving",
+  "description": "Native Superset report capture, reviewed editions, original publisher/buyer, complete receiving and customer-agent operation",
   "commands": {
     "superset": "stellar/scf-starforge-20261009/sf30-seller-sdk/superset/cli.mjs",
     "superset-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/superset/server.mjs"
@@ -13,7 +13,15 @@
     "./seller/superset/server": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/superset/server.mjs",
     "./seller/superset/client": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/superset/client.mjs",
     "./seller/superset/launch": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/superset/launch.mjs",
-    "./buyer/superset": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/superset/customer.mjs"
+    "./buyer/superset": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/superset/customer.mjs",
+    "./seller/superset/operator-client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/superset/operator-client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/superset/operator-client.mjs"
+    },
+    "./seller/superset/agent": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/superset/merchant-agent.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/superset/merchant-agent.mjs"
+    }
   },
   "browserAssets": [
     {
@@ -26,7 +34,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/superset/README.md",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_SUPERSET.md",
     "products/superset-report/OPERATING.md",
-    "products/superset-report/SOURCE.json"
+    "products/superset-report/SOURCE.json",
+    "stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs"
   ],
   "commandDescriptions": {
     "superset": "Capture saved Superset queries, review editions and receive complete original customer output",
@@ -34,5 +43,12 @@
   },
   "applicationProviders": {
     "superset": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/superset.mjs"
-  }
+  },
+  "merchantProviders": {
+    "superset-workspaces": "stellar/scf-starforge-20261009/sf30-seller-sdk/superset/merchant-provider.mjs"
+  },
+  "components": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/superset",
+    "stellar-forge/mcp-merchant-operator"
+  ]
 }
