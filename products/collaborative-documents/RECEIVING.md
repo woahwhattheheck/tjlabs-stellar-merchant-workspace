@@ -168,6 +168,10 @@ The native edit helper owns one distinct directory beneath merchant-receiving/na
 
 Saved means the full original Y.encodeStateAsUpdate v1 byte SHA and length and both state-vector representations match the server-durable receipt. A state vector alone does not describe deletion state. The helper closes every actual WebSocket and provider before the checkpoint drains the native deployment.
 
+### Native editing after independent receiving
+
+The receiving browser phases in this integration inspect saved views and downloads; they do not establish a new editing deployment on the receiving host. The transferred original edition retains its reviewed primary-only allowedOrigins. Before enabling native editing at an independent receiving origin, inspect that host's actual origin, prepare and review a configuration edition that explicitly allows it through the original deployment/configuration actions, freeze the reviewed edition, and start that selected deployment. Retain the prior edition for the original rollback workflow. Do not assume that importing a handoff changes allowedOrigins or that an unchanged primary-only edition authorizes the receiving editor.
+
 The integration does not repeat the original offline merge, delete-only or epoch-restore programme. Those accepted original outputs remain in the original result. Its added edit exercises the actual prepared engine through the managed host and is included in the latest complete handoff.
 
 ## Checkpoints, complete files and latest handoff
