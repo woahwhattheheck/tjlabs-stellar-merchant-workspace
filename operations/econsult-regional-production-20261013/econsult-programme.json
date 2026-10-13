@@ -1,0 +1,12 @@
+{
+  "schema": "stellar-forge.qcew-native-programme.v1",
+  "operation": "ECONSULT-REGIONAL-PRODUCTION-9B2C-20261013",
+  "initial": {
+    "year": 2025,
+    "quarter": 1
+  },
+  "successor": {
+    "year": 2026,
+    "quarter": 1
+  }
+}
