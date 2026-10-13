@@ -421,3 +421,7 @@ comparison and all its recurring history for the next facilitator.
   transaction, selected native export and browser/command adapters.
 - agent-client.mjs / agent-client.d.mts and Merchant grant provider/catalog —
   original installed client and full input/output transfer.
+
+## Editable customer measurement workbook
+
+Use the complete [Customer measurement workbook](TASK_OUTCOMES_WORKBOOK.md) from the same comparison desk to prepare editable XLSX measurements, review returned cells and reconcile concurrent desk changes. Its source attachment and pending request remain in the original case. Apply the reviewed measurements to the current draft, then calculate and save through this guide’s original comparison workflow. The whole editor recovery retains unfinished workbook reviews and choices.

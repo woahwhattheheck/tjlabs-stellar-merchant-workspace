@@ -13,6 +13,9 @@ export const GRANT_MAX_LAUNCH_BYTES = 256 * 1024;
 const SOURCE = dirname(fileURLToPath(import.meta.url));
 // The reviewed release includes every original operating module and its mounted UI.
 const BOOT_FILES = [
+  'task-outcomes-workbook.mjs',
+  'task-outcomes-workbook-desk.mjs',
+  'TASK_OUTCOMES_WORKBOOK.md',
   "operations_company_returns.py",
   "operations_company_returns_cli.py",
   "operations_company_returns.mjs",
