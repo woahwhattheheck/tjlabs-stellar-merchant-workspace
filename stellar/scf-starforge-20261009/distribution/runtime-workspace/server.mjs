@@ -189,6 +189,8 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
       if (req.method === 'GET' && url.pathname === '/api/catalog') {
         const value = params(url, ['archiveId']); return send(200, await model.catalog(value.archiveId));
       }
+      if (req.method === 'GET' && url.pathname === '/api/operation-status')
+        return send(200, await model.operationStatus(params(url, ['operationId'])));
       if (req.method === 'GET' && url.pathname === '/api/log')
         return send(200, await model.logs(params(url, ['runtimeId', 'operationId'])));
       if (req.method === 'GET' && url.pathname === '/api/handoff') {

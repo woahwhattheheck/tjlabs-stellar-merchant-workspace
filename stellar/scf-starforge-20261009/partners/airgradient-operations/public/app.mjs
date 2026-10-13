@@ -4,7 +4,7 @@ const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>'
 const number=v=>v===null||v===undefined?'—':Number(v).toLocaleString('en',{maximumFractionDigits:3});
 const measures={pm25:['PM2.5','µg/m³'],pm10:['PM10','µg/m³'],atmp:['Temperature','°C'],rhum:['Relative humidity','%'],rco2:['CO₂','ppm']};
 let state,loadedProjectId,review,receiveReview,sourceReview,receivedSelection,definitionBase64,cataloguePage=0,poll;
-let receivingGeneration=0,sourceGeneration=0,reportReviewGeneration=0,receiveCommitPending=false,receivingSelectionLoaded=false;
+let receivingGeneration=0,sourceGeneration=0,reportReviewGeneration=0,receiveCommitPending=false,receivingSelectionLoaded=false,receiveSelectionPending=null,refreshGeneration=0;
 function notice(message,error=false){$('notice').textContent=message;$('notice').dataset.error=String(error);}
 async function request(path,body,raw=false){
  const response=await fetch(path,{...(body!==undefined?{method:'POST',headers:{'content-type':raw?'application/octet-stream':'application/json'},body:raw?body:JSON.stringify(body)}:{}),credentials:'same-origin'});
@@ -63,22 +63,42 @@ function renderReceivingSelection(preferredId){
  const receipts=state.receiving.filter(v=>v.workspaceId===state.workspaceId&&state.reports.some(r=>r.id===v.reportId&&r.sha256===v.reportSha256&&r.projectId===v.projectId)).sort((a,b)=>b.receivedAt.localeCompare(a.receivedAt)||a.id.localeCompare(b.id));
  const previous=$('received-selection').value;
  options('received-selection',receipts,v=>{const report=state.reports.find(r=>r.id===v.reportId);return report.title+' · '+report.period.start.slice(0,10)+' → '+report.period.end.slice(0,10)+' · received '+v.receivedAt;},'Choose a received study');
+ if(receiveSelectionPending)preferredId=receiveSelectionPending.receivingId;
  if(preferredId!==undefined)$('received-selection').value=receipts.some(v=>v.id===preferredId)?preferredId:'';
  else if(!receivingSelectionLoaded&&!previous&&receipts.length)$('received-selection').value=(receipts.find(v=>v.projectId===state.currentProject?.id)??receipts[0]).id;
  receivingSelectionLoaded=true;
  const receipt=receipts.find(v=>v.id===$('received-selection').value),report=receipt?state.reports.find(v=>v.id===receipt.reportId):null,project=receipt?state.projects.find(v=>v.id===receipt.projectId):null;
  receivedSelection=receipt?Object.freeze({receivingId:receipt.id,projectId:receipt.projectId,reportId:receipt.reportId,reportSha256:receipt.reportSha256,packageId:receipt.packageId,packageSha256:receipt.packageSha256}):null;
- $('receive-select').disabled=!receivedSelection;$('received-detail').textContent=receipt?project.value.organisation+' · '+report.title+' · '+report.period.start+' → '+report.period.end:'Receive a complete study to continue its saved project and prior edition.';
+ $('received-selection').disabled=Boolean(receiveSelectionPending);$('receive-select').disabled=Boolean(receiveSelectionPending)||!receivedSelection;$('received-detail').textContent=receipt?project.value.organisation+' · '+report.title+' · '+report.period.start+' → '+report.period.end:'Receive a complete study to continue its saved project and prior edition.';
+}
+function renderDeliveries(){
+ const pending=(state.pendingDeliveries??[]).map(v=>({...v,pending:true})),completed=state.deliveries??[],items=[...pending,...completed];
+ $('delivery-history').innerHTML=items.length?'<h3>Saved customer destinations</h3><table><thead><tr><th>Report edition</th><th>Customer directory</th><th>Delivery</th><th></th></tr></thead><tbody>'+items.map((v,i)=>{
+  const report=state.reports.find(r=>r.id===v.reportId);
+  return '<tr><td>'+escape(report?.title??v.reportId)+(report?'<br><small>'+escape(report.period.start)+' → '+escape(report.period.end)+'</small>':'')+'</td><td>'+escape(v.directory)+'</td><td>'+(v.pending?'Saved package · ready to resume':v.files.length+' files delivered')+'</td><td><button type="button" class="small" data-delivery="'+i+'">'+(v.pending?'Resume delivery':'Reopen delivery')+'</button></td></tr>';
+ }).join('')+'</tbody></table>':'';
+ for(const button of $('delivery-history').querySelectorAll('button'))button.onclick=action(async()=>{
+  const selected=items[Number(button.dataset.delivery)];$('report').value=selected.reportId;$('destination').value=selected.directory;renderReport();
+  button.disabled=true;try{await deliver(selected.reportId,selected.directory);}finally{button.disabled=false;}
+ });
+}
+async function deliver(reportId,directory){
+ let result;try{result=await request('/api/deliver',{reportId,directory});}
+ catch(error){await refresh().catch(()=>{});throw error;}
+ await refresh();
+ $('delivery-state').textContent=result.files.length+' files delivered to '+result.directory;notice('Complete customer package delivered.');
 }
 async function refresh(force=false){
- state=await request('/api/state');$('workspace-id').textContent=state.workspaceId;
+ const generation=++refreshGeneration,next=await request('/api/state');if(generation!==refreshGeneration)return null;
+ state=next;$('workspace-id').textContent=state.workspaceId;
  options('connection',state.connections,v=>v.title+(v.kind==='dashboard'?(v.binding.tokenAvailable?' · host token available':' · host token required'):''));
  if(force||loadedProjectId===undefined||loadedProjectId!==(state.currentProject?.id??null))projectForm(state.currentProject);
  options('plan',[...state.plans].reverse(),v=>v.title+' · '+v.period.start.slice(0,10)+' → '+v.period.end.slice(0,10));
  options('report',[...state.reports].reverse(),v=>v.title+' · '+v.period.start.slice(0,10)+' → '+v.period.end.slice(0,10));
  options('source-set',state.sourceSets??[],v=>v.operationId+' · '+v.locations.length+' locations','New provider acquisition');
  options('baseline',[...state.reports].reverse(),v=>v.title+' · '+v.period.start.slice(0,10)+' → '+v.period.end.slice(0,10),'First edition');
- renderSource();renderPlan();renderReport();renderReceivingSelection();clearTimeout(poll);if(state.active)poll=setTimeout(()=>refresh().catch(e=>notice(e.message,true)),2000);
+ renderSource();renderPlan();renderReport();renderReceivingSelection();renderDeliveries();clearTimeout(poll);if(state.active&&!receiveSelectionPending)poll=setTimeout(()=>refresh().catch(e=>notice(e.message,true)),2000);
+ return state;
 }
 $('add-location').onclick=()=>{if($('locations').rows.length>=20){notice('This customer project already contains twenty locations.',true);return;}locationRow();};
 $('refresh').onclick=action(()=>refresh());
@@ -104,7 +124,7 @@ $('commit').onclick=action(async()=>{
  await refresh();$('report').value=report.id;renderReport();$('commit').disabled=true;notice('Customer edition committed. The complete report and editable package are ready.');
 });
 $('report').onchange=renderReport;
-$('deliver').onclick=action(async()=>{const result=await request('/api/deliver',{reportId:$('report').value,directory:$('destination').value});$('delivery-state').textContent=result.files.length+' files delivered to '+result.directory;notice('Complete customer package delivered.');});
+$('deliver').onclick=action(async()=>{$('deliver').disabled=true;try{await deliver($('report').value,$('destination').value);}finally{renderReport();}});
 async function catalogue(page){
  const result=await request('/api/catalogue?page='+page+'&sourceType='+$('catalogue-type').value);cataloguePage=result.page;$('catalogue-state').textContent=result.sourceType+' · page '+result.page+' · '+result.returned+' returned locations';$('catalogue-next').disabled=!result.hasNext;
  $('catalogue').innerHTML='<table><thead><tr><th>Location</th><th>Provider / contributor</th><th>Timezone</th><th></th></tr></thead><tbody>'+result.locations.map((v,i)=>'<tr><td>'+escape(v.locationName??('Indoor '+v.locationId))+'<br><small>'+escape(v.locationId)+'</small></td><td>'+escape(v.provider)+'<br>'+escape(v.ownerName)+'</td><td>'+escape(v.timezone??'Customer setting')+'</td><td><button class="small" data-index="'+i+'">Use location</button></td></tr>').join('')+'</tbody></table>';
@@ -161,12 +181,26 @@ $('receive-commit').onclick=action(async()=>{
 });
 $('received-selection').onchange=()=>renderReceivingSelection($('received-selection').value);
 $('receive-select').onclick=action(async()=>{
+ if(receiveSelectionPending)return;
  const selected=receivedSelection;if(!selected)throw new Error('Choose a received study.');
  const report=state.reports.find(v=>v.id===selected.reportId&&v.sha256===selected.reportSha256&&v.projectId===selected.projectId),plan=state.plans.find(v=>v.id===report?.planId&&v.projectId===selected.projectId);
  if(!report||!plan)throw new Error('Reopen the committed receiving selection.');
- await request('/api/project/select',{id:selected.projectId});await refresh();$('baseline').value=selected.reportId;$('report').value=selected.reportId;$('plan').value=plan.id;$('source-set').value=plan.sourceSetId??'';
- review=null;reportReviewGeneration++;$('commit').disabled=true;$('report-review').replaceChildren();
- renderSource();$('source-window').value='';renderPlan();renderReport();notice('Received project and its committed prior edition selected. Choose the next reporting period from the retained source or a new acquisition.');
+ const continuation=Object.freeze({...selected,planId:plan.id,planSha256:plan.sha256,sourceSetId:plan.sourceSetId??null});
+ receiveSelectionPending=continuation;clearTimeout(poll);renderReceivingSelection(continuation.receivingId);
+ try{
+  const project=await request('/api/project/select',{id:continuation.projectId});
+  if(project.id!==continuation.projectId)throw new Error('The selected customer project changed. Reopen the received study.');
+  const refreshed=await refresh();
+  const currentReport=refreshed?.reports.find(v=>v.id===continuation.reportId&&v.sha256===continuation.reportSha256&&v.projectId===continuation.projectId&&v.planId===continuation.planId),
+   currentPlan=refreshed?.plans.find(v=>v.id===continuation.planId&&v.sha256===continuation.planSha256&&v.projectId===continuation.projectId&&(v.sourceSetId??null)===continuation.sourceSetId);
+  if(!refreshed||refreshed!==state||receiveSelectionPending!==continuation||refreshed.currentProject?.id!==continuation.projectId||loadedProjectId!==continuation.projectId||receivedSelection?.receivingId!==continuation.receivingId||receivedSelection?.reportId!==continuation.reportId||receivedSelection?.reportSha256!==continuation.reportSha256||receivedSelection?.projectId!==continuation.projectId||!currentReport||!currentPlan)throw new Error('The customer selection changed while opening the received study. Choose the saved study again.');
+  $('baseline').value=continuation.reportId;$('report').value=continuation.reportId;$('plan').value=continuation.planId;$('source-set').value=continuation.sourceSetId??'';
+  review=null;reportReviewGeneration++;$('commit').disabled=true;$('report-review').replaceChildren();
+  renderSource();$('source-window').value='';renderPlan();renderReport();notice('Received project and its committed prior edition selected. Choose the next reporting period from the retained source or a new acquisition.');
+ }finally{
+  if(receiveSelectionPending===continuation)receiveSelectionPending=null;
+  renderReceivingSelection();clearTimeout(poll);if(state.active)poll=setTimeout(()=>refresh().catch(e=>notice(e.message,true)),2000);
+ }
 });
 function base64(bytes){let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(binary);}
 $('definition-fetch').onclick=action(async()=>{const result=await request('/api/definition',{});definitionBase64=result.definitionBase64;$('definition-inspection').textContent=JSON.stringify(result.inspection,null,2);notice('Official Dashboard source definition retained. The built-in Dashboard history connection follows its declared per-location history route.');});

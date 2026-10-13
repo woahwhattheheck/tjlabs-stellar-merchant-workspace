@@ -175,3 +175,7 @@ See [the full analyst workflow and source contracts](analysis/README.md).
 The existing **Studies & receiving** page selects exact edition windows across up to five stations and five years, pins the receiving mapping and actual review, streams complete model-input/source deliveries, and retains bounded returned-file intake plus a complete comparison and receiving decision. See [STUDIES.md](STUDIES.md) for staff, CLI, original operation recovery and Merchant access. The public-reference mapping is [examples/study-input-columns.json](examples/study-input-columns.json); no private buyer model is supplied.
 
 See [Use a reviewed delivery in native queries and publication](STUDIES.md#use-a-reviewed-delivery-in-native-queries-and-publication) for the staff controls, immutable review/source identities, native capacity and same-request recovery contract. The existing publisher generation and payment decisions remain in the original merchant controls.
+
+## Inspect and review an original observation window
+
+Source editions now includes the complete retained-observation explorer: original clock and datum context, exact decimal extrema, coverage and duplicate counts, full row paging and original-point recovery. Attach the inspected selection to the normal saved source review, then export every selected row through an existing mapping. See [INSPECTION.md](./INSPECTION.md) for UI, CLI, request/replay and receiving contracts. The original coastal residual workbook remains under `analysis/`.

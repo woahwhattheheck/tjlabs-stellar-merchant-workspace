@@ -214,6 +214,22 @@ file. Complete quotation exports can be reopened using Python alone on another
 computer. The installed `stellar-forge-research quotes-*` commands and the full
 `examples/research_quotes_receiving.py` programme use these same operators.
 
+The [Python quotation programme guide](../../python/RESEARCH-QUOTE-PROGRAMMES.md)
+carries the complete selected programme to a second original Research workspace.
+`ResearchWorkspace.quote_programmes()` creates the retained source programme,
+submits and applies exact native steps, exports the full case/dossier/quotation
+and publication package, and prepares its destination receiving review. The
+original CaseStore and customer dossier writers save that reviewed selection.
+The same Python call and native step remain available for recovery and explicit
+replay after subsequent customer work.
+
+A `CASE_RECORD` export and `prepare-case-transfer` input use the maintained native
+602,962,240-byte bound. Python retains the complete body in its original file
+while the native operation records only its source workspace, case, revision and
+SHA. Package and step replies expose complete file descriptors, so the process
+output remains usable with large original cases. Full files remain accessible
+through the original `FileDelivery` reader.
+
 ## Native HTTP interface
 
 All quotation routes use the original Research authorization and original workspace/instance headers. Request JSON accepts up to 96 MiB plus 65,536 bytes so the complete original commercial receiving inputs can pass through. JSON responses use the existing 64 MiB client budget. Each streamed retained file is bounded by 256 MiB.

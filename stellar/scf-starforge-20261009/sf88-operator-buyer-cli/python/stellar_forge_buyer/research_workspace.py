@@ -95,16 +95,17 @@ def _value(record, request_id=None):
     return result
 
 
-def _file_delivery(value):
-    if (not isinstance(value, dict) or not isinstance(value.get("file"), str) or
+def _file_delivery(value, *, maximum=256 * 1024 * 1024):
+    if (type(maximum) is not int or maximum < 0 or
+            not isinstance(value, dict) or not isinstance(value.get("file"), str) or
             not Path(value["file"]).is_absolute() or type(value.get("bytes")) is not int or
-            not 0 <= value["bytes"] <= 256 * 1024 * 1024 or
+            not 0 <= value["bytes"] <= maximum or
             not isinstance(value.get("sha256"), str) or not _HASH.fullmatch(value["sha256"])):
         raise StateError("RESEARCH_DOWNLOAD_RECORD_INVALID")
     path = Path(value["file"])
     return FileDelivery({"returncode": 0, "native": {
         "status": "RETAINED_RESEARCH_FILE", "file": {"path": str(path), **value}}},
-        path, 256 * 1024 * 1024)
+        path, maximum)
 
 
 class ResearchWorkspace:
@@ -189,8 +190,11 @@ class ResearchWorkspace:
     def _invoke(self, action, value, request_file, *, mutating=False, local=False, event):
         if local and (action not in {"commerce-operation", "commerce-archive-inspect",
                                     "commerce-archive-receive", "quotes-run-inspect",
-                                    "quotes-copy-export"} or
-                      mutating and action not in {"commerce-archive-receive", "quotes-copy-export"}):
+                                    "quotes-copy-export", "quotes-programme-state", "quotes-programme-step",
+                                    "quotes-programme-inspect", "quotes-programme-copy",
+                                    "quotes-programme-receiving"} or
+                      mutating and action not in {"commerce-archive-receive", "quotes-copy-export",
+                                                  "quotes-programme-copy"}):
             raise StateError("RESEARCH_LOCAL_ACTION_INVALID")
         request = {"schema": _CALL, "action": action, "input": deepcopy(value),
                    "timeoutMs": self.request_timeout_ms}
@@ -247,7 +251,7 @@ class ResearchWorkspace:
 
     def _write_call(self, action, value, *, request_id, replay_safe, resume, event, local=False):
         request_id = _request_id(request_id)
-        if local and action not in {"commerce-archive-receive", "quotes-copy-export"}:
+        if local and action not in {"commerce-archive-receive", "quotes-copy-export", "quotes-programme-copy"}:
             raise StateError("RESEARCH_LOCAL_ACTION_INVALID")
         if self.workspace_id is None and not local:
             self._read("status", _owned_event=event)
@@ -363,6 +367,11 @@ class ResearchWorkspace:
         """Original cases, quotation reviews, paid publication and complete receiving."""
         from .research_quotes import ResearchQuotes
         return ResearchQuotes(self)
+
+    def quote_programmes(self):
+        """Retained original quotation programmes, complete packages and destination receiving."""
+        from .research_quote_programmes import ResearchQuoteProgrammes
+        return ResearchQuoteProgrammes(self)
 
     def customer_updates(self, dossier_id):
         """Recurring customer commissioning, original delivery and receiving."""

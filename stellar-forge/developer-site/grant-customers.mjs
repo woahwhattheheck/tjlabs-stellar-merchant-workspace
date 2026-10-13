@@ -27,6 +27,13 @@ function receiveIatiOperatingCompanion(value) {
   return installSection(value, IATI, text);
 }
 function receiveIatiOperatingApplication(value) {
+  // A manuscript owner can condense the three introductory joins into its
+  // own product narrative. Preserve that edition when it already names the
+  // installed application and links the complete operating procedure.
+  const authored = section(value, '## Working product and demonstrated results');
+  const hasIntroductions = IATI_OPERATING_APPLICATION.some(item => paragraph(value, item.prefix));
+  if (!hasIntroductions && authored?.text.includes('Operating Plans') &&
+      /\/iati\/document_evidence\/OPERATING_PROCEDURES\.md(?:[?#][^)]*)?\)/.test(authored.text)) return value;
   for (const item of IATI_OPERATING_APPLICATION) {
     if (paragraph(value, item.prefix)) continue;
     const current = section(value, item.heading);
@@ -37,6 +44,7 @@ function receiveIatiOperatingApplication(value) {
 
 const INSTITUTIONAL_REPOSITORY = '## Institutional repository services and complete scholarly receiving';
 const JOURNEY = '# 9A. Current demonstration and operator journey';
+const INSTALLATION_USE = '## Product selection, installation and recurring buyer work';
 const BILLING = '## Merchant settlement, customer billing and accountant receiving';
 const DEDICATED = new Set(['## Recurring economic-report installation', '## Coastal model-input installation', '## Datasette editions and customer analysis']);
 const OPENFN_PARAGRAPHS = [
@@ -252,6 +260,11 @@ export function receiveGrantCustomerSources(index, companion) {
     }
     if (at < 0) index.sources.push(source); else index.sources[at] = source;
   };
+  const installationUse = section(companion, INSTALLATION_USE)?.text || '';
+  receive('customer-use-calendar', 'Saved customer-use calendar and complete editable receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/CUSTOMER_USE_CALENDAR\.md)/, installationUse);
+  receive('customer-use-installations', 'Original Installation selection, preview, immutable editions and receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/INSTALLATIONS\.md)/, installationUse);
   const economic = section(companion, '## Recurring economic-report installation')?.text || '';
   receive('economic-county-report', 'County report publication, original purchase and complete customer receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/fred\/qcew\/MERCHANT\.md)/, economic);
@@ -473,6 +486,15 @@ export function receiveGrantCustomerSources(index, companion) {
   receive("preparation-workspace-native-receiving", "Native original-case continuation, shutdown and complete preservation",
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/receiving\.py)/, preparation);
 
+  const connectedSystems = section(companion, '## Connected Systems observations: customer commissioning and repeat use')?.text || '';
+  receive('connected-systems-customer-operator', 'Connected Systems source, operator installation and complete customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/selections\/CONNECTED_SYSTEMS\.md)/, connectedSystems);
+  receive('connected-systems-publisher-observation', 'Original publisher observation used by the native receiving example',
+    /https:\/\/github\.com\/opengeospatial\/ogcapi-connected-systems\/blob\/([a-f0-9]{40})\/(api\/part2\/openapi\/examples\/observations\/obs-simple\.json)/, connectedSystems);
+  receive('connected-systems-commissioning-programme', 'Original Workshare phases and Customer Installation operating programme',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf49_data_commissioning\/installation-workorders\/GEOROBOTIX_CSAPI\.md)/, connectedSystems);
+  receive('connected-systems-workshare-intake', 'Original Workshare scope and plan intake into Customer Installation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/workshare_intake\.py)/, connectedSystems);
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),

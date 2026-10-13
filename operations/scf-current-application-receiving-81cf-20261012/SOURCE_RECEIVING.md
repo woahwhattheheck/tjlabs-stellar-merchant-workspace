@@ -29,7 +29,7 @@ python -B compose-current-source.py \
   --output /absolute/existing/receiving-parent/current-source-runtime
 ```
 
-The composer verifies the complete original source, source package and review binding; it parses the completed wrapper before writing it. Its output includes all seven native runtime files, the full locally composed source input, the executable wrapper and `LOCAL-COMPOSITION.json`.
+The composer verifies the complete original source, source package and review binding; it parses the completed wrapper before writing it. Its output includes all eight native and browser runtime files, the full locally composed source input, the executable wrapper and `LOCAL-COMPOSITION.json`.
 
 Prepare the transfer for the actual same saved case, then invoke the complete local wrapper:
 
@@ -84,3 +84,48 @@ Continue the browser journey with the case's existing server and browser: open t
 The direct `receive_review.py` entry point accepts `--source-input` and `--expected-source-input-sha256` alongside its normal native arguments. Use the actual retained case hash, original Library item and current saved version. Keep the same local source input. It preserves the phase time, current review checkpoint and complete prior attempts; source-specific actions already present in the same review are reused.
 
 The initial local wrapper is pinned to its selected case. After a partial result is saved, use the direct receiver with the saved partial case and its actual current version. Continue a subsequently selected draft before choosing another source phase if another operator has advanced that same review.
+
+## Continue through the already running browser
+
+The original equipped receiver can call `receiveCurrentSourceBrowser` from
+`receive-current-source-browser.mjs` with its existing Playwright page. Keep the
+current native case and source-selected listener open:
+
+```js
+const { receiveCurrentSourceBrowser } = await import(
+  pathToFileURL(path.join(runtimeDirectory, 'receive-current-source-browser.mjs'))
+);
+const result = await receiveCurrentSourceBrowser(page, {
+  inputPath: path.join(currentCase, 'receiving/source-package-continuation/browser-receiving-input.json'),
+  outputDirectory: path.join(currentCase, 'receiving/source-package-continuation/browser'),
+  expectedOrigin: new URL(existingListener.url).origin,
+});
+```
+
+This is the following phase of the same receiving operation. The function uses
+the page, browser and listener already owned by that receiver. It opens the
+actual completed native draft, review, full source package and source manifest,
+then checks that the listener is serving their selected current files. Reopening the
+same saved case in another workspace remaps its retained local paths from the
+actual browser-input file; source and document identities remain unchanged.
+
+The browser opens a saved draft while its actual published-source response is
+pending. It receives the late response, opens and exports the complete four-file
+source package, saves the same local record through the original revision check,
+exports all answers and reopens that record. When the original local record still
+exists, its exact prior body and revision are checked before receiving the native
+edition. Another browser store creates its own normal binding and retains the
+origin separately.
+
+The original review controls then save, export and reopen the entire current
+review and its selected full draft. A second browser store independently opens,
+saves, exports and reopens both documents. Each real working save adds its normal
+saved version; the original review model compares those working versions and
+confirms every reviewed target remains unchanged. The exact reviewed draft and
+the later working versions are retained together.
+
+Outputs live in the same case under
+`receiving/source-package-continuation/browser/`: complete source-package,
+application, submission and review downloads; both actual local records; the
+reviewed-content comparison; and `RESULT.json`. The receiver's original archive
+and version-guarded writer save this whole continuation back to the same case.

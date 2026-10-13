@@ -26,6 +26,12 @@ def main():
     server.add_argument("--startup-format", choices=["json"], default="json")
     operation = commands.add_parser("operate")
     operation.add_argument("--input", required=True)
+    regional = commands.add_parser("regional")
+    regional.add_argument("--input", required=True)
+    regional.add_argument("--id", required=True)
+    regional.add_argument("--expected-revision", type=int, required=True)
+    definition = commands.add_parser("regional-definition")
+    definition.add_argument("--input", required=True)
     recover = commands.add_parser("operation")
     recover.add_argument("--id", required=True)
     observations = commands.add_parser("observations")
@@ -65,6 +71,14 @@ def main():
             return workspace.state(getattr(args, "offset", 0), getattr(args, "limit", 100))
         if args.command == "operate":
             return workspace.begin(read_json(Path(args.input)))
+        if args.command in ("regional", "regional-definition"):
+            from regional_workspace import definition_request
+            from regional import DEFINITION_SCHEMA, request_input
+            value = read_json(Path(args.input))
+            selected = definition_request(workspace, value)["input"] if isinstance(value, dict) and value.get("schema") == DEFINITION_SCHEMA else request_input(value)
+            if args.command == "regional-definition":
+                return {"input": selected, "workspace_id": workspace.marker["workspace_id"], "revision": workspace.revision()}
+            return workspace.begin({"id": args.id, "kind": "regional", "input": selected, "expected_revision": args.expected_revision})
         if args.command == "operation":
             return workspace.operation(args.id)
         if args.command == "observations":

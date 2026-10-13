@@ -327,6 +327,51 @@ def restore(args):
             with contextlib.suppress(FileNotFoundError):
                 shutil.rmtree(staging)
 
+
+def saved_runtime(directory, manifest):
+    """Select one complete frozen runtime from the restored original invocation."""
+    need(manifest.get("schema") == "stellar-forge.data-preparation-managed-receiving-source.v1",
+         "Keep the complete maintained source manifest beside this receiver")
+    files = manifest.get("files")
+    need(isinstance(files, dict) and files, "Select the complete maintained runtime inventory")
+    for name, record in files.items():
+        safe_name(name)
+        need(isinstance(record, dict) and type(record.get("bytes")) is int and record["bytes"] >= 0
+             and isinstance(record.get("sha256"), str) and HASH.fullmatch(record["sha256"])
+             and isinstance(record.get("blob"), str) and re.fullmatch(r"[a-f0-9]{40}", record["blob"]),
+             "Retain the selected source byte length, SHA-256 and Git blob identity")
+    for source in sorted(directory.glob("receiving-attempts/*/source")):
+        if not ATTEMPT.fullmatch(source.parent.name) or source != source.resolve() or not source.is_dir():
+            continue
+        selection = source.parent / "receiving-source.json"
+        if selection.is_symlink() or not selection.is_file():
+            continue
+        try:
+            recorded = json.loads(selection.read_bytes())
+        except (ValueError, OSError):
+            continue
+        if (not isinstance(recorded, dict)
+                or recorded.get("sourceCommit") != manifest.get("sourceCommit")
+                or recorded.get("files") != files):
+            continue
+        complete = True
+        for name, expected in files.items():
+            path = source / name
+            if path != path.resolve() or not path.is_file():
+                complete = False
+                break
+            data = path.read_bytes()
+            if (len(data) != expected["bytes"]
+                    or hashlib.sha256(data).hexdigest() != expected["sha256"]
+                    or hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
+                    != expected["blob"]):
+                complete = False
+                break
+        if complete:
+            return source
+    raise ValueError("This checkpoint has no complete saved runtime matching receiving-source.json; "
+                     "supply --source-root for the complete selected source edition")
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", required=True, type=Path)
@@ -336,8 +381,10 @@ def main():
         help="Recorded old operation directory when this earlier checkpoint needs an explicit location")
     parser.add_argument("--restore-only", action="store_true",
         help="Receive and verify this complete original case without starting its customer continuation")
-    parser.add_argument("--source-root", type=Path)
-    parser.add_argument("--source-commit")
+    parser.add_argument("--source-root", type=Path,
+        help="Complete selected source; by default reuse a matching frozen runtime from the restored case")
+    parser.add_argument("--source-commit",
+        help="Selected runtime commit; defaults to the adjacent receiving-source.json")
     parser.add_argument("--node", default="node")
     parser.add_argument("--playwright-module")
     parser.add_argument("--chromium")
@@ -345,14 +392,26 @@ def main():
     parser.add_argument("--timeout-seconds", type=int, default=600)
     args = parser.parse_args()
     if not args.restore_only:
-        need(args.source_root is not None and args.source_commit and args.playwright_module and args.chromium,
-             "Supply the actual selected source, Node/Playwright and installed Chromium for the whole continuation")
+        need(args.playwright_module and args.chromium,
+             "Supply the actual Node/Playwright and installed Chromium for the whole continuation")
+        manifest = json.loads((HERE / "receiving-source.json").read_bytes())
+        need(manifest.get("schema") == "stellar-forge.data-preparation-managed-receiving-source.v1"
+             and isinstance(manifest.get("sourceCommit"), str)
+             and re.fullmatch(r"[a-f0-9]{40}", manifest["sourceCommit"]),
+             "Keep the complete selected source manifest beside this receiver")
+        source_commit = args.source_commit or manifest["sourceCommit"]
+        need(source_commit == manifest["sourceCommit"],
+             "Select the exact immutable source commit in receiving-source.json")
     receipt = restore(args)
     print(json.dumps({"stage": "ORIGINAL_MANAGED_CHECKPOINT_RECEIVED", **receipt}), flush=True)
     if args.restore_only:
         return 0
+    source_root = args.source_root.resolve() if args.source_root is not None else saved_runtime(args.directory, manifest)
+    print(json.dumps({"stage": "ORIGINAL_MANAGED_RUNTIME_SELECTED",
+        "sourceRoot": str(source_root), "sourceCommit": source_commit,
+        "fromSavedCase": args.source_root is None, "files": len(manifest["files"])}), flush=True)
     command = [sys.executable, str(HERE / "receiving.py"),
-        "--source-root", str(args.source_root), "--source-commit", args.source_commit,
+        "--source-root", str(source_root), "--source-commit", source_commit,
         "--package", str(args.directory / "original-package.zip"),
         "--directory", str(args.directory), "--continue",
         "--node", args.node, "--playwright-module", args.playwright_module,

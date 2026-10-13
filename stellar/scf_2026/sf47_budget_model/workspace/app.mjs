@@ -1,4 +1,5 @@
 import { mountOperations } from './operations.mjs';
+import {mountDeliveryAgenda} from './operations_agenda.mjs';
 import {readStaffSession,staffRequest,signInOwner,signOutStaff,currentStaffContext,staffDeskStorageKey} from './staff-session.mjs';
 import {mountStaffRecovery} from './staff-recovery.mjs';
 import { mountPlanComparison } from './plan_comparison.mjs';
@@ -14,18 +15,21 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':
 const money = value => value === null || value === undefined || value === '' ? 'Not entered' : new Intl.NumberFormat('en-US', {style:'currency',currency:'USD',maximumFractionDigits:2}).format(Number(value));
 const amount = value => new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(Number(value || 0));
 const label = value => String(value).replace(/_/g,' ').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./, character => character.toUpperCase());
-const tabs = [['overview','Overview'],['source-tables','Source tables'],['work','Work packages'],['milestones','Milestones'],['staffing','Staffing'],['payments','Payment timing'],['delivery','Delivery plan'],['history','Saved versions'],['comparison','Compare saved plans'],['operations','Delivery operations']];
+const tabs = [['overview','Overview'],['source-tables','Source tables'],['work','Work packages'],['milestones','Milestones'],['staffing','Staffing'],['payments','Payment timing'],['delivery','Delivery plan'],['history','Saved versions'],['comparison','Compare saved plans'],['operations','Delivery operations'],['agenda','Delivery agenda']];
 const state = {principal:null,staffContext:null,plans:[],current:null,draft:null,tab:'overview',dirty:false,stale:false,busy:false,history:[],selectedHistory:null};
 const planReadActions=new Set(['reload','export','daily','scenario','history-view']);
 const canEditPlan=()=>state.principal?.role==='owner'||state.principal?.role==='lead';
 const canCreatePlan=()=>canEditPlan()&&state.principal.caseIds.includes('*');
 let controlId = 0;
 let operationsView = null;
+let deliveryAgendaView = null;
+let initialOperationsNavigation = null;
+const deliveryAgendaSessions = new Map();
 let comparisonView = null;
 const comparisonSelections = new Map();
 let sourceTablesView = null;
 function closeSourceTables() {sourceTablesView?.dispose();sourceTablesView=null;}
-function closeOperations() {operationsView?.dispose();operationsView=null;comparisonView?.dispose();comparisonView=null;}
+function closeOperations() {operationsView?.dispose();operationsView=null;comparisonView?.dispose();comparisonView=null;deliveryAgendaView?.dispose();deliveryAgendaView=null;}
 const requestBanks=new Map();
 function requestBank(context){
   const key=staffDeskStorageKey('sf47.requests',context);
@@ -41,13 +45,14 @@ function inform(message, error = false) {
 function busy(value) {
   state.busy = value; $('#workbench').setAttribute('aria-busy',String(value));
   for(const control of document.querySelectorAll('#workbench button,#workbench input:not([type=file]),#workbench select,#workbench textarea')) {
-    if(control.closest('.operations,.plan-comparison')) continue;
+    if(control.closest('.operations,.plan-comparison,.delivery-agenda')) continue;
     const action=control.dataset.action;
     const roleDisabled=!canEditPlan()&&(control.matches('[data-path],#change-note')||action&&!planReadActions.has(action));
     const newPlanDisabled=['clone','import'].includes(action)&&!canCreatePlan();
     control.disabled = value || roleDisabled || newPlanDisabled || control.dataset.fixedDisabled === 'true' || action === 'save' && !state.dirty;
   }
   operationsView?.setHostBusy(value);
+  deliveryAgendaView?.setHostBusy(value);
   comparisonView?.setHostBusy(value);
   sourceTablesView?.setHostBusy(value);
 }
@@ -247,11 +252,28 @@ function render(focus = false) {
   controlId=0;
   $('#plan-select').innerHTML=state.plans.map(row=>'<option value="'+esc(row.id)+'"'+(row.id===state.current.id?' selected':'')+'>'+esc(row.name)+'</option>').join('');
   $('#sections').innerHTML=tabs.filter(([id])=>canEditPlan()||id!=='source-tables').map(([id,title])=>'<button type="button" data-tab="'+id+'"'+(state.tab===id?' aria-current="page"':'')+'>'+title+'</button>').join('');
-  $('.savebar').hidden=!canEditPlan()||state.tab==='operations'||state.tab==='comparison';
+  $('.savebar').hidden=!canEditPlan()||['operations','comparison','agenda'].includes(state.tab);
   if(state.tab==='operations') {
-    const mounted=mountOperations({container:$('#main-panel'),api,plan:state.current,inform,mutationId,principal:state.principal,staffContext:state.staffContext});
+    const navigation=initialOperationsNavigation;
+    const mounted=mountOperations({container:$('#main-panel'),api,plan:state.current,inform,mutationId,principal:state.principal,
+      initialNavigation:navigation,staffContext:state.staffContext});
     operationsView=mounted;mounted.setHostBusy(state.busy);
-    mounted.ready.catch(error=>{if(operationsView===mounted&&mounted.root.isConnected)inform(error.message,true);});
+    mounted.ready.then(()=>{if(operationsView===mounted&&initialOperationsNavigation===navigation)initialOperationsNavigation=null;})
+      .catch(error=>{if(operationsView===mounted&&mounted.root.isConnected)inform(error.message,true);});
+  } else if(state.tab==='agenda') {
+    const agendaContext=state.staffContext?{...state.staffContext}:null;
+    const key=staffDeskStorageKey('sf47.delivery-agenda',agendaContext);
+    if(!deliveryAgendaSessions.has(key))deliveryAgendaSessions.set(key,{});
+    const mounted=mountDeliveryAgenda({container:$('#main-panel'),
+      api:(path,body,options={})=>api(path,body,{...options,staffContext:agendaContext}),principal:state.principal,
+      session:deliveryAgendaSessions.get(key),
+      onOpen:async selection=>{
+        if(deliveryAgendaView!==mounted||!mounted.root.isConnected)return;
+        initialOperationsNavigation=selection;state.tab='operations';render();
+        const opened=operationsView;await opened.ready;
+      }});
+    deliveryAgendaView=mounted;mounted.setHostBusy(state.busy);
+    mounted.ready.catch(error=>{if(deliveryAgendaView===mounted&&mounted.root.isConnected)inform(error.message,true);});
   } else if(state.tab==='source-tables') {
     const mounted=mountPlanningSourceTables({container:$('#main-panel'),api,inform,run,
       getPlan:()=>state.current,getDraft:()=>state.draft,
@@ -366,7 +388,7 @@ async function onAction(buttonNode) {
 }
 $('#workbench').addEventListener('click',event=>{
   const tab=event.target.closest('[data-tab]');
-  if(tab && !state.busy){state.tab=tab.dataset.tab;render(true);return;}
+  if(tab && !state.busy){initialOperationsNavigation=null;state.tab=tab.dataset.tab;render(true);return;}
   const control=event.target.closest('[data-action]');if(control)run(()=>onAction(control));
 });
 $('#main-panel').addEventListener('input',event=>{
@@ -422,6 +444,7 @@ async function openSession() {
 function showSignIn() {
   closeOperations();closeSourceTables();
   state.principal=null;state.staffContext=null;state.current=null;state.draft=null;state.plans=[];state.history=[];
+  initialOperationsNavigation=null;deliveryAgendaSessions.clear();
   state.selectedHistory=null;state.dirty=false;state.stale=false;
   $('#main-panel').replaceChildren();$('#plan-select').replaceChildren();$('#sections').replaceChildren();
   $('#workbench').hidden=true;$('#sign-out').hidden=true;$('#access-panel').hidden=false;

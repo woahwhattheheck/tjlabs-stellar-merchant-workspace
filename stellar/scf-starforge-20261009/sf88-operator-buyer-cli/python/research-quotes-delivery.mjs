@@ -4,7 +4,7 @@ import {readResearchHostFile} from '../research-dossiers/workspace-files.mjs';
 import {exists,digest} from '../node/store.mjs';
 import {customerDirectory,withCustomerOperation,readCustomerJson,retainCustomerBytes,describeCustomerFile}
  from '../research-dossiers/customer-updates/files.mjs';
-import {QUOTE_REQUEST_LIMIT,QUOTE_FILE_LIMIT,fields,need,same,fingerprint,id,hash}
+import {QUOTE_REQUEST_LIMIT,QUOTE_FILE_LIMIT,QUOTE_CASE_TRANSFER_LIMIT,fields,need,same,fingerprint,id,hash}
  from '../research-dossiers/customer-quotes/contracts.mjs';
 import {submitResearchQuote,replayResearchQuote,readResearchQuoteRun,retainResearchQuoteOperation,
  retainResearchQuoteCaseFile,copyResearchQuoteExport}
@@ -17,7 +17,7 @@ export const RESEARCH_QUOTES_PYTHON_RESPONSE_LIMIT=QUOTE_FILE_LIMIT;
 const INPUT_FIELDS=['inputFile','inputSha256','inputBytes'];
 const CONTROL_LIMIT=1024*1024;
 const COMMANDS=new Set(['create-case','native-case','pricing','prepare','apply','prepare-response',
- 'prepare-publication','enroll-publication','prepare-report']);
+ 'prepare-publication','enroll-publication','prepare-report','prepare-case-transfer','apply-case-transfer']);
 const allowed=Object.freeze({
  'quotes-configuration':[],
  'quotes-cases':['options'],
@@ -47,7 +47,7 @@ function errorRecord(error){
  const result={error:safeCode(error?.code)};
  for(const key of ['status','outcomeUnknown','method','route','recovery','requestId','requestState','operationId',
   'destinationPublished','file','metadata','sourceCleanupFailed','clientWarnings','researchQuoteRun',
-  'researchQuoteRetentionError','closeError'])
+  'researchQuoteRetentionError','researchQuoteProgramme','researchQuoteProgrammeReceiving','closeError'])
   if(error?.[key]!==undefined)result[key]=error[key];
  return result;
 }
@@ -76,11 +76,12 @@ function lazyOriginal(openClient,signal){
  return {get,get workspaceId(){return workspaceId;},async close(){if(original)await original.close();}};
 }
 async function selectedInput(value){
+ const maximum=value.command==='prepare-case-transfer'?QUOTE_CASE_TRANSFER_LIMIT:QUOTE_REQUEST_LIMIT;
  need(typeof value.inputFile==='string'&&isAbsolute(value.inputFile)&&
-  Number.isSafeInteger(value.inputBytes)&&value.inputBytes>0&&value.inputBytes<=QUOTE_REQUEST_LIMIT,
+  Number.isSafeInteger(value.inputBytes)&&value.inputBytes>0&&value.inputBytes<=maximum,
   'RESEARCH_QUOTE_PYTHON_INPUT_REQUIRED');
  hash(value.inputSha256);
- const raw=await readResearchHostFile(value.inputFile,QUOTE_REQUEST_LIMIT,{privateFile:true});
+ const raw=await readResearchHostFile(value.inputFile,maximum,{privateFile:true});
  need(raw.length===value.inputBytes&&digest(raw)===value.inputSha256,'RESEARCH_QUOTE_PYTHON_INPUT_CHANGED');
  let input;
  try{input=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));}
@@ -217,8 +218,13 @@ async function execute(action,input,original,signal,{completed=false}={}){
  }
 }
 /** Complete native replies are retained as files; stdout contains only their descriptors. */
-export async function runResearchQuotesCall(request,{signal,openClient}={}){
- need(isResearchQuotesCall(request.action),'RESEARCH_QUOTES_PYTHON_ACTION_INVALID');
+export function runResearchQuotesCall(request,{signal,openClient}={}){
+ return runResearchQuotePythonCall(request,{signal,openClient,operations:{allowed,local,mutable,execute}});
+}
+/** Shared retained Python transport; each original native family supplies its own dispatch. */
+export async function runResearchQuotePythonCall(request,{signal,openClient,operations}={}){
+ const {allowed,local,mutable,execute}=operations;
+ need(Object.hasOwn(allowed,request.action),'RESEARCH_QUOTES_PYTHON_ACTION_INVALID');
  fields(request.input,[...allowed[request.action],'responseDirectory'],['responseDirectory']);
  need(typeof request.input.responseDirectory==='string'&&isAbsolute(request.input.responseDirectory),
   'RESEARCH_QUOTES_PYTHON_RESPONSE_DIRECTORY_REQUIRED');

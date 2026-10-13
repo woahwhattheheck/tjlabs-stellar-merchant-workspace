@@ -1,5 +1,6 @@
 """Receive current source in the original saved SCF case and streaming controller."""
 import base64
+from datetime import datetime, timezone
 import hashlib
 import importlib.util
 import json
@@ -178,7 +179,11 @@ def receive_source(args, original):
         "files": [rows[key] for key in sorted(rows)],
     }
     original.write_json(source_root.parent / "manifest.json", source_manifest)
-    at = saved_config["at"] if saved_config else time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    phase_time = (datetime.fromisoformat(saved_config["at"].replace("Z", "+00:00"))
+                  if saved_config else datetime.now(timezone.utc))
+    if phase_time.utcoffset() is None:
+        raise ValueError("Retain the original phase time with its UTC offset.")
+    at = phase_time.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
     current = {
         "operationId": OPERATION, "phaseId": PHASE, "at": at,
         "draftId": baseline["draftId"], "reviewId": baseline["reviewId"],

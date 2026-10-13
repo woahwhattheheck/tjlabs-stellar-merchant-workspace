@@ -133,7 +133,7 @@ Choose Open workspace and load the adjacent workspace.json. The same comparison 
 
 Choose each side's format in New comparison. Exported source JSON is parsed in the browser and retains its exact edition identity. Complete Datasette source archives are sent to this same loopback server and passed through the installed original native reader. The server returns the complete source edition to the existing review UI.
 
-Save baseline source and Save candidate source download the original CSV or full source JSON. Baseline source archive and Candidate source archive download the original selected package. A received delivery serves the adjacent side archives by their original SHA-256. The existing workbook panel and its complete review/correction/replay operation remain available on the same report.
+Save baseline source and Save candidate source download the original CSV or full source JSON. Baseline source archive and Candidate source archive download the original selected package. A received delivery serves the adjacent side archives by their original SHA-256. Earlier bridge workspaces preserve their original metadata without adding a new archive receipt; the browser resolves their delivered archive from the adjacent completed manifest using the original edition and capture hashes. The local host reopens that archive through the maintained native receiver and matches both identities before returning the download. The existing workbook panel and its complete review/correction/replay operation remain available on the same report.
 
 ### Original runtime and cache
 

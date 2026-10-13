@@ -124,7 +124,8 @@ def _input_object(arguments):
 def _copy_file(file, destination):
     target = Path(destination).expanduser().absolute()
     if target.exists() or target.is_symlink():
-        with _file_delivery({**file.delivery, "file": str(target), "path": str(target)}).open():
+        with _file_delivery({**file.delivery, "file": str(target), "path": str(target)},
+                            maximum=max(_FILE_LIMIT, file.delivery["bytes"])).open():
             pass
     else:
         file.save_as(target)

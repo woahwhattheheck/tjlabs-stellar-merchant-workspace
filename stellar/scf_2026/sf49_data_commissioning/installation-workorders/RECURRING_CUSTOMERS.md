@@ -131,3 +131,126 @@ Use all required provider continuation pages and research operations when choosi
 `recurring-core.mjs` is the unchanged complete calendar, native composition and task-budget engine from the original recurring commissioning implementation. The installed CLI imports its local native core and the current `profiles.mjs` reader, and removes the second-checkout argument. Any complete installed profile may use its compatible proposed calendar. The generic profile edition keeps the complete source semantics and derives commercial/receiving commitments from the selected original Workshare.
 
 The core is byte-identical to original Git blob `50ecf2804e736c1587723f034b245997e0603fb2`, SHA256 `a748c2b73f980ea28b196508142d8b778ccc91048fcc28349b8a656930057dbc`. Complete original customer selections and calendars remain in the original private commissioning source. The installed and original CLIs produced byte-identical complete JSON and CSV for the retained two-customer, forty-task calendar; its Monday closed interval remained 64 hours.
+
+
+## Joined commercial and customer programme receiving
+
+The original receiver can now carry the complete commercial source, recurring calendar, task spending and native customer programme through the same Installation save and complete case handover. Both saved Delivery handovers and the earlier complete Workshare packet format use this path.
+
+The original Workshare remains the source of the quoted fee, milestone amounts and triggers, commencement conditions, complete scope, phase effort and agreed receiving. The Customer use, Customer commissioning, Console, Buyer, accounting and bank desks retain their existing records and controls.
+
+### Select complete programme sources
+
+Add the complete source files to the customer's existing `files` array using their actual file descriptors, SHA-256, media type, source URL and observation. Add this optional selection to that same customer:
+
+```json
+{
+  "programme": {
+    "schema": "stellar-forge.installation-customer-programme.v1",
+    "calendarFile": "Recurring_calendar-input.json",
+    "selectionFile": "Recurring_selection.json",
+    "taskBudgetFile": "Selected_complete_task_budget.json",
+    "nativeChangeFile": "Original_native_programme_change.json"
+  }
+}
+```
+
+`calendarFile` is the complete original R24C calendar input. The other three files are optional. Every named file must be present among that customer's original sources. Use actual source filenames; the last two names above illustrate the selected operator files.
+
+The selection file contains the complete original `tjlabs.scf-recurring-commissioning.v1` document. The consumer compares this profile's fee, milestone amounts, quoted business days and full base-plus-allowance effort with its exact original Workshare. It retains the original stage labels, triggers, scope and all phase bodies in the output. Correct a changed selection against its original source before receiving its successor.
+
+The task-budget file uses the existing complete-task contract: `network`, `asset`, `recipient`, `maximumAtomic`, all `lines` of `operation`, `priceAtomic`, `quantity`, and optional `feeTreatment`. The unchanged recurring engine multiplies exact atomic strings by complete request/page quantities. The receiver checks that result against the current original Installation's native payment tuple and task maximum immediately before preview.
+
+| Commercial value | Existing source |
+|---|---|
+| Customer commissioning fee and due conditions | Complete original Workshare and its milestones |
+| Included corrections and handoff | Original phase descriptions, acceptance and source-selected customer terms |
+| Total commercial effort | Every original phase's explicit source effort |
+| Price of one complete recurring task | All selected original priced operations and page quantities |
+| Funding-group and aggregate budget | Saved Customer commissioning selection and native report |
+| Original settled amount, fees and collection | Existing Buyer, accounting and commercial records |
+
+For the retained Rumble Fish and Amberdata source, the original offered prices are USD 4,800 and USD 3,600, with two equal milestones each. Their selected original effort remains 40 and 32 hours. The source keeps Rumble Fish's following seven-day acceptance-correction period and Amberdata's two reviews, one-hour handoff and ten-business-day scoped correction. The current receipt and scheduling desks continue to record the actual acceptance and dates.
+
+The original R24C two-week input contains twenty complete Prices snapshots and twenty complete Amberdata interval reviews. It retains both review times and every original source interval, including the 64-hour Friday-close to Monday-opening interval. Its full proposed task count travels with the customer source.
+
+### Retain an edited native programme
+
+Use the current Installation's original Customer use and Customer commissioning editors or their existing typed/CLI preparation operations to prepare its dated work, DIRECT/prepaid funding groups, original Console periods and output correspondence. Save the complete original seed and the complete edited native document.
+
+Create the portable change from those actual documents:
+
+```sh
+node recurring.mjs change \
+  --seed /private/original-native-seed.json \
+  --document /private/edited-native-document.json \
+  --out /private/new-original-programme-change
+```
+
+For a new Installation whose initial profile/bindings were already prepared, pass `--base-document /private/original-prepared-document.json` to retain that exact starting draft. The resulting `native-programme-change.json` includes the complete base and proposed documents, original case and plan selection, Workshare identity and Installation revision.
+
+This change carries the existing `useCalendar`, `commissioning` and `workflowPeriods` fields. The current Installation seed remains the source for the other fields. Existing customer bindings apply through the original receiver.
+
+When the case has advanced, the consumer joins the proposed edits against the retained base and the current saved document. Unchanged draft fields keep later saved values. Independently added or edited task, funding, entry and cycle rows retain their original identities. A change to the same field on both sides returns that exact field for an explicit resolution in the existing editor. A recovered new-Installation change can continue against its saved identity when the selected programme was already applied.
+
+The original native validator still validates every source, deployment, purchase, cycle, file and review basis. The original preview SHA and save request control the transaction.
+
+### Prepare the complete customer output
+
+The installed CLI can prepare the full commercial and recurring output from current originals before receiving:
+
+```sh
+node recurring.mjs programme \
+  --seed /private/original-native-seed.json \
+  --profile rumble-fish-prices \
+  --document /private/original-installation-document.json \
+  --commissioning /private/Supplier_Workshare_Commissioning.json \
+  --calendar /private/Recurring_calendar-input.json \
+  --selection /private/Recurring_selection.json \
+  --native-change /private/native-programme-change.json \
+  --out /private/new-rumble-customer-programme
+```
+
+Use `amberdata-spot-research` with its own original seed for the second customer. Add `--task-budget` when that customer's exact native prices and complete request quantities are selected.
+
+The output includes the full original input bytes, complete commercial JSON, a readable commercial handover in Markdown and clean HTML, the full calendar JSON/CSV, customer programme, selected task budget, complete Installation draft and native preview envelope. The manifest names every complete file and its byte count and hash.
+
+### Receive through the original case
+
+Run the existing source preparation with the extended original selection:
+
+```sh
+python3 handover-inputs.py \
+  --selection /private/HANDOVER_SELECTION.json \
+  --source-root /private/original-customer-files \
+  --out /private/prepared-customer-source
+```
+
+The earlier packet-based `source-inputs.py` accepts the same optional programme selection. Both retain every original file and emit the ordinary `SUPPLIER_RECEIVING.json`.
+
+Continue the current accepted case writer with the same original receiver:
+
+```sh
+node receive.mjs \
+  --operations-cli /absolute/original-application/workspace/cli.py \
+  --workspace /absolute/original-workspace \
+  --case ORIGINAL_OPERATIONS_CASE \
+  --plan ORIGINAL_PLAN \
+  --inputs /private/prepared-customer-source/SUPPLIER_RECEIVING.json \
+  --source-root /private/prepared-customer-source \
+  --out /private/original-customer-receiving \
+  --receiving-workspace /private/original-independent-receiver \
+  --actor ACTUAL_OPERATOR
+```
+
+Use the original case/plan IDs and the accepting writer's actual source and workspace paths. Retain this same output directory and request prefix for a retry. The receiver first retains the original source and seed, prepares the complete programme sources, and attaches those full files through the original Sources desk. It then reopens the current case, rechecks the same commercial and task-spending selection, joins the edited native programme, previews and saves its original Installation edition.
+
+Open **Customer installations** for each saved customer. The original workorder, complete native Customer use and Customer commissioning records, phase acceptance and original financial bindings remain editable through their existing desks. Open the attached `COMMERCIAL.md`, `commercial.html` and `CUSTOMER_PROGRAMME.md` for the joined customer handover and full task calendar.
+
+A single source selection may contain several distinct Workshares using the same installed profile. The receiver keeps each customer's complete programme in its own directory, selected by the full Workshare case and plan identity. If this operation already retained an earlier programme under the profile-only path, its matching original seed continues there. The other customer's seed, files, native draft and receiving remain separate while both Installations travel in the same complete-case archive. Continue the same original input and output directory after an interrupted multi-customer run; the earlier accepted sources and native requests remain available.
+
+For standalone `recurring.mjs programme`, select the complete original commissioning file whose exact bytes match `seed.document.workshare.sourceSha256`; the command checks that native source digest before composing the customer programme and retains those same bytes in `original-commissioning.json` and the output manifest.
+
+The receiver exports the whole case and imports it into the selected independent workspace. It reopens each exact saved Installation, compares its full native programme and reports, and checks every joined source attachment's identity, byte count, digest and media type. `RECEIVED.json` contains both complete customer terms, all original milestones, phase effort, calendar summaries, selected native task budgets, native calendar/commissioning reports and source-file locators.
+
+Native customer receipt associations, Console cycles and their output files travel in the existing complete-case archive. Continue the received customer through the original Installation editor and native Buyer/Console operation. The quote, calendar, spending selection and actual retained result remain connected across the complete handover.
