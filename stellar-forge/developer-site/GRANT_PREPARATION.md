@@ -1,0 +1,59 @@
+# SQL preparation and pipelines in the existing SCF application
+
+This complete source contribution belongs to the original canonical §9A manuscript and its maintained four-reader composition. The grant manuscript supplies the current funding, customer targets and publication. The preparation and pipeline receiving case retains its original source, saved customer project and dated native outcomes. The complete chapter below is received in place through the normal composer.
+
+## SQL preparation, reusable pipelines and complete analyst receiving
+
+### Customer task and the useful paid unit
+
+An analyst preparing a recurring reconciliation needs the full chain from the selected customer tables to the reviewed result. The customer supplies the actual source editions, their field and time meaning, the permitted transformation and the receiving application's required output. The operator retains those inputs, records the SQL recipe and parameters, and turns an accepted recipe into a reusable pipeline with named stages and declared dependencies. Each later reporting period selects its actual source editions and saves the resulting execution.
+
+A commissioned installation can price one complete reconciliation or reporting edition. Its workorder names the commissioning payer, merchant host, source custodian, buyer operator and receiving analyst, with the selected source period, complete output, price and acceptance decision. A result's CSV, report and editable project serve the same useful job. The buyer needs a new purchase when a new source period, correction or distinct decision creates useful additional work. The existing merchant and Buyer retain the original approval, pricing, account and native settlement responsibilities.
+
+### Operate and hand over the complete result
+
+The maintained product opens the original preparation browser and its pipeline editor through the same private Applications workspace. An operator can inspect every retained source row, preserve the original filename, save and review a SQL recipe, and compose a pipeline from that exact recipe revision. The pipeline freezes its named inputs, stage dependencies and saved edition. A stable request key identifies the execution; a repeated request recovers that execution.
+
+Stages run through the original preparation engine. Each attempt retains its native recipe and run, input lineage, complete result and status. Staff inspect all result rows, review a selected stage and compare saved executions. Resume keeps completed stages while continuing unfinished work. Explicit reuse selects a previous execution whose source identity, frozen stage definition, inputs and complete result are checked by the original engine. Cancellation reaches the same native SQL operation.
+
+The operator can export the full editable project, complete selected result files, HTML report or merchant dataset. The full project contains both preparation state and pipeline history. Transfers verify the complete file length and digest. A receiving operator opens that project as an independently editable workspace, preserving the original source, recipe, pipeline and receiving identities; the receiving operator can create a later edition and produce a new result without altering the sender's saved edition. The original receiving request is recoverable after a lost response.
+
+Applications manages the original and received workspaces together. Stop requests cancellation, drains owned work and active transfers, and closes its received-workspace listeners. A later opening restores the same saved child and its edited state. The browser, typed SDK and 40 Merchant tools expose these original operations through the same private workspace connection. [The complete operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b47099ffa5acf15f2c70d9d12662ee81dca0d3fe/products/data-preparation/OPERATING.md) gives the actual installed launcher, full SDK and Merchant sequences, and receiving commands. [The original pipeline guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/68ad5adf250e9f100f84d034881ebabc9fa48117/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/README.md) describes its durable execution and stage model.
+
+The complete closed receiving case can also move to another Linux host or a new private directory. Its checkpoint receiver checks every saved file and the original project, preserves the source and customer histories and operation ID, and maps saved downloads and browser captures to their verified new locations. It then continues through the original operation lock with the receiving host's supplied runtimes. Later customer archives retain the complete restore helper and prior restoration history.
+
+### Starting source and current customer operation
+
+[PR 726](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/726) merged the complete managed integration, operating guides and portable original-case receiver as [c451614467b688b8306adb512fa6105898ac634e](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/commit/c451614467b688b8306adb512fa6105898ac634e). Its complete reviewed source is b47099ffa5acf15f2c70d9d12662ee81dca0d3fe, with the selected runtime frozen at 68ad5adf250e9f100f84d034881ebabc9fa48117. The installed selection is [data-preparation-workspace](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/68ad5adf250e9f100f84d034881ebabc9fa48117/stellar/scf-starforge-20261009/distribution/selections/data-preparation-workspace.json). Its complete receiving manifest retains 91 original source files totaling 1,124,639 bytes, including the provider, setup and configuration dependencies required to load the registered product. These are the reusable starting components for a selected customer installation. [PR 899](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/899), merged as 25dd8b0aa9b32eb99507cfb95e682248fcbf2922, aligns the complete receiving comparison with the original portable-result format: every saved run field and portable file remains exact while the engine rebuilds its native SQLite result.
+
+The original customer case contains 120,012 retained rows across orders, accounts and credits. That exact case has reopened through the existing preparation engine and managed attachment; the current joined customer operation continues its saved source, recipes, runs and review. Independent source reviews covered the complete private listener, received-child lifetime, all 40 tools, typed transport, browser handover and the original receiving controller. The published controller and generated save worker passed native Python 3.11 parsing, and the JavaScript receiver passed Node parsing.
+
+The full joined continuation is in progress on that same saved case. Its acceptance covers the six-row reviewed preparation result, pipeline stage execution and complete row comparison, complete project/result/report/merchant exports, browser operation, independently edited receiving, parent Stop and cold reopening. [The receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ca518e3aba84eed4dbc56147fa5ac9090904424e/products/data-preparation/RECEIVING.md), [full frozen source selection](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ca518e3aba84eed4dbc56147fa5ac9090904424e/products/data-preparation/receiving-source.json) and [native controller](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ca518e3aba84eed4dbc56147fa5ac9090904424e/products/data-preparation/receiving.py) retain the exact source and continuation command. Its dated completed result will join this same customer example.
+
+### Use within the existing six funded packages
+
+| Existing funded package | Preparation and pipeline customer work | Assessed completion |
+| --- | --- | --- |
+| T1 · Merchant-resource integration | Select each merchant's actual permitted sources, schema, source period, SQL recipe, complete result and priced service; connect the customer's host, buyer and destination to the existing installed product. | Each merchant operates the agreed source-to-result service and its buyer opens the complete result in the actual receiving application. |
+| T1 · Authority and handover | Configure source and terms authority, private workspace attachment and receiving responsibilities; make the selected source or recipe change with the second accountable operator. | That operator reopens the installation and completes the agreed change while retaining earlier outputs and their source editions. |
+| T2 · Provider and ledger deployment | Carry the same selected useful result through the original merchant, buyer and two independently operated facilitators, retaining its request, settlement, complete files and result edition. | The existing ten-useful-purchase / seven-day testnet target is assessed across the two independent buyers, with the original provider and ledger records. |
+| T2 · Deployed threat response | Complete deployment-specific access and source controls, monitoring and recovery for an interrupted SQL execution, interrupted transfer and settled merchant-delivery failure. | The customer observes, acknowledges and recovers the original operation, receives the complete intended result and records its decision. |
+| T3 · Mainnet merchant rollout | Configure the actual production hosts, network, asset and accounts; adopt the approved recurring reconciliation calendar and controlled release/rollback. | Both merchants serve the existing thirty-useful-purchase / fourteen-day target, and both buyers return for distinct useful work on another day. |
+| T3 · Production recovery and handover | Retain the complete project and source off-host; restore on the receiving host, reconcile later operations and complete a maintainer's support case. | An authorized engineer reopens the original saved project and independently edits, executes and receives its next accepted edition. |
+
+The contribution uses the existing six package IDs, USD 38,000 request, 400 prospective hours and 150-day schedule. Each customer-specific adaptation is allocated once to its funded package or to a separately commissioned workorder. Existing reusable implementation is the starting source; the funded work selects and completes the actual Stellar installation, independent buyer use, recovery and maintainer handover.
+
+## Maintained source registration
+
+The current `grant-customers.mjs` receives the six immutable guide and runtime references below from this chapter. Keep their source IDs when extending the original source catalogue or adopting them into a per-product declaration. `GRANT_COMPOSITION.md` gives the same complete four-output receiving command.
+
+| Source ID | Selected file |
+| --- | --- |
+| `preparation-workspace-operating` | `products/data-preparation/OPERATING.md` |
+| `preparation-pipeline-original-engine` | `stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/README.md` |
+| `preparation-workspace-selection` | `stellar/scf-starforge-20261009/distribution/selections/data-preparation-workspace.json` |
+| `preparation-workspace-receiving` | `products/data-preparation/RECEIVING.md` |
+| `preparation-workspace-source` | `products/data-preparation/receiving-source.json` |
+| `preparation-workspace-native-receiving` | `products/data-preparation/receiving.py` |
+
+The current receiver refreshes a selected repository, commit and path from the chapter and clears an obsolete Git blob pin. Repeating the same selection retains the source identities. A preceding manuscript that omits this chapter preserves the original selected references. The complete chapter and its six-package table travel with all other current customer contributions.
