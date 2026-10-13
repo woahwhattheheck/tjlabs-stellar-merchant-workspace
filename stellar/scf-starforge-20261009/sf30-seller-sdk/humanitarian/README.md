@@ -269,3 +269,15 @@ Build and receive the full distribution with selections/humanitarian-operator.js
 The application provider binds the whole selected source and original workspace identity. Stop and close it through the existing Applications lifecycle so accepted HTTP requests and native Dataset work finish under the original owner. The typed client's close also drains accepted requests; downloads retain the complete original response through transfer or cancellation.
 
 Keep the source commit, selected distribution manifest, READY receipt, original reference provenance, complete requests, named analyst practice and final receiving package with the handover. A source or reporting-definition change should create an explicit new selection and saved revision. The earlier edition remains available for explanation and comparison.
+
+## Received reference for the engineering case
+
+The retained case selects the complete OCHA Common Operational Datasets (GISOCHA) Syrian Arab Republic code/name hierarchy received on 2026-10-13T03:13:24.490Z. The official service root is https://gis.unocha.org/server/rest/services/COD ; selected layers are GBL_COD_Admin0, GBL_COD_Admin1 and GLB_COD_Admin2, each FeatureServer/0. Full original native ID/count reads and independently repeated attribute pages agree.
+
+The original responses contain 2 country features, 15 governorate features and 64 district features. They describe one country, 14 governorates and 62 districts. Same-code feature parts at SY, SY10, SY0301 and SY1000 are consolidated only after equality of every descriptive attribute; OBJECTID, GlobalID, Shape__Area and Shape__Length identify or measure native parts and are retained separately. Every original part and its full attributes, including Arabic names, remains in the complete reference acquisition and derived table.
+
+Observed source attributes are version_no 202012, valid_on 2020-12-17 and valid_to null. The 2026 retrieval date identifies acquisition time; it does not turn those boundaries into a 2026 edition. Original item licenseInfo/accessInformation are null and layer copyrightText values are empty. The saved reference keeps license:null and the full observed notices.
+
+The selected application reference is a native {columns,rows} JSON table with exact ancestor code/name chains and full native_attributes_json. Its complete 83,123-byte source has SHA-256 baed21617385b7773d2b86458ade440d648165c362bfb1519dbfe3bf6779cf38. The exact 1,394-byte save-reference definition has SHA-256 0103c23b56213127a0aa6c207abed6967f5f9c6640b29050ee7aa51850b2eb1d and requestId ocha-syr-reference-20261013. Both whole files and all 49 acquisition files are retained in the private reference handover at commons-ship-enforcer commit 039965e6c9ed284df0407dab95d75356a77a4e2c, under source-receiving/cartong-humanitarian-follow-on-7108-20261013/reference/.
+
+The completed acquisition used the supported connected attachment/download transport. The direct-HTTP helper is reusable source; its presence does not establish a completed Linux acquisition. The native operating result and installed handover remain separate, explicitly returned stages.
