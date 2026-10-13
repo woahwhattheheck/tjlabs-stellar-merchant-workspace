@@ -273,7 +273,9 @@
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/accountant/buyer-source.mjs",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/accountant/buyer-return.mjs",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/accountant/engine.mjs",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/accountant/adjustments.mjs"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/accountant/adjustments.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_workflows.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/SAVED_WORKFLOWS.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

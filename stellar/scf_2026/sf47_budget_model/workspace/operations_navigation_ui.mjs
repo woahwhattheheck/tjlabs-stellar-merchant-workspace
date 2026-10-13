@@ -15,12 +15,13 @@ const editableKinds=new Set(['contributors','work','invoices','awards','deployme
 
 export function mountOperationsNavigation({
   container,hostRoot,current,sections,activeSection,session={},onSection,onEntry,onState,onError=()=>{},
-  canEditRecord=()=>false,
+  canEditRecord=()=>false,onRetryWorkflows=null,
 }) {
   const root=document.createElement('aside');
   root.className='operating-navigation';root.setAttribute('aria-label','Operations navigation');
   container.replaceChildren(root);
-  const index=buildCaseIndex(current,sections);
+  let index=buildCaseIndex(current,sections);
+  let workflowLoading=typeof onRetryWorkflows==='function',workflowError=null,workflowLoaded=false;
   const sectionMap=new Map(sections.map(section=>[section.id,section]));
   const currentId=current.program.id,version=current.program.version;
   const id='ops-find-'+currentId;
@@ -96,6 +97,7 @@ export function mountOperationsNavigation({
       '<div class="ops-find-heading"><div><h2 id="'+esc(id+'-title')+'">Find in case</h2><p>'+esc(current.program.name)+
       ' · version '+esc(version)+'</p></div>'+button('Close','data-nav-close aria-label="Close case search"')+'</div>'+
       '<p class="ops-find-error" data-nav-error role="alert" hidden></p>'+
+      '<div class="ops-find-workflows" data-nav-workflows role="status" aria-live="polite"></div>'+
       '<div data-nav-search-controls class="ops-find-controls" role="search">'+
       '<label class="ops-find-query">Name, reference or saved text<input type="search" data-nav-query maxlength="200" autocomplete="off" value="'+esc(search.query)+'" aria-controls="'+esc(id+'-results')+'"></label>'+
       '<label>Search in<select data-nav-kind>'+[['all','All result types'],['section','Sections'],['record','Native case records'],['source','Source metadata'],['saved','Saved workflow summaries']]
@@ -104,11 +106,11 @@ export function mountOperationsNavigation({
         sections.map(section=>'<option value="'+esc(section.id)+'"'+(search.section===section.id?' selected':'')+'>'+esc(section.label)+'</option>').join('')+'</select></label>'+
       '</div><div data-nav-search-results><p data-nav-count role="status" aria-live="polite"></p>'+
       '<ol id="'+esc(id+'-results')+'" data-nav-results class="ops-find-results"></ol>'+
-      '<div data-nav-pages class="ops-find-pages"></div><details class="ops-find-coverage"><summary>Search coverage</summary><p>'+
-      esc(index.coverage)+'</p><p>'+esc(index.counts.record)+' native records · '+esc(index.counts.source)+' sources · '+
+      '<div data-nav-pages class="ops-find-pages"></div><details class="ops-find-coverage"><summary>Search coverage</summary><p data-nav-coverage>'+
+      esc(index.coverage)+'</p><p data-nav-coverage-counts>'+esc(index.counts.record)+' native records · '+esc(index.counts.source)+' sources · '+
       esc(index.counts.saved)+' saved workflow summaries · '+esc(index.counts.section)+' sections.</p></details></div>'+
       '<div data-nav-detail hidden></div></dialog>';
-    renderNavigation();renderResults();retain();
+    renderNavigation();renderResults();renderWorkflowStatus();retain();
   }
   function renderResults() {
     if(!available())return;
@@ -127,6 +129,34 @@ export function mountOperationsNavigation({
       '<span>Page '+(result.page+1)+' of '+result.pages+'</span>'+
       button('Next','data-nav-page="next"',result.page>=result.pages-1);
     applyBusy();retain();
+  }
+  function renderWorkflowStatus() {
+    if(!available())return;
+    const target=$('[data-nav-workflows]');
+    if(typeof onRetryWorkflows!=='function'){target.hidden=true;return;}
+    target.hidden=false;
+    const message=workflowLoading?'Loading saved workflow editions. Other case records are ready to search.':
+      workflowError?'Saved workflow editions could not be loaded. '+(workflowError.message||String(workflowError)):
+      workflowLoaded?'Saved workflow editions are ready. Select an original edition to resume its desk.':'Load the original saved workflow editions.';
+    target.innerHTML='<p>'+esc(message)+'</p>'+(!workflowLoading&&(workflowError||!workflowLoaded)
+      ?button('Load saved workflows','data-nav-retry-workflows'):'');
+    const coverage=$('[data-nav-coverage]');
+    if(coverage)coverage.textContent=index.coverage;
+    const counts=$('[data-nav-coverage-counts]');
+    if(counts)counts.textContent=index.counts.record+' native records · '+index.counts.source+' sources · '+
+      index.counts.saved+' saved workflow summaries · '+index.counts.section+' sections.';
+    applyBusy();
+  }
+  function setWorkflows(value,{loading=false,error=null}={}) {
+    if(!available())return false;
+    if(value!==null&&value!==undefined) {
+      const next=buildCaseIndex(current,sections,value);
+      index=next;workflowLoaded=true;
+      renderResults();
+    }
+    workflowLoading=Boolean(loading);workflowError=error;
+    renderWorkflowStatus();
+    return true;
   }
   function arrayMarkup(key) {
     const state=detailArrays.get(key),size=20;
@@ -183,7 +213,7 @@ export function mountOperationsNavigation({
       '<p>'+esc(entry.kindLabel)+' · '+esc(entry.sectionLabel)+'</p>'+
       '<p class="ops-find-reference">'+esc(entry.id)+'</p>'+
       '<div class="ops-find-detail-actions">'+actions+'</div>'+
-      (entry.type==='saved'?'<p class="ops-find-note">This is the saved summary returned with the current case. Open the original section to inspect its complete retained edition.</p>':'')+
+      (entry.type==='saved'?'<p class="ops-find-note">'+(entry.workflowSelection?'This summary identifies the original saved edition. Opening its desk preserves current drafts and pending requests.':'This is the saved summary returned with the current case. Open the original section to inspect its complete retained edition.')+'</p>':'')+
       (href?'<p><a href="'+esc(href)+'" target="_blank" rel="noopener noreferrer">Open the original source URL</a></p>':'')+
       renderValue(entry.data);
     dialog().setAttribute('aria-labelledby',id+'-detail-title');
@@ -239,6 +269,7 @@ export function mountOperationsNavigation({
     if(target.dataset.navResult){showEntry(target.dataset.navResult);return;}
     if(target.dataset.navRelated){showEntry(target.dataset.navRelated,{related:true});return;}
     if(target.dataset.navBack!==undefined){backToResults();return;}
+    if(target.dataset.navRetryWorkflows!==undefined){void Promise.resolve(onRetryWorkflows?.()).catch(error=>setWorkflows(null,{error}));return;}
     if(target.dataset.navArrayAction){
       const key=target.dataset.navArrayKey,state=detailArrays.get(key);
       if(!state)return;
@@ -300,5 +331,5 @@ export function mountOperationsNavigation({
     root.removeEventListener('change',onChange);root.removeEventListener('toggle',onToggle,true);
     if(dialog()?.open)dialog().close();
   }
-  return {root,ready:Promise.resolve(),dispose,setHostBusy,openSearch,index};
+  return {root,ready:Promise.resolve(),dispose,setHostBusy,openSearch,setWorkflows,get index(){return index;}};
 }

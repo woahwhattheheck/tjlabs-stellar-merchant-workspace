@@ -11,6 +11,32 @@ export const GRANT_CASE_ACTIONS: readonly GrantCaseAction[];
 export type GrantObject = Record<string, unknown>;
 /** YYYY-MM-DD. The native service validates that this is an actual civil date. */
 export type GrantCivilDate = string;
+
+/** Original saved selections returned together from one versioned operating case. */
+export type GrantOperatingWorkflowSelection =
+  | { kind: 'statement-original'; sourceId: string }
+  | { kind: 'account-reconciliation'; reconciliationId: string; revision: number }
+  | { kind: 'cost-funding'; revision: number }
+  | { kind: 'award-terms'; id: string; revision: number }
+  | { kind: 'cohort-delivery'; sourceId: string }
+  | { kind: 'grant-procedure'; sourceId: string };
+export interface GrantOperatingWorkflowPopulation {
+  key: string; section: string; label: string; count: number;
+}
+export interface GrantOperatingWorkflowEntry {
+  key: string; collection: string; id: string; revision: number | null;
+  section: string; kindLabel: string; label: string;
+  /** The complete original source summary, retaining its native fields and values. */
+  summary: GrantObject;
+  selection: GrantOperatingWorkflowSelection;
+}
+export interface GrantOperatingWorkflows {
+  schema: 'stellar-forge.sf47-operating-workflows.v1';
+  case: { id: string; version: number };
+  populations: GrantOperatingWorkflowPopulation[];
+  entries: GrantOperatingWorkflowEntry[];
+}
+
 export type GrantInstallationStage = 'PLANNED' | 'COMMISSIONING' | 'OPERATING' | 'HANDED_OVER' | 'RETIRED';
 export type GrantCheckState = 'OPEN' | 'IN_PROGRESS' | 'ACCEPTED' | 'CHANGES_REQUIRED' | 'NOT_APPLICABLE';
 export type GrantDeliveryPriority = 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW';
@@ -3514,6 +3540,7 @@ export class GrantWorkspaceClient {
   read(view: 'delivery-agenda', selection: GrantDeliveryAgendaSelection): Promise<GrantJsonResponse<GrantDeliveryAgenda>>;
   read(view: 'delivery-queue', selection: GrantDeliveryQueueSelection): Promise<GrantJsonResponse<GrantDeliveryQueue>>;
   read(view: 'case', selection: { caseId: string }): Promise<GrantJsonResponse<GrantCaseView>>;
+  read(view: 'operating-workflows', selection: {caseId: string; expectedVersion: number}): Promise<GrantJsonResponse<GrantOperatingWorkflows>>;
   read(view: 'settlements', selection: { caseId: string }): Promise<GrantJsonResponse<GrantSettlementList>>;
   read(view: 'settlement', selection: { caseId: string; reviewId: string }): Promise<GrantJsonResponse<GrantSettlementSaved>>;
   read(view: 'expenses', selection: { caseId: string }): Promise<GrantJsonResponse<GrantExpenseDashboard>>;
@@ -3538,6 +3565,7 @@ export class GrantWorkspaceClient {
   statementInspect(caseId: string, expectedVersion: number, inputs: GrantStatementInspectionInput): Promise<GrantJsonResponse<GrantStatementInspection>>;
   statementPreview(caseId: string, expectedVersion: number, inputs: GrantStatementInput): Promise<GrantJsonResponse<GrantStatementPreview>>;
   statementReceive(caseId: string, body: GrantOperationRequest & { inputs: GrantStatementInput; expectedPreviewSha256: string }): Promise<GrantJsonResponse<GrantStatementReceipt>>;
+  operatingWorkflows(caseId: string, expectedVersion: number): Promise<GrantJsonResponse<GrantOperatingWorkflows>>;
   accountReconciliationPreview(caseId: string, body: GrantAccountReconciliationInput): Promise<GrantJsonResponse<GrantAccountReconciliationPreview>>;
   accountReconciliationApply(caseId: string, body: GrantAccountReconciliationApplyInput): Promise<GrantJsonResponse<GrantAccountReconciliationReceipt>>;
   cashCorrectionPreview(caseId: string, body: GrantCashCorrectionInput): Promise<GrantJsonResponse<GrantCashCorrectionPreview>>;
