@@ -443,3 +443,7 @@ The callback preserves complete matching browser revisions in `browser-snapshots
 An interrupted callback returns its actual phase and files on `error.result`. Repeating the original call continues that same operation. Its latest status can move from interrupted to complete, while completed delivery files and earlier attempts retain their original bytes. After completion, another identical call verifies and returns the saved completion with `reused: true`.
 
 The original saved five-revision case used for this delivery is `plan-93b727c8a44346bab4f923e60481e020`. Its complete planning ZIP is 96,869 bytes with SHA-256 `2fcc813903a1fbd66532c0a3a17ed07d250f04d3e856f8a4c5dc84309a10e086`. It is the `planning.zip` member of the retained original `SCF_Operating_Case_with_Freeform_Event_Timing_20261012.zip` (647,130 bytes; SHA-256 `c71303844660d5a859d3936a569b5461c7b1679b739dfead95d907759693df2b`). Other actual saved native plans use their own selected file identities.
+
+## Review the exact required content
+
+Required content now records the named reviewer and complete selected answer/issuer-field text. Later edits show the full prior/current comparison; historical unbound decisions remain readable. Explicit re-review uses the original Saved versions, complete draft export and prepared handover. Follow [the full required-content review journey](./GRANT_REQUIRED_CONTENT_REVIEW.md) for selection, unfinished-work recovery, actual-output coverage and frozen prepared reports.
