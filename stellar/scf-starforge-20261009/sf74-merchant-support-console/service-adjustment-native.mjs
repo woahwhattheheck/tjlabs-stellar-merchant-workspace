@@ -517,7 +517,7 @@ export async function continueServiceBuyerWorkbenchOperation({
     context=await chromium.launchPersistentContext(join(directory,'browser'),{headless:true,executablePath:chromiumPath,
       args:['--no-sandbox','--disable-dev-shm-usage','--renderer-process-limit=1'],acceptDownloads:true,viewport:{width:1440,height:1000}});
     const result=await receiveServiceBuyerWorkbench({
-      directory:join(directory,'receiving','buyer-workbench'),context,sourceUrl,receivingUrl,
+      directory:join(following,'workbench'),context,sourceUrl,receivingUrl,
       store:sourceStore,receivingStore,api:sourceDesk,receivingApi:receivingDesk,
       caseId:completed.caseId,captureOutcomeId:completed.captureOutcomeId,buyerResult,
       sourceRevision:sourceCase.revision,receivingRevision:receiverCase.revision,sourceCommit,actor:selection.actor
@@ -530,7 +530,7 @@ export async function continueServiceBuyerWorkbenchOperation({
     need(hash(await bytes(nativeResultPath,128*1024*1024))===hash(nativeRaw),'The original inner PASS result must remain immutable.');
     const artifacts=[...result.artifacts];
     for(const path of [join(following,'original-selection.json'),join(following,'selected-cases.json'),join(following,'case-transfer-intent.json'),join(following,'case-transfer-result.json'),
-      join(directory,'receiving','buyer-workbench','service-buyer-workbench-result.json')]){
+      join(following,'workbench','service-buyer-workbench-result.json')]){
       const raw=await bytes(path,128*1024*1024);artifacts.push({path,bytes:raw.length,sha256:hash(raw),name:relative(directory,path),type:'application/json'});
     }
     await verifyFiles(artifacts);

@@ -55,13 +55,15 @@ The continuation takes the same operation-owner lease as the original native ent
 
 The first transfer freezes the complete source body, source revision, recipient predecessor and exact native save request before dispatch. The maintained store's exact-request replay recovers an accepted save after response loss. Once selected-cases.json exists, it is checked before any transfer and no new save occurs. Both prior case editions remain in native history; a later concurrent edit stops the continuation before changing the receiving case.
 
+The initial journey retains its own receiving/buyer-workbench journal. The explicit following continuation uses buyer-workbench-continuation/workbench, preserving the earlier helper selection and all original artifacts when the initial programme already included that phase.
+
 All new native results are separate:
 
 - buyer-workbench-continuation/original-selection.json
 - buyer-workbench-continuation/case-transfer-intent.json and case-transfer-result.json
 - buyer-workbench-continuation/selected-cases.json
-- receiving/buyer-workbench/service-buyer-workbench-progress.json
-- receiving/buyer-workbench/service-buyer-workbench-result.json
+- buyer-workbench-continuation/workbench/service-buyer-workbench-progress.json
+- buyer-workbench-continuation/workbench/service-buyer-workbench-result.json
 - buyer-workbench-continuation/service-buyer-workbench-following-result.json
 
 The original service-adjustment-native-result.json, service-adjustment-operation.json and receiving/service-adjustment-result.json are hash-checked unchanged. The following result carries their exact hashes, original input/selection identity, actual current configurations and every new browser artifact.
