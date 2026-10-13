@@ -368,8 +368,8 @@ export async function readFredWorkspaceConfiguration(path) {
       for (const [name, input] of Object.entries(value.inputs)) {
         if (!ALIAS.test(name)) fail('FRED_CONNECTION_INVALID', 'Use a lowercase input alias.');
         fields(input, ['path', 'kind', 'label', 'sha256'], 'Host input');
-        if (!['public-table', 'capture', 'release-capture', 'ddp-crosswalk', 'ddp-package'].includes(input.kind))
-          fail('FRED_CONNECTION_INVALID', 'Select an original public-table wrapper, observation capture or complete release capture.');
+        if (!['public-table', 'capture', 'release-capture', 'ddp-crosswalk', 'ddp-package', 'alfred-metadata'].includes(input.kind))
+          fail('FRED_CONNECTION_INVALID', 'Select a complete original observation, release, DDP source or historical ALFRED metadata input.');
         entry.inputs[name] = { path: resolve(base, text(input.path, 'original source path', 8192)),
           kind: input.kind, label: text(input.label ?? name, 'input label', 240),
           ...(input.sha256 === undefined ? {} : { sha256: digest(input.sha256, 'complete input file SHA256') }) };
@@ -1016,9 +1016,30 @@ export class FredWorkspaceClient {
     return value;
   }
   async acquireDdpMigration(input, options) {
-    fields(input, ['id', 'expectedRevision', 'migrationId'], 'DDP migration acquisition');
+    fields(input, ['id', 'expectedRevision', 'migrationId', 'sourceMode', 'metadata', 'metadataSha256'], 'DDP migration acquisition');
     ddpId(input.migrationId, 'migration');
+    if (input.sourceMode !== undefined && !['API_VINTAGE', 'ALFRED_VINTAGE'].includes(input.sourceMode))
+      fail('FRED_CLIENT_INPUT_INVALID', 'Choose API_VINTAGE or ALFRED_VINTAGE.');
+    if (input.sourceMode === 'API_VINTAGE' && (input.metadata !== undefined || input.metadataSha256 !== undefined))
+      fail('FRED_CLIENT_INPUT_INVALID', 'API metadata comes from its original API response.');
+    if (input.metadata !== undefined && (!Array.isArray(input.metadata) ||
+        input.metadata.some(item => item?.schema !== 'stellar-forge.alfred-metadata-edition.v1' || typeof item?.series?.value !== 'string') ||
+        new Set(input.metadata.map(item => item.series.value)).size !== input.metadata.length))
+      fail('FRED_CLIENT_INPUT_INVALID', 'Retain one complete historical metadata edition for each selected series.');
+    const metadataSha256 = input.metadata === undefined ? input.metadataSha256
+      : canonicalJSONDigest([...input.metadata].sort((a, b) => a.series.value < b.series.value ? -1 : a.series.value > b.series.value ? 1 : 0));
+    if (input.metadataSha256 !== undefined) {
+      digest(input.metadataSha256, 'historical metadata identity');
+      if (metadataSha256 !== input.metadataSha256)
+        fail('FRED_CLIENT_INPUT_INVALID', 'The historical metadata differs from its retained identity.');
+    }
     const value = await this.#action('ddp-migration-acquire', input, options);
+    if (value?.sourceMode !== undefined && value.sourceMode !== 'ALFRED_VINTAGE' ||
+        input.sourceMode === 'ALFRED_VINTAGE' && value?.sourceMode !== 'ALFRED_VINTAGE' ||
+        input.sourceMode === 'API_VINTAGE' && value?.sourceMode !== undefined ||
+        value?.sourceMode === 'ALFRED_VINTAGE' && (!SHA.test(value.metadataSha256) ||
+          metadataSha256 !== undefined && value.metadataSha256 !== metadataSha256))
+      fail('FRED_CLIENT_DDP_CHANGED', 'The completed migration changed its original source mode or metadata edition.');
     return ddpSaved(value, input, value?.migrationId === input.migrationId &&
       typeof value.receivingId === 'string' && value.receivingId.startsWith(DDP_PREFIXES.receiving) &&
       SHA.test(value.receivingId.slice(DDP_PREFIXES.receiving.length)) && value.receiving?.id === value.receivingId &&
