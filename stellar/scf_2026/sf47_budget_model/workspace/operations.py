@@ -13,6 +13,8 @@ import zipfile
 
 from model import Problem, canonical, digest, now, text, short_id, csv_bytes, MAX_BUNDLE
 import operations_domain as domain
+import operations_workbook as workbooks
+import operations_supplier_statements as supplier_statements
 import forecast as forecasts
 import portfolio as portfolios
 import portfolio_installations as portfolio_installations
@@ -205,6 +207,7 @@ class Operations:
         result["workIntakes"] = [work_intake.summary(row) for row in work_intake.heads(work_intake.load(self, program_id))]
         result["reviews"] = [{**{key: row[key] for key in ("id", "version", "createdAt", "actor", "note", "businessSha256")},
                               "purpose": row.get("purpose"),
+                              **(supplier_statements.summary(row) if row.get("purpose") == supplier_statements.PURPOSE else {}),
                               **({"completionTranche": row["completion"]["clock"]["tranche"],
                                   "receiptId": row["completion"]["receipt"]["id"]} if row.get("purpose") == "TRANCHE_COMPLETION" else {}),
                               **(completion_corrections.summary(row) if row.get("purpose") == completion_corrections.PURPOSE else {}),
@@ -409,6 +412,17 @@ class Operations:
                 if result["unchanged"]:
                     return {"id": program_id, "version": expected, "action": command, "kind": kind,
                             "recordId": record_id, **extra_receipt}
+            elif command == supplier_statements.ACTION:
+                result = supplier_statements.save(self, context, data, actor, next_version, note)
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                extra_receipt = {"supplierStatement": result["supplierStatement"]}
+            elif command in workbooks.ACTIONS:
+                if command == "workbook.record-application" and not _within_transaction:
+                    domain.fail("Use the complete reviewed workbook application.")
+                result = workbooks.save(self, context, command, data, actor, next_version, note)
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                source_change = result.get("sourceChange")
+                extra_receipt = {"workbook": result["workbook"]}
             elif command in work_intake.ACTIONS:
                 result = work_intake.command(self, context, command, data, actor, next_version, note)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
@@ -583,7 +597,7 @@ class Operations:
             self.db.execute("UPDATE ops_programs SET version=?,updated_at=? WHERE id=?", (next_version, now(), program_id))
             self._event(program_id, next_version, {**body, "actor": actor, "note": note}, command, before, after, kind, record_id,
                         source_change=source_change)
-            if command in amendments.ACTIONS or command in award_terms.ACTIONS or command in ("funding.save", risks.ACTION, statement_profiles.ACTION):
+            if command == supplier_statements.ACTION or command in workbooks.ACTIONS or command in amendments.ACTIONS or command in award_terms.ACTIONS or command in ("funding.save", risks.ACTION, statement_profiles.ACTION):
                 # Reject atomically if these complete decisions would make the
                 # original case impossible to hand over through its native limit.
                 self.export(program_id)
@@ -731,6 +745,61 @@ class Operations:
             if domain.integer(expected_version, "Reviewed export case version", 1, 10000000) != context["program"]["version"]:
                 task_outcomes.fail("The case changed. Review its current version before exporting the complete case.", "OPERATIONS_CONFLICT", 409)
             return self.export(program_id, task_outcome_id=study_id, task_outcome_revision=revision)
+
+
+    def list_supplier_statements(self, program_id):
+        with self._snapshot():
+            return supplier_statements.listing(self, self._context(identifier(program_id, "operation")))
+    
+    def seed_supplier_statement(self, program_id, body):
+        with self._snapshot():
+            return supplier_statements.seed_document(self, self._context(identifier(program_id, "operation")), body)
+    
+    def inspect_supplier_statement_source(self, program_id, body):
+        with self._snapshot():
+            return supplier_statements.inspect_source(self, self._context(identifier(program_id, "operation")), body)
+    
+    def preview_supplier_statement(self, program_id, body):
+        with self._snapshot():
+            return supplier_statements.preview(self, self._context(identifier(program_id, "operation")), body)
+    
+    def supplier_statement(self, program_id, review_id):
+        with self._snapshot():
+            return supplier_statements.show(self, self._context(identifier(program_id, "operation")), review_id)
+    
+    def supplier_statement_request(self, program_id, body):
+        with self._snapshot():
+            return supplier_statements.request(self, self._context(identifier(program_id, "operation")), body, SCHEMA)
+    
+    def export_supplier_statement(self, program_id, review_id):
+        with self._snapshot():
+            return supplier_statements.export(self, identifier(program_id, "operation"), review_id)
+
+    def list_workbooks(self, program_id):
+        with self.workspace.mutex:
+            self._program(program_id)
+            return [workbooks.summary(row) for row in workbooks.saved(self, program_id)]
+
+    def work_book(self, program_id, book_id):
+        with self.workspace.mutex:
+            self._program(program_id)
+            return workbooks.selected(self, program_id, book_id)
+
+    def preview_workbook(self, program_id, body):
+        with self._snapshot():
+            context = self._context(program_id)
+            if context["program"]["version"] != body.get("expectedVersion"):
+                domain.fail("Reopen the current case before comparing the workbook.", "OPERATIONS_CONFLICT", 409)
+            return workbooks.preview(self, context, body)
+
+    def inspect_workbook_return(self, program_id, body):
+        with self._snapshot():
+            self._program(program_id)
+            return workbooks.inspect_return(self, program_id, body)
+
+    def apply_workbook(self, program_id, body):
+        return workbooks.apply(self, identifier(program_id, "operation"), body)
+
 
     def list_work_intakes(self, program_id):
         with self.workspace.mutex:
@@ -1764,7 +1833,8 @@ class Operations:
                 if existing[0] != digest(original_payload):
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
-        native_raw, funding_report = funding.unwrap_bundle(raw)
+        native_raw, supplier_selection = supplier_statements.unwrap_bundle(raw)
+        native_raw, funding_report = funding.unwrap_bundle(native_raw)
         native_raw, reconciliation_account = account_reconciliation.unwrap_bundle(native_raw)
         native_raw, cash_account = cash_accounts.unwrap_bundle(native_raw)
         native_raw, supplier_account = payables.unwrap_bundle(native_raw)
@@ -1900,6 +1970,9 @@ class Operations:
                                                         plan_for_version=selected_plan_at)
         funding.validate_import(context, events, files, saved_work_intakes, plan_for_version=selected_plan_at)
         selected_funding = funding.validate_received(funding_report, document, files)
+        workbooks.validate_import(context, reviews, events, files, selected_plan_at, saved_work_intakes)
+        supplier_statements.validate_import(context, reviews, events, files, selected_plan_at, saved_work_intakes)
+        supplier_statements.validate_received(supplier_selection, document, files)
         intake_refs = work_intake.refs(saved_work_intakes)
         if document.get("workIntakeRefs", []) != intake_refs:
             domain.fail("The current work/invoice intake selections differ from their complete saved editions.", "INTAKE_RECEIVING")
@@ -1983,6 +2056,8 @@ class Operations:
             pid, stamp = generated("operation"), now()
             origin = {"programId": source_program["id"], "planId": source_program["planId"],
                       "archiveSha256": hashlib.sha256(raw).hexdigest(), "importedAt": stamp, "importedBy": actor}
+            if any(review.get("purpose") == supplier_statements.PURPOSE for review in reviews) or source_program.get("origin", {}).get("supplierStatementPrograms"):
+                origin["supplierStatementPrograms"] = supplier_statements.retained_program_ancestry(source_program)
             if performance_report:
                 origin["performance"] = performance.received_selection(performance_report)
             if supplier_account:
@@ -2023,6 +2098,9 @@ class Operations:
             for value in saved_portfolios:
                 self.db.execute("INSERT INTO ops_portfolios VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             return {"id": pid, "version": source_program["version"], "action": "import", "planId": imported["id"], "mode": source_program["mode"],
+                    **({"selectedSupplierStatement": {"id": supplier_selection["review"]["id"],
+                        "sha256": supplier_selection["review"]["sha256"],
+                        "statementId": supplier_selection["review"]["supplierStatement"]["document"]["statementId"]}} if supplier_selection else {}),
                     **({"selectedInstallation": selected_installation} if selected_installation else {}),
                     **({"selectedTaskOutcomes": selected_task_outcomes} if selected_task_outcomes else {}),
                     **({"selectedFunding": selected_funding} if selected_funding else {}),

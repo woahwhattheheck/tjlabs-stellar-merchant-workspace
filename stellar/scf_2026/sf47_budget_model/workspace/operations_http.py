@@ -9,6 +9,8 @@ import json
 from model import Problem
 from operations import Operations, decoded
 import operations_calendar as calendar_model
+import operations_workbook_http as workbook_http
+from operations_supplier_statements_http import handle as supplier_statements_http
 import forecast_comparison
 import operations_agenda_http as agenda_http
 import operations_use_calendar as use_calendar
@@ -19,6 +21,10 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    workbook_http.register_static(static)
+    static.update({"/operations_supplier_statements.mjs": ("operations_supplier_statements.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_supplier_statements.css": ("operations_supplier_statements.css", "text/css; charset=utf-8"),
+                   "/SUPPLIER_STATEMENTS.md": ("SUPPLIER_STATEMENTS.md", "text/markdown; charset=utf-8")})
     static.update({"/portfolio-availability.mjs": ("portfolio-availability.mjs", "text/javascript; charset=utf-8"),
                    "/portfolio-availability-desk.mjs": ("portfolio-availability-desk.mjs", "text/javascript; charset=utf-8"),
                    "/portfolio-availability.css": ("portfolio-availability.css", "text/css; charset=utf-8"),
@@ -165,6 +171,10 @@ def read(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, query = store(handler), parse_qs(parsed.query)
+    if supplier_statements_http(handler, parsed, ops, "GET"):
+        return True
+    if workbook_http.handle(handler, parsed, ops, "GET"):
+        return True
     if risk_comparison.read_http(handler, parsed, ops):
         return True
     if forecast_comparison.read_http(handler, parsed, ops):
@@ -468,6 +478,10 @@ def write(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, path = store(handler), parsed.path
+    if supplier_statements_http(handler, parsed, ops, "POST"):
+        return True
+    if workbook_http.handle(handler, parsed, ops, "POST"):
+        return True
     if award_terms_http(handler, parsed, ops, "POST"):
         return True
     if commercial_http(handler, parsed, ops, "POST"):
