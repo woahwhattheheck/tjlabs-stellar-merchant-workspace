@@ -18,6 +18,11 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/forecast-workbook.mjs": ("forecast-workbook.mjs", "text/javascript; charset=utf-8"),
+                   "/forecast-workbook-desk.mjs": ("forecast-workbook-desk.mjs", "text/javascript; charset=utf-8"),
+                   "/forecast-workbook-host.mjs": ("forecast-workbook-host.mjs", "text/javascript; charset=utf-8"),
+                   "/forecast-workbook.css": ("forecast-workbook.css", "text/css; charset=utf-8"),
+                   "/FORECAST_WORKBOOK.md": ("FORECAST_WORKBOOK.md", "text/markdown; charset=utf-8")})
     static["/forecast-comparison.mjs"] = ("forecast-comparison.mjs", "text/javascript; charset=utf-8")
     static["/FORECAST_COMPARISON.md"] = ("FORECAST_COMPARISON.md", "text/markdown; charset=utf-8")
     static["/operations_lazy.mjs"] = ("operations_lazy.mjs", "text/javascript; charset=utf-8")
