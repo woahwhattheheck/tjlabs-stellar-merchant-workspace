@@ -9,6 +9,7 @@ import {preparePortfolioDataset,queryNativeDataset,nativePublishers,prepareNativ
 import {workspaceArchive,portfolioReport} from './exports.mjs';
 import {zipEntries} from './zip.mjs';
 import {mappingIdentity,projectDelivery,reconcileCustomer,compareProjectDeliveries,deliveryReport,reviewBaseline} from './delivery.mjs';
+import {createRecipientDelivery} from './recipient.mjs';
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:stable(value)).digest('hex');
 const idOf=(state,operationId)=>hash({workspaceId:state.workspaceId,operationId}).slice(0,24);
 const choose=(list,id,label)=>{const selected=list.find(x=>x.id===id);if(!selected)throw fault('OPENFEMA_SELECTION','Select a retained '+label+'.',404);return selected;};
@@ -217,8 +218,10 @@ export async function openOpenFemaWorkspace({directory,inboxDirectory,releaseRun
           {path:'mapping.json',bytes:jsonBytes(mapping)},{path:'mapping-review.json',bytes:jsonBytes(review)},
           {path:'portfolio.json',bytes:jsonBytes(selected.portfolio)},{path:'report.html',text:deliveryReport('delivery',delivered.manifest)},
           {path:'TARGET_SCHEMA.txt',text:mapping.target.evidence.content},
-          {path:'START_HERE.txt',text:'Open report.html for the complete mapped project register and source scope. projects-target.csv is the exact machine-import projection of the reviewed mapping; delivery.json binds every row to its original source. The four USD amount measures remain separate. Customer-source differences and pre-obligation records are retained through Data integration / Receive customer CSV. The original workspace ZIP carries every source response and all operation history.\n'}];
+          {path:'START_HERE.txt',text:'Open report.html for the complete mapped project register and source scope. Open recipient.html for the complete offline recipient workspace when recipient-availability.json is AVAILABLE; RECIPIENT_README.txt explains the complete return and any capacity-specific route. projects-target.csv is the exact machine-import projection of the reviewed mapping; delivery.json binds every row to its original source. The four USD amount measures remain separate. Customer-source differences and pre-obligation records are retained through Data integration / Receive customer CSV. The original workspace ZIP carries every source response and all operation history.\n'}];
         if(customerFile)entries.push({path:'customer-original.csv',text:customerFile.content},{path:'customer-reconciliation.json',bytes:jsonBytes(customerReconciliation)});
+        const recipient=createRecipientDelivery({deliveryId:'delivery-'+op.id,manifest:jsonBytes(delivered.manifest).toString('utf8'),targetCsv:delivered.targetCsv,originalCustomer:customerFile,createdAt:op.createdAt});
+        entries.push(...recipient.entries,{path:'recipient-availability.json',bytes:jsonBytes(recipient.availability)});
         const exported=await saveExport(op,{bytes:zipEntries(entries),name:'OpenFEMA_Project_Delivery_'+selected.record.id.slice(0,12)+'.zip',type:'application/zip',format:'zip',versionId:selected.record.id,table:'projects',kind:'project-delivery'});
         const record={id:'delivery-'+op.id,mappingId:mappingRecord.id,mappingSha256:mappingRecord.mappingSha256,mappingReviewId:review.id,
           portfolioId:selected.record.portfolioId,versionId:selected.record.id,editionId:selected.record.editionId,
