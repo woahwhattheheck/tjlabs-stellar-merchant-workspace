@@ -209,6 +209,30 @@ def register(subparsers, common):
     target.add_argument("--file", required=True)
     target.add_argument("--name", required=True)
     mutation(target)
+    target = command("settlements", "List original merchant settlement reviews and their correction editions", case=True, output=True)
+    target = command("settlement-show", "Read a complete saved settlement attribution and current original cash", case=True, output=True)
+    target.add_argument("--review", required=True)
+    target = command("settlement-export", "Export a complete saved settlement review and its original source", case=True)
+    target.add_argument("--review", required=True)
+    target.add_argument("--output", required=True)
+    for verb in ("settlement-preview", "settlement-receive"):
+        target = command(verb, "Review or receive original merchant settlements, explicit units, valuations and delivery attribution", case=True, output=True)
+        target.add_argument("--file", required=True, help="Complete original merchant accounting or period-close TAR archive")
+        target.add_argument("--name", required=verb == "settlement-receive", help="Name for this complete receiving review")
+        target.add_argument("--selections", required=verb == "settlement-receive", help="UTF-8 JSON array of explicitly reviewed original row decisions")
+        if verb == "settlement-receive":
+            mutation(target, version=True)
+            target.add_argument("--expected-preview-sha256", required=True, help="Hash from the full native preview with the same name and selections")
+        else:
+            target.add_argument("--expected-version", type=int, required=True)
+    for verb in ("settlement-correction-preview", "settlement-correct"):
+        target = command(verb, "Review or save a correction to the original settlement attribution and immutable cash history", case=True, output=True)
+        target.add_argument("--data", required=True, help="UTF-8 JSON correction object with original reviewId, rowId and expectedCashId")
+        if verb == "settlement-correct":
+            mutation(target, version=True)
+            target.add_argument("--expected-preview-sha256", required=True)
+        else:
+            target.add_argument("--expected-version", type=int, required=True)
     target = command("buyer-preview", "Review original SF88 Inbox or Node accounting source for this case", case=True, output=True)
     target.add_argument("--file", required=True, help="Original private SF88 Inbox handoff or Node Operation_Accounting.json")
     target.add_argument("--expected-version", type=int, required=True)
@@ -831,6 +855,47 @@ def operate(workspace, args):
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
                 "requestId": args.request_id, "note": args.note, "action": "statement.receive",
                 "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action == "settlements":
+        result = ops.settlements(args.case)
+    elif action == "settlement-show":
+        result = ops.settlement(args.case, args.review)
+    elif action == "settlement-export":
+        return {"reviewId": args.review, "output": publish(args.output, ops.export_settlement(args.case, args.review))}
+    elif action in ("settlement-preview", "settlement-receive"):
+        original = {"filename": Path(args.file).name,
+                    "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")}
+        if bool(args.name is not None) != bool(args.selections is not None):
+            raise Problem("Supply the review name and complete selections together.", 422, "INVALID_SETTLEMENT")
+        selected = {}
+        if args.selections is not None:
+            try:
+                selections = json.loads(read_bytes(args.selections, MAX_SOURCE))
+            except (UnicodeError, ValueError) as exc:
+                raise Problem("Settlement selections must be a complete UTF-8 JSON array.", 422, "INVALID_JSON") from exc
+            if not isinstance(selections, list):
+                raise Problem("Settlement selections must be an array of original row decisions.", 422, "INVALID_SETTLEMENT")
+            selected = {"name": args.name, "selections": selections}
+        if action == "settlement-preview":
+            result = ops.preview_settlement(args.case, {"expectedVersion": args.expected_version, **original, **selected})
+        else:
+            result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+                "requestId": args.request_id, "note": args.note, "action": "settlement.receive",
+                "data": {**original, **selected, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action in ("settlement-correction-preview", "settlement-correct"):
+        try:
+            correction = json.loads(read_bytes(args.data, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("The settlement correction must be a complete UTF-8 JSON object.", 422, "INVALID_JSON") from exc
+        if not isinstance(correction, dict) or any(key in correction for key in
+                ("expectedVersion", "expectedPreviewSha256", "requestId", "actor", "note", "action")):
+            raise Problem("Keep the original correction fields in --data and command metadata in its named options.",
+                          422, "INVALID_SETTLEMENT")
+        if action == "settlement-correction-preview":
+            result = ops.preview_settlement_correction(args.case, {"expectedVersion": args.expected_version, **correction})
+        else:
+            result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+                "requestId": args.request_id, "note": args.note, "action": "settlement.correct",
+                "data": {**correction, "expectedPreviewSha256": args.expected_preview_sha256}})
     elif action in ("buyer-preview", "buyer-receive"):
         original = {"filename": Path(args.file).name,
                     "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")}

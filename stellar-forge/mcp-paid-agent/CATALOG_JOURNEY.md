@@ -7,7 +7,8 @@ executes through the original host approval flow, reopens history and downloads 
 complete saved response.
 
 Use the existing configured native workspace and its real request parameters.
-The same command also supports an explicit service ID in a native registry.
+The same command also supports an explicit service ID in a native registry. It
+selects that service's original configured catalog before the first page.
 
 ## Configure the run
 
@@ -24,6 +25,7 @@ Create a local JSON configuration with these fields:
 | `input.query` | Actual declared query names with string or repeated string values |
 | `input.body` | Optional exact UTF-8 request text |
 | `discovery` | `{mode:"resources",arguments:{...}}` or `{mode:"search",arguments:{query:"...",...}}` |
+| `discovery.arguments.catalogId` | Optional configured source ID; it must match the selected service's original `catalogUrl` |
 | `sourceRevision` | Optional complete commit SHA identifying the selected host checkout |
 
 The input body uses the existing workspace's configured Content-Type. Request
@@ -42,7 +44,11 @@ trusted host setting; journey inputs only select concrete values.
 
 Discovery starts from offset zero or the initial search page. The default is an
 unfiltered resources walk with five rows per page. Supply actual filters when
-evaluating a specific provider view. The normal discovery client preserves complete
+evaluating a specific provider view. On a host with named catalogs, the command
+reads `bazaar_catalogs`, finds the source matching the selected service and pins
+its ID for every page. An explicit source ID must match that original URL.
+`run.json` retains the supplied configuration separately from `catalog` and the
+resolved `discoveryRequest`. The normal discovery client preserves complete
 normalized requests, provider pagination, local filtering counts and
 `partialResults` throughout the walk.
 
@@ -77,7 +83,8 @@ ID, so the original operator can find the exact pending request.
 The journey completes these connected steps:
 
 1. Open the maintained native request client, inspect the original workspace, and
-   bind the lifecycle to its resolved service ID when the host supplies one.
+   bind the lifecycle to its resolved service ID when the host supplies one, then
+   select its original catalog by the configured URL.
 2. Traverse every resources offset or search cursor, retaining each returned page
    and every HTTP/MCP description.
 3. Prepare the first matching later-page HTTP service whose original offer matches
@@ -95,13 +102,13 @@ that page's hash, byte count and original row index before preparation, and the
 retained preparation must preserve the same page hash and row index. The selected
 `requestUrl` and `pathBinding` retain the advertised URL, canonical route template,
 actual parameter values and concrete request URL. Preparation, reopened review
-and completed result must keep that same URL.
+and completed result must keep that same URL and original catalog ID/URL.
 
 ## Read the results
 
 | Output | Contents |
 | --- | --- |
-| `run.json` | Configuration, source hashes, HTTP/MCP/template coverage, selected-page and concrete-path identity, native lifecycle and measured phases |
+| `run.json` | Supplied configuration, resolved catalog and request, source hashes, HTTP/MCP/template coverage, selected-page and concrete-path identity, native lifecycle and measured phases |
 | `catalog-pages.ndjson` | Complete broker discovery responses with their original provider page hashes and pagination |
 | `resource-descriptions.ndjson` | Actual HTTP/MCP request declarations read from those handles |
 | `result.bin` | Complete verified saved native response |

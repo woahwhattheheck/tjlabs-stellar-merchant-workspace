@@ -487,6 +487,72 @@ function ownGrantLauncher(child) {
   return owned;
 }
 
+const SETTLEMENT_CASH_FIELDS = ['date','currency','decimals','unitSourceIds','unitNote','usdValue',
+  'valuationSourceIds','valuationNote','category','tranche','allocations'];
+const settlementRecordId = (value,prefix) => {
+  need(typeof value==='string'&&/^[a-z][a-z0-9-]{1,99}$/.test(value)&&value.startsWith(prefix+'-'),
+    'GRANT_INVALID_INPUT','Use the original retained '+prefix+' identity.');return value;
+};
+const SETTLEMENT_UNIT_FIELDS = ['currency','decimals','unitSourceIds','unitNote'];
+const SETTLEMENT_CORRECTION_FIELDS = ['reviewId','rowId','expectedCashId','decision','reason','cashId','cash','deploymentIds','workIds'];
+function settlementIds(value,prefix) {
+  need(Array.isArray(value)&&new Set(value).size===value.length,'GRANT_INVALID_INPUT','Use distinct original '+prefix+' IDs.');
+  for(const selected of value)settlementRecordId(selected,prefix);
+}
+function settlementCash(value,unitsOnly=false) {
+  exact(value,unitsOnly?SETTLEMENT_UNIT_FIELDS:SETTLEMENT_CASH_FIELDS,
+    [...SETTLEMENT_UNIT_FIELDS,...(unitsOnly?[]:['date'])]);
+  text(value.currency,'Original cash currency',40);integer(value.decimals,'Original asset decimals',0,12);
+  settlementIds(value.unitSourceIds,'source');text(value.unitNote,'Original unit source',4000);
+  if(unitsOnly)return;
+  completionDate(value.date);
+  if(value.usdValue!==undefined&&value.usdValue!==null) {
+    text(value.usdValue,'Exact USD valuation',80);text(value.valuationNote,'Original valuation explanation',4000);
+  }
+  if(value.category!==undefined)need(['INVOICE','CUSTOMER','REFUND','OTHER'].includes(value.category),'GRANT_INVALID_INPUT','Use the original merchant cash category.');
+  if(value.valuationSourceIds!==undefined)settlementIds(value.valuationSourceIds,'source');
+  if(value.valuationNote!==undefined)text(value.valuationNote,'Original valuation explanation',4000,true);
+  if(value.tranche!==undefined&&value.tranche!==null)integer(value.tranche,'Tranche attribution',0,3);
+  if(value.allocations!==undefined) {
+    need(Array.isArray(value.allocations),'GRANT_INVALID_INPUT','Cash allocations must be an array.');
+    for(const allocation of value.allocations) {
+      exact(allocation,['invoiceId','amountUsd'],['invoiceId','amountUsd']);
+      settlementRecordId(allocation.invoiceId,'invoice');text(allocation.amountUsd,'Exact allocated USD',80);
+    }
+  }
+}
+function settlementReview(value) {
+  exact(value,['name','selections'],['name','selections']);text(value.name,'Settlement review name',300);
+  need(Array.isArray(value.selections)&&value.selections.length<=5000,'GRANT_INVALID_INPUT','Select original settlement rows.');
+  for(const row of value.selections) {
+    exact(row,['rowId','decision','reason','cashId','cash','deploymentIds','workIds'],['rowId','decision','reason','deploymentIds','workIds']);
+    text(row.rowId,'Original settlement row',300);text(row.reason,'Settlement decision reason',4000);
+    need(['RECORD_CASH','LINK_CASH','OBSERVE','OMIT'].includes(row.decision),'GRANT_INVALID_INPUT','Choose an original settlement receiving decision.');
+    settlementIds(row.deploymentIds,'deployment');settlementIds(row.workIds,'work');
+    if(row.decision==='RECORD_CASH'||row.decision==='LINK_CASH')settlementCash(row.cash,row.decision==='LINK_CASH');
+    if(row.decision==='LINK_CASH')settlementRecordId(row.cashId,'cash');
+  }
+}
+function settlementCorrection(value) {
+  exact(value,SETTLEMENT_CORRECTION_FIELDS,['reviewId','rowId','expectedCashId','decision','reason']);
+  id(value.reviewId,'settlement');text(value.rowId,'Original settlement row',300);
+  if(value.expectedCashId!==null)settlementRecordId(value.expectedCashId,'cash');
+  need(['CORRECT_CASH','LINK_CASH','VOID_CASH','RELINK'].includes(value.decision),'GRANT_INVALID_INPUT','Choose an original settlement correction.');
+  text(value.reason,'Original correction reason',4000);
+  if(value.cash!==undefined)settlementCash(value.cash,value.decision==='LINK_CASH');
+  if(value.decision==='CORRECT_CASH')need(value.cash!==undefined,'GRANT_INVALID_INPUT','Supply the complete reviewed replacement cash fields.');
+  if(value.decision==='LINK_CASH'){settlementRecordId(value.cashId,'cash');need(value.cash!==undefined,'GRANT_INVALID_INPUT','Supply the original unit fields for the selected existing cash.');}
+  else need(value.cashId===undefined,'GRANT_INVALID_INPUT','An existing cash selection belongs to the link correction.');
+  if(value.deploymentIds!==undefined)settlementIds(value.deploymentIds,'deployment');
+  if(value.workIds!==undefined)settlementIds(value.workIds,'work');
+}
+function settlementArchive(bytes,filename) {
+  need(Buffer.isBuffer(bytes)&&bytes.length>0&&bytes.length<=GRANT_MAX_SOURCE_BYTES,'GRANT_INVALID_INPUT','Use the complete original accounting archive within the native source limit.');
+  text(filename,'Original accounting archive filename',240);
+  need(!/[\x00-\x1f\x7f\\/]/.test(filename)&&!['.','..'].includes(filename),'GRANT_INVALID_INPUT','Use the original plain archive filename.');
+  return {filename,contentBase64:bytes.toString('base64')};
+}
+
 export class GrantWorkspaceClient {
   #binding; #child = null; #connection = null; #opening = null; #closing = false; #close;
   #detaching = false; #detach = null; #pending = new Set();
@@ -666,6 +732,8 @@ export class GrantWorkspaceClient {
       engagements:() => '/api/operations/' + cid() + '/engagements',
       engagement:() => '/api/operations/' + cid() + '/engagements/' + id(args.reviewId, 'review'),
       review:() => '/api/operations/' + cid() + '/reviews/' + id(args.reviewId, 'review'),
+      settlements:() => '/api/operations/' + cid() + '/settlements',
+      settlement:() => '/api/operations/' + cid() + '/settlements/' + id(args.reviewId,'settlement'),
       'delivery-queue':() => '/api/operations/' + cid() + '/delivery-queue' +
         (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
       'installation-returns':() => '/api/operations/' + cid() + '/installation-returns',
@@ -1292,6 +1360,35 @@ export class GrantWorkspaceClient {
   completionExtension(caseId, body) { return this.command(caseId,completionCommandBody('extension',body)); }
   completionSubmit(caseId, body) { return this.command(caseId,completionCommandBody('submit',body)); }
   completionDecision(caseId, body) { return this.command(caseId,completionCommandBody('decision',body)); }
+  settlementPreview(caseId, expectedVersion, bytes, filename, selection) {
+    id(caseId,'operation');integer(expectedVersion,'Current case version');
+    if(selection!==undefined)settlementReview(selection);
+    return this.#request('/api/operations/'+caseId+'/settlement/preview',
+      {body:{expectedVersion,...settlementArchive(bytes,filename),...(selection??{})},mutation:false});
+  }
+  settlementReceive(caseId,bytes,body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','requestId','actor','note','filename','name','selections','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','filename','name','selections','expectedPreviewSha256']);
+    const {filename,name,selections,expectedPreviewSha256,...original}=body;
+    sha(expectedPreviewSha256);settlementReview({name,selections});
+    return this.command(caseId,{...original,action:'settlement.receive',
+      data:{...settlementArchive(bytes,filename),name,selections,expectedPreviewSha256}});
+  }
+  settlementCorrectionPreview(caseId,body) {
+    id(caseId,'operation');exact(body,['expectedVersion',...SETTLEMENT_CORRECTION_FIELDS],['expectedVersion',...SETTLEMENT_CORRECTION_FIELDS.slice(0,5)]);
+    const {expectedVersion,...correction}=body;integer(expectedVersion,'Current case version');settlementCorrection(correction);
+    return this.#request('/api/operations/'+caseId+'/settlement/correction-preview',{body,mutation:false});
+  }
+  settlementCorrect(caseId,body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','requestId','actor','note','expectedPreviewSha256',...SETTLEMENT_CORRECTION_FIELDS],
+      ['expectedVersion','requestId','actor','expectedPreviewSha256',...SETTLEMENT_CORRECTION_FIELDS.slice(0,5)]);
+    const {expectedVersion,requestId,actor,note,expectedPreviewSha256,...correction}=body;
+    sha(expectedPreviewSha256);settlementCorrection(correction);
+    return this.command(caseId,{expectedVersion,requestId,actor,...(note===undefined?{}:{note}),action:'settlement.correct',
+      data:{...correction,expectedPreviewSha256}});
+  }
   supportPreview(caseId, expectedVersion, bytes, filename) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
     return this.#request('/api/operations/' + caseId + '/support-preview',
@@ -1379,6 +1476,7 @@ export class GrantWorkspaceClient {
       'installation-return':() => '/api/operations/' + id(args.caseId,'operation') + '/installation-returns/' + id(args.reviewId,'review') + '/export.zip',
       commercial:() => commercialPath(args.caseId, args.billingId) + '/export.zip',
       source:() => '/api/operations/' + id(args.caseId, 'operation') + '/sources/' + id(args.sourceId, 'source'),
+      settlement:() => '/api/operations/' + id(args.caseId,'operation') + '/settlements/' + id(args.reviewId,'settlement') + '/export',
       'customer-use-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/customer-use-calendar/export.' +
         deliveryCalendarFormat(args.format ?? 'json') + customerUseQuery(args),
       'delivery-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-calendar/export.' +

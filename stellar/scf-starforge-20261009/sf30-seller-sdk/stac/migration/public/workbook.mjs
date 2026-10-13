@@ -14,7 +14,10 @@ const base64 = value => {
   return btoa(text);
 };
 function saveBytes(name, value, type) {
-  const url=URL.createObjectURL(new Blob([bytes(value)],{type}));
+  return saveRawBytes(name,bytes(value),type);
+}
+function saveRawBytes(name, raw, type) {
+  const url=URL.createObjectURL(new Blob([raw],{type}));
   const link=document.createElement("a");link.href=url;link.download=name;
   document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
@@ -31,7 +34,18 @@ export async function downloadMappingRegister(api, planId) {
   const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",raw)),x=>x.toString(16).padStart(2,"0")).join("");
   if(raw.length!==result.file.bytes || hash!==result.file.sha256)
     throw new Error("The complete mapping register differs from its native file descriptor.");
-  saveBytes("Mapping-Register.json",result.registerBase64,"application/json");
+  saveRawBytes("Mapping-Register.json",raw,"application/json");
+  return result;
+}
+export async function downloadMappingWorkbook(api, planId) {
+  const result=await api("mapping-workbook",{planId});
+  if(result.schema!=="starforge.gis-migration-mapping-workbook-export.v1"||result.planId!==planId)
+    throw new Error("The workbook export differs from the selected saved plan.");
+  const raw=bytes(result.bundleBase64);
+  const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",raw)),x=>x.toString(16).padStart(2,"0")).join("");
+  if(raw.length!==result.file.bytes||hash!==result.file.sha256)
+    throw new Error("The complete mapping workbook differs from its native file descriptor.");
+  saveRawBytes("Mapping-Workbook.zip",raw,"application/zip");
   return result;
 }
 function completeSource(selection) {
@@ -45,15 +59,17 @@ function completeSource(selection) {
 export async function mappingWorkbookPanel(context) {
   const {h,panel,field,btn,select,table,cell,pager,detail,api,stash,render,downloadText,draft,plans,onAdopt,run}=context;
   const root=panel(h("h3",{},"Customer mapping workbook"),
-    h("p",{},"Export a saved plan, review the white choice cells in its workbook, then return the complete revision here. Keep the original register beside the XLSX."));
+    h("p",{},"Export the complete workbook delivery, review its white choice cells, then return the complete revision here. Keep the original register beside the XLSX."));
   if(plans.length) {
     const planId=plans.some(row=>row.id===draft.workbookExportPlanId)?draft.workbookExportPlanId:plans[0].id;
     draft.workbookExportPlanId=planId;
     root.append(h("div",{class:"row"},
-      field("Saved plan for the register",select(planId,plans.map(row=>[row.id,row.title+" · "+row.id.slice(0,12)]),async value=>{
+      field("Saved plan for the workbook",select(planId,plans.map(row=>[row.id,row.title+" · "+row.id.slice(0,12)]),async value=>{
         draft.workbookExportPlanId=value;await stash();
       })),
+      btn("Export complete mapping workbook",()=>downloadMappingWorkbook(api,draft.workbookExportPlanId||planId),"primary"),
       btn("Export Mapping-Register.json",()=>downloadMappingRegister(api,draft.workbookExportPlanId||planId))));
+    root.append(h("p",{class:"muted"},"Open the downloaded ZIP for the editable XLSX, matching register, all declared original inputs and guide. The workbook is created by the installed operator."));
   }
   const selected=draft.workbookSelection ||= {};
   const reads=fileReads.get(draft)||{ids:{},pending:new Set()};

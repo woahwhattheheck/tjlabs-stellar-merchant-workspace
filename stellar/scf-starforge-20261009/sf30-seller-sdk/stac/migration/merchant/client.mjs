@@ -22,11 +22,11 @@ const NATIVE_COMMANDS = new Set(['state','records','document','draft','source-ro
   'capture','receive-capture','save-plan','review-plan','compare-captures','build-edition','build-projects',
   'export','receive','cartography.inventory','cartography.preview','cartography.operation',
   'cartography.publication','cartography.download','cartography.save-plan','cartography.publish',
-  'cartography.reopen','mapping-register','workbook-propose']);
+  'cartography.reopen','mapping-register','mapping-workbook','workbook-propose']);
 const READ_COMMANDS = new Set(['state','records','document','draft','source-rows','issues',
   'comparison-rows','history','operation','files','native-info','qgis-info','verify','native-reopen',
   'cartography.inventory','cartography.preview','cartography.operation','cartography.publication',
-  'cartography.download','cartography.reopen','mapping-register','workbook-propose']);
+  'cartography.download','cartography.reopen','mapping-register','mapping-workbook','workbook-propose']);
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 export const migrationFailure = (code, message, details) =>
   Object.assign(new Error(message), {code:'MIGRATION_' + code, ...(details === undefined ? {} : {details})});

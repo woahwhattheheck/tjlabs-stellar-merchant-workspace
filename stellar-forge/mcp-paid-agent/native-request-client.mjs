@@ -4,6 +4,8 @@ import { open, link, unlink } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { openMerchantFileClient } from '../mcp-merchant-operator/retained-download.mjs';
 import { openBazaarDiscoveryClient } from './discovery-client.mjs';
+import { normalizeCatalogDescription, normalizeCatalogUrl, catalogIdentifier } from './catalogs.mjs';
+import { normalizeDiscoveryArguments, discoveryRequestUrl } from './discovery.mjs';
 
 const TOOL = 'sf43_discover_review_and_pay';
 const RESULT = 'stellar-forge.mcp-native-buyer.v1';
@@ -33,6 +35,14 @@ function workspaceView(value) {
       .every(key => Number.isSafeInteger(value.limits[key]) && value.limits[key] > 0) &&
     actionList(value.actions),
   'NATIVE_REQUEST_WORKSPACE_INVALID', 'The running endpoint lacks its native request workspace description.');
+  if (value.catalogUrl !== undefined) {
+    try {
+      need(normalizeCatalogUrl(value.catalogUrl) === value.catalogUrl,'NATIVE_REQUEST_WORKSPACE_INVALID',
+        'The native service requires its original canonical catalog URL.');
+      if (value.catalogId !== undefined) catalogIdentifier(value.catalogId);
+      if (value.catalogLabel !== undefined) need(text(value.catalogLabel),'NATIVE_REQUEST_WORKSPACE_INVALID','The native catalog label is missing.');
+    } catch { fail('NATIVE_REQUEST_WORKSPACE_INVALID','The native service catalog identity is invalid.'); }
+  }
   if (value.route.routeTemplate !== undefined)
     need(text(value.route.routeTemplate), 'NATIVE_REQUEST_WORKSPACE_INVALID', 'The configured route template must be explicit text.');
   if (value.workspaceId !== undefined) workspaceId(value.workspaceId);
@@ -69,6 +79,15 @@ function prepared(value, intentId) {
       Number.isSafeInteger(selected.body.bytes) && selected.body.bytes >= 0 && digest(selected.body.sha256)) &&
     actionList(value.availableActions),
   'NATIVE_REQUEST_PREPARATION_INVALID', 'The native review lacks its original page, selected offer or retained body.');
+  if (plain(selected.source) && selected.source.catalog !== undefined) {
+    try {
+      const catalog = normalizeCatalogDescription(selected.source.catalog);
+      const request = normalizeDiscoveryArguments(selected.source.mode,selected.source.request);
+      need((request.catalogId === undefined || request.catalogId === catalog.id) &&
+        discoveryRequestUrl(catalog.url,selected.source.mode,request).href === selected.source.url,
+      'NATIVE_REQUEST_PREPARATION_INVALID','The retained page must identify its original catalog request.');
+    } catch { fail('NATIVE_REQUEST_PREPARATION_INVALID','The retained page catalog identity is invalid.'); }
+  }
   if (selected.pathBinding !== undefined) {
     const binding = selected.pathBinding;
     need(plain(binding) && (binding.routeTemplate === null || text(binding.routeTemplate)) &&

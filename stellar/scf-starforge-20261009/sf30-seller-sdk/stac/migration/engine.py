@@ -19,7 +19,7 @@ READ_COMMANDS = frozenset(("state", "records", "document", "draft", "source-rows
                          "issues", "history", "operation", "files", "native-info", "comparison-rows",
                          "cartography.inventory", "cartography.preview", "cartography.operation",
                          "cartography.publication", "cartography.download", "qgis-info",
-                         "mapping-register", "workbook-propose"))
+                         "mapping-register", "mapping-workbook", "workbook-propose"))
 WRITE_COMMANDS = frozenset(("capture", "receive-capture", "save-plan", "review-plan",
                            "build-edition", "build-projects", "export", "receive", "compare-captures",
                            "cartography.save-plan", "cartography.publish", "cartography.reopen"))
@@ -68,6 +68,9 @@ def execute(workspace_path, command, payload, *, progress=None, exports_root=Non
         return workspace.document(payload["kind"], payload["id"])
     if command == "draft":
         return workspace.draft(payload["captureId"], payload.get("predecessorPlanId"))
+    if command == "mapping-workbook":
+        from migration import workbook_export
+        return workbook_export.export(workspace, payload["planId"])
     if command in ("mapping-register", "workbook-propose"):
         from migration import workbook
         return workbook.export(workspace, payload["planId"]) if command == "mapping-register" else workbook.propose(workspace, payload["source"])

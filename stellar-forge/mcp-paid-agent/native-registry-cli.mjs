@@ -27,7 +27,7 @@ async function description(path) {
   try { value = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)); }
   catch { fail('MCP_NATIVE_REGISTRY_DESCRIPTION_INVALID'); }
   if (!value || typeof value !== 'object' || Array.isArray(value) ||
-    Object.keys(value).some(key => !['schema','defaultWorkspaceId','workspaces'].includes(key)))
+    Object.keys(value).some(key => !['schema','defaultWorkspaceId','workspaces','catalogs'].includes(key)))
     fail('MCP_NATIVE_REGISTRY_DESCRIPTION_INVALID');
   return value;
 }
@@ -39,7 +39,8 @@ async function main(args) {
       'inspect --dir EXISTING_PRIVATE_ABSOLUTE_DIR\n' +
       'serve --dir EXISTING_PRIVATE_ABSOLUTE_DIR [--port N]\n\n' +
       'The description names a defaultWorkspaceId and 1–16 workspaces, each with id, label and\n' +
-      'its existing absolute native directory. They must use the same original Bazaar URL.\n' +
+      'its existing absolute native directory. Each service retains its original catalog URL.\n' +
+      'Optional catalogs assigns readable labels and IDs to that exact set of original source URLs.\n' +
       'Serve requires the existing MCP_ACCESS_TOKEN or MCP_OAUTH_CONFIG. Original SF81\n' +
       'approval uses the controlling terminal or SF81_APPROVAL_SOCKET and SF81_APPROVAL_TOKEN.\n' +
       'Use the authenticated console or native-requests SDK for lifecycle calls while this host runs.\n' +
@@ -57,13 +58,14 @@ async function main(args) {
   try {
     server = await startMcpWorkspace({environment:{...process.env,...registry.environment,
       MCP_OPERATOR_MODULE:undefined,MCP_PORT:port},
-      operatorAdapter:{agentCommerce:(request,context) => registry.call(request,context),
+      operatorAdapter:{discoveryCatalogs:registry.discoveryCatalogs,
+        agentCommerce:(request,context) => registry.call(request,context),
         approve:async () => false,
         signPayment:async () => { fail('MCP_NATIVE_TOOL_REQUIRED'); },
         close:() => registry.close()}});
     print({schema:'stellar-forge.mcp-native-registry-startup.v1',
       status:'NATIVE_MCP_REGISTRY_LISTENING',url:server.address + '/mcp',consoleUrl:server.consoleUrl,
-      defaultWorkspaceId:registry.manifest.defaultWorkspaceId,
+      defaultWorkspaceId:registry.manifest.defaultWorkspaceId,discoveryCatalogs:registry.discoveryCatalogs,
       workspaces:registry.manifest.workspaces.map(({id,label}) => ({workspaceId:id,workspaceLabel:label})),
       tool:'sf43_discover_review_and_pay'});
   } catch (error) {

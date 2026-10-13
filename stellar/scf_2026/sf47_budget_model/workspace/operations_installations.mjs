@@ -84,7 +84,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     if(!available())return;
     root.setAttribute('aria-busy',String(hostBusy||busy||!!session.inflight));
     for(const el of root.querySelectorAll('button,input,select,textarea')){
-      const isInput=el.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern]');
+      const isInput=el.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern],[data-commissioning-field],[data-commissioning-ui],[data-commissioning-decision],[data-commissioning-review-select],[data-commissioning-output],[data-commissioning-call]');
       const save=el.dataset.installationAction==='save';
       el.disabled=el.dataset.installationFixed==='true'||hostBusy||
         (save&&(!preview||!same(previewDraft?.document,draft()?.document)||previewDraft?.expectedRevision!==draft()?.expectedRevision))||

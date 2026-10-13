@@ -1,5 +1,7 @@
 # Customer quotations and realized Research delivery
 
+[Transfer a complete editable case](CASE_TRANSFER.md) · [Operate and receive a complete quotation programme](PROGRAMME.md)
+
 This workspace connects a customer quotation to the actual Research brief, frozen delivery, Stellar publication and receiving history. The quotation editor is the original SF74 commercial desk, including its saved pricing sources, customer responses, implementation planning and portable receiving. Supplier costs and pricing versions come from the original SF97 workspace. The selected merchant supplies the compiled checkout terms for the paid delivery.
 
 Open **Customer quotations** from the Research workspace. The page uses the same private listener, token, original dossier directory and saved history as Customer updates and Paid delivery.

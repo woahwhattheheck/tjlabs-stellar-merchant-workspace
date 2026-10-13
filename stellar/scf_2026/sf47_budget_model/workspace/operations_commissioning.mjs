@@ -161,9 +161,9 @@ export function commissioningFields(documentValue,context,ui={}){
       decisionFields('FUNDING',row.fundingId,basis?.review||row.review,ui,prepared&&basis?.canApprove,basis?.reviewFindings||[])+
       button('Remove this commissioning price row','remove-funding','data-commissioning-index="'+index+'"')+'</details>';
   }
-  html+='<h4>Aggregate price budget</h4>'+
+  html+='<h4>Active funding-group aggregate</h4>'+
     (view?'<p>Expected '+esc(money(view.budget.expectedAtomic))+' · selected group caps '+esc(money(view.budget.selectedGroupBudgetsAtomic))+
-      ' · aggregate cap '+esc(money(value.aggregateBudgetAtomic))+' · original recorded settled '+esc(money(view.budget.recordedSettledAtomic))+' atomic units.</p>':'')+
+      ' · aggregate cap '+esc(money(value.aggregateBudgetAtomic))+' · original settled amount for active groups '+esc(money(view.budget.recordedSettledAtomic))+' atomic units.</p>':'')+
     decisionFields('BUDGET','budget',view?.budget.review||value.budgetReview,ui,prepared&&view?.budget.canApprove,view?.budget.findings||[]);
   const usePage=pageRows('uses',value.uses,ui);
   html+='<h4>Dated use, original request and full result</h4>'+usePage.html;
@@ -276,7 +276,7 @@ export function commissioningReport(view){
     '<p><strong>'+view.summary.acceptedOutputs+'</strong> current useful-output acceptances</p>'+
     '<p><strong>'+view.summary.reviewedFundingGroups+'</strong> current funding reviews</p></div>'+
     '<p>Selected '+esc(view.payment.network)+' / '+esc(view.payment.asset)+' · recipient '+esc(view.payment.recipient)+'</p>'+
-    table(['Expected atomic amount','Group budgets','Aggregate budget','Original recorded settled amount','Budget review'],[[
+    table(['Active-group expected amount','Active-group budgets','Aggregate budget','Active-group settled amount','Budget review'],[[
       esc(money(view.budget.expectedAtomic)),esc(money(view.budget.selectedGroupBudgetsAtomic)),esc(money(view.budget.aggregateBudgetAtomic)),
       esc(money(view.budget.recordedSettledAtomic)),esc(reviewStatus(view.budget.review))]])+
     table(['Dated use / buyer','Original cycles','Plan decision','Output decision','Original funding'],view.uses.map(row=>[
