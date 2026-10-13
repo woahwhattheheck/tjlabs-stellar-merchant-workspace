@@ -1,3 +1,4 @@
+import {renderIssuerProgrammes} from './grant-issuer-workspace.mjs';
 // MIT. Handover controls for the original submission editor and draft store.
 import {ANSWERS,REQUIREMENTS,MAX_BYTES,retainVersion} from './grant-submission-core.mjs';
 import {emptyHandover,emptySelection,handoverOf,EVIDENCE_KINDS,RETURN_KINDS,canonical,editionFileDescriptors} from './grant-handover-core.mjs';
@@ -88,6 +89,7 @@ export function renderHandover(root,context) {
   const actions=node('div',undefined,'toolbar-row');
   actions.append(button('Save version',save),button('Download whole editable draft',exportFull),button('Open whole draft',openFull));
   root.append(actions);
+  renderIssuerProgrammes(root,context);
 
   const sources=node('section',undefined,'card');sources.append(node('h3','Original reviewer files'),
     node('p','The original application, source index, budget and product-and-finance companion stay together. File digests identify received bytes; each descriptor says which identities were declared by the original index.'));

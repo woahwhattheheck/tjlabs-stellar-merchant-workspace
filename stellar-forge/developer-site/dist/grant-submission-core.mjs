@@ -233,7 +233,7 @@ export function importFormMap(draft,map){
 export function exportFormMap(draft){validateDraft(draft);return {schema:'stellar-forge.grant-form-map.v1',form:clone(draft.form),fields:clone(draft.fields)};}
 
 /** Keep native plan bytes once per draft; versions retain the selected review. */
-export function receivePlanningSource(draft,source,now=new Date().toISOString()){
+export function receivePlanningSource(draft,source,now=new Date().toISOString(),{revision=source.document.currentRevision}={}){
   validatePlanSources([source]);
   const result=retainVersion(draft,'Before receiving native planning edition',now);
   result.planSources??=[];
@@ -242,6 +242,6 @@ export function receivePlanningSource(draft,source,now=new Date().toISOString())
     need(retained.base64===source.base64&&JSON.stringify(retained.document)===JSON.stringify(source.document),
       'Retain the original complete planning edition.');
   }else result.planSources.push(clone(source));
-  selectPlanningRevision(result,(retained||source).sha256,(retained||source).document.currentRevision,{now});
+  selectPlanningRevision(result,(retained||source).sha256,revision,{now});
   return validateDraft(result);
 }
