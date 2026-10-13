@@ -27,6 +27,7 @@ REPOSITORY = "woahwhattheheck/tjlabs-stellar-merchant-workspace"
 COMMIT = "4655211dc5feab86553a1425e71950ad8eb4d0ca"
 PACKET_BLOB = "58d67bf48531ab38906a9e06f736c040fd16c4b7"
 PROGRAMME_BLOB = "d4b13be858a17e0f6b24d7df45343ef3011cb7e8"
+PROGRAMME_SOURCE_URL = "https://raw.githubusercontent.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/0b5fcaa696edfebf5c20ead453b2d380916b84df/operations/delaware-public-reference-814b-20261013/delaware_public_reference.py"
 PREFIX = "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/"
 REQUEST = "https://data.delaware.gov/resource/8z8z-di7f.csv?$limit=10000&$order=%3Aid"
 ROLES = ("csv", "metadata", "count", "header", "acceptance")
@@ -201,13 +202,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-packet", required=True)
     parser.add_argument("--programme", required=True)
-    parser.add_argument("--programme-source-url", required=True, help="Immutable published raw Git URL for the exact programme")
+    parser.add_argument("--programme-source-url", default=PROGRAMME_SOURCE_URL, help="Exact retained immutable programme URL")
     parser.add_argument("--sources", required=True, help="Actual retained-file selection JSON, with full hashes and stable Notion identities")
     parser.add_argument("--work-directory", required=True)
     parser.add_argument("--prepare-only", action="store_true")
     parser.add_argument("--date-format", help="Explicitly reviewed format of the actual received CSV date strings")
     parser.add_argument("--retry-terminal", action="store_true")
     args = parser.parse_args()
+    need(args.programme_source_url == PROGRAMME_SOURCE_URL, "Reviewed immutable programme source URL changed")
     root = folder(args.work_directory)
     lock_fd = os.open(root / "original-controller.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
     child = None

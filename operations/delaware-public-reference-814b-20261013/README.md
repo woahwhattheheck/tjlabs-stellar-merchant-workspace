@@ -84,7 +84,7 @@ The receiver creates the original materialization receipt once, after those byte
 
 ## Run the original preparation and course
 
-Keep `run-reference.py`, `delaware_public_reference.py`, `source-packet.json` and this guide together. The programme source URL must name the immutable published commit and exact complete programme used by the receiver. Select one original private work directory. Do not run competing receivers against it.
+Keep `run-reference.py`, `delaware_public_reference.py`, `source-packet.json` and this guide together. The receiver pins the exact complete programme blob and its [immutable source URL](https://raw.githubusercontent.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/0b5fcaa696edfebf5c20ead453b2d380916b84df/operations/delaware-public-reference-814b-20261013/delaware_public_reference.py). Its optional --programme-source-url must equal that retained URL; omission selects the same pin. Set CSE_PROGRAMME_IMMUTABLE_RAW_URL to that exact linked URL if using the explicit commands below. Select one original private work directory. Do not run competing receivers against it.
 
 First receive the source and inspect actual CSV date spelling:
 
