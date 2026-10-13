@@ -66,6 +66,19 @@ export function validateForecastDraftInputs(value){
       optional(row.timing.deliveryBusinessDays)&&array(row.timing,'receiptConditions')&&
       row.timing.receiptConditions.every(x=>object(x)&&strings(x,['receiptId','condition'])),'Retain complete original event-dependent terms.');
   }
+  if(Object.hasOwn(value,'customerFunding')){
+    const f=value.customerFunding,customerIds=new Set(value.commercial.map(row=>row.id));
+    check(object(f)&&Object.keys(f).every(k=>['enabled','opening','note'].includes(k))&&typeof f.enabled==='boolean'&&typeof f.note==='string'&&f.note.length<=8000&&
+      Array.isArray(f.opening)&&f.opening.length<=50,'Retain the complete customer funding policy and opening attributions.');
+    const seen=new Set();
+    for(const row of f.opening){
+      check(object(row)&&Object.keys(row).every(k=>['commercialId','amountUsd','basis','cashIds','sourceIds','note'].includes(k))&&
+        typeof row.commercialId==='string'&&customerIds.has(row.commercialId)&&!seen.has(row.commercialId)&&optional(row.amountUsd)&&
+        ['NOT_ENTERED','OBSERVED_BALANCE','PLANNING_ASSUMPTION'].includes(row.basis)&&ids(row,'cashIds')&&ids(row,'sourceIds')&&
+        typeof row.note==='string'&&row.note.length<=4000,'Retain each original customer attribution, partial amount, basis and evidence.');
+      seen.add(row.commercialId);
+    }
+  }
   if(value.fxRates!==undefined){
     check(array(value,'fxRates')&&value.fxRates.length<=5000,'Retain the original exchange-rate drafts.');
     for(const row of value.fxRates)check(object(row)&&strings(row,['id','baseCurrency','quoteCurrency','rate','observationDate',

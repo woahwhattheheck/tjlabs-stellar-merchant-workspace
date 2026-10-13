@@ -16,6 +16,7 @@ import zipfile
 
 import operations_domain as domain
 import forecast_currency as currency
+import forecast_customer_funding as customer_funding
 from model import canonical, csv_bytes, digest, short_id, text
 
 SCHEMA = "stellar-forge.sf47-operating-forecast.v1"
@@ -79,7 +80,7 @@ def source_identity(context):
 
 def normalize(context, raw):
     raw = obj(deepcopy(raw), "Forecast", ("name", "asOfDate", "calendarStart", "openingCash",
-              "packageOverrides", "invoiceOverrides", "grantReceipts", "commercial", "capacity", "note", "fxRates"))
+              "packageOverrides", "invoiceOverrides", "grantReceipts", "commercial", "capacity", "note", "fxRates", "customerFunding"))
     as_of = domain.calendar(raw.get("asOfDate"), "Forecast as-of date")
     fx_rates = currency.normalize_rates(context, raw.get("fxRates", []), as_of)
     rate_map = {row["id"]: row for row in fx_rates}
@@ -262,7 +263,9 @@ def normalize(context, raw):
             "calendarStart": anchor, "openingCash": opening, "packageOverrides": packages,
             "invoiceOverrides": invoice_overrides, "grantReceipts": grants, "commercial": commercial,
             "capacity": capacity, "note": text(raw.get("note", ""), "Forecast decisions / assumptions", 12000),
-            **({"fxRates": fx_rates} if "fxRates" in raw or any("nativePricing" in row for row in commercial) else {})}
+            **({"fxRates": fx_rates} if "fxRates" in raw or any("nativePricing" in row for row in commercial) else {}),
+            **({"customerFunding": customer_funding.normalize(context, raw["customerFunding"], commercial, opening, as_of)}
+               if "customerFunding" in raw else {})}
 
 
 def split_amount(amount, weights, places=2):
@@ -571,7 +574,7 @@ def build(context, inputs):
             day["knownCommercialBalanceUsd"] = day["commercialBalanceUsd"]
             if not currency_coverage["datedCashComplete"]:
                 day["commercialDeltaUsd"] = day["commercialBalanceUsd"] = None
-    return {"schema": SCHEMA + ".report", "engineVersion": ENGINE_VERSION, "mode": context["program"]["mode"],
+    report = {"schema": SCHEMA + ".report", "engineVersion": ENGINE_VERSION, "mode": context["program"]["mode"],
         "asOfDate": as_of, "firstForecastDate": first, "lastForecastDate": end,
         "basis": "Current retained record states; observed cash/work cut off at the as-of date. Opening balance is end-of-day. Forecast dates begin the next day.",
         "actual": {"cash": actual["cash"], "applicationStage": actual["applicationStage"],
@@ -594,6 +597,9 @@ def build(context, inputs):
         "events": events, "days": days, "workDays": daily_work, "issues": issues,
         **({"eventTiming": event_timing(commercial_rows, native_mode)} if any("timing" in row for row in commercial_rows) else {}),
         **({"currencyValuation": currency_coverage} if native_mode else {})}
+    if "customerFunding" in inputs:
+        report["customerFunding"] = customer_funding.build(report, inputs["customerFunding"])
+    return report
 
 
 def event_timing(commercial, native_mode=False):
@@ -709,6 +715,7 @@ def export(value):
             "appliedObservedUsd", "remainingUsd", "date"], [{"projectId": row["id"], **receipt}
             for row in report["eventTiming"]["projects"] for receipt in row["receipts"]])
     files.update(currency.export_files(report))
+    files.update(customer_funding.export_files(report))
     manifest = {"schema": SCHEMA + ".bundle", "forecastId": value["id"], "forecastSha256": value["sha256"],
                 "files": [{"path": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()} for name, raw in sorted(files.items())]}
     files["MANIFEST.json"] = (canonical(manifest) + "\n").encode()

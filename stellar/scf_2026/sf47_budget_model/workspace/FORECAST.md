@@ -209,3 +209,8 @@ To activate the dated work:
 An allocation keeps the whole undated task, including its effort, assignments and source terms. It reports `EVENT_RELEASE_DATE_REQUIRED` while the original release remains unresolved. A deadline outside the selected horizon needs a longer calendar; a manually entered due date later than the original relative deadline is returned for correction. Existing saved allocations stay available alongside that unfinished date decision.
 
 The complete forecast ZIP adds `event-dependent-timing.json`, `event-dependent-work.csv` and `event-dependent-receipts.csv` only when this timing mode is used. Complete case export and import retain these inputs through the original saved forecasts and snapshots. Ordinary dated rows omit `timing`; their normalized values, calculations and saved identities are unchanged.
+
+
+## Protect customer delivery funding
+
+The optional [Customer funding guide](./FORECAST_CUSTOMER_FUNDING.md) explains explicit unspent opening attribution, included invoices counted once, unknown-versus-zero values, full protected/unreserved daily results, and original saved working-file/workbook/case receiving. Use the existing Forecast controls, preview and native save; no separate account or payment is created. Older saved Forecasts with no optional input retain their original calculations and identities.
