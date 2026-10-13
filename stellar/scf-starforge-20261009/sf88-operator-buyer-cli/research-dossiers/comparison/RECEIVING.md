@@ -10,6 +10,10 @@ The full change includes the comparison contracts, immutable model, original-sto
 
 Use the installed Research entry for the actual browser. The same listener serves the original application and comparison assets. Keep its configured private source store and token with its existing owner. Do not start a second listener on an occupied original operation.
 
+## Run the complete native and browser continuation
+
+Use [FOREGROUND_RECEIVING.md](FOREGROUND_RECEIVING.md) for one owned native-to-browser course over the complete original source selection. The launcher receives the same backend, starts the original authenticated Research listeners, uses a persistent browser profile, operates historical protocol review and original downloads, recovers prepared requests, exports the complete dossier and continues a named edit in the received project. It retains the original operation, exact source copy, stable browser origins and first completed output generation through interruption. Supply actual installed runtime paths and follow the guide's complete desktop/narrow and every-file inspection before recording rendered readiness.
+
 ## Run the original-store receiving controller
 
 From the complete source checkout, run:
