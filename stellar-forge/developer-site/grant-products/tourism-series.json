@@ -15,8 +15,15 @@
           "bytes": 4977,
           "sha256": "79a7c74a3c30fda3c23fb3e7cc11df3cd01f116301f7c454e94981df59fd5542",
           "git_blob": "894802a271496945cdb6be4d2ecfc4b5bc1fab12"
+        },
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 5887,
+          "sha256": "a904a5dd2bb1d080c794463142d5fc792310ec6c95e24b30081f8414edf919c8",
+          "git_blob": "6b0161fff4500b937b4c3c22516a7600a76fa996"
         }
-      ]
+      ],
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8"
     },
     {
       "id": "tourism-series-original-source",
@@ -30,8 +37,15 @@
           "bytes": 4304,
           "sha256": "810916a4328a7b944d3d9525f7a919274cefb91adf923a53e53f8412fdd40966",
           "git_blob": "d1fde6312819f7794d2f9fd743efb7a78ade9ee0"
+        },
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 7676,
+          "sha256": "b78007cbbfb1826a5c9abe333a941324748dfeaf9125181f4d688bd21316f1e8",
+          "git_blob": "7cae1ecf88ab853f00fe30e062fa08b7abb95d23"
         }
-      ]
+      ],
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8"
     },
     {
       "id": "tourism-series-engine",
@@ -60,8 +74,15 @@
           "bytes": 10910,
           "sha256": "9c801c2cc48af2f93bf9e525fa115c0e4aefd76cd543f804650a5e6d82675189",
           "git_blob": "6a2f1dee9d1e9fece8bf19f2a7c29730842d4182"
+        },
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 12942,
+          "sha256": "e6ffe5b3d22ae3cf97704cb4bff5dd4a7de64ff18fac23db8f8758f5a44f642f",
+          "git_blob": "04c445bed21bb824ca8302e8de0196a340b5b90c"
         }
-      ]
+      ],
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8"
     },
     {
       "id": "tourism-series-browser",
@@ -90,8 +111,15 @@
           "bytes": 9809,
           "sha256": "78aed8fed2c3ed94e3025dbe5a63bc2b35af96bc6cc1bc7dec7f1c7de250817d",
           "git_blob": "45870547995d85f247b5f1314496849ff4cc98ea"
+        },
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 10006,
+          "sha256": "9f2163ce863e5470c16bbd272fd69b61c2b4ecc0d95958da8fa97b296171f618",
+          "git_blob": "8ca5a1b8ab265a763eb778f24be0bd74fb26d6e5"
         }
-      ]
+      ],
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8"
     },
     {
       "id": "tourism-series-builder",
@@ -105,8 +133,15 @@
           "bytes": 5869,
           "sha256": "2000bdfece4bed1b2ae3f9880fc32fd0b245f3d1ef0ce70dab349683a2c9718b",
           "git_blob": "6681d7e02a89dad389ce9165847f89bae9ab62ba"
+        },
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 6069,
+          "sha256": "51e494bf9172bd0b06d26b0e03cd5f3f80f243efc699e2fe2ae44af50167a589",
+          "git_blob": "5e9baea8b66e599996954751ecd0c3bb6ba99184"
         }
-      ]
+      ],
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8"
     },
     {
       "id": "tourism-series-api",
@@ -285,8 +320,15 @@
           "bytes": 3496,
           "sha256": "6748025534e0c33b8775af2cfc40ade56b46d4cc19fc8145c2d7d2d8fbc92dd7",
           "git_blob": "b5d8a1871eee5092e6c3b74880ae189dc6d92cd4"
+        },
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 4906,
+          "sha256": "bedf8ede95f57194019b4cffb4b5eb2e61216295aa6eae7dfb516796d4f2e175",
+          "git_blob": "3b573926c975724789fc3d9409f8154a4ec6daad"
         }
-      ]
+      ],
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8"
     },
     {
       "id": "tourism-series-distribution",
@@ -300,8 +342,15 @@
           "bytes": 22074,
           "sha256": "0b95101ab1e9dce035b3626a9e10c3aeb1108188f603e6c56a48060f1a614a36",
           "git_blob": "dd6459a3c425de3d90a39157ee539dbba1cd49c4"
+        },
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 22664,
+          "sha256": "67724a2a56c5adbee864a52ecc44d423d884023ce5881b32494339f143a4a546",
+          "git_blob": "8f6794af2d2e3766f2e73ddc4829ba890b4ad4a0"
         }
-      ]
+      ],
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8"
     },
     {
       "id": "tourism-series-standalone",
@@ -315,6 +364,217 @@
           "bytes": 383106,
           "sha256": "41e9e4ab543af4b6c55175da051fc642000343e79536831797baf8ef76a4f3e0",
           "git_blob": "a1b0410e97d99ab36f5a02082353cc92fb952de1"
+        },
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 468515,
+          "sha256": "366c0cf9f74829979cedbe263cd743be4c316628ffd074b93a9ef519647c54e6",
+          "git_blob": "d9a9efaa8001808a1b71f3336590b1a72dcd482b"
+        }
+      ],
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8"
+    },
+    {
+      "id": "tourism-series-agent-client",
+      "label": "Complete original workspace agent client and durable request replay",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/agent-client.mjs",
+      "required": false,
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+      "editions": [
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 15335,
+          "sha256": "9fd3768196881aa201b12567653cd6eb896556151df9792313f680979d11abed",
+          "git_blob": "ebf5f0920454edd3c50bc0eb7844ab730936aac4"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-agent-contracts",
+      "label": "Twenty typed source-owned tourism tool contracts",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/agent-tools.mjs",
+      "required": false,
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+      "editions": [
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 9235,
+          "sha256": "259298f6ee680d09093601d073cb38f230a27a598cb15170e5ee4a5fe1abebcd",
+          "git_blob": "08a7dcc36f12581562a63128b2f1f0b7a392fb91"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-agent-adapter",
+      "label": "Original merchant host and retained-file transport adapter",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/agent-merchant.mjs",
+      "required": false,
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+      "editions": [
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 4440,
+          "sha256": "bdc7f8af2736886d88b7f5b4ad374548f0c4143affd78b9234ca72df676fe7bf",
+          "git_blob": "657b3b1a253bf707f6043eb6c19e26e217750830"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-agent-provider",
+      "label": "Lazy provider and original runtime task lifecycle",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/merchant-provider.mjs",
+      "required": false,
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+      "editions": [
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 1923,
+          "sha256": "dda5a8751835406525b372ef882907b9641757d8eb769c1237bf2acfdabf3723",
+          "git_blob": "c5383dce9ff10e8db88ef8706e5c72467ba78a42"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-agent-setup",
+      "label": "Source-owned original merchant configuration and setup",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/agent-setup.mjs",
+      "required": false,
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+      "editions": [
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 5576,
+          "sha256": "d68dcc9d149fce43dadd7ca963187c51df9ffa7e01886687a8a3032603f028d8",
+          "git_blob": "dc38518479f585b9df62ac5b7174e7b10066e43e"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-agent-types",
+      "label": "Complete typed workspace, operation and download contracts",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/agent-client.d.mts",
+      "required": false,
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+      "editions": [
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 5521,
+          "sha256": "06f611a325a076623839229f557f06c18e871f0b92690219d51bf3aa46840755",
+          "git_blob": "30a72f5e50643d8afaf36a72881079b0f730bde8"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-agent-io",
+      "label": "Original complete inputs and operation receipt custody",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/agent-io.mjs",
+      "required": false,
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+      "editions": [
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 3656,
+          "sha256": "28111478d75b1c65cb9b8c4e4950d12a9d9a2f9427ae068998a142b20e75ce1e",
+          "git_blob": "2c20e3dfe2ccd723d92ed1d3e2dbfd193b5e7126"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-agent-guide",
+      "label": "Whole installed agent operating and source selection guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/AGENT_OPERATING.md",
+      "required": false,
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+      "editions": [
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 10172,
+          "sha256": "66984686f9f0f8a76c9a524966363175d7528d37645b727ec86af72b39016ac0",
+          "git_blob": "341324743d22832583ac3654dd36d1498d2715ea"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-agent-course",
+      "label": "Same-programme full native agent receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/agent-receiving.mjs",
+      "required": false,
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+      "editions": [
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 15961,
+          "sha256": "bdc8064e500200f35e85eee7a282738fd7a07e9fdbea77261feb05c367ba631e",
+          "git_blob": "67a9d54797f2e1d97976af707d602b7f7598c7aa"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-agent-receiving-guide",
+      "label": "Complete native and rendered agent receiving continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/AGENT_RECEIVING.md",
+      "required": false,
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+      "editions": [
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 8955,
+          "sha256": "6bc59d032d2dc8146e1a8a5ef833ff40cbbba53abab853fac824b6834a83f47a",
+          "git_blob": "317338e21188fae8a3ff92da02292faba2c6b53d"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-complete-guide",
+      "label": "Whole browser CLI and agent product operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/README.md",
+      "required": false,
+      "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+      "editions": [
+        {
+          "commit": "6d40d2b8fcdd41d65b0903d58e467e1e32a1afa8",
+          "bytes": 11457,
+          "sha256": "0b0017cdd7faa626a68100081b272ea84e1a01faeb229da238729906d4598152",
+          "git_blob": "7b0bcc4bd318d7e8b4986ea0c59ed2927ee39a68"
+        }
+      ]
+    },
+    {
+      "id": "tourism-series-prospect-renderer",
+      "label": "Corrected original fifteen-source prospect application",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "services/tourism-series-workspace/Tourism_Series_Workspace.html",
+      "required": false,
+      "commit": "aa954971e7f3ece0e66fb797510db66bd1513f2e",
+      "editions": [
+        {
+          "commit": "aa954971e7f3ece0e66fb797510db66bd1513f2e",
+          "bytes": 383502,
+          "sha256": "c5e8e368c0bb30c64b8bf4433b1addfc735cb8ee251593d77fa678ff70a5e62f",
+          "git_blob": "6894d997bef7f88f5173cb83cf387dfa304dce6c"
         }
       ]
     }
