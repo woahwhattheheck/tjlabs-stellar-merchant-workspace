@@ -6,6 +6,12 @@ The original Workspace, Operations, forecast and portfolio implementations remai
 
 The complete Merchant setup, tools, input references, source-bound pages, downloads, same-ID recovery and receiving workflow are in [Grant workspaces through Merchant MCP](../../../../stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md).
 
+## Delivery agenda across selected cases
+
+Open **Delivery agenda** in the original application to review multiple existing cases together, navigate to each original payment or Completion assignment, and export the complete selected cases. The typed client exposes `read('delivery-agenda', {caseIds, asOfDate, expectedVersions})` and `download('delivery-agenda', {...report.selection, format})`. Both use one original workspace snapshot; a supplied version map covers every selected case. The adjacent declarations include the complete report, original case metadata and wrapped native entries.
+
+[Delivery agenda](DELIVERY_AGENDA.md) covers the browser, source navigation, authenticated HTTP, CLI, Python operation, typed client, Merchant tools and complete exports.
+
 ## Installation delivery queue
 
 Read `client.read('delivery-queue', {caseId, asOfDate})` and download the complete handover with `client.download('delivery-queue', {caseId, asOfDate})`. The package now includes adjacent TypeScript declarations for the public client, complete queue, installation document and saved-edition workflow. [Installation delivery queue](DELIVERY_QUEUE.md) covers assignment editing, typed consumption, MCP paging, date semantics and complete receiving.

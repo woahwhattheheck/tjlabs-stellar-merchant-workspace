@@ -10,6 +10,13 @@ const alias = {type:'string', pattern:'^[a-z0-9][a-z0-9_-]{0,63}$'};
 const digest = {type:'string', pattern:'^[a-f0-9]{64}$'};
 const integer = {type:'integer', minimum:1, maximum:10000000};
 const id = prefix => ({type:'string', pattern:'^' + prefix + '-[a-f0-9]{32}$'});
+const deliveryAgendaCases = {type:'array',items:id('operation'),minItems:1,uniqueItems:true};
+const deliveryAgendaVersions = {
+  type:'object',minProperties:1,
+  propertyNames:{pattern:'^operation-[a-f0-9]{32}$'},
+  additionalProperties:{type:'integer',minimum:1,maximum:10000000},
+  description:'Exactly one original current version for every selected case; omit to read current versions.'
+};
 const object = {type:'object', additionalProperties:true};
 const ws = {workspace:alias};
 const requestIdentifier = {type:'string', pattern:'^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$'};
@@ -634,6 +641,9 @@ export const grantWorkspaceTools = [
     ['workspace','caseId','expectedVersion','requestId','actor','expectedPreviewSha256']),
   tool('completion', 'Read payment-based 90-calendar-day completion clocks, original and confirmed deadlines, current recorded form outcomes, and complete original deliverable assignments. The selected calendar date does not reconstruct historical issuer decisions.',
     {...ws,caseId:id('operation'),asOfDate:supportDate},['workspace','caseId'],true),
+  tool('delivery_agenda', 'Read one complete delivery agenda over explicitly selected existing cases in this original workspace. Every row retains its own case identity, mode, version and native calendar source. asOfDate evaluates current retained records. A supplied expectedVersions map must cover exactly the selected cases; one changed case rejects the complete selection. Export all selected rows through merchant_grant_export with kind delivery-agenda and the returned complete selection.',
+    {...ws,caseIds:deliveryAgendaCases,asOfDate:supportDate,expectedVersions:deliveryAgendaVersions},
+    ['workspace','caseIds'],true),
   tool('delivery_calendar', 'Read the complete dated grant agenda, original payment-derived completion deadlines, issuer-confirmed extensions, saved deliverables and submitted forms. Native dates keep their original meaning; asOfDate evaluates current retained records. Export the same case as ICS, CSV or JSON through merchant_grant_export.',
     {...ws,caseId:id('operation'),asOfDate:supportDate,expectedVersion:{type:'integer',minimum:1,maximum:10000000}},
     ['workspace','caseId'],true),
@@ -697,13 +707,13 @@ export const grantWorkspaceTools = [
     {...ws, ...caseSelection, ...originalInput, ...originalRequest, filename:nonempty(240), kind:nonempty(80),
       mediaType:nonempty(200), sourceUrl:str(2000), observedAt:str(100)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','requestId','actor','filename','kind','mediaType']),
-  tool('export', 'Plan ZIPs accept an exact saved revision; omission selects the current original plan. Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, original settlement review and its source archive, source, scenario or dated CSV export for verified byte paging and host download.',
-    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','settlement','delivery-calendar','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes','cost-funding']},
+  tool('export', 'Plan ZIPs accept an exact saved revision; omission selects the current original plan. Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar, the full explicitly selected multi-case delivery agenda and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, original settlement review and its source archive, source, scenario or dated CSV export for verified byte paging and host download.',
+    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','settlement','delivery-calendar','delivery-agenda','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes','cost-funding']},
       planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:{anyOf:[id('review'),id('settlement')]},
       fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest,
       installationId:id('installation'),comparisonId:id('task-outcomes'),billingId:commercialIdentifier,revision:planComparisonRevision,sha256:digest,asOfDate:supportDate,
-      installationRefs:customerUseInstallationRefs,
-      format:{enum:['ics','csv','json'],description:'Grant delivery calendar defaults to ICS; customer-use calendar defaults to JSON.'},
+      installationRefs:customerUseInstallationRefs,caseIds:deliveryAgendaCases,expectedVersions:deliveryAgendaVersions,
+      format:{enum:['ics','csv','json'],description:'Grant delivery calendar and multi-case delivery agenda default to ICS; customer-use calendar defaults to JSON.'},
       reconciliationId:id('reconciliation'),contributorId:id('person'),network:str(200),currency:str(40),asset:str(500),startDate:supportDate,endDate:supportDate,expectedVersion:{type:'integer',minimum:1,maximum:10000000},expectedReportSha256:digest},
     ['workspace','kind'], true),
   tool('snapshot', 'Inspect an exact retained JSON snapshot or one original JSON pointer. Large values remain available through rows and the complete file.',
