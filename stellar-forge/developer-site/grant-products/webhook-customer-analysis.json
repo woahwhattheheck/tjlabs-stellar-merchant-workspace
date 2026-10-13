@@ -1,0 +1,154 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "webhook-customer-analysis",
+  "heading": "## Webhook customer adoption: complete event tasks and operator handover",
+  "sources": [
+    {
+      "id": "webhook-customer-commissioning",
+      "label": "Complete webhook customer commissioning and independently maintainable event delivery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/webhook-feed/COMMISSIONING.md",
+      "editions": [
+        {
+          "commit": "2e622209e2a1ce47f9f5764ad424c30c66212d19",
+          "git_blob": "e472a6233d1ecaea3cb3232c1434d1e03970e3f4"
+        },
+        {
+          "commit": "490c84f1b933c5a9733bb1e204c97cabefca6fbb",
+          "git_blob": "b7f8d9c6963f626d06595a2e34d582e0297a04dd",
+          "bytes": 23823,
+          "sha256": "1a6c3b97582dadcc5572db88e0d1e2aac12c257ddfed024dc12460f0d3c933af"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-subscriber",
+      "label": "Original complete event subscriber export and manifest",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/subscriber.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "490c84f1b933c5a9733bb1e204c97cabefca6fbb",
+          "git_blob": "62d3e6f3de5133b0023578e4b79f1059a641c5ed",
+          "bytes": 24680,
+          "sha256": "3f26540b42cb477131bc06dd1f8a9901484642737767f5b4a7ebf14891a38b7a"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-analysis-source",
+      "label": "Complete acquired-event source validation and typed projection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/analysis-source.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "490c84f1b933c5a9733bb1e204c97cabefca6fbb",
+          "git_blob": "876a360dff6f73e2526ebdcf8234ac6a176d02dd",
+          "bytes": 8928,
+          "sha256": "1302e5093c69c808cafed794b203f90901afc5bb45ad2ed1cdf5868d38564a55"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-analysis-operating",
+      "label": "Installed event Analysis programme and complete customer handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_FEED_ANALYSIS.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "490c84f1b933c5a9733bb1e204c97cabefca6fbb",
+          "git_blob": "a96ebcdf97164d6d0273c3877ad6b327995a319e",
+          "bytes": 15335,
+          "sha256": "73f85460a793e63a3ab7deb280d4084963ea3a6e2f96fd88c6eace626c446353"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-analysis-programme",
+      "label": "Original native event Analysis review, later-window and delivery programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/event_feed_analysis.py",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cf0a48c99dd896a9dc315b6f9883db850d9f232c",
+          "git_blob": "fb636f9f349f62f2871914c71e8624ed35bab2e8",
+          "bytes": 57187,
+          "sha256": "68073bd2c7a0f79be1206d8893e60429fc4dfdd24d15a4b1f5b8508d334107ee"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-browser-operating",
+      "label": "Private Event programmes browser and independent operator receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_PROGRAMMES.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cf0a48c99dd896a9dc315b6f9883db850d9f232c",
+          "git_blob": "2ed0a28643554d46bda2145b13d5571824190171",
+          "bytes": 10574,
+          "sha256": "be8256b9d29bcc2e08650882337faa002ec4dfde9f15228c99716130877e054e"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-browser-coordinator",
+      "label": "Durable original input receiving and saved action coordination",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/event_programmes.py",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cf0a48c99dd896a9dc315b6f9883db850d9f232c",
+          "git_blob": "5cc7c5ffad0acdc5be3803866a9f588e9be00d1f",
+          "bytes": 18294,
+          "sha256": "95d6e88515dd35bc88610fe097190b297aac44422a1e93f96ff42970d439f1af"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-browser-http",
+      "label": "Existing private Analysis HTTP integration for event programmes",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/event_programmes_http.py",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cf0a48c99dd896a9dc315b6f9883db850d9f232c",
+          "git_blob": "d69e3598f9c37c150c8fb53f8d6b0eee4610b9c1",
+          "bytes": 2327,
+          "sha256": "c79d089198d0de4e439338f2e2873f29feeca1dbb9648a6119f72bbad019e827"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-browser",
+      "label": "Complete original Event programmes browser interface",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_event_programmes_ui.py",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cf0a48c99dd896a9dc315b6f9883db850d9f232c",
+          "git_blob": "d5cd61a51a4100f99df6a54f0430b2475373e9be",
+          "bytes": 25658,
+          "sha256": "b5aa36ef7c32e9763086491e655c5ed478887120d8e1202b746694c3c8edaf51"
+        }
+      ]
+    }
+  ]
+}
