@@ -3,9 +3,9 @@
 import { realpath } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { main as nativeMain } from '../../stellar/scf-starforge-20261009/distribution/cli.mjs';
 
 const commands = new Map([
+  ['material-installation', 'Prepare a complete material customer source for the original Workshare Installation'],
   ['opensearch-workspace', 'Open the material catalog, customer matching and search operator workspace'],
   ['opensearch-catalog', 'Operate saved catalogs, supplier corrections, recipient deliveries and complete handovers'],
   ['opensearch-materials-client', 'Operate material and supplier MCP workflows and receive complete resumable deliveries'],
@@ -35,6 +35,11 @@ export async function main(args = process.argv.slice(2)) {
   }
   if (!commands.has(command) && !['doctor', 'source', 'registrations'].includes(command))
     throw new TypeError('Unknown product command: ' + command + '. Use starforge-materials --help.');
+  if (command === 'material-installation') {
+    const {run} = await import('./commissioning/cli.mjs');
+    console.log(JSON.stringify(await run(rest), null, 2)); return;
+  }
+  const {main: nativeMain} = await import('../../stellar/scf-starforge-20261009/distribution/cli.mjs');
   return nativeMain(args);
 }
 if (process.argv[1] && await realpath(resolve(process.argv[1])).then(
