@@ -5,7 +5,7 @@ import {openMerchantFileClient} from '../mcp-merchant-operator/retained-download
 import {acquireCollectionLease} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/model.mjs';
 import {initializationDirectory,retainInitializationFile,optionalInitializationBytes} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/initialization.mjs';
 import {fileHandle,measure,bytes,identity,need,absolute,MAX_PACKAGE,CHUNK} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/format.mjs';
-import {nativeCollectionDeliveryOperations} from './native-collection-delivery-schema.mjs';
+import {nativeCollectionDeliveryOperations,nativeCollectionDeliveryUploadBatchChunks} from './native-collection-delivery-schema.mjs';
 export const DELIVERY_NATIVE_SCHEMA='stellar-forge.mcp-native-collection-delivery.v1';
 const ALIAS=/^[A-Za-z][A-Za-z0-9_-]{0,63}$/,HASH=/^[a-f0-9]{64}$/;
 const stamp=v=>['dev','ino','size','mtimeNs','ctimeNs'].map(k=>String(v[k])).join(':');
@@ -63,11 +63,21 @@ export async function uploadNativeCustomerPackage({client,file,directory,expecte
    Number.isSafeInteger(value.offset)&&value.offset>=0&&value.offset<=selected.bytes&&typeof value.complete==='boolean','MCP_DELIVERY_UPLOAD_STATUS_CHANGED');return value;};
   validate(status);
   while(status.offset<selected.bytes){
-   signal?.throwIfAborted();const offset=status.offset,raw=Buffer.alloc(Math.min(CHUNK,selected.bytes-offset));let used=0;
-   while(used<raw.length){const part=await held.file.read(raw,used,raw.length-used,offset+used);need(part.bytesRead>0,'MCP_DELIVERY_UPLOAD_SOURCE_CHANGED');used+=part.bytesRead;}
-   await verifyHeld();status=validate(await client.call('upload-chunk',{sha256:selected.sha256,offset,base64:raw.toString('base64'),chunkSha256:sha(raw)},context));
-   need(status.offset>=offset+raw.length,'MCP_DELIVERY_UPLOAD_OFFSET_CHANGED');
-   await onProgress({stage:'upload',sha256:selected.sha256,offset:status.offset,bytes:selected.bytes});
+   signal?.throwIfAborted();
+   const advertised=status.uploadBatchChunks;
+   need(advertised===undefined||Number.isSafeInteger(advertised)&&advertised>=1&&advertised<=nativeCollectionDeliveryUploadBatchChunks,'MCP_DELIVERY_UPLOAD_CAPABILITY_CHANGED');
+   const limit=advertised??1,chunks=[],start=status.offset;let offset=start;
+   while(chunks.length<limit&&offset<selected.bytes){
+    const raw=Buffer.alloc(Math.min(CHUNK,selected.bytes-offset));let used=0;
+    while(used<raw.length){const part=await held.file.read(raw,used,raw.length-used,offset+used);need(part.bytesRead>0,'MCP_DELIVERY_UPLOAD_SOURCE_CHANGED');used+=part.bytesRead;}
+    chunks.push({offset,base64:raw.toString('base64'),chunkSha256:sha(raw)});offset+=raw.length;
+   }
+   await verifyHeld();
+   status=validate(await client.call(chunks.length===1?'upload-chunk':'upload-chunks',
+    chunks.length===1?{sha256:selected.sha256,...chunks[0]}:{sha256:selected.sha256,chunks},context));
+   need(status.offset>=offset,'MCP_DELIVERY_UPLOAD_OFFSET_CHANGED');
+   await onProgress({stage:'upload',sha256:selected.sha256,offset:status.offset,bytes:selected.bytes,
+    startOffset:start,chunks:chunks.length,uploadBatchChunks:limit});
   }
   status=validate(await client.call('upload-finish',{sha256:selected.sha256},context));need(status.complete,'MCP_DELIVERY_UPLOAD_NOT_COMPLETE');
   await verifyHeld();await measure(file,selected,MAX_PACKAGE);

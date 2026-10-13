@@ -140,7 +140,13 @@ Upload to the operator-registered recipient:
 node stellar-forge/mcp-paid-agent/native-collection-delivery-cli.mjs upload --url http://127.0.0.1:8794/mcp --workspace customer_recipient --file /private/customer/download/customer-delivery.ndjson --sha256 ORIGINAL_PACKAGE_SHA256 --filename customer-monthly-2026-10.ndjson --state /private/customer/upload-operation
 ~~~
 
-This retains the closed local file identity and uses the original recipient's committed contiguous offset. Each chunk is at most 65,536 bytes and has its own digest. Exact committed chunk replays read the saved bytes; a changed file, filename, package digest or existing intent is rejected.
+This retains the closed local file identity and uses the original recipient's committed contiguous offset. Each chunk is at most 65,536 bytes and has its own digest. Updated registered hosts advertise `uploadBatchChunks` in status and upload responses. The standalone Collections MCP receiver explicitly enables two contiguous chunks per call within its declared 256 KiB ingress limit. The generic native workspace and older hosts retain one chunk; both now use compact recipient progress when available. Older retained responses without a capability field also use the original single-chunk route. Both modes use the same saved upload intent, file, filename, package digest and committed offsets.
+
+The MCP batch is deliberately limited by both the original recipient and its registered MCP host. The adapter defaults to one chunk. Only a host that declares the two-part allowance enables two chunks, as the standalone receiver does with its existing 256 KiB ingress limit. A complete two-part JSON request fits that limit including the MCP envelope. The original HTTP recipient may advertise a larger browser batch; that does not enlarge the MCP transport limit. Raw callers can use `upload-chunks` with `{sha256, chunks:[{offset, base64, chunkSha256}, ...]}`, with at most two entries and the advertised recipient limit. Every member and contiguous offset is validated before forwarding the batch.
+
+The adapter requests compact progress from the original recipient, avoiding a growing list of prior parts in each response. The original offset-named part files, metadata, private-directory checks and kernel lease remain authoritative. Explicit upload-status inspection and cold receiving verify retained bytes; final upload-finish verifies every part and the complete sender digest.
+
+After a lost reply or interrupted batch, rerun the identical upload command with the same state directory. Upload-start obtains the original recipient's committed contiguous offset, which may include only a durable prefix of the last batch. The client resumes there from the same held, hash-verified local file; it does not allocate a replacement upload or guess which parts were accepted. Exact committed chunk replays read the saved bytes. A changed file, filename, package digest or existing intent is rejected.
 
 Sealing an upload does not receive it. Receive deliberately:
 
@@ -220,7 +226,7 @@ const result = await receiveCollectionsCustomerProgramme({
 });
 ~~~
 
-The native sequence retains credentials privately before use, binds all executing source, persists the original request, obtains and reviews the original preview, prepares the same package, retains a real interrupted download prefix and resumes it, retains an original upload offset and resumes it, explicitly receives the full archive, enumerates every original member, downloads a complete original response, and performs independent local receiving. It then closes both original borrowed listeners, reopens only MCP, and verifies retained metadata/member access. Its final result is saved only after all owners close.
+The native sequence retains credentials privately before use, binds all executing source, persists the original request, obtains and reviews the original preview, prepares the same package, retains a real interrupted download prefix and resumes it, retains an original upload offset and its actual batch progress, then resumes the same upload, explicitly receives the full archive, enumerates every original member, downloads a complete original response, and performs independent local receiving. It then closes both original borrowed listeners, reopens only MCP, and verifies retained metadata/member access. Its final result is saved only after all owners close.
 
 The programme saves the full NDJSON package, complete remote result, full recipient inventory, original response and receiving evidence in its files directory. Result descriptors bind every file by bytes and SHA256. Reopening a completed programme verifies those files and the whole package rather than rerunning preparation or a purchase.
 

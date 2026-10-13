@@ -5,6 +5,7 @@ export interface Range {byteOffset?:number;maxBytes?:number}
 export interface FileIdentity {bytes:number;sha256:string}
 export interface OriginalRequest {id:string;collectionId:string;expectedManifestSha256:string;title:string;note:string;intentIds:string[];maxVerifyBytes:number;allowIncomplete:boolean}
 export interface PrepareRequest extends OriginalRequest {expectedPreviewSha256:string}
+export interface UploadChunk {offset:number;base64:string;chunkSha256:string}
 export interface Requests {
  workspaces:Page;status:Page;preview:OriginalRequest;prepare:PrepareRequest;inspect:{id:string};
  'manifest-file':{id:string;expectedFileSha256:string}&Range;
@@ -13,6 +14,7 @@ export interface Requests {
  'upload-start':{sha256:string;bytes:number;filename:string};
  'upload-status':{sha256:string};
  'upload-chunk':{sha256:string;offset:number;base64:string;chunkSha256:string};
+ 'upload-chunks':{sha256:string;chunks:UploadChunk[]};
  'upload-finish':{sha256:string};receive:{sha256:string};
  received:{sha256:string}&Page;
  'received-file':{sha256:string;path:string;expectedFileSha256:string}&Range;
@@ -20,18 +22,18 @@ export interface Requests {
 export interface SavedRange extends FileIdentity {verifiedSavedFile:true;encoding:'base64';byteOffset:number;returnedBytes:number;nextByteOffset:number|null;data:string}
 export interface Package extends FileIdentity {filename:string;mediaType:'application/x-ndjson';manifestSha256:string}
 export interface CompleteDelivery {schema:string;id:string;state:'COMPLETE';request:OriginalRequest;previewSha256:string;package:Package;outputsComplete:boolean;responseCount:number;sourceFiles:number;files:{result:FileIdentity&{name:'result.json'};manifest:FileIdentity&{name:'manifest.json'}}}
-export interface Upload extends FileIdentity {filename:string;offset:number;complete:boolean}
+export interface Upload extends FileIdentity {filename:string;offset:number;complete:boolean;uploadBatchChunks?:1|2}
 export interface Member extends FileIdentity {path:string;role:'source'|'response'|'review'}
 export interface Received extends FileIdentity {schema:string;manifestSha256:string;outputsComplete:boolean;title:string;items:Member[];offset:number;total:number;nextOffset:number|null}
 export interface Preview {schema:string;request:OriginalRequest;previewSha256:string;source:{sha256:string;files:number;bytes:number};[key:string]:unknown}
 export interface Responses {
  workspaces:{schema:string;operation:'workspaces';items:unknown[];offset:number;total:number;nextOffset:number|null};
- status:{mode:'COLLECTIONS'|'RECEIVING';source:unknown;items:unknown[];offset:number;total:number;nextOffset:number|null};
+ status:{mode:'COLLECTIONS'|'RECEIVING';source:unknown;uploadBatchChunks?:1|2;items:unknown[];offset:number;total:number;nextOffset:number|null};
  preview:Preview;prepare:CompleteDelivery;inspect:CompleteDelivery|{schema:string;id:string;state:'PREPARING'};
  'manifest-file':{id:string;filename:'manifest.json';file:SavedRange};
  'result-file':{id:string;filename:'result.json';file:SavedRange};
  'package-file':{id:string;filename:'customer-delivery.ndjson';file:SavedRange};
- 'upload-start':Upload;'upload-status':Upload;'upload-chunk':Upload;'upload-finish':Upload;
+ 'upload-start':Upload;'upload-status':Upload;'upload-chunk':Upload;'upload-chunks':Upload;'upload-finish':Upload;
  receive:Received;received:Received;'received-file':{packageSha256:string;path:string;file:SavedRange};
 }
 export interface Context {requestSignal?:AbortSignal|null;timeoutMs?:number}
@@ -46,5 +48,5 @@ export interface NativeCustomerClient {
 export const DELIVERY_NATIVE_SCHEMA:string;
 export function openNativeCollectionDeliveryClient(options:ConnectionOptions):Promise<NativeCustomerClient>;
 export function checkedDeliveryRange(value:SavedRange,selection:FileIdentity&{byteOffset:number;maxBytes:number}):Uint8Array;
-export function uploadNativeCustomerPackage(options:{client:NativeCustomerClient;file:string;directory:string;expectedSha256:string;filename:string;signal?:AbortSignal;onProgress?:(value:{stage:'upload';sha256:string;offset:number;bytes:number})=>void|Promise<void>}):Promise<{schema:string;intent:unknown;status:Upload}>;
+export function uploadNativeCustomerPackage(options:{client:NativeCustomerClient;file:string;directory:string;expectedSha256:string;filename:string;signal?:AbortSignal;onProgress?:(value:{stage:'upload';sha256:string;offset:number;bytes:number;startOffset:number;chunks:number;uploadBatchChunks:number})=>void|Promise<void>}):Promise<{schema:string;intent:unknown;status:Upload}>;
 export function retainNativeCustomerRequest<K extends 'preview'|'prepare'|'receive'>(options:{client:NativeCustomerClient;directory:string;operation:K;body:Requests[K];signal?:AbortSignal}):Promise<{schema:string;intent:unknown;value:Responses[K]}>;
