@@ -30,7 +30,7 @@ Publication cadence governs recurrence: a monthly issue produces a monthly editi
 
 ### Remaining work in the funded programme
 
-The completed source and migration product is the starting architecture. The [repository commissioning and grant guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/0dd5dff9eb5b9883b3e1dfee07efe93bf9bb5817/products/tind/GRANT.md) assigns remaining customer work within the existing six packages. These are the shared programme allocations across both selected merchants.
+The completed source and migration product is the starting architecture. The [repository commissioning and grant guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/81de07473f9596312ee47c1ff81e2f8dbb1371c8/products/tind/GRANT.md) assigns remaining customer work within the existing six packages. These are the shared programme allocations across both selected merchants.
 
 |Existing funded package|Programme hours / cost|Repository-specific completion|
 |  ---  |  ---  |  ---  |

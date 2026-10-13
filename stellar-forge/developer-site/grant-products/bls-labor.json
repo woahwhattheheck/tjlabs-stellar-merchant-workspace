@@ -204,6 +204,22 @@
           "git_blob": "fecf59c1b8388b9dd97d7e0732565a24de6e16d6"
         }
       ]
+    },
+    {
+      "id": "bls-regional-agent-commissioning-guide",
+      "label": "Regional labor customer commissioning, recurring service and complete agent handover",
+      "path": "products/bls-labor/GRANT.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "81de07473f9596312ee47c1ff81e2f8dbb1371c8",
+          "bytes": 18657,
+          "sha256": "d19813f61f32099e1608e50f6bc334d53aaca3f2bb620009aa48c8f2c4019e21",
+          "git_blob": "df6ef9a8220d94fadd5e1e9ee6cfc2214df26c9d"
+        }
+      ]
     }
   ]
 }
