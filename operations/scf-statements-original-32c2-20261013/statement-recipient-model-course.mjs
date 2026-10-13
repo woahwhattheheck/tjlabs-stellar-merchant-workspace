@@ -1,5 +1,5 @@
 // One complete recipient-review model course, composed with the original Statements receiving.
-export function exerciseStatementRecipientReview({review,copies,source,caseId,invoiceId,current,preview,at='2026-10-13T12:00:00.000Z'}){
+export function exerciseStatementRecipientReview({review,copies,worklist,source,caseId,invoiceId,current,preview,at='2026-10-13T12:00:00.000Z'}){
   const clone=value=>structuredClone(value),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
   const require=(ok,message)=>{if(!ok)throw new Error(message);};
   const rejects=(work,label)=>{let message='';try{work();}catch(error){message=String(error.message||error);}require(message,label+' must reject before changing the draft.');return message;};
@@ -57,8 +57,42 @@ export function exerciseStatementRecipientReview({review,copies,source,caseId,in
   require(acceptedZero.recommendations[0].tranche===0,'Preserve native-supported tranche 0.');
   const trancheFour=clone(recommendations);trancheFour[0].tranche=4;
   const rejectedFour=rejects(()=>review.prepareStatementRecipientReturn(packet,{reviewer:returned.reviewer,recommendations:trancheFour,returnedAt:at}),'Native-unsupported tranche 4');
+
+  require(worklist,'Compose the current returned-review worklist with the original course.');
+  let book=worklist.statementReviewWorklist({recipientReturn:returned,recipientHistory:[result.receipt]},caseId);
+  require(book.entries.length===1&&book.entries[0].phase==='APPLIED','Migrate the original return and its complete application once.');
+  const secondRows=clone(recommendations);secondRows[2].reason='Second colleague reviewed the same original customer receipt.';
+  const second=review.prepareStatementRecipientReturn(packet,{reviewer:{name:'Second original programme reviewer',role:'Accounting',note:'Independent review of the same complete original statement.'},recommendations:secondRows,returnedAt:at});
+  book=worklist.receiveStatementReviewWork(book,review.receiveStatementRecipientReturn(packet,edition,second),{id:'statement-return-second-original-review',receivedAt:at}).worklist;
+  const secondComparison=review.compareStatementRecipientReturn(packet,edition,concurrent,second),basis=worklist.statementReviewBasis(concurrent,current.program.version);
+  let entry=worklist.startStatementReviewComparison(worklist.selectedStatementReview(book),secondComparison,basis,at);
+  entry=worklist.chooseStatementReviewField(entry,secondComparison.fields[0].key,'CURRENT');
+  entry=worklist.noteStatementReview(entry,'Check the original invoice allocation with the account operator.');
+  book=worklist.replaceStatementReviewWork(book,entry);
+  const duplicate=worklist.receiveStatementReviewWork(book,second,{id:'statement-return-unused-duplicate',receivedAt:at});
+  require(duplicate.duplicate&&duplicate.worklist.entries.length===2&&same(worklist.selectedStatementReview(duplicate.worklist),entry),'Exact re-receiving preserves all saved progress.');
+  const recoveredBook=worklist.statementReviewWorklist({recipientWorklist:JSON.parse(JSON.stringify(book))},caseId);
+  const recoveredEntry=worklist.selectedStatementReview(recoveredBook);
+  require(worklist.statementReviewComparisonCurrent(recoveredEntry,secondComparison,basis)&&recoveredEntry.choices[secondComparison.fields[0].key]==='CURRENT','Reopen the original comparison and unfinished choice.');
+  const metadata=clone(concurrent);metadata.recipientWorklist=recoveredBook;metadata.copyName='Another readable copy name';
+  require(same(worklist.statementReviewBasis(metadata,current.program.version),basis),'Copy metadata and operator notes do not invalidate financial choices.');
+  const staleWork=clone(concurrent);staleWork.allocationWorks['3'].allocations[0].amountUsd='250.00';
+  require(!worklist.statementReviewComparisonCurrent(recoveredEntry,secondComparison,worklist.statementReviewBasis(staleWork,current.program.version)),'Changed unfinished allocation invalidates saved choices even with unchanged allocation count.');
+  require(!worklist.statementReviewComparisonCurrent(recoveredEntry,secondComparison,worklist.statementReviewBasis(concurrent,current.program.version+1)),'A changed actual case version invalidates the comparison.');
+  const newComparison=review.compareStatementRecipientReturn(packet,edition,stale,second);
+  const restarted=worklist.startStatementReviewComparison(recoveredEntry,newComparison,worklist.statementReviewBasis(stale,current.program.version),at);
+  require(Object.keys(restarted.choices).length===0&&entry.choices[secondComparison.fields[0].key]==='CURRENT','Fresh changed comparison resets choices without mutating the retained prior work object.');
+  const wholeDraft=clone(concurrent);wholeDraft.recipientWorklist=recoveredBook;wholeDraft.recipientPackets=[packet];wholeDraft.recipientReturn=second;wholeDraft.recipientHistory=[result.receipt];
+  const whole=copies.prepareStatementCopySave(fresh.index,{expectedRevision:fresh.index.revision,id:edition.id,name:edition.name,note:'Complete multiple-return handover with unfinished choices.',savedAt:at,draft:wholeDraft});
+  const wholeArchive=copies.prepareStatementCopyArchive({schema:'sf47.statement-working-copy-archive.v1',caseId,index:whole.index,editions:[edition,fresh.edition,whole.edition]},caseId);
+  require(same(wholeArchive.editions[2].draft.recipientWorklist,recoveredBook),'Full original archive retains both complete returns, note, saved basis and field choices.');
+  const nextPacket=review.prepareStatementRecipientPacket(whole.edition,current,{id:'statement-review-next-original-colleague',recipient:{name:'Next colleague',role:'Finance'},issuedBy:packet.issuedBy,issuedAt:at});
+  require(!('recipientWorklist' in nextPacket.edition.draft)&&!('recipientPackets' in nextPacket.edition.draft),'Issuing another review does not recursively embed earlier worklists or packets.');
+  const pendingBook=clone(wholeDraft);pendingBook.pending={payload:{requestId:'retained-original-request'}};
+  const pendingWorklist=rejects(()=>review.compareStatementRecipientReturn(packet,edition,pendingBook,second),'Worklist with uncertain original request');
+
   return {schema:'sf47.statement-recipient-model-course.v1',caseId,invoiceId,sourceFilename:source.filename,
     changedFields:comparison.fields.length,conflicts:comparison.fields.filter(row=>row.conflict).length,
-    immutableEditions:archive.editions.length,completeResult:result,archive,
+    immutableEditions:archive.editions.length,completeResult:result,archive,worklist:{completeReturns:recoveredBook.entries.length,archive:wholeArchive,pendingRejection:pendingWorklist},
     rejections:{changedSource,staleComparison,pendingRequest,rejectedFour},acceptedNativeTrancheZero:true};
 }

@@ -193,9 +193,14 @@ async function receiveRecipientArchiveInEmptyBrowser(receiving,archive,selectedE
   await desk.locator('.statement-notice').filter({hasText:'Opened '+selectedEdition.name}).waitFor();
   const restored=await download('draft-export','recipient-cold-complete-recovery.json'),draft=JSON.parse(restored.raw),returned=JSON.parse(returnedDownload.raw);
   need(draft.inputs.source.contentBase64===originalInputs.source.contentBase64&&draft.recipientHistory.some(value=>value.packetId===returned.packetId),'The empty browser receives full original bank bytes and attributed application history.');
+  need(draft.recipientWorklist?.entries.length===2,'Cold receiving retains both complete original attributed returns.');
+  const firstWork=draft.recipientWorklist.entries.find(entry=>canonical(entry.returned)===canonical(returned)),otherWork=draft.recipientWorklist.entries.find(entry=>entry!==firstWork);
+  need(firstWork?.phase==='APPLIED'&&firstWork.applications.length===1&&firstWork.note.startsWith('Finance return:'),'Cold receiving retains original application progress and the finance note.');
+  need(otherWork?.note.startsWith('Accounting return:')&&Object.values(otherWork.choices).includes('CURRENT'),'Cold receiving retains the other colleague’s unfinished independent choices.');
+
   const returnChooser=page.waitForEvent('filechooser');await desk.locator('[data-statement-action="recipient-import"]').click();
   await(await returnChooser).setFiles(returnedDownload.path);
-  await desk.locator('.statement-notice').filter({hasText:'Received the complete attributed recommendations'}).waitFor();
+  await desk.locator('.statement-notice').filter({hasText:'Opened the same retained return'}).waitFor();
   await desk.locator('[data-statement-action="recipient-compare"]').click();
   await desk.locator('[data-recipient-choice="2:category"]').waitFor();
   need((await desk.locator('.statement-recipient').textContent()).includes('Already current'),'Resolve the return through the locally restored trusted edition and retain applied recommendations.');
@@ -217,24 +222,78 @@ async function receiveRecipientArchiveInEmptyBrowser(receiving,archive,selectedE
  }finally{page=originalPage;await cold.close();}
 }
 
+async function returnedReviewWorklistBrowser(returnedDownload,reviewModel,packet){
+ const desk=page.locator('.statement-desk'),act=name=>desk.locator('[data-statement-action="recipient-'+name+'"]');
+ const workAct=name=>desk.locator('[data-statement-action="recipient-work-'+name+'"]');
+ const first=JSON.parse(returnedDownload.raw),firstKey=await desk.locator('[data-recipient-choice]').first().getAttribute('data-recipient-choice');
+ await desk.locator('[data-recipient-choice="'+firstKey+'"]').selectOption('RETURNED');
+ await desk.locator('[name="recipientWorkNote"]').fill('Finance return: retain the original supplier allocation while completing field choices.');
+ await workAct('save').click();
+ const one=JSON.parse((await download('draft-export','recipient-worklist-first-progress.json')).raw);
+ const firstId=one.recipientWorklist.selectedId;
+ need(one.recipientWorklist.entries.length===1&&one.recipientWorklist.entries[0].choices[firstKey]==='RETURNED','Retain the first complete return and its unfinished choice.');
+ const recommendations=structuredClone(first.recommendations);
+ recommendations.find(row=>row.rowNumber===4).reason='Accounting colleague reviewed the original customer receipt independently.';
+ const second=reviewModel.prepareStatementRecipientReturn(packet,{reviewer:{name:'Original programme accounting colleague',role:'Accounting',note:'Second complete review of the same original bank file.'},recommendations,returnedAt:new Date().toISOString()});
+ const secondPath=join(work,'recipient-second-complete-attributed-return.json');await atomic(secondPath,second);
+ const receive=async path=>{
+  const chooser=page.waitForEvent('filechooser');await act('import').click();await(await chooser).setFiles(path);
+  await desk.locator('.statement-notice').filter({hasText:/Retained this complete attributed return|Opened the same retained return/}).waitFor();
+ };
+ await receive(secondPath);await act('compare').click();
+ await desk.locator('[data-recipient-choice]').first().selectOption('CURRENT');
+ await desk.locator('[name="recipientWorkNote"]').fill('Accounting return: discuss the original grant classification with the operator.');
+ await workAct('save').click();
+ const two=JSON.parse((await download('draft-export','recipient-worklist-two-independent-returns.json')).raw),secondId=two.recipientWorklist.selectedId;
+ need(two.recipientWorklist.entries.length===2&&secondId!==firstId,'Keep the second distinct return without replacing the first.');
+ need(two.recipientWorklist.entries.find(entry=>entry.id===firstId).choices[firstKey]==='RETURNED','The second review preserves the first unfinished choice.');
+ await desk.locator('[data-review-work-id="'+firstId+'"]').click();
+ need(await desk.locator('[data-recipient-choice="'+firstKey+'"]').inputValue()==='RETURNED','Switch back to the first matching current comparison and its own choice.');
+ await page.setViewportSize({width:1360,height:1000});await capture('00-recipient-worklist-two-returns-desktop');
+ await workAct('save').click();
+ await openOperations(origin+'/#access='+token,state.caseId);await openStatements();
+ need(await desk.locator('[data-recipient-choice="'+firstKey+'"]').inputValue()==='RETURNED','A normal page reopen resumes matching saved field choices.');
+ need((await desk.locator('[name="recipientWorkNote"]').inputValue()).startsWith('Finance return:'),'The selected return retains its independent operator note.');
+ await desk.locator('[data-row-reason="4"]').fill('Current operator changed the original customer row while reviewing colleagues.');
+ need(await desk.locator('[data-recipient-choice]').count()===0,'A current draft edit disables the earlier comparison.');
+ need((await desk.locator('[data-review-work-status]').textContent()).includes('changed'),'Show why earlier choices require another comparison.');
+ await page.setViewportSize({width:390,height:844});await capture('00-recipient-worklist-stale-choices-phone');
+ await act('compare').click();
+ need(await desk.locator('[data-recipient-choice="'+firstKey+'"]').inputValue()==='','A changed comparison requires fresh explicit choices.');
+ await desk.locator('[data-recipient-choice="'+firstKey+'"]').selectOption('RETURNED');await workAct('save').click();
+ await receive(secondPath);
+ const repeat=JSON.parse((await download('draft-export','recipient-worklist-duplicate-received.json')).raw);
+ need(repeat.recipientWorklist.entries.length===2&&repeat.recipientWorklist.selectedId===secondId,'Receiving the exact second file again opens its original work item.');
+ need(repeat.recipientWorklist.entries.find(entry=>entry.id===secondId).note.startsWith('Accounting return:'),'Exact replay retains the independent accounting note.');
+ need(await desk.locator('[data-recipient-choice]').count()===0,'The second review retains its old choices but cannot apply them after the draft changed.');
+ await desk.locator('[name="recipientWorkQuery"]').fill('no-original-review-matches-this');
+ await workAct('filter').click();need((await desk.locator('.statement-review-worklist').textContent()).includes('No returns match'),'Render the complete worklist empty search.');
+ await capture('00-recipient-worklist-empty-search-phone');await workAct('clear').click();
+ await desk.locator('[data-review-work-id="'+firstId+'"]').click();
+ need(await desk.locator('[data-recipient-choice="'+firstKey+'"]').inputValue()==='RETURNED','Opening another return does not invalidate the first freshly compared choice.');
+ await stage('original-statement-returned-review-worklist-operated',{caseId:state.caseId,firstReturnId:firstId,secondReturnId:secondId,
+  completeReturns:2,firstReturnedSha256:sha(returnedDownload.raw),secondReturnPath:secondPath,firstChoiceKey:firstKey});
+}
+
 async function recipientReviewBrowser(receiving,originalInputs){
  const desk=page.locator('.statement-desk'),act=name=>desk.locator('[data-statement-action="recipient-'+name+'"]');
  need(await desk.locator('.statement-recipient').count(),'Compose the maintained recipient review desk before its original receiving.');
  const original=await download('draft-export','recipient-original-complete-before-review.json');
  const originalDraft=JSON.parse(original.raw),base=structuredClone(originalDraft);
  base.inputs.decisions=[];base.allocationWorks={};base.allocationRow=null;base.preview=null;base.dirty=true;
- base.recipientPackets=[];base.recipientReturn=null;base.recipientHistory=[];
+ base.recipientPackets=[];base.recipientReturn=null;base.recipientHistory=[];delete base.recipientWorklist;
  const basePath=join(work,'recipient-original-source-review-base.json');await atomic(basePath,base);
  await openRecovery(basePath);
  const originalPreview=await preview('recipient-original-source-native-preview');
  need(originalPreview.rows.length===3&&originalPreview.summary.newCount===3,'Review the three original CSV rows in this original case.');
- const [reviewModel,copyModel,modelCourse]=await Promise.all([
+ const [reviewModel,copyModel,modelCourse,worklistModel]=await Promise.all([
   import(pathToFileURL(join(grant,'operations_statement_review.mjs')).href),
   import(pathToFileURL(join(grant,'operations_statement_copies.mjs')).href),
-  import(pathToFileURL(join(dirname(resolve(process.argv[1])),'statement-recipient-model-course.mjs')).href)
+  import(pathToFileURL(join(dirname(resolve(process.argv[1])),'statement-recipient-model-course.mjs')).href),
+  import(pathToFileURL(join(grant,'operations_statement_review_worklist.mjs')).href)
  ]);
  const modelResult=modelCourse.exerciseStatementRecipientReview({
-  review:reviewModel,copies:copyModel,source:base.inputs.source,caseId:state.caseId,invoiceId:state.invoiceId,
+  review:reviewModel,copies:copyModel,worklist:worklistModel,source:base.inputs.source,caseId:state.caseId,invoiceId:state.invoiceId,
   current:await api('/api/operations/'+state.caseId),preview:originalPreview,at:new Date().toISOString()
  });
  await atomic(join(work,'recipient-complete-model-course.json'),modelResult);
@@ -298,6 +357,7 @@ async function recipientReviewBrowser(receiving,originalInputs){
  need((await desk.locator('.statement-recipient').textContent()).includes('Concurrent change'),'Show the actual current CAPITAL / returned GRANT conflict.');
  await page.setViewportSize({width:1360,height:1000});await capture('00-recipient-three-version-comparison-desktop');
  await page.setViewportSize({width:390,height:844});await capture('00-recipient-three-version-comparison-phone');
+ await returnedReviewWorklistBrowser(returnedDownload,reviewModel,JSON.parse(packetDownload.raw));
  const selection=desk.locator('[data-recipient-choice]');
  for(let i=0;i<await selection.count();i++)await selection.nth(i).selectOption('RETURNED');
  await act('apply').click();

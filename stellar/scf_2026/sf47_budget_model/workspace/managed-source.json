@@ -624,6 +624,8 @@
     "forecast-cash-reconciliation.mjs",
     "forecast-cash-reconciliation-desk.mjs",
     "forecast-cash-reconciliation.css",
-    "FORECAST_CASH_RECONCILIATION.md"
+    "FORECAST_CASH_RECONCILIATION.md",
+    "operations_statement_review_worklist.mjs",
+    "STATEMENT_REVIEW_WORKLIST.md"
   ]
 }

@@ -9,7 +9,7 @@ function reviewText(v,max,name,required=false){need(typeof v==='string'&&v.lengt
 function reviewTime(v){need(typeof v==='string'&&Number.isFinite(Date.parse(v)),'Use a complete review timestamp.');return v;}
 function unlocked(draft){need(draft&&!draft.pending&&!draft.accepted&&!draft.setupPending,'Finish the retained original request before recipient review.');}
 function interpretation(draft){const input=copy(draft.inputs);delete input.decisions;return input;}
-function reviewEdition(edition){const result=copy(edition);for(const key of ['recipientPackets','recipientReturn','recipientHistory','recipientName','recipientRole'])delete result.draft[key];return result;}
+function reviewEdition(edition){const result=copy(edition);for(const key of ['recipientPackets','recipientReturn','recipientHistory','recipientName','recipientRole','recipientWorklist'])delete result.draft[key];return result;}
 function effectiveDecision(draft,row){const selected=(draft.inputs.decisions||[]).find(v=>v.rowNumber===row.rowNumber)||{};return {rowNumber:row.rowNumber,action:selected.action??row.action??'IMPORT',category:selected.category??row.category??draft.inputs.defaultCategory??'OTHER',tranche:selected.tranche===undefined?(row.tranche??null):selected.tranche,reason:selected.reason??row.reason??'',allocations:copy(selected.allocations??row.allocations??[])};}
 function validateRecommendation(packet,row){
   need(row&&Number.isSafeInteger(row.rowNumber)&&packet.edition.draft.preview.rows.some(v=>v.rowNumber===row.rowNumber),'Recommendations must use an original preview row.');
@@ -45,6 +45,7 @@ function validatePacket(packet,edition){
   need(edition.draft.dirty===false&&Array.isArray(edition.draft.preview?.rows),'This review needs its original current native preview.');
   return packet;
 }
+export {validatePacket as validateStatementRecipientPacket};
 export function prepareStatementRecipientReturn(packet,{reviewer,recommendations,returnedAt}){
   validatePacket(packet,packet.edition);
   need(Array.isArray(recommendations)&&recommendations.length===packet.edition.draft.preview.rows.length,'Return every original source row once.');
