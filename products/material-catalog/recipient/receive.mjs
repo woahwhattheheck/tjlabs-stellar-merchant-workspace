@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // MIT. One complete original-bundle browser receiving course.
-import {readFile,writeFile,mkdir,lstat} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,lstat,open,rename,unlink} from 'node:fs/promises';
 import {resolve,join,dirname} from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
 import {openText,tableJsonl,materialCsv,compareEditions,TABLES,decodeBase64} from './core.mjs';
 import {buildRecipient} from './build.mjs';
 import {assembleRecipient} from './assemble.mjs';
@@ -22,7 +23,7 @@ async function exactHtml(selection){
 }
 async function validateSuppliedHtml(supplied,originalBytes,originalName){
  const blank=await exactHtml(supplied?.blank),populated=await exactHtml(supplied?.populated);
- const names=['sha256.mjs','core.mjs','workspace.mjs','reader.html'];
+ const names=['sha256.mjs','core.mjs','review.mjs','review-panel.mjs','workspace.mjs','reader.html'];
  const sources=Object.fromEntries(await Promise.all(names.map(async name=>[name,await readFile(join(ROOT,name),'utf8')])));
  if(blank.text!==assembleRecipient(sources))throw new Error('SUPPLIED_BLANK_HTML_IS_NOT_THIS_COMPLETE_SOURCE_EDITION');
  const matches=[...populated.text.matchAll(/<script id="catalog-payload" type="application\/json">([\s\S]*?)<\/script>/g)];
@@ -35,7 +36,8 @@ async function validateSuppliedHtml(supplied,originalBytes,originalName){
 }
 // The caller owns the browser/context. A supplied Page must be a fresh about:blank Page.
 // This API does not launch a browser, navigate an existing user tab, or close its caller's Page.
-export async function receiveRecipientBrowser({context:assignedContext,page:assignedPage=null,bundlePath,bundleSha256,directory:output,pageSource='file',suppliedHtml=null,operationId=DEFAULT_OPERATION}){
+export async function receiveRecipientBrowser({context:assignedContext,page:assignedPage=null,bundlePath,bundleSha256,directory:output,pageSource='file',suppliedHtml=null,operationId=DEFAULT_OPERATION,reviewReturn=false,resumeReviewReturn=false}){
+ if(typeof reviewReturn!=='boolean'||typeof resumeReviewReturn!=='boolean'||(reviewReturn&&resumeReviewReturn))throw Error('SELECT_ONE_ORIGINAL_REVIEW_PHASE');
  if(!['file','supplied-html'].includes(pageSource))throw new Error('SELECT_FILE_OR_SUPPLIED_HTML');
  if(typeof operationId!=='string'||!operationId.trim())throw new Error('KEEP_THE_ORIGINAL_RECEIVING_OPERATION');
  const context=assignedContext??assignedPage?.context();
@@ -46,9 +48,41 @@ export async function receiveRecipientBrowser({context:assignedContext,page:assi
  const originalText=decode(bytes),bundle=openText(originalText,{name:input.split(/[\\/]/).at(-1)});
  const supplied=pageSource==='supplied-html'?await validateSuppliedHtml(suppliedHtml,bytes,bundle.name):null;
  if(pageSource==='file'&&suppliedHtml!==null)throw new Error('SUPPLIED_HTML_REQUIRES_ITS_EXPLICIT_PAGE_SOURCE');
- await mkdir(directory,{mode:0o700});
-const record={schema:'stellar-forge.material-recipient-browser-receiving.v1',status:'RUNNING',operation:operationId,pageSource,renderedHtml:[],startedAt:new Date().toISOString(),original:bundle.summary,downloads:[],screenshots:[],steps:[],browserErrors:[],pixelReview:{status:'PENDING',instructions:'Open and inspect all actual retained images before recording visual completion.'}};
-const save=()=>writeFile(join(directory,'RECEIVING.json'),JSON.stringify(record,null,2)+'\n');
+ const resume=Boolean(resumeReviewReturn);
+const sourceNames=['sha256.mjs','core.mjs','review.mjs','review-panel.mjs','workspace.mjs','reader.html','assemble.mjs','build.mjs','receive.mjs',
+ ...(reviewReturn||resume?['receive-review.mjs',
+ '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/workspace.mjs',
+ '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/recipient-return.mjs',
+ '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/cli.mjs',
+ '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/transfer.mjs',
+ '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/store.mjs']:[])];
+const sourceBinding=await Promise.all(sourceNames.map(async path=>{const body=await readFile(resolve(ROOT,path));return{path,bytes:body.length,sha256:sha(body)};}));
+if(!resume){await mkdir(directory,{mode:0o700});const parent=await open(dirname(directory),'r');try{await parent.sync();}finally{await parent.close();}}
+let reviewGuard;
+if(reviewReturn||resume){
+ reviewGuard=await open(join(directory,'.review-receiving.lock'),'a',0o600);
+ const held=spawnSync('flock',['--exclusive','--nonblock','--conflict-exit-code','75','3'],{stdio:['ignore','pipe','pipe',reviewGuard.fd],timeout:5000});
+ if(held.status!==0){await reviewGuard.close();throw Object.assign(Error(held.status===75?'ORIGINAL_REVIEW_COURSE_ACTIVE':'REVIEW_COURSE_FLOCK_UNAVAILABLE'),{cause:held.error});}
+}
+try{
+const record=resume?JSON.parse(await readFile(join(directory,'RECEIVING.json'),'utf8')):{schema:'stellar-forge.material-recipient-browser-receiving.v1',status:'RUNNING',operation:operationId,pageSource,renderedHtml:[],startedAt:new Date().toISOString(),original:bundle.summary,downloads:[],screenshots:[],steps:[],browserErrors:[],pixelReview:{status:'PENDING',instructions:'Open and inspect all actual retained images before recording visual completion.'}};
+if(resume){
+ if(record.schema!=='stellar-forge.material-recipient-browser-receiving.v1'||record.original.bundleSha256!==bundle.identity.sha256||record.original.bundleBytes!==bytes.length||record.inputBinding?.path!==input||record.inputBinding?.name!==bundle.name)throw Error('RECEIVING_ORIGINAL_INPUT_DIFFERS');
+ if(JSON.stringify(record.sourceBinding)!==JSON.stringify(sourceBinding))throw Error('RECEIVING_SELECTED_SOURCE_DIFFERS');
+ if(!record.steps.includes('incomplete-file-error-and-original-reopen'))throw Error('RECONCILE_ORIGINAL_BROWSER_PHASE_BEFORE_REVIEW_CONTINUATION');
+ if(record.operation!==operationId||record.pageSource!==pageSource)throw Error('RECEIVING_OPERATION_OR_TRANSPORT_DIFFERS');
+ if(supplied&&JSON.stringify(record.suppliedHtml)!==JSON.stringify({blank:{path:supplied.blank.path,bytes:supplied.blank.bytes,sha256:supplied.blank.sha256},populated:{path:supplied.populated.path,bytes:supplied.populated.bytes,sha256:supplied.populated.sha256}}))throw Error('RECEIVING_SUPPLIED_HTML_DIFFERS');
+ for(const built of record.built){const actual=await readFile(built.output);if(actual.length!==built.bytes||sha(actual)!==built.sha256)throw Error('RECEIVING_BUILT_SOURCE_DIFFERS');}
+ record.continuations??=[];record.continuations.push({at:new Date().toISOString(),previousStatus:record.status});
+ record.status='RUNNING';
+}else{record.sourceBinding=sourceBinding;record.inputBinding={path:input,name:bundle.name,bytes:bytes.length,sha256:sha(bytes)};}
+const save=async()=>{
+ const path=join(directory,'RECEIVING.json'),pending=path+'.'+randomUUID()+'.part',handle=await open(pending,'wx',0o600);
+ try{
+  await handle.writeFile(JSON.stringify(record,null,2)+'\n');await handle.sync();await handle.close();
+  await rename(pending,path);const parent=await open(directory,'r');try{await parent.sync();}finally{await parent.close();}
+ }finally{await handle.close().catch(()=>{});await unlink(pending).catch(()=>{});}
+};
 await save();
 let page=assignedPage,reopened;
 const ownedPages=[],observers=[];
@@ -61,7 +95,8 @@ try{
   blank=supplied.blank;populatedHtml=supplied.populated;
   record.built=[];record.suppliedHtml={blank:{path:blank.path,bytes:blank.bytes,sha256:blank.sha256},populated:{path:populatedHtml.path,bytes:populatedHtml.bytes,sha256:populatedHtml.sha256}};
  }else{
-  record.built=[await buildRecipient({output:empty}),await buildRecipient({output:populated,bundle:input})];
+  if(!resume){record.built=[await buildRecipient({output:empty}),await buildRecipient({output:populated,bundle:input})];
+   for(const built of record.built)built.sha256=sha(await readFile(built.output));await save();}
   blank=await exactHtml({path:empty,sha256:sha(await readFile(empty))});
   populatedHtml=await exactHtml({path:populated,sha256:sha(await readFile(populated))});
  }
@@ -88,6 +123,7 @@ try{
   if(type==='json'?JSON.stringify(JSON.parse(body))!==JSON.stringify(expected):!body.equals(desired))throw new Error('DOWNLOADED_CONTENT_DIFFERS:'+name);
   record.downloads.push({name,path,bytes:body.length,sha256:sha(body)});return path;
  };
+ if(!resume){
  await openHtml(page,blank,'blank-reader');await requireVisible(page.getByRole('heading',{name:'Open a catalogue handover',exact:true}));
  await shot('01-empty-desktop');await shot('02-empty-narrow',390);
  await page.getByLabel('Open original catalogue bundle',{exact:true}).setInputFiles(input);
@@ -167,15 +203,21 @@ try{
  await page.getByLabel('Open original catalogue bundle',{exact:true}).setInputFiles(invalid);await requireVisible(page.getByRole('alert'));await shot('11-incomplete-file-error-narrow',390);
  await page.getByLabel('Open original catalogue bundle',{exact:true}).setInputFiles(input);
  await requireVisible(page.getByRole('heading',{name:'Complete recipient workspace',exact:true}));
- record.steps.push('incomplete-file-error-and-original-reopen');
+ record.steps.push('incomplete-file-error-and-original-reopen');await save();
+ }else{await openHtml(page,blank,'original-review-resume');await page.getByLabel('Open original catalogue bundle',{exact:true}).setInputFiles(input);await requireVisible(page.getByRole('heading',{name:'Complete recipient workspace',exact:true}));}
+ record.reviewBlank={path:blank.path,bytes:blank.bytes,sha256:blank.sha256};
+ if(reviewReturn||resume){const {receiveReviewReturn}=await import('./receive-review.mjs');await receiveReviewReturn({page,context,directory,input,bundle,record,save,openDocument:openHtml});}
  if(record.browserErrors.length)throw new Error('BROWSER_ERRORS_RECORDED');
- record.status='BROWSER_COURSE_COMPLETE';record.completedAt=new Date().toISOString();record.customerReader=recipientPath;
+ record.status='BROWSER_COURSE_COMPLETE';record.completedAt=new Date().toISOString();if(!resume)record.customerReader=join(directory,'Downloaded_Complete_Recipient.html');
  await save();return record;
 }catch(error){record.status='ERROR';record.error=String(error.stack??error);record.failedAt=new Date().toISOString();await save();throw error;}
 finally{for(const [observed,handler] of observers)observed.off('pageerror',handler);for(const owned of ownedPages.reverse())await owned.close().catch(()=>{});if(assignedPage&&previousViewport&&!assignedPage.isClosed())await assignedPage.setViewportSize(previousViewport).catch(()=>{});}
+}finally{if(reviewGuard)await reviewGuard.close().catch(()=>{});}
 }
 async function cli(){
- const args=process.argv.slice(2),get=key=>{const i=args.indexOf(key);return i<0?undefined:args[i+1];};
+ const rawArgs=process.argv.slice(2),flags=rawArgs.filter(x=>['--review-return','--resume-review-return'].includes(x));
+ if(flags.length>1)throw Error('Choose one original review suffix or its same-directory continuation.');
+ const args=rawArgs.filter(x=>!flags.includes(x)),get=key=>{const i=args.indexOf(key);return i<0?undefined:args[i+1];};
  const allowed=['--bundle','--sha256','--directory','--playwright','--cdp','--executable','--page-source','--blank-html','--blank-sha256','--populated-html','--populated-sha256','--operation'];
  if(args.length%2||args.some((x,i)=>i%2===0&&!allowed.includes(x))||new Set(args.filter((_,i)=>i%2===0)).size!==args.length/2)throw new Error('Use one value for each supported receiving option.');
  for(const key of ['--bundle','--sha256','--directory','--playwright'])if(!get(key))throw new Error('Required: '+key);
@@ -190,7 +232,7 @@ async function cli(){
  try{
   browser=get('--cdp')?await playwright.chromium.connectOverCDP(get('--cdp')):await playwright.chromium.launch({executablePath:resolve(get('--executable')),headless:true,args:['--no-sandbox']});
   const context=get('--cdp')?browser.contexts()[0]:await browser.newContext({acceptDownloads:true});
-  const record=await receiveRecipientBrowser({context,bundlePath:get('--bundle'),bundleSha256:get('--sha256'),directory:get('--directory'),pageSource,
+  const record=await receiveRecipientBrowser({context,bundlePath:get('--bundle'),bundleSha256:get('--sha256'),directory:get('--directory'),pageSource,reviewReturn:flags.includes('--review-return'),resumeReviewReturn:flags.includes('--resume-review-return'),
    operationId:get('--operation')??DEFAULT_OPERATION,suppliedHtml:pageSource==='supplied-html'?{blank:{path:get('--blank-html'),sha256:get('--blank-sha256')},populated:{path:get('--populated-html'),sha256:get('--populated-sha256')}}:null});
   console.log(JSON.stringify(record,null,2));
  }finally{if(browser&&!get('--cdp'))await browser.close().catch(()=>{});}

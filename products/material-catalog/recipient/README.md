@@ -2,7 +2,7 @@
 
 Open a complete original material catalogue handover in one browser file. The reader includes material browsing, full edition comparisons, every retained customer-decision revision, supplier plan/correction/review/recipient records, original source downloads, and complete original table exports.
 
-It operates entirely on the selected original JSONL bundle. The maintained Node/SQLite operator remains the authoring and receiving application; this reader provides a portable recipient view of its exports.
+It operates entirely on the selected original JSONL bundle. The maintained Node/SQLite operator remains the authoring and receiving application. The reader also prepares named customer-match proposals and complete working reviews for explicit author receiving; the original catalogue remains unchanged until the operator adopts the reviewed request.
 
 ## Build and open
 
@@ -39,13 +39,19 @@ The builder verifies the complete bundle before creating a new output file and r
 
 **Original sources** downloads every exact source byte stream. Source formats, names, original URLs, hashes and provenance remain in their complete manifests. **All retained records** makes every original table available with its exact stored record JSON.
 
+## Review and return
+
+**Review and return** creates a named review against the exact selected edition. Save complete proposal revisions, the original bundle and unfinished form as working JSON or a self-contained HTML. Return the full named review to the author, then compare it with the current complete author bundle and choose Keep current or Adopt separately for every context. The downloaded request is received through the original catalogue CLI and Journal; full return history travels in the existing decision history.
+
+Follow [REVIEW_RETURN.md](./REVIEW_RETURN.md) for the complete colleague, author, replay and onward delivery workflow. Original browsing and source downloads remain available throughout.
+
 ## Integrity and receiving
 
 The reader checks the original v1/v2 envelope, frame and row counts, table keys, contiguous source chunks, exact source-byte hashes and complete footer. It checks original material content seals, edition material roots/change counts, original catalogue and decision histories, saved supplier seals and retained reference/history relationships. It uses the existing MIT-licensed js-sha256 1.0.0 implementation with its original notice.
 
 The original operator owns source interpretation, profile normalization, business-rule evaluation, exact correction projection, xChange FULL/CHANGE derivation, recipient processing, database import and concurrent revision handling. Open the complete bundle through its maintained importer when continuing editable work. A consistent byte hash describes the selected file; supplier and customer conclusions retain their original scope and dates.
 
-The browser does not persist imported data in local storage or contact any server. Closing the tab discards its in-memory view. Use **Download complete offline reader** or keep the original bundle to reopen the complete handover. A browser file can contain the entire customer dataset, so deliver it through that customer's existing authorized destination.
+The browser does not persist imported data in local storage or contact any server. Closing the tab discards its in-memory view and review. Use **Save complete working review**, **Save complete working HTML**, or **Download complete offline reader** before closing. These retain the entire original handover plus any current review and unfinished form. A browser file can contain the entire customer dataset, so deliver it through that customer's existing authorized destination.
 
 The reader accepts complete bundles up to 256 MiB and original individual JSONL frames up to 8 MiB. It presents records in pages of 50 and never substitutes a partial file for a complete import. Memory holds the original bundle, parsed records and decoded source files; use the maintained streaming native importer for larger data.
 

@@ -30,6 +30,8 @@ Read the original retained workspace:
   catalog-quantity   --catalog ID --material-key KEY --material-sha256 SHA256
                      --quantity DECIMAL_TEXT --unit ORIGINAL_UNIT
   catalog-decisions  --catalog ID [--offset N] [--limit N]
+  catalog-review-return --return NAMED_RECIPIENT_REVIEW.json
+  catalog-receive-review --request REVIEWED_RECEIVING_REQUEST.json
   catalog-operation  --request-id ORIGINAL_ID
   catalog-import-storage [--import-request-id ORIGINAL_ID] [--offset N] [--limit N]
   catalog-retire-import-stage --request RETIREMENT.json
@@ -92,6 +94,10 @@ retain expectedRevision; decisions retain expectedCatalogRevision, material hash
 and an existing decisionId/expectedRevision when revising a saved customer match.
 The JSON fields are the same fields used by the browser and workspace methods.
 Use --request - to read one JSON object from stdin (up to 1 MiB).
+The complete reviewed catalog-receive-review request permits up to 8 MiB;
+catalog-review-return accepts the original complete return file up to 4 MiB.
+Receiving adopts only explicit choices in one original transaction. Reuse the same
+requestId for exact replay; changed catalogue/material/decisions require new review.
 Upload requests include format (for example {"kind":"tsv"}) and source provenance.
 Upload/import name, bytes and sha256 may be supplied; omitted manifest fields are
 filled from the selected regular file. Supplied length/hash must match its bytes.
@@ -123,6 +129,8 @@ const OPTIONS = {
   'catalog-suggest': ['--catalog', '--text', '--text-file', '--customer', '--category', '--manufacturer', '--unit', ...PAGING],
   'catalog-quantity': ['--catalog', '--material-key', '--material-sha256', '--quantity', '--unit'],
   'catalog-decisions': ['--catalog', ...PAGING],
+  'catalog-review-return': ['--return'],
+  'catalog-receive-review': ['--request'],
   'catalog-operation': ['--request-id'],
   'catalog-import-storage': ['--import-request-id', ...PAGING],
   'catalog-retire-import-stage': ['--request'],
@@ -153,6 +161,7 @@ const MUTATIONS = {
   'catalog-preview': 'preview',
   'catalog-select': 'select',
   'catalog-decision': 'saveDecision',
+  'catalog-receive-review': 'receiveRecipientReview',
   'catalog-create-draft': 'createDraft',
   'catalog-supplier-save': 'supplierSave',
   'catalog-supplier-correction': 'supplierCorrection',
@@ -225,8 +234,8 @@ async function readText(path, limit, stdin) {
     return text;
   } finally { if (file) await file.close(); }
 }
-async function requestInput(options, stdin, { requireRequestId = true } = {}) {
-  const text = await readText(required(options, '--request'), 1024 * 1024, stdin);
+async function requestInput(options, stdin, { requireRequestId = true, limit = 1024 * 1024 } = {}) {
+  const text = await readText(required(options, '--request'), limit, stdin);
   let value;
   try { value = JSON.parse(text); }
   catch { fail('CATALOG_CLI_JSON_REQUIRED', 'Supply one complete JSON request object.'); }
@@ -333,7 +342,10 @@ async function perform(workspace, command, options, context) {
   const catalog = workspace.catalog;
   if (Object.hasOwn(MUTATIONS, command))
     return catalog[MUTATIONS[command]](await requestInput(options, context.stdin, {
-      requireRequestId: command !== 'catalog-retire-import-stage' }));
+      requireRequestId: command !== 'catalog-retire-import-stage',
+      limit: command === 'catalog-receive-review' ? 8 * 1024 * 1024 : 1024 * 1024 }));
+  if (command === 'catalog-review-return')
+    return catalog.previewRecipientReview(await readText(required(options, '--return'), 4 * 1024 * 1024, context.stdin));
   if (command === 'catalog-bmecat-profile')
     return catalog.bmecatInputProfile(options['--source-id'] ? {sourceId:options['--source-id']} : {});
   if (command === 'catalog-supplier-profile') return catalog.supplier.templates(options['--target']?{target:options['--target']}:{});

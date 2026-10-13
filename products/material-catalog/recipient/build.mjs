@@ -8,7 +8,7 @@ import {assembleRecipient} from './assemble.mjs';
 const ROOT=dirname(fileURLToPath(import.meta.url));
 export async function buildRecipient({output,bundle}){
  if(!output)throw new Error('Select a new output HTML filename.');
- const names=['sha256.mjs','core.mjs','workspace.mjs','reader.html'];
+ const names=['sha256.mjs','core.mjs','review.mjs','review-panel.mjs','workspace.mjs','reader.html'];
  const values=await Promise.all(names.map(name=>readFile(join(ROOT,name),'utf8')));
  const sources=Object.fromEntries(names.map((name,i)=>[name,values[i]]));
  let summary=null,payload=null;
