@@ -94,6 +94,38 @@
         <div id="qbo-mapping-help" class="padded hint" aria-live="polite">Choose an original accountant handoff to load its events.</div>
         <details class="padded qbo-divider"><summary id="qbo-fill-description">Fill blank account fields across selected events</summary><div class="qbo-form-grid qbo-spaced"><div><label for="qbo-default-debit-id">Debit account ID</label><input id="qbo-default-debit-id" list="qbo-account-options" maxlength="100" placeholder="QuickBooks account ID"></div><div><label for="qbo-default-debit-name">Debit account name</label><input id="qbo-default-debit-name" maxlength="160" placeholder="For example, settlement clearing"></div><div><label for="qbo-default-credit-id">Credit account ID</label><input id="qbo-default-credit-id" list="qbo-account-options" maxlength="100" placeholder="QuickBooks account ID"></div><div><label for="qbo-default-credit-name">Credit account name</label><input id="qbo-default-credit-name" maxlength="160" placeholder="For example, merchant revenue"></div></div><div class="actions qbo-spaced"><button id="qbo-fill-accounts" type="button">Fill blank account fields</button><span class="hint">Existing row values and all amounts stay as entered.</span></div></details>
         <details id="qbo-buyer-bulk" class="padded qbo-divider" hidden><summary>Explicitly exclude the remaining pending allocations</summary><p id="qbo-buyer-bulk-count" class="hint qbo-spaced"></p><label for="qbo-buyer-bulk-reason" class="qbo-spaced">Reason for these exclusions</label><textarea id="qbo-buyer-bulk-reason" rows="2" maxlength="2000" placeholder="Why the still-pending allocations will not have lines in this journal"></textarea><div class="actions qbo-spaced"><button id="qbo-buyer-exclude-pending" type="button">Exclude pending allocations</button></div><p class="hint qbo-spaced">These are journal decisions. The original allocation, accountant status and any earlier included or excluded decision remain unchanged.</p></details>
+        <details id="qbo-worksheets" class="padded qbo-divider qbo-worksheets" hidden>
+          <summary>Edit buyer allocations in a worksheet</summary>
+          <p class="hint qbo-spaced">Export every allocation and the current draft, edit only the decision, amount, account IDs, valuation and explanation cells, then inspect the returned CSV. Later draft edits are compared field by field before adoption. Load the original company chart first.</p>
+          <div class="actions qbo-spaced"><button id="qbo-worksheet-export" type="button">Export current draft to CSV</button></div>
+          <div class="qbo-form-grid qbo-spaced">
+            <div><label for="qbo-worksheet-select">Retained worksheet base</label><select id="qbo-worksheet-select"><option value="">Choose a retained worksheet</option></select></div>
+            <div><label for="qbo-worksheet-record-file">Open an earlier worksheet record</label><input id="qbo-worksheet-record-file" type="file" accept=".json,application/json"><p class="hint">Use the complete original worksheet JSON saved beside its CSV.</p></div>
+            <div class="qbo-wide"><label for="qbo-worksheet-csv-file">Edited worksheet CSV</label><input id="qbo-worksheet-csv-file" type="file" accept=".csv,text/csv"><p class="hint">Keep every original allocation, the JOURNAL row and all source columns. UTF-8 CSV, up to 16 MiB.</p></div>
+          </div>
+          <p id="qbo-worksheet-status" class="hint qbo-spaced" aria-live="polite"></p>
+          <div id="qbo-worksheet-source" class="qbo-spaced"></div>
+          <div class="actions qbo-spaced">
+            <button id="qbo-worksheet-download-record" type="button">Download worksheet record</button>
+            <button id="qbo-worksheet-download-original" type="button">Download original CSV</button>
+            <button id="qbo-worksheet-download-accounts" type="button">Download account reference CSV</button>
+            <button id="qbo-worksheet-download-edited" type="button">Download retained edited CSV</button>
+            <button id="qbo-worksheet-download-review" type="button">Download complete import review</button>
+          </div>
+          <div class="actions qbo-spaced"><button id="qbo-worksheet-inspect" type="button">Inspect against current draft</button></div>
+          <section id="qbo-worksheet-preview" class="qbo-spaced" aria-labelledby="qbo-worksheet-preview-title" hidden>
+            <h4 id="qbo-worksheet-preview-title">Review returned values and later draft edits</h4>
+            <p id="qbo-worksheet-summary" class="hint qbo-spaced" aria-live="polite"></p>
+            <div id="qbo-worksheet-issues" class="qbo-issues"></div>
+            <div class="pagination"><span id="qbo-worksheet-issues-page"></span><div class="actions"><button id="qbo-worksheet-issues-previous" type="button">Previous items</button><button id="qbo-worksheet-issues-next" type="button">Next items</button></div></div>
+            <div class="table-wrap"><table class="qbo-worksheet-table"><caption class="sr-only">Three-way comparison of worksheet edits and the current draft</caption>
+              <thead><tr><th scope="col">Allocation and field</th><th scope="col">Exported base</th><th scope="col">Current draft</th><th scope="col">Returned CSV</th><th scope="col">Value to keep</th></tr></thead><tbody id="qbo-worksheet-changes"></tbody>
+            </table></div>
+            <div class="pagination"><span id="qbo-worksheet-page"></span><div class="actions"><button id="qbo-worksheet-previous" type="button">Previous fields</button><button id="qbo-worksheet-next" type="button">Next fields</button></div></div>
+            <p class="hint qbo-spaced">Choose each conflicting value, then inspect again. Adoption saves draft choices; the original journal preview, review and posting controls follow below.</p>
+            <div class="actions qbo-spaced"><button id="qbo-worksheet-adopt" class="primary" type="button">Adopt reviewed values into draft</button></div>
+          </section>
+        </details>
         <div class="filters"><label id="qbo-draft-search-label" for="qbo-draft-search">Find source events</label><input id="qbo-draft-search" type="search" placeholder="Event, option, network or original reference"><button id="qbo-draft-select-page" type="button">Select this page</button><button id="qbo-draft-clear" type="button">Clear selection</button></div>
         <div class="table-wrap"><table class="qbo-mapping-table">
           <caption id="qbo-mapping-caption" class="sr-only">Journal mapping for each original payment option</caption>
