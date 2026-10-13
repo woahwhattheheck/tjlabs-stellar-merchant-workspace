@@ -21,10 +21,14 @@ HERE = Path(__file__).resolve().parent
 
 
 class OperatorServer(ThreadingHTTPServer):
-    daemon_threads = True
+    daemon_threads = False
+    block_on_close = True
 
     def __init__(self, workspace, port=8777):
         self.workspace = workspace
+        self.closed = False
+        self.commissioning = None
+        self.commissioning_lock = threading.RLock()
         self.jobs = {}
         self.job_lock = threading.Lock()
         self.receiving_lock = threading.Lock()
@@ -79,7 +83,13 @@ class OperatorServer(ThreadingHTTPServer):
     def open_received(self, identifier):
         from receiving import received_project
         record = received_project(self.workspace, identifier)
+        return self.open_received_record(record)
+
+    def open_received_record(self, record):
+        identifier = record['id']
         with self.receiving_lock:
+            if self.closed:
+                raise Busy('Applications is stopping; reopen this saved project')
             existing = self.received_servers.get(identifier)
             if existing is None:
                 child = OperatorServer(PipelineWorkspace(record['path']), 0)
@@ -91,6 +101,15 @@ class OperatorServer(ThreadingHTTPServer):
         return {**record, 'origin': child.origin}
 
     def server_close(self):
+        if self.closed:
+            return
+        self.closed = True
+        # Finish HTTP writers before collecting the final owned work and children.
+        super().server_close()
+        with self.commissioning_lock:
+            commissioning = self.commissioning
+        if commissioning is not None:
+            commissioning.close()
         with self.receiving_lock:
             children = list(self.received_servers.values())
         for child, thread in children:
@@ -105,11 +124,13 @@ class OperatorServer(ThreadingHTTPServer):
                 self.workspace.cancel(execution_id)
         for _, worker in jobs:
             worker.join()
-        super().server_close()
+        # The root socket and request threads were drained above.
 
 
 class OperatorHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
+    # Bound idle keep-alive readers so owned shutdown can drain HTTP threads.
+    timeout = 30
     # Full-result clients page over one local persistent connection. Avoid the
     # delayed-ACK/Nagle pause between the separately written headers and body.
     disable_nagle_algorithm = True
@@ -122,6 +143,8 @@ class OperatorHandler(BaseHTTPRequestHandler):
         return self.server.workspace
 
     def check_origin(self, write=False):
+        if self.server.closed:
+            raise Busy('Applications is stopping; reopen the saved workspace')
         expected = urlsplit(self.server.origin).netloc
         if self.headers.get('Host') != expected:
             raise PreparationError('Use the exact local application address')
@@ -163,6 +186,10 @@ class OperatorHandler(BaseHTTPRequestHandler):
             parsed = urlsplit(self.path)
             query = {k: v[-1] for k, v in parse_qs(parsed.query).items()}
             path = parsed.path
+            if path.startswith('/api/commissioning/'):
+                from commissioning import route
+                if route(self, parsed, 'GET'):
+                    return
             if path in {'/', '/app.js', '/style.css'}:
                 filename = 'index.html' if path == '/' else path[1:]
                 return self.file(HERE / filename, {'index.html': 'text/html; charset=utf-8', 'app.js': 'text/javascript; charset=utf-8', 'style.css': 'text/css; charset=utf-8'}[filename])
@@ -204,6 +231,10 @@ class OperatorHandler(BaseHTTPRequestHandler):
         try:
             self.check_origin(True)
             parsed = urlsplit(self.path)
+            if parsed.path.startswith('/api/commissioning/'):
+                from commissioning import route
+                if route(self, parsed, 'POST'):
+                    return
             if parsed.path == '/api/receive':
                 query = {k: v[-1] for k, v in parse_qs(parsed.query).items()}
                 remaining = self.content_length(20 * 1024**3)
