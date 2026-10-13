@@ -1,4 +1,5 @@
 """Routes behind the existing private Analysis capability."""
+from pathlib import Path
 from . import _analysis_event_programmes_ui as ui
 from .errors import StateError
 
@@ -6,7 +7,8 @@ from .errors import StateError
 def assets():
     return {"/event-programmes": (ui.HTML, "text/html;charset=utf-8"),
             "/event-programmes.js": (ui.JS, "text/javascript;charset=utf-8"),
-            "/event-programmes.css": (ui.CSS, "text/css;charset=utf-8")}
+            "/event-programmes.css": (ui.CSS, "text/css;charset=utf-8"),
+            "/event-workbook-columns.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-columns.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8")}
 
 
 def get(handler, workspace, url, query, parts):

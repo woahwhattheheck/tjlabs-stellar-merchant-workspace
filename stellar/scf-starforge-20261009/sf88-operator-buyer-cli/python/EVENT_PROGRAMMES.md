@@ -279,3 +279,10 @@ behavior defects in the same source. Source-only execution is separate from
 this actual native/rendered course. Return the exact source edition, original
 workspace/input/programme IDs, complete downloads and real screens to the
 existing receiving owner; preserve the same original operation and deadline.
+
+
+## Review changed customer workbook columns
+
+When a later source invalidates a saved worksheet column, the original native result opens the complete worksheet-choice editor in this same page. Review every original heading, type, null label and precision choice; explicitly select replacements using actual new source names and report ordinals, and reorder, remove or add columns. Save/reopen the full source-bound JSON and complete readable HTML, then continue the same native apply with its original note and reviewed operation. Other selected worksheet arrays remain retained.
+
+The full browser, file/CLI, interrupted-action and independently restored receiving course is [Event workbook column continuation](EVENT_WORKBOOK_COLUMNS.md). Its exact outgoing UI, all attachments, normal/narrow operation and restored whole workbook are part of the original producer inspection course. Original Workbooks remains the source/conversion/review/save owner.
