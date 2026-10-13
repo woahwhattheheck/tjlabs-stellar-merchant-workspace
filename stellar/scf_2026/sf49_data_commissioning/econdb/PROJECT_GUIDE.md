@@ -13,6 +13,7 @@ The complete immutable destination contains:
 | `report.html` | Offline project overview with per-entry source semantics, coverage and review findings |
 | `observations.csv` | Combined annotated selected observations; original entry, edition, request and source identities remain on each row |
 | `project-analysis.json` | Complete structured project result, including distinct unknown states and exact decimal strings |
+| `browser-workspace.json` | Complete editable browser workspace with original response/descriptor pairs and exact calculation binding |
 | `project.json` | Portable configuration with paths under `originals/<entry-id>/current` or `previous` |
 | `originals/<entry-id>/<role>/` | Exact original response, descriptor, receiving state and original edition manifest |
 | `entries/<entry-id>/` | Original per-edition report, selected CSV/JSON, source binding and any explicitly requested comparisons |
@@ -110,3 +111,40 @@ Before calling any customer/prospect-facing application, report, dashboard or ex
 Fix broken, unstyled, cramped, clipped, overflowing or unreadable output directly while preserving the real source and computation. Use readable tables, clear hierarchy, restrained controls and useful labels. Source review, DOM counts, HTTP 200, unit checks and another worker's approval do not substitute for seeing and using the product. Keep receiving focused on this actual operation and do not create broad suites, synthetic customer data or a separate verification product.
 
 Carry this requirement into current, future, resumed and delegated worker instructions across providers and local/cloud runtimes. Preserve historical and vendor instructions and existing owner cutoffs. Do not force restarts, add watchers, revive stopped work, start hosted Actions or create a duplicate runtime. If execution is unavailable, join the original equipped receiver with the complete exact source and opening steps, then inspect its actual rendering while continuing independent implementation.
+
+## Browser project editor and full native continuation
+
+Open the included `maritime-workbench.html`. The fifth panel collects complete applied source reviews into one project. Give the project an identifier/title, apply a source and local period above, give the entry a descriptive title and select **Add reviewed entry**. Repeat with the next port, source measure or source edition. A new source review does not change an existing entry automatically.
+
+Select **Edit entry** to return that entry's complete current/prior source and periods to the original review controls. Apply the revised selection, then **Replace selected entry from review**. **Update selected title** changes only its title. Entries can be reordered or removed. **Undo last project change** restores the preceding complete in-memory project, including a project replaced by a successful reopen. The page does not use a remote service or browser persistence; download the project before closing it.
+
+A saved project uses `econdb.project-workspace.v1` and carries every referenced complete original response and descriptor. Identical response/descriptor pairs are stored once and referenced by entries. Its analysis/project module hashes select the producing calculations. Reopening validates every retained original, all source references, complete project configuration and calculated entries before replacing the existing working project. A malformed, changed-source or mismatched-engine file preserves the current project. Use the accompanying original workbench for an older engine, or explicitly receive original pairs in a new project.
+
+The browser exports:
+
+- A complete project workspace with all original current/prior data and applied selections.
+- A standalone HTML report containing the overview, all selected observations, comparisons, source revisions, exceptions and source identities for every entry. It has no directory-relative download links.
+- Source-annotated CSV for every selected cell, preserving separate measures, missing states and original numeric lexemes.
+- The complete structured project analysis JSON.
+
+Native `build` now also writes `browser-workspace.json` in its complete manifested project. Reopen that file in the included browser workbench to continue the same entries. Every new native project carries the standalone workspace module and project UI source alongside the original engines and builder.
+
+Receive a browser-saved project through the existing Linux CLI:
+
+```bash
+node maritime-project-cli.mjs import-workspace --workspace /absolute/path/saved-project-workspace.json --out /absolute/path/new-native-project
+node maritime-project-cli.mjs inspect --project /absolute/path/new-native-project
+node maritime-project-cli.mjs reopen --project /absolute/path/new-native-project --out /absolute/path/independently-reopened-project
+```
+
+The import retains the exact incoming file in `<output>.browser-inputs/workspace.json`, checks its complete originals and engine binding, receives each original through the existing edition receiver and builds the same complete native project. The browser result and native result must agree. Repeating the same import reconciles the already received project. A different workspace or analysis binding requires a new destination; it cannot replace the previous intake. The intake and published project have distinct kernel locks, so source receiving and complete project publication each keep their existing operation safe. No API call, account, token, package install, purchase or hosted workflow is involved.
+
+The browser receives saved files up to 256 MiB; native project members and this native import use the existing 128 MiB per-file limit. Both use 1–48 entries and the original 500,000 retained-current/prior-cell project limit. A browser workspace above the native file limit can continue in the browser or be received as explicitly selected smaller complete projects. Customer commissioning scope remains the agreed commercial scope.
+
+After changing a browser source, run `node build-workbench.mjs` from this directory. It embeds the exact period engine, project engine, workspace module and UI source and updates their analysis identities in the standalone HTML. The builder refuses missing boundaries. Keep the produced workbench and its source files together in native projects.
+
+### Actual receiving for this extension
+
+Join the original Econdb receiving operation. In the exact outgoing desktop and narrow workbench: add both retained issuer examples with descriptive titles; edit, rename, reorder, remove and undo an entry; save/download and cold-reopen the whole project; open the complete standalone report and every CSV/JSON; review the unknown traffic cell and complete capacity comparison. Open a native project's `browser-workspace.json` in the browser. Import the downloaded browser workspace through the original CLI, inspect it, repeat the same import and independently reopen the native project.
+
+Exercise an empty selection and a rejected malformed/changed-source workspace while another valid project is open; the existing project must remain available. View actual screenshots of the important states and correct readability/overflow. The JavaScript original-source calculation and workspace round trip are already exercised; actual browser interaction and native import execution remain with that same equipped receiving owner.

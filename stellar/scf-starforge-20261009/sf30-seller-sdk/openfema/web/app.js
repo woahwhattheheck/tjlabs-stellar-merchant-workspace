@@ -1,4 +1,5 @@
 // MIT. Industrial portfolio operator; the native workspace owns source and decisions.
+import {createOperatorCopies} from '/working-copy-ui.js';
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const title=v=>String(v).replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,s=>s.toUpperCase());
@@ -16,6 +17,7 @@ const split=v=>String(v??'').split(/[,\n]/).map(x=>x.trim()).filter(Boolean);
 let token=location.hash.slice(1)||sessionStorage.getItem('openfema-session');
 if(token){sessionStorage.setItem('openfema-session',token);if(location.hash)history.replaceState(null,'',location.pathname);}
 const S={view:null,schema:null,section:'sources',table:'projects',search:'',sort:'',direction:'asc',offset:0,rows:null,detail:null,comparison:null,query:null,releaseStates:{},buyer:null,busy:false,pending:null,rowGeneration:0,detailGeneration:0};
+let W=null;
 const PENDING_SCHEMA='stellar-forge.openfema-browser-operation.v1';
 async function api(path,body){
   const res=await fetch(path,{method:body===undefined?'GET':'POST',headers:{Authorization:'Bearer '+token,...(body===undefined?{}:{'Content-Type':'application/json'})},body:body===undefined?undefined:JSON.stringify(body)});
@@ -24,6 +26,7 @@ async function api(path,body){
 function notify(message,error=false){const box=$('#notice');box.hidden=false;box.className='notice'+(error?' error':'');box.textContent=message;if(error&&S.pending){const b=document.createElement('button');b.type='button';b.dataset.command='retry';b.textContent='Reopen original operation';box.append(b);}}
 function pendingKey(operationId){return 'openfema-pending:'+S.view.workspaceId+':'+operationId;}
 function retainedRequests(){
+  if(W?.ready)return W.pending();
   if(!S.view)return [];
   const prefix=pendingKey(''),records=[];
   for(const key of Object.keys(sessionStorage)){
@@ -54,20 +57,16 @@ async function pending(request){
   const record={...request,schema:PENDING_SCHEMA,workspaceId:S.view.workspaceId,savedAt:new Date().toISOString()};
   if(request.action==='source.import')record.originalSource=await bundleIdentity(request.payload.bundle);
   if(request.action==='delivery.reconcile')record.originalCustomerFile={...await bundleIdentity(request.payload.customerFile),deliveryId:request.payload.deliveryId};
-  const saved={...record};
-  if(record.originalSource&&JSON.stringify(saved).length>=64000){
-    delete saved.payload;saved.needsOriginalSource=true;
-  }
-  if(record.originalCustomerFile&&JSON.stringify(saved).length>=64000){delete saved.payload;saved.needsOriginalCustomerFile=true;}
-  sessionStorage.setItem(pendingKey(request.operationId),JSON.stringify(saved));
+  await W.retainRequest(record);
   S.pending=record;
 }
-function completePending(operationId){
-  sessionStorage.removeItem(pendingKey(operationId));
+async function completePending(operationId,result,revision){
+  await W.completeRequest(operationId,result,revision);
+  try{sessionStorage.removeItem(pendingKey(operationId));}catch{}
   S.pending=retainedRequests()[0]??null;
 }
 async function originalRequest(operationId,{sourceBundle,customerFile}={}){
-  const retained=(S.pending?.operationId===operationId?S.pending:null)||
+  const retained=(await W.request(operationId))||(S.pending?.operationId===operationId?S.pending:null)||
     retainedRequests().find(item=>item.operationId===operationId);
   const operation=await api('/api/operation?operationId='+encodeURIComponent(operationId));
   if(operation){
@@ -128,7 +127,7 @@ async function readSourceFile(file){
     if(typeof DecompressionStream!=='function')throw new Error('Receive this gzip through the original native CLI or choose its complete JSON.');
     stream=stream.pipeThrough(new DecompressionStream('gzip'));
   }
-  const reader=stream.getReader(),decoder=new TextDecoder('utf-8',{fatal:true}),parts=[];let size=0,complete=false;
+  const reader=stream.getReader(),decoder=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}),parts=[];let size=0,complete=false;
   try{
     while(true){
       const item=await reader.read();if(item.done)break;
@@ -136,7 +135,7 @@ async function readSourceFile(file){
       if(size>maximum)throw new Error('The expanded source package exceeds 256 MiB.');
       parts.push(decoder.decode(item.value,{stream:true}));
     }
-    parts.push(decoder.decode());complete=true;return JSON.parse(parts.join(''));
+    parts.push(decoder.decode());complete=true;return JSON.parse(parts.join('').replace(/^\uFEFF/,''));
   }finally{if(!complete)await reader.cancel().catch(()=>{});reader.releaseLock();}
 }
 const version=()=>S.view?.versions.find(v=>v.id===S.view.selectedVersionId);
@@ -145,14 +144,17 @@ const editionOptions=()=>S.view.editions.map(e=>({value:e.id,label:(e.label||'FE
 const versionOptions=()=>S.view.versions.slice().reverse().map(v=>({value:v.id,label:v.criteria.name+' · v'+v.number+' · '+date(v.createdAt)}));
 async function act(action,payload={},original=null){
   if(S.busy)throw new Error('The current workspace operation is still running.');
-  const request=nativeRequest(original||{operationId:'browser-'+crypto.randomUUID(),action,payload,expectedRevision:S.view.revision});
+  let request=nativeRequest(original||{operationId:'browser-'+crypto.randomUUID(),action,payload,expectedRevision:S.view.revision});
   S.busy=true;document.body.setAttribute('aria-busy','true');
   try{
     await pending(request);
+    const first=await W.request(request.operationId);
+    if(!first?.payload)throw new Error('The complete original request payload is unavailable.');
+    request={...request,payload:first.payload};
     const result=await api('/api/action',request);
     if(result.view?.workspaceId!==S.view.workspaceId)throw new Error('The returned operation belongs to another workspace.');
     if(Number.isInteger(result.view.revision)&&result.view.revision>=S.view.revision)S.view=result.view;
-    completePending(request.operationId);return result.result;
+    await completePending(request.operationId,result.result,result.view.revision);return result.result;
   }
   catch(error){try{const view=await api('/api/view');if(view.workspaceId===S.view.workspaceId&&Number.isInteger(view.revision)&&view.revision>=S.view.revision)S.view=view;}catch{}throw error;}
   finally{S.busy=false;document.body.removeAttribute('aria-busy');updateHeader();}
@@ -167,10 +169,10 @@ function renderSelection(){
   $('#selection').innerHTML='<div><label for="selected-portfolio">Portfolio</label><select id="selected-portfolio">'+options(S.view.portfolios.map(p=>({value:p.id,label:p.name+' · '+p.number+' versions'})),p?.id,'Select a portfolio')+'</select></div><div><label for="selected-version">Saved version</label><select id="selected-version">'+options(S.view.versions.filter(x=>x.portfolioId===p?.id).slice().reverse().map(x=>({value:x.id,label:'Version '+x.number+' · '+x.reason+' · '+date(x.createdAt)})),v?.id,'Select a version')+'</select></div><div class="version-meta">'+(v?'SOURCE '+short(v.editionId)+'<br>VERSION '+short(v.id):'Capture an official source edition, then save a portfolio.')+'</div>';
 }
 function render(){
-  if(!S.view)return;S.rowGeneration++;updateHeader();renderSelection();
+  if(!S.view)return;W?.beforeRender();S.rowGeneration++;updateHeader();renderSelection();
   $('#navigation').innerHTML=[['sources','Sources'],['portfolios','Portfolios'],['review','Review'],['changes','Changes'],['integration','Data integration'],['publication','Publication'],['customer','Customer'],['handover','Handover']].map(([id,label])=>'<button type="button" data-command="section" data-section="'+id+'" aria-current="'+(S.section===id?'page':'false')+'">'+label+'</button>').join('');
   const screens={sources:renderSources,portfolios:renderPortfolio,review:renderReview,changes:renderChanges,integration:renderIntegration,publication:renderPublication,customer:renderCustomer,handover:renderHandover};
-  $('#main').innerHTML=screens[S.section]();
+  $('#main').innerHTML=screens[S.section]();W?.afterRender();
   if(['portfolios','review'].includes(S.section)&&version())void loadRows().catch(e=>notify(e.message,true));
 }
 function heading(name,description){return '<div class="section-heading"><div><h2>'+name+'</h2><p>'+description+'</p></div></div>';}
@@ -264,7 +266,7 @@ function renderHandover(){
     '<details><summary>Original operation history</summary><p class="small">A repeated operation ID reopens its saved outcome. Retained records include the original inputs, result and error for interrupted work.</p><div class="table-wrap"><table><thead><tr><th>Operation</th><th>Action</th><th>State</th><th>Updated</th><th>Open</th></tr></thead><tbody>'+ops+'</tbody></table></div></details>';
 }
 
-function openDialog(name,html,{record=false}={}){if(!record){S.detail=null;S.detailGeneration++;}$('#record-title').textContent=name;$('#record-body').innerHTML=html;const dialog=$('#record-dialog');if(!dialog.open)dialog.showModal();}
+function openDialog(name,html,{record=false}={}){W?.beforeRender();if(!record){S.detail=null;S.detailGeneration++;}$('#record-title').textContent=name;$('#record-body').innerHTML=html;const dialog=$('#record-dialog');if(!dialog.open)dialog.showModal();W?.restoreForms();}
 async function openRecord(table,row){
   const selectedVersion=version(),selectedPortfolio=portfolio(),section=S.section,generation=++S.detailGeneration;
   if(!selectedVersion||!selectedPortfolio||!row)throw new Error('Select an original row from the current saved version.');
@@ -355,8 +357,8 @@ async function executeCommand(target){
     a.href=url;a.download='OpenFEMA_Earlier_Browser_Request.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);return;
   }
 }
-async function submitForm(event){
-  const form=event.target,data=new FormData(form),id=form.id,submitter=event.submitter?.value;
+async function submitForm(event,preparedData=null){
+  const form=event.target,data=preparedData||new FormData(form),id=form.id,submitter=event.submitter?.value;
   if(id.startsWith('integration-')){await integrationForm(form,data);return;}
   if(id==='table-form'){S.search=String(data.get('search')||'');S.sort=String(data.get('sort')||'');S.direction=String(data.get('direction')||'asc');S.offset=0;await loadRows();return;}
   if(id==='capture-form'){
@@ -367,7 +369,7 @@ async function submitForm(event){
     await act('source.capture',{scope,label:String(data.get('capture-label')||'Public Assistance source')});render();notify('The full selected source cohort is being captured.');return;
   }
   if(id==='import-form'){
-    const file=$('#source-file').files[0];if(!file)throw new Error('Choose the original source bundle.');
+    const file=await W.selectedFile('source-file');
     const bundle=await readSourceFile(file),identity=await bundleIdentity(bundle);
     const candidates=[...(S.pending?[S.pending]:[]),...retainedRequests()];
     const retained=candidates.find(r=>r.action==='source.import'&&r.originalSource?.sha256===identity.sha256&&r.originalSource?.bytes===identity.bytes);
@@ -395,15 +397,16 @@ async function submitForm(event){
 
 // Original project data exchange: mappings, files and decisions use this workspace's actions.
 const I={document:null,offset:0,generation:0,selected:new Set(),draft:null,mappingId:'',deliveryId:'',receivingReviewer:'',receivingNote:''};
+W=createOperatorCopies({state:()=>({S,I}),render,notify,openIntegrationDocument,openRecord,selectPortfolio:async(portfolioId,versionId)=>{await act('portfolio.select',{portfolioId,versionId});W.nativeSelectionChanged();}});
 const integrationRows=key=>S.view[key]||[];
 function integrationDraft(){
   if(I.draft)return I.draft;
-  try{I.draft=JSON.parse(sessionStorage.getItem('openfema-mapping-draft:'+S.view.workspaceId)||'null');}catch{}
+  
   if(!I.draft||typeof I.draft.text!=='string')I.draft={text:JSON.stringify(S.schema.delivery.stagingMapping,null,2),previousMappingId:null};
   return I.draft;
 }
 function saveIntegrationDraft(text,previousMappingId=integrationDraft().previousMappingId){
-  I.draft={text,previousMappingId};sessionStorage.setItem('openfema-mapping-draft:'+S.view.workspaceId,JSON.stringify(I.draft));
+  I.draft={text,previousMappingId};
 }
 const integrationOptions=(key,label)=>integrationRows(key).slice().reverse().map(row=>({value:row.id,label:label(row)}));
 const deliveryLabel=row=>date(row.createdAt)+' · '+number(row.summary.rows)+' projects · '+short(row.versionId);
@@ -484,13 +487,16 @@ async function integrationCommand(target){
   if(command==='integration-default'){saveIntegrationDraft(JSON.stringify(S.schema.delivery.stagingMapping,null,2),null);render();$('#integration-mapping-editor').open=true;return;}
   if(command==='integration-map'){
     const record=integrationRows('deliveryMappings').find(r=>r.id===id);if(!record)throw new Error('Choose a retained mapping.');
-    const generation=++I.generation,workspaceId=S.view.workspaceId,mapping=await api('/api/objects/'+record.objectSha256);
+    const originalText=I.draft?.text,generation=++I.generation,workspaceId=S.view.workspaceId,mapping=await api('/api/objects/'+record.objectSha256);
     if(generation!==I.generation||workspaceId!==S.view.workspaceId)return;
+    if(I.draft?.text!==originalText)throw new Error('The mapping changed while the saved original was read. Select it again for this copy.');
     I.mappingId=id;saveIntegrationDraft(JSON.stringify(mapping,null,2),id);render();$('#integration-mapping-editor').open=true;return;
   }
   if(command==='integration-schema-load'){
-    const file=$('#integration-schema-file').files[0];if(!file||file.size>2*1024*1024)throw new Error('Choose the complete original schema text within 2 MiB.');
-    const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await file.arrayBuffer()),mapping=JSON.parse($('#integration-mapping-json').value);
+    const originalMapping=$('#integration-mapping-json').value,file=await W.selectedFile('integration-schema-file');
+    const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await file.arrayBuffer());
+    if($('#integration-mapping-json').value!==originalMapping)throw new Error('The mapping changed while its original schema was read. Choose the schema again for this edit.');
+    const mapping=JSON.parse(originalMapping);
     mapping.target={...mapping.target,kind:'customer_supplied',evidence:{name:file.name,content:text}};
     saveIntegrationDraft(JSON.stringify(mapping,null,2));render();$('#integration-mapping-editor').open=true;
     notify('Original schema received into the draft. Set its destination name, reference and exact field mapping, then save and review the mapping.');return;
@@ -524,7 +530,7 @@ async function integrationForm(form,data){
     I.deliveryId=saved.id;await openIntegrationDocument('delivery',saved.id);notify('Complete project delivery saved with mapping, source portfolio and report.');return;
   }
   if(id==='integration-reconcile-form'){
-    const deliveryId=String(data.get('deliveryId')),customerFile=await readCustomerFile($('#integration-customer-file').files[0]),identity=await bundleIdentity(customerFile);
+    const deliveryId=String(data.get('deliveryId')),customerFile=await readCustomerFile(await W.selectedFile('integration-customer-file')),identity=await bundleIdentity(customerFile);
     const retained=[...(S.pending?[S.pending]:[]),...retainedRequests()].find(r=>r.action==='delivery.reconcile'&&r.originalCustomerFile?.deliveryId===deliveryId&&r.originalCustomerFile?.sha256===identity.sha256&&r.originalCustomerFile?.bytes===identity.bytes);
     const request=retained?await originalRequest(retained.operationId,{customerFile}):null;
     const saved=await act('delivery.reconcile',{deliveryId,customerFile},request);
@@ -550,24 +556,24 @@ document.addEventListener('change',event=>{
   if(event.target.matches('.integration-review-row')){const row=Number(event.target.value);if(event.target.checked)I.selected.add(row);else I.selected.delete(row);const count=$('#integration-selected-count');if(count)count.textContent=number(I.selected.size);}
 });
 
-document.addEventListener('click',event=>{const target=event.target.closest('button[data-command]');if(target){void executeCommand(target).catch(error=>notify(error.message,true));}});
-document.addEventListener('submit',event=>{if(event.target.matches('form')){event.preventDefault();void submitForm(event).catch(error=>notify(error.message,true));}});
+document.addEventListener('click',event=>{const target=event.target.closest('button[data-command]');if(target){void W.run(()=>executeCommand(target)).catch(error=>notify(error.message,true));}});
+document.addEventListener('submit',event=>{if(event.target.matches('form')){event.preventDefault();const preparedData=new FormData(event.target);void W.run(()=>submitForm(event,preparedData)).catch(error=>notify(error.message,true));}});
 $('#selection').addEventListener('change',event=>{
   if(!['selected-portfolio','selected-version'].includes(event.target.id)||!event.target.value)return;
   S.detail=null;S.detailGeneration++;S.rowGeneration++;if($('#record-dialog').open)$('#record-dialog').close();
   const portfolioId=event.target.id==='selected-portfolio'?event.target.value:portfolio().id;
   const versionId=event.target.id==='selected-version'?event.target.value:undefined;
-  void act('portfolio.select',{portfolioId,...(versionId?{versionId}:{})}).then(()=>{S.offset=0;render();}).catch(error=>{render();notify(error.message,true);});
+  void W.run(async()=>{await act('portfolio.select',{portfolioId,...(versionId?{versionId}:{})});W.nativeSelectionChanged();S.offset=0;render();}).catch(error=>{render();notify(error.message,true);});
 });
-$('#close-record').addEventListener('click',()=>{S.detail=null;S.detailGeneration++;$('#record-dialog').close();});
-$('#record-dialog').addEventListener('close',()=>{S.detail=null;S.detailGeneration++;});
-$('#refresh').addEventListener('click',()=>{void refresh().catch(error=>notify(error.message,true));});
+$('#close-record').addEventListener('click',()=>{W?.capture();S.detail=null;S.detailGeneration++;$('#record-dialog').close();});
+$('#record-dialog').addEventListener('close',()=>{W?.capture();S.detail=null;S.detailGeneration++;});
+$('#refresh').addEventListener('click',()=>{void W.run(()=>refresh()).catch(error=>notify(error.message,true));});
 async function start(){
   if(!token)throw new Error('Open the private session URL printed by openfema-workspace.');
   [S.schema,S.view]=await Promise.all([api('/api/schema'),api('/api/view')]);
   if(!S.view.workspaceId||S.schema.workspaceId!==S.view.workspaceId)throw new Error('Open the schema and state of the same original workspace.');
-  S.pending=retainedRequests()[0]??null;render();if(S.pending)notify('An original browser operation is retained. Use Handover to inspect it, or reopen its original request.',true);
-  setInterval(()=>{if(S.busy||document.hidden)return;const editing=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||$('#record-dialog').open;
+  const legacy=retainedRequests();await W.start(legacy);S.pending=retainedRequests()[0]??null;render();if(S.pending)notify('An original browser operation is retained. Use Handover to inspect it, or reopen its original request.',true);
+  setInterval(()=>{if(S.busy||W.busy||document.hidden)return;const editing=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||$('#record-dialog').open;
     if(S.view?.captures.some(c=>['RUNNING','IMPORTING'].includes(c.state)))void refresh({repaint:S.section==='sources'&&!editing}).catch(error=>notify(error.message,true));},4000);
 }
 void start().catch(error=>{$('#connection').textContent='Session unavailable';notify(error.message,true);$('#main').innerHTML=empty('Open the original workspace session','Use the private URL printed by the installed OpenFEMA command.');});

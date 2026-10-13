@@ -3,13 +3,15 @@ import {resolve,join,dirname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {spawn} from 'node:child_process';
-import {openEdition,analyzeEdition} from './maritime-native.mjs';
+import {openEdition,analyzeEdition,retainEdition} from './maritime-native.mjs';
 import {validateProject,analyzeProject,projectRowsCSV,projectHTML} from './maritime-project-analysis.mjs';
+
+import {saveProjectWorkspace,receiveProjectWorkspace} from './maritime-project-workspace.mjs';
 
 const MODULE_ROOT=dirname(fileURLToPath(import.meta.url));
 const SOURCE_FILES=['maritime-analysis.mjs','maritime-native.mjs','maritime-cli.mjs',
  'maritime-project-analysis.mjs','maritime-project-native.mjs','maritime-project-cli.mjs',
- 'maritime-workbench.html','build-workbench.mjs','PROJECT_GUIDE.md','OPERATOR_GUIDE.md','AGENTS.md'];
+ 'maritime-workbench.html','build-workbench.mjs','maritime-project-workspace.mjs','maritime-project-workbench.js','PROJECT_GUIDE.md','OPERATOR_GUIDE.md','AGENTS.md'];
 const MAX_FILE_BYTES=128*1024*1024;
 const MAX_PROJECT_BYTES=2*1024*1024*1024;
 const MAX_CELLS=500000;
@@ -213,7 +215,7 @@ export async function verifyProject(directoryPath,{requireCurrentSource=false}={
 }
 
 async function cleanInterruptedWrites(stage,binding){
- const expected=['project.json','project-analysis.json','observations.csv','report.html','REOPEN.md','project-manifest.json',
+ const expected=['browser-workspace.json','project.json','project-analysis.json','observations.csv','report.html','REOPEN.md','project-manifest.json',
   ...SOURCE_FILES.map(name=>'source/'+name)];
  for(const entry of binding.editions)for(const role of ['current','previous']){
   if(entry[role])for(const m of entry[role].members)expected.push('originals/'+entry.id+'/'+role+'/'+m.name);
@@ -281,6 +283,15 @@ export async function buildProject({config,baseDirectory=process.cwd(),directory
    const expected=analysis.entries.find(x=>x.id===entry.id);need(expected,'Project analysis omitted an entry');
    await ensureChild({stage,entry,expected,sourceHashes});ensureLease();
   }
+  const browserEntries=[];
+  for(const entry of prepared.portable.entries){
+   const pair=prepared.originals.get(entry.id);
+   const retain=async original=>original?{raw:decode(await read(join(original.root,'response.json'))),descriptor:original.descriptor}:null;
+   browserEntries.push({id:entry.id,title:entry.title,current:await retain(pair.current),previous:await retain(pair.previous),selection:entry.selection,before:entry.before,after:entry.after});
+  }
+  const browserWorkspace=saveProjectWorkspace({id:prepared.portable.id,title:prepared.portable.title},browserEntries,
+   {analysis_sha256:sourceHashes['maritime-analysis.mjs'].sha256,project_sha256:sourceHashes['maritime-project-analysis.mjs'].sha256});
+  await put(join(stage,'browser-workspace.json'),json(browserWorkspace));
   await put(join(stage,'project-analysis.json'),json(analysis));
   await put(join(stage,'observations.csv'),projectRowsCSV(analysis));
   await put(join(stage,'report.html'),projectHTML(analysis,{engine_sha256:sourceHashes['maritime-analysis.mjs'].sha256,project_engine_sha256:sourceHashes['maritime-project-analysis.mjs'].sha256}));
@@ -303,6 +314,43 @@ export async function rebuildProject({directory:originalDirectory,destination}){
  const originalAnalysis=await readJSON(join(original,'project-analysis.json'));
  const rebuiltAnalysis=await readJSON(join(target,'project-analysis.json'));
  need(equal(originalAnalysis,rebuiltAnalysis),'Rebuilt project analysis differs from the original received result');
- for(const name of ['observations.csv','report.html'])need((await read(join(original,name))).equals(await read(join(target,name))),'Rebuilt project export differs: '+name);
+ for(const name of ['observations.csv','report.html','browser-workspace.json'])need((await read(join(original,name))).equals(await read(join(target,name))),'Rebuilt project export differs: '+name);
  return {...result,received_from:original,independent_reopen:true};
+}
+
+export async function importProjectWorkspace({workspacePath,directory:destination}){
+ const target=resolve(destination),inputPath=resolve(workspacePath);
+ need(inputPath!==target&&!inputPath.startsWith(target+sep),'Keep the saved input workspace outside its new native destination');
+ return withPublicationLock(target+'.browser-import',async ensureLease=>{
+  const original=await read(inputPath),saved=JSON.parse(decode(original));
+  const sources=await moduleSources(),sourceHashes=sourceIdentities(sources);
+  const binding={analysis_sha256:sourceHashes['maritime-analysis.mjs'].sha256,project_sha256:sourceHashes['maritime-project-analysis.mjs'].sha256};
+  const received=receiveProjectWorkspace(saved,binding),input_sha256=sha(original);
+  const inputs=target+'.browser-inputs',identity={schema:'econdb.browser-project-input.v1',input_sha256,engine:binding};
+  if(await exists(inputs)){
+   await directory(inputs);need(equal(await readJSON(join(inputs,'input.json')),identity),'Existing browser input staging belongs to another workspace or engine; preserve it and choose a new destination');
+  }else{
+   const initializing=inputs+'.initializing-'+randomUUID();await mkdir(initializing,{mode:0o700});
+   try{await put(join(initializing,'input.json'),json(identity));await syncDirectory(initializing);await rename(initializing,inputs);await syncDirectory(dirname(inputs));}
+   catch(error){await rm(initializing,{recursive:true,force:true});throw error}
+  }
+  await put(join(inputs,'workspace.json'),original);
+  const directories=new Map(),sourcesRoot=join(inputs,'sources');
+  if(!await exists(sourcesRoot))await mkdir(sourcesRoot,{mode:0o700});await directory(sourcesRoot);
+  for(const source of saved.sources){
+   const holder=join(sourcesRoot,source.id);if(!await exists(holder))await mkdir(holder,{mode:0o700});await directory(holder);
+   need(safeName(source.descriptor.id),'Use a file-safe original edition identifier');
+   const editionTarget=join(holder,source.descriptor.id);if(await exists(editionTarget))await directory(editionTarget);
+   const retained=await retainEdition({directory:holder,raw:source.raw,descriptor:source.descriptor});
+   need(retained.status==='analyzable','Saved original requires source review: '+source.id);
+   directories.set(source.id,retained.directory);
+  }
+  const config={schema:'econdb.maritime-project.v1',id:received.project.id,title:received.project.title,
+   entries:saved.entries.map(entry=>({...entry,current:directories.get(entry.current),previous:entry.previous?directories.get(entry.previous):null}))};
+  await unchangedSources(sources);ensureLease();
+  const result=await buildProject({config,baseDirectory:inputs,directory:target});
+  const restored=receiveProjectWorkspace(await readJSON(join(target,'browser-workspace.json'),MAX_FILE_BYTES),binding);
+  need(equal(restored.analysis,received.analysis),'Native project does not reproduce the original browser workspace');
+  return {...result,received_workspace:inputPath,workspace_sha256:input_sha256,browser_roundtrip:true};
+ });
 }

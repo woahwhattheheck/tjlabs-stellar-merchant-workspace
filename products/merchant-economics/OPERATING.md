@@ -235,11 +235,35 @@ starforge merchant-tariffs preview \
 
 The returned envelope is `{version,sourceLabel,sellerChanged,review}`. To save, retain the original input, add a nonempty `label` and one original request UUID, and set `tariffReviewSha256` to `preview.review.tariffReviewSha256`. Pass that complete JSON to `merchant-tariffs save` with the same workspace flags. The saved plan retains its source, tariff definitions, quantity comparisons and original review hash. Reopen it with `load --plan PLAN_ID`, or use the browser's saved-plan selector.
 
-Each saved plan provides `plan.json`, `tariffs.json` and `comparison.csv`. Use `download --plan PLAN_ID --name comparison.csv --output NEW_FILE` with the same merchant flags to receive the complete original file. Explicit output files are created exclusively; choose a new destination for a new result.
+Each saved plan provides the original `plan.json`, `tariffs.json` and `comparison.csv`, plus the complete `report.html`, `band-charges.csv` and `thresholds.csv`. Use `download --plan PLAN_ID --name report.html --output NEW_FILE.html` with the same merchant flags to receive the full offline review. Explicit output files are created exclusively; choose a new destination for a new result.
+
+### Read and share the complete saved comparison
+
+Use the **Route**, **Tariff** and **Monthly quantity** filters to find an outcome, then choose **Details**. The complete reader displays the saved baseline, proposed tariff and separate uniform quote at the same explicit planned quantity. Read its charged bands, exact rational average and native decimal bounds, next-request result, source cost basis and original comparison identity. Zero requests and unknown costs retain their original meaning.
+
+Expand **All saved tariff bands and boundaries** to inspect every schedule and finite, representable boundary. A volume band's selected rate applies to all requests. Its threshold can reduce total gross; the reader shows the exact signed change. Expand **Original saved source** for the original plan, Pricing review and source hashes. Opening another plan first resolves its complete source; a failed lookup keeps the existing reader and exports together.
+
+**Download full HTML report** produces one complete self-contained file with every outcome, independent of the screen filters. Open that file offline or print it in full. **Print displayed review** prints the current workspace view. The detailed charged-band and threshold CSVs accompany the original unchanged JSON and comparison CSV. Import exact quantity, identifier and monetary columns as text to keep their digits; the complete JSON retains native types and null values.
+
+The original merchant_pricing_tariff_download still returns its three-file plan artifact. The additive six-file report uses the same existing native file owner and complete retained downloader:
+
+~~~sh
+starforge merchant-mcp pricing tariff-report-manifest \
+  --url "$MCP_URL" --workspace merchant --plan-id PLAN_ID
+
+starforge merchant-mcp pricing tariff-report-download \
+  --url "$MCP_URL" --workspace merchant --plan-id PLAN_ID \
+  --manifest-sha256 RETURNED_REPORT_MANIFEST_SHA256 \
+  --out /srv/starforge/received/merchant-tariff-report
+~~~
+
+Repeat the identical report command and private destination after an interrupted transfer. Keep this report directory separate from an earlier three-file plan download. Its manifest pins the report edition, original plan/review and every file hash. Keep the original installed source edition when resuming an older pinned report.
+
+The original HTTP client supports report(planId) and detailed CSV names; the native MCP client adds report, downloadMerchantTariffReport and inspectMerchantTariffReport. The [complete saved-plan review operation](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/REVIEW.md) covers field meaning, original authenticated routes, typed calls, full exports and the same saved-case desktop/narrow and offline receiving course.
 
 ### Carry the selected plan through original pricing
 
-Choose a positive-quantity comparison, then choose **Review**. Inspect the current pricing against the selected source, the original scenario review and the proposed pricing change. The prepared selection binds both original workspaces and their expected revisions.
+Choose a positive-quantity comparison, open **Details**, then choose **Review this uniform quote**. Inspect the current pricing against the selected source, the original scenario review and the proposed pricing change. The prepared selection binds both original workspaces and their expected revisions.
 
 Commit that exact prepared selection with the two distinct original request UUIDs: `planRequestId` and `pricingRequestId`. The original scenario and pricing writers return their saved results. If a response is interrupted, keep the same selection and both UUIDs so the original requests can be reconciled and replayed. A changed merchant source or pricing revision needs a current review.
 
@@ -334,6 +358,7 @@ Choose the handoff required for the actual recipient:
 | Cost-edition download or TAR | Complete native edition, original selected source evidence and native report/export files appropriate to that selection |
 | Full workspace backup TAR | Captured pricing versions, repricing decisions, scenarios, cost sources, books, editions and their linked histories |
 | Tariff portfolio JSON | Complete saved tariff plans and retained selection intents/results, with their original pricing source references |
+| Complete tariff report | Readable offline HTML, detailed bands/thresholds CSV and original plan/input/comparison files from one saved plan |
 
 The original cost-edition download has eight native files plus `edition-manifest.json`; its transfer also has `manifest.json`. Use the native manifest to select the complete file set. A full workspace backup is bounded by its captured pricing, decision and cost revisions and referenced editions. Previous generated archives and live credentials are excluded. Retain external merchant deployment files and the selected runtime separately.
 
@@ -626,6 +651,7 @@ The [merchant economics receiving operation](../../operations/merchant-economics
 - [Supplier-source, cost-book and archive contracts](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/economics/README.md)
 - [MCP and CLI costs, files and recovery](../../stellar-forge/mcp-merchant-operator/COSTS.md)
 - [Original pricing, scenario and repricing operations](../../stellar-forge/mcp-merchant-operator/PRICING.md)
+- [Complete saved tariff review and portable report](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/REVIEW.md)
 - [Tariff planning, typed client and original pricing continuation](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/README.md)
 - [Applications inspection, receiving and normal reopen](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
 - [Whole merchant product](../merchant-workspace/OPERATING.md)

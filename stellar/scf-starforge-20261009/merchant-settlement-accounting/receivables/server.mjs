@@ -363,14 +363,20 @@ export async function handleReceivablesRequest(receivables, {method, path, query
 }
 
 /** Compose with a provided accounting workspace; no additional lease is acquired. */
-export async function createReceivablesHandler(receivables, {apiPath = '/api/receivables', uiPath = '/receivables', port, statements, paymentPlans, bankStatements} = {}) {
+export async function createReceivablesHandler(receivables, {apiPath = '/api/receivables', uiPath = '/receivables', port, statements, paymentPlans, bankStatements, sourceConfig, sourceWorkspace} = {}) {
   apiPath = basePath(apiPath, '/api/receivables'); uiPath = basePath(uiPath, '/receivables');
   await receivables.init();
   if (paymentPlans) await paymentPlans.init();
   bankStatements ??= new BankStatementsWorkspace(receivables);
   await bankStatements.init();
+  let sourcePreparations=null,sourceBridge=null;
+  if(sourceConfig!==undefined||sourceWorkspace!==undefined){
+    if(!sourceConfig||!sourceWorkspace)throw problem('BANK_SOURCE_CONFIGURATION','Supply both the original accounting configuration and selected workspace alias.');
+    sourceBridge=await import('./bank-statements/source-preparation-server.mjs');
+    sourcePreparations=await sourceBridge.openBankSourcePreparations(bankStatements,{sourceConfig,sourceWorkspace});
+  }
   const planApiPath = apiPath + '/payment-plans', bankApiPath = apiPath + '/bank-statements';
-  return async function receivablesHandler(request, response) {
+  const handler=async function receivablesHandler(request, response) {
     let url;
     try { url = new URL(request.url || '/', 'http://localhost'); } catch { return false; }
     const api = url.pathname === apiPath || url.pathname.startsWith(apiPath + '/');
@@ -383,16 +389,20 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
     const planRequest = paymentPlans && (planUi || url.pathname === planApiPath || url.pathname.startsWith(planApiPath + '/'));
     const bankUi = url.pathname === '/bank-statements' || url.pathname.startsWith('/bank-statements/');
     const bankRequest = bankUi || url.pathname === bankApiPath || url.pathname.startsWith(bankApiPath + '/');
+    const sourceApiPath=bankApiPath+'/source-preparations';
+    const sourceRequest=url.pathname===sourceApiPath||url.pathname.startsWith(sourceApiPath+'/');
     if (!api && !ui && !customer && !planRequest && !bankRequest) return false;
     securityHeaders(response);
+    let endSourceRequest;
     try {
       const mutation = request.method === 'POST';
       localRequest(request, port, mutation);
+      if(sourceRequest&&sourcePreparations)endSourceRequest=sourcePreparations.beginRequest();
       if (request.method === 'GET' || request.method === 'HEAD') {
         if (url.pathname === uiPath) { response.writeHead(302, {Location: uiPath + '/'}); response.end(); return true; }
         if (planRequest && url.pathname === '/payment-plans') { response.writeHead(302, {Location: '/payment-plans/'}); response.end(); return true; }
         if (bankRequest && url.pathname === '/bank-statements') { response.writeHead(302, {Location: '/bank-statements/'}); response.end(); return true; }
-        const asset = bankRequest ? await bankStatementAsset(url.pathname, {apiPath: bankApiPath, receivablesApiBase: apiPath, receivablesUi: uiPath + '/'}) :
+        const asset = bankRequest ? await bankStatementAsset(url.pathname, {apiPath: bankApiPath, receivablesApiBase: apiPath, receivablesUi: uiPath + '/', sourcePreparations}) :
           planRequest ? await paymentPlanAsset(url.pathname, {apiPath: planApiPath}) :
           ui ? await receivablesAsset(url.pathname, {apiPath, uiPath}) : customer ? await customerStatementAsset(url.pathname) : null;
         if (asset) {
@@ -401,15 +411,18 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
         }
       }
       if (request.method !== 'GET' && request.method !== 'POST') throw problem('METHOD_NOT_ALLOWED', 'Use a supported workspace operation.', 405);
-      const value = mutation ? await body(request, bankRequest ? BANK_REQUEST_BYTES : planRequest ? PAYMENT_PLAN_REQUEST_BYTES : customer ? STATEMENT_REQUEST_BYTES : customerAccountIntake ? CUSTOMER_ACCOUNT_REQUEST_BYTES : RECEIVABLE_REQUEST_BYTES) : undefined;
+      if(sourceRequest&&!sourcePreparations)throw problem('BANK_SOURCE_DESK_UNAVAILABLE','Configured source preparation is not enabled for this installed accounting owner. Select its original host configuration and workspace alias.',503);
+      const value = mutation ? await body(request, sourceRequest ? sourceBridge.SOURCE_PREPARATION_REQUEST_BYTES : bankRequest ? BANK_REQUEST_BYTES : planRequest ? PAYMENT_PLAN_REQUEST_BYTES : customer ? STATEMENT_REQUEST_BYTES : customerAccountIntake ? CUSTOMER_ACCOUNT_REQUEST_BYTES : RECEIVABLE_REQUEST_BYTES) : undefined;
       const parameters = {method: request.method, path: url.pathname, query: Object.fromEntries(url.searchParams), value, apiPath,
         expectedWorkspaceId: request.headers['x-accounting-workspace-id'],
         expectedSourcesSha256: request.headers['x-accounting-sources-sha256']};
-      const result = bankRequest ? await handleBankStatementsRequest(bankStatements, {...parameters, apiPath: bankApiPath}) :
+      const result = sourceRequest ? await sourceBridge.handleBankSourcePreparations(sourcePreparations,{...parameters,apiPath:sourceApiPath}) :
+        bankRequest ? await handleBankStatementsRequest(bankStatements, {...parameters, apiPath: bankApiPath}) :
         planRequest ? await handlePaymentPlansRequest(paymentPlans, {...parameters, apiPath: planApiPath}) :
         customer ? await handleCustomerStatementRequest(statements, parameters) : await handleReceivablesRequest(receivables, parameters);
       if (!result) throw problem('NOT_FOUND', 'This workspace route does not exist.', 404);
-      if (result.file) file(response, result.file);
+      if(result.download) await sourceBridge.sendBankSourceDownload(response,result.download);
+      else if (result.file) file(response, result.file);
       else {
         const requestId = result.value?.operation?.id || value?.requestId;
         if (typeof requestId === 'string' && !/[\r\n]/.test(requestId)) response.setHeader('X-Request-Id', requestId);
@@ -420,9 +433,11 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
       const responseError = publicError(error);
       if (responseError.status === 405) response.setHeader('Allow', ui || planUi || bankUi ? 'GET, HEAD' : 'GET, POST');
       json(response, responseError.status, responseError.value);
-    }
+    } finally { endSourceRequest?.(); }
     return true;
   };
+  handler.drainSourcePreparations=async()=>{await sourcePreparations?.drain();};
+  return handler;
 }
 export async function createReceivablesHttpHandler(workspace, options = {}) {
   const paymentPlans = options.paymentPlans || new PaymentPlanWorkspace(workspace);
@@ -455,7 +470,10 @@ export async function prepareReceivablesServer(options = {}) {
     if (options.includeCustomerStatements !== false) { statements = new CustomerStatementWorkspace(workspace); await statements.init(); }
     if (options.includePaymentPlans !== false) paymentPlans = new PaymentPlanWorkspace(workspace);
     bankStatements = new BankStatementsWorkspace(receivables);
-    handler = await createReceivablesHandler(receivables, {...options, port: port || undefined, statements, paymentPlans, bankStatements});
+    handler = await createReceivablesHandler(receivables, {...options,
+      sourceConfig:options.sourceConfig??process.env.STARFORGE_BANK_SOURCE_CONFIG,
+      sourceWorkspace:options.sourceWorkspace??process.env.STARFORGE_BANK_SOURCE_WORKSPACE,
+      port: port || undefined, statements, paymentPlans, bankStatements});
   } catch (error) { if (ownsWorkspace) await workspace.close(); throw error; }
   const server = createServer(async (request, response) => {
     try {
@@ -470,6 +488,7 @@ export async function prepareReceivablesServer(options = {}) {
   async function close() {
     if (closed) return; closed = true;
     if (server.listening) await new Promise((accept, reject) => server.close(error => error ? reject(error) : accept()));
+    await handler.drainSourcePreparations();
     if (ownsWorkspace) await workspace.close();
   }
   return {server, workspace, receivables, statements, paymentPlans, bankStatements, handler, port, close,

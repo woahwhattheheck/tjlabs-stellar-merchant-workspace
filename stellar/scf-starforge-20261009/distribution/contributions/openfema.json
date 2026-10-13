@@ -76,6 +76,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/testnet-runtime-package.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/DATA_INTEGRATION.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/project-staging-mapping.json",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/merchant-project-exchange.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/merchant-project-exchange.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/WORKING_COPIES.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/working-copy-receiving.mjs"
   ]
 }

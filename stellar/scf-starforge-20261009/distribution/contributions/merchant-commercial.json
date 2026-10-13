@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-commercial",
-  "description": "Complete merchant quotation, recorded usage revisions, accepted implementation, selected tariff pricing and customer workspace handover",
+  "description": "Complete merchant quotation, recorded usage revisions, accepted implementation, selected tariff pricing and customer workspace handover, private quote economics and care-capacity review",
   "components": [
     "stellar/scf-starforge-20261009/sf74-merchant-support-console",
     "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops"
@@ -12,7 +12,12 @@
     "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/TARIFFS.md",
     "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/tariff-client.d.mts",
     "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/PERFORMANCE.md",
-    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/performance-client.d.mts"
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/performance-client.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/cohort_planning.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/commercial_installation_source.mjs",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/ECONOMICS.md",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/ECONOMICS_RECEIVING.md",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-receiving-journey.mjs"
   ],
   "commands": {
     "merchant-commercial": "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial-cli.mjs"
@@ -42,6 +47,8 @@
       "import": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/performance-client.mjs",
       "default": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/performance-client.mjs"
     },
-    "./merchant/commercial-performance-desk": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/performance-desk.mjs"
+    "./merchant/commercial-performance-desk": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/performance-desk.mjs",
+    "./merchant/commercial-economics": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics.mjs",
+    "./merchant/commercial-economics-receiving": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-receiving.mjs"
   }
 }

@@ -16,7 +16,7 @@ const HELP='Merchant bank statements and cash reconciliation\n\n'+
   'starforge bank-statements profile help\n'+
   'starforge bank-statements collection help\n'+
   'starforge bank-statements accountant help\n'+
-  'starforge bank-statements serve --directory /private/accounting [--port 8448]\n'+
+  'starforge bank-statements serve --directory /private/accounting [--port 8448] [--source-config /private/accounting-config.json --source-workspace original-alias]\n'+
   'starforge bank-statements state --directory /private/accounting\n'+
   'starforge bank-statements transactions --directory /private/accounting --account UUID [--status UNMATCHED] [--offset 0] [--limit 100]\n'+
   'starforge bank-statements detail --directory /private/accounting --id TRANSACTION_UUID\n'+
@@ -40,7 +40,7 @@ const HELP='Merchant bank statements and cash reconciliation\n\n'+
 const COMMANDS=new Set(['help','--help','prepare-source','serve','state','transactions','detail','source-preview','assembly-preview','close-preview','apply','operation','import','close','file','export']);
 const FLAGS=new Set(['directory','outbox','proof-dir','terms','recovered-dir','port','account','status','search','offset','limit',
   'id','input','action','request','kind','name','out','expected-workspace-id','expected-sources-sha256',
-  'file','format','text-encoding','account-namespace','csv-mapping','message-version','detail-policy','namespace-mode','reference-policy']);
+  'source-config','source-workspace','file','format','text-encoding','account-namespace','csv-mapping','message-version','detail-policy','namespace-mode','reference-policy']);
 export function parseBankArguments(argv) {
   const [command='help',...rest]=argv,flags={};need(COMMANDS.has(command),'UNKNOWN_BANK_COMMAND','Choose a documented bank-statement command.');
   for(let i=0;i<rest.length;i+=2) {
@@ -116,12 +116,17 @@ export async function runBankStatementsCli(argv=process.argv.slice(2)) {
   const {command,flags}=parseBankArguments(argv);
   if(command==='help'||command==='--help'){process.stdout.write(HELP);return;}
   if(command==='prepare-source'){const result=await prepareSource(flags);process.stdout.write(json(result));return result;}
+  need(command==='serve'||(!flags['source-config']&&!flags['source-workspace']),'BANK_SOURCE_SERVE_ONLY','Configured source aliases are selected only for the installed serve command.');
   const options={directory:absolute(flags.directory,'accounting workspace')};
   for(const [flag,key]of [['outbox','outboxDir'],['proof-dir','proofDir'],['terms','termsFile'],['recovered-dir','recoveredDir']])
     if(flags[flag])options[key]=absolute(flags[flag],flag);
   if(flags['expected-workspace-id'])options.expectedWorkspaceId=flags['expected-workspace-id'];
   if(flags['expected-sources-sha256'])options.expectedSourcesSha256=flags['expected-sources-sha256'];
   if(command==='serve') {
+    if(flags['source-config']||flags['source-workspace']){
+      need(flags['source-config']&&flags['source-workspace'],'BANK_SOURCE_CONFIGURATION','Supply both original source configuration and workspace alias.');
+      options.sourceConfig=absolute(flags['source-config'],'original accounting configuration');options.sourceWorkspace=flags['source-workspace'];
+    }
     const port=Number(flags.port??8448);need(Number.isInteger(port)&&port>=0&&port<=65535,'INVALID_BANK_PORT','Choose a valid local port.');
     const {createReceivablesServer}=await import('../server.mjs'),running=await createReceivablesServer({...options,port});
     const binding=accountingWorkspaceBinding(running.workspace.directory,running.workspace.state),url=new URL('/bank-statements/',running.url).href;
