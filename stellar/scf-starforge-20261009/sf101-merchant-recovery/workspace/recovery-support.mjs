@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SF101 selected recovery request -> original SF74 saved case and whole source package.
-import {constants} from 'node:fs';
+import {constants,createReadStream} from 'node:fs';
 import {open,mkdir,lstat,realpath,readdir} from 'node:fs/promises';
 import {join,dirname,isAbsolute,resolve,sep} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -289,8 +289,10 @@ export function createRecoverySupport({directory,workspaceId,profiles,currentHos
     if(!profile.caseSourceDirectory)return null;
     if(!sources.has(profile.id)){
       await privateDirectory(profile.caseSourceDirectory);
-      sources.set(profile.id,await createCaseSourceDelivery({store:await openCaseStore(profile.casesDirectory),
-        directory:profile.caseSourceDirectory,environment}));
+      const created=await createCaseSourceDelivery({store:await openCaseStore(profile.casesDirectory),
+        directory:profile.caseSourceDirectory,environment});
+      if(closed){await created.close();shutdown.signal.throwIfAborted();}
+      sources.set(profile.id,created);
     }
     return sources.get(profile.id);
   }
@@ -350,11 +352,90 @@ export function createRecoverySupport({directory,workspaceId,profiles,currentHos
       const {folder,result}=await originalResult(profileId,id);need(result,'WORKSPACE_SUPPORT_SAVE_REQUIRED');
       return inspectCaseSourcePackage({directory:join(folder,'package'),environment,signal});
     }),
+    attachArchive:input=>tracked(async signal=>{
+      fields(input,['profileId','transferId','expectedReviewSha256','expectedRevision','actor','archive','transport']);
+      need(SHA.test(input.expectedReviewSha256??'')&&SHA.test(input.expectedRevision??'')&&
+        typeof input.actor==='string'&&input.actor.trim()&&Buffer.byteLength(input.actor)<=200,
+        'WORKSPACE_SUPPORT_ATTACHMENT_SELECTION_INVALID');
+      const {folder,review,result}=await originalResult(input.profileId,input.transferId);
+      need(result&&review.reviewSha256===input.expectedReviewSha256,'WORKSPACE_SUPPORT_SAVE_REQUIRED');
+      const transport=input.transport,archive=input.archive;
+      need(transport?.status==='COMPLETE'&&transport.command==='object-bundle-export'&&
+        transport.recordSha256===review.bundle.recordSha256&&
+        transport.originalRequest?.id===review.selection.id&&
+        transport.originalRequest.reviewHash===review.selection.expectedReviewHash&&
+        transport.originalRequest.sha256===review.request.sha256&&
+        SHA.test(archive?.sha256??'')&&Number.isSafeInteger(archive.bytes)&&archive.bytes>0,
+        'WORKSPACE_SUPPORT_ORIGINAL_BUNDLE_CHANGED');
+      const {profile:selected}=await storeFor(input.profileId),delivery=await sourceDelivery(selected);
+      need(delivery,'WORKSPACE_SUPPORT_SOURCE_NOT_CONFIGURED',
+        'Declare the original caseSourceDirectory before attaching an actual binary source.');
+      const attachmentId='recovery-'+hash(input.transferId+'\n'+archive.sha256).slice(0,48);
+      const request={schema:'stellar-forge.sf101.recovery-bundle-attachment.v1',profileId:input.profileId,
+        transferId:input.transferId,reviewSha256:review.reviewSha256,caseId:result.caseId,
+        sourceCaseRevision:result.revision,expectedRevision:input.expectedRevision,actor:input.actor,
+        archive:{bytes:archive.bytes,sha256:archive.sha256},recordSha256:transport.recordSha256,
+        transportRequestId:transport.workspaceOperationId,attachmentId};
+      const path=join(folder,'native-bundle-'+archive.sha256);await privateDirectory(path,true);
+      await retained(join(path,'request.json'),json(request));
+      const prior=await optional(join(path,'result.json'),MAX_REQUEST);
+      if(prior)return JSON.parse(decode(prior));
+      signal.throwIfAborted();
+      const service=delivery.service;
+      await service.begin({id:attachmentId,kind:'source',caseId:result.caseId,caseRevision:input.expectedRevision,
+        label:'Original encrypted Object recovery '+review.sessionId,actor:input.actor,
+        files:[{id:'object-recovery',name:archive.filename,role:'encrypted-object-recovery',
+          bytes:String(archive.bytes),sha256:archive.sha256}]});
+      signal.throwIfAborted();
+      const stream=createReadStream(archive.path,{flags:constants.O_RDONLY|constants.O_NOFOLLOW});
+      try{await service.upload({id:attachmentId,fileId:'object-recovery',stream,signal});}
+      finally{stream.destroy();}
+      signal.throwIfAborted();await service.prepare({id:attachmentId});
+      signal.throwIfAborted();
+      const attached=await service.attach({id:attachmentId,caseId:result.caseId,expectedRevision:input.expectedRevision,
+        requestId:attachmentId+'-attach',actor:input.actor});
+      const output={schema:request.schema,status:'ATTACHED',request,result:attached,
+        encryptedArchive:request.archive,recordSha256:request.recordSha256};
+      await retained(join(path,'result.json'),json(output));return output;
+    },true),
+    attachment:input=>tracked(async()=>{
+      fields(input,['profileId','transferId','archiveSha256']);need(SHA.test(input.archiveSha256??''),'WORKSPACE_SUPPORT_ARCHIVE_ID_REQUIRED');
+      const {folder,review}=await readReview(input.profileId,input.transferId);
+      const path=join(folder,'native-bundle-'+input.archiveSha256);
+      const request=JSON.parse(decode(await bytes(join(path,'request.json'),MAX_REQUEST)));
+      need(request.archive.sha256===input.archiveSha256&&request.reviewSha256===review.reviewSha256,
+        'WORKSPACE_SUPPORT_ATTACHMENT_CHANGED');
+      const saved=await optional(join(path,'result.json'),MAX_REQUEST);
+      const result=saved?JSON.parse(decode(saved)):null;
+      if(result)need(same(result.request,request),'WORKSPACE_SUPPORT_ATTACHMENT_CHANGED');
+      return {status:result?'ATTACHED_RECORDED':'NEEDS_CONTINUATION',request,result};
+    }),
+    exportAttached:input=>tracked(async signal=>{
+      fields(input,['profileId','transferId','archiveSha256']);
+      need(SHA.test(input.archiveSha256??''),'WORKSPACE_SUPPORT_ARCHIVE_ID_REQUIRED');
+      const {folder,review,result}=await originalResult(input.profileId,input.transferId);
+      need(result,'WORKSPACE_SUPPORT_SAVE_REQUIRED');
+      const path=join(folder,'native-bundle-'+input.archiveSha256);
+      const saved=JSON.parse(decode(await bytes(join(path,'result.json'),MAX_REQUEST)));
+      const original=JSON.parse(decode(await bytes(join(path,'request.json'),MAX_REQUEST)));
+      need(saved.status==='ATTACHED'&&same(saved.request,original)&&original.archive.sha256===input.archiveSha256&&
+        original.caseId===result.caseId&&original.reviewSha256===review.reviewSha256,
+        'WORKSPACE_SUPPORT_ATTACHMENT_CHANGED');
+      const revision=saved.result?.attachment?.result?.revision;
+      need(SHA.test(revision??'')&&saved.result.attachment.result.caseId===result.caseId,
+        'WORKSPACE_SUPPORT_ATTACHMENT_RESULT_CHANGED');
+      const {profile:selected,store}=await storeFor(input.profileId),delivery=await sourceDelivery(selected);
+      need(delivery,'WORKSPACE_SUPPORT_SOURCE_NOT_CONFIGURED');
+      return exportCaseSourcePackage({store,casesDirectory:selected.casesDirectory,id:result.caseId,revision,
+        directory:join(path,'case-package'),exportId:'encrypted-'+hash(input.transferId+'\n'+input.archiveSha256).slice(0,48),
+        sourceDelivery:delivery,generatedAt:review.capturedAt,environment,signal});
+    },true),
     close(){
       if(!closePromise){
         closed=true;shutdown.abort();
-        closePromise=(async()=>{await Promise.allSettled([...pending]);
-          const outcomes=await Promise.allSettled([...sources.values()].map(source=>source.close()));
+        closePromise=(async()=>{
+          const sourceClosed=Promise.allSettled([...sources.values()].map(source=>source.close()));
+          await Promise.allSettled([...pending]);const outcomes=await sourceClosed;
           const failed=outcomes.filter(row=>row.status==='rejected');
           if(failed.length)throw Object.assign(failed[0].reason,{supportCloseErrors:failed.map(row=>String(row.reason?.message??row.reason))});})();
       }return closePromise;

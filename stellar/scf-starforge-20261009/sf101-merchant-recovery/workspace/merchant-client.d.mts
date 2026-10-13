@@ -24,6 +24,8 @@ export type RecoverySelection = {
   profileId: RecoveryProfileId;
   id: RecoveryOperationId;
 } & (
+  | { action:'object-bundle-export';sourceRequestId:string;sourceReviewHash:RecoveryDigest;sourceAttempt:number }
+  | { action:'object-bundle-receive';archiveId:string;objectSessionId:string }
   | { action: 'snapshot'; capturePlanId: string; quiesced: true; destinationName?: string }
   | { action: 'verify'; bundleId: string }
   | { action: 'object-snapshot'; objectSessionId: string; quiesced: true }
@@ -59,6 +61,13 @@ export interface RecoverySupportSelection {
 }
 export interface RecoverySupportInput extends RecoveryProfileInput {transferId:string;}
 export interface RecoveryToolInputs {
+  merchant_recovery_bundle_inspection:RecoveryProfileInput & {archiveId:string};
+  merchant_recovery_bundle_report:RecoveryOriginalInput & {kind?:'report'|'verification'|'publication'};
+  merchant_recovery_bundle_artifact:RecoveryOriginalInput;
+  merchant_recovery_bundle_attach:RecoveryOriginalInput & {transferId:string;expectedReviewSha256:RecoveryDigest;
+    expectedRevision:RecoveryDigest;actor:string};
+  merchant_recovery_bundle_attachment:RecoverySupportInput & {archiveSha256:RecoveryDigest};
+  merchant_recovery_bundle_case_export:RecoverySupportInput & {archiveSha256:RecoveryDigest};
   merchant_recovery_support_cases:RecoveryProfileInput & {q?:string;offset?:number;limit?:number};
   merchant_recovery_support_transfers:RecoveryProfileInput;
   merchant_recovery_support_transfer:RecoverySupportInput;
