@@ -81,6 +81,16 @@ Undo retains the original match history. Reopening creates a separate event. A r
 
 Foreign-currency TRNAMT values retain their native currency and original conversion fields. The bank desk asks for an explicit account-currency valuation and explanation before matching an unconverted foreign-currency movement. It preserves the original amount, source rate and reviewed valuation. The sign must continue to represent the original debit or credit.
 
+## Assemble a complete original CAMT statement
+
+A daily statement can arrive as several XML files or as several statement sections in one file. Receive each original page into the same saved account through the ordinary import review. In **Close statement → Combine original statement pages**, select those retained imports and review their original page numbers, final-page indicator, period, sequences and balance boundaries.
+
+The application connects the first original opening balance through each intermediate booked boundary to the final original closing balance. It checks each page's signed cash, the original summary scope and every selected booked entry's current posted transaction. Every posted movement in the account period must also appear in that complete source selection. The default summary scope is the bank's complete statement summary on the first page. Select a separate summary per page only when the actual bank convention supplies it, and retain the explanation. When original page IDs differ and no common original sequence establishes the grouping, retain the operator's account-period explanation.
+
+Choose **Use these original statement balances** after the page review is eligible. This fills the existing close form with the exact source period and balances. Complete the normal cash matching and close review, then retain the close through the same original request journal. The saved account archive includes every selected original XML, including empty pages, and the full connected page review.
+
+The source selection persists across the import table's pages and in **Download working inputs**. Restored inputs require a fresh review of the currently retained source interpretations. The [complete page-assembly guide](PAGE_ASSEMBLY.md) gives the browser, typed client, CLI, complete retained close shape and original-workspace receiving course.
+
 ## Retain a balanced close
 
 Select the original account, inclusive source calendar dates, opening balance and closing balance. The opening balance is the balance immediately before the period's included transactions; the closing balance is the balance after them. A selected complete source balance pair fixes those values to the original record.
@@ -152,7 +162,7 @@ Create/select the account and refresh the workspace revision before preparing th
 
 If the response is interrupted, recover the original request with getOperation(requestId). An unrecorded operation returns HTTP 404; the caller may then retry the same original body. A stale revision requires a fresh review of the current workspace. The browser retains source bytes and unresolved operation bodies across reloads. Selecting or restoring another file clears the earlier preview immediately; review becomes available when the selected complete file has loaded. Closing a source, transaction or saved-close dialog leaves later read responses attached to their original selection instead of reopening an earlier record.
 
-Pure preview routes are /source-preview and /close-preview. Mutation routes create accounts/imports, match or create customer receipts, undo matches, resolve source rows and retain/reopen closes. See [client.d.ts](client.d.ts) for complete request and result types, and run starforge bank-statements help for native commands.
+Pure preview routes are /source-preview, /assembly-preview and /close-preview. Mutation routes create accounts/imports, match or create customer receipts, undo matches, resolve source rows and retain/reopen closes. See [client.d.ts](client.d.ts) for complete request and result types, and run starforge bank-statements help for native commands.
 
 ## Runtime and full native receiving
 

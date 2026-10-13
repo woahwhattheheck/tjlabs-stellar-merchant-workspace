@@ -1,18 +1,22 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-bank-statements",
-  "description": "Original bank statement intake, customer cash reconciliation and complete closing handover",
+  "description": "Original bank intake, complete CAMT page assembly, customer cash reconciliation and accountant receiving",
   "commands": {
     "bank-statements": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/cli.mjs"
   },
   "commandDescriptions": {
-    "bank-statements": "Import original OFX/QFX/CSV statements, match customer receipts and refunds, resolve corrections and retain balanced cash closes"
+    "bank-statements": "Receive original CAMT.053/OFX/QFX/CSV statements, assemble complete source pages, match cash, retain balanced closes and open the accountant reader"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/README.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_FORMATS.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/client.d.ts",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source.d.ts"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/CAMT053.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/PAGE_ASSEMBLY.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/PAGE_ASSEMBLY_RECEIVE.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md"
   ],
   "exports": {
     "./merchant/bank-statements": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/store.mjs",

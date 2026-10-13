@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-bank-statements",
   "title": "Merchant bank statements and cash reconciliation",
-  "description": "Complete original bank source intake, reviewed receipt/refund/fee matching, source corrections, balanced saved closes and editable accountant handover.",
+  "description": "Complete original bank source intake and CAMT page assembly, reviewed customer cash matching, retained closes, complete accountant review and receiving.",
   "base": {
     "commands": [
       "installation",
@@ -89,7 +89,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete original bank source intake, reviewed receipt/refund/fee matching, source corrections, balanced saved closes and editable accountant handover.",
+    "description": "Complete original bank source intake and CAMT page assembly, reviewed customer cash matching, retained closes, complete accountant review and receiving.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""
