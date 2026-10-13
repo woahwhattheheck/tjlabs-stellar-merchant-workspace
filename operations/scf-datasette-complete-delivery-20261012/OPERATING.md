@@ -133,3 +133,65 @@ A restored installed-ready archive contains its stable pending request. Carry it
 After installed COMPLETE and successful final delivery, the controller closes its original delivery flock and executes the exact pinned following source. The receiver embeds all seven original Conapi files from carrier `02d82c8dbef9af75ad5127170b1aa48a1f2c4e34`. It uses the unchanged original `continue_conapi.py` in the same producer lifetime. The original Conapi application remains selected at `e5520a2a962ccebc461d478edf6aebb4b6c7fb20`; its separate clean workbook worktree selects `4d0eb4bba1704547a4c2ea3481b1f199eee2be98`. Git-native scoped worktrees retain the full original object database and avoid expanding unrelated working files into RAM. The workbook source retains the full supplier product and the independently verified original driver/model/Elite inputs. Conapi retains its own original journals, lock, installed Python and complete delivery saver.
 
 The current executable receiver contains the complete controller, driver, source repairs, prior checkpoint identities, unchanged transfer helpers, and following source. Run that file through the existing receiving owner. Its startup reconciles the previous exact producer before restoring; a live original producer is continued through its own operation rather than duplicated.
+
+
+## Original CloudJob artifact output
+
+The receiver accepts an optional --artifact-directory argument for the existing native CloudJob artifact collector. Run from the selected CloudJob project, with a repo-relative output directory:
+
+~~~sh
+python3 -B operations/scf-datasette-complete-delivery-20261012/receive_original.py \
+  --artifact-directory datasette-native-return
+~~~
+
+The complete embedded 521,275-byte payload and its SHA256 2f8d51a742e40605be739ed66e024d8ae99d57a18747b8fd64e440b9f7d67d72 remain unchanged. The same original driver, controller, installed programme, following Conapi source, checkpoint and journals execute. With no argument, the receiver retains its existing behavior.
+
+The selected output must be an ordinary relative directory below the current real project. Absolute paths, traversal and symbolic-link components are rejected. Each invocation writes a new private receiver-* child so preceding returned attempts remain intact. The original CloudJob collector selects the entire datasette-native-return directory and supplies its existing recursive file manifest, complete hashes and delivery archive.
+
+### Retained files and actual outcomes
+
+After the original controller returns, the wrapper copies the existing files as exact bytes. The selection includes:
+
+- Original operating reports, native result and root-level stdout/stderr files, including native.stdout, native.stderr and the installed programme logs.
+- Original delivery/source/capacity input metadata and retained checkpoint member manifests.
+- Historical saved operating reports and all installed-ready checkpoint receipt/upload sidecars.
+- The same-lifetime Conapi complete operating result, complete delivery-save receipt, workbook-following result, native invocation receipts, original Conapi programme/project reports and logs, and the actual selected workbook COMPLETE.json.
+- Conapi's original conapi-export save ledger, saved-result and parts manifests, plus every retained conapi-upload-state helper stdout/stderr.
+- Original checkpoint parts manifests and every existing save-helper stdout/stderr file in the actual transfer directory.
+- Complete Python receiver stdout/stderr, with the unchanged Library write receipts and controller delivery events, while live output continues to the calling native supervisor.
+
+The wrapper streams each original file into a private temporary sibling, checks stable source identity and the complete received SHA256, fsyncs it, then publishes without replacing a preceding file. Each successful copy emits its original path, received path, byte count and SHA256. It copies the existing report body and save receipts without rewriting their state or file identities. The original whole checkpoint archives and their complete saved part identities remain governed by the original delivery saver.
+
+The copy runs in finally after successful or failed original execution. The original exception or exit status remains authoritative. Copy or transcript errors appear in the receiver events and, when writable, artifact-export.stderr; a copy failure never substitutes a different native result. The native supervisor's own full process log remains available through its existing cloud_job_logs operation. Direct subprocess bytes are retained in the controller's original native log files.
+
+The existing native worker supplies stdin from DEVNULL. The controller completes its report-first and whole-checkpoint saves, then its fully pinned same-lifetime following source, before reading the receiver-retainer stdin. EOF ends that existing retainer and reaches the final copy. A failed canonical save still returns its actual failure and available original report/logs; the export does not mark it saved.
+
+### Existing equipment submission
+
+Use cloud_job_submit through the existing equipped host/configuration. Select this receiver's published successor commit, the actual checkout and peer returned by that host, and the same original operation ID. The immutable spec uses:
+
+~~~json
+{
+  "operation_id": "SCF-DATASETTE-SOURCE-EDITIONS-07476-20261012",
+  "repo": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "head": "ACTUAL_PUBLISHED_RECEIVER_SUCCESSOR_COMMIT",
+  "argv": [
+    "python3",
+    "-B",
+    "operations/scf-datasette-complete-delivery-20261012/receive_original.py",
+    "--artifact-directory",
+    "datasette-native-return"
+  ],
+  "artifact_paths": ["datasette-native-return"]
+}
+~~~
+
+The commit placeholder must be replaced with the immutable commit containing this exact receiver before submission. The same always-selected directory returns success and failure outputs; separate outcome-specific selections are unnecessary. The existing source selection may name only the receiver and this operating guide, because the receiver embeds its entire original source/helper/payload closure. Its restored selected product source remains a78709d02d323924446702a851e85bcf256f2437.
+
+The actual host must supply its installed Python, Node24, Playwright/Chromium, private persistent transfer parent, current memory/disk declarations and original authenticated Library access. CloudJobEquipment's subprocess environment is intentionally narrow. Nonsecret executable and transfer-path bindings can be set explicitly in the immutable argv through the host's installed env command; existing account authentication remains with its original logged-in runtime. The small original manifest materialization/save-binding check measures that selected runtime's access.
+
+Observe the same operation with cloud_job_status, receive exact log ranges with cloud_job_logs, and use the existing cloud_job_artifact / cloud_job_artifact_read or download-artifact contract for the returned directory. A lost acknowledgement is reconciled on the same operation before further execution.
+
+Maintained contracts reviewed for this binding: Commons cloud_jobs.py Git e72590b8801dafbc22473a318d68b76b6bdd7de5, run_bounded.py Git 05819dc9379cfc2a12c3db2378a5cc2b625ca85b, offload_build.py Git c654b54ae33d0d6f7c4f1ca1222a347567d6d7fa and swarm_cloud_job.py Git 48d727c7fff12d20d7622021220f8c4966e47e1d.
+
+The Conapi output selection is composed from the unchanged seven-file source carrier 02d82c8dbef9af75ad5127170b1aa48a1f2c4e34: preserve_delivery.py SHA256 5a637dea893af24144b7ceb570f2ffe8219e560fed739f00be203167d6229f3c, continue_conapi.py SHA256 b51c3c4cdbde2582d433dac5aca332f1c143c83d7101cfe00c55436029c40bb0, and workbook_following.py SHA256 36279a939bcd285a21cfa26e22ca3de7717aba828e9beeb23c3b38b366ec1146. The native outputs stay under the original root; their save journals and helper logs use the existing incoming/conapi-export and incoming/conapi-upload-state directories. The complete Conapi archive and the exact saved raw-part identities retain their original saver and format.
