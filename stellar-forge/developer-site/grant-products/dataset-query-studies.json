@@ -1,0 +1,135 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "dataset-query-studies",
+  "heading": "## Saved dataset queries and complete original results",
+  "sources": [
+    {
+      "id": "dataset-studies-guide",
+      "label": "Complete operator workflow, native CLI/API and original receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/DATASET_STUDIES.md",
+      "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+      "editions": [
+        {
+          "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+          "git_blob": "f26477724f9e2cebf47c8c777581c22e2a141706",
+          "bytes": 11141,
+          "sha256": "cfb14a6794fed1b8c51f1089f096791d6bd9b10841cdb2d923a64ef37afc5a61"
+        }
+      ]
+    },
+    {
+      "id": "dataset-studies-model",
+      "label": "Source-bound portable study, full raw forms and retained editions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-study-core.mjs",
+      "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+      "editions": [
+        {
+          "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+          "git_blob": "0d2f6d7b6c14019223a49da02406b3d00fb8c799",
+          "bytes": 13441,
+          "sha256": "a43b074fe1d25d61c151fb30d493a3f5131a10288fd516a9f63678bf6a3160b4"
+        }
+      ]
+    },
+    {
+      "id": "dataset-studies-native",
+      "label": "Immutable native revisions and original-page complete result custody",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-query-studies.mjs",
+      "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+      "editions": [
+        {
+          "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+          "git_blob": "2ed88c0d0c59742c7c49f7aff49480ae4ed03a54",
+          "bytes": 27911,
+          "sha256": "f05103e7b50f0cfdc84507dc9c74cae49bf8152243364d6938d542d255fe8ba4"
+        }
+      ]
+    },
+    {
+      "id": "dataset-studies-browser",
+      "label": "Original source queries, saved work and complete result selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-workspace.js",
+      "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+      "editions": [
+        {
+          "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+          "git_blob": "ee229987146e22e5e415cc0a20fbbc0ba03fa31f",
+          "bytes": 37478,
+          "sha256": "e530ebbad1fca83da96a394cc9a3d864a01954a3b3634bd6c090df702f20e64e"
+        }
+      ]
+    },
+    {
+      "id": "dataset-studies-http",
+      "label": "Original private workspace, authenticated native APIs and downloads",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-workspace.mjs",
+      "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+      "editions": [
+        {
+          "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+          "git_blob": "83480b3f273e7061d51c8949358e0c886cf0aed3",
+          "bytes": 18055,
+          "sha256": "ad5c8a48f9d44155082514e4f5331eafb80747469d167d34bafd7ab5ef2e995a"
+        }
+      ]
+    },
+    {
+      "id": "dataset-studies-cli",
+      "label": "Installed saved-query and complete-result commands",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-study-cli.mjs",
+      "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+      "editions": [
+        {
+          "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+          "git_blob": "2df6c6a8299d44b41b291d295f74c136a6f0b008",
+          "bytes": 9324,
+          "sha256": "19a020005596b3c8f4f03ebde28e1b55f24db71fa9c7cd56813ad02628087621"
+        }
+      ]
+    },
+    {
+      "id": "dataset-studies-engine",
+      "label": "Unchanged original dataset query and snapshot engine",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-handler.mjs",
+      "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+      "editions": [
+        {
+          "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+          "git_blob": "8da9ef8bddbc560aabe1a74f59c258e29f18d5a9",
+          "bytes": 35553,
+          "sha256": "2c145cbabf0a236e6e878c55ed69220d0ff0500c682d55133305a6e1b061d515"
+        }
+      ]
+    },
+    {
+      "id": "dataset-studies-validators",
+      "label": "Unchanged original SF100 page and cursor validators",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf100-buyer-dataset-delivery/deliver.mjs",
+      "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+      "editions": [
+        {
+          "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+          "git_blob": "290957543c5bf3b7b29c87e111552749eee1a9e7",
+          "bytes": 43740,
+          "sha256": "cbaeb9541a8eb770b5e95bf33b4504d37e30333edfd8822242a708fa145ffb74"
+        }
+      ]
+    }
+  ]
+}
