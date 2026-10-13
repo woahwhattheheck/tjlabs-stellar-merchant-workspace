@@ -65,7 +65,7 @@
       "label": "Complete bank product installation and original runtime transfer",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "products/merchant-bank-statements/INSTALLATION.md",
-      "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
+      "commit": "fa00d78d089706a55fcf3dfb283674a9f2ba4a41",
       "editions": [
         {
           "commit": "e57a359966f093f483a1aa5f4c2dac28566b6a5c",
@@ -108,6 +108,12 @@
           "git_blob": "0c11752ef2fa164eb8fc2937658e5a6dee50379d",
           "sha256": "f88814fd533e175cd83d35e8cd6287b8b8491595c30a639cb9d65257a4a1446e",
           "bytes": 27605
+        },
+        {
+          "commit": "fa00d78d089706a55fcf3dfb283674a9f2ba4a41",
+          "git_blob": "606110a4705833f266011b2585a1c5ccc23afa93",
+          "bytes": 30132,
+          "sha256": "dc48584e4cd6fef580af1b2d5bbbd703d7973a2876240df3ba2fd6fe0ffc0c0b"
         }
       ]
     },
@@ -383,13 +389,19 @@
       "label": "Original accountant archive, source-bound review and complete offline handover",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md",
-      "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
       "editions": [
         {
           "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
           "git_blob": "ec625716e9363e795e9cfeafaceec1ee403a227f",
           "sha256": "cf699710dcfeade79e8f273c0c1da6a3f7f12699921d677932869a4ab8e474cc",
           "bytes": 14827
+        },
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "e019f43b42670f8314f885b84dcc7fa74f231cbc",
+          "sha256": "d9e78861972885c3850b3664ae4023fea48df3412fafaf9ac47215f186df68be",
+          "bytes": 27793
         }
       ]
     },
@@ -449,13 +461,19 @@
       "label": "Complete close, financial lineage, original files and private review browser",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/app.mjs",
-      "commit": "e7da0a7f1aff44d44398498063df2d2d9e97684b",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
       "editions": [
         {
           "commit": "e7da0a7f1aff44d44398498063df2d2d9e97684b",
           "git_blob": "b972088c1fe78147bf451d68f1eec3e42caff57b",
           "sha256": "670a49239db2d3c7d1b65f7e9638bc45831e937ef1d715f0d7c28678ebdcf206",
           "bytes": 27316
+        },
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "359da7f65a44ed9b4366b49980a14cdc7293f194",
+          "sha256": "1c3de4d8e973b11e2f4cc14e8b5333c33dba50db4dd3f59bc5485fad73825979",
+          "bytes": 45133
         }
       ]
     },
@@ -464,13 +482,19 @@
       "label": "Native original-close receiving, note editions, export and offline handover",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/cli.mjs",
-      "commit": "e7da0a7f1aff44d44398498063df2d2d9e97684b",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
       "editions": [
         {
           "commit": "e7da0a7f1aff44d44398498063df2d2d9e97684b",
           "git_blob": "158c277e613476e18374c959bc0298f5783922cd",
           "sha256": "4ced2c5ee407ca6deb2def049b20bbb4272b1f7e51a84325e32ecb4d88512bf8",
           "bytes": 18255
+        },
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "089df8b0487053a2e7ccd5c1378b7b8cb734559f",
+          "sha256": "27b6b78c8cecb9ee22d9d5c64c0dfa35d9b04727cc48ee60882282f17c34f3e7",
+          "bytes": 20682
         }
       ]
     },
@@ -479,13 +503,19 @@
       "label": "Durable private accountant review and original request retention",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/storage.mjs",
-      "commit": "e7da0a7f1aff44d44398498063df2d2d9e97684b",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
       "editions": [
         {
           "commit": "e7da0a7f1aff44d44398498063df2d2d9e97684b",
           "git_blob": "86e3d27aa2b84677879566ce7442bd36b91513fb",
           "sha256": "84f61885f160ac909cb4e44a7a56c0470aa44c8f3105f9c2c71a9e7f462ca296",
           "bytes": 4245
+        },
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "abc06a2b45cc8c40005d94fccc8fb43d213e6156",
+          "sha256": "af57a109db99e391d04b8cc35cade2584e23c2cc6577a9f9b79869ed097da7f3",
+          "bytes": 6778
         }
       ]
     },
@@ -509,13 +539,19 @@
       "label": "Whole actual-close desktop, phone, CLI and independent receiving course",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/EXERCISE.mjs",
-      "commit": "e7da0a7f1aff44d44398498063df2d2d9e97684b",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
       "editions": [
         {
           "commit": "e7da0a7f1aff44d44398498063df2d2d9e97684b",
           "git_blob": "303f3ae398db5515cf382dce415cdef1c3a4d054",
           "sha256": "10a316d88886324934c3fc5a20e9a2985e7f89310bc579ac16d31828f0e1b96a",
           "bytes": 15700
+        },
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "33dbda0bff8edf79c2bab1e68acca0686f0f9c37",
+          "sha256": "69edd3857b74647785595c4b04a609f103800756a9d5a726445535b15d155a03",
+          "bytes": 19425
         }
       ]
     },
@@ -1274,7 +1310,7 @@
       "label": "Complete installed Bank browser asset selection",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/browser-assets.json",
-      "commit": "1ceca0493e279d379de95dfec695cbe4181c0196",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
       "editions": [
         {
           "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
@@ -1287,6 +1323,12 @@
           "git_blob": "804450c519ab1e42e778dc6fb74a799c4085982d",
           "sha256": "08b80d10c7ef07353aa530425066501629c47f11e7fd707b9fe6c6a072f8a4ec",
           "bytes": 6379
+        },
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "491eb3ffb35b5ee64f8a7cc16a60533859ab8db8",
+          "sha256": "d7058561c0d6df6a4f9703aff6216448609b8d101f4caf09bc2ccc3969327b44",
+          "bytes": 6926
         }
       ]
     },
@@ -2208,6 +2250,126 @@
           "git_blob": "f0a66ad47ba0eadf732e51ca6131ddc9c4d310ab",
           "sha256": "ce44d2ffcce82c706592e7b9cadca306e5dca782d16897731f6bda8c297c5e36",
           "bytes": 5955
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-accountant-assets",
+      "label": "Complete standalone accountant browser route selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/browser-assets.json",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+      "editions": [
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "f699bfafb649f8fe31d5dfb4015946026b08f992",
+          "sha256": "33cd9d7ca1bb33d4cb1739f8cc0cdd384c676676fceece5314b2353f0a8f2574",
+          "bytes": 1224
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-accountant-page",
+      "label": "Installed accountant working and complete-recovery controls",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/index.html",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+      "editions": [
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "8545464496638a5484a82cb7e84ab3da12a73c1b",
+          "sha256": "e3b34225a8a1191d5ee9e512f4fd1a02f9a6fd523bbf0f430fb48587a6a2c93a",
+          "bytes": 3735
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-accountant-styles",
+      "label": "Industrial accountant tables and responsive working layout",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/style.css",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+      "editions": [
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "48ca9efa6242a14ca48cb439839c0d4d4b94867c",
+          "sha256": "65a40a9d0c6fe6031f4795f20264ff4b30c47508a0e5bfd7a96280da2fe05570",
+          "bytes": 5733
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-accountant-working-model",
+      "label": "Complete unfinished accountant working edition, original-input reconstruction and full export",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/working.mjs",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+      "editions": [
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "5bd6c78a68484942c2530a9e067b76fd45a5c11d",
+          "sha256": "79ab2cec9e690cffea28d042390cdda9a3a6c48a193d3bd76e1214dae33b26f1",
+          "bytes": 14590
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-accountant-working-contract",
+      "label": "Complete accountant working and source-edition types",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/working.d.mts",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+      "editions": [
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "77a41f256aa9f75a925aeaaf3da25de72835643e",
+          "sha256": "9833b35e80f4830ef440babdc7378c48912768e828f74de840b67b79e279385e",
+          "bytes": 2919
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-accountant-portable",
+      "label": "One-pass populated offline accountant HTML composition",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/portable.mjs",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+      "editions": [
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "c88f696d8419fef3b44f0e6390662bb6ffeef3c6",
+          "sha256": "8b85edfa16af9527654b5e2b21b955c91c95fc61aac491606cac6532f38cb05c",
+          "bytes": 3443
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-accountant-working-source",
+      "label": "Complete selected source bank for accountant working handovers",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/working-source.json",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+      "editions": [
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "4f58c85fc8e291b97f8479c46ed8d0b74b021f81",
+          "sha256": "e3d90b997c29e9d74d5bc3a6285a3667fff591593e9e67c26fe2b721aa128504",
+          "bytes": 188337
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-accountant-distribution",
+      "label": "Installed accountant package, native commands and complete source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/bank-accountant-receiving.json",
+      "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+      "editions": [
+        {
+          "commit": "fb3e8657b294e1da5ee208f6b448b0ac211d6dd9",
+          "git_blob": "a19189d80bdc53f0aae1bc9af0a599bd2c0b37a3",
+          "sha256": "64853abb229bcbc0481a5976fd63fd40467e47fe38bdad839294ac3cf115c749",
+          "bytes": 3752
         }
       ]
     }

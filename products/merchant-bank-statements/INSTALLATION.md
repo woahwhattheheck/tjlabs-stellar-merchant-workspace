@@ -363,3 +363,19 @@ receiving guides; it does not claim to update another host merely by being
 published. Bryce's placement instruction is: "that rule goes in every policy
 file the agents read not just a slack ping" and "and not just local sessions or
 ones from this provider".
+
+
+## Complete accountant working handover (PR 2009)
+
+Select a full source commit containing `fb3e8657b294e1da5ee208f6b448b0ac211d6dd9` when building the existing Bank or `bank-accountant-receiving` selection. This edition adds full unfinished working TARs, directly populated standalone HTML, exact original incoming-file reconstruction, transaction-owned browser CAS acknowledgements and complete retained CAMT page coverage. Preserve the original financial workspace and the same existing DFF77/RD12 receiving identity. Do not replace its historical source intent or assert that the new version ran because it is installed.
+
+Open the same `/bank-statements/accountant-receiving/` route. After receiving the original close and writing a partial source-bound note, use **Download working TAR** or **Download populated reader** without retaining that unfinished note as an edition. Open the actual downloaded HTML, confirm the original record and every unfinished field, then operate and inspect its actual desktop/narrow screens and complete downloads. A CAS conflict retains a separate whole attempted copy; the working selector and **Save visible work as another copy** let the accountant preserve it. Full exports retain original archive/source identities and earlier received-file history.
+
+```sh
+starforge bank-accountant working-inspect --bundle /private/accountant-working.tar
+starforge bank-accountant working-receive --directory /private/accountant-working-custody --bundle /private/accountant-working.tar
+starforge bank-accountant working-export --directory /private/accountant-working-custody --out /private/reopened-working.tar
+starforge bank-accountant prepare-working --directory /private/accountant-working-custody --out /private/populated-accountant-handover
+```
+
+The existing `prepare` command now produces a populated `reader.html` with complete `working.tar`, the committed `review.tar`, all source, guide and byte/hash inventory. The [complete current accountant guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fb3e8657b294e1da5ee208f6b448b0ac211d6dd9/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md) defines custody, limits and explicit recovery. Continue the original `EXERCISE.mjs` course only with its actual selected close archives and the original receiving owner. Source checks do not replace the standing actual rendered-product and all-attachments inspection instruction above.
