@@ -19,6 +19,86 @@ function* lineageCsvChunks(rows, modelVersionId, gridSha256) {
   if (pending) yield Buffer.from(pending);
 }
 
+// Walk the same JSON value contract as json-codec, but retain only the current
+// branch and one scalar/key token. Complete tokens are never split in UTF-16.
+function* jsonFragments(value, space = 2, active = new Set(), depth = 0) {
+  if (value === null || typeof value !== "object") { yield stringifyJson(value); return; }
+  if (active.has(value)) throw Object.assign(new TypeError("JSON values cannot contain cycles."),
+    { code: "HAYSTACK_JSON_VALUE", status: 400 });
+  const array = Array.isArray(value);
+  if (!array && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+    // Keep the original codec's strict type error and metadata.
+    yield stringifyJson(value); return;
+  }
+  active.add(value);
+  const unit = " ".repeat(space), before = space ? "\n" + unit.repeat(depth + 1) : "";
+  const after = space ? "\n" + unit.repeat(depth) : "";
+  yield array ? "[" : "{";
+  let first = true;
+  try {
+    if (array) {
+      // Array.from in the original codec uses the array's iterator too; holes
+      // and explicit undefined entries become null, never omitted values.
+      for (const entry of value) {
+        yield (first ? before : "," + before); first = false;
+        yield* jsonFragments(entry === undefined ? null : entry, space, active, depth + 1);
+      }
+    } else {
+      const keys = Object.keys(value).filter(key => value[key] !== undefined);
+      for (const key of keys) {
+        yield (first ? before : "," + before); first = false;
+        yield JSON.stringify(key) + (space ? ": " : ":");
+        yield* jsonFragments(value[key], space, active, depth + 1);
+      }
+    }
+    if (!first) yield after;
+    yield array ? "]" : "}";
+  } finally { active.delete(value); }
+}
+
+function* utf8Chunks(fragments) {
+  let pending = "";
+  for (const fragment of fragments) {
+    pending += fragment;
+    if (pending.length >= 65536) { yield Buffer.from(pending); pending = ""; }
+  }
+  if (pending) yield Buffer.from(pending);
+}
+
+function* jsonReportFragments(report) { yield* jsonFragments(report); yield "\n"; }
+
+function* escapedJsonFragments(value) {
+  for (const fragment of jsonFragments(value)) yield escapeHtml(fragment);
+}
+
+function* htmlReportFragments(read, report) {
+  const e = escapeHtml;
+  yield '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
+    e(read.profile.title) + '</title><style>body{font:15px system-ui,sans-serif;margin:36px;color:#161616;background:#fff;max-width:1400px}table{border-collapse:collapse;width:100%;margin:20px 0}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#eee}code,pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}h1{font-size:26px}.meta{color:#444} @media print{body{margin:12mm}thead{display:table-header-group}tr{break-inside:avoid}}</style><h1>' +
+    e(read.profile.title) + '</h1><p>' + e(read.profile.description) + '</p><p class="meta">' + e(report.meaning) + '</p><p>' +
+    read.counts.rows + ' rows · ' + read.counts.columns + ' columns · ' + read.counts.errors + ' errors · ' + read.counts.warnings +
+    ' warnings</p><h2>Original model and reviewed grid</h2><pre>';
+  yield* escapedJsonFragments({ workspaceId: report.workspaceId,
+    projectionId: report.projectionId, version: read.version.id, modelId: read.modelId, modelVersionId: read.modelVersionId,
+    contextId: read.contextId, gridSha256: read.gridSha256, reviews: report.reviews });
+  yield '</pre><h2>Findings</h2><table><thead><tr><th>Severity</th><th>Entity / tag</th><th>Finding</th></tr></thead><tbody>';
+  for (const d of read.diagnostics) yield '<tr><td>' + e(d.severity) + '</td><td>' +
+    e((d.entityId || '') + ' / ' + (d.tag || '')) + '</td><td>' + e(d.message) + '</td></tr>';
+  yield '</tbody></table><h2>Complete typed values and source lineage</h2><table><thead><tr><th>Entity</th><th>Tag</th><th>Typed value</th><th>Original source / conversion</th></tr></thead><tbody>';
+  for (const row of read.rows) for (const cell of row.cells) yield '<tr><td>' + e(row.entityId) + '</td><td>' +
+    e(cell.tag) + '</td><td><code>' + e(cell.present ? canonical(cell.value) : '(absent)') +
+    '</code></td><td><code>' + e(canonical(cell.origin)) + '</code>' +
+    (cell.issue ? '<p>' + e(cell.issue.message) + '</p>' : '') + '</td></tr>';
+  yield '</tbody></table><h2>Native publications and returned corrections</h2><pre>';
+  yield* escapedJsonFragments({ publications: report.publications, returns: report.returns });
+  yield '</pre></html>';
+}
+
+function rendered(metadata, fragments, stream) {
+  const chunks = utf8Chunks(fragments);
+  return stream ? { ...metadata, chunks } : { ...metadata, bytes: Buffer.concat([...chunks]) };
+}
+
 export function makeProjectionDelivery(state, args, { stream = false } = {}) {
   const read = projectionRead(state, args), short = read.projection.id + "-" + read.version.id.slice(0, 12);
   if (args.kind === "projection-grid") {
@@ -48,25 +128,11 @@ export function makeProjectionDelivery(state, args, { stream = false } = {}) {
     publications: read.publications.filter(r => r.versionId === read.version.id),
     returns: read.returns.map(({ base64, ...row }) => row),
     meaning: "A reviewed typed-grid projection and its original source lineage. Consumer acceptance belongs to the referenced original consumer record." };
-  if (format === "html") {
-    const e = escapeHtml;
-    const html = '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
-      e(read.profile.title) + '</title><style>body{font:15px system-ui,sans-serif;margin:36px;color:#161616;background:#fff;max-width:1400px}table{border-collapse:collapse;width:100%;margin:20px 0}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#eee}code,pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}h1{font-size:26px}.meta{color:#444} @media print{body{margin:12mm}thead{display:table-header-group}tr{break-inside:avoid}}</style><h1>' +
-      e(read.profile.title) + '</h1><p>' + e(read.profile.description) + '</p><p class="meta">' + e(report.meaning) + '</p><p>' +
-      read.counts.rows + ' rows · ' + read.counts.columns + ' columns · ' + read.counts.errors + ' errors · ' + read.counts.warnings +
-      ' warnings</p><h2>Original model and reviewed grid</h2><pre>' + e(stringifyJson({ workspaceId: report.workspaceId,
-        projectionId: report.projectionId, version: read.version.id, modelId: read.modelId, modelVersionId: read.modelVersionId,
-        contextId: read.contextId, gridSha256: read.gridSha256, reviews: report.reviews }, 2)) +
-      '</pre><h2>Findings</h2><table><thead><tr><th>Severity</th><th>Entity / tag</th><th>Finding</th></tr></thead><tbody>' +
-      read.diagnostics.map(d => '<tr><td>' + e(d.severity) + '</td><td>' + e((d.entityId || '') + ' / ' + (d.tag || '')) + '</td><td>' + e(d.message) + '</td></tr>').join('') +
-      '</tbody></table><h2>Complete typed values and source lineage</h2><table><thead><tr><th>Entity</th><th>Tag</th><th>Typed value</th><th>Original source / conversion</th></tr></thead><tbody>' +
-      read.rows.flatMap(row => row.cells.map(cell => '<tr><td>' + e(row.entityId) + '</td><td>' + e(cell.tag) + '</td><td><code>' +
-        e(cell.present ? canonical(cell.value) : '(absent)') + '</code></td><td><code>' + e(canonical(cell.origin)) +
-        '</code>' + (cell.issue ? '<p>' + e(cell.issue.message) + '</p>' : '') + '</td></tr>')).join('') +
-      '</tbody></table><h2>Native publications and returned corrections</h2><pre>' +
-      e(stringifyJson({ publications: report.publications, returns: report.returns }, 2)) + '</pre></html>';
-    return { name: "haystack-projection-report-" + short + ".html", mediaType: "text/html; charset=utf-8", bytes: Buffer.from(html) };
-  }
-  return { name: "haystack-" + (args.kind === "projection-lineage" ? "lineage-" : "projection-report-") + short + ".json",
-    mediaType: "application/json", bytes: Buffer.from(stringifyJson(report, 2) + "\n") };
+  if (format === "html") return rendered({
+    name: "haystack-projection-report-" + short + ".html", mediaType: "text/html; charset=utf-8"
+  }, htmlReportFragments(read, report), stream);
+  return rendered({
+    name: "haystack-" + (args.kind === "projection-lineage" ? "lineage-" : "projection-report-") + short + ".json",
+    mediaType: "application/json"
+  }, jsonReportFragments(report), stream);
 }
