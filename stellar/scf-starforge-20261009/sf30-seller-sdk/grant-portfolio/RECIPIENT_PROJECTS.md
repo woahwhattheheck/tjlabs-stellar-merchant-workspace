@@ -97,7 +97,9 @@ an automatic rebase or a second operation under another ID.
 
 The normal Saved operations view remains available for the original request.
 The downloaded plan is a complete recovery input, not a substitute for the
-workspace's durable request/result journal.
+workspace's durable request/result journal. Reopening accepts the complete saved
+import plan up to 32 MiB, including its original identity and mapping copies. The
+source JSON remains limited to 8 MiB and the original action to 1 MiB.
 
 ## Native client
 

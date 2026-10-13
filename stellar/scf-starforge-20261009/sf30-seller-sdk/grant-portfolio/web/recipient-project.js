@@ -75,7 +75,7 @@ function GrantRecipientProjects(H){
       const resume=panel("Continue a saved recipient import","Select the original application-plan JSON above and the complete recipient import plan downloaded before saving."),
         saved=field("Saved recipient import plan","file");saved.input.accept=".json,application/json";
       resume.append(saved.wrapper,button("Review original recipient import",attempt(async()=>{
-        await read();const f=saved.input.files[0];need(f&&f.size>0&&f.size<=2*1024*1024,"Choose the complete saved recipient import plan, up to 2 MiB.");
+        await read();const f=saved.input.files[0];need(f&&f.size>0&&f.size<=32*1024*1024,"Choose the complete saved recipient import plan, up to 32 MiB.");
         const plan=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(await f.arrayBuffer()));
         I.basis=await checkSaved(module,plan,I.bytes);I.plan=plan;I.resume=true;I.downloaded=true;reviewPage();
       })));body.append(resume);
