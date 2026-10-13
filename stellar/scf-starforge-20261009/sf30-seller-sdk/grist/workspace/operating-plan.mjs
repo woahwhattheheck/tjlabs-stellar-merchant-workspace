@@ -31,7 +31,7 @@ export function inspectProcedure(value){
  need(value.schema===PROCEDURE_SCHEMA&&Number.isSafeInteger(value.version)&&value.version>=1,'Use a saved Grist procedure.');
  id(value.id);origin(value.origin);at(value.createdAt);at(value.updatedAt);
  const plan=inspectOperatingPlan(value.plan);need(plan.id===value.id,'The original plan ID differs.');
- need(Array.isArray(value.bindings)&&value.bindings.length>0&&value.bindings.length<=1000,'Retain every original source binding.');
+ need(Array.isArray(value.bindings)&&value.bindings.length<=1000,'Retain every original source binding.');
  for(const b of value.bindings){
   only(b,['kind','id','stepId','identitySha256','identity']);id(b.id);id(b.stepId);sha(b.identitySha256);
   need(SOURCE_KINDS.includes(b.kind)&&plain(b.identity),'Retain the original source identity.');
@@ -52,12 +52,16 @@ export function inspectProcedure(value){
   }
  }
  need(unique(value.captures.map(c=>c.id)),'Repeated capture ID.');
- for(const returned of value.returns){const r=inspectOperatingPlanReturn(returned);need(r.completion,'Keep completed return reviews.');receiveOperatingPlan(plan,r.completion.plan);}
+ for(const returned of value.returns){
+  const r=inspectOperatingPlanReturn(returned);need(r.completion,'Keep completed return reviews.');
+  const received=receiveOperatingPlan(r.completion.plan,plan);
+  need(received.plan.revisions.length===plan.revisions.length,'The procedure must retain the complete result of every applied return.');
+ }
  need(unique(value.returns.map(r=>r.id)),'Repeated return review.');
  return {...clone(value),plan};
 }
 export function createGristProcedure({id:planId,title,customer='',purpose='',period='',owner='',receiving='',notes='',snapshot,catalog,savedAt}){
- origin(snapshot.origin);need(Array.isArray(snapshot.rows)&&snapshot.rows.length>0&&snapshot.rows.length<=1000,'Choose actual saved Grist source items.');
+ origin(snapshot.origin);need(Array.isArray(snapshot.rows)&&snapshot.rows.length<=1000,'Choose original saved Grist source items or an empty manual procedure.');
  const registration=snapshotRegistration(catalog,'command:grist-workspace');
  need(registration.item.entry==='stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/cli.mjs',
   'Use the original Grist authoring command registration.');
