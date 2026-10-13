@@ -1,0 +1,14 @@
+{
+  "id": "issuer-doc-container-traffic",
+  "kind": "container-traffic",
+  "locode": null,
+  "source_role": "issuer_documentation_example",
+  "captured_at": "2026-10-13T09:20Z",
+  "source_sha256": "673c8bcc57cb15f550366c97dd27dc0ed6c372a08c7c96400476a4f20f9b3e6d",
+  "original_url": "https://api.econdb.com/v1/schema/",
+  "basis": {
+    "original_openapi_sha256": "c271e5e1799a7a47b3f598cdf286d25c7bb68108cd9f3e466231f4f95a82c915",
+    "example": "SampleContainerVolume",
+    "representation": "Exact JSON value transcribed from original YAML; numeric lexemes belong to this JSON transcription."
+  }
+}

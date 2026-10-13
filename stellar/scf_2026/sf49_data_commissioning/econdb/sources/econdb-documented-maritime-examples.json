@@ -1,0 +1,164 @@
+{
+  "schema": "econdb.documentation-examples.v1",
+  "source_url": "https://api.econdb.com/v1/schema/",
+  "source_sha256": "c271e5e1799a7a47b3f598cdf286d25c7bb68108cd9f3e466231f4f95a82c915",
+  "classification": "ISSUER_DOCUMENTATION_EXAMPLES_NOT_LIVE_DATA",
+  "examples": {
+    "ports-list": {
+      "name": "PortExample",
+      "endpoint": "/v1/ports/",
+      "value": [
+        {
+          "name": "Barcelona",
+          "locode": "ES BCN",
+          "iso2": "ES",
+          "lat": 41.35,
+          "lon": 2.16667,
+          "timezone": "Europe/Madrid",
+          "region": "West Mediterranean"
+        }
+      ]
+    },
+    "capacity-by-operator": {
+      "name": "CapacityByOperator",
+      "endpoint": "/v1/ports/{locode}/capacity-by-operator/",
+      "locode": null,
+      "value": {
+        "type": "timeseries",
+        "title": "Throughput by operator",
+        "series": [
+          {
+            "code": "Mediterranean Shipping",
+            "name": "Mediterranean Shipping",
+            "display": "stacked"
+          },
+          {
+            "code": "Hapag-Lloyd",
+            "name": "Hapag-Lloyd",
+            "display": "stacked"
+          },
+          {
+            "code": "CMA CGM",
+            "name": "CMA CGM",
+            "display": "stacked"
+          },
+          {
+            "code": "Maersk",
+            "name": "Maersk",
+            "display": "stacked"
+          },
+          {
+            "code": "Ocean Network Express",
+            "name": "Ocean Network Express",
+            "display": "stacked"
+          },
+          {
+            "code": "Others",
+            "name": "Others",
+            "display": "stacked"
+          }
+        ],
+        "data": [
+          {
+            "Date": "2022-02-01",
+            "Mediterranean Shipping": 84622,
+            "Hapag-Lloyd": 61658,
+            "CMA CGM": 54621,
+            "Maersk": 18385,
+            "Ocean Network Express": 13918,
+            "Others": 38394
+          },
+          {
+            "Date": "2022-03-01",
+            "Mediterranean Shipping": 156663,
+            "Hapag-Lloyd": 95629,
+            "CMA CGM": 74605,
+            "Maersk": 29990,
+            "Ocean Network Express": 235,
+            "Others": 26042
+          }
+        ]
+      }
+    },
+    "container-traffic": {
+      "name": "SampleContainerVolume",
+      "endpoint": "/v1/ports/{locode}/container-traffic/",
+      "locode": null,
+      "value": {
+        "type": "timeseries",
+        "title": "Container volume (TEU, full)",
+        "series": [
+          {
+            "code": "Imports",
+            "name": "Gross imports",
+            "axis": 0
+          },
+          {
+            "code": "Exports",
+            "name": "Gross exports",
+            "axis": 0
+          },
+          {
+            "code": "Transshipment",
+            "name": "Transshipment",
+            "axis": 0
+          }
+        ],
+        "data": [
+          {
+            "Date": "2022-02-21",
+            "Exports": 26635,
+            "Imports": 34850,
+            "Transshipment": null
+          }
+        ]
+      }
+    },
+    "dwell-times": {
+      "name": "SampleDwellTime",
+      "endpoint": "/v1/ports/{locode}/dwell-times/",
+      "locode": null,
+      "value": {
+        "type": "timeseries",
+        "title": "Container yard dwell (days)",
+        "tooltip": "Average period needed to process cargo",
+        "series": [
+          {
+            "code": "Imports",
+            "name": "Imports",
+            "axis": 0,
+            "lbreak": true
+          },
+          {
+            "code": "Exports",
+            "name": "Exports",
+            "axis": 0,
+            "lbreak": true
+          },
+          {
+            "code": "Transshipments",
+            "name": "Transshipments",
+            "axis": 0,
+            "lbreak": true
+          },
+          {
+            "code": "Rail imports",
+            "name": "Rail imports",
+            "axis": 0,
+            "dashed": true,
+            "lbreak": true
+          }
+        ],
+        "data": [
+          {
+            "Date": "2022-03-01",
+            "Imports": 7.238361111111112,
+            "Exports": 12.079057054263567,
+            "Transshipments": 8.403610210526317,
+            "Rail imports": null
+          }
+        ]
+      }
+    }
+  }
+}
