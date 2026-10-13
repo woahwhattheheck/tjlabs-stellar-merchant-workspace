@@ -14,3 +14,8 @@
 @media(max-width:650px){.awards-object,.awards-definition{grid-template-columns:minmax(0,1fr)}
 .awards-field{padding:10px}.awards-money{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
 .awards-scope .field{min-width:0;width:100%}.awards-repeat-row{padding:8px}.awards-definition dd{margin-bottom:8px}}
+
+.awards-intake{display:grid;gap:12px;min-width:0}.awards-intake-error{color:#27272a;border-left:3px solid #52525b;padding-left:10px;white-space:pre-wrap}
+.awards-intake-error:empty{display:none}.awards-intake .actions{flex-wrap:wrap}.awards-identity-picker{min-width:220px;display:grid;gap:6px}
+.awards-intake>div>.field{margin-bottom:12px}.awards-intake h3{margin-top:8px}.awards-intake .table-wrap{max-width:100%}
+@media(max-width:650px){.awards-identity-picker{min-width:160px}.awards-intake .actions>*{width:100%}}
