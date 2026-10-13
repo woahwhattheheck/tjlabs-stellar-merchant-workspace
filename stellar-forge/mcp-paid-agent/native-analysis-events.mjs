@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Complete agent use of the original private Event programmes service.
+import {reopen as reopenWorkbookReview,nativeColumns as workbookNativeColumns}
+ from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-columns.mjs';
 import {join,resolve} from 'node:path';
 import {initializationDirectory as directory,initializationBytes as bytes,
  retainInitializationFile as retainFile,retainInitializationRecord as retainRecord}
  from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/initialization.mjs';
+import {createEventWorkbookReviewSource,eventWorkbookReviewSourceStatus,receiveEventWorkbookReviewChunk,
+ readEventWorkbookReviewSource,EVENT_WORKBOOK_REVIEW_LIMIT,EVENT_WORKBOOK_REQUEST_LIMIT}
+ from './native-analysis-events-workbook-source.mjs';
 import {nativeEventOperations} from './native-analysis-events-schema.mjs';
 import {EVENT_DOWNLOAD_SCHEMA,EVENT_MAX_RECORD,EVENT_MAX_FILE,EVENT_ID,EVENT_HASH,EVENT_NAME,
  EVENT_FILES,eventObject as object,eventNeed as need,eventHash as sha,eventCanonical,eventMime,
@@ -41,6 +46,8 @@ function action(value,record,id){
  result.mapping_review={schema:value.mapping_review.schema,reviewed_at:value.mapping_review.reviewed_at,
   comparison_sha256:s.comparison_sha256,programme_revision:s.programme_revision,baseline_operation_id:s.baseline_operation_id,
   reviewer_preview:preview(s.reviewer),note_preview:preview(s.note),decision_count:s.decisions.length};}
+ if(value.column_review_validation)result.column_review_validation=pick(value.column_review_validation,
+ ['schema','workspace_id','programme','operation_id','review_sha256','working_sha256','working_bytes','columns_sha256','validator_sources']);
  if(value.progress)result.progress=pick(value.progress,['phase','id','kind','status','message']);
  if(object(value.result))result.result=pick(value.result,['schema','operation_id','accepted_operation_id','edition_id',
  'review_sha256','version_id','report_name','workbook_name','workbook_job_id','workspace_archive_job_id',
@@ -149,6 +156,9 @@ export function createNativeEventActions({reads,parse}={}){
  typeof getBytes==='function'&&typeof postBytes==='function','ORIGINAL_TRANSPORT_REQUIRED');
  const spec=nativeEventOperations[operation];fields(body,spec.required,Object.keys(spec.properties).filter(k=>!spec.required.includes(k)));
  signal?.throwIfAborted();
+ if(operation==='event-workbook-review-create')return createEventWorkbookReviewSource(record,body);
+ if(operation==='event-workbook-review-source')return eventWorkbookReviewSourceStatus(record,body.id);
+ if(operation==='event-workbook-review-chunk')return receiveEventWorkbookReviewChunk(record,body);
  if(operation==='event-record-file')return readRecord(body,record);
  if(operation==='event-overview'){
  for(const key of ['actions_before','inputs_before'])if(body[key]!==undefined)integer(body[key],1);
@@ -291,9 +301,26 @@ export function createNativeEventActions({reads,parse}={}){
  need(typeof body.note==='string'&&body.note.trim()&&Buffer.byteLength(body.note)<=8000,'DECISION_NOTE_REQUIRED');
  request.review_sha256=body.review_sha256;request.note=body.note;
  if(actionName==='apply'){need(body.columns===undefined||object(body.columns),'WORKBOOK_COLUMNS_INVALID');
- request.columns=copy(body.columns??{});need(Buffer.byteLength(JSON.stringify(request.columns))<=512*1024,'WORKBOOK_COLUMNS_INVALID');}
+ request.columns=copy(body.columns??{});need(Buffer.byteLength(JSON.stringify(request.columns))<=512*1024,'WORKBOOK_COLUMNS_INVALID');
+ need(body.columns_sha256===undefined||body.column_review!==undefined||body.column_review_source!==undefined,'WORKBOOK_REVIEW_REQUIRED');
+ need(body.column_review===undefined||body.column_review_source===undefined,'ONE_WORKBOOK_REVIEW_SOURCE_REQUIRED');
+ if(body.column_review!==undefined||body.column_review_source!==undefined){
+  const full=body.column_review_source!==undefined?await readEventWorkbookReviewSource(record,body.column_review_source):copy(body.column_review);
+  need(object(full)&&Buffer.byteLength(eventCanonical(full))<=EVENT_WORKBOOK_REVIEW_LIMIT&&
+   full.original?.workspace_id===record.workspaceId&&full.original?.programme===body.programme&&
+   full.original?.proposal?.operation_id===body.operation_id&&
+   full.original?.proposal?.review_sha256===body.review_sha256,'ORIGINAL_WORKBOOK_REVIEW_CHANGED');
+  const normalized=workbookNativeColumns(reopenWorkbookReview(full));
+  need(Buffer.byteLength(eventCanonical(normalized))<=512*1024,'WORKBOOK_COLUMNS_INVALID');
+  if(body.columns!==undefined)need(eventCanonical(normalized)===eventCanonical(body.columns),'SELECTED_WORKBOOK_COLUMNS_CHANGED');
+  if(body.columns_sha256!==undefined)need(EVENT_HASH.test(body.columns_sha256)&&
+   sha(Buffer.from(eventCanonical(normalized)))===body.columns_sha256,'SELECTED_WORKBOOK_COLUMNS_CHANGED');
+  request.columns=normalized;request.column_review=full;
+ }
+}
  }else need(actionName==='deliver'&&body.id!==body.operation_id,'FRESH_DELIVERY_ID_REQUIRED');
- return snapshot(record,'action',body.id,()=>postBytes(ROOT+'/named/'+body.programme+'/actions',request,EVENT_MAX_RECORD),value=>{
+ return snapshot(record,'action',body.id,()=>postBytes(ROOT+'/named/'+body.programme+'/actions',request,EVENT_MAX_RECORD,
+  request.column_review===undefined?undefined:EVENT_WORKBOOK_REQUEST_LIMIT),value=>{
  const result=action(value,record,body.id);
  need(value.programme===body.programme&&value.request.action===actionName&&value.request.operation_id===body.operation_id,'ACTION_SELECTION_CHANGED');
  return result;

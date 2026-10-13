@@ -137,11 +137,11 @@ export function createNativeAnalysis({manifest,completedDataset,completedObject,
     need((await json(join(root,'format.json'))).schema===SCHEMA,'MCP_ANALYSIS_FORMAT_CHANGED');
     return true;
   }
-  async function request(connection,route,body,signal,{raw:asBytes=false,maximum=MAX_JSON}={}){
+  async function request(connection,route,body,signal,{raw:asBytes=false,maximum=MAX_JSON,maximumInput=MAX_REQUEST}={}){
     available();
     const headers={'X-Analysis-Capability':connection.capability,'Origin':connection.url.origin};
     let input;
-    if(body!==undefined){input=enc(body);need(input.length<=MAX_REQUEST,'MCP_ANALYSIS_REQUEST_TOO_LARGE');headers['Content-Type']='application/json';}
+    if(body!==undefined){input=enc(body);need(Number.isSafeInteger(maximumInput)&&maximumInput>=1&&maximumInput<=17*1024*1024&&input.length<=maximumInput,'MCP_ANALYSIS_REQUEST_TOO_LARGE');headers['Content-Type']='application/json';}
     const controller=new AbortController();
     const options={method:body===undefined?'GET':'POST',redirect:'error',cache:'no-store',headers,
       ...(input===undefined?{}:{body:input}),
@@ -327,7 +327,7 @@ export function createNativeAnalysis({manifest,completedDataset,completedObject,
       getBytes:(route,maximum)=>request(connection,route,undefined,context.signal,{raw:true,maximum})});
     else if(events.handles(op))value=await events.call({operation:op,body,record,get,post,signal:context.signal,
       getBytes:(route,maximum)=>request(connection,route,undefined,context.signal,{raw:true,maximum}),
-      postBytes:(route,value,maximum)=>request(connection,route,value,context.signal,{raw:true,maximum})});
+      postBytes:(route,value,maximum,maximumInput)=>request(connection,route,value,context.signal,{raw:true,maximum,maximumInput})});
     else if(research.handles(op))value=await research.call({operation:op,body,get,post});
     else if(sources.handles(op))value=await sources.call({operation:op,body,post});
     else if(workbooks.handles(op))value=await workbooks.call({operation:op,body,record,state:connection.state,get,post});
