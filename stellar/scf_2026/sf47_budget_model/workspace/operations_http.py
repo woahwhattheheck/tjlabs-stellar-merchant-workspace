@@ -57,6 +57,8 @@ def register_static(static):
                    "/operations_amendments.css": ("operations_amendments.css", "text/css; charset=utf-8")})
     static.update({"/operations_installation_returns.mjs": ("operations_installation_returns.mjs", "text/javascript; charset=utf-8"),
                    "/operations_installation_returns.css": ("operations_installation_returns.css", "text/css; charset=utf-8")})
+    static.update({"/operations_commissioning.mjs": ("operations_commissioning.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_commissioning.css": ("operations_commissioning.css", "text/css; charset=utf-8")})
     static.update({"/operations_use_calendar.mjs": ("operations_use_calendar.mjs", "text/javascript; charset=utf-8"),
                    "/operations_use_calendar.css": ("operations_use_calendar.css", "text/css; charset=utf-8")})
     static.update({"/operations_work_intake.mjs": ("operations_work_intake.mjs", "text/javascript; charset=utf-8"),
@@ -397,7 +399,7 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commissioning-seed|installation-commissioning-review|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
@@ -426,6 +428,8 @@ def write(handler, parsed):
                    "implementation-preview": ops.preview_implementation, "cohort-seed": ops.seed_cohort, "cohort-preview": ops.preview_cohort, "installation-seed": ops.seed_installation,
                    "installation-workflows": ops.installation_workflows,
                    "installation-workflow-seed": ops.seed_workflow_installation,
+                   "installation-commissioning-seed": ops.seed_installation_commissioning,
+                   "installation-commissioning-review": ops.review_installation_commissioning,
                    "installation-commercial": ops.installation_commercial,
                    "installation-commercial-seed": ops.seed_commercial_installation,
                    "installation-workshares": ops.installation_workshares,

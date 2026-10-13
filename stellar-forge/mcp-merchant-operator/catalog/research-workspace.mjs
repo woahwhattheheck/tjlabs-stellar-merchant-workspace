@@ -8,6 +8,7 @@ import {researchCustomerUpdateTools,RESEARCH_CUSTOMER_UPDATE_EXPORTS,RESEARCH_CU
 import {researchRisTools,RESEARCH_RIS_EXPORTS,RESEARCH_RIS_EXPORT_FIELDS} from './research-ris.mjs';
 import {researchDossierReturnTools,RESEARCH_DOSSIER_RETURN_EXPORTS,RESEARCH_DOSSIER_RETURN_EXPORT_FIELDS} from './research-dossier-returns.mjs';
 import {researchCommerceTools,RESEARCH_COMMERCE_EXPORTS,RESEARCH_COMMERCE_EXPORT_FIELDS} from './research-commerce.mjs';
+import {researchProgrammeTools} from './research-programmes.mjs';
 import {researchQuoteTools,RESEARCH_QUOTE_EXPORTS,RESEARCH_QUOTE_EXPORT_FIELDS} from './research-quotes.mjs';
 import {researchEuropePmcTools,RESEARCH_EUROPE_PMC_EXPORTS,RESEARCH_EUROPE_PMC_EXPORT_FIELDS} from './research-europe-pmc.mjs';
 import {researchDocumentTools,RESEARCH_DOCUMENT_EXPORTS,RESEARCH_DOCUMENT_EXPORT_FIELDS} from './research-documents.mjs';
@@ -138,6 +139,7 @@ export function researchWorkspaceTools(tool){
     ...researchDossierReturnTools(tool),
     ...researchCommerceTools(tool),
     ...researchQuoteTools(tool),
+    ...researchProgrammeTools(tool),
     ...researchEuropePmcTools(tool),
     ...researchExtractionTools(tool),
     ...researchStudyFlowTools(tool)

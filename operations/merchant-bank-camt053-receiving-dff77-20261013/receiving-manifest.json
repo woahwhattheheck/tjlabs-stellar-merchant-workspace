@@ -1,0 +1,38 @@
+{
+  "schema": "stellar-forge.camt053.maintained-receiver.v1",
+  "operation": "SCF-BANK-CAMT053-SOURCE-DFF77-20261013",
+  "edition": "NORDEA_AND_GS08_20261013",
+  "sourceCommit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
+  "files": [
+    {
+      "path": "source-config.json",
+      "bytes": 490528,
+      "sha256": "5ee78421542fca9661e23f2e0e38c1bfbd2e840f6160b218f888f217895b6db1",
+      "git_blob_sha1": "7373f73231619f99197cba558819328e83ce6b90"
+    },
+    {
+      "path": "receive-originals.mjs",
+      "bytes": 6244,
+      "sha256": "6dd94190dd4984eec3cc5fb656f452af229638ecf3ac2b9ab7d88762cae5453e",
+      "git_blob_sha1": "ffb69d5ffee42b97d28892f302d0ac044b50e104"
+    },
+    {
+      "path": "receive-application.mjs",
+      "bytes": 20693,
+      "sha256": "956668776cd0577eddaf27a331c5d75e554836354adf33b4d48a72bff54d7138",
+      "git_blob_sha1": "fa36022c485647c71c5a036055e06c31b50e2cb9"
+    },
+    {
+      "path": "producer.py",
+      "bytes": 20784,
+      "sha256": "b70d8e0f6048ab555c3f3285f05502be811bda01e56231299a37e9e8f7fbc8a2",
+      "git_blob_sha1": "427ef9d9990da5a5d4e6587a92c4464bbfd39046"
+    },
+    {
+      "path": "README.md",
+      "bytes": 7594,
+      "sha256": "52f46e6d6be2930d810eb37cd16882446da695955c89bac26a7628f2d5d7a049",
+      "git_blob_sha1": "a706fe1d9cc79f3847e4c6a25526cb8e9ce3eaf4"
+    }
+  ]
+}
