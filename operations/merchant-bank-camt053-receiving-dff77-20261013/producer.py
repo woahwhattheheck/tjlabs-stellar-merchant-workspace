@@ -14,10 +14,13 @@ def canonical(value):
  if value==0:return "0"
  s=format(value,"f")
  return s.rstrip("0").rstrip(".") if "." in s else s
-def expected(data):
+def expected(data,profile=None):
  global ns
- tree=ET.fromstring(data);namespace=tree.tag[1:].split("}")[0];ns={"c":namespace}
- result={"messageVersion":namespace.split(":")[-1],"statements":[]}
+ tree=ET.fromstring(data);namespace=tree.tag[1:].split("}")[0]if tree.tag.startswith("{")else"";ns={"c":namespace}
+ profile=profile or{}
+ if not namespace:
+  assert profile.get("namespaceMode")=="UNQUALIFIED"and profile.get("messageVersion")=="camt.053.001.08","Retain the explicit unqualified original interpretation"
+ result={"messageVersion":namespace.split(":")[-1]if namespace else profile["messageVersion"],"statements":[]}
  for stmt in tree.findall("c:BkToCstmrStmt/c:Stmt",ns):
   record={"id":txt(stmt,"c:Id"),"hasPeriod":stmt.find("c:FrToDt",ns)is not None,"entries":[],"bookedTotals":[]};totals={}
   for entry in stmt.findall("c:Ntry",ns):
@@ -31,8 +34,8 @@ def expected(data):
   record["bookedTotals"]=[{"currency":currency,"net":canonical(total)}for currency,total in totals.items()]
   result["statements"].append(record)
  return result
-def original_expected(data):
- try:return expected(data)
+def original_expected(data,profile=None):
+ try:return expected(data,profile)
  except ET.ParseError:
   if sha(data)in cfg.get("expectedOriginalRejections",{}):return None
   raise
@@ -71,36 +74,38 @@ try:
    "provenance":item["provenance"],"bytes":len(data),"sha256":sha(data),"expected":original_expected(data)})
  (root/"PUBLISHED_SOURCE_CAPTURE.json").write_text(json.dumps(cfg.get("publishedSourceCapture",{}),ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
  (root/"SAMPLE_OPERATOR_REVIEW.json").write_text(json.dumps(cfg.get("applicationCloseReviews",{}),ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
- out["additionalSources"]=[]
- for source in cfg.get("additionalIssuedSources",[]):
-  capture={"label":source["label"],"requested_url":source["url"],"startedAt":datetime.now(timezone.utc).isoformat(),"members":[]}
-  out["additionalSources"].append(capture)
-  try:
-   request=urllib.request.Request(source["url"],headers={"User-Agent":"TJLabs-original-bank-source-receiving/1.0"})
-   with urllib.request.urlopen(request,timeout=45)as response:
-    data=response.read(source["archiveLimitBytes"]+1)
-    if len(data)>source["archiveLimitBytes"]:raise ValueError("Original issued source archive exceeds configured receiving capacity")
-    capture.update({"status":response.status,"final_url":response.geturl(),"content_type":response.headers.get("Content-Type"),"bytes":len(data),"sha256":sha(data),"completedAt":datetime.now(timezone.utc).isoformat()})
-   (root/"issued-zips"/(source["label"]+".zip")).write_bytes(data)
-   total=0
-   with zipfile.ZipFile(io.BytesIO(data))as zf:
-    for member_index,member in enumerate(zf.infolist()):
-     if member.is_dir():continue
-     if member.file_size>source["memberLimitBytes"]:raise ValueError("Original member exceeds configured source size")
-     total+=member.file_size
-     if total>source["totalMemberLimitBytes"]:raise ValueError("Original archive members exceed configured source size")
-     original=zf.read(member);record={"member":member.filename,"bytes":len(original),"sha256":sha(original)};capture["members"].append(record)
-     try:tree=ET.fromstring(original)
-     except ET.ParseError:
-      record["selection"]="NON_XML_SOURCE_MEMBER";continue
-     namespace=tree.tag[1:].split("}")[0]if tree.tag.startswith("{")else""
-     record["namespace"]=namespace
-     if namespace not in ("urn:iso:std:iso:20022:tech:xsd:camt.053.001.02","urn:iso:std:iso:20022:tech:xsd:camt.053.001.08"):
-      record["selection"]="OTHER_ISSUED_MESSAGE";continue
-     record["selection"]="CAMT053_SOURCE"
-     label=source["label"]+"-"+str(member_index);path="originals/"+label+".xml";(root/path).write_bytes(original)
-     inputs.append({"name":pathlib.PurePosixPath(member.filename).name,"label":label,"local":path,"sourceKind":"BUNDESBANK_BANK_ISSUED_EXAMPLE","accountNamespace":"BUNDESBANK-ISSUED-EXAMPLES","originalMember":member.filename,"bytes":len(original),"sha256":sha(original),"expected":expected(original),"source":capture["requested_url"]})
-  except Exception as error:capture["error"]={"type":type(error).__name__,"message":str(error)}
+ delivery=cfg["bundesbankOriginals"]
+ assert delivery["schema"]=="stellar-forge.bank-issued-originals.v1"and len(delivery["archives"])==2 and len(delivery["files"])==22
+ retained_members={};out["bundesbankOriginals"]={"archives":[],"files":[]}
+ for archive in delivery["archives"]:
+  data=base64.b64decode(archive["dataBase64"],validate=True)
+  assert len(data)==archive["bytes"]and sha(data)==archive["sha256"],archive["name"]
+  name=pathlib.PurePosixPath(archive["name"])
+  assert len(name.parts)==1 and name.name not in(".","..")
+  (root/"issued-zips"/name.name).write_bytes(data)
+  metadata={key:archive[key]for key in("name","bytes","sha256","url")}
+  metadata["members"]=archive["members"];out["bundesbankOriginals"]["archives"].append(metadata)
+  with zipfile.ZipFile(io.BytesIO(data))as zf:
+   actual=zf.infolist();expected_members={item["name"]:item for item in archive["members"]}
+   assert len(actual)==len(expected_members)and set(item.filename for item in actual)==set(expected_members),"Original complete member inventory"
+   for member in actual:
+    original=zf.read(member);identity=expected_members[member.filename]
+    assert len(original)==identity["bytes"]and sha(original)==identity["sha256"]and member.CRC==identity["crc32"],member.filename
+    if not member.is_dir():retained_members[(archive["name"],member.filename)]=original
+ for index,item in enumerate(delivery["files"]):
+  data=base64.b64decode(item["dataBase64"],validate=True)
+  assert len(data)==item["bytes"]and sha(data)==item["sha256"],item["name"]
+  assert data==retained_members[(item["archive"],item["archiveMember"])],"Retain the exact original ZIP member"
+  label="bundesbank-"+str(index+1);path="originals/"+label+".xml";(root/path).write_bytes(data)
+  retained={key:item[key]for key in("name","archive","archiveMember","bytes","sha256","format","included","mapping","note")}
+  retained["local"]=path;out["bundesbankOriginals"]["files"].append(retained)
+  if not item["included"]:continue
+  mapping=item["mapping"];profile={"namespaceMode":mapping["camtNamespaceMode"],"messageVersion":mapping["camtMessageVersion"],"referencePolicy":mapping["camtReferencePolicy"],"detailPolicy":mapping["camtDetailPolicy"]}
+  inputs.append({"name":item["name"],"label":label,"local":path,"sourceKind":"BUNDESBANK_BANK_ISSUED_EXAMPLE","accountNamespace":mapping["accountNamespace"],
+   "camt":profile,"originalMember":item["archiveMember"],"bytes":len(data),"sha256":sha(data),"expected":original_expected(data,profile),
+   "provenance":{"archive":item["archive"],"member":item["archiveMember"],"sourcePage":delivery["sourcePage"]}})
+ assert len(retained_members)==22 and sum(item["included"]for item in delivery["files"])==2
+ (root/"BUNDESBANK_ORIGINALS.json").write_text(json.dumps(out["bundesbankOriginals"],ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
  for item in inputs:
   original_sha=sha((root/item["local"]).read_bytes())
   if original_sha in cfg.get("expectedOriginalRejections",{}):item["expectedRejection"]=cfg["expectedOriginalRejections"][original_sha]
@@ -233,7 +238,7 @@ finally:
   with path.open("rb")as stream:
    for block in iter(lambda:stream.read(1024*1024),b""):digest.update(block)
   return {"path":str(path),"bytes":path.stat().st_size,"sha256":digest.hexdigest()}
- short={"schema":out["schema"],"operation":out["operation"],"root":str(root),"exitCode":out.get("exitCode"),"error":out.get("error"),"stderr":out.get("stderr"),"runtime":out.get("result",{}).get("runtime"),"files":[{k:v for k,v in item.items()if k!="statements"}for item in out.get("result",{}).get("files",[])],"archive":file_identity(archive_path),"sourceFiles":files,"additionalSources":out.get("additionalSources",[]),"application":out.get("application")}
+ short={"schema":out["schema"],"operation":out["operation"],"root":str(root),"exitCode":out.get("exitCode"),"error":out.get("error"),"stderr":out.get("stderr"),"runtime":out.get("result",{}).get("runtime"),"files":[{k:v for k,v in item.items()if k!="statements"}for item in out.get("result",{}).get("files",[])],"archive":file_identity(archive_path),"sourceFiles":files,"bundesbankOriginals":out.get("bundesbankOriginals"),"application":out.get("application")}
  summary_path=artifact_directory/(root.name+"-result.json")
  summary_path.write_text(json.dumps(short,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
  uploads=[];reservations=cfg.get("uploads",[])
