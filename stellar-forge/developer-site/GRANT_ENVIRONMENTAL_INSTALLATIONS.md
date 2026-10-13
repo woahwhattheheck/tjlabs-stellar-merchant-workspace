@@ -47,7 +47,7 @@ Measure the useful outcome in its original operating case: selected population/p
 
 ## Receive this contribution through the existing application
 
-`stellar-forge/developer-site/grant-products/environmental-installations.json` declares ten exact original files: four profiles, operating guide, both launchers and three private operator-package selections. Each identity retains its complete bytes, SHA-256, Git blob and selected commit.
+`stellar-forge/developer-site/grant-products/environmental-installations.json` originally declared ten exact files: four profiles, an operating guide, both launchers and three private operator-package selections. Two original commercial-phase evidence files then brought that selection to twelve. The current complete declaration retains those twelve and adds twenty-eight installed Measurements sources, for forty current entries. Each identity retains its complete bytes, SHA-256, Git blob and selected commit.
 
 The maintained receiver reads the existing **## Environmental data installations** chapter in the current canonical manuscript. That chapter selects the original immutable links. The original public projection preserves authenticated-source identity while handling private reader URLs. Do not replace the full manuscript or its shared source index with an isolated environmental edition.
 
@@ -77,3 +77,47 @@ The existing publisher owns the four complete reviewer outputs, source package, 
 The four profiles, full guide and both launcher integrations are merged at `6d18ad532aef87aad8982da1ff3c3426655ae014`. The complete private environmental operator package is merged at `11614dc6f978bdc3b9a31b03280b44c93b096f09`; it retains all original inputs and preparation dependencies. Native preparation of the newly selected cohort and its existing Installation receiving remain with their original owners. Commercial-case receiving, scientific job completion and actual customer acceptance remain distinct observations.
 
 This source contribution starts no new grant case, native product, purchase or customer contact. The whole existing customer programme remains the execution and receiving authority.
+
+
+## Measurements installed source and the same grant chapter
+
+The following Measurements edition belongs to the existing **Environmental data installations** chapter. It supplies the complete monitoring source, observed study, independent review and receiving workflow; it does not replace the original Laboratory/WQX/KiWIS engines or the five existing commercial plans. Select the original **measurement-workspace** Installation profile and the complete source selection in the public software repository. Private source inputs, scientific workspaces, token values and transport custody stay outside the repository.
+
+### Operate the complete selected installation
+
+Use the existing Runtime source build/install flow and its saved Applications provider to review, save and start the configured original scientific workspace. Open the actual native browser. Guided intake retains original source text, explicit mappings, previews, rejected rows and saved editions. Perform the chosen source reconciliation, observed benchmark or source-supported flow/load study. Save the exact scientific choices and retain all complete reports and exports.
+
+The configured Merchant client receives host-declared input aliases and an exact connection receipt. Inspect the complete native operation, pin its digest, retain its original transport UUID, and execute it through the same scientific owner. Download and inspect the full response. Recover an interrupted call from original custody; never substitute another process or recipient for an uncertain original request. A connection's instance identity changes on restart. Whole-workspace receiving can change the native intake UUID; retain its successful response and use the original Applications Stop/Review/Start course before configuring subsequent calls.
+
+Receive the appropriate complete native project, collection, source handback, benchmark or large-file edition in a separate recipient workspace. Keep companion originals as well as database state. Reopen all selected sources and histories, make an attributed independent edit, export the full successor, and open its real reports and editable project. Compare a returned review against the exact sent and current author state, retaining later local work and every original proposal.
+
+### Receive this whole author pair
+
+Use the complete `GRANT_ENVIRONMENTAL_EVIDENCE_CHAPTER.md` and `grant-products/environmental-installations.json` from this same author commit. They preserve the full original environmental chapter and all twelve preceding source records. The current declaration adds twenty-eight optional measured sources for the whole installed Measurements interface and principal original scientific/receiving boundaries. Its manifest binds every original scientific file. Each current source has an exact linked commit/path/byte/SHA/Git identity; an older environmental chapter still selects its original twelve sources.
+
+The existing cumulative publisher receives the **whole** chapter at its existing H2 and this matching declaration through the unchanged product source registry and grant composer. Do not replace the current full manuscript, reviewer answers, source index, budget, saved-v7 case or four-role package with this isolated author edition. Keep current concurrent authors and the original acceptance/source lineage. The canonical Canvas may have a provider size limit; the complete maintained author file remains the full source, and any Canvas link or source selection is handled by that same publisher.
+
+The original grant remains USD 38,000, 400 prospective hours, 150 days and six packages. Two customer installations are selected through their actual agreements and source/receiving requirements. Measurements is reusable pre-award implementation; its development is not added retrospectively to funded hours, and its local operation is not a claim of a new paid Stellar service.
+
+### Evidence and original owners
+
+Source registration, exact file readback, scientific peer review and controlled original-function composition establish only their stated source scope. Actual native startup, source intake, reports, customer receiving and producing-peer visual inspection require the exact final installed edition on its actual equipped host. Continue the existing Measurements operation and the existing E496 cumulative grant publisher; no second scientific controller, payment process, grant compiler or receiving job is created by this guide.
+
+The complete immutable product operator and receiving sources are selected in the chapter's source table. Those sources carry the concrete native commands, client configuration, matching receiving formats and original-request recovery.
+
+## Standing rendered-product and attachment instruction
+
+Source: Bryce's standing instruction, revision `rendered-product-inspection-20261013-all-attachments-v1`; original Commons source blob `e692a3f2af3189bd2f7724e3013e646f7431bbd8`.
+
+Before calling any client/prospect-facing app, website, dashboard, demo, report, presentation or export ready, the producing peer must actually open, run or render the exact outgoing version, LOOK at the actual screen or real screenshots, and operate the important controls. Check screenshare and relevant narrow/mobile widths; populated, empty, loading and error states; downloads, exports and reopening. Capturing screenshots without viewing them is insufficient. Repair ugly, broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized product. Code review, DOM counts, HTTP 200, tests and peer approval cannot replace seeing the product.
+
+ALL ATTACHMENTS count. Literally open, view, play and use every final HTML, PDF, report, slide deck, spreadsheet, map, image, video, audio, archive and project as a recipient. Extract archives and open the contained deliverables and working project. Tests, checklists and captured-but-unseen screenshots are no substitute. Use available high-quality generative media and natural voice generation/TTS for videos rather than robotic default voices. Watch and listen to the final export for pronunciation, pacing, timing and audio alignment.
+
+Keep building and fixing; inspection is not performance theatre. Use plain industrial design: readable tables and hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve the real workflows, data and computation. Reviews lead directly to repairs and do not replace implementation or integration, become a separate verification product, or turn into endless rechecking. Use focused validation, not broad suites. Empty scientific Workspace images are not completed-product acceptance.
+
+Persist the complete rule into every active owned instruction surface actually consumed: global/project AGENTS, CLAUDE, GEMINI/rules, provider boot, Commons/source/cloud mirrors and current build/receiving guides. Every child assignment carries the complete rule, including all attachments and final media. Return exact paths, versions and readback; a Slack acknowledgment alone is insufficient. Preserve owner controls, historical evidence and third-party/vendor policies. Do not force restarts, add watchers or revive owner-stopped work. Continue the original scientific, run, browser, receiving, source, native, runtime and archive owners. The Ecosystem October 13 10 a.m. EDT/14:00 UTC cutoff belongs to that project; it does not expire this standing rule or other projects' schedules. The canonical machine policy files retain their original Root owner. Portable publication does not claim that another host has been updated.
+
+Source engineering and integration may be complete while actual native and rendered readiness remain unclaimed. Continue through the existing authorized operating owner and actual available equipment; this instruction does not create a new controller or permission gate.
+
+
+Current complete installed product source: [Measurements operator](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/fa4fb0b30105387f24fbe072019314cd7d156857/products/measurement-workspace/OPERATOR.md) and [independent receiving](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/fa4fb0b30105387f24fbe072019314cd7d156857/products/measurement-workspace/RECEIVING.md).
