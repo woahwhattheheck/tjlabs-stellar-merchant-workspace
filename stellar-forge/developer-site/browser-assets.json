@@ -1149,6 +1149,104 @@
         "woo.html",
         "text/html; charset=utf-8"
       ]
+    ],
+    [
+      "/products/source-tables/reporting/workbench.html",
+      [
+        "../../../products/source-tables/reporting/workbench.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/products/source-tables/reporting/workbench.css",
+      [
+        "../../../products/source-tables/reporting/workbench.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/products/source-tables/reporting/workbench.mjs",
+      [
+        "../../../products/source-tables/reporting/workbench.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/products/source-tables/reporting/workbench-model.mjs",
+      [
+        "../../../products/source-tables/reporting/workbench-model.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/products/source-tables/reporting/programme.mjs",
+      [
+        "../../../products/source-tables/reporting/programme.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/products/source-tables/reporting/desk-receive.mjs",
+      [
+        "../../../products/source-tables/reporting/desk-receive.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/products/source-tables/reporting/WORKBENCH.md",
+      [
+        "../../../products/source-tables/reporting/WORKBENCH.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/products/source-tables/reporting/REPORTING_PROGRAMMES.md",
+      [
+        "../../../products/source-tables/reporting/REPORTING_PROGRAMMES.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar-forge/developer-site/dist/source-table-workspace.mjs",
+      [
+        "source-table-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar-forge/developer-site/dist/onboarding.mjs",
+      [
+        "onboarding.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar-forge/developer-site/dist/source-table-corrections.mjs",
+      [
+        "source-table-corrections.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar-forge/developer-site/dist/source-table-intake.mjs",
+      [
+        "source-table-intake.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar-forge/developer-site/dist/source-document-tables.mjs",
+      [
+        "source-document-tables.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar-forge/developer-site/dist/source-delimited.mjs",
+      [
+        "source-delimited.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

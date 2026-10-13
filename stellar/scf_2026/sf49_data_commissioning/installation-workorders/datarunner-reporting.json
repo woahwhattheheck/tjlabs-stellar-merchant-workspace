@@ -92,7 +92,7 @@
     },
     {
       "path": "products/source-tables/reporting/programme-cli.mjs",
-      "blob": "aeb7a02646dcdab42b3c2a1933155ee9fe4baf25"
+      "blob": "17a60a6e55df6cf8f0a5dc4dab7b4a8af6d64168"
     },
     {
       "path": "products/source-tables/reporting/programme.d.mts",
@@ -100,7 +100,7 @@
     },
     {
       "path": "products/source-tables/reporting/REPORTING_PROGRAMMES.md",
-      "blob": "fa8534c0e9cfec9d1e9b3a7cf3db4a0c1a579e08"
+      "blob": "5813eeeeb86cf8f4ae9c2352b85b18b0e52262e3"
     },
     {
       "path": "products/source-tables/reporting/examples/create-programme.example.json",
@@ -108,7 +108,7 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/contributions/reporting-programmes.json",
-      "blob": "6fc939d7807789568dd673f325239ac5cdc82c28"
+      "blob": "19116691928be023fe31df475d0d3fc4bcf1e064"
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/selections/reporting-programmes.json",
@@ -116,7 +116,7 @@
     },
     {
       "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/DATARUNNER_REPORTING.md",
-      "blob": "1fd1104a9f4650553d0b8ae0583cd4c823a1fd8a"
+      "blob": "50c7c47bce6a12a1c3f8f12c765f59573e47e8f7"
     },
     {
       "path": "products/source-tables/reporting/desk-receive.mjs",
@@ -125,6 +125,38 @@
     {
       "path": "products/source-tables/reporting/desk-receive.d.mts",
       "blob": "cc83aa4c4119408d04d12b3ef32125bb3f5603a1"
+    },
+    {
+      "path": "products/source-tables/reporting/workbench-server.mjs",
+      "blob": "43404366074982ba6702fa6552c9d63e64b2596b"
+    },
+    {
+      "path": "products/source-tables/reporting/workbench-application.mjs",
+      "blob": "a60fb11738f6dcd75f6ee89d4cc7564f76bc3f8a"
+    },
+    {
+      "path": "stellar-forge/developer-site/browser-assets.json",
+      "blob": "1d454a603cbbf21a63a8a91ec0232c970a9eb665"
+    },
+    {
+      "path": "products/source-tables/reporting/workbench.html",
+      "blob": "bd22470ce6af69e10b4daa316b1ce12064cdb8f8"
+    },
+    {
+      "path": "products/source-tables/reporting/workbench.mjs",
+      "blob": "56858a18796ddb30082ba6e6808da74c6cf240e7"
+    },
+    {
+      "path": "products/source-tables/reporting/workbench.css",
+      "blob": "b8d1541fbef5738e27e2aaa802fd2064f367266c"
+    },
+    {
+      "path": "products/source-tables/reporting/workbench-model.mjs",
+      "blob": "613b28df8305085b6bad8c45269413aa1f1e2154"
+    },
+    {
+      "path": "products/source-tables/reporting/WORKBENCH.md",
+      "blob": "37597739dd54b35010c92e8e0977e2cdb1581bb1"
     }
   ]
 }
