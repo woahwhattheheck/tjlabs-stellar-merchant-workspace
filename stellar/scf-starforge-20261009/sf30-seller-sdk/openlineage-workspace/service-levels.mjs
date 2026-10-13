@@ -255,6 +255,12 @@ function normalizeActionArgs(action, args) {
   if (!allowed) fail("Unknown service-level action", 404);
   for (const key of Object.keys(args)) if (!allowed.includes(key)) fail("Unknown service-level argument " + key);
 }
+// One original policy revision constructor is shared by single-policy and reviewed batch saves.
+export function servicePolicyRevision(prior, policy, reason, operationId, workspaceId, { at = new Date().toISOString(), newId } = {}) {
+  const id = prior?.id ?? newId ?? digest([workspaceId, "service-level-policy", operationId]);
+  return { ...policy, id, version: (prior?.version ?? 0) + 1, reason, createdAt: prior?.createdAt ?? at, updatedAt: at,
+    history: prior ? [...prior.history, clone({ ...prior, history: undefined })].map(item => JSON.parse(JSON.stringify(item))) : [] };
+}
 export async function serviceLevelAction(workspace, action, args = {}) {
   if (!record(args)) fail("Service-level action arguments must be an object");
   normalizeActionArgs(action, args);
@@ -271,10 +277,8 @@ export async function serviceLevelAction(workspace, action, args = {}) {
       const service = state.serviceLevels ??= emptyState();
       const prior = policy.id ? service.policies.find(item => item.id === policy.id) : null;
       if (policy.id && !prior) fail("Unknown service-level policy", 404);
-      const at = new Date().toISOString(), id = prior?.id ?? digest([state.workspaceId, "service-level-policy", operationId]);
-      const saved = { ...policy, id, version: (prior?.version ?? 0) + 1, reason, createdAt: prior?.createdAt ?? at, updatedAt: at,
-        history: prior ? [...prior.history, clone({ ...prior, history: undefined })].map(item => JSON.parse(JSON.stringify(item))) : [] };
-      if (prior) service.policies[service.policies.findIndex(item => item.id === id)] = saved;
+      const saved = servicePolicyRevision(prior, policy, reason, operationId, state.workspaceId);
+      if (prior) service.policies[service.policies.findIndex(item => item.id === saved.id)] = saved;
       else service.policies.push(saved);
       return { policy: saved };
     });

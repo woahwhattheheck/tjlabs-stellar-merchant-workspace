@@ -30,6 +30,7 @@ const HELP = [
   "  scf-lineage native-java runtime-verify --input PACKAGE",
   "  scf-lineage native-java runtime-receive --input PACKAGE --runtime NEW_DIR",
   "  scf-lineage service-levels status|policy|evaluate|record|incident|report ...",
+  "  scf-lineage policy-rollout status|preview|prepare|request|apply|resume|show|report ...",
   "  scf-lineage import --workspace DIR --input EVENTS [--name NAME] [--source URL] --operation-id ID [--revision N] [--content-encoding identity|gzip]",
   "  scf-lineage status --workspace DIR [--edition ID]",
   "  scf-lineage action ACTION --workspace DIR --input ARGUMENTS.json",
@@ -80,6 +81,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === "native-java") {
     print(await (await import("./JAVA_PRODUCER.mjs")).javaProducerCommand(args)); return 0;
   }
+  if (command === "policy-rollout") return (await import("./service-policy-rollout-cli.mjs")).policyRolloutMain(args);
   if (command === "service-levels") return (await import("./service-levels-cli.mjs")).serviceLevelMain(args);
   const { result: options, positional } = parse(args);
   if (command === "producer") {
