@@ -131,3 +131,37 @@ export function inspectCohortOriginalCosts(document:CohortDeliveryInput|CohortDe
 /** Returns the full editable successor; compareCohortDelivery reports any remaining source/quantity/date constraint. */
 export function selectCohortOriginalCosts(document:CohortDeliveryInput|CohortDeliveryComparison,selection:CohortOriginalCostReceive):CohortDeliveryInput;
 export function receiveCohortOriginalCosts(document:CohortDeliveryInput|CohortDeliveryComparison,selection:CohortOriginalCostReceive):CohortDeliveryComparison;
+
+/** Full original actual-cost basis applied only to explicitly selected future schedules. */
+export const COHORT_RECORDED_COST_PLAN_SCHEMA:'stellar-forge.sf47-cohort-recorded-cost-plan.v1';
+export interface CohortRecordedCostAllocation {
+  id:string;targetScheduleId:string;sourceServiceId:string;
+  outputQuantity:string;outputUnit:string;outputSource:string;
+  supplierCoverage:'PARTIAL'|'COMPLETE';laborCoverage:'PARTIAL'|'COMPLETE';coverageNote:string;
+  costs:Array<{costId:string;share:string}>;
+}
+export interface CohortRecordedCostChoices {name:string;note:string;allocations:CohortRecordedCostAllocation[];}
+export interface CohortRecordedCostPlan {
+  schema:typeof COHORT_RECORDED_COST_PLAN_SCHEMA;
+  sourceDocument:CohortDeliveryComparison;
+  planDocument:import('./cohort_planning.mjs').CohortPlanDocument;
+  choices:CohortRecordedCostChoices;
+  candidate:import('./cohort_planning.mjs').CohortPlan;
+  report:import('./cohort_planning.mjs').CohortPlanReport;
+  comparison:import('./cohort_planning.mjs').CohortPlanComparison;
+  derivations:Array<{
+    id:string;targetScheduleId:string;sourceServiceId:string;outputQuantity:string;outputUnit:string;outputSource:string;
+    sourceService:Record<string,unknown>;originalEconomics:Record<string,unknown>|null;
+    derivedEconomics:{unitCost:string|null;activeHoursPerTask:string|null;hourlyCost:string|null};
+    supplierCoverage:'PARTIAL'|'COMPLETE';laborCoverage:'PARTIAL'|'COMPLETE';coverageNote:string;
+    knownSupplierCost:string;knownLaborCost:string;knownActiveHours:string;
+    supplierComplete:boolean;laborComplete:boolean;hoursComplete:boolean;
+    contributions:Array<{costId:string;costType:string;share:string;amount:string|null;activeHours:string|null;originalCost:Record<string,unknown>}>;
+    rounding:string;
+  }>;
+  costBalances:Array<{costId:string;costType:string;serviceId:string;selectedShare:string;unselectedShare:string}>;
+}
+export function seedCohortRecordedCostPlan(recordedDocument:CohortDeliveryInput|CohortDeliveryComparison,planDocument:import('./cohort_planning.mjs').CohortPlanDocument):CohortRecordedCostChoices;
+export function planCohortFromRecordedCosts(recordedDocument:CohortDeliveryInput|CohortDeliveryComparison,planDocument:import('./cohort_planning.mjs').CohortPlanDocument,choices:CohortRecordedCostChoices):CohortRecordedCostPlan;
+export function reopenCohortRecordedCostPlan(document:CohortRecordedCostPlan):CohortRecordedCostPlan;
+export function exportCohortRecordedCostPlanCsv(document:CohortRecordedCostPlan):string;

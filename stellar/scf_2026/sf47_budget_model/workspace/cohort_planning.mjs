@@ -1232,6 +1232,7 @@ const COMPARISON_WORKSHARE_FIELDS = ["fee", "hours", "otherCosts", "laborCost", 
 
 function comparisonPlan(document, label) {
   object(document, label);
+  if (document.schema === "stellar-forge.sf47-cohort-recorded-cost-plan.v1") return document.candidate;
   if (document.schema === COHORT_PLAN_SCHEMA) return document;
   if (document.schema === COHORT_PLAN_REPORT_SCHEMA && document.kind === "PLAN") return document.input;
   if (document.schema === "stellar-forge.sf47-delivery-schedule-report.v1") return document.candidate;

@@ -685,7 +685,7 @@ export declare function exportCohortPlanCsv(report: CohortPlanReport): string;
 
 
 export declare const COHORT_PLAN_COMPARISON_SCHEMA: "stellar-forge.sf47-cohort-plan-comparison.v1";
-export type CohortPlanDocument = CohortPlan | CohortPlanReport | import('./cohort_planning_scheduling.mjs').CohortDeliverySchedule | {
+export type CohortPlanDocument = import('./cohort_delivery_comparison.mjs').CohortRecordedCostPlan | CohortPlan | CohortPlanReport | import('./cohort_planning_scheduling.mjs').CohortDeliverySchedule | {
   schema: "stellar-forge.sf47-cohort-plan-edition.v1";
   plan: CohortPlan;
   [originalField: string]: unknown;
