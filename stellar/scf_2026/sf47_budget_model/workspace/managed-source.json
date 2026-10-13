@@ -620,6 +620,8 @@
     "operations_installation_mapping_reconciliation.py",
     "operations_installation_mapping_cli.py",
     "operations_installation_mapping_reconciliation.mjs",
-    "INSTALLATION_MAPPING_RECONCILIATION.md"
+    "INSTALLATION_MAPPING_RECONCILIATION.md",
+    "operations_statement_review_worklist.mjs",
+    "STATEMENT_REVIEW_WORKLIST.md"
   ]
 }
