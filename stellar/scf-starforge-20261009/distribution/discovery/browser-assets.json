@@ -134,6 +134,27 @@
         "../../../../../stellar-forge/developer-site/dist/onboarding.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/iati/document_evidence/operating_procedure.mjs",
+      [
+        "../../../sf30-seller-sdk/iati/document_evidence/operating_procedure.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/distribution/discovery/operating-plan.mjs",
+      [
+        "../operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/distribution/discovery/catalog.mjs",
+      [
+        "../catalog.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
