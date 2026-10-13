@@ -1,0 +1,59 @@
+{
+  "name": "Five-county Philadelphia regional employment and wages",
+  "title": "Greater Philadelphia employment and wage production example",
+  "focus": "greater_philadelphia",
+  "regions": [
+    {
+      "id": "greater_philadelphia",
+      "label": "Philadelphia, Bucks, Chester, Delaware and Montgomery counties",
+      "areas": [
+        "42101",
+        "42017",
+        "42029",
+        "42045",
+        "42091"
+      ]
+    },
+    {
+      "id": "pennsylvania",
+      "label": "Pennsylvania",
+      "areas": [
+        "42000"
+      ]
+    },
+    {
+      "id": "united_states",
+      "label": "United States",
+      "areas": [
+        "US000"
+      ]
+    }
+  ],
+  "employment": "quarter_mean",
+  "wageMethod": "from_totals",
+  "coverage": "complete",
+  "baseline": {
+    "year": 2025,
+    "quarter": "same_quarter"
+  },
+  "history": {
+    "startYear": 2025,
+    "tableYears": [
+      2025
+    ],
+    "chartIndustries": "highest_current_wage"
+  },
+  "price": {
+    "dollars": "nominal",
+    "seriesId": "CPIAUCSL",
+    "quarterly": "quarter_end",
+    "base": {
+      "policy": "report_period"
+    }
+  },
+  "publisher": {
+    "name": "Report production team",
+    "methodologyOwner": "Report operator"
+  },
+  "operatorNotes": "Five-county Philadelphia production example using the original BLS county, Pennsylvania and United States QCEW observations. The same-quarter reports retain exact original industry employment and wage totals, complete source disclosure states and nominal dollars. Edit this complete profile to match the report operator's selected geography and publication conventions."
+}
