@@ -11,6 +11,7 @@
 <button type="button" data-page="releases">Releases</button>
 <button type="button" data-page="processes">Processes</button>
 <button type="button" data-page="tasks">Human tasks</button>
+<button type="button" data-page="task-forms">Task forms</button>
 <button type="button" data-page="migrations">Migrations</button>
 <button type="button" data-page="decisions">Decisions</button>
 <button type="button" data-page="cases">Cases</button>
@@ -65,6 +66,33 @@
 <button type="submit">Prepare task action</button></form>
 <div class="panel"><h2>Saved task actions</h2><div id="task-records"></div></div>
 <div class="panel"><h2>Task history</h2><div id="historic-tasks-table"></div></div></section>
+
+<section data-panel="task-forms" hidden>
+  <div class="section-heading"><div><h1>Native task forms</h1><p>Capture the original task form, retain complete typed edits, then prepare and separately dispatch its native submission.</p></div></div>
+  <form id="task-native-capture-form" class="panel">
+    <h2>Capture an original form</h2><p>The selected engine supplies legacy form properties and current values. Modern form keys remain original metadata.</p>
+    <label>Native task ID<input name="taskId" autocomplete="off"></label><label>Capture label<input name="label"></label><label>Capture note<textarea name="note" rows="2"></textarea></label>
+    <div class="toolbar"><button id="task-native-capture-submit" type="submit">Capture native task form</button><button id="task-native-capture-another" type="button" hidden>Keep original and capture another</button></div><p id="task-native-capture-request"></p>
+  </form>
+  <div class="panel">
+    <h2>Complete unfinished work</h2><p>Each browser window writes its own copy. Working files retain all captured form sources, property choices and original preparation requests.</p>
+    <div class="toolbar"><button type="button" id="task-native-working-download">Download complete working file</button><label>Open working file<input id="task-native-working-file" type="file" accept=".json,application/json"></label></div>
+    <div class="toolbar"><select id="task-native-copy-select" aria-label="Earlier task-form browser copy"><option value="">Choose an earlier browser copy</option></select><button type="button" id="task-native-copies-refresh">Read saved copies</button><button type="button" id="task-native-copy-open">Open selected copy</button></div><p id="task-native-working-status" role="status"></p>
+  </div>
+  <h2>Saved form captures</h2><label>Find a captured form<input type="search" id="task-native-search"></label><div id="task-native-captures"></div>
+  <h2 id="task-native-editing-label">Open a saved native form capture to author its submission.</h2>
+  <div id="task-native-editor" hidden>
+    <form id="task-native-submit-form">
+      <div class="panel"><label>Submission label<input name="label"></label><label>Operator note<textarea name="note" rows="3"></textarea></label></div>
+      <div id="task-native-fields"></div><div id="task-native-warnings" role="status"></div>
+      <div class="toolbar"><button type="submit" id="task-native-prepare">Prepare native form submission</button><button type="button" id="task-native-another" hidden>Keep original and author another review</button></div><p id="task-native-preparation"></p>
+    </form>
+    <div id="task-native-outcome"></div><details><summary>Complete original task, form and native sources</summary><div id="task-native-original"></div></details>
+  </div>
+  <h2>Original submission requests</h2><div id="task-native-submissions"></div>
+  <h2>Prepared submissions and native results</h2><div id="taskFormOperation-records"></div>
+</section>
+
 <section data-panel="migrations" hidden><h1>Process migration</h1><p class="lede">Move a running process to a target definition using Flowable's original migration document and native validation.</p>
 <form id="migration-form" class="panel"><h2>Validate migration</h2><div class="form-grid">
 <label>Native process instance ID<input name="processInstanceId" maxlength="2000" required></label>

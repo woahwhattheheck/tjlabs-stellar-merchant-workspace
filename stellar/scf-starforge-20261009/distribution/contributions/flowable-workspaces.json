@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "flowable-workspaces",
-  "description": "Complete native Flowable BPMN, CMMN and DMN releases, process and case work, decisions, native jobs and recovery, history and customer handover",
+  "description": "Complete native Flowable BPMN, CMMN and DMN releases, process and case work, decisions, native task forms, jobs and recovery, history and customer handover",
   "commands": {
     "flowable-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/cli.mjs",
     "flowable-process-programme": "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/compile-process-programme.mjs",
@@ -75,7 +75,9 @@
     "./seller/flowable/customer-installation-following": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation-following.mjs",
     "./seller/flowable/customer-installation-following-core": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation-following-core.mjs",
     "./seller/flowable/job-native": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/job-native.mjs",
-    "./seller/flowable/job-native-journey": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/job-native-journey.mjs"
+    "./seller/flowable/job-native-journey": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/job-native-journey.mjs",
+    "./seller/flowable/task-form-native": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/task-form-native.mjs",
+    "./seller/flowable/task-form-native-journey": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/task-form-native-journey.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/README.md",
@@ -167,7 +169,15 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/examples/job-recovery-demo.bpmn20.xml",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/JOB_NATIVE_RECEIVING.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/JOB_NATIVE_CONTRACT.md",
-    "products/flowable-merchant/JOBS.md"
+    "products/flowable-merchant/JOBS.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/TASK_FORM_NATIVE_CONTRACT.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/task-form-browser.mjs",
+    "products/flowable-merchant/TASK_FORMS.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/task-form-native-host.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/task-form-native-journey.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/task-form-native-browser.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/examples/task-forms-demo.bpmn20.xml",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/TASK_FORM_NATIVE_RECEIVING.md"
   ],
   "browserAssets": [
     {
