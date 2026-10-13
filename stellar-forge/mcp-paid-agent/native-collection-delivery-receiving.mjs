@@ -128,7 +128,7 @@ export async function receiveNativeCustomerDelivery({directory,collections,sourc
    expectedSha256:state.original.package.sha256,filename:state.original.package.filename};
   if(!state.steps.uploadInterrupted){
    try{await uploadNativeCustomerPackage({...uploadOptions,onProgress:async progress=>{
-    if(progress.offset>0){state.steps.uploadInterrupted=true;await save();throw Object.assign(new Error('Original recipient offset retained'),{code:'MCP_DELIVERY_RECEIVING_UPLOAD_HELD'});}
+    if(progress.offset>0){state.uploadProgress=progress;state.steps.uploadInterrupted=true;await save();throw Object.assign(new Error('Original recipient offset retained'),{code:'MCP_DELIVERY_RECEIVING_UPLOAD_HELD'});}
    }});}catch(error){if(error.code!=='MCP_DELIVERY_RECEIVING_UPLOAD_HELD')throw error;}
    need(state.steps.uploadInterrupted,'MCP_DELIVERY_RECEIVING_NO_UPLOAD_PREFIX');
   }
@@ -176,7 +176,8 @@ export async function receiveNativeCustomerDelivery({directory,collections,sourc
   state.steps.originalOwnersClosedReadback=true;await save();
   await retainedJson('receiving-evidence.json',{schema:SCHEMA+'.evidence',operationId:state.operationId,originalIntents:intentIds,
    source:{sha256:source.sha256,files:source.files.length,bytes:source.bytes},package:state.original.package,
-   downloadManifestSha256:state.downloadManifest.manifestSha256,memberCount:inventory.total,steps:state.steps});
+   downloadManifestSha256:state.downloadManifest.manifestSha256,memberCount:inventory.total,
+   ...(state.uploadProgress?{retainedUploadProgress:state.uploadProgress}:{}),steps:state.steps});
  }catch(error){failed=error;}
  finally{
   while(owners().length){
