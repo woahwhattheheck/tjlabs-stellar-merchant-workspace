@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "grist-authoring",
-  "description": "Complete Grist source authoring, explicit typed public projections, original publisher/SF82 and shared browser/MCP/Applications lifetime. Complete editable .grwh handover preserves original operating-plan origin with explicit receiving-host placement.",
+  "description": "Complete Grist source authoring, explicit typed public projections, original publisher/SF82 and shared browser/MCP/Applications lifetime. Complete editable .grwh handover preserves original operating-plan origin with explicit receiving-host placement. Source-bound returned customer projection review preserves common draft ancestry and applies only the explicitly reviewed source draft.",
   "commands": {
     "grist-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/cli.mjs",
     "grist-receive": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/receiving.mjs"
@@ -16,7 +16,8 @@
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/operating-plan.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/operating-plan.mjs"
     },
-    "./seller/grist/workspace/handover": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/handover.mjs"
+    "./seller/grist/workspace/handover": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/handover.mjs",
+    "./seller/grist/workspace/returns": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/returns.mjs"
   },
   "applicationProviders": {
     "grist-authoring": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/application-provider.mjs"
@@ -25,6 +26,6 @@
     "grist-workspaces": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/merchant-provider.mjs"
   },
   "commandDescriptions": {
-    "grist-workspace": "Author original Grist document/table captures and reviewed source versions, publish through the existing workspace, and prepare editable customer operating plans with saved observations and complete returned-plan review. Prepare full editable workspace handovers, independently receive/reopen named children and continue original operating plans with unchanged saved settings identity."
+    "grist-workspace": "Author original Grist document/table captures and reviewed source versions, publish through the existing workspace, and prepare editable customer operating plans with saved observations and complete returned-plan review. Prepare full editable workspace handovers, independently receive/reopen named children and continue original operating plans with unchanged saved settings identity. Freeze a received customer's projection, review concurrent author/returned field and order choices, apply the saved draft and run original all-row validation/publication."
   }
 }

@@ -188,6 +188,7 @@ The complete workspace receiving feature does not replace this original return e
 | Document observation export | Original account-visible catalog/metadata bodies and source identity; it is not a row capture. |
 | Original capture/source packet | Complete retained typed capture, field projection and safe original version metadata. Import uses the product’s existing source-packet semantics. |
 | Saved source-version packet | Operator recovery for one exact reviewed source edition. |
+| Frozen source-projection return JSON | Complete saved incoming draft/source identity/ancestry, review decisions and applied result at the selected immutable review revision. Full captured bytes stay in .grwh. |
 | Complete procedure/plan JSON | Editable procedure, saved revisions and its native source/return history. |
 | Complete browser working editor | Original-workspace recovery for unsaved procedure edits, incoming files, decisions and pending requests; import requires the exact directory and origin. Save desired edits natively before a differently placed child receives them. |
 | **.grwh complete workspace file** | The selected saved native workspace, owned source/capture/preview/version bytes, original authoring/Operating Plans history, publisher/dataset state and SF82 packages/releases/history. |
@@ -269,27 +270,149 @@ The CLI receives beneath the selected parent. Stop that owner before separately 
 
 A repeated same-UUID/same-input receive resolves its original saved receipt. It must leave an already progressed child intact. To make another independent branch, use an explicit new name and request. Receiving does not silently reset a child because its current draft, procedure or release has advanced after its original import.
 
-## 11. Continue independently and return the right work
+## 11. Continue independently and reconcile returned source work
 
-Once received, the customer can use the same original source/Operating Plans/publisher interfaces on its independent workspace. Begin with the actual retained source rather than an automatic provider read.
+Once received, the customer can use the same original source, Operating Plans and publisher interfaces on the independently owned workspace. Begin with its retained capture and saved history. Choose the real change requested in the customer review, preserve its original source binding, save it and prepare the complete progressed workspace for return.
 
-A practical first continuation is:
+A useful continuation is:
 
-1. Open an actual saved source version and inspect its complete capture identity.
-2. Save a small real customer field-note/alias change within the retained field union, using the current draft revision.
-3. Validate every row and, if appropriate, save a new locally reviewed source version.
-4. Open an actual retained procedure, edit the intended staff instructions/result, and save its next guarded revision.
-5. Confirm the parent’s corresponding saved source/procedure history remains unchanged.
-6. Close and reopen the child through its original owner.
-7. Prepare a new complete file from that progressed child if the next recipient needs its complete saved workspace.
+1. Open the actual saved source and identify its document, table, capture, field/type union and reviewed output.
+2. Save the customer's requested source title, public alias, permitted encoding or null/empty decision using the current draft revision. Keep the selected native source and field identities.
+3. Run complete-row validation. Save a locally reviewed source version when the customer intends to retain that edition; publishing it remains a separate existing operation.
+4. Save any independently requested procedure changes through the existing Operating Plans interface.
+5. Confirm that the author's saved source and procedure history remain unchanged while the received customer workspace progresses independently.
+6. Close and reopen the customer workspace through its original owner, then export that workspace's complete .grwh with its current saved work and history.
 
-Use a real requested edit, not a disposable edit to an agreed production release. Public publication, release activation and source refresh remain separately chosen existing operations.
+Use a requested customer change. The receiving copy remains useful independent work, and its next complete export comes from that copy's own browser or configured child workspace alias.
 
-If the customer returns only procedural work for one of the agreed review rounds, use complete procedure/plan export and the original reviewed-return engine. If the customer returns a whole .grwh file, receive it as a separately named workspace and inspect its source and history. This enhancement adds no automatic cross-workspace field projection merge or automatic parent publication.
+### Choose the correct returned work
+
+| Customer return | Author's receiving and review course |
+| --- | --- |
+| Source projection edits on the original capture | Receive the progressed .grwh as a separately named workspace, freeze its saved draft into the source-projection return review, resolve differences against the actual common draft and current author draft, then apply the reviewed draft. |
+| Procedure or staff-instruction edits | Use the original complete OperatingPlan export and its existing procedure return review. Its authors, IDs, source bindings and review logic stay in that course. |
+| Both source and procedure edits | Retain the complete received workspace, then perform each existing review against its own saved object and source identity. A source-projection decision does not accept a procedural change. |
+| New provider capture, changed table/filter/order or changed native field/type union | Review the actual new source through the original capture/source-version course. A projection correction on an earlier capture does not authorize a new source observation. |
+| Unsaved browser procedure backup | Recover it in its original directory/origin through the existing editor controls. Save desired native changes before handing on a differently placed workspace. |
+
+The two customer table outputs remain separately reviewed workspaces. Receive and reconcile Table A against its original author workspace and Table B against its own. Matching display titles or numeric revision numbers do not establish a common original source.
+
+### Prepare the author and the incoming workspace
+
+Retain the customer-returned .grwh and its complete SHA256. Receive it through **Workspace handover** under a distinct name in the original author's received-workspaces directory. Inspect the resulting named workspace and confirm that it contains the intended customer's saved draft and source history. A same-request retry reuses the original receiving receipt and preserves an already progressed child.
+
+Open the original author workspace and inspect its current saved draft. Save an intended pending source-editor change before capturing or applying a return; otherwise explicitly reload the saved draft after preserving whatever work is still needed. This workflow compares saved native objects. An unsaved editor is not silently promoted into either side of the review.
+
+Retain the current AUTHOR draft revision and the actual received workspace name. Capture the return once with a new request UUID, then use that same UUID and exact input to recover any uncertain result. The captured return is a frozen intake. Later edits to the received workspace are a later customer return, not an invisible mutation of an already opened comparison.
+
+The original CAPTURE or IMPORT may itself have adopted the first saved draft. When its retained adoption says draftSaved, that complete original draft record participates in the ancestry without an extra no-op save. Native DRAFT and VERSION records and a previously applied incoming branch retain their actual original identity. Local and customer revision counters can advance independently; the reviewer follows the exact saved source and draft identities.
+
+### Read the complete projection comparison
+
+Open the saved source-projection return and refresh its comparison against the current original author draft. Inspect the base, local and returned identities, all reported source issues, changed fields and column/query ordering. Read every page of changes before deciding that a return is complete.
+
+The full comparison distinguishes independent changes that can be carried automatically from conflicting decisions that require a local, returned or base choice. A field deleted on one branch and edited on the other needs its actual comparison; it is not equivalent to choosing an empty string. Public alias changes and field reordering can affect an existing API/CSV consumer even when the row values remain the same.
+
+Check the actual chosen result against the consumer's purpose:
+
+| Review item | Required Grist meaning |
+| --- | --- |
+| Original source | Preserve the actual capture, site, document, table, native filter/order, and captured field/type union. A new source choice requires its own source review. |
+| Native record identity | Preserve $recordId and its identity-text meaning when selected. Do not replace it with a row ordinal or a display label. |
+| Public alias | Choose the consumer-facing name deliberately while retaining the original native source field. Review duplicate aliases and any downstream request/CSV mapping. |
+| Int and Numeric | Preserve exact number tokens. The ordinary string projection uses number-text; selecting a different supported scalar conversion requires complete-row validation. |
+| Date and DateTime | Preserve the selected native type, including its actual timezone metadata. The ordinary string projection uses epoch-seconds-text. A display formatting preference does not silently become a different captured instant. |
+| Ref | Preserve the original reference-ID meaning, including zero where the native value uses it. Reference-name lookup is a separate source/contract decision. |
+| Any, ChoiceList, RefList and Attachments | Preserve the original typed representation through supported typed-json output. An attachment identifier is not a retrieved attachment file. |
+| Bool and ordinary text | Use the declared native type and a supported scalar projection. Keep actual empty strings, false and missing/null distinctions. |
+| Nullable and empty policy | Review the customer's allowed null values and the exact treatment of empty text. Do not infer missing data from a convenient display value. |
+| Query and column order | Review the real ordered keys and resulting client column order. A set of unchanged names does not prove that an ordered consumer contract stayed unchanged. |
+
+The original sourceConfig path compiles the chosen projection and binds it to the retained capture. Supported encoding/type combinations and source selection are enforced there. Keep a source incompatibility visible and resolve the source decision in its proper course rather than editing saved source IDs, raw settings or manifest hashes.
+
+### Save decisions, refresh and apply
+
+Save one complete choices map for the displayed saved comparison, using the exact review revision and preview SHA256. Each key is a JSON pointer returned by that actual comparison; each value is local, returned or base. Review the whole map across all pages. Omitting an existing explicit choice removes that explicit choice from the newly saved review.
+
+A partial review is useful saved work. Keep its note and remaining conflicts, and continue from that same saved review. The browser's local working-copy download preserves the editable decision envelope. The CLI receives the plain choices map from that envelope's choices property, not the whole envelope.
+
+After saving decisions, refresh the comparison and use its new review revision and preview hash. If another window saved the author's draft, the old comparison is stale. Preserve any local choices, inspect the current comparison and decide whether to reload the saved choices or explicitly carry applicable local choices forward. Carrying choices prepares another review; it does not silently accept the changed author draft.
+
+Apply the complete reviewed source draft with the exact current review revision and preview hash, under a retained request UUID. The native transaction appends the author draft revision and the saved applied-return result together. An uncertain reply is recovered under the same request and accepted result.
+
+Applying the return changes the author's editable draft. Continue through its normal complete-row preview, examine the actual validation and rejected-value information, then save the intended source version and select the customer output through the existing publisher and release course. A previously selected publication remains that selected edition until the operator deliberately changes it.
+
+If a saved OperatingPlan procedure is bound to a previous source version, inspect and update that procedural binding through its original interface when the reviewed source edition warrants it. The projection return does not rewrite raw settings, INIT, the procedure origin or the original OperatingPlan return records.
+
+### Exact source-projection return controls and API
+
+Use the current **Returned review** tab for saved source-projection work. **Capture returned draft** freezes the selected named receiving workspace; **Open returned review** opens the saved intake. **Refresh comparison**, **Previous changes** and **Next changes** expose the complete paged comparison. **Save review decisions** retains the current full map and note. **Apply reviewed draft** uses the refreshed saved review. **Download frozen review** pins the displayed saved revision; **Download local choices** preserves an editable working envelope.
+
+When a local decision editor is stale, **Use saved review** deliberately replaces it with the saved decisions. **Carry local choices to current comparison** reads the whole current comparison, preserves the older full map in local history and carries only applicable choices for another explicit review. Neither control accepts the returned source on its own.
+
+The native model exposes these exact methods:
+
+| Method | Complete intended use |
+| --- | --- |
+| captureReturnedReview({name, expectedDraftRevision, requestId}) | Freeze the saved draft/source/history from an existing named received child against the current AUTHOR draft revision. The new return identity is the retained request UUID. |
+| returnedReviews() | List retained source-projection returns in this original workspace. |
+| returnedReview(id) | Read a saved return and its current top-level choices and note. |
+| previewReturnedReview({reviewId, offset, limit}) | Read the comparison with exact base/local/returned identities, current review revision/status, previewSha256, rows, total, nextOffset and canApply. Limit is 1–100; continue until nextOffset is null. |
+| saveReturnedReview({reviewId, expectedReviewRevision, previewSha256, choices, note, requestId}) | Save the complete JSON-pointer choice map and note against the exact displayed comparison. Replaces the prior choices map in full. |
+| applyReturnedReview({reviewId, expectedReviewRevision, previewSha256, requestId}) | Atomically append the reviewed author draft and retained applied result using the exact saved comparison and original UUID. |
+| exportReturnedReview({reviewId, revision}) | Export complete immutable frozen-review bytes at the selected saved revision. |
+
+Native workspace ancestry also binds the original raw settings.data SHA256 and original creation identity. Independent receiving preserves those logical originals while runtime placement records the receiving host. Do not modify raw settings or INIT to manufacture an origin match, and do not infer a common base from matching names or revision counters.
+
+The configured customer-agent interface uses merchant_grist_return_capture, merchant_grist_returns, merchant_grist_return, merchant_grist_return_preview, merchant_grist_return_review, merchant_grist_return_apply and merchant_grist_return_read. Keep the existing configured workspace alias and actual method schemas. Reading the frozen return requires its explicit saved revision and the existing retained chunk/read identity; release that retained read with the existing merchant_grist_packet_release operation and its original readId when complete.
+
+### Complete CLI course
+
+Use the existing Grist workspace CLI from the same installed source selection:
+
+```text
+node stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/cli.mjs COMMAND [OPTIONS]
+```
+
+In the commands below, AUTHOR_DIR, RECEIVED_NAME, REVIEW_ID, revision numbers, hashes and UUIDs are the actual values returned by this original customer workspace. They are labels for those retained values, not new source IDs. Use a private absolute path for each file and choose a write request UUID once.
+
+```text
+return-capture --directory AUTHOR_DIR --name RECEIVED_NAME --expected-revision AUTHOR_DRAFT_REVISION --request CAPTURE_UUID
+
+returns --directory AUTHOR_DIR
+
+return --directory AUTHOR_DIR --review REVIEW_ID
+
+return-preview --directory AUTHOR_DIR --review REVIEW_ID --offset 0 --limit 100
+
+return-review --directory AUTHOR_DIR --review REVIEW_ID --expected-review-revision REVIEW_REVISION --preview-sha256 PREVIEW_SHA256 --choices /private/grist/choices.json --note "The actual consolidated source decision" --request REVIEW_UUID
+
+return-preview --directory AUTHOR_DIR --review REVIEW_ID --offset 0 --limit 100
+
+return-apply --directory AUTHOR_DIR --review REVIEW_ID --expected-review-revision REFRESHED_REVIEW_REVISION --preview-sha256 REFRESHED_PREVIEW_SHA256 --request APPLY_UUID
+
+return-export --directory AUTHOR_DIR --review REVIEW_ID --revision SAVED_REVIEW_REVISION --out /private/grist/frozen-return.json
+```
+
+After every preview page, follow its actual nextOffset until the complete changed set has been inspected. A choices file is the complete plain JSON object mapping the actual returned JSON pointers to local, returned or base. Copy the actual paths from the comparison. The browser download is a richer envelope; extract its choices object for --choices.
+
+The second preview after saving is deliberate: saving review decisions advances the review and its digest. Apply uses that refreshed revision and digest. Subsequent normal source preview/version/publication commands use the newly applied AUTHOR draft revision.
+
+Keep each complete command and its original UUID in the existing customer operation record. On a lost reply, inspect the original request before retrying it. The browser's retained source-request recovery and the existing operation/resume CLI continue that same UUID and input. A failed receipt read leaves the outcome uncertain; it is not a reason to create another write.
+
+A definite stale-draft/review/preview conflict requires the current saved comparison and a deliberate next review. Preserve local choices and the earlier request history while refreshing. A completed original operation returns its accepted result without reapplying against later author changes.
+
+### A later customer return and complete handover
+
+Keep the first customer's frozen intake and applied result. A later return from that customer's progressed branch can use the previously applied incoming ancestry where the actual retained identities establish it. Begin a new capture for the new saved customer draft while preserving both earlier review rounds. A numeric revision greater than another branch's revision is not a merge rule.
+
+Download the frozen source review at its exact displayed saved revision. It retains the incoming draft, original source identity and ancestry, saved choices and the applied result available at that revision. Use the complete .grwh to carry the actual captured source bytes, full workspace history, saved return records and related operator work. A small review JSON is the focused review record; the private workspace remains the complete editable delivery.
+
+Retain the original returned archive, receiving name and receipt, frozen review export, actual applied author draft revision, subsequent complete-row validation, selected source/publication edition and the customer operating procedure. These artifacts explain what the customer returned, what the author accepted and which output the consumer should use.
 
 ### Original merchant staging after receiving
 
-An existing private deployment package may refer to the source workspace’s original dataset location. The maintained receiving/placement path preserves those original package bytes and stages the original dataset through the native local installation binding. It does not alter a release’s retained source hash to match an arbitrary new path.
+An existing private deployment package may refer to the source workspace's original dataset location. The maintained receiving/placement path preserves those original package bytes and stages the original dataset through the native local installation binding. It does not alter a release's retained source hash to match an arbitrary new path.
 
 Use the existing reviewed package and original stage/resume request. Inspect the actual installed local dataset and release receipt before later activation. Keep the original current-console/generation/release guards. A completed stage remains the same native operation; a new release or changed customer terms is a new deliberate choice.
 
@@ -330,7 +453,7 @@ Open the first consumer-facing output and use the intended request. Record concr
 
 ### Review round 2: operation, correction and receiving
 
-Receive the full saved workspace, open the current output and its original history, complete the agreed corrections, and reopen the independent child. Use the original procedure return review when staff have edited the customer procedure independently.
+Receive the full saved workspace, open the current output and its original history, and freeze the actual customer's returned source draft. Review independent and conflicting changes against the common original and current author work, save the complete decisions and apply the reviewed draft. Complete-row validation and deliberate version/publication follow. Reopen the progressed independent child. Use the separately maintained procedure return review when staff have edited the customer procedure independently.
 
 Confirm the exact source/publication/release version delivered to the consumer, actual refresh/recovery responsibilities and the retained private archive. Corrections should update their original draft/procedure/request; they should not spawn a second competing customer workspace or sender.
 
@@ -346,7 +469,7 @@ Use the customer’s real selected tables and the current complete receiving res
 | 10–25 minutes | Inspect native field/encoding/null decisions and all-row validation; staff explain the actual numeric/date/reference choices. |
 | 25–40 minutes | Reopen the saved publication and customer export, use the agreed consumer, and identify the difference between source refresh and a new public edition. |
 | 40–60 minutes | Create/download or reopen the complete .grwh, receive the reviewed named child, inspect its actual source and saved Operating Plans, and open its current URL. |
-| 60–75 minutes | Save/reopen one real independent procedure correction or source draft adjustment; use the existing returned-plan review where relevant. |
+| 60–75 minutes | Reconcile one real returned source projection through its saved comparison/decisions/apply and locate the following complete-row validation. For a procedure-only correction, use the existing OperatingPlan return review. |
 | 75–90 minutes | Reconcile an actual retained receipt/recovery example, locate all full source/customer/private handovers, assign support ownership and confirm next scheduled operating work. |
 
 If Table B is in scope, prepare its separate complete file and consumer/output selection before this session so staff can identify both. The handover is not extended by pretending two independent workspaces are one implicit joined source.
@@ -365,12 +488,13 @@ Give the customer the complete files necessary for its agreed role, with simple 
 | Field decision sheet | Native IDs/types, exact output rules, source visibility and public subset. |
 | Saved data output and consumer handover | Exact publication/release selection and original generated client/configuration files. |
 | Editable private workspace file | Each selected .grwh, complete receipt/hash, new child name and verified receiving/reopen result. |
+| Consolidated returned source correction | Original returned .grwh/receiving receipt, immutable frozen review revision, complete decisions, applied author draft, subsequent full-row validation and selected delivered source edition. |
 | Staff procedure | Complete saved procedure/plan JSON, useful readable version, existing return history and attached original files. |
 | Original-workspace recovery, when retained | Complete procedure working editor backup with its exact original directory/origin and pending requests; saved native edits are the portable child handover. |
 | Native operating result | Actual complete receiving result, original operation/logs, viewed desktop/narrow screens and reopened downloads. |
 | Support handover | Named owner/contact, 14-day in-scope defect window and agreed refresh/recovery responsibilities. |
 
-Acceptance should show useful behaviour: the agreed consumer reads the selected output; the original complete source and field decisions can be located; the saved version reopens without provider access; the independent received workspace remains editable; a progressed child reopens without resetting its history; and staff can use the actual procedure and recover its original request.
+Acceptance should show useful behaviour: the agreed consumer reads the selected output; the original complete source and field decisions can be located; the saved version reopens without provider access; the independent received workspace remains editable; a progressed child reopens without resetting its history; staff can reconcile an actual independently returned source draft while preserving concurrent author decisions, locate the selected resulting output, and use the actual procedure and its original request recovery.
 
 Use the existing native course to resolve a concrete remaining risk. Do not add repetitive test suites that mirror the same implementation or replace useful operator work. Record the actual environment result separately from source review. A final viewed attachment is a delivery artifact, not a substitute for a working editable product.
 
@@ -406,7 +530,7 @@ The commercial authority is the original Grist case and sixteen-file proposal, n
 
 At this guide’s authoring boundary, source/customer terms and the original implementation have been read. The original public-source acquisition has not returned a completed capture to this programme. Use its actual returned source and native result as they arrive, preserving that operation and the existing 14F5 owner.
 
-The original customer relationship remains in its existing case. This source enhancement sends no follow-up or duplicate first contact. Favorable human correspondence belongs to Bryce’s relationship continuation.
+The original customer relationship remains in its existing case. This source enhancement sends no follow-up or duplicate first contact. Favorable human correspondence belongs to Bryce’s relationship continuation. Every outgoing message to a warm lead requires Bryce's individual green for that message, as recorded in his original war-room instruction1791900781.679609; internal customer preparation and engineering continue.
 
 ## Rendered product inspection — owner instruction, 2026-10-13
 

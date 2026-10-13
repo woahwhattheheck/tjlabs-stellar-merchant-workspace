@@ -432,3 +432,35 @@ The original 14F5 receiving operation must run this exact final source with its 
 Grist document/table acquisition, publisher/buyer and desktop/narrow browser course.
 Source review and emulated control-flow execution do not establish a completed native
 or rendered result.
+
+## Returned customer source-projection review
+
+A customer can edit the independently received .grwh workspace and return its complete saved project. Receive that progressed branch under a new private name in the author's original workspace, then freeze its actual saved source draft for review. Source-projection returns cover the title, query/column aliases and order, Grist output type/encoding, missing/null/empty policies and the other original draft fields. They use the exact original frozen capture, document/table/native filter/order and selected native field/type union. They do not change provider data or convert a different capture into shared history.
+
+This course is separate from OperatingPlan procedure returns. Original settings.data bytes and INIT.json remain unchanged, and existing procedure origins, requests, editor recovery and returned-plan behavior stay with their existing owner. The source-return workspace identity includes the digest of the original raw settings, not its receiving-host path projection. Save source-editor work before freezing or applying a review; unsaved browser changes are not automatically merged.
+
+The source engine records the first adopted CAPTURE or IMPORT draft, full completed DRAFT/version records and previously applied incoming ancestry. It compares exact ordered record identities, not matching revision numbers. Independently saved branches can share the same numeric revision and still have different content. Source or ancestry mismatch remains a visible issue; no reviewed apply is possible until the original relationship is established.
+
+### One original native course
+
+The existing model exposes these methods. Use one original UUID per mutation, retain its full input, and recover its result through operation(requestId) or resume(requestId).
+
+| Method | Input and result |
+| --- | --- |
+| captureReturnedReview | {name, expectedDraftRevision, requestId}; the revision is the current AUTHOR draft. Freezes the named received child's saved draft, source identity and complete retained ancestry. |
+| returnedReviews | Lists saved return summaries. |
+| returnedReview | Takes reviewId and returns the current saved summary with its complete choices map and note. |
+| previewReturnedReview | {reviewId, offset:0, limit:100}; pages every changed field and order decision, with exact base/local/returned values, source identities, current review revision, previewSha256 and canApply. limit is 1–100; follow nextOffset to null. |
+| saveReturnedReview | {reviewId, expectedReviewRevision, previewSha256, choices, note, requestId}; replaces the FULL choices map. A choice is local, returned or base. Omitted prior choices are removed. |
+| applyReturnedReview | {reviewId, expectedReviewRevision, previewSha256, requestId}; atomically saves the explicitly reviewed working draft, review result and original operation receipt. |
+| exportReturnedReview | {reviewId, revision}; returns one complete immutable saved review revision and its history as JSON bytes. Pin revision when downloading. |
+
+First preview all changes. Disjoint edits merge automatically; actual conflicts require an explicit local, returned or base choice. Query and column order have their own review rows. Save the complete map and note, then fetch a fresh preview: the saved review has a new revision and digest. Applying requires that exact current reviewed result. A concurrent author edit, different return revision or stale preview is rejected before accepting a new request; preserve unknown original requests until their receipt is reconciled.
+
+Applying changes only the saved source draft. It does not select a source version, publish a dataset, start a publisher, activate a release, refresh the provider or dispatch a payment. Run the existing complete-row preview, resolve native value issues, review and save the source version, then intentionally use the original publisher/buyer/SF82 course. Date and timezone, Ref and typed-list encodings, exact numeric tokens, native record identities and missing/null distinctions remain governed by the original Grist compiler and capture binder.
+
+The authenticated browser routes are GET /api/returns, /api/return?id=..., /api/return/preview?id=...&offset=...&limit=..., and /api/return/export?id=...&revision=.... Mutations are POST /api/return/capture, /api/return/review and /api/return/apply. Existing /api/operation and /api/resume retain original UUID recovery. The browser and CLI instructions are in [HANDOVER.md](HANDOVER.md), with the full original customer course in [COMMISSIONING.md](../../../../products/grist/COMMISSIONING.md).
+
+The customer-agent tools are merchant_grist_return_capture, merchant_grist_returns, merchant_grist_return, merchant_grist_return_preview, merchant_grist_return_review, merchant_grist_return_apply and merchant_grist_return_read. The final read requires an explicit saved revision and uses the existing retained chunk/hash/offset protocol and merchant_grist_packet_release. Keep the actual configured parent or received child workspace alias; these tools operate on the same installed model.
+
+A frozen review JSON retains the complete incoming saved draft, original source identity, ancestry, explicit choices and applied result. Original captured response bytes travel in the full private .grwh. Whole-project export includes the saved return tables and operation journal, so a subsequent independent reopen preserves the first review and supports the next actual customer review round. Public client data remains separate from this private authoring handover.
