@@ -302,6 +302,41 @@
         "application-input-set-archive-format.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/managed-configuration.mjs",
+      [
+        "managed-configuration.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/managed-configuration-drafts.mjs",
+      [
+        "managed-configuration-drafts.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/managed-configuration.css",
+      [
+        "managed-configuration.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/output-search.mjs",
+      [
+        "output-search.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/output-search.css",
+      [
+        "output-search.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

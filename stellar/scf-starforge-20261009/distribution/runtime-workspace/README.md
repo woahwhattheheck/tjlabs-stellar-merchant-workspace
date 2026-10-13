@@ -435,3 +435,11 @@ and recovery workflow.
 ## Search and reopen complete operation history
 
 The **Operations** desk now filters and pages retained work while preserving its original recovery controls. Open a selected operation for its full result, download the complete record, or continue through its existing workflow. Ordinary activity polling carries compact descriptors; views requiring historical result bodies retain them. See [Original operation history](OPERATION_HISTORY.md) for the browser journey, native/API paging, current observation semantics and the existing receiving continuation.
+
+## Edit and restore retained configuration
+
+In **Managed releases → Configuration**, edit the original managed file with a draft for that exact home and path. Saving retains complete before/after bytes and the original operation identity. Reopen an edition, compare it with the current file, or explicitly restore its contents through the same native writer. Switching files preserves unfinished edits and pending requests. [Managed configuration](MANAGED_CONFIGURATION.md) includes complete history export, CLI commands, interruption recovery and the original installed browser/backup course.
+
+## Search the complete selected output
+
+The existing Applications, Launch groups and Runtime output readers can search every occurrence of a literal in the complete selected original output. The fixed end stays stable while a worker appends later bytes. Resume an interrupted search, move between result pages, jump to the original byte context, or download every match as streamed JSONL. [Complete output search](OUTPUT_SEARCH.md) describes source-bound cursors, UTF-8 context, source changes, API/CLI use and installed receiving.
