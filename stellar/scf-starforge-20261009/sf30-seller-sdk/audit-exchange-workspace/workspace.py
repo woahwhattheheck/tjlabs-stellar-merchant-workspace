@@ -25,6 +25,11 @@ READ_ACTIONS = {"workspace.get", "source.get", "edition.get", "source.compare", 
                 "return.preview", "return.plan"}
 WRITE_ACTIONS = {"source.import", "source.replace", "source.patch", "source.validate", "edition.save",
                  "review.save", "link.save", "projection.save", "analysis.run", "analysis.resume", "export.create", "workspace.receive", "return.apply"}
+from recipient_operator import SPECIAL_ACTIONS as RECIPIENT_ACTIONS, WRITE_ACTIONS as RECIPIENT_WRITES
+import recipient_queue
+import review_transition
+READ_ACTIONS |= recipient_queue.READ_ACTIONS | review_transition.READ_ACTIONS
+WRITE_ACTIONS |= RECIPIENT_WRITES | recipient_queue.WRITE_ACTIONS | review_transition.WRITE_ACTIONS
 APPLICATION_ID = 1096107080
 
 def identifier(prefix):
@@ -178,6 +183,9 @@ class Workspace:
         action = text(envelope.get("action"), "action", blank=False)
         inputs = envelope.get("inputs", {})
         require(isinstance(inputs, dict), "invalid_input", "Action inputs must be an object")
+        if action in RECIPIENT_ACTIONS:
+            from recipient_operator import perform as recipient_perform
+            return recipient_perform(self, envelope)
         require(action in READ_ACTIONS | WRITE_ACTIONS, "unknown_action", "The native action is unknown")
         with self.connect() as db:
             if action in READ_ACTIONS:
@@ -219,6 +227,10 @@ class Workspace:
         return {"ok": True, "result": result, "state": state}
 
     def _read(self, db, action, inputs):
+        if action in review_transition.READ_ACTIONS:
+            return review_transition.read(self, db, action, inputs)
+        if action in recipient_queue.READ_ACTIONS:
+            return recipient_queue.read(self, db, action, inputs)
         if action == "return.preview":
             return preview_corrections(self, db, inputs)
         if action == "return.plan":
@@ -298,6 +310,13 @@ class Workspace:
         return record
 
     def _write(self, db, action, inputs):
+        if action in review_transition.WRITE_ACTIONS:
+            return review_transition.write(self, db, action, inputs)
+        if action in recipient_queue.WRITE_ACTIONS:
+            return recipient_queue.write(self, db, action, inputs)
+        if action in RECIPIENT_WRITES:
+            from recipient_operator import native_write as recipient_write
+            return recipient_write(self, db, action, inputs)
         if action == "return.apply":
             return self._apply_return(db, inputs)
         if action == "source.import":

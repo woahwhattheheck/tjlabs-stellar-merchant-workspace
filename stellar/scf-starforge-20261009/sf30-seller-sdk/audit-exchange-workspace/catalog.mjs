@@ -1507,6 +1507,544 @@ export const tools = [
       "destructiveHint": false,
       "openWorldHint": false
     }
+  },
+  {
+    "action": "recipient.prepare",
+    "name": "audit_recipient_prepare",
+    "description": "Build the complete offline recipient editor from this author's exact retained workspace/application export.",
+    "mutation": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actor": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "exportId": {
+          "type": "string"
+        },
+        "expectedSha256": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "requestId",
+        "expectedVersion",
+        "actor",
+        "note",
+        "exportId",
+        "expectedSha256"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "idempotentHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "action": "recipient.stage",
+    "name": "audit_recipient_stage",
+    "description": "Retain a complete returned recipient ZIP and verify its original author export, whole manuscript and history before preview.",
+    "mutation": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actor": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "contentBase64": {
+          "type": "string"
+        },
+        "expectedSha256": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "requestId",
+        "expectedVersion",
+        "actor",
+        "note",
+        "name",
+        "contentBase64",
+        "expectedSha256"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "idempotentHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "action": "recipient.preview",
+    "name": "audit_recipient_preview",
+    "description": "Plan every authored review against this original workspace, recovering only exact accepted native requests.",
+    "mutation": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "returnId": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "returnId",
+        "operator"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "action": "recipient.apply",
+    "name": "audit_recipient_apply",
+    "description": "Apply the entire saved original preview through native review requests and retain the complete acceptance custody ZIP. Recover the same outer envelope after an unknown outcome.",
+    "mutation": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actor": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "returnId": {
+          "type": "string"
+        },
+        "previewSha256": {
+          "type": "string"
+        },
+        "preview": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "requestId",
+        "expectedVersion",
+        "actor",
+        "note",
+        "returnId",
+        "previewSha256",
+        "preview"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "idempotentHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "action": "recipient.queue.get",
+    "name": "audit_recipient_queue_get",
+    "description": "Read a complete saved recipient queue and all preceding editions.",
+    "mutation": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "exportId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "exportId"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "action": "recipient.queue.inspect",
+    "name": "audit_recipient_queue_inspect",
+    "description": "Inspect exact original accepted review requests and custody for a retained return.",
+    "mutation": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "returnId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "returnId"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "action": "recipient.queue.save",
+    "name": "audit_recipient_queue_save",
+    "description": "Save one complete ordered queue edition under the original author request and version; earlier selections remain retained.",
+    "mutation": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actor": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "queueId": {
+          "type": "string"
+        },
+        "expectedQueueSha256": {},
+        "title": {
+          "type": "string"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "returnId": {
+                "type": "string"
+              },
+              "returnSha256": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "disposition": {
+                "type": "string",
+                "enum": [
+                  "review",
+                  "deferred"
+                ]
+              },
+              "previewSha256": {}
+            },
+            "required": [
+              "returnId",
+              "returnSha256",
+              "note",
+              "disposition",
+              "previewSha256"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "selectedReturnSha256": {}
+      },
+      "required": [
+        "requestId",
+        "expectedVersion",
+        "actor",
+        "note",
+        "queueId",
+        "expectedQueueSha256",
+        "title",
+        "entries",
+        "selectedReturnSha256"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "idempotentHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "action": "recipient.queue.export",
+    "name": "audit_recipient_queue_export",
+    "description": "Export the complete selected queue history, every original return from every edition and original acceptance custody.",
+    "mutation": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actor": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "exportId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "requestId",
+        "expectedVersion",
+        "actor",
+        "note",
+        "exportId"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "idempotentHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "action": "review.transition.preview",
+    "name": "audit_review_transition_preview",
+    "description": "Inspect exact earlier reviews against the current original XML, all affected scalar/reference changes and complete validation.",
+    "mutation": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sourceId": {
+          "type": "string"
+        },
+        "toRevisionId": {
+          "type": "string"
+        },
+        "reviewIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "sourceId",
+        "toRevisionId",
+        "reviewIds"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "action": "review.transition.history",
+    "name": "audit_review_transition_history",
+    "description": "List complete retained revision-review archives, including received original history.",
+    "mutation": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "action": "review.transition.apply",
+    "name": "audit_review_transition_apply",
+    "description": "Apply one explicit decision per reviewed finding through the original native review transaction and retain complete original XML/before-after archive.",
+    "mutation": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actor": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "sourceId": {
+          "type": "string"
+        },
+        "toRevisionId": {
+          "type": "string"
+        },
+        "reviewIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "previewSha256": {
+          "type": "string"
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "reviewId": {
+                "type": "string"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "retain",
+                  "update"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "review": {
+                "type": "object",
+                "properties": {
+                  "entityKey": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "open",
+                      "investigating",
+                      "resolved",
+                      "accepted"
+                    ]
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "assignee": {
+                    "type": "string"
+                  },
+                  "dueDate": {
+                    "type": "string"
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string"
+                        },
+                        "url": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "label",
+                        "url"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "entityKey",
+                  "status",
+                  "title",
+                  "note",
+                  "assignee",
+                  "dueDate",
+                  "evidence"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "reviewId",
+              "mode",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "requestId",
+        "expectedVersion",
+        "actor",
+        "note",
+        "sourceId",
+        "toRevisionId",
+        "reviewIds",
+        "previewSha256",
+        "decisions"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "idempotentHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
   }
 ];
 

@@ -217,3 +217,29 @@ The course preserves the original nine business stages, then performs the full c
 The existing `AUDIT_BROWSER_EXECUTABLE` and `AUDIT_BROWSER_MODULE` select the actual equipped browser. `AUDIT_PDF_RENDERER` defaults to `pdftoppm`; `AUDIT_RSCRIPT` selects the original R launcher. The Node driver's `--return` and `--render` modes are internal continuations under the inherited original controller, not separate customer commands.
 
 Open the actual `OPEN.html` indexes and every intended outgoing attachment, inspect their rendered content and operate the complete downloads/reopen controls. The saved capture status remains `captured-awaiting-producer-view` until the producing worker has directly viewed the selected images/files and repaired concrete defects. A completed capture programme is the input to that human or model inspection. Keep the resulting observations with the original Installation's acceptance phases and the exact delivered files.
+
+
+## Commission complete recipient work, queues and changed-source review
+
+The installed Audit source now includes all 82 application members. Keep the original customer Installation, Workshare price/phases and named engineering/receiving owners. Select the following review work only where it serves that original agreed task. The complete source and four specific operating guides travel through the same maintained Runtime selection and application export.
+
+| Customer step | Complete operation and accepted result |
+| --- | --- |
+| Prepare a recipient's original source | In the installed author, select its complete retained workspace/application export and prepare the complete recipient editor. Deliver the whole ZIP and original source with its HTML/assets. |
+| Review offline and return | The recipient inspects actual source/revision/entity records, retains unfinished proposals, saves complete manuscript editions and returns the unchanged original project plus all manuscript editions. |
+| Accept through the original author | Retain the complete returned ZIP, inspect every proposal and original acceptance record, then deliberately apply the current preview. Keep original review UUIDs, accepted prefixes and complete custody when recovering interruptions. |
+| Coordinate several returns | Save an ordered queue with whole-queue/per-return notes, Review/Defer choices and original return hashes. Work each selected return through its existing preview/apply flow. Queue order is staff selection; acceptance remains a separate native outcome. |
+| Reassess after a source correction | Select actual earlier findings and current XML. Read both complete native records, scalar/reference changes and validation. Explicitly retain the earlier finding or author a complete current review with reason, entity scope, status, owner, date and evidence. |
+| Deliver the whole decision history | Download/open the queue and revision decision archives, their complete source/custody bodies, then export the full editable application. Independently receive and reopen original revisions, reviewed records, analytical outputs and every retained archive. |
+
+The complete profiles remain in [offline recipient review](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_REVIEW.md), [installed recipient acceptance](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_INSTALLED.md), [ordered queues](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_QUEUE.md), and [revision review](../../../scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_REVISION_REVIEW.md). The maintained [product guide](../../../../products/audit-exchange/OPERATING.md) joins these to actual build/install and Applications use.
+
+The browser retains unfinished queue/revision fields and separate competing-tab work. Carry the complete working copy before changing origin. A stale preview needs an explicit new review; do not silently move earlier decisions onto changed native material. For an unavailable mutation response, recover the full original UUID/envelope. Resolve a definitive refusal through the existing original-request controls before deliberately preparing another request.
+
+The recipient manuscript does not alter XML or establish physical inspection. Current engineering conclusions, source mapping, review acceptance and any added service allowance remain with their named original decision owners. Received queue history retains its original author and remains historical source. A full application handover preserves it together with the editable local project.
+
+Use the existing original receiving owner. The offline, installed, queue and revision programmes run in their actual dependency order against the same original author. Preserve earlier source generations, request bodies, case identifiers and complete predecessor archives. The installed runtime integration uses the maintained source selection and existing Applications/provider lifecycle; never replace an active launch or begin a duplicate original model operation.
+
+Observe and use the exact installed author and independent receiver at desktop and relevant narrow width. Open every outgoing recipient/editor, native source, decision/custody/queue archive, XML, report, model output and application attachment in its normal viewer. Captured images still require the producing operator's direct viewing. Record useful actual acceptance outcomes in the same customer Installation. The complete owner instruction above applies to all these files.
+
+Bryce's local Codex in-app browser is reserved from 16:00 UTC on 13 October 2026 until explicit release. This original receiving uses only a separately authorized isolated cloud browser while that reservation applies.
