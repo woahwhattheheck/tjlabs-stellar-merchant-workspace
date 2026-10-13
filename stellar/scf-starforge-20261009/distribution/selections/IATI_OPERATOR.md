@@ -144,6 +144,98 @@ production import and is declared explicitly so the builder retains its original
 filename. These source files travel with their original Git identities alongside
 the builder's static import closure.
 
+## Customer operating procedures and the Command Finder
+
+This installation includes the original Command Finder and Operating Plans
+application alongside the IATI operator. Open **Command Finder** from the
+Runtime workspace's Applications screen, or start its original local server:
+
+~~~sh
+starforge discover serve
+~~~
+
+Open the returned private URL and choose **Operating Plans**. Its catalog comes
+from this installation's retained source selection and contribution records.
+The same selected product includes the IATI document-procedure CLI, typed client
+export, complete generator and browser modules.
+
+### Create a procedure from a saved document-evidence case
+
+Open the selected IATI workspace, choose **Document evidence**, and select the
+exact saved evidence revision. In **Publisher handoff**, choose
+**Download operating source**. The complete source file carries the selected
+plan, its full revision history, original organisation plan, every selected
+document row and observation, existing comparisons and the current correction
+draft.
+
+In Operating Plans, choose **Import complete plan** and select that source file.
+The original editor creates an ordinary editable operating plan and downloads
+the complete IATI procedure package. Its steps retain the selected case
+identities, native commands, source-derived progress and registration snapshots.
+Edit the customer, owner, period, instructions and step notes, then save a
+revision in the original editor.
+
+The CLI can capture and create the same package directly from the current
+authenticated local console:
+
+~~~sh
+starforge iati-document-procedure create \
+  --connection-file /absolute/private-iati/PRIVATE_CONSOLE_CONNECTION.json \
+  --evidence-id EXACT_EVIDENCE_ID \
+  --evidence-revision EXACT_SAVED_REVISION \
+  --customer "Customer name" \
+  --owner "Responsible operator" \
+  --out /absolute/customer-handover/iati-procedure.json
+~~~
+
+Use the connection file returned by the original console connection workflow.
+A saved operating source can be used with `--source CASE.json` in place of the
+evidence ID and revision. The CLI loads the actual installation catalog by
+default. For an original source checkout, use `--source-root ORIGINAL_ROOT
+--selection iati-operator`. A retained complete catalog may instead be supplied
+with `--catalog COMPLETE_CATALOG.json`.
+
+Capturing the procedure reads the selected saved case. Observation, review,
+correction and complete workspace receiving remain explicit operations of the
+original IATI application, with their existing source and revision checks.
+
+### Edit, deliver and continue the same procedure
+
+The package retains its full original source and catalog alongside the ordinary
+Operating Plans document. Keep that package with the customer's complete native
+IATI workspace ZIP. The workspace ZIP reopens the working scientific records;
+the procedure records how the recipient should operate and continue that case.
+
+After editing and saving in Operating Plans, choose **Update IATI package** and
+select the earlier complete package. The downloaded package includes the
+current saved plan history and its original case source. The CLI supports the
+same join with a complete edited plan:
+
+~~~sh
+starforge iati-document-procedure show \
+  --file /absolute/customer-handover/iati-procedure.json \
+  --format plan --out /absolute/customer-handover/editable-plan.json
+
+starforge iati-document-procedure receive \
+  --file /absolute/customer-handover/iati-procedure.json \
+  --plan /absolute/customer-handover/edited-complete-plan.json \
+  --out /absolute/customer-handover/iati-procedure-next.json
+
+starforge iati-document-procedure show \
+  --file /absolute/customer-handover/iati-procedure-next.json \
+  --format html --out /absolute/customer-handover/iati-procedure.html
+~~~
+
+The original editor also exports the complete plan and readable Markdown/HTML.
+Receiving a later plan requires the same original plan history; divergent saved
+copies keep their separate histories. Each CLI output uses a new filename.
+Private connection file contents stay in the local console workflow; a command
+may retain the operator-supplied local connection path.
+
+Read the complete [IATI operating procedure guide](../../sf30-seller-sdk/iati/document_evidence/OPERATING_PROCEDURES.md)
+for source/package formats, browser receiving, command options, exact selected
+revision semantics and complete customer handover instructions.
+
 ## Continue the same release and installation
 
 ~~~sh

@@ -1,4 +1,5 @@
 import type { RequestOptions, RevisionOptions, Sha256 } from './client.mjs';
+import type { DocumentOperatingSource } from './document_evidence/operating_procedure.mjs';
 
 /** MIT. The native document-evidence engine owns validation, history and acquisition. */
 export type DocumentEvidenceView = 'source' | 'candidate';
@@ -360,6 +361,7 @@ export interface DocumentEvidencePacketInput {
 export interface DocumentEvidenceClient {
   status(options?: RequestOptions): Promise<DocumentEvidenceStatus>;
   plan(id: Sha256, options?: RevisionOptions): Promise<DocumentEvidencePlan>;
+  operatingSource(id: Sha256, options?: RevisionOptions): Promise<DocumentOperatingSource>;
   history(id: Sha256, options?: RequestOptions): Promise<{ history: DocumentEvidencePlan[] }>;
   request(requestId: string, options?: RequestOptions): Promise<DocumentEvidenceRequestStatus>;
   rows(id: Sha256, input: DocumentEvidenceRowsInput, options?: RequestOptions): Promise<DocumentEvidencePage>;
