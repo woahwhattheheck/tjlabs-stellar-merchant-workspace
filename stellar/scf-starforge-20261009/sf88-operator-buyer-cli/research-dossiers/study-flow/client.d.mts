@@ -31,7 +31,7 @@ export interface FlowMetric{
 }
 export interface FlowIssue{id:string;code:string;level:'info'|'warning'|'error';message:string;[key:string]:unknown}
 export interface FlowReport{
- schema:'sf88-research-study-flow/v1';flowId:string|null;edition:{id:string;number:number;revision:number;createdAt:string;actor:FlowActor;reason:string}|null;
+ schema:'sf88-research-study-flow/v1';flowId:string|null;edition:{id:string;number:number;revision:number;createdAt:string;actor:FlowActor;reason:string;reportVersion?:2}|null;
  dossier:{id:string;title:string;revision:number};definition:FlowDefinition;status:'draft'|'reviewed'|'withdrawn';review:unknown;
  source:{id:string;sha256:string;sourceRevision:number;sourceRevisionSha256:string;capturedAt:string;selector:unknown;
  question:unknown;review:unknown;editions:unknown[];workSets:unknown[];protocols:unknown[];previous:unknown};
