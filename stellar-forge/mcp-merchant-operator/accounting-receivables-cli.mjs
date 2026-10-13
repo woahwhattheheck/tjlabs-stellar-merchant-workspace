@@ -161,7 +161,8 @@ export async function prepareAccountingReceivablesOperation({
   const content = {schema: REQUEST, preparedAt: now(), url: endpoint(url), workspace, tokenEnv,
     kind, arguments: args, ...(preview === undefined ? {} : {preview: structuredClone(preview)})};
   const request = validateRequest({...content, sha256: sha(content)}), text = JSON.stringify(request) + '\n';
-  need(Buffer.byteLength(text) <= 8_000_000, 'The complete original request exceeds eight MB.', 'SIZE');
+  const maximumRequestBytes = kind === 'cash_realization_save' ? 34_000_000 : 8_000_000;
+  need(Buffer.byteLength(text) <= maximumRequestBytes, 'The complete original request exceeds its supported size.', 'SIZE');
   directory = resolve(directory);
   await privateDirectory(dirname(directory)); await mkdir(directory, {mode: 0o700}); await privateDirectory(directory);
   await writePrivate(join(directory, 'request.json'), text);
@@ -175,7 +176,7 @@ async function operation(directory, work) {
   const lease = await acquireStateLease(directory); let failure;
   try {
     const request = validateRequest(await readJson(join(directory, 'request.json'), 128_000_000));
-    const state = await readJson(join(directory, 'state.json'), 32_000_000);
+    const state = await readJson(join(directory, 'state.json'), request.kind === 'cash_realization_save' ? 128_000_000 : 32_000_000);
     need(state.schema === STATE && state.requestSha256 === request.sha256 &&
       typeof state.submissionAttempted === 'boolean', 'The operation state belongs to a different request.', 'STATE');
     async function checkpoint(changes) {
