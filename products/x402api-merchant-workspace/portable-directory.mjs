@@ -70,7 +70,13 @@ const SOURCE_FILES = [
   "products/x402api-merchant-workspace/managed-review.mjs",
   "products/x402api-merchant-workspace/RECEIVED_REVIEW.md",
   "products/x402api-merchant-workspace/received-review-receiving.mjs",
-  "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-environment.mjs"
+  "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-environment.mjs",
+  "products/x402api-merchant-workspace/observation.mjs",
+  "stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-source.mjs",
+  "stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-observation.mjs",
+  "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-desk.mjs",
+  "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-render.mjs",
+  "stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md"
 ];
 const SCHEMA = 'stellar-forge.x402api-merchant-handover.v1';
 const RESTORE_SCHEMA = 'stellar-forge.x402api-merchant-restoration.v1';

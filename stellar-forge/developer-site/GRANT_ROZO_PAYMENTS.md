@@ -2,14 +2,20 @@
 
 Operation: SCF-ROZO-FINANCIAL-APPLICATION-24EA-20261013.
 
-This contribution supplies the complete ROZO operating chapter, measured source registration and publisher/receiving instructions for the existing grant application. The source edition is merged PR1064, `a480c70a6cb4b5dfa89976d2978013af9b70794e`, following the original payment product in PR812. The complete configured-finance release contains 53 source changes and the selected original Accounting/Buyer runtime closure.
+This contribution supplies the complete ROZO operating chapter, measured source registration and publisher/receiving instructions for the existing grant application. The selected source combines merged configured-finance PR1064, `a480c70a6cb4b5dfa89976d2978013af9b70794e`, and following-edition corrections PR1138, `47c67eecca93ffa3cc95731a24ef03ccba9264d9`, after the original payment product in PR812. The complete configured-finance release contains 53 source changes. Its correction successor adds 16 complete files including the current 600-file support selection. The registry retains earlier source editions and the current correction implementation.
+
+## Following-edition source
+
+The chapter includes the full closed-period correction workflow and pins its original review, native receiver, staff interface and complete operating guide. Original financial-source registrations retain their earlier editions. The native programme is selected from the completed first finance archive, and its second receiver preserves that whole archive and both accountant histories.
+
+The first programme uses the original `finance-plan`, `native-finance` and `receive-finance` commands already documented below. Continue a closed period through `FINANCE_AMENDMENTS.md` at merged PR1138; its exact caller-owned report, reviewed period identities, explicit Buyer selection and original native paths define that programme. A current native result remains the source for operated completion.
 
 ## Receive the complete contribution
 
 | File | Original use |
 | --- | --- |
 | [grant-chapters/rozo-payments.md](grant-chapters/rozo-payments.md) | Whole H2 customer chapter: installation, payment/report, merchant recognition, explicit Buyer ownership, accountant work, full restoration, funded scope and customer measurement. |
-| [grant-products/rozo-payments.json](grant-products/rozo-payments.json) | One original product registration with twelve immutable source files and their complete Git blob, byte-count and SHA-256 identities. |
+| [grant-products/rozo-payments.json](grant-products/rozo-payments.json) | One original product registration with sixteen immutable source files and their complete Git blob, byte-count and SHA-256 identities. |
 | This guide | Original application composition and complete customer/native receiving sequence. |
 
 The chapter heading is `## ROZO payment operations, financial closing and complete receiving`; its product ID is `rozo-payments`. The original generic customer chapter receiver accepts this H2 inside canonical `# 9A. Current demonstration and operator journey`. The original product-source registry receives the selected source links before public projection.

@@ -12,6 +12,7 @@ import {readBytes,parseJson,privateDirectory,writeJson,exists} from '../../../sf
 
 const ENTRY=fileURLToPath(import.meta.url);
 const HELP=[
+ 'api-pass-workspace recovery help',
  'api-pass-workspace configure --directory ABS --out ABS [--buyer-workspace ABS]',
  '  [--runtime ABS --buyer-state ABS --inbox ABS --claim-env NAME --python EXECUTABLE --title TEXT]',
  'api-pass-workspace serve --config ABS [--port 0]',
@@ -231,6 +232,7 @@ export async function runCustomerWorkspaceLifetime(start,{describe=app=>({
 }
 
 export async function main(argv=process.argv.slice(2)){
+ if(argv[0]==='recovery')return (await import('./recovery-cli.mjs')).main(argv.slice(1));
  const {command,values}=argumentsOf([...argv]);
  if(command==='help'){process.stdout.write(HELP+'\n');return;}
  if(command==='configure'){

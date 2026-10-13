@@ -7,9 +7,11 @@ import {createNativeSellerServer} from '../../stellar/scf-starforge-20261009/sf3
 import {documentError} from './contracts.mjs';
 function need(value,code){if(!value)throw documentError(code);}
 export function createDocumentCommissioningFactory(selection){
-  need(plain(selection)&&plain(selection.facilitator)&&plain(selection.payment),
+  need(plain(selection)&&plain(selection.facilitator)&&plain(selection.payment)&&
+    (selection.assemblyPayment===undefined||plain(selection.assemblyPayment)),
     'DOCUMENT_COMMISSION_FACTORY_SELECTION_REQUIRED');
   const chosen=structuredClone(selection),same=(a,b)=>canonical(a)===canonical(b);
+  const payments=[chosen.payment,...(chosen.assemblyPayment?[chosen.assemblyPayment]:[])];
   let owner=null;
   async function originalPolicy(){
     const original=await readServiceFile(chosen.facilitator.path,1048576,{privateFile:true});
@@ -31,7 +33,8 @@ export function createDocumentCommissioningFactory(selection){
     need(Array.isArray(compiled?.routes)&&compiled.routes.length>0,'DOCUMENT_COMMISSION_NATIVE_ROUTES_REQUIRED');
     for(const route of compiled.routes){
       need(Array.isArray(route.offer?.accepts)&&route.offer.accepts.length>0,'DOCUMENT_COMMISSION_NATIVE_TERMS_CHANGED');
-      for(const terms of route.offer.accepts)need(same(terms,chosen.payment),'DOCUMENT_COMMISSION_NATIVE_TERMS_CHANGED');
+      for(const terms of route.offer.accepts)need(payments.some(selected=>same(terms,selected)),
+        'DOCUMENT_COMMISSION_NATIVE_TERMS_CHANGED');
     }
     need(same(await originalPolicy(),current.policy),'DOCUMENT_COMMISSION_ORIGINAL_FACILITATOR_CHANGED');
     need(owner===current&&!current.closing,'DOCUMENT_COMMISSION_SERVICE_DRAINING');

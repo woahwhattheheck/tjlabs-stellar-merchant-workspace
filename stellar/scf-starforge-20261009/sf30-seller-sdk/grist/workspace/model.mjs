@@ -17,6 +17,8 @@ import { inspectGristAuthoring } from './launch.mjs';
 import { normalizeConnections, selectConnection, connectionViews, discoveryConfig, documentConfig } from './provider.mjs';
 import { MAX_PACKET_BYTES, makeGristSourcePacket, validatePacket, retainPacket, packetFromCapture, createOrVerify } from './packet.mjs';
 
+import {openOperatingProcedures,OPERATING_MUTATIONS,validateOperatingInput} from './operating-store.mjs';
+
 const SCHEMA = 'stellar-forge.grist-authoring.v1';
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const decode = value => { try { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(value)); }
@@ -191,6 +193,8 @@ export async function openGristAuthoring({ directory, create = false, connection
           ['GRIST_CAPTURE_CANCELLED','GRIST_PROVIDER_UNREACHABLE','GRIST_RESPONSE_INTERRUPTED','GRIST_CAPTURE_TIMEOUT'].includes(issue.code) ||
           kind === 'CAPTURE' && ['GRIST_RATE_LIMITED','GRIST_PROVIDER_FAILED','GRIST_TOKEN_MISSING',
             'GRIST_TOKEN_INVALID','GRIST_READ_SCOPE_REQUIRED','GRIST_PROVIDER_PLAN_REQUIRED'].includes(issue.code);
+        // Deterministic original plan/return validation requires a new reviewed request, not endless I/O recovery.
+        if (kind === 'OPERATING_PLAN' && /^(PLAN_|RETURN_)/.test(issue.code ?? '')) interrupted = false;
         if (kind === 'CAPTURE') {
           try {
             const attempt = await inspectGristCaptureAttempt(join(directory,'captures','.pending-'+request));
@@ -902,6 +906,13 @@ export async function openGristAuthoring({ directory, create = false, connection
 
 
 
+    const operatingStore = openOperatingProcedures({db,transaction,settings,current,operation,assertOpen});
+    async function operating(method,args={}) {
+      assertOpen();validateOperatingInput(method,args);
+      if(!OPERATING_MUTATIONS.includes(method))return operatingStore.read(method,args);
+      return run('OPERATING_PLAN',{method,args},args.requestId,()=>operatingStore.perform(method,args));
+    }
+
     async function resume(request) {
       id(request);
       const row = db.prepare('SELECT * FROM operations WHERE id=?').get(request);
@@ -911,6 +922,7 @@ export async function openGristAuthoring({ directory, create = false, connection
       if (pending) throw fault('GRIST_AUTHORING_BUSY', 'Wait for the active original operation.', 409);
       const input = JSON.parse(row.input);
       return run(row.kind, input, request, async () => {
+        if (row.kind === 'OPERATING_PLAN') return operatingStore.perform(input.method,input.args);
         if (row.kind === 'DOCUMENT') return performDocument(input, request, false);
         if (row.kind === 'DISCOVER') return performDiscover(input, request, false);
         if (row.kind === 'IMPORT') return performImport(input, request);
@@ -958,7 +970,7 @@ export async function openGristAuthoring({ directory, create = false, connection
       inspectCapture, saveDraft, preview, saveVersion, selectVersion, exportVersion, exportCapture, captureAttempt, compareVersions,
       openPublisher, withOpenPublisher, resume, operation, version, deploymentStatus, reviewDeployment, prepareDeployment,
       inspectDeploymentPackage, stageDeployment, openDeploymentConsole, closeDeploymentConsole,
-      compareDeployment, commandDeployment, deploymentFile,
+      compareDeployment, commandDeployment, deploymentFile, operating,
       async status({ capturesOffset = 0, versionsOffset = 0, discoveriesOffset = 0, documentsOffset = 0, limit = 25 } = {}) {
         for (const value of [capturesOffset, versionsOffset, discoveriesOffset, documentsOffset]) integer(value, 'Use a nonnegative result offset.');
         if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw fault('GRIST_PAGE_LIMIT_INVALID');

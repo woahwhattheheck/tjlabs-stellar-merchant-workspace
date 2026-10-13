@@ -6,7 +6,7 @@ import {randomUUID} from 'node:crypto';
 import {
   COHORT_DELIVERY_INPUT_SCHEMA,COHORT_DELIVERY_COMPARISON_SCHEMA,
   seedCohortDeliveryComparison,compareCohortDelivery,reopenCohortDeliveryComparison,
-  exportCohortDeliveryCsv,exportCohortDeliveryHtml,seedCohortCommercialChoices
+  exportCohortDeliveryCsv,exportCohortDeliveryHtml,seedCohortCommercialChoices,inspectCohortOriginalCosts,selectCohortOriginalCosts
 } from './cohort_delivery_comparison.mjs';
 
 const MAX=8*1024*1024;
@@ -20,6 +20,11 @@ const HELP=[
   '  grant-cohort-delivery html --input comparison.json [--output comparison.html]','',
   '  grant-cohort-delivery commercial-seed --input comparison.json [--output commercial-choices.json]',
   '  grant-cohort-delivery commercial --input comparison.json --choices commercial-choices.json [--output reconciled.json]',
+  '  grant-cohort-delivery original-costs --input comparison.json [--output original-cost-catalog.json]',
+  '  grant-cohort-delivery original-costs-receive --input comparison.json --choices selected-original-costs.json [--output editable-successor.json]',
+  'The original-cost catalog includes the full current records, retained selection and changed-source review.',
+  'original-costs-receive preserves existing source witnesses; acceptSourceIds explicitly rebinds reviewed selections.',
+  'Run compare on the complete editable successor to calculate or report a remaining source constraint.',
   'seed accepts --name TEXT and --note TEXT.',
   'Edit choices.json links and assignments to retain original identity and date associations.',
   'compare also accepts a complete saved comparison and recalculates from its retained input.',
@@ -31,17 +36,17 @@ const HELP=[
 function args(argv){
   if(!argv.length||argv.includes('--help')||argv[0]==='help')return{command:'help',options:{}};
   const command=argv[0],options={},allowed=command==='seed'?['plan','review','name','note','output']:
-    command==='commercial'?['input','choices','output']:
-    ['compare','reopen','csv','html','commercial-seed'].includes(command)?['input','output']:null;
-  if(!allowed)throw new Error('Choose seed, compare, reopen, csv, html, commercial-seed or commercial.');
+    ['commercial','original-costs-receive'].includes(command)?['input','choices','output']:
+    ['compare','reopen','csv','html','commercial-seed','original-costs'].includes(command)?['input','output']:null;
+  if(!allowed)throw new Error('Choose seed, compare, reopen, csv, html, commercial-seed, commercial, original-costs or original-costs-receive.');
   for(let i=1;i<argv.length;i+=2){
     const key=argv[i]?.startsWith('--')?argv[i].slice(2):'';
     if(!allowed.includes(key)||Object.hasOwn(options,key)||i+1>=argv.length)throw new Error('Use each documented --option once with its value.');
     options[key]=argv[i+1];
   }
-  for(const key of command==='seed'?['plan','review']:command==='commercial'?['input','choices']:['input'])if(!options[key])throw new Error('Supply --'+key+'.');
+  for(const key of command==='seed'?['plan','review']:['commercial','original-costs-receive'].includes(command)?['input','choices']:['input'])if(!options[key])throw new Error('Supply --'+key+'.');
   if(command==='seed'&&[options.plan,options.review].includes('-'))throw new Error('Seed needs two separate original local files.');
-  if(command==='commercial'&&options.input==='-'&&options.choices==='-')throw new Error('Select a separate complete choices file when the comparison comes from stdin.');
+  if(['commercial','original-costs-receive'].includes(command)&&options.input==='-'&&options.choices==='-')throw new Error('Select a separate complete choices file when the comparison comes from stdin.');
   return{command,options};
 }
 async function input(path){
@@ -71,7 +76,9 @@ export async function main(argv=process.argv.slice(2)){
   if(command==='seed')result=seedCohortDeliveryComparison(await input(options.plan),await input(options.review),{title:options.name,note:options.note});
   else{
     const original=await input(options.input);
-    if(command==='commercial-seed')result=seedCohortCommercialChoices(original);
+    if(command==='original-costs')result=inspectCohortOriginalCosts(original);
+    else if(command==='original-costs-receive')result=selectCohortOriginalCosts(original,await input(options.choices));
+    else if(command==='commercial-seed')result=seedCohortCommercialChoices(original);
     else if(command==='commercial'){
       const candidate=original.schema===COHORT_DELIVERY_COMPARISON_SCHEMA?reopenCohortDeliveryComparison(original).input:original;
       result=compareCohortDelivery({...candidate,commercial:await input(options.choices)});

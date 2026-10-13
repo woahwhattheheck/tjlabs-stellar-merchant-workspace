@@ -1,3 +1,4 @@
+import { mountCompanyReturnIntake } from "./operations_company_returns.mjs";
 // Complete receiver-to-owner handover in the original Operations application.
 const SCHEMA='sf47.installation-return-editor.v1';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -27,6 +28,7 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
   if(!document.querySelector('link[data-installation-return-style]')){
     const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_installation_returns.css';
     link.dataset.installationReturnStyle='true';document.head.append(link);
+    const companyStyle=document.createElement('link');companyStyle.rel='stylesheet';companyStyle.href='/operations_company_returns.css';document.head.append(companyStyle);
   }
   const caseId=current.program.id,prefix='/api/operations/'+caseId,storageKey='sf47.installation-returns.'+caseId;
   const savedKeys=['mode','receiver','owner','selectedReview','pending','accepted','rejected','notice','stage','previousDrafts','returnCase','returnOptions'];
@@ -37,6 +39,7 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
   }
   for(const [key,value] of Object.entries({mode:'receiver',receiver:null,owner:null,selectedReview:null,
     pending:null,accepted:null,rejected:[],stage:null,notice:'',inflight:null}))if(!Object.hasOwn(session,key))session[key]=value;
+  let packageDesk=null,packageBusy=false;
   let active=true,busy=false,hostBusy=false,generation=0,caseValue=current,reviewList=[],cases=[],savedRow=null,returnedRow=null,
     draftPreview=null,previewInput=null,installationPreview=null,installationInput=null,stageSeed=null,error='',storageNotice='';
   const $=selector=>root.querySelector(selector),available=()=>active&&root.isConnected;
@@ -66,8 +69,9 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
     const locked=hostBusy||busy||!!session.inflight||!!session.pending||!!session.accepted;
     root.setAttribute('aria-busy',String(hostBusy||busy||!!session.inflight));
     for(const el of root.querySelectorAll('button,input,select,textarea')){
+      if(el.closest('[data-company-intake]'))continue;
       const action=el.dataset.returnAction;
-      let disabled=el.dataset.returnFixed==='true'||hostBusy||busy||!!session.inflight;
+      let disabled=el.dataset.returnFixed==='true'||hostBusy||busy||packageBusy||!!session.inflight;
       if(el.matches('[data-return-field],[data-return-save-note]'))disabled=locked||!writable();
       if(['new-receiver','load-return','load-retained-return','regenerate-stage','preview','save','stage-preview','stage-save'].includes(action))disabled=disabled||!!session.pending||!!session.accepted||!writable();
       if(action==='save')disabled=disabled||!draftPreview||!same(previewInput,currentDraft()?.inputs);
@@ -75,10 +79,11 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
       if(action==='stage-save')disabled=disabled||!installationPreview||!same(installationInput,session.stage?.document);
       el.disabled=disabled;
     }
+    packageDesk?.setHostBusy(hostBusy||busy||!!session.inflight||!!session.pending||!!session.accepted);
   }
   function fail(cause){error=cause?.message||String(cause);if(available())render();}
   async function run(fn){
-    if(!available()||hostBusy||busy||session.inflight)return;
+    if(!available()||hostBusy||busy||packageBusy||session.inflight)return;
     capture();busy=true;error='';controls();
     try{return await fn();}catch(cause){fail(cause);}finally{busy=false;if(available())render();}
   }
@@ -86,7 +91,7 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
   function recordOptions(kind){return(caseValue.records[kind]||[]).map(x=>[x.id,(x.name||x.description||x.number||x.id)+' · '+x.state]);}
   function heading(){return '<header><div><h2>Receiving returns</h2><p>Finish the receiving work against a saved Installation, then return the whole case. The owner reviews the current definition before applying observations.</p></div></header>'+
     '<div class="ir-meta"><span>'+esc(caseValue.program.name)+'</span><span>Case version '+caseValue.program.version+'</span><span>'+esc(caseValue.program.mode)+'</span></div>'+
-    '<nav aria-label="Receiving return work">'+[['receiver','Record receiving'],['owner','Review a return'],['saved','Saved reports']].map(([mode,label])=>button(label,'mode','data-mode="'+mode+'"'+(session.mode===mode?' aria-current="page"':''))).join('')+'</nav>';}
+    '<nav aria-label="Receiving return work">'+[['package','Company return package'],['receiver','Record receiving'],['owner','Review a return'],['saved','Saved reports']].map(([mode,label])=>button(label,'mode','data-mode="'+mode+'"'+(session.mode===mode?' aria-current="page"':''))).join('')+'</nav>';}
   function recovery(){
     let html='';
     if(session.pending)html+='<aside class="ir-warning"><strong>Continue the retained request</strong><p>The complete original body and request identity are saved. Continue this request before editing its selection.</p>'+button('Continue original request','resume')+button('Download original request','request-download')+'</aside>';
@@ -182,11 +187,26 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
   }
   function render(){
     if(!available())return;
+    packageDesk?.dispose();packageDesk=null;packageBusy=false;
     root.innerHTML=heading()+(error?'<p class="ir-warning" role="alert">'+esc(error)+'</p>':'')+
       (storageNotice?'<p class="ir-warning" role="alert">'+esc(storageNotice)+'</p>':'')+
       (session.notice?'<p class="ir-notice" role="status">'+esc(session.notice)+'</p>':'')+recovery()+
       (!writable()?'<p class="ir-warning">This original case is closed. Reopen it from Delivery operations before recording new work.</p>':'')+
-      (session.mode==='receiver'?receiver():session.mode==='owner'?owner():saved())+'<input type="file" data-return-draft-file accept="application/json,.json" hidden>';
+      (session.mode==='package'?'<div data-company-intake></div>':session.mode==='receiver'?receiver():session.mode==='owner'?owner():saved())+'<input type="file" data-return-draft-file accept="application/json,.json" hidden>';
+    if(session.mode==='package')packageDesk=mountCompanyReturnIntake({
+      container:root.querySelector('[data-company-intake]'),current:caseValue,api,saveApi,mutationId,recordingActor,
+      locked:()=>!!session.pending||!!session.accepted,
+      onBusy:value=>{packageBusy=value;controls();},
+      onDraft:async(draft,next)=>{
+        if(session.pending||session.accepted)throw new Error('Finish the original receiving request before replacing its draft.');
+        const previous=copy({receiver:session.receiver,previousDrafts:session.previousDrafts||[],mode:session.mode,notice:session.notice});
+        if(session.receiver){session.previousDrafts??=[];session.previousDrafts.push(copy(session.receiver));}
+        session.receiver=copy(draft);session.mode='receiver';
+        session.notice='The complete company proposal is open with its original retained evidence. Preview and explicitly save this receiving report.';
+        try{persist(true);}catch(cause){Object.assign(session,previous);throw cause;}
+        caseValue=next;draftPreview=null;previewInput=null;render();
+      }
+    });
     controls();
   }
   async function refreshLists(){
@@ -427,5 +447,5 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
     if(session.mode==='saved'&&session.selectedReview)await openReview(session.selectedReview);
     if(available())render();
   })().catch(fail);
-  return {root,ready,setHostBusy(value){hostBusy=!!value;controls();},dispose(){capture();active=false;++generation;persist();}};
+  return {root,ready,setHostBusy(value){hostBusy=!!value;controls();},dispose(){capture();packageDesk?.dispose();packageDesk=null;active=false;++generation;persist();}};
 }

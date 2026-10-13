@@ -9,6 +9,7 @@ import { dirname, join, resolve, isAbsolute } from 'node:path';
 import { parseArgs } from 'node:util';
 import { openMerchantWorkspace, openMerchantReview, validateConfig, MerchantError } from './workspace.mjs';
 import { ProtocolError } from './protocol.mjs';
+import {readMerchantObservation} from './observation.mjs';
 import { merchantInputFiles, reviewMerchantInputs, verifyMerchantInputFingerprint, readMerchantInput } from './application-inputs.mjs';
 import { createMerchantProject, resolveMerchantProjectSource } from './portable.mjs';
 
@@ -130,6 +131,7 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
     const origin = header(request, 'origin'), localOrigin = 'http://' + header(request, 'host');
     if (origin && origin !== workspace.config.publicOrigin && origin !== localOrigin) fail('ORIGIN_NOT_ALLOWED', 403);
     if (parsed.search) fail('QUERY_NOT_SUPPORTED');
+    if (path === '/api/observation' && request.method === 'GET') return respond(response, 200, readMerchantObservation(workspace));
     if (path === '/api/state' && request.method === 'GET') return respond(response, 200, {
       config: workspace.publicConfig(), orders: workspace.listOrders(), mode: workspace.readOnly ? 'review' : 'live' });
     if (path === '/api/project' && request.method === 'GET') return respond(response, 200, project ?
@@ -179,7 +181,8 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
   const server = createServer({ maxHeaderSize: 98304 }, (request, response) => {
     const promise = handle(request, response).catch(error => {
       if (response.headersSent) response.destroy(error);
-      else respond(response, Number.isInteger(error?.status) && error.status >= 400 && error.status <= 599 ? error.status : 500, safeError(error));
+      else respond(response, Number.isInteger(error?.status) && error.status >= 400 && error.status <= 599 ? error.status : 500,
+        safeError(error), error?.code === 'MERCHANT_PROJECT_SNAPSHOT_IN_PROGRESS' ? { 'Retry-After': '5' } : {});
     }).finally(() => inFlight.delete(promise));
     inFlight.add(promise);
   });

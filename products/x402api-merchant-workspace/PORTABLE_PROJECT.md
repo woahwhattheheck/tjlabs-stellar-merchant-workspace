@@ -224,3 +224,12 @@ remain readable with their original selected source. Run the command through the
 existing Node entrypoint, which passes its actual executable to the native
 reservation bridge; a direct Python invocation can select that same executable
 with `MERCHANT_PORTABLE_NODE`.
+
+
+## Capturing a working merchant
+
+Browser export finishes already admitted invoice operations and durably retains their provider and fulfillment returns before native copying starts. New mutations pause until native capture and ZIP packaging finish. Invoice review, completed-result downloads and existing project downloads remain available. The Project handover panel displays the capture state and disables invoice-changing controls while preserving entered values. New API updates and webhooks receive HTTP503 with Retry-After:5 during that window; retry the original request when the package is ready. Background reconciliation resumes automatically. Allow an operating window for the complete copy and packaging duration, particularly for large projects.
+
+A capture becomes selected only after its database snapshot and every original input, result and reservation file are retained together. An earlier interruption leaves a private unselected attempt. Retrying the same export request captures the now-current merchant in a fresh private attempt, keeping the original request UUID and input selection. Once a complete capture is selected, retries use its same immutable database and files to finish ZIP packaging. This prevents later live locks from being combined with an earlier SQLite backup. Unselected attempts remain beneath that export's captures/ directory for inspection; remove them after the selected export and its receiving copy are complete.
+
+The original Node entrypoint passes its actual executable to Python. During export, each reservation subprocess also inherits the existing merchant ownership descriptor for its lifetime. A terminated Python parent therefore cannot release the original ownership descriptor while its reservation worker is still reading the captured state.
