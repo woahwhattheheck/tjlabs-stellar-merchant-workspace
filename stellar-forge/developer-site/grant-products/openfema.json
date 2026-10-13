@@ -1,0 +1,151 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "openfema",
+  "heading": "## Public Assistance portfolio commissioning and recurring review",
+  "sources": [
+    {
+      "id": "openfema-customer-programme",
+      "label": "Complete Public Assistance customer programme and recurring handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/openfema/CUSTOMER_PROGRAMME.md",
+      "commit": "178897a59bec7f7be51c4c0c126d20db9d6e647e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "178897a59bec7f7be51c4c0c126d20db9d6e647e",
+          "git_blob": "938a3d512a4ea5a7da372c3ec128822f51e6a443",
+          "bytes": 18728
+        }
+      ]
+    },
+    {
+      "id": "openfema-source-contract",
+      "label": "Official Public Assistance source, identity and financial semantics",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/SOURCE_CONTRACT.md",
+      "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+      "required": true,
+      "editions": [
+        {
+          "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+          "git_blob": "faf56eda3af9bd55ad44665167808a2907d980f7",
+          "bytes": 17896
+        }
+      ]
+    },
+    {
+      "id": "openfema-project-exchange",
+      "label": "Complete destination mapping, returned customer file and analyst decision exchange",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/DATA_INTEGRATION.md",
+      "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+      "required": true,
+      "editions": [
+        {
+          "commit": "92596081bf3117eda3b184c40fc34b75aed45c61",
+          "git_blob": "191012530b56c4dde61bd5fdcc986cc8ef8b41b9",
+          "bytes": 11337
+        }
+      ]
+    },
+    {
+      "id": "openfema-operator-working-copies",
+      "label": "Complete private operator preparation, retained files and original request continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/WORKING_COPIES.md",
+      "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+      "required": true,
+      "editions": [
+        {
+          "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+          "git_blob": "3ce2a98f928ae7552f88107154a0dcec26d3fc6e",
+          "bytes": 11695
+        }
+      ]
+    },
+    {
+      "id": "openfema-working-copy-model",
+      "label": "Workspace-bound preparation, complete-file storage and original request histories",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/web/working-copies.js",
+      "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+      "required": true,
+      "editions": [
+        {
+          "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+          "git_blob": "5b0807cf946416f0847d6a512863e7ca64dd2295",
+          "bytes": 22274
+        }
+      ]
+    },
+    {
+      "id": "openfema-working-copy-browser",
+      "label": "Original form, file-selection and cross-window continuation integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/web/working-copy-ui.js",
+      "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+      "required": true,
+      "editions": [
+        {
+          "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+          "git_blob": "8fea0ffbc667411aac8aff6d0687a79c2c40037f",
+          "bytes": 19011
+        }
+      ]
+    },
+    {
+      "id": "openfema-installed-contribution",
+      "label": "Original installed OpenFEMA product and full browser asset selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/openfema.json",
+      "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+      "required": true,
+      "editions": [
+        {
+          "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+          "git_blob": "605299ab6cbf7e661a9a8067f79b306f0e0951aa",
+          "bytes": 6668
+        }
+      ]
+    },
+    {
+      "id": "openfema-complete-operation",
+      "label": "Complete installed OpenFEMA analyst and customer operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/openfema/OPERATING.md",
+      "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+      "required": true,
+      "editions": [
+        {
+          "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+          "git_blob": "82389f2b6494e9d206aaf6fd6c2500fe3c06aeb3",
+          "bytes": 18239
+        }
+      ]
+    },
+    {
+      "id": "openfema-original-working-copy-receiving",
+      "label": "Original populated 195-project browser and complete-copy receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/working-copy-receiving.mjs",
+      "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+      "required": true,
+      "editions": [
+        {
+          "commit": "23e5f8b1de08e99fdff9eb97c787cd3cb0b38aec",
+          "git_blob": "1f5672fa67220f4485427f36ed1efcda36540811",
+          "bytes": 16100
+        }
+      ]
+    }
+  ]
+}
