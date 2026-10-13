@@ -192,6 +192,20 @@ The portable receiving programme continues the original saved five-invoice proje
 
 [PORTABLE_FOREGROUND.md](PORTABLE_FOREGROUND.md) gives the complete source intake and execution procedure. Select `--portable` on the maintained installed receiving entrypoints to run the full browser export, independent review, activation, repeated receiving and onward handover in its own receiving directory. The completed delivery contains the original customer input, installed source, both received projects and their complete saved files.
 
+## Interrupted file deliveries in a project ZIP
+
+A new export retains the complete private `results/` tree together with the original SQLite snapshot. This includes completed files, a final file whose database completion was interrupted, exact SF31 reservation locks, empty locks, partial response prefixes and unreferenced partials left by the original native writer. The archive keeps every original byte and the native reservation mapping; it does not infer a payment or fulfillment transition.
+
+The same installed Node reservation reader and restorer serve the directory and project ZIP workflows. The Node launcher passes its actual executable to the Python worker. A direct Python invocation uses `MERCHANT_PORTABLE_NODE`, then `CODEX_PRIMARY_RUNTIME_NODE`, then `node` on the executable path. The selected distribution must contain the complete current merchant source, including `portable-reservation-bridge.mjs`.
+
+Receiving first validates the original result inventory against the unchanged snapshot and retained return bytes. It prepares a private full copy, relocates only each lock's native destination and partial paths, and durably records the complete published result state before publishing the independent runtime database. Empty locks and original reservation tags stay intact. The original archive remains unchanged.
+
+If receiving is interrupted before that publication, the same request continues its selected staging and exact file copy. An interrupted unpublished native relocation is retained privately and a fresh complete stage is prepared. Once result publication is recorded, receiving reuses that record and preserves any later native progress. It never recreates a consumed lock or replaces a partial that the received merchant has continued. Completed receive replay checks the original archive and retained publication identities while keeping the live workspace's current state.
+
+The existing native merchant recovery remains the operator workflow: it adopts an exact already-published final response or continues from its original retained return. A resumed `RETURNED` fulfillment uses that original return, keeping the same payment, request, result digest and history.
+
+Earlier project ZIPs retain their original inventory and receiving rules. A new export records its complete result state explicitly; the new reader accepts both editions.
+
 ## Complete directory handover
 
 The same installation retains the [complete offline directory handover](PORTABLE.md), including original fulfillment reservations, direct offline inspection, source/configuration receiving and independently reopened merchant operation. Use `x402api-merchant export`, `inspect`, `restore` and `serve-archive` for that format; use `x402api-merchant-project export`, `inspect` and `receive` for the source-archive-bound project ZIP documented here. Both routes preserve their original formats and business identities. The complete directory receiver is `portable-directory-receiving.mjs`; this guide's installed `--portable` programme remains `portable-receiving.mjs`.
