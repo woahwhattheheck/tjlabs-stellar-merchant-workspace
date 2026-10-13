@@ -422,14 +422,18 @@ $4,800 payments distinct from the six funded packages. The commissioning payer,
 technical owner, acceptance owner, source rights, receiving environment and actual
 available contributors are established in the original customer workorder.
 
-The source receiver follows two immutable links from that complete subsection:
+The source receiver follows four immutable links from that complete subsection:
 
 - `connected-systems-customer-operator`: the selected `CONNECTED_SYSTEMS.md`
   operating and installation guide.
 - `connected-systems-publisher-observation`: the publisher's original
   `obs-simple.json` observation used by the completed native receiving example.
+- `connected-systems-commissioning-programme`: the original GeoRobotix Workshare
+  phases and Customer Installation operating guide.
+- `connected-systems-workshare-intake`: the exact maintained Python scope and plan
+  intake used by the completed native commercial operation.
 
-Both records retain their actual repository, commit and path. A later accepted
+All four records retain their actual repository, commit and path. A later accepted
 source edition updates the existing record and clears an obsolete blob pin
 through the original receiver. Earlier manuscripts without this subsection keep
 the preceding source register. All unrelated source records and customer
@@ -445,6 +449,15 @@ Use the same four-reader source pins and original saved draft, review, Page and
 Site publisher. The complete chapter and capacity discussion accompany the
 existing editable answers; this source addition creates no new authoring,
 application or customer-operation controller.
+
+The current canonical chapter includes the original completed commercial
+Workshare and Installation intake. Its eight engineering workorders remain
+planned, with the same $9,600 proposal, 72 hours, 12 active business days and two
+$4,800 milestones. The observation product's dependency completion, installed
+receiving and browser acceptance remain the next product stages. Receive the
+current author's complete paragraphs through the existing manuscript receiver;
+keep its live wording, source appendix and concurrent customer chapters. The
+source registration is additive and supplies no new application or native result.
 
 ## Receive Calendar and Connected Systems in the cumulative edition
 

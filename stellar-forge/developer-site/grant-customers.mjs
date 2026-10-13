@@ -491,6 +491,10 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/selections\/CONNECTED_SYSTEMS\.md)/, connectedSystems);
   receive('connected-systems-publisher-observation', 'Original publisher observation used by the native receiving example',
     /https:\/\/github\.com\/opengeospatial\/ogcapi-connected-systems\/blob\/([a-f0-9]{40})\/(api\/part2\/openapi\/examples\/observations\/obs-simple\.json)/, connectedSystems);
+  receive('connected-systems-commissioning-programme', 'Original Workshare phases and Customer Installation operating programme',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf49_data_commissioning\/installation-workorders\/GEOROBOTIX_CSAPI\.md)/, connectedSystems);
+  receive('connected-systems-workshare-intake', 'Original Workshare scope and plan intake into Customer Installation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/workshare_intake\.py)/, connectedSystems);
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),
