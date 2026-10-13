@@ -1,7 +1,6 @@
 {
   "schema": "govhub.public-product-source.v1",
   "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-  "source_edition": "fb206f16b12f1b620baa1335692119b9d43f14da",
   "application_root": "products/govhub/application",
   "source_files": 209,
   "source_bytes": 5345964,
@@ -1471,5 +1470,6 @@
     }
   ],
   "source_policy": "Complete generic source and native receiving; private cases, credential values, host custody routes and private runtime receipts are excluded. Generated APPLICATION_SOURCE.json is separately bound to its exact source commit.",
-  "original_packet_sha256": "210bdac8170d062862e5af44671de93277f0c14c64b619c602c52bc2e1d03ff9"
+  "original_packet_sha256": "210bdac8170d062862e5af44671de93277f0c14c64b619c602c52bc2e1d03ff9",
+  "base_source_commit": "fb206f16b12f1b620baa1335692119b9d43f14da"
 }
