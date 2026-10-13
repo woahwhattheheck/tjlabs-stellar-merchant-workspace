@@ -72,6 +72,13 @@ def main():
     command = sub.add_parser("source-download-run"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
     command.add_argument("--only", help="JSON array of selected acquisition row IDs")
     command = sub.add_parser("source-download-export"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
+    command = sub.add_parser("production-collections"); command.add_argument("--project", required=True)
+    command = sub.add_parser("production-plans"); command.add_argument("--project", required=True); command.add_argument("--id")
+    command.add_argument("--offset", type=int, default=0); command.add_argument("--limit", type=int, default=50)
+    command = sub.add_parser("production-wave"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
+    command.add_argument("--offset", type=int, default=0); command.add_argument("--limit", type=int, default=50)
+    command = sub.add_parser("production-export"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
+    command.add_argument("--out", required=True)
     args = parser.parse_args()
     if args.command == "profile-template":
         from marc import default_profile
@@ -124,6 +131,21 @@ def main():
                     with workspace.mutex:
                         item, _ = collection(workspace, args.project, args.id)
                         result = storage.load_json(workspace.object_path(item["original"]).read_bytes())
+                elif args.command == "production-collections":
+                    from production_waves import collection_inventory
+                    with workspace.mutex:
+                        result = collection_inventory(workspace, args.project)
+                elif args.command == "production-plans":
+                    from production_waves import list_plans, plan_view
+                    with workspace.mutex:
+                        result = plan_view(workspace, args.project, args.id, args.offset, args.limit) if args.id else list_plans(workspace, args.project, args.offset, args.limit)
+                elif args.command == "production-wave":
+                    from production_waves import wave_view
+                    with workspace.mutex:
+                        result = wave_view(workspace, args.project, args.id, args.offset, args.limit)
+                elif args.command == "production-export":
+                    from production_waves import write_export
+                    result = write_export(workspace, args.project, args.id, args.out)
                 elif args.command == "source-downloads":
                     from source_files import view, list_acquisitions
                     with workspace.mutex:
