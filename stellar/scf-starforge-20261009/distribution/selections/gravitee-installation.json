@@ -6,6 +6,7 @@
   "base": {
     "commands": [
       "installation",
+      "grant-workspace",
       "runtime-profile",
       "runtime-install",
       "runtime-workspace",
@@ -45,6 +46,7 @@
   ],
   "components": [
     "products/gravitee-merchant",
+    "stellar/scf_2026/sf47_budget_model",
     "stellar/scf-starforge-20261009/sf46-release",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
     "stellar/scf-starforge-20261009/distribution/python-runtime"
