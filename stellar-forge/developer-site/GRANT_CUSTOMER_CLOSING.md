@@ -41,7 +41,7 @@ Open the existing saved Customer statements application with its merchant connec
 
 For the reference operation, display the values returned by its original captures: three new calls and fifteen consumed service units. Use the actual statement numbers and packet filenames returned by the workbench. A subsequent close begins from the original current statement's closing capture when that is the unique eligible boundary, with the next closing source chosen from an actual later capture.
 
-The service follow-through uses the existing [complete customer programme](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/222660db233f81028126d6b9a0129b6ead84d27a/stellar-forge/mcp-merchant-operator/examples/CUSTOMER_CLOSING_WORKBENCH.md), whose entrypoint preserves its original operation directory and request identities. The reviewer can inspect the selected period, linked statement history and complete customer packet alongside the retained purchase and funded installation plan.
+The service follow-through uses the existing [complete customer programme](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2dc5ff92b04cd4d9e00e3033f5bd3ac5ce0423b7/stellar-forge/mcp-merchant-operator/examples/CUSTOMER_CLOSING_WORKBENCH.md), whose entrypoint preserves its original operation directory and request identities. The reviewer can inspect the selected period, linked statement history and complete customer packet alongside the retained purchase and funded installation plan.
 
 ## Continue recurring service calendars
 
@@ -65,11 +65,17 @@ The course then continues its original period-plus-cumulative issuing cycle thro
 
 Use the same receiving command below and retain the full `flow-result.json`, `service-calendar-request.json`, `service-calendar-recovery.json`, `service-calendar-received.json`, complete downloads, screenshots and operation directory. The returned native result supplies the current completion state and actual customer/capture/cycle identities.
 
+The current caller preserves the original issued customer handover and its archive before later corrections or withdrawals. Resuming the same operation reopens that retained issued snapshot. It confirms closure of its owned contexts, workbench, client, MCP listener and original accounting owner before publishing a complete result. If closure is uncertain, keep the original directory and writer lease with that operation; its retained closer retries only the unresolved handles. Each failure retains a new immutable diagnostic file. An embedding owner keeps its shared browser; the CLI closes the browser it owns.
+
+The calendar feature and the native receiving programme have independent source selections. The five calendar rows remain on **222660db233f81028126d6b9a0129b6ead84d27a**; the original caller and its complete guide use **2dc5ff92b04cd4d9e00e3033f5bd3ac5ce0423b7**. `service_calendars.native_receiving_source_commit` follows the customer-closing selection because that entrypoint belongs to the original customer programme. Keep both pins together in the following cumulative source package.
+
+The complete original receiver remains with B3909 under **SCF-CUSTOMER-CLOSING-5245-20261012**. Its retained full source contains 169 files, including the original 806-source grant inputs. Receive a later complete grant package only as an explicit following edition in the original 22B7/7108 application; preserve any selected source, saved answers and accepted runtime phase. Open the exact outgoing application and downloaded customer files at desktop and narrow widths, operate the important controls and reopening path, and view the returned screenshots within that existing course.
+
 ## Receive the canonical application edition
 
 The canonical manuscript is F0C86PRE5NF. Its finance chapter contains **Customer service close, corrections and complete handover**; its existing demonstration chapter contains **Continue the customer's service operation**. The front architecture and working-product answers carry their concise explanation. The original composer receives these whole sections through its current financial and customer section receivers.
 
-The optional **--customer-closing-commit** selects the actual customer product source independently of the financial chapter owner's other components. For this delivered feature the selected commit is **222660db233f81028126d6b9a0129b6ead84d27a**. The source index retains the installed workbench, planner, cycle and dossier guides, the original receiving guide/programme, and the browser asset manifest from that same complete merge.
+The optional **--customer-closing-commit** selects the actual customer product source independently of the financial chapter owner's other components. Select **2dc5ff92b04cd4d9e00e3033f5bd3ac5ce0423b7** for the current complete customer source and original receiving programme (PR1552). This successor retains the calendar product and repairs original issued-handover preservation, confirmed resource closure before completion, retained lease recovery and immutable per-attempt failure diagnostics. The source index retains the installed workbench, planner, cycle and dossier guides, the current original receiving guide/programme, and the browser asset manifest from that complete merge.
 
 Select **--customer-service-calendars-commit 222660db233f81028126d6b9a0129b6ead84d27a** with that existing customer-closing selection. This independently registers the five complete calendar guide, store, browser, terminal and typed-interface sources and adds the calendar journey inside the same reviewer opening. Earlier customer-closing selections continue to use their original eight sources until calendars are explicitly selected. A later manuscript refresh reuses the saved calendar pin in `narrative_source.customer_service_calendars_product_commit`.
 
@@ -85,7 +91,7 @@ Use the current complete dist directory and canonical manuscript selected by the
 node stellar-forge/developer-site/grant-compose.mjs \
   --directory /absolute/current-selected/dist \
   --manuscript /absolute/current-canonical.md \
-  --customer-closing-commit 222660db233f81028126d6b9a0129b6ead84d27a \
+  --customer-closing-commit 2dc5ff92b04cd4d9e00e3033f5bd3ac5ce0423b7 \
   --customer-service-calendars-commit 222660db233f81028126d6b9a0129b6ead84d27a \
   --source-pins-output /absolute/current-source-pins.json
 ~~~
