@@ -1,0 +1,727 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "econdb-maritime",
+  "heading": "## Econdb maritime customer workflow: original sources, port periods and complete paid delivery",
+  "sources": [
+    {
+      "id": "econdb-installed-operating-guide",
+      "label": "Econdb products/econdb/OPERATING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/econdb/OPERATING.md",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "e8e4f89ea0918f096c0b3044cb4a473cc7c11178",
+          "bytes": 22665,
+          "sha256": "de7506b586ffbfcad791cb8759ecca710f18f272616ccb13d51d6c5cbd78e8f8"
+        }
+      ]
+    },
+    {
+      "id": "econdb-agents-md",
+      "label": "Econdb AGENTS.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/AGENTS.md",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "d4f21934f9f6fd664a44986524c6e75c68df6b3e",
+          "bytes": 3330,
+          "sha256": "2c1ddf94e83f979fd19d82f2608087283130465ee2bf2ce3fbe47d3556d25036"
+        }
+      ]
+    },
+    {
+      "id": "econdb-browser-assets-json",
+      "label": "Econdb browser-assets.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/browser-assets.json",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "42902d449277e6113cc7d34c9d1469bdbfdbbd90",
+          "bytes": 528,
+          "sha256": "9f4efef260a42558366954eb377b57d6e794f98c61af0ac057fbfc494678cc81"
+        }
+      ]
+    },
+    {
+      "id": "econdb-build-workbench-mjs",
+      "label": "Econdb build-workbench.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/build-workbench.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "0c4d81c44ce982096db96af2ac3cb618344ce88c",
+          "bytes": 1968,
+          "sha256": "2fa751403c81a7444d0cee04c6b39136defb5da960da6da44baaf068302b612d"
+        }
+      ]
+    },
+    {
+      "id": "econdb-example-results-md",
+      "label": "Econdb EXAMPLE_RESULTS.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/EXAMPLE_RESULTS.md",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "3bbb5856267b47c36020245da64863e46b72b061",
+          "bytes": 3051,
+          "sha256": "d12f8f9666122fabe494e7c10de862942da0e798aee29f91d3fa9bcd191e54f3"
+        }
+      ]
+    },
+    {
+      "id": "econdb-examples-capacity-descriptor-json",
+      "label": "Econdb examples/capacity.descriptor.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/examples/capacity.descriptor.json",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "52f6dfc5220ddafc9ee56da92a7af43f23986a69",
+          "bytes": 605,
+          "sha256": "ae5941f55a2f02551377ce81ae90bbd28520c35d1c2e1d96c6e0721d8d9ebced"
+        }
+      ]
+    },
+    {
+      "id": "econdb-examples-capacity-response-json",
+      "label": "Econdb examples/capacity.response.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/examples/capacity.response.json",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "c2ad23d8cbbb7ba5975fccff258c8b0ac9173c23",
+          "bytes": 1129,
+          "sha256": "5c9eba876ecf179a1c65aeddf5ce0159cb63c6a3c62c6a48705e2d307ca57d11"
+        }
+      ]
+    },
+    {
+      "id": "econdb-examples-project-json",
+      "label": "Econdb examples/project.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/examples/project.json",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "b9e738050216ed9be0656c2ee14155f342daa7fa",
+          "bytes": 794,
+          "sha256": "d8e4723b418d2c10fc5efe38044142a016d0928f8b810e59ce81d1733aa588ac"
+        }
+      ]
+    },
+    {
+      "id": "econdb-examples-traffic-descriptor-json",
+      "label": "Econdb examples/traffic.descriptor.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/examples/traffic.descriptor.json",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "bb7872a847b079e2223d97dbecc1e7cd67d6d9f7",
+          "bytes": 602,
+          "sha256": "327af8b4580ee2e3b033f2d9e7aad5d7f54b4c93c0d74209f0d9b5d3a27233c6"
+        }
+      ]
+    },
+    {
+      "id": "econdb-examples-traffic-response-json",
+      "label": "Econdb examples/traffic.response.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/examples/traffic.response.json",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "d2b6ffd23fda18c986a2526cae940913f8f8e356",
+          "bytes": 482,
+          "sha256": "673c8bcc57cb15f550366c97dd27dc0ed6c372a08c7c96400476a4f20f9b3e6d"
+        }
+      ]
+    },
+    {
+      "id": "econdb-maritime-analysis-mjs",
+      "label": "Econdb maritime-analysis.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/maritime-analysis.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "f954c8edba16df240076c2ac54c5f329fa5527cf",
+          "bytes": 25137,
+          "sha256": "778a2f23096fe93bdad8ed5a11850c7e1c559fad2f290996c8ff853f5996d9d6"
+        }
+      ]
+    },
+    {
+      "id": "econdb-maritime-cli-mjs",
+      "label": "Econdb maritime-cli.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/maritime-cli.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "4120766b14fdd2611a50ff855fa0a73f3fd16f15",
+          "bytes": 2980,
+          "sha256": "0987fa8c8e40808d829a789083bd3f264940dc4ea4a0361c8c453b47af561fed"
+        }
+      ]
+    },
+    {
+      "id": "econdb-maritime-native-mjs",
+      "label": "Econdb maritime-native.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/maritime-native.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "3cf0fc5b557b4eee1420eec7d212703b3f82a689",
+          "bytes": 12170,
+          "sha256": "a2b429ab9f7144333cf2978ba0cdfa98fd31f078bc74f35973df08c7a1d7b74e"
+        }
+      ]
+    },
+    {
+      "id": "econdb-maritime-project-analysis-mjs",
+      "label": "Econdb maritime-project-analysis.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/maritime-project-analysis.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "e43bb5800cd037c00747d1088886cf3ae3162478",
+          "bytes": 17521,
+          "sha256": "ab090369dd51fb5ddb9bfbdbab131eca70a365c8e2f39d41c13d86f87c0c3c35"
+        }
+      ]
+    },
+    {
+      "id": "econdb-maritime-project-cli-mjs",
+      "label": "Econdb maritime-project-cli.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/maritime-project-cli.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "ca71a35729d0ccac7e11db4c50a8006f3defba66",
+          "bytes": 2421,
+          "sha256": "367f48091edf8bb62a8547c65984a4e893980083e5f6a84453f2a921e6acce39"
+        }
+      ]
+    },
+    {
+      "id": "econdb-maritime-project-native-mjs",
+      "label": "Econdb maritime-project-native.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/maritime-project-native.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "ee1422c4653b45f944d104e5c6d1bb016953749b",
+          "bytes": 25618,
+          "sha256": "0ec1fb06280210d1dd047e070bea562f295973e8dddaff865d10d6abd3d0192e"
+        }
+      ]
+    },
+    {
+      "id": "econdb-maritime-project-workbench-js",
+      "label": "Econdb maritime-project-workbench.js",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/maritime-project-workbench.js",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "b8ddbee7d586a428e71961258697ec77928648eb",
+          "bytes": 11936,
+          "sha256": "2e7948148fc8b656d1b6a9075b97879be961ae17c20f2454805b30303dceee06"
+        }
+      ]
+    },
+    {
+      "id": "econdb-maritime-project-workspace-mjs",
+      "label": "Econdb maritime-project-workspace.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/maritime-project-workspace.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "d1ebec5c14a2620bdb2587554bf7b8a98545541a",
+          "bytes": 8472,
+          "sha256": "794b67b2438addd349aa831d6fffb98edb45cf10ac4b88b621188eb4dc399792"
+        }
+      ]
+    },
+    {
+      "id": "econdb-maritime-workbench-html",
+      "label": "Econdb maritime-workbench.html",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/maritime-workbench.html",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "f83e09e39f7fa09229f1aa4ae779ec92a97f2241",
+          "bytes": 90050,
+          "sha256": "3e7b3f1a867f1ed993ba724bd8b615607eeda92a4ae5d68d17d70614d5adf1c2"
+        }
+      ]
+    },
+    {
+      "id": "econdb-operator-guide-md",
+      "label": "Econdb OPERATOR_GUIDE.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/OPERATOR_GUIDE.md",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "7a85c125a1ea190fdd1bb8d35705e8c62b453bcf",
+          "bytes": 21334,
+          "sha256": "b5bcdb98fc3229fa8e0f91057e52ce873f0031c24d0a963bfa3d4e8c0dde06e6"
+        }
+      ]
+    },
+    {
+      "id": "econdb-operator-cli-mjs",
+      "label": "Econdb operator-cli.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/operator-cli.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "bdb7bc3ad823dce6bcbd7bd355000989f48aa0e2",
+          "bytes": 3551,
+          "sha256": "dccd2c1b518f34aa76874d8de018fc280278bddcc7241b2959d61a2123ce89f8"
+        }
+      ]
+    },
+    {
+      "id": "econdb-operator-client-d-mts",
+      "label": "Econdb operator-client.d.mts",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/operator-client.d.mts",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "62c784c5efa137065f8c322c02fe5852f04b0bd7",
+          "bytes": 1264,
+          "sha256": "0eea5f31ee057b10f93b36631fdf5289716166f102fd0a3e616804afd8ce1b75"
+        }
+      ]
+    },
+    {
+      "id": "econdb-operator-client-mjs",
+      "label": "Econdb operator-client.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/operator-client.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "79deb3d68c949127b5b94e02cc64ffad71322b62",
+          "bytes": 1328,
+          "sha256": "830a33e14964452bb085996899ed77fa2cef394addae5e489eee4fc6096ac38a"
+        }
+      ]
+    },
+    {
+      "id": "econdb-operator-server-mjs",
+      "label": "Econdb operator-server.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/operator-server.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "aab9ceb88517c73a36e4341ef096413944f6f933",
+          "bytes": 6556,
+          "sha256": "658573d93c8f15b51cc2d2260dcfcd91284d07bc962a556ead025ba32692fc69"
+        }
+      ]
+    },
+    {
+      "id": "econdb-operator-css",
+      "label": "Econdb operator.css",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/operator.css",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "1a0d8d6fd7f87fcce97b601be43345d8304d4de8",
+          "bytes": 2915,
+          "sha256": "55d6735bf875573ff9aed597106897ed0f68e8fdc54a0336b0bb5fb88e6ec3a5"
+        }
+      ]
+    },
+    {
+      "id": "econdb-operator-html",
+      "label": "Econdb operator.html",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/operator.html",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "c3b8ce3d989029e861f69d997efb7f3fd7be7273",
+          "bytes": 8170,
+          "sha256": "b41ec2a64cb1c2bf6952ee3524807d458bcb899b5f0a5b722f3eb2777e022669"
+        }
+      ]
+    },
+    {
+      "id": "econdb-operator-js",
+      "label": "Econdb operator.js",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/operator.js",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "dc0b893e5ee21e0f627cf0f0ce102096995b1fa6",
+          "bytes": 12571,
+          "sha256": "fe24e301814913f55618f81bec16fb58ab49c3a5fc0c96542b9e6c20aaaaae94"
+        }
+      ]
+    },
+    {
+      "id": "econdb-operator-mjs",
+      "label": "Econdb operator.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/operator.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "5455fe244739f48c3d4d61e62769e27075bdb089",
+          "bytes": 32633,
+          "sha256": "44920b4d00d76afe452f72de83903825fe6dd35892cfe639c09eb7fcf41c0ca9"
+        }
+      ]
+    },
+    {
+      "id": "econdb-period-acceptance-md",
+      "label": "Econdb PERIOD_ACCEPTANCE.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/PERIOD_ACCEPTANCE.md",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "aa1a13b19061ef87e0f26fcac0283ac7623c0733",
+          "bytes": 5307,
+          "sha256": "c9a3fc10e28b01ee81deaf14fb19bd92c27cc4c96983131664380def5a76eda7"
+        }
+      ]
+    },
+    {
+      "id": "econdb-project-guide-md",
+      "label": "Econdb PROJECT_GUIDE.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/PROJECT_GUIDE.md",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "537afbf830acb98b33cafcf7a158f4898cf5560e",
+          "bytes": 17894,
+          "sha256": "87be9910b4d907be89b33cbf4152017c9b9c594bcd6b4f8a228cd3d48a6162d6"
+        }
+      ]
+    },
+    {
+      "id": "econdb-readme-md",
+      "label": "Econdb README.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/README.md",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "a7f9865e0413d4827d8f59a095e693a03e95ca3d",
+          "bytes": 14261,
+          "sha256": "81a5152271d8e7ed243408dfe32238e70e7b29c785778e3f30b9adca63a90bce"
+        }
+      ]
+    },
+    {
+      "id": "econdb-receiving-native-receiving-md",
+      "label": "Econdb receiving/NATIVE_RECEIVING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/receiving/NATIVE_RECEIVING.md",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "0d85b6647937a19032e1d913a5435ec6d51c7ac1",
+          "bytes": 17510,
+          "sha256": "83187a931bc5cdea257e859e0dcbc7cd1db152c5de4b8ad1e65af156adebe323"
+        }
+      ]
+    },
+    {
+      "id": "econdb-receiving-receive-econdb-browser-mjs",
+      "label": "Econdb receiving/receive-econdb-browser.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/receiving/receive-econdb-browser.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "2129a6eec1e9ad36bf212ed09539b3d2ebf50e4f",
+          "bytes": 26876,
+          "sha256": "ab5ecfec9c1ba8a3f387e6c746a56f7495663c971a2cee1fe6d06e66e2ec3f5f"
+        }
+      ]
+    },
+    {
+      "id": "econdb-receiving-receive-econdb-native-mjs",
+      "label": "Econdb receiving/receive-econdb-native.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/receiving/receive-econdb-native.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "74ac581d716b224590693308fff1854aef292853",
+          "bytes": 19188,
+          "sha256": "b3624a4a64e9012bb0bec60f0c1042add7a272dac62ac5383ac49de424cba45f"
+        }
+      ]
+    },
+    {
+      "id": "econdb-receiving-receive-econdb-operator-mjs",
+      "label": "Econdb receiving/receive-econdb-operator.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/receiving/receive-econdb-operator.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "2867f49ac465cee30885aee39fa4bc46ba8cdb7d",
+          "bytes": 12952,
+          "sha256": "83dc4eb39b57f0ecb4b24d6702208559d1ae50d7eed4907b28e1806084bd0b41"
+        }
+      ]
+    },
+    {
+      "id": "econdb-receiving-receive-econdb-project-browser-mjs",
+      "label": "Econdb receiving/receive-econdb-project-browser.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/receiving/receive-econdb-project-browser.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "aba39f6cba0351a62756f9b5398be0312d535d53",
+          "bytes": 13400,
+          "sha256": "edda8537d001f0af538e2c45fb26da9790fd69868cf865884916984f397ce2d7"
+        }
+      ]
+    },
+    {
+      "id": "econdb-receiving-receive-econdb-py",
+      "label": "Econdb receiving/receive-econdb.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/receiving/receive-econdb.py",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "41e0af216e5ed67efc2b01b8b74d186edc89a642",
+          "bytes": 19332,
+          "sha256": "c2fd42ba039b6c1bfd7c1ed31cb838559ae7e53aad2edd65fde51e8891f2b512"
+        }
+      ]
+    },
+    {
+      "id": "econdb-sf30-publication-md",
+      "label": "Econdb SF30_PUBLICATION.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/SF30_PUBLICATION.md",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "75c396f89cb6b4ec73eee9a32213745f63d7815e",
+          "bytes": 21219,
+          "sha256": "c171b80ade93d3ebbd543337ea58caa833c40a540099c9e6a3a22c657ea7a8cd"
+        }
+      ]
+    },
+    {
+      "id": "econdb-sf30-publication-mjs",
+      "label": "Econdb sf30-publication.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/sf30-publication.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "3b9d45a7f45d392604ed956e4720ea8319054966",
+          "bytes": 43492,
+          "sha256": "5e06032230ee860ac720ca59ccd8674f6d40adbc386fc00f609d21c4f6b77d25"
+        }
+      ]
+    },
+    {
+      "id": "econdb-sources-econdb-source-receiving-md",
+      "label": "Econdb sources/ECONDB_SOURCE_RECEIVING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/sources/ECONDB_SOURCE_RECEIVING.md",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "4523f8b678105ab74cdefe68155a0e386ee6d99f",
+          "bytes": 2596,
+          "sha256": "1e28c3f65b4a23a36536c3d5cf3d69d46d22c5218eb3858ac2445d80826b9cf7"
+        }
+      ]
+    },
+    {
+      "id": "econdb-sources-econdb-documented-maritime-examples-json",
+      "label": "Econdb sources/econdb-documented-maritime-examples.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/sources/econdb-documented-maritime-examples.json",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "d145920c1eea84f42326d24f7a77bc1c5a639b3d",
+          "bytes": 4259,
+          "sha256": "d718736a5f4f630b39423211e2a6be1d39050437eabcd72d913654a585254d0d"
+        }
+      ]
+    },
+    {
+      "id": "econdb-sources-econdb-original-openapi-yaml",
+      "label": "Econdb sources/econdb-original-openapi.yaml",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/econdb/sources/econdb-original-openapi.yaml",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "eb2f82b1fedb1e9a207c63560f1447f54197929a",
+          "bytes": 45151,
+          "sha256": "c271e5e1799a7a47b3f598cdf286d25c7bb68108cd9f3e466231f4f95a82c915"
+        }
+      ]
+    },
+    {
+      "id": "econdb-distribution-contribution",
+      "label": "Econdb stellar/scf-starforge-20261009/distribution/contributions/econdb-maritime.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/econdb-maritime.json",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "42c20beabdbd20fb8f764b586fd2d23711b16425",
+          "bytes": 8348,
+          "sha256": "ff04cee3d1e7897b2376b4d85716b2279c62e6f2f50bb363b1b6cad579a586ee"
+        }
+      ]
+    },
+    {
+      "id": "econdb-applications-provider",
+      "label": "Econdb stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/econdb.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/econdb.mjs",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "9290cac48d5631a04492d68ea493ea9739a47fea",
+          "bytes": 2231,
+          "sha256": "bd61f8a4dc14c3abcd28b6728626961043c7b137240e333ef0970c8404aa6e59"
+        }
+      ]
+    },
+    {
+      "id": "econdb-distribution-selection",
+      "label": "Econdb stellar/scf-starforge-20261009/distribution/selections/econdb-maritime.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/econdb-maritime.json",
+      "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+      "editions": [
+        {
+          "commit": "3be88b396b3a94acdd9fa824ed1a97518782db4d",
+          "git_blob": "e6eb5b7d35e5d5d982f8494e2d1a4b1f2e1920dd",
+          "bytes": 10128,
+          "sha256": "d35927c424335d040b13a55889349edf3a8b3bf90b1730469a4fecea56ff7cac"
+        }
+      ]
+    }
+  ]
+}
