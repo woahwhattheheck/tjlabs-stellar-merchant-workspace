@@ -1,6 +1,6 @@
 # SeaTable customer commissioning and complete workspace handover
 
-This course turns one authorized SeaTable source into a reviewed data delivery that a second operator can continue. It covers the customer source/output agreement, the complete saved authoring workspace, private receiving, original publisher and release history, a useful later edition, and the working handover back to the original team.
+This course turns one authorized SeaTable source into a reviewed data delivery that a second operator can continue. It covers the customer source/output agreement, the complete saved authoring workspace, private receiving, original publisher and release history, a useful later edition, and review of the customer's returned draft against current author work.
 
 Use the [source workspace guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/WORKSPACE.md) for the installed authoring application, [provider input](../../stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/PROVIDER_INPUT.md) for actual source acquisition, and [the original native receiving course](../../stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/RECEIVING.md) for the existing complete execution programme. Customer-specific correspondence, quotes and decisions remain in their original customer case.
 
@@ -89,9 +89,147 @@ Open the original publisher from the selected reviewed source version. Preserve 
 
 For merchant operation, retain the original SF82 stage/review and actual owned instance. Review the received package and destination bindings through its maintained interface before an intentional release action. Source receiving and a payment-required HTTP response do not establish a paid transaction. The existing buyer/facilitator path retains actual approved payment and delivered output records.
 
-Prepare a new `.stwh` archive of the complete progressed receiving workspace as a later handover, again observing its deliberate owned-service drain boundary. Send it back through the same authorized customer case with its original source, operation and useful result identified. The original team opens that complete branch through the maintained receiver. Keep both the original author workspace and returned progressed workspace until the reviewer chooses the operating continuation. A complete return is not implicitly a field-by-field merge into a concurrently edited author database.
+Prepare a new `.stwh` archive of the complete progressed receiving workspace as a later handover, again observing its deliberate owned-service drain boundary. Send it back through the same authorized customer case with its original source, operation and useful result identified. The original team opens that complete branch through the maintained receiver. Keep both the original author workspace and returned progressed workspace until the reviewer chooses the operating continuation. A complete return is retained as an independent branch. To reconcile its saved source-output draft with concurrent author work, use the explicit returned-review course below; applying that review creates a new author draft.
 
 A subsequent team can receive, edit and export the same progressed working project. Reopening the first received handover must retain that recipient's later work. The practical acceptance is that an independent operator can continue the useful data service, locate earlier editions and recover its original work.
+
+## Review a customer's returned draft in the original workspace
+
+A customer may finish a review round while the implementation team continues editing the original workspace. Use the maintained returned-draft review to bring the customer's saved source-output choices back into that original authoring history. Keep the original workspace, the independently received customer branch and the frozen return together in the same customer case.
+
+The return course operates on the existing complete workspace format and the customer's actual named received workspace. It reconciles saved draft choices against a common original draft record. It does not infer ancestry from equal revision numbers, a matching title or similar-looking rows. Applying the review updates the working draft; the existing full-row preview, immutable source version and publication stages still produce the customer edition.
+
+### Establish the real review round
+
+Agree which part of the source-output contract the customer is reviewing: the actual query, public aliases, scalar types, numeric encoding, nullability and empty-value treatment. Keep the approved source observation and native source-field identities visible. The review note should explain the useful customer decision and its downstream effect.
+
+Save the author's useful work before intake so the comparison includes the current saved draft. Separately retain any unsaved browser edits until the operator has deliberately saved or replaced them. The customer saves its own edits and returns its complete progressed workspace through the existing private handover route.
+
+Receive that complete file as a named independent child of the original author's workspace. Select the actual returned child and freeze its saved draft, source identity and relevant original history through the maintained return-intake control. Retain the return record and exact receiving name. Later edits in the child do not silently change the already frozen review.
+
+The customer and author can both continue working. A later return is a new explicit intake of its saved state; an uncertain response continues the original intake request. Preserve the earlier return and its decision history so the next review round can be explained.
+
+### Compare the actual author, base and returned choices
+
+Open the complete comparison against the current original saved draft. Inspect the source binding and the actual common original record first, then read every returned change and conflict. Follow the comparison's paging through the last result rather than treating the first screen as the complete review.
+
+| Comparison | Practical review |
+| --- | --- |
+| Only the customer changed a field | Review the returned value and its effect on the agreed output. The preview identifies how that one-sided change is applied. |
+| Only the author changed a field | Retain the author's useful work unless the actual reviewed decision says otherwise. |
+| Both chose the same resulting value | Preserve the common result and its history. |
+| Both changed the same value differently | Select the explicit local, returned or base choice for the actual comparison row. Explain the customer decision in the saved review note. |
+| A query or column was added, removed or renamed | Review the exact structural change, its source binding and dependent fields together. Use the engine's actual row identities and available choices. |
+| Numeric, null or empty policy changed | Inspect the full retained source values that this policy affects. Preserve exact numeric tokens and the distinction between missing, null and an empty string. |
+
+An alias affects the client's visible schema. Renaming it may require a corresponding client mapping or a deliberately new output contract. Changing a type or non-null rule may reject existing rows. A narrower output does not authorize adding a source field that was never in the original capture. Record those effects in the same source/output agreement and original quote scope.
+
+Keep explicit choices tied to the exact preview and current saved author state. If another operator saves a draft while review is open, refresh the comparison and inspect the changed rows before applying. Preserve the useful review notes and choices through that refresh; do not replace the whole current draft with a stale customer snapshot.
+
+A different source edition follows the original source-review course. Retain the complete incoming branch and its original observation, then inspect the actual capture and approved source selection before selecting a compatible return. A matching row count or revision is insufficient to identify the original source.
+
+### Save and apply the reviewed draft
+
+Save the chosen resolutions and explanatory note against the exact return revision and preview identity supplied by the maintained interface. That preview binds the current saved author draft. The review can be prepared before its application; inspect the saved result and current comparison when reopening it.
+
+After saving review choices, use the fresh comparison and its actual current identities for apply. The existing original request UUID and compare-and-save controls protect the accepted operation from replay and competing edits. If the response is uncertain, read the saved return/request before sending the same operation again.
+
+A successful apply creates a new saved author draft containing the reviewed result and retains the full return decision. Reopen the original draft and confirm the intended aliases, field definitions, query structure and value policies. The customer branch remains its own retained project, and the original returned source remains available for explanation or a later review.
+
+Run **Validate every row** over the actual captured observations. Resolve any actual row failure through the saved draft and agreed output contract. Then use **Freeze and select source version** with the current reviewed preview and version selection. Open the original publisher to prepare the useful new client edition under its own plan and review. Earlier source versions, publisher outputs and merchant releases stay identifiable.
+
+Applying a returned draft is separate from issuing a client edition. The original publisher and release controls remain the means of selecting and operating that edition. This preserves a clear relationship between the customer's reviewed choices, the exact validated source version and the bytes delivered to the client.
+
+### Complete the two useful customer review rounds
+
+Use the review rounds specified in the original proposal; the application does not turn each field conflict into a new commercial approval process.
+
+| Round | Complete customer outcome |
+| --- | --- |
+| Source-output review | The customer reviews the selected source fields and intended client contract, returns its saved changes, and the author reconciles them with current work. The resulting validated source version and client example demonstrate the agreed schema and value policies. |
+| Installation and handover review | The receiving maintainer operates the complete workspace on the intended installation, identifies useful operating or output changes and returns that progressed project. The author reviews those changes in the same original history and delivers the completed working handover. |
+
+The original case controls the actual number of included rounds, active implementation days, fee, milestones, defect-correction period and operator session. A new source base, unsupported field type or additional public data contract is handled as a concrete change to that same scope.
+
+During the operator handover, have the maintainer open the real returned review, explain one actual resolved choice, follow the new draft into its validated source version, locate the corresponding client edition and cold-reopen the complete workspace. Use the real commissioned data and useful agreed changes. Keep the final source/output map, original and returned workspaces, saved review, exact client files and recovery instructions together.
+
+### Exact returned-review model controls
+
+Use these methods on the existing open SeaTable authoring model. Keep the original author's current draft revision distinct from the received child's revision.
+
+| Method | Actual saved operation |
+| --- | --- |
+| `captureReturnedReview({name, expectedDraftRevision, requestId})` | Freeze the named child's incoming draft, source and relevant history. `expectedDraftRevision` is the current **author** draft revision. The saved return ID is this original request UUID. |
+| `returnedReviews()` | List saved customer returns in the original workspace. |
+| `returnedReview(id)` | Open the saved return and its current review revision, status, `choices` and `note`. |
+| `previewReturnedReview({reviewId, offset, limit})` | Compare the exact base, current local and frozen returned states. Limit is 1–100; follow `nextOffset` until it is `null`, retaining all changed rows and issues. |
+| `saveReturnedReview({reviewId, expectedReviewRevision, previewSha256, choices, note, requestId})` | Save the complete resolution map and note against that current comparison. |
+| `applyReturnedReview({reviewId, expectedReviewRevision, previewSha256, requestId})` | Atomically apply the reviewed result as a new author draft against the saved review and current local basis. |
+| `exportReturnedReview({reviewId, revision})` | Export the requested immutable review revision with the full frozen intake/ancestry, original source and saved review revisions through that point. Omit `revision` to select the interface's current saved result. |
+
+The `choices` object maps the **actual JSON Pointer values returned by the comparison** to `local`, `returned` or `base`. Save replaces the whole map. Collect and retain choices across every page; omitting a prior explicit key removes that choice. Use the returned path values exactly, including their escaping, rather than constructing them from a displayed field label.
+
+Refresh the comparison after saving choices, because its review revision and digest may change. Apply uses that fresh `expectedReviewRevision` and `previewSha256` together with its own retained original operation UUID. A replay returns the accepted operation's saved result.
+
+The complete `.stwh` workspace contains the revised records and review history. The individual return JSON is the immutable reviewed-return document; the existing whole-workspace file remains the complete editable project handover.
+
+### Customer-agent returned review
+
+Use the original provider's configured author `workspace` alias. Receive the customer's whole file through the existing private workspace tools, then select its actual named child for intake. A returned draft is reviewed against the original author; the independent child's alias remains available for its own ordinary work.
+
+| Tool | Required operating input and result |
+| --- | --- |
+| `merchant_seatable_return_capture` | `workspace`, received `name`, current author `expectedDraftRevision` and original `requestId`; freezes the saved incoming draft and full ancestry. |
+| `merchant_seatable_returns` | `workspace`; lists retained return summaries. |
+| `merchant_seatable_return` | `workspace` and `reviewId`; reads the saved decision record, complete choices and note. |
+| `merchant_seatable_return_preview` | `workspace`, `reviewId` and optional `offset`/`limit` of 1–100; read every page through terminal `nextOffset`. |
+| `merchant_seatable_return_review` | `workspace`, `reviewId`, `expectedReviewRevision`, `previewSha256`, full `choices`, useful `note` and original `requestId`; saves the reviewed map and returns its new revision. |
+| `merchant_seatable_return_apply` | `workspace`, `reviewId`, fresh `expectedReviewRevision`/`previewSha256` and original `requestId`; applies the saved result as a draft. |
+| `merchant_seatable_return_read` | `workspace`, `reviewId` and explicit saved `revision`; retains and reads the complete immutable review in chunks. |
+
+These operations preserve the same native revisions, full-map replacement, source binding and request recovery as the model and browser. Save the complete choices after reading every page, then obtain the new preview identity before applying. Continue ordinary full-row validation and source-version/publication controls after the draft is applied.
+
+For the frozen review download, retain the returned `readId`, complete-file `expectedSha256`, offset and chunk result. Continue the same saved revision through the final chunk and release the retained descriptor with `merchant_seatable_packet_release`. The review contains private original source history and operator decisions; keep it with the complete customer workspace and approved receiving operator.
+
+### Exact browser and command-line review controls
+
+Open **Returned review** in the original author's application after saving useful edits in **Review columns**. Its receiving selector uses the saved independent children from the existing whole-workspace handover.
+
+| Control | Actual customer-review operation |
+| --- | --- |
+| **Capture returned draft** | Freeze the selected received child's saved source, draft and ancestry under its original request UUID. |
+| **Open returned review** | Select an already saved return and its current decision record. |
+| **Refresh comparison** | Read the current common, author and frozen returned states. Save/apply remains tied to that exact result. |
+| **Previous changes** / **Next changes** | Read the complete field comparison, at most 100 rows per page. Choices on other pages stay in the same complete map. |
+| **Save review decisions** | Save the complete explicit choice map and useful note, then read the new saved review revision and comparison. |
+| **Apply reviewed draft** | Apply the saved, applicable review to the original draft. Save unsaved author column edits before this operation. |
+| **Download frozen review** | Export the exact displayed saved review revision with its complete frozen intake and review history. |
+| **Download local choices** | Retain the complete browser choices envelope when recovering unsaved or stale decisions. |
+
+Conflict selectors are **Keep current author value**, **Use returned value** and **Use common original value**. An empty selection removes an explicit choice. Order rows select an entire saved order; inspect the resulting query and column order as part of the public contract.
+
+When local choices were made against an older comparison, the browser displays **Local decisions need reconciliation**. **Use saved review** deliberately replaces the local editor with the current saved decisions. **Carry local choices to current comparison** reads every current comparison page, retains choices for remaining paths, reports excluded choices and keeps the prior full map in local history. Review and save the carried choices before applying. A local storage error leaves the decision unsaved; preserve the local download and the existing request instead of clearing browser storage.
+
+The installed CLI uses the same source model:
+
+~~~text
+return-capture --directory PRIVATE_DIR --name RECEIVED_NAME --expected-revision N --request UUID
+returns --directory PRIVATE_DIR
+return --directory PRIVATE_DIR --review UUID
+return-preview --directory PRIVATE_DIR --review UUID [--offset N] [--limit 1..100]
+return-review --directory PRIVATE_DIR --review UUID --expected-review-revision N --preview-sha256 SHA --choices CHOICES.json --note TEXT --request UUID
+return-apply --directory PRIVATE_DIR --review UUID --expected-review-revision N --preview-sha256 SHA --request UUID
+return-export --directory PRIVATE_DIR --review UUID [--revision N] --out FROZEN_REVIEW.json
+~~~
+
+Invoke these subcommands through the same installed `seatable-workspace` entry or original `workspace/cli.mjs`. `--expected-revision` on capture names the current author draft. The review and apply commands take the saved review revision and the actual fresh comparison digest. Choose each write UUID once and keep its exact command input with the same customer case.
+
+The CLI choices file is the **full JSON-pointer-to-choice object**. A browser download is an envelope containing a `choices` property; extract that property for `--choices`. Use the actual paths in the comparison, including escaping and any order row. An empty map is `{}`. Omitting a previously explicit entry removes it. Collect all pages before saving, then refresh the preview to obtain the new review revision and digest for apply.
+
+The original `operation` and `resume` subcommands use `--directory PRIVATE_DIR --request UUID`. In the browser, **Check original receipt**, **Resume retained request** and **Retry identical request** preserve the saved action after an uncertain response. Reconcile its actual receipt before treating a stale comparison as a new action. A failed receipt read leaves that same request pending; a host-confirmed pre-accept conflict allows a deliberate fresh review action after the current comparison is read.
+
+The return export writes a complete private JSON file. It accepts an existing identical file and rejects an existing file with different bytes. Pin `--revision` for the reviewed edition and choose a different output path for another saved revision. Keep this readable decision handover alongside the full editable `.stwh` archive.
+
 
 ## Exact installed transfer controls
 
@@ -193,7 +331,7 @@ Use one coherent authorized customer source and the original SeaTable operation.
 4. Prepare the complete editable workspace handover. Retain its exact input, original files, draft/review/version and publisher/release history.
 5. Receive that whole workspace into an independent private installation through the maintained receiving workflow. Reopen it through the actual supported browser/CLI/agent entry.
 6. Make a useful receiving-only continuation, save it, then reopen the earlier incoming handover and confirm the later work remains. Continue an actual interrupted request through its original UUID when that state occurs.
-7. Export the progressed receiving workspace and open it with another operator. Inspect the prior source/publication and current result, continue one reviewed operation and cold-reopen the same saved project.
+7. Export the progressed receiving workspace and receive it under a named child of the original author. Freeze its returned draft, compare it with the actual common record and current author work, save explicit conflict decisions and apply the reviewed draft. Validate every row, prepare the agreed new client edition and cold-reopen the same complete project with another operator.
 8. Open the exact source UI, receiving preview, saved-state/error screens and public customer files at desktop/screenshare width and 390 pixels. Operate every important control and LOOK at the rendered results. Repair unreadable or overflowing source tables, long values, disabled labels, file controls and narrow action layouts in this product.
 
 The acceptance record identifies the actual source/installation, original and receiving workspace, selected draft/version/publication, retained request IDs, delivered files and named operator observations. Capturing a screenshot without looking at it does not complete the final operating stage.
@@ -206,7 +344,7 @@ The implementation work remains scoped in its original quote. The following six 
 | --- | --- | --- |
 | Source and output agreement | Actual source map, permissions, query/view, scalar output, pilot limits, reviewer and receiving host. | The source/output contract describes the intended useful delivery and its approval. |
 | Complete source configuration | Private credential references, source metadata, actual SQL/view capture and original recovery. | Complete retained observations preserve their source IDs, values and completeness semantics. |
-| Review and immutable editions | Staff aliases/value policies, full validation, reviewer decisions and saved source versions. | The reviewer can reopen the approved edition and explain its public fields. |
+| Review and immutable editions | Staff aliases/value policies, full validation, independently returned customer choices and saved source versions. | The reviewer can reconcile a customer's saved draft with concurrent author changes, reopen the approved edition and explain its public fields. |
 | Client delivery profile | Original publisher plan, agreed CSV/JSON output and actual client-read example. | The client reads the complete correct edition; earlier output remains identifiable. |
 | Installation and recovery | Selected runtime, independent whole-workspace receiving, real host bindings and interrupted-work continuation. | The receiving operator continues useful work and cold-reopens it without losing original history. |
 | Operator handover | Complete source/configuration, source and customer files, private recovery inputs, practical teaching and agreed acceptance record. | The named maintainer independently operates the source-to-delivery workflow and returns a progressed project. |
@@ -226,7 +364,7 @@ A complete handover includes the opening guide, actual installed source/runtime 
 | Original publisher or release action has an uncertain result | Inspect its saved native request/state and continue through that engine's existing recovery. |
 | Recipient lacks a private credential or runtime reference | Configure the actual destination reference through its original host mechanism. The retained source history remains available. |
 | Source and public output disagree | Inspect the full original capture, projection, reviewed version and original publication; correct the selected contract through a new explicit review. |
-| A returned workspace diverges from the author's current project | Preserve both complete projects and choose the intended operating continuation through the maintained receiving workflow. |
+| A returned workspace diverges from the author's current project | Preserve both complete workspaces, compare the frozen return with the actual common draft and current author choices, then apply the reviewed result as a new draft through the maintained return controls. |
 | Actual rendering is poor | Repair the exact outgoing source and repeat only the affected complete controls/export/reopen course. |
 
 ## Fit to the existing SCF programme
