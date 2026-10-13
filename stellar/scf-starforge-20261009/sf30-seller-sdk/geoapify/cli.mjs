@@ -10,6 +10,7 @@ const usage='Address quality workspace\n\n'+
  'Actions: '+[...GEOAPIFY_ACTIONS].join(', ')+'\n\n'+
  'Keep the first original source in intake.import; source.stage/history/compare/activate retain following editions and explicit decision reuse. Source selection is independent from the selected frozen customer edition. Provider responses retain original generic-batch input IDs and full candidates. '+
  'provider.prepare records the explicit job options and input limit; provider.run uses its original ID and SHA-256 once. provider.poll continues the returned job after its saved poll time; provider.import joins an actual original acknowledgment or result. '+
+ 'customer.issue freezes original source groups for an offline reviewer; customer.export retains complete HTML/JSON; customer.receive retains the original returned draft; customer.preview shows baseline/current/customer differences; customer.adopt requires an explicit current preview and resolutions or readyAll. issue/adopt retain requestId for exact uncertain-result recovery. '+
  'Mutations require expectedRevision from status. The optional API key is read from the selected environment variable and stays outside saved state.\n';
 function parse(args){
  const [command,...rest]=args;if(!['serve','status','act'].includes(command))throw new TypeError(usage);

@@ -21,3 +21,12 @@ export interface GeoapifySourceStage {format:'csv'|'json';name:string;provenance
 export interface GeoapifySourceSelection {sourceSha256:string;expectedComparisonSha256?:string;reuseQueryIds?:string[];reuseAllEligible?:boolean;reviewer?:string;note?:string;expectedRevision:number}
 export interface GeoapifySourceComparisonQuery {sourceSha256:string;offset?:number;limit?:number;status?:string;search?:string;reuseOffset?:number;reuseLimit?:number}
 export interface GeoapifyIntakeGuard {expectedRevision:number;expectedIntakeSha256?:string}
+
+export interface GeoapifyCustomerIssueInput {requestId:string;editionId:string;title:string;recipient:string;expectedRevision:number}
+export interface GeoapifyCustomerReviewPage {offset?:number;limit?:number}
+export interface GeoapifyCustomerReviewResolution {queryId:string;choice:'customer'|'current'|'skip';expectedCurrentSha256:string}
+export type GeoapifyCustomerAdoptInput={requestId:string;returnId:string;expectedPreviewSha256:string;expectedIntakeSha256:string;reviewer:string;note:string;expectedRevision:number}&({resolutions:GeoapifyCustomerReviewResolution[];readyAll?:never}|{readyAll:true;resolutions?:never});
+export interface GeoapifyCustomerReceiveInput {text?:string;path?:string;expectedRevision:number}
+export interface GeoapifyCustomerIssue {id:string;requestId:string;createdAt:string;title:string;recipient:string;editionId:string;intakeSha256:string;projectSha256:string;request:RetainedFile;project:RetainedFile;working:RetainedFile;html:RetainedFile}
+export interface GeoapifyCustomerReturn {id:string;issueId:string;returnedAt:string;receivedAt:string;reviewer:string;note:string;projectSha256:string;returnSha256:string;choiceCount:number;draftRevision:number;file:RetainedFile;html?:RetainedFile}
+export type GeoapifyCustomerPreviewStatus='NO_CUSTOMER_CHOICE'|'SOURCE_CHANGED'|'RESPONSE_CHANGED'|'ALREADY_CURRENT'|'READY'|'CONFLICT';
