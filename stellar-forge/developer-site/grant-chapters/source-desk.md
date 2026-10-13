@@ -1,0 +1,53 @@
+## Customer source preparation and installed delivery
+
+The Installation Source Desk turns a customer's complete retained source into an operating workshare inside the existing Grant Operations application. A customer job arrives with its original documents, scope, plan, responsible people and receiving requirements. The operator prepares that whole job, reviews its native workorder and optional operating calendar, then attaches the source and phases to the original Installation. The same case continues through delivery and later review.
+
+### Customer task and useful output
+
+The product addresses the work between choosing a customer and having an installation that another operator can run. Its output is a complete prepared source edition, the original Workshare inputs, the reviewed Installation document, human-readable operating instructions and the selected customer programme. Complete original files and prepared downloads remain with the source draft. The operator can reopen the preparation, inspect its original inputs and receive it into a restored workspace.
+
+The current catalogue contains 28 complete customer profiles, including query results, air-quality reports, supplier catalogues, commissioning collections, mobility review, public-information publication, procurement work, Rumble Fish Prices and Amberdata research. Each profile supplies the customer task, source requirements, phase sequence and receiving expectations. The actual case supplies the deployment, original agreement, payer, merchant, buyer and accountable receiver. Profiles retain those distinct roles when the work is prepared and attached.
+
+A useful recurring task is defined by its complete customer output and selected source interval. Paging, another download format or reopening an acquired edition preserves that same task. A later source edition or separately requested computation creates the next task. The customer-programme engine joins the complete selected calendar, commercial terms and native task budget to the Installation; it retains closed source intervals that cross weekends.
+
+### Operator workflow
+
+The existing Installation view contains the Source preparation workspace. Operators can upload individual complete files or a whole selected file collection, retain the original provenance, inspect documents, map their source roles and choose the installed customer profile. Working copies retain unfinished edits separately from saved revisions. Earlier preparations retain their complete original mapping even after a later draft changes.
+
+A saved Delivery handover is received from its full `dealscout.delivery-handover.v1` snapshot. The handover reader verifies the original customer case, Workshare, scope, board, plan and every delivered phase before passing the complete source and plan into the maintained Workshare loader. Source-selected effort is retained with its original phase pointers. A source draft can carry up to 20 whole customer handovers.
+
+A commissioning capture can arrive in its original native USTAR handover. The archive receiver retains that archive and verifies the complete ordinary file population against the merchant manifest, capture and review. The operator selects its actual project, Installation and phase mapping, then attaches the retained capture through the existing Installation writer. Prepared native commands and interrupted requests are reconciled by their original request identities.
+
+For a customer programme, the operator reviews the complete commercial document, useful-task calendar and original bindings with the native workorder. A programme change compares the original selected programme, the proposed edition and the current saved Installation. This supports deliberate changes while retaining work another operator has already saved.
+
+### Installed product and receiving
+
+The desktop workspace, native Python client and Node entry point use the original Operations transaction and case. The managed Python and Node launch inventories now select the complete Source Desk runtime, commissioning client, programme engines, native commands and all 28 current profiles. The additive source join preserves every preceding selected module, including the whole-file collection intake and current completion and source-table work.
+
+The existing Staff Installation backup starts from those reviewed launch inventories and collects the original complete source dependencies. Restore receives the actual source, scenario and database together. The operator can reopen the original case, source draft and Installation, download its prepared files and continue the original pending request.
+
+The source-owned receiving programme includes the complete customer handover, native phase preparation, optional programme, browser operation, whole output downloads and restored workspace. The current whole receiving operation is retained for the original accepting worker, with the full application source and original saved customer case. Source publication and the actual returned receiving result keep their respective original identities in the cumulative application.
+
+### Commercial and grant contribution
+
+Source preparation is a reusable installation and delivery capability within the existing funded work. It makes an agreed customer task concrete: the payer and merchant remain identified, the complete source and terms travel with the task, a named receiver can open the output, and later work remains tied to the original Installation. The application's existing payment, task outcome and delivery records supply the commercial activity.
+
+This chapter uses the existing USD 38,000, 400-hour, 150-day programme and its six-package structure. Its independent source declaration is received by the maintained grant composer when this exact chapter is present. The existing submission workspace retains the whole reviewer edition and all other product chapters.
+
+### Complete source editions
+
+The installation selection and operator guide are pinned to the complete additive source commit. The original Source Desk, handover, programme, capture, catalogue and receiving sources below select their complete merged editions.
+
+- [Installed operation and source handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/93b7335efeb14665d1dce887c21d31258df04a0e/stellar/scf_2026/sf47_budget_model/workspace/SOURCE_DESK_INSTALLATION.md)
+- [Python managed source selection](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/93b7335efeb14665d1dce887c21d31258df04a0e/stellar/scf_2026/sf47_budget_model/workspace/managed_launch.py)
+- [Node managed source selection](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/93b7335efeb14665d1dce887c21d31258df04a0e/stellar/scf_2026/sf47_budget_model/workspace/launch.mjs)
+- [Original Source Desk and Installation adapter](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1d91db51af1b721ab979907ae3739fcacc965200/stellar/scf_2026/sf47_budget_model/workspace/operations_installation_sources.py)
+- [Complete operator workspace and saved working copies](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1d91db51af1b721ab979907ae3739fcacc965200/stellar/scf_2026/sf47_budget_model/workspace/operations_installation_sources.mjs)
+- [Original whole-file collection intake](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1d91db51af1b721ab979907ae3739fcacc965200/stellar/scf_2026/sf47_budget_model/workspace/operations_installation_source_collection.mjs)
+- [Complete Delivery handover reader](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1d91db51af1b721ab979907ae3739fcacc965200/stellar/scf_2026/sf49_data_commissioning/installation-workorders/handover-inputs.py)
+- [Customer programme and original Installation change composer](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1d91db51af1b721ab979907ae3739fcacc965200/stellar/scf_2026/sf49_data_commissioning/installation-workorders/customer-programme-core.mjs)
+- [Complete merchant commissioning archive receiver](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1d91db51af1b721ab979907ae3739fcacc965200/stellar/scf_2026/sf47_budget_model/workspace/operations_installation_commissioning_archive.py)
+- [Original workspace native operations and reconciliation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1d91db51af1b721ab979907ae3739fcacc965200/stellar/scf_2026/sf47_budget_model/workspace/installation_source_desk_client.py)
+- [Whole original source and installed receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1d91db51af1b721ab979907ae3739fcacc965200/stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-receiving.py)
+- [Complete browser receiving and retained output comparison](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1d91db51af1b721ab979907ae3739fcacc965200/stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-receiving.mjs)
+- [Complete customer profiles and preparation engines](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/1d91db51af1b721ab979907ae3739fcacc965200/stellar/scf_2026/sf49_data_commissioning/installation-workorders)
