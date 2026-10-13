@@ -270,7 +270,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
     view.cases=(await api('/api/operations')).cases;
     let retained;try{retained=sessionStorage.getItem('sf47.operations.case.'+plan.id);}catch{}
     const target=prefer||view.cases.find(row=>row.id===retained)?.id||view.cases[0]?.id;
-    if(view.current?.program.id!==target){view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;view.tab=target?navigationSession(target).activeSection:'overview';}
+    if(view.current?.program.id!==target){view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;view.tab=prefer===route?.caseId&&route?.tab==='amendments'&&lead?'amendments':target?navigationSession(target).activeSection:'overview';}
     view.current=target?await api('/api/operations/'+target):null;
     if(target)try{sessionStorage.setItem('sf47.operations.case.'+plan.id,target);}catch{}
     view.events=[];view.nextAfter=null;render();if(view.current)await observePlanningCase(view.current);

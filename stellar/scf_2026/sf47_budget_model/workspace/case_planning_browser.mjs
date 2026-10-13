@@ -79,7 +79,15 @@ async function openCase(tab='overview'){
   if(!(await page.locator('[name=caseSelect]').count()))await click('[data-tab=operations]');
   const choice=page.locator('[name=caseSelect]');await choice.waitFor();
   if(await choice.inputValue()!==input.caseId){await choice.selectOption(input.caseId);await waitFor(()=>choice.inputValue().then(v=>v===input.caseId),'Select original case');}
-  await click('[data-ops-tab="'+tab+'"]');
+  const label={overview:'Plan / actual',amendments:'Plan amendments',calendar:'Delivery calendar',completion:'Tranche completion'}[tab];
+  const navigation=page.locator('[data-ops-navigation]');
+  let candidates=page.locator('[data-ops-tab="'+tab+'"]');
+  if(await navigation.count()){
+    const browse=navigation.getByRole('button',{name:'Browse sections',exact:true});
+    if(await browse.count()&&await browse.isVisible()&&await browse.getAttribute('aria-expanded')!=='true')await click(browse);
+    if(label)candidates=navigation.getByRole('button',{name:label,exact:true});
+  }
+  await waitFor(async()=>{for(const control of await candidates.all())if(await control.isVisible())return control;return null;},'Open original '+(label||tab)+' section').then(click);
 }
 async function storedCaseDraft(){
   return page.evaluate(async expected=>{
