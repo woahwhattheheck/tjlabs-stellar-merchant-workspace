@@ -126,6 +126,37 @@ export const FRED_WORKSPACE_HELP = [
   '  buy --publication SHA --intent ORIGINAL_ID',
   '  recover --publication SHA --intent ORIGINAL_ID',
   '',
+  'Research catalogue, issued products and paid receiving:',
+  '  research-catalogue [--query TEXT --topic TOPIC --geography AREA --status STATUS --due true|false]',
+  '      [--offset 0 --limit 20 --revision N --as-of ORIGINAL_ISO_TIMESTAMP]',
+  '  research-taxonomy --section topics|geographies [--offset 0 --limit 20 --revision N]',
+  '  research-entry --entry ID --section versions|sources|reviews [--revision N --as-of ISO --offset 0 --limit 20]',
+  '  research-products [--query TEXT --offset 0 --limit 20 --revision N]',
+  '  research-product --product ID --section versions|editions|requirements|coverage',
+  '      [--revision N --as-of ORIGINAL_ISO_TIMESTAMP --offset 0 --limit 20]',
+  '  research-entry-save --id ID --revision N --definition-file COMPLETE_DEFINITION.json',
+  '  research-import --id ID --revision N --input CATALOGUE_ALIAS --sha256 ORIGINAL_SHA',
+  '  research-source-acquire --id ID --revision N --entry ID --definition-id ORIGINAL_SHA',
+  '  research-source-upload --id ID --revision N --entry ID --definition-id ORIGINAL_SHA',
+  '      --input SOURCE_ALIAS --sha256 ORIGINAL_SHA --filename ORIGINAL_NAME --content-type ORIGINAL_TYPE',
+  '      [--retrieved-at ORIGINAL_ISO_TIMESTAMP]',
+  '  research-review --id ID --revision N --snapshot SHA --decision ACCEPT|NEEDS_WORK|REJECT',
+  '      --reviewer ORIGINAL_REVIEWER --note-file COMPLETE_NOTE.txt',
+  '  research-product-save --id ID --revision N --definition-file COMPLETE_PRODUCT.json',
+  '  research-product-issue --id ID --revision N --product ID --issued-by ORIGINAL_ISSUER [--note-file TEXT]',
+  '  research-resume --id ORIGINAL_ID --revision ORIGINAL_N --action ORIGINAL_RESEARCH_ACTION',
+  '  research-commerce --section publications|receivings [--offset 0 --limit 20 --revision N]',
+  '  research-publication --publication SHA --section files|sources|requests [--offset 0 --limit 20 --view-sha SHA]',
+  '  research-publish --id ID --revision N --product ID --edition SHA --profile HOST_PROFILE [--note-file TEXT]',
+  '  research-receive --id ID --revision N --input RESEARCH_PACKAGE_ALIAS --sha256 ORIGINAL_SHA',
+  '      --receiving-directory SEPARATE_ABSOLUTE_CUSTOMER_PROJECT',
+  '  research-commerce-resume --id ORIGINAL_ID --revision ORIGINAL_N --action research-publish|research-receive',
+  '  research-purchase-receive --publication SHA --intent ORIGINAL_ID --purchase-sha ORIGINAL_PREPARED_SHA',
+  '      [--receiving-directory ORIGINAL_ABSOLUTE_CUSTOMER_PROJECT]',
+  '  research-received --publication SHA --intent ORIGINAL_ID --section files|sources [--offset 0 --limit 20 --view-sha SHA]',
+  '  buy --publication SHA --intent ORIGINAL_ID --purchase-sha ORIGINAL_PREPARED_SHA',
+  '  recover --publication SHA --intent ORIGINAL_ID --purchase-sha ORIGINAL_PREPARED_SHA',
+  '',
   'Complete retained downloads and local project receiving:',
   '  download --kind source --capture SHA --out NEW_FILE [--sha256 FILE_SHA]',
   '  download --kind release-source --release-capture SHA --out NEW_CAPTURE.json [--sha256 FILE_SHA]',
@@ -138,6 +169,13 @@ export const FRED_WORKSPACE_HELP = [
   '  download --kind briefing --review SHA --format html|csv|json|manifest --out NEW_FILE',
   '  download --kind briefing-successor --successor SUCCESSOR_ID --format html|csv|json --out NEW_FILE',
   '  download --kind customer --publication SHA --intent ORIGINAL_ID --out NEW_FILE',
+  '  download --kind research-source --snapshot SHA --revision N --out ORIGINAL_SOURCE',
+  '  download --kind research-catalogue --revision N --out ORIGINAL_CATALOGUE.csv',
+  '  download --kind research-entry --entry ID --revision N --out COMPLETE_ENTRY.json',
+  '  download --kind research-product --product ID [--edition SHA] --revision N --out COMPLETE_PRODUCT.json',
+  '  download --kind research-publication --publication SHA --file ORIGINAL_ADVERTISED_PATH --out NEW_FILE',
+  '  download --kind research-received --publication SHA --intent ORIGINAL_ID [--edition SHA]',
+  '      --file ORIGINAL_RECEIVED_PATH --out NEW_FILE',
   '  download --kind project --out NEW_PROJECT_BUNDLE.json',
   '  bundle-inspect --source ORIGINAL_PROJECT_BUNDLE.json [--sha256 FILE_SHA]',
   '  receive --source ORIGINAL_PROJECT_BUNDLE.json --project EMPTY_PRIVATE_DIRECTORY [--sha256 FILE_SHA]',
@@ -161,7 +199,11 @@ const remote = new Set(['workspaces','status','inputs','input-inspect','records'
   'ddp-sources','ddp-crosswalk','ddp-crosswalk-import','ddp-crosswalk-acquire','ddp-package','ddp-package-import',
   'ddp-migration-preview','ddp-migration-save','ddp-migration','ddp-migration-acquire','ddp-receiving',
   'handovers','handover','handover-export','handover-upload','handover-inspect','handover-receive','handover-open',
-  'published-operations','published-operation','published-start','published-report','published-rows','published-file-read']);
+  'published-operations','published-operation','published-start','published-report','published-rows','published-file-read',
+  'research-catalogue','research-taxonomy','research-entry','research-products','research-product',
+  'research-entry-save','research-import','research-source-acquire','research-source-upload','research-review',
+  'research-product-save','research-product-issue','research-resume','research-commerce','research-publication',
+  'research-publish','research-receive','research-commerce-resume','research-purchase-receive','research-received']);
 const allowed = new Set(['connection','workspace','args-file','out','console-url-file','project-id','binding-sha','label',
   'inputs-file','profiles-file','payment-file','merchant-origin','merchant-path','kind','id','capture','series','offset','limit','revision','before','after','input','sha256',
   'captures','review','profile','pending','publication','intent','query','file','accept','view-sha','selection-file',
@@ -170,7 +212,8 @@ const allowed = new Set(['connection','workspace','args-file','out','console-url
   'release-capture','watch','plan','before-release','after-release','section','as-of','watch-series',
   'observation-start','observation-end','baseline-as-of','catch-up','page-size','max-rows',
   'crosswalk','package','migration','receiving','package-series','release','frequency','bookmark','url','decisions-file','bindings-file',
-  'comparison','result-status','series-id','source-mode','metadata-input','metadata-file-sha256','metadata-sha256','captured-at','publication-ids','plan-input','plan-file-sha256','use-current-plan']);
+  'comparison','result-status','series-id','source-mode','metadata-input','metadata-file-sha256','metadata-sha256','captured-at','publication-ids','plan-input','plan-file-sha256','use-current-plan','entry','product','edition','definition-id','snapshot','decision','reviewer','issued-by',
+  'filename','content-type','retrieved-at','definition-file','topic','geography','status','due','action','receiving-directory','purchase-sha']);
 function parse(values) {
   const argv = [...values], command = argv[0] && !argv[0].startsWith('--') ? argv.shift() : 'help', flags = {};
   while (argv.length) {
@@ -263,6 +306,10 @@ async function toolArgs(flags, workspace) {
     'package-series':'seriesId', release:'release', frequency:'frequency', bookmark:'bookmark', url:'url',
     comparison:'comparisonId', 'result-status':'status', 'series-id':'seriesId',
     'captured-at':'capturedAt','plan-input':'planInput','plan-file-sha256':'planFileSha256',
+    entry:'entryId',product:'productId',edition:'editionId','definition-id':'definitionId',snapshot:'snapshotId',
+    decision:'decision',reviewer:'reviewer','issued-by':'issuedBy',filename:'filename','content-type':'contentType',
+    'retrieved-at':'retrievedAt',topic:'topic',geography:'geography',status:'status',action:'action',
+    'receiving-directory':'receivingDirectory','purchase-sha':'expectedPurchaseSha256',
     'source-mode':'sourceMode', 'metadata-input':'metadataInput', 'metadata-file-sha256':'metadataFileSha256', 'metadata-sha256':'metadataSha256' };
   for (const [flag, key] of Object.entries(strings)) if (flags[flag] !== undefined) put(key, flags[flag]);
   for (const [flag, key] of Object.entries({ offset:'offset', limit:'limit', revision:'expectedRevision', accept:'acceptIndex', 'page-size':'pageSize', 'max-rows':'maxRows' }))
@@ -271,10 +318,14 @@ async function toolArgs(flags, workspace) {
     if(!['true','false'].includes(flags['use-current-plan']))fail('Use --use-current-plan true or false.');
     put('useCurrentPlan',flags['use-current-plan']==='true');
   }
+  if (flags.due !== undefined) {
+    if (!['true','false'].includes(flags.due)) fail('Use --due true or false.');
+    put('due', flags.due === 'true');
+  }
   if (flags['publication-ids'] !== undefined) put('publicationIds', flags['publication-ids'] ? flags['publication-ids'].split(',') : []);
   if (flags.captures !== undefined) put('captureIds', flags.captures.split(','));
   if (flags['watch-series'] !== undefined) put('series', flags['watch-series'].split(','));
-  for (const [flag, key] of Object.entries({ 'selection-file':'selection', 'policy-file':'policy', 'previous-file':'previous', 'briefing-file':'briefing', 'window-file':'window' }))
+  for (const [flag, key] of Object.entries({ 'selection-file':'selection', 'policy-file':'policy', 'previous-file':'previous', 'briefing-file':'briefing', 'window-file':'window', 'definition-file':'definition' }))
     if (flags[flag] !== undefined) put(key, await jsonFile(flags[flag]));
   for (const [flag, key] of Object.entries({ 'decisions-file':'decisions', 'bindings-file':'bindings' }))
     if (flags[flag] !== undefined) put(key, await jsonArrayFile(flags[flag]));

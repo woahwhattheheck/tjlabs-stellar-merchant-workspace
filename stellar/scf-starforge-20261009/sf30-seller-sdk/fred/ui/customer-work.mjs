@@ -2,7 +2,7 @@
 const SCHEMA = 'stellar-forge.fred-customer-work.v1';
 const DRAFT = 'stellar-forge.fred-customer-draft.v1';
 const OPERATION = 'stellar-forge.fred-customer-operation.v1';
-const actions = new Set(['prepare','buy','recover','receive-county-purchase']);
+const actions = new Set(['prepare','buy','recover','receive-county-purchase','receive-research-purchase']);
 const clone = value => JSON.parse(JSON.stringify(value));
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const identifier = /^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$/;

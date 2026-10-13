@@ -258,6 +258,9 @@ def main():
     parser.add_argument("--research-agent", action="store_true",
                         help="Operate and independently receive the complete customer Research agent workflow")
     parser.add_argument("--mtc-originals", help="Complete original MTC forecast and FAQ directory for this same research project")
+    parser.add_argument("--research-commerce-selection",
+                        help="Continue this actual issued Research product through editable customer and optional paid receiving")
+    parser.add_argument("--pdftoppm", default="pdftoppm")
     parser.add_argument("--node", default="node")
     parser.add_argument("--chromium", required=True)
     parser.add_argument("--playwright-module", required=True)
@@ -271,6 +274,8 @@ def main():
           "The customer agent continues the complete original research catalogue.")
     check(not options.mtc_originals or options.research_agent,
           "Continue the complete original Research customer-agent course before MTC source receiving.")
+    check(not options.research_commerce_selection or options.research_agent,
+          "Continue the original complete Research catalogue and installed customer-agent course before product receiving.")
     active_packet, active_packet_bytes = packet, packet_bytes
     if options.source_edition_packet:
         active_packet, active_packet_bytes = read_packet(options.source_edition_packet, options.source_edition_sha256)
@@ -365,6 +370,10 @@ def main():
               "Continue the original customer-agent course with --research-agent.")
         check(not mtc_started or options.mtc_originals,
               "Continue the original MTC source course with --mtc-originals and its retained original directory.")
+        commerce_started = state.get("researchCommerce") or any(
+            stage.get("name") == "complete-research-commerce-receiving" for stage in state["stages"])
+        check(not commerce_started or options.research_commerce_selection,
+              "Continue the original Research product receiving with its retained selection.")
         state.update({"lastStartedAt": now(), "status": "running", "sourceEdition": source_edition,
                       "runtime": {"node": versions, "python": sys.version, "chromium": str(browser),
                                   "playwright": str(playwright)}})
@@ -512,6 +521,101 @@ def main():
                     "bytes": len(read_regular(mtc_result_path)), "sha256": sha(read_regular(mtc_result_path))},
                     "operation": mtc_input["operation"], "projectId": after_mtc["state"]["id"],
                     "independentReceiving": received_mtc}
+            if options.research_commerce_selection:
+                commerce_directory = private_directory(root / "research-commerce")
+                commerce_selection, commerce_selection_identity = selected_input(
+                    options.research_commerce_selection, inputs / "research-commerce-selection.json")
+                allowed = {"schema", "productId", "editionId", "buyerConfig", "paymentFile", "origin",
+                           "path", "facilitator", "merchantPort", "acceptIndex", "allowLocalFacilitator"}
+                check(isinstance(commerce_selection, dict) and set(commerce_selection) <= allowed and
+                      commerce_selection.get("schema") == "commons.econsult-research-commerce-selection.v1" and
+                      isinstance(commerce_selection.get("productId"), str),
+                      "Select the complete original Research product receiving input.")
+                selection_path = commerce_directory / "original-selection.json"
+                source_project = root / "research" / "project"
+                live_project = json.loads(read_regular(source_project / "project.json"))
+                before_commerce = json.loads(read_regular(final_project))
+                check(live_project["id"] == before_commerce["state"]["id"],
+                      "Continue the actual original company economic project.")
+                selected_product = next((item for item in live_project.get("research", {}).get("products", [])
+                                         if item["id"] == commerce_selection["productId"]), None)
+                check(selected_product and selected_product["editions"],
+                      "Select an actually issued Research product from this original company project.")
+                if selection_path.exists():
+                    selection = json.loads(read_regular(selection_path))
+                    check(selection.get("input") == commerce_selection_identity and
+                          selection.get("projectId") == live_project["id"] and
+                          selection.get("productId") == selected_product["id"],
+                          "Continue the frozen original product and complete input selection.")
+                else:
+                    wanted = commerce_selection.get("editionId")
+                    selected_edition = next((item for item in selected_product["editions"] if item["id"] == wanted), None) if wanted else selected_product["editions"][-1]
+                    check(selected_edition, "Choose the issued Research edition retained in this original project.")
+                    selection = {"input": commerce_selection_identity, "projectId": live_project["id"],
+                                 "productId": selected_product["id"], "editionId": selected_edition["id"]}
+                    retain_exact(selection_path, (json.dumps(selection, ensure_ascii=False, indent=2) + "\n").encode())
+                check(any(item["id"] == selection["editionId"] for item in selected_product["editions"]),
+                      "Retain the selected original issued Research edition.")
+                browser_config = {"node": str(pathlib.Path(node).absolute()), "chromium": str(launcher),
+                                  "playwrightModule": str(playwright)}
+                pdf_renderer = shutil.which(options.pdftoppm) or options.pdftoppm
+                pdf_renderer = pathlib.Path(pdf_renderer).resolve(strict=True)
+                check(pdf_renderer.is_file() and os.access(pdf_renderer, os.X_OK),
+                      "Use the installed PDF renderer for the complete outgoing attachments.")
+                browser_config["pdftoppm"] = str(pdf_renderer)
+                browser_config_path = commerce_directory / "browser-config.json"
+                retain_exact(browser_config_path, (json.dumps(browser_config, ensure_ascii=False, indent=2) + "\n").encode())
+                commerce_command = [node, str(product / "fred/research/commerce-journey.mjs"),
+                    "--directory", str(commerce_directory), "--project", str(source_project),
+                    "--product", selection["productId"], "--edition", selection["editionId"],
+                    "--operation", OPERATION + "-RESEARCH-COMMERCE",
+                    "--browser-course", str(product / "fred/research/commerce-browser.mjs"),
+                    "--browser-config", str(browser_config_path)]
+                paid_fields = {"buyerConfig": "buyer-config", "paymentFile": "payment", "origin": "origin",
+                               "facilitator": "facilitator", "merchantPort": "merchant-port"}
+                present = [name in commerce_selection for name in paid_fields]
+                check(not any(present) or all(present), "Supply all original native payment and Buyer selections together.")
+                for name, flag in paid_fields.items():
+                    if name in commerce_selection:
+                        commerce_command += ["--" + flag, str(commerce_selection[name])]
+                for name, flag in (("path", "path"), ("acceptIndex", "accept-index")):
+                    if name in commerce_selection:
+                        commerce_command += ["--" + flag, str(commerce_selection[name])]
+                check("allowLocalFacilitator" not in commerce_selection or
+                      isinstance(commerce_selection["allowLocalFacilitator"], bool),
+                      "Choose the original local facilitator setting explicitly.")
+                if commerce_selection.get("allowLocalFacilitator"):
+                    commerce_command.append("--allow-local-facilitator")
+                commerce_result_path = commerce_directory / "result.json"
+                complete_stage("complete-research-commerce-receiving", commerce_command, commerce_result_path,
+                               root, lock, state, environment)
+                commerce_result_bytes = read_regular(commerce_result_path)
+                commerce_result = json.loads(commerce_result_bytes)
+                check(commerce_result.get("schema") == "stellar-forge.research-commerce-result.v1" and
+                      commerce_result.get("operation") == OPERATION + "-RESEARCH-COMMERCE" and
+                      commerce_result.get("originalProjectId") == selection["projectId"] and
+                      commerce_result.get("productId") == selection["productId"] and
+                      commerce_result.get("editionId") == selection["editionId"] and
+                      commerce_result.get("rendered"),
+                      "Complete the original selected product, editable receiving and actual browser course.")
+                final_project = commerce_directory / "complete-original-project.json"
+                complete_original = read_regular(final_project)
+                original_descriptor = commerce_result["originalProject"]
+                check(original_descriptor["bytes"] == len(complete_original) and
+                      original_descriptor["sha256"] == sha(complete_original),
+                      "Retain the complete original company project after customer and browser receiving.")
+                after_commerce = json.loads(complete_original)
+                check(after_commerce["state"]["id"] == before_commerce["state"]["id"] and
+                      after_commerce.get("qcew") == before_commerce.get("qcew") and
+                      after_commerce["captures"] == before_commerce["captures"] and
+                      after_commerce.get("research") == before_commerce.get("research") and
+                      after_commerce["state"].get("research") == before_commerce["state"].get("research"),
+                      "Retain all original quantitative and Research sources through the complete product handover.")
+                state["researchCommerce"] = {"selection": selection,
+                    "result": {"path": str(commerce_result_path), "bytes": len(commerce_result_bytes),
+                               "sha256": sha(commerce_result_bytes)},
+                    "projectId": selection["projectId"], "customer": commerce_result["customer"],
+                    "restored": commerce_result["restored"], "financial": commerce_result["financial"]}
             final_bytes = read_regular(final_project)
             state["completeCustomerProject"] = {"path": str(final_project),
                 "bytes": len(final_bytes), "sha256": sha(final_bytes)}
@@ -529,6 +633,8 @@ def main():
             result["researchAgent"] = state["researchAgent"]
         if state.get("mtcSources"):
             result["mtcSources"] = state["mtcSources"]
+        if state.get("researchCommerce"):
+            result["researchCommerce"] = state["researchCommerce"]
         if state.get("completeCustomerProject"):
             result["completeCustomerProject"] = state["completeCustomerProject"]
         if failed:

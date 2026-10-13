@@ -177,7 +177,7 @@ const RESEARCH_PHASE_CONTEXT = {
   }
 };
 function researchInputs(source, phase) {
-  if (!RESEARCH_PHASE_CONTEXT[phase] || !Object.hasOwn(source.inventory,'research')) return null;
+  if (!(RESEARCH_PHASE_CONTEXT[phase] || ['publications','customer'].includes(phase)) || !Object.hasOwn(source.inventory,'research')) return null;
   const research = source.inventory.research;
   const families = ['entries','sources','reviews','products'];
   const collections = {};
@@ -195,7 +195,16 @@ function researchInputs(source, phase) {
   }
   const evidence = source.evidence.filter(item => item.reference === '/state/research' ||
     families.some(family => item.reference.startsWith('/state/research/' + family + '/')));
+  const commerce = source.inventory.researchCommerce;
+  const commerceCollections = commerce === undefined ? null : Object.fromEntries(['publications','receivings'].map(family =>
+    [family,{reference:'/state/researchCommerce/' + family,records:Array.isArray(commerce[family]) ? commerce[family].length : null}]));
+  const commerceEvidence = source.evidence.filter(item => item.reference === '/state/researchCommerce' ||
+    item.reference.startsWith('/state/researchCommerce/'));
   return {reference:'/state/research',collections,
+    ...(commerceCollections === null ? {} : {commerce:{reference:'/state/researchCommerce',collections:commerceCollections,
+      evidence:{reference:'source.json#/evidence',records:commerceEvidence.length,
+        selection:'Use original /state/researchCommerce publication and receiving references.'},
+      retainedSource:'The original version 8 project carries the complete packages, merchant plans and original customer intent/receiving selections.'}}),
     evidence:{reference:'source.json#/evidence',records:evidence.length,
       selection:'Use the retained references whose original project pointer is /state/research or one of its collections.'},
     originalSource:'Complete research source response bytes remain in the original project artifact.'};

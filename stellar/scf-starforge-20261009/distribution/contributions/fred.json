@@ -3,10 +3,12 @@
   "id": "fred",
   "description": "FRED and ALFRED economic editions, recurring briefings, release planning, complete DDP migration, current publications and paid county reports",
   "commands": {
-    "fred": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/cli.mjs"
+    "fred": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/cli.mjs",
+    "fred-research-commerce-receive": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-journey.mjs"
   },
   "commandDescriptions": {
-    "fred": "Acquire original economic sources, migrate DDP packages, produce and sell county reports, and receive original customer deliveries"
+    "fred": "Acquire original economic sources, migrate DDP packages, produce and sell county reports, and receive original customer deliveries",
+    "fred-research-commerce-receive": "Continue one complete issued Research edition through selected source packaging, editable customer receiving, paid intent recovery and full project handover."
   },
   "exports": {
     "./seller/fred": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/merchant.mjs",
@@ -216,6 +218,16 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/cli.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/README.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/research.js",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/native-journey.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/native-journey.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-model.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/merchant.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/purchase.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-bundle.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-journey.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/delivery.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-browser.mjs",
+    "stellar-forge/mcp-merchant-operator/FRED_RESEARCH_COMMERCE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/COMMERCE.md"
   ]
 }

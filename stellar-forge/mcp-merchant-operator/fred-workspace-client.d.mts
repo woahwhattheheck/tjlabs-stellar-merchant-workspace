@@ -99,7 +99,7 @@ export interface FredQcewProjectState {
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type JsonObject = { [key: string]: Json };
 export type NativeRecord = JsonObject & { id: string };
-export interface FredSourceInput { path: string; kind: 'public-table' | 'capture' | 'release-capture' | 'ddp-crosswalk' | 'ddp-package' | 'alfred-metadata' | 'operating-archive' | 'operating-plan' | 'research-source' | 'research-catalogue'; label?: string; sha256?: string }
+export interface FredSourceInput { path: string; kind: 'public-table' | 'capture' | 'release-capture' | 'ddp-crosswalk' | 'ddp-package' | 'alfred-metadata' | 'operating-archive' | 'operating-plan' | 'research-source' | 'research-catalogue' | 'research-package'; label?: string; sha256?: string }
 export interface FredMerchantProfile { label?: string; origin: string; path?: string; payment: JsonObject }
 export interface FredWorkspaceOptions {
   label?: string; projectId?: string; expectedBindingSha256?: string;
@@ -133,6 +133,7 @@ export interface FredProject extends FredReleaseProjectState {
   briefingTemplates?: FredBriefingTemplate[]; briefingSuccessors?: FredBriefingSuccessorRecord[];
   qcew?: FredQcewProjectState;
   research?: FredResearchCatalogue;
+  researchCommerce?: FredResearchCommerceState;
   ddpCrosswalks?: FredDdpCrosswalkSummary[]; ddpPackages?: FredDdpPackageSummary[];
   ddpMigrations?: FredDdpMigrationSummary[]; ddpReceivings?: FredDdpReceivingSummary[];
 }
@@ -201,7 +202,7 @@ export interface FredReviewInput extends FredCaptureInput { policy?: JsonObject;
 export interface FredPublishInput extends FredJournalInput { reviewId: string; origin: string; path?: string; payment: JsonObject }
 export interface FredAbandonInput extends FredJournalInput { pendingId: string }
 export interface FredPublicationInput { publicationId: string }
-export interface FredIntentInput extends FredPublicationInput { intentId: string }
+export interface FredIntentInput extends FredPublicationInput { intentId: string; expectedPurchaseSha256?: string }
 export interface FredPrepareInput extends FredIntentInput {
   query?: string; file?: string | null; previous?: JsonObject | null; acceptIndex?: number;
 }
@@ -309,6 +310,8 @@ export interface FredDdpReceivingInput extends FredDdpPageInput {
 export interface FredRequestOptions { signal?: AbortSignal }
 export interface FredFileOptions extends FredRequestOptions { expectedSha256?: string }
 export type FredFileSelection =
+  { kind: 'research-publication'; publicationId: string; file?: string } |
+  { kind: 'research-received'; publicationId: string; intentId: string; file?: string; editionId?: string } |
   { kind: 'research-source'; snapshotId: string; expectedRevision?: number } |
   { kind: 'research-catalogue'; expectedRevision?: number } |
   { kind: 'research-entry'; entryId: string; expectedRevision?: number } |
@@ -326,12 +329,13 @@ export type FredFileSelection =
   { kind: 'briefing-successor'; successorId: string; format: 'html' | 'csv' | 'json' } |
   { kind: 'customer'; publicationId: string; intentId: string };
 export interface FredBundleIdentity {
-  schema: 'stellar-forge.fred-project-bundle.v1' | 'stellar-forge.fred-project-bundle.v2' | 'stellar-forge.fred-project-bundle.v3' | 'stellar-forge.fred-project-bundle.v4' | 'stellar-forge.fred-project-bundle.v5' | 'stellar-forge.fred-project-bundle.v6' | 'stellar-forge.fred-project-bundle.v7'; projectId: string; revision: number;
+  schema: 'stellar-forge.fred-project-bundle.v1' | 'stellar-forge.fred-project-bundle.v2' | 'stellar-forge.fred-project-bundle.v3' | 'stellar-forge.fred-project-bundle.v4' | 'stellar-forge.fred-project-bundle.v5' | 'stellar-forge.fred-project-bundle.v6' | 'stellar-forge.fred-project-bundle.v7' | 'stellar-forge.fred-project-bundle.v8'; projectId: string; revision: number;
   bundleSha256: string; captures: number; publications: number; briefings?: number; templates?: number; successors?: number;
   releaseCaptures?: number; releaseWatches?: number; releasePlans?: number; releaseCatchUps?: number;
   ddpCrosswalks?: number; ddpPackages?: number; ddpMigrations?: number; ddpReceivings?: number;
   qcew?: { captures: number; profiles: number; editions: number };
   research?: { entries: number; sources: number; reviews: number; products: number };
+  researchCommerce?: { publications: number; receivings: number };
 }
 export interface FredDownloadedFile {
   name: string; type: string; bytes: Buffer; sha256: string; status: number; projectId: string; bundle?: FredBundleIdentity;
@@ -472,6 +476,68 @@ export interface FredResearchUpload extends FredJournalInput, FredResearchSource
   filename: string; contentType?: string; bodyBase64: string; retrievedAt?: string;
 }
 
+
+export declare const RESEARCH_PACKAGE_MAX_BYTES: number;
+export declare const RESEARCH_PACKAGE_REQUEST_BYTES: number;
+export interface FredResearchPublicationRecord {
+  id: string; sourceProjectId: string; productId: string; editionId: string; definitionId: string;
+  manifestSha256: string; deliverySha256: string; planSha256: string; origin: string; path: string;
+  payment: JsonObject; resource: string; createdAt: string;
+}
+export interface FredResearchReceivingRecord {
+  id: string; deliverySha256: string; manifestSha256: string; sourceProjectId: string;
+  productId: string; editionId: string; receivedAt: string;
+}
+export interface FredResearchCommerceState {
+  schema: 'stellar-forge.research-commerce.v1';
+  publications: FredResearchPublicationRecord[]; receivings: FredResearchReceivingRecord[];
+}
+export interface FredResearchCommercePage {
+  projectId: string; revision: number; section: 'publications' | 'receivings';
+  total: number; offset: number; limit: number; nextOffset: number | null;
+  rows: Array<FredResearchPublicationRecord | FredResearchReceivingRecord>;
+  counts: { publications: number; receivings: number }; pending: JsonObject | null;
+}
+export interface FredResearchMerchantPlan {
+  schema: 'stellar-forge.research-merchant.v1'; publicationId: string; sourceProjectId: string;
+  productId: string; editionId: string; definitionId: string; manifestSha256: string;
+  deliverySha256: string; origin: string; path: string; payment: JsonObject; resource: string;
+  downloads: FredAdvertisedFile[]; configSha256: string; offersSha256: string; planSha256: string;
+}
+export interface FredResearchPublicationView {
+  projectId: string; revision: number; record: FredResearchPublicationRecord;
+  plan: FredResearchMerchantPlan; edition: JsonObject & { sources: number }; sourceRecords: FredResearchSource[]; offers?: JsonObject[];
+  requests?: Array<{ intentId: string; publicationId: string; editionId: string; file: string;
+    url: string; purchaseSha256: string; expected: FredAdvertisedFile; receiving: JsonObject | null }>;
+}
+export interface FredResearchPublishInput extends FredJournalInput {
+  productId: string; editionId: string; note?: string; origin: string; path?: string; payment: JsonObject;
+}
+export interface FredResearchPublishedResult extends FredRevisionResult {
+  publicationId: string; productId: string; editionId: string; edition: JsonObject; plan: FredResearchMerchantPlan;
+}
+export interface FredResearchReceiveInput extends FredJournalInput {
+  receivingDirectory: string; bodyBase64: string;
+}
+export interface FredResearchReceiveResult extends FredRevisionResult {
+  receiving: JsonObject; directory: string; sourceProjectId: string; productId: string;
+  editionId: string; packageSha256: string;
+}
+export interface FredResearchPurchaseReceiveInput extends FredIntentInput {
+  expectedPurchaseSha256: string; receivingDirectory?: string | null;
+}
+export interface FredResearchReceivedView {
+  kind: 'RESEARCH'; projectId: string; publicationId: string; intentId: string;
+  receipt: JsonObject; directory: string; edition: JsonObject & { sources: number }; sourceRecords: FredResearchSource[];
+  files: Array<Omit<FredFileMetadata,'role'> & { role?: string }>;
+}
+export interface FredResearchPreparedPurchase {
+  schema: 'stellar-forge.research-purchase.v1'; publicationId: string; sourceProjectId: string;
+  productId: string; editionId: string; manifestSha256: string; deliverySha256: string;
+  planSha256: string; intentId: string; url: string; file: string; expected: FredAdvertisedFile;
+  configSha256: string; config: JsonObject; purchaseSha256: string;
+}
+
 export declare class FredWorkspaceClient {
   constructor(definition: FredWorkspaceDefinition, runtime?: FredClientRuntime);
   readonly metadata: FredClientMetadata;
@@ -499,6 +565,15 @@ export declare class FredWorkspaceClient {
   issueResearchProduct(input: FredJournalInput & { productId: string; issuedBy: string; note?: string }, options?: FredRequestOptions):
     Promise<FredRevisionResult & { edition: FredResearchEdition }>;
   resumeResearch(input: FredJournalInput & { action: FredResearchAction }, options?: FredRequestOptions): Promise<FredRevisionResult & JsonObject>;
+  researchCommerce(input?: { section?: 'publications' | 'receivings'; offset?: number; limit?: number; expectedRevision?: number },
+    options?: FredRequestOptions): Promise<FredResearchCommercePage>;
+  researchPublication(input: FredPublicationInput, options?: FredRequestOptions): Promise<FredResearchPublicationView>;
+  publishResearchEdition(input: FredResearchPublishInput, options?: FredRequestOptions): Promise<FredResearchPublishedResult>;
+  receiveResearchEdition(input: FredResearchReceiveInput, options?: FredRequestOptions): Promise<FredResearchReceiveResult>;
+  resumeResearchCommerce(input: FredJournalInput & { action: 'research-publish' | 'research-receive' },
+    options?: FredRequestOptions): Promise<FredResearchPublishedResult | FredResearchReceiveResult>;
+  receiveResearchPurchase(input: FredResearchPurchaseReceiveInput, options?: FredRequestOptions): Promise<JsonObject>;
+  researchReceived(input: FredIntentInput, options?: FredRequestOptions): Promise<FredResearchReceivedView>;
   launch(options?: FredRequestOptions): Promise<FredStartup>;
   state(options?: FredRequestOptions): Promise<FredState>;
   operation(id: string, options?: FredRequestOptions): Promise<FredOperation>;
@@ -575,7 +650,7 @@ export declare class FredWorkspaceClient {
   abandon(input: FredAbandonInput, options?: FredRequestOptions): Promise<FredRevisionResult & { pendingId: string; state: 'ABANDONED' }>;
   startMerchant(input: FredPublicationInput, options?: FredRequestOptions): Promise<FredMerchantRuntime>;
   stopMerchant(input: FredPublicationInput, options?: FredRequestOptions): Promise<{ state: 'STOPPED' }>;
-  prepare(input: FredPrepareInput, options?: FredRequestOptions): Promise<FredPreparedPurchase>;
+  prepare(input: FredPrepareInput, options?: FredRequestOptions): Promise<FredPreparedPurchase | FredResearchPreparedPurchase>;
   buy(input: FredIntentInput, options?: FredRequestOptions): Promise<FredPurchaseStatus>;
   recover(input: FredIntentInput, options?: FredRequestOptions): Promise<FredPurchaseStatus>;
   wait(id: string, options?: FredRequestOptions & { timeoutMs?: number; intervalMs?: number }): Promise<FredOperation>;
