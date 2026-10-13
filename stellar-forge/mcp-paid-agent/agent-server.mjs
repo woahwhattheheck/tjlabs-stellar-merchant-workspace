@@ -129,7 +129,7 @@ export class McpPaidToolBroker {
     this.#scope=hash({discoveryUrl:this.#catalogUrl.href,origins:[...this.#trustedOrigins].sort(),
       ...(this.#catalogs.catalogs.length===1 && this.#catalogs.defaultCatalogId==='default' ? {} : {
         discoveryCatalogs:{defaultCatalogId:this.#catalogs.defaultCatalogId,
-          catalogs:this.#catalogs.catalogs.map(({id,url})=>({id,url})).sort((a,b)=>a.id.localeCompare(b.id))}}),
+          catalogs:this.#catalogs.catalogs.map(({id,url})=>({id,url})).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)}}),
       ...(this.#mcpPolicies.length?{remoteMcpPolicies:this.#mcpPolicies}:{})});
     try{for(const saved of this.#store?.load()??[]){
       const q=structuredClone(saved);this.#quotes.set(q.quoteId,q);
