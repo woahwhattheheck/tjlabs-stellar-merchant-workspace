@@ -12,6 +12,8 @@ export const dcatReceivingHelp = `
   runtime-workspace dcat-receiving-prepare --workspace DIRECTORY --operation PRIVATE_DIRECTORY [--request COMPLETE_JSON]
   runtime-workspace dcat-receiving-status --workspace DIRECTORY --operation PRIVATE_DIRECTORY
   runtime-workspace dcat-receiving-save --workspace DIRECTORY --operation PRIVATE_DIRECTORY
+  The complete request selects a READY semantic runtime (v1) or original transferred source/wheels and recipient Python (v2).
+  Resume uses the same retained request, input and final environment directories; preparation performs no new wheel resolution.
 `;
 export async function runDcatReceivingCommand(model, command, options) {
   need(options['--operation'],'DCAT_RECEIVING_OPERATION_REQUIRED');
