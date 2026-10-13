@@ -609,6 +609,8 @@
     "portfolio-sequence.mjs",
     "portfolio-sequence-desk.mjs",
     "portfolio-sequence.css",
-    "PORTFOLIO_SEQUENCE.md"
+    "PORTFOLIO_SEQUENCE.md",
+    "operations_statement_review_worklist.mjs",
+    "STATEMENT_REVIEW_WORKLIST.md"
   ]
 }
