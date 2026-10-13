@@ -154,6 +154,12 @@
           "git_blob": "6c3d613f56f6b0ea0421152b27f1b8dcc2a1ab63",
           "sha256": "a59d3c3b95b2937864ae9f6ddedd2b38afffe44d2ea3125a527ad9bf9b99c798",
           "bytes": 22861
+        },
+        {
+          "commit": "7eabf3065723a3bf930ad6065a595ae9b8dbed2b",
+          "git_blob": "3b2d0d1e38402a556a4a85fe61eeeddb4397a09e",
+          "sha256": "469502765caa95c50f5cb64cd0f7be8dba9ba13c042254b9111dade9cb2314dc",
+          "bytes": 25885
         }
       ]
     },
@@ -269,6 +275,12 @@
           "git_blob": "d39d53484a8b8414378c28a1af366331e0ffc275",
           "sha256": "8e6eba71e13231fe94e31ed5bef2ea301e22da38330b1a455563664b514d45ce",
           "bytes": 104266
+        },
+        {
+          "commit": "7eabf3065723a3bf930ad6065a595ae9b8dbed2b",
+          "git_blob": "67916cfa8cd7523a84c299417560fb99b7106249",
+          "sha256": "1eb24aa8986e76ace33924dded643ea49d27332cfe6332b570b77f2c3c0f93b5",
+          "bytes": 117219
         }
       ],
       "required": false
@@ -338,6 +350,12 @@
           "git_blob": "f204f6f0b89dc8a5b48a3ca872ace763ea18884c",
           "sha256": "c28bd3b7a094617a80fcd1ab89b2266dd0a045bfe339a4cd49f9514c021e3edc",
           "bytes": 64395
+        },
+        {
+          "commit": "7eabf3065723a3bf930ad6065a595ae9b8dbed2b",
+          "git_blob": "d9df6fab225fe6bac5e8585b993d9c0438226a90",
+          "sha256": "58340f2ed01606ed98e4e134102ce065ace80479ddff78cbba288f21d4a2a58a",
+          "bytes": 79044
         }
       ],
       "required": false
@@ -668,6 +686,40 @@
           "git_blob": "26494e61a643b4984068af242416292c2298a920",
           "sha256": "4e732bf5cac30a672571cee5fe282a79d06059b84c5f0d0ab918b03f49282b3a",
           "bytes": 14204
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-rules-guide",
+      "label": "Recurring account rules, explicit matched-row review and complete following-period receiving",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENT_RULES.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "7eabf3065723a3bf930ad6065a595ae9b8dbed2b",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7eabf3065723a3bf930ad6065a595ae9b8dbed2b",
+          "git_blob": "773dc6e76a7454f40208dcf04eb59896eba0c269",
+          "sha256": "6b30a3c79cb7c199dc26f03b1c3b9d637d1feae119e5415f452a279ed209e531",
+          "bytes": 12586
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-rules-model",
+      "label": "Immutable rule editions, exact conditions, protected decisions and selected native batch application",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statement_rules.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "7eabf3065723a3bf930ad6065a595ae9b8dbed2b",
+      "required": false,
+      "editions": [
+        {
+          "commit": "7eabf3065723a3bf930ad6065a595ae9b8dbed2b",
+          "git_blob": "cde4aff51e202bdfc19fa6c12bf230b879a3158a",
+          "sha256": "6d0af1787857b724e74e54095d2b1e24167b9d7cb022a120c7e470201111b105",
+          "bytes": 29904
         }
       ]
     }
