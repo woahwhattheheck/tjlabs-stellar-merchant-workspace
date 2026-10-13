@@ -52,6 +52,7 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/application-library.mjs', 'application-library.mjs', 'text/javascript; charset=utf-8'],
     ['/application-inputs.mjs', 'application-inputs.mjs', 'text/javascript; charset=utf-8'],
     ['/application-input-sets.mjs', 'application-input-sets.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-input-set-editions.mjs', 'application-input-set-editions.mjs', 'text/javascript; charset=utf-8'],
     ['/application-input-sets.css', 'application-input-sets.css', 'text/css; charset=utf-8'],
     ['/application-input-set-format.mjs', 'application-input-set-format.mjs', 'text/javascript; charset=utf-8'],
     ['/application-groups.mjs', 'application-groups.mjs', 'text/javascript; charset=utf-8'],
@@ -312,6 +313,18 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
         }
         return send(200,await model.applicationInputSetsState(value));
       }
+      if (req.method === 'GET' && url.pathname === '/api/application-input-set-editions') {
+        const value=params(url,['selectionRequestId','offset','limit']);
+        for(const key of ['offset','limit'])if(value[key]!==undefined) {
+          need(/^(0|[1-9][0-9]*)$/.test(value[key])&&Number.isSafeInteger(Number(value[key])),'APPLICATION_INPUT_EDITION_PAGE_INVALID');
+          value[key]=Number(value[key]);
+        }
+        return send(200,await model.applicationInputSetEditionsState(value));
+      }
+      if (req.method === 'GET' && url.pathname === '/api/application-input-set-editions/read')
+        return send(200,await model.applicationInputSetEditionRead(params(url,['requestId'])));
+      if (req.method === 'GET' && url.pathname === '/api/application-input-set-editions/received')
+        return send(200,await model.applicationInputSetEditionReceived(params(url,['requestId'])));
       if (req.method === 'GET' && url.pathname === '/api/application-input-sets/inspect')
         return send(200,await model.applicationInputSetInspect(params(url,['setId'])));
       if (req.method === 'GET' && url.pathname === '/api/application-input-sets/selection')
@@ -363,6 +376,10 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
       if (req.method === 'GET' && url.pathname === '/api/managed/config')
         return send(200, await model.managedConfig(params(url, ['homeId', 'path'])));
       need(req.method === 'POST' && req.headers.origin === origin, 'RUNTIME_WORKSPACE_ORIGIN_REQUIRED', undefined, 403);
+      if (url.pathname === '/api/application-input-set-editions/review')
+        return send(200,await model.applicationInputSetEditionReview(await body(req,['selectionRequestId','name'],8192)));
+      if (url.pathname === '/api/application-input-set-editions/capture')
+        return send(200,await model.applicationInputSetEditionCapture(await body(req,['requestId','review'],4*1024*1024)));
       if (url.pathname === '/api/application-input-sets/begin')
         return send(200,await model.applicationInputSetBegin(await body(req,['manifest'],2*1024*1024)));
       if (url.pathname === '/api/application-input-sets/complete')
