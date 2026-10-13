@@ -71,6 +71,12 @@
               <p class="muted">A saved payment work file can contain the buyer’s authorization. Keep it private. Open it with this same invoice and merchant.</p>
             </section>
             <form id="signature-form" class="subsection"><label for="signature">Buyer payment authorization</label><p class="muted">Paste the complete PAYMENT-SIGNATURE returned by the buyer’s wallet.</p><textarea id="signature" rows="3" spellcheck="false" autocomplete="off" maxlength="65536" aria-describedby="payment-review-note"></textarea><p id="payment-review-note" class="muted"></p><div class="form-actions"><span class="muted">The original authorization is retained for retries.</span><button type="submit" id="signature-submit">Submit authorization</button></div></form>
+            <section id="customer-delivery" class="subsection" aria-labelledby="customer-delivery-title">
+              <h4 id="customer-delivery-title">Customer delivery</h4>
+              <p class="muted">Prepare this invoice, its original wallet request and complete delivered file together. The customer opens the included invoice in a browser.</p>
+              <div class="actions"><button id="customer-delivery-review" class="secondary">Prepare customer delivery</button><button id="customer-delivery-download" hidden>Download customer ZIP</button></div>
+              <div id="customer-delivery-summary" aria-live="polite"></div>
+            </section>
             <section class="subsection"><h4>Activity</h4><ol id="history" class="history"></ol></section>
           </div>
         </section>

@@ -112,6 +112,9 @@ export interface MerchantOperatorClient {
     selection?:InvoiceSelection;revision:string;format?:'json'|'csv';
   }):Promise<RegisterExport>;
   downloadRegisterExport(ticket:RegisterExport,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
+  previewInvoiceDelivery(id:string,settings?:RequestSettings):Promise<InvoiceDeliveryReview>;
+  prepareInvoiceDelivery(id:string,revision:string,settings?:RequestSettings):Promise<InvoiceDeliveryTicket>;
+  downloadInvoiceDelivery(ticket:InvoiceDeliveryTicket,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
   downloadInvoiceResult(id:string,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
   downloadProject(operation:string,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
 }
@@ -152,4 +155,15 @@ export interface IntakeDelivery {
     source:IntakeSource&FileIdentity;mapping:IntakeMapping;configuration:JSONObject;configurationSha256:string;
     planSha256:string;createdAt:string;invoices:Pick<IntakeInvoice,'key'|'id'|'reference'|'title'|'prices'|'sourceRows'>[]};
   status:IntakeStatus;
+}
+
+export interface InvoiceDeliveryReview {
+ schema:'stellar-forge.merchant-invoice-delivery.v1';owner:{storeId:string;tenantId:string};
+ invoiceId:string;revision:string;reference:string;title:string;state:InvoiceState;updatedAt:string;
+ offers:(InvoiceOffer&{amount:string})[];hasWalletRequest:boolean;historyRecords:number;members:string[];
+ result:(RetainedResult&{member:string})|null;
+}
+export interface InvoiceDeliveryTicket extends FileIdentity {
+ url:string;fileName:string;source:{storeId:string;tenantId:string;revision:string};
+ selection:{invoiceId:string;revision:string};invoiceCount:1;offerCount:number;expiresInSeconds:number;
 }

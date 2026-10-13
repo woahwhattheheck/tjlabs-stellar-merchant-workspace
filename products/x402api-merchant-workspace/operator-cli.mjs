@@ -78,6 +78,8 @@ observation|observation-summary --connection FILE [--history-sequence INTEGER] [
 project|project-status|project-manifest --connection FILE [--operation ORIGINAL_UUID] [--out FILE]
 project-begin --connection FILE --operation ORIGINAL_UUID [--out FILE]
 project-download --connection FILE --operation ORIGINAL_UUID --out /private/project.zip
+invoice-delivery --connection FILE --id ORIGINAL_UUID --out /private/delivery-review.json
+invoice-delivery-download --connection FILE --request /private/delivery-review.json --out /private/customer.zip
 intake-context|intakes --connection FILE [--out FILE]
 intake-prepare --connection FILE --source ORIGINAL_FILE --mapping MAPPING_JSON
                --format csv|json --operation ORIGINAL_UUID [--out REVIEW_JSON]
@@ -107,6 +109,7 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
     connect:['url','token-env','out','timeout-ms','maximum-download-bytes'],
     register:[...common,'selection','limit','cursor','revision'],
     'register-export':[...common,'register','format'],
+    'invoice-delivery':[...common,'id'],'invoice-delivery-download':[...common,'request'],
     invoice:[...common,'id'],create:[...common,'request'],charge:[...common,'id'],
     envelope:[...common,'id'],authorize:[...common,'id','request'],reconcile:[...common,'id'],
     result:[...common,'id'],observation:common,'observation-summary':[...common,'history-sequence'],
@@ -160,6 +163,15 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
       const ticket=await client.prepareRegisterExport({selection:page.selection,revision:page.source.revision,
         format:values.format??'json',...settings});
       result=await client.downloadRegisterExport(ticket,values.out,settings);download=true;
+    }
+    else if(action==='invoice-delivery')result=await client.previewInvoiceDelivery(values.id,settings);
+    else if(action==='invoice-delivery-download'){
+      need(values.out&&values.request,'INVOICE_DELIVERY_REVIEW_REQUIRED');
+      const review=await input('request');
+      need(review?.schema==='stellar-forge.merchant-invoice-delivery.v1'&&review.owner?.storeId===connection.storeId&&
+        review.owner?.tenantId===connection.tenantId,'MERCHANT_OPERATOR_INVOICE_DELIVERY_CHANGED');
+      const ticket=await client.prepareInvoiceDelivery(review.invoiceId,review.revision,settings);
+      result={...await client.downloadInvoiceDelivery(ticket,values.out,settings),invoiceId:review.invoiceId,revision:review.revision};download=true;
     }
     else if(action==='invoice')result=await client.inspectInvoice(values.id,settings);
     else if(action==='create')result=await client.createInvoice(await input('request',1048576),settings);
