@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Economic Client Workspace</title><link rel="stylesheet" href="/style.css"></head><body>
+<header><div><strong>Economic Client Workspace</strong><p id="identity">Opening original project</p></div><button id="refresh">Refresh</button></header>
+<div id="message" role="status" aria-live="polite"></div>
+<div id="pending" hidden><strong>Saved original request</strong><span id="pending-label"></span><button id="resume">Continue original request</button><button id="clear-pending">Keep in history and start another action</button></div>
+<nav aria-label="Workspace"><button data-view="sources">Sources</button><button data-view="briefing">Client briefing</button><button data-view="editions">Saved editions</button><button data-view="reviews">Customer reviews</button><button data-view="project">Project and handover</button></nav>
+<main>
+<section data-panel="sources">
+<h1>Source acquisition and review</h1><p>Choose original dataset and release identities. Every native page, structure and historical observation stays with the saved project.</p>
+<div class="columns"><article><h2>Original registry</h2><form id="registry-form">
+<label>Registry<select id="registry-kind"><option>datasets</option><option>dataflows</option><option>datastructures</option><option>codelists</option></select></label>
+<label>Agency IDs<input id="registry-agency" placeholder="Optional native agency filter"></label>
+<label>Native IDs<input id="registry-ids" placeholder="Optional comma-delimited IDs"></label>
+<label>Versions<input id="registry-versions" placeholder="Optional native versions"></label><button>Read complete registry</button></form>
+<details><summary>Complete registry result</summary><pre id="registry-result"></pre></details></article>
+<article><h2>Retain a selected dataset</h2><form id="capture-form">
+<div class="row"><label>Agency ID<input id="agency" required></label><label>Dataset ID<input id="dataset" required></label><label>Version<input id="version" required></label></div>
+<label>Release<select id="release-kind"><option value="latest">Latest returned release, fixed at acquisition</option><option value="timestamp">Exact native timestamp</option><option value="description">Exact native description</option><option value="unreleased">Current unreleased source state</option></select></label>
+<label>Timestamp or description<input id="release-value"></label>
+<label>Native series-key query filters (JSON array of strings; empty selects the dataset)<textarea id="series-keys" rows="3">[]</textarea></label>
+<div class="row"><label>Start<input id="source-start" placeholder="Native period, optional"></label><label>End<input id="source-end" placeholder="Native period, optional"></label></div>
+<label class="check"><input id="historical" type="checkbox">Include original historical observations</label><button>Acquire complete selected source</button></form></article></div>
+<article><h2>Retained captures</h2><label>Capture<select id="capture-list"></select></label><button id="inspect-capture">Inspect complete metadata</button>
+<div class="columns"><div><label>Original series<select id="series-list" size="8"></select></label><button id="add-series">Add series to client briefing</button><button id="load-rows">Read observations</button>
+<div id="row-page"></div><button id="next-rows" hidden>Next original page</button></div><div><h3>Native dimensions, attributes and source references</h3><pre id="capture-metadata"></pre></div></div></article>
+<article><h2>Existing OECD analyst project</h2><p>Use the original installed OECD client and saved project configured below. Its own dataset, reports, citation and complete project archive are retained unchanged.</p>
+<button id="oecd-state">Read original OECD workspace</button><button id="oecd-seed">Import original public OECD source</button>
+<label>Original OECD save request<textarea id="oecd-request" rows="9"></textarea></label><button id="oecd-save">Save original OECD briefing</button>
+<label>Saved OECD briefing ID<input id="oecd-id"></label><button id="oecd-attach">Attach full briefing and original project</button><pre id="oecd-result"></pre></article>
+</section>
+<section data-panel="briefing" hidden><h1>Client briefing</h1><p>Review the source's frequency, units and classification. These selections travel with every report edition.</p>
+<form id="draft-form"><label>Title<input id="title" required></label><label>Audience<input id="audience" required></label><label>Prepared by<input id="prepared-by"></label>
+<label>Executive summary<textarea id="summary" rows="5"></textarea></label><div id="selected-series"></div><div id="source-rights"></div>
+<h2>Original companion editions</h2><div id="companions"></div><label>Editorial notes<textarea id="notes" rows="5"></textarea></label>
+<div class="actions"><button type="submit">Save mapping and editorial draft</button><button type="button" id="preview">Preview complete selection</button><button type="button" id="save-briefing">Save complete report edition</button></div></form>
+<details><summary>Complete selection preview</summary><pre id="preview-result"></pre></details></section>
+<section data-panel="editions" hidden><h1>Saved report editions</h1><div id="edition-list"></div>
+<h2>Compare original editions</h2><div class="row"><label>Before<select id="compare-before"></select></label><label>After<select id="compare-after"></select></label></div>
+<button id="compare">Compare all native period groups</button><pre id="comparison"></pre></section>
+<section data-panel="reviews" hidden><h1>Customer review and editorial receiving</h1>
+<p>Send a complete saved briefing with its original data and source files. Receive the saved customer review here, compare it with the current analyst draft and resolve selected editorial proposals.</p>
+<div class="columns"><article><h2>Create a complete review package</h2><form id="review-create">
+<label>Saved briefing edition<select id="review-briefing" required></select></label>
+<label>Intended reviewer<input id="review-recipient" required maxlength="1000"></label>
+<label>Review label<input id="review-label" required maxlength="1000"></label><button>Create editable offline review</button></form>
+<p>The HTML works offline and retains the complete original package. The customer can save revisions, download a working copy and return the full review JSON.</p></article>
+<article><h2>Receive a saved customer return</h2><label>Complete Return JSON<input id="review-upload" type="file" accept=".json,application/json"></label><button id="review-receive">Receive original customer review</button>
+<div id="review-pending" hidden><p id="review-pending-label"></p><button id="review-resume">Continue original return receiving</button><button id="review-retain-input">Retain this input and select another</button></div>
+<label>Received review<select id="review-return"></select></label><button id="review-compare">Compare with current saved draft</button><button id="review-return-download">Download complete original return</button>
+<details><summary>Last saved result</summary><pre id="review-receipt"></pre></details></article></div>
+<h2>Complete review packages</h2><div id="review-packages"></div>
+<h2>Customer decisions</h2><p id="review-comparison-summary"></p><div id="review-decisions"></div><p id="review-page"></p>
+<div class="actions"><button id="review-prev" hidden>Previous decisions</button><button id="review-next" hidden>Next decisions</button><button id="review-apply">Save selected dispositions and update draft</button></div>
+<p>Using a proposal changes only the selected editorial field in the draft. Save a new briefing edition when that draft is ready. Source values, captured periods and previous editions stay bound to their original records.</p>
+<h2>Saved dispositions</h2><div id="review-resolution-history"></div></section>
+<section data-panel="project" hidden><h1>Project and customer handover</h1>
+<article><h2>Installed source configuration</h2><p>Store environment-variable names and the paths to the installed original OECD client and saved project. Credential values belong in the launching environment.</p>
+<label>Configuration<textarea id="config" rows="15"></textarea></label><button id="save-config">Save source configuration</button></article>
+<article><h2>Complete customer project</h2><p>The project contains all saved reports, exact native source responses, selections, pending source operations and original OECD project archives.</p>
+<button id="export-project">Download complete project</button>
+<label>Receive original project into this fresh named workspace<input id="project-upload" type="file" accept=".gz,application/gzip"></label><button id="import-project">Receive complete project</button>
+<p>After receiving, configure the receiving host's own installed OECD client and a new OECD project directory before reopening the companion.</p>
+<label>OECD companion<select id="reopen-companion"></select></label><button id="reopen-oecd">Reopen original OECD project and compare all report files</button></article>
+<article><h2>Original operations</h2><div id="operations"></div></article></section>
+</main><footer>Retained economic sources · Exact editions · Complete client handover</footer>
+<script type="module" src="/operator.mjs"></script></body></html>

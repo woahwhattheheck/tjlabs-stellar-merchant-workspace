@@ -1,0 +1,121 @@
+{
+  "bugs": {
+    "url": "https://github.com/josdejong/lossless-json/issues"
+  },
+  "dist": {
+    "shasum": "ae1275f2f7e3aafdbf6985a42b6b604d848d716f",
+    "tarball": "https://registry.npmjs.org/lossless-json/-/lossless-json-4.3.1.tgz",
+    "fileCount": 68,
+    "integrity": "sha512-SqD/Bg3ZfltBJ2Z14hJ/BihnvtV553WO4g9/ePtlp4lrnl9jF3AdIJt53A/Wkg/0Li+LMfxaBqgx1MiFZdQlpQ==",
+    "signatures": [
+      {
+        "sig": "MEUCIQDdgNN/5ST9+eZe8pRdpWLVoVO6/1Mb26gXaoBJTFHfxAIgYR34zJNPvomof3NTyMTKk2ggiaLRQbfxrnMzQqmCozk=",
+        "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+      }
+    ],
+    "unpackedSize": 332517
+  },
+  "main": "lib/umd/lossless-json.js",
+  "name": "lossless-json",
+  "types": "lib/types/index.d.ts",
+  "author": {
+    "name": "Jos de Jong"
+  },
+  "module": "lib/esm/index.js",
+  "browser": "lib/umd/lossless-json.js",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/umd/lossless-json.js"
+    }
+  },
+  "gitHead": "a19ae09763876582d120d2f3de4cbd7741faa427",
+  "license": "MIT",
+  "scripts": {
+    "lint": "biome check",
+    "test": "vitest watch src",
+    "build": "npm-run-all build:**",
+    "format": "biome check --write",
+    "prepare": "husky",
+    "release": "npm-run-all release:**",
+    "test-ci": "vitest run src",
+    "benchmark": "npm run build:esm && node tools/benchmark/run.mjs",
+    "build:esm": "babel src --out-dir lib/esm --extensions \".ts\" --source-maps --config-file ./babel.config.json",
+    "build:umd": "rollup --config rollup.config.mjs",
+    "build:clean": "del-cli lib",
+    "build:types": "tsc --project tsconfig-types.json",
+    "release:push": "git push && git push --tag",
+    "build:esm:cpy": "cpy tools/esm/package.json lib/esm --flat",
+    "build:umd:cpy": "cpy tools/cjs/package.json lib/umd --flat",
+    "build-and-test": "npm run test-ci && npm run lint && npm run build",
+    "build:validate": "vitest run test-lib",
+    "release-dry-run": "npm run build-and-test && standard-version --dry-run",
+    "release:publish": "npm publish",
+    "release:version": "standard-version",
+    "release:build-and-test": "npm run build-and-test"
+  },
+  "_npmUser": {
+    "name": "josdejong",
+    "email": "email@josdejong.com"
+  },
+  "homepage": "https://github.com/josdejong/lossless-json#readme",
+  "keywords": [
+    "json",
+    "lossless",
+    "parse",
+    "stringify",
+    "long",
+    "bigint",
+    "bignumber",
+    "number",
+    "date",
+    "safe"
+  ],
+  "repository": {
+    "url": "git+https://github.com/josdejong/lossless-json.git",
+    "type": "git"
+  },
+  "_npmVersion": "11.13.0",
+  "description": "Parse JSON without risk of losing numeric information",
+  "directories": {},
+  "maintainers": [
+    {
+      "name": "josdejong",
+      "email": "email@josdejong.com"
+    }
+  ],
+  "sideEffects": false,
+  "_nodeVersion": "24.16.0",
+  "_hasShrinkwrap": false,
+  "devDependencies": {
+    "husky": "9.1.7",
+    "rollup": "4.53.4",
+    "vitest": "4.0.15",
+    "cpy-cli": "6.0.0",
+    "del-cli": "7.0.0",
+    "globals": "16.5.0",
+    "tinybench": "6.0.0",
+    "@babel/cli": "7.28.3",
+    "decimal.js": "10.6.0",
+    "typescript": "5.9.3",
+    "@babel/core": "7.28.5",
+    "@types/node": "25.0.2",
+    "npm-run-all": "4.1.5",
+    "@biomejs/biome": "2.3.8",
+    "@commitlint/cli": "20.2.0",
+    "@types/benchmark": "2.1.5",
+    "standard-version": "9.5.0",
+    "@babel/preset-env": "7.28.5",
+    "@rollup/plugin-terser": "0.4.4",
+    "@babel/preset-typescript": "7.28.5",
+    "@commitlint/config-conventional": "20.2.0",
+    "@babel/plugin-transform-typescript": "7.28.5"
+  },
+  "_npmOperationalInternal": {
+    "tmp": "tmp/lossless-json_4.3.1_1785506745372_0.24310824213402515",
+    "host": "s3://npm-registry-packages-npm-production"
+  },
+  "_id": "lossless-json@4.3.1",
+  "version": "4.3.1"
+}
