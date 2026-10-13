@@ -52,7 +52,7 @@ npx --no-install starforge registrations --source openfema
 npx --no-install starforge merchant-providers inspect openfema-workspaces
 ~~~
 
-The source registration inspection names four commands: openfema-workspace, openfema, openfema-mcp and openfema-merchant-exchange. It also names the original application/provider and merchant/provider declarations.
+The source registration inspection names openfema-workspace, openfema, openfema-mcp, openfema-merchant-exchange and openfema-installation. It also names the original application/provider and merchant/provider declarations.
 
 For the complete installed merchant and Applications workflow, prepare the runtime from that same archive and SHA:
 
@@ -224,3 +224,9 @@ Use **Handover** or the existing workspace.export action to receive the complete
 The merchant retains the complete archive in its original private export directory and returns a stable workspace file selection. The typed downloader can continue the same bytes after a session change and reopen the received files offline. Restore the complete archive into a new private directory, then select that actual restored directory through Applications.
 
 The [receiving guide](RECEIVING.md) gives the exact inspect, restore, restart and complete exchange commands, and distinguishes original workspace restoration from file-transport verification.
+
+## 9. Commission the customer's complete Installation
+
+The installed **openfema-installation** command receives an exact complete native workspace ZIP and selected project delivery, original Workshare seed, explicit operator bindings and optional whole unfinished working files. It retains every customer member and prepares the existing SF47 Customer installations input, preview and complete Workorder. The original commercial phases, funded assignments and acceptance checks remain in the same case.
+
+Follow the complete [Public Assistance customer Installation guide](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/OPENFEMA_CUSTOMER.md) for original Workshare selection, editable binding template, full preparation, interrupted receiving, independent offline reopen and native case preview/save/restore. Keep the original browser working-copy and recipient files alongside the committed native archive so the next engineer receives the whole customer project.
