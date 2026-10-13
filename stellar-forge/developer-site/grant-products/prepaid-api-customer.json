@@ -1,0 +1,110 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "prepaid-api-customer",
+  "heading": "## Prepaid API: one acquired pass, useful calls and later work",
+  "sources": [
+    {
+      "id": "prepaid-api-customer-recovery-guide",
+      "label": "Complete API customer encrypted handover and same-workspace receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/RECOVERY.md",
+      "commit": "93ba3e0af1221a62d9735697849d175e1e6a36fa",
+      "editions": [
+        {
+          "commit": "93ba3e0af1221a62d9735697849d175e1e6a36fa",
+          "git_blob": "0acc877c99c08c2b78f064b88c5e55d720a16769",
+          "sha256": "78d661f3bc564ff66d237ffc59a028fcba23bc3b6766f3b21fb7708a81510e82",
+          "bytes": 11617
+        }
+      ]
+    },
+    {
+      "id": "prepaid-api-customer-manual-agent-guide",
+      "label": "Preserve the original manual agent connection and CLI source pin during receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/RECOVERY_MANUAL_AGENT.md",
+      "commit": "3c2c545787b0cdd1ce8bf7c2c1e1d4680535636f",
+      "editions": [
+        {
+          "commit": "3c2c545787b0cdd1ce8bf7c2c1e1d4680535636f",
+          "git_blob": "7ddf349ee44b1d08a7b9ab823b1c14ec858b22ff",
+          "sha256": "b32fd3601a93e9982b421feac466e8d4ccc0edc357fb4d1ac52be71e05c7c4cd",
+          "bytes": 2969
+        }
+      ]
+    },
+    {
+      "id": "prepaid-api-customer-workspace-guide",
+      "label": "Complete API customer request, portfolio, history, download and recovery operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/README.md",
+      "commit": "3c2c545787b0cdd1ce8bf7c2c1e1d4680535636f",
+      "editions": [
+        {
+          "commit": "3c2c545787b0cdd1ce8bf7c2c1e1d4680535636f",
+          "git_blob": "c5946125791bb5369593e3c687df944b64d703b3",
+          "sha256": "bdba26c80098eb8b1a2a438ac516d1f359557c06c60e2518ce1272455431375e",
+          "bytes": 29278
+        }
+      ]
+    },
+    {
+      "id": "prepaid-api-customer-recovery-programme",
+      "label": "Original complete encrypted customer capture, restore, browser edit and cold receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-programme.mjs",
+      "commit": "3c2c545787b0cdd1ce8bf7c2c1e1d4680535636f",
+      "editions": [
+        {
+          "commit": "3c2c545787b0cdd1ce8bf7c2c1e1d4680535636f",
+          "git_blob": "0bbe3c776e648aa0234f3defe4bff9336cf49563",
+          "sha256": "aa24da4dee2009fc83aa6fbaac02f9f18d0533717deb1b68344c0718cd18bc75",
+          "bytes": 10624
+        }
+      ]
+    },
+    {
+      "id": "prepaid-api-customer-navigation-operated-programme",
+      "label": "Exact source edition operated for the original three-pass navigation and download result",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/customer-navigation-programme.mjs",
+      "commit": "985f8fc90dfd5a79c80f877f211075c3bf5074a3",
+      "editions": [
+        {
+          "commit": "985f8fc90dfd5a79c80f877f211075c3bf5074a3",
+          "sha256": "cbd45892e76fdc92c75d01b5e77b89687e214081b02a892073cd6f54f2ee3f38",
+          "bytes": 10323
+        }
+      ]
+    },
+    {
+      "id": "prepaid-api-customer-navigation-current-programme",
+      "label": "Complete maintained navigation programme with empty, archived and all-page portfolio receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/customer-navigation-programme.mjs",
+      "commit": "3c2c545787b0cdd1ce8bf7c2c1e1d4680535636f",
+      "editions": [
+        {
+          "commit": "3c2c545787b0cdd1ce8bf7c2c1e1d4680535636f",
+          "git_blob": "9e690ff6a77bd21c6999e0894c7ed2b7582e97e5",
+          "sha256": "d7e89c73edba3f89a73d55e7611347205ef331d41d5d20c84c85fe65a3e8a2f9",
+          "bytes": 12544
+        }
+      ]
+    },
+    {
+      "id": "prepaid-api-customer-complete-source",
+      "label": "Complete maintained API customer application, browser, recovery, agent and typed source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "tree",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace",
+      "commit": "3c2c545787b0cdd1ce8bf7c2c1e1d4680535636f"
+    }
+  ]
+}
