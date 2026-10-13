@@ -93,7 +93,7 @@ export function selection(c,input,catalogueSha256){
 }
 export function challenge(selection,value,index){
  need(value.x402Version===2&&object(value.resource)&&Array.isArray(value.accepts),'Actual v2 resource challenge required');
- const pathBinding=bindRequestPath(value,selection.url,selection.method);
+ const pathBinding=bindRequestPath({resource:value.resource,extensions:value.extensions},selection.url,selection.method);
  integer(index,'challenge accept index',0,value.accepts.length-1);const offer=value.accepts[index],old=selection.selectedTerms;
  need(object(offer),'Original challenge option required');
  for(const key of ['scheme','network','asset','payTo'])need(offer[key]===old[key],'Actual challenge changed '+key+'; receive and select the new source explicitly');
