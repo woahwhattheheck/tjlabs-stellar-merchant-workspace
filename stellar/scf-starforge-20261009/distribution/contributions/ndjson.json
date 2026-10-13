@@ -30,6 +30,9 @@
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/gleif_portfolio.py",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/public/gleif-intake.js"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/public/gleif-intake.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/portfolio_refresh.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/public/portfolio-refresh.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/PORTFOLIO_REFRESH.md"
   ]
 }

@@ -7,6 +7,7 @@ relevance decisions. It never turns a missing record into a legal conclusion.
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from contextlib import nullcontext
 import csv
 import hashlib
 import io
@@ -62,6 +63,8 @@ TABLES = {
     "reviews": ("id", "change_id", "body"),
     "cycle_events": ("id", "body"),
     "research_intakes": ("id", "body"),
+    "portfolio_refreshes": ("id", "body"),
+    "portfolio_refresh_events": ("id", "body"),
 }
 
 def sha(data: bytes) -> str:
@@ -181,6 +184,8 @@ class Domain:
                 CREATE TABLE IF NOT EXISTS os_reviews(id TEXT PRIMARY KEY,change_id TEXT NOT NULL,body TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS os_cycle_events(id TEXT PRIMARY KEY,body TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS os_research_intakes(id TEXT PRIMARY KEY,body TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS os_portfolio_refreshes(id TEXT PRIMARY KEY,body TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS os_portfolio_refresh_events(id TEXT PRIMARY KEY,body TEXT NOT NULL);
                 CREATE INDEX IF NOT EXISTS os_alias_lookup ON os_aliases(scope,alias);
                 CREATE INDEX IF NOT EXISTS os_case_events_case ON os_case_events(case_id);
                 CREATE INDEX IF NOT EXISTS os_change_comparison ON os_changes(comparison,entity_id);
@@ -582,6 +587,16 @@ class Domain:
 
     def save_case(self, *, portfolio_id, counterparty_id, candidate_id, edition_id,
                   resolution, relevance, reason, reviewer, match_request=None, case_id=None, expected=None, monitoring=None):
+        return self._save_case(portfolio_id=portfolio_id, counterparty_id=counterparty_id,
+            candidate_id=candidate_id, edition_id=edition_id, resolution=resolution, relevance=relevance,
+            reason=reason, reviewer=reviewer, match_request=match_request, case_id=case_id,
+            expected=expected, monitoring=monitoring, _commit=True)
+
+    def _save_case(self, *, portfolio_id, counterparty_id, candidate_id, edition_id,
+                   resolution, relevance, reason, reviewer, match_request=None, case_id=None,
+                   expected=None, monitoring=None, _commit=True):
+        if not _commit and not self.db.in_transaction:
+            raise InputError("The internal case writer requires its original caller-owned transaction")
         portfolio = self._one("portfolios", portfolio_id)
         self.entity(portfolio_id, counterparty_id)
         edition = self._one("editions", edition_id)
@@ -627,7 +642,7 @@ class Domain:
                     "updatedAt": time.time()}
             body["revision"] = sha(json_bytes(body))
             event = {"id": body["revision"], "case": ident, "previous": expected, "value": body}
-            with self.db:
+            with self.db if _commit else nullcontext():
                 self._put("cases", body, mutable=True)
                 self.db.execute("INSERT INTO os_case_events VALUES(?,?,?)", (event["id"], ident, json_bytes(event).decode()))
             return body
@@ -789,6 +804,8 @@ class Domain:
             review_cycles.replay(self)
             import gleif_portfolio
             gleif_portfolio.verify_all(self)
+            import portfolio_refresh
+            portfolio_refresh.verify_all(self)
             state = {"schema": SCHEMA, "tables": {}}
             for table, columns in TABLES.items():
                 if table in ("indexes", "aliases", "statements"):
@@ -858,7 +875,7 @@ class Domain:
             # Earlier complete archives predate additive immutable custody collections.
             if isinstance(state.get("tables"), dict):
                 absent = expected_tables - set(state["tables"])
-                if absent <= {"cycle_events", "research_intakes"}:
+                if absent <= {"cycle_events", "research_intakes", "portfolio_refreshes", "portfolio_refresh_events"}:
                     for name in absent:
                         state["tables"][name] = []
             if state.get("schema") != SCHEMA or set(state.get("tables", {})) != expected_tables:
@@ -934,6 +951,8 @@ class Domain:
                 review_cycles.replay(self)
                 import gleif_portfolio
                 gleif_portfolio.verify_all(self)
+                import portfolio_refresh
+                portfolio_refresh.verify_all(self)
             # The original comparison implementation reconstructs its own closure.
             for row in state["tables"]["comparisons"]:
                 body = load_json(row["body"]); before = self._one("editions", body["before"]); after = self._one("editions", body["after"])

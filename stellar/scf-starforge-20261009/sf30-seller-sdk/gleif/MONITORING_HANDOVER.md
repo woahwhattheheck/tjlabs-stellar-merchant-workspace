@@ -126,6 +126,10 @@ After native completion, open the original and independently received applicatio
 
 A successful source/function check is not a claim of browser, Python/native or visual acceptance. The native receipt explicitly leaves visual acceptance pending until the original equipped owner opens and uses the exact outgoing versions. Correct the first actual exception or visible defect in place, preserving original source identities and the same operation.
 
+## Subsequent customer portfolio refresh
+
+The same original receiving command accepts optional `--refresh-selection PRIVATE_REFRESH_SELECTION.json` to compare an earlier same-key customer portfolio against the newly received one, save explicit original case decisions and cold-reopen the complete result. See [PORTFOLIO_REFRESH.md](../ndjson/opensanctions/PORTFOLIO_REFRESH.md) for exact choices and the full native continuation. Omission preserves the original receiving intent and course. A changed selection uses a new receiving output; no existing receipt or source edition is replaced.
+
 ## Source packaging
 
 The original gleif-research contribution exports the mapping helper and new receiving command, includes both guides, and carries the browser asset through the original browser-assets.json manifest. GLEIF managed source identity includes the helper, UI, guide and receiver. The original ndjson contribution explicitly carries the Python intake and browser module. Source Monitoring's original application binding includes both new leaves. The original client admits only the three named additive operations.
