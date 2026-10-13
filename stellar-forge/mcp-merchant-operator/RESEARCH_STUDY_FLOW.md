@@ -19,14 +19,14 @@ The host declares an existing Research listener through the normal configuration
     "evidence": {
       "label": "Existing evidence workspace",
       "consoleUrlFile": "/absolute/private/research-connection.json",
-      "directory": "/absolute/private/research-mcp-files",
+      "directory": "/absolute/private/original-research-workspace",
       "sources": {}
     }
   }
 }
 ```
 
-These are host-selected paths, never paths supplied to the six tools. The original managed Research application writes the startup connection and owns its token and listener. Follow the maintained merchant `README.md` and its initialization/serve commands for the installed version. Keep that startup file with its original private permissions. Do not paste its token into an MCP argument or a source document.
+These are host-selected paths, never paths supplied to the six tools. `directory` is the actual original Research store directory; the client derives the expected workspace ID from it. It is not a new MCP client-state directory. The original managed Research application writes the startup connection and owns its token and listener. Follow the maintained merchant `README.md` and its initialization/serve commands for the installed version. Keep that startup file with its original private permissions. Do not paste its token into an MCP argument or a source document.
 
 Call `merchant_research_workspaces`, then `merchant_research_attach({"workspace":"evidence"})`.
 The original attachment verifies workspace identity and rereads the startup connection after a managed restart. Read `merchant_research_status` and the actual dossier before selecting a source or writing.

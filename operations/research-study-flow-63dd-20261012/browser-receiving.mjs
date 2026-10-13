@@ -48,6 +48,8 @@ export async function runStudyFlowBrowserReceiving({sourceRoot,operationDirector
   const overview=await api(endpoint+'/study-flow');
   need(overview.dossier.revision===baseline.native.revision,'Receiving must preserve original dossier revision');
   journal.workspaceId=app.workspaceId;journal.instanceId=app.instanceId;await checkpoint();
+  const {receiveStudyFlowMcp}=await import('./mcp-receiving.mjs');
+  await phase('same-dossier-mcp-receiving',()=>receiveStudyFlowMcp({app,sourceRoot,operationDirectory,baseline,signal}));
   const {chromium}=await import(pathToFileURL(resolve(playwrightModule)).href);
   console.log(JSON.stringify({operationId:OP,phase:'browser-starting',pid:process.pid,workspaceId:app.workspaceId}));
   browser=await chromium.launch({executablePath:resolve(chromiumExecutable),headless:true,
