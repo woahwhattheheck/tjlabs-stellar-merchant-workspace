@@ -1,0 +1,91 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "grant-reviewer-receiving",
+  "heading": "## Reviewer Workbench, Merchant client and managed Applications",
+  "sources": [
+    {
+      "id": "reviewer-restored-source-selection",
+      "label": "Complete 2,377-file restored Reviewer source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/REQUIRED-SOURCE-SELECTION.json",
+      "editions": [
+        {
+          "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+          "git_blob": "46d08c4395ba753c72e0e1f79742366b8527c290",
+          "sha256": "0df0a2ac352d1875a1a8c9586cc72e1434117aced00c7ae79f47e73f91ebc85c",
+          "bytes": 1316825
+        }
+      ]
+    },
+    {
+      "id": "reviewer-restored-native-runner",
+      "label": "Original nonpaying Workbench, Merchant and Console receiving runner",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/RUN_RECOVERED_REVIEWER.py",
+      "editions": [
+        {
+          "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+          "git_blob": "d986078e3d65e5a98b36f4f65d895ca78f2cd158",
+          "sha256": "2356bcebd2ab91e76d001d80fa908822a924b3e10a82f8bc8b729004f322ad7b",
+          "bytes": 24074
+        }
+      ]
+    },
+    {
+      "id": "reviewer-customer-receiving",
+      "label": "Complete Reviewer customer operation, receiving and recovery guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/CUSTOMER_RECEIVING.md",
+      "editions": [
+        {
+          "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+          "git_blob": "82d6bef32a276921e45775cbd6c47186f3499486",
+          "sha256": "9964f7f45c007d027131a3e37137769dada4913c7bbe757488ca5791dbf6e13f",
+          "bytes": 21912
+        }
+      ]
+    },
+    {
+      "id": "reviewer-receiving-release",
+      "label": "Dated original Workbench and Merchant completions with pending Console",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/RECEIVING-RELEASE.json",
+      "editions": [
+        {
+          "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+          "git_blob": "332057b4a74ea556ffe9ff3245eacd9d19c2825c",
+          "sha256": "b34c8b4b44b0a72908f336e3f810a056af4982c92334c4d6d7fc2544642e3cd7",
+          "bytes": 4487
+        }
+      ]
+    },
+    {
+      "id": "reviewer-applications-receiving",
+      "label": "Additive Applications receiver preserving both completed parent results",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.mjs",
+      "editions": [
+        {
+          "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+          "git_blob": "ba1f9b0c3a88962fa7a7e9955daa50bc2c9398a6",
+          "sha256": "9e5f23538326540ee83281f7484d856796c5f28fa04efe99e23209666bad086e",
+          "bytes": 22239
+        }
+      ]
+    },
+    {
+      "id": "reviewer-applications-operating",
+      "label": "Complete existing-READY-runtime Applications operation and recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.md",
+      "editions": [
+        {
+          "commit": "736c62105d66f60a4b5da241e9198da39858d2fe",
+          "git_blob": "f55c2186f07b81e21c8834603441bb12ca41167f",
+          "sha256": "d810b3b3917d15392723f769c94e2f3088f16eb49ee559f1c4b27f46a525cd7a",
+          "bytes": 15276
+        }
+      ]
+    }
+  ]
+}
