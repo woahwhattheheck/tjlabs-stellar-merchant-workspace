@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // MIT. Search and export original registrations, or open the same browser catalog.
+import { mainOperatingReturn } from './operating-plan-return-cli.mjs';
 import { mainOperatingPlan } from './operating-plan-cli.mjs';
 import { realpath } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -19,6 +20,7 @@ const HELP = [
   '                     [--out NEW_FILE]',
   '  starforge discover serve [--port NUMBER] [--host 127.0.0.1|localhost|::1]', '',
   '  starforge discover plan --help',
+  '  starforge discover plan-return --help',
   '  starforge discover requirements --repository /absolute/git-repository --help',
   '  starforge discover review-request PRODUCT_ID --repository /absolute/git-repository --help', '',
   'Kinds: command, source, feature, export, application, merchant; default all.',
@@ -56,6 +58,7 @@ export function parseDiscoveryArguments(args) {
 }
 
 export async function main(args = process.argv.slice(2)) {
+  if (args[0] === 'plan-return') return mainOperatingReturn(args.slice(1));
   if (args[0] === 'plan') return mainOperatingPlan(args.slice(1));
   if (REQUIREMENT_ACTIONS.includes(args[0])) return mainRequirements(args);
   const { action, options = {}, query = '' } = parseDiscoveryArguments([...args]);
