@@ -220,6 +220,354 @@ def preserve_archive(root, intake, archive_directory):
     return {"path": str(destination), "bytes": length, "sha256": digest256.hexdigest(),
             "gitSha1": digest_git.hexdigest(), "files": len(records) + 1}
 
+NATIVE_HOST_SOURCE = r"""// MIT. Continue the complete NEED county programme on its existing funded native host.
+import { readFile, realpath, lstat } from 'node:fs/promises';
+import { join, resolve, dirname, isAbsolute } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { createHash, X509Certificate } from 'node:crypto';
+import { createServer as httpServer, request as httpRequest } from 'node:http';
+import { createServer as httpsServer } from 'node:https';
+import { connect as netConnect, createServer as netServer } from 'node:net';
+import { connect as tlsConnect } from 'node:tls';
+
+const OPERATION = 'NEED-REGIONAL-REPORTS-9B2C-20261012';
+const PAYMENT = Object.freeze({ scheme: 'exact', network: 'stellar:testnet',
+  asset: 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
+  payTo: 'GBB37T6QFXSFLVG7FHVVOQOK4YHE4T7ISG3ITPDRS3XNNY6JBWRIYOGC',
+  amount: '10000', maxTimeoutSeconds: 600 });
+const EXPECTED_ORIGIN = 'https://merchant.routescan39da.scf.test';
+const EXPECTED_RPC = 'https://soroban-testnet.stellar.org';
+const check = (ok, message, code = 'QCEW_NATIVE_HOST_INPUT_REQUIRED') => {
+  if (!ok) throw Object.assign(new Error(message), { code });
+};
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const stamp = () => new Date().toISOString();
+const log = value => process.stdout.write(JSON.stringify(value) + '\n');
+const portNumber = value => Number.isInteger(value) && value > 0 && value <= 65535;
+function argumentsFor(args) {
+  const result = {}, allowed = new Set(['source', 'directory', 'original', 'ca',
+    'chromium', 'playwright-module', 'path', 'accept-index']);
+  for (let index = 0; index < args.length; index++) {
+    check(/^--[a-z-]+$/.test(args[index]), 'Use the complete native host programme options.');
+    const name = args[index].slice(2);
+    check(allowed.has(name) && result[name] === undefined && args[index + 1] &&
+      !args[index + 1].startsWith('--'), 'Select each native host option and its value once.');
+    result[name] = args[++index];
+  }
+  for (const name of ['source', 'directory', 'original', 'chromium', 'playwright-module'])
+    check(isAbsolute(result[name] ?? ''), 'Select the absolute original host, source, native directory and installed browser paths.');
+  if (result.ca !== undefined) check(isAbsolute(result.ca), 'Select the absolute installed certificate authority file.');
+  const index = Number(result['accept-index'] ?? 0);
+  check(Number.isSafeInteger(index) && index === 0,
+    'The existing native host advertises its original single testnet payment alternative.');
+  return { ...result, acceptIndex: index, path: result.path ?? '/county-reports' };
+}
+async function listen(server, port = 0) {
+  return new Promise((accept, reject) => {
+    const failed = error => { server.removeListener('listening', ready); reject(error); };
+    const ready = () => { server.removeListener('error', failed); accept(server.address().port); };
+    server.once('error', failed); server.once('listening', ready); server.listen(port, '127.0.0.1');
+  });
+}
+async function closeServer(server) {
+  if (!server?.listening) return;
+  await new Promise((accept, reject) => {
+    server.close(error => error ? reject(error) : accept());
+    server.closeIdleConnections?.();
+    server.closeAllConnections?.();
+  });
+}
+function ordinaryEnvironmentName(value) {
+  return typeof value === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(value);
+}
+function publicProfile(configuration) {
+  return Object.fromEntries(['operator', 'signerModule', 'trustedPayer', 'buyerTransport',
+    'requestTimeoutMs', 'bodyCaptureTimeoutMs']
+    .filter(name => configuration[name] !== undefined).map(name => [name, configuration[name]]));
+}
+export async function runOriginalNativeHost(options) {
+  process.umask(0o077);
+  const SOURCE = await realpath(options.source), DIRECTORY = await realpath(options.directory);
+  const ORIGINAL = await realpath(options.original), OPERATOR = join(ORIGINAL, 'operator-workspace');
+  const originalManifestBytes = await readFile(join(OPERATOR, 'workspace.json'));
+  const manifest = JSON.parse(originalManifestBytes);
+  check(isAbsolute(manifest.sourceCli ?? ''), 'The original operator workspace must retain its installed native CLI.');
+  const ORIGINAL_SOURCE = await realpath(dirname(dirname(manifest.sourceCli)));
+  const moduleAt = path => import(pathToFileURL(join(SOURCE, path)).href);
+  const originalModuleAt = path => import(pathToFileURL(join(ORIGINAL_SOURCE, path)).href);
+  const [
+    { privateDirectory, readJson, readBytes, writeJson, writeBytes, jsonBytes, exists },
+    { withPrivateLock }, { openWorkspace }, { createNativeFacilitator },
+    { startFacilitatorServer }, { runQcewMerchantJourney }
+  ] = await Promise.all([
+    moduleAt('sf88-operator-buyer-cli/node/store.mjs'),
+    moduleAt('sf30-seller-sdk/routescan/quota.mjs'),
+    originalModuleAt('sf88-operator-buyer-cli/workspace.mjs'),
+    originalModuleAt('native-facilitator/runtime.mjs'),
+    originalModuleAt('native-facilitator/server.mjs'),
+    moduleAt('sf30-seller-sdk/fred/qcew/merchant-journey.mjs')
+  ]);
+  const ROOT = await privateDirectory(join(DIRECTORY, 'native-host'));
+  const retain = async (name, value) => {
+    const file = join(ROOT, name), bytes = jsonBytes(value);
+    if (await exists(file)) {
+      check((await readBytes(file, Math.max(1048576, bytes.length))).equals(bytes),
+        'Continue this original native host with its retained configuration: ' + name,
+        'QCEW_NATIVE_HOST_SELECTION_CHANGED');
+    } else await writeBytes(file, bytes, { exclusive: true });
+  };
+  return withPrivateLock(ROOT, 'native-host.lock', async () => {
+    const environmentBefore = new Map(), tunnels = new Set(), upstreamRequests = new Set();
+    const counters = { merchantConnect: 0, rpcConnect: 0, refusedConnect: 0 };
+    const setEnv = (name, value) => {
+      check(ordinaryEnvironmentName(name) && typeof value === 'string',
+        'Use the original operator environment names and string values.');
+      if (!environmentBefore.has(name)) environmentBefore.set(name, process.env[name]);
+      process.env[name] = value;
+    };
+    const restoreEnvironment = () => {
+      for (const [name, value] of environmentBefore)
+        if (value === undefined) delete process.env[name]; else process.env[name] = value;
+    };
+    const tracked = socket => {
+      tunnels.add(socket); socket.once('close', () => tunnels.delete(socket)); return socket;
+    };
+    let phase = 'ORIGINAL_HOST_READ', facilitator, facilitatorHttp, tls, proxy, result, failure;
+    const progress = async (next, extra = {}) => {
+      phase = next;
+      const value = { schema: 'stellar-forge.qcew-native-host-progress.v1',
+        operation: OPERATION, phase, at: stamp(), ...extra };
+      await writeJson(join(ROOT, 'progress.json'), value); log(value);
+    };
+    try {
+      const funding = await readJson(join(ORIGINAL, 'funding-result.json'), 4194304);
+      const accounts = await readJson(join(ORIGINAL, 'accounts.public.json'), 65536);
+      const active = await openWorkspace(['--dir', OPERATOR], { accounting: true });
+      check(funding.state === 'TESTNET_ACCOUNTS_FUNDED' && funding.network === PAYMENT.network &&
+        active.manifest.network === PAYMENT.network && active.config.trustedPayer === accounts.buyer,
+      'Reopen the original funded testnet operator and its existing Buyer.');
+      check(accounts.asset === PAYMENT.asset && accounts.merchant === PAYMENT.payTo,
+        'Use this installation’s original public testnet payment selection.');
+      const transport = active.config.buyerTransport;
+      check(transport?.origin === EXPECTED_ORIGIN && transport.mode === 'explicit-connect' &&
+        ordinaryEnvironmentName(transport.proxyEnv), 'Use the existing native merchant CONNECT transport.');
+      const origin = transport.origin, merchantHost = new URL(origin).hostname;
+      const rpc = new URL(active.manifest.signer.rpcUrl);
+      check(rpc.origin === EXPECTED_RPC && rpc.pathname === '/' &&
+        !rpc.search && !rpc.hash && !rpc.username && !rpc.password,
+      'Use the original Stellar testnet RPC endpoint.');
+      const certificateBytes = await readBytes(join(ORIGINAL, 'tls/server.pem'), 1048576);
+      const certificate = new X509Certificate(certificateBytes);
+      check(certificate.checkHost(merchantHost) !== undefined,
+        'The original TLS certificate must cover the selected public merchant host.');
+      const selectedCa = await realpath(options.ca ?? join(ORIGINAL, 'tls/extra-ca.pem'));
+      check((await lstat(selectedCa)).isFile() && process.env.NODE_EXTRA_CA_CERTS &&
+        await realpath(process.env.NODE_EXTRA_CA_CERTS) === selectedCa,
+      'Start Node with the selected original NODE_EXTRA_CA_CERTS file so TLS trust is loaded before startup.');
+      const facilitatorPolicyBytes = await readBytes(join(ORIGINAL, 'facilitator.json'), 65536);
+      const facilitatorPolicy = JSON.parse(facilitatorPolicyBytes);
+      check(facilitatorPolicy.network === PAYMENT.network && facilitatorPolicy.rpcUrl === EXPECTED_RPC &&
+        facilitatorPolicy.operations?.ownershipDirectory === join(ORIGINAL, 'signer-ownership') &&
+        facilitatorPolicy.payments?.maxAtomic === PAYMENT.amount,
+      'Reopen the existing native facilitator and signer ownership directory.');
+      check(facilitatorPolicy.signers?.length === 1 &&
+        facilitatorPolicy.signers[0].address === accounts.fee &&
+        ordinaryEnvironmentName(facilitatorPolicy.signers[0].secretEnv) &&
+        ordinaryEnvironmentName(active.manifest.signer.secretEnv),
+      'Select the original funded Buyer and fee signer environment bindings.');
+      const operatorProfile = publicProfile(active.config);
+      await retain('host-selection.json', { schema: 'stellar-forge.qcew-native-host-selection.v1',
+        operation: OPERATION, nativeDirectory: DIRECTORY, originalHost: ORIGINAL,
+        originalSource: ORIGINAL_SOURCE, operatorWorkspace: OPERATOR,
+        buyer: accounts.buyer, feePayer: accounts.fee, origin, rpc: rpc.origin,
+        path: options.path, payment: PAYMENT, acceptIndex: options.acceptIndex,
+        operatorManifestSha256: sha(originalManifestBytes),
+        facilitatorPolicySha256: sha(facilitatorPolicyBytes),
+        certificateSha256: sha(certificateBytes), caFile: selectedCa,
+        caSha256: sha(await readBytes(selectedCa, 4194304)) });
+      const buyerConfig = join(ROOT, 'buyer-settings.json'), stateDirectory = join(ROOT, 'buyer-state');
+      await privateDirectory(stateDirectory);
+      let buyerSettings = { runtimeDirectory: join(SOURCE, 'sf88-operator-buyer-cli'),
+        stateDirectory, operatorProfile, timeoutMs: 600000 };
+      if (await exists(buyerConfig)) {
+        const previous = await readJson(buyerConfig, 1048576);
+        check(typeof previous.runtimeDirectory === 'string' && isAbsolute(previous.runtimeDirectory),
+          'Reopen the same retained native Buyer runtime.');
+        const runtime = await realpath(previous.runtimeDirectory);
+        check(runtime === previous.runtimeDirectory && (await lstat(runtime)).isDirectory(),
+          'Keep the installed runtime selected by this original Buyer.');
+        buyerSettings = { ...buyerSettings, runtimeDirectory: runtime };
+      }
+      await retain('buyer-settings.json', buyerSettings);
+      const paymentFile = join(ROOT, 'public-payment.json');
+      await retain('public-payment.json', PAYMENT);
+      const selectedPortPath = join(ROOT, 'merchant-listener.json');
+      let merchantPort;
+      if (await exists(selectedPortPath)) {
+        const saved = await readJson(selectedPortPath, 65536);
+        check(saved.schema === 'stellar-forge.qcew-native-merchant-listener.v1' &&
+          saved.origin === origin && portNumber(saved.port),
+        'Reopen the existing county merchant listener.');
+        merchantPort = saved.port;
+      } else {
+        const probe = netServer();
+        try { merchantPort = await listen(probe); } finally { await closeServer(probe); }
+        await retain('merchant-listener.json', {
+          schema: 'stellar-forge.qcew-native-merchant-listener.v1', origin, port: merchantPort });
+      }
+      for (const [name, value] of Object.entries(active.operatorEnvironment)) setEnv(name, value);
+      const privateAccounts = await readJson(join(ORIGINAL, 'accounts.private.json'), 65536);
+      setEnv(active.manifest.signer.secretEnv, privateAccounts.accounts.buyer.secret);
+      setEnv(facilitatorPolicy.signers[0].secretEnv, privateAccounts.accounts.fee.secret);
+      setEnv('SF36_OBSERVER_USE_SYSTEM_CA', '1');
+      if (!(process.env.NODE_OPTIONS ?? '').split(/\s+/).includes('--use-system-ca'))
+        setEnv('NODE_OPTIONS', ((process.env.NODE_OPTIONS ?? '') + ' --use-system-ca').trim());
+      await progress('ORIGINAL_NATIVE_FACILITATOR_START', { originalHost: ORIGINAL, source: SOURCE,
+        operatorWorkspace: OPERATOR, buyerState: stateDirectory, merchantPort });
+      facilitator = await createNativeFacilitator(facilitatorPolicy, { environment: process.env });
+      const listenerPath = join(ROOT, 'facilitator-listener.json');
+      const savedListener = await exists(listenerPath) ? await readJson(listenerPath, 65536) : null;
+      if (savedListener) {
+        check(portNumber(savedListener.port), 'Reopen the retained native facilitator port.');
+        const previous = new URL(savedListener.url);
+        check(previous.protocol === 'http:' && ['127.0.0.1', '[::1]', 'localhost'].includes(previous.hostname) &&
+          Number(previous.port) === savedListener.port && previous.pathname === '/' &&
+          !previous.search && !previous.hash && !previous.username && !previous.password,
+        'Use the retained original local facilitator URL.');
+      }
+      facilitatorHttp = await startFacilitatorServer({ facilitator, port: savedListener?.port ?? 0 });
+      const facilitatorUrl = facilitatorHttp.url;
+      await retain('facilitator-listener.json', {
+        url: facilitatorUrl, port: Number(new URL(facilitatorUrl).port) });
+
+      tls = httpsServer({ key: await readBytes(join(ORIGINAL, 'tls/server-key.pem'), 65536),
+        cert: certificateBytes }, (request, response) => {
+        const outgoing = httpRequest({ hostname: '127.0.0.1', port: merchantPort,
+          path: request.url, method: request.method, headers: request.headers, agent: false }, incoming => {
+          response.writeHead(incoming.statusCode, incoming.headers); incoming.pipe(response);
+          incoming.once('error', () => response.destroy());
+        });
+        upstreamRequests.add(outgoing); outgoing.once('close', () => upstreamRequests.delete(outgoing));
+        outgoing.once('error', () => {
+          if (!response.headersSent) response.writeHead(502); response.end();
+        });
+        request.once('aborted', () => outgoing.destroy());
+        response.once('close', () => { if (!response.writableEnded) outgoing.destroy(); });
+        request.pipe(outgoing);
+      });
+      const tlsPort = await listen(tls);
+      const selectedEgress = process.env.HTTPS_PROXY ?? process.env.https_proxy ??
+        process.env.HTTP_PROXY ?? process.env.http_proxy;
+      const upstreamProxy = new URL(selectedEgress);
+      check(['http:', 'https:'].includes(upstreamProxy.protocol) &&
+        !upstreamProxy.username && !upstreamProxy.password &&
+        upstreamProxy.pathname === '/' && !upstreamProxy.search && !upstreamProxy.hash,
+      'Use this host’s existing HTTP CONNECT egress proxy.');
+      const bridgeRpc = (socket, authority) => {
+        const upstream = tracked(upstreamProxy.protocol === 'https:' ?
+          tlsConnect({ host: upstreamProxy.hostname, port: Number(upstreamProxy.port || 443),
+            servername: upstreamProxy.hostname }) :
+          netConnect({ host: upstreamProxy.hostname, port: Number(upstreamProxy.port || 80) }));
+        upstream.once('error', () => socket.destroy());
+        socket.once('error', () => upstream.destroy()); socket.once('close', () => upstream.destroy());
+        upstream.once('close', () => socket.destroy());
+        upstream.setTimeout(30000, () => { upstream.destroy(); socket.destroy(); });
+        upstream.once(upstreamProxy.protocol === 'https:' ? 'secureConnect' : 'connect',
+          () => upstream.write('CONNECT ' + authority + ' HTTP/1.1\r\nHost: ' + authority + '\r\n\r\n'));
+        let buffer = Buffer.alloc(0);
+        const handshake = data => {
+          buffer = Buffer.concat([buffer, data]);
+          if (buffer.length > 16384) { upstream.destroy(); socket.destroy(); return; }
+          const end = buffer.indexOf('\r\n\r\n'); if (end < 0) return;
+          upstream.removeListener('data', handshake); upstream.setTimeout(0);
+          if (!/^HTTP\/1\.[01] 200(?: |\r)/.test(buffer.toString('latin1', 0, end))) {
+            upstream.destroy(); socket.end('HTTP/1.1 502 Bad Gateway\r\n\r\n'); return;
+          }
+          socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+          if (buffer.length > end + 4) socket.write(buffer.subarray(end + 4));
+          socket.pipe(upstream); upstream.pipe(socket);
+        };
+        upstream.on('data', handshake);
+      };
+      proxy = httpServer((_request, response) => { response.writeHead(405); response.end(); });
+      proxy.on('connect', (request, socket, head) => {
+        tracked(socket); socket.on('error', () => {});
+        if (request.url === merchantHost + ':443' && head.length === 0) {
+          counters.merchantConnect++;
+          const target = tracked(netConnect({ host: '127.0.0.1', port: tlsPort }, () => {
+            socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+            socket.pipe(target); target.pipe(socket);
+          }));
+          target.once('error', () => socket.destroy()); target.once('close', () => socket.destroy());
+          socket.once('error', () => target.destroy()); socket.once('close', () => target.destroy());
+        } else if (request.url === rpc.hostname + ':443' && head.length === 0) {
+          counters.rpcConnect++; bridgeRpc(socket, request.url);
+        } else {
+          counters.refusedConnect++; socket.end('HTTP/1.1 403 Forbidden\r\n\r\n');
+        }
+      });
+      const proxyUrl = 'http://127.0.0.1:' + await listen(proxy);
+      setEnv(transport.proxyEnv, proxyUrl);
+      await writeJson(join(ROOT, 'running-service.json'), {
+        schema: 'stellar-forge.qcew-native-host-services.v1', operation: OPERATION,
+        recordedAt: stamp(), origin, merchantPort, tlsPort, proxyUrl,
+        facilitator: facilitatorUrl, buyerConfig, paymentFile });
+      await progress('COMPLETE_ORIGINAL_COUNTY_MERCHANT_CUSTOMER', { origin, facilitator: facilitatorUrl,
+        merchantPort, buyerConfig, paymentFile });
+      result = await runQcewMerchantJourney({ directory: DIRECTORY,
+        chromium: options.chromium, playwrightModule: options['playwright-module'],
+        buyerConfig, paymentFile, origin, path: options.path, facilitator: facilitatorUrl,
+        allowLocalFacilitator: true, merchantPort, acceptIndex: options.acceptIndex });
+      check(result?.schema === 'stellar-forge.qcew-merchant-result.v1' && result.operation === OPERATION,
+        'Receive the complete result from this original Merchant and Customer programme.');
+      await writeJson(join(ROOT, 'host-result.json'), {
+        schema: 'stellar-forge.qcew-native-host-result.v1', operation: OPERATION,
+        state: 'COMPLETE', completedAt: stamp(), originalHost: ORIGINAL, source: SOURCE,
+        buyerState: stateDirectory, origin, merchantPort, facilitator: facilitatorUrl,
+        transport: counters, result });
+      await progress('COMPLETE_ORIGINAL_COUNTY_RECEIVING', {
+        projectId: result.projectId, publication: result.publication, transport: counters });
+    } catch (error) {
+      failure = error;
+      const record = { schema: 'stellar-forge.qcew-native-host-interruption.v1',
+        operation: OPERATION, phase, at: stamp(),
+        code: typeof error.code === 'string' ? error.code : 'QCEW_NATIVE_HOST_INTERRUPTED',
+        message: String(error.message ?? '').slice(0, 2000) };
+      await writeJson(join(ROOT, 'host-error.json'), record).catch(() => {});
+      log(record);
+    } finally {
+      const shutdown = { schema: 'stellar-forge.qcew-native-host-shutdown.v1',
+        operation: OPERATION, at: stamp(), transport: counters, errors: [] };
+      try {
+        if (facilitatorHttp) shutdown.facilitator = await facilitatorHttp.close() ?? null;
+        else if (facilitator) shutdown.facilitator = await facilitator.drain() ?? null;
+      } catch (error) { shutdown.errors.push({ component: 'facilitator',
+        code: error.code ?? 'NATIVE_FACILITATOR_DRAIN_FAILED' }); failure ??= error; }
+      for (const outgoing of upstreamRequests) outgoing.destroy();
+      for (const socket of tunnels) socket.destroy();
+      for (const [component, server] of [['proxy', proxy], ['tls', tls]]) {
+        try { await closeServer(server); } catch (error) {
+          shutdown.errors.push({ component, code: error.code ?? 'NATIVE_LISTENER_DRAIN_FAILED' });
+          failure ??= error;
+        }
+      }
+      restoreEnvironment();
+      try { await writeJson(join(ROOT, 'shutdown.json'), shutdown); }
+      catch (error) { failure ??= error; }
+      log({ event: 'qcew_native_host_shutdown', operation: OPERATION,
+        complete: shutdown.errors.length === 0, transport: counters });
+    }
+    if (failure) throw failure;
+    return result;
+  });
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
+  runOriginalNativeHost(argumentsFor(process.argv.slice(2))).catch(error => {
+    console.error(JSON.stringify({ code: error.code ?? 'QCEW_NATIVE_HOST_INTERRUPTED',
+      message: String(error.message ?? '').slice(0, 2000) })); process.exitCode = 1;
+  });
+"""
+
 SDK_INSPECTOR = "import { readFile } from 'node:fs/promises';\nimport { dirname, join } from 'node:path';\nimport { createRequire } from 'node:module';\nimport { pathToFileURL } from 'node:url';\nimport { createHash } from 'node:crypto';\nimport { HTTPFacilitatorClient, x402ResourceServer, x402HTTPResourceServer } from '@x402/core/server';\nimport { ExactStellarScheme } from '@x402/stellar/exact/server';\nimport { bazaarResourceServerExtension, validateBazaarRouteExtensions } from '@x402/extensions/bazaar';\nconst { NATIVE_SDK_VERSION } = await import(pathToFileURL(process.argv[2]).href);\nif ([HTTPFacilitatorClient, x402ResourceServer, x402HTTPResourceServer, ExactStellarScheme,\n  validateBazaarRouteExtensions].some(value => typeof value !== 'function') ||\n  !bazaarResourceServerExtension) throw new Error('The installed original native seller SDK is incomplete.');\nconst require = createRequire(import.meta.url), packages = [];\nfor (const [name, specifier] of [['@x402/core','@x402/core/server'],\n  ['@x402/stellar','@x402/stellar/exact/server'], ['@x402/extensions','@x402/extensions/bazaar']]) {\n  let directory = dirname(require.resolve(specifier)), found = null;\n  for (;;) {\n    try {\n      const bytes = await readFile(join(directory, 'package.json'));\n      const value = JSON.parse(bytes);\n      if (value.name === name) {\n        if (value.version !== NATIVE_SDK_VERSION) throw new Error('Use the original ' + name + '@' + NATIVE_SDK_VERSION + '.');\n        found = { name, version: value.version, packageSha256: createHash('sha256').update(bytes).digest('hex') };\n        break;\n      }\n    } catch (error) { if (error.code !== 'ENOENT') throw error; }\n    const parent = dirname(directory);\n    if (parent === directory) break;\n    directory = parent;\n  }\n  if (!found) throw new Error('Read the installed original package metadata for ' + name + '.');\n  packages.push(found);\n}\nconsole.log(JSON.stringify({ event: 'qcew_native_sdk_ready', nativeSdk: NATIVE_SDK_VERSION, packages }));\n"
 
 def select_merchant_dependencies(root, paid_root, selected):
@@ -257,6 +605,9 @@ def main():
     parser.add_argument("--prepare-only", action="store_true")
     parser.add_argument("--merchant-packet")
     parser.add_argument("--merchant-packet-sha256")
+    parser.add_argument("--original-native-host",
+        help="Existing funded native operator installation; derives the retained Buyer, payment and local services.")
+    parser.add_argument("--native-ca", help="Existing certificate authority for the original native host.")
     parser.add_argument("--buyer-config")
     parser.add_argument("--seller-node-modules", help="Existing installed native seller dependencies, outside the original source/archive.")
     parser.add_argument("--payment")
@@ -280,13 +631,21 @@ def main():
         check(merchant_packet.get("entrypoints", {}).get("merchant") == PREFIX + "/fred/qcew/merchant-journey.mjs" and
               any(file["path"] == merchant_packet["entrypoints"]["merchant"] for file in merchant_packet["files"]),
               "Use the complete installed paid Merchant/Customer programme.")
-        if not options.prepare_only:
-            check(all((options.buyer_config, options.payment, options.origin, options.facilitator)) and
-                  options.merchant_port is not None and 0 < options.merchant_port <= 65535 and options.accept_index >= 0,
-                  "Select the existing testnet Buyer, public payment file, HTTPS origin, facilitator and fixed merchant port.")
+        if options.original_native_host:
+            check(not any((options.buyer_config, options.payment, options.origin, options.facilitator,
+                           options.merchant_port, options.allow_local_facilitator)),
+                  "The original native host derives its existing Buyer, payment, HTTPS route and facilitator.")
+            check(options.accept_index == 0, "Use the existing native host's original testnet payment alternative.")
+        else:
+            check(not options.native_ca, "Select the original native host for its certificate authority.")
+            if not options.prepare_only:
+                check(all((options.buyer_config, options.payment, options.origin, options.facilitator)) and
+                      options.merchant_port is not None and 0 < options.merchant_port <= 65535 and options.accept_index >= 0,
+                      "Select the existing testnet Buyer, public payment file, HTTPS origin, facilitator and fixed merchant port.")
     else:
         check(not options.paid_only and not any((options.buyer_config, options.payment, options.origin,
-              options.facilitator, options.merchant_port, options.allow_local_facilitator, options.seller_node_modules)),
+              options.facilitator, options.merchant_port, options.allow_local_facilitator, options.seller_node_modules,
+              options.original_native_host, options.native_ca)),
               "Use the complete paid source packet for the selected Merchant/Customer continuation.")
     root = private_directory(options.directory)
     intake = pathlib.Path(options.intake_directory).absolute() if options.intake_directory else root / "intake"
@@ -311,12 +670,16 @@ def main():
         if not (root / "run_native.py").exists():
             retain_exact(root / "run_native.py", controller_bytes)
         source = materialize(root, packet)
-        merchant_source, sdk_inspector = None, None
+        merchant_source, sdk_inspector, native_host_controller = None, None, None
         if merchant_packet is not None:
             paid_root = private_directory(root / "paid-sources" / options.merchant_packet_sha256)
             retain_exact(paid_root / "source-packet.json", merchant_bytes)
             merchant_source = materialize(paid_root, merchant_packet)
             sdk_inspector = select_merchant_dependencies(root, paid_root, options.seller_node_modules)
+            if options.original_native_host:
+                native_host_bytes = NATIVE_HOST_SOURCE.encode("utf-8")
+                native_host_controller = controllers / ("native-host-" + sha(native_host_bytes) + ".mjs")
+                retain_exact(native_host_controller, native_host_bytes)
             emit({"event": "qcew_paid_source_ready", "operation": OPERATION, "directory": str(paid_root),
                 "source": str(merchant_source), "files": merchant_packet["source"]["files"],
                 "sourceBytes": merchant_packet["source"]["bytes"], "packetSha256": options.merchant_packet_sha256,
@@ -349,6 +712,15 @@ def main():
         product = source / PREFIX
         environment = dict(os.environ)
         environment["QCEW_EXPECTED_SEED_SHA256"] = SEED_SHA
+        original_native_host, native_ca = None, None
+        if options.original_native_host:
+            original_native_host = pathlib.Path(options.original_native_host).resolve(strict=True)
+            check(original_native_host.is_dir(), "Select the complete existing native operator installation.")
+            native_ca = pathlib.Path(options.native_ca).resolve(strict=True) if options.native_ca else (
+                original_native_host / "tls" / "extra-ca.pem").resolve(strict=True)
+            check(native_ca.is_file(), "Select the existing native host certificate authority.")
+            environment["NODE_EXTRA_CA_CERTS"] = str(native_ca)
+            environment["SF36_OBSERVER_USE_SYSTEM_CA"] = "1"
         failed = None
         try:
             completed_original = all(any(stage.get("name") == name and stage.get("status") == "completed"
@@ -385,15 +757,23 @@ def main():
             if merchant_source is not None:
                 run_stage("original-native-seller-sdk", [node, str(sdk_inspector),
                     str(merchant_source / PREFIX / "native-version.mjs")], root, lock, state, environment)
-                paid = [node, str(merchant_source / merchant_packet["entrypoints"]["merchant"]),
-                    "--directory", str(root / "native"), "--chromium", str(pathlib.Path(options.chromium).absolute()),
-                    "--playwright-module", str(pathlib.Path(options.playwright_module).absolute()),
-                    "--buyer-config", str(pathlib.Path(options.buyer_config).absolute()),
-                    "--payment", str(pathlib.Path(options.payment).absolute()),
-                    "--origin", options.origin, "--path", options.merchant_path, "--facilitator", options.facilitator,
-                    "--merchant-port", str(options.merchant_port), "--accept-index", str(options.accept_index)]
-                if options.allow_local_facilitator:
-                    paid.append("--allow-local-facilitator")
+                if original_native_host is not None:
+                    paid = [node, "--use-system-ca", str(native_host_controller),
+                        "--source", str(merchant_source / pathlib.PurePosixPath(PREFIX).parent),
+                        "--directory", str(root / "native"), "--original", str(original_native_host),
+                        "--ca", str(native_ca), "--chromium", str(pathlib.Path(options.chromium).absolute()),
+                        "--playwright-module", str(pathlib.Path(options.playwright_module).absolute()),
+                        "--path", options.merchant_path, "--accept-index", str(options.accept_index)]
+                else:
+                    paid = [node, str(merchant_source / merchant_packet["entrypoints"]["merchant"]),
+                        "--directory", str(root / "native"), "--chromium", str(pathlib.Path(options.chromium).absolute()),
+                        "--playwright-module", str(pathlib.Path(options.playwright_module).absolute()),
+                        "--buyer-config", str(pathlib.Path(options.buyer_config).absolute()),
+                        "--payment", str(pathlib.Path(options.payment).absolute()),
+                        "--origin", options.origin, "--path", options.merchant_path, "--facilitator", options.facilitator,
+                        "--merchant-port", str(options.merchant_port), "--accept-index", str(options.accept_index)]
+                    if options.allow_local_facilitator:
+                        paid.append("--allow-local-facilitator")
                 state["paidSource"] = {"packetSha256": options.merchant_packet_sha256,
                     "source": str(merchant_source), "controller": str(controller_path)}
                 atomic_json(root / "run.json", state)

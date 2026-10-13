@@ -14,11 +14,11 @@ This delivery contains the complete paid county-report source packet and the com
 
 The original three-file programme is already delivered at https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C8REC7QHF and the original case is https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791827742861299. The existing original controller's source-packet.json is **2,158,543 bytes**, SHA256 **d392e198af16678277b4cfe71c96cdf26a61652f42bcbe7de96980541c687ec5**, Git blob **afad6d2d88f7999a176ad5afafe33f426b63ed7f**. Keep that exact packet for --packet. The following paid packet is selected separately with --merchant-packet.
 
-The complete paid packet contains **208 files / 2,635,825 source bytes**. Its packet is **2,788,442 bytes**, SHA256 **ff7225ca479a835481fbfdaeba263efcf84082a5fa32851f48ffaaac0c9695a5**, Git blob **260151ffe456a87a3aa2f6c516e4e5995312db25**. The preserved original runtime base is **0b005caa01350f7763a1905dcec9ce9edd45d781**. The complete county/DDP application composition is published at **db9c2e9d033174ea5c0bcd7b10e9573a1b0f49e4**, with complete current FRED/DDP support received from **5d51b802eea4ee45929985f944b1d0bccccf7e65**. Every member records its own selected source commit and complete byte identity.
+The complete paid packet contains **208 files / 2,645,687 source bytes**. Its packet is **2,800,376 bytes**, SHA256 **03e0aac4846ae426107ce1fd555a7e26cc94534598bbf94009b6269db4c5e6d3**, Git blob **034baf16a6da0a68b07965ac212949bb0582dcdf**. The preserved original runtime base is **0b005caa01350f7763a1905dcec9ce9edd45d781**. The complete county/DDP application composition is published at **53e5c6d6f10c2e501326716da52cdc390c48f5f2**, with complete current FRED/DDP support received from **5d51b802eea4ee45929985f944b1d0bccccf7e65**. Every member records its own selected source commit and complete byte identity.
 
 This receiving edition joins the current DDP package and publication desks with the county Merchant and Customer flows in the same workspace. It includes the complete published-source CLI, collector, comparison and receiving modules, their declarations, current browser assets and the original Buyer worker resources. The native controller continues the same retained intake, project, report ancestry and purchase intentions. Its original source phase still selects the unchanged 156-file packet; the full shared application is selected separately for the paid continuation.
 
-The complete extended controller is **27,840 bytes**, SHA256 **932aa6d54f3f3183c998d174b097b7b5a67c3feb8640bdd0b0029751689126f2**, Git blob **e22632665a0f0251074d0309b401c1e6605492c6**.
+The complete extended controller is **52,355 bytes**, SHA256 **3c971bb47bb13c739828b1eb204ee2f1c41060b3a014a1fe442483e99a1232ef**, Git blob **53720f5611548d95ae53452524c2711075762b9f**.
 
 Receive this complete delivery into a new private receiving directory, separate from the original operation. The Canvas carrier provides the complete compressed JSON and its encoded standard-library Python receiver. The receiver verifies the whole transfer and every individual file before writing the selected files. Its final output gives the actual receiving paths.
 
@@ -49,9 +49,46 @@ The public payment JSON must contain the original seller's actual payment requir
 
 Keep the Buyer configuration in its current private installation. The programme retains its public payment terms, selected launch binding, Buyer settings hash and actual operation identifiers in the original journal. The complete private configuration is read from its selected path at runtime.
 
-The original native FRED installation is retained in the [FD06/39DA host handoff](https://tokenjunkielabs.slack.com/archives/C0C1F274SGH/p1791773418541189?thread_ts=1791768518.287349&cid=C0C1F274SGH), joined by the current source receiver in the [original county case](https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791851368700359?thread_ts=1791827742.861299&cid=C0BTTA66TK3). Its installed operator workspace supplies the selected active configuration and operator environment. Use the current private Buyer configuration and the public launch values returned by that installation's owner.
+## Use the existing funded native host
+
+The original [FD06/39DA installation](https://tokenjunkielabs.slack.com/archives/C0C1F274SGH/p1791773418541189?thread_ts=1791768518.287349&cid=C0C1F274SGH) has already operated the native FRED/Huwise merchant programme. Its recorded original directory is /workspace/scratch/39daa82f3fbd/routescan_native_39da. Select that complete installation, or its actual complete receiving location on the accepting host, with --original-native-host.
+
+The complete host controller is embedded in run_native.py and is retained as an immutable .mjs file under operation/controllers. It opens the original operator workspace and derives the existing Buyer profile, public payment, native facilitator and HTTPS route. It starts the exact original facilitator under its existing signer ownership, creates the trusted local TLS/CONNECT bridge, and invokes the full maintained county Merchant and Customer journey against this operation's saved native project.
+
+The installation must retain operator-workspace/workspace.json, its original sourceCli installation and operator state, facilitator.json, accounts.public.json, accounts.private.json, funding-result.json, signer-ownership, tls/server.pem, tls/server-key.pem and tls/extra-ca.pem. The host's existing HTTPS_PROXY or HTTP_PROXY supplies RPC egress. Its public payment remains the original exact Stellar testnet asset/payee and 10,000 atomic units per advertised report resource.
+
+The launcher reads the original private signer values into the native process environment. Its retained launch files contain public terms, configuration references and Buyer settings. It loads NODE_EXTRA_CA_CERTS before starting Node and uses the original system trust. --native-ca selects an existing alternative CA file when the installation's complete trust bundle has a different path.
+
+The first paid run saves its Buyer settings, state directory, merchant port and facilitator URL under native/native-host. Reopening retains all four so that the original Customer workspace binding and native payment intents continue unchanged. The saved Buyer runtime continues to refer to its original installed source edition when a later complete application packet is received. The host uses the operator's existing spending controls and drains its facilitator, network connections and local listeners when the full journey ends.
+
+The host controller's whole source is based on the existing maintained native-huwise-journey.mjs at Commons commit 534dfcef5842add560d386bc707ffbd5af04ef1a. Its original account/facilitator setup and transport sequence are reused for the complete county programme.
 
 ## Complete operation command
+
+Use the original funded installation to derive all paid launch values:
+
+~~~sh
+python3 /absolute/paid-receiving/run_native.py \
+  --packet /dev/needecon48db-receiving-20261012/operation/source-packet.json \
+  --packet-sha256 d392e198af16678277b4cfe71c96cdf26a61652f42bcbe7de96980541c687ec5 \
+  --directory /dev/needecon48db-receiving-20261012/operation \
+  --intake-directory /dev/needecon48db-receiving-20261012/original-intake \
+  --merchant-packet /absolute/paid-receiving/merchant-source-packet.json \
+  --merchant-packet-sha256 03e0aac4846ae426107ce1fd555a7e26cc94534598bbf94009b6269db4c5e6d3 \
+  --original-native-host /workspace/scratch/39daa82f3fbd/routescan_native_39da \
+  --node /absolute/installed/node \
+  --chromium /absolute/installed/chromium \
+  --playwright-module /absolute/installed/playwright/index.js \
+  --pdfinfo /absolute/installed/pdfinfo \
+  --seller-node-modules /absolute/installed/node_modules \
+  --archive-directory /absolute/owned/private/needecon-artifacts
+~~~
+
+Choose the actual original operation and installed runtime paths on the accepting host. Add --paid-only when the same original operation has already completed source, production and browser receiving. --prepare-only receives the full source without starting the paid native host.
+
+### Existing separately configured Buyer and merchant
+
+A separately configured native installation can continue using its original explicit Buyer/payment/origin/facilitator/port selection:
 
 Run the received new controller, keeping --packet pointed at the original received packet and selecting the new paid source separately. Replace the installed paths and the public launch values below with that accepting host's existing selection:
 
@@ -62,7 +99,7 @@ python3 /absolute/paid-receiving/run_native.py \
   --directory /dev/needecon48db-receiving-20261012/operation \
   --intake-directory /dev/needecon48db-receiving-20261012/original-intake \
   --merchant-packet /absolute/paid-receiving/merchant-source-packet.json \
-  --merchant-packet-sha256 ff7225ca479a835481fbfdaeba263efcf84082a5fa32851f48ffaaac0c9695a5 \
+  --merchant-packet-sha256 03e0aac4846ae426107ce1fd555a7e26cc94534598bbf94009b6269db4c5e6d3 \
   --node /absolute/installed/node \
   --chromium /absolute/installed/chromium \
   --playwright-module /absolute/installed/playwright/index.js \
@@ -100,13 +137,13 @@ The complete maintained entrypoint is stellar/scf-starforge-20261009/sf30-seller
 
 5. It exports the complete outer-v6 economic project through the original browser workspace, receives that complete file into the original selected project receiving destination, and reopens the resulting project's Merchant view. The original merchant plan, delivered gzip and report files retain their exact bytes in that independently received project.
 
-6. It retains desktop and phone views and the original native Buyer results, all report downloads, receiving journals and complete project transfer. An invalid payment-alternative preparation also exercises the actual created-but-unprepared directory and confirms that the complete request catalogue still reopens.
+6. It retains desktop and phone views and the original native Buyer results, all report downloads, receiving journals and complete project transfer. An invalid payment-alternative preparation also exercises the actual created-but-unprepared directory and confirms that the complete request catalogue still reopens. The cumulative application also retains prepared and delivered Customer requests in the complete v3 project handover, with saved offer and destination identities.
 
 The programme operates the maintained product and configured native runtime. Its journal records actual dispatched request identities and full host results, and preserves the original publication and receiving selections across restart. Use that same operation to recover an interrupted payment or receiving run.
 
 ## Complete output and receiving
 
-All paid outputs stay beneath the original operation's native/merchant-workspace directory:
+The original native host setup is retained under native/native-host, including the saved public launch files, Buyer state, selected listeners, host progress and shutdown result. The complete Merchant/Customer outputs stay beneath the original operation's native/merchant-workspace directory:
 
 | Output | Contents |
 | --- | --- |
