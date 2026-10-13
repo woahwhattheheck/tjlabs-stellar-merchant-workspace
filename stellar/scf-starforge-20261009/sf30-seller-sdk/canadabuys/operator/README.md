@@ -272,3 +272,24 @@ const result = await operateCanadaBuysApi({
 Both applications are caller-owned existing workspaces. The result identifies `interface: 'http-api'` and retains the source, review, workshare, reports, complete package and receiving records. A supplied `workshareId` selects a particular saved workshare; otherwise an unambiguous workshare with the same notice, title and partner is reused before creation. Mutation failures are returned with the retained operation directory. The caller can read the existing workspace and deliberately continue the same operation.
 
 `OPERATING_TOOLS.mjs` accepts a completed original customer result with either a browser `browser` journey or an HTTP `operator` journey. It carries the actual interface name into its result, then opens the same SQLite databases through Applications and the registered 37-tool merchant provider.
+
+
+## Continue the exact outgoing rendered delivery
+
+The original browser course now continues through `operator/RENDERED_DELIVERY.mjs` after receiving the saved package. It uses the same browser context, original operator URL, notice/workshare identity and receiving URL. It opens populated bilingual notice, complete source, qualification and workshare screens at 1440 and 390 pixels; operates an empty search and restores the saved notice; opens the original bidder profile, captured evidence, requirements and frozen decision; and compares the saved decision with its current context using the original read operation.
+
+Every captured response document is downloaded through its saved browser control and matched to its exact saved byte count and hash. The original HTML handover, full HTML notice report and saved decision report open from their exact downloaded bytes. An intercepted local browser navigation supplies those bytes where file navigation is unavailable; Markdown/JSON evidence uses an explicitly identified readable text view. The same receiver reopens its saved workshare at narrow width.
+
+The producer must open the returned PNGs and look at the actual desktop/narrow views and outgoing files. The course saves original screenshots, viewport/layout observations, document identities and any browser errors in `rendered-delivery/result.json`. It reports capture separately from the producer's inspection. Horizontal overflow is recorded with the actual viewport and document dimensions for repair. The course creates no new customer and saves no edited qualification, profile or decision.
+
+The saved browser receiving is checkpointed before this rendering phase. A later render interruption reuses that complete original journey and its downloads; it does not receive the package again. Only the browser pages and services started by the caller are closed. Retain the images with the same original customer archive and return them to the producing peer for direct viewing and concrete corrections.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk; do not run broad suites or build a verification product.
+
+Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999

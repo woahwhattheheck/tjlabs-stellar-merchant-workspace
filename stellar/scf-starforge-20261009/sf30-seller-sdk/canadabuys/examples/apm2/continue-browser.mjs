@@ -29,7 +29,7 @@ async function save() {
   }
   console.log(JSON.stringify({stage, status:result.browserContinuation?.status, memory:process.memoryUsage()}));
 }
-if (result.browser?.status === 'completed') {
+if (result.browser?.status === 'completed' && result.browser.renderedDelivery?.status === 'captured') {
   console.log(JSON.stringify({stage:'original-browser-complete', status:'completed-retained', directory:result.browser.directory}));
 } else try {
   const attempts = join(root, 'original-case-attempts');
@@ -39,6 +39,7 @@ if (result.browser?.status === 'completed') {
   await save();
   const {startCanadaBuysServer} = await load('server.mjs');
   const {operateCanadaBuysDesk} = await load('operator/OPERATING_JOURNEY.mjs');
+  const {renderCanadaBuysDelivery} = await load('operator/RENDERED_DELIVERY.mjs');
   server = await startCanadaBuysServer({directory:join(root,'operator-workspace'),operator:'TJLabs browser receiving',title:'CanadaBuys procurement desk'});
   receiving = await startCanadaBuysServer({directory:join(root,'receiving-workspace'),operator:'TJLabs browser receiving',title:'CanadaBuys receiving desk'});
   need(server.workspace.getWorkshare(workshareId).noticeId === noticeId &&
@@ -57,18 +58,30 @@ if (result.browser?.status === 'completed') {
   const context = await browser.newContext({viewport:{width:1440,height:960},acceptDownloads:true});
   const page = await context.newPage(); page.setDefaultTimeout(20000);
   stage = 'original-browser-operating-and-receiving'; result.browserContinuation.stage = stage; await save();
-  const journey = await operateCanadaBuysDesk({page, url:server.url, noticeId, workshareId,
-    outputDirectory:join(root,'operator-journey'), receivingUrl:receiving.url});
+  const journey = result.browser?.status === 'completed'
+    ? JSON.parse(await readFile(join(result.browser.directory,'result.json'),'utf8'))
+    : await operateCanadaBuysDesk({page, url:server.url, noticeId, workshareId,
+      outputDirectory:join(root,'operator-journey'), receivingUrl:receiving.url});
   need(journey.status === 'completed' && journey.browserErrors.length === 0 &&
     journey.receiving?.sourceMatches && journey.receiving.reviewDifferences.length === 0 &&
     journey.receiving.workshareDifferences.length === 0 &&
     journey.saved.workshare.id === workshareId && journey.saved.workshare.feeCents === 720000,
     'Complete the original visible operator and source-preserving receiving workflow.');
+  // Preserve the completed browser receiving before rendering its retained outgoing files.
+  result.browser = {interface:'browser',status:journey.status,executable,directory:journey.directory,
+    saved:journey.saved,package:journey.package,receiving:journey.receiving,screenshots:journey.screenshots,errors:journey.browserErrors};
+  stage='original-browser-outgoing-delivery'; await save(); globalThis.gc?.();
+  const responsePath=join(root,'apm2-bidder-response-result.json');
+  const bidderResponse=existsSync(responsePath)?JSON.parse(await readFile(responsePath,'utf8')):undefined;
+  const rendered=await renderCanadaBuysDelivery({page,url:server.url,receivingUrl:receiving.url,
+    journey,bidderResponse,outputDirectory:join(root,'rendered-delivery')});
+  result.browser.renderedDelivery=rendered;
+  await save();
   const inspectionDirectory = join('/workspace/scratch/9fcdd28e6390/canadabuys-original-native-artifacts','browser-inspection');
   const inspections = [];
   try {
     await mkdir(inspectionDirectory, {recursive:true, mode:0o700});
-    for (const screenshot of journey.screenshots) {
+    for (const screenshot of [...journey.screenshots,...rendered.screenshots]) {
       const destination = join(inspectionDirectory, basename(screenshot.file));
       await copyFile(screenshot.path, destination);
       inspections.push({...screenshot, path:destination});
@@ -78,11 +91,12 @@ if (result.browser?.status === 'completed') {
   }
   result.browser = {interface:'browser', status:journey.status, executable, directory:journey.directory,
     saved:journey.saved, package:journey.package, receiving:journey.receiving, screenshots:journey.screenshots,
-    inspectionScreenshots:inspections, errors:journey.browserErrors};
+    inspectionScreenshots:inspections, renderedDelivery:rendered, errors:journey.browserErrors};
   result.browserContinuation = {...result.browserContinuation, status:'completed', completedAt:new Date().toISOString()};
   result.stages = result.stages.filter(item => item.stage !== 'original-browser-operating-and-receiving');
   result.stages.push({stage:'original-browser-operating-and-receiving', executable, packageId:journey.package.packageId,
-    workshareId, browserErrors:0, screenshots:journey.screenshots.length});
+    workshareId, browserErrors:0, screenshots:journey.screenshots.length+rendered.screenshots.length,
+    producerInspection:rendered.producerInspection.status,layoutFindings:rendered.layoutFindings});
   result.completedInterfaces = [...new Set([...(result.completedInterfaces || []), 'browser'])];
   stage = 'original-browser-complete'; await save();
   console.log(JSON.stringify({originalBrowserScreenshots:inspections, originalBrowserDirectory:journey.directory}));

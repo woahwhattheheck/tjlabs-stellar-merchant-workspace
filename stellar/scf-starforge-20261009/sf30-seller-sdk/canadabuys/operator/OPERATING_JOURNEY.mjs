@@ -57,7 +57,8 @@ function objectDiff(expected, actual, prefix = '') {
 }
 
 async function responseJson(response, label) {
-  const raw = await response.text();
+  let raw;
+  try { raw = await response.text(); } finally { if (typeof response.dispose === 'function') await response.dispose(); }
   let value;
   try { value = JSON.parse(raw); }
   catch { throw new Error(label + ' returned non-JSON HTTP ' + response.status() + '.'); }
