@@ -225,12 +225,13 @@ export function mountForecast({container,current,api:transport,mutationId,record
   }
   async function receiveWorking(value,{fromFile=false}={}){
     const next=validateWorking(value);
-    const originalSignature=signature(snapshot());
-    await receiveCashSources(next.cashReview);
-    if(signature(snapshot())!==originalSignature)throw new Error('The current Forecast changed while the received cash sources were being checked. Both working files remain intact.');
+    const recoverySignature=()=>{const state=snapshot();delete state.savedAt;return signature(state);};
+    const originalSignature=recoverySignature();
+    const checkCurrent=()=>{requireActive();if(recoverySignature()!==originalSignature)throw new Error('The current Forecast changed while the received cash sources were being checked. Both working files remain intact.');};
+    await receiveCashSources(next.cashReview);checkCurrent();
     if(next.pendingWorkbook)next.pendingWorkbook=await workbookHost.validateJournal(next.pendingWorkbook);
     if(next.workbook)next.workbook=await validateForecastWorkbookDeskState(next.workbook,{...workbookOptions(),currentInputs:next.inputs});
-    requireActive();
+    checkCurrent();
     if(fromFile){previousWorking=snapshot();delete previousWorking.previousWorking;}
     workbook?.dispose();workbook=null;
     inputState=clone(next.inputs);rawFields=clone(next.rawFields);selected=null;editing=next.editing;preview=null;request=clone(next.saveRequest);
