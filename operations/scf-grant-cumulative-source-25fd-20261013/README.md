@@ -2,22 +2,35 @@
 
 This delivery brings the current application, detailed customer chapters, source register and saved-submission tools into the existing grant reader. It keeps the original nine-answer draft, manual edits, issuer fields, review rounds, planning and handover history together with the complete selected source.
 
-The selected edition contains 276 original source records and 64 detailed companion chapters. The maintained product registry selects each contribution's actual source files and editions. The funding remains $38,000 for 400 prospective hours over 150 days, with the original six priced packages and two independent merchant / two independent buyer commitments.
+The selected edition contains 486 original source records and 78 detailed companion chapters. The maintained product registry selects each contribution's actual source files and editions. The funding remains $38,000 for 400 prospective hours over 150 days, with the original six priced packages and two independent merchant / two independent buyer commitments.
 
 ## Complete files in this delivery
 
-`source-package.json` is the existing submission application's complete four-file source package. It contains the application, source index, six-package budget and full companion. The original `openReviewerSourcePackage` reopened these bytes and reproduced the same complete native source bundle before publication.
+`source-package.json` is the existing submission application's complete four-file source package. It contains the application, source index, six-package budget and full companion. The original `openReviewerSourcePackage` reopened these bytes and reproduced the same complete source bundle before publication.
 
 `source-files.json` contains the complete selected source bodies in their maintained repository paths, including the composer, customer projector, product registry and declarations, browser modules/assets, operating guides and original source-package/export APIs. Every file carries its exact decoded byte count, SHA-256 and Git blob identity. Text retains complete UTF-8 in `content`; the original binary FRED example ZIP uses canonical `encoding: "base64"` in that same field. Both `gitBlob` and the original receiver's `git_blob` carry the same decoded-file identity. Its `outputs` list identifies the four emitted reader files. The six-package `budget.csv` is also retained verbatim in both source representations.
 
 | Reader file | UTF-8 bytes | Git blob |
 | --- | ---: | --- |
-| `dist/grant.html` | 92,026 | `cc0bb4b1e25f8c972d2fddf1b1f1cb4ba8feda51` |
-| `grant-data/application.md` | 43,002 | `7351da5bea0924c4f9bb7b45bccaefab0ae65233` |
-| `grant-data/product-and-finance.md` | 645,994 | `ead8b67e14aea39c325a31fba4ee52a8054133bd` |
-| `grant-data/source-index.json` | 318,551 | `2562e448c0e91d5abefa6513b003f24096e2d31d` |
+| `grant.html` | 96,422 | `6b65ce94eab0e3513e50cdc0a2c5366dc760ab65` |
+| `grant-data/application.md` | 47,321 | `f6ed178f10ac6d936914d3cc973804088d7af5e1` |
+| `grant-data/product-and-finance.md` | 925,292 | `f6643a51522d724df620c07c2b9312237f77e349` |
+| `grant-data/source-index.json` | 595,601 | `9cfb110f9ffc141be9a2fbdbeb4e2e572af048ec` |
 
-The following edition is composed against the actual current repository source at `7cf68a3029360242c13c45aa8132d710968fd01f`. It retains all 267 source records already present there, including the complete concurrently received OECD chapter and eleven exact source records, and adds nine registered sources from the maintained product declarations, preserving the complete earlier 225-record edition. Its 201 supplied files contain 6,014,772 decoded bytes: all 122 declared browser routes (121 unique assets), the 22 selected product declarations in this receiving edition, the original composer and its imports, and the existing eleven-file source-receiving runtime. The four narrow binary-receiving overlays retain the owners' current browser-save recovery and are recorded against exact preimages. The public application and HTML are identical to that selected main source; the complete companion and source index advance together. The original canonical input is 1,192,051 UTF-8 bytes, SHA-256 `2f4b6757580bcded3b36b963cb8a28a0a8ca2a3ebee6413b7d270709d5eadb5a`. The original source-package APIs created and reopened the complete four-file package. The application owner retains the full accepted manuscript and original saved submission; the source carrier retains the complete public output and original operators.
+The selected complete edition starts from repository `7a0b7c389f7fcb4b64c05a4da4e371c677a30de7`. It preserves every one of that edition's 318 source records and 67 chapters, then receives the current canonical manuscript through all 43 maintained declarations. The result contains 486 source records and 78 chapters; each prior source identity and chapter remains available. Forty-one chapter registrations are selected in the current source index; declarations without a matching selected chapter do not invent a product intake.
+
+The full canonical snapshot is 1,524,300 UTF-8 bytes, SHA-256 `0bf3ca54f347f2edc4a809fb6f39557a71fa7b7776c01875499b13a8c4b4b1d5`. It includes the complete OAuth/Support and generic Operating Plans chapters, the original Accounts and Document successors, Collections customer delivery, current bank/accountant and Rialto customer receiving, and the source-to-next-service planning loop. The canonical repair preserved all prior chapter bodies and peer content while the two reviewed front paragraphs now point to readable operating/finance material. The finance companion carries the existing USD200 source/compute reserve, its original basis and all four recalculated scenarios; its source and customer terms remain distinct from the unchanged grant allocation.
+
+The carrier supplies **247 full files / 7,280,107 decoded bytes**, including every one of the original 201 selected paths. It contains all 127 current browser routes (126 unique assets), all 43 current declaration files, the original composer and its complete imports, and 18 original receiving/source/helper files. Browser import resolution checks all 103 selected module references. The receiver's complete current ten-file runtime includes `reviewer_source_paths.py` and `receive-source-browser.cjs`; the original Library helper and its two sibling modules are also retained. This closes the concrete source-preparation and browser-child omissions in the earlier carrier. The complete original FRED example ZIP remains byte-identical in canonical Base64.
+
+Every carried text/binary body was checked against its exact decoded length, SHA-256 and Git object. Current source files are selected from the retained repository edition; the four composed reader outputs and the confined bank author-guide update are declared as exact preimage/postimage overlays. The bank author-guide change retains the complete original text and adds its current receiving sources. The independently advanced Cohort author chapter already includes the immutable calculator link and is preserved unchanged. `previousDelivery` retains the earlier carrier and source-package identities.
+
+The original source-bundle create/export/open functions created and independently reopened the complete four-file package in the connected JavaScript runtime. The checks retain all nine answer identities and the original 597-byte budget. These are completed source composition and package-receiving results; the original saved-case browser/native operation retains its own execution result.
+
+| Complete delivery | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `source-package.json` | 2,142,434 | `22d582e6759cbf20e17f7b6c9fcf3fc9a818fc38f9f49d0fd5d3421d1f1cc959` |
+| `source-files.json` | 7,746,666 | `ceeb4f3927b3c1164f16861a4bea49a2e15fe529799feb0e4437a68ca44c6f0c` |
 
 ## Receive into the existing saved submission
 
@@ -43,7 +56,7 @@ python -B operations/scf-current-application-receiving-81cf-20261012/prepare-sou
   --source-packet /absolute/received/source-files.json \
   --source-packet-sha256 ACTUAL_FULL_SOURCE_CARRIER_SHA256 \
   --source-package /absolute/received/source-package.json \
-  --source-package-sha256 a214a5cbcadff92ac3a683d5d464d47b5dcfbf4f4a14203d37d529872c9ae483 \
+  --source-package-sha256 22d582e6759cbf20e17f7b6c9fcf3fc9a818fc38f9f49d0fd5d3421d1f1cc959 \
   --original-source-commit ACTUAL_ORIGINAL_CASE_SOURCE_COMMIT \
   --runtime-source-commit ACTUAL_SELECTED_RECEIVING_RUNTIME_COMMIT \
   --application-source-commit ACTUAL_MERGED_SOURCE_COMMIT \
@@ -98,6 +111,6 @@ Its complete output includes exact field text, recorded counts and limits, the o
 
 ## Continue the original receiving operation
 
-The original saved application, draft, review and Page/Site remain the receiving targets. Source/package verification above describes actual completed source composition and native API reopening. Browser interaction, saved-review receiving and deployment results are recorded by their existing operation when they complete.
+The original saved application, draft, review and Page/Site remain the receiving targets. Source/package verification above describes actual completed source composition and original API reopening. Browser interaction, saved-review receiving and deployment results are recorded by their existing operation when they complete.
 
 The source package retains each customer product's actual operated results separately from grant participant evidence. The original invitation, eligibility correspondence and applicant fields stay in the existing application owner's custody. The delivery work continues against the agreed funded implementation and acceptance measures.
