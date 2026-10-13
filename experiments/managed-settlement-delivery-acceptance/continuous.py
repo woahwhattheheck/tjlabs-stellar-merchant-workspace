@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """MIT. One original managed, direct, installed Applications and rollout receiving sequence."""
-import os,sys,json,subprocess,hashlib,zipfile,stat,tempfile,shutil,time
+import os,sys,json,subprocess,hashlib,zipfile,stat,tempfile,shutil,time,shlex
 from pathlib import Path
 ROOT=Path(sys.argv[1]).resolve(); OUT=Path(sys.argv[2]).resolve()
 NODE=sys.argv[3]; PYTHON=sys.argv[4]; MODULES=sys.argv[5]; CHROME=sys.argv[6]
 OPERATION='SCF-MANAGED-SF98-DELIVERY-E49D-20261012'
 PRODUCT='e316fc9db6ef67949938b560a36c4700bf38410b'
 LIBRARY_HELPER_HASHES={"library_upload.py":"5bc473dadefe1f68ee8797baaed19d6662642d0ea4bcba128fa12938faa0d767","library_hosted_apps.py":"97d029b097ace62b744c82dfde20ef6921ed543a33a771ecf6452bd655d11b59","library_file_transfer.py":"5e1557817be17db06e2375f8c34ed83e948d520242e5ee4cb50a30c7a4c83378"}
+RESTORE_HELPERS=json.loads("{\"RESTORE.py\":{\"sourcePath\":\"experiments/managed-settlement-delivery-acceptance/restore-continuation.py\",\"gitBlob\":\"af507fff9b11f7e3036c727074a3c2353f232a0c\",\"bytes\":21645,\"sha256\":\"2467272e261a7e9164429e995d607ea0ed6d739af26f69b9dcb462602e9079a9\"},\"RESTORE.md\":{\"sourcePath\":\"experiments/managed-settlement-delivery-acceptance/RESTORING.md\",\"gitBlob\":\"fc0e08781c579de1fe1f931bdae842df990797e5\",\"bytes\":5331,\"sha256\":\"269051d7f3f040685ede363c1f3ddcffd02554587422867c0d772d92c15e742d\"}}")
 OUT.mkdir(parents=True,exist_ok=True,mode=0o700)
 if OUT.is_symlink() or OUT.stat().st_mode & 0o077:
  raise ValueError('The original receiving output must stay private.')
@@ -95,6 +96,15 @@ def persist_outputs(code):
   and p.get('receipt',{}).get('state')=='PASS' for p in summary['phases'])
  report=OUT/'receiving-summary.json';write_json(report,summary)
  archive=OUT.parent/'merchant-delivery-continuation.zip'
+ helper_bodies={}
+ for name,entry in RESTORE_HELPERS.items():
+  path=ROOT/entry['sourcePath']
+  if path.is_symlink() or not path.is_file(): raise ValueError('Use the original selected restore helper: '+str(path))
+  raw=path.read_bytes()
+  blob=hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
+  if len(raw)!=entry['bytes'] or sha(raw)!=entry['sha256'] or blob!=entry['gitBlob']:
+   raise ValueError('The selected restore helper changed: '+str(path))
+  helper_bodies[name]=raw
  excluded={'tmp','browser-profile','chromium-profile','playwright-profile','node_modules','__pycache__'}
  retained_installation=OUT/'installation-receiving'
  entries=[(OUT,Path('.'),'directory',stat.S_IMODE(OUT.lstat().st_mode))]
@@ -132,7 +142,7 @@ def persist_outputs(code):
   'sourceRetrieval':'Restore exact original Git sources separately before continuing at the same retained absolute paths.',
   'data':'Original local fixture signing values, stores, requests and customer receiving state. The phase-owned installation, dependencies, resources, links and modes are retained; unrelated browser images, profiles and shared dependencies are excluded.',
   'restoration':'Verify entry bytes and hashes, restore all regular files and directories with their retained modes, then restore the recorded internal symbolic links. Preserve the original absolute output paths and original request identities; inspect the selected runtime before continuing.',
-  'files':[]}
+  'helpers':RESTORE_HELPERS,'files':[]}
  with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as output:
   for path,relative,kind,mode in entries:
    name=str(Path('output')/relative)
@@ -164,9 +174,23 @@ def persist_outputs(code):
       raise ValueError('An original continuation file changed while being retained: '+str(path))
      entry.update(bytes=size,sha256=digest.hexdigest())
    continuation['files'].append(entry)
+  for name,raw in helper_bodies.items():
+   info=zipfile.ZipInfo(name);info.create_system=3;info.compress_type=zipfile.ZIP_DEFLATED
+   info.external_attr=(stat.S_IFREG|0o600)<<16;output.writestr(info,raw)
   output.writestr('CONTINUATION.json',json.dumps(continuation,indent=2)+'\n')
  os.chmod(archive,0o600)
- emit({'phase':'saving-receiving-files','archive':str(archive),'bytes':archive.stat().st_size,'summary':str(report)})
+ with archive.open('rb') as original:
+  os.fsync(original.fileno());archive_digest=hashlib.sha256()
+  for chunk in iter(lambda:original.read(1024*1024),b''): archive_digest.update(chunk)
+ archive_sha256=archive_digest.hexdigest()
+ descriptor=os.open(archive.parent,os.O_RDONLY|os.O_DIRECTORY)
+ try: os.fsync(descriptor)
+ finally: os.close(descriptor)
+ restore_command=[PYTHON,str(ROOT/RESTORE_HELPERS['RESTORE.py']['sourcePath']),
+  '--archive',str(archive),'--expected-sha256',archive_sha256,'--output',str(OUT)]
+ emit({'phase':'saving-receiving-files','archive':str(archive),'bytes':archive.stat().st_size,
+  'archiveSha256':archive_sha256,'restoreCommand':shlex.join(restore_command),
+  'restoreHelpers':RESTORE_HELPERS,'summary':str(report)})
  # Resolve the current locally available skill, then copy its three unchanged
  # helper bodies into one fresh private directory for this ordered upload.
  skill=Path(ENV.get('DELIVERY_LIBRARY_SKILL',
@@ -190,6 +214,7 @@ def persist_outputs(code):
  except (ValueError,TypeError): payload=None
  items=saved_items(payload)
  emit({'phase':'library-finished','exitCode':upload.returncode,'receipt':str(saved),'results':items,
+       'archiveSha256':archive_sha256,'restoreCommand':shlex.join(restore_command),
        'orderedResultsAvailable':items is not None})
  ordered=payload.get('results') if isinstance(payload,dict) else None
  valid_results=isinstance(ordered,list) and len(ordered)==len(request['uploads'])
