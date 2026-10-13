@@ -2130,6 +2130,8 @@ T1 configures the customer's actual source, company profile, service terms and r
 
 ## Document processing and complete customer receiving
 
+The complete immutable sources for this chapter include [Complete ordered PDF customer bundle setup, operation and receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/adae6d07971165fc04da3391440b786cf59ef6c4/products/document-merchant/ASSEMBLY.md); [Ordered complete PDF sources and original native batch fulfillment](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/adae6d07971165fc04da3391440b786cf59ef6c4/products/document-merchant/assembly.mjs).
+
 A report publisher, agency or analyst can commission a document service that carries the customer's editable input through a paid rendering job into a complete reusable delivery. The maintained Document merchant joins supplier configuration, Stellar payment terms, customer Requests, Jobs, document output and receiving in the original application. The customer receives the PDF together with the source and the information needed to relate it to the original request.
 
 ### Configure and operate the saved merchant

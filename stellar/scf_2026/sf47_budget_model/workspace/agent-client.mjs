@@ -1202,6 +1202,37 @@ export class GrantWorkspaceClient {
     if(Object.hasOwn(body,'document'))object(body.document,'Complete editable installation document');
     return this.#request('/api/operations/'+caseId+'/installation-workflow-seed',{body,mutation:false});
   }
+  installationCommissioningSeed(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','installationId','expectedRevision','document'],
+      ['expectedVersion','installationId','expectedRevision','document']);
+    integer(body.expectedVersion,'Current case version');integer(body.expectedRevision,'Current Installation edition',0,500);
+    if(body.installationId!==null)id(body.installationId,'installation');
+    need(body.installationId===null?body.expectedRevision===0:body.expectedRevision>=1,
+      'GRANT_INVALID_INPUT','Select the current Installation edition, or zero for a new Installation.');
+    object(body.document,'Complete original Installation draft');
+    return this.#request('/api/operations/'+caseId+'/installation-commissioning-seed',{body,mutation:false});
+  }
+  installationCommissioningReview(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','installationId','expectedRevision','document','reviews','actor','observedAt'],
+      ['expectedVersion','installationId','expectedRevision','document','reviews','actor','observedAt']);
+    integer(body.expectedVersion,'Current case version');integer(body.expectedRevision,'Current Installation edition',0,500);
+    if(body.installationId!==null)id(body.installationId,'installation');
+    need(body.installationId===null?body.expectedRevision===0:body.expectedRevision>=1,
+      'GRANT_INVALID_INPUT','Select the current Installation edition, or zero for a new Installation.');
+    object(body.document,'Complete original Installation draft');text(body.actor,'Recorded reviewing operator',500);
+    text(body.observedAt,'Original review timestamp with timezone',100);
+    need(Array.isArray(body.reviews)&&body.reviews.length>0&&body.reviews.length<=1001,
+      'GRANT_INVALID_INPUT','Select one through 1001 explicit source-bound review rows.');
+    for(const row of body.reviews){
+      exact(row,['kind','id','state','expectedBasisSha256','note'],['kind','id','state','expectedBasisSha256','note']);
+      need(['FUNDING','BUDGET','PLAN','OUTPUT'].includes(row.kind)&&['APPROVED','CHANGES_REQUIRED'].includes(row.state),
+        'GRANT_INVALID_INPUT','Select the original commissioning review kind and decision.');
+      sha(row.expectedBasisSha256);text(row.note,'Recorded decision reason',8000);
+    }
+    return this.#request('/api/operations/'+caseId+'/installation-commissioning-review',{body,mutation:false});
+  }
   installationPreview(caseId, body) {
     id(caseId,'operation');
     exact(body,['expectedVersion','installationId','expectedRevision','document','returnReview'],

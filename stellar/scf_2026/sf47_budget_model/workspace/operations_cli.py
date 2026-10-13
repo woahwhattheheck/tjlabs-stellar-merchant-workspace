@@ -350,6 +350,17 @@ def register(subparsers, common):
             target.add_argument("--installation", help="Original Installation ID; omit for a new Installation")
             target.add_argument("--expected-revision", type=int, required=True)
             target.add_argument("--document", help="Optional complete current editable Installation JSON")
+    for verb in ("installation-commissioning-seed", "installation-commissioning-review"):
+        target = command(verb, "Prepare exact customer cycle, priced-unit and output decisions in the original Installation draft", case=True, output=True)
+        target.add_argument("--document", required=True, help="Complete original editable Installation JSON")
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--installation", help="Original Installation ID; omit for a new Installation")
+        target.add_argument("--expected-revision", type=int, required=True)
+        target.add_argument("--document-only", action="store_true", help="Return the full document for original preview/save")
+        if verb == "installation-commissioning-review":
+            target.add_argument("--reviews", required=True, help="Explicit review rows with kind, id, state, expectedBasisSha256 and note")
+            target.add_argument("--actor", required=True)
+            target.add_argument("--observed-at", required=True, help="Original recorded review timestamp with timezone")
     target = command("installation-show", "Reopen one whole saved installation and its selected original records", case=True, output=True)
     target.add_argument("--installation", required=True)
     target.add_argument("--revision", type=int, help="Exact saved edition; omission opens the latest")
@@ -1040,6 +1051,22 @@ def operate(workspace, args):
                 except (UnicodeError, ValueError) as exc:
                     raise Problem("Use the complete UTF-8 Installation document.", 422, "INVALID_JSON") from exc
             result = ops.seed_workflow_installation(args.case, selected)
+    elif action in ("installation-commissioning-seed", "installation-commissioning-review"):
+        from operations_installations import MAX_DOCUMENT_BYTES
+        try:
+            document = json.loads(read_bytes(args.document, MAX_DOCUMENT_BYTES).decode("utf-8"))
+            reviews = json.loads(read_bytes(args.reviews, MAX_DOCUMENT_BYTES).decode("utf-8")) if action == "installation-commissioning-review" else None
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Supply the complete UTF-8 Installation document and explicit review rows.", 422, "INVALID_JSON") from exc
+        selected = {"expectedVersion": args.expected_version, "installationId": args.installation,
+                    "expectedRevision": args.expected_revision, "document": document}
+        if action == "installation-commissioning-review":
+            selected.update({"reviews": reviews, "actor": args.actor, "observedAt": args.observed_at})
+            result = ops.review_installation_commissioning(args.case, selected)
+        else:
+            result = ops.seed_installation_commissioning(args.case, selected)
+        if args.document_only:
+            result = result["document"]
     elif action == "installation-show":
         result = ops.installation(args.case, args.installation, args.revision)
     elif action == "installation-history":
