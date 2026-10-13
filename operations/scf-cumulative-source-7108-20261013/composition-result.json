@@ -1,7 +1,7 @@
 {
   "schema": "commons.scf-cumulative-composition.v1",
   "operationId": "SCF-CUMULATIVE-SOURCE-JOIN-7108-20261013",
-  "sourceCommit": "44b1b4839f062e811a1b0b1c444cdf203857c35c",
+  "sourceCommit": "6f22a2754c7b6f5d4dd192032ad182ca09cf79d9",
   "execution": "Complete original composer and all dependencies in V8",
   "repeatExact": true,
   "sourceCount": 183,
@@ -371,16 +371,16 @@
     },
     {
       "path": "grant-data/source-index.json",
-      "bytes": 193008,
-      "sha256": "7190ba5432d66c0bf78288a908d6c7b835ee41a030a68062cf3772979e844c63",
-      "gitBlob": "93ac481ab3db43ec8d3664c0a56f8f2253cfdacd"
+      "bytes": 194138,
+      "sha256": "f8d20ad806b47616d1ba13a46a814c04f721d94f6add1e67f3447590564206e2",
+      "gitBlob": "82a533cf480ed9711049a5cd92227d7b5085ac88"
     }
   ],
   "sourcePins": {
     "/grant.html": "1a8d7458129e0cc563341c581ee1370c5893f6fe",
     "/grant-data/application.md": "ba6246c39194aa5aee1bc515fe1e4a7548b19735",
     "/grant-data/product-and-finance.md": "62ca3331140b860ef75da71ae5aa657a7a04b63c",
-    "/grant-data/source-index.json": "93ac481ab3db43ec8d3664c0a56f8f2253cfdacd"
+    "/grant-data/source-index.json": "82a533cf480ed9711049a5cd92227d7b5085ac88"
   },
   "applicationChanges": [
     {
@@ -420,5 +420,9 @@
       "old": "The [complete commissioning workorder](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/ZARR_CUSTOMER_COMMISSIONING.md) and [editable source-selection worksheet](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/zarr-customer-commissioning.json) retain the source-to-customer agreement, original case ownership, acceptance, payment terms, measured effort and complete handover. Named source access, paid-service terms and receiving operators are selected through that original customer work; the supplied example results establish the reusable starting product.",
       "new": "The [complete commissioning workorder](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d901b45911a14df19acef842b43553ec0ee06653/stellar-forge/developer-site/ZARR_CUSTOMER_COMMISSIONING.md) and [editable source-selection worksheet](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d901b45911a14df19acef842b43553ec0ee06653/stellar-forge/developer-site/zarr-customer-commissioning.json) retain the source-to-customer agreement, original case ownership, acceptance, payment terms, measured effort and complete handover. Named source access, paid-service terms and receiving operators are selected through that original customer work; the supplied example results establish the reusable starting product."
     }
-  ]
+  ],
+  "concurrentIntegration": {
+    "preserved": "Complete issuer programme, original handover/CLI and source-package APIs, authored IATI introduction handling, CKAN declaration and expanded BLS measurements",
+    "base": "6f22a2754c7b6f5d4dd192032ad182ca09cf79d9"
+  }
 }

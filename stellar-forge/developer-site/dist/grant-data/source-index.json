@@ -3097,7 +3097,7 @@
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-      "projector_git_blob": "59cf33c8f337b0ecd8f1be7606b194ad112db4e4",
+      "projector_git_blob": "c5f2c42614680a09a398663476b29238414a0395",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
@@ -3169,9 +3169,9 @@
           ],
           "definition": {
             "path": "grant-products/bls-labor.json",
-            "bytes": 2628,
-            "sha256": "18935cf0d07d047c3b04b86fdf86771df0468100e8bfeed1a65d97a71bc427c8",
-            "git_blob": "b028d6c0939902f072cb94a5d684555e72b3a14c"
+            "bytes": 5025,
+            "sha256": "66ceb2c0c0c8598413ef0a6cf4f8a8fb8d0870bc2f682df2c515392b0ca3d220",
+            "git_blob": "21a4fa735be102e11eba9cedc6b50f48bbff59cb"
           }
         },
         {
@@ -3348,7 +3348,27 @@
         "/grant-data/product-and-finance.md"
       ],
       "guide": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/GRANT_HANDOVER.md",
-      "meaning": "Exact source/evidence, prepared output and operator-recorded issuer observations inside the original editable draft. No automatic issuer action."
+      "meaning": "Exact source/evidence, prepared output and operator-recorded issuer observations inside the original editable draft. No automatic issuer action.",
+      "issuer_programmes": {
+        "schema": "stellar-forge.grant-issuer-context.v1",
+        "native_bundle_schema": "stellar-forge.sf47-operations.v1.bundle",
+        "native_terms_schema": "stellar-forge.sf47-award-terms.v1",
+        "native_correspondence_schema": "stellar-forge.issuer-correspondence.receiving.v1",
+        "route": "/grant-submission.html",
+        "view": "handover",
+        "operation": "SCF-ISSUER-PREPARED-APPLICATION-94FE-20261013",
+        "guide": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/GRANT_ISSUER_CONTEXT.md",
+        "original_files": [
+          "operations.json",
+          "planning.zip",
+          "award-terms-selection.json",
+          "award-terms.html",
+          "award-terms.csv",
+          "sources/*"
+        ],
+        "selection": "Complete original Operations case, explicitly selected terms edition and native case-selected planning revision.",
+        "receiving": "The original editable draft retains full message sources, terms history, commissioning, prepared context and manual answer edits."
+      }
     }
   },
   "financial_operations": {

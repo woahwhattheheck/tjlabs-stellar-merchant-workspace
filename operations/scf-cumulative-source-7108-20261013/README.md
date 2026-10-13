@@ -23,21 +23,3 @@ The selected original draft is `scf-technical-buyer-draft-7108-20261012`; its na
 A reviewer source package contains the application, complete source index, original budget CSV and complete companion. The HTML page travels through the separate four-reader sourcePins contract. Receive the new package through the unchanged `grant-export --draft ORIGINAL --receive-source-package PACKAGE --out NEW_DIRECTORY` path. Reopen the complete exported draft and preserve all edited answers, issuer mappings, prior sources, plans, review and handover histories. Do not replace the saved draft with a newly created one.
 
 Native materialization of that private saved archive is pending after the latest invocation was rejected before process creation with environment_offline. Its failed local transfer and exact original input remain retained; source publication does not imply that the saved draft or Site has been updated.
-
-## Exact complete source package
-
-The included `source-package.json` is 1,072,556 bytes, SHA-256 `d67839c0620b0fb0d9ec80480fc6e56388ac233a461e0cdc721784d3aae9a904`. It binds the four complete original files to producer commit `85d898a7c9d84cc13f529f72027980409948d141`. Its 597-byte budget has SHA-256 `4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00` and is byte-identical to the previously accepted reviewer package.
-
-The source package was created and independently reopened by the unchanged current `makeSource`, `createSourceBundle`, `createReviewerSourcePackage` and `openReviewerSourcePackage` implementations. `source-package-selection.json` retains every complete descriptor and the original budget comparison.
-
-An equipped owner with the selected original submission can run:
-
-```sh
-node stellar-forge/developer-site/grant-export.mjs \
-  --draft /absolute/private/original/Current_Complete_Submission.json \
-  --receive-source-package operations/scf-cumulative-source-7108-20261013/source-package.json \
-  --select answers --format plain \
-  --out /absolute/private/scf/current-cumulative-export
-```
-
-Use an absent output directory, preserve the complete returned draft and source-package files, and continue the same named review through its original source-comparison/carry-forward controls. A later saved case version remains authoritative; select its actual original identity before applying this package. Do not apply the earlier 131-source phase's prepared decisions to this different edition. The preserved manual answers and any changed review targets need their original author/reviewer decisions.

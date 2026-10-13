@@ -27,6 +27,13 @@ function receiveIatiOperatingCompanion(value) {
   return installSection(value, IATI, text);
 }
 function receiveIatiOperatingApplication(value) {
+  // A manuscript owner can condense the three introductory joins into its
+  // own product narrative. Preserve that edition when it already names the
+  // installed application and links the complete operating procedure.
+  const authored = section(value, '## Working product and demonstrated results');
+  const hasIntroductions = IATI_OPERATING_APPLICATION.some(item => paragraph(value, item.prefix));
+  if (!hasIntroductions && authored?.text.includes('Operating Plans') &&
+      /\/iati\/document_evidence\/OPERATING_PROCEDURES\.md(?:[?#][^)]*)?\)/.test(authored.text)) return value;
   for (const item of IATI_OPERATING_APPLICATION) {
     if (paragraph(value, item.prefix)) continue;
     const current = section(value, item.heading);
