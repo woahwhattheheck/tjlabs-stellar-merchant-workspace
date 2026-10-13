@@ -5,7 +5,7 @@ export const DOMAIN_SCHEMA: 'starforge.opensanctions-workspace.v1';
 export const STARTUP_SCHEMA: 'stellar-forge.opensanctions-workspace-launch.v1';
 export type ReadOperation = 'state' | 'contract' | 'entity' | 'entities' | 'aliases' |
   'changes' | 'impacts' | 'case' | 'statements' | 'response' | 'request' | 'update-plan' |
-  'cycles' | 'cycle' | 'cycle-request' | 'cycle-report' | 'gleif-intake' | 'portfolio-refreshes' | 'portfolio-refresh' | 'portfolio-refresh-request' | 'portfolio-refresh-report';
+  'cycles' | 'cycle' | 'cycle-request' | 'cycle-report' | 'gleif-intake' | 'portfolio-cycle-reviews' | 'portfolio-refreshes' | 'portfolio-refresh' | 'portfolio-refresh-request' | 'portfolio-refresh-report';
 export type WriteOperation = 'published-edition' | 'edition' | 'portfolio' | 'statement-set' |
   'compare' | 'update' | 'fetch-update' | 'select-update' | 'review' | 'case' | 'profile' |
   'prepare' | 'dispatch' | 'receive-response' | 'query' | 'cycle-command' | 'gleif-preview' | 'gleif-receive' | 'portfolio-refresh-prepare' | 'portfolio-refresh-command';

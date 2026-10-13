@@ -126,3 +126,7 @@ Before publishing workflow changes, use the maintained Commons `tools/hosted_ci_
 This carries Bryce's existing zero-spend instruction from [Commons RULES, CI and spend](https://github.com/woahwhattheheck/commons/blob/main/RULES.md#4-ci-and-spend) into this repository's consumed entry guidance. Original cost coordination: https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791755765336589 .
 
 
+
+## Assignment and signed review completion
+
+The original [Review cycles customer workflow](PORTFOLIO_REVIEW_CYCLES.md) freezes the selected customer pair, assigns existing cases, and binds completion to the exact attributed retain or continue event. It includes supervisor sign-off, reopening, full reports and the same original receiving course. Source-dataset cycles remain distinct.

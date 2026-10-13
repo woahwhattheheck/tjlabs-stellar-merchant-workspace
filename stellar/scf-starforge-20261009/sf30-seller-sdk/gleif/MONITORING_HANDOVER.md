@@ -167,3 +167,14 @@ Before publishing workflow changes, use the maintained Commons `tools/hosted_ci_
 
 This carries Bryce's existing zero-spend instruction from [Commons RULES, CI and spend](https://github.com/woahwhattheheck/commons/blob/main/RULES.md#4-ci-and-spend) into this repository's consumed entry guidance. Original cost coordination: https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791755765336589 .
 
+
+## Original customer review cycles
+
+The optional `refreshSelection.cycle` continues this same native operation through reviewer assignment, exact original refresh decision, completion, supervisor sign-off and cold report reopen. Follow the complete [portfolio Review cycles guide](../ndjson/opensanctions/PORTFOLIO_REVIEW_CYCLES.md), including its attributed command sequence. Omission preserves the original course. All exact request bodies and signed JSON/HTML reports remain in the complete received Monitoring workspace.
+
+## Local demo browser custody — original owner direction
+
+From **16:00 UTC on 13 October 2026**, Bryce's local Codex in-app browser belongs entirely to Bryce for his demo. Do not navigate, reload, click, type, capture, inspect, resize, open or close tabs, or run automated checks on that browser. Leave selected demo/report tabs intact. Resume it only after Bryce explicitly says the meeting is over or releases it; no end time is assumed.
+
+Engineering, source integration, shell work and Slack continue. Existing cloud workers may use their isolated browsers. This restriction does not create a new native operation or authorize borrowing another person's browser. Original direction: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791906463475599 .
+

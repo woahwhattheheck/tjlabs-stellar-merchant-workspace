@@ -1,5 +1,5 @@
 /* MIT. Saved review cycles in the original source-monitoring console. */
-export async function mountReviewCycles({api,run,navigate,inspectCase,getState,refresh,escape,pretty}) {
+export async function mountReviewCycles({api,run,navigate,inspectCase,getState,refresh,escape,pretty,openPortfolioRefresh}) {
   const $=(q,r=document)=>r.querySelector(q);
   const host=$("#view-cycles");
   let context=null, selected=null, cyclePage=0, cycleSearch="", cycleStatus="", queue=Promise.resolve();
@@ -180,13 +180,15 @@ export async function mountReviewCycles({api,run,navigate,inspectCase,getState,r
       const b=document.createElement("button");b.type="button";b.textContent=row.label+" · "+row.status+" · "+row.counts.reviewed+"/"+row.counts.selected+" reviewed · "+row.counts.stale+" stale";
       b.onclick=()=>run("Open review cycle",()=>openCycle(row.id));container.append(b);
     }
-    if(!result.rows.length)container.textContent="Create a cycle from an existing source comparison.";
+    if(!result.rows.length)container.textContent="Create a cycle from an existing source-dataset or customer-portfolio comparison.";
     await requests();
   }
   const evidenceFields=()=>'<label>Review evidence files<input name="evidenceFiles" type="file" multiple></label><button type="button" data-retain-evidence>Retain review evidence</button>'+textArea("Retained evidence object IDs","evidence","[]");
   async function openCycle(id) {
     const cycle=await call("cycle?"+new URLSearchParams({id}));
     if(selected!==id){cyclePage=0;cycleSearch="";cycleStatus="";}selected=id;
+    const customerCycle=cycle.basis.sourceKind==='portfolio_refresh';
+    const originalReviews=customerCycle?(await call('portfolio-cycle-reviews?'+new URLSearchParams({comparisonId:cycle.basis.comparison.id}))).rows:[];
     const allItems=Object.values(cycle.items),filtered=allItems.filter(item=>(!cycleStatus||item.status===cycleStatus)&&
       JSON.stringify([item.caseId,item.impact.case.counterpartyId,item.impact.case.candidateId,item.assignment?.reviewer]).toLowerCase().includes(cycleSearch.toLowerCase()));
     cyclePage=Math.min(cyclePage,Math.max(0,Math.ceil(filtered.length/25)-1));
@@ -194,9 +196,9 @@ export async function mountReviewCycles({api,run,navigate,inspectCase,getState,r
     const target=$("#cycle-detail");
     target.innerHTML='<h2>'+escape(cycle.label)+'</h2><p>'+escape(cycle.scopeNote)+'</p><p><strong>'+escape(cycle.status)+'</strong> · version '+cycle.version+
       ' · '+cycle.counts.reviewed+' / '+cycle.counts.selected+' reviewed · '+cycle.counts.stale+' stale · '+cycle.counts.overdue+' overdue</p>'+
-      '<p>Supervisor: '+escape(cycle.supervisor.name)+' · '+escape(cycle.supervisor.id)+'. Source: '+escape(cycle.basis.beforeEdition.version)+' → '+escape(cycle.basis.afterEdition.version)+
+      '<p>Supervisor: '+escape(cycle.supervisor.name)+' · '+escape(cycle.supervisor.id)+'. '+(customerCycle?'Customer portfolios: '+escape(cycle.basis.beforePortfolio.label)+' → '+escape(cycle.basis.afterPortfolio.label):'Source dataset: '+escape(cycle.basis.beforeEdition.version)+' → '+escape(cycle.basis.afterEdition.version))+
       '. '+cycle.excludedCaseIds.length+' impacted cases explicitly outside this cycle.</p><button type="button" id="cycle-full-download">Download complete cycle JSON</button><div class="form-grid"><label>Find case or reviewer<input id="cycle-search" value="'+escape(cycleSearch)+'"></label><label>Review state<select id="cycle-status"><option value="">All</option>'+['OPEN','FOLLOW_UP','STALE','REVIEWED'].map(x=>'<option '+(x===cycleStatus?'selected':'')+'>'+x+'</option>').join('')+'</select></label></div><button id="cycle-filter" type="button">Filter cases</button><p>'+filtered.length+' matching / '+allItems.length+' selected cases · page '+(cyclePage+1)+' of '+Math.max(1,Math.ceil(filtered.length/25))+'</p><div class="pager"><button id="cycle-prev" type="button">Previous cases</button><button id="cycle-next" type="button">Next cases</button></div><div id="cycle-items"></div><article id="cycle-signoff"></article><div id="cycle-reports"></div>'+
-      '<details><summary>Original source bindings</summary><pre class="scroll-box">'+escape(pretty({comparison:cycle.basis.comparison,beforeEdition:cycle.basis.beforeEdition,afterEdition:cycle.basis.afterEdition,excludedCaseIds:cycle.excludedCaseIds}))+'</pre></details>';
+      '<details><summary>Original source bindings</summary><pre class="scroll-box">'+escape(pretty({comparison:cycle.basis.comparison,beforeEdition:cycle.basis.beforeEdition,afterEdition:cycle.basis.afterEdition,beforePortfolio:cycle.basis.beforePortfolio,afterPortfolio:cycle.basis.afterPortfolio,sourceKind:cycle.basis.sourceKind,excludedCaseIds:cycle.excludedCaseIds}))+'</pre></details>';
     $('#cycle-full-download').onclick=()=>run('Download complete cycle',()=>download('cycle?'+new URLSearchParams({id}),'Review_Cycle_Complete.json'));
     $('#cycle-filter').onclick=()=>run('Filter cycle cases',async()=>{cycleSearch=$('#cycle-search').value;cycleStatus=$('#cycle-status').value;cyclePage=0;await openCycle(id);});
     $('#cycle-prev').disabled=cyclePage===0;$('#cycle-next').disabled=(cyclePage+1)*25>=filtered.length;
@@ -205,23 +207,27 @@ export async function mountReviewCycles({api,run,navigate,inspectCase,getState,r
     for(const item of visible){
       const article=document.createElement("article"),c=item.impact.case;
       article.innerHTML='<h3>'+escape(c.counterpartyId)+' · '+escape(c.candidateId)+'</h3><p>'+escape(item.status)+(item.overdue?' · OVERDUE':'')+
-        ' · Identity review: '+(item.impact.identityReview?'required':'retained')+' · Relevance review: '+(item.impact.relevanceReview?'required':'retained')+'</p>'+
+        (customerCycle?' · Explicit customer portfolio review':' · Identity review: '+(item.impact.identityReview?'required':'retained')+' · Relevance review: '+(item.impact.relevanceReview?'required':'retained'))+'</p>'+
         '<p>'+escape(item.impact.reasons.join("; "))+'</p><button type="button" data-open-case>Open original case decision</button>'+
+        (customerCycle?'<button type="button" data-open-portfolio-refresh>Open original portfolio review</button><details><summary>Exact customer attribute changes</summary><pre class="scroll-box">'+escape(pretty(item.impact.customerChange))+'</pre></details>':'')+
         (item.assignment?'<p>Assigned to '+escape(item.assignment.reviewer.name)+' · '+escape(item.assignment.dueAt||"no due date")+'</p>':'<p>Reviewer not assigned.</p>')+
         '<details><summary>Assign reviewer</summary><form data-assign>'+field("Reviewer ID","reviewerId","text",true,item.assignment?.reviewer.id||"")+
         field("Reviewer name","reviewerName","text",true,item.assignment?.reviewer.name||"")+field("Due","dueAt","datetime-local",false,local(item.assignment?.dueAt||cycle.dueAt))+
         textArea("Assignment note","note")+ '<button type="submit">Save assignment</button></form></details>'+
         '<details><summary>Record review completion or follow-up</summary><form data-complete>'+field("Original case decision revision","caseRevision","text",true,item.currentCaseRevision)+
         '<label>Outcome<select name="disposition"><option value="REVIEWED">Reviewed</option><option value="FOLLOW_UP">Follow-up remains</option></select></label>'+
+        (customerCycle?'<label>Original attributed portfolio review<select name="portfolioReviewRequestId"><option value="">Choose the original review, or retain follow-up</option>'+originalReviews.filter(r=>r.caseId===c.id).map(r=>'<option value="'+escape(r.requestId)+'">'+escape(r.decision+' · '+r.reviewer+' · '+new Date(r.createdAt*1000).toLocaleString()+' · '+r.caseRevision.slice(0,12))+'</option>').join('')+'</select></label><p>Reviewed requires the assigned reviewer’s exact original retain/continue event and current case revision. Source-only reviews cannot complete an existing case assignment.</p>':'')+
         textArea("Review note","note")+evidenceFields()+'<button type="submit">Record review</button></form></details>'+
         '<details><summary>Reopen review</summary><form data-reopen>'+textArea("Reason","reason")+'<button type="submit">Reopen this case review</button></form></details>'+
         (item.completion?'<details><summary>Retained completion</summary><pre class="scroll-box">'+escape(pretty(item.completion))+'</pre></details>':'');
       article.querySelector("[data-open-case]").onclick=()=>run("Open original customer decision",async()=>{
         await inspectCase(c.id);navigate("review");
       });
+      if(customerCycle)article.querySelector("[data-open-portfolio-refresh]").onclick=()=>run("Open original portfolio review",()=>openPortfolioRefresh(cycle.basis.comparison.id,c.counterpartyId));
       $("#cycle-items").append(article);
       await bind($("[data-assign]",article),"assign:"+id+":"+c.id,f=>({caseId:c.id,reviewer:{id:value(f,"reviewerId").trim(),name:value(f,"reviewerName").trim()},dueAt:iso(value(f,"dueAt")),note:value(f,"note")}),cycle.version,id);
-      await bind($("[data-complete]",article),"complete:"+id+":"+c.id,f=>({caseId:c.id,caseRevision:value(f,"caseRevision").trim(),disposition:value(f,"disposition"),note:value(f,"note"),evidence:JSON.parse(value(f,"evidence")||"[]")}),cycle.version,id);
+      await bind($("[data-complete]",article),"complete:"+id+":"+c.id,f=>({caseId:c.id,caseRevision:value(f,"caseRevision").trim(),disposition:value(f,"disposition"),note:value(f,"note"),evidence:JSON.parse(value(f,"evidence")||"[]"),
+        ...(customerCycle?{portfolioReviewRequestId:value(f,"portfolioReviewRequestId")||null}:{})}),cycle.version,id);
       await bind($("[data-reopen]",article),"reopen:"+id+":"+c.id,f=>({caseId:c.id,reason:value(f,"reason")}),cycle.version,id);
     }
     $("#cycle-signoff").innerHTML='<h3>Supervisor sign-off</h3><p>Sign-off freezes the selected source, exact case decision versions, assignments and completion evidence. Changed decisions remain visible as stale reviews.</p><form id="cycle-signoff-form">'+textArea("Supervisor note","note")+evidenceFields()+'<button type="submit">Sign off and freeze report</button></form>';
@@ -238,8 +244,9 @@ export async function mountReviewCycles({api,run,navigate,inspectCase,getState,r
     $("#cycle-branch").textContent="Workspace: "+context.name;
     const savedActor=await get(branchKey("actor"));if(savedActor){$("#cycle-actor-id").value=savedActor.actor.id;$("#cycle-actor-name").value=savedActor.actor.name;}
     const editions=getState().editions,comparisons=getState().comparisons;
-    $("#cycle-comparison").innerHTML=comparisons.map(c=>'<option value="'+escape(c.id)+'">'+escape(c.dataset+" · "+(editions.find(e=>e.id===c.before)?.version||c.before.slice(0,8))+" → "+(editions.find(e=>e.id===c.after)?.version||c.after.slice(0,8)))+'</option>').join("");
-    await bind($("#cycle-create-form"),"create",f=>({label:value(f,"label"),comparison:value(f,"comparison"),caseIds:value(f,"caseIds").trim()?value(f,"caseIds").split(/\s+/).filter(Boolean):null,
+    const customerComparisons=(await call("portfolio-refreshes")).rows;
+    $("#cycle-comparison").innerHTML='<optgroup label="Source dataset changes">'+comparisons.map(c=>'<option value="'+escape(c.id)+'">'+escape(c.dataset+" · "+(editions.find(e=>e.id===c.before)?.version||c.before.slice(0,8))+" → "+(editions.find(e=>e.id===c.after)?.version||c.after.slice(0,8)))+'</option>').join("")+'</optgroup><optgroup label="Customer portfolio refresh">'+customerComparisons.map(c=>'<option value="portfolio-refresh:'+escape(c.id)+'">'+escape(c.portfolioKey+' · '+c.before.slice(0,12)+' → '+c.after.slice(0,12))+'</option>').join('')+'</optgroup>';
+    await bind($("#cycle-create-form"),"create",f=>({label:value(f,"label"),comparison:value(f,"comparison").replace(/^portfolio-refresh:/,''),...(value(f,"comparison").startsWith('portfolio-refresh:')?{sourceKind:'portfolio_refresh'}:{}),caseIds:value(f,"caseIds").trim()?value(f,"caseIds").split(/\s+/).filter(Boolean):null,
       scopeNote:value(f,"scopeNote"),supervisor:{id:value(f,"supervisorId").trim(),name:value(f,"supervisorName").trim()},dueAt:iso(value(f,"dueAt"))}),0,null);
     await loadCycles();if(selected)await openCycle(selected);
   }

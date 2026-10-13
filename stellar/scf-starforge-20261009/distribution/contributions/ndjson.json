@@ -33,6 +33,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/public/gleif-intake.js",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/portfolio_refresh.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/public/portfolio-refresh.js",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/PORTFOLIO_REFRESH.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/PORTFOLIO_REFRESH.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/portfolio_review_cycles.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/PORTFOLIO_REVIEW_CYCLES.md"
   ]
 }

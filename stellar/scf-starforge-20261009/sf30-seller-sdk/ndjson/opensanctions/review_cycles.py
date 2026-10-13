@@ -143,7 +143,11 @@ def _reduce(domain, current, command, observations, verified=None):
     if current is None:
         need(action == "create" and command["cycleId"] is None and command["expectedVersion"] == 0,
              "Create a cycle before changing it")
-        keys(body, ("label", "comparison", "caseIds", "scopeNote", "supervisor", "dueAt"), "New cycle")
+        creation_fields = ("label", "comparison", "caseIds", "scopeNote", "supervisor", "dueAt")
+        if body.get("sourceKind") is not None:
+            need(body["sourceKind"] == "portfolio_refresh", "Choose the supported customer portfolio cycle kind")
+            creation_fields += ("sourceKind",)
+        keys(body, creation_fields, "New cycle")
         text(body["label"], "Cycle label", 240); text(body["scopeNote"], "Scope note", 8000)
         actor(body["supervisor"]); instant(body["dueAt"], "Cycle due time", True)
         exact_id(body["comparison"])
@@ -155,7 +159,11 @@ def _reduce(domain, current, command, observations, verified=None):
         need(basis["comparison"]["createdAt"] <= when and
              all(case["updatedAt"] <= when for case in basis["caseSnapshots"]),
              "Cycle creation cannot precede its original comparison or frozen case decisions")
-        expected_basis = source_basis(domain, body["comparison"], basis["caseSnapshots"], verified)
+        if body.get("sourceKind") == "portfolio_refresh":
+            import portfolio_review_cycles
+            expected_basis = portfolio_review_cycles.basis(domain, body["comparison"], basis["caseSnapshots"], verified)
+        else:
+            expected_basis = source_basis(domain, body["comparison"], basis["caseSnapshots"], verified)
         need(stable(expected_basis) == stable(basis), "Frozen cycle source or case population changed")
         rows = basis["population"]["rows"]
         ids = body["caseIds"]
@@ -194,12 +202,19 @@ def _reduce(domain, current, command, observations, verified=None):
             item["assignment"] = {**body, "at": command["at"], "by": command["actor"], "requestId": command["requestId"]}
             item["completion"] = None
         elif action == "complete":
-            keys(body, ("caseId", "caseRevision", "disposition", "note", "evidence"), "Case completion")
+            customer_cycle = state["basis"].get("sourceKind") == "portfolio_refresh"
+            completion_fields = ("caseId", "caseRevision", "disposition", "note", "evidence")
+            if customer_cycle:
+                completion_fields += ("portfolioReviewRequestId",)
+            keys(body, completion_fields, "Case completion")
             need(item["assignment"] is not None and command["actor"]["id"] == item["assignment"]["reviewer"]["id"],
                  "The assigned reviewer records this completion")
             text(body["note"], "Review note", 8000)
             need(body["disposition"] in {"REVIEWED", "FOLLOW_UP"}, "Choose reviewed or follow-up")
-            keys(observations, ("caseEvent", "evidence"), "Review observations")
+            observation_fields = ("caseEvent", "evidence")
+            if customer_cycle:
+                observation_fields += ("portfolioRefreshEvent",)
+            keys(observations, observation_fields, "Review observations")
             original = case_event(domain, body["caseRevision"], verified)
             need(stable(original) == stable(observations["caseEvent"]), "The retained decision observation changed")
             need(stable(evidence(domain, body["evidence"])) == stable(observations["evidence"]), "Review evidence changed")
@@ -208,7 +223,11 @@ def _reduce(domain, current, command, observations, verified=None):
                  case["counterpartyId"] == frozen["counterpartyId"] and case["dataset"] == frozen["dataset"],
                  "Completion must reference the original customer case")
             need(case["updatedAt"] <= when, "The case decision occurs after the supplied review time")
-            if body["disposition"] == "REVIEWED":
+            if customer_cycle:
+                import portfolio_review_cycles
+                portfolio_review_cycles.verify_completion(domain, state, item, command,
+                    observations["portfolioRefreshEvent"], case)
+            if body["disposition"] == "REVIEWED" and not customer_cycle:
                 need(case["edition"] == state["basis"]["comparison"]["after"], "Review against the cycle's exact following source edition")
                 need(stable(case["monitoring"]) == stable(frozen["monitoring"]),
                      "The monitoring scope changed; retain follow-up or start a cycle for that explicit policy")
@@ -222,7 +241,8 @@ def _reduce(domain, current, command, observations, verified=None):
                      "The selected identity remains absent or ambiguous; retain follow-up")
             item["completion"] = {**body, "at": command["at"], "by": command["actor"],
                                   "requestId": command["requestId"], "caseEvent": original,
-                                  "evidenceObjects": observations["evidence"]}
+                                  "evidenceObjects": observations["evidence"],
+                                  **({"portfolioRefreshEvent": observations["portfolioRefreshEvent"]} if customer_cycle else {})}
         elif action == "reopen":
             keys(body, ("caseId", "reason"), "Reopen")
             text(body["reason"], "Reopen reason", 8000)
@@ -314,15 +334,24 @@ def command(domain, value):
         body, action = value["body"], value["action"]
         observations = {}
         if action == "create":
-            comparison = domain._one("comparisons", body.get("comparison"))
-            cases = [load_json(r[0]) for r in domain.db.execute("SELECT body FROM os_cases ORDER BY id")]
-            cases = [case for case in cases if case["dataset"] == comparison["dataset"] and not case.get("mergedInto")]
-            need(len(cases) <= MAX_CASES, "Complete retained case population exceeds the cycle's 10,000-case limit")
-            observations = {"basis": source_basis(domain, body.get("comparison"), cases)}
+            if body.get("sourceKind") == "portfolio_refresh":
+                import portfolio_review_cycles
+                cases = portfolio_review_cycles.selected_cases(domain, body.get("comparison"))
+                need(len(cases) <= MAX_CASES, "Complete retained case population exceeds the cycle's 10,000-case limit")
+                observations = {"basis": portfolio_review_cycles.basis(domain, body.get("comparison"), cases)}
+            else:
+                comparison = domain._one("comparisons", body.get("comparison"))
+                cases = [load_json(r[0]) for r in domain.db.execute("SELECT body FROM os_cases ORDER BY id")]
+                cases = [case for case in cases if case["dataset"] == comparison["dataset"] and not case.get("mergedInto")]
+                need(len(cases) <= MAX_CASES, "Complete retained case population exceeds the cycle's 10,000-case limit")
+                observations = {"basis": source_basis(domain, body.get("comparison"), cases)}
         elif action == "complete":
             original = domain._one("cases", body.get("caseId"))
             need(original["revision"] == body.get("caseRevision"), "The case changed; inspect its current original decision")
             observations = {"caseEvent": case_event(domain, body["caseRevision"]), "evidence": evidence(domain, body.get("evidence"))}
+            if current is not None and current["basis"].get("sourceKind") == "portfolio_refresh":
+                import portfolio_review_cycles
+                observations["portfolioRefreshEvent"] = portfolio_review_cycles.observe_completion(domain, body.get("portfolioReviewRequestId"))
         elif action == "signoff":
             need(current is not None, "Select the existing review cycle")
             observations = {"caseRevisions": {case: domain._one("cases", case)["revision"] for case in current["items"]},

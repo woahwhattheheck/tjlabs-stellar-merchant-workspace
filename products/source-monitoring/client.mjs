@@ -13,7 +13,7 @@ export const GET_OPERATIONS = Object.freeze([
   'state', 'contract', 'entity', 'entities', 'aliases', 'changes', 'impacts',
   'case', 'statements', 'response', 'request', 'update-plan',
   'cycles', 'cycle', 'cycle-request', 'cycle-report', 'gleif-intake',
-  'portfolio-refreshes', 'portfolio-refresh', 'portfolio-refresh-request', 'portfolio-refresh-report',
+  'portfolio-cycle-reviews', 'portfolio-refreshes', 'portfolio-refresh', 'portfolio-refresh-request', 'portfolio-refresh-report',
 ]);
 export const POST_OPERATIONS = Object.freeze([
   'published-edition', 'edition', 'portfolio', 'statement-set', 'compare', 'update',

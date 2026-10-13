@@ -74,12 +74,12 @@ function edition(id) {return state.editions.find(item=>item.id===id);}
 function comparison(id) {return state.comparisons.find(item=>item.id===id);}
 function editionLabel(row) {return row.dataset+" · "+row.version;}
 function comparisonLabel(row) {return row.dataset+" · "+(edition(row.before)?.version||short(row.before))+" → "+(edition(row.after)?.version||short(row.after));}
-function navigate(name) {
+function navigate(name,{activate=true}={}) {
   if(view==='portfolio-refresh'&&name!==view)portfolioRefresh?.deactivate();
   view=name;
   $$("nav [data-view]").forEach(el=>el.classList.toggle("selected",el.dataset.view===name));
   $("main>section").forEach(el=>el.hidden=el.id!=="view-"+name);
-  if(name==="portfolio-refresh")portfolioRefresh?.activate();
+  if(name==="portfolio-refresh"&&activate)portfolioRefresh?.activate();
 }
 $$("[data-view]").forEach(el=>el.addEventListener("click",()=>navigate(el.dataset.view)));
 function renderState() {
@@ -426,7 +426,8 @@ const gleifIntake=await mountGleifIntake({root:$("#gleif-intake"),api,refresh,ge
     named(form,"monitoring").value=pretty({...current,resolutionProperties:[...new Set([...(current.resolutionProperties??policy.resolutionProperties),"leiCode"])]});
     navigate("review");message("LEI is included in this case monitoring draft. Review the unchanged identity and relevance choices before saving.");
   }});
-await mountReviewCycles({api,run,navigate,inspectCase,getState:()=>state,refresh,escape,pretty});
+await mountReviewCycles({api,run,navigate,inspectCase,getState:()=>state,refresh,escape,pretty,
+  openPortfolioRefresh:async(id,entity)=>{navigate("portfolio-refresh",{activate:false});await portfolioRefresh.openComparison(id,entity);}});
 portfolioRefresh=await mountPortfolioRefresh({root:$("#view-portfolio-refresh"),api,getState:()=>state,refresh,
   inspectCase:id=>run("Open original case",()=>inspectCase(id)),message,escape});
 await run("Open retained source workspace",refresh);

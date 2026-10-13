@@ -13,7 +13,7 @@ if Path(original_managed.__file__).resolve() != NDJSON / "managed.py":
 BINDING = "stellar-forge.opensanctions-managed-binding.v1"
 STARTUP = "stellar-forge.opensanctions-workspace-launch.v1"
 SOURCE_FILES = (
-    "model.py", "gleif_portfolio.py", "portfolio_refresh.py", "updates.py", "matching.py", "review_cycles.py", "web.py", "cli.py",
+    "model.py", "gleif_portfolio.py", "portfolio_refresh.py", "portfolio_review_cycles.py", "updates.py", "matching.py", "review_cycles.py", "web.py", "cli.py",
     "application_binding.py", "cli.mjs", "managed.mjs", "application-provider.mjs",
     "public/index.html", "public/app.js", "public/gleif-intake.js", "public/portfolio-refresh.js", "public/review-cycles.js", "public/style.css", "SOURCE_CONTRACT.json",
 )
