@@ -5,6 +5,8 @@ import { constants } from 'node:fs';
 import { open, lstat, realpath, mkdir, link, unlink, rm } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { openNativeWorkspace } from './native-workspace.mjs';
+import { BAZAAR_CATALOGS_SCHEMA, normalizeCatalogConfiguration, normalizeCatalogDescription,
+  normalizeCatalogUrl } from './catalogs.mjs';
 import { lockPrivateDirectory } from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/private-directory-lock.mjs';
 import { InputError } from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/config.mjs';
 import { operatorApprovalEnvironment, checkOperatorChannel } from '../../stellar/scf-starforge-20261009/sf81-buyer-operator-bridge/bridge.mjs';
@@ -109,7 +111,27 @@ function catalogUrl(value) {
   return url.href;
 }
 function tag(value, entry) {
-  return {...value, workspaceId:entry.id, workspaceLabel:entry.label};
+  return {...value, workspaceId:entry.id, workspaceLabel:entry.label,
+    ...(value.schema === 'stellar-forge.mcp-native-request-workspace.v1' ?
+      {catalogId:entry.catalog.id,catalogLabel:entry.catalog.label,catalogUrl:entry.catalog.url} : {})};
+}
+function configuredCatalogs(workspaces, defaultWorkspaceId, supplied) {
+  const urls = [...new Set(workspaces.map(entry => entry.catalogUrl))].sort();
+  const definitions = supplied === undefined ? urls.map(url => ({
+    id:urls.length === 1 ? 'default' : 'catalog-' + sha(url).slice(0,24),
+    label:urls.length === 1 ? 'Configured catalog' :
+      (new URL(url).host + new URL(url).pathname).replace(/\/$/,'').slice(0,80), url,
+  })) : supplied;
+  need(Array.isArray(definitions),'MCP_NATIVE_REGISTRY_CATALOG_INVALID');
+  const catalogs = definitions.map(normalizeCatalogDescription);
+  const defaultUrl = workspaces.find(entry => entry.id === defaultWorkspaceId).catalogUrl;
+  const defaultCatalogId = catalogs.find(entry => entry.url === defaultUrl)?.id;
+  const configuration = normalizeCatalogConfiguration({discoveryUrl:defaultUrl,
+    discoveryCatalogs:{schema:BAZAAR_CATALOGS_SCHEMA,defaultCatalogId,catalogs}});
+  need(configuration.catalogs.length === urls.length &&
+    urls.every(url => configuration.catalogs.some(entry => entry.url === url)),
+  'MCP_NATIVE_REGISTRY_CATALOG_MISMATCH');
+  return configuration;
 }
 function intentKey(intentId) {
   need(typeof intentId === 'string' && /^[A-Za-z0-9._:-]{1,128}$/.test(intentId),
@@ -118,24 +140,24 @@ function intentKey(intentId) {
 }
 
 /** The input is an operator-owned local description, never a path from MCP or a catalog. */
-export async function initializeNativeRegistry({directory, schema = INPUT, workspaces, defaultWorkspaceId} = {}) {
+export async function initializeNativeRegistry({directory, schema = INPUT, workspaces, defaultWorkspaceId, catalogs} = {}) {
   need(process.platform !== 'win32', 'MCP_NATIVE_POSIX_REQUIRED');
   need(schema === INPUT, 'MCP_NATIVE_REGISTRY_INPUT_INVALID');
   const root = rootPath(directory), entries = membership(workspaces, defaultWorkspaceId);
   await privateDirectory(dirname(root));
-  let catalog;
-  const pinned = [];
+  const observedCatalogs = [], pinned = [];
   for (const entry of entries) {
     const source = await nativeManifest(entry);
-    const selectedCatalog = catalogUrl(source.manifest.catalog.origin);
-    need(catalog === undefined || catalog === selectedCatalog, 'MCP_NATIVE_REGISTRY_CATALOG_MISMATCH');
-    catalog = selectedCatalog;
+    const selectedCatalog = normalizeCatalogUrl(catalogUrl(source.manifest.catalog.origin));
+    observedCatalogs.push({id:entry.id,catalogUrl:selectedCatalog});
     const native = await openNativeWorkspace(entry.directory);
     try { await native.call({action:'request-workspace'}); } finally { await native.close(); }
     pinned.push({...entry, nativeSha256:sha(source.bytes)});
   }
+  const discoveryCatalogs = configuredCatalogs(observedCatalogs,defaultWorkspaceId,catalogs);
+  const catalog = discoveryCatalogs.catalogs.find(entry => entry.id === discoveryCatalogs.defaultCatalogId).url;
   const manifest = {schema:REGISTRY, directory:root, createdAt:new Date().toISOString(),
-    defaultWorkspaceId, catalogUrl:catalog, workspaces:pinned};
+    defaultWorkspaceId, catalogUrl:catalog, discoveryCatalogs, workspaces:pinned};
   let created = false;
   try {
     await mkdir(root, {mode:0o700}); created = true; await privateDirectory(root);
@@ -147,13 +169,15 @@ export async function initializeNativeRegistry({directory, schema = INPUT, works
       'import {openNativeRegistry} from ' + JSON.stringify(moduleUrl) + ';',
       'const registry = await openNativeRegistry(' + JSON.stringify(root) + ');',
       'export const agentCommerce = (args, context) => registry.call(args, context);',
+      'export const discoveryCatalogs = registry.discoveryCatalogs;',
       'export const approve = async () => false;',
       'export async function signPayment() { throw Object.assign(new Error("Use the native sf43 tool"), {code:"MCP_NATIVE_TOOL_REQUIRED"}); }',
       'export const close = () => registry.close();', '',
     ].join('\n');
     await publish(join(root, 'operator.mjs'), Buffer.from(adapter));
     return {schema:REGISTRY, status:'NATIVE_MCP_REGISTRY_CREATED', directory:root,
-      defaultWorkspaceId, workspaces:pinned.map(({id,label}) => ({workspaceId:id,workspaceLabel:label})),
+      defaultWorkspaceId, discoveryCatalogs:structuredClone(discoveryCatalogs),
+      workspaces:pinned.map(({id,label}) => ({workspaceId:id,workspaceLabel:label})),
       environment:{MCP_OPERATOR_MODULE:join(root,'operator.mjs'), MCP_STATE_DIR:join(root,'quotes'),
         BAZAAR_DISCOVERY_URL:catalog,
         PAID_RESOURCE_ORIGINS:[...new Set(await Promise.all(pinned.map(async entry =>
@@ -170,17 +194,26 @@ export async function inspectNativeRegistry(directory) {
   const root = rootPath(directory); await privateDirectory(root);
   const bytes = await privateBytes(join(root, 'native-registry.json'));
   const manifest = json(bytes);
-  keys(manifest, ['schema','directory','createdAt','defaultWorkspaceId','catalogUrl','workspaces'],
+  keys(manifest, ['schema','directory','createdAt','defaultWorkspaceId','catalogUrl','discoveryCatalogs','workspaces'],
     'MCP_NATIVE_REGISTRY_MANIFEST_INVALID');
   need(manifest.schema === REGISTRY && manifest.directory === root &&
     typeof manifest.createdAt === 'string', 'MCP_NATIVE_REGISTRY_MANIFEST_INVALID');
   const entries = membership(manifest.workspaces, manifest.defaultWorkspaceId, true);
   catalogUrl(manifest.catalogUrl);
+  const discoveryCatalogs = normalizeCatalogConfiguration({discoveryUrl:manifest.catalogUrl,
+    discoveryCatalogs:manifest.discoveryCatalogs});
+  const observed = new Set();
   for (const entry of entries) {
     const source = await nativeManifest(entry);
-    need(catalogUrl(source.manifest.catalog.origin) === manifest.catalogUrl,
+    const url = normalizeCatalogUrl(catalogUrl(source.manifest.catalog.origin));
+    need(discoveryCatalogs.catalogs.some(catalog => catalog.url === url),
       'MCP_NATIVE_REGISTRY_CATALOG_MISMATCH');
+    observed.add(url);
   }
+  need(observed.size === discoveryCatalogs.catalogs.length,'MCP_NATIVE_REGISTRY_CATALOG_MISMATCH');
+  const defaultEntry = entries.find(entry => entry.id === manifest.defaultWorkspaceId);
+  need(normalizeCatalogUrl((await nativeManifest(defaultEntry)).manifest.catalog.origin) === manifest.catalogUrl,
+    'MCP_NATIVE_REGISTRY_CATALOG_MISMATCH');
   await privateDirectory(join(root,'intent-owners'));
   return {manifest:structuredClone(manifest), sha256:sha(bytes)};
 }
@@ -246,6 +279,8 @@ async function combinedHistory(entries, registrySha, args, context) {
 /** Open one live host for the configured original native buyers. */
 export async function openNativeRegistry(directory) {
   const original = await inspectNativeRegistry(directory), root = original.manifest.directory;
+  const discoveryCatalogs = normalizeCatalogConfiguration({discoveryUrl:original.manifest.catalogUrl,
+    discoveryCatalogs:original.manifest.discoveryCatalogs});
   const releases = [], entries = [], active = new Map(), pending = new Set();
   let closed = false, closing;
   const approval = operatorApprovalEnvironment(process.env);
@@ -281,7 +316,8 @@ export async function openNativeRegistry(directory) {
       busyCode:'MCP_NATIVE_REGISTRY_ALREADY_OPEN',unavailableCode:'MCP_NATIVE_REGISTRY_LOCK_UNAVAILABLE'}));
     for (const definition of original.manifest.workspaces) {
       const {manifest:source} = await nativeManifest(definition);
-      const entry = {...definition,source};
+      const entry = {...definition,source,
+        catalog:discoveryCatalogs.catalogs.find(catalog => catalog.url === normalizeCatalogUrl(source.catalog.origin))};
       entry.native = await openNativeWorkspace(entry.directory,{operationCoordinator:coordinate(entry)});
       entries.push(entry);
     }
@@ -370,6 +406,7 @@ export async function openNativeRegistry(directory) {
   }
   return {
     manifest:structuredClone(original.manifest),
+    discoveryCatalogs:structuredClone(discoveryCatalogs),
     environment:{BAZAAR_DISCOVERY_URL:original.manifest.catalogUrl,
       PAID_RESOURCE_ORIGINS:[...new Set(entries.map(entry => entry.source.route.origin))].join(','),
       MCP_STATE_DIR:join(root,'quotes')},

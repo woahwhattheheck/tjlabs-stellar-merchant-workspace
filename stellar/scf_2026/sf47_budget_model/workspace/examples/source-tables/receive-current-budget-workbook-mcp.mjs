@@ -8,7 +8,8 @@ import {createHash,randomUUID} from 'node:crypto';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {inflateRawSync} from 'node:zlib';
-import {inspectGrantAgentBinding,GRANT_TRANSFER_CHUNK_BYTES} from '../../agent-client.mjs';
+import {inspectGrantAgentBinding} from '../../agent-client.mjs';
+import {GRANT_TRANSFER_CHUNK_BYTES} from '../../agent-contracts.mjs';
 import {importPlanningBook,preparePlanningImport,rebasePlanningBook} from '../../source-tables-core.mjs';
 import {receivePlanningFile} from '../../../../../../stellar-forge/developer-site/dist/grant-plan-source.mjs';
 import {MerchantGrantWorkspaces,GRANT_WORKSPACE_CONNECTION_SCHEMA}
@@ -114,6 +115,42 @@ function verifyBudget(plan){
     String(plan.report.capacity.totalHours)==='401'&&plan.scenario.future_costs.length===6,
     'Continue the original fully reviewed 401-hour, $38,095 workbook case.');
 }
+async function checkpointOriginalCase(options,python,context){
+  const configured=options.checkpointHelper??process.env.SF47_WORKBOOK_MCP_CHECKPOINT_HELPER;
+  if(configured===undefined)return;
+  need(typeof configured==='string'&&configured.length>0,'Select the original complete-case checkpoint helper.');
+  const selected=resolve(configured),info=await lstat(selected);
+  need(info.isFile()&&!info.isSymbolicLink()&&await realpath(selected)===selected,
+    'Use the original regular complete-case checkpoint helper.');
+  const directory=await privateDirectory(join(context.directory,'mcp-receiving','checkpoints')),
+    path=join(directory,context.phase+'.json');
+  const matches=value=>value?.schema===SCHEMA+'.checkpoint'&&value.state==='COMPLETE'&&
+    value.operationId===context.operationId&&value.phase===context.phase&&
+    value.originalContentSha256===context.originalContentSha256&&
+    value.handoverArchiveSha256===context.handoverArchiveSha256&&
+    Number.isSafeInteger(value.archive?.bytes)&&value.archive.bytes>0&&
+    /^[0-9a-f]{64}$/.test(value.archive?.sha256);
+  if(await exists(path)){
+    need(matches(await readJson(path)),'Receive the checkpoint of this same complete original handover.');
+    return;
+  }
+  const result=await new Promise((resolveResult,rejectResult)=>{
+    const child=execFile(python,[selected],{encoding:'utf8',maxBuffer:1024*1024},
+      (error,stdout,stderr)=>{
+        if(error){rejectResult(Object.assign(new Error('Complete-case preservation returned before receiving its saved result.'),
+          {code:'WORKBOOK_MCP_CHECKPOINT',cause:error,details:stderr.slice(-2000)}));return;}
+        try{resolveResult(JSON.parse(stdout));}catch(error){rejectResult(error);}
+      });
+    child.stdin.on('error',()=>{});
+    child.stdin.end(json(context));
+  });
+  need(matches(result),'The checkpoint helper must return its complete original case archive.');
+  await publishOnce(path,result);
+  process.stdout.write('WORKBOOK_MCP_CHECKPOINT '+json({
+    phase:context.phase,archive:result.archive,location:result.location,
+  }).trim()+'\n');
+}
+
 export async function receiveCurrentBudgetWorkbookMcp(directory,options={}){
   process.umask(0o077);
   const root=await realpath(resolve(directory)),original=await readJson(join(root,'WORKBOOK_HANDOVER_RECEIVING.json'));
@@ -282,6 +319,17 @@ export async function receiveCurrentBudgetWorkbookMcp(directory,options={}){
     const handover=await phase('14-complete-workbook-handover',()=>tool('workbook_handover',handoverArgs));
     need(handover.retention.state==='COMPLETE'&&handover.originalMemberCount===15&&handover.files.length===4,
       'Receive the complete workbook archive and all four original member files.');
+    // Retained files are independent of the native workspace processes. Close
+    // both original writers before preserving or receiving the complete handover.
+    await provider.close();provider=null;
+    await checkpointOriginalCase(options,python,{
+      schema:SCHEMA+'.checkpoint-request',operationId:'SCF-WORKBOOK-MCP-CEDAR-8047-20261012',
+      phase:'14-complete-workbook-handover',directory:root,
+      originalContentSha256:identity.originalContentSha256,
+      handoverArchiveSha256:handover.archive.file.sha256,
+    });
+    provider=new MerchantGrantWorkspaces({exportsDirectory,
+      grantWorkspaces:{schema:GRANT_WORKSPACE_CONNECTION_SCHEMA,workspaces:bindings}});
     const delivered=[];
     async function collect(descriptor,filename){
       const path=await receiveSnapshot(provider,descriptor,join(output,filename));

@@ -1,6 +1,7 @@
 import type {RecipeInput,Source,Recipe,Run,Review,Page,RequestOptions} from './client.mjs';
 import type {PreparationConnection,PreparationCollection,DirectoryIdentity,PreparationStatus,RecordsPage,
- DeliveryRequest,DeliveryRecord,ReceivedPreparation} from './connection.mjs';
+ NativeDeliveryRequest,DeliveryRecord,ReceivedPreparation,PipelineDeliveryRequest,PipelineStatus,ManagedReceivedPipeline} from './connection.mjs';
+import type {Definition,SavedDefinition,Execution,Page as PipelinePage,RowPage,Event,Comparison,ReceivedProject} from './pipelines/client.mjs';
 export const PREPARATION_MCP_CONFIGURATION_SCHEMA:'stellar-forge.data-preparation-workspaces.v1';
 export interface PreparationInput {
  label?:string;kind:'csv'|'jsonl'|'project';file:string;sha256:string;nullToken?:string;
@@ -50,6 +51,27 @@ export type PreparationWorkspaceStatus=(
 type Scoped={workspace:string};
 type PageArguments={offset?:number;limit?:number};
 export interface PreparationToolArguments {
+ merchant_preparation_pipeline_status:Scoped;
+ merchant_preparation_pipeline_browser:Scoped;
+ merchant_preparation_pipeline_list:Scoped&PageArguments&{collection:'pipelines'|'executions'};
+ merchant_preparation_pipeline_definition:Scoped&{pipelineId:string;revision?:number};
+ merchant_preparation_pipeline_save:Scoped&{definition:Definition;pipelineId?:string;expectedRevision?:number};
+ merchant_preparation_pipeline_from_recipe:Scoped&{recipeId:string;revision?:number};
+ merchant_preparation_pipeline_enqueue:Scoped&{pipelineId:string;requestKey:string;revision?:number;inputs?:Record<string,string>;reuseExecution?:string};
+ merchant_preparation_pipeline_execute:Scoped&{executionId:string;resume?:boolean};
+ merchant_preparation_pipeline_execution:Scoped&{executionId:string};
+ merchant_preparation_pipeline_events:Scoped&{executionId:string;after?:number;limit?:number};
+ merchant_preparation_pipeline_rows:Scoped&PageArguments&{executionId:string;stageId:string};
+ merchant_preparation_pipeline_cancel:Scoped&{executionId:string};
+ merchant_preparation_pipeline_recover:Scoped;
+ merchant_preparation_pipeline_review:Scoped&{executionId:string;stageId:string;decision:'accept'|'revise'|'withdraw';reviewer:string;note:string;expectedRevision?:number};
+ merchant_preparation_pipeline_compare:Scoped&{beforeId:string;afterId:string};
+ merchant_preparation_pipeline_export:Scoped&PipelineDeliveryRequest;
+ merchant_preparation_pipeline_receive:Scoped&{requestKey:string;expectedSourceSha256:string}&(
+  {sourceInput:string;fileId?:never}|{fileId:string;sourceInput?:never}
+ );
+ merchant_preparation_pipeline_received:Scoped;
+ merchant_preparation_pipeline_open_received:Scoped&{receivedId:string};
  merchant_preparation_status:{workspace?:string};
  merchant_preparation_connect:Scoped&{expectedInstanceId?:string};
  merchant_preparation_disconnect:Scoped&{instanceId:string};
@@ -65,7 +87,7 @@ export interface PreparationToolArguments {
  merchant_preparation_cancel:Scoped&{runId:string};
  merchant_preparation_recover:Scoped;
  merchant_preparation_review:Scoped&{runId:string;decision:'accept'|'revise'|'withdraw';reviewer:string;note:string;expectedRevision?:number};
- merchant_preparation_export:Scoped&DeliveryRequest;
+ merchant_preparation_export:Scoped&NativeDeliveryRequest;
  merchant_preparation_exports:Scoped&PageArguments&{expectedInventorySha256?:string};
  merchant_preparation_file:Scoped&{fileId:string;readId?:string;expectedSha256?:string;offset?:number;limit?:number};
  merchant_preparation_file_release:Scoped&{readId:string};
@@ -75,6 +97,25 @@ export interface PreparationToolArguments {
  merchant_preparation_received:Scoped&{destination:string};
 }
 export interface PreparationToolResults {
+ merchant_preparation_pipeline_status:PipelineStatus;
+ merchant_preparation_pipeline_browser:PreparationConnection&{url:string};
+ merchant_preparation_pipeline_list:PipelinePage<SavedDefinition|Execution>;
+ merchant_preparation_pipeline_definition:SavedDefinition;
+ merchant_preparation_pipeline_save:SavedDefinition;
+ merchant_preparation_pipeline_from_recipe:Definition;
+ merchant_preparation_pipeline_enqueue:Execution;
+ merchant_preparation_pipeline_execute:Execution;
+ merchant_preparation_pipeline_execution:Execution;
+ merchant_preparation_pipeline_events:{items:Event[];nextAfter:number|null};
+ merchant_preparation_pipeline_rows:RowPage;
+ merchant_preparation_pipeline_cancel:{id:string;requested:boolean};
+ merchant_preparation_pipeline_recover:{executions:string[];native:{recovered:string[]}};
+ merchant_preparation_pipeline_review:Review;
+ merchant_preparation_pipeline_compare:Comparison;
+ merchant_preparation_pipeline_export:DeliveryRecord;
+ merchant_preparation_pipeline_receive:ManagedReceivedPipeline;
+ merchant_preparation_pipeline_received:{items:ReceivedProject[]};
+ merchant_preparation_pipeline_open_received:ManagedReceivedPipeline;
  merchant_preparation_status:PreparationConfiguredSummary|PreparationWorkspaceStatus;
  merchant_preparation_connect:PreparationConnection&{workspace:string;state:'CONNECTED';native:PreparationStatus};
  merchant_preparation_disconnect:{workspace:string;state:'DISCONNECTED';instanceId:string};

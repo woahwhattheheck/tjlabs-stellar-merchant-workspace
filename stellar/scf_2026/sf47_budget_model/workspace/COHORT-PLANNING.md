@@ -868,6 +868,73 @@ groups and full currency totals remain identical to the source plan. The
 original completion dates and cohort opportunity results are recalculated from
 the proposed delivery dates.
 
+### Resolve competing delivery dates
+
+Choose **Resolve competing dates** in the existing Schedule delivery tab when
+flexible services compete for the same available days. The calculation first
+retains the original ordered allocation, then revisits complete service groups
+that share possible delivery capacity. It can move an earlier flexible service
+to another permitted day so a later service also fits its actual commitment.
+
+For example, a higher-priority service may permit Tuesday or Wednesday while
+another service permits Tuesday only. The reviewed successor can place the first
+service on Wednesday and the second on Tuesday, retaining both complete jobs,
+their prices and the same entered daily capacity. All entered priority, release,
+deadline, funding-date, weekday, cutoff and sequence rules still apply.
+
+Each linked prepaid/spacing group stays together. The calculation releases only
+the flexible members of the competing groups while preserving all fixed, past,
+unknown and otherwise unplaceable work in the capacity ledger. It searches in
+the original priority and service order, using the selected date preference.
+Only a complete placement of that whole competing set replaces the retained
+allocation. The result lists each attempted set, its result and any changed
+dates. A set without a complete accepted placement keeps its previous dates and
+full constraints; other independent sets can still receive a complete solution.
+
+**Standard** uses up to 100,000 candidate placements; **Extended** uses up to
+1,000,000. The limit and exact visited count travel in the complete result. The
+result identifies a completed placement, an exhausted search, or a search that
+used its selected effort. These describe the deterministic operation under the
+entered constraints. Edit the original service or capacity inputs to calculate
+another complete alternative.
+
+The original **Original service order** method remains available. Saved results
+from that method preserve their original JSON representation and calculation.
+Selecting another method or effort makes the displayed result require a fresh
+calculation before its dates are adopted. Opening a saved allocation restores
+its actual method and effort.
+
+A complete plan file or saved source that finishes opening after newer edits
+stays in **Compare plans → Received sources**. The current draft and selected
+allocation method remain selected. Choose **Adopt received source** to open that
+complete original deliberately. An invalid saved allocation is rejected before
+it can replace the editable plan.
+
+The existing **Use dated successor**, **Open full comparison**, and **Save
+successor and comparison** actions use the selected complete result. The one
+source edition retains the original source, exact funding groups, full
+allocation and comparison. JSON and readable HTML include every competing-date
+decision. Allocation CSV adds the selected method, effort, component result and
+previous allocated date to each row. Service-choice JSON retains the original
+service constraints; complete allocation JSON retains those choices together
+with its selected method.
+
+The same installed command operates this method:
+
+~~~sh
+starforge grant-cohort-plan schedule \
+  --input original-plan.json --constraints delivery-choices.json \
+  --method resolve-conflicts --max-search-steps 100000 \
+  --output resolved-delivery-allocation.json
+~~~
+
+Use **--method first-fit** for the original method. The typed ESM operation takes
+**{method: "RESOLVE_CONFLICTS", maxSearchSteps: 100000}** as its third argument,
+alongside an optional successor name. The default is **FIRST_FIT**.
+**maxSearchSteps** accepts a whole number from 1 through 1,000,000 for conflict
+resolution. Complete results retain these fields in **resolution**, and the
+existing reopener recalculates the same original source and selected method.
+
 ### Keep occurrence identities when dates coincide
 
 A schedule retains its original cadence, exclusions, useful-task count, payment

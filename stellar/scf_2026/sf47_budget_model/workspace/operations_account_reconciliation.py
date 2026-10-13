@@ -283,7 +283,7 @@ def _cash_before_void(context, event, after):
                     or review.get("schema") != "scf.operations.settlement-receiving.v1.review"
                     or review.get("type") != "CORRECTION" or review["version"] != event["version"]
                     or review["id"] != event["recordId"] or review["requestId"] != event["requestId"]
-                    or review["actor"] != event["actor"]
+                    or review["actor"] != text(event["actor"], "Original settlement operator", 300, True)
                     or digest({key: value for key, value in review.items() if key != "sha256"}) != review["sha256"]
                     or history[position] != review or position == 0
                     or event["before"].get("reviewId") != review["previousReviewId"]

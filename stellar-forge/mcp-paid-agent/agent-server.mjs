@@ -1,3 +1,4 @@
+import { normalizeCatalogConfiguration, selectCatalog } from './catalogs.mjs';
 /**
  * SF-32 - MCP buyer-side discover/preview/approved paid call bridge.
  * MIT. MCP 2025-11-25 JSON-RPC Streamable HTTP (single-response subset) and
@@ -42,6 +43,7 @@ async function readData(response,max=64*1024,{retainBytes=false}={}){
   return {body,contentType:response.headers.get('content-type')??null,truncated,...(retainBytes?{bytes}: {})};
 }
 const statOf=q=>({quoteId:q.quoteId,status:q.status,resource:q.resource,requestUrl:q.url,method:q.method,
+  ...(q.discoverySource?{source:structuredClone(q.discoverySource)}:{}),
   ...(q.invocation?{invocation:structuredClone(q.invocation)}:{}),
   selected:sanitizedPrice(q.accepted),acceptedTerms:structuredClone(q.accepted),expiresAt:q.expiresAt,attempts:q.attempts,
   createdAt:q.createdAt,updatedAt:q.updatedAt,phase:q.phase??null,
@@ -94,17 +96,15 @@ if(new Set(TOOLS.map(tool=>tool.name)).size!==TOOLS.length)
  * from a model-supplied URL. Default approval=false, signer=null, origins=[].
  */
 export class McpPaidToolBroker {
-  #catalogUrl;#trustedOrigins;#approve;#sign;#fetch;#records=new Map();#quotes=new Map();
+  #catalogUrl;#catalogs;#trustedOrigins;#approve;#sign;#fetch;#records=new Map();#quotes=new Map();
   #timeLimit;#quoteTTL;#maxRecords;#agentCommerce;
   #store;#scope;#closing=false;#storeClosed=false;#closePromise;#active=new Set();#shutdown=new AbortController();
   #mcpPolicies;#approvalControllers=new Map();#remoteControllers=new Map();#results;#reconcilePaymentAdapter;#reconciliations=new Map();#spendingStatusAdapter;
-  constructor({discoveryUrl,allowedResourceOrigins=[],approve=()=>false,signPayment=null,
+  constructor({discoveryUrl,discoveryCatalogs,allowedResourceOrigins=[],approve=()=>false,signPayment=null,
     fetchImpl=defaultFetch,timeoutMs=8000,quoteTTL=10*60*1000,maxRecords=500,
     agentCommerce=null,quoteStore=null,remoteMcpPolicies=[],resultStore=null,reconcilePayment=null,spendingStatus=null}={}){
-    if(!discoveryUrl)throw new TypeError('Explicit configured discoveryUrl required');
-    this.#catalogUrl=new URL(discoveryUrl);
-    if(!['https:','http:'].includes(this.#catalogUrl.protocol)||this.#catalogUrl.username||this.#catalogUrl.password||
-      this.#catalogUrl.search||this.#catalogUrl.hash)throw new TypeError('Invalid configured discoveryUrl');
+    this.#catalogs=normalizeCatalogConfiguration({discoveryUrl,discoveryCatalogs});
+    this.#catalogUrl=new URL(selectCatalog(this.#catalogs).url);
     this.#trustedOrigins=new Set(allowedResourceOrigins.map(resourceOrigin));
     if(typeof approve!=='function'||typeof fetchImpl!=='function')throw new TypeError('Operator hooks required');
     if(signPayment!==null&&typeof signPayment!=='function')throw new TypeError('Invalid signer callback');
@@ -127,6 +127,9 @@ export class McpPaidToolBroker {
       throw new TypeError('Result store must provide the native file lifecycle');
     this.#results=resultStore;
     this.#scope=hash({discoveryUrl:this.#catalogUrl.href,origins:[...this.#trustedOrigins].sort(),
+      ...(this.#catalogs.catalogs.length===1 && this.#catalogs.defaultCatalogId==='default' ? {} : {
+        discoveryCatalogs:{defaultCatalogId:this.#catalogs.defaultCatalogId,
+          catalogs:this.#catalogs.catalogs.map(({id,url})=>({id,url})).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)}}),
       ...(this.#mcpPolicies.length?{remoteMcpPolicies:this.#mcpPolicies}:{})});
     try{for(const saved of this.#store?.load()??[]){
       const q=structuredClone(saved);this.#quotes.set(q.quoteId,q);
@@ -169,16 +172,22 @@ export class McpPaidToolBroker {
       fail('DISCOVERY_INVALID','Invalid Bazaar result');
     return {body:value,bytes:data.bytes};
   }
+  catalogs(args={}){
+    this.#running();
+    if(!plain(args)||Object.keys(args).length)fail('INVALID_PARAMS','Catalog listing takes no arguments');
+    return {...structuredClone(this.#catalogs),total:this.#catalogs.catalogs.length};
+  }
   async search(args){return this.#discover('search',args);}
   async resources(args={}){return this.#discover('resources',args);}
   async #discover(mode,args){
     this.#running();
     const request=normalizeDiscoveryArguments(mode,args);
-    const url=discoveryRequestUrl(this.#catalogUrl,mode,request);
+    const catalog=selectCatalog(this.#catalogs,request.catalogId);
+    const url=discoveryRequestUrl(catalog.url,mode,request);
     const {body,bytes}=await this.#get(url);
     this.#running();
     const observedAt=Date.now(), source={url:url.href,observedAt:new Date(observedAt).toISOString(),
-      mode,request:structuredClone(request),pageSha256:createHash('sha256').update(bytes).digest('hex'),pageBytes:bytes.length};
+      mode,request:structuredClone(request),catalog:{...catalog},pageSha256:createHash('sha256').update(bytes).digest('hex'),pageBytes:bytes.length};
     const capture={bytes,source};
     const pending=[],listed=[];
     let filtered=0,invalid=0;
@@ -202,13 +211,16 @@ export class McpPaidToolBroker {
       const info={resource:structuredClone(resource),input:bazaar.info.input,bazaar,accepts:eligible,origin,
         capture,providerAcceptIndexes:eligible.map(option=>row.accepts.indexOf(option)),
         source:{...source,resource:structuredClone(row.resource),rowIndex},
-        fingerprint:hash([resourceUrl,input,eligible]),type:input.type,createdAt:observedAt};
+        fingerprint:hash([catalog.id,catalog.url,resourceUrl,input,eligible]),type:input.type,createdAt:observedAt};
       const handle=randomUUID();pending.push([handle,info]);
-      listed.push({handle,resource:structuredClone(resource),resourceType:input.type,
+      listed.push({handle,catalogId:catalog.id,resource:structuredClone(resource),resourceType:input.type,
         method:input.method??null,toolName:input.toolName??null,
         accepts:eligible.map(sanitizedPrice),allowedOrigin:this.#trustedOrigins.has(origin)});
     }
     const continuation=discoveryContinuation(mode,request,body,body.resources.length);
+    if(continuation.continuation && (request.catalogId!==undefined ||
+        catalog.id!=='default' || this.#catalogs.catalogs.length>1))
+      continuation.continuation.arguments.catalogId=catalog.id;
     // Retain the whole selected page together, then retire only older handles.
     for(const [handle,info] of pending)this.#records.set(handle,info);
     // Keep complete provider pages within the same ephemeral resource cache.
@@ -278,6 +290,7 @@ export class McpPaidToolBroker {
       !/^(0|[1-9]\d*)$/.test(accepted?.amount??'')||
       ![accepted.payTo,accepted.asset].every(x=>typeof x==='string'&&x.length>0))fail('INVALID_PAYMENT_TERMS','Unsupported or invalid Stellar payment option');
     const quoteId=randomUUID();const q={quoteId,resource:row.resource.url,method,url:u.toString(),accepted:structuredClone(accepted),
+      discoverySource:{...structuredClone(row.capture.source),rowIndex:row.source.rowIndex},
       ...(invocation?{invocation}:{}),
       status:'PREVIEWED',fingerprint:row.fingerprint,expiresAt:Date.now()+this.#quoteTTL,attempts:0,
       signedRequestDispatched:false,createdAt:Date.now(),operatorScope:this.#scope,phase:'PREVIEW'};
@@ -422,7 +435,8 @@ export class McpPaidToolBroker {
     let permission;
     try {
       permission=await this.#approve(Object.freeze({quoteId:q.quoteId,resource:q.resource,requestUrl:q.url,method:q.method,
-        accepted:structuredClone(q.accepted),...(q.invocation?{invocation:structuredClone(q.invocation)}:{}),
+        accepted:structuredClone(q.accepted),...(q.discoverySource?{source:structuredClone(q.discoverySource)}:{}),
+        ...(q.invocation?{invocation:structuredClone(q.invocation)}:{}),
         signal:AbortSignal.any([this.#shutdown.signal,approvalController.signal])}));
     }catch(e){
       if(this.#closing||q.status!=='APPROVAL_PENDING')return statOf(q);
@@ -594,6 +608,7 @@ export class McpPaidToolBroker {
       case 'bazaar_resources':return this.resources(args);
       case 'bazaar_describe':return this.describe(args);
       case 'bazaar_preview':return this.preview(args);
+      case 'bazaar_catalogs':return this.catalogs(args);
       case 'bazaar_execute_approved':return this.execute(args);
       case 'bazaar_status':return this.status(args);
       case 'bazaar_history':return this.history(args);

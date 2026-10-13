@@ -1,3 +1,4 @@
+import type { CommissioningState, CommissioningView, CommissioningReport, CommissioningActionPayloads } from './commissioning.mjs';
 import type { Buffer } from 'node:buffer';
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type JsonObject = { [key: string]: Json };
@@ -24,13 +25,13 @@ export type OperationState='prepared'|'running'|'complete'|'failed'|'interrupted
 export interface Operation {id:string;requestId:string;action:string;state:OperationState;createdAt:string;selection:Selection|null;params:JsonObject|null;wire:JsonObject[];observationIds:string[];sourceIds:string[];target:string|null;dispatchedAt?:string;finishedAt?:string;result?:Json|null;error?:PublicError|null;private?:boolean}
 export interface History {revision:number;kind:string;actor:string;at:string;previousSha256:string|null;sha256:string;payload:JsonObject}
 export interface Publication {id:string;createdAt:string;title:string;editionId:string;projectId:string;projectRevision:number;asset:{file:string;sha256:string;contentType:string;downloadName:string;sourceId:string;bytes:number};service:JsonObject;source:{agentCardSha256:string;observationSha256:string;editionId:string};paymentAuthority:'original-sf30-x402'}
-export interface Project {schema:string;id:string;title:string;notes:string;revision:number;createdAt:string;updatedAt:string;originWorkspaceId:string;executionWorkspaceId:string;connectionId:string;connection:ConnectionView;cards:Card[];selection:Selection|null;messages:PreparedMessage[];observations:Observation[];operations:Operation[];sources:Source[];artifactCaptures:ArtifactCapture[];reviews:Review[];editions:Edition[];handoffs:Handoff[];publications:Publication[]}
-export interface ProjectView extends Project {currentRevision:number;historical:boolean;localWorkspaceId:string;networkEnabled:boolean;history:History[]}
+export interface Project {schema:string;id:string;title:string;notes:string;revision:number;createdAt:string;updatedAt:string;originWorkspaceId:string;executionWorkspaceId:string;connectionId:string;connection:ConnectionView;cards:Card[];selection:Selection|null;messages:PreparedMessage[];observations:Observation[];operations:Operation[];sources:Source[];artifactCaptures:ArtifactCapture[];reviews:Review[];editions:Edition[];handoffs:Handoff[];publications:Publication[];commissioning?:CommissioningState}
+export interface ProjectView extends Project {currentRevision:number;historical:boolean;localWorkspaceId:string;networkEnabled:boolean;history:History[];commissioningView:CommissioningView}
 export interface PublicError {code:string;message:string;details?:Json}
 export interface RequestReceipt {id:string;requestId:string;action:string;state:OperationState;createdAt:string;revision:number;result:Json|null;error:PublicError|null;active:boolean}
 export interface DispatchResult extends RequestReceipt {project:ProjectView;replay?:boolean}
 export interface RevisionInput {id:string;expectedRevision:number;requestId:string}
-export interface ActionPayloads {
+export interface ActionPayloads extends CommissioningActionPayloads {
   create:{title:string;connectionId:string;notes?:string;requestId:string};
   update:RevisionInput&{title?:string;notes?:string};
   capture_card:RevisionInput;
@@ -57,6 +58,7 @@ export class A2AWorkspace {
   list():{schema:string;workspaceId:string;sdk:{name:string;version:string;commit:string};connections:ConnectionView[];projects:Array<{id:string;title:string;notes:string;revision:number;updatedAt:string;connectionId:string;taskCount:number;editionCount:number;handoffCount:number}>};
   get(projectId:string,options?:{revision?:number|null}):ProjectView;
   request(requestId:string):RequestReceipt;
+  commissioningReport(projectId:string,options?:{revision?:number|null}):CommissioningReport;
   dispatch<K extends keyof ActionPayloads>(action:K,payload:ActionPayloads[K]):Promise<DispatchResult>;
   readSource(projectId:string,sha256:string,options?:{revision?:number|null;includePrivate?:boolean}):{filename:string;mediaType:string;sha256:string;bytes:Buffer;metadata:Source};
   exportPacket(projectId:string,options?:{revision?:number|null;handoffId?:string|null;includePrivate?:boolean}):Exported;

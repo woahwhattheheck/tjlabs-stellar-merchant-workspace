@@ -153,3 +153,20 @@ This programme continues the completed original workbook case identified by WORK
 The original six-package example case keeps its entered one-hour workbook change and staffing choices. Its reviewed result remains 401 hours and $38,095. The continuation records the actual source histories and cell provenance it receives, with all full source projects, previews, native plans and portable outputs. It uses the same case directory and preserves the original native and browser receiving summaries.
 
 The programme retains phase inputs and outputs before the next native operation. Repeating its command resumes the same source references, reviewed preview, save request and completed handover. Its complete result is mcp-receiving/WORKBOOK_MCP_RECEIVING.json; keep the entire mcp-receiving directory with the original case. Use the existing --resume-browser programme in WORKBOOK_HANDOVER.md for the same case's browser continuation.
+
+
+### Preserve the complete case before file receiving
+
+After the complete handover is retained, the programme closes both native workspace clients. Merchant then receives the retained archive and companion files without keeping those native processes open. It reopens the original clients for the completed-handover comparison and the receiving workspace's native import, preview and cold CLI reopen.
+
+For a host-side portable checkpoint at this boundary, select the supplied complete-case helper and a private directory outside the operating case:
+
+~~~sh
+SF47_WORKBOOK_MCP_CHECKPOINT_HELPER=/absolute/source/examples/source-tables/checkpoint-workbook-mcp.py \
+SF47_WORKBOOK_MCP_CHECKPOINT_DIRECTORY=/absolute/private/workbook-checkpoints \
+node examples/source-tables/receive-current-budget-workbook-mcp.mjs COMPLETE_NATIVE_CASE_DIRECTORY
+~~~
+
+The helper takes the two original workspace locks, preserves the entire operated case and saves an immutable ZIP plus its complete checkpoint record. Original inputs, source selections, reviewed previews, save requests, native databases, retained handover files and partial outputs stay together. A repeated request receives the existing matching checkpoint. The programme continues into full file receiving immediately after the checkpoint returns.
+
+A host can select its own Python helper through the same environment variable or the exported function's `checkpointHelper` option. The helper receives one JSON request on stdin containing schema `stellar-forge.planning-workbook-mcp.receiving.v1.checkpoint-request`, the original operation ID, phase `14-complete-workbook-handover`, the complete case directory, `originalContentSha256` and `handoverArchiveSha256`. It returns one JSON object with the corresponding `.checkpoint` schema, `state: COMPLETE`, the same four identity fields, and the actual whole archive's positive byte count and SHA256 in `archive`. An optional `location` identifies the saved output. The supplied helper provides the complete local-archive implementation; a host's storage adapter can persist that archive before returning its saved result. The original checkpoint record in `mcp-receiving/checkpoints` is reused on continuation.

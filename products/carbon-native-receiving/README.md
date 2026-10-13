@@ -17,6 +17,19 @@ starforge carbon-native-receiving inspect-source --source-root /absolute/new-car
 
 Source, output and archive destinations preserve existing work. Select new source and output directories, and an archive outside both. Use the same original capture checkpoint and matching selection for recovery, with a new output directory for the next attempt.
 
+## Prepare the original SDK and historical inputs
+
+When the host already resolves a compatible installed Stellar SDK, pass that existing module directly. The maintained `sdk` command can also prepare the original published standalone SDK bundle with its complete npm metadata and original license. It checks the bundle's published identity, preserves its original bytes, creates the native adapter, loads the actual required exports and retains the full result in `sdk-runtime.json`.
+
+```sh
+starforge carbon-native-receiving sdk --bundle /absolute/original-downloads/stellar-sdk-16.3.1-original.min.js --metadata /absolute/new-carbon-source/receiving/sdk-originals/stellar-sdk-16.3.1-original-npm-metadata.json --output /absolute/new-carbon-source/receiving/stellar-sdk-16.3.1
+starforge carbon-native-receiving archive-inputs --source-root /absolute/new-carbon-source --source-manifest /absolute/original-downloads/givecredit-public-source-manifest-20261012.json --ledger-json /absolute/original-downloads/givecredit-original-ledger-51890145-transactions.json --ledger-json /absolute/original-downloads/givecredit-original-ledger-51890864-transactions.json --sdk-module /absolute/new-carbon-source/receiving/stellar-sdk-16.3.1/stellar-sdk-16.3.1.mjs --output /absolute/new-carbon-source/receiving/public-ledger-inputs
+```
+
+Use each result's actual `sdkModule` and `captureOptions` paths for the full `run`. SDK output and historical-input output must be new directories. Inspect existing `sdk-runtime.json`, `archive-inputs.json` and `capture-options.json` before selecting a recovery path. The historical command checks the whole source closure, then imports the source packet's own original input reader. Every repeated `--ledger-json` value is retained in order. Its returned counts and hashes come from decoding the supplied complete original ledger records.
+
+The package carries the SDK preparer declaration, original npm and distribution metadata, full license and `SDK_RUNTIME.md`. The SDK guide gives the pinned public bundle URL and its exact original file integrity. `./carbon-native-receiving/sdk-runtime` is its typed package export.
+
 ## Operate the complete desks
 
 ```sh
@@ -80,7 +93,7 @@ Move the entire archive and its descriptor through the host's existing durable f
 
 ## Native client
 
-The installation exposes typed package subpaths `./carbon-native-receiving` and `./carbon-native-receiving/client`. `CarbonNativeReceivingClient` provides `receiveSource`, `inspectSource`, `start`, `run`, `status` and `verify`.
+The installation exposes typed package subpaths `./carbon-native-receiving` and `./carbon-native-receiving/client`. `CarbonNativeReceivingClient` provides `receiveSource`, `inspectSource`, `prepareSdk`, `prepareLedgerInputs`, `start`, `run`, `status` and `verify`.
 
 ```js
 const client = new CarbonNativeReceivingClient();

@@ -1,0 +1,328 @@
+{
+  "schema": "stellar-forge.groundwater-application-source.v1",
+  "prefix": "stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater",
+  "sourceHead": "96a1d66ad032cbbb2640252fedd3f4048a6c8dd6",
+  "sourceCapsule": "ec6a1d1faa4d641835d2853715887ad5481be800",
+  "files": [
+    {
+      "path": "API.md",
+      "bytes": 11972,
+      "gitBlob": "c003c281811d3b34386957436b69b9d75eb51777"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1091,
+      "gitBlob": "2d2a35a69e3896b7c6b885c1faebae2f2f8bc9c1"
+    },
+    {
+      "path": "OPERATOR.md",
+      "bytes": 20952,
+      "gitBlob": "8062059ddfe4f09de95709f14a22b9b5b75269b2"
+    },
+    {
+      "path": "README.md",
+      "bytes": 7344,
+      "gitBlob": "740157f86f9611d13a26fd4b90c6d29f6a71a919"
+    },
+    {
+      "path": "TETHYS.md",
+      "bytes": 23931,
+      "gitBlob": "ed48c087c69febdef026d4161a877c3f7890422a"
+    },
+    {
+      "path": "cli.mjs",
+      "bytes": 832,
+      "gitBlob": "9e48008bd6bf3c5af2105faf8b7d9c1f6c479e11"
+    },
+    {
+      "path": "distribution-contribution.json",
+      "bytes": 7611,
+      "gitBlob": "a238047b84c4b761c1b3e82197459403d595b46f"
+    },
+    {
+      "path": "examples/NATIVE_WORKFLOW.md",
+      "bytes": 12903,
+      "gitBlob": "60c77723b568704b66eb3497cbf39bc649b03e28"
+    },
+    {
+      "path": "examples/browser_workflow.mjs",
+      "bytes": 25783,
+      "gitBlob": "0aab84c9acfcf614688a6dbdf4b9484935a3845a"
+    },
+    {
+      "path": "examples/native_workflow.mjs",
+      "bytes": 2329,
+      "gitBlob": "98042e8de6b01e147541ee2697af792869d41984"
+    },
+    {
+      "path": "examples/prepare_runtime.py",
+      "bytes": 3559,
+      "gitBlob": "f3521f458071eb7b1ead715e58cd0d7ba5570033"
+    },
+    {
+      "path": "examples/publisher-input.example.json",
+      "bytes": 780,
+      "gitBlob": "515ffc3bdc064dd80db2e9fa0e187d1880b3812b"
+    },
+    {
+      "path": "examples/run_publisher_workflow.py",
+      "bytes": 28650,
+      "gitBlob": "6b10c8951eed4f265fbbaaa412a97cd9f411af24"
+    },
+    {
+      "path": "groundwater_workspace/__init__.py",
+      "bytes": 117,
+      "gitBlob": "dc2249ff599e1b65c0eed0b94e7b5537c299092c"
+    },
+    {
+      "path": "groundwater_workspace/analysis.py",
+      "bytes": 23791,
+      "gitBlob": "ac054f8ad5c4da14758e2d7bb88849c6960b6ff3"
+    },
+    {
+      "path": "groundwater_workspace/cli.py",
+      "bytes": 3429,
+      "gitBlob": "a62092d25f373108cb04d754833a6d4fb16d39d9"
+    },
+    {
+      "path": "groundwater_workspace/common.py",
+      "bytes": 12343,
+      "gitBlob": "26ebf7f6f200131064ca5f88b869acccc9dd9c16"
+    },
+    {
+      "path": "groundwater_workspace/delivery.py",
+      "bytes": 31349,
+      "gitBlob": "affacc2153250f04a347b3f4f02f9e6d263c05fb"
+    },
+    {
+      "path": "groundwater_workspace/native.py",
+      "bytes": 20917,
+      "gitBlob": "d63f518ac08e8de682184c5ec1ea90208adb3857"
+    },
+    {
+      "path": "groundwater_workspace/native_attempt.py",
+      "bytes": 13889,
+      "gitBlob": "1cc3a8d7966b45d383065d7b83c604656d8533ea"
+    },
+    {
+      "path": "groundwater_workspace/server.py",
+      "bytes": 7615,
+      "gitBlob": "d6205cd621e5e6f211c88b506230313b9136e485"
+    },
+    {
+      "path": "groundwater_workspace/sources.py",
+      "bytes": 22662,
+      "gitBlob": "9f208c1d4224dc694b3c5c1ef7576400c53cc887"
+    },
+    {
+      "path": "groundwater_workspace/store.py",
+      "bytes": 46429,
+      "gitBlob": "3a1d44c697d5a3a532ed68379441d96808c6a3e8"
+    },
+    {
+      "path": "index.d.mts",
+      "bytes": 1299,
+      "gitBlob": "74d81a304652d25e9da5b0780649bd11724bd444"
+    },
+    {
+      "path": "index.mjs",
+      "bytes": 3298,
+      "gitBlob": "3759f06801c5736a47de4ed3cacb0cc5329ad3f8"
+    },
+    {
+      "path": "publisher/examples/DEVELOPER.md",
+      "bytes": 14536,
+      "gitBlob": "d7f643bd1049e6b8fef631e5101fefe560c4f626"
+    },
+    {
+      "path": "publisher/examples/doc/ex-gwf-twri.tex",
+      "bytes": 3975,
+      "gitBlob": "1e4da0e6a523ead5eecd9e542bf5b1c167b72b36"
+    },
+    {
+      "path": "publisher/examples/ex-workflow.yml",
+      "bytes": 7858,
+      "gitBlob": "be6f9b18725643c818c31386af7f4654cbdde513"
+    },
+    {
+      "path": "publisher/examples/pixi.toml",
+      "bytes": 3092,
+      "gitBlob": "41221bba9fc87a51fea25202cd8156a2fdea2a74"
+    },
+    {
+      "path": "publisher/examples/scripts/ex-gwf-twri.py",
+      "bytes": 13538,
+      "gitBlob": "b7629e2fbdcef8b2cbf89c6e299b794c4c2b45a3"
+    },
+    {
+      "path": "publisher/executables/README.md",
+      "bytes": 1623,
+      "gitBlob": "70ce923deb191a364fce39818d27907a64eac554"
+    },
+    {
+      "path": "publisher/flopy/LICENSE.md",
+      "bytes": 1627,
+      "gitBlob": "c086f953951e4875cb5132bfc40444198407af1b"
+    },
+    {
+      "path": "publisher/flopy/get_modflow.py",
+      "bytes": 27874,
+      "gitBlob": "73e791edf2ffa31452f3de7e3e0a8e43de6bf622"
+    },
+    {
+      "path": "publisher/flopy/pyproject.toml",
+      "bytes": 5810,
+      "gitBlob": "4816231822766e47e40c52c128965950b8953c8b"
+    },
+    {
+      "path": "publisher/manifest.json",
+      "bytes": 5050,
+      "gitBlob": "070314b59f2dbf9fafa7d2311ea074ebe6b5055b"
+    },
+    {
+      "path": "publisher/modflow6/LICENSE.md",
+      "bytes": 1650,
+      "gitBlob": "7dbcd7cea347980e42dfd4ec5e341e79ce03fc4c"
+    },
+    {
+      "path": "publisher/modflow6/README.md",
+      "bytes": 14595,
+      "gitBlob": "698dabaab306d9c51fa11b3e29c47e0d93cf1edc"
+    },
+    {
+      "path": "publisher/modflow6/code.json",
+      "bytes": 1383,
+      "gitBlob": "c221db915c16ea5afce6d8f25afe828779f2e4bc"
+    },
+    {
+      "path": "publisher/tethys/LICENSE",
+      "bytes": 1338,
+      "gitBlob": "f04089bdede48915872abfacea827128b447e76a"
+    },
+    {
+      "path": "publisher/tethys/pyproject.toml",
+      "bytes": 2265,
+      "gitBlob": "d1c551c26325bba1fe9188bb9be75ee5f33acb4d"
+    },
+    {
+      "path": "pyproject.toml",
+      "bytes": 674,
+      "gitBlob": "eb0a854f46492cda5db3f133529d50f1469387a3"
+    },
+    {
+      "path": "setup.py",
+      "bytes": 1475,
+      "gitBlob": "e30be21c17ebfb4ef2e05601e6ce840d2d8e548c"
+    },
+    {
+      "path": "tethys_app/README.md",
+      "bytes": 3322,
+      "gitBlob": "dc3eb36de4471a2b184c51611da35141f7a9fba6"
+    },
+    {
+      "path": "tethys_app/install.yml",
+      "bytes": 94,
+      "gitBlob": "bf3d47a62c8095b171756139dbc9f260048c8921"
+    },
+    {
+      "path": "tethys_app/pyproject.toml",
+      "bytes": 818,
+      "gitBlob": "52ab59e9173313435a1af707fe43277c8c746529"
+    },
+    {
+      "path": "tethys_app/services.example.yml",
+      "bytes": 273,
+      "gitBlob": "a83fb8fb64f4cb720fddf35e3e623163bf8db8d5"
+    },
+    {
+      "path": "tethys_app/tethysapp/__init__.py",
+      "bytes": 156,
+      "gitBlob": "6e4cd0d1a1c876f1fddfbd5d73b4bdbab7f91696"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/__init__.py",
+      "bytes": 79,
+      "gitBlob": "589685a45d24e051bb2e4af25f88707ff2953d83"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/app.py",
+      "bytes": 3394,
+      "gitBlob": "aa1d72f185d8fafd195fe6b859e9ed6c716efba7"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/controllers.py",
+      "bytes": 12242,
+      "gitBlob": "5a8809dcbba984e91e3677f5df56704b73350e3f"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/creation.py",
+      "bytes": 10403,
+      "gitBlob": "dba83440a4022907f478968dbee96d35c6ca48bd"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/manage.py",
+      "bytes": 8317,
+      "gitBlob": "3b00c2528aded2ca88d58a9eeffee48eb396c73d"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/policy.py",
+      "bytes": 12467,
+      "gitBlob": "a97db85ac72b6b5960708ebc0e79769f80a09a03"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/public/css/portal.css",
+      "bytes": 1773,
+      "gitBlob": "de7a90b3708f96110e19e20cffdc302b5be234ac"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/public/images/icon.svg",
+      "bytes": 542,
+      "gitBlob": "10ffce0fb29029b0a250100abec9fa9acb91283f"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/receiving.py",
+      "bytes": 22825,
+      "gitBlob": "6bfa7c96510ab586e053477bba12867051691bf6"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/resources/RECEIVING_INPUT.schema.json",
+      "bytes": 4858,
+      "gitBlob": "df0e17c5a87b70ed71572fc5b36949758836f5b2"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/resources/SOURCE_CONTRACT.json",
+      "bytes": 3818,
+      "gitBlob": "4d0fb76185d29d02b75aa23693b59f05ff01e0fd"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/templates/groundwater_workshare/launcher.html",
+      "bytes": 3551,
+      "gitBlob": "5b0915d88d0faca54446c7afa0f71921e4074d70"
+    },
+    {
+      "path": "tethys_app/tethysapp/groundwater_workshare/transport.py",
+      "bytes": 9441,
+      "gitBlob": "660247799900af172fa0593bc88d72f68d97c201"
+    },
+    {
+      "path": "ui/app.js",
+      "bytes": 61373,
+      "gitBlob": "2049d4dacaa8084c3ca039288337bc646f6b73c4"
+    },
+    {
+      "path": "ui/index.html",
+      "bytes": 2318,
+      "gitBlob": "fe2d35eca9b8b2f23901fe72f05121868db3259c"
+    },
+    {
+      "path": "ui/style.css",
+      "bytes": 8893,
+      "gitBlob": "0b98b0fb37a19c414d93483d54895d7461b56d78"
+    },
+    {
+      "path": "workspace.py",
+      "bytes": 236,
+      "gitBlob": "8191070c7f107c7201a6658c0601b13d002e37e6"
+    }
+  ]
+}
