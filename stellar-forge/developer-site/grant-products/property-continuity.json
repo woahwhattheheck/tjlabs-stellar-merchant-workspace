@@ -77,6 +77,765 @@
           "git_blob": "375f51c804e4df78fbbfec27f0a6e920ce807ea4"
         }
       ]
+    },
+    {
+      "id": "property-continuity-managed-operator",
+      "label": "Installed Applications, customer installation and full operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/OPERATING.md",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 28284,
+          "sha256": "210beec89266f4cad6f971664e1e3c7472eb1ef215ec68f86b3cab9be869301b",
+          "git_blob": "7c564d80191394932501a9d54a9faa16a8d74f05"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-sdk-guide",
+      "label": "Complete typed client and Merchant operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/SDK.md",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 14354,
+          "sha256": "e1813fb2511745bb647a7cd81a06a729ca24f64cdda6f98081a689c56eb4df60",
+          "git_blob": "e2ca124a16516fc2f68896d9aabb02005824ca9f"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-adoption",
+      "label": "Historical original adoption and current maintained source lineage",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/ADOPTION.json",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 12358,
+          "sha256": "5f2b23e40b4e477e665eff39ef9c1c743ffce3ec2a18ad53b8f0c288a4fde91a",
+          "git_blob": "01bc74848bfb364fa2f23aeae2385a8512e1149e"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-application-provider",
+      "label": "Original Applications review/startup provider",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/application-provider.mjs",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 6788,
+          "sha256": "ac09fc7de9c12655c1bb47bbb40027c71d187f475cd0fa2af28292070f80e99d",
+          "git_blob": "34b8f572c5738f13cfe0bcb436b1bab88706cef8"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-binding",
+      "label": "Private connection, physical workspace and selected runtime binding",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/binding.mjs",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 6496,
+          "sha256": "9f5f85f97d4b989b2555efe5adc63e9c23e9dc64ca31eef2d4523c807f519387",
+          "git_blob": "ee9eb8ce76bb501a2baf590d586b06b315c3f306"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-managed-host",
+      "label": "Managed lifetime of the original native HTTP application",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/managed-host.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 8225,
+          "sha256": "dce213a39955abbce683dc700d90032b9c0eb994c64f9336f285ca5c9ac14481",
+          "git_blob": "9cbf435b7af69b75f48492895ae3008643557c00"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-managed-cli",
+      "label": "Installed create, binding and service command",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/managed.mjs",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 5617,
+          "sha256": "88c4e6d0f56dd6c6a384bf8fe8905a42e33c4bdc9285298bfd76ff0b176b679d",
+          "git_blob": "410c908e7e759b29a707d9149712bd14cbda0133"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-contract",
+      "label": "Complete source selection and managed identity contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/contract.mjs",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 3981,
+          "sha256": "1dc818aa42e86b14abf0b8365e90480ed53425a693c217467d69112832f9304f",
+          "git_blob": "41ef9dfb3b2538ce44048d5c92da82a4ba10ae38"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-client",
+      "label": "Authenticated complete native and review client",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/client.mjs",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 15498,
+          "sha256": "1d9f2a815f09ceee245fb19dfaa126511109668346384c598669005660909f72",
+          "git_blob": "4e589283e173c55079d713421e717c9b80c6826d"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-client-types",
+      "label": "Complete public typed client declarations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/client.d.mts",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 3505,
+          "sha256": "7242e52eebbe95b49f8eb7a07c53f1063c6589c6bb5b507479b132a2401cbc37",
+          "git_blob": "c5c0ab3402cb01eb5e1f1499f18daecdae2a1d78"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-catalog",
+      "label": "Native customer-agent tool catalogue and inputs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/catalog.mjs",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 6068,
+          "sha256": "bce128c965fdf056af3d1e5bed6b18ff48b89eb299892c46364baa1b35c1d65c",
+          "git_blob": "b92db51f9d6142760251ea679ef540a5a1c00526"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-merchant",
+      "label": "Original service agent operations and retained file ownership",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/merchant.mjs",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 8720,
+          "sha256": "15568688ecbbdae6b3f96f2e50b4c92e52a934bbdc85b5be789c7b82d49eea0c",
+          "git_blob": "e766baa8c7c80d8a3932a628a758424aac5b51aa"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-merchant-provider",
+      "label": "Declared Merchant host configuration and lifecycle",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/merchant-provider.mjs",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 1761,
+          "sha256": "3ec51da2972550ca3d2b9aebe5799c1cc1543e024e036a21573e0f0a981082ae",
+          "git_blob": "7f3adf39768711bb0d8c8adaf28957590cce31f8"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-native-domain",
+      "label": "Original precise reconciliation and atomic native review adoption",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/bluewave/domain.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 68006,
+          "sha256": "f4104fdec6e31470372aa9197db20723114bd5752aa8868e52acc474618e5a27",
+          "git_blob": "dcf11613cdcdce3ad40b2f59885b8649587bb1bd"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-review-domain",
+      "label": "Complete issue, returned editions, comparison and adoption model",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/bluewave/review_exchange.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 28151,
+          "sha256": "169de2308d3964654fabbe71d9ed3839a28574b155b89e091c853bce064f896e",
+          "git_blob": "31b9ff54010952a3ae63fffa77d25c02173a93be"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-native-workspace",
+      "label": "Original SQLite requests, revision CAS and atomic complete file batch",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/bluewave/workspace.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 16167,
+          "sha256": "e9c26dff1076e16803823a036b0b51d0fd6383642910ffb6b9216c6649b8b72d",
+          "git_blob": "fde29d6bf9da88663fc120c5dc8f9b0d494d71dd"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-native-exchange",
+      "label": "Complete native archive export, independent receiving and later-edit preservation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/bluewave/exchange.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 22856,
+          "sha256": "44fb01b7806e40253a44e2b4504c65725d26fc46e879e2aa47d0dd3d1d2436dc",
+          "git_blob": "1b8f2ea290e938e01bdd4d81f2c707719a484e71"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-review-host",
+      "label": "Exact issue HTML and complete returned-file preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/bluewave/review_host.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 4662,
+          "sha256": "6df928eac6aeb74043f451e151b36ca96f696e098e9c6c898fbd83473846ab23",
+          "git_blob": "7385c22fcb835873bc6a16b05be680b394bfb5e2"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-native-server",
+      "label": "Original authenticated branch-bound HTTP routes",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/bluewave/server.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 19474,
+          "sha256": "c8154ddca02cff3c4405dcc406a34dd8e2dda9bd83c76a5e6d786d7b0101c3fc",
+          "git_blob": "17646ec14d3338540d8710d15ac47a12effe5ad4"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-native-cli",
+      "label": "Full original command and reviewer preparation/receiving CLI",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/bluewave/cli.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 9652,
+          "sha256": "fc1f214711d6796e493cf2ea7357d9fed5b4ddee5a0be4d1aca62ea3f6f581a6",
+          "git_blob": "46dee92901a913af91c8f7b662b8aa78957796b3"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-native-common",
+      "label": "Canonical JSON, capacities and original filesystem primitives",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/bluewave/common.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 4946,
+          "sha256": "66b1ff4ee944f54c2be67bed427dd32f26d849075113a21c00f9b96c58f344d8",
+          "git_blob": "7903c3e9b0e60e01a68b70c19f51a7c39ca0a69e"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-staff-ui",
+      "label": "Complete physical-branch staff UI and request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/public/app.js",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 52604,
+          "sha256": "52efb3e30321b0eb31ef908d50a84446688c2785c1fb0c93e3fd5fafae3100ec",
+          "git_blob": "7200fbdd7fe3fbc7526ce91ea55e78263302af13"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-review-host-ui",
+      "label": "Assigned review preparation, comparison, explicit choices and draft recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/public/reviewer-host.js",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 20780,
+          "sha256": "9e0173c0abeb103837ed8b5050a0160007e9452129d913cf86e46872aa86794f",
+          "git_blob": "adb252a1aaec3f621364edf0d03b5ac27794004c"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-staff-html",
+      "label": "Complete installed staff navigation and document",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/public/index.html",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 1654,
+          "sha256": "346d8c8e3762e0eff6ac7759c522aa23e78d4b29f33d3ce8b651c044f05d5097",
+          "git_blob": "6405d19fa227b430de9b83e13fa5499e7ec7061a"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-staff-style",
+      "label": "Original industrial staff presentation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/public/style.css",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 5043,
+          "sha256": "af44a91d5fa57bb8a8e8c073817a21330b7cb94328707ce4de4a91e667a6111a",
+          "git_blob": "3e96ef5263300416864c380fdf0c299fc279432f"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-reviewer-js",
+      "label": "Independent complete reviewer editor, named editions and copy CAS",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/public/reviewer-copy.js",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 49861,
+          "sha256": "32bc2a930eac9c2273f0f2ef64abe69f8358c7ab00d14da310bf7e04db64947c",
+          "git_blob": "959d0d0d6f15b85a215a7bdd430c5a5c1ab72571"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-reviewer-html",
+      "label": "Full standalone source-bearing reviewer template",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/public/reviewer-copy.html",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 1367,
+          "sha256": "b0b87e63aaf5c5c4e53c405b359da8e96e6eb44f4b0a22b90d617c727918a065",
+          "git_blob": "e3e6fb70cfa2b9fec262a24f127bdb50ba032334"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-reviewer-style",
+      "label": "Complete reviewer desktop and narrow presentation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/public/reviewer-copy.css",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 5758,
+          "sha256": "92b19420e558bb14b05a20abaefb98f37514a7306c493a7426b6766c0d35ffd1",
+          "git_blob": "581e8746c32251c5ff02e70ec67529e2e8e3ac3e"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-native-programme",
+      "label": "Original complete Programme and inherited receiving owner",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/bluewave/receiving_program.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 33036,
+          "sha256": "afa45d671e48d0fe9224decef750909a2760e6fdc8fc39a189bb02ec1b226e4a",
+          "git_blob": "475aa1baafea375b75fe0454f6b3f194ba8ab521"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-review-programme",
+      "label": "Full ISSUE/BROWSER/RECEIVE/COMPARE/ADOPT/ONWARD continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/bluewave/review_receiving.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 30974,
+          "sha256": "de4b92d37e0356f14e17e9da552da481fb879e33ee7a5dc4b778cdc18d2ad75e",
+          "git_blob": "ead57d05f194b8a796c8cf322c1b6484f02b0f9e"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-native-browser",
+      "label": "Same-owner native and independent reviewer browser course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/tools/receiving_browser.cjs",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 20808,
+          "sha256": "923fe04515d6449749221d2d044b6c36d70d44129567f8597ae6697c181fc7e3",
+          "git_blob": "e209613918970299ce832d941ebd204fded5ff2a"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-reviewer-browser",
+      "label": "Whole borrowed-browser reviewer edits, conflict and reopened return",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/tools/reviewer-copy-browser.mjs",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 30463,
+          "sha256": "3f37276bb626b79b8b255a419e498a66613b2c8533becbd73470c6755e8aca71",
+          "git_blob": "9b41725fde6bb4a4c3fa362dd7168250999f0bd1"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-native-source-selection",
+      "label": "Exact complete current native application source inventory",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/source-selection.json",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 5015,
+          "sha256": "af8e51630df6c5b5b6be9437f5ade076401ca6904d06b1d935a3c7890169e17e",
+          "git_blob": "0463ba282951483e5c5e4790ed2069d893560ed6"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-review-domain-guide",
+      "label": "Complete assigned review domain and integration guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/REVIEW_EXCHANGE_DOMAIN.md",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 21647,
+          "sha256": "4a7642d923b10d1a12b3f3bbc03a70343c1fecf7b8c75c290db7e1bb358feed3",
+          "git_blob": "3ffbb6f6d4504eb49e5a5d7c9109b3655c3b5cc1"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-review-receiving-guide",
+      "label": "Whole original native and browser reviewer receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/REVIEW_EXCHANGE_RECEIVING.md",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 21946,
+          "sha256": "32c485fbb20174a49ba39c7ab842671d7a8175ee14b798b856fe0d53732bf09f",
+          "git_blob": "5710d7ca27f861cd06c1ae527a2b4fc9cdb53e15"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-current-native-operator",
+      "label": "Complete native source, reconciliation, acceptance and receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/OPERATING.md",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 32012,
+          "sha256": "3204d19c2cacd542ef5a5319be9a4682d7619599ff402d0822e3681b320b150e",
+          "git_blob": "ec79d0592d4622cca1be7648ff0df812a5f887dd"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-current-native-domain-guide",
+      "label": "Original complete precise domain semantics",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/CONTINUITY_DOMAIN.md",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 17340,
+          "sha256": "8c516a96caa020b177b2663400d0d5cbbad2b6aa577008445b49aaef663aa54a",
+          "git_blob": "b6b7e7f880dd3cf934376880b52d15488646acf2"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-current-native-readme",
+      "label": "Complete native application opening and requirements",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/README.md",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 3905,
+          "sha256": "194ab475379e3a65b188029de4a1d2739f3153af829aaa241cd09e98639c5ff3",
+          "git_blob": "019dfab07b8f366d3ba2ec540738c9bb80441fba"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-current-native-receiving-guide",
+      "label": "Original supplied-input commissioning course and continuation references",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/RECEIVING_PROGRAMME.md",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 10855,
+          "sha256": "bf9d864044835701421b9f25df08f3739a6697f03769526eda24bdb46c5b1384",
+          "git_blob": "7f8b7be74b08ce0d0c80653524bfa9bc804f31b2"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-current-training-guide",
+      "label": "Explicitly labelled complete original training course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/TRAINING.md",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 6155,
+          "sha256": "d2a2242f3ecbaf457ec8b4ed39b0ca3e54055c7980d34e770ba5e7f049d872da",
+          "git_blob": "3403ea9596fa7b7540200a9350ffbc69cbba630b"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-staff-guide",
+      "label": "Installed rendered operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/app/public/guide.html",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 34626,
+          "sha256": "ed56e79d986e97d7977a08cfdbfa63e5874ed6f0b657cbbc592baf3f491c6825",
+          "git_blob": "77058b85d92612c6b01ae5dc39a2da0d24ee1bd3"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-managed-programme",
+      "label": "Complete current Runtime, SDK and Merchant receiving with historical native basis",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/managed-receiving.mjs",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 24786,
+          "sha256": "c22c7e2df2e12bc7fb625bf67df09ea12f86f1ada4984f8ea7b493e8069fb719",
+          "git_blob": "142a682494cfead637f1b8635d4144d703b9d824"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-managed-supervisor",
+      "label": "Inherited original owner and complete managed archive publication",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/run-managed-receiving.py",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 13644,
+          "sha256": "7565e25cd1d1039f20e0d3ef708f73b04a757136f76005e35221ea505573a081",
+          "git_blob": "519e916f3baa7ce5175261392ec9a1970e467e1f"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-managed-receiving-guide",
+      "label": "Complete managed course with separate original and installed source identities",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/property-continuity/MANAGED_RECEIVING.md",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 8307,
+          "sha256": "70859b726825a4f18030d6ec2bd0cbd1bb2739ba1ac3597fb39cb220e2107719",
+          "git_blob": "a24b019713f464055ff031f4289a34d1f7cd14dc"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-installation-profile",
+      "label": "Complete original Customer Installation workorder profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/property-continuity.json",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 16797,
+          "sha256": "c2b806c81eec973cb95f2c96b9cff91dad4a068a97ad03650d9a1c43027afe6b",
+          "git_blob": "eb3be06d826a50b13a0131a3841c0d1d8d268560"
+        },
+        {
+          "commit": "95b2b93c3a9765e960456cd3187df503b229f765",
+          "bytes": 26630,
+          "sha256": "e1c063db6a5af5c9880c4801b5c529e7cafe6a96260c789f788d6d09aa442b36",
+          "git_blob": "1c164ba3182910b499e18cab2bcf549a42b0b1b6"
+        }
+      ],
+      "required": false,
+      "commit": "95b2b93c3a9765e960456cd3187df503b229f765"
+    },
+    {
+      "id": "property-continuity-distribution-contribution",
+      "label": "Full source, CLI, SDK, Applications and Merchant declaration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/property-continuity-interfaces.json",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 4586,
+          "sha256": "5c6ac9774b7e1f8c5d8fcb5746a100bbb10393455eecae1124311625372f42bf",
+          "git_blob": "02ee318a4ec15f85060e06fc852decb7967fc2a8"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "property-continuity-distribution-selection",
+      "label": "Maintained original complete product distribution selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/property-continuity.json",
+      "editions": [
+        {
+          "commit": "a2ddb7175e9e969bec2df440493c3009122ff677",
+          "bytes": 24146,
+          "sha256": "70ef4011b86b9628d7d4280f29d3205da86bc3ccb4e3781dbe69ae7f72a2b11b",
+          "git_blob": "2bbd826cec77cb176973ab2c47d3d7621a2a41cd"
+        }
+      ],
+      "required": false
     }
   ]
 }
