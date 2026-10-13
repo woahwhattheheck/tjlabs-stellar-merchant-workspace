@@ -34,7 +34,9 @@
     "./applications/openfema": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/application.mjs",
     "./seller/openfema/recorded-source": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/recorded-source.mjs",
     "./seller/openfema/delivery": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/delivery.mjs",
-    "./merchant-mcp/openfema/exchange": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/merchant-project-exchange.mjs"
+    "./merchant-mcp/openfema/exchange": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/merchant-project-exchange.mjs",
+    "./seller/openfema/recipient": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/recipient.mjs",
+    "./seller/openfema/recipient-core": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/recipient-core.mjs"
   },
   "browserAssets": [
     {
@@ -78,6 +80,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/project-staging-mapping.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/merchant-project-exchange.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/WORKING_COPIES.md",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/working-copy-receiving.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/working-copy-receiving.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/RECIPIENT_WORKSPACE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recipient-receiving.mjs"
   ]
 }
