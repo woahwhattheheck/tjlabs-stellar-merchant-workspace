@@ -1,3 +1,4 @@
+import type {PipelineRequestCustomer,PipelineRequestCatalog,PipelineRequestHandoff} from './request-handoff.mjs';
 import type {PreparedPipelineJob,ReceivedPipelineJob} from './customer.mjs';
 import type {JobPackageIdentity,JobPackageJob} from '../../jobs/outputs/index.mjs';
 export type PipelineOrderFileName='project.zip'|'selection.json'|'input.json'|'review.html';
@@ -14,6 +15,9 @@ type OptionalExpected=PipelinePackageExpected|{
  expectedBytes?:never;expectedSourceSha256?:never;expectedFilename?:never;
 };
 export interface PreparationJobToolArguments {
+ merchant_preparation_job_catalog:Scoped&{customer:string;merchantOrigin:string};
+ merchant_preparation_job_request:Scoped&{customer:string;orderDestination:string;expectedOrderSha256:string;merchantOrigin:string;
+  expectedCatalogSha256:string;reference:string;label:string};
  merchant_preparation_job_prepare:Scoped&SourceSelection&{expectedSourceSha256:string;orderDestination:string;
   pipelineId:string;revision:number;reportName:string;inputs?:Record<string,string>;reuseExecution?:string};
  merchant_preparation_job_order:Scoped&{orderDestination:string;expectedOrderSha256?:string};
@@ -42,6 +46,8 @@ export interface PipelineCommissioningReadSummary {
  activeFileReads:number;pendingFileCloses:number;snapshotBytes:number;immutableFileBytes:number;
 }
 export interface PreparationJobToolResults {
+ merchant_preparation_job_catalog:PipelineRequestCatalog;
+ merchant_preparation_job_request:PipelineRequestHandoff;
  merchant_preparation_job_prepare:PreparedPipelineOrder;
  merchant_preparation_job_order:PreparedPipelineOrder&{orderSha256:string;files:PipelineCommissioningFile[]};
  merchant_preparation_job_receive:ReceivedPipelineJob&{workspaceAlias:string;packageDestination:string;destination:string};
@@ -54,6 +60,7 @@ export interface PreparationJobToolResults {
 export interface PreparationCommissioningContext {
  scope:{alias:string;directory:string;workspaceSha256:string;directoryIdentity:{dev:string;ino:string}};
  python?:string;
+ customer(alias:string):{label:string;customer:PipelineRequestCustomer};
  input(args:Record<string,unknown>,kind:'project'|'job-result'):{file:string;bytes:number;sha256:string};
  destination(alias:string):{directory:string};
  exported(fileId:string):Promise<{path:string;record:{kind:string;bytes:number;sha256:string}}>;

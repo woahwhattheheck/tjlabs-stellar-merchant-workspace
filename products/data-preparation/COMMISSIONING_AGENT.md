@@ -1,6 +1,6 @@
 # Pipeline commissioning through the preparation agent attachment
 
-The installed preparation attachment now carries a complete commissioned SQL order from its saved project to its independently editable result. It retains the original forty preparation and pipeline tools and adds seven customer operations. The new operations call the same prepare, receive and reopen functions as the installed `pipeline-jobs` command.
+The installed preparation attachment now carries a complete commissioned SQL order from its saved project to its independently editable result. It retains the original forty preparation and pipeline tools and adds nine customer operations. The new operations call the same prepare, receive and reopen functions as the installed `pipeline-jobs` command.
 
 Use the complete **data-preparation-jobs** distribution selection. Its Jobs, Request, Buyer, named-output verifier, pipeline engine, Python helpers and original source are the operating dependencies. The ordinary preparation tools continue to load without starting or importing a Jobs worker. A commissioning call loads its original customer implementation when first selected.
 
@@ -25,6 +25,16 @@ The following is a host configuration example. Replace the three marked original
       "label": "Original reporting project",
       "directory": "/srv/customer/projects/original",
       "workspaceSha256": "ORIGINAL_WORKSPACE_SHA256",
+      "jobCustomers": {
+        "original_request": {
+          "label": "Original Request and Buyer",
+          "customer": {
+            "directory": "/srv/customer/paid-jobs",
+            "runtimeDirectory": "/srv/install/source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli",
+            "operatorWorkspace": "/srv/customer/operator"
+          }
+        }
+      },
       "inputs": {
         "period_project": {
           "kind": "project",
@@ -135,13 +145,51 @@ Read the complete review and selection before proceeding to the original purchas
 
 ## Continue the existing Request and Buyer
 
-The preparation result retains `functionId: "executePipeline"`, `input` and `attachmentSlots`. Supply the exact retained project and selection files to their original `project` and `selection` input slots in the existing Request workspace. Its original receiver seals those inputs and returns the original private purchase handoff.
+The host declares an existing private Request customer under the original workspace's `jobCustomers` map. Each entry has a label and the original customer selection: `directory`, `runtimeDirectory`, and optionally the original `operatorWorkspace` or `operatorProfile`. An optional `expectedInstanceId` binds a particular live instance. Both the agent and browser handoffs call the original `readJobWorkspaceLaunch` reader; its bearer token stays in the existing private host.
 
-The existing Buyer reviews the actual merchant quote, configured account, selected runtime and spending approval. Execute and recover that original purchase through its maintained Buyer interface. Preserve the accepted intent, job and settlement. The commissioning facade prepares and receives the customer project; payment and job execution continue through those existing operations.
+Call `merchant_preparation_job_catalog` with the configured customer alias and actual merchant origin. It reads the current full catalog through that existing Request host, validates the original `executePipeline` function and its two required file slots, and returns the catalog's original quote, output declarations and SHA. Review that complete catalog and the prepared SQL/source order.
 
-Download the whole completed named-result package with the original Buyer. Retain its actual filename, byte count, SHA, content type, original job ID, ordinary input SHA, merchant public origin and native settlement. The receiver requires those actual original expectations for a first receiving operation.
+Call `merchant_preparation_job_request` with:
 
-This complete sequence uses one declared Buyer download directory. It does not require replacing or restarting the preparation attachment after the download is saved.
+- the original workspace, declared `customer` and `orderDestination`;
+- `expectedOrderSha256` from the complete prepared-order read;
+- the actual merchant origin and reviewed `expectedCatalogSha256`;
+- one retained `reference` and human-readable `label`.
+
+The operation derives the same request ID as the original Request model. It first reopens that request when present, validating the ordinary input, merchant/function, reference, label and catalog. It creates a draft only when that original ID is absent. This avoids replaying an empty file-input draft after the first attachment has already been saved.
+
+Both complete prepared files are opened as held original descriptors. The existing upload planner computes their full file/chunk identities, which must agree with the reviewed order. The original Request's begin/chunk/seal routes retain those bytes in its own store. Interrupted receiving repeats the same plan and fills only its actual missing chunks. A different file selected on the same request rejects the continuation. A valid existing submitted request retains its original checkout/job and merchant receiving state.
+
+The returned `stellar-forge.preparation-pipeline-request-handoff.v1` record includes the original request ID/reference/revision, catalog and function identities, both complete sealed file descriptors and the Request URL selecting that same request. Open that private URL to continue the original Request, Checkout and Buyer workflow. Keep the URL private: its fragment is the existing customer's bearer session.
+
+The original Request page prepares its merchant ticket and links the existing Checkout. The Buyer reviews the actual quote, configured account, selected runtime and spending approval. Purchase and recovery use that original Buyer intent and accepted job.
+
+Download the whole completed named-result package with the original Buyer. Retain its actual filename, byte count, SHA, content type, original job ID, ordinary input SHA, merchant public origin and native settlement. Those original expectations bind the first receiving operation.
+
+### Native and browser handoff
+
+The same complete helper is available as `jobs/request-handoff.mjs`. `discoverPipelineRequest` returns the original full catalog. `seedPreparedPipelineRequest` returns the complete typed handoff and accepts an AbortSignal. It uses the existing authenticated HTTP host and original upload engine.
+
+The CLI reads an owned private JSON file containing exactly the selected customer object:
+
+```sh
+node jobs/request-handoff-cli.mjs catalog \
+  --customer /srv/private/customer.json \
+  --merchant-origin https://merchant.example
+
+node jobs/request-handoff-cli.mjs seed \
+  --customer /srv/private/customer.json \
+  --order-directory /srv/customer/orders/period-01 \
+  --expected-order-sha256 ORIGINAL_ORDER_SHA256 \
+  --merchant-origin https://merchant.example \
+  --expected-catalog-sha256 REVIEWED_CATALOG_SHA256 \
+  --reference period_01_original_reference \
+  --label "Period 01 saved SQL report"
+```
+
+The foreground CLI converts SIGINT/SIGTERM to cancellation, waits for the original held-file and HTTP work to close, and returns the original request ID with any failed continuation. Repeat the same selected order, reference and customer after correcting that reported condition.
+
+The Pipeline browser declares the same customer objects in `SF30_PREPARATION_JOB_CUSTOMERS`, a JSON object mapping aliases to `{label, customer}`. Its existing listener presents those aliases, retains the reviewed catalog/reference against the saved order, and invokes this same fixed CLI through its owned native lifetime. See the complete [browser commissioning guide](COMMISSIONING_BROWSER.md).
 
 ## Receive the paid result and editable project
 
@@ -191,11 +239,11 @@ The immutable package and editable directory can move together. Update their hos
 
 ## Operation lifetime and compatibility
 
-All seven tools share the original per-workspace serialization in `MerchantPreparationWorkspaces`. Closing the MCP owner first drains its accepted operations, then closes both original and commissioning file readers. The existing disconnect closes that workspace's active readers and retains completed original files for later offline reads.
+All nine tools share the original per-workspace serialization in `MerchantPreparationWorkspaces`. Closing the MCP owner first drains its accepted operations, then closes both original and commissioning file readers. The existing disconnect closes that workspace's active readers and retains completed original files for later offline reads.
 
 The original customer helper owns each preparation/receiving Python child through process close and cancellation. The adapter does not spawn its own process, start another listener, purchase a job, or create an alternate database.
 
-The complete original tool catalog is preserved in its previous relative order. Commissioning is an additive group. A non-Jobs preparation installation can continue its existing local operations; an explicit commissioning call requires the full selected Jobs dependency closure and returns a definite installation error if it is absent.
+The complete original tool catalog is preserved in its previous relative order. Commissioning is an additive group. A preparation installation can continue its existing local operations; an explicit commissioning call requires the full selected Jobs dependency closure and returns a definite installation error if it is absent.
 
 The typed argument/result maps in `data-preparation/mcp.d.mts` include every new operation and retain the original native result types. Complete file chunks have the same shape as the maintained original retained-file reader.
 

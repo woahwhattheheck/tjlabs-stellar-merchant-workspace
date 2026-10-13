@@ -1,6 +1,8 @@
 // MIT. Commission and receive saved pipeline jobs through original host-declared aliases.
 import {join,dirname,relative,isAbsolute} from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
+import {inspectPreparedPipelineOrder as selectedOrder} from './order.mjs';
+import {discoverPipelineRequest,seedPreparedPipelineRequest} from './request-handoff.mjs';
 import {preparePipelineJob,receivePipelineJob,reopenPipelineJob} from './customer.mjs';
 import {reopenResultPackage,RESULT_PACKAGE_TYPE,RESULT_PACKAGE_MAX_BYTES} from '../../jobs/outputs/index.mjs';
 import {RetainedFileReads} from '../../../../../stellar-forge/mcp-merchant-operator/retained-file-reads.mjs';
@@ -52,30 +54,7 @@ function separate(left,right){
  preparationNeed(!within(left,right)&&!within(right,left),'PREPARATION_JOB_DESTINATION_CONFLICT',
   'Use separate declared order, immutable package and editable customer directories.');
 }
-async function selectedOrder(directory,{verifyFiles=false}={}){
- await preparationPrivateDirectory(directory);
- const selected=await preparationReadJson(join(directory,'prepared.json'),{maximum:MAX_JSON}),p=selected.value;
- preparationNeed(p?.schema===PREPARED&&p.intent?.schema===PREPARED&&p.functionId==='executePipeline'&&
-  preparationPlain(p.files)&&isDeepStrictEqual(Object.keys(p.files).sort(),ORDER_NAMES)&&
-  typeof p.intent.pipelineId==='string'&&Number.isSafeInteger(p.intent.revision)&&p.intent.revision>=1&&
-  typeof p.intent.reportName==='string'&&preparationPlain(p.intent.project)&&
-  isDeepStrictEqual(p.intent.project,p.files['project.zip'])&&
-  p.input?.reportName===p.intent.reportName&&p.input?.selectionSha256===p.files['selection.json'].sha256&&
-  isDeepStrictEqual(p.attachmentSlots,{project:'project.zip',selection:'selection.json'}),
-  'PREPARATION_JOB_ORDER_CHANGED','The selected destination is not a complete original prepared pipeline order.',409);
- for(const [name,record]of Object.entries(p.files)){
-  preparationNeed(preparationPlain(record)&&Number.isSafeInteger(record.bytes)&&record.bytes>0&&
-   record.bytes<=(name==='project.zip'?MAX_PROJECT:MAX_JSON)&&PREPARATION_HASH.test(record.sha256??''),
-   'PREPARATION_JOB_ORDER_CHANGED','The complete original prepared-file declaration changed.',409);
-  if(verifyFiles){
-   const opened=await preparationOpenFile(join(directory,name),{privateOnly:true,maximum:name==='project.zip'?MAX_PROJECT:MAX_JSON});
-   try{preparationNeed(opened.bytes===record.bytes&&await preparationHashFile(opened)===record.sha256,
-    'PREPARATION_JOB_ORDER_CHANGED','A complete original prepared file changed.',409);}
-   finally{await opened.handle.close();}
-  }
- }
- return {prepared:p,sha256:selected.sha256};
-}
+
 function retainedFiles(receipt){
  preparationNeed(receipt?.complete===true&&receipt.schema==='stellar-forge.job-result-receiving.v1'&&
   receipt.package?.contentType===RESULT_PACKAGE_TYPE&&receipt.job?.functionId==='executePipeline'&&
@@ -106,6 +85,15 @@ export class PreparationCommissioning{
    return {workspace:context.scope.alias,readId:args.readId,released:true};
   }
   await verifyScope(context.scope);
+  if(name==='merchant_preparation_job_catalog'){
+   return discoverPipelineRequest({customer:context.customer(args.customer).customer,merchantOrigin:args.merchantOrigin});
+  }
+  if(name==='merchant_preparation_job_request'){
+   const orderDirectory=await selectedDestination(context,args.orderDestination);
+   return seedPreparedPipelineRequest({orderDirectory,expectedOrderSha256:args.expectedOrderSha256,
+    customer:context.customer(args.customer).customer,merchantOrigin:args.merchantOrigin,
+    expectedCatalogSha256:args.expectedCatalogSha256,reference:args.reference,label:args.label});
+  }
   if(name==='merchant_preparation_job_prepare'){
    preparationNeed(Boolean(args.sourceInput)!==Boolean(args.fileId),'PREPARATION_JOB_SOURCE_REQUIRED',
     'Select one declared project sourceInput or one retained complete pipeline-project fileId.');
@@ -170,25 +158,33 @@ export class PreparationCommissioning{
   if(name==='merchant_preparation_job_file'){
    hash(args.expectedSha256);
    preparationNeed(['order','result'].includes(args.kind),'PREPARATION_JOB_FILE_KIND','Select an original order or result file.');
-   let directory,selected;
+   let directory,job;
    if(args.kind==='order'){
     preparationNeed(args.packageDestination===undefined&&args.job===undefined,'PREPARATION_JOB_FILE_SELECTION','Use only the prepared order destination for order files.');
+    preparationNeed(ORDER_NAMES.includes(args.selection),'PREPARATION_JOB_FILE_SELECTION','Select one complete prepared order file.');
     directory=await selectedDestination(context,args.orderDestination);
-    const original=await selectedOrder(directory),file=original.prepared.files[args.selection];
-    preparationNeed(ORDER_NAMES.includes(args.selection)&&file,'PREPARATION_JOB_FILE_SELECTION','Select one complete prepared order file.');
-    selected={path:join(directory,args.selection),name:args.selection,contentType:media(args.selection),...file};
    }else{
     preparationNeed(args.orderDestination===undefined,'PREPARATION_JOB_FILE_SELECTION','Use only the original package destination for result files.');
-    directory=await selectedDestination(context,args.packageDestination);
-    const receipt=await reopenResultPackage({directory,job:originalJob(args.job)});
-    selected=retainedFiles(receipt).find(x=>x.selection===args.selection);
-    preparationNeed(selected,'PREPARATION_JOB_FILE_SELECTION','Select one of the original complete result files.');
+    preparationNeed(['package','report','project','execution','results'].includes(args.selection),
+     'PREPARATION_JOB_FILE_SELECTION','Select one complete original result file.');
+    directory=await selectedDestination(context,args.packageDestination);job=originalJob(args.job);
    }
-   preparationNeed(selected.sha256===args.expectedSha256,'PREPARATION_JOB_FILE_CHANGED','Read the exact retained file SHA-256.',409);
-   const key=JSON.stringify([args.kind,directory,args.selection]);
+   const key=JSON.stringify([args.kind,directory,args.selection,job??null],(_key,value)=>
+    preparationPlain(value)?Object.fromEntries(Object.keys(value).sort().map(name=>[name,value[name]])):value);
    return this.#reads.read({scope:context.scope.alias,key,kind:'pipeline-job-'+args.kind,directory,
     readId:args.readId,expectedSha256:args.expectedSha256,offset:args.offset,limit:args.limit,
     load:async()=>{
+     let selected;
+     if(args.kind==='order'){
+      const original=await selectedOrder(directory),file=original.prepared.files[args.selection];
+      preparationNeed(file,'PREPARATION_JOB_FILE_SELECTION','Select one complete prepared order file.');
+      selected={path:join(directory,args.selection),name:args.selection,contentType:media(args.selection),...file};
+     }else{
+      const receipt=await reopenResultPackage({directory,job});
+      selected=retainedFiles(receipt).find(value=>value.selection===args.selection);
+      preparationNeed(selected,'PREPARATION_JOB_FILE_SELECTION','Select one of the original complete result files.');
+     }
+     preparationNeed(selected.sha256===args.expectedSha256,'PREPARATION_JOB_FILE_CHANGED','Read the exact retained file SHA-256.',409);
      const source=await preparationOpenFile(selected.path,{privateOnly:true,maximum:RESULT_PACKAGE_MAX_BYTES});
      return {readonlyFileHandle:source.handle,bytes:selected.bytes,sha256:selected.sha256,name:selected.name,type:selected.contentType};
     }});

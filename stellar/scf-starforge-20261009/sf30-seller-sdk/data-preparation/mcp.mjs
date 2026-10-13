@@ -35,17 +35,17 @@ export async function readPreparationWorkspaceConfiguration(path){
   const maxExpandedBytes=capacity(raw.maxExpandedBytes,PREPARATION_DEFAULT_RECEIVING_BYTES);
   const base=dirname(path),workspaces=Object.create(null),directories=new Set();
   for(const [name,input] of Object.entries(raw.workspaces)){
-    alias(name);preparationExact(input,['label','directory','workspaceSha256','inputs','destinations'],['directory']);
+    alias(name);preparationExact(input,['label','directory','workspaceSha256','inputs','destinations','jobCustomers'],['directory']);
     preparationNeed(typeof input.directory==='string'&&input.directory.length>0,'PREPARATION_DIRECTORY_INVALID','Declare the original workspace directory.');
     const directory=preparationAbsolute(resolve(base,input.directory)),identity=await preparationWorkspaceIdentity(directory);
     preparationNeed(!directories.has(directory),'PREPARATION_DUPLICATE_WORKSPACE','Give each original workspace one host alias.');
     directories.add(directory);
     preparationNeed(input.workspaceSha256===undefined||input.workspaceSha256===identity.workspaceSha256,
       'PREPARATION_WORKSPACE_CHANGED','The declared original workspace identity changed.',409);
-    for(const key of ['inputs','destinations'])
+    for(const key of ['inputs','destinations','jobCustomers'])
       preparationNeed(input[key]===undefined||preparationPlain(input[key])&&Object.keys(input[key]).length<=256,
         'PREPARATION_CONFIGURATION_INVALID','Declare up to 256 original sources or customer destinations.');
-    const inputs=Object.create(null),destinations=Object.create(null);
+    const inputs=Object.create(null),destinations=Object.create(null),jobCustomers=Object.create(null);
     for(const [key,value] of Object.entries(input.inputs??{})){
       alias(key);preparationExact(value,['label','kind','file','sha256','nullToken'],['kind','file','sha256']);
       preparationNeed(['csv','jsonl','project','job-result'].includes(value.kind)&&typeof value.file==='string'&&
@@ -67,7 +67,29 @@ export async function readPreparationWorkspaceConfiguration(path){
       try{await preparationPrivateDirectory(target);}catch(error){if(error.code!=='ENOENT')throw error;}
       destinations[key]={directory:target,label:label(value.label,key)};
     }
-    workspaces[name]={label:label(input.label,identity.info.label),...identity,inputs,destinations,
+    for(const [key,value] of Object.entries(input.jobCustomers??{})){
+      alias(key);preparationExact(value,['label','customer'],['customer']);
+      const selected=value.customer;
+      preparationExact(selected,['directory','runtimeDirectory','operatorWorkspace','operatorProfile','expectedInstanceId'],
+        ['directory','runtimeDirectory']);
+      preparationNeed(!(selected.operatorWorkspace!==undefined&&selected.operatorProfile!==undefined),
+        'PREPARATION_JOB_CUSTOMER_INVALID','Select the original Request operator workspace or profile.');
+      const customer={};
+      for(const field of ['directory','runtimeDirectory','operatorWorkspace','operatorProfile'])
+        if(selected[field]!==undefined){
+          preparationNeed(typeof selected[field]==='string'&&selected[field].length>0,
+            'PREPARATION_JOB_CUSTOMER_INVALID','Declare the original Request customer paths.');
+          customer[field]=preparationAbsolute(resolve(base,selected[field]));
+        }
+      await preparationPrivateDirectory(customer.directory);
+      if(selected.expectedInstanceId!==undefined){
+        preparationNeed(/^[a-f0-9-]{36}$/.test(selected.expectedInstanceId),'PREPARATION_JOB_CUSTOMER_INVALID',
+          'Select the original Request instance identity.');
+        customer.expectedInstanceId=selected.expectedInstanceId;
+      }
+      jobCustomers[key]={label:label(value.label,key),customer};
+    }
+    workspaces[name]={label:label(input.label,identity.info.label),...identity,inputs,destinations,jobCustomers,
       connectionFile:join(directory,PREPARATION_CONNECTION_FILENAME)};
   }
   for(const scope of Object.values(workspaces))for(const target of Object.values(scope.destinations))
@@ -124,12 +146,15 @@ export class MerchantPreparationWorkspaces{
         state:this.#clients.has(workspace)?'CONNECTED':'DISCONNECTED',
         inputs:Object.entries(scope.inputs).map(([sourceInput,value])=>({sourceInput,label:value.label,kind:value.kind,bytes:value.bytes,sha256:value.sha256})),
         destinations:Object.entries(scope.destinations).map(([destination,value])=>({destination,...value})),
+        jobCustomers:Object.entries(scope.jobCustomers??{}).map(([customer,value])=>({customer,label:value.label})),
       }))};
     const scope=this.#scope(args.workspace);
     if(name.startsWith('merchant_preparation_job_')){
       const owner=await this.#commissioningOwner();
       return owner.call(name,args,{scope,python:this.#config.preparationWorkspaces.python,
         input:(value,kind)=>this.#input(scope,value,kind),
+        customer:name=>{const value=scope.jobCustomers?.[alias(name)];preparationNeed(value,
+          'PREPARATION_JOB_CUSTOMER_NOT_CONFIGURED','Select a declared original Request customer.');return value;},
         destination:name=>this.#destination(scope,name),exported:fileId=>this.#files.record(scope,fileId)});
     }
     if(name==='merchant_preparation_connect'){

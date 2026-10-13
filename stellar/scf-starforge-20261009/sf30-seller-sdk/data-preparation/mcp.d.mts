@@ -1,3 +1,4 @@
+import type {PipelineRequestCustomer} from './jobs/request-handoff.mjs';
 import type {PreparationJobToolArguments,PreparationJobToolResults,PipelineCommissioningReadSummary} from './jobs/merchant.mjs';
 import type {RecipeInput,Source,Recipe,Run,Review,Page,RequestOptions} from './client.mjs';
 import type {PreparationConnection,PreparationCollection,DirectoryIdentity,PreparationStatus,RecordsPage,
@@ -12,7 +13,7 @@ export interface PreparationHostConfiguration {
  schema:typeof PREPARATION_MCP_CONFIGURATION_SCHEMA;maxFileBytes?:number;maxExpandedBytes?:number;python?:string;
  workspaces:Record<string,{
   label?:string;directory:string;workspaceSha256?:string;inputs?:Record<string,PreparationInput>;
-  destinations?:Record<string,PreparationDestination>;
+  destinations?:Record<string,PreparationDestination>;jobCustomers?:Record<string,{label?:string;customer:PipelineRequestCustomer}>;
  }>;
 }
 export interface ConfiguredPreparationWorkspace {
@@ -20,6 +21,7 @@ export interface ConfiguredPreparationWorkspace {
  info:{schema:'stellar-forge.data-preparation.v1';label:string;createdAt:string};
  inputs:Record<string,PreparationInput&{label:string;bytes:number}>;
  destinations:Record<string,PreparationDestination&{label:string}>;
+ jobCustomers:Record<string,{label:string;customer:PipelineRequestCustomer}>;
 }
 export interface ReadPreparationConfiguration {
  configuration:string;sha256:string;maxFileBytes:number;maxExpandedBytes:number;python?:string;
@@ -44,6 +46,7 @@ export interface PreparationConfiguredSummary extends PreparationSummary {
   workspace:string;label:string;workspaceSha256:string;state:'CONNECTED'|'DISCONNECTED';
   inputs:Array<{sourceInput:string;label:string;kind:PreparationInput['kind'];bytes:number;sha256:string}>;
   destinations:Array<{destination:string;directory:string;label:string}>;
+  jobCustomers:Array<{customer:string;label:string}>;
  }>;
 }
 export type PreparationWorkspaceStatus=(

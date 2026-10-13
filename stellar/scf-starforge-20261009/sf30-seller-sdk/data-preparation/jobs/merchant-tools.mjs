@@ -14,6 +14,13 @@ const expected={expectedBytes:integer(1,64*1024*1024),expectedSourceSha256:hash,
 const read={readOnly:true,idempotent:true};
 export function preparationCommissioningTools(tool){
  return [
+  tool('merchant_preparation_job_catalog','Read the actual executePipeline merchant catalog through a host-declared existing private Request customer. Retain its full catalog SHA and original payment/output declarations before seeding that reviewed order.',
+   scoped({customer:alias,merchantOrigin:text(2048)}),['workspace','customer','merchantOrigin'],read),
+  tool('merchant_preparation_job_request','Continue one complete prepared order into its original Request customer: retain the deterministic original reference, stage and seal both exact project/selection files, then return its existing Request page. Partial retries resume the same request and original upload IDs. Checkout preparation and payment remain explicit actions on that original page.',
+   scoped({customer:alias,orderDestination:alias,expectedOrderSha256:hash,merchantOrigin:text(2048),
+    expectedCatalogSha256:hash,reference:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$'},label:text(300)}),
+   ['workspace','customer','orderDestination','expectedOrderSha256','merchantOrigin','expectedCatalogSha256','reference','label'],{idempotent:true}),
+
   tool('merchant_preparation_job_prepare','Freeze a complete original saved pipeline order. Select a declared project source or retained pipeline-project delivery, exact saved definition/source bindings, optional original reuse, and an unused declared order destination. Exact retries verify and reopen that original order; this operation prepares no payment.',
    scoped({sourceInput:alias,fileId:hash,expectedSourceSha256:hash,orderDestination:alias,
     pipelineId:{type:'string',pattern:'^p_[a-f0-9]{32}$'},revision:integer(1),reportName:text(120),
