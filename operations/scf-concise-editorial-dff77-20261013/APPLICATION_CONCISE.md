@@ -8,7 +8,7 @@ Concise nine-answer working edition, 13 October 2026. These answers contain the 
 
 TokenJunkieLabs builds open-source software that lets a buyer purchase a complete API, dataset or agent task on Stellar and continue using its result after delivery or handover. The buyer approves the task and spending; the merchant keeps the payment, fulfillment and accounting together.
 
-We request **$38,000 for 400 prospective hours over 150 days from actual award acceptance** to deliver **two independently operated merchant services and two independent buyer operators**. Each merchant will complete an approved testnet purchase by day 30. By day 90, both buyers will use the services repeatedly and the same useful service will operate through two independent facilitators. By day 150, both merchants will operate on mainnet with returning buyers and an independent maintainer.
+We request **$38,000 for 400 prospective hours over 150 days from actual award acceptance** to deliver **two independently operated merchant services and two independent buyer operators**. Each merchant will complete an approved testnet purchase by day 30. By day 90, the services will have recurring testnet use and the same useful service will operate through two independent facilitators. By day 150, both merchants will operate on mainnet with returning buyers and an independent maintainer.
 
 The existing product is our starting point. The grant funds the remaining customer-source and consumer adaptations, Stellar deployment, provider compatibility, monitoring, recovery and handover. Reusable improvements return to the public product.
 
@@ -59,6 +59,8 @@ Node.js supplies the payment and client interfaces alongside Python/SQLite and P
 
 T1 configures this architecture for the selected customers. T2 implements provider compatibility and monitored recovery. T3 operates the reviewed mainnet configuration and independent maintenance.
 
+Development documentation: [unified product guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/68929767fd9c138e3bcee2df65ea9e5928ca565a/products/merchant-workspace/DEVELOPMENT.md).
+
 ## Working product and demonstrated results
 
 The historical baseline is **18 distinct team-operated testnet purchases totaling 411,000 stroops / 0.0411 native XLM**, with fees separate.
@@ -72,7 +74,7 @@ The historical baseline is **18 distinct team-operated testnet purchases totalin
 
 Saved-pass operations preserved selection and consumed allowance through changed defaults and cold receiving. OpenLineage receiving retained a 1,000-row measurement against a 1,001-row requirement, its decision, unknown column count and two matching 76-file exports.
 
-Catalog discovery was evaluated separately across 27 resources and 33 queries: expected-resource retrieval improved from 22 to 31 and top-three placement from 19 to 29; direct and indexed results agreed on all 33 queries. Nine general queries have no expected-resource mapping.
+Catalog discovery was evaluated separately across 27 resources, 33 queries and 31 scored query–resource pairs: expected-resource retrieval improved from 22 to 31 and top-three placement from 19 to 29; direct and indexed results agreed on all 33 queries. Nine general queries have no expected-resource mapping.
 
 The [3:32 product/team film](https://github.com/woahwhattheheck/public-commons-sprint-2026/releases/download/scf-presentation-20261011/stellar-forge-scf46-presentation.mp4) follows the limited MySQL result, purchase/accounting and independent receiving. The complete HPD task is a separate case. These observations establish the named development and receiving results; the funded milestones below require independent customer and mainnet operation.
 

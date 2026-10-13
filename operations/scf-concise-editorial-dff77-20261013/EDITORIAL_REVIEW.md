@@ -6,9 +6,11 @@ Original claim: https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p17919079
 
 ## Editorial purpose
 
-The complete current concise source contained 3,579 whitespace-separated words. This following edition has 2607 words, a reduction of 27%, while retaining all nine answer headings and the full newly authored Soroban payment explanation.
+The complete current concise source contained 3,579 whitespace-separated words. This following edition has 2616 words, a reduction of 27%, while retaining all nine answer headings and the full newly authored Soroban payment explanation.
 
 The reader now reaches the customer outcome in the first sentence, encounters the commercial need before the provider comparison, and reads the historical operating evidence once. The original six costed packages and their actual acceptance conditions remain together. Payment timing, the bridge requirement, actual uncommitted staffing/customer status and the material effort-overrun risk remain in the application. The complete scenario portfolio remains with the full financial companion.
+
+Independent whole-narrative review is closed. Its two corrections retain the original collective T2 recurrence wording and the 31 scored query–resource pair denominator; the original unified development-documentation link is also retained.
 
 The exact preimage is included as PREVIOUS_APPLICATION_CONCISE.md, and source-join.json identifies every complete answer and its original bytes. These are editable authoring inputs for the original application composition.
 

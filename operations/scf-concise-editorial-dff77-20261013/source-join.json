@@ -14,9 +14,9 @@
   },
   "candidate": {
     "file": "APPLICATION_CONCISE.md",
-    "bytes": 19921,
-    "sha256": "df74bb0301f89b8fb29221c45581a127edabfaf41da446de941401cb60a0499c",
-    "git_blob_sha1": "dd58a6595834efad00fcd154fb7f6ec564354cef"
+    "bytes": 20167,
+    "sha256": "773c26c2f3b221f43fce2a730dcbae6e2a9416fe28ecea41234dbcdbdac663b6",
+    "git_blob_sha1": "98d8bf1500230b6050f3229d95805229d0f26ffb"
   },
   "scope": "Complete following concise working edition; full canonical manuscript and complete financial/source companion remain selected by the original cumulative publisher.",
   "answers": [
@@ -30,8 +30,8 @@
       },
       "candidate": {
         "bytes": 1069,
-        "sha256": "601d6faf2ea2a65a0bd05937a09b45dfff9d3d05ac1a4c6724931ed60e59553b",
-        "git_blob_sha1": "bfad976d6fa6bddadc14af2f4c6a5f7179ade15a"
+        "sha256": "38b6d683b3939bbe0c37189a5cab24dfecd1653b04c02cde8e2f2454d74b1e78",
+        "git_blob_sha1": "20da17251de2dc41fca41e0ab84b4d4a0d9209d8"
       }
     },
     {
@@ -71,9 +71,9 @@
         "git_blob_sha1": "57278f4a82290ea0b7e0c071be3004843a7e350e"
       },
       "candidate": {
-        "bytes": 2685,
-        "sha256": "616b63f4f6f749aa36931905c7933e1aee991ccab8e3452b88a5eb4eba2478ef",
-        "git_blob_sha1": "3b440c11895f11de24a9e64812531b7a6fba38cd"
+        "bytes": 2897,
+        "sha256": "d85d526afe6069c1bd45f6af195ff544f017937683611ce377c9c81be8ea78a1",
+        "git_blob_sha1": "17c2962b9c7e59b0aeb9f5ed751a938108603f8a"
       }
     },
     {
@@ -85,9 +85,9 @@
         "git_blob_sha1": "2913d43a08977588040b8586371fb9eda5fefe83"
       },
       "candidate": {
-        "bytes": 2176,
-        "sha256": "2fd486be1e70e45c7e40942efa4b14203d52c656cd06b8379bd39a8c06bf8a80",
-        "git_blob_sha1": "2a6e101a8b36e5eee3535d7e65d94705f1fd334f"
+        "bytes": 2210,
+        "sha256": "411ff4b1279d5dd5465f6c2ab8b4d402d8a52d270ff244bcad72d63d605ea1c1",
+        "git_blob_sha1": "64bc6a45f244ae916d05e62f070e4a88e6f758b6"
       }
     },
     {
@@ -198,11 +198,12 @@
   },
   "verification": {
     "word_count_preimage": 3579,
-    "word_count_candidate": 2607,
+    "word_count_candidate": 2616,
     "nine_original_headings": true,
     "original_soroban_payment_sequence_retained": true,
     "issuer_field_capture": false,
-    "visual_review": "Continue the existing exact-version producing receiver; no new rendered result is asserted."
+    "visual_review": "Continue the existing exact-version producing receiver; no new rendered result is asserted.",
+    "independent_whole_narrative_review": "Closed by work_scout with two factual compression corrections applied and unified development documentation link retained."
   },
   "primary_sources": [
     {
