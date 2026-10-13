@@ -51,6 +51,7 @@ REQUIRED_PRODUCT = (
     "store.mjs", "protocol.mjs", "provider.mjs", "application-inputs.mjs",
     "invoice-register.mjs", "INVOICE_REGISTER.md",
     "operator-client.mjs", "operator-client.d.mts", "operator-cli.mjs", "OPERATOR_CLIENT.md",
+    "invoice-intake.mjs", "web/invoice-intake.mjs", "INVOICE_INTAKE.md",
     "fulfillment/file-delivery.mjs", "web/index.html", "web/app.mjs", "web/style.css",
 )
 EXPECTED_TABLES = {
@@ -1467,6 +1468,10 @@ def validate_manifest(manifest):
     required -= {PRODUCT + "invoice-register.mjs", PRODUCT + "INVOICE_REGISTER.md"}
     required -= {PRODUCT + name for name in
                  ("operator-client.mjs", "operator-client.d.mts", "operator-cli.mjs", "OPERATOR_CLIENT.md")}
+    intake_sources = {PRODUCT + name for name in
+                      ("invoice-intake.mjs", "web/invoice-intake.mjs", "INVOICE_INTAKE.md")}
+    if not (proof_paths & intake_sources):
+        required -= intake_sources
     need(isinstance(proof, list) and len(proof) == len(proof_paths)
          and required <= proof_paths <= needed,
          "PORTABLE_SOURCE_INCOMPLETE", "Keep the complete portable-capable source edition.")
