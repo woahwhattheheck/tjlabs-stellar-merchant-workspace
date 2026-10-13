@@ -162,8 +162,8 @@ After the complete handover is retained, the programme closes both native worksp
 For a host-side portable checkpoint at this boundary, select the supplied complete-case helper and a private directory outside the operating case:
 
 ~~~sh
-SF47_WORKBOOK_MCP_CHECKPOINT_HELPER=/absolute/source/examples/source-tables/checkpoint-workbook-mcp.py \\
-SF47_WORKBOOK_MCP_CHECKPOINT_DIRECTORY=/absolute/private/workbook-checkpoints \\
+SF47_WORKBOOK_MCP_CHECKPOINT_HELPER=/absolute/source/examples/source-tables/checkpoint-workbook-mcp.py \
+SF47_WORKBOOK_MCP_CHECKPOINT_DIRECTORY=/absolute/private/workbook-checkpoints \
 node examples/source-tables/receive-current-budget-workbook-mcp.mjs COMPLETE_NATIVE_CASE_DIRECTORY
 ~~~
 

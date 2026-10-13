@@ -22,6 +22,13 @@ Use the complete [Research commissioning workflow](COMMISSIONING.md) to select t
 The quotation product carries the original customer case and published quote through a reviewed Research brief, source-linked work, frozen delivery, native paid publication, Buyer receiving and realized pricing/cost report. The [quotation operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/OPERATING.md) contains the complete browser, terminal and Merchant journey.
 
 
+## Retained quotation programme and complete receiving
+
+Use the [complete quotation programme](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/PROGRAMME.md) to keep the original customer case, native phase requests, source-bound reviews, paid delivery and realized report in one operating directory. The installed `research-quotes-programme` command operates the original Research/SF74/SF97/Buyer workflow and reopens its saved requests after the connection closes.
+
+The complete handover contains every selected native quote and supplier-cost file, the full case and customer history, all four frozen report formats, the reviewed work snapshot and the exact published paid archive. Its receiver prepares the original case transfer, retains the whole dossier before writes, and returns the actual destination case and Research identities for subsequent customer work. The original source and receiving directories preserve their own exact-request continuation.
+
+
 ## Open the original workspace
 
 Use the existing Linux and Node 22.16+ runtime described in the [product README](../../README.md). The Research client uses Node's built-in modules. Its optional source connections use their existing host configuration.

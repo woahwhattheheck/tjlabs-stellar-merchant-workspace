@@ -11,7 +11,8 @@ and installed client use the same running MCP endpoint and original request IDs.
 Set up and serve the original native operator using [NATIVE_WORKSPACE.md](NATIVE_WORKSPACE.md).
 The tool is **sf43_discover_review_and_pay**. Its new **request-workspace** action
 reports the configured merchant origin, pathname, HTTP method, Content-Type,
-payment network, scheme, asset, recipient and current maximum atomic amount.
+payment network, scheme, asset, recipient, current maximum atomic amount and
+original `catalogUrl`.
 A host configured with a trusted route template also reports **route.routeTemplate**.
 
 The workspace also reports actual request, source-page, preparation and response
@@ -32,17 +33,23 @@ available on a broker workspace.
 The [native registry](NATIVE_REGISTRY.md) joins existing native workspaces in one
 console and endpoint. Read **request-workspaces** or **client.workspaces()**, then
 retain the selected **workspaceId** with each intent. The console chooses among
-route/payment-compatible services. The typed client exposes
+catalog/route/payment-compatible services. The typed client exposes
 **client.forWorkspace(id)** and **client.allHistoryPages()** for service-bound
 operations and complete shared history. Each original inbox, signer, approval
 channel and spending ledger remains in its configured service.
 
 ## Find an offer across the complete catalog
 
-Use **bazaar_resources** for browsing or **bazaar_search** for text search.
+Read **bazaar_catalogs** and select the configured source whose URL equals the
+chosen native workspace's **catalogUrl**. Use its **catalogId** with
+**bazaar_resources** for browsing or **bazaar_search** for text search. The
+registry also reports **catalogId** and **catalogLabel** on its service descriptors.
 The [discovery workflow](DISCOVERY.md) retains the complete provider pagination
 object, source request, row coverage, partial-result flag and next tool arguments.
-Follow the returned cursor or offset without changing filters.
+Follow the returned cursor or offset with its original catalog and filters.
+The [catalog guide](CATALOGS.md) covers source selection for hosts serving several
+original providers. Native preparation verifies the selected source against the
+service's immutable original catalog URL.
 
 The native broker privately retains the complete original provider page for each
 current handle, together with its row and original payment-option indexes.
@@ -59,7 +66,8 @@ calling the maintained SF88 preparation module.
 The broker's handles retain their existing expiry and capacity behavior. It also
 limits retained complete page buffers to 16 MiB. If a handle has expired or its
 original page is unavailable, discover and inspect the offer again. An already
-saved native intent remains independent of that temporary handle.
+saved native intent remains independent of that temporary handle and retains its
+original **preparation.source.catalog** with the complete page identity.
 
 ## Prepare the original request
 
@@ -243,7 +251,11 @@ const buyer = await openNativeRequestClient({
 
 try {
   const workspace = await buyer.workspace();
+  const configured = await buyer.discovery.catalogs();
+  const catalog = configured.catalogs.find(source => source.url === workspace.catalogUrl);
+  if (!catalog) throw new Error('The service requires its original configured catalog.');
   for await (const page of buyer.discovery.searchPages({
+    catalogId: catalog.id,
     query: 'weather',
     type: 'http',
     scheme: workspace.payment.scheme,

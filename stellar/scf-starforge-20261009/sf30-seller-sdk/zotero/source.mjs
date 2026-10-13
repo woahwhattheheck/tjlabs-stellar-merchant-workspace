@@ -1,6 +1,6 @@
 // MIT. Complete original Zotero documents, typed metadata, and edition comparison.
 import {SCHEMA,LIMIT,need,plain,parse,json,sha256,clone,key,library,libraryIdentity,collectionScope,text,safeFilename} from './contracts.mjs';
-import {createSourceBundle,SOURCE_MANIFEST_SCHEMA} from '../../sf88-operator-buyer-cli/research-dossiers/source-bundles.mjs';
+import {createSourceBundle,SOURCE_MANIFEST_SCHEMA,SOURCE_MANIFEST_LIMIT} from '../../sf88-operator-buyer-cli/research-dossiers/source-bundles.mjs';
 
 function objectVersion(value) {
   need(Number.isSafeInteger(value)&&value>=0,'ZOTERO_OBJECT_VERSION_INVALID');return value;
@@ -116,7 +116,8 @@ export function makeDocumentSet({library:selection,documents,sourceReference='',
 }
 export function titleOf(row) {
   const data=row.data;
-  return String(data.title??(data.itemType==='note'?'Note '+row.key:data.itemType==='attachment'?'Attachment '+row.key:row.key));
+  const title=String(data.title??'');
+  return title.trim()?title:(data.itemType==='note'?'Note '+row.key:data.itemType==='attachment'?'Attachment '+row.key:row.key);
 }
 export function creatorsOf(row) {
   return (row.data.creators??[]).map(c=>({creatorType:c.creatorType??null,
@@ -223,5 +224,31 @@ export async function researchSourceBundle({project,edition,documents,workspaceI
   const manifest={schema:SOURCE_MANIFEST_SCHEMA,label:project.title,sourceTerms:edition.sourceTerms,
     sourceReference:'Zotero '+edition.libraryIdentity+'; edition '+edition.id+'; project '+project.id+' revision '+project.revision,
     description:project.description,sources,findings};
-  return createSourceBundle({manifestBytes:json(manifest),files,manifestName:'zotero-source-manifest.json'});
+  let manifestBytes=json(manifest);
+  if(manifestBytes.length>SOURCE_MANIFEST_LIMIT){
+    // The full upstream item and provenance already have exact original files.
+    // Keep bibliographic fields, decisions and findings in the manifest while
+    // referencing those originals instead of copying their bodies a second time.
+    const compactSources=sources.map(source=>{
+      if(source.key==='zotero-original-documents')return {...source,metadata:{...source.metadata,
+        itemCitationPolicy:'originalFile references the full unchanged item JSON',
+        originIndexFile:'zotero-project-lineage.json'}};
+      const metadata=source.metadata;
+      return {...source,citation:{originalFile:source.files[0]},
+        metadata:{provider:'zotero',key:metadata.key,version:metadata.version,itemType:metadata.itemType,
+          originKey:'items:'+metadata.key}};
+    });
+    // Only display summaries vary. Full abstracts, unknown metadata and exact
+    // authored notes remain in item originals and the complete project lineage.
+    for(const previewCharacters of [128,64,0]){
+      const compact={...manifest,sources:compactSources.map(source=>
+        source.key==='zotero-original-documents'?source:
+          {...source,summary:source.summary.slice(0,previewCharacters)})};
+      manifestBytes=Buffer.from(JSON.stringify(compact)+'\n','utf8');
+      if(manifestBytes.length<=SOURCE_MANIFEST_LIMIT)break;
+    }
+    need(manifestBytes.length<=SOURCE_MANIFEST_LIMIT,'ZOTERO_RESEARCH_MANIFEST_LIMIT',
+      {limit:SOURCE_MANIFEST_LIMIT,bytes:manifestBytes.length,sources:sources.length});
+  }
+  return createSourceBundle({manifestBytes,files,manifestName:'zotero-source-manifest.json'});
 }

@@ -95,12 +95,23 @@ export async function captureWeatherReceivingCase({runtime,output,forecastStart,
      try{
       const fetch=createPublicHttpsFetch({timeoutMs:100000,...(proxyEnv?{trustedProxy:{mode:'explicit-connect',origin:url.origin,proxyEnv}}:{})});
       response=await fetch(url.href,{method:'GET',headers:{accept:'application/json'},redirect:'manual'});
-      if(response.status!==200)fail('WEATHER_PROVIDER_HTTP_'+response.status,{family,sourceUrl:url.href});
-      if(!/^application\/json(?:;|$)/i.test(response.headers.get('content-type')??''))fail('WEATHER_PROVIDER_CONTENT_TYPE',{family});
       const reader=response.body.getReader(),parts=[];let length=0;
       try{for(;;){const item=await reader.read();if(item.done)break;length+=item.value.byteLength;if(length>MAX_RESPONSE_BYTES)fail('WEATHER_RESPONSE_TOO_LARGE');parts.push(Buffer.from(item.value));}}
       catch(error){await reader.cancel().catch(()=>{});throw error;}
-      const bytes=Buffer.concat(parts),provenance={kind:'PROVIDER_CAPTURE',sourceAttempt:request.sourceAttempt,sourceUrl:url.href,providerMode:profile.mode,
+      const bytes=Buffer.concat(parts),contentType=response.headers.get('content-type')??'';
+      if(response.status!==200||!/^application\/json(?:;|$)/i.test(contentType)){
+       const code=response.status!==200?'WEATHER_PROVIDER_HTTP_'+response.status:'WEATHER_PROVIDER_CONTENT_TYPE';
+       const bodyPath=join(output,'provider-errors',requestId+'-'+request.sourceAttempt+'.body');
+       const metadataPath=bodyPath+'.json';
+       const providerResponse={schema:'stellar-forge.weather-provider-error-response.v1',requestId,sourceAttempt:request.sourceAttempt,
+        specSha256:request.specSha256,family,request:selected.request,sourceUrl:url.href,query:publicQuery(selected.request).toString(),
+        providerMode:profile.mode,httpStatus:response.status,contentType,retryAfter:response.headers.get('retry-after'),
+        observedAt:new Date().toISOString(),httpRequests:1,complete:true,body:{path:bodyPath,bytes:bytes.length,sha256:sha(bytes)},
+        metadataPath,code};
+       await keep(bodyPath,bytes);await keep(metadataPath,Buffer.from(JSON.stringify(providerResponse,null,2)+'\n'));
+       fail(code,{family,sourceUrl:url.href,providerResponse});
+      }
+      const provenance={kind:'PROVIDER_CAPTURE',sourceAttempt:request.sourceAttempt,sourceUrl:url.href,providerMode:profile.mode,
        httpStatus:response.status,retrievedAt:new Date().toISOString(),requestSha256:sha(Buffer.from(publicQuery(selected.request).toString())),httpRequests:1,
        accounting:'A provider read; local HTTP request count is not the provider billing-unit count.',attribution:ATTRIBUTION};
       store.retainSourceRead(requestId,request.specSha256,bytes,provenance);
@@ -110,7 +121,7 @@ export async function captureWeatherReceivingCase({runtime,output,forecastStart,
      }catch(error){
       await response?.body?.cancel().catch(()=>{});
       const current=store.request(requestId);
-      if(current.state==='ACQUIRING')store.sourceFailed(requestId,request.specSha256,{code:error.code??error.name,sourceAttempt:request.sourceAttempt,observedAt:new Date().toISOString(),sourceUrl:url.href});
+      if(current.state==='ACQUIRING')store.sourceFailed(requestId,request.specSha256,{code:error.code??error.name,sourceAttempt:request.sourceAttempt,observedAt:new Date().toISOString(),sourceUrl:url.href,...(error.details?.providerResponse?{providerResponse:error.details.providerResponse}:{})});
       throw error;
      }
     }

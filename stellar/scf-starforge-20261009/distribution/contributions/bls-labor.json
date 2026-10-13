@@ -1,17 +1,26 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "bls-labor",
-  "description": "BLS labor observations",
+  "description": "Complete BLS regional labor analysis, original dataset publication and editable customer receiving",
   "commands": {
-    "bls-publisher": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/publisher/cli.mjs"
+    "bls-publisher": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/publisher/cli.mjs",
+    "bls-labor-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/cli.mjs",
+    "bls-native-receiving": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/native-receiving.mjs"
   },
   "commandDescriptions": {
-    "bls-publisher": "Publish official BLS labor observations and original customer deliveries"
+    "bls-publisher": "Publish official BLS labor observations and original customer deliveries",
+    "bls-labor-workspace": "Receive original LAUS and QCEW sources, save county briefings and comparisons, publish native datasets and reopen the complete editable project.",
+    "bls-native-receiving": "Continue one saved BLS publication and original customer receiving operation."
   },
   "exports": {
     "./seller/bls-labor": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/source.mjs",
     "./seller/bls-labor/publisher": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/publisher/model.mjs",
     "./seller/bls-labor/publisher/plan": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/publisher/plan.mjs",
-    "./seller/bls-labor/release": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/release.mjs"
+    "./seller/bls-labor/release": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/release.mjs",
+    "./seller/bls-labor/workspace": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/client.mjs",
+    "./seller/bls-labor/workspace/native-receiving": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/native-receiving.mjs"
+  },
+  "applicationProviders": {
+    "bls-labor-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/application-provider.mjs"
   }
 }

@@ -311,7 +311,12 @@ export function mountWorkbookReview(root,{getReport,onChange,onBusy=()=>{},onErr
   }
   async function receiveDelivery(file){
     if(!file.size||file.size>MAX_PACKET)throw problem('WORKBOOK_SIZE','Choose a complete delivery JSON within 256 MiB.');
-    const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await file.arrayBuffer()),packet=JSON.parse(text),received=await receiveWorkbookDelivery(packet);
+    const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await file.arrayBuffer()),packet=JSON.parse(text),received=await receiveWorkbookDelivery(packet,{
+      readWorkbook:async contentBase64=>{
+        const identity=await workbookFileIdentity(workbookBytes(contentBase64));
+        return request('read',{contentBase64,sha256:identity.sha256});
+      }
+    });
     const actual=getReport();
     const target=actual?.comparisonId===received.report.comparisonId?recoverWorkbookReturn(actual,received.operation).report:received.report;
     if(!await mayReplace())return;

@@ -1,5 +1,6 @@
 // MIT. Whole adoption operations over the original Grant workspace client.
 import type {Buffer} from 'node:buffer';
+import type {CohortDeliveryInput,CohortDeliveryComparison} from './cohort_delivery_comparison.mjs';
 import type {GrantWorkspaceClient,GrantJsonResponse,
   GrantCustomerUseCalendar,GrantCustomerUseEditionSelection} from './agent-client.mjs';
 import type {CohortPlan,CohortPlanDocument,CohortPlanReport,CohortPlanComparison,
@@ -35,7 +36,7 @@ export interface CohortAdoptionEdition {
   deliverySchedule?: CohortDeliverySchedule; comparison?: CohortPlanComparison;
 }
 export type CohortAdoptionDocument = CohortPlanDocument|CohortPlanComparison|CohortAdoptionEdition|
-  CohortAdoptionSeed|CohortAdoptionReview|CohortAdoptionPrepared|CohortAdoptionSaved;
+  CohortAdoptionSeed|CohortAdoptionReview|CohortAdoptionPrepared|CohortAdoptionSaved|CohortDeliveryInput|CohortDeliveryComparison;
 export interface CohortAdoptionSeed {
   schema: typeof COHORT_ADOPTION_SEED_SCHEMA; sourceKind: 'CASE'|'CALENDAR';
   case: CohortAdoptionCase; nativeSeed: NativeCohortPlanningSeed;
@@ -44,10 +45,12 @@ export interface CohortAdoptionSeed {
 }
 export interface CohortAdoptionReview {
   schema: typeof COHORT_ADOPTION_REVIEW_SCHEMA;
-  document: CohortPlanDocument|CohortPlanComparison|CohortAdoptionEdition;
+  document: CohortPlanDocument|CohortPlanComparison|CohortAdoptionEdition|CohortDeliveryComparison;
   plan?: CohortPlan; report?: CohortPlanReport; comparison?: CohortPlanComparison;
   deliverySchedule?: CohortDeliverySchedule; case?: CohortAdoptionCase;
   nativeSeed?: NativeCohortPlanningSeed; changes?: CohortAdoptionEdit[];
+  recordedDelivery?:Pick<CohortDeliveryComparison,'summary'|'source'|'issues'>;
+  nativeSources?:import('./cohort_delivery_agent.mjs').CohortDeliveryNativeSources;
 }
 export type CohortAdoptionSeedOptions = {
   expectedVersion: number; name?: string; draftId?: string; asOfAt?: TimestampText;
@@ -86,7 +89,7 @@ export interface CohortAdoptionSourceRequest {
 export interface CohortAdoptionPrepared {
   schema: typeof COHORT_ADOPTION_PREPARED_SCHEMA;
   caseId: string; caseCreatedAt: TimestampText; case: CohortAdoptionCase;
-  document: CohortAdoptionEdition|CohortPlanComparison;
+  document: CohortAdoptionEdition|CohortPlanComparison|CohortDeliveryComparison;
   nativeSeed: NativeCohortPlanningSeed|null; parentSource: CohortAdoptionCaseSource|null;
   sourceFile: CohortAdoptionSourceFile; request: CohortAdoptionSourceRequest; preparedSha256: string;
 }

@@ -20,9 +20,14 @@ async function updateResult(path,value){
   finally{await rm(directory,{recursive:true,force:true});}
 }
 async function native(workspace,args){
-  try{return JSON.parse((await execute('python3',[nativeCli,'operations','--workspace',workspace,...args],
-    {encoding:'utf8',maxBuffer:128*1024*1024})).stdout);}
-  catch(error){throw new Error(String(error.stderr||error.message));}
+  try{
+    // The existing Operations CLI opens an initialized original workspace.
+    // Repeating init preserves its saved plans and original import request replay.
+    if(args[0]==='import')await execute('python3',[nativeCli,'init','--workspace',workspace],
+      {encoding:'utf8',maxBuffer:128*1024*1024});
+    return JSON.parse((await execute('python3',[nativeCli,'operations','--workspace',workspace,...args],
+      {encoding:'utf8',maxBuffer:128*1024*1024})).stdout);
+  }catch(error){throw new Error(String(error.stderr||error.message));}
 }
 async function listener(workspace){
   const child=spawn('python3',[join(sourceDirectory,'server.py'),'--workspace',workspace,'--port','0'],
@@ -76,7 +81,7 @@ async function receiveBrowserDownload(workspace,file,termsId,originalSha,actor){
     'sys.path.insert(0,sys.argv[1])',
     'from model import Workspace',
     'from operations import Operations',
-    'w=Workspace(Path(sys.argv[2]))',
+    'w=Workspace(Path(sys.argv[2]),Path(sys.argv[1]).parent/"sf10_current_candidate.json")',
     'try:',
     '    metadata,raw=Operations(w).source(sys.argv[3],sys.argv[4])',
     '    print(json.dumps({"bytes":len(raw),"sha256":hashlib.sha256(raw).hexdigest()}))',

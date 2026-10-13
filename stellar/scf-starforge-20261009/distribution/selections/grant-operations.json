@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "grant-operations",
   "title": "Grant Operations",
-  "description": "Original grant planning and delivery calendars with complete XLSX and source-table authoring with editable saved-plan workbook handover and returned-workbook receiving through browser, CLI and complete retained Merchant MCP operations, reviewed native baseline amendments with full historical receiving, contributor delivery and cash, complete timesheet and supplier invoice source intake, original CSV, OFX / QFX and MT940 statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, customer installation commissioning and complete receiver-to-owner return review, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases. Sourced contributor agreement editions retain actual acceptance and availability, complete native Forecast/Portfolio allocations, and original case receiving.",
+  "description": "Original grant planning and delivery calendars with complete XLSX and source-table authoring with editable saved-plan workbook handover and returned-workbook receiving through browser, CLI and retained Merchant MCP, reviewed native baseline amendments with full historical receiving, contributor delivery and cash, complete timesheet and supplier invoice source intake, original CSV, OFX / QFX and MT940 statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, original merchant settlement and period-close cash attribution with reviewed corrections, customer installation commissioning and complete receiver-to-owner return review, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases. Sourced contributor agreement editions retain actual acceptance and availability, complete native Forecast/Portfolio allocations, and original case receiving.",
   "base": {
     "commands": [
       "installation",
@@ -58,7 +58,8 @@
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
     "stellar/scf-starforge-20261009/distribution/python-runtime",
     "stellar/scf-starforge-20261009/sf46-release",
-    "stellar/scf_2026/sf49_data_commissioning/installation-workorders"
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting"
   ],
   "supportFiles": [
     "stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md",
@@ -251,7 +252,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Grant planning and delivery: retained plans and baseline reviews, payment calendars, native currencies and sourced FX, statement receiving and cash forecasts, resource portfolios, contributor agreements and allocations, installations, returned cases, customer billing, implementation evidence, cohort reviews and tranche completion.",
+    "description": "Grant planning and delivery: retained plans and baseline reviews, payment calendars, native currencies and sourced FX, statement receiving, account reconciliation, merchant settlement corrections and cash forecasts, resource portfolios, contributor agreements and allocations, installations, returned cases, customer billing, implementation evidence, cohort reviews and tranche completion.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

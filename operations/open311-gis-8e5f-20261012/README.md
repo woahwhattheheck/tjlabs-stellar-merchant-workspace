@@ -72,7 +72,7 @@ Rerun the same private configuration and physical output directory. Keep the ori
 | `attempts/` | Actual process entries, failures, browser errors and available failure screenshots |
 | `journey.json` | Immutable completed result, published only after all operating phases and file/native-workspace verification |
 
-A permanent private kernel lock serializes the programme. The native CLI child inherits a copy of that same held open-file description. If the parent ends while the CLI is still writing, another invocation cannot enter until the actual child releases its copy. Closing one copy never explicitly unlocks another owner’s descriptor.
+A permanent private kernel lock serializes the programme. The original CLI command resolves the physical `cli.mjs` leaf before launching Node. This includes a composed product whose CLI is still a symbolic link after its parent directory has been resolved; the command receipt records that actual physical entry path. The native CLI child inherits a copy of that same held open-file description. If the parent ends while the CLI is still writing, another invocation cannot enter until the actual child releases its copy. Closing one copy never explicitly unlocks another owner’s descriptor.
 
 The browser capture keeps its generated request ID. The programme does not substitute an ID that the browser’s saved outbox has never seen. An interrupted exact request is read from the native workspace before any replay. A native revision or handoff-head conflict remains a concrete original selection conflict; the programme does not silently change a saved request, replace a current handoff or discard later operator work.
 

@@ -1,5 +1,6 @@
 // MIT. Original SF47 tool schemas without provider runtime imports.
 import {grantCohortAdoptionTools} from './grant-cohort-adoption.mjs';
+import {grantCohortDeliveryTools} from './grant-cohort-delivery.mjs';
 import {grantPlanningSourceTools} from './grant-planning-sources.mjs';
 import {GRANT_CASE_ACTIONS,GRANT_MAX_BUNDLE_BYTES,GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 
@@ -287,6 +288,49 @@ const commercialMilestoneMapping = {type:'object',additionalProperties:false,
         properties:{authorizationSourceIds:{minItems:1},authorizationNote:{minLength:1}}}},
   ]};
 
+const settlementRecordId = prefix => ({type:'string',maxLength:100,pattern:'^'+prefix+'-[a-z0-9-]*$'});
+const settlementReferences = prefix => ({type:'array',items:settlementRecordId(prefix),uniqueItems:true,maxItems:200});
+const settlementUnitProperties = {
+  currency:nonempty(40),decimals:{type:'integer',minimum:0,maximum:12},
+  unitSourceIds:settlementReferences('source'),unitNote:nonempty(4000)
+};
+const settlementUnits = {type:'object',additionalProperties:false,properties:settlementUnitProperties,
+  required:['currency','decimals','unitSourceIds','unitNote']};
+const settlementCash = {type:'object',additionalProperties:false,properties:{
+  ...settlementUnitProperties,date:supportDate,usdValue:{anyOf:[nonempty(80),{type:'null'}]},
+  valuationSourceIds:settlementReferences('source'),valuationNote:str(4000),
+  category:{enum:['INVOICE','CUSTOMER','REFUND','OTHER']},
+  tranche:{anyOf:[{type:'integer',minimum:0,maximum:3},{type:'null'}]},
+  allocations:{type:'array',items:{type:'object',additionalProperties:false,
+    properties:{invoiceId:settlementRecordId('invoice'),amountUsd:nonempty(80)},required:['invoiceId','amountUsd']}}
+},required:['date','currency','decimals','unitSourceIds','unitNote']};
+const settlementSelections = {type:'array',maxItems:5000,items:{
+  type:'object',additionalProperties:false,properties:{
+    rowId:nonempty(300),decision:{enum:['RECORD_CASH','LINK_CASH','OBSERVE','OMIT']},reason:nonempty(4000),
+    cashId:{anyOf:[settlementRecordId('cash'),{type:'null'}]},cash:{anyOf:[settlementCash,settlementUnits]},
+    deploymentIds:settlementReferences('deployment'),workIds:settlementReferences('work')
+  },required:['rowId','decision','reason','deploymentIds','workIds'],
+  allOf:[
+    {if:{properties:{decision:{const:'RECORD_CASH'}},required:['decision']},
+      then:{required:['cash'],properties:{cash:settlementCash}}},
+    {if:{properties:{decision:{const:'LINK_CASH'}},required:['decision']},
+      then:{required:['cashId','cash'],properties:{cashId:settlementRecordId('cash'),cash:settlementUnits}}}
+  ]
+}};
+const settlementCorrection = {reviewId:id('settlement'),rowId:nonempty(300),
+  expectedCashId:{anyOf:[settlementRecordId('cash'),{type:'null'}]},decision:{enum:['CORRECT_CASH','LINK_CASH','VOID_CASH','RELINK']},
+  reason:nonempty(4000),cashId:settlementRecordId('cash'),cash:{anyOf:[settlementCash,settlementUnits]},deploymentIds:settlementReferences('deployment'),workIds:settlementReferences('work')};
+const settlementCorrectionRequired = ['reviewId','rowId','expectedCashId','decision','reason'];
+const settlementCorrectionRules = {allOf:[
+  {if:{properties:{decision:{const:'CORRECT_CASH'}},required:['decision']},then:{required:['cash'],properties:{cash:settlementCash},not:{required:['cashId']}}},
+  {if:{properties:{decision:{const:'LINK_CASH'}},required:['decision']},then:{required:['cashId','cash'],properties:{cash:settlementUnits}}},
+  {if:{properties:{decision:{enum:['VOID_CASH','RELINK']}},required:['decision']},then:{not:{anyOf:[{required:['cash']},{required:['cashId']}]}}}
+]};
+const settlementPreviewRules = {allOf:[
+  {if:{required:['name']},then:{required:['selections']}},
+  {if:{required:['selections']},then:{required:['name']}}
+]};
+
 function tool(suffix, description, properties = {}, required = [], readOnly = false, rules = {}) {
   return {name:'merchant_grant_' + suffix, description,
     annotations:{readOnlyHint:readOnly, destructiveHint:false, idempotentHint:true, openWorldHint:false},
@@ -572,6 +616,7 @@ export const grantWorkspaceTools = [
   tool('commercial_refresh', 'Refresh retained invoice, payment, allocation and credit observations from the original accounting workspace, then read the complete updated billing record.',
     {...ws,caseId:id('operation'),billingId:commercialIdentifier}, ['workspace','caseId','billingId']),
   ...grantCohortAdoptionTools,
+  ...grantCohortDeliveryTools,
   tool('cohort_seed', 'Open the original case proposal, actual purchase and deployment inventory, and explicit review inputs for tranche 2 or 3. This creates no purchase, participant, award or saved evaluation.',
     {...ws,...caseSelection,tranche:{type:'integer',minimum:2,maximum:3}},['workspace','caseId','expectedVersion','tranche'],true),
   tool('cohort_preview', 'Evaluate the explicitly selected original cohort as of its retained cutoff. Preserve exact purchase windows, historical denominators, accountable operators, transaction proof, recovery timing and source findings. Inputs may be inline or selected from one retained original input.',
@@ -614,6 +659,22 @@ export const grantWorkspaceTools = [
     {...ws,...caseSelection,...originalRequest,outcomeId:id('outcome'),state:{enum:['ACCEPTED','CHANGES_REQUESTED','WITHDRAWN']},
       date:supportDate,sourceIds:{type:'array',items:id('source'),uniqueItems:true,maxItems:200},sourceNote:nonempty(12000)},
     ['workspace','caseId','expectedVersion','requestId','actor','outcomeId','state','date','sourceNote']),
+  tool('settlements', 'List the original merchant settlement reviews and immutable correction editions retained in this Operations case.',
+    {...ws,caseId:id('operation')},['workspace','caseId'],true),
+  tool('settlement', 'Reopen a complete original settlement review, every original source row, effective reviewed attribution, current immutable cash records and correction history.',
+    {...ws,caseId:id('operation'),reviewId:id('settlement')},['workspace','caseId','reviewId'],true),
+  tool('settlement_preview', 'Inspect an original merchant accounting or period-close archive and its retained transfer proofs. Add both name and selections to review complete cash effects, exact native units, valuation, existing-cash links and delivery attribution. Retain the full selected preview hash for receiving.',
+    {...ws,...caseSelection,...originalInput,filename:nonempty(240),name:nonempty(300),selections:settlementSelections},
+    ['workspace','caseId','expectedVersion','input','expectedInputSha256','filename'],true,settlementPreviewRules),
+  tool('settlement_receive', 'Save the complete reviewed settlement attribution in the original case transaction. Preserve the exact archive, selected rows, unit and valuation sources, cash identity, current case version, reviewed preview hash and original request. The original source and every correction travel in the complete case export.',
+    {...ws,...caseSelection,...originalInput,...originalRequest,filename:nonempty(240),name:nonempty(300),
+      selections:settlementSelections,expectedPreviewSha256:digest},
+    ['workspace','caseId','expectedVersion','input','expectedInputSha256','filename','name','selections','expectedPreviewSha256','requestId','actor']),
+  tool('settlement_correction_preview', 'Review a correction against the selected saved original row and expected cash identity. Link an existing replacement cash record across source editions, void-and-replace or void the current observation, or update work/deployment attribution. The original transfer and cash history remain readable.',
+    {...ws,...caseSelection,...settlementCorrection},['workspace','caseId','expectedVersion',...settlementCorrectionRequired],true,settlementCorrectionRules),
+  tool('settlement_correct', 'Apply the exact reviewed original settlement correction in one case transaction. Keep the previous immutable review and cash record, the original request ID and the preview hash for this complete correction.',
+    {...ws,...caseSelection,...originalRequest,...settlementCorrection,expectedPreviewSha256:digest},
+    ['workspace','caseId','expectedVersion',...settlementCorrectionRequired,'expectedPreviewSha256','requestId','actor'],false,settlementCorrectionRules),
   tool('support_preview', 'Review the complete original SF74 support handoff against the current case without saving. Keep its exact filename and whole-file SHA; the native result retains source/reader identities, full report and HTML, deployments and previewSha256.',
     {...ws, ...caseSelection, ...originalInput, filename:nonempty(240)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','filename'], true),
@@ -636,9 +697,9 @@ export const grantWorkspaceTools = [
     {...ws, ...caseSelection, ...originalInput, ...originalRequest, filename:nonempty(240), kind:nonempty(80),
       mediaType:nonempty(200), sourceUrl:str(2000), observedAt:str(100)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','requestId','actor','filename','kind','mediaType']),
-  tool('export', 'Plan ZIPs accept an exact saved revision; omission selects the current original plan. Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, source, scenario or dated CSV export for verified byte paging and host download.',
-    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','delivery-calendar','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes','cost-funding']},
-      planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:id('review'),
+  tool('export', 'Plan ZIPs accept an exact saved revision; omission selects the current original plan. Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, original settlement review and its source archive, source, scenario or dated CSV export for verified byte paging and host download.',
+    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','settlement','delivery-calendar','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes','cost-funding']},
+      planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:{anyOf:[id('review'),id('settlement')]},
       fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest,
       installationId:id('installation'),comparisonId:id('task-outcomes'),billingId:commercialIdentifier,revision:planComparisonRevision,sha256:digest,asOfDate:supportDate,
       installationRefs:customerUseInstallationRefs,

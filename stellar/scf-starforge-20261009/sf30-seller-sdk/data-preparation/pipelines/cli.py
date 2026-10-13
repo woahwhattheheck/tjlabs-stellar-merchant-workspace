@@ -38,7 +38,8 @@ def main():
     commands.add_parser('state'); commands.add_parser('rpc'); commands.add_parser('recover')
     save = commands.add_parser('save'); save.add_argument('definition'); save.add_argument('--id'); save.add_argument('--expected-revision', type=int, default=0)
     imp = commands.add_parser('import'); imp.add_argument('file'); imp.add_argument('--alias', required=True); imp.add_argument('--format', default='csv', choices=['csv', 'jsonl']); imp.add_argument('--label'); imp.add_argument('--null-token')
-    run = commands.add_parser('run'); run.add_argument('pipeline_id'); run.add_argument('--request-key', required=True); run.add_argument('--revision', type=int); run.add_argument('--inputs', help='Complete named source bindings as JSON')
+    run = commands.add_parser('run'); run.add_argument('pipeline_id'); run.add_argument('--request-key', required=True); run.add_argument('--revision', type=int)
+    run.add_argument('--reuse-execution', help='Explicit prior execution; unchanged stages retain their original complete results'); run.add_argument('--inputs', help='Complete named source bindings as JSON')
     for command in ('execute', 'resume', 'cancel'):
         sub = commands.add_parser(command); sub.add_argument('execution_id')
     out = commands.add_parser('export'); out.add_argument('destination')
@@ -70,7 +71,7 @@ def main():
     if a.command == 'save': return ws.save(parse_json(Path(a.definition).read_text(encoding='utf-8')), pipeline_id=a.id, expected_revision=a.expected_revision)
     if a.command == 'import': return ws.native.import_file(a.file, a.alias, a.format, label=a.label, null_token=a.null_token)
     if a.command == 'run':
-        execution = ws.enqueue(a.pipeline_id, a.request_key, revision=a.revision, inputs=parse_json(a.inputs) if a.inputs else None)
+        execution = ws.enqueue(a.pipeline_id, a.request_key, revision=a.revision, inputs=parse_json(a.inputs) if a.inputs else None, reuse_execution=a.reuse_execution)
         return ws.execute(execution['id'], resume=execution['status'] not in {'QUEUED', 'COMPLETE'})
     if a.command == 'call':
         text = Path(a.arguments_file).read_text(encoding='utf-8') if a.arguments_file else a.arguments

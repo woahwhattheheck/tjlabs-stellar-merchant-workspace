@@ -7,6 +7,10 @@ import {seedCohortPlanFromCalendar} from './cohort_planning_calendar.mjs';
 import {COHORT_DELIVERY_SCHEDULE_SCHEMA,seedCohortDeliveryScheduling,scheduleCohortDelivery,
   reopenCohortDeliverySchedule,exportCohortDeliveryScheduleCsv} from './cohort_planning_scheduling.mjs';
 
+import {COHORT_DELIVERY_INPUT_SCHEMA,COHORT_DELIVERY_COMPARISON_SCHEMA,
+  compareCohortDelivery,reopenCohortDeliveryComparison,
+  exportCohortDeliveryCsv,exportCohortDeliveryHtml} from './cohort_delivery_comparison.mjs';
+
 export const COHORT_PLAN_EDITION_SCHEMA='stellar-forge.sf47-cohort-plan-edition.v1';
 export const COHORT_ADOPTION_SEED_SCHEMA='stellar-forge.sf47-cohort-adoption-seed.v1';
 export const COHORT_ADOPTION_REVIEW_SCHEMA='stellar-forge.sf47-cohort-adoption-review.v1';
@@ -48,7 +52,8 @@ function originalDocument(value){
   object(value,'Adoption document');
   for(let count=0;count<5;count++){
     if(value.schema===COHORT_ADOPTION_SEED_SCHEMA)return object(value.plan,'Complete seed plan');
-    if([COHORT_ADOPTION_REVIEW_SCHEMA,COHORT_ADOPTION_PREPARED_SCHEMA,COHORT_ADOPTION_SAVED_SCHEMA].includes(value.schema)){
+    if([COHORT_ADOPTION_REVIEW_SCHEMA,COHORT_ADOPTION_PREPARED_SCHEMA,COHORT_ADOPTION_SAVED_SCHEMA,
+      'stellar-forge.sf47-cohort-delivery-agent.v1'].includes(value.schema)){
       value=object(value.document,'Complete original document');continue;
     }
     return value;
@@ -75,6 +80,10 @@ function verifyReport(report){
 function checkedDocument(value){
   const wrapper=clone(value),document=clone(originalDocument(value));
   if(document.schema===COHORT_PLAN_COMPARISON_SCHEMA)return {document,comparison:reopenCohortPlanComparison(document)};
+  if(document.schema===COHORT_DELIVERY_INPUT_SCHEMA||document.schema===COHORT_DELIVERY_COMPARISON_SCHEMA){
+    const recordedDelivery=document.schema===COHORT_DELIVERY_INPUT_SCHEMA?compareCohortDelivery(document):reopenCohortDeliveryComparison(document);
+    return {document:recordedDelivery,recordedDelivery};
+  }
   let deliverySchedule=null,comparison=null;
   if(wrapper.schema===COHORT_ADOPTION_REVIEW_SCHEMA){
     if(wrapper.comparison)comparison=reopenCohortPlanComparison(wrapper.comparison);
@@ -118,6 +127,25 @@ async function currentSeed(client,current,tranche){
     'GRANT_ADOPTION_SOURCE_CHANGED','The native seed belongs to another case or version.');
   return value;
 }
+
+async function currentDeliverySources(client,current,comparison){
+  need(comparison.source.programId===current.program.id,'GRANT_ADOPTION_SOURCE_CHANGED',
+    'Continue the recorded delivery comparison in its original Operations case.');
+  const selected=sourceId(comparison.input.recording.planSourceId);
+  const plan=current.sources.find(row=>row.id===selected);
+  need(plan,'GRANT_ADOPTION_SOURCE_CHANGED','Select the original saved adoption source in this case.');
+  const original=await client.download('source',{caseId:current.program.id,sourceId:selected});
+  need(Buffer.isBuffer(original.bytes)&&original.bytes.length===plan.bytes&&hash(original.bytes)===plan.sha256&&
+    same(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(original.bytes)),comparison.input.planDocument),
+    'GRANT_ADOPTION_SOURCE_CHANGED','The recorded delivery comparison has a different original saved adoption source.');
+  const response=await client.read('review',{caseId:current.program.id,reviewId:comparison.source.reviewId});
+  need(same(response.value,comparison.input.review),'GRANT_ADOPTION_SOURCE_CHANGED',
+    'Select the complete original frozen review. Its recorded observations differ from this comparison.');
+  return {plan:clone(plan),review:{id:response.value.id,version:response.value.version,
+    businessSha256:response.value.businessSha256,measurementSha256:response.value.cohort.source.measurementSha256,
+    previewSha256:response.value.cohort.previewSha256}};
+}
+
 function sourceCase(current){
   const p=current.program;
   return {id:p.id,createdAt:p.createdAt,version:p.version,planId:p.planId,planRevision:p.planRevision,
@@ -156,6 +184,8 @@ export async function seedGrantCohortAdoption(client,selected,options){
 
 export function reviewCohortAdoption(value,{nativeSeed}={}){
   const checked=checkedDocument(value);
+  if(checked.recordedDelivery)return {schema:COHORT_ADOPTION_REVIEW_SCHEMA,document:checked.document,
+    recordedDelivery:{summary:clone(checked.recordedDelivery.summary),source:clone(checked.recordedDelivery.source),issues:clone(checked.recordedDelivery.issues)}};
   if(checked.comparison&&!checked.plan)return {schema:COHORT_ADOPTION_REVIEW_SCHEMA,
     document:checked.document,comparison:checked.comparison};
   const retained=checked.document.schema===COHORT_PLAN_REPORT_SCHEMA?checked.document:checked.document.report;
@@ -169,6 +199,8 @@ export function reviewCohortAdoption(value,{nativeSeed}={}){
 }
 export async function reviewGrantCohortAdoption(client,selected,expected,document){
   const {current}=await currentCase(client,selected,expected),checked=checkedDocument(document);
+  if(checked.recordedDelivery)return {...reviewCohortAdoption(document),case:sourceCase(current),
+    nativeSources:await currentDeliverySources(client,current,checked.recordedDelivery)};
   if(!checked.plan)return {...reviewCohortAdoption(document),case:sourceCase(current)};
   const nativeSeed=await currentSeed(client,current,checked.plan.rule.target.tranche);
   return {...reviewCohortAdoption(document,{nativeSeed}),case:sourceCase(current),nativeSeed};
@@ -263,7 +295,15 @@ export async function prepareGrantCohortAdoption(client,selected,body){
   }else need(body.expectedParentSha256===undefined,'GRANT_ADOPTION_INPUT','A predecessor SHA needs its original source ID.');
   const editionId='cohort-edition-'+hash(Buffer.from(current.program.createdAt+'\0'+selected+'\0'+body.requestId)).slice(0,32);
   let document,filename;
-  if(checked.plan){
+  if(checked.recordedDelivery){
+    need(!parent,'GRANT_ADOPTION_INPUT','The recorded delivery comparison retains its original saved plan and frozen review.');
+    await currentDeliverySources(client,current,checked.recordedDelivery);
+    const input=clone(checked.recordedDelivery.input);
+    input.recording={...input.recording,editionId:'cohort-delivery-'+editionId.slice('cohort-edition-'.length),
+      createdAt:body.createdAt,actor:body.actor};
+    document=compareCohortDelivery(input);
+    filename='sf47-cohort-delivery-'+input.recording.editionId+'.json';
+  }else if(checked.plan){
     need(checked.plan.source.programId===selected,'GRANT_ADOPTION_SOURCE_CHANGED','Save this plan in its original Operations case.');
     nativeSeed=await currentSeed(client,current,checked.plan.rule.target.tranche);
     const report=evaluateCohortPlan(checked.plan,{nativeSeed});
@@ -317,7 +357,11 @@ export function validateCohortAdoptionPrepared(value,expectedSha256){
   need(prepared.case.id===prepared.caseId&&prepared.case.createdAt===prepared.caseCreatedAt&&
     prepared.case.version===r.expectedVersion,'GRANT_ADOPTION_PREPARED_CHANGED','The prepared command belongs to another original case/version.');
   const checked=checkedDocument(prepared.document);
-  if(checked.plan)need(same(prepared.document.nativeSeed,prepared.nativeSeed)&&checked.plan.source.programId===prepared.caseId&&prepared.nativeSeed?.source?.programId===prepared.caseId&&
+  if(checked.recordedDelivery)need(prepared.nativeSeed===null&&prepared.parentSource===null&&
+    checked.recordedDelivery.source.programId===prepared.caseId&&
+    checked.recordedDelivery.input.recording.actor===r.actor&&checked.recordedDelivery.input.recording.createdAt===r.data.observedAt,
+    'GRANT_ADOPTION_PREPARED_CHANGED','Retain the complete original recorded delivery comparison and recording operator.');
+  else if(checked.plan)need(same(prepared.document.nativeSeed,prepared.nativeSeed)&&checked.plan.source.programId===prepared.caseId&&prepared.nativeSeed?.source?.programId===prepared.caseId&&
     prepared.nativeSeed.source.version===r.expectedVersion&&same(prepared.document.report,evaluateCohortPlan(checked.plan,{nativeSeed:prepared.nativeSeed})),
     'GRANT_ADOPTION_PREPARED_CHANGED','The edition must retain its complete selected native source and calculated report.');
   else need([checked.comparison.before.source.programId,checked.comparison.after.source.programId].includes(prepared.caseId),
@@ -419,6 +463,12 @@ export function exportCohortAdoption(document,format='JSON'){
   need(['JSON','CSV','HTML'].includes(format),'GRANT_ADOPTION_INPUT','Choose JSON, CSV or HTML.');
   const checked=checkedDocument(document),original=checked.document;
   const title=checked.plan?.name??checked.comparison?.review?.title??'Cohort adoption';
+  if(checked.recordedDelivery){
+    const bytes=format==='JSON'?rawJson(document):Buffer.from(format==='CSV'
+      ?exportCohortDeliveryCsv(checked.recordedDelivery):exportCohortDeliveryHtml(checked.recordedDelivery),'utf8');
+    return {bytes,sha256:hash(bytes),filename:'cohort-delivery.'+format.toLowerCase(),
+      mediaType:format==='JSON'?'application/json':format==='CSV'?'text/csv; charset=utf-8':'text/html; charset=utf-8'};
+  }
   let bytes,mediaType,extension;
   if(format==='JSON'){bytes=rawJson(document);mediaType='application/json';extension='json';}
   if(format==='CSV'){

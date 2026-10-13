@@ -109,7 +109,9 @@ Numbered observations are published atomically. If an observation was complete b
 
 Every download/response event promise has an immediate rejection observer, while its original later awaited error remains intact. A failed click or closing context therefore stays inside the owned error/cleanup lifetime.
 
-Screenshots are written only after Playwright returns their full bytes. Completed downloads are size/hash checked before their final filename is published. Already-complete files are verified and reused. Partial local attempt files are not treated as completed observations.
+Each new screenshot captures the current viewport: the desktop view is 1360 by 980 pixels and the phone view is 390 by 844 pixels. The driver records the actual document width, height and device pixel ratio in the corresponding screens/<name>-capture.json before asking Chromium for the image. The record keeps the observed full-page pixel count and selected viewport pixel count. The offline report can contain a long register page; a full-page bitmap is unnecessary for these visual checks because the complete native data, DOM coverage and exported files are checked separately. All five meaningful screenshots remain in the complete receiving result.
+
+The capture record is retained before the image call and recovered if progress publication is interrupted. A retry uses the same selected viewport and preserves the first document measurement. Already-complete images, including full-page images from the earlier driver, are verified and reused without replacement. Screenshots are written only after Playwright returns their full bytes. Completed downloads are size/hash checked before their final filename is published. Partial local attempt files remain separate from completed observations.
 
 completed-workflow.json is a complete candidate containing all actual UI results and original file descriptors. It is not the final success receipt. browser-cleanup.json is written only after the owned browser context and typed client have actually closed, and it is bound to the exact complete workflow file.
 
