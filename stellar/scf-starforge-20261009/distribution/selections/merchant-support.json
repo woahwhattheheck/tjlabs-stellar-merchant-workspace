@@ -156,5 +156,8 @@
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
     }
+  },
+  "sourceFormats": {
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/reference/zotero/itemJSON.js": "json"
   }
 }
