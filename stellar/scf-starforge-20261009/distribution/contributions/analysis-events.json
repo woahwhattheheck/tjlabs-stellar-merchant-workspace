@@ -5,12 +5,14 @@
   "commands": {
     "mcp-analysis-events": "stellar-forge/mcp-paid-agent/native-analysis-events-download.mjs",
     "mcp-analysis-event-installation": "stellar-forge/mcp-paid-agent/native-analysis-events-installation.mjs",
-    "event-workbook-columns": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-columns-cli.mjs"
+    "event-workbook-columns": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-columns-cli.mjs",
+    "event-mapping-working": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-working-cli.mjs"
   },
   "commandDescriptions": {
     "mcp-analysis-events": "Receive original event files, inspect and resume the complete customer delivery, and reopen all files offline",
     "mcp-analysis-event-installation": "Prepare and independently reopen a complete event customer Installation with every original file",
-    "event-workbook-columns": "Prepare, inspect and independently reopen complete customer worksheet choices for the original Event programme"
+    "event-workbook-columns": "Prepare, inspect and independently reopen complete customer worksheet choices for the original Event programme",
+    "event-mapping-working": "Open, compare, save and return complete offline Event mapping working copies with both original source windows"
   },
   "exports": {
     "./buyer/mcp/analysis-events": "./source/stellar-forge/mcp-paid-agent/native-analysis-events.mjs",
@@ -37,7 +39,9 @@
       "import": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-workbook.mjs"
     },
     "./buyer/event-workbook-colleague-course": "./source/products/webhook-feed/receiving/workbook-colleague-review.mjs",
-    "./buyer/event-workbook-colleague-browser": "./source/products/webhook-feed/receiving/workbook-colleague-browser.mjs"
+    "./buyer/event-workbook-colleague-browser": "./source/products/webhook-feed/receiving/workbook-colleague-browser.mjs",
+    "./buyer/event-mapping-working": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-working.mjs",
+    "./buyer/event-mapping-working-html": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-working-html.mjs"
   },
   "supportFiles": [
     "stellar-forge/mcp-paid-agent/ANALYSIS_EVENTS.md",
@@ -48,6 +52,8 @@
     "products/webhook-feed/receiving/workbook-colleague-review.mjs",
     "products/webhook-feed/receiving/WORKBOOK_COLLEAGUE_REVIEW.md",
     "products/webhook-feed/receiving/workbook-colleague-browser.mjs",
-    "products/webhook-feed/receiving/WORKBOOK_COLLEAGUE_BROWSER.md"
+    "products/webhook-feed/receiving/WORKBOOK_COLLEAGUE_BROWSER.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-working-ui.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_WORKING.md"
   ]
 }

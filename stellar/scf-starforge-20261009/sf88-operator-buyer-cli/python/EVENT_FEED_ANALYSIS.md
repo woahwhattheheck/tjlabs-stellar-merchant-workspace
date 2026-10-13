@@ -429,3 +429,19 @@ The existing original source limits remain 32 MiB NDJSON, 4 MiB manifest and 100
 ### Actual outgoing operation
 
 Use the original received programme and real successive input editions for commissioning. Inspect the actual desktop and narrow rendered screens: accepted mapping, changed pointer, absence in new events, empty newly added population, full table pages, unfinished reasons and original action recovery. Download and reopen the complete mapping review and the existing full workspace delivery. Confirm the original saved reports, workbook choices and earlier source histories remain available. Keep source-reviewed and actually operated/rendered states distinct; this source addition does not claim a native or browser run.
+
+
+## Complete offline mapping working copy
+
+The original accepted-to-current mapping comparison can now be received as a
+complete independent editable HTML and working JSON, including both original
+NDJSON/manifest pairs and all unfinished field/reason work. In Event programmes,
+compare the actual original source and choose **Download editable offline mapping**.
+The same parser recomputes comparisons and reads full original values offline;
+earlier compared drafts remain retained. Save/reopen the complete working file,
+then export its native review JSON and use the existing **Inspect and reopen review**
+control before explicit native Review/Apply.
+
+Read [Complete Event mapping working copies](EVENT_MAPPING_WORKING.md) for the
+full source/draft/history contract, installed commands, exact receiving limits,
+original-file recovery and actual native/offline producer course.

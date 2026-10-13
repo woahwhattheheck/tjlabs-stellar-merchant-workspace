@@ -12,7 +12,12 @@ def assets():
             "/workbook-columns.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-columns.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
             "/workbook-returns.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-returns.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
             "/event-workbook-editor.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-editor.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
-            "/event-workbook-editor.js": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-editor.js").read_text(encoding="utf-8"), "text/javascript;charset=utf-8")}
+            "/event-workbook-editor.js": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-editor.js").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
+            "/mapping-working.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "mapping-working.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
+            "/mapping-working-ui.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "mapping-working-ui.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
+            "/mapping-working-html.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "mapping-working-html.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
+            "/analysis-source.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "analysis-source.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
+            "/event-mapping-working-guide": ((Path(__file__).resolve().parents[1] / "EVENT_MAPPING_WORKING.md").read_text(encoding="utf-8"), "text/plain;charset=utf-8")}
 
 
 def get(handler, workspace, url, query, parts):
@@ -61,6 +66,10 @@ def post(handler, workspace, url, parts, body):
         if not isinstance(body, dict) or set(body) != {"input_id", "mapping"}:
             raise StateError("EVENT_PROGRAMME_MAPPING_COMPARISON_REQUIRED")
         result = api.compare_mapping(parts[3], body["input_id"], body["mapping"])
+    elif len(parts) == 5 and parts[2] == "named" and parts[4] == "mapping-source":
+        if not isinstance(body, dict) or set(body) != {"input_id", "mapping", "expected"}:
+            raise StateError("EVENT_PROGRAMME_MAPPING_SOURCE_SELECTION_REQUIRED")
+        result = api.mapping_source(parts[3], body["input_id"], body["mapping"], body["expected"])
     elif len(parts) == 5 and parts[2] == "named" and parts[4] == "actions":
         result = api.start(parts[3], body)
     else:
