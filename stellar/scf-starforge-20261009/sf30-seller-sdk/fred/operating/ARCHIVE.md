@@ -86,3 +86,9 @@ A raw upload sends `application/octet-stream` to `/api/operating-handover/upload
 The full download route returns Content-Length and `x-fred-file-sha256`. Browser download tickets are short-lived, single-use links created by the authenticated session. Reopening a received project returns that new workspace's original startup URL and session.
 
 The original directory source APIs remain available; see [SOURCE.md](SOURCE.md). The complete archive is a portable transport over those same capture and receiving engines.
+
+## Research source catalogues
+
+Version 7 economic projects carry the complete research catalogue with every retained source file, definition revision, recorded review and issued product edition. The handover keeps these original bytes in its project bundle. Its source descriptor exposes the full catalogue and stable references to each retained entry, source, review and product; the editable procedure summarizes those inventories in source, review and handover phases.
+
+Earlier project versions and existing source descriptors keep their original identities. Receiving an older compatible plan continues to preserve the customer's later saved revisions. Reopened research projects use the same research catalogue and source-download routes as the original workspace.

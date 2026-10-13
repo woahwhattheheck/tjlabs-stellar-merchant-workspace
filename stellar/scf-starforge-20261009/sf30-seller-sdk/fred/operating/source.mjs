@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { extractFredOperatingTar } from './archive-io.mjs';
 import { withPrivateLock } from '../../routescan/quota.mjs';
 import { exportFredProject, readFredProject, receiveFredProject } from '../project.mjs';
+import { validateResearchExtension } from '../research/bundle.mjs';
 import { canonicalJSONDigest } from '../canonical-stream.mjs';
 import { listFredDdpPublicationOperations, readFredDdpPublicationOperation,
   openFredDdpPublicationFile, attachFredDdpPublishedProgramme } from '../ddp/published-workspace.mjs';
@@ -30,16 +31,22 @@ export function fredOperatingHistory(state) {
   return history;
 }
 function bundleIdentity(bundle) {
-  need(bundle && /^stellar-forge\.fred-project-bundle\.v[1-6]$/.test(bundle.schema ?? '') && HASH.test(bundle.bundleSha256 ?? ''),
+  need(bundle && /^stellar-forge\.fred-project-bundle\.v[1-7]$/.test(bundle.schema ?? '') && HASH.test(bundle.bundleSha256 ?? ''),
     'Select the original complete versioned project bundle.');
   const { bundleSha256, ...core } = bundle;
   need(canonicalJSONDigest(core) === bundleSha256, 'The complete project bundle identity changed.');
   need(!bundle.state?.pending, 'Complete the original project action before freezing its handover.');
   fredOperatingHistory(bundle.state);
+  if (bundle.schema === 'stellar-forge.fred-project-bundle.v7') {
+    need(bundle.state.research !== undefined, 'The complete research project catalogue is required.');
+    validateResearchExtension(bundle.research, bundle.state);
+  } else need(bundle.state.research === undefined && bundle.research === undefined,
+    'Research sources require the complete original version 7 project bundle.');
   return bundle;
 }
 function inventoryFor(state) {
-  return { ...Object.fromEntries(INVENTORY.map(key => [key, clone(state[key] ?? [])])), qcew:clone(state.qcew ?? null) };
+  return { ...Object.fromEntries(INVENTORY.map(key => [key, clone(state[key] ?? [])])), qcew:clone(state.qcew ?? null),
+    ...(state.research === undefined ? {} : { research:clone(state.research) }) };
 }
 function descriptorFor(bundle, artifact, capturedAt, published) {
   bundleIdentity(bundle); const state = bundle.state, history = fredOperatingHistory(state);
@@ -52,6 +59,13 @@ function descriptorFor(bundle, artifact, capturedAt, published) {
     ...state.operations.map((operation, index) => ({ id:'operation/' + operation.id, kind:operation.kind,
       reference:'/state/operations/' + index, artifact })),
     ...(state.qcew ? [{ id:'qcew/' + state.id, kind:'qcew', reference:'/state/qcew', artifact }] : []),
+    ...(state.research === undefined ? [] : [
+      { id:'research/' + state.id, kind:'research', reference:'/state/research', artifact },
+      ...['entries','sources','reviews','products'].flatMap(family => state.research[family].map((item,index) => ({
+        id:'research-' + family + '/' + index + '/' + item.id, kind:'research-' + family,
+        reference:'/state/research/' + family + '/' + index, artifact
+      })))
+    ]),
     ...published.filter(item => item.artifact).map(item => ({
       id:'published/' + item.id, kind:'published', reference:item.id, artifact:item.artifact
     }))
