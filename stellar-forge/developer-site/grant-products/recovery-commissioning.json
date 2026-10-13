@@ -137,13 +137,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/recovery-support.mjs",
-      "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+      "commit": "57c417495c040e1a37012a3aabc02289ea652973",
       "editions": [
         {
           "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
           "bytes": 23821,
           "sha256": "b443c76d4efe8d0b4f2a11687e2f0437062dc89c711bd560c668f42553e4c6a4",
           "git_blob": "5e2f992f515a77b1b1c496f83e49663722ad74f7"
+        },
+        {
+          "commit": "57c417495c040e1a37012a3aabc02289ea652973",
+          "bytes": 29948,
+          "sha256": "e8d1c353414ab1721baa47a4bd8fdc89ce9e2c2815933dd907010f117150bc26",
+          "git_blob": "aed8d95b6bf422ad211a57957466cd97b844a8f7"
         }
       ]
     },
@@ -160,6 +166,54 @@
           "bytes": 25371,
           "sha256": "e9ac09bc61c870342af4e51e5cc5d0768362c50b5b59456a64a220a632079621",
           "git_blob": "14e698e53f3155ec47b1fdfe121da2f09cee01ca"
+        }
+      ]
+    },
+    {
+      "id": "recovery-portable-workspace-guide",
+      "label": "Complete encrypted backup transfer operator",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/OBJECT_BUNDLE_WORKSPACE.md",
+      "commit": "57c417495c040e1a37012a3aabc02289ea652973",
+      "editions": [
+        {
+          "commit": "57c417495c040e1a37012a3aabc02289ea652973",
+          "bytes": 9427,
+          "sha256": "c8cb69f3bc39b90330be25c4196ddc9065648dda1122c52e4826a64bba31a776",
+          "git_blob": "3e7f05d018ea8dc52ca39444fc1a0a369b674bf2"
+        }
+      ]
+    },
+    {
+      "id": "recovery-portable-engine",
+      "label": "Complete original encrypted bundle export and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/recovery-bundle.mjs",
+      "commit": "57c417495c040e1a37012a3aabc02289ea652973",
+      "editions": [
+        {
+          "commit": "57c417495c040e1a37012a3aabc02289ea652973",
+          "bytes": 19396,
+          "sha256": "552f59d84ac736baabee5d92ff5a21a79c3171b81d2502a10bb7514ac50e4dfa",
+          "git_blob": "a97dc90aa2b328611bf92c58d6122f23a7dbb48e"
+        }
+      ]
+    },
+    {
+      "id": "recovery-portable-format-guide",
+      "label": "Portable encrypted backup format and native receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/RECOVERY_BUNDLES.md",
+      "commit": "57c417495c040e1a37012a3aabc02289ea652973",
+      "editions": [
+        {
+          "commit": "57c417495c040e1a37012a3aabc02289ea652973",
+          "bytes": 10156,
+          "sha256": "87cd25be80b94067fc2ee924feb12e915b3e29b75cc050a3de0371a5bf995ba9",
+          "git_blob": "b11d9e983d3fbcf99969cc632dc40c17309837a3"
         }
       ]
     }
