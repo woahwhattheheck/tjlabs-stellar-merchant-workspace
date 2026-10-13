@@ -344,7 +344,7 @@ def write(handler, parsed):
     if path == "/api/operations/import":
         query = parse_qs(parsed.query)
         result = ops.import_bundle(handler.raw_body(), query.get("name", ["Imported delivery operations"])[0],
-                                   handler.headers.get("X-Request-ID"), unquote(handler.headers.get("X-Recorded-By", "")))
+                                   handler.headers.get("X-Request-ID"), getattr(handler, "recording_actor", lambda value: value)(unquote(handler.headers.get("X-Recorded-By", ""))))
     elif path == "/api/operations/intake":
         from operations_intake import import_source_intake
         body = handler.json_body()

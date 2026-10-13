@@ -18,6 +18,16 @@ SELECTION_SCHEMA = "stellar-forge.sf47.workspace-selection.v1"
 SOURCE = Path(__file__).resolve().parent
 # Keep the original managed Python/Node source selection identical.
 BOOT_FILES = (
+    "staff_access.py",
+    "staff_http.py",
+    "staff_installation.py",
+    "staff-session.mjs",
+    "staff.html",
+    "staff.mjs",
+    "staff.css",
+    "STAFF_ACCESS.md",
+    "STAFF_INSTALLATION.md",
+    "STAFF_INSTALLATION_RECEIVING.py",
     "../budget.py",
     "cli.py",
     "server.py",
@@ -32,6 +42,8 @@ BOOT_FILES = (
     "WORKBOOK_HANDOVER.md",
     "../../../scf-starforge-20261009/sf30-seller-sdk/dataset-refresh/workbook/reader.py",
     "source-tables-core.mjs",
+    "source-tables-agent.mjs",
+    "SOURCE_TABLES_AGENT.md",
     "source-tables.mjs",
     "source-tables.css",
     "source-tables-cli.mjs",

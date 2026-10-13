@@ -6,6 +6,7 @@ import {resolve, join, dirname, relative, isAbsolute, sep} from 'node:path';
 import {pathToFileURL, fileURLToPath} from 'node:url';
 import {pipeline} from 'node:stream/promises';
 import {parseArgs} from 'node:util';
+import {registerHooks} from 'node:module';
 
 const SCHEMA = 'sf88-research-dossier-return-native-acceptance-v1';
 const MAX = 256 * 1024 * 1024;
@@ -97,80 +98,174 @@ async function retainStream(file, stream, expected) {
     return {file, bytes: expected.bytes, sha256: expected.sha256};
   } finally { await fs.rm(temporary, {force: true}); }
 }
-async function sourceClosure(featureRoot, directory, {browser = false} = {}) {
+async function sourceClosure(featureRoot, directory, {browser = false, sourceManifest} = {}) {
   const repositoryRoot = resolve(featureRoot, '../../../..');
-  const pending = [
-    join(featureRoot, 'dossier.mjs'), join(featureRoot, 'source-bundles.mjs'),
-    join(featureRoot, 'crossref-documents.mjs'), join(featureRoot, 'crossref.mjs'),
-    join(featureRoot, 'citation-updates.mjs'), join(featureRoot, 'dossier-returns/engine.mjs'),
-    join(featureRoot, 'template-exchange/workbook.py')
-  ];
-  const assetFiles = new Set();
-  if (browser) {
-    pending.push(join(featureRoot, 'dossier-returns/browser-acceptance.mjs'),
-      join(featureRoot, 'server.mjs'), join(featureRoot, 'workspace-client.mjs'));
-    // Original HTTP routes map browser URLs to several actual public folders.
-    // Keep those full assets without treating served URLs as native file imports.
-    async function publicAssets(folder, insidePublic = false) {
-      if (folder === directory || folder.startsWith(directory + sep)) return;
-      for (const entry of (await fs.readdir(folder, {withFileTypes: true})).sort((a, b) => a.name.localeCompare(b.name))) {
-        if (entry.name.startsWith('.')) continue;
-        const file = join(folder, entry.name);
-        need(!entry.isSymbolicLink(), 'ACCEPTANCE_SOURCE_SYMLINK', {file});
-        if (entry.isDirectory()) await publicAssets(file, insidePublic || entry.name === 'public');
-        else if (insidePublic && entry.isFile()) { assetFiles.add(file); pending.push(file); }
-      }
-    }
-    await publicAssets(featureRoot);
-  }
-  const found = new Map();
-  while (pending.length) {
-    const file = pending.pop();
-    if (found.has(file)) continue;
-    const path = relative(repositoryRoot, file);
-    need(path && !path.startsWith('..' + sep) && !isAbsolute(path), 'ACCEPTANCE_SOURCE_OUTSIDE_REPOSITORY', {file});
-    const body = await ordinary(file, 16 * 1024 * 1024), stat = await fs.lstat(file);
+  need(typeof sourceManifest === 'string' && isAbsolute(sourceManifest) &&
+    resolve(sourceManifest) === sourceManifest, 'ACCEPTANCE_SOURCE_MANIFEST_REQUIRED');
+  const manifestBytes = await ordinary(sourceManifest, 16 * 1024 * 1024);
+  const selected = JSON.parse(manifestBytes.toString('utf8'));
+  need(selected && selected.schema === 'research-dossier-return-native-final-cohort-v1' &&
+    Array.isArray(selected.files) && selected.files.length > 0, 'ACCEPTANCE_SOURCE_MANIFEST_INVALID');
+  const found = new Map(), files = [];
+  for (const entry of selected.files) {
+    need(entry && typeof entry.path === 'string' && entry.path &&
+      !entry.path.includes('\\') && !/[\u0000-\u001f\u007f]/.test(entry.path) &&
+      entry.path.split('/').every(part => part && part !== '.' && part !== '..') &&
+      !isAbsolute(entry.path) && Number.isSafeInteger(entry.bytes) && entry.bytes >= 0 &&
+      entry.bytes <= MAX && /^[a-f0-9]{64}$/.test(entry.sha256 ?? '') &&
+      ['100644', '100755'].includes(entry.mode), 'ACCEPTANCE_SOURCE_MEMBER_INVALID', {entry});
+    const file = resolve(repositoryRoot, ...entry.path.split('/'));
+    need(file !== directory && !file.startsWith(directory + sep) &&
+      file.startsWith(repositoryRoot + sep) && !found.has(file),
+      'ACCEPTANCE_SOURCE_MEMBER_SCOPE_CHANGED', {path: entry.path});
+    need(await fs.realpath(file) === file, 'ACCEPTANCE_SOURCE_SYMLINK', {file});
+    const body = await ordinary(file), stat = await fs.lstat(file);
     const mode = stat.mode & 0o111 ? '100755' : '100644';
+    need(body.length === entry.bytes && sha(body) === entry.sha256 && mode === entry.mode,
+      'ACCEPTANCE_SELECTED_SOURCE_CHANGED', {path: entry.path});
     const gitBlobSha = createHash('sha1').update('blob ' + body.length + '\0').update(body).digest('hex');
-    const row = {path: path.split(sep).join('/'), bytes: body.length, sha256: sha(body), mode, gitBlobSha};
-    found.set(file, row);
-    await retain(join(directory, 'source', row.path), body, mode === '100755');
-    if (assetFiles.has(file) || !/\.(?:mjs|cjs|js)$/.test(file)) continue;
-    const text = body.toString('utf8'), imports = new Set();
-    for (const pattern of [
-      /\b(?:import|export)\s+(?:[^'";]*?\s+from\s*)?['"]([^'"]+)['"]/g,
-      /\bimport\s*\(\s*['"]([^'"]+)['"]/g,
-      /\bnew\s+URL\s*\(\s*['"](\.[^'"]+)['"]\s*,\s*import\.meta\.url/g
-    ]) for (const match of text.matchAll(pattern)) imports.add(match[1]);
-    for (const specifier of imports) {
-      if (specifier.startsWith('node:')) continue;
-      need(specifier.startsWith('.'), 'ACCEPTANCE_EXTERNAL_SOURCE_REQUIRED', {file, specifier});
-      const target = resolve(dirname(file), specifier);
-      const supported = browser ? /\.(?:mjs|cjs|js|py|json|html|css|svg|png|jpe?g|woff2?)$/ : /\.(?:mjs|cjs|js|py|json)$/;
-      if (!supported.test(target)) continue;
-      pending.push(target);
-    }
+    if (entry.gitBlobSha !== undefined)
+      need(gitBlobSha === entry.gitBlobSha, 'ACCEPTANCE_SELECTED_GIT_BLOB_CHANGED', {path: entry.path});
+    const row = {path: entry.path, bytes: body.length, sha256: entry.sha256, mode, gitBlobSha};
+    found.set(file, row); files.push(row);
+    await retain(join(directory, 'source', ...row.path.split('/')), body, mode === '100755');
   }
-  for (const name of ['LICENSE', 'NOTICE']) {
-    const body = await optional(join(repositoryRoot, name), 1024 * 1024);
-    if (body) {
-      const row = {path: name, bytes: body.length, sha256: sha(body), mode: '100644',
-        gitBlobSha: createHash('sha1').update('blob ' + body.length + '\0').update(body).digest('hex')};
-      found.set(join(repositoryRoot, name), row);
-      await retain(join(directory, 'source', name), body);
-    }
-  }
-  const programme = await ordinary(fileURLToPath(import.meta.url), 1024 * 1024);
+  files.sort((a, b) => a.path.localeCompare(b.path));
+  const totalBytes = files.reduce((sum, row) => sum + row.bytes, 0);
+  if (selected.sourceFiles !== undefined)
+    need(selected.sourceFiles === files.length, 'ACCEPTANCE_SOURCE_COUNT_CHANGED');
+  if (selected.sourceBytes !== undefined)
+    need(selected.sourceBytes === totalBytes, 'ACCEPTANCE_SOURCE_TOTAL_CHANGED');
+  need(found.has(join(repositoryRoot, 'LICENSE')), 'ACCEPTANCE_ORIGINAL_LICENSE_REQUIRED');
+  const required = [
+    'dossier.mjs', 'source-bundles.mjs', 'crossref-documents.mjs', 'crossref.mjs',
+    'citation-updates.mjs', '../node/store.mjs', 'dossier-returns/engine.mjs',
+    'dossier-returns/contracts.mjs', 'template-exchange/workbook.py'
+  ];
+  if (browser) required.push('dossier-returns/browser-acceptance.mjs',
+    'server.mjs', 'workspace-client.mjs', 'public/index.html', 'public/app.js',
+    'public/dossier-returns.js', 'public/dossier-return-drafts.js',
+    'public/dossier-returns.css', 'public/source-inspection.js');
+  for (const member of required)
+    need(found.has(resolve(featureRoot, member)), 'ACCEPTANCE_REQUIRED_SOURCE_NOT_SELECTED', {member});
+  const programmeFile = fileURLToPath(import.meta.url);
+  const programme = await ordinary(programmeFile, 1024 * 1024);
+  const programmeRow = found.get(join(featureRoot, 'dossier-returns/source-native-acceptance.mjs'));
+  need(programmeRow && programmeRow.bytes === programme.length &&
+    programmeRow.sha256 === sha(programme), 'ACCEPTANCE_PROGRAMME_SOURCE_NOT_SELECTED');
   await retain(join(directory, 'source', 'source-native-acceptance.mjs'), programme);
-  const files = [...found.values()].sort((a, b) => a.path.localeCompare(b.path));
-  const manifest = {schema: 'sf88-research-dossier-return-native-source-v1', repositoryRoot, featureRoot,
-    files, sourceFiles: files.length, sourceBytes: files.reduce((sum, row) => sum + row.bytes, 0),
-    programme: {path: 'source-native-acceptance.mjs', bytes: programme.length, sha256: sha(programme)},
-    ...(browser ? {browser: {publicAssetFiles: assetFiles.size,
-      helper: relative(repositoryRoot, join(featureRoot, 'dossier-returns/browser-acceptance.mjs')).split(sep).join('/')}} : {})};
+  await retain(join(directory, 'SOURCE_SELECTION.json'), manifestBytes);
+  const assets = browser ? files.filter(row => {
+    const local = relative(featureRoot, join(repositoryRoot, ...row.path.split('/')));
+    return local && !local.startsWith('..' + sep) && !isAbsolute(local) &&
+      local.split(sep).includes('public');
+  }).map(row => row.path) : [];
+  const manifest = {schema: 'sf88-research-dossier-return-native-source-v1',
+    repositoryRoot, featureRoot, selectionMethod: 'explicit-complete-source-cohort',
+    selectedManifest: {originalFile: sourceManifest, path: 'SOURCE_SELECTION.json',
+      schema: selected.schema, bytes: manifestBytes.length, sha256: sha(manifestBytes)},
+    files, sourceFiles: files.length, sourceBytes: totalBytes,
+    programme: {path: 'source-native-acceptance.mjs', selectedPath: programmeRow.path,
+      bytes: programme.length, sha256: sha(programme)},
+    ...(browser ? {browser: {publicAssetFiles: assets.length, publicAssets: assets,
+      helper: relative(repositoryRoot, join(featureRoot, 'dossier-returns/browser-acceptance.mjs')).split(sep).join('/'),
+      assetAuthority: 'Complete selected source cohort and the original HTTP asset routes; browser URLs are not native module specifiers.'}} : {})};
   await retain(join(directory, 'SOURCE.json'), json(manifest));
-  return {manifestSha256: sha(json(manifest)), files: files.length, bytes: manifest.sourceBytes,
-    programmeSha256: sha(programme)};
+  return {repositoryRoot, directory, found, manifest, programmeFile, programmeRow,
+    summary: {manifestSha256: sha(json(manifest)), files: files.length, bytes: totalBytes,
+      selectedManifestSha256: sha(manifestBytes), programmeSha256: sha(programme)}};
+}
+function observeNativeModules(selection) {
+  // Node's synchronous hooks delegate to its original resolver and loader unchanged.
+  // https://nodejs.org/download/release/v24.0.1/docs/api/module.html
+  need(typeof registerHooks === 'function', 'ACCEPTANCE_NODE_MODULE_HOOKS_REQUIRED');
+  const modules = new Map(), edges = new Map();
+  function identity(url) {
+    if (typeof url !== 'string') return null;
+    let value;
+    if (url.startsWith('node:')) value = {kind: 'node-builtin', name: url};
+    else if (url.startsWith('file:')) {
+      const file = fileURLToPath(url);
+      if (file === selection.programmeFile || file === selection.repositoryRoot || file.startsWith(selection.repositoryRoot + sep)) {
+        const selected = file === selection.programmeFile ? selection.programmeRow : selection.found.get(file);
+        need(selected, 'ACCEPTANCE_NATIVE_SOURCE_NOT_SELECTED', {file});
+        value = {kind: 'selected-source', path: selected.path,
+          bytes: selected.bytes, sha256: selected.sha256};
+      } else value = {kind: 'installed-runtime', file};
+    } else value = {kind: 'runtime-url', protocol: url.slice(0, url.indexOf(':') + 1),
+      identitySha256: sha(Buffer.from(url)), identityBytes: Buffer.byteLength(url)};
+    const id = 'module_' + sha(json(value));
+    if (!modules.has(id)) modules.set(id, {id, ...value, resolved: false, loaded: false});
+    return modules.get(id);
+  }
+  const hooks = registerHooks({
+    resolve(specifier, context, nextResolve) {
+      const result = nextResolve(specifier, context);
+      const target = identity(result.url), parent = identity(context.parentURL);
+      if (target) {
+        target.resolved = true;
+        const edge = {from: parent?.id ?? null, to: target.id};
+        edges.set(JSON.stringify(edge), edge);
+      }
+      return result;
+    },
+    load(url, context, nextLoad) {
+      const result = nextLoad(url, context), item = identity(url);
+      if (item) {
+        item.loaded = true; item.format = result.format ?? context.format ?? null;
+        if (result.source !== undefined && result.source !== null) {
+          const body = typeof result.source === 'string' ? Buffer.from(result.source) :
+            result.source instanceof ArrayBuffer ? Buffer.from(result.source) :
+            ArrayBuffer.isView(result.source) ?
+              Buffer.from(result.source.buffer, result.source.byteOffset, result.source.byteLength) : null;
+          if (body) {
+            item.loaderSource = {bytes: body.length, sha256: sha(body)};
+            if (item.kind === 'selected-source')
+              need(item.loaderSource.bytes === item.bytes && item.loaderSource.sha256 === item.sha256,
+                'ACCEPTANCE_NATIVE_LOADER_SOURCE_CHANGED', {path: item.path});
+          }
+        }
+      }
+      return result;
+    }
+  });
+  async function verifySelection() {
+    for (const [file, entry] of selection.found) {
+      const actual = await streamIdentity(file), mode = (await fs.lstat(file)).mode & 0o111 ? '100755' : '100644';
+      need(actual.bytes === entry.bytes && actual.sha256 === entry.sha256 && mode === entry.mode,
+        'ACCEPTANCE_EXECUTED_SOURCE_CHANGED', {path: entry.path});
+      const retained = await streamIdentity(join(selection.directory, 'source', ...entry.path.split('/')));
+      need(retained.bytes === entry.bytes && retained.sha256 === entry.sha256,
+        'ACCEPTANCE_RETAINED_SOURCE_CHANGED', {path: entry.path});
+    }
+  }
+  return {
+    async retainObservation(state, {verify = false} = {}) {
+      if (verify) await verifySelection();
+      const folder = join(selection.directory, 'native-module-observations');
+      await privateDirectory(folder);
+      const names = await fs.readdir(folder);
+      let index = names.reduce((largest, name) => {
+        const match = /^([0-9]+)\.json$/.exec(name);
+        return match ? Math.max(largest, Number(match[1])) : largest;
+      }, 0) + 1;
+      const result = {schema: 'sf88-research-dossier-return-native-modules-v1',
+        state, selectedManifestSha256: selection.summary.selectedManifestSha256,
+        sourceManifestSha256: selection.summary.manifestSha256,
+        runtime: {node: process.version, executable: process.execPath},
+        observation: 'Original Node resolution and loading after registration in this thread. Preloaded cache contents and child processes are not inferred.',
+        sourceCustody: 'Every explicitly selected original engine and asset file is retained independently of which modules this attempt executes.',
+        modules: [...modules.values()].sort((a, b) => a.id.localeCompare(b.id)),
+        edges: [...edges.values()].sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
+        observedAt: new Date().toISOString()};
+      const body = json(result), file = join(folder, String(index).padStart(4, '0') + '.json');
+      const saved = await retain(file, body);
+      return {path: relative(selection.directory, file).split(sep).join('/'),
+        bytes: saved.bytes, sha256: saved.sha256,
+        observedModules: modules.size, selectedSourceFiles: selection.found.size};
+    },
+    close() { hooks.deregister(); }
+  };
 }
 async function acquire(directory, operation) {
   const file = join(directory, 'RUNNING.json');
@@ -194,11 +289,11 @@ async function acquire(directory, operation) {
 }
 
 export async function runDossierReturnNativeAcceptance({
-  featureRoot, directory, crossrefEdition, crossrefSha256, targetDoi,
+  featureRoot, directory, sourceManifest, crossrefEdition, crossrefSha256, targetDoi,
   python = 'python3', operation = 'research-dossier-return-native-acceptance-v1',
   playwrightModule, chromiumExecutable
 } = {}) {
-  for (const file of [featureRoot, directory, crossrefEdition])
+  for (const file of [featureRoot, directory, sourceManifest, crossrefEdition])
     need(typeof file === 'string' && isAbsolute(file) && resolve(file) === file, 'ACCEPTANCE_ABSOLUTE_PATH_REQUIRED', {file});
   need(/^[a-f0-9]{64}$/.test(crossrefSha256 ?? ''), 'ACCEPTANCE_ORIGINAL_CROSSREF_HASH_REQUIRED');
   need(typeof operation === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.:-]{7,120}$/.test(operation), 'ACCEPTANCE_OPERATION_INVALID');
@@ -209,8 +304,11 @@ export async function runDossierReturnNativeAcceptance({
       'ACCEPTANCE_BROWSER_RUNTIME_PATH_REQUIRED', {file});
   await privateDirectory(directory);
   const release = await acquire(directory, operation);
-  let activePhase = 'source';
+  let activePhase = 'source', nativeModules;
   try {
+    const selectedSource = await sourceClosure(featureRoot, directory, {browser: browserSelected, sourceManifest});
+    const source = selectedSource.summary;
+    nativeModules = observeNativeModules(selectedSource);
     const imports = await Promise.all([
       import(pathToFileURL(join(featureRoot, 'dossier.mjs')).href),
       import(pathToFileURL(join(featureRoot, 'source-bundles.mjs')).href),
@@ -224,14 +322,15 @@ export async function runDossierReturnNativeAcceptance({
       {validateCrossrefDocumentEdition}, {validateCrossrefEdition}, {citationDigest},
       {digest, jsonBytes}, {RETURN_TYPED_FAMILIES}] = imports;
     const same = (a, b) => citationDigest(a) === citationDigest(b);
-    const source = await sourceClosure(featureRoot, directory, {browser: browserSelected});
+    if (browserSelected) await import(pathToFileURL(
+      join(featureRoot, 'dossier-returns/browser-acceptance.mjs')).href);
     const crossrefBytes = await ordinary(crossrefEdition, 64 * 1024 * 1024);
     need(sha(crossrefBytes) === crossrefSha256, 'ACCEPTANCE_ORIGINAL_CROSSREF_CHANGED');
     const crossref = JSON.parse(crossrefBytes.toString('utf8'));
     if (crossref.provider === 'crossref-document') validateCrossrefDocumentEdition(crossref);
     else validateCrossrefEdition(crossref);
     await retain(join(directory, 'inputs', 'original-crossref-edition.json'), crossrefBytes);
-    const selection = {schema: SCHEMA, operation, featureRoot, directory, python, source,
+    const selection = {schema: SCHEMA, operation, featureRoot, directory, python, sourceManifest, source,
       ...(browserSelected ? {browser: {playwrightModule, chromiumExecutable}} : {}),
       crossref: {originalFile: crossrefEdition, bytes: crossrefBytes.length, sha256: crossrefSha256,
         provider: crossref.provider, targetDoi: targetDoi ?? null}};
@@ -944,6 +1043,7 @@ export async function runDossierReturnNativeAcceptance({
       originalPrefixExtensionAndShorterReopen: true, editableColdReceiving: true,
       ...(browserAcceptance ? {originalBrowserPendingRequestRecovery: true} : {})
     };
+    const sourceExecution = await nativeModules.retainObservation('COMPLETE', {verify: true});
     const report = [
       '# Research dossier return native acceptance', '',
       'Operation: ' + operation, '', 'Dossier: ' + id, '',
@@ -955,7 +1055,7 @@ export async function runDossierReturnNativeAcceptance({
       '- Second accepted review: ' + secondAccepted.return.revision + ' / ' + secondAccepted.return.revisionSha256,
       '- Editable cold result: ' + editable.head.revision + ' / ' + editable.head.sha256, '',
       '## Retained evidence', '',
-      'SOURCE.json binds every actual local module in this programme’s dependency graph. source/ contains their complete original bodies. inputs/ holds the complete Crossref edition, authored source documents, workbook CSVs, and altered native input used for precommit rejection. retained/, phases/, reviews/, values/, drafts/, portable/, and delivery/ retain the actual requests, decisions, accepted results, exact source exports, reports, and editable original portable histories.', '',
+      'SOURCE_SELECTION.json preserves the complete selected engine manifest. SOURCE.json binds every selected original engine and asset file, and source/ contains every complete body. native-module-observations/ records Node’s actual module resolution and loading for each retained attempt; installed runtime modules remain explicitly identified with their actual paths. inputs/ holds the complete Crossref edition, authored source documents, workbook CSVs, and altered native input used for precommit rejection. retained/, phases/, reviews/, values/, drafts/, portable/, and delivery/ retain the actual requests, decisions, accepted results, exact source exports, reports, and editable original portable histories.', '',
       'Run the same command and directory to recover retained phases. Each unacknowledged ordinary mutation is reconciled against its exact original next revision before the programme advances. Native request-bearing operations retain their original IDs and payloads.',
       ...(browserAcceptance ? ['', 'The browser journey used the same saved native draft and exact first-return request. Its public screenshots, full downloads and receipts are in browser/. Native phase39 then recovered that same accepted request. The invocation-private browser profile and listener state remain in browser/private/.'] : []), '',
       '## Completed native checks', '', ...Object.keys(checks).map(name => '- ' + name), ''
@@ -999,7 +1099,7 @@ export async function runDossierReturnNativeAcceptance({
     }
     const result = {schema: SCHEMA, state: 'COMPLETE', operation, selection,
       runtime: {node: process.version, nodeExecutable: process.execPath, python, platform: process.platform, architecture: process.arch},
-      dossierId: id, seed, firstReturn: accepted, secondReturn: secondAccepted,
+      dossierId: id, seed, firstReturn: accepted, secondReturn: secondAccepted, sourceExecution,
       finalPortable, editablePortable: editable, browserAcceptance, checks, files,
       bytes: files.reduce((sum, row) => sum + row.bytes, 0), completedAt: new Date().toISOString()};
     await retain(join(directory, 'COMPLETE.json'), jsonBytes(result));
@@ -1008,6 +1108,10 @@ export async function runDossierReturnNativeAcceptance({
     const failure = {schema: SCHEMA, state: 'FAILED', operation, phase: activePhase,
       code: error.code ?? error.name ?? 'ACCEPTANCE_FAILED', details: error.details ?? null,
       message: String(error.message ?? error), observedAt: new Date().toISOString()};
+    if (nativeModules) {
+      try { failure.nativeModules = await nativeModules.retainObservation('FAILED'); }
+      catch (retention) { failure.nativeModuleRetentionFailure = retention.code ?? retention.name; }
+    }
     try {
       await privateDirectory(join(directory, 'failures'));
       let index = 1;
@@ -1018,12 +1122,12 @@ export async function runDossierReturnNativeAcceptance({
       process.stderr.write(JSON.stringify(failure) + '\n');
     }
     error.acceptance = failure; throw error;
-  } finally { await release(); }
+  } finally { nativeModules?.close(); await release(); }
 }
 
 async function main() {
   const {values} = parseArgs({strict: true, options: {
-    'feature-root': {type: 'string'}, directory: {type: 'string'},
+    'feature-root': {type: 'string'}, directory: {type: 'string'}, 'source-manifest': {type: 'string'},
     'crossref-edition': {type: 'string'}, 'crossref-sha256': {type: 'string'},
     'target-doi': {type: 'string'}, python: {type: 'string'}, operation: {type: 'string'},
     'playwright-module': {type: 'string'}, 'chromium-executable': {type: 'string'},
@@ -1032,14 +1136,16 @@ async function main() {
   if (values.help) {
     process.stdout.write('Run the complete original Research dossier-return acceptance programme.\n\n' +
       'node source-native-acceptance.mjs --feature-root /ABS/research-dossiers --directory /ABS/owned-run ' +
+      '--source-manifest /ABS/FINAL_SOURCE_MATERIALIZATION.json ' +
       '--crossref-edition /ABS/original-crossref-edition.json --crossref-sha256 FULL_SHA256 ' +
       '[--target-doi DOI] [--python /ABS/python3] [--operation SAME_OPERATION] ' +
       '[--playwright-module /ABS/playwright/index.mjs --chromium-executable /ABS/chromium]\n\n' +
-      'The selected feature root must contain the complete original dependency closure plus the reviewed return source, store, engine, contracts and dossier integration. The Crossref edition must be an exact retained native capture or crossref-document edition containing a registered notice and its target. Python runs the original CSV workbook inspector. Supply both browser runtime paths to include the original browser journey before the first native return acknowledgement; it reuses the same saved request and retains complete public outputs. Use the same paths, selected runtime options and operation to recover an interrupted run. COMPLETE.json and ACCEPTANCE.md bind the actual native outcomes and complete retained source.\n');
+      'The selected feature root must contain the complete original engine cohort declared by --source-manifest (schema research-dossier-return-native-final-cohort-v1, with complete relative path/mode/bytes/sha256 rows). Node 24 records actual module resolution and loading through its original loader; the programme retains every selected source and original browser asset without following imports embedded in text. The manifest must select this exact programme body alongside the reviewed return source, store, engine, contracts and dossier integration. The Crossref edition must be an exact retained native capture or crossref-document edition containing a registered notice and its target. Python runs the original CSV workbook inspector. Supply both browser runtime paths to include the original browser journey before the first native return acknowledgement; it reuses the same saved request and retains complete public outputs. Use the same paths, selected runtime options and operation to recover an interrupted run. COMPLETE.json and ACCEPTANCE.md bind the actual native outcomes and complete retained source.\n');
     return;
   }
   const result = await runDossierReturnNativeAcceptance({featureRoot: values['feature-root'],
-    directory: values.directory, crossrefEdition: values['crossref-edition'], crossrefSha256: values['crossref-sha256'],
+    directory: values.directory, sourceManifest: values['source-manifest'],
+    crossrefEdition: values['crossref-edition'], crossrefSha256: values['crossref-sha256'],
     targetDoi: values['target-doi'], python: values.python ?? 'python3', operation: values.operation,
     playwrightModule: values['playwright-module'], chromiumExecutable: values['chromium-executable']});
   process.stdout.write(JSON.stringify({schema: result.schema, state: result.state, operation: result.operation,

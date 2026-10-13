@@ -5,6 +5,8 @@ payment reconciliation and paid file delivery. The operator works in one
 plain gray interface. Each invoice retains its original request, charge,
 authorization, payment identity and result.
 
+For the maintained package, Node 24 profile and **Applications → Merchant invoices** workflow, see [Install and operate](OPERATING.md). [Installed receiving](INSTALLED_RECEIVING.md) opens the original completed five-invoice workspace through that same lifecycle.
+
 ## What an operator can do
 
 - Create an invoice with exact prices on one or more configured payment rails.

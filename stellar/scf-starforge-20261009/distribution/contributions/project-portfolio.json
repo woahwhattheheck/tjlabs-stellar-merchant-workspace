@@ -1,0 +1,30 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "project-portfolio",
+  "description": "Complete native project migration, reviewed portfolio reporting, managed application, typed client and original customer receiving.",
+  "components": [
+    "products/project-portfolio"
+  ],
+  "commands": {
+    "project-portfolio": "products/project-portfolio/cli.mjs",
+    "project-portfolio-receive": "products/project-portfolio/receive-installed.mjs"
+  },
+  "commandDescriptions": {
+    "project-portfolio": "Open, review, migrate, report and receive original Microsoft Project portfolios.",
+    "project-portfolio-receive": "Run the complete installed customer workflow against the original retained workspace and source file."
+  },
+  "exports": {
+    "./products/project-portfolio": "./source/products/project-portfolio/workspace.mjs",
+    "./products/project-portfolio/client": {
+      "types": "./source/products/project-portfolio/client.d.mts",
+      "import": "./source/products/project-portfolio/client.mjs"
+    },
+    "./products/project-portfolio/merchant": "./source/products/project-portfolio/merchant.mjs"
+  },
+  "applicationProviders": {
+    "project-portfolio": "products/project-portfolio/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "project-portfolio-workspaces": "products/project-portfolio/merchant-provider.mjs"
+  }
+}
