@@ -8,6 +8,8 @@ export const HELP=String.raw`Carbon reporting native receiving
 
   starforge carbon-native-receiving source --downloads DIR --source-root NEW_DIR
   starforge carbon-native-receiving inspect-source --source-root DIR
+  starforge carbon-native-receiving sdk --bundle ORIGINAL_JS --metadata ORIGINAL_NPM_JSON --output NEW_DIR
+  starforge carbon-native-receiving archive-inputs --source-root DIR --source-manifest ORIGINAL_JSON --ledger-json ORIGINAL_LEDGER_JSON [--ledger-json ANOTHER_JSON] --output NEW_DIR [--sdk-module FILE]
   starforge carbon-native-receiving run --source-root DIR --output NEW_DIR [options]
   starforge carbon-native-receiving status --output DIR [--archive-path FILE]
   starforge carbon-native-receiving verify --output DIR [--archive-path FILE]
@@ -51,6 +53,8 @@ const runNames=Object.fromEntries(Object.entries(RUN_FLAGS).map(([key,flag])=>[f
 const commandNames={
   source:{downloads:'downloads','source-root':'sourceRoot'},
   'inspect-source':{'source-root':'sourceRoot'},
+  sdk:{bundle:'bundle',metadata:'metadata',output:'output'},
+  'archive-inputs':{'source-root':'sourceRoot','source-manifest':'sourceManifest','ledger-json':'ledgerFiles',output:'output','sdk-module':'sdkModule'},
   run:runNames,
   status:{output:'output','archive-path':'archivePath'},
   verify:{output:'output','archive-path':'archivePath'}
@@ -64,11 +68,12 @@ export function parseReceivingCommand(args=[]){
     const argument=args[i];
     if(argument==='--help')return {command:'help',options:{}};
     need(argument.startsWith('--'),'CLI_OPTION','Use named command options.');
-    const flag=argument.slice(2);need(!seen.has(flag),'CLI_OPTION','Provide '+argument+' once.');seen.add(flag);
+    const flag=argument.slice(2),many=command==='archive-inputs'&&flag==='ledger-json';
+    need(many||!seen.has(flag),'CLI_OPTION','Provide '+argument+' once.');seen.add(flag);
     if(command==='run'&&flag==='keep-open'){options.keepOpen=true;continue;}
     need(Object.hasOwn(commandNames[command],flag),'CLI_OPTION','Unknown option for '+command+': '+argument);
     need(i+1<args.length&&!args[i+1].startsWith('--'),'CLI_VALUE','Provide a value for '+argument+'.');
-    options[commandNames[command][flag]]=args[++i];
+    const value=args[++i];if(many){options.ledgerFiles??=[];options.ledgerFiles.push(value);}else options[commandNames[command][flag]]=value;
   }
   return {command,options};
 }
@@ -79,6 +84,8 @@ export async function main(args=process.argv.slice(2)){
   const client=new CarbonNativeReceivingClient();
   if(command==='source')print(await client.receiveSource({...options,onStderr:chunk=>process.stderr.write(chunk)}));
   else if(command==='inspect-source')print(await client.inspectSource(options));
+  else if(command==='sdk')print(await client.prepareSdk(options));
+  else if(command==='archive-inputs')print(await client.prepareLedgerInputs(options));
   else if(command==='status'||command==='verify'){
     const value=await client[command](options);print(value);
     if(command==='verify'&&!value.archive.complete)process.exitCode=1;

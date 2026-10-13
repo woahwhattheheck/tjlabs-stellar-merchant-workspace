@@ -3,7 +3,7 @@ import {spawn} from 'node:child_process';
 import {constants} from 'node:fs';
 import {readFile,writeFile,lstat,realpath,open,rename} from 'node:fs/promises';
 import {resolve,join,dirname,relative,isAbsolute,sep} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {hostname} from 'node:os';
 
@@ -178,6 +178,13 @@ export async function receivingStatus({output,archivePath,verifyArchive=false}={
 export class CarbonNativeReceivingClient{
   constructor({nodeExecutable=process.execPath}={}){this.nodeExecutable=pathValue(nodeExecutable,'the existing Node executable');}
   inspectSource(options){return inspectReceivingSource(options);}
+  async prepareSdk(options){const {prepareSdkRuntime}=await import('./prepare-sdk-runtime.mjs');return prepareSdkRuntime(options);}
+  async prepareLedgerInputs(options){
+    const source=await inspectReceivingSource(options),body=await regular(source.manifest.path),manifest=json(body);
+    need(hash(body)===source.manifest.sha256&&manifest.files.some(file=>file.path==='receiving/prepare-ledger-inputs.mjs'),'SOURCE_CLOSURE','Select the complete source packet containing its original historical input reader.');
+    const {prepareArchiveInputs}=await import(pathToFileURL(join(source.sourceRoot,'receiving/prepare-ledger-inputs.mjs')).href);
+    return prepareArchiveInputs({...options,sourceRoot:source.sourceRoot});
+  }
   status(options){return receivingStatus(options);}
   verify(options){return receivingStatus({...options,verifyArchive:true});}
   async receiveSource({downloads,sourceRoot,signal,onStderr}={}){
