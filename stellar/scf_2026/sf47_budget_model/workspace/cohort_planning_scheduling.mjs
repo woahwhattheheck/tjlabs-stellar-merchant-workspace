@@ -26,6 +26,7 @@ function fail(code, message, path = '') { throw new CohortPlanningError(code, me
 function planFrom(document) {
   if (document?.schema === COHORT_PLAN_SCHEMA) return document;
   if (document?.schema === COHORT_PLAN_REPORT_SCHEMA && document.kind === 'PLAN') return document.input;
+  if (document?.schema === COHORT_DELIVERY_SCHEDULE_SCHEMA) return document.candidate;
   if (document?.schema === 'stellar-forge.sf47-cohort-plan-edition.v1') return document.plan;
   fail('SCHEDULING_PLAN_REQUIRED', 'Select the complete original cohort plan, report or saved edition.', 'sourceDocument');
 }

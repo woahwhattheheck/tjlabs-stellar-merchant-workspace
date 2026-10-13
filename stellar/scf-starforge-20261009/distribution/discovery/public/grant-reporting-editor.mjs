@@ -83,7 +83,8 @@ function freshPreparation(previous) {
   const values = Object.fromEntries(fields.map(key => [key, '']));
   values.asOfDate = now.slice(0, 10);
   values.paths = Object.fromEntries(pathFields.map(key => [key, '']));
-  values.paths.commandFinderUrl = location.origin;
+  values.paths.commandFinderUrl = location.protocol === 'http:' && !location.port
+    ? location.origin + ':80' : location.origin;
   return {
     schema: PREPARATION_SCHEMA, id: crypto.randomUUID(), planId: crypto.randomUUID(),
     revision: 0, createdAt: now, updatedAt: now,

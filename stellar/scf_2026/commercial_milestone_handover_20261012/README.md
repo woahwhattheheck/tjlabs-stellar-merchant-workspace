@@ -2,6 +2,8 @@
 
 This directory contains the complete launcher for the operated customer billing case introduced with merchant-workspace PR #409. It packages and opens the original accounting workspace together with both planning cases, the commercial inputs and the exact product source used for that delivery.
 
+For a recipient-selected private directory and complete later repacking, use the [portable customer opener](PORTABLE.md).
+
 ## Package the closed case
 
 Use Linux, Python 3.11 or later and Node.js 22 or later. Select the 241 original source files listed in `source-selection.json`, at commit `5f4c92edc4278cb1b3da08d41fd11b6cacb9bc6f`. The launcher checks every source file and the canonical source-selection digest before creating a handover.

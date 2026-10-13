@@ -22,6 +22,13 @@ Use the complete [Research commissioning workflow](COMMISSIONING.md) to select t
 The quotation product carries the original customer case and published quote through a reviewed Research brief, source-linked work, frozen delivery, native paid publication, Buyer receiving and realized pricing/cost report. The [quotation operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/OPERATING.md) contains the complete browser, terminal and Merchant journey.
 
 
+## Retained quotation programme and complete receiving
+
+Use the [complete quotation programme](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/PROGRAMME.md) to keep the original customer case, native phase requests, source-bound reviews, paid delivery and realized report in one operating directory. The installed `research-quotes-programme` command operates the original Research/SF74/SF97/Buyer workflow and reopens its saved requests after the connection closes.
+
+The complete handover contains every selected native quote and supplier-cost file, the full case and customer history, all four frozen report formats, the reviewed work snapshot and the exact published paid archive. Its receiver prepares the original case transfer, retains the whole dossier before writes, and returns the actual destination case and Research identities for subsequent customer work. The original source and receiving directories preserve their own exact-request continuation.
+
+
 ## Open the original workspace
 
 Use the existing Linux and Node 22.16+ runtime described in the [product README](../../README.md). The Research client uses Node's built-in modules. Its optional source connections use their existing host configuration.
@@ -1332,6 +1339,36 @@ For an existing dossier, also pass --workspace /absolute/original/research-works
 Original Europe PMC editions are received before citation decisions so the citation fingerprint sees the complete selected source set. The programme then saves citation reviews, attaches the complete chronology/source bundle, runs original Python/Analysis workbook receiving, and reopens saved reviews through Merchant and the browser. It exports the complete dossier and history, packages all input/source/output members, and opens the actual extracted archive with the included engine in a separate editable workspace.
 
 Open **delivery/START_HERE.html** for the readable handover. **COMPLETE.json** records the actual dossier revision, final archive and independent receiving result. Deliver the selected ZIP with its complete original inputs, reports, source and operating guides. See [the installed customer receiving chapter](RECEIVING.md#20-receive-the-complete-customer-selected-programme) for extraction and ongoing edits.
+
+## Review a returned dossier
+
+Use the dossier-return workflow when a recipient sends back a full editable copy of an existing Research dossier. It retains the exact returned file and compares the original common base, current branch and returned branch. Every branch is identified by its revision and SHA256.
+
+The installed command is `research-dossier-returns`; the same `returns-*` commands are also available under `research-client`. They use the existing Applications listener, private connection record, original store and dossier.
+
+~~~sh
+starforge registrations --command research-dossier-returns
+starforge research-dossier-returns returns-help
+~~~
+
+The complete [dossier-return operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/OPERATING.md) contains the exact source, choice, draft and reviewed-request inputs. Its sequence is:
+
+1. Retain the original full portable with `returns-source --source-file FILE --sha256 SHA`.
+2. Freeze the comparison with `returns-preview --input SOURCE_AND_CURRENT_REVISION.json`.
+3. Read every `returns-inspect` page and download complete `returns-value` sides as needed.
+4. Preserve the full versioned draft, then run `returns-preview-choices` on every explicit item decision.
+5. Save the unchanged reviewed request with `returns-review`, retaining its original request ID and complete receipt.
+6. Export the immutable comparison, selected accepted return, original source and exact accepted dossier revision.
+
+Every working command also takes `--connection-file`, `--directory` and `--id`. `--result-file` retains the complete native JSON result under a new private file name; a different existing result is preserved.
+
+Read each item's native `treatment`, `allowedChoices`, `choiceLabels` and `effect`. Authored values can take an allowed current, returned or edited value. A returned absent side can remove an authored item, subject to native dependency checks. Returned typed histories and unknown extensions are retained as reviewed proposals while the current typed history or extension remains authoritative. Use the original eligibility, extraction, appraisal, citation or other applicable workflow to adopt a retained proposal.
+
+After an interrupted review reply, use `returns-request --request ORIGINAL_REQUEST_ID` and compare the complete saved receipt with the unchanged pending request. A stale current revision requires an explicit new comparison and review. No command silently rebases choices or invents a replacement request.
+
+A report selected only by review ID is immutable and never includes a later adoption. Add the actual return ID to export that accepted receipt. Source exports preserve the exact original upload; item values use streamed JSON, with the serialized file digest separate from the native value digest.
+
+The [Merchant return family](../../stellar-forge/mcp-merchant-operator/DOSSIER_RETURNS.md) exposes the same ten source/review/draft operations and five complete export kinds through the original attachment and retained file reader. The [receiving chapter](RECEIVING.md#21-receive-a-reviewed-dossier-return) covers the complete editable handover.
 
 ## Operating source
 

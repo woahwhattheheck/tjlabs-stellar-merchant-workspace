@@ -113,11 +113,17 @@ export interface MigrationNativeTask<T = MigrationValue> {
 export interface MigrationNativeOptions { requestId?: string; wait?: boolean; signal?: AbortSignal; }
 export interface MigrationRevisionInput { revision: number; requestId: string; actor: string; }
 export interface MigrationPaging { offset?: number; limit?: number; }
+export interface MigrationWorkbookSource {
+  schema: "starforge.gis-migration-workbook-source.v1";
+  registerBase64: string; workbookBase64: string; filename?: string;
+}
 export interface MigrationNativeArguments {
   state: Record<string, never>;
   records: MigrationPaging & { kind: MigrationRecordKind };
   document: { kind: string; id: string };
   draft: { captureId: string; predecessorPlanId?: string };
+  "mapping-register": { planId: string };
+  "workbook-propose": { source: MigrationWorkbookSource };
   'source-rows': MigrationPaging & { captureId: string; layerId: string };
   issues: MigrationPaging & { planId: string; layerId?: string; kind?: string };
   'comparison-rows': MigrationPaging & { comparisonId: string; layerId?: string; status?: string };
@@ -130,7 +136,7 @@ export interface MigrationNativeArguments {
   'native-reopen': Record<string, never>;
   capture: MigrationRevisionInput & { selection: ExactJSONObject; sourceRoot: string; originalBase64?: string };
   'receive-capture': MigrationRevisionInput & { directory: string; expectedManifestSha256: string };
-  'save-plan': MigrationRevisionInput & { plan: ExactJSONObject; originalBase64?: string };
+  'save-plan': MigrationRevisionInput & { plan: ExactJSONObject; originalBase64?: string; workbookSource?: MigrationWorkbookSource };
   'review-plan': MigrationRevisionInput & { planId: string; outcome: 'accepted' | 'changes-requested'; note: string };
   'compare-captures': MigrationRevisionInput & { beforeCaptureId: string; afterCaptureId: string };
   'build-edition': MigrationRevisionInput & { planId: string };
@@ -234,6 +240,8 @@ export interface MigrationToolArguments {
     captureId: string;
     predecessorPlanId?: string;
   };
+  "merchant_migration_mapping_register": { workspace: string; planId: string; };
+  "merchant_migration_workbook_propose": { workspace: string; sourceJson: string; };
   "merchant_migration_source_rows": {
     workspace: string;
     captureId: string;
@@ -295,6 +303,7 @@ export interface MigrationToolArguments {
   "merchant_migration_save_plan": {
     workspace: string;
     planJson: string;
+    workbookSourceJson?: string;
     revision: number;
     requestId: string;
     actor: string;
@@ -475,6 +484,8 @@ export interface MigrationToolResults {
   "merchant_migration_records": MigrationNativeTask<MigrationPage<MigrationValue>> & WorkspaceSelection;
   "merchant_migration_document": MigrationNativeTask & WorkspaceSelection;
   "merchant_migration_draft": MigrationNativeTask & WorkspaceSelection;
+  "merchant_migration_mapping_register": MigrationNativeTask & WorkspaceSelection;
+  "merchant_migration_workbook_propose": MigrationNativeTask & WorkspaceSelection;
   "merchant_migration_source_rows": MigrationNativeTask & WorkspaceSelection;
   "merchant_migration_issues": MigrationNativeTask & WorkspaceSelection;
   "merchant_migration_comparison_rows": MigrationNativeTask & WorkspaceSelection;

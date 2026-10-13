@@ -9,7 +9,7 @@ Open **Operating plans → Create Grant reporting plan**.
 1. Enter the plan title, customer or programme, operating owner and reporting period label. Select the report end date. Add a start date for a period report, or leave it empty for cumulative reporting through the end date.
 2. Choose the complete original Grant case JSON. The native case read/show value and the exported operations.json carry the programme, plan, records and sources used by the reporting builder.
 3. Choose the complete original Source Tables project JSON. A raw planning-source project and the retained native wrapper are both supported by the maintained importer. The editable workbook handover includes this as planning-source-project.json.
-4. Enter the original Grant workspace directory, original Source Tables JSON path, report output directory, receiving workspace directory and Command finder address. Use paths on the computer that will perform the work.
+4. Enter the original Grant workspace directory, original Source Tables JSON path, report output directory, receiving workspace directory and Command finder address. Use paths on the computer that will perform the work. Retain the complete loopback HTTP address and its explicit port, including `:80` when that is the selected listener.
 5. Describe who receives the completed report, where it belongs and how the next operator continues.
 6. Select **Preview procedure**. The builder validates the complete native inputs and captures the selected toolkit catalog with the plan. Expand the ordered steps to review their original selections, commands, work and expected results.
 7. Select **Create plan and open**. The complete result enters the existing Operating plans receiver and opens in its normal editor. Add actual work results, update step status and save revisions as the reporting work progresses.
@@ -28,7 +28,7 @@ Entered preparation fields are saved as you work. The original case, complete so
 
 If another tab saves the same preparation first, the editor retains the current entered work and identifies the conflict. **Copy preparation** saves that work under a new preparation name. The other tab's saved preparation remains available in the selector.
 
-A source file can contain up to 32 MiB of complete UTF-8 JSON. The complete portable preparation can contain up to 96 MiB. Complete Operating plans retain the existing 32 MiB limit. Download the portable preparation when moving to another computer, browser or listener address.
+A source file can contain up to 32 MiB of complete UTF-8 JSON. The complete portable preparation can contain up to 96 MiB. Complete Operating plans retain the existing 32 MiB limit. Download the portable preparation when moving to another computer, browser or listener address. Keep the same host spelling and port when reopening existing browser preparations. The complete preparation preserves its original preview ID and creation time; a previewless preparation uses its retained update time when created through the CLI.
 
 ## Review and distribute the complete result
 
@@ -71,3 +71,35 @@ The shared asynchronous createGrantReportingPlan(input) function accepts these o
 | savedAt | Optional explicit UTC creation time for reopening the same prepared result. |
 
 Await the function: the original Source Tables importer checks complete retained source and workbook material. The return value uses the maintained stellar-forge.operating-plan.v1 model, including its original registration snapshots and complete initial revision.
+
+## Create the same procedure from the command line
+
+The original installed command accepts the same complete preparation downloaded by the browser:
+
+~~~sh
+starforge grant-reporting-plan create \
+  --input /absolute/inputs/reporting-preparation.json \
+  --out /absolute/reports/period-01/grant-reporting-plan.json
+~~~
+
+Set the preparation's output directory to /absolute/reports/period-01 before its preview. The CLI output must match that directory's grant-reporting-plan.json so the retained procedure commands open the intended file. Existing output files are preserved. Reopening a completed creation uses its original output and the normal Operating plans read/edit/receive commands.
+
+The complete preparation already contains its selected toolkit catalog. Keep that selection when using the CLI; use **Use current source catalog** and create a new preview in the browser when deliberately changing the toolkit. All original UTF-8 file contents are checked against their retained bytes and SHA-256 before the saved preview is regenerated. The preview must match the complete plan rebuilt from those original inputs.
+
+The command also accepts one full input JSON with catalog, case, sourceProject, paths, stable id, savedAt and the entered customer/reporting fields listed above. A complete native input can use --catalog COMPLETE_CATALOG.json or the maintained --source-root / --selection loader when deliberately selecting its toolkit. The older compact reference format and its selected archive, Installation, task outcome and explicitly formatted table files remain supported by this same command.
+
+The complete creator is exported as @tokenjunkielabs/starforge-merchant/operator/grant-reporting. Its prepareGrantReportingPlan function returns the plan, complete normalized selection and retained procedure filename. The original compact builder remains exported as @tokenjunkielabs/starforge-merchant/operator/grant-reporting-plan. Both create the original OperatingPlan model and leave every generated step planned.
+
+The original preparation retains file-byte hashes separately from the normalized native case/project hashes shown in the procedure. On the operating host, compare the actual selected paths with the retained original files before recording their receiving results. Native table edition, mapping, binding, review and workbook identities are retained explicitly; a stale review or baseline remains visible.
+
+## Attach the complete procedure to the customer case
+
+Open the same Grant case and choose **Operating procedures**. Prepare the complete Operating plan with the actual case sources, Source Tables selections and original Installation or task-outcome editions. Review every selected step link, then save it through the case's original actor, version and request controls.
+
+The original command-line route is starforge grant-procedures. Its prepare, save, show, export, inspect and receive commands use the same native Grant client and complete procedure format. A private client binding selects the actual managed workspace; it is kept with the operator rather than placed in the public procedure.
+
+Export the entire procedure delivery directory when returning the work. It contains the original Operating plan JSON and readable handovers, selected source tables and native editions, their full verification, and the complete original Grant case. The receiving operator imports this through the existing Grant receiver at the selected receiving workspace. Preserve the actual destination plan/case mapping and the original procedure parent chain.
+
+When the next operator returns a saved revision, reopen the original case and choose its previous procedure as the parent. The original OperatingPlan receiver verifies the full prefix history before accepting the new revision. Repeat an interrupted save or import with the same request ID and exact retained input; its native receipt determines the outcome.
+
+See [Grant operating procedures](../../../scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES.md) for the complete native selection and command contract, and [complete case receiving](../../../scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES_RECEIVING.md) for its original two-operator continuation.

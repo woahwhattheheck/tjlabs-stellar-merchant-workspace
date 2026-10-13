@@ -6,6 +6,8 @@ import { pathToFileURL } from 'node:url';
 import { loadCommandCatalog } from './load.mjs';
 import { saveExport } from './write-json.mjs';
 import { createGrantReportingPlan } from './grant-reporting-plan.mjs';
+import { prepareGrantReportingPlan } from './grant-reporting-core.mjs';
+import { GRANT_REPORTING_PREPARATION_SCHEMA } from './grant-reporting-input.mjs';
 import { summarizeOperatingPlan } from './operating-plan.mjs';
 
 export const GRANT_REPORTING_HELP = [
@@ -13,6 +15,11 @@ export const GRANT_REPORTING_HELP = [
   '',
   'starforge grant-reporting-plan create --input INPUT.json --out NEW_PLAN.json',
   '  [--catalog COMPLETE_CATALOG.json | --source-root DIRECTORY --selection PRODUCT]',
+  '',
+  'Input may be the complete browser preparation, full native case/source-project input, or compact reference input.',
+  'The complete preparation retains and verifies all three original JSON files and its saved preview.',
+  'For full inputs, --out must be OUTPUT_DIRECTORY/grant-reporting-plan.json, preserving the plan’s command path.',
+  'A preparation keeps its captured catalog; open it in the browser to intentionally refresh that selection.',
   '',
   'The input retains the original case/plan IDs and revisions, actual workspace, selected files,',
   'customer/period/receiving notes, a stable procedure ID and savedAt time, and a fixed browser origin.',
@@ -46,31 +53,53 @@ export function parseGrantReportingArguments(args) {
     throw new TypeError('Preserve the original input and catalog; choose a separate new output.');
   return {action, options};
 }
-async function jsonFile(filename) {
+async function jsonFile(filename, maximum = 32 * 1024 * 1024) {
   const path = resolve(filename), info = await stat(path);
-  if (!info.isFile() || info.size > 32 * 1024 * 1024) throw new TypeError('Use a complete regular UTF-8 JSON file up to 32 MiB.');
+  if (!info.isFile() || info.size > maximum) throw new TypeError('Use a complete regular UTF-8 JSON file within the selected input size limit.');
   const raw = await readFile(path);
-  if (raw.length > 32 * 1024 * 1024) throw new TypeError('The complete JSON input exceeds 32 MiB.');
+  if (raw.length > maximum) throw new TypeError('The complete JSON input exceeds its selected size limit.');
   return JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(raw));
 }
 export async function mainGrantReportingPlan(args = process.argv.slice(2), {log = console.log} = {}) {
   const {action, options} = parseGrantReportingArguments(args);
   if (action === 'help') {log(GRANT_REPORTING_HELP); return;}
-  const input = await jsonFile(options.input);
+  const input = await jsonFile(options.input, 96 * 1024 * 1024);
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new TypeError('Use the complete Grant reporting input object.');
   const output = resolve(options.out);
   if (input.procedureFile !== undefined && resolve(input.procedureFile) !== output)
     throw new TypeError('The original procedureFile must match --out; retain the input/output binding.');
+  const portable = input.schema === GRANT_REPORTING_PREPARATION_SCHEMA;
+  const full = portable || Object.hasOwn(input, 'paths') || Object.hasOwn(input, 'sourceProject');
   const sourceRoot = options['source-root'] ?? input.sourceRoot ?? undefined;
   const selection = options.selection ?? input.sourceSelection ?? undefined;
-  const catalog = options.catalog ? await jsonFile(options.catalog) : await loadCommandCatalog({sourceRoot, selection});
-  const document = createGrantReportingPlan({catalog, input: {...input, procedureFile: output,
-    ...(options['source-root'] ? {sourceRoot: resolve(options['source-root'])} : {}),
-    ...(options.selection ? {sourceSelection: options.selection} : {})}});
+  let document, selected;
+  if (full) {
+    if (portable && (options.catalog || options['source-root'] || options.selection))
+      throw new TypeError('Keep the portable preparation’s original catalog and preview. Refresh them in the existing editor before exporting a new preparation.');
+    const catalog = portable ? null : options.catalog ? await jsonFile(options.catalog)
+      : input.catalog && !options['source-root'] && !options.selection ? input.catalog
+      : await loadCommandCatalog({sourceRoot, selection});
+    const prepared = await prepareGrantReportingPlan(portable ? input : {...input, catalog,
+      ...(sourceRoot ? {sourceRoot: resolve(sourceRoot)} : {}),
+      ...(selection ? {sourceSelection: selection} : {})});
+    if (resolve(prepared.procedureFile) !== output)
+      throw new TypeError('Keep the procedure command filename: --out must be ' + prepared.procedureFile + '. Update the entered output directory before preparing a different path.');
+    document = prepared.plan;
+    selected = {caseId: prepared.selection.case.id, caseVersion: prepared.selection.case.version,
+      planId: prepared.selection.plan.id, planRevision: prepared.selection.plan.revision,
+      sourceProjectId: prepared.selection.sourceProject.id,
+      ...(prepared.selection.originalFiles ? {originalFiles: prepared.selection.originalFiles} : {})};
+  } else {
+    const catalog = options.catalog ? await jsonFile(options.catalog) : await loadCommandCatalog({sourceRoot, selection});
+    document = createGrantReportingPlan({catalog, input: {...input, procedureFile: output,
+      ...(options['source-root'] ? {sourceRoot: resolve(options['source-root'])} : {}),
+      ...(options.selection ? {sourceSelection: options.selection} : {})}});
+    selected = {caseId: input.case.id, caseVersion: input.case.version, planId: input.case.planId,
+      planRevision: input.case.planRevision};
+  }
   await saveExport(output, document);
   log(JSON.stringify({file: output, action, ...summarizeOperatingPlan(document),
-    caseId: input.case.id, caseVersion: input.case.version, planId: input.case.planId,
-    planRevision: input.case.planRevision, nativeOperationStarted: false}));
+    ...selected, nativeOperationStarted: false}));
   return document;
 }
 if (process.argv[1] && await realpath(resolve(process.argv[1])).then(

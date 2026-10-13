@@ -3,17 +3,22 @@ import { createHash } from 'node:crypto';
 import { readFile, readdir, realpath, stat } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { productPackageMetadata } from './product-package.mjs';
 import { sourceSelectionPath, validateSourceSelection, selectedContributionPaths,
-  selectDistributionSources, validateSourceSelectionRecord, requireSourceSelectionMatch } from './source-selection.mjs';
+  selectDistributionSources, validateSourceSelectionRecord, requireSourceSelectionMatch,
+  validateSourceFormats, parseOriginalSourceData } from './source-selection.mjs';
 
 export const distributionPath = 'stellar/scf-starforge-20261009/distribution/distribution.json';
 export const contributionDirectory = 'stellar/scf-starforge-20261009/distribution/contributions';
 export const contributionSchema = 'stellar-forge.merchant-distribution-contribution.v1';
 const ownRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const baseSchema = 'stellar-forge.merchant-distribution.v1';
-const fields = ["components","supportFiles","moduleTemplates","excludeFiles","commands","commandDescriptions","exports","nativePeers","featurePeers","runtimePackageManifests","browserAssets","applicationProviders","merchantProviders"];
+const fields = ['components', 'supportFiles', 'moduleTemplates', 'sourceFormats', 'excludeFiles', 'commands',
+  'commandDescriptions', 'exports', 'nativePeers', 'featurePeers', 'runtimePackageManifests',
+  'browserAssets', 'applicationProviders', 'merchantProviders'];
 const lists = ['components', 'supportFiles', 'moduleTemplates', 'excludeFiles'];
-const maps = ["commands","commandDescriptions","exports","nativePeers","runtimePackageManifests","applicationProviders","merchantProviders"];
+const maps = ['commands', 'commandDescriptions', 'exports', 'nativePeers', 'runtimePackageManifests',
+  'applicationProviders', 'merchantProviders', 'sourceFormats'];
 const idPattern = /^[a-z][a-z0-9-]{0,63}$/;
 const packagePattern = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
 const reservedCommands = new Set(['init', 'run', 'doctor', 'source', 'help', 'registrations']);
@@ -86,6 +91,7 @@ function validateRegistrations(data, owner) {
   for (const field of maps) {
     if (data[field] === undefined) continue;
     if (!plain(data[field])) throw new TypeError(owner + ': ' + field + ' must be an object');
+    if (field === 'sourceFormats') validateSourceFormats(data[field]);
     for (const [key, value] of Object.entries(data[field])) {
       if (field === 'commands') {
         commandName(key); filePath(value, key);
@@ -99,6 +105,7 @@ function validateRegistrations(data, owner) {
         if (key !== '.') filePath(key.slice(2), key);
         exportTarget(value, key);
       } else if (field === 'nativePeers') peer(key, value);
+      else if (field === 'sourceFormats') continue; // Validated as one bounded original map above.
       else if (['applicationProviders', 'merchantProviders'].includes(field)) {
         if (!idPattern.test(key)) throw new TypeError('Invalid source provider ID: ' + key);
         filePath(value, key);
@@ -127,6 +134,24 @@ function validateRegistrations(data, owner) {
       if (servers.has(value.server)) throw new TypeError('Duplicate browser server in ' + owner + ': ' + value.server);
       servers.add(value.server);
     }
+  }
+}
+
+function sourceExportTargets(value) {
+  return typeof value === 'string' ? (value.startsWith('./source/') ? [value.slice(9)] : []) :
+    Object.values(value ?? {}).flatMap(sourceExportTargets);
+}
+function validateSourceFormatEntries(spec) {
+  const formats = validateSourceFormats(spec.sourceFormats ?? {});
+  if (!Object.keys(formats).length) return;
+  const executable = new Set([...Object.values(spec.commands),
+    ...Object.values(productPackageMetadata(spec.product).bin), ...sourceExportTargets(spec.exports),
+    ...Object.values(spec.applicationProviders ?? {}), ...Object.values(spec.merchantProviders ?? {}),
+    ...(spec.browserAssets ?? []).map(entry => entry.server)]);
+  const templates = new Set(spec.moduleTemplates ?? []);
+  for (const path of Object.keys(formats)) {
+    if (templates.has(path)) throw new TypeError('JSON source cannot also be a module template: ' + path);
+    if (executable.has(path)) throw new TypeError('JSON source cannot be an executable packaged entry: ' + path);
   }
 }
 
@@ -232,6 +257,7 @@ export function composeDistribution({ base, contributions = [], selection }) {
     sources.push({ id, path, description: data.description, counts: count(data),
       registrations: Object.fromEntries(fields.filter(field => data[field] !== undefined).map(field => [field, copy(data[field])])) });
   }
+  validateSourceFormatEntries(spec);
   return { spec, origins, sources, contributions: sources.slice(1).map(({ registrations, ...entry }) => entry),
     ...(selection === undefined ? {} : { selection }) };
 }
@@ -265,16 +291,20 @@ export function contributedCommandHelp(distribution) {
   }).join('\n');
 }
 
-async function originalJson(root, path) {
+async function originalBytes(root, path, maximum = 1024 * 1024) {
   filePath(path, 'distribution declaration');
   const filename = await realpath(resolve(root, path));
   const inside = relative(root, filename);
   if (!inside || isAbsolute(inside) || inside === '..' || inside.startsWith('../') || inside.startsWith('..\\'))
     throw new TypeError('Distribution declaration leaves the selected source: ' + path);
   const info = await stat(filename);
-  if (!info.isFile() || info.size > 1024 * 1024) throw new TypeError('Distribution declaration must be a regular file up to 1 MiB: ' + path);
+  if (!info.isFile() || info.size > maximum) throw new TypeError('Original source must be a regular file up to ' + maximum + ' bytes: ' + path);
   const bytes = await readFile(filename);
-  if (bytes.length > 1024 * 1024) throw new TypeError('Distribution declaration exceeds 1 MiB: ' + path);
+  if (bytes.length > maximum) throw new TypeError('Original source exceeds ' + maximum + ' bytes: ' + path);
+  return bytes;
+}
+async function originalJson(root, path) {
+  const bytes = await originalBytes(root, path);
   return { data: JSON.parse(bytes.toString('utf8')), descriptor: { path, bytes: bytes.length, sha256: digest(bytes) } };
 }
 
@@ -315,6 +345,18 @@ export async function readDistributionSpecification({ sourceRoot = ownRoot, sele
   if (manifest) {
     const entries = new Map(manifest.files.map(entry => [entry.path, entry]));
     if (entries.size !== manifest.files.length) throw new TypeError('Installed distribution has duplicate files');
+    const formats = validateSourceFormats(manifest.sourceFormats ?? {});
+    if (!same(Object.entries(formats).sort(), Object.entries(distribution.spec.sourceFormats ?? {}).sort()))
+      throw new TypeError('Installed distribution source formats changed');
+    for (const path of Object.keys(formats)) {
+      const retained = entries.get(path);
+      if (!retained || retained.packagePath !== 'source/' + path)
+        throw new TypeError('Installed original formatted source is missing: ' + path);
+      const bytes = await originalBytes(root, path, 2 * 1024 * 1024);
+      if (retained.bytes !== bytes.length || retained.sha256 !== digest(bytes))
+        throw new TypeError('Installed original formatted source changed: ' + path);
+      parseOriginalSourceData(path, formats[path], bytes);
+    }
     const expected = [distributionPath, ...contributionPaths([...entries.keys()]), ...(recipePath ? [recipePath] : [])];
     if (!same(inputFiles.map(entry => entry.path), expected))
       throw new TypeError('Installed distribution contribution inventory changed');
@@ -338,5 +380,7 @@ export async function readDistributionSpecification({ sourceRoot = ownRoot, sele
         throw new TypeError('Installed distribution selection inputs changed');
     }
   }
+  else for (const [path, format] of Object.entries(distribution.spec.sourceFormats ?? {}))
+    parseOriginalSourceData(path, format, await originalBytes(root, path, 2 * 1024 * 1024));
   return { ...distribution, sourceRoot: root, inputFiles, manifest };
 }

@@ -1,5 +1,9 @@
 # Grant Operations — installed operating and receiving guide
 
+## Issuer correspondence and award terms
+
+Open **Operations → Issuer terms** to receive an original email or text file and selected attachments, retain complete message bytes, record the observed application stage and explicitly selected proposal or issuer track, and review the original source for each term. The same workspace compares issued amount, duration, tranche criteria and any stated metric window with the saved proposal, then saves a reviewed native plan through the existing amendment transaction. Local drafts, exact pending requests, all issuer editions, original attachments and commissioned plan history reopen through the complete case handover. The browser, original Operations CLI and authenticated API share this workflow. See [Issuer correspondence and award terms](../../stellar/scf_2026/sf47_budget_model/workspace/AWARD_TERMS.md) for the full operating procedure, source formats and receiving commands.
+
 ## Recorded work and supplier invoice intake
 
 The original Operations case now receives CSV/TSV timesheets and invoice lines through **Work / invoice intake**. Operators map positions and source formats, match existing contributors and packages, retain corrections and duplicate decisions, and apply the complete reviewed batch atomically. Saved drafts, original bytes, grouped invoice lines and applied native record links survive complete case export/import. The existing CLI, typed GrantWorkspaceClient and six `merchant_grant_work_intake*` tools expose the same workflow. See [the complete operator guide](../../stellar/scf_2026/sf47_budget_model/workspace/WORK_INTAKE.md).
@@ -697,6 +701,18 @@ A reviewed correction shows complete original and replacement observations, invo
 The full account ZIP contains offline HTML, complete JSON/CSVs, original correction history and the entire Operations case. Receiving validates the source and rebuilds the account before opening the same dates and dimensions. Browser drafts retain exact pending requests across navigation and use stored-revision comparisons between tabs. CLI, typed client and Merchant tools expose the same account, preview, apply, export and original request recovery.
 
 Use the [Cash accounts operating guide](../../stellar/scf_2026/sf47_budget_model/workspace/CASH_ACCOUNTS.md) for the complete workflow and original native receiving continuation.
+
+## Customer reporting procedures and returned operating history
+
+Open the installed **Command finder → Operating plans → Create Grant reporting plan** to prepare ordered reporting work from the original complete Grant case and Source Tables project. Enter the customer, period, responsible operator, original workspace paths and receiving workspace. Keep the browser's explicit loopback address and port, including when reopening saved preparation inputs.
+
+The creator retains the complete original case/project/catalog inputs, selected file editions, mappings, reviews, workbook lineage and native command/runtime registrations. A preview contains planned work. Record actual native results and save revisions in the existing Operating plans editor as the reporting work proceeds.
+
+Download the complete preparation JSON to reopen its entered fields and exact original sources. Download the ordinary Operating plan JSON to carry its full revision history; readable HTML and Markdown accompany the same plan. The installed starforge grant-reporting-plan command creates that same procedure from a complete preparation, native input object or selected compact references.
+
+Return to the original Grant case's **Operating procedures** pane to attach the full plan and its explicit source/table/Installation/task-outcome selections. Save and export through the original case transaction, then receive the complete directory with starforge grant-procedures or the existing receiving pane. The delivery includes the whole source case. Each receiving workspace records its actual native IDs; procedure revisions retain the full original parent history.
+
+Use the [reporting creator guide](../../stellar/scf-starforge-20261009/distribution/discovery/GRANT_REPORTING.md), [Operating plans guide](../../stellar/scf-starforge-20261009/distribution/discovery/OPERATING_PLANS.md), [native case procedure guide](../../stellar/scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES.md) and [complete receiving command](../../stellar/scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES_RECEIVING.md) for the complete browser/CLI workflow.
 
 ## Original source references
 

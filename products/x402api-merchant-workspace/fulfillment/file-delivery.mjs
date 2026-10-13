@@ -36,10 +36,13 @@ async function originalBytes(path, expected) {
     return Buffer.concat(parts);
   } finally { await handle.close(); }
 }
-export async function createFulfillment({ configuration, baseDirectory }) {
+export async function createFulfillment({ configuration, baseDirectory, expectedManifestSha256 = null }) {
   need(configuration && typeof configuration.manifest === 'string', 'DELIVERY_MANIFEST_REQUIRED');
   const path = resolve(baseDirectory, configuration.manifest);
   const raw = await readFile(path); need(raw.length <= 1048576, 'DELIVERY_MANIFEST_TOO_LARGE');
+  if (expectedManifestSha256 !== null) need(typeof expectedManifestSha256 === 'string' &&
+    /^[0-9a-f]{64}$/.test(expectedManifestSha256) && digest(raw) === expectedManifestSha256,
+    'REVIEWED_DELIVERY_MANIFEST_CHANGED');
   const manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw));
   need(manifest.schema === 'stellar-forge.merchant-file-delivery.v1' && manifest.files && typeof manifest.files === 'object' &&
     !Array.isArray(manifest.files), 'DELIVERY_MANIFEST_INVALID');

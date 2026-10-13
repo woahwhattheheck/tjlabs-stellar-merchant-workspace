@@ -11,7 +11,7 @@
   },
   "commandDescriptions": {
     "discover": "Find installed commands, match complete product requirements, prepare source build reviews and save customer operating plans with original registrations and revision history",
-    "grant-reporting-plan": "Create a complete customer reporting procedure from original Grant case, source-table, report and Installation references"
+    "grant-reporting-plan": "Create the original reporting procedure from a complete browser preparation, native case/source project or compact selected references"
   },
   "exports": {
     "./operator/discovery": {
@@ -51,6 +51,14 @@
     "./operator/grant-reporting-plan": {
       "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-plan.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-plan.mjs"
+    },
+    "./operator/grant-reporting": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-core.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-core.mjs"
+    },
+    "./operator/grant-reporting/input": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-input.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-input.mjs"
     }
   },
   "applicationProviders": {
@@ -61,5 +69,11 @@
       "server": "stellar/scf-starforge-20261009/distribution/discovery/server.mjs",
       "manifest": "stellar/scf-starforge-20261009/distribution/discovery/browser-assets.json"
     }
+  ],
+  "supportFiles": [
+    "stellar/scf_2026/sf47_budget_model/workspace/source-tables-core.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/source-workbooks.mjs",
+    "stellar-forge/developer-site/dist/source-table-workspace.mjs",
+    "stellar-forge/developer-site/dist/onboarding.mjs"
   ]
 }

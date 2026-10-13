@@ -13,12 +13,12 @@ import sys
 HERE = Path(__file__).resolve().parent
 PINS = {
   "input.json": {
-    "sha256": "60de2486a2db1d2f7fe702d2d6e6feb2dd25338805f4111d77a33f34cffd47cf",
-    "bytes": 2815260
+    "bytes": 2868712,
+    "sha256": "5d1c04127ebc9f0c0ef60345de495781dca31b90817098ccb027de29b0f73df1"
   },
   "complete_canadabuys_delivery.py": {
-    "sha256": "699e3e4b1cb69675b3f69c4fa9e7d1af207a85b8188988a761c5ac9620f11c64",
-    "bytes": 28307
+    "bytes": 28319,
+    "sha256": "a558da4c65e7e0a87681e0498411864fe169f17d6c22e26bed149eb885743292"
   },
   "run-canadabuys-bidder-receiving.mjs": {
     "bytes": 89006,
@@ -37,12 +37,16 @@ PINS = {
     "sha256": "cb7bc950f51f7fcc8413006d3337e7bf4c473f9c6277861d303c7e26e187d933"
   },
   "official_library_save_bridge.py": {
-    "bytes": 6048,
-    "sha256": "e9715e42eea200b04489da61f05e5058bd21dc5c817f3830a379b7c541afe21d"
+    "bytes": 6449,
+    "sha256": "1e31a986b70f5cb54c8feec6a14147fffa281294affd0056912df575c35f602c"
   },
   "runtime-attempt-history.json": {
     "sha256": "70050b45a6e2671c9658e96921793d34af60ab2a49b7c0ec24cca2d484187a53",
     "bytes": 16535
+  },
+  "accepted-receiving-source.json": {
+    "bytes": 7327,
+    "sha256": "5fd231c372fba1e4d79b18e04a4f6836a76ad762871f299dd251f0ed61d5fcb2"
   }
 }
 
@@ -95,6 +99,10 @@ def main():
                   if item["path"] == "official_library_save_bridge.py")
     if bridge["content"].encode("utf-8") != selected["official_library_save_bridge.py"]:
         raise RuntimeError("The selected complete save transport differs")
+    accepted_source = next(item for item in payload["historyFiles"]
+                           if item["path"] == "accepted-receiving-source.json")
+    if accepted_source["content"].encode("utf-8") != selected["accepted-receiving-source.json"]:
+        raise RuntimeError("The accepted receiving source adoption differs")
     original_runtime = dict(payload["runtime"])
     for name in ("node", "playwright", "chromium"):
         value = getattr(options, name)
@@ -132,7 +140,7 @@ def main():
                            if item["path"] == "integrated-61367-runtime-history.json")
     if runtime_history["content"].encode("utf-8") != selected["runtime-attempt-history.json"]:
         raise RuntimeError("The original runtime attempt history differs")
-    del runtime_history
+    del runtime_history, accepted_source
     selected.clear()
     del fixture, original, runner, transition, history, bridge, raw, selection
     gc.collect()

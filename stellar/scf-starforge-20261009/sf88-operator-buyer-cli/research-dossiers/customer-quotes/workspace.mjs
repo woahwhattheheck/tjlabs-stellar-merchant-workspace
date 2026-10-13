@@ -23,6 +23,9 @@ import {quoteRoot,operationPath,withCustomerOperation,optional,retainQuoteReques
  quoteOperationFiles,openQuoteFile,exists,now} from './files.mjs';
 import {researchQuoteBrief,researchQuoteResponse,researchQuotePublication,researchQuoteRealized,
  renderResearchQuoteRealized} from './model.mjs';
+import {caseTransferInput,caseTransferSelection,validateCaseTransferSelection,inspectResearchCaseTransfer,
+ exportResearchCaseTransfer,previewResearchCaseTransfer,readResearchTransferTarget,assertResearchTransferRevision,
+ findResearchCaseTransfer} from './case-transfer.mjs';
 import {inspectResearchQuoteLaunch,assertResearchQuoteLaunch,researchQuoteLaunchView} from './launch-inspection.mjs';
 
 const CASE_ACTIONS=Object.freeze({
@@ -269,6 +272,86 @@ export async function openResearchCustomerQuotes({directory,workspaceId,configur
    return selectedOperation(selected.requestId);
   });
  }
+
+ async function prepareCaseTransfer(input){
+  const selected=caseTransferSelection(input);
+  return retainedWork('CASE_TRANSFER',selected,async(target,request)=>{
+   const packet=await inspectResearchCaseTransfer(input.source);await checkedCases();
+   const current=await readResearchTransferTarget(store,selected.caseId);
+   assertResearchTransferRevision(current,selected.expectedRevision);
+   const candidate=await previewResearchCaseTransfer(packet,current),
+    {workspaceText,supportText,...stable}=packet.case;
+   const files=[await put(target,'source.workspace.json',workspaceText),
+    await putJson(target,'source-record.json',{schema:packet.schema,source:packet.source,case:stable,sha256:packet.sha256}),
+    await put(target,'received.workspace.json',candidate.workspaceText)];
+   if(supportText!==null)files.push(await put(target,'source.support.json',supportText));
+   const nativeRequest={id:selected.caseId,expectedRevision:selected.expectedRevision,metadata:candidate.metadata,
+    workspaceFile:'received.workspace.json',supportFile:supportText===null?null:'source.support.json',
+    workspaceSha256:candidate.workspaceSha256,supportSha256:candidate.supportSha256};
+   files.push(await putJson(target,'native-request.json',nativeRequest));
+   await saveQuoteReview(target,request,{schema:QUOTES_SCHEMA,kind:'CASE_TRANSFER',selection:selected,
+    source:packet.source,sourceSha256:packet.sha256,
+    sourceCase:{id:packet.case.id,revision:packet.case.revision,name:packet.case.name,metadata:packet.case.metadata,
+     sources:packet.case.sources,runtimeSupport:packet.case.runtimeSupport,
+     workspaceSha256:packet.case.workspaceSha256,supportSha256:packet.case.supportSha256},
+    target:current===null?null:caseIdentity(current),
+    received:{name:candidate.name,metadata:candidate.metadata,sources:candidate.sources,
+     workspaceSha256:candidate.workspaceSha256,supportSha256:candidate.supportSha256,
+     commissioningChanged:candidate.commissioningChanged,serviceChanged:candidate.serviceChanged},
+    nativeRequest,files});
+  });
+ }
+ async function applyCaseTransfer(input){
+  const selected=applySelection(input);
+  return withCustomerOperation(operationPath(root,selected.id),async target=>{
+   const record=await readQuoteOperation(target),proof=record.review?.proof;
+   need(record.request.workspaceId===workspaceId&&record.request.casesWorkspaceId===casesWorkspaceId&&
+    record.request.kind==='CASE_TRANSFER'&&record.review?.reviewSha256===selected.reviewSha256,
+    'RESEARCH_QUOTE_REVIEW_CHANGED',409);
+   await verifyQuoteFiles(target,proof.files);
+   if(record.result)return operationView(record);
+   const selection=validateCaseTransferSelection(record.request.request);
+   need(same(proof.selection,selection)&&same(proof.source,selection.source)&&proof.sourceSha256===selection.sourceSha256,
+    'RESEARCH_CASE_TRANSFER_REVIEW_CHANGED',409);
+   const retained=await optional(target,'source-record.json'),
+    originalWorkspace=(await readResearchHostFile(join(target,'source.workspace.json'),QUOTE_FILE_LIMIT)).toString('utf8'),
+    originalSupport=retained.case.supportSha256===null?null:
+     (await readResearchHostFile(join(target,'source.support.json'),QUOTE_FILE_LIMIT)).toString('utf8');
+   const source=await inspectResearchCaseTransfer({...retained,
+    case:{...retained.case,workspaceText:originalWorkspace,supportText:originalSupport}});
+   need(source.sha256===selection.sourceSha256&&same(source.source,selection.source),'RESEARCH_CASE_TRANSFER_SOURCE_CHANGED',409);
+   const native=await optional(target,'native-request.json');
+   need(same(native,proof.nativeRequest)&&native.id===selection.caseId&&native.expectedRevision===selection.expectedRevision&&
+    native.workspaceFile==='received.workspace.json'&&native.supportFile===(originalSupport===null?null:'source.support.json')&&
+    same(native.metadata,source.case.metadata),'RESEARCH_CASE_TRANSFER_NATIVE_REQUEST_CHANGED',409);
+   const workspaceText=(await readResearchHostFile(join(target,'received.workspace.json'),QUOTE_FILE_LIMIT)).toString('utf8');
+   need(digest(Buffer.from(workspaceText))===native.workspaceSha256&&native.workspaceSha256===proof.received.workspaceSha256&&
+    native.supportSha256===source.case.supportSha256&&native.supportSha256===proof.received.supportSha256,
+    'RESEARCH_CASE_TRANSFER_CANDIDATE_CHANGED',409);
+   await checkedCases();
+   let received=await findResearchCaseTransfer(store,{caseId:selection.caseId,expectedRevision:selection.expectedRevision,
+    workspaceSha256:native.workspaceSha256,supportSha256:native.supportSha256,metadata:native.metadata});
+   let recovered=received!==null,unchanged=received?.revision===selection.expectedRevision;
+   if(received===null){
+    const current=await readResearchTransferTarget(store,selection.caseId);
+    assertResearchTransferRevision(current,selection.expectedRevision);
+    const candidate=await previewResearchCaseTransfer(source,current);
+    need(candidate.workspaceSha256===native.workspaceSha256&&candidate.supportSha256===native.supportSha256&&
+     same(candidate.metadata,native.metadata),'RESEARCH_CASE_TRANSFER_REVIEW_CHANGED',409);
+    const saved=await store.save({id:selection.caseId,expectedRevision:selection.expectedRevision,
+     workspaceText,metadata:native.metadata,supportText:originalSupport});
+    received=caseIdentity(await store.read(selection.caseId,saved.case.revision));unchanged=saved.unchanged;
+    need(received.workspaceSha256===native.workspaceSha256&&received.supportSha256===native.supportSha256&&
+     same(received.metadata,native.metadata),'RESEARCH_CASE_TRANSFER_SAVED_CASE_CHANGED',409);
+   }
+   await saveQuoteResult(target,record.request,record.review,{caseId:selection.caseId,case:received,
+    source:selection.source,sourceSha256:selection.sourceSha256,
+    receiving:{workspaceId,casesWorkspaceId,expectedRevision:selection.expectedRevision,unchanged,recovered,
+     commissioningChanged:proof.received.commissioningChanged,serviceChanged:proof.received.serviceChanged}});
+   return selectedOperation(selected.id);
+  });
+ }
+
  async function preparePublication(input){
   const selected=normalizePublicationSelection(input);
   need(selected.bindingId!==selected.requestId,'RESEARCH_QUOTE_BINDING_ID_CHANGED');
@@ -432,6 +515,17 @@ export async function openResearchCustomerQuotes({directory,workspaceId,configur
  }
  async function nativeCaseDownload(caseId,args){
   id(caseId);need(args.id===undefined||args.id===caseId,'RESEARCH_QUOTE_CASE_CHANGED');await checkedCases();
+  if(args.kind==='CASE_RECORD'){
+   fields(args,['id','kind','revision','scope'],['kind']);
+   if(args.revision!==undefined)hash(args.revision);
+   if(args.scope!==undefined){fields(args.scope,['workspaceId','caseId']);
+    need(args.scope.workspaceId===casesWorkspaceId&&args.scope.caseId===caseId,'RESEARCH_CASE_TRANSFER_SCOPE_CHANGED',409);}
+   const record=await store.read(caseId,args.revision??null),
+    packet=await exportResearchCaseTransfer(record,{workspaceId,casesWorkspaceId}),body=Buffer.from(JSON.stringify(packet)+'\n');
+   return {schema:QUOTES_SCHEMA,workspaceId,caseId,case:caseIdentity(record),
+    descriptor:{name:'research-case-'+caseId+'-'+record.revision+'.json',bytes:body.length,sha256:digest(body),
+     contentType:'application/json; charset=utf-8'},body};
+  }
   const result=await commercial.download({...copy(args),id:caseId});
   return {schema:QUOTES_SCHEMA,workspaceId,caseId,case:result.case,
    descriptor:{name:result.descriptor.filename,bytes:result.descriptor.bytes,sha256:result.descriptor.sha256,
@@ -451,6 +545,8 @@ export async function openResearchCustomerQuotes({directory,workspaceId,configur
    if(selected.revision!==undefined)hash(selected.revision);return run(async()=>{await checkedCases();
     return envelope('case',await commercial.read({id:caseId,...selected}),{caseId});});},
   caseAction:(caseId,action,args)=>{const selected=copy(args);return run(()=>nativeCase(caseId,action,selected));},
+  prepareCaseTransfer:input=>{const selected=caseTransferInput(input);return run(()=>prepareCaseTransfer(selected));},
+  applyCaseTransfer:input=>{const selected=applySelection(input);return run(()=>applyCaseTransfer(selected));},
   createCase:input=>{const selected=caseSelection(input);return run(()=>createCase(selected));},
   prepare:input=>{const selected=briefSelection(input);return run(()=>prepare(selected));},
   prepareResponse:input=>{const selected=responseSelection(input);return run(()=>prepareResponse(selected));},

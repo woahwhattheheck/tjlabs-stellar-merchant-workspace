@@ -213,3 +213,18 @@ workflow through the existing `odk.connection.json`. The dedicated
 `./seller/odk/warehouse` export contains the original factories and complete
 types. The [warehouse guide](warehouse/README.md) documents installation,
 profiles, full receiving, native SQL bindings and portable reopening.
+
+## Review form releases
+
+Open **Form releases** from the managed application to retain published form
+generations and the current Central draft, compare their original fields and
+media, connect exact reporting selectors and repeat tables, and record the staff
+review. Every comparison names the affected commissioning outputs and warehouse
+projections. The approved plan freezes the original candidate, destination,
+reporting interpretation and decisions for the existing native publication
+operation. Published receiving results remain attached to the same workspace.
+
+The desk uses the existing private listener and Store at `/form-releases/`.
+Its [complete operating and integration guide](release-review/README.md) covers
+current-draft source receiving, original file downloads, revision recovery,
+native compatibility, trusted authoring composition and publication receiving.

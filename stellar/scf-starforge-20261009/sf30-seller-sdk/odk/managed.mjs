@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {mkdir,unlink} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {openCentralWarehouse} from './warehouse/open.mjs';
+import {composeCentralFormReleaseReview} from './release-review/open.mjs';
 import {readCentralCommissioningInputs,readCentralWarehouseProfiles} from './host-inputs.mjs';
 import {createCentralServer} from './server.mjs';
 import {restoreCentralArchive} from './archive.mjs';
@@ -59,11 +60,17 @@ export async function startManagedCentralWorkspace(options){
   const before=await odkPrivateDirectory(selected.directory);
   const hostInputs=await readCentralCommissioningInputs({connection:options.commissioningConnection,
     connectionFile:selected.commissioningConnectionFile,environmentFile:options.commissioningEnvironmentFile});
-  let owner,workspace,server,connection,closePromise;
+  let owner,workspace,server,connection,closePromise,formReleases;
+  const formReleaseExtensions=[];
   try{
     owner=await openCentralWarehouse({directory:before.path,connection:hostInputs.connection,
       profiles:warehouseInputs.profiles,
-      ...(options.fetchImpl?{fetchImpl:options.fetchImpl}:{})});
+      ...(options.fetchImpl?{fetchImpl:options.fetchImpl}:{}),
+      extend:({workspace:original,store})=>{
+        const composed=composeCentralFormReleaseReview({workspace:original,store,
+          authoring:options.formAuthoring,fetchImpl:options.fetchImpl});
+        formReleases=composed.review;formReleaseExtensions.push(composed.extension);
+      },extraExtensions:formReleaseExtensions});
     workspace=owner.workspace;
     server=await createCentralServer({workspace,host:'127.0.0.1',port:selected.port,
       token:(await import('node:crypto')).randomBytes(32).toString('hex'),extensions:owner.extensions});
@@ -80,6 +87,13 @@ export async function startManagedCentralWorkspace(options){
     odkNeed(observedWarehouse.schema===warehouseState.schema&&observedWarehouse.workspaceId===commissioned.workspaceId&&
       Number.isSafeInteger(observedWarehouse.revision)&&observedWarehouse.revision>=0,'ODK_WAREHOUSE_IDENTITY',
       'The warehouse differs from the managed Central workspace.',409);
+    const formReleaseMounted=await fetch(server.origin+'/api/form-releases/state',{headers:{Authorization:'Bearer '+server.token},
+      redirect:'error',signal:AbortSignal.timeout(10000)});
+    odkNeed(formReleaseMounted.ok,'ODK_FORM_RELEASE_MOUNT','The form release desk did not open on this managed listener.',502);
+    const observedFormReleases=await formReleaseMounted.json();
+    odkNeed(observedFormReleases.schema==='stellar-forge.odk-form-release-review.v1'&&
+      observedFormReleases.workspaceId===commissioned.workspaceId,'ODK_FORM_RELEASE_IDENTITY',
+      'The form release desk differs from the managed Central workspace.',409);
     const identity=await odkPrivateDirectory(workspace.directory),state=await workspace.state();
     odkNeed(identity.dev===before.dev&&identity.ino===before.ino,
       'ODK_DIRECTORY_CHANGED','The selected original workspace directory changed during opening.',409);
@@ -104,7 +118,8 @@ export async function startManagedCentralWorkspace(options){
       instanceId:value.instanceId,restored,commissioning:owner.commissioning,
       commissioningUrl:server.origin+'/commissioning/#token='+encodeURIComponent(server.token),
       warehouse:owner.warehouse,warehouseProfilesSha256:warehouseInputs.source?.sha256??null,
-      warehouseUrl:server.origin+'/warehouse/#token='+encodeURIComponent(server.token),close};
+      warehouseUrl:server.origin+'/warehouse/#token='+encodeURIComponent(server.token),
+      formReleases,formReleasesUrl:server.origin+'/form-releases/#token='+encodeURIComponent(server.token),close};
   }catch(error){
     await server?.close().catch(()=>{});
     await owner?.close().catch(()=>{});
@@ -116,7 +131,7 @@ export function centralStartup(service){
     operator:service.operator,workspaceId:service.connection.value.workspaceId,instanceId:service.instanceId,
     pid:service.connection.value.pid,connectionFile:service.connection.path,
     connectionSha256:service.connection.sha256,origin:service.origin,url:service.url,commissioningUrl:service.commissioningUrl,
-    warehouseUrl:service.warehouseUrl,warehouseProfilesSha256:service.warehouseProfilesSha256};
+    warehouseUrl:service.warehouseUrl,warehouseProfilesSha256:service.warehouseProfilesSha256,formReleasesUrl:service.formReleasesUrl};
 }
 const HELP='ODK Central managed workspace\n\n'+
   'starforge odk-central-workspace --workspace /private/central --operator "Field data operator" [--port 0]\n'+
@@ -125,7 +140,7 @@ const HELP='ODK Central managed workspace\n\n'+
   '  --commissioning-connection PATH  Original private Central host connection or bootstrap JSON\n'+
   '  --commissioning-environment PATH Original private JSON containing that Authorization alias\n\n'+
   '  --warehouse-profiles PATH      Original private PostgreSQL warehouse profile selection\n\n'+
-  'Commissioning and Warehouse open at /commissioning/ and /warehouse/ on this same listener.\n'+
+  'Commissioning, Warehouse and Form releases open at /commissioning/, /warehouse/ and /form-releases/.\n'+
   'Use commissioning <command> for source agreements, original periods and complete handover.\n'+
   'Use warehouse <command> for approved periods, reviewed SQL imports and full period reports.\n'+
   'Data subcommands include state, capture, report, export, publisher transfers and release controls.\n'+

@@ -74,3 +74,7 @@ The installed `document-merchant batch` commands turn a customer's reports, invo
 ~~~sh
 starforge document-merchant batch --help
 ~~~
+
+## Saved Applications operation
+
+[APPLICATIONS.md](APPLICATIONS.md) covers the complete saved Document merchant: review and prepare the provider configuration, start the original native Jobs service, open its authenticated operator, fulfill whole-file customer requests, then stop and reopen that same merchant. The installed CLI exposes `review`, `inspect-service` and `launch`; JS/TS uses the same original service lifetime.
