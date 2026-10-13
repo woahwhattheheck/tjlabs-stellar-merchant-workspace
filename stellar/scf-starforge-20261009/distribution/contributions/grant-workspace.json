@@ -13,7 +13,7 @@
   "commandDescriptions": {
     "grant-installation-workorder": "Receive complete original Workshare sources and prepare a selected customer Installation workorder",
     "grant-installation-receive": "Receive original customer Workshares into the current Installation case and reopen the complete case on the receiving host",
-    "grant-installation-source-desk": "Review retained original files, prepare source Workshares and attach complete outputs to the selected private Installation case"
+    "grant-installation-source-desk": "Review retained original files and merchant commissioning archives, prepare source Workshares and attach complete outputs to the selected private Installation case"
   },
   "exports": {
     "./grant/installation-workorders": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs"
@@ -57,6 +57,9 @@
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/commissioning-collections.json",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/COMMISSIONING_COLLECTIONS_INSTALLATION.md",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_commissioning.mjs",
-    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_commissioning.py"
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_commissioning.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_commissioning_archive.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation_source_desk_client.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_COMMISSIONING_ARCHIVE.md"
   ]
 }

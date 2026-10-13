@@ -8,14 +8,21 @@ const OID = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 // Keep original source members within the same 8 MiB limit enforced by runtime-unpack.py.
 export const MAX_SOURCE_FILE_BYTES = 8 * 1024 * 1024;
 export const MAX_SOURCE_BYTES = 256 * 1024 * 1024;
+const READ_BATCH_BYTES = MAX_SOURCE_FILE_BYTES;
+const READ_BATCH_OBJECTS = 128;
+const CACHE_BYTES = 2 * MAX_SOURCE_FILE_BYTES;
+const CACHE_OBJECTS = 512;
 const round = value => Math.round(value * 100) / 100;
 
 export function openGitSource({ repository, ref = 'HEAD', offline = false, onProgress = () => {} }) {
   if (typeof ref !== 'string' || !ref || typeof offline !== 'boolean' || typeof onProgress !== 'function')
     throw new TypeError('Expected a Git ref, an offline boolean and a progress callback');
   const repo = resolve(repository), started = performance.now(), cache = new Map();
+  const sizes = new Map(), verified = new Set();
+  let cacheBytes = 0;
   const counts = { gitCommands: 0, gitMilliseconds: 0, metadataBatches: 0, contentBatches: 0,
-    fetchBatches: 0, requestedObjects: 0, cachedObjects: 0, fetchedObjects: 0, uniqueBytes: 0 };
+    fetchBatches: 0, requestedObjects: 0, cachedObjects: 0, fetchedObjects: 0, uniqueBytes: 0,
+    contentBytes: 0, peakBatchBytes: 0, peakCacheBytes: 0 };
   let commit, remotes;
   const progress = (phase, details = {}) => onProgress({ phase, ...(commit ? { sourceCommit: commit } : {}),
     elapsedMilliseconds: round(performance.now() - started), ...details });
@@ -125,42 +132,83 @@ export function openGitSource({ repository, ref = 'HEAD', offline = false, onPro
     }
     return metadata;
   }
-  function readFiles(items) {
+  function cached(blob) {
+    const bytes = cache.get(blob);
+    if (bytes !== undefined) { cache.delete(blob); cache.set(blob, bytes); }
+    return bytes;
+  }
+  function retain(blob, bytes) {
+    while (cache.size && (cacheBytes + bytes.length > CACHE_BYTES || cache.size >= CACHE_OBJECTS)) {
+      const oldest = cache.keys().next().value;
+      cacheBytes -= cache.get(oldest).length; cache.delete(oldest);
+    }
+    cache.set(blob, bytes); cacheBytes += bytes.length;
+    counts.peakCacheBytes = Math.max(counts.peakCacheBytes, cacheBytes);
+  }
+  function clearContentCache() { cache.clear(); cacheBytes = 0; }
+
+  // Yield verified original files in bounded Git batches. Metadata and hashes
+  // persist across rereads; content can leave memory after its current consumer.
+  function* readEntries(items) {
     for (const item of items)
       if (!item || !['100644', '100755'].includes(item.mode) || item.type !== 'blob' || !OID.test(item.blob))
         throw new TypeError('Only regular source files may be packaged: ' + (item?.path ?? 'missing entry'));
-    const blobs = [...new Set(items.map(item => item.blob))].filter(blob => !cache.has(blob));
-    if (blobs.length) {
-      counts.requestedObjects += blobs.length;
-      progress('inspect', { files: items.length, objects: blobs.length });
-      const metadata = inspect(blobs);
-      counts.cachedObjects += blobs.filter(blob => metadata.get(blob) !== null).length;
-      acquire(blobs, metadata);
-      const size = blobs.reduce((sum, blob) => sum + metadata.get(blob), 0);
-      if (counts.uniqueBytes + size > MAX_SOURCE_BYTES) throw new RangeError(`Distribution Git source exceeds ${MAX_SOURCE_BYTES} bytes: ${counts.uniqueBytes + size}`);
-      counts.contentBatches++;
-      const data = git(['cat-file', '--batch'], { input: blobs.join('\n') + '\n',
-        maxBuffer: size + blobs.length * 128 + 1024 });
-      let offset = 0;
-      for (const blob of blobs) {
-        const end = data.indexOf(10, offset), length = metadata.get(blob);
-        if (end < offset || data.toString('ascii', offset, end) !== `${blob} blob ${length}`)
-          throw new TypeError('Git content batch header does not match selected source');
-        const start = end + 1, stop = start + length;
-        if (stop >= data.length || data[stop] !== 10) throw new TypeError('Incomplete Git source content');
-        const bytes = data.subarray(start, stop);
-        const actual = createHash(blob.length === 64 ? 'sha256' : 'sha1')
-          .update(`blob ${length}\0`).update(bytes).digest('hex');
-        if (actual !== blob) throw new TypeError('Git source content identity changed');
-        cache.set(blob, bytes); offset = stop + 1;
-      }
-      if (offset !== data.length) throw new TypeError('Unexpected trailing Git source content');
-      counts.uniqueBytes += size;
-      progress('loaded', { files: items.length, objects: blobs.length, bytes: size });
+    const requested = [...new Set(items.map(item => item.blob))];
+    const unknown = requested.filter(blob => !sizes.has(blob));
+    if (unknown.length) {
+      counts.requestedObjects += unknown.length;
+      progress('inspect', { files: items.length, objects: unknown.length });
+      const metadata = inspect(unknown);
+      counts.cachedObjects += unknown.filter(blob => metadata.get(blob) !== null).length;
+      acquire(unknown, metadata);
+      for (const [blob, size] of metadata) sizes.set(blob, size);
     }
-    return new Map(items.map(item => [item.path, cache.get(item.blob)]));
+    const added = requested.filter(blob => !verified.has(blob)).reduce((sum, blob) => sum + sizes.get(blob), 0);
+    if (counts.uniqueBytes + added > MAX_SOURCE_BYTES)
+      throw new RangeError(`Distribution Git source exceeds ${MAX_SOURCE_BYTES} bytes: ${counts.uniqueBytes + added}`);
+    let index = 0;
+    while (index < items.length) {
+      const batch = [], batchBlobs = new Set(); let bytesInBatch = 0;
+      while (index < items.length && batch.length < READ_BATCH_OBJECTS) {
+        const item = items[index], addedBytes = batchBlobs.has(item.blob) ? 0 : sizes.get(item.blob);
+        if (batch.length && bytesInBatch + addedBytes > READ_BATCH_BYTES) break;
+        batch.push(item); batchBlobs.add(item.blob); bytesInBatch += addedBytes; index++;
+      }
+      // Touch cached batch members before inserting new ones so eviction never
+      // removes a member of this <=8 MiB/128-object batch from the 16 MiB cache.
+      const missing = [...batchBlobs].filter(blob => cached(blob) === undefined);
+      if (missing.length) {
+        const size = missing.reduce((sum, blob) => sum + sizes.get(blob), 0);
+        counts.contentBatches++; counts.contentBytes += size;
+        counts.peakBatchBytes = Math.max(counts.peakBatchBytes, size);
+        const data = git(['cat-file', '--batch'], { input: missing.join('\n') + '\n',
+          maxBuffer: size + missing.length * 128 + 1024 });
+        let offset = 0;
+        for (const blob of missing) {
+          const end = data.indexOf(10, offset), length = sizes.get(blob);
+          if (end < offset || data.toString('ascii', offset, end) !== `${blob} blob ${length}`)
+            throw new TypeError('Git content batch header does not match selected source');
+          const start = end + 1, stop = start + length;
+          if (stop >= data.length || data[stop] !== 10) throw new TypeError('Incomplete Git source content');
+          const view = data.subarray(start, stop);
+          const actual = createHash(blob.length === 64 ? 'sha256' : 'sha1')
+            .update(`blob ${length}\0`).update(view).digest('hex');
+          if (actual !== blob) throw new TypeError('Git source content identity changed');
+          // Independent allocation prevents one tiny retained member from
+          // keeping the entire original Git subprocess output alive.
+          retain(blob, Buffer.from(view)); offset = stop + 1;
+          if (!verified.has(blob)) { verified.add(blob); counts.uniqueBytes += length; }
+        }
+        if (offset !== data.length) throw new TypeError('Unexpected trailing Git source content');
+      }
+      for (const item of batch) yield [item.path, cached(item.blob)];
+    }
+    progress('loaded', { files: items.length, objects: requested.length,
+      bytes: requested.reduce((sum, blob) => sum + sizes.get(blob), 0),
+      cacheBytes, peakBatchBytes: counts.peakBatchBytes });
   }
-  return { commit, tree, readFiles, progress,
+  function readFiles(items) { return new Map(readEntries(items)); }
+  return { commit, tree, readFiles, readEntries, clearContentCache, progress,
     metrics: () => ({ ...counts, gitMilliseconds: round(counts.gitMilliseconds),
       elapsedMilliseconds: round(performance.now() - started), offline }) };
 }

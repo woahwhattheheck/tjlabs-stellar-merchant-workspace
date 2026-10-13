@@ -16,7 +16,8 @@ import uuid
 
 from model import Workspace, Problem
 from operations import Operations
-from operations_installation_sources import SourceDesk, MAX_ZIP, json_bytes
+from operations_installation_sources import SourceDesk, MAX_FILE, MAX_ZIP, json_bytes
+from installation_source_desk_client import InstallationSourceDeskClient, prepare_upload, receiving_selection
 
 MAX_REQUEST = 32 * 1024 * 1024
 
@@ -118,6 +119,39 @@ def publish(path, raw):
 
 def execute(desk, args):
     case, draft = args.case, getattr(args, "draft", None)
+    if args.command in ("prepare-command", "prepare-upload", "archive-inspect",
+                         "archive-receive-prepare", "commissioning-inspect",
+                         "commissioning-preview", "commissioning-attach-prepare",
+                         "execute-prepared", "reconcile-prepared"):
+        client = InstallationSourceDeskClient(desk, case, draft,
+                    workspace_directory=str(args.workspace.expanduser().absolute()))
+        if args.command == "prepare-command":
+            return client.prepare_command(object_file(args.request)), None
+        if args.command == "prepare-upload":
+            raw = read_file(args.file, MAX_FILE)
+            value = prepare_upload(case, draft, raw,
+                filename=args.filename or args.file.name, source_url=args.source_url,
+                observed_at=args.observed_at, expected_revision=args.revision,
+                actor=args.actor, request_id=args.request_id, note=args.note,
+                media_type=args.media_type, workspace_directory=client.workspace_directory)
+            return value, None
+        if args.command == "archive-inspect":
+            return client.archive_inspect(args.archive_file_id, args.revision, args.replace_file_id), None
+        if args.command in ("archive-receive-prepare", "commissioning-attach-prepare"):
+            action = ("commissioning.archive.receive" if args.command == "archive-receive-prepare"
+                      else "commissioning.attach")
+            return client.prepare_review(object_file(args.preview), action,
+                actor=args.actor, request_id=args.request_id, note=args.note), None
+        if args.command == "commissioning-inspect":
+            selection = (receiving_selection(object_file(args.receiving_receipt), case_id=case, draft_id=draft)
+                         if args.receiving_receipt else object_file(args.selection))
+            return client.commissioning_inspect(selection), None
+        if args.command == "commissioning-preview":
+            return client.commissioning_preview(object_file(args.selection)), None
+        operation = object_file(args.operation)
+        if args.command == "execute-prepared":
+            return client.execute(operation), None
+        return client.reconcile(operation), None
     if args.command == "profiles":
         return desk.profiles(), None
     if args.command == "list":
@@ -179,6 +213,47 @@ def main(argv=None):
             command.add_argument("--filename", required=True)
         if name in ("file", "output", "export"):
             command.add_argument("--expected-sha256", required=True)
+    for name in ("prepare-command", "prepare-upload", "archive-inspect",
+                 "archive-receive-prepare", "commissioning-inspect",
+                 "commissioning-preview", "commissioning-attach-prepare",
+                 "execute-prepared", "reconcile-prepared"):
+        command = sub.add_parser(name)
+        command.add_argument("--draft", required=True)
+        if name == "prepare-command":
+            command.add_argument("--request", required=True, type=Path,
+                                 help="Complete original command body, including its request ID")
+        if name == "prepare-upload":
+            command.add_argument("--file", required=True, type=Path,
+                                 help="One complete original file of at most 8 MiB")
+            command.add_argument("--filename", help="Exact native receiving filename; defaults to original basename")
+            command.add_argument("--source-url", required=True, help="Original source provenance URL")
+            command.add_argument("--observed-at", required=True, help="Actual original observation timestamp")
+            command.add_argument("--media-type", default="application/x-tar")
+        if name in ("prepare-upload", "archive-inspect"):
+            command.add_argument("--revision", required=True, type=int)
+        if name == "archive-inspect":
+            command.add_argument("--archive-file-id", required=True)
+            command.add_argument("--replace-file-id", action="append", default=[],
+                                 help="Exact conflicting selected file to replace; repeat for each reviewed ID")
+        if name in ("prepare-upload", "archive-receive-prepare", "commissioning-attach-prepare"):
+            command.add_argument("--actor", required=True)
+            command.add_argument("--request-id", help="Stable request identity; generated once when omitted")
+            command.add_argument("--note", default="")
+        if name in ("archive-receive-prepare", "commissioning-attach-prepare"):
+            command.add_argument("--preview", required=True, type=Path,
+                                 help="Complete original sealed preview, unchanged")
+        if name == "commissioning-inspect":
+            source = command.add_mutually_exclusive_group(required=True)
+            source.add_argument("--receiving-receipt", type=Path,
+                                help="Complete original archive receiving receipt")
+            source.add_argument("--selection", type=Path,
+                                help="Original expectedRevision/captureFileId/fileIds object")
+        if name == "commissioning-preview":
+            command.add_argument("--selection", required=True, type=Path,
+                                 help="Complete project/Installation/phase mapping and original revisions")
+        if name in ("execute-prepared", "reconcile-prepared"):
+            command.add_argument("--operation", required=True, type=Path,
+                                 help="Previously saved complete operation, unchanged")
     args = parser.parse_args(argv)
     if args.command != "profiles" and not args.case:
         parser.error("--case must select the original existing Operations case")

@@ -1,0 +1,117 @@
+{
+  "schema": "stellar-forge.sdp-batch.source-contract.v1",
+  "operationId": "BLOCCPAY-SDP-BATCH-8F43-20261013",
+  "upstream": {
+    "repository": "stellar/stellar-disbursement-platform-backend",
+    "commit": "4330f131e8a2638a10767ec8db50a98f22672a61",
+    "files": [
+      {
+        "path": "internal/data/receivers.go",
+        "gitBlob": "3a3282f5f6516e834980a4f79e8a5c1529a16ddf"
+      },
+      {
+        "path": "internal/data/disbursement_receivers.go",
+        "gitBlob": "6828be9fba9d3fede9aa5be2dc7ea54ecac47e82"
+      },
+      {
+        "path": "internal/data/receivers_wallet.go",
+        "gitBlob": "59850054cd823c5dde572402756bfd7723a03abc"
+      },
+      {
+        "path": "internal/data/registration_contact_type.go",
+        "gitBlob": "54e4e93b78536fa675feb1fb71b633abffe0bff8"
+      },
+      {
+        "path": "internal/data/payments.go",
+        "gitBlob": "5d992fdc01395ba81af8a99537ac7e73f7129643"
+      },
+      {
+        "path": "internal/data/disbursement_instructions.go",
+        "gitBlob": "d1d3668f2b36ad06f2182f29b1412ba1654751c2"
+      },
+      {
+        "path": "internal/serve/httphandler/disbursement_handler.go",
+        "gitBlob": "7b8c0678b726a9d0e9b347927305c14198437a14"
+      },
+      {
+        "path": "internal/events/events.go",
+        "gitBlob": "101c8c82add5949b6be0ecc41febe9a741843c7e"
+      },
+      {
+        "path": "internal/scheduler/jobs/event_delivery_job.go",
+        "gitBlob": "ab2e98820410e430ff4f4c70e71b0b952a9d36f6"
+      }
+    ]
+  },
+  "maintainedRepository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "reviewedCommit": "e0ade1d51e695dc55fe40281b0d55bf2994e3472",
+  "dependencies": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/settlement-audit/native-http.mjs",
+      "gitBlob": "416872f58a30f488c115bf3218734de83617ee9e",
+      "bytes": 11179,
+      "sha256": "25163934132ce488a2a7588e28c7bea90dc63f5fb53788f983e3330852888a6a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/settlement-audit/reconciliation.mjs",
+      "bytes": 67534,
+      "sha256": "59800dae52dbb159b7d0919c4e53c3ff6938332c7444d812a0fd603aef36b967"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/settlement-audit/workspace.mjs",
+      "gitBlob": "3e2497b913e3c353fe28cc58a75dd6ea920e39b7",
+      "bytes": 42758,
+      "sha256": "2dbf0af95dfc4ca0bcde681290977a02cbfe7d4ac5926996561dd1eddb4b5af7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/native.mjs",
+      "gitBlob": "8d0e1cc6b5d3efc75f20e3da61d07d83ed9230ea",
+      "bytes": 30324,
+      "sha256": "e309dd795a96779658d35cdcc572ac249c07f9b815f81ef962ceaa8ae28db8e2"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/workspace.mjs",
+      "bytes": 79498,
+      "sha256": "adf32064b6bd1e9eaf837804bbf778bde1e32b577a9f244b894a694be1071cb2"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/common.mjs",
+      "gitBlob": "3fe71be78bd0db57305858dd0c4cb6a14509b015",
+      "bytes": 13794,
+      "sha256": "51c9ab1a978a78b9bb34739b86a3fb0a1199357d2c26b7aa3487bf3a83e4d2e4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/archive.mjs",
+      "gitBlob": "d90f3c9efd16202b4baefda02f134432f7e5aaf8",
+      "bytes": 28853,
+      "sha256": "fb4aaa79f4b8401deda1969541bbce2065341de42243f5be86edd3f74881491c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/cli.mjs",
+      "bytes": 19046,
+      "sha256": "fa9240eb61066d5bbf1c46174f805a883eb928535d04550c9d93b98db1148680"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/reconciliation.mjs",
+      "gitBlob": "8f50d92eb0200e7ba3f8489b3a571bc83665bea3",
+      "bytes": 58929,
+      "sha256": "8f416557113671d4e2e092092091c99fdda410145cccbb961de48f78ea8f1db4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/settlement-audit/sdp-native.mjs",
+      "gitBlob": "4b1fe46bb4929b40cc855b3f3790f8fce91a50e1",
+      "bytes": 9275,
+      "sha256": "9d1e6e934a6e16304cfb8a53c659284105ecf2d7c3391c8dc0c18c2c9cf73c35"
+    }
+  ],
+  "financialBinding": "Existing customer durable mutation admission/outcome writer and atomic event/effect transaction",
+  "receiving": "Original invoice workspace source journal and complete application package",
+  "validation": {
+    "course": "Pure contract exercise using constructed documentation records",
+    "validBatch": "PASS",
+    "providerUnderpayment": "95 actual /100 expected",
+    "wrongAssetExcluded": "PASS",
+    "oneStroop": true,
+    "existingRecipientID": "older-customer-id"
+  }
+}

@@ -1208,8 +1208,9 @@ pricing and comparison engine as the rest of this desk.
    an unknown selected cost remains unknown in the resulting estimate. A known
    zero requires explicit complete coverage; the absence of a row alone does not
    turn a partial category into zero.
-6. **Calculate complete successor** shows the derived per-result supplier cost,
-   hours and hourly cost, selected/unselected source shares, full financial report,
+6. **Calculate complete successor** shows supplier cost per useful task and per
+   underlying request, the retained task/request conversion, hours per task and
+   hourly cost, selected/unselected source shares, full financial report,
    capacity and price floors. Resolve an invalid source, cost share, currency,
    measured output, or future-date constraint in the same retained form.
 7. Review **Open before / after comparison**, then **Apply to editable future
@@ -1233,7 +1234,11 @@ hours at $4/hour, assigned to two measured useful results, produce $6 materials
 and 0.625 active hours per result at $4/hour. Running two future results costs
 $17 before the plan's original payment fees. The two measured results need not
 equal a payment count. The original payment and funding identities remain
-untouched.
+untouched. If each future task uses three requests, the same $6 materials per task
+becomes $2 per underlying request. Two tasks then use six requests and still cost
+$12 materials plus $5 labor, rather than charging the materials three times.
+The entered or saved measured unit must represent one complete future task; keep
+that relationship explicit in the original measurement/source basis.
 
 For each selected actual cost, the shares across *all* target allocations must
 sum to at most one. Unselected shares remain visible. Every selected contribution
@@ -1241,8 +1246,12 @@ retains its whole original cost row, including any native Work, invoice,
 contributor, attachment and reviewed overlap witnesses. Resolve invoice-linked
 Work overlap in the original commercial reconciliation before deriving a plan.
 
-Supplier cost per result is selected supplier/other cost divided by measured
-outputs. Hours per result are selected labor hours divided by measured outputs.
+Supplier cost per completed task is selected supplier/other cost divided by measured
+completed tasks. The original planner charges `unitCost` per underlying request,
+so the derived `unitCost` additionally divides by the selected future schedule's
+`requestsPerTask`. The complete derivation retains both quantities, the exact
+corresponding request count and the supplier cost per task. Hours per task are
+selected labor hours divided by measured completed tasks.
 Hourly cost is selected labor cost divided by selected labor hours. Derived
 nonnegative rates are ceiling-rounded to twelve decimal places, while the
 underlying amounts, hours and shares remain exact decimal values. The original
@@ -1268,6 +1277,11 @@ A complete result has schema
 `stellar-forge.sf47-cohort-recorded-cost-plan.v1`, the whole `sourceDocument`,
 whole `planDocument`, normalized `choices`, `candidate`, `report`,
 `comparison`, per-allocation `derivations` and all `costBalances`.
+New normalized choices carry `quantityBasis: "COMPLETED_TASKS"`. Each derivation
+includes its completed tasks, requests per task, corresponding requests and
+supplier cost per task. A complete historical document without that marker reopens
+with its original calculation and bytes. Explicitly calculating a successor uses
+the current unit conversion; the browser retains the earlier complete proposal.
 Reopen recalculates and compares the complete result with these originals.
 The existing 8 MiB native attachment bound applies to the whole saved edition;
 source is never silently omitted to fit it.
@@ -1278,6 +1292,7 @@ An illustrative allocation, using IDs from the selected original documents:
 {
   "name": "Next customer service window",
   "note": "Original measured output and dated actual-cost basis reviewed",
+  "quantityBasis": "COMPLETED_TASKS",
   "allocations": [{
     "id": "report-service-basis",
     "targetScheduleId": "future-report-service",
@@ -1454,3 +1469,12 @@ actual selected source and saved revision in that case. The operation derives `o
 Continue the existing adoption review, prepare, save, request recovery and open
 tools. The Task Outcomes writer, its original revisions and any measurement
 workbook remain in their own native workflow.
+
+The multi-request continuation used the same maintained modules and in-memory
+source/browser adapters: two measured tasks, three requests per future task,
+$12 selected materials and 1.25 hours at $4/hour produced $2/request,
+0.625 hours/task and $17 total for six requests. Purchased funding stayed exact.
+The full independently received-case prepare/save/recovery/reopen retained
+826,748 bytes, with both original and selected case identities unchanged.
+Earlier complete proposal documents reopened exactly with their original
+calculation; an explicit new calculation selected the current quantity basis.

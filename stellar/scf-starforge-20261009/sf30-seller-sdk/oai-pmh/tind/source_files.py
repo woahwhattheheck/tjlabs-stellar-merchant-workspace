@@ -483,7 +483,10 @@ def import_source(owner, project, value, operation):
     if path.is_symlink():
         raise InputError("Receive an original regular file")
     path = path.resolve(strict=True)
+    from migration import source_binding, source_binding_digest
+    binding = source_binding(path, value.get("sourceBinding"))
     actual = file_digest(path, item["maximumBytes"])
+    source_binding_digest(actual, binding)
     if item["expectedBytes"] is not None and actual["bytes"] != item["expectedBytes"] or item["expectedSha256"] is not None and actual["sha256"] != item["expectedSha256"]:
         raise InputError("The original received document differs from its selected expected identity")
     if item["status"] == "complete" and (item["sha256"], item["bytes"]) != (actual["sha256"], actual["bytes"]):
@@ -505,6 +508,7 @@ def import_source(owner, project, value, operation):
         if file_digest(temporary, item["maximumBytes"]) != actual:
             raise InputError("The original file changed while it was received")
         os.replace(temporary, destination); storage.sync_dir(destination.parent)
+    source_binding(path, value.get("sourceBinding"))
     transport = {"url": requested, "finalUrl": final_url, "method": "GET", "status": 200,
                  "headers": retained_headers, "observedAt": observed_at}
     receipt = {"schema": "stellar-forge.tind-source-file-receiving.v1", "operationId": operation,

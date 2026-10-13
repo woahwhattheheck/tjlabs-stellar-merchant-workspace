@@ -50,7 +50,8 @@
     "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-desk.mjs",
     "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-render.mjs",
     "stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md",
-    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-environment.mjs"
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-environment.mjs",
+    "stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-summary.mjs"
   ],
   "excludeFiles": [
     "products/x402api-merchant-workspace/installed-receiving.mjs"

@@ -1,0 +1,79 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "merchant-monitoring",
+  "heading": "## 7. Threat response and useful-outcome measurement",
+  "sources": [
+    {
+      "id": "merchant-monitoring-threat-chapter",
+      "label": "Complete merchant threat model, monitoring workflow and funded receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf_2026/SCF46_THREAT_MODEL_AND_MONITORING_20261012.md",
+      "commit": "15a108b2f4964f86fcdb1a67ef75692ff9b40057",
+      "editions": [
+        {
+          "commit": "15a108b2f4964f86fcdb1a67ef75692ff9b40057",
+          "bytes": 52635,
+          "sha256": "72eb08125e1fd61c94d05281beadb1199a47b47ec7dd6cbd73c111d191014470",
+          "git_blob": "4b1736dd604768ed8963115e72716b7b46a98aa5"
+        }
+      ]
+    },
+    {
+      "id": "merchant-monitoring-application-source",
+      "label": "Original live merchant owner, store, full observation and summary implementation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "tree",
+      "path": "products/x402api-merchant-workspace",
+      "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d"
+    },
+    {
+      "id": "merchant-monitoring-watcher-source",
+      "label": "Original continuous collector, condition evaluator, incidents and complete capture",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "tree",
+      "path": "stellar/scf-starforge-20261009/sf93-seller-support-bundle",
+      "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d"
+    },
+    {
+      "id": "merchant-monitoring-support-source",
+      "label": "Customer Support source selection, editable cases and full receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "tree",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console",
+      "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d"
+    },
+    {
+      "id": "merchant-monitoring-owner-guide",
+      "label": "Full and summary observation operation, original identity and history continuity",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/OBSERVATIONS.md",
+      "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d",
+      "editions": [
+        {
+          "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d",
+          "bytes": 10756,
+          "sha256": "b05926428b9d3e56698548cd8c405b2aa2311bfeaedaaa9e9011e794a2077827",
+          "git_blob": "e131ee5f06a082a6c91bb86c11194de51c2d9925"
+        }
+      ]
+    },
+    {
+      "id": "merchant-monitoring-support-guide",
+      "label": "Complete merchant monitoring configuration, response cases and customer handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md",
+      "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d",
+      "editions": [
+        {
+          "commit": "0bca95aa3126849a47ef775c8af965747a01dc2d",
+          "bytes": 19793,
+          "sha256": "4ab399195d51307fdb6780f426dfd6598dec7e66a85859e2d284ed32648d5f22",
+          "git_blob": "f7a2b941188c423ac9d0fde4b4f48e12745fe263"
+        }
+      ]
+    }
+  ]
+}

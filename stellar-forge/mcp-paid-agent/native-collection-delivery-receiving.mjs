@@ -11,6 +11,7 @@ import {initializationDirectory,initializationBytes,optionalInitializationBytes,
 import {selectSource} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/source.mjs';
 import {bytes,identity,need,measure,inspectPackage,copyFile,MAX_PACKAGE} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/format.mjs';
 import {receiveCustomerDelivery} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/receiving/receive.mjs';
+import {selectNativeInboxTask} from './native-inbox-task-delivery.mjs';
 import {initializeCollectionReceiver,openCollectionReceiver,startCollectionReceiver} from './native-collections-receiver.mjs';
 import {openNativeCollectionDeliveryClient,retainNativeCustomerRequest,uploadNativeCustomerPackage,checkedDeliveryRange} from './native-collection-delivery-client.mjs';
 import {inspectNativeCustomerPackage,downloadNativeCustomerPackage,reopenNativeCustomerPackage,receiveDownloadedCustomerPackage,inspectReceivedCustomerPackage,downloadReceivedCustomerPackage,reopenReceivedCustomerPackage} from './native-collection-delivery-download.mjs';
@@ -48,11 +49,14 @@ async function exactHistory(client){
  return{...first,items,offset:0,nextOffset:null};
 }
 /** Caller retains the original Collections object and its existing queue owner. */
-export async function receiveNativeCustomerDelivery({directory,collections,sourceRoot,sourceManifest,collectionId,intentIds,onProgress=()=>{}}){
- need(collections&&typeof collections.inspect==='function'&&Array.isArray(intentIds)&&intentIds.length>0,'MCP_DELIVERY_RECEIVING_SELECTION');
+export async function receiveNativeCustomerDelivery({directory,collections,sourceRoot,sourceManifest,collectionId,intentIds,taskPacket,expectedTaskSha256,onProgress=()=>{}}){
+ const taskMode=collections==null&&typeof taskPacket==='string'&&typeof expectedTaskSha256==='string';
+ need((taskMode||(collections&&typeof collections.inspect==='function'&&taskPacket===undefined&&expectedTaskSha256===undefined))&&Array.isArray(intentIds)&&intentIds.length>0,'MCP_DELIVERY_RECEIVING_SELECTION');
+ const task=taskMode?await selectNativeInboxTask({taskPacketDirectory:taskPacket,expectedTaskSha256}):null;
+ if(taskMode)need(collectionId==null&&intentIds.every(id=>task.inspection.intents.some(row=>row.intentId===id)),'MCP_DELIVERY_RECEIVING_TASK_SELECTION');
  const executed=relative(sourceRoot,fileURLToPath(import.meta.url));
  need(['stellar-forge/mcp-paid-agent/native-collection-delivery-receiving.mjs','source/stellar-forge/mcp-paid-agent/native-collection-delivery-receiving.mjs'].includes(executed)&&await realpath(sourceRoot)===sourceRoot,'MCP_DELIVERY_RECEIVING_SOURCE');
- const source=await selectSource({sourceRoot,sourceManifest,exclude:[directory,collections.directory,collections.queueRoot]});
+ const source=await selectSource({sourceRoot,sourceManifest,exclude:[directory,collections?.directory,collections?.queueRoot,taskPacket].filter(Boolean)});
  await initializationDirectory(directory,{create:true});const release=await acquireCollectionLease(directory);
  let state,mcp,registration,sender,recipient,failed;
  const stateFile=join(directory,'operation.json'),files=join(directory,'files'),host=join(directory,'mcp-host'),recipientRoot=join(directory,'remote-customer');
@@ -82,11 +86,14 @@ export async function receiveNativeCustomerDelivery({directory,collections,sourc
  try{
   await initializationDirectory(files,{create:true});await initializationDirectory(recipientRoot,{create:true});
   const raw=await optionalInitializationBytes(stateFile,32*1024*1024);state=raw?JSON.parse(raw):null;
-  const selection={collectionId,intentIds,sourceRoot,sourceManifest,sourceSha256:source.sha256,collectionsDirectory:collections.directory,queueRoot:collections.queueRoot};
+  const selection=taskMode?{kind:'inbox-task',taskPacket,expectedTaskSha256,task:task.inspection.task,intentIds,sourceRoot,sourceManifest,sourceSha256:source.sha256}:
+   {collectionId,intentIds,sourceRoot,sourceManifest,sourceSha256:source.sha256,collectionsDirectory:collections.directory,queueRoot:collections.queueRoot};
   if(!state){
-   const original=await collections.inspect(collectionId);
+   const original=taskMode?null:await collections.inspect(collectionId);
    state={schema:SCHEMA,operationId:'collection-mcp-'+randomUUID(),selection,
-    request:{id:'mcp-'+randomUUID(),collectionId,expectedManifestSha256:original.manifestSha256,title:'Complete original customer package through MCP',
+    request:taskMode?{id:'mcp-'+randomUUID(),expectedTaskSha256,title:'Complete original InboxTask customer package through MCP',
+     note:'The original saved Task output and its separate recovery read; no new buyer execution.',intentIds}:
+    {id:'mcp-'+randomUUID(),collectionId,expectedManifestSha256:original.manifestSha256,title:'Complete original customer package through MCP',
      note:'Original saved output and source receiving; no new buyer execution.',intentIds,maxVerifyBytes:1073741824,allowIncomplete:false},
     steps:{},files:[]};await save();
   }
@@ -96,27 +103,39 @@ export async function receiveNativeCustomerDelivery({directory,collections,sourc
   if(!credential){credential=bytes({token:randomBytes(32).toString('hex')});await retainInitializationFile(credentialsFile,credential,{resume:true});}
   const token=JSON.parse(credential).token;need(/^[a-f0-9]{64}$/.test(token),'MCP_DELIVERY_RECEIVING_CREDENTIALS');
   const environment={MCP_ACCESS_TOKEN:token};
-  sender=await serveCollections(collections,{port:state.senderPort??0,approvalMode:'TERMINAL'});
+  const taskSenderRoot=join(directory,'original-task-sender');
+  if(taskMode)await initializationDirectory(taskSenderRoot,{create:true});
+  sender=await serveCollections(taskMode?null:collections,{...(taskMode?{receivingDirectory:taskSenderRoot}:{}),port:state.senderPort??0,approvalMode:'TERMINAL'});
   recipient=await serveCollections(null,{receivingDirectory:recipientRoot,port:state.recipientPort??0,approvalMode:'TERMINAL'});
   if(!state.senderPort){state.senderPort=Number(new URL(sender.origin).port);await save();}
   if(!state.recipientPort){state.recipientPort=Number(new URL(recipient.origin).port);await save();}
   const senderConnection=join(directory,'sender-connection.json'),recipientConnection=join(directory,'recipient-connection.json');
-  await atomic(senderConnection,collectionsWorkspaceLaunch({directory:collections.directory,queueRoot:collections.queueRoot,approvalMode:'TERMINAL'},sender.origin+'/#'+sender.token));
+  await atomic(senderConnection,taskMode?collectionsRecoveryWorkspaceLaunch({receivingDirectory:taskSenderRoot},sender.origin+'/#'+sender.token):
+   collectionsWorkspaceLaunch({directory:collections.directory,queueRoot:collections.queueRoot,approvalMode:'TERMINAL'},sender.origin+'/#'+sender.token));
   await atomic(recipientConnection,collectionsRecoveryWorkspaceLaunch({receivingDirectory:recipientRoot},recipient.origin+'/#'+recipient.token));
   try{await initializationBytes(join(host,'collection-receiver.json'));}
   catch(error){if(error.code!=='ENOENT')throw error;await initializeCollectionReceiver({directory:host});}
   registration=await openCollectionReceiver(host);
-  await registration.registerCollectionDelivery({name:'sender',connectionFile:senderConnection,sourceRoot,sourceManifest});
+  await registration.registerCollectionDelivery({name:'sender',connectionFile:senderConnection,sourceRoot,sourceManifest,...(taskMode?{taskPacketDirectory:taskPacket,expectedTaskSha256}: {})});
   await registration.registerCollectionDelivery({name:'recipient',connectionFile:recipientConnection});
   await closeOne('registration');
   mcp=await startCollectionReceiver({directory:host,port:state.mcpPort??0,environment});
   if(!state.mcpPort){state.mcpPort=Number(new URL(mcp.url).port);await save();}
   const options={url:mcp.url,environment},client=await openNativeCollectionDeliveryClient({...options,deliveryWorkspace:'sender'});
   const receiving=await openNativeCollectionDeliveryClient({...options,deliveryWorkspace:'recipient'});
-  const preview=await retainNativeCustomerRequest({client,directory:join(directory,'preview'),operation:'preview',body:state.request});
+  if(taskMode){
+   const rows=[];let offset=0,first;
+   do{const page=await client.inspectTask(expectedTaskSha256,{offset,limit:100});first??=page;
+    need(identity(page.task)===identity(task.inspection.task)&&page.offset===offset&&page.total===first.total,'MCP_DELIVERY_RECEIVING_TASK_INSPECTION');
+    rows.push(...page.items);offset=page.nextOffset;
+   }while(offset!==null);
+   need(identity(rows)===identity(task.inspection.intents),'MCP_DELIVERY_RECEIVING_TASK_POPULATION');
+   await retainedJson('original-task-inspection.json',{schema:first.schema,task:first.task,intents:rows});
+  }
+  const preview=await retainNativeCustomerRequest({client,directory:join(directory,'preview'),operation:taskMode?'task-preview':'preview',body:state.request});
   if(!state.preview){state.preview=preview.value;await save();}
   need(identity(state.preview)===identity(preview.value)&&state.preview.source.sha256===source.sha256,'MCP_DELIVERY_RECEIVING_PREVIEW');
-  const prepared=await retainNativeCustomerRequest({client,directory:join(directory,'prepare'),operation:'prepare',body:{...state.request,expectedPreviewSha256:state.preview.previewSha256}});
+  const prepared=await retainNativeCustomerRequest({client,directory:join(directory,'prepare'),operation:taskMode?'task-prepare':'prepare',body:{...state.request,expectedPreviewSha256:state.preview.previewSha256}});
   need(prepared.value.state==='COMPLETE'&&prepared.value.outputsComplete&&prepared.value.responseCount===intentIds.length,'MCP_DELIVERY_RECEIVING_OUTPUTS');
   if(!state.original){state.original=prepared.value;await save();}
   need(identity(prepared.value)===identity(state.original),'MCP_DELIVERY_RECEIVING_PREPARE_CHANGED');
@@ -152,6 +171,8 @@ export async function receiveNativeCustomerDelivery({directory,collections,sourc
   const packageInspection=await inspectPackage(join(files,'customer-delivery.ndjson'),{expected:state.original.package});
   need(received.value.outputsComplete&&inventory.manifestSha256===packageInspection.manifestSha256&&identity(inventory.items)===identity(packageInspection.manifest.files),'MCP_DELIVERY_RECEIVING_MEMBER_POPULATION');
   await retainedJson('received-inventory.json',inventory);
+  if(taskMode)need(packageInspection.manifest.collection===null&&identity(packageInspection.manifest.task)===identity(task.inspection.task)&&
+   packageInspection.manifest.rows.every((row,index)=>row.intentId===intentIds[index]&&row.output.state==='VERIFIED'),'MCP_DELIVERY_RECEIVING_TASK_MANIFEST');
   const response=packageInspection.manifest.rows.find(r=>r.output.state==='VERIFIED').output;
   const responseTarget=join(files,'original-response.bin');
   // Receive all original bytes via the registered member reader, with a durable original package as independent witness.
@@ -242,7 +263,7 @@ export async function receiveNativeCustomerDelivery({directory,collections,sourc
    if(!failed&&state&&!state.complete){
     for(const row of state.files)await measure(join(files,row.name),row,MAX_PACKAGE);
     const result={schema:SCHEMA+'.result',operationId:state.operationId,source:{sha256:source.sha256,files:source.files.length,bytes:source.bytes},
-     originalCollection:collectionId,originalIntents:intentIds,package:state.original.package,downloadManifestSha256:state.downloadManifest.manifestSha256,
+     ...(taskMode?{originalTask:task.inspection.task}:{originalCollection:collectionId}),originalIntents:intentIds,package:state.original.package,downloadManifestSha256:state.downloadManifest.manifestSha256,
      files:state.files,steps:state.steps,ownersClosed:true};
     await retainInitializationFile(join(directory,'final-candidate.json'),bytes(result),{resume:true});
     await retainInitializationFile(join(directory,'result.json'),bytes(result),{resume:true});state.complete=true;await save();
@@ -252,9 +273,15 @@ export async function receiveNativeCustomerDelivery({directory,collections,sourc
  if(failed)throw failed;
  return verifyCompletion();
 }
-/** The existing browser programme and the native agent programme share the same original outputs. */
+/** The existing browser programme and the native agent programme share the same original Collection or InboxTask outputs. */
 export async function receiveCollectionsCustomerProgramme(options){
  const browser=await receiveCustomerDelivery({...options,directory:join(options.directory,'browser')});
  const native=await receiveNativeCustomerDelivery({...options,directory:join(options.directory,'mcp')});
  return{schema:'stellar-forge.collections-customer-programme.v1',browser,native,ownersClosed:browser.ownersClosed&&native.ownersClosed};
+}
+
+/** Compose the same original browser/MCP course with the existing immutable Task packet. */
+export async function receiveInboxTaskCustomerProgramme(options){
+ need(options?.collections==null&&typeof options?.taskPacket==='string'&&typeof options?.expectedTaskSha256==='string','MCP_DELIVERY_RECEIVING_TASK_SELECTION');
+ return receiveCollectionsCustomerProgramme({...options,collections:null});
 }

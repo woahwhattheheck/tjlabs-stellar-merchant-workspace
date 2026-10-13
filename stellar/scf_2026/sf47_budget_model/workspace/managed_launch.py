@@ -251,6 +251,7 @@ BOOT_FILES = (
     "app.mjs",
     "style.css",
     "operations.mjs",
+    "operations_lazy.mjs",
     "operations.css",
     "operations_workflows.py",
     "SAVED_WORKFLOWS.md",

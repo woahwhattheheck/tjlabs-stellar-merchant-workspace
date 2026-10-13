@@ -4,15 +4,21 @@ import { createOperatingPlanReturn, inspectOperatingPlanReturn, compareOperating
   reviseOperatingPlanReturn, decideOperatingPlanReturn, applyOperatingPlanReturn,
   renderOperatingPlanReturnHTML, OPERATING_RETURN_MAX_BYTES, OPERATING_RETURN_PLAN_MAX_BYTES } from '/operating-return-core/operating-plan-return.mjs';
 
+import { inspectOperatingReturnWorking, renderOperatingReturnWorkbook, OPERATING_RETURN_WORKBOOK_ASSETS,
+  OPERATING_RETURN_WORKING_SCHEMA, OPERATING_RETURN_WORKING_MAX_BYTES } from '/operating-return-core/operating-plan-return-workbook.mjs';
+
 const $ = id => document.getElementById(id), clone = value => JSON.parse(JSON.stringify(value));
-const WORKING_SCHEMA = 'stellar-forge.operating-plan-return-working.v1';
-const WORKING_MAX_BYTES = 192 * 1024 * 1024, PAGE_SIZE = 20;
+const WORKING_SCHEMA = OPERATING_RETURN_WORKING_SCHEMA;
+const WORKING_MAX_BYTES = OPERATING_RETURN_WORKING_MAX_BYTES, PAGE_SIZE = 20;
+const offline = globalThis.__operatingReturnWorkbook ?? null;
+let memoryOnly = false, workbookAssets = offline?.sources ?? null, lastPortable = null;
+const memoryReviews = new Map();
 const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 const display = value => typeof value === 'string' ? value : JSON.stringify(value, null, 2);
 let plansDB, reviewsDB, ready = false, busy = false, currentSource = null, incomingSource = null;
 let sourceDestination = { kind: 'file' }, state = null, report = null, page = 1;
 let saveTimer, saveChain = Promise.resolve(), pendingSaves = 0, lastSaveFailed = false;
-const broadcast = typeof BroadcastChannel === 'function' ? new BroadcastChannel('starforge-operating-plans-v1') : null;
+const broadcast = !offline && typeof BroadcastChannel === 'function' ? new BroadcastChannel('starforge-operating-plans-v1') : null;
 function node(tag, content, className) {
   const result = document.createElement(tag);
   if (content !== undefined) result.textContent = content;
@@ -32,7 +38,9 @@ function openDB(name, configure) {
     request.onblocked = () => message('Close an older workspace tab to finish opening saved work.');
     request.onsuccess = () => {
       request.result.onversionchange = () => {
-        request.result.close(); ready = false; renderControls();
+        request.result.close();
+        if (offline) useMemoryStorage(); else ready = false;
+        renderControls();
         error(new Error('Saved storage changed. Download the working review, then reopen this page.'));
       };
       resolve(request.result);
@@ -56,13 +64,50 @@ function getPlan(id) {
     tx.objectStore('plans').get(id).onsuccess = event => done(event.target.result ?? null);
   });
 }
+function useMemoryStorage() {
+  if (!offline) return;
+  if (state) memoryReviews.set(state.persistence.key, {
+    ...snapshot(), key: state.persistence.key, version: state.persistence.version,
+  });
+  memoryOnly = true;
+  try { reviewsDB?.close(); } catch {}
+  reviewsDB = null;
+  $('draft-status').textContent = 'Browser storage is unavailable. Download the editable workbook or Working review JSON to retain current work.';
+}
+function saveMemoryReview(captured, persistence) {
+  const existing = memoryReviews.get(persistence.key), version = existing?.version ?? null;
+  const forked = version !== persistence.version || !existing && persistence.version !== null;
+  const key = forked ? crypto.randomUUID() : persistence.key, nextVersion = crypto.randomUUID();
+  memoryReviews.set(key, { ...clone(captured), key, version: nextVersion });
+  return { key, version: nextVersion, forked };
+}
 function getReview(key) {
+  if (memoryOnly) return Promise.resolve(clone(memoryReviews.get(key) ?? null));
   return transaction(reviewsDB, ['reviews'], 'readonly', (tx, done) => {
     tx.objectStore('reviews').get(key).onsuccess = event => done(event.target.result ?? null);
+  }).then(value => {
+    if (value) memoryReviews.set(value.key, clone(value)); return value;
+  }).catch(value => {
+    if (!offline) throw value;
+    useMemoryStorage(); return clone(memoryReviews.get(key) ?? null);
+  });
+}
+async function reviewRecords() {
+  if (memoryOnly) return [...memoryReviews.values()].map(clone);
+  return transaction(reviewsDB, ['reviews'], 'readonly', (tx, done) => {
+    const rows = []; tx.objectStore('reviews').openCursor().onsuccess = event => {
+      const cursor = event.target.result; if (!cursor) { done(rows); return; }
+      rows.push(cursor.value); cursor.continue();
+    };
+  }).then(rows => {
+    for (const value of rows) memoryReviews.set(value.key, clone(value)); return rows;
+  }).catch(value => {
+    if (!offline) throw value;
+    useMemoryStorage(); return [...memoryReviews.values()].map(clone);
   });
 }
 async function refreshShelves() {
-  const planRows = await transaction(plansDB, ['plans'], 'readonly', (tx, done) => {
+  const planRows = offline ? [] : await transaction(plansDB, ['plans'], 'readonly', (tx, done) => {
     const rows = [];
     tx.objectStore('plans').openCursor().onsuccess = event => {
       const cursor = event.target.result;
@@ -74,17 +119,10 @@ async function refreshShelves() {
       cursor.continue();
     };
   });
-  const reviewRows = await transaction(reviewsDB, ['reviews'], 'readonly', (tx, done) => {
-    const rows = [];
-    tx.objectStore('reviews').openCursor().onsuccess = event => {
-      const cursor = event.target.result;
-      if (!cursor) { done(rows); return; }
-      const value = cursor.value;
-      rows.push({ key: value.key, title: value.title, updatedAt: value.updatedAt,
-        completed: Boolean(value.review?.completion), pending: Object.keys(value.buffers ?? {}).length });
-      cursor.continue();
-    };
-  });
+  const reviewRows = (await reviewRecords()).map(value => ({
+    key: value.key, title: value.title, updatedAt: value.updatedAt,
+    completed: Boolean(value.review?.completion), pending: Object.keys(value.buffers ?? {}).length,
+  }));
   const selectedPlan = $('saved-plan').value, selectedReview = state?.key ?? $('saved-review').value;
   $('saved-plan').replaceChildren(new Option('Choose a saved procedure', ''));
   for (const row of planRows.sort((a, b) => b.savedAt.localeCompare(a.savedAt)))
@@ -110,7 +148,8 @@ function snapshot() {
   const work = portableWorking(); serialized(work);
   return { ...work, key: state.key, reviewId: state.review.id,
     title: state.review.current.revisions.at(-1).title, updatedAt: new Date().toISOString(),
-    destination: clone(state.destination), applied: state.applied };
+    destination: clone(state.destination), applied: state.applied,
+    ...(offline ? { workbookId: offline.id } : {}) };
 }
 async function saveNow() {
   clearTimeout(saveTimer); saveTimer = undefined;
@@ -118,7 +157,7 @@ async function saveNow() {
   const captured = snapshot(), persistence = state.persistence;
   pendingSaves++; $('draft-status').textContent = 'Saving working review…';
   const pending = saveChain.catch(() => {}).then(async () => {
-    const saved = await transaction(reviewsDB, ['reviews'], 'readwrite', (tx, done) => {
+    const saved = memoryOnly ? saveMemoryReview(captured, persistence) : await transaction(reviewsDB, ['reviews'], 'readwrite', (tx, done) => {
       const records = tx.objectStore('reviews'), request = records.get(persistence.key);
       request.onsuccess = () => {
         const existing = request.result, version = existing?.version ?? null;
@@ -127,7 +166,11 @@ async function saveNow() {
         records.put({ ...captured, key, version: nextVersion });
         done({ key, version: nextVersion, forked });
       };
+    }).catch(value => {
+      if (!offline) throw value;
+      useMemoryStorage(); return saveMemoryReview(captured, persistence);
     });
+    memoryReviews.set(saved.key, { ...clone(captured), key: saved.key, version: saved.version });
     persistence.key = saved.key; persistence.version = saved.version;
     if (state?.persistence === persistence) state.key = saved.key;
     if (saved.forked) {
@@ -140,7 +183,9 @@ async function saveNow() {
   pending.then(() => {
     lastSaveFailed = false;
     if (state?.persistence === persistence && pendingSaves === 1)
-      $('draft-status').textContent = 'Working review retained at ' + new Date(captured.updatedAt).toLocaleTimeString() + '.';
+      $('draft-status').textContent = memoryOnly
+        ? 'Working review is open in this tab. Download the editable workbook or Working review JSON before closing.'
+        : 'Working review retained at ' + new Date(captured.updatedAt).toLocaleTimeString() + '.';
   }, value => {
     lastSaveFailed = true;
     $('draft-status').textContent = 'This latest work is still open. Download Working review JSON to retain it.';
@@ -190,14 +235,17 @@ function filteredRows() {
 function renderControls() {
   document.querySelectorAll('button,input,select,textarea').forEach(element => { element.disabled = busy || !ready; });
   const editable = Boolean(state && !state.review.completion);
-  $('load-current').disabled ||= !$('saved-plan').value;
+  $('load-current').disabled ||= Boolean(offline) || !$('saved-plan').value;
+  $('saved-plan').disabled ||= Boolean(offline);
   $('prepare-return').disabled ||= !currentSource || !incomingSource;
   $('open-review').disabled ||= !$('saved-review').value;
-  $('refresh-current').disabled ||= !state;
+  $('refresh-current').disabled ||= Boolean(offline) || !state;
   for (const id of ['reviewer', 'review-notes', 'save-details']) $(id).disabled ||= !editable;
   for (const id of ['download-working', 'download-review', 'download-html', 'change-filter', 'change-search'])
     $(id).disabled ||= !state;
   const pending = state ? Object.keys(state.buffers).length : 0;
+  $('download-workbook').disabled = busy || !state;
+  if ($('recover-embedded-working')) $('recover-embedded-working').disabled = false;
   $('download-working').disabled = busy || !state; // Memory recovery remains available if saved storage closes.
   $('download-review').disabled ||= Boolean(pending);
   $('download-html').disabled ||= Boolean(pending);
@@ -363,27 +411,17 @@ async function readJSON(file, maximum) {
   if (bytes.byteLength > maximum) throw new TypeError('The selected JSON exceeds its size limit.');
   return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
 }
-function working(value) {
-  if (value?.schema !== WORKING_SCHEMA) return { review: inspectOperatingPlanReturn(value), buffers: {} };
-  if (Object.keys(value).some(key => !['schema', 'review', 'details', 'buffers'].includes(key)))
-    throw new TypeError('This working review contains unsupported fields.');
-  const review = inspectOperatingPlanReturn(value.review), keys = new Set(compareOperatingPlanReturn(review).rows.map(row => row.key));
-  if (!value.details || Object.keys(value.details).some(key => !['reviewer', 'notes'].includes(key)) ||
-    typeof value.details.reviewer !== 'string' || value.details.reviewer.length > 1000 ||
-    typeof value.details.notes !== 'string' || value.details.notes.length > 32000 ||
-    !value.buffers || typeof value.buffers !== 'object' || Array.isArray(value.buffers))
-    throw new TypeError('Keep the complete review details and pending choice editors.');
-  for (const [key, buffer] of Object.entries(value.buffers)) {
-    if (!keys.has(key) || !buffer || typeof buffer !== 'object' || Array.isArray(buffer) ||
-      Object.keys(buffer).some(field => !['take', 'custom', 'note'].includes(field)) ||
-      !['automatic', 'current', 'incoming', 'base', 'custom'].includes(buffer.take) ||
-      typeof buffer.note !== 'string' || buffer.note.length > 32000 ||
-      typeof buffer.custom !== 'string' || buffer.custom.length > OPERATING_RETURN_PLAN_MAX_BYTES)
-      throw new TypeError('A pending choice does not belong to the retained source comparison.');
-  }
-  if (review.completion && (Object.keys(value.buffers).length || !same(value.details, { reviewer: review.reviewer, notes: review.notes })))
-    throw new TypeError('A completed review must keep its recorded details and choices.');
-  return { review, buffers: clone(value.buffers), details: clone(value.details) };
+function working(value) { return inspectOperatingReturnWorking(value); }
+async function loadWorkbookAssets() {
+  if (workbookAssets) return workbookAssets;
+  const entries = await Promise.all(OPERATING_RETURN_WORKBOOK_ASSETS.map(async asset => {
+    const response = await fetch(asset.route, { cache: 'no-store', redirect: 'error', credentials: 'same-origin' });
+    if (!response.ok) throw new Error('The installed workbook source is unavailable: ' + asset.file);
+    const body = await response.text();
+    if (new Blob([body]).size > 4 * 1024 * 1024) throw new Error('The installed workbook source exceeds its complete-file limit.');
+    return [asset.key, body];
+  }));
+  workbookAssets = Object.fromEntries(entries); return workbookAssets;
 }
 function download(filename, value, type = 'application/json') {
   const body = typeof value === 'string' ? value : serialized(value);
@@ -463,7 +501,14 @@ for (const id of ['change-filter', 'change-search'])
 $('previous-page').addEventListener('click', () => { page--; renderRows(); renderControls(); });
 $('next-page').addEventListener('click', () => { page++; renderRows(); renderControls(); });
 $('download-working').addEventListener('click', () => run(async () => {
-  download(filename('working.json'), portableWorking()); message('Working review downloaded with every unfinished choice editor.');
+  const work = portableWorking(); download(filename('working.json'), work); lastPortable = JSON.stringify(work);
+  message('Working review downloaded with every unfinished choice editor.');
+}));
+$('download-workbook').addEventListener('click', () => run(async () => {
+  const work = portableWorking(), sources = await loadWorkbookAssets();
+  download(filename('workbook.html'), renderOperatingReturnWorkbook(work, sources), 'text/html');
+  lastPortable = JSON.stringify(work);
+  message('Editable offline workbook downloaded with the complete review, all file bytes and unfinished choice editors.');
 }));
 $('download-review').addEventListener('click', () => run(async () => {
   if (Object.keys(state.buffers).length) throw new Error('Record pending choices first, or download the full Working review JSON.');
@@ -511,7 +556,7 @@ $('complete-return').addEventListener('click', () => run(async () => {
   renderReview(); await refreshShelves();
 }));
 window.addEventListener('beforeunload', event => {
-  if (pendingSaves || saveTimer || lastSaveFailed) { event.preventDefault(); event.returnValue = ''; }
+  if (pendingSaves || saveTimer || lastSaveFailed || memoryOnly && state && JSON.stringify(portableWorking()) !== lastPortable) { event.preventDefault(); event.returnValue = ''; }
 });
 if (broadcast) broadcast.onmessage = event => {
   if (state && event.data?.id === state.review.current.id) {
@@ -521,16 +566,42 @@ if (broadcast) broadcast.onmessage = event => {
 };
 (async () => {
   try {
-    [plansDB, reviewsDB] = await Promise.all([
-      openDB('starforge-operating-plans-v1', db => {
-        db.createObjectStore('plans', { keyPath: 'id' });
-        const drafts = db.createObjectStore('drafts', { keyPath: 'key' }); drafts.createIndex('planId', 'planId');
-      }),
-      openDB('starforge-operating-plan-returns-v1', db => {
-        const reviews = db.createObjectStore('reviews', { keyPath: 'key' }); reviews.createIndex('reviewId', 'reviewId');
-      }),
-    ]);
-    ready = true; await refreshShelves(); renderReview();
-    message('Saved procedures and retained reviews are ready.');
+    if (offline) {
+      $('saved-plan').closest('section').querySelector('label[for="saved-plan"]').hidden = true;
+      for (const id of ['saved-plan', 'load-current', 'refresh-current']) $(id).hidden = true;
+      let storageError = null;
+      try {
+        reviewsDB = await openDB('starforge-operating-plan-return-workbooks-v1', db => {
+          const reviews = db.createObjectStore('reviews', { keyPath: 'key' }); reviews.createIndex('reviewId', 'reviewId');
+        });
+      } catch (value) { useMemoryStorage(); storageError = value; }
+      ready = true;
+      const candidates = (await reviewRecords()).filter(row => row.workbookId === offline.id)
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      const saved = candidates[0], selected = working(saved
+        ? { schema: WORKING_SCHEMA, review: saved.review, buffers: saved.buffers, details: saved.details }
+        : offline.working);
+      await activate(selected.review, { ...selected, destination: { kind: 'file' },
+        ...(saved ? { key: saved.key, version: saved.version ?? null } : {}) });
+      lastPortable = JSON.stringify(portableWorking());
+      message(memoryOnly
+        ? 'Offline workbook opened. Browser storage is unavailable; download the editable workbook to keep each working edition.'
+        : saved ? 'Your latest retained work for this workbook is open.' +
+          (candidates.length > 1 ? ' Other saved copies remain in Retained reviews.' : '')
+        : 'Offline workbook opened with both complete histories. Download an updated workbook to keep the current file edition.');
+      if (storageError) $('draft-status').textContent = 'Local saving is unavailable. Complete editing and file downloads remain available.';
+    } else {
+      [plansDB, reviewsDB] = await Promise.all([
+        openDB('starforge-operating-plans-v1', db => {
+          db.createObjectStore('plans', { keyPath: 'id' });
+          const drafts = db.createObjectStore('drafts', { keyPath: 'key' }); drafts.createIndex('planId', 'planId');
+        }),
+        openDB('starforge-operating-plan-returns-v1', db => {
+          const reviews = db.createObjectStore('reviews', { keyPath: 'key' }); reviews.createIndex('reviewId', 'reviewId');
+        }),
+      ]);
+      ready = true; await refreshShelves(); renderReview();
+      message('Saved procedures and retained reviews are ready.');
+    }
   } catch (value) { error(value); renderControls(); }
 })();

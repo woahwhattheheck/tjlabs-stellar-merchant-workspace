@@ -2,8 +2,9 @@
 import {createCustomerSetup} from './setup.mjs';
 import {createCustomerDossierUi} from './customer-dossiers.mjs';
 import {createServicePlannerUi} from './service-planner.mjs';
+import {createServiceSchedulesUi} from './service-schedules.mjs';
 const $=id=>document.getElementById(id);
-let customerSetup,customerDossiers,servicePlanner;
+let customerSetup,customerDossiers,servicePlanner,serviceSchedules;
 const state={context:null,inventory:null,selected:new Set(),selections:[],requestId:crypto.randomUUID(),cycles:[],key:null,current:null,poll:null,inventoryBusy:false,review:null};
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const pretty=value=>JSON.stringify(value,null,2);
@@ -92,7 +93,7 @@ function renderSelections(){
   }).join('');
 }
 function view(name){
-  $('compose-view').hidden=name!=='compose';$('cycles-view').hidden=name!=='cycles';$('setup-view').hidden=name!=='setup';$('service-planner-view').hidden=name!=='service-planner';
+  $('compose-view').hidden=name!=='compose';$('cycles-view').hidden=name!=='cycles';$('setup-view').hidden=name!=='setup';$('service-planner-view').hidden=name!=='service-planner';$('service-schedules-view').hidden=name!=='service-schedules';
   document.querySelectorAll('[data-view]').forEach(button=>{if(button.dataset.view===name)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
 }
 async function refreshInventory(){
@@ -246,7 +247,7 @@ $('selections').addEventListener('click',async event=>{
 $('prepare').addEventListener('click',prepareCycle);
 $('close-review').addEventListener('click',()=>$('review-dialog').close());
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',async()=>{
-  view(button.dataset.view);if(button.dataset.view==='service-planner')try{await servicePlanner.show();}catch(error){showError(error);}if(button.dataset.view==='setup')try{await customerSetup.show();}catch(error){showError(error);}if(button.dataset.view==='cycles')try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}
+  view(button.dataset.view);if(button.dataset.view==='service-schedules')try{await serviceSchedules.show();}catch(error){showError(error);}if(button.dataset.view==='service-planner')try{await servicePlanner.show();}catch(error){showError(error);}if(button.dataset.view==='setup')try{await customerSetup.show();}catch(error){showError(error);}if(button.dataset.view==='cycles')try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}
 }));
 $('reload-cycles').addEventListener('click',async()=>{try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}});
 $('cycle-list').addEventListener('click',event=>{const button=event.target.closest('[data-cycle]');if(button)loadCycle(button.dataset.cycle);});
@@ -281,6 +282,10 @@ customerSetup=createCustomerSetup({getState:()=>state,api,notice,showError,clear
 servicePlanner=createServicePlannerUi({getState:()=>state,api,notice,showError,clearError,openReview,
   async openCycle(key){state.key=key;view('cycles');await refreshCycles();await loadCycle(key);},
   async showSetup(){view('setup');await customerSetup.show();}
+});
+serviceSchedules=createServiceSchedulesUi({getState:()=>state,api,notice,showError,clearError,openReview,
+  async openCycle(key){state.key=key;view('cycles');await refreshCycles();await loadCycle(key);},
+  async showPlanner(){view('service-planner');await servicePlanner.show();}
 });
 async function start(){
   try{

@@ -25,6 +25,7 @@ import zipfile
 from model import Problem, canonical, digest, now, short_id, text
 import operations_workshare_installations as workshares
 import operations_installation_commissioning as merchant_commissioning
+import operations_installation_commissioning_archive as commissioning_archive
 
 SCHEMA = "stellar-forge.installation-source-desk.v1"
 PREPARATION = "stellar-forge.installation-source-desk-preparation.v1"
@@ -108,6 +109,37 @@ def native():
     need(module.stable_file(HELPER) == raw, "The original preparation source changed while loading.")
     _MODULE = (module, receipt)
     return _MODULE
+
+
+_NATIVE_HANDOVER = None
+
+
+def native_handover():
+    """Pin the existing full handover adapter and its exact shared source helper."""
+    global _NATIVE_HANDOVER
+    source, source_receipt = native()
+    path = ROOT / "handover-inputs.py"
+    raw = source.stable_file(path)
+    files = [source_receipt, {"path": str(path), "bytes": len(raw), "sha256": raw_hash(raw)}]
+    receipt = {"kind": "delivery-handover", "files": files,
+               "bytes": sum(row["bytes"] for row in files), "sha256": digest(files)}
+    if _NATIVE_HANDOVER is not None:
+        need(_NATIVE_HANDOVER[1] == receipt,
+             "The installed handover preparation source changed. Reopen the application source.",
+             "INSTALLATION_SOURCE_ENGINE_CHANGED", 409)
+        return _NATIVE_HANDOVER
+    spec = importlib.util.spec_from_file_location("sf47_original_installation_handover_inputs", path)
+    need(spec is not None and spec.loader is not None, "Retain the installed handover preparation module.")
+    module = importlib.util.module_from_spec(spec)
+    exec(compile(raw, str(path), "exec"), module.__dict__)
+    need(source.stable_file(path) == raw and native()[1] == source_receipt,
+         "The installed handover preparation source changed while loading.",
+         "INSTALLATION_SOURCE_ENGINE_CHANGED", 409)
+    # Both complete original engines use the same source reader already pinned by
+    # this desk. The source adapter retains and validates its original intake.
+    module.source_tools = native
+    _NATIVE_HANDOVER = (module, receipt)
+    return _NATIVE_HANDOVER
 
 
 _NATIVE_PACKAGE = None
@@ -292,7 +324,11 @@ class SourceDesk:
             result.append({**selected, "profile": module.json_object(raw, path.name)})
         need(result, "Retain the complete installed profile catalogue.")
         package, package_receipt = native_package()
+        handover, handover_receipt = native_handover()
         return {"schema": SCHEMA, "engine": receipt, "profiles": result,
+                "sourceFormats": [
+                    {"schema": module.SCHEMA, "label": "Original Workshare packets", "engine": receipt},
+                    {"schema": handover.SCHEMA, "label": "Saved delivery handovers", "engine": handover_receipt}],
                 "nativePackages": [{"schema": package.SCHEMA, "kind": "canadabuys-native-workshare",
                                     "profile": "canadabuys-bidder-desk", "engine": package_receipt}],
                 "limits": {"fileBytes": MAX_FILE, "selectedInputBytes": MAX_INPUTS,
@@ -304,7 +340,25 @@ class SourceDesk:
         value = module.json_object(raw, metadata["filename"])
         plan = value.get("workshare_input", {}).get("plan") if isinstance(value.get("workshare_input"), dict) else None
         packet_case = value.get("prepared_case", {}).get("id") if isinstance(value.get("prepared_case"), dict) else None
-        amendment_receipt = None
+        amendment_receipt, handover_identity = None, None
+        source_kind = "workshare-packet"
+        snapshot = value.get("snapshot")
+        if isinstance(snapshot, dict) and snapshot.get("version") == "dealscout.delivery-handover.v1":
+            need(amendment is None, "Keep saved handover phases unchanged; select an amended original handover edition.")
+            handover, receipt = native_handover()
+            saved_case, saved_workshare = snapshot.get("case"), snapshot.get("workshare")
+            need(isinstance(saved_case, dict) and isinstance(saved_workshare, dict)
+                 and isinstance(saved_workshare.get("plan"), dict),
+                 "Retain the complete original handover case and Workshare plan.")
+            packet_case, plan = saved_case.get("id"), saved_workshare["plan"]
+            plan_sha = raw_hash(module.canonical(plan).encode("utf-8"))
+            try:
+                inputs, handover_identity = handover.handover_workshare(module, raw, packet_case, plan_sha)
+            except (ValueError, KeyError, TypeError, AttributeError) as error:
+                raise Problem("The saved original delivery handover is unreadable: " + str(error),
+                              422, "INSTALLATION_SOURCE_INVALID") from error
+            plan = inputs["plan"]
+            source_kind = "delivery-handover"
         if amendment is not None:
             need(isinstance(plan, dict), "Select an original complete Workshare packet before reviewing its phase amendment.")
             selected, _, amendment_receipt = module.selected_packet(
@@ -337,7 +391,8 @@ class SourceDesk:
                             candidates.append({"basis": basis, "pointer": pointer, "value": item,
                                                "text": str(item)})
         return {"schema": SCHEMA, "file": metadata, "engine": receipt, "jsonText": raw.decode("utf-8"),
-                "packet": ({"caseId": packet_case, "plan": deepcopy(plan),
+                "sourceKind": source_kind, "originalHandover": handover_identity,
+                "packet": ({"caseId": packet_case, "plan": deepcopy(plan), "sourceKind": source_kind,
                             "planSha256": raw_hash(module.canonical(plan).encode("utf-8"))}
                            if isinstance(plan, dict) else None),
                 "phaseAmendment": deepcopy(amendment), "phaseAmendmentReceipt": amendment_receipt,
@@ -390,6 +445,14 @@ class SourceDesk:
 
     def _prepare(self, state, context, data):
         module, source = native()
+        selected = state["selection"]
+        need(isinstance(selected, dict), "Save the complete original source selection before preparing.")
+        if selected.get("schema") == "stellar-forge.installation-handover-selection.v1":
+            engine, source = native_handover()
+            original_key, kind = "handover", "delivery-handover"
+        else:
+            need(selected.get("schema") == module.SCHEMA, "Select a supported complete original source format.")
+            engine, original_key, kind = module, "packet", "workshare-packet"
         need(data.get("expectedEngineSha256") == source["sha256"],
              "Reopen the current installed preparation source before preparing.",
              "INSTALLATION_SOURCE_ENGINE_CHANGED", 409)
@@ -427,7 +490,7 @@ class SourceDesk:
         for case in cases:
             need(isinstance(case, dict), "Use the complete native customer selection.")
             need(isinstance(case.get("files"), list), "Select the complete original customer document list.")
-            for declared in [case.get("packet"), *case["files"]]:
+            for declared in [case.get(original_key), *case["files"]]:
                 need(isinstance(declared, dict) and declared.get("filename") in names,
                      "Select each full original packet/document from this draft's retained files.")
                 file = names[declared["filename"]]
@@ -454,7 +517,7 @@ class SourceDesk:
             domain.timestamp(original["at"], "Original preparation time")
             context["at"] = original["at"]
         module.retain(root / "selection.json", selected_raw)
-        report = module.prepare(root / "selection.json", inputs, outputs)
+        report = engine.prepare(root / "selection.json", inputs, outputs)
         returned_profiles = report.get("profiles")
         need(isinstance(returned_profiles, list) and
              all(isinstance(item, dict) and isinstance(item.get("id"), str) and
@@ -463,7 +526,8 @@ class SourceDesk:
              {item["id"]: item["sha256"] for item in returned_profiles} == pins,
              "The native preparation used a different complete profile selection. Keep its original outputs for reconciliation.",
              "INSTALLATION_SOURCE_ENGINE_CHANGED", 409)
-        need(native()[1] == source, "The original preparation source changed during execution.",
+        current_source = native_handover()[1] if kind == "delivery-handover" else native()[1]
+        need(current_source == source, "The original preparation source changed during execution.",
              "INSTALLATION_SOURCE_ENGINE_CHANGED", 409)
         files = []
         for item in [*report["outputs"], report["output"]]:
@@ -483,7 +547,9 @@ class SourceDesk:
                   "draftId": state["id"], "draftRevision": state["revision"],
                   "selectionSha256": raw_hash(selected_raw), "engine": source,
                   "actor": context["actor"], "preparedAt": context["at"],
-                  "state": "PREPARED_SOURCE", "report": report, "files": files}
+                  "state": "PREPARED_SOURCE", "report": report, "files": files, "kind": kind,
+                  "sourceRoles": {"commissioning": "Supplier_Workshare_Commissioning.json",
+                                  "packet": None if kind == "delivery-handover" else "Supplier_Complete_Receiving_Packets.json"}}
         self.db.execute("INSERT INTO ops_installation_source_preparations VALUES(?,?,?,?)",
                         (state["caseId"], state["id"], preparation_id, canonical(result)))
         state["preparations"].append({key: deepcopy(result[key]) for key in
@@ -561,6 +627,9 @@ class SourceDesk:
                                       ("id", "draftRevision", "selectionSha256", "preparedAt", "state", "kind")})
         return result
 
+    def commissioning_archive_inspect(self, case_id, draft_id, body):
+        return commissioning_archive.inspect(self, case_id, draft_id, body)
+
     def commissioning_inspect(self, case_id, draft_id, body):
         return merchant_commissioning.inspect(self, case_id, draft_id, body)
 
@@ -607,10 +676,12 @@ class SourceDesk:
         by_name = {row["filename"]: row for row in selected}
         roles = prepared.get("sourceRoles", {"commissioning": "Supplier_Workshare_Commissioning.json",
                                             "packet": "Supplier_Complete_Receiving_Packets.json"})
-        commissioning, packets = by_name[roles["commissioning"]], by_name[roles["packet"]]
+        commissioning = by_name[roles["commissioning"]]
+        packets = by_name[roles["packet"]] if roles["packet"] is not None else None
         source_selection = {"expectedVersion": expected, "sourceId": commissioning["sourceId"],
-                            "expectedSourceSha256": commissioning["sha256"], "packetSourceId": packets["sourceId"],
-                            "expectedPacketSha256": packets["sha256"]}
+                            "expectedSourceSha256": commissioning["sha256"],
+                            "packetSourceId": packets["sourceId"] if packets is not None else None,
+                            "expectedPacketSha256": packets["sha256"] if packets is not None else None}
         inventory = workshares.case_inventory(self.ops, self.ops._context(state["caseId"]), source_selection)
         receipt = {"schema": PREPARATION, "state": "ATTACHED_SOURCES", "caseId": state["caseId"],
                    "draftId": state["id"], "preparationId": prepared["id"],
@@ -625,7 +696,7 @@ class SourceDesk:
         request_id = short_id(body["requestId"], "Original source-desk request ID")
         actor, note = text(body["actor"], "Recording operator", 300, True), text(body.get("note", ""), "Preparation note", 12000)
         action = body["action"]
-        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach"),
+        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach", "commissioning.archive.receive"),
              "Choose a supported original source preparation action.")
         need(isinstance(body["data"], dict), "Use the complete source action data.")
         expected = integer(body["expectedRevision"], "source draft revision")
@@ -707,6 +778,8 @@ class SourceDesk:
                           ("fileId", "expectedSha256", "expectedEngineSha256", "expectedProfileSha256"),
                           "complete native source-package receiving")
                     result = self._receive_native(state, context, data)
+                elif action == "commissioning.archive.receive":
+                    result = commissioning_archive.receive(self, state, context, data)
                 elif action == "commissioning.attach":
                     result = merchant_commissioning.attach(self, state, context, data)
                 elif action == "attach":
@@ -730,6 +803,8 @@ class SourceDesk:
             if isinstance(returned, dict) and returned.get("state") == "PREPARED_SOURCE":
                 need(self._preparation(draft["caseId"], draft["id"], returned["id"]) == returned,
                      "The complete original preparation receipt differs.", "INSTALLATION_SOURCE_CHANGED", 409)
+            elif isinstance(returned, dict) and returned.get("state") == "RECEIVED_COMMISSIONING_ARCHIVE":
+                commissioning_archive.verify_receipt(self, returned)
             elif isinstance(returned, dict) and returned.get("state") == "ATTACHED_COMMISSIONING":
                 merchant_commissioning.verify_receipt(self, returned)
             elif isinstance(returned, dict) and returned.get("state") == "ATTACHED_SOURCES":
@@ -763,6 +838,9 @@ def register_static(static):
         "/operations_installation_sources.css": ("operations_installation_sources.css", "text/css; charset=utf-8"),
         "/operations_installation_source_hash.mjs": ("operations_installation_source_hash.mjs", "text/javascript; charset=utf-8"),
         "/installation-prepare-core.mjs": ("../../sf49_data_commissioning/installation-workorders/prepare-core.mjs", "text/javascript; charset=utf-8"),
+        "/installation-workorders/customer-programme-core.mjs": ("../../sf49_data_commissioning/installation-workorders/customer-programme-core.mjs", "text/javascript; charset=utf-8"),
+        "/installation-workorders/commercial-workshare-core.mjs": ("../../sf49_data_commissioning/installation-workorders/commercial-workshare-core.mjs", "text/javascript; charset=utf-8"),
+        "/installation-workorders/recurring-core.mjs": ("../../sf49_data_commissioning/installation-workorders/recurring-core.mjs", "text/javascript; charset=utf-8"),
     })
 
 
@@ -771,12 +849,13 @@ def handle(handler, parsed, operations, method):
     from urllib.parse import parse_qs, unquote
     commissioning_path = re.fullmatch(
         r"/api/operations/(operation-[a-f0-9]{32})/installation-sources/"
-        r"(source-desk-[a-f0-9]{32})/commissioning/(inspect|preview)", parsed.path)
+        r"(source-desk-[a-f0-9]{32})/commissioning/(inspect|preview|archive-inspect)", parsed.path)
     if commissioning_path:
         need(method == "POST" and not parsed.query, "Review one original commissioning capture.", status=405)
         case_id, draft_id, action = commissioning_path.groups()
         desk = SourceDesk(operations)
-        read = desk.commissioning_inspect if action == "inspect" else desk.commissioning_preview
+        read = {"inspect": desk.commissioning_inspect, "preview": desk.commissioning_preview,
+                "archive-inspect": desk.commissioning_archive_inspect}[action]
         handler.send(200, read(case_id, draft_id, handler.json_body()))
         return True
     global_path = "/api/operations/installation-source-profiles"

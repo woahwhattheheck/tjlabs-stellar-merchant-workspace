@@ -10,10 +10,12 @@ import secrets
 import shutil
 import tempfile
 import threading
+import uuid
 from urllib.parse import parse_qs, urlsplit, quote
 from bridge import InputError
 from harvest import jbytes, decode, sha, stamp
 from managed import require_binding, startup
+from live import publish as publish_live, retire as retire_live
 from migration import Migration, MAX_JSON
 from native import native_tables, search_export, send_exact
 from source_cases import list_collections, view_collection, plan_many, reviews, review_document, collection
@@ -32,6 +34,7 @@ class Server(ThreadingHTTPServer):
         super().__init__(("127.0.0.1", port), Handler)
         self.workspace, self.binding, self.token = workspace, binding, token
         self.cookie_name = "tind_" + str(self.server_port)
+        self.instance_id = str(uuid.uuid4())
         self.announcement = startup(self, binding, token)
         self.native_jobs = {}
         self.job_lock = threading.Lock()
@@ -53,7 +56,7 @@ class Server(ThreadingHTTPServer):
             if old:
                 if old["requestSha256"] != digest:
                     raise InputError("This native operation ID has different inputs")
-                resumable = old["status"] != "running" and (request["task"] == "source-download" or request["task"] == "search" and old.get("result", {}).get("status") == "ready")
+                resumable = old["status"] != "running" and (request["task"] == "source-download" or request["task"] == "search" and old.get("result", {}).get("status") == "ready" or request["task"] == "job-read" and old["status"] == "error")
                 if not resumable:
                     return old
             if any(item["status"] == "running" for item in self.native_jobs.values()):
@@ -131,6 +134,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(data)))
+        self.send_header("X-Content-SHA256", sha(data))
         self.common_headers()
         if download:
             self.send_header("Content-Disposition", 'attachment; filename="' + download + '"')
@@ -181,7 +185,39 @@ class Handler(BaseHTTPRequestHandler):
                 return
             owner = self.server.workspace
             if path == "/api/launch":
+                require_binding(owner.root, self.server.binding["sha256"])
                 self.respond(200, self.server.announcement)
+            elif path == "/api/operation":
+                operation = query["operation"]
+                with owner.mutex:
+                    row = owner.db.execute("SELECT request_sha,response FROM tind_operations WHERE id=?", (operation,)).fetchone()
+                    result = {"operationId": operation, "found": row is not None}
+                    if row:
+                        response = decode(row["response"])
+                        if query.get("project") and response.get("projectId") != query["project"]:
+                            raise InputError("This saved operation belongs to another project")
+                        result.update({"requestSha256": row["request_sha"], "response": response})
+                self.respond(200, result)
+            elif path == "/api/native-operation":
+                task, identity, project_id = query["task"], query["operation"], query["project"]
+                tables = {"search": "tind_native_searches", "send": "tind_native_transfers",
+                          "source-download": "tind_source_acquisitions", "job-read": "tind_job_observations"}
+                if task not in tables:
+                    raise InputError("Choose the original native task")
+                with self.server.job_lock:
+                    running = self.server.native_jobs.get(identity)
+                    if running and (running["projectId"] != project_id or running["task"] != task):
+                        raise InputError("This native operation belongs to another original task")
+                    running = dict(running) if running else None
+                with owner.mutex:
+                    owner.project(project_id)
+                    lookup = query["acquisition"] if task == "source-download" else identity
+                    row = owner.db.execute("SELECT body FROM " + tables[task] + " WHERE id=?", (lookup,)).fetchone()
+                    retained = decode(row[0]) if row else None
+                    if retained and retained.get("projectId") != project_id:
+                        raise InputError("This native result belongs to another project")
+                self.respond(200, {"operationId": identity, "task": task, "found": bool(running or retained),
+                                   "process": running, "retained": retained})
             elif path == "/api/state":
                 result = owner.state(query.get("project"))
                 with self.server.job_lock:
@@ -206,6 +242,7 @@ class Handler(BaseHTTPRequestHandler):
                     size = source.stat().st_size
                     self.send_response(200); self.send_header("Content-Type", "application/octet-stream")
                     self.send_header("Content-Length", str(size))
+                    self.send_header("X-Content-SHA256", result["response"]["original"]["sha256"])
                     self.send_header("Content-Disposition", 'attachment; filename="original-native-job-response.bin"')
                     self.common_headers(); self.end_headers()
                     with source.open("rb") as stream:
@@ -261,6 +298,7 @@ class Handler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header("Content-Type", "application/octet-stream")
                     self.send_header("Content-Length", str(item["bytes"]))
+                    self.send_header("X-Content-SHA256", item["sha256"])
                     self.send_header("Content-Disposition", 'attachment; filename="original-' + item["id"][:16] + '.bin"; filename*=UTF-8\'\'' + quote(Path(item["filename"].replace("\\", "/")).name, safe=""))
                     self.common_headers(); self.end_headers()
                     with source.open("rb") as stream:
@@ -338,6 +376,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(result["bytes"]))
+            self.send_header("X-Content-SHA256", result["sha256"])
             self.send_header("Content-Disposition", 'attachment; filename="' + filename + '"')
             self.common_headers()
             self.end_headers()
@@ -363,6 +402,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.respond(503, {"error": "The original workspace is closing; continue this saved request after reopening"})
                 return
             request = decode(data)
+            if path not in {"/api/source-download/stop", "/api/session"}:
+                require_binding(self.server.workspace.root, self.server.binding["sha256"])
             if path == "/api/apply":
                 result = self.server.workspace.apply(request)
                 self.respond(200, result)
@@ -408,8 +449,10 @@ def serve(directory, port=0, expected_binding=None, startup_format=None):
     native_tables(owner)
     token = secrets.token_hex(16)
     server = Server(owner, port, binding, token)
-    print(jbytes(server.announcement).decode(), end="", flush=True)
+    attachment = None
     try:
+        attachment = publish_live(owner, server.announcement)
+        print(jbytes(server.announcement).decode(), end="", flush=True)
         server.serve_forever()
     except KeyboardInterrupt:
         pass
@@ -421,4 +464,6 @@ def serve(directory, port=0, expected_binding=None, startup_format=None):
         server.server_close()
         for worker in server.source_threads + server.native_threads:
             worker.join()
+        if attachment:
+            retire_live(attachment)
         owner.close()

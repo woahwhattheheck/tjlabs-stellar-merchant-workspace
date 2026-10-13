@@ -75,7 +75,8 @@ const publicSource=source=>({id:source.id,label:source.label,...(source.recovery
   {oauthResources:[...source.oauthResources.values()].map(({id,label,oauth})=>({id,label,resource:oauth.resource,
     configurationSha256:oauth.configurationSha256}))}:{}),...(source.x402Merchants?.size?
   {x402Merchants:[...source.x402Merchants.values()].map(({id,label,x402})=>({id,label,storeId:x402.storeId,
-    tenantId:x402.tenantId,resourceVersionId:x402.resourceVersionId,configurationSha256:x402.configurationSha256}))}:{})});
+    tenantId:x402.tenantId,resourceVersionId:x402.resourceVersionId,configurationSha256:x402.configurationSha256,
+    ...(x402.polling===undefined?{}:{polling:x402.polling}),...(x402.inputsSha256===undefined?{}:{inputsSha256:x402.inputsSha256})}))}:{})});
 const encodedFiles=files=>Object.fromEntries(Object.entries(files).map(([name,bytes])=>[name,bytes.toString('base64')]));
 const oauthSourceKey=source=>JSON.stringify([source.endpoint,source.tokenEnv,source.resource,source.configurationSha256]);
 
@@ -495,16 +496,26 @@ export async function openIncidentSources({configPath,environment=process.env}={
   async function inspectX402(sourceId,input) {
     const source=sourceFor(sourceId);
     const options=['timeoutMs','paymentAfterSeconds','outputAfterSeconds'];
-    fields(input,['x402SourceId','expectedConfigRevision',...options],'X402 source review');
+    fields(input,['x402SourceId','expectedConfigRevision','polling',...options],'X402 source review');
     const expected=integer(input.expectedConfigRevision,1,Number.MAX_SAFE_INTEGER,'configuration revision');
     const selected=source.x402Merchants.get(text(input.x402SourceId,64,'X402 source ID'));
     if(!selected)throw fail('INCIDENT_X402_NOT_REGISTERED','Choose an original X402 resource registered for this console.',404);
     checkConfiguration(await source.store.read(),expected);
     if(closing)throw fail('INCIDENT_SOURCES_CLOSED','The incident console is closing.',503);
-    const settings=normalizeX402Source({...selected.x402,...Object.fromEntries(
-      options.filter(key=>own(input,key)).map(key=>[key,input[key]]))});
+    const polling=input.polling??selected.x402.polling??'full';
+    if(!['full','summary'].includes(polling))
+      throw fail('INCIDENT_INPUT_INVALID','Choose full or summary observation polling.');
+    if(polling==='full'&&selected.x402.inputsSha256!==undefined)
+      throw fail('INCIDENT_X402_INPUT_BINDING_REQUIRED','This registered source pins reviewed inputs and requires summary polling.',409);
+    const chosen={...selected.x402,...Object.fromEntries(
+      options.filter(key=>own(input,key)).map(key=>[key,input[key]]))};
+    if(polling==='summary')chosen.polling='summary';else delete chosen.polling;
+    const settings=normalizeX402Source(chosen);
     const pending=reviewX402Source({endpoint:settings.endpoint,tokenEnv:settings.tokenEnv,
-      ...Object.fromEntries(options.map(key=>[key,settings[key]]))},{signal:readAbort.signal,environment});
+      ...Object.fromEntries(options.map(key=>[key,settings[key]])),
+      ...(settings.polling===undefined?{}:{polling:settings.polling}),
+      ...(settings.inputsSha256===undefined?{}:{inputsSha256:settings.inputsSha256})},
+      {signal:readAbort.signal,environment});
     reads.add(pending);
     try {
       const result=await pending;

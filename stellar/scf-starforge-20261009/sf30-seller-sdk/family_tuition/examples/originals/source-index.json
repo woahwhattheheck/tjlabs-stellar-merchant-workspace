@@ -1,0 +1,38 @@
+{
+  "schema": "tondo.original-public-documents.v1",
+  "files": [
+    {
+      "name": "Student-Registration-Form-1-1-1.pdf",
+      "url": "https://www.tondoartstudio.com/s/Student-Registration-Form-1-1-1.pdf",
+      "finalUrl": "https://static1.squarespace.com/static/66f071066ce50603b41b5443/t/6a9b01907045e47a246232b2/1788543376970/Student+Registration+Form+%281%29+%281%29+%281%29.pdf",
+      "status": 200,
+      "contentType": "application/pdf",
+      "path": "/workspace/scratch/7108267765ab/tondo-original-public-documents-20261013/Student-Registration-Form-1-1-1.pdf",
+      "bytes": 3594789,
+      "sha256": "eec6450f43b9798892d77c3688dba20f3aa9f11e4da9055e9f63f6d9ae754e7a",
+      "retrievedAt": "2026-10-13T05:28:26Z"
+    },
+    {
+      "name": "Calendar-2026-27.pdf",
+      "url": "https://www.tondoartstudio.com/s/Calendar-2026-27.pdf",
+      "finalUrl": "https://static1.squarespace.com/static/66f071066ce50603b41b5443/t/6a9258e64590e8700c25bf91/1787975910504/Calendar+2026-27.pdf",
+      "status": 200,
+      "contentType": "application/pdf",
+      "path": "/workspace/scratch/7108267765ab/tondo-original-public-documents-20261013/Calendar-2026-27.pdf",
+      "bytes": 160498,
+      "sha256": "db9d77b47546e57ce1428ebc40a6fe24aae17f304e79972a6e2b253435139117",
+      "retrievedAt": "2026-10-13T05:28:25Z"
+    },
+    {
+      "name": "Terms-Conditions-2026-2027.pdf",
+      "url": "https://www.tondoartstudio.com/s/Terms-Conditions-2026-2027.pdf",
+      "finalUrl": "https://static1.squarespace.com/static/66f071066ce50603b41b5443/t/6a9cec74f6f7e140a56cb75d/1788669044962/Terms+%26+Conditions+2026-2027.pdf",
+      "status": 200,
+      "contentType": "application/pdf",
+      "path": "/workspace/scratch/7108267765ab/tondo-original-public-documents-20261013/Terms-Conditions-2026-2027.pdf",
+      "bytes": 263593,
+      "sha256": "68fb0614ad67c0703ae2c74dfe455a9356c25bd720e651bf953fc95b386a313f",
+      "retrievedAt": "2026-10-13T05:28:25Z"
+    }
+  ]
+}

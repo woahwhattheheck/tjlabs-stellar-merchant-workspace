@@ -15,6 +15,60 @@ For each phase, identify the exact JSON pointer that supplies its assigned effor
 All source files are selected explicitly. A file's receiving filename, complete byte length, SHA-256, media type, source reference and observed time travel together. If the original filename contains characters outside the native receiving format, choose a distinct receiving filename with letters, numbers, dots, underscores or hyphens; the file's original content stays unchanged.
 
 
+## Receive a complete saved delivery handover
+
+A saved Delivery handover can enter this same desk directly. Retain its entire original JSON, including the `dealscout.delivery-handover.v1` snapshot, plus every original document supplying phase effort or the selected operating programme. Choose **Add original customer**, select **Whole original Workshare packet or saved handover**, and choose **Review original source and every phase**.
+
+The installed `handover-inputs.py` checks the saved snapshot hash and its original case, Workshare, scope and delivery identities. The saved Workshare and board must select the same complete source and plan. Every delivery phase must retain its unchanged original Workshare phase and phase hash. The UI shows the original recorded completed/total phase count and exposes every original phase for source-backed effort mapping.
+
+Keep the exact saved customer case ID and phase identities. To change those source facts, receive the corresponding original handover edition. Original receiving-packet phase amendments remain available for packet selections.
+
+The first applied customer selects the draft's source format. Keep handovers and original receiving packets in separate named preparations; each uses its original complete native reader. One handover preparation can contain up to twenty customer cases, with different installed profiles and all original source files. The complete handover selection has schema `stellar-forge.installation-handover-selection.v1` and uses `handover` for each original file descriptor. Its remaining operation, request-prefix, profile, plan hash, phase effort and complete-total fields use the existing source-selection contract.
+
+```json
+{
+  "caseId": "the-original-saved-customer-case",
+  "profile": "the-selected-installed-profile",
+  "handover": {
+    "path": "Customer_Delivery_Handover.json",
+    "filename": "Customer_Delivery_Handover.json",
+    "bytes": 12345,
+    "sha256": "the-original-64-hex-file-hash",
+    "mediaType": "application/json",
+    "sourceUrl": "https://the-original-source-reference",
+    "observedAt": "2026-10-13T00:00:00Z"
+  },
+  "planSha256": "the-original-canonical-plan-hash",
+  "productionEffort": ["every original phase mapping"],
+  "effortTotal": {"hours": "40", "sourcePointer": "/quoted_hours", "sourceFile": "Original_Scope.json", "unit": "hours"},
+  "files": ["every complete selected source descriptor"]
+}
+```
+
+The example names are explanatory placeholders; select actual retained file identities and the full original mapping in the desk. The original native helper validates the whole plan through the maintained Workshare intake with its supported absent-packet argument. Its output contains all unchanged handovers and documents, complete commissioning inputs, `SUPPLIER_RECEIVING.json`, selection and preparation reports. These saved handovers already contain their complete Workshare inputs, so their native attachment carries the commissioning source and an absent receiving-packet reference through the existing optional-packet API.
+
+**Prepare complete native package** pins both complete handover/source helper bodies and every selected profile. The same request, revision, create-only output and replay protections apply. The catalogue's additive `sourceFormats` field names each supported selection schema and complete engine receipt. Existing packet clients may continue using `engine`; handover clients select the matching `sourceFormats[].engine.sha256` for `expectedEngineSha256`. HTTP routes and terminal `command`, `inspect`, `preparation`, `output` and `export` commands are unchanged.
+
+### Preserve an existing customer operating programme
+
+In the customer mapping, expand **Existing customer calendar and operating programme** and select its original complete file names:
+
+```json
+{
+  "schema": "stellar-forge.installation-customer-programme.v1",
+  "calendarFile": "calendar-input.json",
+  "selectionFile": "recurring-selection.json"
+}
+```
+
+The same original contract also accepts optional `taskBudgetFile` and `nativeChangeFile`. Keep each selected file among this customer's complete supporting documents. The installed source helper checks the selected schemas and retains the whole programme in its original receiving input.
+
+Opening a prepared Installation reads **that preparation's own immutable SOURCE_SELECTION.json**. A newer draft mapping cannot replace an older preparation's original customer, profile, bindings or programme. The desk reads every selected programme file through its saved output length/hash, then runs the maintained `composeCustomerProgramme` against the current native seed and full original commissioning source. Its exact calendar, source windows, commercial selections, complete task budget and original native editor change stay joined. The existing native preview/save validates the resulting Installation; the existing customer-use and commissioning desks own their operational observations.
+
+The Installation review shows every selected task's UTC review, inclusive source start, exclusive source end and requested snapshot. **Download full prepared workorder** carries the complete programme in the JSON and its readable customer schedule in the workorder Markdown. The prepared source ZIP retains all original programme inputs and their receiving mapping.
+
+If a retained native change belongs to a different Installation or conflicts with a later saved programme field, the maintained composer returns that exact conflict. Resolve it in the original Installation editor and select its complete updated change. Source preparation does not manufacture acceptance, payer status, funding or a successful provider result.
+
 ## Receive an original CanadaBuys Workshare package
 
 A native CanadaBuys Workshare can enter this same desk through its complete prepared source package. Use the original CanadaBuys application to author or revise the Workshare. The installed `canadabuys prepare` command retains its complete exported application package and the separately authored party, milestone, effort and working-day mapping. See [CANADABUYS_NATIVE_WORKSHARES.md](../../sf49_data_commissioning/installation-workorders/CANADABUYS_NATIVE_WORKSHARES.md) for that full source preparation.
@@ -349,3 +403,17 @@ The 15 connected stages retain the actual original case, prepare the complete cu
 The managed launch source selection now covers this complete desk, its CLI and receiving programme, the unchanged native source helper and profile engine, and every profile present in the selected installed edition. Newer staff, accounting and commercial workflows stay part of the same original source selection. A changed installed profile or helper is a changed launch/source selection and must be reviewed through the existing launcher.
 
 Keep actual receiving reports and private customer/workspace packages with the original operation's artifact delivery. The repository contains the generic implementation, guide and receiving programme.
+
+## Retain and reopen the complete source working copy
+
+The Source Desk keeps a complete editable working copy alongside the original native draft editions. **Download complete working fields** includes the selected source draft and historical edition, raw mapping and binding JSON even when unfinished, every customer mapping and programme field, upload metadata and the full bytes of the selected original file, change note, preparation name, source inspections, original profile seed and preview, commissioning selections and archive fields, reconciliation history, and the complete retained original request inventory. This download remains available when local browser storage fails. It is an editable copy of the desk; the native original-file, prepared-package and case exports retain their existing independent formats and checks.
+
+Use **Open complete working-copy JSON** to receive that whole editor in the same original operating case, selected plan and installation identity. The receiver validates its scope, source-file bytes and request identities before replacing any fields. It first downloads the preceding complete editor as a `-working-before-open.json` file, and also retains a separate local copy when storage is available. UTF-8 decoding is strict; an optional leading BOM is accepted for the JSON envelope. Complete working-copy files may be up to 512 MiB; original selected files and native package limits are unchanged. Opening a copy preserves its raw JSON and selected source IDs without replacing missing original choices with the first current option.
+
+Each window owns a distinct local copy. A reload opens this window's last committed copy into a new owned copy; a duplicated tab therefore cannot overwrite the first tab's record. **Refresh saved copies**, **Open selected local copy** and **Save as separate local copy** provide explicit navigation among retained copies. Every save compares the complete copy's original sequence in one IndexedDB transaction. A conflicting save retains a separate copy when possible and keeps the complete current editor downloadable; it does not overwrite a newer local record. Preceding mapping, source, file and profile selections are retained before deliberate replacement. Unfinished guided values, including invalid whole-number input, remain visible and downloadable until corrected.
+
+Local copy keys and reopen pointers use the established installation and named-operator scope. **Open earlier original local copy** explicitly receives the older unscoped Source Desk journal. It does not automatically open another operator's earlier desk. The receiving programme selects this action only for its already retained original browser draft, validates its original pending UUID and complete request bytes, and retains the preceding download before continuing the same original operation. A named operator must match the pending request's original recording actor before retry; the installed owner retains the existing owner actor semantics. No actor, case, request UUID or original request body is rewritten during import.
+
+The native pending-request journal remains authoritative for mutation recovery. Complete copies carry all their original requests and any recorded receipts; importing an older unresolved copy cannot erase an already recorded result. A received pending request stays selected until the existing request-status/recovery controls reconcile its original native receipt. A local storage failure permits complete download and explicit reopening, but a native mutation still requires its original request to be durably retained before dispatch. Saved historical source editions stay immutable; if the current native head advanced, the editor keeps its original source basis and exposes the existing explicit mapping reconciliation.
+
+The original-case receiving programme compares complete native Workshare effort by exact decimal value, so summed hours such as `3` match an original declared `3.0`. It retains all original source strings and file bytes unchanged.

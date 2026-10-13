@@ -101,21 +101,29 @@ def _bundle(desk, state, value):
     capture_id = value.get("captureFileId")
     need(capture_id in selected, "Select the original commissioning-capture.json file.")
     metadata = [deepcopy(by_id[ident]) for ident in sorted(selected)]
-    by_name = {row["filename"]: row for row in metadata}
-    need(len(by_name) == len(metadata), "Select one complete original file for each receiving filename.")
+    bodies = {row["filename"]: desk._blob(state["caseId"], state["id"], row["sha256"]) for row in metadata}
+    return verify_bundle(metadata, bodies, capture_id)
+
+
+def verify_bundle(metadata, bodies, capture_id):
+    """Verify original capture members, preserving any retained archive member name."""
+    by_id = {row["id"]: row for row in metadata}
+    by_name = {row.get("originalMemberName", row["filename"]): row for row in metadata}
+    need(len(by_name) == len(metadata) and len(by_id) == len(metadata),
+         "Select one complete original file for each receiving filename.")
     need(all(name in by_name for name in REQUIRED),
          "Include commissioning-capture.json, commissioning-manifest.json, commissioning-review.json, "
          "commissioning-source.json and original-workshares.json.")
-    need(by_id[capture_id]["filename"] == "commissioning-capture.json",
-         "The capture selector must name the original commissioning-capture.json.")
-    bodies = {row["filename"]: desk._blob(state["caseId"], state["id"], row["sha256"]) for row in metadata}
+    need(capture_id in by_id and by_id[capture_id].get("originalMemberName", by_id[capture_id]["filename"]) ==
+         "commissioning-capture.json", "The capture selector must name the original commissioning-capture.json.")
     for row in metadata:
-        need(len(bodies[row["filename"]]) == row["bytes"],
-             "A complete original file differs from its retained byte count.", "INSTALLATION_SOURCE_CHANGED", 409)
-    capture = object_json(bodies["commissioning-capture.json"], "saved capture")
-    manifest = object_json(bodies["commissioning-manifest.json"], "capture manifest")
-    review = object_json(bodies["commissioning-review.json"], "commissioning review")
-    source = object_json(bodies["commissioning-source.json"], "workshare normalization")
+        raw = bodies.get(row["filename"])
+        need(isinstance(raw, bytes) and len(raw) == row["bytes"] and sha(raw) == row["sha256"],
+             "A complete original file differs from its retained byte identity.", "INSTALLATION_SOURCE_CHANGED", 409)
+    capture = object_json(bodies[by_name["commissioning-capture.json"]["filename"]], "saved capture")
+    manifest = object_json(bodies[by_name["commissioning-manifest.json"]["filename"]], "capture manifest")
+    review = object_json(bodies[by_name["commissioning-review.json"]["filename"]], "commissioning review")
+    source = object_json(bodies[by_name["commissioning-source.json"]["filename"]], "workshare normalization")
     need(capture.get("schema") == CAPTURE and manifest.get("schema") == MANIFEST
          and review.get("schema") == REVIEW and source.get("schema") == SOURCE,
          "Select complete files from the original merchant commissioning product.")
@@ -147,7 +155,7 @@ def _bundle(desk, state, value):
          and review.get("selection") == capture.get("selection"),
          "The saved review and capture disagree on original source, date or selection.",
          "INSTALLATION_COMMISSIONING_CHANGED", 409)
-    original = bodies["original-workshares.json"]
+    original = bodies[by_name["original-workshares.json"]["filename"]]
     need(isinstance(source.get("file"), dict)
          and source["file"].get("sha256") == capture["sourceSha256"]
          and source["file"].get("bytes") == len(original)
@@ -168,10 +176,10 @@ def _bundle(desk, state, value):
          and set(reviewed) <= set(projects),
          "Keep each selected original project once in this complete capture.")
     for row in metadata:
-        descriptor = descriptors.get(row["filename"], {})
-        row["originalRole"] = descriptor.get("role")
-        row["originalType"] = descriptor.get("type")
-        row["containsCompleteAccount"] = row["filename"] == SNAPSHOT
+        descriptor = descriptors.get(row.get("originalMemberName", row["filename"]), {})
+        row["originalRole"] = descriptor.get("role", row.get("originalRole"))
+        row["originalType"] = descriptor.get("type", row.get("originalType"))
+        row["containsCompleteAccount"] = row.get("originalMemberName", row["filename"]) == SNAPSHOT
     return {"capture": capture, "review": review, "source": source, "manifest": manifest,
             "projects": projects, "reviewed": reviewed, "files": metadata, "bodies": bodies,
             "captureFileSha256": by_name["commissioning-capture.json"]["sha256"],

@@ -2,7 +2,25 @@
 
 Operation: `SCF-RECEIVABLES-NATIVE-2A51-20261012`.
 
-This route executes the existing original payment and MerchantAccounting programmes at source commit `94ad1dd33fd1616303d52faa8b1cd98745c6cfc5`. It uses the complete original receiver and source/dependency capsules. The first run preserved those exact inputs. Its payment programme passed. The next continuation keeps the original MCP programme and accounting engine, and applies the exact maintained registration schema repairs described below.
+This route executes the existing original payment and MerchantAccounting programmes at source commit `94ad1dd33fd1616303d52faa8b1cd98745c6cfc5`. It uses the complete original receiver and source/dependency capsules. The first run preserved those exact inputs and passed the payment programme. The completed MCP continuation retained the original programme and accounting engine, applied the exact maintained startup repairs described below, and passed the complete original lifecycle.
+
+
+## Completed original receiving
+
+The original payment and MCP programmes have both completed successfully:
+
+| Programme | Actual run | Native result |
+|---|---|---|
+| Payment request, original Stellar proof/alias handling and owner reopening | [38343867655](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/actions/runs/38343867655) | Exit 0; seven complete workflows |
+| Authenticated MerchantAccounting HTTP lifecycle, original source recovery and complete customer files | [38359117638](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/actions/runs/38359117638) | Exit 0; eight complete workflows |
+
+The corrected MCP run completed at **2026-10-13 06:51:55 UTC** on the standard public Ubuntu runner, Node 22.23.3 and Python 3.12.3. It exercised the original SF74 quote/response import after configured aliases changed; editable invoice review and issuance; SEP-7 wallet instructions, canonical RPC NOT_FOUND observation, retained proof and cancellation; a preliminary USD 70.00 receipt corrected to USD 75.00 with USD 25.00 credit; complete SHA-pinned invoice/credit/quote/wallet/proof/customer-tar reads; original error projection and interrupted download recovery; and close/reopen of the same original owner. The USD 100.00 invoice finished with **USD 75.00 paid, USD 25.00 credited and USD 0.00 due**.
+
+All twelve emitted output files were reconstructed from the original job log chunks and checked against their full byte count and SHA-256. Their complete original bodies are retained in [results/run-38359117638.json](results/run-38359117638.json), also Git result capsule `2e7e07d3e453d5778fb866c200b8139dfe197b6e`. The earlier payment outputs remain in [results/run-38343867655.json](results/run-38343867655.json). Runtime dependency inventories and the actual generated MCP lock are included with each run.
+
+The successful continuation used source correction `bbc06b338f4ee7b51640ec0e241b05d39e71cee8`, offline receiver `4ea4c09fde74c471ce7e497d5bcfb69c0cc3c842`, hosted helper `1d13d8b14c451ca8ef78f987b6ee9382e000dfce`, and workflow blob `098406f9a30e7f1e84477bf20c9b62da51361f1b`. The original programme hashes, source/dependency capsule identities and exact three corrected leaf identities appear in the native receiving outputs.
+
+After completion, the original repository policy was restored to `enabled:false` and workflow `382795854` to `disabled_manually`. Both writes returned 204 and both independent provider readbacks returned 200 with those saved states. Existing completed results can be reused for this exact original receiving scope; the installed-product and durable-customer continuations retain their own source and operation records below.
 
 ## Source and execution
 

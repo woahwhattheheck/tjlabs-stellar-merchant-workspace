@@ -116,6 +116,166 @@
           "sha256": "9133bbee76b8aa5106eb2a70101f3f2875ec58e2082a2b5be63b685ae31a5c96"
         }
       ]
+    },
+    {
+      "id": "runtime-procedures-operator",
+      "label": "Complete Runtime procedure editing, original records and independent handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/RUNTIME_PROCEDURES.md",
+      "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+      "editions": [
+        {
+          "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+          "git_blob": "7f7affacda34afb1af94a3c00a128194eff84a60",
+          "bytes": 14136,
+          "sha256": "c63f798c178a6a3a470e1f9299f60d1d0d3222d24cc778f273e525b53165a995"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-adapter",
+      "label": "Native Runtime source capture, attributed steps, retained requests and returned-work application",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/operating-procedures.mjs",
+      "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+      "editions": [
+        {
+          "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+          "git_blob": "7deefb4f7473944e11ace971f04da85a897e998f",
+          "bytes": 24570,
+          "sha256": "2861ffb799157107305ce88b736c468a79745cc6cb80a9324b9b3e30de463701"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-browser",
+      "label": "Installed Operating procedures browser, original drafts and full receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/operating-procedures.mjs",
+      "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+      "editions": [
+        {
+          "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+          "git_blob": "60ba9ff7c598be113d0db5629aea10c8f7413817",
+          "bytes": 39395,
+          "sha256": "4ca667a264142bf5410338ae85fee743067052ded0a4d8c4ffb946341fda5763"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-cli",
+      "label": "Original Runtime procedure command and complete request-file operations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/operating-procedures-cli.mjs",
+      "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+      "editions": [
+        {
+          "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+          "git_blob": "6609417c0d77bbf8a970ba2ecf9334c6d7b7e79a",
+          "bytes": 3354,
+          "sha256": "bee133c73c33d5a3f4ad3404b04f3b3056d33aa6c6f01ecc93d374b02bfc5e20"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-contract",
+      "label": "Typed native procedure, capture, request and returned-work contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/operating-procedures.d.mts",
+      "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+      "editions": [
+        {
+          "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+          "git_blob": "e964f9d54502e2d39e1c80a923c4a371c6ec4e65",
+          "bytes": 3744,
+          "sha256": "47cfe2d452415dab4b5d7cbb03ac315f2e65310eec0da85ab13fb616f733f377"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-distribution",
+      "label": "Installed source declaration, typed export and complete browser dependencies",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/runtime-operating-procedures.json",
+      "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+      "editions": [
+        {
+          "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+          "git_blob": "083c770b5803d51fb30b9fef3e763d8470545fa0",
+          "bytes": 1929,
+          "sha256": "69a1314ff4fc23942216d8720e2bfaebe43decd0f2304b0dca1c546311066560"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-plan-engine",
+      "label": "Original complete Operating Plan, revision and carried-file engine",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs",
+      "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+      "editions": [
+        {
+          "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+          "git_blob": "be138d4a1670058290e7410905c52b1955a40da4",
+          "bytes": 28464,
+          "sha256": "72b7057b643bbc65b54244916a7d8d6d7421844d3e4ae9d6e556cc127ab34a64"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-return-engine",
+      "label": "Original three-way Operating Plan Return review and complete history application",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs",
+      "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+      "editions": [
+        {
+          "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+          "git_blob": "8dd299083341fedb1eebc1e0303b297953a0c1a7",
+          "bytes": 28838,
+          "sha256": "fa41752b3a9a34fe2a8d5a517ae9f4dda76868c0b9f9fbd69117ad57947f98d1"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-native-receiving",
+      "label": "Complete original Runtime model/CLI procedure receiving and cold reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/RUNTIME_PROCEDURES_RECEIVE.mjs",
+      "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+      "editions": [
+        {
+          "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+          "git_blob": "bfffb12ef6d507fc0c229dc383501f224772ae33",
+          "bytes": 24640,
+          "sha256": "74d3cafd09099f0d1f9ac99d7af4a7d94e4fddbeb5e53c84b6e13344e06e9e68"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-receiving-guide",
+      "label": "Manual original-case procedure course, source selection and recovery instructions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/RUNTIME_PROCEDURES_RECEIVE.md",
+      "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+      "editions": [
+        {
+          "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+          "git_blob": "d67eec749843602029c80e5cb91a4121d8d9d6f3",
+          "bytes": 7466,
+          "sha256": "9725ad9de0be5a29c8c690c03338ba554083a5f075972f29fc4fcd426af1d46b"
+        }
+      ]
     }
   ]
 }

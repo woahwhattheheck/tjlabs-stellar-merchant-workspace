@@ -63,6 +63,10 @@
     "./operator/operating-plan-returns": {
       "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs"
+    },
+    "./operator/operating-plan-returns/workbook": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return-workbook.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return-workbook.mjs"
     }
   },
   "applicationProviders": {

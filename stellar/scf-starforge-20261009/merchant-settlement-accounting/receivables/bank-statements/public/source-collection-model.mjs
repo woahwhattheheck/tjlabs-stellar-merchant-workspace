@@ -108,7 +108,7 @@ export function sourceInputForItem(item){
  const d=item.mapping,source={format:d.format,file:{name:item.file.name,dataBase64:item.file.dataBase64}};
  if(d.textEncoding)source.textEncoding=d.textEncoding;
  if(d.accountNamespace)source.accountNamespace=d.accountNamespace.trim();
- if(d.format==='CAMT053'){source.camt={detailPolicy:d.camtDetailPolicy||'PRESERVE_ONLY'};if(d.camtMessageVersion)source.camt.messageVersion=d.camtMessageVersion;}
+ if(d.format==='CAMT053'){source.camt={detailPolicy:d.camtDetailPolicy||'PRESERVE_ONLY'};if(d.camtMessageVersion)source.camt.messageVersion=d.camtMessageVersion;if(d.camtNamespaceMode&&d.camtNamespaceMode!=='DECLARED')source.camt.namespaceMode=d.camtNamespaceMode;if(d.camtReferencePolicy&&d.camtReferencePolicy!=='ACCOUNT_SERVICER_REFERENCE')source.camt.referencePolicy=d.camtReferencePolicy;}
  if(d.format==='CSV'){
   const allowed=new Set(['postedDate','amount','debit','credit','providerId','payee','memo','reference','checkNumber','type','balance','currency','status','correctsProviderId','correctionAction','valueDate','accountId','bankId','branchId','accountType']);
   const columns=Object.fromEntries(Object.entries(d.columns).filter(([key,value])=>allowed.has(key)&&String(value??'').trim()).map(([key,value])=>{const raw=String(value).trim();return [key,/^#\d+$/.test(raw)?Number(raw.slice(1)):raw];}));

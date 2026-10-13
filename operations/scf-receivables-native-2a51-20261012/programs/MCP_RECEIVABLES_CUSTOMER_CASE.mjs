@@ -3,7 +3,7 @@
 // Original programme Git568669a6e3de268aa34c4aa17427582585c4fcf9 remains unchanged.
 // Execute this named successor once through the same receiving owner.
 import assert from 'node:assert/strict';
-import {mkdtemp, mkdir, writeFile, readFile} from 'node:fs/promises';
+import {mkdtemp, mkdir, writeFile, readFile, open, rename, unlink} from 'node:fs/promises';
 import {continueRetainedCustomerFollowup} from '../retained-customer-followup.mjs';
 import {createDurableCustomerCase,captureDurableCustomerCase,checkpointDurableCustomerCase}
   from '../durable-customer-case.mjs';
@@ -93,6 +93,54 @@ const prefix = 'merchant_accounting_receivables_', alias = 'billing', actor = 'P
 const tokenEnv = 'SCF_MCP_RECEIVING_TOKEN', environment = {[tokenEnv]: randomUUID() + randomUUID()};
 const originalFetch = globalThis.fetch, workflows = [], delivered = [], calls = new Map();
 let host, server, client, reopened, firstReply = true, failRelease = false, rpcCalls = 0;
+let completedResult = null, primaryError = null;
+function retainedError(error) {
+  return {code:error?.code??'ERROR',message:String(error?.message??error),
+    ...(Array.isArray(error?.failures)?{failures:error.failures}: {}),
+    ...(error?.publicationCleanupError?{publicationCleanupError:retainedError(error.publicationCleanupError)}:{})};
+}
+async function publishResult(path, value) {
+  const temporaryPath=join(dirname(path),'.customer-case-'+randomUUID()+'.partial');
+  let file,problem;
+  try {
+    file=await open(temporaryPath,'wx',0o600);
+    await file.writeFile(json(value));await file.sync();await file.close();file=null;
+    await rename(temporaryPath,path);
+    const parent=await open(dirname(path),'r');
+    try {await parent.sync();} finally {await parent.close();}
+  } catch(error) {problem=error;throw error;}
+  finally {
+    const failures=[];
+    if(file)try {await file.close();} catch(error) {failures.push(error);}
+    try {await unlink(temporaryPath);} catch(error) {if(error.code!=='ENOENT')failures.push(error);}
+    if(failures.length) {
+      const cleanupError=Object.assign(new AggregateError(failures,'The result publication did not fully close.'),{
+        code:'CUSTOMER_CASE_PUBLICATION_CLEANUP_FAILED',failures:failures.map(retainedError)});
+      if(problem)problem.publicationCleanupError=cleanupError;else throw cleanupError;
+    }
+  }
+}
+async function closeOwnedResources() {
+  const failures=[];
+  async function close(name,work) {
+    try {await work();} catch(error) {failures.push({name,error});}
+  }
+  if(client)await close('client',async()=>{await client.disconnect();client=null;});
+  if(reopened)await close('reopened client',async()=>{await reopened.disconnect();reopened=null;});
+  globalThis.fetch=originalFetch;
+  if(server)await close('MCP HTTP server',async()=>{
+    server.closeAllConnections?.();
+    await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));
+    server=null;
+  });
+  if(host)await close('Merchant accounting owner',async()=>{await host.close();host=null;});
+  if(failures.length)throw Object.assign(new AggregateError(failures.map(row=>row.error),
+    'The original customer case resources did not all close.'),{
+      code:'CUSTOMER_CASE_CLEANUP_FAILED',
+      failures:failures.map(({name,error})=>({name,...retainedError(error)}))
+    });
+  retained.closedAt??=new Date().toISOString();
+}
 let activeNetwork = 'stellar:pubnet';
 const fixtureHash = sha('private-native-mcp-transaction-not-found');
 const recoveryBillingId = randomUUID();
@@ -400,10 +448,10 @@ try {
     replayed:recoveredFollowup.replayed,at:new Date().toISOString()};
   await reopened.closeWorkspace();await reopened.disconnect();reopened=null;
   workflows.push('Full customer follow-up cold reopen: USD 3800 remains due, revised USD 2800 promise and resolved query retained, consumed approval and both customer decisions restored under the same original IDs');
-  retained.status='COMPLETE';retained.finishedAt=new Date().toISOString();
+  await closeOwnedResources();
   workflows.push('Original issued account published as an editable customer document; complete customer/staff case and original request journals retained for continuing work');
 
-  const result = {result: 'PASS', runtime: process.version, operation: 'SCF-MCP-RECEIVABLES-COLLECTION-2A51-20261012',
+  completedResult = {result: 'PASS', runtime: process.version, operation: 'SCF-MCP-RECEIVABLES-COLLECTION-2A51-20261012',
     retainedCustomerCase:retained,
     transport: 'Original authenticated MCP HTTP handler and merchant accounting host',
     quoteProducer: 'Original SF74 commercial context, quote review/seal and response document factory',
@@ -411,19 +459,32 @@ try {
     currency: 'USD', invoiceTotal: '100.00', credited: '25.00', paid: '75.00', amountDue: '0.00',
     receiptRecords: 2, currentReceipts: 1, nativeQuoteImports: calls.get(prefix + 'quote_import'),
     rpcFixtureCalls: rpcCalls, workflows, files: delivered, toolCalls: Object.fromEntries(calls)};
-  await writeFile(join(sourceRoot, 'MCP_RECEIVABLES_CUSTOMER_CASE_RESULT.json'), json(result), {mode: 0o600});
-  process.stdout.write(json(result));
 } catch(error){
-  retained.status='INCOMPLETE';retained.error={code:error.code??'ERROR',message:error.message};throw error;
+  primaryError=error;retained.status='INCOMPLETE';retained.error=retainedError(error);
+  if(error?.code==='CUSTOMER_CASE_CLEANUP_FAILED')retained.cleanupError=retainedError(error);
 } finally {
-  if (client) await client.disconnect().catch(() => {});
-  if (reopened) await reopened.disconnect().catch(() => {});
-  globalThis.fetch = originalFetch;
-  if (server) {
-    server.closeAllConnections?.();
-    await new Promise(resolve => server.close(() => resolve()));
+  try {await closeOwnedResources();}
+  catch(error) {
+    retained.cleanupError=retainedError(error);retained.status='INCOMPLETE';
+    if(primaryError)primaryError.cleanupError=error;
+    else {primaryError=error;retained.error=retainedError(error);}
   }
-  if (host) await host.close().catch(() => {});
-  retained.closedAt=new Date().toISOString();
-  await writeFile(join(temporary,'RETENTION.json'),json(retained),{mode:0o600});
+}
+if(primaryError) {
+  try {await publishResult(join(temporary,'RETENTION.json'),retained);}
+  catch(error) {primaryError.retentionError=error;}
+  throw primaryError;
+}
+const complete={...retained,status:'COMPLETE',finishedAt:new Date().toISOString()};
+const result={...completedResult,retainedCustomerCase:complete};
+try {
+  await publishResult(join(sourceRoot,'MCP_RECEIVABLES_CUSTOMER_CASE_RESULT.json'),result);
+  await publishResult(join(temporary,'RETENTION.json'),complete);
+  Object.assign(retained,complete);
+  process.stdout.write(json(result));
+} catch(error) {
+  retained.status='INCOMPLETE';retained.error=retainedError(error);
+  try {await publishResult(join(temporary,'RETENTION.json'),retained);}
+  catch(retentionError) {error.retentionError=retentionError;}
+  throw error;
 }

@@ -17,6 +17,7 @@ import {inspectAccountingStatementCycle,runAccountingStatementCycle} from '../ac
 import {startAccountingStatementCycleWorkbench} from '../accounting-statement-cycle-server.mjs';
 import {readAccountingStatementCustomerDossier} from '../accounting-statement-customer-dossier.mjs';
 import {validateAccountingStatementServicePlan} from '../accounting-statement-service-planner.mjs';
+import {createAccountingStatementServiceSchedules,serviceScheduleBoundary} from '../accounting-statement-service-schedules.mjs';
 import {createMcpToolHandler} from '../../mcp-paid-agent/http-tools.mjs';
 import {acquireStateLease} from '../../../stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs';
 import {openOutbox} from '../../../stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs';
@@ -132,7 +133,7 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
   const output=async(name,value)=>synced(join(directory,name),json(value),{replace:true});
   try{
     const complete=await readOptional(join(directory,'flow-result.json'));
-    if(complete?.state==='COMPLETE'&&complete.customerDossier?.complete&&complete.customerDossier.reopenedAfterWorkbenchRestart&&complete.servicePlanner?.complete){emit('REOPENED_COMPLETE_RESULT',{cycleId:complete.cycle.id});return complete;}
+    if(complete?.state==='COMPLETE'&&complete.customerDossier?.complete&&complete.customerDossier.reopenedAfterWorkbenchRestart&&complete.servicePlanner?.complete&&complete.serviceCalendars?.complete){emit('REOPENED_COMPLETE_RESULT',{cycleId:complete.cycle.id});return complete;}
     const operation=await retained(join(directory,'operation.json'),async()=>({
       schema:SCHEMA,operationId:randomUUID(),createdAt:new Date().toISOString(),input:inputLabel,
       customerReference:'SCF-PERIOD-EXAMPLE',workspace:ALIAS,actor:ACTOR
@@ -218,6 +219,8 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       'stellar-forge/mcp-merchant-operator/accounting-statement-cycle-server.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-customer-dossier.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-service-planner.mjs',
+      'stellar-forge/mcp-merchant-operator/accounting-statement-service-schedules.mjs',
+      'stellar-forge/mcp-merchant-operator/cycle-public/service-schedules.mjs',
       'stellar-forge/mcp-merchant-operator/catalog/accounting-statements.mjs',
       'stellar-forge/mcp-merchant-operator/cycle-public/service-planner.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-cycle-browser-assets.json',
@@ -543,6 +546,147 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       inventorySha256:plannerInventory.inventorySha256,passIdentitySha256:plannerRow.periodIdentitySha256,
       nativePreviewSha256:plannedNativeReview.previewSha256,selections:compiledPlan.selections,files:plannerFiles};
     await output('service-planner-prepared.json',plannerPrepared);
+
+    // Adopt the existing period-only planner cycle into its saved service calendar.
+    // The separate main cycle below still owns the original period+cumulative issue.
+    const calendarFiles=[],calendarRequestId=plannedCycle.key.slice('cycle-'.length);
+    assert.match(plannedCycle.key,/^cycle-[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/);
+    const calendarName=captureName+' — monthly service calendar';
+    const calendarAnchor=plannerRow.captures.find(row=>row.id===opening.id).sourceCreatedAt.slice(0,10);
+    const calendarUntil=serviceScheduleBoundary({anchor:calendarAnchor,cadence:'monthly',interval:1},3);
+    const calendarWindow={from:calendarAnchor,until:calendarUntil,includePaused:false,offset:0,limit:100};
+    async function showCalendars(selectedPage=page){
+      const observed=selectedPage.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-schedules/calendar');
+      await selectedPage.locator('[data-view="service-schedules"]').click();
+      assert.ok((await observed).ok());
+      await selectedPage.waitForFunction(()=>!document.getElementById('service-schedules-view').inert);
+      await selectedPage.locator('#schedule-from').fill(calendarWindow.from);
+      await selectedPage.locator('#schedule-until').fill(calendarWindow.until);
+      const windowRead=selectedPage.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-schedules/calendar');
+      await selectedPage.locator('#schedule-window button[type="submit"]').click();
+      const response=await windowRead,value=await response.json();assert.ok(response.ok(),json(value));
+      await selectedPage.waitForFunction(()=>!document.getElementById('service-schedules-view').inert);
+      return value;
+    }
+    let calendarCatalogue=await api('/api/service-schedules/catalogue');
+    let savedCalendar=calendarCatalogue.current.find(row=>row.name===calendarName);
+    if(!savedCalendar){
+      await showCalendars();
+      await page.locator('#schedule-new').click();
+      await page.locator('#schedule-name').fill(calendarName);
+      await page.locator('#schedule-pass').selectOption(plannerRow.id);
+      await page.locator('#schedule-anchor').fill(calendarAnchor);
+      await page.locator('#schedule-cadence').selectOption('monthly');
+      await page.locator('#schedule-interval').fill('1');
+      await page.locator('#schedule-due').fill('0');
+      await page.locator('#schedule-notes').fill('Original repository customer period; actual retained captures define the statement source interval.');
+      const savedRead=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-schedules/save');
+      await page.locator('#schedule-save').click();
+      const response=await savedRead,value=await response.json();assert.ok(response.ok(),json(value));
+      savedCalendar=value.definition;
+      await page.waitForFunction(()=>!document.getElementById('service-schedules-view').inert);
+    }
+    assert.equal(savedCalendar.customerId,customer.id);assert.equal(savedCalendar.bindingId,plannerRow.binding.id);
+    assert.equal(savedCalendar.periodIdentitySha256,plannerRow.periodIdentitySha256);
+    assert.equal(savedCalendar.anchor,calendarAnchor);assert.equal(savedCalendar.cadence,'monthly');
+    let calendarPage=await showCalendars();
+    const firstCalendarPeriod=()=>calendarPage.items.find(row=>row.scheduleId===savedCalendar.id&&row.index===0);
+    assert.ok(firstCalendarPeriod());assert.equal(calendarPage.items.filter(row=>row.scheduleId===savedCalendar.id).length,3);
+    const calendarCheckpointPath=join(directory,'service-calendar-request.json');
+    const calendarCheckpoint=await readOptional(calendarCheckpointPath);
+    const originalCalendarRequest=await api('/api/service-schedules/request',{requestId:calendarRequestId});
+    let calendarRequest=originalCalendarRequest.found?{
+      requestId:originalCalendarRequest.preparation.requestId,label:originalCalendarRequest.preparation.label,
+      scheduledPlan:originalCalendarRequest.preparation.scheduledPlan
+    }:calendarCheckpoint?.request;
+    if(!calendarRequest){
+      const selectedPeriod=firstCalendarPeriod();
+      await page.locator('[data-schedule-add="'+selectedPeriod.id+'"]').click();
+      await page.locator('[data-schedule-choice="0"][data-field="runId"]').selectOption(run.id);
+      await page.locator('[data-schedule-choice="0"][data-field="usageOpeningId"]').selectOption(opening.id);
+      await page.locator('[data-schedule-choice="0"][data-field="usageId"]').selectOption(closing.id);
+      await page.locator('[data-schedule-choice="0"][data-field="acceptDifferentBoundaries"]').check();
+      await page.locator('#schedule-cycle-label').fill(plannerLabel);
+      const reviewedRead=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-schedules/compile');
+      await page.locator('#schedule-compile').click();
+      const response=await reviewedRead,scheduledPlan=await response.json();assert.ok(response.ok(),json(scheduledPlan));
+      await page.waitForFunction(()=>!document.getElementById('service-schedules-view').inert);
+      assert.deepEqual(scheduledPlan.plan.selections,compiledPlan.selections);
+      assert.equal(scheduledPlan.targets[0].boundaryDifference,true);
+      await page.locator('[data-schedule-preview="0"]').click();
+      await page.locator('#review-dialog[open]').waitFor();
+      await screenshot('desktop-calendar-native-review.png');await page.locator('#close-review').click();
+      calendarRequest={requestId:calendarRequestId,label:plannerLabel,scheduledPlan};
+    }
+    assert.equal(calendarRequest.requestId,calendarRequestId);assert.equal(calendarRequest.label,plannerLabel);
+    assert.deepEqual(calendarRequest.scheduledPlan.plan.selections,compiledPlan.selections);
+    assert.equal(calendarRequest.scheduledPlan.targets[0].scheduleId,savedCalendar.id);
+    if(calendarCheckpoint)assert.deepEqual(calendarCheckpoint.request,calendarRequest);
+    else await synced(calendarCheckpointPath,json({schema:SCHEMA,request:calendarRequest,calendarId:savedCalendar.id,
+      originalPlannedCycleKey:plannedCycle.key,originalPlannedCycleId:plannedCycle.cycleId}));
+    let calendarRecovery=await readOptional(join(directory,'service-calendar-recovery.json'));
+    if(!calendarRecovery){
+      const draftContext=await api('/api/context'),target=calendarRequest.scheduledPlan.targets[0];
+      const selected=[{period:{...firstCalendarPeriod(),version:target.version,index:target.index},
+        runId:run.id,usageOpeningId:opening.id,usageId:closing.id,acceptDifferentBoundaries:true}];
+      // Restore the exact pre-send browser draft from the course's saved request.
+      await page.evaluate(({scope,request,selected,window})=>{
+        const key='customer-service-calendars:'+scope,previous=JSON.parse(localStorage.getItem(key)??'{}');
+        localStorage.setItem(key,JSON.stringify({...previous,selected,label:request.label,requestId:request.requestId,
+          pending:request,pendingDraft:JSON.stringify({selected,label:request.label}),from:window.from,until:window.until}));
+      },{scope:draftContext.draftScope,request:calendarRequest,selected,window:calendarWindow});
+      await page.reload({waitUntil:'networkidle'});await showCalendars();
+      let lostResponse=null;
+      const interruptResponse=async route=>{
+        const path=new URL(route.request().url()).pathname;
+        if(lostResponse||!['/api/service-schedules/resume','/api/service-schedules/prepare'].includes(path)){
+          await route.continue();return;
+        }
+        const response=await route.fetch();
+        if(response.ok()){lostResponse={path,status:response.status(),requestId:calendarRequestId};await route.abort('failed');}
+        else await route.fulfill({response});
+      };
+      await page.route('**/api/service-schedules/**',interruptResponse);
+      try{
+        await page.locator('#schedule-recover').click();
+        await waitUntil(async()=>lostResponse,Boolean,'Saved calendar preparation response');
+        await page.waitForFunction(()=>!document.getElementById('service-schedules-view').inert&&
+          !document.getElementById('schedule-pending').hidden);
+      }finally{await page.unroute('**/api/service-schedules/**',interruptResponse);}
+      const saved=await api('/api/service-schedules/request',{requestId:calendarRequestId});
+      assert.equal(saved.found,true);assert.equal(saved.preparation.cycleKey,plannedCycle.key);
+      assert.deepEqual(saved.preparation.scheduledPlan,calendarRequest.scheduledPlan);
+      const newerLabel=plannerLabel+' — next draft';
+      await page.locator('#schedule-cycle-label').fill(newerLabel);
+      const newerRead=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-schedules/compile');
+      await page.locator('#schedule-compile').click();
+      const newerResponse=await newerRead,newerPlan=await newerResponse.json();assert.ok(newerResponse.ok(),json(newerPlan));
+      await page.waitForFunction(()=>!document.getElementById('service-schedules-view').inert);
+      const recoveredRead=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-schedules/resume');
+      await page.locator('#schedule-recover').click();
+      const recoveredResponse=await recoveredRead,recovered=await recoveredResponse.json();assert.ok(recoveredResponse.ok(),json(recovered));
+      assert.equal(recovered.cycle.key,plannedCycle.key);assert.equal(recovered.cycle.cycleId,plannedCycle.cycleId);
+      await page.waitForFunction(()=>!document.getElementById('service-schedules-view').inert&&
+        document.getElementById('schedule-pending').hidden);
+      await showCalendars();
+      const preserved=await page.evaluate(scope=>JSON.parse(localStorage.getItem('customer-service-calendars:'+scope)),draftContext.draftScope);
+      assert.equal(preserved.pending,null);assert.equal(preserved.pendingDraft,null);
+      assert.equal(preserved.label,newerLabel);assert.equal(preserved.selected.length,1);
+      assert.equal(preserved.selected[0].usageOpeningId,opening.id);assert.equal(preserved.selected[0].usageId,closing.id);
+      assert.notEqual(preserved.requestId,calendarRequestId);
+      assert.equal(await page.locator('#schedule-plan-panel').evaluate(element=>element.hidden),false);
+      await screenshot('desktop-calendar-recovered-newer-draft.png');
+      calendarRecovery={requestId:calendarRequestId,cycleKey:recovered.cycle.key,cycleId:recovered.cycle.cycleId,
+        lostResponse,preservedDraft:{label:preserved.label,requestId:preserved.requestId,selections:preserved.selected,
+          reviewedPlanSha256:newerPlan.sha256},originalScheduledPlanSha256:calendarRequest.scheduledPlan.sha256};
+      await output('service-calendar-recovery.json',calendarRecovery);
+    }else{
+      const recovered=await api('/api/service-schedules/resume',{requestId:calendarRequestId});
+      assert.equal(recovered.cycle.key,plannedCycle.key);assert.equal(recovered.cycle.cycleId,plannedCycle.cycleId);
+    }
+    emit('SERVICE_CALENDAR_PREPARED',{calendarId:savedCalendar.id,originalCycleKey:plannedCycle.key,
+      requestId:calendarRequestId,newerDraftPreserved:true});
+
     const periodSelection={customerId:customer.id,runId:run.id,usageOpeningId:opening.id,usageId:closing.id};
     const cumulativeSelection={customerId:customer.id,runId:run.id,usageId:closing.id};
     const cycleKey=await prepare(captureName,[periodSelection,cumulativeSelection]);
@@ -628,6 +772,58 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     assert.ok((await page.locator('#service-history-rows').innerText()).includes('Superseded'));
     await screenshot('desktop-planner-correction-history.png');await page.locator('#service-history-close').click();
     await output('service-planner-lifecycle.json',{inventorySha256:plannerLifecycle.inventorySha256,revision:plannerLifecycle.revision,row:plannerCurrent});
+
+    calendarPage=await showCalendars();
+    const currentCalendarPeriod=firstCalendarPeriod();
+    assert.ok(currentCalendarPeriod.preparations.some(row=>row.requestId===calendarRequestId&&row.cycleKey===plannedCycle.key));
+    assert.ok(currentCalendarPeriod.currentStatements.some(row=>row.id===correctionId&&row.status==='RETAINED'));
+    assert.ok(!currentCalendarPeriod.currentStatements.some(row=>originalIds.includes(row.id)));
+    await screenshot('desktop-calendar-current-native-statement.png');
+    for(const format of ['html','csv']){
+      const downloadedRead=page.waitForEvent('download');
+      await page.locator('#schedule-window-'+format).click();
+      const downloaded=await downloadedRead,path=join(downloadRoot,'customer-service-calendar.'+format);
+      await downloaded.saveAs(path);assert.equal(await downloaded.failure(),null);calendarFiles.push(await fileIdentity(path));
+      const content=await readFile(path,'utf8');
+      assert.ok(content.includes(calendarName)&&content.includes(plannedCycle.key));
+      assert.ok(content.includes(currentCalendarPeriod.currentStatements.find(row=>row.id===correctionId).number));
+      await page.waitForFunction(()=>!document.getElementById('service-schedules-view').inert);
+    }
+    const calendarDownload=page.waitForEvent('download');
+    await page.locator('#schedule-export').click();const calendarExport=await calendarDownload;
+    const calendarBundlePath=join(downloadRoot,'customer-service-calendars.json');
+    await calendarExport.saveAs(calendarBundlePath);assert.equal(await calendarExport.failure(),null);
+    calendarFiles.push(await fileIdentity(calendarBundlePath));
+    const calendarBundle=JSON.parse(await readFile(calendarBundlePath,'utf8'));
+    assert.equal(calendarBundle.preparations.find(row=>row.requestId===calendarRequestId).cycleKey,plannedCycle.key);
+    const plannedArchive=join(downloadRoot,'calendar-original-planned-cycle.tar.gz');
+    const plannedDownload=await fetch(new URL(cyclePath(plannedCycle.key)+'/download',baseUrl),{redirect:'error'});
+    assert.ok(plannedDownload.ok,'Read the original planned cycle archive: '+plannedDownload.status);
+    await synced(plannedArchive,Buffer.from(await plannedDownload.arrayBuffer()),{replace:true});
+    calendarFiles.push(await fileIdentity(plannedArchive));
+    const receivedCalendarRoot=await privateDirectory(join(directory,'received-service-calendars'));
+    await extract(plannedArchive,join(receivedCalendarRoot,plannedCycle.key));
+    const receivedCalendars=await createAccountingStatementServiceSchedules({directory:receivedCalendarRoot,url,workspace:ALIAS,
+      readInventory:()=>api('/api/service-planner'),
+      async prepareCycle(){throw new Error('The imported calendar must reopen its received original cycle.');},
+      async readCycle(key){return {...await inspectAccountingStatementCycle({directory:join(receivedCalendarRoot,key)}),key};}});
+    const receivedCatalogue=await receivedCalendars.catalogue();
+    await receivedCalendars.importBundle({bundle:calendarBundle,expectedRevision:receivedCatalogue.revision});
+    const receivedCalendarPreparation=await receivedCalendars.resume({requestId:calendarRequestId});
+    assert.equal(receivedCalendarPreparation.preparation.imported,true);
+    assert.equal(receivedCalendarPreparation.cycle.key,plannedCycle.key);
+    assert.equal(receivedCalendarPreparation.cycle.cycleId,plannedCycle.cycleId);
+    assert.deepEqual(receivedCalendarPreparation.cycle.rows.map(row=>row.intent),compiledPlan.selections);
+    const receivedCalendarPage=await receivedCalendars.calendar(calendarWindow);
+    const receivedCurrentPeriod=receivedCalendarPage.items.find(row=>row.id===currentCalendarPeriod.id);
+    assert.ok(receivedCurrentPeriod.currentStatements.some(row=>row.id===correctionId));
+    const calendarReceiving={directory:receivedCalendarRoot,calendarId:savedCalendar.id,preparedCycleKey:plannedCycle.key,
+      preparedCycleId:plannedCycle.cycleId,requestId:calendarRequestId,imported:true,
+      sourceBundle:await fileIdentity(calendarBundlePath),originalCycleArchive:await fileIdentity(plannedArchive),
+      nativeIssuedCycleKey:cycleKey,nativeIssuedCycleId:cycle.cycleId,currentStatementId:correctionId,
+      currentPeriod:receivedCurrentPeriod};
+    await output('service-calendar-received.json',calendarReceiving);
+
     const phoneContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
     contexts.push(phoneContext);
     const phone=await phoneContext.newPage();phone.on('pageerror',error=>pageErrors.push(error.message));
@@ -652,8 +848,13 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     await phone.locator('[data-service-history="'+plannerRow.id+'"]').first().click();
     await phone.locator('#service-history-dialog[open]').waitFor();
     await screenshot('phone-planner-correction-history.png',phone);await phone.locator('#service-history-close').click();
+
+    const phoneCalendar=await showCalendars(phone);
+    assert.ok(phoneCalendar.items.some(row=>row.id===currentCalendarPeriod.id&&row.currentStatements.some(statement=>statement.id===correctionId)));
+    await screenshot('phone-customer-service-calendar.png',phone);
+
     const partialHandover=await readOptional(join(directory,'customer-handover-partial.json'));
-    const downloads=[...plannerFiles,issuedHandover.archive,finalHandover.archive,...(partialHandover?[partialHandover.archive]:[])];
+    const downloads=[...plannerFiles,...calendarFiles,issuedHandover.archive,finalHandover.archive,...(partialHandover?[partialHandover.archive]:[])];
     const setupArchive=join(downloadRoot,'customer-setup.tar.gz');
     const setupTar=spawnSync('tar',['-czf',setupArchive,'-C',cyclesRoot,'customer-operations'],{encoding:'utf8'});
     assert.equal(setupTar.status,0,setupTar.stderr||setupTar.error?.message||'Save the complete original customer operations.');
@@ -708,6 +909,15 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     assert.deepEqual(savedHandoverAfterRestart.statements.map(row=>row.statement.status),['SUPERSEDED','WITHDRAWN']);
     const savedEarlierAfterRestart=await api(issuedHandover.manifestHref);
     assert.equal(savedEarlierAfterRestart.snapshotSha256,issuedHandover.snapshotSha256);
+
+    const calendarAfterRestart=await api('/api/service-schedules/calendar',calendarWindow);
+    const restartedCalendarPeriod=calendarAfterRestart.items.find(row=>row.id===currentCalendarPeriod.id);
+    assert.ok(restartedCalendarPeriod.currentStatements.some(row=>row.id===correctionId));
+    const recoveredCalendarAfterRestart=await api('/api/service-schedules/resume',{requestId:calendarRequestId});
+    assert.equal(recoveredCalendarAfterRestart.cycle.key,plannedCycle.key);
+    assert.equal(recoveredCalendarAfterRestart.cycle.cycleId,plannedCycle.cycleId);
+    assert.deepEqual(recoveredCalendarAfterRestart.preparation.scheduledPlan,calendarRequest.scheduledPlan);
+
     await workbench.close();workbench=null;
     assert.deepEqual(pageErrors,[],'The actual desktop and phone application raised a browser error.');
     const images=[];
@@ -726,6 +936,11 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       servicePlanner:{complete:true,prepared:plannerPrepared,currentHistory:{inventorySha256:plannerLifecycle.inventorySha256,
         revision:plannerLifecycle.revision,passIdentitySha256:plannerCurrent.periodIdentitySha256,suggestion:plannerCurrent.suggestion,
         periodStatuses:plannerCurrent.history.map(row=>({id:row.id,status:row.status})),cumulativeStatuses:plannerCurrent.cumulativeStatements.map(row=>({id:row.id,status:row.status}))}},
+      serviceCalendars:{complete:true,calendarId:savedCalendar.id,definitionSha256:savedCalendar.sha256,
+        scheduledPlanSha256:calendarRequest.scheduledPlan.sha256,window:calendarWindow,
+        originalPreparedCycle:{key:plannedCycle.key,id:plannedCycle.cycleId,requestId:calendarRequestId},
+        nativeIssuedCycle:{key:cycleKey,id:cycle.cycleId,currentStatementId:correctionId},
+        recovery:calendarRecovery,receiving:calendarReceiving,phone:true,reopenedAfterWorkbenchRestart:true,files:calendarFiles},
       downloads,screenshots:images,browserErrors:pageErrors,
       nativeRetainedStatements:nativeStatements.items.length,toolCalls:Object.fromEntries(calls)};
     await synced(join(directory,'flow-result.json'),json(result),{replace:Boolean(complete)});

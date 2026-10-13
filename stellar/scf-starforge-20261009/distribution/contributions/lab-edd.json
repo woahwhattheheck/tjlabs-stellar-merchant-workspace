@@ -5,12 +5,14 @@
   "commands": {
     "lab-edd": "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/cli.mjs",
     "lab-edd-receive": "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/receiving.mjs",
-    "lab-edd-agent": "stellar-forge/mcp-merchant-operator/lab-edd-cli.mjs"
+    "lab-edd-agent": "stellar-forge/mcp-merchant-operator/lab-edd-cli.mjs",
+    "lab-edd-receive-customer": "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/customer-review-receiving.mjs"
   },
   "commandDescriptions": {
     "lab-edd": "Review complete laboratory EDD source, record field decisions and receive native delivery files",
     "lab-edd-receive": "Receive the complete original laboratory file job, native outputs and offline operator workflow",
-    "lab-edd-agent": "Operate complete laboratory source, saved decisions, original checkout and native results through merchant MCP"
+    "lab-edd-agent": "Operate complete laboratory source, saved decisions, original checkout and native results through merchant MCP",
+    "lab-edd-receive-customer": "Operate the complete offline Laboratory customer inspector, receive editable findings and cold-reopen the full unchanged result"
   },
   "exports": {
     "./seller/lab-edd": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/application.mjs",
@@ -41,6 +43,10 @@
     "./seller/lab-edd/received-result": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/received-result.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/received-result.mjs"
+    },
+    "./seller/lab-edd/customer-review": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/customer-review.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/customer-review.mjs"
     }
   },
   "supportFiles": [
@@ -105,7 +111,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/examples/xlrd/formula_test_sjmachin.xls",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/received-result.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/RESULT_RECEIVING.md",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/received-result-receiving.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/received-result-receiving.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/customer-review.d.mts"
   ],
   "applicationProviders": {
     "laboratory-edd": "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/application-provider.mjs"

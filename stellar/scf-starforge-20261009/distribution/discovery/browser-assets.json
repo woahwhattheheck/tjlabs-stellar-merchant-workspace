@@ -241,6 +241,13 @@
       ]
     ],
     [
+      "/operating-return-core/operating-plan-return-workbook.mjs",
+      [
+        "../operating-plan-return-workbook.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/fred-operating-plan.mjs",
       [
         "fred-operating-plan.mjs",

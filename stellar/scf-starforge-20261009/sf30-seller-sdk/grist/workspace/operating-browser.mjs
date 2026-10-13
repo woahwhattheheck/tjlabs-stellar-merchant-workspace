@@ -60,8 +60,13 @@ export function mountGristOperatingPlans({api,getContext,setBlocked,notice}){
     if(origin&&!sameOrigin(origin,next))throw Error('The original Grist workspace identity changed. Download this complete editor and reopen its original workspace.');
     origin=next;
   };
+  function creationValues(){
+    const controls=$('op-create').elements;
+    return Object.fromEntries(['planId',...fields.map(([name])=>name)].map(name=>[name,controls.namedItem(name).value]));
+  }
   function captureEditorState(){
-    const creation=Object.fromEntries([...new FormData($('op-create'))].filter(([,v])=>typeof v==='string'));
+    // Temporary fieldset locking must not remove unfinished authoring fields.
+    const creation=creationValues();
     for(const el of document.querySelectorAll('[data-op-command]'))commandEdits[el.dataset.opCommand]=el.value;
     for(const row of $('op-return-comparison').querySelectorAll('[data-key]')){
       const v=row._choice;if(v)returnEdits[row.dataset.key]={take:v.select.value,custom:v.custom.value,note:v.note.value};
@@ -519,9 +524,9 @@ export function mountGristOperatingPlans({api,getContext,setBlocked,notice}){
   }
   $('op-source-kind').addEventListener('change',()=>run(async()=>{sourceKind=$('op-source-kind').value;sourceOffset=0;await sources();}));
   $('op-source-refresh').addEventListener('click',()=>run(sources));
-  $('op-create').addEventListener('submit',event=>{event.preventDefault();run(async()=>{
-    if(!confirmReplace())return;const form=new FormData(event.currentTarget),args={planId:String(form.get('planId')).trim(),expectedVersion:0,selection:selectedInputs()};
-    for(const [name]of fields)args[name]=String(form.get(name)??'');
+  $('op-create').addEventListener('submit',event=>{event.preventDefault();const creation=creationValues(),selection=selectedInputs();run(async()=>{
+    if(!confirmReplace())return;const args={planId:creation.planId.trim(),expectedVersion:0,selection};
+    for(const [name]of fields)args[name]=creation[name];
     await mutate('create',args);
   });});
   $('op-adopt').addEventListener('submit',event=>{event.preventDefault();run(async()=>{

@@ -45,6 +45,85 @@ A `PREPARED` workbook can retain a `CORRECTION_REQUIRED` profile disposition.
 A `REVIEW_REQUIRED` native preparation retains the original review and exact
 preparation explanation. Receiving a folder preserves these states.
 
+## Inspect rows and return customer findings
+
+New receiving folders use layout 2. Open **Inspect all rows and customer findings**
+from `index.html`, or open the returned `inspectionPage` (`inspect.html`) directly.
+It is a self-contained offline page: no server, account, network request or new
+Laboratory job is needed. Keep the complete folder beside it for the original
+downloads. The original result ZIP, current/baseline reports and native files are
+unchanged.
+
+1. Select an edition and physical table, or search across every original and
+   reviewed field value. The displayed row count always names the complete
+   population and the selected subset. Paging displays 50 rows at a time without
+   changing the retained population. Filters select changed rows, profile
+   observations, or rows with customer findings.
+2. Select a physical row. The inspector displays every exact header/key, original
+   and reviewed value, and saved scientific choice. A field-name filter helps with
+   wide worksheets; clear it to see all columns. Empty strings remain explicit.
+   Expand cell details for the original workbook type, formula/cache and retained
+   provenance. Limits, qualifiers, dates and units remain separate original cells;
+   this view applies no implicit scientific interpretation.
+3. Inspect all original/reviewed profile observations attached to the row. For a
+   cross-profile result, expand its complete source entities, candidate groups and
+   saved correspondence choices. The full source manifests, reports, lineage,
+   decisions and original/prepared correspondence remain available at the bottom
+   and in `inspection.json`.
+4. Add a customer finding to the whole row or an exact field. Choose **Open**,
+   **Resolved** or **Information**, write the reason and select **Save finding in
+   this page**. A field finding binds its complete result identity, edition, table,
+   physical record, original/reviewed row hashes and both exact values. Unfinished
+   note edits remain attached to their targets when navigating. Save or remove
+   them before downloading a complete handover.
+5. Enter the reviewer, summary and explicit customer disposition. A completed
+   disposition requires a reviewer and summary; acceptance also requires no open
+   customer finding. This records the customer's findings review. It does not
+   assert a successful EDP import, change profile errors, or replace the scientific
+   decision/correspondence documents.
+6. Download **editable findings JSON** and the **readable findings report**. The
+   page keeps changes in memory until download. JSON is the complete editable
+   handover; use **Reopen findings JSON** in the same result's inspector to continue.
+   Another result, altered row/value, duplicate target or unknown field is refused
+   before the current draft is replaced. Browser reload alone is not a save.
+
+Receive the downloaded findings with the entire original delivery in a separate
+immutable folder:
+
+```sh
+starforge lab-edd receive-findings \
+  --directory /absolute/private/delivery-01 \
+  --file /absolute/downloads/Laboratory_Customer_Findings.json \
+  --output-directory /absolute/private/delivery-01-customer-review \
+  --expected-result-sha256 EXPECTED_COMPLETE_ZIP_SHA256
+
+starforge lab-edd reopen-result \
+  --directory /absolute/private/delivery-01-customer-review \
+  --expected-result-sha256 EXPECTED_COMPLETE_ZIP_SHA256
+```
+
+The command first cold-verifies the complete existing folder. It validates the
+findings against those exact original/reviewed rows, then receives every original
+ZIP member and both native families alongside `inspection.json`, `inspect.html`,
+`customer-review.json` and `customer-review.html`. The final receiving receipt
+binds all file bytes; its separate customer-document hash uses canonical JSON.
+The original folder remains unchanged. Repeat receiving of the same findings into
+the same successor resumes exact files; different findings need another output
+folder. Transfer that whole successor and cold-reopen it through the same command.
+
+The SDK exports `receiveLabCustomerReview({directory,file,outputDirectory,
+expected,signal})` from `received-result.mjs`. `receiveLabResult` accepts an optional
+complete `customerReview` object and `layoutVersion: 1 | 2`; a new folder defaults
+to 2. `customer-review.mjs` exports the same pure findings normalizer used in the
+offline browser, plus the complete inspection and exact-target helpers. Types are
+provided beside both modules. Neither surface can modify the incoming scientific
+result.
+
+Historical layout-1 folders continue using their original exact page and receipt.
+Open/reopen selects the recorded layout. To add the new operator to an old result,
+receive its unchanged original ZIP into a new folder. No in-place layout migration
+or receipt replacement occurs.
+
 ## Reopen, resume and transfer
 
 A read-only reopen validates the complete original ZIP through `readLabResult`,
@@ -320,3 +399,55 @@ native receipt. Use the existing admitted execution route on a shared host.
 The original paid Laboratory receiving operation and its source collector remain
 independent continuations. This customer-folder workflow only consumes a
 completed result.
+
+## Complete offline operator receiving
+
+The source includes `customer-review-receiving.mjs` for the entire customer journey.
+It opens the real self-contained inspector through the supplied installed browser,
+operates every physical row and every original/reviewed field, retains a pending
+note across target changes, downloads and reopens the full editable findings and
+readable report, and verifies the complete original ZIP download. It then invokes
+the existing `receive-findings` CLI, copies every managed file to an independent
+folder, cold-reopens it through both CLI and SDK, and replays the same findings
+without overwriting the accepted handover.
+
+Use the original retained result, its exact hash and source description. Select
+the existing installed Playwright module and Chromium executable; this programme
+does not acquire either dependency or invoke a Laboratory worker.
+
+```sh
+node /absolute/source/stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/customer-review-receiving.mjs \
+  --file /absolute/retained/DTS8D_Recorded_Literals_Complete_Result.zip \
+  --directory /absolute/private/offline-customer-receiving \
+  --expected-result-sha256 a38dea03a0d0e976c644e215bc7d360344eab2945326dd2836adaba72b6a85ac \
+  --source-kind 'generated software-format fixture' \
+  --playwright /absolute/installed/playwright/index.mjs \
+  --chromium /absolute/installed/chromium \
+  --operation-id LAB-RESULT-CUSTOMER-RECEIVING-9F77-20261012
+```
+
+The receiving directory binds all 29 operative source files, the original input,
+and the selected runtime entry files. It contains the full `original-customer/`,
+`findings-customer/` and `independent-findings-customer/` folders, complete browser
+downloads, desktop/mobile screenshots, all CLI outputs and the final
+`native-receiving.json`. That final receipt names the supplied source kind and
+original job; an automated format receiving does not assert supplier acceptance.
+
+A browser handover is published only after the complete course succeeds and the
+captured browser closes. On continuation, the same completed handover and every
+artifact are reread before reuse. A completed temporary handover can be recovered
+after an interrupted atomic directory publication. Incomplete attempt directories
+remain visibly separate and are never interpreted as completed browser output.
+The independent folder copy resumes exact files through the original immutable
+writer. An already completed course reopens all three folders and verifies every
+retained output before returning.
+
+Use the existing admitted execution route on a shared host, and preserve an
+already-bound operation's exact command and source selection. This added customer
+course must not replace the command in an older registered receiving record.
+For the retained two-row format fixture, select a new owned output directory for
+the current source continuation and budget for three complete folders, browser
+downloads/screenshots and the native record copy. The browser and its runtime
+need their normal memory reservation; available tmpfs capacity is not additional
+cgroup memory. A full supplier result uses the same course only after the original
+supplier job has actually completed, with resource needs based on that whole input.

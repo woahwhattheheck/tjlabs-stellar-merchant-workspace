@@ -72,6 +72,7 @@ export async function continueRetainedCustomerFollowup({directory,client,signal,
     const completedPath=join(directory,'followup.json');
     if(await exists(completedPath)){const result=await readDurableCaseInput(completedPath,32_000_000);
       need(result.selectionSha256===flow.selectionSha256&&result.customerId===selected.customerId,'The retained follow-up completion changed.');
+      if(flow.status!=='COMPLETE'){flow.status='COMPLETE';flow.finishedAt=result.finishedAt;await replace(statePath,flow);}
       return{directory,result,replayed:true};}
     for(const name of ['operations','preparations','documents'])await privateDir(join(directory,name));
     const common={url:selected.url,workspace:selected.workspace,tokenEnv:selected.tokenEnv};
@@ -234,7 +235,8 @@ export async function continueRetainedCustomerFollowup({directory,client,signal,
     if(await exists(final)){const saved=await readDurableCaseInput(final,32_000_000);
       need(saved.selectionSha256===flow.selectionSha256&&saved.invoiceId===invoiceId&&saved.responseId===result.responseId,
         'The retained completion belongs to another follow-up operation.');return{directory,result:saved,replayed:true};}
-    flow.finishedAt=result.finishedAt;flow.status='COMPLETE';await replace(statePath,flow);await save(final,result);
+    await save(final,result);
+    flow.finishedAt=result.finishedAt;flow.status='COMPLETE';await replace(statePath,flow);
     return{directory,result,replayed:false};
   }catch(problem){error=problem;throw problem;}
   finally{try{await lease.close();}catch(problem){if(error)error.releaseError={code:problem.code,message:problem.message};else throw problem;}}
@@ -259,7 +261,7 @@ export async function finishRetainedCustomerFollowup({directory,client,signal,..
       originalOperation:selected.originalOperation,url:selected.url,workspace:selected.workspace,tokenEnv:selected.tokenEnv,
       workspaceId:selected.workspaceId,customerId:selected.customerId,asOf:selected.accountDate,
       cashPlans:followed.result.cashPlans,requestIds:followed.result.requestIds};
-    if(!await exists(join(delivery.directory,'case.json')))await createDurableCustomerCase({directory:delivery.directory,selection:caseSelection,client,signal});
+    if(!await exists(join(delivery.directory,'case.json')))await createDurableCustomerCase({directory:delivery.directory,selection:caseSelection,client,signal,resume:true});
     else{const existing=await readDurableCaseInput(join(delivery.directory,'case.json'),1_000_000);
       need(existing.id===delivery.caseId&&existing.workspaceId===selected.workspaceId&&existing.customerId===selected.customerId&&
         existing.url===selected.url&&existing.asOf===selected.accountDate&&

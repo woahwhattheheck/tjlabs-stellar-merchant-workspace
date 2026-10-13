@@ -12,6 +12,7 @@ import {connectAccountingStatementClient, accountingStatementPreview, accounting
 import {prepareAccountingStatementCycle, runAccountingStatementCycle, observeAccountingStatementCycle} from './accounting-statement-cycle.mjs';
 
 import {readAccountingStatementServicePlanner,compileAccountingStatementServicePlan,validateAccountingStatementServicePlan,prepareAccountingStatementServiceCycle,renderAccountingStatementServicePlanCsv,renderAccountingStatementServicePlanHtml} from './accounting-statement-service-planner.mjs';
+import {createAccountingStatementServiceSchedules} from './accounting-statement-service-schedules.mjs';
 import {createCustomerSetupRoutes} from './accounting-statement-setup.mjs';
 import {inspectAccountingStatementCustomerDossiers, exportAccountingStatementCustomerDossier, readAccountingStatementCustomerDossier} from './accounting-statement-customer-dossier.mjs';
 import {readBrowserAssets} from '../../stellar/scf-starforge-20261009/distribution/browser-assets.mjs';
@@ -250,6 +251,31 @@ export async function startAccountingStatementCycleWorkbench({
   const customerSetup=await createCustomerSetupRoutes({directory:root,url,workspace,actor,tokenEnv,connection,signal:controller.signal,bodyJson,sendJson,
     enqueue:work=>{const promise=workQueue.then(()=>{controller.signal.throwIfAborted();return work();});workQueue=promise.catch(()=>{});return promise;}
   });
+  async function prepareServiceCycle(body){
+const plan=validateAccountingStatementServicePlan(body.plan);
+        need(plan.workspace===workspace&&(!plan.endpoint||plan.endpoint===url),'Prepare this plan in its original merchant workspace.',409,'WORKBENCH_WORKSPACE');
+        need(UUID.test(body.requestId??''),'Use one request identity for this prepared cycle.');
+        need(typeof body.label==='string'&&body.label.trim()&&body.label.trim().length<=200,'Name this closing cycle.');
+        const selections=plan.selections.map(selection),key='cycle-'+body.requestId;
+        const inputHash=digest(JSON.stringify({label:body.label.trim(),selections})),previousJob=jobs.get(key);
+        need(!previousJob?.inputHash||previousJob.inputHash===inputHash,'This preparation request already has different selections. Start a new cycle.',409,'WORKBENCH_PREPARATION_CHANGED');
+        if(await exists(join(cyclePath(key),'request.json'))){
+          const original=await compatible(key);
+          need(original.label===body.label.trim()&&JSON.stringify(original.selections)===JSON.stringify(selections),
+            'This preparation request already belongs to different customer selections. Start a new cycle.',409,'WORKBENCH_PREPARATION_CHANGED');
+          if(await exists(join(cyclePath(key),'manifest.json'))){return {status:200,value:await record(key)};}
+        }
+        const job=begin(key,'PREPARE',async()=>prepareAccountingStatementServiceCycle({plan,directory:cyclePath(key),url,workspace,actor,
+          label:body.label.trim(),tokenEnv,environment,signal:controller.signal,client:providedClient}));
+        job.label=body.label.trim();job.inputHash=inputHash;
+        return {status:202,value:{key,job:jobView(job)}};
+  }
+  async function readServicePlanner(){
+    if(!plannerInventoryPromise)plannerInventoryPromise=connection().then(client=>readAccountingStatementServicePlanner({client,signal:controller.signal})).then(result=>{plannerInventory=result;return result;}).finally(()=>{plannerInventoryPromise=undefined;});
+    return plannerInventoryPromise;
+  }
+  const serviceSchedules=await createAccountingStatementServiceSchedules({directory:root,url,workspace,readInventory:readServicePlanner,
+    async prepareCycle(body){return (await prepareServiceCycle(body)).value;},async readCycle(key){await compatible(key);return record(key);}});
   const server=createServer(async(request,response)=>{
     response.setHeader('Cache-Control','no-store');
     response.setHeader('X-Content-Type-Options','nosniff');
@@ -266,16 +292,19 @@ export async function startAccountingStatementCycleWorkbench({
       }
       if(request.method==='POST')need(request.headers['x-workbench-token']===csrfToken,'Refresh this page before continuing.',403,'WORKBENCH_SESSION');
       if(request.method==='GET'&&path==='/api/context'){sendJson(response,200,{workspace,actor,directory:root,draftScope:digest(JSON.stringify({url,workspace,directory:root})),csrfToken,origin});return;}
+      if(request.method==='GET'&&path==='/api/service-schedules/catalogue'){sendJson(response,200,await serviceSchedules.catalogue());return;}
+      if(request.method==='POST'&&path.startsWith('/api/service-schedules/')){
+        const methods={save:'save',calendar:'calendar',compile:'compile',prepare:'prepare',request:'request',resume:'resume',history:'history',export:'exportBundle',import:'importBundle'};
+        const method=methods[path.slice('/api/service-schedules/'.length)];need(method,'Choose a documented calendar action.',404);
+        const result=await serviceSchedules[method](await bodyJson(request));sendJson(response,200,result);return;
+      }
       if(await customerSetup.handle(request,response,address))return;
       if(request.method==='GET'&&path==='/api/inventory'){
         if(!inventoryPromise)inventoryPromise=connection().then(inventory).finally(()=>{inventoryPromise=undefined;});
         sendJson(response,200,await inventoryPromise);return;
       }
       if(request.method==='GET'&&path==='/api/service-planner'){
-        if(!plannerInventoryPromise)plannerInventoryPromise=connection()
-          .then(client=>readAccountingStatementServicePlanner({client,signal:controller.signal}))
-          .then(result=>{plannerInventory=result;return result;}).finally(()=>{plannerInventoryPromise=undefined;});
-        sendJson(response,200,await plannerInventoryPromise);return;
+        sendJson(response,200,await readServicePlanner());return;
       }
       if(request.method==='POST'&&path==='/api/service-planner/plan'){
         const body=await bodyJson(request);
@@ -297,23 +326,7 @@ export async function startAccountingStatementCycleWorkbench({
           content:body.format==='csv'?renderAccountingStatementServicePlanCsv(plan):renderAccountingStatementServicePlanHtml(plan)});return;
       }
       if(request.method==='POST'&&path==='/api/service-planner/cycles'){
-        const body=await bodyJson(request),plan=validateAccountingStatementServicePlan(body.plan);
-        need(plan.workspace===workspace&&(!plan.endpoint||plan.endpoint===url),'Prepare this plan in its original merchant workspace.',409,'WORKBENCH_WORKSPACE');
-        need(UUID.test(body.requestId??''),'Use one request identity for this prepared cycle.');
-        need(typeof body.label==='string'&&body.label.trim()&&body.label.trim().length<=200,'Name this closing cycle.');
-        const selections=plan.selections.map(selection),key='cycle-'+body.requestId;
-        const inputHash=digest(JSON.stringify({label:body.label.trim(),selections})),previousJob=jobs.get(key);
-        need(!previousJob?.inputHash||previousJob.inputHash===inputHash,'This preparation request already has different selections. Start a new cycle.',409,'WORKBENCH_PREPARATION_CHANGED');
-        if(await exists(join(cyclePath(key),'request.json'))){
-          const original=await compatible(key);
-          need(original.label===body.label.trim()&&JSON.stringify(original.selections)===JSON.stringify(selections),
-            'This preparation request already belongs to different customer selections. Start a new cycle.',409,'WORKBENCH_PREPARATION_CHANGED');
-          if(await exists(join(cyclePath(key),'manifest.json'))){sendJson(response,200,await record(key));return;}
-        }
-        const job=begin(key,'PREPARE',async()=>prepareAccountingStatementServiceCycle({plan,directory:cyclePath(key),url,workspace,actor,
-          label:body.label.trim(),tokenEnv,environment,signal:controller.signal,client:providedClient}));
-        job.label=body.label.trim();job.inputHash=inputHash;
-        sendJson(response,202,{key,job:jobView(job)});return;
+        const result=await prepareServiceCycle(await bodyJson(request));sendJson(response,result.status,result.value);return;
       }
       if(request.method==='POST'&&path==='/api/preview'){
         const body=await bodyJson(request);sendJson(response,200,await (await connection()).preview(selection(body.selection)));return;

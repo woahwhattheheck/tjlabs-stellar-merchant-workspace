@@ -120,6 +120,35 @@ observation, not recovery. The checksum is the exact same source hash retained
 in the complete observation's history. It is not a substitute for an entire
 history capture.
 
+The original watcher also retains complete immutable prefix witnesses. The
+summary carries `immutablePrefixes.history` and
+`immutablePrefixes.exchanges`, each with the current row count and SHA-256
+of the complete original projected array. These are the same descriptors used
+by the full observation, in their original sequence order. Every object key is
+sorted recursively before JSON serialization; array order stays unchanged.
+
+For an existing witness, send both
+`X-Merchant-History-Prefix-Rows` and
+`X-Merchant-Exchanges-Prefix-Rows`. Each must be a canonical nonnegative
+safe decimal integer, including zero. Supplying only one header is invalid.
+The response's `prefixContinuity` returns the actual number of rows and
+digest in each requested prefix. If fewer rows remain, its count is smaller.
+Compare both counts and hashes against the retained witness before advancing
+recovery. This detects a deleted or changed earlier history/exchange record
+even when the final history boundary is unchanged.
+
+Without those headers, prefixContinuity is null and the complete current
+immutablePrefixes still provides the next witness. Older accepted watcher
+checkpoints without a prefix witness can adopt one from the next valid
+observation. A checkpoint with a witness requires its matching prefix proof;
+omitted proof cannot weaken the earlier requirement.
+
+Both full and summary readers call the same original row projection functions.
+The summary hashes their canonical JSON as a stream: opening bracket,
+comma-separated complete rows, then closing bracket. It holds only the current
+row and digest state, exports no payload BLOB, and never materializes the whole
+history/exchange array merely to compute a witness.
+
 The snapshot starts when the original metadata SELECT establishes SQLite's
 consistent view. capturedAt records that snapshot time; all reported ages use
 it. startedAt records entry into the observation. snapshotSha256 is SHA-256 over

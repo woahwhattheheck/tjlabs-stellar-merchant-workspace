@@ -19,7 +19,7 @@ A healthy merchant can also be reviewed by attaching its original two-file obser
 
 ## Review the actual merchant
 
-The new native route is:
+The full native route is:
 
     GET http://127.0.0.1:ACTUAL_PORT/api/observation
 
@@ -83,11 +83,61 @@ The private incidentSources file can declare x402Merchants on an existing incide
 
 Existing merchants[].x402 registrations also populate the named list, including after the original incident-store recovery flow. The managed Application selection retains these exact registered identities.
 
-The browser selects a registered alias. It can adjust timeout and age thresholds, then inspect the original source. It cannot supply another endpoint or a credential value. Inspection rechecks the watcher revision and original merchant identity after the read. Editing a field or receiving a late response invalidates the earlier review. **Add or replace source in draft** edits only the current configuration draft; the existing Apply action commits it.
+The browser selects a registered alias. In Observation and condition settings, choose Full original history or Complete conditions with bounded detail, adjust timeout and age thresholds, then inspect that same source. The exact reviewed mode travels into the current watcher draft. A private reviewed-input fingerprint is displayed and preserved; its Full option is disabled because that pin requires summary polling. It cannot supply another endpoint or a credential value. Inspection rechecks the watcher revision and original merchant identity after the read. Editing a field or receiving a late response invalidates the earlier review. **Add or replace source in draft** edits only the current configuration draft; the existing Apply action commits it.
+
+## Efficient polling of a large original store
+
+The same registered merchant can use a compact recurring read while retaining the existing seven incident conditions, original watcher and customer case. The merchant provides:
+
+    GET http://127.0.0.1:ACTUAL_PORT/api/observation/summary
+
+Select this mode through the same review command:
+
+    node stellar/scf-starforge-20261009/sf93-seller-support-bundle/incident-cli.mjs \
+      review-x402 \
+      --endpoint http://127.0.0.1:ACTUAL_PORT/api/observation \
+      --token-env MERCHANT_OPERATOR_TOKEN \
+      --polling summary \
+      --payment-after-seconds 300 \
+      --output-after-seconds 300
+
+Use the returned complete selection in the original watcher configuration. It adds "polling": "summary" to x402; the registered endpoint remains the original /api/observation URL. The collector derives its fixed /summary child. Existing registrations without this field retain full-snapshot polling and their existing normalized bytes and configuration digest.
+
+If the merchant was launched from a reviewed inputs file, the review can additionally take:
+
+    --inputs-sha256 EXACT_REVIEWED_INPUTS_SHA256
+
+This optional selection must match the original runtime's retained inputs binding. It is available only with summary polling. A missing or different inputs digest is an explicit identity mismatch. The canonical store, tenant, resource version and configuration digest remain required in both modes. Each detailed order retains the tenant/resource version frozen when that order was created; an older valid order is not relabelled to the current runtime configuration.
+
+### Complete totals and bounded detail
+
+The summary reads the existing owner's original SQLite transaction. Its condition totals cover every order, including terminal orders with contradictory results or retained authority issues. It separately counts all provider exchanges, incomplete exchanges, rejected authority records and pending webhook records. It transfers no response bodies, signatures or result bytes.
+
+Detailed rows include up to 1,024 condition-bearing orders and are additionally bounded by the 2 MiB response limit. The response states matching, returned and omitted detail counts. These omissions do not reduce aggregate coverage and cannot turn a condition off. The Support page and exported report label this detail boundary.
+
+The same unresolved-signature/state/receipt classifier and first receipt-verification transition determine ages. The server supplies original oldest timestamps plus the count of unknown anchors. The collector advances known ages to its actual collection time. If a known age exceeds the configured threshold the condition is failing; otherwise any unknown anchor keeps that age condition unknown. It does not become a healthy recovery poll.
+
+On each accepted follow-up poll the collector requests the prior original history sequence in X-Merchant-History-Sequence. The server returns the SHA-256 of that exact original history row inside the same snapshot. It also returns canonical hashes and counts for the complete prior history and provider-exchange descriptor prefixes requested by the watcher. Those full-prefix witnesses preserve the existing detection of an earlier deleted or changed descriptor even when the last row remains intact. Missing or changed proof leaves coverage unavailable for incident recovery. It does not start another merchant owner or replay an upstream operation.
+
+### Full captures for incident work
+
+Summary polling requests the existing full /api/observation capture on initial observation, at the configured captureEveryMs interval, and when an incident is about to open or recover. It evaluates that later response as a new observation; a changed outcome is handled from the later source.
+
+A full capture retains the earlier exact summary in optional pollSource metadata with its own byte count, SHA-256 and source time. The later full source remains x402-source.json. Both observations must name the same original owner/runtime/configuration. The full response must preserve the summary's complete immutable history and exchange prefixes as well as its last original history row. The earlier summary also retains any selected reviewed-input identity.
+
+If the optional full capture exceeds the existing workload limit or has a transport, timeout or temporary-availability failure, the usable summary keeps its original collection time with fullCaptureError explaining that separate result. A later full response with a changed identity, history, input binding or invalid source is retained as contradictory or unavailable evidence and cannot be replaced with an earlier healthy poll. The ordinary original watcher can still evaluate complete summary condition totals. It retains summary captures for incident before/after evidence and retries full capture on a later original capture interval or transition. The same source Retry-After handling and private capture budget apply.
+
+The two-file capture format, original incident snapshot/receive workflow and customer handoff remain in use. x402-source.json explicitly declares whether it contains the full observation or the complete-condition summary. Reading a saved capture validates its exact source bytes, schema, totals, row limits, digest and recomputed operational summary.
+
+### Comparing retained summaries
+
+Two full captures keep the complete original history/exchange comparison. When either side is a summary, Support compares complete condition totals and the original history boundary and both immutable descriptor prefixes that the selected later observation actually proves. It labels the result as condition totals compared, with bounded order detail.
+
+An order absent from the bounded detail is not described as deleted or recovered. A selected pair without the earlier boundary proof remains an explicitly incomplete comparison. Keep or obtain two full captures when the customer question requires the complete per-order history and exchange descriptors.
 
 ## Read the operational evidence
 
-Each accepted snapshot has complete bounded metadata from the original store:
+Each accepted full snapshot has complete bounded metadata from the original store:
 
 - Every order's original identity, state, frozen rail terms, charge-request descriptor, recorded receipt-verification result and safe error code.
 - Every retained order-history transition, sequence, timestamp, selected state and original row digest.
@@ -103,7 +153,7 @@ Both original capture files are required:
 | File | Contents |
 | --- | --- |
 | x402-observation.json | Reviewed registration, collector times, exact source byte count/SHA-256 and recomputed operational summary. |
-| x402-source.json | Exact merchant snapshot JSON bytes, or JSON null with an explicit failed-read reason in the metadata. |
+| x402-source.json | Exact full merchant snapshot or complete-condition summary JSON bytes, or JSON null with an explicit failed-read reason in the metadata. |
 
 Each file is limited to 8 MiB. The endpoint additionally limits total projected rows to 100,000 and measures rows before accumulating them. If the complete projection exceeds either bound, it reports a workload limit. Select an appropriately sized operational workspace with its owner or extend the native source contract explicitly.
 

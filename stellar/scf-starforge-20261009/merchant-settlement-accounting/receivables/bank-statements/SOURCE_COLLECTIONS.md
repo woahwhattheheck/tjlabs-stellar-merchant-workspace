@@ -2,7 +2,7 @@
 
 A bank delivery often contains several original account statements or the pages of one daily statement. **Statement collections** keeps the entire delivery, every working interpretation and each inclusion decision together while the existing bank source editor performs the financial intake.
 
-The collection contains complete originals. Its browser storage and downloaded JSON preserve original basenames, byte lengths, SHA-256 identities and canonical base64, plus each file's source format, text encoding, bank namespace, CAMT detail interpretation or complete CSV mapping. The original account, source review, request journal, transaction matching and account close remain the same maintained bank workflow.
+The collection contains complete originals. Its browser storage and downloaded JSON preserve original basenames, byte lengths, SHA-256 identities and canonical base64, plus each file's source format, text encoding, bank namespace, CAMT message version, original namespace and booking-reference interpretation, detail policy or complete CSV mapping. The original account, source review, request journal, transaction matching and account close remain the same maintained bank workflow.
 
 ## Receive a whole delivery
 
@@ -87,3 +87,7 @@ Continue the existing Bank receiving operation with its retained original files.
 Download the full working collection, open it as a separate copy, and verify that all originals, mapping fields, inclusion choices and notes remain. Reprepare the source previews in the same original bank workspace; its existing imports should resolve through the original file/statement/review identities. A current superseding interpretation must remain visible as later history.
 
 The implemented model and exact existing preview/digest domain have already been exercised against the three retained Goldman Sachs originals. Both accepted original reports preserve all four statement sections; the original malformed structured sample remains an explicit source exclusion. Complete transfer preserves every byte and working field, changing a mapping requires fresh source review, and altered recorded file lengths are rejected. Controlled import-interface inputs exercise complete, partial and superseded progress. Continue the installed browser and native file commands in the same original operation for their actual host results.
+
+## Complete Bundesbank original delivery
+
+The [Bundesbank receiving guide](BUNDESBANK.md) opens both complete original ZIPs and all22XMLfiles as one collection. Its two CAMT.053 statements retain explicit `camtNamespaceMode: "UNQUALIFIED"`, `camtMessageVersion: "camt.053.001.08"` and `camtReferencePolicy: "SOURCE_ENTRY"`; the twenty CAMT.052 reports travel with explicit exclusions. These fields restore into the same source editor and pass through `sourceInputForItem` in both browser and CLI. The example keeps the original cheque and fee separate despite their repeated bank reference, and carries the entire delivery through preparation, review, original extraction and independent collection receiving.

@@ -10,5 +10,18 @@
   },
   "applicationProviders": {
     "tind-migration": "stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "tind-workspaces": "stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/merchant-provider.mjs"
+  },
+  "exports": {
+    "./tind/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/client.mjs"
+    },
+    "./tind/merchant": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/merchant.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/merchant.mjs"
+    }
   }
 }

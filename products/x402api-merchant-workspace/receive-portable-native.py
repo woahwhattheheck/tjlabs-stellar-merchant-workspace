@@ -28,7 +28,7 @@ SOURCE_PATHS = [
   "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/result.mjs",
   "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/store.mjs",
   "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs",
-  "products/x402api-merchant-workspace/fixtures/protocol-fixture.mjs",
+  "products/x402api-merchant-workspace/receiving-protocol.mjs",
   "products/x402api-merchant-workspace/native-receiving.mjs",
   "products/x402api-merchant-workspace/run-native-receiving.py",
   "products/x402api-merchant-workspace/receive-native-source.py",

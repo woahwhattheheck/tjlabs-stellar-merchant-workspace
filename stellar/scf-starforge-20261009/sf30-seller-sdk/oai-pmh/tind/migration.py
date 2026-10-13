@@ -25,6 +25,35 @@ MAX_OBJECT = 256 * 1024 * 1024
 MAX_FILE = 1024 * 1024 * 1024 * 1024
 MAX_PACKAGE = 4 * MAX_FILE
 
+def source_binding(path, value, kind="file"):
+    """Optional exact host selection carried inside an original saved request."""
+    if value is None:
+        return None
+    if not isinstance(value, dict) or value.get("schema") != "stellar-forge.tind-source-binding.v1" or value.get("kind") != kind:
+        raise InputError("Retain the original source binding")
+    path = Path(path)
+    if path.is_symlink() or not path.is_absolute() or path.resolve(strict=True) != path or str(path) != value.get("path"):
+        raise InputError("The bound original source path changed")
+    info = path.stat()
+    if str(info.st_dev) != value.get("device") or str(info.st_ino) != value.get("inode"):
+        raise InputError("The bound original source identity changed")
+    if kind == "directory":
+        if not path.is_dir():
+            raise InputError("The bound original source directory changed")
+    else:
+        if not path.is_file() or type(value.get("bytes")) is not int or value["bytes"] != info.st_size or value["bytes"] < 0:
+            raise InputError("The bound original source size changed")
+        if str(info.st_mtime_ns) != value.get("modifiedNs") or str(info.st_ctime_ns) != value.get("changedNs"):
+            raise InputError("The bound original source changed after selection")
+        digest = value.get("sha256")
+        if not isinstance(digest, str) or len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
+            raise InputError("Retain the complete original source SHA-256")
+    return value
+
+def source_binding_digest(actual, binding):
+    if binding is not None and (actual.get("bytes") != binding["bytes"] or actual.get("sha256") != binding["sha256"]):
+        raise InputError("The received source differs from the immutable original request bytes")
+
 def member(value):
     if not isinstance(value, str) or not value or len(value) > 1024 or "\\" in value or "\x00" in value:
         raise InputError("Use a relative package member")
@@ -528,9 +557,15 @@ class Migration:
 
     def _destination_file(self, project, value, operation):
         path = Path(value["path"]).expanduser().resolve(strict=True)
-        file_digest(path, MAX_OBJECT)
+        binding = source_binding(path, value.get("sourceBinding"))
+        source_binding_digest(file_digest(path, MAX_OBJECT), binding)
         with path.open("rb") as source:
-            return self._receive_destination(project, source, value.get("provenance"), operation)
+            result = self._receive_destination(project, source, value.get("provenance"), operation)
+        # The immutable object is the actual parsed source, so a pathname change
+        # between selection and open cannot commit different MARCXML bytes.
+        source_binding_digest(result["original"], binding)
+        source_binding(path, value.get("sourceBinding"))
+        return result
 
     def _production_plan(self, project, value, operation):
         from production_waves import create_plan
@@ -609,11 +644,15 @@ class Migration:
 
     def _file_root(self, project, value, _):
         path = Path(value["path"]).expanduser().resolve(strict=True)
+        binding = source_binding(path, value.get("sourceBinding"), "directory")
         if not path.is_dir():
             raise InputError("Select the source file directory")
         info = path.stat()
         project["fileRoot"] = str(path)
         project["fileRootIdentity"] = {"device": info.st_dev, "inode": info.st_ino}
+        if binding is not None and (str(info.st_dev) != binding["device"] or str(info.st_ino) != binding["inode"]):
+            raise InputError("The original directory changed during binding")
+        source_binding(path, value.get("sourceBinding"), "directory")
         return {"directory": str(path), "identity": project["fileRootIdentity"]}
 
     def _source_file(self, project, entry):
@@ -1162,6 +1201,8 @@ class Migration:
                 relative = path.relative_to(self.root).as_posix()
                 if path.is_symlink():
                     raise InputError("Resolve symbolic links before a whole workspace handover")
+                if relative == "oai/tind/live.json" or relative.startswith("oai/tind/.live-") or (relative.startswith("oai/tind/agent-requests/") and relative.endswith(".partial")):
+                    continue
                 if not include_files and relative.startswith("oai/tind/acquisition-bytes/"):
                     continue
                 if path.is_file() and relative not in {".lock", "workspace.sqlite", "workspace.sqlite-journal"} and not any(
@@ -1170,7 +1211,7 @@ class Migration:
             runtime_members = []
             for relative in ("oai-pmh", "xml"):
                 for path in (source_root / relative).rglob("*"):
-                    if path.is_file() and "__pycache__" not in path.parts and path.suffix in {".py", ".mjs", ".js", ".html", ".css", ".md", ".json"}:
+                    if path.is_file() and "__pycache__" not in path.parts and path.suffix in {".py", ".mjs", ".mts", ".js", ".html", ".css", ".md", ".json"}:
                         name = "source/" + path.relative_to(source_root).as_posix()
                         members[name] = path
                         runtime_members.append(name)

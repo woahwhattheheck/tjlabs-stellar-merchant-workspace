@@ -29,6 +29,9 @@ export async function openNativeCollectionDeliveryClient(options={}){
  return Object.freeze({endpoint:native.endpoint,deliveryWorkspace,call,
   preview:(request,context)=>call('preview',request,context),
   prepare:(request,context)=>call('prepare',request,context),
+  inspectTask:(expectedTaskSha256,range={},context)=>call('task-inspect',{expectedTaskSha256,...range},context),
+  previewTask:(request,context)=>call('task-preview',request,context),
+  prepareTask:(request,context)=>call('task-prepare',request,context),
   inspect:(id,context)=>call('inspect',{id},context),
   received:(sha256,range={},context)=>call('received',{sha256,...range},context),
   receivedHistory:(range={},context)=>call('received-list',range,context),
@@ -91,7 +94,7 @@ export async function uploadNativeCustomerPackage({client,file,directory,expecte
 /** Save one original effect selection before dispatch, then retry only that selection. */
 export async function retainNativeCustomerRequest({client,directory,operation,body,signal}){
  need(client&&typeof client.call==='function'&&typeof client.endpoint==='string'&&
-  ['preview','prepare','receive'].includes(operation),'MCP_DELIVERY_REQUEST_SELECTION');
+  ['preview','prepare','task-preview','task-prepare','receive'].includes(operation),'MCP_DELIVERY_REQUEST_SELECTION');
  absolute(directory);
  const selected={schema:'stellar-forge.customer-package-request.v1',endpoint:client.endpoint,
   workspace:client.deliveryWorkspace,operation,body};

@@ -15,6 +15,9 @@ def save_json(path,value):
     with temp.open("w",encoding="utf-8") as f:
         json.dump(value,f,indent=2,sort_keys=True);f.write("\n");f.flush();os.fsync(f.fileno())
     os.replace(temp,path)
+    directory=os.open(path.parent,os.O_RDONLY)
+    try:os.fsync(directory)
+    finally:os.close(directory)
 def read_json(path):
     try:return json.loads(P(path).read_bytes())
     except (FileNotFoundError,json.JSONDecodeError):return None
@@ -77,39 +80,79 @@ def progress():
                 state={k:value[k] for k in ("id","phase","runId","updatedAt","completedAt") if k in value}
                 if state!=previous.get(label):emit("datasette_progress",programme=label,**state);previous[label]=state
 threading.Thread(target=progress,daemon=True).start()
-def run(arguments,label,cwd=None,timeout=None):
+def run(arguments,label,cwd=None,timeout=None,checkpoint_callback=None):
     out=root/(label+".stdout");err=root/(label+".stderr")
     started=time.monotonic()
     with out.open("wb") as stdout,err.open("wb") as stderr:
-        process=subprocess.Popen([str(a) for a in arguments],cwd=str(cwd or root),stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True)
+        process=subprocess.Popen([str(a) for a in arguments],cwd=str(cwd or root),
+            stdin=subprocess.PIPE if checkpoint_callback else subprocess.DEVNULL,
+            stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True)
         emit("datasette_process_started",phase=label,pid=process.pid)
         select=selectors.DefaultSelector()
         select.register(process.stdout,selectors.EVENT_READ,(stdout,"stdout"));select.register(process.stderr,selectors.EVENT_READ,(stderr,"stderr"))
         pending={"stdout":b"","stderr":b""}
-        while select.get_map():
-            if timeout and time.monotonic()-started>timeout:
-                import signal
-                os.killpg(process.pid,signal.SIGTERM)
-                try:process.wait(10)
-                except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);process.wait()
-                raise TimeoutError(label+" did not finish within its selected runtime.")
-            for key,_ in select.select(timeout=1):
-                stream,kind=key.data;raw=os.read(key.fileobj.fileno(),65536)
-                if not raw:
-                    select.unregister(key.fileobj);key.fileobj.close();continue
-                stream.write(raw);stream.flush();pending[kind]+=raw
-                while b"\n" in pending[kind]:
-                    line,pending[kind]=pending[kind].split(b"\n",1)
-                    if line.startswith(b"{") and len(line)<6000:
+        try:
+            while select.get_map():
+                if timeout and time.monotonic()-started>timeout:
+                    raise TimeoutError(label+" did not finish within its selected runtime, including checkpoint saves.")
+                for key,_ in select.select(timeout=1):
+                    stream,kind=key.data;raw=os.read(key.fileobj.fileno(),65536)
+                    if not raw:
+                        select.unregister(key.fileobj);key.fileobj.close();continue
+                    stream.write(raw);stream.flush();pending[kind]+=raw
+                    while b"\n" in pending[kind]:
+                        line,pending[kind]=pending[kind].split(b"\n",1)
+                        if not line.startswith(b"{") or len(line)>=6000:continue
+                        try:value=json.loads(line)
+                        except json.JSONDecodeError:continue
+                        if not isinstance(value,dict):continue
+                        if "phase" in value or "stage" in value or "state" in value:
+                            emit("datasette_native_progress",programme=label,channel=kind,event=value)
+                        if value.get("stage")!="datasette_installed_checkpoint_requested":continue
+                        if kind!="stderr" or checkpoint_callback is None:
+                            raise RuntimeError("Checkpoint control is only available to the original installed invocation.")
+                        stdout.flush();stderr.flush();os.fsync(stdout.fileno());os.fsync(stderr.fileno())
                         try:
-                            value=json.loads(line)
-                            if isinstance(value,dict) and ("phase" in value or "stage" in value or "state" in value):emit("datasette_native_progress",programme=label,channel=kind,event=value)
-                        except json.JSONDecodeError:pass
-        code=process.wait()
+                            response=checkpoint_callback(value)
+                            if timeout and time.monotonic()-started>timeout:
+                                raise TimeoutError("The complete installed checkpoint was saved after the selected invocation timeout.")
+                        except Exception as error:
+                            response={"protocol":value.get("protocol"),"operation":OP,"requestId":value.get("requestId"),
+                                "status":"FAILED","error":{"type":type(error).__name__,"message":str(error)}}
+                        process.stdin.write((json.dumps(response,separators=(",",":"))+"\n").encode());process.stdin.flush()
+            code=process.wait()
+        finally:
+            select.close()
+            if process.stdin is not None:
+                try:process.stdin.close()
+                except BrokenPipeError:pass
+            if process.poll() is None:
+                # Give the waiting runner time to retain its EOF failure before
+                # stopping only this controller-owned process group.
+                try:process.wait(5)
+                except subprocess.TimeoutExpired:
+                    import signal
+                    os.killpg(process.pid,signal.SIGTERM)
+                    try:process.wait(10)
+                    except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);process.wait()
     emit("datasette_process_exited",phase=label,returncode=code,seconds=round(time.monotonic()-started,2))
     if code:
         raise RuntimeError(label+" returned "+str(code)+": "+err.read_text(errors="replace")[-6000:])
     return {"returncode":code,"stdout":str(out),"stderr":str(err)}
+def save_files(paths,label):
+    request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"report" if path.suffix==".json" else "other"} for path in paths]}
+    completed=subprocess.run([sys.executable,helpers/"library_private_upload.py",tmp],input=json.dumps(request).encode(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    (tmp/(label+".stdout")).write_bytes(completed.stdout);(tmp/(label+".stderr")).write_bytes(completed.stderr)
+    for line in completed.stderr.decode(errors="replace").splitlines():
+        if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__"):print(line,flush=True)
+    if completed.returncode:raise RuntimeError("Canonical save helper failed: "+str(completed.returncode))
+    response=json.loads(completed.stdout);rows=response.get("results")
+    if not isinstance(rows,list) or len(rows)!=len(paths):raise RuntimeError("The canonical save returned another artifact selection.")
+    for path,row in zip(paths,rows):
+        if row.get("local_path")!=str(path):raise RuntimeError("The save returned another original local file.")
+        if row.get("status")=="succeeded" and not succeeded(row):raise RuntimeError("The saved file identity is incomplete.")
+    return rows
+
 def persist_complete_phase(original_outcome,phase):
     outcome=json.loads(json.dumps(original_outcome))
     outcome["checkpoint_phase"]=phase
@@ -132,23 +175,18 @@ def persist_complete_phase(original_outcome,phase):
     outcome["host_capacity_at_save"]=capacity
     save_json(root/"host-capacity-at-save.json",capacity)
     emit("datasette_host_capacity_at_save",**capacity)
-    report=root/("Datasette_Publisher_Complete_Result.json" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Result.json")
+    names={
+        "publisher":("Datasette_Publisher_Complete_Result.json","Datasette_Publisher_Complete_Checkpoint.zip","Datasette_Operating_Checkpoint_Parts.json"),
+        "installed":("Datasette_Publisher_Installed_Operating_Result.json","Datasette_Publisher_Installed_Operating_Checkpoint.zip","Datasette_Operating_Checkpoint_Parts.json"),
+        "installed-ready":("Datasette_Installed_Ready_Result.json","Datasette_Installed_Ready_Checkpoint.zip","Datasette_Installed_Ready_Checkpoint_Parts.json"),
+    }
+    if phase not in names:raise RuntimeError("Unknown original checkpoint phase.")
+    if phase=="installed-ready" and outcome["state"]!="INSTALLED_SOURCE_VERIFIED":raise RuntimeError("The installed checkpoint must retain its actual source-verified state.")
+    report_name,archive_name,parts_name=names[phase]
+    report=root/report_name
     save_json(report,outcome)
     # Preserve the complete original outcome before creating its large archive.
     # The same successful report receipt is reused by the final delivery.
-    def save_files(paths,label):
-        request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"report" if path.suffix==".json" else "other"} for path in paths]}
-        completed=subprocess.run([sys.executable,helpers/"library_private_upload.py",tmp],input=json.dumps(request).encode(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        (tmp/(label+".stdout")).write_bytes(completed.stdout);(tmp/(label+".stderr")).write_bytes(completed.stderr)
-        for line in completed.stderr.decode(errors="replace").splitlines():
-            if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__"):print(line,flush=True)
-        if completed.returncode:raise RuntimeError("Canonical save helper failed: "+str(completed.returncode))
-        response=json.loads(completed.stdout);rows=response.get("results")
-        if not isinstance(rows,list) or len(rows)!=len(paths):raise RuntimeError("The canonical save returned another artifact selection.")
-        for path,row in zip(paths,rows):
-            if row.get("local_path")!=str(path):raise RuntimeError("The save returned another original local file.")
-            if row.get("status")=="succeeded" and not succeeded(row):raise RuntimeError("The saved file identity is incomplete.")
-        return rows
     report_saved=None
     try:
         report_saved=save_files([report],"complete-report-first")[0]
@@ -167,7 +205,7 @@ def persist_complete_phase(original_outcome,phase):
             if digest(retained_manifest)!=previous_digest:raise RuntimeError("The preceding checkpoint manifest changed.")
         else:shutil.copy2(prior_manifest,retained_manifest)
     export=transfer_root/"export";export.mkdir(mode=0o700,exist_ok=True)
-    archive_path=export/("Datasette_Publisher_Complete_Checkpoint.zip" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Checkpoint.zip")
+    archive_path=export/archive_name
     members=[];directories=[];excluded=[]
     with zipfile.ZipFile(archive_path,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
         for folder,dirs,files in os.walk(root,followlinks=False):
@@ -217,7 +255,7 @@ def persist_complete_phase(original_outcome,phase):
         for i,row in enumerate(rows):
             if not succeeded(row) and row.get("error_code")=="transfer_failed":rows[i]=save_files([parts[i]],"complete-part-retry-"+str(i))[0]
         if not succeeded(saved[1]):saved[1]=save_files([report],"complete-report-retry")[0]
-        manifest=export/"Datasette_Operating_Checkpoint_Parts.json"
+        manifest=export/parts_name
         value={"schema":"commons.complete-checkpoint-parts.v1","operation":OP,"state":outcome["state"],"archive":archive_identity,"parts":[{"order":i+1,"file_name":path.name,"bytes":path.stat().st_size,"sha256":digest(path),"saved":public_save(rows[i])} for i,path in enumerate(parts)],"report":public_save(saved[1]),"assembly":"Concatenate the complete raw part files in ascending order, verify the complete archive byte count and SHA256, then restore its original retained root before resuming the same journals."}
         save_json(manifest,value);manifest_row=save_files([manifest],"complete-parts-manifest")[0]
         if all(succeeded(row) for row in [*rows,saved[1],manifest_row]):delivered(mode="complete_archive_parts",archive=archive_identity,parts=value["parts"],saved=[public_save(saved[1]),public_save(manifest_row)])
@@ -235,6 +273,99 @@ def persist_complete_phase(original_outcome,phase):
                 emit("datasette_save_retry_required",root=str(root),archive=archive_identity,saved=[public_save(row) for row in saved])
     return delivery_result
 
+
+def valid_installed_checkpoint_delivery(delivery):
+    if not isinstance(delivery,dict):return False
+    archive=delivery.get("archive",{});saved=delivery.get("saved",[])
+    if (delivery.get("state")!="INSTALLED_SOURCE_VERIFIED" or delivery.get("checkpoint_phase")!="installed-ready"
+        or type(archive.get("bytes")) is not int or archive["bytes"]<=0
+        or not isinstance(archive.get("sha256"),str) or len(archive["sha256"])!=64
+        or any(character not in "0123456789abcdef" for character in archive["sha256"])
+        or not isinstance(saved,list) or len(saved)!=2 or not all(isinstance(row,dict) and succeeded(row) for row in saved)):return False
+    if delivery.get("mode")=="complete_archive":return True
+    parts=delivery.get("parts")
+    return (delivery.get("mode")=="complete_archive_parts" and isinstance(parts,list) and bool(parts)
+        and all(isinstance(part,dict) and part.get("order")==index+1 and type(part.get("bytes")) is int and part["bytes"]>0
+            and isinstance(part.get("sha256"),str) and len(part["sha256"])==64
+            and all(character in "0123456789abcdef" for character in part["sha256"])
+            and isinstance(part.get("saved"),dict) and succeeded(part["saved"]) for index,part in enumerate(parts))
+        and sum(part["bytes"] for part in parts)==archive["bytes"])
+
+def installed_checkpoint(request):
+    import uuid
+    if (request.get("stage")!="datasette_installed_checkpoint_requested"
+        or request.get("protocol")!="controller-stdio-v1" or request.get("operation")!=OP):
+        raise RuntimeError("The installed checkpoint control operation differs.")
+    request_id=request.get("requestId")
+    if not isinstance(request_id,str) or str(uuid.UUID(request_id))!=request_id:
+        raise RuntimeError("The original installed checkpoint request identity differs.")
+    journal_path=root/"installed/installed-browser-journey.json"
+    if request.get("journalFile")!=str(journal_path):raise RuntimeError("Checkpoint must read the original installed journal.")
+    journal=read_json(journal_path)
+    if (not journal or journal.get("schema")!="stellar-forge.datasette-installed-browser-journey.v1"
+        or journal.get("phase")!="INSTALLED_SOURCE_VERIFIED"):
+        raise RuntimeError("The installed runner has not paused at its source-verified journal.")
+    original_input=journal["input"];build=journal["build"];runtime=journal["runtime"]
+    installation=journal["installation"];source=journal["installedSource"]
+    if (original_input["sourceRef"]!=source_identity["installed_source_ref"]
+        or original_input["repository"]!=str(root/"canonical-repository")
+        or original_input["publisherProgrammeDirectory"]!=str(root/"journey")
+        or original_input["outputDirectory"]!=str(root/"installed")
+        or build.get("sourceCommit")!=source_identity["installed_source_ref"]
+        or runtime.get("status")!="READY" or not runtime.get("ready")
+        or runtime.get("sourceCommit")!=source_identity["installed_source_ref"]
+        or source.get("sourceCommit")!=source_identity["installed_source_ref"]
+        or source.get("sourceRoot")!=runtime.get("sourceRoot")
+        or not all(journal.get("checks",{}).get(key) is True for key in (
+            "selectedSourceBuilt","installedRuntimeReady","originalGzipRetained","pythonTypesRetained","typedClientExports"))):
+        raise RuntimeError("The original installed source or complete runtime selection differs.")
+    expected={"journalId":journal["id"],"workspaceId":original_input["workspaceId"],
+        "sourceCommit":original_input["sourceRef"],"buildArchive":build["archive"],
+        "buildSha256":build["sha256"],"buildBytes":build["archiveBytes"],
+        "runtimeDirectory":installation["directory"],"sourceRoot":runtime["sourceRoot"]}
+    if request.get("binding")!=expected:raise RuntimeError("The checkpoint request differs from its original journal/build/runtime.")
+    selected=[item for item in journal.get("installedCheckpoints",[]) if item.get("id")==request_id]
+    if len(selected)!=1 or selected[0].get("binding")!=expected or selected[0].get("status")!="REQUESTED":
+        raise RuntimeError("The installed checkpoint request was not durably retained by its original runner.")
+    archive=P(expected["buildArchive"]);archive.resolve(strict=True).relative_to(root)
+    runtime_directory=P(expected["runtimeDirectory"]).resolve(strict=True);runtime_directory.relative_to(root)
+    P(expected["sourceRoot"]).resolve(strict=True).relative_to(runtime_directory)
+    if archive.stat().st_size!=expected["buildBytes"] or digest(archive)!=expected["buildSha256"]:
+        raise RuntimeError("The complete installed build changed before its checkpoint.")
+    receipt_path=root/"run-history/installed-ready-checkpoints"/(request_id+".json")
+    upload_path=receipt_path.with_name(request_id+".upload.json")
+    receipt=read_json(receipt_path)
+    if receipt:
+        if (receipt.get("schema")!="commons.datasette-installed-ready-checkpoint.v1"
+            or receipt.get("operation")!=OP or receipt.get("root")!=str(root)
+            or receipt.get("source")!=source_identity or receipt.get("request")!=request
+            or not valid_installed_checkpoint_delivery(receipt.get("delivery"))):
+            raise RuntimeError("The retained installed checkpoint receipt differs.")
+        emit("datasette_installed_ready_checkpoint_reused",request_id=request_id,archive=receipt["delivery"]["archive"])
+    else:
+        checkpoint_outcome={**outcome,"state":"INSTALLED_SOURCE_VERIFIED","installed_state":journal,
+            "installed_checkpoint_request":request}
+        delivery=persist_complete_phase(checkpoint_outcome,"installed-ready")
+        if not valid_installed_checkpoint_delivery(delivery):raise RuntimeError("The complete installed checkpoint did not finish its original save.")
+        receipt={"schema":"commons.datasette-installed-ready-checkpoint.v1","operation":OP,"root":str(root),
+            "source":source_identity,"request":request,"delivery":delivery,"saved_at":stamp()}
+        save_json(receipt_path,receipt)
+    receipt_sha=digest(receipt_path)
+    uploaded=read_json(upload_path)
+    if uploaded:
+        if (uploaded.get("request_id")!=request_id or uploaded.get("receipt_sha256")!=receipt_sha
+            or not isinstance(uploaded.get("saved"),dict) or not succeeded(uploaded["saved"])):
+            raise RuntimeError("The retained installed checkpoint receipt upload differs.")
+        saved=uploaded["saved"]
+    else:
+        saved=save_files([receipt_path],"installed-ready-receipt-"+request_id)[0]
+        if not succeeded(saved):raise RuntimeError("The complete checkpoint receipt still needs its original save.")
+        save_json(upload_path,{"request_id":request_id,"receipt_sha256":receipt_sha,"saved":public_save(saved)})
+    outcome["installed_ready_checkpoint"]=receipt["delivery"]
+    outcome["installed_ready_receipt"]={"path":str(receipt_path),"sha256":receipt_sha,"saved":public_save(saved)}
+    emit("datasette_installed_ready_checkpoint_saved",request_id=request_id,archive=receipt["delivery"]["archive"],receipt=outcome["installed_ready_receipt"])
+    return {"protocol":"controller-stdio-v1","operation":OP,"requestId":request_id,"status":"SAVED",
+        "binding":request["binding"],"savedAt":receipt["saved_at"],"delivery":receipt["delivery"],"receipt":public_save(saved)}
 
 def compact_original_checkout(repository,source_commit):
     # The restored checkout is a reproducible copy of this receiver's retained
@@ -471,9 +602,10 @@ try:
     outcome["browser_runtime"]={"playwright_module":str(playwright),"chromium":str(chromium),"version":(root/"browser-executable-version.stdout").read_text().strip(),"retained_directory":str(browser_home)}
     emit("datasette_browser_runtime_ready",**outcome["browser_runtime"])
     installed_input={"repository":str(repository),"sourceRef":got,"publisherProgrammeDirectory":str(root/"journey"),"outputDirectory":str(root/"installed"),"playwrightModule":str(playwright),"browserExecutable":str(chromium),"port":53173,"receivedPort":53174,"offline":False,"npmCache":str(tmp/"npm-cache"),"python":sys.executable,"npm":str(node.parent/"npm")}
+    installed_input["installedCheckpoint"]={"protocol":"controller-stdio-v1","operation":OP}
     save_json(root/"installed-input.json",installed_input)
     emit("datasette_installed_started",source_ref=got,port=53173,received_port=53174,publisher_directory=str(root/"journey"))
-    run([node,continuation/"run-installed.mjs","--input",root/"installed-input.json"],"installed-programme",timeout=1800)
+    run([node,continuation/"run-installed.mjs","--input",root/"installed-input.json"],"installed-programme",timeout=1800,checkpoint_callback=installed_checkpoint)
     installed_journal=read_json(root/"installed/installed-browser-journey.json")
     if not installed_journal or installed_journal.get("phase")!="COMPLETE":raise RuntimeError("The actual installed browser programme did not reach COMPLETE.")
     outcome.update({"state":"COMPLETE","installed":installed_journal,"completed_at":stamp()})
@@ -485,13 +617,43 @@ except BaseException as error:
     emit("datasette_original_continuation_preserved",error_type=native_error["type"],message=native_error["message"])
 finally:
     done.set()
+final_delivery=None
 try:
-    persist_complete_phase(outcome,"installed")
+    final_delivery=persist_complete_phase(outcome,"installed")
 except Exception as error:
     if not payload.get("retain_receiver"):raise
     outcome["complete_save_continuation"]={"type":type(error).__name__,"message":str(error),"traceback":traceback.format_exc()}
     emit("datasette_complete_save_continuation",root=str(root),**outcome["complete_save_continuation"])
 fcntl.flock(lease.fileno(),fcntl.LOCK_UN);lease.close()
+after_installed_source=payload.get("after_installed_source")
+if after_installed_source is not None and outcome.get("state")=="COMPLETE" and final_delivery:
+    try:
+        if not isinstance(after_installed_source,dict):raise RuntimeError("Supply the complete pinned following source.")
+        source=after_installed_source.get("content");source_sha=after_installed_source.get("sha256")
+        if not isinstance(source,str) or hashlib.sha256(source.encode("utf-8")).hexdigest()!=source_sha:
+            raise RuntimeError("The complete following source identity differs.")
+        folder=root/"continuation-source";folder.mkdir(mode=0o700,exist_ok=True)
+        path=folder/(source_sha+".py")
+        if path.exists():
+            if path.read_text(encoding="utf-8")!=source:raise RuntimeError("The retained following source differs.")
+        else:
+            source_fd,temporary_name=tempfile.mkstemp(prefix=path.name+".pending-",dir=folder)
+            temporary_source=P(temporary_name)
+            with os.fdopen(source_fd,"w",encoding="utf-8") as saved_source:
+                saved_source.write(source);saved_source.flush();os.fsync(saved_source.fileno())
+            if digest(temporary_source)!=source_sha:raise RuntimeError("The retained following source bytes differ.")
+            os.replace(temporary_source,path)
+            directory=os.open(folder,os.O_RDONLY)
+            try:os.fsync(directory)
+            finally:os.close(directory)
+        emit("datasette_after_installed_source_started",sha256=source_sha,path=str(path))
+        try:exec(compile(source,str(path),"exec"),{"delivery_payload":payload,"delivery_root":root,"__name__":"__main__"})
+        except SystemExit as stopped:
+            if stopped.code not in (None,0):raise
+        emit("datasette_after_installed_source_returned",sha256=source_sha)
+    except BaseException as error:
+        if isinstance(error,KeyboardInterrupt):raise
+        emit("datasette_after_installed_source_error",error_type=type(error).__name__,message=str(error),traceback=traceback.format_exc())
 if payload.get("retain_receiver"):
     if sys.stdin.isatty():
         import termios

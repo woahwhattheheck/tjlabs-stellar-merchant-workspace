@@ -40,7 +40,7 @@ function ref(value) {
   need(value && typeof value === 'object' && Object.keys(value).sort().join(',') === 'bytes,path,sha256',
     'Select the exact original file descriptor.');
   pathName(value.path);
-  need(Number.isSafeInteger(value.bytes) && value.bytes > 0 && value.bytes <= MAX_FRED_OPERATING_PACKAGE_BYTES &&
+  need(Number.isSafeInteger(value.bytes) && value.bytes >= 0 && value.bytes <= MAX_FRED_OPERATING_PACKAGE_BYTES &&
     HASH.test(value.sha256 ?? ''), 'The original file length or hash is invalid.');
   return value;
 }
@@ -74,7 +74,7 @@ async function opened(root, name, maximum = MAX_FRED_OPERATING_PACKAGE_BYTES) {
   const path = join(root, name), file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
     const info = await file.stat();
-    need(info.isFile() && info.nlink === 1 && !(info.mode & 0o077) && info.size > 0 && info.size <= maximum,
+    need(info.isFile() && info.nlink === 1 && !(info.mode & 0o077) && info.size >= 0 && info.size <= maximum,
       'Read a complete private original file: ' + name);
     return { file, info, path };
   } catch(error) { await file.close(); throw error; }

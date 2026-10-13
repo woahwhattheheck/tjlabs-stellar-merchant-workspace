@@ -17,6 +17,8 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static["/operations_lazy.mjs"] = ("operations_lazy.mjs", "text/javascript; charset=utf-8")
+    static["/DESK_LOADING.md"] = ("DESK_LOADING.md", "text/markdown; charset=utf-8")
     static.update({"/task-outcomes-workbook.mjs": ("task-outcomes-workbook.mjs", "text/javascript; charset=utf-8"),
                    "/task-outcomes-workbook-desk.mjs": ("task-outcomes-workbook-desk.mjs", "text/javascript; charset=utf-8"),
                    "/TASK_OUTCOMES_WORKBOOK.md": ("TASK_OUTCOMES_WORKBOOK.md", "text/markdown; charset=utf-8")})

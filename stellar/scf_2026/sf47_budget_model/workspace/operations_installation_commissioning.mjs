@@ -6,6 +6,7 @@ const SNAPSHOT = 'commissioning-account-snapshot.json';
 const clone = value => JSON.parse(JSON.stringify(value));
 const rows = value => Array.isArray(value) ? value : [];
 const name = value => value?.filename ?? value?.name ?? '';
+const isArchive = file => /\.tar$/i.test(name(file)) || file?.mediaType === 'application/x-tar';
 const display = value => value === null || value === undefined || value === '' ? '—' : String(value);
 
 export function createCommissioningReceivingDesk(owner) {
@@ -52,6 +53,7 @@ export function createCommissioningReceivingDesk(owner) {
     const files=ids.map(id=>{
       const file=originals().find(row=>row.id===id);
       if(!file)throw new Error('A selected original file is absent from this source draft edition.');
+      if(isArchive(file))throw new Error('Review and receive the original archive before selecting its capture members for Installation attachment.');
       return file;
     });
     for(const required of REQUIRED){
@@ -149,6 +151,181 @@ export function createCommissioningReceivingDesk(owner) {
   function previewCurrent() {
     try{return Boolean(work()?.preview&&work().previewKey===stable(payload()));}catch{return false;}
   }
+
+  const ARCHIVE_SCHEMA='stellar-forge.installation-commissioning-archive.v1';
+  function archiveWork(){
+    const w=work();
+    if(!w)throw new Error('Open the commissioning receiving selection first.');
+    if(!w.archive)w.archive={fileId:'',replaceFileIds:[],preview:null,previewKey:null,receipt:null,offset:0};
+    return w.archive;
+  }
+  function archiveInput(){
+    const a=archiveWork(), file=originals().find(row=>row.id===a.fileId);
+    if(!file)throw new Error('Choose the complete original handover archive retained in this source draft.');
+    return {expectedRevision:draft().revision,archiveFileId:file.id,replaceFileIds:rows(a.replaceFileIds).slice().sort()};
+  }
+  function archiveKey(){
+    const input=archiveInput(), file=originals().find(row=>row.id===input.archiveFileId);
+    return stable({...input,archive:{id:file.id,filename:name(file),sha256:file.sha256,bytes:file.bytes}});
+  }
+  function invalidateArchive(){
+    const a=work()?.archive;if(a){a.previewKey=null;}
+  }
+  function archiveCurrent(){
+    try{const a=archiveWork();return Boolean(a.preview&&a.previewKey===archiveKey());}catch{return false;}
+  }
+  async function inspectArchive(){
+    mutation();const w=work(),a=archiveWork(),input=archiveInput(),key=archiveKey();
+    const value=await owner.api('/commissioning/archive-inspect',clone(input));
+    if(!owner.available()||w!==work()||a!==work().archive||key!==archiveKey())return;
+    const original=originals().find(row=>row.id===input.archiveFileId);
+    if(value?.schema!==ARCHIVE_SCHEMA||value.caseId!==owner.caseId||value.draftId!==state().draftId||
+       value.draftRevision!==input.expectedRevision||!Array.isArray(value.members)||
+       value.archive?.id!==original.id||value.archive?.sha256!==original.sha256||value.archive?.bytes!==original.bytes||
+       value.selection?.archiveFileId!==original.id||value.selection?.expectedArchiveSha256!==original.sha256||
+       stable(rows(value.selection?.replaceFileIds).slice().sort())!==stable(input.replaceFileIds)||
+       typeof value.previewSha256!=='string'||!/^[0-9a-f]{64}$/.test(value.previewSha256))
+      throw new Error('The archive review differs from the exact original retained archive or replacement selection.');
+    a.preview=clone(value);a.previewKey=key;a.offset=0;
+    w.dirty=true;state().notice=value.ready?
+      'Reviewed every original archive member and the complete source capacity. Receive the exact reviewed archive when ready.':
+      'The archive review identifies current source conflicts or capacity findings. Review their complete identities before receiving.';
+    owner.changed();
+  }
+  async function receiveArchive(){
+    mutation();const a=archiveWork();
+    if(!archiveCurrent()||a.preview.ready!==true)throw new Error('Review a ready complete archive selection before receiving.');
+    if(!String(state().note||'').trim())throw new Error('Enter the original source receiving reason before recording the archive.');
+    const preview=clone(a.preview);
+    if(!confirm('Receive this complete original archive into the current Source Desk edition, apply only the reviewed replacements, and open its suggested capture selection?'))return;
+    return owner.issue('commissioning.archive.receive',{
+      ...preview.selection,expectedPreviewSha256:preview.previewSha256
+    },preview.draftRevision);
+  }
+  function adoptArchiveReceipt(result){
+    if(result?.state!=='RECEIVED_COMMISSIONING_ARCHIVE')return false;
+    if(!work()||work().draftId!==state().draftId)state().commissioningWork=initial();
+    const w=work(),a=archiveWork();
+    state().reconciliations??=[];
+    state().reconciliations.push({
+      reason:'commissioning_archive_received',draftId:state().draftId,reviewedRevision:draft().revision,
+      editedCommissioningReceiving:{
+        captureFileId:w.captureFileId,fileIds:clone(w.fileIds),projectId:w.projectId,
+        installationId:w.installationId,milestonePhases:clone(w.milestonePhases),
+        includeAccountSnapshot:w.includeAccountSnapshot,preview:clone(w.preview)
+      },archiveSha256:result.archive?.sha256,at:new Date().toISOString()
+    });
+    const selected=result.receivingSelection;
+    if(!selected||typeof selected.captureFileId!=='string'||!Array.isArray(selected.fileIds))
+      throw new Error('The recorded archive is missing its original suggested receiving selection.');
+    // This result has already committed. Keep its complete original receipt in
+    // the parent journal before the surrounding desk persists/refreshes.
+    a.receipt=clone(result);a.preview=null;a.previewKey=null;a.replaceFileIds=[];a.offset=0;
+    w.captureFileId=selected.captureFileId;w.fileIds=clone(selected.fileIds);
+    w.projectId='';w.installationId='';w.milestonePhases=[];w.includeAccountSnapshot=false;
+    w.inspection=null;w.inspectionKey=null;w.preview=null;w.previewKey=null;w.baseRevision=draft().revision;w.dirty=false;
+    state().tab='commissioning';
+    state().notice='Received the complete original handover archive. Inspect its suggested original capture files to select the project and Installation.';
+    return true;
+  }
+  function editArchive(target){
+    if(!target.matches('[data-commissioning-archive],[data-commissioning-replacement]'))return false;
+    if(!owner.editing())return true;
+    mutation();const a=archiveWork();
+    if(target.matches('[data-commissioning-archive]')){
+      a.fileId=target.value;a.replaceFileIds=[];a.preview=null;a.previewKey=null;a.offset=0;
+    }else{
+      const id=target.dataset.commissioningReplacement;
+      if(!originals().some(file=>file.id===id)||!rows(a.preview?.conflicts).some(conflict=>conflict.existing?.id===id))throw new Error('Choose an original current file explicitly identified by the archive review.');
+      const ids=new Set(a.replaceFileIds);if(target.checked)ids.add(id);else ids.delete(id);
+      a.replaceFileIds=[...ids].sort();invalidateArchive();
+    }
+    work().dirty=true;owner.changed();owner.render();return true;
+  }
+  function archiveView(){
+    const a=work()?.archive||{fileId:'',replaceFileIds:[],preview:null,offset:0}, preview=a.preview;
+    const archives=originals().filter(isArchive);
+    let body='<section class="source-desk-inspection">'+header('Receive a complete merchant handover archive',
+      'Keep the original handover.tar and review every exact member before adding its files to this original source draft.')+
+      '<p>Retain the complete archive through Original files first. The existing complete-file upload limit is 8 MiB. Larger handovers can use the original individual-file receiving path below.</p>'+
+      '<div class="source-desk-fields"><label><span>Original retained handover archive</span><select data-source-edit data-commissioning-archive><option value="">Select original archive</option>'+
+      archives.map(file=>'<option value="'+esc(file.id)+'"'+(a.fileId===file.id?' selected':'')+'>'+esc(name(file))+' · '+esc(file.bytes)+' bytes · '+esc(file.sha256.slice(0,12))+'</option>').join('')+
+      '</select></label></div><div class="source-desk-actions">'+
+      btn('Review complete original archive','commissioning-archive-inspect','',!a.fileId||owner.historic())+'</div>';
+    if(!archives.length)body+=hint('Use Original files to retain the exact merchant handover.tar, including its source reference and observation time.');
+    if(preview){
+      const members=rows(preview.members), offset=Math.min(a.offset||0,Math.max(0,Math.floor((members.length-1)/100)*100));
+      const conflicts=members.filter(member=>member.existingFileId&&member.disposition==='CONFLICT');
+      body+=table(['Original archive','Capture','Current source review','Capacity'],[[
+        identity(name(preview.archive),preview.archive.id)+'<br><code>'+esc(preview.archive.sha256)+'</code>',
+        identity(preview.capture?.label||preview.capture?.id,preview.capture?.id),
+        preview.ready?'Ready to receive':'Review required',
+        esc(preview.newBytes)+' new bytes<br>'+esc(preview.selectedBytes)+' selected bytes<br>'+esc(preview.storedBytesAfter)+' retained bytes after receiving'
+      ]])+
+      '<p>The complete original archive remains retained. Suggested later Installation attachments contain the required capture/source JSON and selected-cohort reports. The complete account snapshot requires its explicit later attachment choice.</p>';
+      if(conflicts.length){
+        body+='<h4>Review changed current filenames</h4>'+
+          '<p>Choose each exact current file to replace in the next source draft edition. Earlier source revisions and their complete bytes remain retained.</p>'+
+          table(['Replace current selection','Current original file','Incoming original member','Exact replacement identities'],
+            conflicts.map(member=>{
+              const old=originals().find(file=>file.id===member.existingFileId);
+              return [
+                '<input type="checkbox" data-source-edit data-commissioning-replacement="'+esc(member.existingFileId)+'"'+(a.replaceFileIds.includes(member.existingFileId)?' checked':'')+' aria-label="Replace current '+esc(name(old))+'">',
+                identity(name(old),old?.id)+'<br>'+esc(old?.bytes)+' bytes',
+                esc(member.originalMemberName)+'<br>'+esc(member.bytes)+' bytes',
+                'Current <code>'+esc(old?.sha256)+'</code><br>Incoming <code>'+esc(member.sha256)+'</code>'
+              ];
+            }));
+      }
+      body+='<h4>Complete original archive inventory</h4>'+
+        table(['Original member / receiving filename','Retained identity','Original role','Receiving disposition'],
+          members.slice(offset,offset+100).map(member=>[
+            '<strong>'+esc(member.originalMemberName)+'</strong><br>'+esc(member.filename),
+            '<code>'+esc(member.sha256)+'</code><br>'+esc(member.bytes)+' bytes',
+            esc(member.originalRole||member.originalType||member.mediaType)+(member.containsCompleteAccount?'<br><strong>Complete private account snapshot</strong>':''),
+            esc(member.disposition)+(member.replaceSelected?'<br>Explicit replacement selected':'')+(member.disposition==='ARCHIVE_ONLY'?'<br>Exact member remains in the original archive':'')
+          ]))+
+        '<div class="source-desk-actions">'+btn('Previous members','commissioning-archive-previous','',offset===0)+
+        '<span>'+esc(members.length?offset+1:0)+'–'+esc(Math.min(members.length,offset+100))+' of '+esc(members.length)+' original members</span>'+
+        btn('Next members','commissioning-archive-next','',offset+100>=members.length)+'</div>'+
+        (!archiveCurrent()?hint('The archive or replacement selection changed. Review the complete current selection again.'):'')+
+        '<div class="source-desk-actions">'+btn('Receive reviewed original archive','commissioning-archive-receive','',!archiveCurrent()||preview.ready!==true||owner.historic())+
+        btn('Download full archive review','commissioning-archive-review-download')+'</div>'+
+        details('Original conflicts, removals and source limits',{conflicts:preview.conflicts,removedFiles:preview.removedFiles,limits:preview.limits})+
+        details('Complete original archive review',preview);
+    }
+    if(a.receipt){
+      body+='<h4>Recorded complete archive receiving</h4>'+
+        table(['Original archive','Saved capture','Received files','Recorded by'],[[
+          identity(name(a.receipt.archive),a.receipt.archive?.sha256),
+          identity(a.receipt.capture?.label,a.receipt.capture?.id),
+          esc(rows(a.receipt.files).length)+' complete native files',
+          esc(a.receipt.actor)+'<br>'+esc(a.receipt.receivedAt)
+        ]])+
+        '<div class="source-desk-actions">'+btn('Inspect received capture selection','commissioning-inspect')+
+        btn('Download archive receiving receipt','commissioning-archive-receipt-download')+'</div>'+
+        details('Complete original archive receiving receipt',a.receipt);
+    }
+    return body+'</section>';
+  }
+  async function archiveAction(name){
+    if(name==='commissioning-archive-inspect')return inspectArchive();
+    if(name==='commissioning-archive-receive')return receiveArchive();
+    if(name==='commissioning-archive-review-download'){
+      if(!archiveWork().preview)throw new Error('Review the complete original archive first.');
+      return owner.download(pretty(archiveWork().preview),'COMMISSIONING_ARCHIVE_PREVIEW.json');
+    }
+    if(name==='commissioning-archive-receipt-download'){
+      if(!archiveWork().receipt)throw new Error('Open the recorded original archive receipt.');
+      return owner.download(pretty(archiveWork().receipt),'COMMISSIONING_ARCHIVE_RECEIPT.json');
+    }
+    const a=archiveWork(),total=rows(a.preview?.members).length;
+    if(name==='commissioning-archive-previous')a.offset=Math.max(0,(a.offset||0)-100);
+    else if(name==='commissioning-archive-next')a.offset=Math.min(Math.max(0,Math.floor((total-1)/100)*100),(a.offset||0)+100);
+    else throw new Error('Choose an existing archive receiving action.');
+    owner.changed();
+  }
+
   async function attach() {
     mutation();if(!previewCurrent())throw new Error('Review the complete current Installation receiving selection first.');
     if(!String(state().note||'').trim())throw new Error('Enter the original Installation save reason in the Source Desk reason field before attaching.');
@@ -159,6 +336,7 @@ export function createCommissioningReceivingDesk(owner) {
     },preview.draftRevision);
   }
   function adoptReceipt(result) {
+    if(adoptArchiveReceipt(result))return;
     if(result?.state!=='ATTACHED_COMMISSIONING')return;
     if(!work()||work().draftId!==state().draftId)state().commissioningWork=initial();
     work().receipt=clone(result);work().dirty=false;work().baseRevision=draft().revision;
@@ -168,18 +346,21 @@ export function createCommissioningReceivingDesk(owner) {
   function onDraftAccepted({replace=false}={}) {
     const w=work();if(!w)return;
     if(w.draftId!==state().draftId){state().commissioningWork=null;return;}
-    if(w.baseRevision!==draft().revision)invalidate({source:true});
+    if(w.baseRevision!==draft().revision){invalidate({source:true});invalidateArchive();}
   }
   function rebase() {
-    if(work()){work().baseRevision=draft().revision;invalidate({source:true});}
+    if(work()){work().baseRevision=draft().revision;invalidate({source:true});invalidateArchive();}
   }
   function edit(target) {
+    if(editArchive(target))return true;
     if(!target.matches('[data-commissioning-field],[data-commissioning-file],[data-commissioning-phase],[data-commissioning-snapshot]'))return false;
     if(!owner.editing())return true;
     mutation();const w=work();
     if(target.matches('[data-commissioning-file]')){
       const id=target.dataset.commissioningFile;
-      if(!originals().some(file=>file.id===id))throw new Error('Select an existing complete file.');
+      const selectedFile=originals().find(file=>file.id===id);
+      if(!selectedFile)throw new Error('Select an existing complete file.');
+      if(isArchive(selectedFile))throw new Error('Use the complete archive review above; attach its verified capture members.');
       const ids=new Set(w.fileIds);if(target.checked)ids.add(id);else ids.delete(id);
       w.fileIds=[...ids];changed(true);
     }else if(target.matches('[data-commissioning-snapshot]')){
@@ -254,16 +435,17 @@ export function createCommissioningReceivingDesk(owner) {
     let body=header('Receive saved commissioning into an Installation',
       'Inspect the saved capture, select its original project, and map milestones to the existing Workshare phase checks.');
     if(!w||w.draftId!==state().draftId)return body+
-      hint('Retain the five original capture/source JSON files using Original files. Add selected reports as needed. The original case retains every attachment and its source identities.')+
+      hint('Retain the complete original handover.tar or the five capture/source JSON files using Original files. The original case retains every attachment and its source identities.')+
       '<div class="source-desk-actions">'+btn('Open commissioning receiving selection','commissioning-open','',historical)+'</div>'+
       (retained.length?details('Original commissioning attachment history',retained):'');
     const selected=new Set(w.fileIds), files=originals();
+    body+=archiveView();
     body+='<p>The complete private account snapshot contains every original receivables customer and ledger record. Include it only through the explicit selection below. Selected-cohort reports and the five required capture/source files can be received separately.</p>'+
       '<div class="source-desk-fields">'+select('Original commissioning capture','captureFileId',w.captureFileId,
         [['','Select retained capture'],...files.filter(file=>name(file)==='commissioning-capture.json').map(file=>[file.id,name(file)+' · '+file.sha256.slice(0,12)])])+'</div>'+
       table(['Receive file','Original name and role','Complete identity'],files.map(file=>[
-        '<input type="checkbox" data-source-edit data-commissioning-file="'+esc(file.id)+'"'+(selected.has(file.id)?' checked':'')+' aria-label="Receive '+esc(name(file))+'">',
-        '<strong>'+esc(name(file))+'</strong><br>'+(REQUIRED.includes(name(file))?'Required original capture/source':name(file)===SNAPSHOT?'Complete private account snapshot':'Optional original or report'),
+        '<input type="checkbox" data-source-edit data-commissioning-file="'+esc(file.id)+'"'+(selected.has(file.id)?' checked':'')+(isArchive(file)?' disabled data-source-fixed="true"':'')+' aria-label="Receive '+esc(name(file))+'">',
+        '<strong>'+esc(name(file))+'</strong><br>'+(REQUIRED.includes(name(file))?'Required original capture/source':name(file)===SNAPSHOT?'Complete private account snapshot':isArchive(file)?'Complete archive · use the archive review above':'Optional original or report'),
         '<code>'+esc(file.sha256)+'</code><br>'+esc(file.bytes)+' bytes'
       ]))+
       '<label><input type="checkbox" data-source-edit data-commissioning-snapshot'+(w.includeAccountSnapshot?' checked':'')+'> Explicitly include the complete private account snapshot if selected above</label>'+
@@ -298,9 +480,11 @@ export function createCommissioningReceivingDesk(owner) {
     }
     body+=reviewView(w.preview)+receiptView(w.receipt);
     if(retained.length)body+=details('Original commissioning attachment history',retained);
+    if(rows(saved?.commissioningArchives).length)body+=details('Original complete archive receiving history',saved.commissioningArchives);
     return body;
   }
   async function action(name) {
+    if(name.startsWith('commissioning-archive-'))return archiveAction(name);
     if(name==='commissioning-open')return open();
     if(name==='commissioning-inspect')return inspect();
     if(name==='commissioning-preview')return preview();

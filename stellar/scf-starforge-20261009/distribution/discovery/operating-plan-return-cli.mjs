@@ -8,6 +8,9 @@ import { createOperatingPlanReturn, inspectOperatingPlanReturn, compareOperating
   reviseOperatingPlanReturn, decideOperatingPlanReturn, applyOperatingPlanReturn,
   renderOperatingPlanReturnHTML, OPERATING_RETURN_MAX_BYTES, OPERATING_RETURN_PLAN_MAX_BYTES } from './operating-plan-return.mjs';
 
+import { inspectOperatingReturnWorking, renderOperatingReturnWorkbook, OPERATING_RETURN_WORKBOOK_ASSETS,
+  OPERATING_RETURN_WORKING_MAX_BYTES } from './operating-plan-return-workbook.mjs';
+
 export const OPERATING_RETURN_HELP = [
   'Returned customer procedure review', '',
   'starforge discover plan-return prepare --current CURRENT.json --incoming RETURNED.json --out NEW.json',
@@ -19,7 +22,7 @@ export const OPERATING_RETURN_HELP = [
   '  [--value-file JSON_VALUE.json] [--note TEXT | --note-file UTF8.txt]',
   'starforge discover plan-return complete --file REVIEW.json --current CURRENT.json --out NEW_REVIEW.json',
   '  [--saved-at UTC_ISO_TIME]',
-  'starforge discover plan-return export --file REVIEW.json --format review|plan|html --out NEW', '',
+  'starforge discover plan-return export --file REVIEW.json --format review|plan|html|workbook --out NEW', '',
   'Choices: current, incoming, base, custom, automatic.',
   'show lists exact change keys, complete original/current/returned values, unresolved choices and proposed work.',
   'A custom choice reads a JSON value from --value-file; a text value is a JSON string.',
@@ -27,6 +30,8 @@ export const OPERATING_RETURN_HELP = [
   'Every selected step ID must appear once in a custom final order, including [] when no steps remain.',
   'complete retains both whole histories, reviewer choices and the exact original-format result in one file.',
   'export --format plan extracts that completed result for the original Operating plans or GrantOps receiver.',
+  'export --format workbook accepts a complete review or Working review JSON, including unfinished choice text.',
+  'The one HTML file contains the original editor and complete source; it opens offline and exports the complete return.',
   'A complete review is immutable; prepare a new review to change later work.',
   'Every --out is a new create-only file. Existing files and the supplied --current remain intact.',
   'JSON plans are limited to 32 MiB each; complete review JSON is limited to 128 MiB.',
@@ -66,8 +71,8 @@ export function parseOperatingReturnArguments(args) {
     throw new TypeError('Provide the reviewing operator or review notes.');
   if (action === 'show' && options.format && !['json', 'html'].includes(options.format))
     throw new TypeError('show --format must be json or html.');
-  if (action === 'export' && !['review', 'plan', 'html'].includes(options.format))
-    throw new TypeError('export --format must be review, plan or html.');
+  if (action === 'export' && !['review', 'plan', 'html', 'workbook'].includes(options.format))
+    throw new TypeError('export --format must be review, plan, html or workbook.');
   if (action === 'decide') {
     if (!['current', 'incoming', 'base', 'custom', 'automatic'].includes(options.take))
       throw new TypeError('--take must be current, incoming, base, custom or automatic.');
@@ -79,7 +84,7 @@ export function parseOperatingReturnArguments(args) {
   return { action, options };
 }
 async function readText(filename, maximum) {
-  const target = resolve(filename), info = await stat(target);
+  const target = filename instanceof URL ? filename : resolve(filename), info = await stat(target);
   if (!info.isFile() || info.size > maximum) throw new TypeError('Use a regular file within the stated size limit: ' + target);
   const bytes = await readFile(target);
   if (bytes.length > maximum) throw new TypeError('The file grew beyond its size limit: ' + target);
@@ -92,7 +97,10 @@ async function detail(options, key) {
 export async function mainOperatingReturn(args = process.argv.slice(2), { log = console.log } = {}) {
   const { action, options } = parseOperatingReturnArguments(args);
   if (action === 'help') { log(OPERATING_RETURN_HELP); return; }
-  const original = options.file ? inspectOperatingPlanReturn(await readJSON(options.file, OPERATING_RETURN_MAX_BYTES)) : null;
+  const workbookInput = action === 'export' && options.format === 'workbook'
+    ? inspectOperatingReturnWorking(await readJSON(options.file, OPERATING_RETURN_WORKING_MAX_BYTES)) : null;
+  const original = workbookInput?.review ??
+    (options.file ? inspectOperatingPlanReturn(await readJSON(options.file, OPERATING_RETURN_MAX_BYTES)) : null);
   let value, outputText, completion = null;
   if (action === 'prepare') {
     const current = await readJSON(options.current, OPERATING_RETURN_PLAN_MAX_BYTES);
@@ -127,6 +135,13 @@ export async function mainOperatingReturn(args = process.argv.slice(2), { log = 
       value = original.completion.plan;
     }
     if (options.format === 'html') outputText = renderOperatingPlanReturnHTML(original);
+    if (options.format === 'workbook') {
+      const sources = Object.fromEntries(await Promise.all(OPERATING_RETURN_WORKBOOK_ASSETS.map(async asset => {
+        const body = await readText(new URL(asset.file, import.meta.url), 4 * 1024 * 1024);
+        return [asset.key, body];
+      })));
+      outputText = renderOperatingReturnWorkbook(workbookInput, sources);
+    }
   }
   if (options.out) {
     if (outputText !== undefined) await saveTextExport(options.out, outputText);
