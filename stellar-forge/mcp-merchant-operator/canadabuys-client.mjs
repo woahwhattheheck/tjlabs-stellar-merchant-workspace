@@ -93,6 +93,9 @@ export function canadaBuysReplayPolicy(tool, args = {}) {
   if (['bidder_create', 'bidder_update'].includes(request.name.slice(CANADABUYS_TOOL_PREFIX.length))
       && typeof request.arguments.commandId === 'string' && request.arguments.commandId.trim())
     return { replayable: true, basis: 'ORIGINAL_BIDDER_COMMAND_ID', commandId: request.arguments.commandId };
+  if (['response_prepare','response_apply'].includes(request.name.slice(CANADABUYS_TOOL_PREFIX.length)))
+    return { replayable: true, basis: 'ORIGINAL_RESPONSE_COMMAND_AND_INPUT_SHA256',
+      commandId: request.arguments.commandId, inputSha256: request.arguments.expectedSha256 };
   if (request.name === CANADABUYS_TOOL_PREFIX + 'bidder_intake')
     return { replayable: true, basis: 'ORIGINAL_INTAKE_COMMAND_AND_INPUT_SHA256',
       commandId: request.arguments.commandId, inputSha256: request.arguments.expectedSha256 };
@@ -127,7 +130,7 @@ function pageSelection(value, offset, key) {
   return value;
 }
 const PAGE_KEYS = Object.freeze({
-  status: 'items', entries: 'items', compare: 'items', qualify: 'items', bidder_list: 'records', bidder_fit: 'items',
+  response_status: 'items', status: 'items', entries: 'items', compare: 'items', qualify: 'items', bidder_list: 'records', bidder_fit: 'items',
 });
 
 /** One existing MCP connection. Disconnect drains client requests/read leases; it never stops an application. */
@@ -201,6 +204,13 @@ export class CanadaBuysMerchantClient {
   qualify(args, options) { return this.call('qualify', args, options); }
   inspectEvidenceIntake(args, options) { return this.call('bidder_intake_inspect', args, options); }
   intakeEvidence(args, options) { return this.call('bidder_intake', args, options); }
+  responseStatus(args = {}, options) { return this.call('response_status', args, options); }
+  inspectResponse(args, options) { return this.call('response_inspect', args, options); }
+  prepareResponse(args, options) { return this.call('response_prepare', args, options); }
+  responseRecord(args, options) { return this.call('response_record', args, options); }
+  exportResponse(args, options) { return this.call('response_export', args, options); }
+  compareResponse(args, options) { return this.call('response_compare', args, options); }
+  applyResponse(args, options) { return this.call('response_apply', args, options); }
   bidderStatus(options) { return this.call('bidder_status', {}, options); }
   bidderList(args, options) { return this.call('bidder_list', args, options); }
   bidderRecord(args, options) { return this.call('bidder_record', args, options); }

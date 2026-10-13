@@ -3,8 +3,8 @@
  * standalone supplier review, attributed return and native receiving.
  * The caller owns the original server/browser/customer and supplies real source.
  */
-import { readFile, writeFile, rename, mkdir, open } from 'node:fs/promises';
-import { resolve, join, basename } from 'node:path';
+import { readFile, writeFile, rename, mkdir, open, link, unlink } from 'node:fs/promises';
+import { resolve, join, basename, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 
@@ -14,10 +14,30 @@ async function atomic(path,value) {
   const temporary=path+'.'+randomUUID()+'.tmp',handle=await open(temporary,'wx',0o600);
   try{await handle.writeFile(JSON.stringify(value,null,2)+'\n');await handle.sync();}finally{await handle.close();}
   await rename(temporary,path);
+  const parent=await open(dirname(path),'r');try{await parent.sync();}finally{await parent.close();}
 }
 async function retainDownload(download,path) {
   await download.saveAs(path);const bytes=await readFile(path);
   return {path,bytes:bytes.length,sha256:digest(bytes)};
+}
+async function retainNativeRequest(directory, body) {
+  const bytes=Buffer.from(JSON.stringify(body,null,2)+'\n'),sha256=digest(bytes);
+  const path=join(directory,'native-request-'+sha256+'.json'),temporary=path+'.'+randomUUID()+'.pending';
+  let file;
+  try{
+    file=await open(temporary,'wx',0o600);await file.writeFile(bytes);await file.sync();
+    await file.close();file=null;
+    try{await link(temporary,path);}catch(error){
+      if(error.code!=='EEXIST')throw error;
+      need((await readFile(path)).equals(bytes),'The retained original native request changed.');
+    }
+    const parent=await open(directory,'r');try{await parent.sync();}finally{await parent.close();}
+    need((await readFile(path)).equals(bytes),'The complete original native request was not retained.');
+  }finally{
+    if(file)await file.close();
+    await unlink(temporary).catch(error=>{if(error.code!=='ENOENT')throw error;});
+  }
+  return {path,bytes:bytes.length,sha256};
 }
 async function readRetained(selection){
   need(selection&&typeof selection.path==='string'&&Number.isSafeInteger(selection.bytes)&&typeof selection.sha256==='string','The saved outgoing file selection is incomplete.');
@@ -59,7 +79,16 @@ export async function runResponseReviewJourney(input) {
   const inputSha256=digest(Buffer.from(JSON.stringify(courseInput)));
   if(result){need(result.inputSha256===inputSha256&&JSON.stringify(result.courseInput)===JSON.stringify(courseInput),'The continuation review, attribution, attachment selection or acknowledgement differs from this original course.');need(result.workspaceId===workspaceId&&result.workshareId===workshareId&&result.masterSha256===masterSha256&&result.title===title,'The existing course belongs to another original source/customer.');}
   else result={schema:'starforge.canadabuys.response-review-course.v1',courseInput,inputSha256,workspaceId,workshareId,masterSha256,title,startedAt:new Date().toISOString(),phase:'opening',views:[],downloads:{},errors:[],pending:null};
+  result.requests ||= [];
   const save=()=>atomic(resultPath,result);
+  const confirmNative = (endpoint, value) => {
+    const commandId=result.pending?.body?.commandId;
+    const selected=result.requests.find(item=>item.endpoint===endpoint&&item.commandId===commandId);
+    need(selected&&value.record,'The accepted response must retain its original submitted request.');
+    selected.confirmed={record:value.record,workspace:value.workspace,
+      ...(value.returnedRecord?{returnedRecord:value.returnedRecord}:{})};
+  };
+
   if(result.phase==='COMPLETE')return result;
   const routePattern='**/api/response-review/**';
   const routeHandler=async route=>{
@@ -67,12 +96,19 @@ export async function runResponseReviewJourney(input) {
     if(request.method()==='POST'&&['/api/response-review/prepare','/api/response-review/apply'].includes(path)){
       const body=request.postDataJSON();
       need(body.workspaceId===workspaceId,'The native mutation targets another workspace.');
+      need(typeof body.commandId==='string'&&body.commandId,'Retain the original native command ID.');
+      const endpoint=path.replace('/api/response-review','');
+      const savedRequest=await retainNativeRequest(directory,body);
+      const prior=result.requests.find(value=>value.endpoint===endpoint&&value.commandId===body.commandId);
+      need(!prior||(prior.sha256===savedRequest.sha256&&prior.bytes===savedRequest.bytes),
+        'This original native command already has another retained input.');
+      if(!prior)result.requests.push({endpoint,commandId:body.commandId,...savedRequest});
       result.pending={schema:'starforge.canadabuys.response-review-request.v1',kind:path.endsWith('/prepare')?'Prepare response':'Apply supplier return',path:path.replace('/api/response-review',''),body,createdAt:new Date().toISOString()};
       await save();
     }
     await route.continue();
   };
-  let recipient=null;const browserErrors=[];const onError=error=>browserErrors.push(error.message);page.on('pageerror',onError);
+  let recipient=null,originalFailure=null;const browserErrors=[];const onError=error=>browserErrors.push(error.message);page.on('pageerror',onError);
   await page.route(routePattern,routeHandler);
   try {
     await page.setViewportSize({width:1440,height:1000});
@@ -84,6 +120,7 @@ export async function runResponseReviewJourney(input) {
       const pending=result.pending;
       const received=await waitNative(page,'POST','/api/response-review'+pending.path,()=>page.locator('#retry-request').click());
       await page.locator('#notice').filter({hasText:'The complete native response is saved.'}).waitFor();
+      confirmNative(pending.path,received);
       result.record=received.record;result.receipt=received;result.pending=null;result.phase=pending.kind==='Apply supplier return'?'received':'prepared';await save();
     }
     if(!result.record){
@@ -93,6 +130,7 @@ export async function runResponseReviewJourney(input) {
       await page.locator('#prepare-title').fill(title);
       const prepared=await waitNative(page,'POST','/api/response-review/prepare',()=>page.locator('#prepare-response').click());
       await page.locator('#notice').filter({hasText:'The complete native response is saved.'}).waitFor();
+      confirmNative('/prepare',prepared);
       result.record=prepared.record;result.pending=null;result.phase='prepared';await save();
     }
     await page.locator('#record-select').selectOption(result.record.id);
@@ -172,6 +210,7 @@ export async function runResponseReviewJourney(input) {
       await layout(page,'native-complete-three-way-review',directory,result);await save();
       const applied=await waitNative(page,'POST','/api/response-review/apply',()=>page.locator('#apply-return').click());
       await page.locator('#notice').filter({hasText:'The complete native response is saved.'}).waitFor();
+      confirmNative('/apply',applied);
       result.receipt=applied;result.record=applied.record;result.pending=null;result.phase='received';await save();
     }
     await page.locator('#record-select').selectOption(result.record.id);await page.locator('#record-revision').fill(String(result.record.revision));await page.locator('#open-record').click();
@@ -184,9 +223,19 @@ export async function runResponseReviewJourney(input) {
     need(!browserErrors.length,'The original response course reported browser errors: '+browserErrors.join('; '));
     result.phase='COMPLETE';result.completedAt=new Date().toISOString();result.errors=browserErrors;await save();return result;
   } catch(error) {
-    result.failure={message:error.message,at:new Date().toISOString()};result.errors=browserErrors;await save();throw error;
+    originalFailure=error;
+    result.failure={message:error.message,at:new Date().toISOString()};result.errors=browserErrors;
+    await save().catch(saveError=>{error.saveError={message:saveError.message};});throw error;
   } finally {
-    if(recipient)await recipient.close().catch(()=>{});
-    await page.unroute(routePattern,routeHandler);page.off('pageerror',onError);
+    const closing=[];
+    if(recipient)try{await recipient.close();}catch(error){closing.push({owner:'recipient',message:error.message});}
+    try{await page.unroute(routePattern,routeHandler);}catch(error){closing.push({owner:'course-route',message:error.message});}
+    page.off('pageerror',onError);
+    if(closing.length){
+      result.closeFailures=[...(result.closeFailures||[]),{at:new Date().toISOString(),closing}];
+      try{await save();}catch(error){if(originalFailure)originalFailure.closeSaveError={message:error.message};else originalFailure=error;}
+      if(originalFailure){originalFailure.closing=closing;throw originalFailure;}
+      else throw Object.assign(new Error('The original recipient or course route did not finish closing.'),{closing});
+    }
   }
 }
