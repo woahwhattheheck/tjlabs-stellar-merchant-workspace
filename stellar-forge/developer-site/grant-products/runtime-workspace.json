@@ -369,13 +369,19 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/runtime-application-inputs.json",
-      "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
       "editions": [
         {
           "commit": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
           "git_blob": "adcb13f6afd7b22c7b6bdc0fde22a214c5953831",
           "bytes": 1622,
           "sha256": "a920b594eccb893c682e802645e806aa1f0d5e2c084106dc7e359407e9e15465"
+        },
+        {
+          "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+          "git_blob": "caae0227928ccf47742d1acfdd397438973a6994",
+          "bytes": 3809,
+          "sha256": "2f05def173c22e1318f4ca9af8a29906db7e4948b4c5b224f3c9bb4f6d8b31b5"
         }
       ]
     },
@@ -465,13 +471,19 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-sets-cli.mjs",
-      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
       "editions": [
         {
           "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
           "git_blob": "a2c5646e688d6bb7b85e429745e86d5f63fc4304",
           "bytes": 7436,
           "sha256": "3a29a6a3aeb229bbebb6e98aac43dd920d654fddc882b4115d539548c467fd09"
+        },
+        {
+          "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+          "git_blob": "a14da9479c641bedbdd72b0449ff452aafb4622c",
+          "bytes": 2670,
+          "sha256": "16aa43f11d8e04e0a0020a58c62f2262a2125798fbe45198ff712e69500daad2"
         }
       ]
     },
@@ -481,13 +493,19 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-sets.mjs",
-      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
       "editions": [
         {
           "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
           "git_blob": "964b434a730d7792cf699a78ed91d0b944bb8213",
           "bytes": 14992,
           "sha256": "7f9846f6398ddcf6deb176cf06ddbbb08377d768b735a19e9aca888b816064f0"
+        },
+        {
+          "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+          "git_blob": "d5161954c80140fd8c1546f4420131aa88b7a371",
+          "bytes": 15601,
+          "sha256": "7a65bdc5822658d6ac66f1f3b1395bbe87b0598d294372c29bb4525e182b33f8"
         }
       ]
     },
@@ -567,13 +585,131 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-sets.css",
-      "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
+      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
       "editions": [
         {
           "commit": "a613bbcaad272fad9c097bb33f5b2240d23a2218",
           "git_blob": "39ae55246000698071dde0fc86c144c90fcc8656",
           "bytes": 589,
           "sha256": "0d8b12d8c607c6a0e09800507c717aed676c7c04cf98c0ca6222932ffd56edf8"
+        },
+        {
+          "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+          "git_blob": "85f8552c9b87625319fcdbeeb27678d6ddecb2e7",
+          "bytes": 1411,
+          "sha256": "358fe6876d9a96dd15160dbd81e21b33dde04b38e9d40bbbf293b330bc583191"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-edition-sources",
+      "label": "Complete original directory reader and frozen source-member validation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-set-sources.mjs",
+      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+      "editions": [
+        {
+          "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+          "git_blob": "0da7b3a44d22138807c633d3a698262fdbc57140",
+          "bytes": 5368,
+          "sha256": "6b4cd6f5f13ce3a1fd27c05d5cc273d9fc018e0fbe3877d28ce3b991df7f85bd"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-edition-core",
+      "label": "Edited working-source review, original capture, complete parent/current handoff and independent receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-set-editions.mjs",
+      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+      "editions": [
+        {
+          "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+          "git_blob": "6de9d80ff052a15eb90ea4ededd90ca033ac5ab9",
+          "bytes": 17469,
+          "sha256": "a7dc6523d6b8c5619ed60a0a0377498755cb7a438191d966380052a754e20228"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-edition-cli",
+      "label": "Complete edited-source review, capture, export and receiving CLI",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-set-editions-cli.mjs",
+      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+      "editions": [
+        {
+          "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+          "git_blob": "72abce9abe58549611c5c31273165c3b80985467",
+          "bytes": 3041,
+          "sha256": "b0c91019f083ab49b230d2148a9c04c838dd6444e2f2f4c739d41dd83ac3015f"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-edition-browser",
+      "label": "Desktop and phone edited-source review with original-request continuation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-set-editions.mjs",
+      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+      "editions": [
+        {
+          "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+          "git_blob": "7195d8f99bfd73a78291ef893e107146c09a11ed",
+          "bytes": 12763,
+          "sha256": "25812d4a0f383f72e0c92aeace4165213a6bf44d8d1e61d0aba57ab5995cd3dc"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-edition-types",
+      "label": "Typed exact edited-source and original receiving contract",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-input-set-editions.d.mts",
+      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+      "editions": [
+        {
+          "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+          "git_blob": "74f6511c7879a0d687e12a41fb1a26ace8b4f963",
+          "bytes": 987,
+          "sha256": "d4a739d1bf07131d2b3b6f9a70177292bbb85f6a9db8c4181dcbe89207226701"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-edition-guide",
+      "label": "Customer edited-source editions, complete handoff and independent reopening",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_INPUT_EDITIONS.md",
+      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+      "editions": [
+        {
+          "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+          "git_blob": "c57e3822e9bfd4c37ecccd379802a5f4c75be19e",
+          "bytes": 8990,
+          "sha256": "043814e4b9bd24eee175cad117a73f793da2dd874393309e59e21a063dd9cd41"
+        }
+      ]
+    },
+    {
+      "id": "runtime-companion-edition-receiving",
+      "label": "Whole original browser capture, CLI handoff, independent receive and backup/restore",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUT_EDITIONS_RECEIVE.mjs",
+      "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+      "editions": [
+        {
+          "commit": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0",
+          "git_blob": "d70e93f5177efb507231cb0ec8821dfeed5f712f",
+          "bytes": 18918,
+          "sha256": "57533b29d49f6300c60fca77dfd84be41ee0b3d27b9a0ec7a5f3bf440e2fa0e8"
         }
       ]
     }
