@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Complete original-output working copies beside the existing comparison UI.
+import {privacyBenchDraft,renderPrivacyBenchPanel} from './privacybench-output.js';
 import {openProtocolDraftStore} from './study-protocol-storage.js';
 const SCHEMA='sf88-original-output-browser/v1',SOURCE='sf88-original-output-browser-source/v1',SAVED='sf88-original-output-browser-record/v1';
 const LIMIT=64*1024*1024,clone=x=>structuredClone(x),json=x=>JSON.stringify(x,null,2);
@@ -22,8 +23,8 @@ function field(label,value,change,{type='text',options=null,rows=3}={}){
  n.value=value??'';n.addEventListener(options?'change':'input',()=>change(n.value));l.append(n);return l;
 }
 function parsed(s,label){try{return JSON.parse(s);}catch{throw Error(label+' must contain complete valid JSON.');}}
-export function createOriginalOutputDesk({api,task,notify,getSelection,getCase,getRevision,getWorkspace,isBusy=()=>false,onReceived}){
- let root=null,current=null,visible=false,busy=false,storageError=null,storePromise=null,writer=Promise.resolve(),epoch=0,rowsOffset=0,rowsFilter='',rowsSearch='',prepared=null;
+export function createOriginalOutputDesk({api,task,notify,getSelection,getCase,getRevision,getWorkspace,isBusy=()=>false,onReceived,onPrepareProtocol}){
+ let root=null,current=null,visible=false,busy=false,storageError=null,storePromise=null,writer=Promise.resolve(),epoch=0,rowsOffset=0,rowsFilter='',rowsSearch='',prepared=null,providerProfile=null;
  const copies=new Map(),revisions=new Map(),unwritten=new Map(),sourceCache=new Map(),recordCache=new Map();
  const store=()=>storePromise??=openProtocolDraftStore({databaseName:'sf88-original-output-drafts'}).catch(e=>{storePromise=null;throw e;});
  const selected=()=>getSelection(),context=d=>d&&d.workspaceId===selected().workspaceId&&d.dossierId===selected().dossierId;
@@ -68,9 +69,9 @@ export function createOriginalOutputDesk({api,task,notify,getSelection,getCase,g
   const b=decode(v.bodyBase64);if(b.length!==v.bytes||await sha(b)!==v.sha256)throw Error('The retained original file changed.');
   sourceCache.set(ref.id,v);return v;
  }
- async function retainFile(file,path){
+ async function retainFile(file,path,selection=selected()){
   if(!file||file.size>LIMIT)throw Error('Select an original file up to 64 MiB.');
-  const b=new Uint8Array(await file.arrayBuffer()),hash=await sha(b),sel=selected();
+  const b=new Uint8Array(await file.arrayBuffer()),hash=await sha(b),sel=selection;
   const id='output-source:'+sel.workspaceId+':'+hash,db=await store(),old=await db.read(id);
   const value={schema:SOURCE,id,commitId:hash,bytes:b.length,sha256:hash,bodyBase64:encode(b)};
   if(old){if(!same(old.snapshot,value))throw Error('An existing original source identity changed.');}
@@ -90,6 +91,7 @@ export function createOriginalOutputDesk({api,task,notify,getSelection,getCase,g
    if(dirty){current=clone(dirty);storageError='This complete working copy still has unsaved changes; preserve it separately or download it.';}
   }
   if(current?.preparation)prepared=await record(current.preparation);
+  providerProfile=current?.providerProfile?await record(current.providerProfile):null;
  }
  async function ensureCurrent(){
   if(!context(current))throw Error('Reopen this working copy in its original workspace and dossier.');
@@ -208,7 +210,7 @@ export function createOriginalOutputDesk({api,task,notify,getSelection,getCase,g
  }
  async function completeDownload(){
   await writer.catch(()=>{});const d=clone(current),files=[];for(const ref of d.files)files.push({...ref,...await source(ref)});
-  const records={};for(const id of [d.preparation,...d.attempts.flatMap(a=>[a.command,a.receipt])].filter(Boolean))records[id]=await record(id);
+  const records={};for(const id of [d.preparation,d.providerProfile,d.providerPrepared,...d.attempts.flatMap(a=>[a.command,a.receipt])].filter(Boolean))records[id]=await record(id);
   save(json({schema:'sf88-original-output-working-copy-file/v1',workingCopy:d,files,records})+'\n','original-output-working-copy.json');
  }
  async function verifyImportedReceipts(d,records){
@@ -262,7 +264,7 @@ export function createOriginalOutputDesk({api,task,notify,getSelection,getCase,g
    if(old&&!same(old.snapshot,value))throw Error('Existing source differs.');if(!old)await db.write(value,0);sourceCache.set(f.id,value);
   }
   for(const ref of d.files)if(!p.files.some(f=>f.id===ref.id&&f.sha256===ref.sha256))throw Error('A complete original file is missing.');
-  checkPreparationBasis(d);d.frozen=d.attempts.length>0;
+  checkPreparationBasis(d);await verifyProviderWorkingCopy(d,p);d.frozen=d.attempts.length>0;
   if(d.preparation){
    const retained=p.records[d.preparation],logical=d.preparationRequest;
    if(!retained||!logical||logical.requestId!==retained.requestId)throw Error('The complete original preparation is missing.');
@@ -277,8 +279,201 @@ export function createOriginalOutputDesk({api,task,notify,getSelection,getCase,g
   const old=await(await store()).read(d.id);current=clone(d);
   if(old&&!same(old.snapshot,d))current={...current,id:'output:'+d.workspaceId+':'+d.dossierId+':'+crypto.randomUUID(),importedFrom:d.id};
   else if(old)revisions.set(d.id,old.revision);
-  current=changed(current);await write(current);prepared=current.preparation?await record(current.preparation):null;storageError=null;render();
+  current=changed(current);await write(current);prepared=current.preparation?await record(current.preparation):null;providerProfile=current.providerProfile?await record(current.providerProfile):null;storageError=null;render();
  }
+
+ function providerBinding(){
+  const d=current,c=getCase(),sel=selected();
+  return{id:d?.id,commitId:d?.commitId,workspaceId:sel.workspaceId,dossierId:sel.dossierId,
+   caseId:c?.id,caseVersionId:c?.versionId,revision:getRevision()};
+ }
+ function sameProviderBinding(b){
+  const actual=providerBinding();if(!same(b,actual))throw Error('The selected dossier, protocol or working copy changed while this native source was being read. Reopen its original saved copy.');
+ }
+ async function providerReady(basis){
+  sameProviderBinding(basis);await ensureCurrent();sameProviderBinding(basis);if(!current.providerDraft||current.frozen||current.providerDraft.generated)throw Error('Create an editable PrivacyBench successor before changing this selection.');
+ }
+ function providerEdit(key,value,{advanced=false}={}){
+  if(!current?.providerDraft||current.providerDraft.generated)return;
+  const changesSource=!advanced&&['datasetId','datasetRevision','cohortRef'].includes(key);
+  edit(d=>{if(advanced)d.providerDraft.advanced[key]=value;else d.providerDraft[key]=value;
+   d.providerRequest=null;d.providerPrepared=null;if(changesSource)d.providerProfile=null;});
+  if(changesSource)providerProfile=null;
+ }
+ async function newPrivacyBench(){
+  const basis=providerBinding();await ensureIfDirty();sameProviderBinding(basis);current=changed({...blank(),providerDraft:privacyBenchDraft(),providerProfile:null,providerPrepared:null,providerRequest:null});
+  prepared=null;providerProfile=null;await write(current);render();
+ }
+ async function providerFile(ref){
+  const retained=await source(ref);return{path:ref.path,name:ref.name,bytes:ref.bytes,sha256:ref.sha256,bodyBase64:retained.bodyBase64};
+ }
+ async function uploadProviderResult(file){
+  const basis=providerBinding();await providerReady(basis);if(!file||file.size>32*1024*1024)throw Error('Choose the complete native results JSON up to 32 MiB.');
+  const d=clone(current),old=d.providerDraft.results,ref=await retainFile(file,'provider-input/results.json',basis);sameProviderBinding(basis);
+  d.files=d.files.filter(f=>f.path!==old?.path);d.files.push(ref);d.providerDraft.results=ref;
+  d.providerProfile=null;d.providerPrepared=null;d.providerRequest=null;await update(d);providerProfile=null;render();
+ }
+ async function uploadProviderOriginals(files){
+  const basis=providerBinding();await providerReady(basis);if(current.providerDraft.originals.length+files.length>190)throw Error('Keep at most 190 complete original supporting files.');
+  const total=current.files.reduce((n,f)=>n+f.bytes,0)+files.reduce((n,f)=>n+f.size,0);
+  if(total>63*1024*1024)throw Error('The original files exceed the complete Research intake size; choose a smaller complete result cohort.');
+  const d=clone(current);
+  for(const file of files){const ref=await retainFile(file,'provider-input/originals/'+crypto.randomUUID(),basis);ref.mediaType=file.type||'application/octet-stream';d.files.push(ref);d.providerDraft.originals.push(ref);}
+  d.providerPrepared=null;d.providerRequest=null;sameProviderBinding(basis);await update(d);render();
+ }
+ async function removeProviderOriginal(ref){
+  const basis=providerBinding();await providerReady(basis);const d=clone(current);d.files=d.files.filter(f=>f.path!==ref.path);d.providerDraft.originals=d.providerDraft.originals.filter(f=>f.path!==ref.path);
+  d.providerPrepared=null;d.providerRequest=null;await update(d);render();
+ }
+ async function previewProvider(){
+  const basis=providerBinding();await providerReady(basis);const d=current,p=d.providerDraft;if(!p.results)throw Error('Choose the original native results first.');
+  const result=await call(endpoint('/output/privacybench/profile'),{method:'POST',body:{file:await providerFile(p.results),dataset:{id:p.datasetId,revision:p.datasetRevision},cohortRef:p.cohortRef}});
+  if(result.schema!=='sf88-privacybench-output-profile/v1'||result.dossierId!==d.dossierId||result.source.sha256!==p.results.sha256||result.source.bytes!==p.results.bytes||!same(result.providerReview.dataset,{id:p.datasetId,revision:p.datasetRevision})||result.providerReview.cohortRef!==p.cohortRef)throw Error('The native source review belongs to another original selection.');
+  sameProviderBinding(basis);const id='output-prepared:'+d.workspaceId+':privacybench-profile:'+crypto.randomUUID();await immutable(id,result);recordCache.set(id,result);
+  const next=clone(d);next.providerProfile=id;next.providerRequest=null;next.providerPrepared=null;
+  if(!next.providerDraft.externalRunId)next.providerDraft.externalRunId=result.providerReview.sourceRunName;
+  sameProviderBinding(basis);await update(next);providerProfile=result;render();
+ }
+ async function proposeProviderProtocol(){
+  const basis=providerBinding();await providerReady(basis);if(!providerProfile)throw Error('Read the complete native result first.');
+  const c=getCase();if(!c)throw Error('Select the comparison case whose protocol you want to extend.');
+  const definition=clone(c.definition);
+  for(const criterion of providerProfile.criteria){
+   const existing=definition.criteria.find(x=>x.id===criterion.id);
+   if(existing&&!same(existing,criterion))throw Error('The saved protocol defines '+criterion.id+' differently. Review that conflict in the original case editor.');
+   if(!existing)definition.criteria.push(clone(criterion));
+  }
+  await writer;sameProviderBinding(basis);await onPrepareProtocol(definition,basis);
+  notify('The complete protocol successor is open in the original case editor. Review it, enter the operator, prepare and apply its saved request, then select that edition here.');
+ }
+ async function providerSuccessor(){
+  const basis=providerBinding();await ensureCurrent();sameProviderBinding(basis);if(!current.providerDraft)throw Error('Open the retained native-result working copy.');
+  const c=getCase();if(!c)throw Error('Choose the exact saved protocol for this successor.');
+  const old=clone(current),next=blank();
+  next.predecessor=old.id;next.actor=clone(old.actor);next.providerDraft=clone(old.providerDraft);next.providerDraft.generated=false;
+  next.files=[next.providerDraft.results,...next.providerDraft.originals].filter(Boolean);
+  next.providerProfile=old.providerProfile;next.providerPrepared=null;next.providerRequest=null;
+  next.protocolAdoption={previousCaseId:old.caseId,previousCaseVersionId:old.caseVersionId,selectedCaseId:c.id,selectedCaseVersionId:c.versionId,at:new Date().toISOString()};
+  current=changed(next);prepared=null;providerProfile=next.providerProfile?await record(next.providerProfile):null;await write(current);render();
+ }
+ function selectionFromProviderDraft(d,profile,reviewedAt){
+  const p=d.providerDraft;
+  const object=(s,label)=>{const v=parsed(s,label);if(!v||typeof v!=='object'||Array.isArray(v))throw Error(label+' must be an object.');return v;};
+  const refs=parsed(p.advanced.sourceRefs,'Original input references');if(!Array.isArray(refs))throw Error('Original input references must be an array.');
+  const command=p.engineCommand.split(/\r?\n/).filter(v=>v.length),limitations=p.limitations.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+  let elapsedMs=null;if(p.elapsedMs!==''){elapsedMs=Number(p.elapsedMs);if(!Number.isFinite(elapsedMs)||elapsedMs<0)throw Error('Use the actual nonnegative elapsed milliseconds, or leave them blank.');}
+  return{schema:'sf88-privacybench-preparation/v1',dataset:{id:p.datasetId,revision:p.datasetRevision},cohortRef:p.cohortRef,
+   results:{file:p.results.path,bytes:p.results.bytes,sha256:p.results.sha256},
+   originals:p.originals.map((f,i)=>({id:'privacybench-original-'+i,file:f.path,path:'provider/original/'+i+'-'+f.name.replace(/[^A-Za-z0-9._-]/g,'_').slice(0,120),role:'complete original producer supporting file',mediaType:f.mediaType||'application/octet-stream',bytes:f.bytes,sha256:f.sha256})),
+   protocol:clone(d.plan.protocol),candidate:{name:p.candidateName,kind:p.candidateKind,version:p.candidateVersion,description:p.candidateDescription,configuration:object(p.advanced.candidateConfiguration,'Candidate configuration'),sourceRefs:[]},
+   run:{externalRunId:p.externalRunId,kind:p.runKind,status:p.runStatus,startedAt:p.startedAt,finishedAt:p.finishedAt,elapsedMs,
+    engine:{name:p.engineName,version:p.engineVersion,command,runtime:object(p.advanced.runtime,'Actual producer runtime'),configuration:clone(profile.providerReview.config)},
+    input:{cohortId:p.cohortRef,protocolId:p.protocolId,definition:object(p.advanced.inputDefinition,'Population and method'),sourceRefs:refs,artifactIds:[]},limitations},
+   reviewer:p.reviewer,reviewedAt};
+ }
+ function providerSelection(){
+  const d=current,c=getCase();
+  if(!c||c.id!==d.caseId||c.versionId!==d.caseVersionId)throw Error('Select this saved protocol or explicitly use the selected protocol in a successor copy.');
+  return selectionFromProviderDraft(d,providerProfile,new Date().toISOString());
+ }
+ async function prepareProvider(){
+  const basis=providerBinding();await providerReady(basis);if(!providerProfile||!current.providerProfile)throw Error('Read and review the exact original metric groups first.');
+  if(!current.providerRequest){
+   const selection=providerSelection();
+   await update({...current,providerRequest:{requestId:crypto.randomUUID(),expectedRevision:current.expectedRevision,caseId:current.caseId,caseVersionId:current.caseVersionId,selection,files:clone(current.files)}});
+  }
+  const requestBasis=providerBinding(),d=clone(current),logical=d.providerRequest,files=[];
+  for(const ref of logical.files)files.push(await providerFile(ref));
+  const result=await call(endpoint('/output/privacybench/prepare'),{method:'POST',body:{...logical,files}});
+  sameProviderBinding(requestBasis);if(result.schema!=='sf88-privacybench-output-preparation/v1'||result.requestId!==logical.requestId||result.dossierId!==d.dossierId||result.basis.caseId!==d.caseId||result.basis.caseVersionId!==d.caseVersionId||result.basis.revision!==d.expectedRevision||!same(result.plan.protocol,d.plan.protocol))throw Error('The prepared native intake selected another original protocol.');
+  if(!Array.isArray(result.files)||result.files.length>201)throw Error('The complete generated file set is invalid.');
+  const retained=[],paths=new Set();let bytes=0;
+  for(const f of result.files){
+   if(paths.has(f.path))throw Error('The generated source path is repeated.');paths.add(f.path);
+   const b=decode(f.bodyBase64);bytes+=b.length;
+   if(bytes>63*1024*1024||b.length!==f.bytes||await sha(b)!==f.sha256)throw Error('A complete generated source changed or exceeded the admitted size.');
+   retained.push(await retainFile(new File([b],f.name,{type:'application/octet-stream'}),f.path,requestBasis));
+  }
+  const specs=[result.plan.source,...result.plan.originals];
+  if(specs.some(spec=>!retained.some(f=>f.path===spec.file&&f.bytes===spec.bytes&&f.sha256===spec.sha256))||new Set(specs.map(x=>x.file)).size!==retained.length)throw Error('The complete generated plan must retain every returned original file.');
+  if(!retained.some(f=>f.bytes===d.providerDraft.results.bytes&&f.sha256===d.providerDraft.results.sha256))throw Error('The original native results are missing from the generated intake.');
+  for(const original of d.providerDraft.originals)if(!retained.some(f=>f.bytes===original.bytes&&f.sha256===original.sha256))throw Error('An original supporting file is missing from the generated intake.');
+  const receipt={...result,files:result.files.map(({bodyBase64,...f})=>f)},id='output-prepared:'+d.workspaceId+':privacybench-intake:'+logical.requestId;
+  await immutable(id,receipt);recordCache.set(id,receipt);
+  d.files=retained;d.plan=clone(result.plan);d.advanced={};d.filterTexts=[];d.table=null;d.preparation=null;d.preparationRequest=null;d.providerPrepared=id;d.providerDraft.generated=true;
+  sameProviderBinding(requestBasis);await update(d);prepared=null;await inspectTable();await prepare();
+ }
+ function providerPanel(){
+  const d=current;
+  return renderPrivacyBenchPanel({draft:d.providerDraft,profile:providerProfile,caseDefinition:getCase()?.definition,locked:d.frozen,
+   edit:providerEdit,action:run,uploadResults:uploadProviderResult,uploadOriginals:uploadProviderOriginals,removeOriginal:removeProviderOriginal,
+   preview:previewProvider,proposeProtocol:proposeProviderProtocol,useSelectedProtocol:providerSuccessor,prepare:prepareProvider,successor:providerSuccessor,
+   downloadProfile:async()=>save(json(providerProfile)+'\n','privacybench-original-source-review.json'),
+   downloadOriginal:async ref=>{const f=await source(ref);save(decode(f.bodyBase64),ref.name,'application/octet-stream');}});
+ }
+
+ async function verifyProviderWorkingCopy(d,packet){
+  if(!d.providerDraft){
+   if(d.providerProfile||d.providerPrepared||d.providerRequest)throw Error('The complete native-source working selection is missing.');
+   return;
+  }
+  const p=d.providerDraft;
+  if(p.schema!=='sf88-privacybench-browser-selection/v1'||!Array.isArray(p.originals)||p.originals.length>190||typeof p.generated!=='boolean'||!p.advanced)throw Error('The complete native-source selection is invalid.');
+  const refs=[p.results,...p.originals].filter(Boolean),paths=new Set();
+  const wire=ref=>{
+   if(!ref||typeof ref.path!=='string'||paths.has(ref.path))throw Error('The original provider source path is missing or repeated.');
+   paths.add(ref.path);
+   const f=packet.files.find(x=>x.id===ref.id&&x.bytes===ref.bytes&&x.sha256===ref.sha256);
+   if(!f||!d.files.some(x=>x.id===ref.id&&x.bytes===ref.bytes&&x.sha256===ref.sha256))throw Error('A complete original native input is absent from the working copy.');
+   return{path:ref.path,name:ref.name,bytes:ref.bytes,sha256:ref.sha256,bodyBase64:f.bodyBase64};
+  };
+  const inputs=refs.map(wire);
+  const retained=id=>{const value=id?packet.records[id]:null;if(id&&!value)throw Error('The complete referenced native-source review or preparation is missing.');return value;};
+  const profile=retained(d.providerProfile),preparedProvider=retained(d.providerPrepared),request=d.providerRequest;
+  if((request||p.generated||preparedProvider)&&(!profile||!p.results))throw Error('The original native result and complete source review are required.');
+  if(profile){
+   if(profile.schema!=='sf88-privacybench-output-profile/v1'||profile.dossierId!==d.dossierId||!same(profile.providerReview.dataset,{id:p.datasetId,revision:p.datasetRevision})||profile.providerReview.cohortRef!==p.cohortRef||profile.source.bytes!==p.results.bytes||profile.source.sha256!==p.results.sha256||!same(profile.sourceImplementation,profile.providerReview.sourceImplementation))throw Error('The retained native-source profile belongs to another source selection.');
+   const actual=await call(endpoint('/output/privacybench/profile',d),{method:'POST',body:{file:inputs.find(x=>x.path===p.results.path),dataset:{id:p.datasetId,revision:p.datasetRevision},cohortRef:p.cohortRef}},d);
+   actual.sourceImplementation=clone(profile.sourceImplementation);actual.providerReview.sourceImplementation=clone(profile.sourceImplementation);
+   for(const key of ['schema','dossierId','source','providerReview','criteria','rows','metricRows','sourceImplementation'])if(!same(actual[key],profile[key]))throw Error('The complete original native-source review changed: '+key);
+  }
+  if(request){
+   const expected=selectionFromProviderDraft(d,profile,request.selection?.reviewedAt);
+   const ordered=values=>values.map(x=>({id:x.id,path:x.path,name:x.name,bytes:x.bytes,sha256:x.sha256})).sort((a,b)=>a.path.localeCompare(b.path));
+   if(typeof request.requestId!=='string'||request.caseId!==d.caseId||request.caseVersionId!==d.caseVersionId||request.expectedRevision!==d.expectedRevision||!same(request.selection,expected)||!Array.isArray(request.files)||!same(ordered(request.files),ordered(refs)))throw Error('The retained native preparation request selects another source, protocol or entered record.');
+  }
+  if(p.generated!==Boolean(preparedProvider)||preparedProvider&&!request)throw Error('The generated native intake and its original request are incomplete.');
+  if(!preparedProvider){
+   if(new Set(refs.map(f=>f.path)).size!==d.files.length||d.files.some(f=>!refs.some(x=>same(x,f))))throw Error('The editable native intake contains unselected generated or original files.');
+   return;
+  }
+  if(preparedProvider.schema!=='sf88-privacybench-output-preparation/v1'||preparedProvider.dossierId!==d.dossierId||preparedProvider.requestId!==request.requestId||preparedProvider.basis.caseId!==d.caseId||preparedProvider.basis.caseVersionId!==d.caseVersionId||preparedProvider.basis.revision!==d.expectedRevision||!same(preparedProvider.plan,d.plan)||!same(preparedProvider.sourceImplementation,preparedProvider.providerReview.sourceImplementation))throw Error('The retained native preparation belongs to another original request or plan.');
+  const actual=await call(endpoint('/output/privacybench/prepare',d),{method:'POST',body:{...request,files:inputs}},d);
+  // Retain the exact original implementation identity when receiving an older
+  // completed preparation. Every scientific value and other field is compared.
+  const originalImplementation=preparedProvider.sourceImplementation;
+  actual.sourceImplementation=clone(originalImplementation);actual.providerReview.sourceImplementation=clone(originalImplementation);
+  for(const target of [actual.plan.candidate.configuration.privacybench,actual.plan.run.input.definition.privacybench])target.sourceImplementation=clone(originalImplementation);
+  const reviewBytes=utf(json(actual.providerReview)+'\n'),reviewSha=await sha(reviewBytes),spec=actual.plan.originals.find(x=>x.id==='privacybench-intake');
+  if(!spec)throw Error('The complete provider review is missing from the canonical plan.');
+  spec.bytes=reviewBytes.length;spec.sha256=reviewSha;
+  const reviewFile=actual.files.find(x=>x.path===spec.file);
+  if(!reviewFile)throw Error('The provider review file is missing from canonical receiving.');
+  reviewFile.bytes=reviewBytes.length;reviewFile.sha256=reviewSha;reviewFile.bodyBase64=encode(reviewBytes);
+  if(!same(actual.plan,d.plan)||!same(actual.providerReview,preparedProvider.providerReview))throw Error('The generated native plan or complete provider review differs from its original selected inputs.');
+  if(actual.files.length!==d.files.length||preparedProvider.files.length!==d.files.length)throw Error('The complete generated native file set changed.');
+  for(const f of actual.files){
+   const expected=preparedProvider.files.find(x=>x.path===f.path),selected=d.files.find(x=>x.path===f.path),body=packet.files.find(x=>x.id===selected?.id);
+   const {bodyBase64,...descriptor}=f;
+   if(!same(descriptor,expected)||!selected||selected.bytes!==f.bytes||selected.sha256!==f.sha256||!body||body.bodyBase64!==bodyBase64)throw Error('An original generated native file changed: '+f.path);
+  }
+  if(d.preparation){
+   const ordinary=packet.records[d.preparation];
+   if(!ordinary||!same(ordinary.rawIdentity,preparedProvider.rawIdentity)||!same(ordinary.review,preparedProvider.review))throw Error('The ordinary comparison preparation differs from the retained native provider preparation.');
+  }
+ }
+
+
  function binding(label,object,key,headers,{valueOnly=false}={}){
   const b=object[key]??{column:''},wrap=node('div',undefined,'output-binding'),kind=Object.hasOwn(b,'column')?'column':'literal';
   const types=valueOnly?[['column','Original column']]:[['column','Original column'],['literal','Reviewed literal']];
@@ -331,7 +526,7 @@ export function createOriginalOutputDesk({api,task,notify,getSelection,getCase,g
    rows=all.filter(r=>(!rowsFilter||r.disposition===rowsFilter)&&(!rowsSearch||JSON.stringify(r).toLocaleLowerCase().includes(rowsSearch.toLocaleLowerCase())));
    const values=rows.slice(rowsOffset,rowsOffset+25).map(r=>{
     const original=Object.fromEntries(headers.map((h,i)=>[h,r.values[i]])),controls=node('div');controls.append(detail('All original values and finding',original),detail('Complete row disposition',r));
-    if(!d.frozen)controls.append(button('Review exclusion for row '+r.ordinal,async()=>{
+    if(!d.frozen&&!d.providerDraft)controls.append(button('Review exclusion for row '+r.ordinal,async()=>{
      const dialog=node('dialog',undefined,'output-dialog'),reason=field('Exclusion reason','',()=>{},{type:'area'}),reviewer=field('Actual reviewer',d.actor.name,()=>{});
      dialog.append(node('h3','Review original row '+r.ordinal),detail('Exact original row and key',{key:r.key,original}),reason,reviewer,
       button('Retain this reviewed exclusion',async()=>{
@@ -361,22 +556,25 @@ export function createOriginalOutputDesk({api,task,notify,getSelection,getCase,g
   if(!root||!visible)return;root.replaceChildren();root.className='output-desk';
   root.append(node('h2','Prepare original output'),node('p','Keep the producer’s complete table and original files, review exact mappings and retain the result in the selected comparison protocol.'));
   const nav=node('div',undefined,'output-actions'),saved=node('select');saved.setAttribute('aria-label','Saved original-output working copies');saved.append(option('','Choose a working copy'),...[...copies.values()].filter(context).sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt))).map(x=>option(x.id,(x.plan.candidate.name||'Original output')+' · '+x.updatedAt)));saved.value=current?.id??'';
-  saved.addEventListener('change',()=>run(async()=>{await ensureIfDirty();current=clone(copies.get(saved.value)??null);prepared=current?.preparation?await record(current.preparation):null;rowsOffset=0;render();}));
-  nav.append(saved,button('New original output',newCopy),button('Reopen saved browser work',async()=>{await ensureIfDirty();await reload();render();}));root.append(nav);
+  saved.addEventListener('change',()=>run(async()=>{await ensureIfDirty();current=clone(copies.get(saved.value)??null);prepared=current?.preparation?await record(current.preparation):null;providerProfile=current?.providerProfile?await record(current.providerProfile):null;rowsOffset=0;render();}));
+  nav.append(saved,button('New original output',newCopy),button('New PrivacyBench native result',newPrivacyBench),button('Reopen saved browser work',async()=>{await ensureIfDirty();await reload();render();}));root.append(nav);
   const imported=node('input');imported.type='file';imported.accept='.json';imported.setAttribute('aria-label','Open complete output working copy');imported.dataset.outputRead='1';imported.addEventListener('change',()=>run(()=>openWorkingCopy(imported.files[0])));root.append(imported);
   if(!current){root.append(node('p','Choose an exact comparison protocol, then begin or reopen its working copy.'));updateBusy();return;}
   const d=current,c=getCase();root.append(node('p','Original dossier revision '+d.expectedRevision+' · protocol '+d.caseVersionId));
   if(!context(d)||c?.id!==d.caseId||c?.versionId!==d.caseVersionId)root.append(node('p','This working copy keeps its original case and protocol. Reopen that protocol before preparing or changing its basis.','output-error'));
   if(storageError)root.append(node('p','Browser storage could not retain the last change: '+storageError+'. Download the complete visible work before leaving.','output-error'));
+  if(d.providerDraft){root.append(providerPanel(),section('Retained complete files',table(['Original filename','Bytes','Read and retain'],d.files.map(ref=>[ref.name,ref.bytes,button('Download original '+ref.name,async()=>{const f=await source(ref);save(decode(f.bodyBase64),ref.name,'application/octet-stream');})]))),detail('Exact selected protocol',d.plan.protocol),rowReview());}
+  else{
   const files=section('Complete original files'),tableFile=node('input');tableFile.type='file';tableFile.accept='.csv,.tsv,.txt';tableFile.setAttribute('aria-label','Select original output table');tableFile.addEventListener('change',()=>run(()=>uploadTable(tableFile.files[0])));files.append(tableFile);
   const attachment=node('input');attachment.type='file';attachment.multiple=true;attachment.setAttribute('aria-label','Add original workbooks, reports or logs');attachment.addEventListener('change',()=>run(async()=>{for(const f of attachment.files)await uploadOriginal(f);}));files.append(attachment);
   const planFile=node('input');planFile.type='file';planFile.accept='.json';planFile.setAttribute('aria-label','Open existing complete preparation plan');planFile.addEventListener('change',()=>run(()=>importPlan(planFile.files[0])));files.append(node('p','To open an existing plan, select all its original files first. Its exact original plan is retained alongside the selected browser edition.'),planFile);
   files.append(table(['Original filename','Bytes','Read and retain'],d.files.map(ref=>[ref.name,ref.bytes,button('Download original '+ref.name,async()=>{const f=await source(ref);save(decode(f.bodyBase64),ref.name,'application/octet-stream');})])));
   d.plan.originals.forEach((spec,index)=>files.append(group(field('Original artifact label',spec.role,v=>edit(x=>{x.plan.originals[index].role=v;})),field('Original package member path',spec.path,v=>edit(x=>{x.plan.originals[index].path=v;})),field('Original media type',spec.mediaType,v=>edit(x=>{x.plan.originals[index].mediaType=v;})),editButton('Remove selected original',async()=>{mutate(x=>{const removed=x.plan.originals.splice(index,1)[0];if(removed.file!==x.plan.source.file&&!x.plan.originals.some(s=>s.file===removed.file))x.files=x.files.filter(f=>f.path!==removed.file);});render();}))));
   root.append(files,detail('Exact selected protocol',d.plan.protocol),mapping(),metadata(),rowReview());
-  const actions=node('div',undefined,'output-actions');if(storageError||unwritten.has(d.id))actions.append(button('Preserve visible work as separate copy',preserveSeparate));actions.append(editButton('Prepare and review complete output',prepare),button('Download complete working copy',completeDownload),button('Download selected plan',async()=>save(json(selectedPlan(current))+'\n','original-output-plan.json')));
+  }
+  const actions=node('div',undefined,'output-actions');if(storageError||unwritten.has(d.id))actions.append(button('Preserve visible work as separate copy',preserveSeparate));if(!d.providerDraft||d.providerDraft.generated)actions.append(editButton('Prepare and review complete output',prepare));actions.append(button('Download complete working copy',completeDownload),button('Download selected plan',async()=>save(json(selectedPlan(current))+'\n','original-output-plan.json')));
   if(prepared)actions.append(button('Download full mapping review',async()=>save(json(prepared.review)+'\n','original-output-review.json')),button('Download prepared complete run',async()=>{if(!prepared.rawText)throw Error('Resolve all mapping findings first.');save(prepared.rawText,'original-output-run.json');}));
-  actions.append(button('Create editable successor',async()=>{await ensureCurrent();const protocol=getCase();if(!protocol||protocol.id!==current.caseId||protocol.versionId!==current.caseVersionId)throw Error('Select this original protocol before creating its editable successor.');const successor=clone(current);successor.expectedRevision=getRevision();successor.id='output:'+successor.workspaceId+':'+successor.dossierId+':'+crypto.randomUUID();successor.predecessor=current.id;successor.frozen=false;successor.attempts=[];successor.candidateResult=null;successor.runResult=null;successor.preparation=null;successor.preparationRequest=null;current=changed(successor);prepared=null;await write(current);render();}));
+  if(!d.providerDraft)actions.append(button('Create editable successor',async()=>{await ensureCurrent();const protocol=getCase();if(!protocol||protocol.id!==current.caseId||protocol.versionId!==current.caseVersionId)throw Error('Select this original protocol before creating its editable successor.');const successor=clone(current);successor.expectedRevision=getRevision();successor.id='output:'+successor.workspaceId+':'+successor.dossierId+':'+crypto.randomUUID();successor.predecessor=current.id;successor.frozen=false;successor.attempts=[];successor.candidateResult=null;successor.runResult=null;successor.preparation=null;successor.preparationRequest=null;current=changed(successor);prepared=null;await write(current);render();}));
   root.append(actions,operations());updateBusy();
  }
  function updateBusy(){
@@ -388,7 +586,7 @@ export function createOriginalOutputDesk({api,task,notify,getSelection,getCase,g
   }
  }
  return{
-  mount(element){root=element;visible=true;if(current&&!context(current)){current=null;prepared=null;storageError=null;}const ticket=++epoch;reload().then(()=>{if(ticket===epoch)render();}).catch(e=>{storageError=e.message;if(ticket===epoch)render();});},
+  mount(element){root=element;visible=true;if(current&&!context(current)){current=null;prepared=null;providerProfile=null;storageError=null;}const ticket=++epoch;reload().then(()=>{if(ticket===epoch)render();}).catch(e=>{storageError=e.message;if(ticket===epoch)render();});},
   hide(){visible=false;++epoch;root=null;},
   updateBusy,
  };

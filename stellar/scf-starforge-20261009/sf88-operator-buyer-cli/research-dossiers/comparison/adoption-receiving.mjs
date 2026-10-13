@@ -188,7 +188,7 @@ try:
 finally:
     if stage.exists():shutil.rmtree(stage)
 `;
-async function receiveHandoverCourse({store,dossierId,directory,label,revision,planId,input,operationId,python,expectedCompleted,expectedStatus,originalRun}){
+export async function receiveHandoverCourse({store,dossierId,directory,label,revision,planId,input,operationId,python,expectedCompleted,expectedStatus,originalRun}){
  const root=await privateDirectory(join(directory,'handovers',label)),exportDirectory=join(root,'original-export');
  const options={directory:exportDirectory,operationId:'adoption-handover-'+hash({operationId,label}),revision,planId,python};
  const exported=await exportAdoptionHandover(store,dossierId,options);

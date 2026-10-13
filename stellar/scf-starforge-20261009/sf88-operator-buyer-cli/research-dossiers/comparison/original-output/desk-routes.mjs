@@ -5,6 +5,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {prepareOutput,csvRecords} from './prepare.mjs';
+import {isPrivacyBenchPlan,privacyBenchImplementation} from './privacybench.mjs';
 import {caseDefinition,safePath,comparisonInput,hash} from '../contracts.mjs';
 const LIMIT=64*1024*1024;
 export const ORIGINAL_OUTPUT_REQUEST_LIMIT=128*1024*1024+65536;
@@ -23,12 +24,12 @@ function file(value){
  need(body.toString('base64')===value.bodyBase64&&body.length===value.bytes&&digest(body)===value.sha256,'OUTPUT_DESK_FILE_CHANGED');
  return{path:value.path,name:value.name,bytes:body.length,sha256:value.sha256,body};
 }
-async function implementation(){
+async function implementation(plan){
  const files=[];
  for(const name of ['prepare.mjs','desk-routes.mjs','review.mjs','../contracts.mjs']){
   const body=await readFile(fileURLToPath(new URL(name,import.meta.url)));files.push({path:name,bytes:body.length,sha256:digest(body)});
  }
- return{schema:'sf88-original-output-desk-source/v1',files};
+ return{schema:'sf88-original-output-desk-source/v1',files,...(isPrivacyBenchPlan(plan)?{provider:await privacyBenchImplementation()}:{})};
 }
 export async function handleOriginalOutputRoute({store,dossierId,action,req,url,readBody,send,setHeader}){
  if(!['comparison/output/table','comparison/output/prepare','comparison/output/verify','comparison/output/request'].includes(action))return false;
@@ -83,7 +84,7 @@ export async function handleOriginalOutputRoute({store,dossierId,action,req,url,
  const rawText=prepared.envelope?JSON.stringify(prepared.envelope,null,2)+'\n':null;
  const result={schema:'sf88-original-output-desk-preparation/v1',requestId:body.requestId,
   basis:{dossierId,revision:body.expectedRevision,caseId:page.case.id,caseVersionId:page.case.versionId},
-  planSha256:prepared.review.planSha256,sourceImplementation:await implementation(),
+  planSha256:prepared.review.planSha256,sourceImplementation:await implementation(body.plan),
   review:prepared.review,rawText,rawIdentity:rawText?{bytes:Buffer.byteLength(rawText),sha256:digest(Buffer.from(rawText))}:null};
  setHeader('X-Research-Dossier-Revision',String(page.revision));send(200,result);return true;
  }catch(error){if(typeof error.code!=='string'||!/^OUTPUT_|^COMPARISON_|^REVISION_|^DOSSIER_/.test(error.code))throw error;

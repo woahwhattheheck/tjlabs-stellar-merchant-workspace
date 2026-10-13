@@ -129,6 +129,30 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
     if(action==='run.import')d.form={candidateVersionId:'',rawText:'',sourceName:'',sourceBytes:null,sourceSha256:null,...d.form};
     current=changed(d);persist(current).catch(()=>{});render();
   }
+
+  async function preparePrivacyBenchProtocol(definition=null,binding=null){
+    const sel=selection(),c=activeCase(),revision=overview?.revision??getDossier()?.revision;
+    await writer;if(storageFailure)throw Error('Preserve the current comparison working copy before starting this protocol.');
+    if(binding&&(!same(sel,binding)||binding.caseId!==c?.id||binding.caseVersionId!==c?.versionId))throw Error('The original native-source protocol selection changed.');
+    let source=null;
+    if(!definition){
+      const result=await selectedApi(endpoint('/output/privacybench/catalog',sel),{method:'POST',body:{}},sel);
+      if(!same(sel,selection())||revision!==(overview?.revision??getDossier()?.revision)||c?.versionId!==activeCase()?.versionId)throw Error('The selected dossier or protocol changed while the native criteria were being read.');
+      if(result.schema!=='sf88-privacybench-output-catalog/v1'||result.dossierId!==sel.dossierId||!Array.isArray(result.criteria)||result.criteria.length!==8)throw Error('The installed native source criteria could not be read completely.');
+      source={profile:result.profile,producer:result.producer,sourceImplementation:result.sourceImplementation};
+      definition={questionId:c?.definition.questionId??'',title:'PrivacyBench original evaluation comparison',
+        purpose:'Compare source-defined native evaluation results and retain the exact original evidence for named review.',
+        scope:'Selected dataset edition, cohort and candidate releases. Every original group retains its own denominator and source identity.',
+        criteria:clone(result.criteria),sourceRefs:[]};
+    }
+    if(!same(sel,selection())||binding&&(activeCase()?.id!==binding.caseId||activeCase()?.versionId!==binding.caseVersionId))throw Error('The original protocol context changed.');
+    prepareDraft('case.save',binding?activeCase():null);
+    current=changed({...current,form:clone(definition),protocolPreparationSource:source??{profile:'native-results-5dfcaf57',workingCopyId:binding.id,caseId:binding.caseId,caseVersionId:binding.caseVersionId}});
+    await persist(current);render();
+    root.querySelector('[data-comparison-form]')?.scrollIntoView({block:'start',behavior:'smooth'});
+    notify('Review the complete source-defined criteria, choose the research question and operator, then prepare and apply this original protocol request.');
+  }
+
   function payload(d){
     const v=d.form,sourceRefs=clone(v.sourceRefs??[]),common={caseId:d.caseId,caseVersionId:d.caseVersionId};
     if(d.action==='case.save')return{caseId:d.caseId,previousVersionId:d.previousVersionId,definition:{questionId:v.questionId,title:v.title,purpose:v.purpose,scope:v.scope,criteria:clone(v.criteria),sourceRefs}};
@@ -265,7 +289,7 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
     if(!getDossier()){root.append(node('p','Open a dossier and create its research question first.'));return;}
     const controls=node('div',null,'comparison-actions'),select=node('select');select.setAttribute('aria-label','Comparison case');select.append(option('','Choose a saved case'),...(overview?.cases??[]).map(c=>option(c.id,c.definition.title)));select.value=selectedCase??'';
     select.addEventListener('change',()=>runTask(async()=>{await refresh({caseId:select.value||null,offset:0});}));
-    controls.append(select,button('New comparison case',()=>runTask(async()=>prepareDraft('case.save'))),button('Refresh saved work',()=>runTask(refresh)));root.append(controls);
+    controls.append(select,button('New comparison case',()=>runTask(async()=>prepareDraft('case.save'))),button('Prepare PrivacyBench protocol',()=>runTask(()=>preparePrivacyBenchProtocol())),button('Refresh saved work',()=>runTask(refresh)));root.append(controls);
     const c=activeCase();
     if(c){
       const protocol=node('select');protocol.setAttribute('aria-label','Protocol edition');
@@ -287,7 +311,7 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
     const upload=node('input');upload.type='file';upload.accept='.json,application/json';upload.setAttribute('aria-label','Open complete comparison working copy');upload.addEventListener('change',()=>runTask(()=>openDownloaded(upload.files[0])));
     root.append(section('Saved working copies',saved,upload),draftEditor());
     const outputRoot=node('div');root.append(outputRoot);
-    outputDesk??=createOriginalOutputDesk({api,task:runTask,notify,getSelection:selection,getCase:activeCase,getRevision:()=>overview?.revision??getDossier()?.revision,getWorkspace,isBusy:()=>busy||isBusy(),onReceived});
+    outputDesk??=createOriginalOutputDesk({api,task:runTask,notify,getSelection:selection,getCase:activeCase,getRevision:()=>overview?.revision??getDossier()?.revision,getWorkspace,isBusy:()=>busy||isBusy(),onReceived,onPrepareProtocol:preparePrivacyBenchProtocol});
     outputDesk.mount(outputRoot);
     const adoptionRoot=node('div');root.append(adoptionRoot);
     adoptionPanel??=createComparisonAdoptionPanel({api,task:runTask,notify,getSelection:selection,getRevision:()=>overview?.revision??getDossier()?.revision,getDossier,isBusy:()=>busy||isBusy(),onReceived,openReturnedWork});
