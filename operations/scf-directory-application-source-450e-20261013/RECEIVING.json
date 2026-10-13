@@ -45,7 +45,7 @@
     },
     "after": {
       "bytes": 23568,
-      "sha256": "c0a49e5d282d9d4bbf04670c646d9196d57a5b329569b2ec833fa536effd81d1"
+      "sha256": "50245fa5863919c56fdaa4670b8b0dc09d0abf9b8e97b15e9c368e8d9ee1a5a5"
     },
     "prefixSha256": "f81adc0373e898dbfbd868316e1e9218f4f8867a24ca2b8b99c335d493b64ac0",
     "suffixSha256": "367069c4542ffb4733496d064d8f339aeb2446bd8c03374164db6eb8ff9526ba",
@@ -67,14 +67,14 @@
     {
       "path": "grant-data/product-and-finance.md",
       "bytes": 935804,
-      "sha256": "9c4bb1ea7f96ac3ce90e5283b2594ba6a541af1c9cb88c56e294da3d2751c378",
-      "git_blob": "0924a37797ec176663fc99a301a17c9577a0631b"
+      "sha256": "28520f68104c4a72100d06ff7eed9fbace04dee4c1d69e857c075d39d22940a8",
+      "git_blob": "99b6a525c312cdc2e21a493425ce67a4c06c05f9"
     },
     {
       "path": "grant-data/source-index.json",
       "bytes": 628350,
-      "sha256": "965d633755a3eb55d1dbe6c959e65679415916492c26c3c6ba5df9b8c066ee99",
-      "git_blob": "764afe815db5144b0748bbc1c9121122318dd4a3"
+      "sha256": "219b45cbce1d92fab9e4d1ef5dd58f9ba16735034852b49efbf0c15efaca3dd4",
+      "git_blob": "4bac0b8cf4b726df887c55e6d8f5c5a720b7bf57"
     }
   ],
   "originalSourcePackageApi": {
@@ -86,22 +86,37 @@
     ],
     "sourcePackage": {
       "bytes": 2200232,
-      "sha256": "e1d7aa14f240634ac57f594ad3d8a2d6572e91d7e6d36ccfbb10b0a54d3cf78a",
-      "gitBlob": "e2621c9f1cda5f1890f95d02ca7af978f4288a65"
+      "sha256": "fe0eba32084bb488cbde374611e4125cea42c58bc1bed8a4413c979b012186cc",
+      "gitBlob": "d3c1953ff34ddfebb7239e680567004451e4b0f9"
     },
-    "bundleId": "8311bdd8b34a39a183d4b2a2e8c15e23cc9b6056fed67c5acba0954a42d6a672"
+    "bundleId": "b87b943bd1a1447db25bc9a88a9c41d0a08e5a126a11b9e07e8e167057ed9ce3"
   },
   "completeSourceCarrier": {
     "files": 271,
-    "decodedBytes": 7783862,
-    "bytes": 8288828,
-    "sha256": "00843291a0ab339bbbe20611be4e378817f4affb5c7e437a77107b3832e60c2e",
-    "gitBlob": "461b196c2abe8576d7e77786fa6606bf80e1b333",
+    "decodedBytes": 7783600,
+    "bytes": 8289431,
+    "sha256": "e4b0ffbae0cd9b6e57e26e20a340391f0ce4a204fd2bd014d713ef563f0dbe28",
+    "gitBlob": "0e002a8517f78c4c785f03cfdf74a1b33e9833b0",
     "previous247Retained": true,
     "selectedDirectoryFiles": 19,
     "assemblyFiles": 5,
     "originalBinaryUnchanged": true
   },
   "nativeRun": false,
-  "publicationMeaning": "Complete source composition and original package API receiving, for the existing cumulative publisher and original saved-case/Site operation."
+  "publicationMeaning": "Complete source composition and original package API receiving, for the existing cumulative publisher and original saved-case/Site operation.",
+  "sourceCorrespondenceCorrection": {
+    "source": "The exact selected e963 product contribution was re-read after independent full-source correspondence found a different retained programme description.",
+    "path": "stellar/scf-starforge-20261009/distribution/contributions/human-services-directory-connected.json",
+    "selected": {
+      "bytes": 10583,
+      "sha256": "8542e457a97b0f7a70bcc494fa9daebaee1774698896765f94aba967c185a129",
+      "git_blob": "445ab5ac6dd5184600b02ac9f78d894d1e789e6f"
+    },
+    "priorRetainedProgramme": {
+      "bytes": 10845,
+      "sha256": "15b18413d3d6edcc68c54560338ef3ab93d881a792fe4def030098d6eb3a2671",
+      "git_blob": "a15d3eb184f6bf618323f4321c78af1b3c94d943"
+    },
+    "scope": "Select the actual product source. The separate 354-file native programme remains unchanged and retains its own source edition."
+  }
 }
