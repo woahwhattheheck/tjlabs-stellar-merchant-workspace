@@ -487,7 +487,9 @@ export class MerchantCanadaBuysWorkspaces {
           load: async () => ({ name: basename(file.file), type: file.mime, bytes: file.bytes, sha256: file.sha256,
             readonlyFileHandle: await open(join(selected.directory, file.file), constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0)) }) });
       }
-      case 'merchant_canadabuys_file_release': return this.#reads.release(this.#scope(workspace), input.readId);
+      case 'merchant_canadabuys_file_release':
+        await this.#reads.release(this.#scope(workspace), input.readId);
+        return { workspace, readId: input.readId, released: true };
       case 'merchant_canadabuys_merchant_prepare': {
         this.#revision(entry, input.expectedRevision);
         const { prepareMerchant } = await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/merchant.mjs');
