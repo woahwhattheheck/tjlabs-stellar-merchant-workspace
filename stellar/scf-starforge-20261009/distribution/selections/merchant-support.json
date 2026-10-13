@@ -98,7 +98,9 @@
     "merchant-payment-plans",
     "receivables-agent",
     "customer-closing",
-    "merchant-service-agreements"
+    "merchant-service-agreements",
+    "operator-discovery",
+    "merchant-support-operating"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",

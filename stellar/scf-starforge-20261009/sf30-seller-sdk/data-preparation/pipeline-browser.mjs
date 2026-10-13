@@ -37,7 +37,8 @@ try{
     if(target.origin!==location.origin||target.pathname.startsWith('/managed-download/'))return;
     if(target.pathname.startsWith('/downloads/'))target.pathname='/api/pipelines'+target.pathname;
     else if(target.pathname==='/api/result')target.pathname='/api/pipelines/result';
-    if(!target.pathname.startsWith('/api/pipelines/downloads/')&&target.pathname!=='/api/pipelines/result')return;
+    else if(target.pathname==='/api/commissioning/file')target.pathname='/api/pipelines/commissioning/file';
+    if(!target.pathname.startsWith('/api/pipelines/downloads/')&&target.pathname!=='/api/pipelines/result'&&target.pathname!=='/api/pipelines/commissioning/file')return;
     event.preventDefault();event.stopImmediatePropagation();
     (async()=>{
       const result=await fetch('/api/managed/ticket',{method:'POST',headers:{'Content-Type':'application/json'},

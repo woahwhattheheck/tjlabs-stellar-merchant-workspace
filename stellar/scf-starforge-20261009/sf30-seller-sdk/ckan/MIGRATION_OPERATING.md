@@ -98,6 +98,22 @@ The neighbouring **CKAN data merchant** entry keeps its original merchant
 configuration and project-alias workflow. Choose **DCAT catalog migration** for
 a document-migration workspace initialized with **starforge dcat init**.
 
+## Acquire following publisher editions
+
+The same migration section includes **Recurring catalogue sources**. Save the
+publisher's original document URL, profile, private token environment reference
+when needed, request limits and due-check interval. Acquire the current complete
+document, inspect its original HTTP history, and review its latest edition
+against an explicitly selected accepted release. Choose each accepted identity
+decision to carry forward; newly edited candidates remain explicit inputs.
+Source configuration versions, acquisition receipts and responses, reviews and
+release decisions travel together in the complete workspace.
+
+Use [Recurring catalogues](RECURRING_CATALOGS.md) for the complete source editor,
+conditional acquisition, publisher retry handling, exact baseline mapping
+selection, installed commands, agent interfaces and receiving continuation.
+The controls below continue to receive documents supplied directly as files.
+
 ## Receive the original catalogue
 
 Open **Catalogue migration → Receive an original catalogue document**.

@@ -21,9 +21,9 @@ const SOURCE_FILES = [
     'config.mjs', 'operator.mjs', 'serve.mjs'].map(name => MCP + name),
   ...['model.mjs', 'server.mjs', 'source.mjs', 'capture.mjs', 'semantics.mjs', 'declaration.mjs',
     'archive.mjs', 'source-locations.mjs', 'refresh.mjs', 'reviewed-refresh.mjs',
-    'dcat-workspace.mjs', 'dcat_migration.py', 'DCAT_ENGINE.md', 'MIGRATION_OPERATING.md',
+    'dcat-workspace.mjs', 'dcat-acquisition.mjs', 'dcat_migration.py', 'DCAT_ENGINE.md', 'MIGRATION_OPERATING.md', 'RECURRING_CATALOGS.md',
     'PORTABLE_RUNTIME.md', 'portable-runtime-requirements.txt',
-    'public/index.html', 'public/app.mjs', 'public/migration.mjs', 'public/dcat-json.mjs',
+    'public/index.html', 'public/app.mjs', 'public/migration.mjs', 'public/dcat-sources.mjs', 'public/dcat-json.mjs',
     'public/style.css'].map(name => CKAN + name),
   ...[
     "LICENSE.md",

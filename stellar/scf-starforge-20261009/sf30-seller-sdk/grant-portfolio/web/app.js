@@ -538,7 +538,7 @@ function requestsView(container) {
 const programmeConsole = GrantProgrammeConsole({state:() => S, node, button, field, panel, heading, metric,
   table, api, response, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
 const awardsConsole = GrantAwardsConsole({state:() => S, node, button, field, panel, heading, metric,
-  table, api, response, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
+  table, api, response, runOriginal, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
 async function render() {
   const epoch = ++S.epoch, content = $("#content"), fragment = node("div");
   document.querySelectorAll("nav button").forEach(button => button.classList.toggle("active", button.dataset.view === S.view));

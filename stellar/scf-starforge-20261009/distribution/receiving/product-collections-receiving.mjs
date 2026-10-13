@@ -13,6 +13,7 @@ import { runtimeCommand, inspectRuntimeInstall } from '../runtime-install.mjs';
 import { saveJSON, operationLease, processIdentity } from '../runtime-workspace/storage.mjs';
 import { validateCollectionPlan, resolveCollectionEdition, stableJson } from '../../sf88-operator-buyer-cli/collection-composer/plan.mjs';
 import { openProductCollectionsBrowser } from './product-collections-browser.mjs';
+import { parsePlanPackage } from '../../sf88-operator-buyer-cli/collection-composer/package-format.mjs';
 
 import { readCustomerUseSource, customerUseDocument, canonical, customerUseReview, customerUseCsv } from '../../sf88-operator-buyer-cli/collection-composer/customer-use-definition.mjs';
 import { inspectCustomerUseReturn } from '../../sf88-operator-buyer-cli/collection-composer/customer-use-return.mjs';
@@ -45,7 +46,7 @@ function disjoint(left, right) {
 /** Select actual existing files, two real plan revisions and two explicit periods. */
 export function validateReceivingInput(value) {
   fields(value, ['schema', 'operationId', 'outputDirectory', 'source', 'runtime',
-    'collections', 'recovery', 'browser', 'operationTimeoutSeconds', 'customerUse']);
+    'collections', 'recovery', 'browser', 'operationTimeoutSeconds', 'customerUse', 'planAdoption']);
   need(value.schema === RECEIVING_SCHEMA && typeof value.operationId === 'string'
     && value.operationId.length > 0 && value.operationId.length <= 200, 'RECEIVING_OPERATION_REQUIRED');
   absolute(value.outputDirectory);
@@ -150,6 +151,31 @@ export function validateReceivingInput(value) {
       && selected.buyerReturn.maxVerifyBytes <= 1073741824
       && selected.buyerReturn.requireSavedResponses === true,
     'RECEIVING_EXPLICIT_ORIGINAL_BUYER_RETURN_REQUIRED');
+  }
+  if (value.planAdoption !== undefined) {
+    const selected = value.planAdoption;
+    fields(selected, ['sourcePeriod','recipientDirectory','bindings','headerSelections','period']);
+    need(selected.sourcePeriod === 0 || selected.sourcePeriod === 1, 'RECEIVING_ADOPTION_SOURCE_PERIOD_REQUIRED');
+    absolute(selected.recipientDirectory);
+    disjoint(value.recovery.stateRoot, selected.recipientDirectory);
+    for (const path of [value.outputDirectory, value.source.repository, value.runtime.workspaceDirectory,
+      value.runtime.installedDirectory, value.recovery.retainedStateRoot].filter(Boolean))
+      disjoint(path, selected.recipientDirectory);
+    fields(selected.bindings, ['path','bytes','sha256']); absolute(selected.bindings.path);
+    need(Number.isSafeInteger(selected.bindings.bytes) && selected.bindings.bytes > 0
+      && selected.bindings.bytes <= 2 * 1024 * 1024 && HASH.test(selected.bindings.sha256 ?? ''),
+    'RECEIVING_EXACT_ADOPTION_BINDINGS_REQUIRED');
+    disjoint(value.recovery.stateRoot, selected.bindings.path);
+    fields(selected.period, ['collectionId','name','values']);
+    need(ID.test(selected.period.collectionId ?? '') && typeof selected.period.name === 'string'
+      && selected.period.name.trim().length > 0 && selected.period.name.length <= 160
+      && plain(selected.period.values) && Object.values(selected.period.values).every(value => typeof value === 'string')
+      && !value.collections.periods.some(period => period.collectionId === selected.period.collectionId),
+    'RECEIVING_DISTINCT_ADOPTED_PERIOD_REQUIRED');
+    need(selected.headerSelections === undefined || Array.isArray(selected.headerSelections)
+      && selected.headerSelections.every(row => plain(row) && typeof row.key === 'string'
+        && Array.isArray(row.names) && row.names.every(name => typeof name === 'string')),
+    'RECEIVING_SHARED_HEADER_SELECTION_INVALID');
   }
   return JSON.parse(JSON.stringify(value));
 }
@@ -377,12 +403,20 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
   }
   async function startCollection(mode) {
     const receivingDirectory = join(config.outputDirectory, 'receiving-workspace');
-    const selected = mode === 'receiving' ? receivingDirectory : config.collections.directory;
+    const selected = mode === 'receiving' ? receivingDirectory
+      : mode === 'adoption' ? config.planAdoption.recipientDirectory : config.collections.directory;
     const command = await runtimeCommand({ directory: journal.runtime.directory,
       args: ['buyer-collections-workspace', mode === 'receiving' ? '--receiving-directory' : '--directory',
         selected, '--port', '0', '--startup-format', 'json'] });
     need(command.sourceCommit === config.source.commit, 'RECEIVING_INSTALLED_SOURCE_CHANGED');
-    const saved = journal.listener;
+    let saved = journal.listener;
+    if (saved && await processIdentity(saved.pid) === saved.processStart
+      && (saved.mode !== mode || saved.selected !== selected)) {
+      need(saved.sourceCommit === config.source.commit
+        && [config.collections.directory, receivingDirectory, config.planAdoption?.recipientDirectory].includes(saved.selected),
+      'RECEIVING_EXISTING_LISTENER_SELECTION_CHANGED');
+      collection = { ...saved }; await closeCollection(); saved = null;
+    }
     if (saved && await processIdentity(saved.pid) === saved.processStart) {
       need(saved.mode === mode && saved.selected === selected && saved.sourceCommit === config.source.commit,
         'RECEIVING_EXISTING_LISTENER_SELECTION_CHANGED');
@@ -433,7 +467,7 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
     }
     collection.host = endpoint(collection.url, 'collections');
     const status = await original(collection.host, '/api/status');
-    need(mode === 'receiving' || status.directory === config.collections.directory,
+    need(mode === 'receiving' || status.directory === selected,
       'RECEIVING_ORIGINAL_COLLECTION_STORE_CHANGED');
     return collection;
   }
@@ -700,6 +734,141 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       originalBuyerSource: report.buyerSource, counts: report.counts };
   }
 
+  async function adoptionBindings() {
+    const selected = config.planAdoption.bindings;
+    const stat = await lstat(selected.path);
+    need(stat.isFile() && !stat.isSymbolicLink() && stat.uid === process.getuid()
+      && (stat.mode & 0o077) === 0, 'RECEIVING_PRIVATE_ADOPTION_BINDINGS_REQUIRED');
+    const raw = await regular(selected.path, 2 * 1024 * 1024);
+    need(raw.length === selected.bytes && sha(raw) === selected.sha256, 'RECEIVING_ADOPTION_BINDINGS_CHANGED');
+    const input = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw));
+    fields(input, ['planId','name','description','operatorBindings','outputDirectory',
+      'deliveryParameter','deliveryValue','requestBindings']);
+    need(ID.test(input.planId ?? '') && typeof input.name === 'string'
+      && Array.isArray(input.operatorBindings) && input.operatorBindings.length > 0,
+    'RECEIVING_LOCAL_ADOPTION_SELECTION_REQUIRED');
+    absolute(input.outputDirectory); disjoint(config.recovery.stateRoot, input.outputDirectory);
+    for (const binding of input.operatorBindings) {
+      fields(binding, ['groupId','operatorWorkspace','operatorConfigFile']);
+      need(typeof binding.groupId === 'string'
+        && (binding.operatorWorkspace !== undefined) !== (binding.operatorConfigFile !== undefined),
+      'RECEIVING_LOCAL_OPERATOR_BINDING_REQUIRED');
+      const path = absolute(binding.operatorWorkspace ?? binding.operatorConfigFile);
+      disjoint(config.recovery.stateRoot, path);
+    }
+    need(input.requestBindings === undefined || Array.isArray(input.requestBindings),
+      'RECEIVING_LOCAL_REQUEST_BINDINGS_REQUIRED');
+    for (const request of input.requestBindings ?? []) {
+      fields(request, ['key','ticketFile','headers','omitHeaders']);
+      need(typeof request.key === 'string', 'RECEIVING_LOCAL_REQUEST_BINDINGS_REQUIRED');
+      if (request.ticketFile !== undefined)
+        disjoint(config.recovery.stateRoot, absolute(request.ticketFile));
+    }
+    return input;
+  }
+  async function receivePlanAdoption() {
+    const selected = config.planAdoption;
+    // Source export finishes before this same installed listener is moved to the
+    // already-existing recipient store. No additional host or work queue is created.
+    const shared = await step('EXPORT_COMPLETE_REQUEST_PLAN', async () => {
+      const sourceId = config.collections.periods[selected.sourcePeriod].collectionId;
+      const edition = await original(collection.host, '/api/composer/editions/' + sourceId);
+      need(edition.phase === 'CREATED' && edition.editionSha256, 'RECEIVING_SOURCE_EDITION_REQUIRED');
+      const packet = await browser.sharePlan(collectionsPage, edition, selected.headerSelections ?? []);
+      let manifest, footer, records = 0;
+      for await (const record of parsePlanPackage(createReadStream(packet.file.path))) {
+        if (record.type === 'manifest') manifest = record.manifest;
+        if (record.type === 'complete') footer = record;
+        records++;
+      }
+      need(footer?.packageSha256 === packet.packageSha256
+        && stableJson(manifest) === stableJson(packet.manifest), 'RECEIVING_SHARED_FILE_CHANGED');
+      await artifact('plan-adoption/source-package.json', packet);
+      return { ...packet, recordCount: records };
+    });
+    const pinned = await fileIdentity(shared.file.path);
+    need(pinned.bytes === shared.file.bytes && pinned.sha256 === shared.file.sha256,
+      'RECEIVING_SHARED_FILE_CHANGED');
+    const bindings = await adoptionBindings();
+    need(bindings.operatorBindings.length === shared.manifest.operators.length
+      && new Set(bindings.operatorBindings.map(item => item.groupId)).size === bindings.operatorBindings.length,
+    'RECEIVING_WHOLE_PLAN_OPERATOR_BINDINGS_REQUIRED');
+    for (const group of shared.manifest.operators) {
+      const binding = bindings.operatorBindings.find(item => item.groupId === group.id);
+      need(binding && (binding.operatorWorkspace ?? binding.operatorConfigFile) !== group.path,
+        'RECEIVING_DISTINCT_RECIPIENT_OPERATOR_REQUIRED');
+    }
+    await collectionsPage?.close(); collectionsPage = null; await closeCollection();
+    await startCollection('adoption');
+    collectionsPage = await browser.collectionsPage(collection.url);
+    const adopted = await step('ADOPT_COMPLETE_REQUEST_PLAN', async () => {
+      return browser.adoptSharedPlan(collectionsPage, shared, bindings, async reviewed => {
+        const groups = new Map(shared.manifest.sources.map(source => [source.key, source.operatorGroup]));
+        for (const operator of reviewed.operators) {
+          const source = shared.manifest.operators.find(group => group.id === groups.get(operator.key));
+          need(source && operator.configSha256 !== source.configSha256,
+            'RECEIVING_DISTINCT_RECIPIENT_OPERATOR_REQUIRED');
+        }
+        need(!journal.adoptionReview || journal.adoptionReview.reviewSha256 === reviewed.reviewSha256,
+          'RECEIVING_ADOPTION_REVIEW_CHANGED');
+        const values = selected.period.values;
+        need(reviewed.plan.parameters.every(parameter => Object.hasOwn(values, parameter.name)),
+          'RECEIVING_EXPLICIT_ADOPTED_PERIOD_VALUES_REQUIRED');
+        const resolved = resolveCollectionEdition(reviewed.plan, {
+          planId: reviewed.plan.id, planSha256: sha(encoded(reviewed.plan)), collectionId: selected.period.collectionId,
+          name: selected.period.name, values });
+        // A recipient ticket is reviewed for this exact future operation by the
+        // original period preparation below, not reused as sender authority.
+        journal.adoptionReview = { reviewSha256: reviewed.reviewSha256, packageSha256: shared.packageSha256,
+          planId: reviewed.plan.id, planSha256: sha(encoded(reviewed.plan)),
+          operatorSources: reviewed.operators.map(({ key, configFile, configSha256, manifestSha256 }) =>
+            ({ key, configFile, configSha256, ...(manifestSha256 ? { manifestSha256 } : {}) })),
+          requestKeys: resolved.requests.map(request => request.key) };
+        await persist();
+      });
+    });
+    need(adopted.saved.planSha256 === journal.adoptionReview.planSha256
+      && adopted.adoption.packageSha256 === shared.packageSha256,
+    'RECEIVING_RETAINED_ADOPTION_CHANGED');
+    const edition = await step('CREATE_ADOPTED_BUYER_PERIOD', async () => {
+      let result = await original(collection.host, '/api/composer/editions/' + selected.period.collectionId,
+        undefined, { optional: true });
+      if (!result) result = await browser.preparePeriod(collectionsPage, adopted.saved, selected.period);
+      else if (result.phase === 'PREPARING') {
+        result = await original(collection.host, '/api/composer/editions/prepare', {
+          planId: adopted.saved.id, planSha256: adopted.saved.planSha256,
+          collectionId: selected.period.collectionId, name: selected.period.name, values: selected.period.values });
+        await browser.openEdition(collectionsPage, result.collectionId);
+      } else await browser.openEdition(collectionsPage, result.collectionId);
+      need(result.planId === adopted.saved.id && result.planSha256 === adopted.saved.planSha256
+        && stableJson(result.values) === stableJson(selected.period.values),
+      'RECEIVING_ADOPTED_PERIOD_CHANGED');
+      result = await browser.createPeriod(collectionsPage, result);
+      need(result.phase === 'CREATED', 'RECEIVING_ADOPTED_COLLECTION_REQUIRED');
+      const shown = await browser.showCollection(collectionsPage, result, 'adopted-independent-buyer-collection');
+      const exported = await retainCollection(shown.edition, 'adopted-buyer-period');
+      return { ...exported, editionSha256: shown.edition.editionSha256,
+        planSha256: shown.edition.planSha256, workspaceByIntent: shown.workspaceByIntent };
+    });
+    await collectionsPage.close(); collectionsPage = null; await closeCollection();
+    await startCollection('adoption'); collectionsPage = await browser.collectionsPage(collection.url);
+    return step('REOPEN_ADOPTED_BUYER_WORKSPACE', async () => {
+      const saved = await browser.openPlan(collectionsPage, adopted.saved);
+      need(saved.planSha256 === adopted.saved.planSha256 && stableJson(saved.plan) === stableJson(adopted.saved.plan),
+        'RECEIVING_REOPENED_ADOPTED_PLAN_CHANGED');
+      const current = await original(collection.host, '/api/composer/editions/' + selected.period.collectionId);
+      need(current.phase === 'CREATED' && current.editionSha256 === edition.editionSha256
+        && current.collection.manifestSha256 === edition.manifestSha256, 'RECEIVING_REOPENED_ADOPTED_COLLECTION_CHANGED');
+      await browser.showCollection(collectionsPage, current, 'reopened-adopted-buyer-collection');
+      const receipt = { sourcePeriod: shared.manifest.origin, packageSha256: shared.packageSha256,
+        packageFile: shared.file, recipientDirectory: selected.recipientDirectory,
+        adoptedPlan: { id: saved.id, planSha256: saved.planSha256 },
+        period: edition, review: journal.adoptionReview };
+      await artifact('plan-adoption/complete-recipient-journey.json', receipt);
+      return receipt;
+    });
+  }
+
   async function ensureEdition(index) {
     if (config.customerUse) return customerUsePeriod(index, 'prepare');
     const saved = journal.plans[index], period = config.collections.periods[index];
@@ -840,6 +1009,15 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
         plans };
     });
     if (config.customerUse) await step('RETAIN_CUSTOMER_USE_INPUTS', customerUseInputs);
+    if (config.planAdoption) await step('RETAIN_ADOPTION_SELECTION', async () => {
+      await directory(config.planAdoption.recipientDirectory, { privateMode: true });
+      const input = await adoptionBindings();
+      const identity = await fileIdentity(config.planAdoption.bindings.path);
+      await artifact('plan-adoption/recipient-selection.json', { ...identity,
+        recipientDirectory: config.planAdoption.recipientDirectory, planId: input.planId,
+        sourcePeriod: config.planAdoption.sourcePeriod, period: config.planAdoption.period });
+      return identity;
+    });
     browser = await openProductCollectionsBrowser({ ...config.browser, outputDirectory: config.outputDirectory });
     runtimeServer = await startRuntimeWorkspace({ directory: config.runtime.workspaceDirectory, port: 0 });
     runtimeHost = endpoint(runtimeServer.url, 'runtime');
@@ -1145,6 +1323,8 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       });
     }
 
+    if (config.planAdoption) await receivePlanAdoption();
+
     await collectionsPage.close(); collectionsPage = null; await closeCollection();
     if (runtimePage) { await runtimePage.close(); runtimePage = null; }
     if (runtimeServer) { await runtimeServer.close(); runtimeServer = null; }
@@ -1159,6 +1339,7 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       restoreRequestId: restored.requestId, originalStateRoot: config.recovery.stateRoot,
       retainedOriginalStateRoot: config.recovery.retainedStateRoot, views: views.artifacts,
       originalRequestIds: journal.ids,
+      ...(config.planAdoption ? { planAdoption: journal.completed.REOPEN_ADOPTED_BUYER_WORKSPACE } : {}),
       ...(config.customerUse ? { customerUse: {
         source: journal.completed.SAVE_ORIGINAL_CUSTOMER_USE,
         restored: journal.completed.RECEIVE_ORIGINAL_CUSTOMER_USE_HISTORY,

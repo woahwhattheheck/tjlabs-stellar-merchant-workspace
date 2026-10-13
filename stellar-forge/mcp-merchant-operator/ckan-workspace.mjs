@@ -282,6 +282,8 @@ export class MerchantCkanWorkspaces {
     return { workspace: entry.alias, instanceId: entry.instanceId, operationId: started.id,
       ...(started.editionId ? { editionId: started.editionId } : {}),
       ...(started.catalogId ? { catalogId: started.catalogId } : {}),
+      ...(started.sourceId ? { sourceId: started.sourceId } : {}),
+      ...(started.acquisitionId ? { acquisitionId: started.acquisitionId } : {}),
       ...(started.reviewId ? { reviewId: started.reviewId } : {}),
       native: view({ operation: native.operation, active: native.active }) };
   }

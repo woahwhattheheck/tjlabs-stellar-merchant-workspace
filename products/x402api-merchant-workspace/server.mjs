@@ -218,9 +218,17 @@ export async function loadMerchantConfiguration(configPath, { env = process.env,
 export async function main(argv = process.argv.slice(2)) {
   const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, strict: true,
     options: { config: { type: 'string' }, directory: { type: 'string' }, host: { type: 'string', default: '127.0.0.1' },
-      port: { type: 'string', default: '8764' }, 'allow-loopback': { type: 'boolean', default: false },
+      port: { type: 'string', default: '8764' }, output: { type: 'string' }, bundle: { type: 'string' },
+      'expected-sha256': { type: 'string' }, 'original-root': { type: 'string' }, 'retained-root': { type: 'string' },
+      'allow-loopback': { type: 'boolean', default: false },
       'expect-inputs-sha256': { type: 'string' }, 'input-files': { type: 'string' } } });
   const command = positionals[0] ?? 'serve';
+  if (['export', 'inspect', 'restore', 'serve-archive'].includes(command)) {
+    if (positionals.length !== 1) fail('ONE_MERCHANT_COMMAND_REQUIRED');
+    const { portableCommand } = await import('./portable.mjs');
+    process.stdout.write(JSON.stringify(await portableCommand(command, values)) + '\n');
+    return;
+  }
   if (!['serve', 'doctor'].includes(command) || positionals.length > 1 || !values.config) fail('USE_SERVE_OR_DOCTOR_WITH_CONFIG');
   const selected = await loadMerchantConfiguration(resolve(values.config), { allowLoopback: values['allow-loopback'],
     expectedInputsSha256: values['expect-inputs-sha256'] ?? null, inputFiles: merchantInputFiles(values['input-files']) });

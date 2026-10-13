@@ -180,6 +180,7 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
     'grant-portfolio/programme_service.py','grant-portfolio/programme-client.mjs',
     'grant-portfolio/awards.py','grant-portfolio/awards_service.py','grant-portfolio/awards-client.mjs',
     'grant-portfolio/web/awards.js','grant-portfolio/AWARDS.md','grant-portfolio/awards-exchange.mjs',
+    'grant-portfolio/web/awards-exchange.js','grant-portfolio/awards-exchange-core.mjs',
     'grant-portfolio/check_programme_decimal.py','grant-portfolio/examples/awards/awards-receiving.mjs',
     'grant-portfolio/examples/awards/AWARDS_RECEIVING.md','grant-portfolio/examples/awards/receiving-input.example.json',
     'grant-portfolio/examples/awards/run-awards-receiving.py','grant-portfolio/examples/spc/process_family.py',
@@ -739,6 +740,283 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
       return {portfolioId:portfolio.id,revision:portfolio.revision,text,unresolved,screenshots,pageErrors:view.errors,browserVersion:browser.version()};
     } finally {await view.context.close();}
   }
+  async function retainBrowserDownload(view,trigger,target,{filename=null,expected=null}={}) {
+    checkStop();
+    const pending=view.page.waitForEvent('download');
+    // A click failure must not leave a later rejected download promise unobserved.
+    pending.catch(()=>{});
+    await trigger();
+    const download=await pending,originalFilename=download.suggestedFilename();
+    if(filename!==null)equal(originalFilename,filename,'The browser selected a different original download.');
+    const staged=target+'.download-'+randomUUID();
+    let actual;
+    try {
+      await download.saveAs(staged);
+      const failure=await download.failure();
+      assert(failure===null,'The original browser download failed: '+String(failure));
+      actual=await fileInfo(staged,{synchronize:true});
+      if(expected)equal({bytes:actual.bytes,sha256:actual.sha256},expected,
+        'The complete browser download differs from the original selected bytes.');
+      await retainCompleted('complete original browser download',async()=>{
+        try{await link(staged,target);}catch(error){if(error.code!=='EEXIST')throw error;}
+        const retained=await fileInfo(target,{synchronize:true});
+        equal({bytes:retained.bytes,sha256:retained.sha256},{bytes:actual.bytes,sha256:actual.sha256},
+          'Preserve the original complete browser download.');
+        await syncDirectory(dirname(target));
+      });
+      actual=await fileInfo(target,{synchronize:true});
+      return {...actual,filename:originalFilename};
+    } finally {
+      try{await unlink(staged);await syncDirectory(dirname(staged));}catch(error){if(error.code!=='ENOENT')throw error;}
+    }
+  }
+  async function browserIntakeViews(view,label) {
+    const screenshots=[];
+    for(const viewport of [{width:1360,height:940},{width:390,height:844}]) {
+      await view.page.setViewportSize(viewport);
+      const size=await view.page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth}));
+      assert(size.scrollWidth<=size.width,'The reviewed original CSV intake exceeds this viewport.');
+      const path=join(root,'evidence',label+'-'+randomUUID()+'-'+viewport.width+'.png');
+      await view.page.screenshot({path,fullPage:true});
+      const actual=await fileInfo(path,{synchronize:true});await syncDirectory(dirname(path));
+      screenshots.push({viewport,size,...actual});
+    }
+    equal(view.errors,[]);
+    return screenshots;
+  }
+  function validateBrowserCsvPlan(module,plan,portfolio,csv,status) {
+    assert(plan?.schema==='stellar-forge.awards-csv-import-plan.v1'&&plan.rows===1,
+      'Retain the complete original one-application browser plan.');
+    equal(plan.portfolio,{id:portfolio.id,revision:portfolio.revision,snapshot:portfolio.snapshot});
+    equal(plan.source,{sha256:sha(csv),bytes:csv.length,filename:'Internal_Applications_Original.csv',contentType:'text/csv'});
+    assert(UUID.test(plan.documentId)&&typeof plan.action?.operationId==='string'&&
+      plan.action.operationId.startsWith('award-csv-')&&UUID.test(plan.action.operationId.slice(10)),'Keep the actual browser-allocated import identities.');
+    const changes=plan.action.payload?.awards?.changes;
+    assert(changes?.length===1&&changes[0].collection==='applications'&&UUID.test(changes[0].id));
+    const id=journal.refs.ids,change=changes[0],prior=portfolio.definition.awards.records.applications.find(row=>row.id===change.id);
+    equal(plan.mapping,{profile:{},answers:{eligibility:'Eligibility',quality:'Quality',delivery:'Delivery'},
+      reference:'Ref',title:'Title',legalName:'Name',partnerKey:'Partner',projectKey:'Project',
+      amount:'Amount',currency:'Currency',submittedDate:'Date',notes:'Notes'});
+    assert(change.fields.partnerId===id.partner&&change.fields.projectId===id.project&&change.fields.roundId===id.round);
+    assert(change.fields.status===status&&change.fields.reference==='INT-APP-1');
+    if(status==='draft')assert(!prior&&change.expectedRevision===0);
+    else {
+      assert(prior?.id===id.application&&prior.status==='draft'&&!prior.archived);
+      assert(change.expectedRevision===prior.revision);
+    }
+    const rebuilt=module.prepareAwardCsvImport(portfolio,{operationId:plan.action.operationId,csv,
+      filename:plan.source.filename,documentId:plan.documentId,roundId:id.round,actor:input.actor,mapping:plan.mapping,
+      identities:{applications:{'INT-APP-1':change.id},partners:{INTERNAL:id.partner},projects:{PROJECT:id.project}},status});
+    equal(plan,rebuilt,'The browser plan must preserve the complete original native exchange contract.');
+    assert(plan.actionSha256===sha(Buffer.from(JSON.stringify(plan.action),'utf8')));
+    return change.id;
+  }
+  async function adoptBrowserCsvIdentities(plan,applicationId,status) {
+    const documentKey=status==='draft'?'csvDraftDoc':'csvDoc';
+    const captured={application:applicationId,[documentKey]:plan.documentId};
+    for(const [key,value] of Object.entries(captured)) {
+      if(journal.refs.ids[key]!==undefined)equal(journal.refs.ids[key],value,'Keep the original reviewed browser identity.');
+      else assert(!Object.values(journal.refs.ids).includes(value),'Distinct original records cannot reuse an allocated identity.');
+    }
+    assert(applicationId!==plan.documentId);
+    await retainCompleted('reviewed browser CSV identities',async()=>{
+      Object.assign(journal.refs.ids,captured);await checkpoint();
+    });
+  }
+  async function prepareCsvInBrowser(portfolio,csvPath,status,planPath) {
+    const view=await browserPage('source',portfolio);
+    const dialog=view.page.locator('#detail-dialog');
+    try {
+      await view.page.getByRole('button',{name:'Import application CSV',exact:true}).click();
+      await dialog.getByRole('heading',{name:'Application CSV intake',exact:true}).waitFor();
+      await dialog.getByLabel('Original application CSV',{exact:true}).setInputFiles(csvPath);
+      await dialog.getByLabel('Retained filename',{exact:true}).fill('Internal_Applications_Original.csv');
+      await dialog.getByLabel('Funding round',{exact:true}).selectOption(journal.refs.ids.round);
+      await dialog.getByLabel('Recording actor',{exact:true}).fill(input.actor);
+      await dialog.getByLabel('Imported status',{exact:true}).selectOption(status);
+      await dialog.getByRole('button',{name:'Map CSV columns',exact:true}).click();
+      await dialog.getByRole('heading',{name:'2. Map the application fields',exact:true}).waitFor();
+      const columns=[
+        ['Application reference *','Ref'],['Application title *','Title'],['Applicant legal name *','Name'],
+        ['Partner matching key *','Partner'],['Project matching key','Project'],['Requested amount','Amount'],
+        ['Requested currency','Currency'],['Actual submission date'+(status==='submitted'?' *':''),'Date'],
+        ['Application notes','Notes'],
+        ...criteria.map(c=>[c.title+' · '+c.id+(status==='submitted'&&c.required?' *':''),
+          {eligibility:'Eligibility',quality:'Quality',delivery:'Delivery'}[c.id]]),
+      ];
+      for(const [name,column] of columns)await dialog.getByLabel(name,{exact:true}).selectOption(column);
+      await dialog.getByRole('button',{name:'Match existing records',exact:true}).click();
+      await dialog.getByRole('heading',{name:'3. Match existing programme records',exact:true}).waitFor();
+      await dialog.getByLabel('Partner for INTERNAL',{exact:true}).selectOption(journal.refs.ids.partner);
+      await dialog.getByLabel('Project for PROJECT',{exact:true}).selectOption(journal.refs.ids.project);
+      const application=dialog.getByLabel('Application INT-APP-1',{exact:true});
+      if(status==='draft')equal(await application.inputValue(),'new');
+      else {
+        equal(await application.inputValue(),journal.refs.ids.application,
+          'The original draft is selected automatically by its round and CSV reference.');
+        await application.selectOption(journal.refs.ids.application);
+      }
+      await dialog.getByRole('button',{name:'Review complete import',exact:true}).click();
+      await dialog.getByRole('heading',{name:'4. Review and save the original import',exact:true}).waitFor();
+      // This is the actual downloaded JSON, including its original key order.
+      // Do not replace it with the canonical journal encoding.
+      const retained=await retainBrowserDownload(view,()=>dialog.getByRole('button',{
+        name:'Download original import plan',exact:true}).click(),planPath);
+      const plan=await readJson(planPath);
+      equal(retained.filename,'Award_Import_'+plan.action.operationId+'.json');
+      equal(view.errors,[]);
+      return retained;
+    } finally {await view.context.close();}
+  }
+  async function resumeCsvInBrowser(client,portfolio,plan,csvPath,planPath,key,{replay=false}={}) {
+    const inputPath=join(root,'actions',key+'.input.json');
+    let original=await readJson(inputPath,true),routeFailure=null,posts=0;
+    if(original)equal(original,plan.action);
+    const view=await browserPage('source',portfolio);
+    const dialog=view.page.locator('#detail-dialog');
+    try {
+      await view.page.getByRole('button',{name:'Import application CSV',exact:true}).click();
+      await dialog.getByRole('heading',{name:'Application CSV intake',exact:true}).waitFor();
+      await dialog.getByLabel('Original application CSV',{exact:true}).setInputFiles(csvPath);
+      await dialog.getByLabel('Saved import plan',{exact:true}).setInputFiles(planPath);
+      await dialog.getByRole('button',{name:'Review original saved import',exact:true}).click();
+      await dialog.getByRole('heading',{name:'4. Review and save the original import',exact:true}).waitFor();
+      const planFile=await fileInfo(planPath,{synchronize:true});
+      const resumedPath=join(root,'exports',key+(replay?'-completed-replay':'-resumed')+'.plan.json');
+      const resumed=await retainBrowserDownload(view,()=>dialog.getByRole('button',{
+        name:'Download original import plan',exact:true}).click(),resumedPath,{
+        filename:'Award_Import_'+plan.action.operationId+'.json',
+        expected:{bytes:planFile.bytes,sha256:planFile.sha256}});
+      equal(await readJson(resumedPath),plan);
+      const screenshots=await browserIntakeViews(view,key+(replay?'-completed-replay':'-resumed-review'));
+      const before=await client.state();
+      await view.page.route('**/api/action',async route=>{
+        try {
+          const submitted=route.request().postDataJSON();equal(submitted,plan.action,
+            'Resume must submit the complete original reviewed operation.');
+          await retainCompleted('original browser CSV action',()=>save(inputPath,submitted,true));
+          original=submitted;posts++;
+          if(stopRequested)await route.abort();else await route.continue();
+        } catch(error){routeFailure=error;await route.abort();}
+      });
+      await dialog.getByRole('button',{name:'Continue original import',exact:true}).click();
+      while(!posts){
+        if(routeFailure)throw routeFailure;checkStop();equal(view.errors,[]);
+        const message=await dialog.getByRole('alert').textContent();
+        assert(!message?.trim(),'The original browser import stopped before dispatch: '+message);
+        await sleep(100);
+      }
+      if(routeFailure)throw routeFailure;
+      equal(original,plan.action);
+      const completed=await completeOriginal(client,key,original);
+      await view.page.waitForFunction(revision=>document.querySelector('#revision-select')?.value===String(revision),
+        completed.result.revision);
+      equal(view.errors,[]);assert(posts===1,'The browser sends one original action on this explicit continuation.');
+      const after=await client.state();
+      if(replay) {
+        equal(after.revision,before.revision,'Reopening a completed browser import must not create a workspace revision.');
+        equal(await currentPortfolio(client),portfolio,'Reopening a completed browser import must not create a portfolio revision.');
+      }
+      return {requestId:completed.id,portfolio:completed.result,inputSha256:completed.inputSha256,
+        uiGenerated:true,completedReplay:replay,browserPosts:posts,workspaceBefore:before.revision,workspaceAfter:after.revision,
+        planDownload:resumed,screenshots,pageErrors:view.errors,browserVersion:browser.version()};
+    } finally {await view.context.close();}
+  }
+  async function browserApplicationIntake(client,portfolio,status) {
+    const module=await import(pathToFileURL(join(sdk,'grant-portfolio/awards-exchange.mjs')).href);
+    const key=status==='draft'?'import-browser-draft':'import-original-applications';
+    const csv=Buffer.from('Ref,Title,Name,Partner,Project,Amount,Currency,Eligibility,Quality,Delivery,Date,Notes\r\n'+
+      'INT-APP-1,"Synthetic ""original"" application, version 1",Internal Example Organisation,INTERNAL,PROJECT,10000.00,GBP,'+
+      '"Internal evidence supplied","Quality narrative","Delivery narrative",'+input.asOf+',"Internal acceptance only.\nNo real application or funding request."\r\n');
+    const csvPath=join(root,'documents','Internal_Applications_Original.csv');
+    await writeBytes(csvPath,csv,{immutable:true});
+    const planPath=join(root,'exports',key+'.plan.json');
+    if(!await exists(planPath))await prepareCsvInBrowser(portfolio,csvPath,status,planPath);
+    const plan=await readJson(planPath),applicationId=validateBrowserCsvPlan(module,plan,portfolio,csv,status);
+    await adoptBrowserCsvIdentities(plan,applicationId,status);
+    const intent={schema:'stellar-forge.awards-browser-intake-selection.v1',status,
+      portfolio:plan.portfolio,applicationId,documentId:plan.documentId,operationId:plan.action.operationId,
+      actionSha256:plan.actionSha256,source:plan.source,plan:await fileInfo(planPath,{synchronize:true})};
+    await retainCompleted('complete browser intake selection',()=>save(join(root,'actions',key+'.selection.json'),intent,true));
+    const resumedPath=join(root,'evidence',key+'.browser-resume.json');
+    let resumed=await readJson(resumedPath,true);
+    if(!resumed) {
+      // The new context must load the current portfolio to open the resume
+      // dialog; the original plan itself resolves its historical basis.
+      resumed=await resumeCsvInBrowser(client,await currentPortfolio(client),plan,csvPath,planPath,key);
+      await retainCompleted('actual original browser import return',()=>save(resumedPath,resumed,true));
+    }
+    assert(resumed.requestId===plan.action.operationId);
+    equal(resumed.portfolio.id,portfolio.id);
+    const original=await readJson(join(root,'actions',key+'.input.json'));
+    equal(original,plan.action);
+    const returned=await completeOriginal(client,key,original);
+    equal(returned.result,resumed.portfolio);
+    const application=awardOf(returned.result,'applications',applicationId);
+    assert(application.status===status&&application.reference==='INT-APP-1');
+    assert(application.revision===(status==='draft'?1:awardOf(portfolio,'applications',applicationId).revision+1));
+    equal(application.requestedAmount,money);
+    assert(application.title==='Synthetic "original" application, version 1');
+    assert(application.notes==='Internal acceptance only.\nNo real application or funding request.');
+    assert(recordOf(returned.result,'documents',plan.documentId).object.sha256===sha(csv));
+    const replayPath=join(root,'evidence',key+'.browser-completed-replay.json');
+    let replayed=await readJson(replayPath,true);
+    if(!replayed) {
+      replayed=await resumeCsvInBrowser(client,returned.result,plan,csvPath,planPath,key,{replay:true});
+      await retainCompleted('actual completed browser import replay',()=>save(replayPath,replayed,true));
+    }
+    assert(replayed.completedReplay===true&&replayed.requestId===returned.id);
+    equal(replayed.portfolio,returned.result);
+    return {operationId:returned.id,plan,planFile:intent.plan,csv:await fileInfo(csvPath,{synchronize:true}),
+      portfolio:returned.result,status,applicationId,documentId:plan.documentId,
+      browserResume:resumed,browserReplay:replayed,
+      files:[intent.plan,resumed.planDownload,replayed.planDownload],
+      screenshots:[...resumed.screenshots,...replayed.screenshots]};
+  }
+  async function browserApplicationExports(portfolio) {
+    const module=await import(pathToFileURL(join(sdk,'grant-portfolio/awards-exchange.mjs')).href);
+    const view=await browserPage('source',portfolio),files=[];
+    const dialog=view.page.locator('#detail-dialog');
+    try {
+      await view.page.getByRole('button',{name:'Export applications',exact:true}).click();
+      await dialog.getByRole('heading',{name:'Application exchange',exact:true}).waitFor();
+      await dialog.getByLabel('Export funding round',{exact:true}).selectOption(journal.refs.ids.round);
+      await dialog.getByLabel('Spreadsheet handling',{exact:true}).selectOption('true');
+      for(const format of ['json','csv']) {
+        const expected=module.exportAwardApplications(portfolio,{roundId:journal.refs.ids.round,format,spreadsheetSafe:true});
+        assert(expected.schema==='stellar-forge.awards-exchange-file.v1'&&expected.rows===1);
+        assert(expected.bytes instanceof Uint8Array&&sha(expected.bytes)===expected.sha256);
+        const path=join(root,'exports','Internal_Applications.'+format);
+        const actual=await retainBrowserDownload(view,()=>dialog.getByRole('button',{
+          name:format==='json'?'Download application JSON':'Download application CSV',exact:true}).click(),path,{
+          filename:'Award_Applications_'+portfolio.id+'_r'+portfolio.revision+'.'+format,
+          expected:{bytes:expected.bytes.length,sha256:expected.sha256}});
+        const body=await readBytes(path),original=awardOf(portfolio,'applications',journal.refs.ids.application);
+        if(format==='json') {
+          const decoded=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(body));
+          assert(decoded.schema==='stellar-forge.awards-application-exchange.v1'&&decoded.snapshot===portfolio.snapshot);
+          equal(decoded.applications,[original]);
+          equal(decoded.rounds,[awardOf(portfolio,'rounds',journal.refs.ids.round)]);
+        } else {
+          const decoded=module.parseAwardCsvText(new TextDecoder('utf-8',{fatal:true}).decode(body));
+          assert(decoded.rows.length===1);const row=decoded.rows[0];
+          equal({recordId:row.recordId,recordSha256:row.recordSha256,reference:row.reference,title:row.title,
+            requestedAmount:row.requestedAmount,currency:row.currency,notes:row.notes},
+            {recordId:original.id,recordSha256:original.sha256,reference:original.reference,title:original.title,
+              requestedAmount:original.requestedAmount.value,currency:original.requestedAmount.currency,notes:original.notes});
+          equal(JSON.parse(row.evidenceIds),original.evidenceIds);
+          for(const answer of original.answers)assert(row['answer:'+answer.criterionId]===answer.response);
+        }
+        const receipt={...actual,format,rows:expected.rows,uiDownload:true,selection:{
+          portfolioId:expected.portfolioId,revision:expected.revision,snapshot:expected.snapshot,awardsRevision:expected.awardsRevision}};
+        await retainCompleted('complete browser application '+format+' export',()=>save(path+'.receipt.json',receipt,true));
+        files.push(receipt);
+      }
+      equal(view.errors,[]);
+      return {files,pageErrors:view.errors,browserVersion:browser.version()};
+    } finally {await view.context.close();}
+  }
+
   async function browserReadback(role,portfolio,label) {
     const view=await browserPage(role,portfolio),screenshots=[],downloads=[];
     try {
@@ -905,7 +1183,7 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
           await stage('source-and-internal-awards-input',async()=>{
         if(!journal.refs.ids) {
           const names=['portfolio','programme','project','partner','grant','rulesDoc','applicationDoc','agreement1Doc','paymentDoc',
-            'indicator','observation','milestone','round','csvDoc','application','eligibilityQuery','eligibilityPass','diligence','abandoned',
+            'indicator','observation','milestone','round','eligibilityQuery','eligibilityPass','diligence','abandoned',
             'recused','assignment','assessment','deferred','decision','agreement','claim','claimQuery','claimApproved',
             'reconciliation','monitoring','rejectedAssessment'];
           const captured=Object.fromEntries(names.map(name=>[name,randomUUID()]));
@@ -948,7 +1226,7 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
         assert(!portfolio.definition.awards,'The pre-awards original revision retains its original table inventory.');
         return portfolio;
       });
-      await stage('published-explicit-internal-round',async()=>{
+      const publishedRound=await stage('published-explicit-internal-round',async()=>{
         const result=await changeAwards(client,'publish-internal-round',input.actor,async()=>({changes:[
           newAward('rounds','round',{code:'INT-ROUND-1',title:'Internal grant round',programmeNodeId:journal.refs.ids.programme,
             owner:input.actor,opensDate:input.asOf,closesDate:input.asOf,criteria,scoringMethod:'weighted-sum',
@@ -958,46 +1236,10 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
         equal(awardOf(result.result,'rounds',journal.refs.ids.round).criteria,criteria);
         return result.result;
       });
-      const applicationIntake=await stage('original-csv-application-intake',async()=>{
-        const module=await import(pathToFileURL(join(sdk,'grant-portfolio/awards-exchange.mjs')).href);
-        const id=journal.refs.ids,key='import-original-applications',operationId='awards-'+journal.runId+'-'+key;
-        const csv=Buffer.from('Ref,Title,Name,Partner,Project,Amount,Currency,Eligibility,Quality,Delivery,Date,Notes\r\n'+
-          'INT-APP-1,"Synthetic ""original"" application, version 1",Internal Example Organisation,INTERNAL,PROJECT,10000.00,GBP,'+
-          '"Internal evidence supplied","Quality narrative","Delivery narrative",'+input.asOf+',"Internal acceptance only.\nNo real application or funding request."\r\n');
-        const csvPath=join(root,'documents','Internal_Applications_Original.csv');
-        await writeBytes(csvPath,csv,{immutable:true});
-        const path=join(root,'actions',key+'.plan.json');
-        let plan=await readJson(path,true);
-        if(!plan) {
-          const portfolio=await currentPortfolio(client);
-          plan=module.prepareAwardCsvImport(portfolio,{operationId,csv,filename:'Internal_Applications_Original.csv',
-            documentId:id.csvDoc,roundId:id.round,actor:input.actor,
-            mapping:{reference:'Ref',title:'Title',legalName:'Name',partnerKey:'Partner',projectKey:'Project',
-              amount:'Amount',currency:'Currency',answers:{eligibility:'Eligibility',quality:'Quality',delivery:'Delivery'},
-              notes:'Notes',submittedDate:'Date'},
-            identities:{applications:{'INT-APP-1':id.application},partners:{INTERNAL:id.partner},projects:{PROJECT:id.project}},
-            status:'submitted'});
-          await retainCompleted('complete original CSV intake plan',()=>save(path,plan,true));
-        }
-        assert(plan.action.operationId===operationId&&plan.action.action==='portfolio.save'&&plan.documentId===id.csvDoc);
-        assert(plan.source.bytes===csv.length&&plan.source.sha256===sha(csv)&&plan.portfolio.id===journal.refs.portfolioId);
-        const uploaded=await client.uploadProgrammeDocument({body:csv,bytes:csv.length,sha256:sha(csv)},{signal:controller.signal});
-        equal({sha256:uploaded.sha256,bytes:uploaded.bytes},{sha256:plan.source.sha256,bytes:plan.source.bytes});
-        const inputPath=join(root,'actions',key+'.input.json');
-        let original=await readJson(inputPath,true);
-        if(!original) {
-          original={...plan.action,expectedRevision:(await client.state()).revision};
-          await retainCompleted('original complete CSV action',()=>save(inputPath,original,true));
-        }
-        equal(original.payload,plan.action.payload);
-        const returned=await completeOriginal(client,key,original),application=awardOf(returned.result,'applications',id.application);
-        assert(application.status==='submitted'&&application.id===id.application&&application.reference==='INT-APP-1');
-        equal(application.requestedAmount,money);
-        assert(application.title==='Synthetic "original" application, version 1');
-        assert(application.notes==='Internal acceptance only.\nNo real application or funding request.');
-        assert(recordOf(returned.result,'documents',id.csvDoc).object.sha256===sha(csv));
-        return {operationId:returned.id,plan,csv:await fileInfo(csvPath,{synchronize:true}),portfolio:returned.result};
-      });
+      const draftApplicationIntake=await stage('browser-original-csv-draft-intake',()=>
+        browserApplicationIntake(client,publishedRound,'draft'));
+      const applicationIntake=await stage('original-csv-application-intake',()=>
+        browserApplicationIntake(client,draftApplicationIntake.portfolio,'submitted'));
 
       await stage('attributed-checks-and-conflict-disposition',async()=>{
         const id=journal.refs.ids;
@@ -1142,42 +1384,9 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
           reason:'This attempted final-record archive must fail without replacing its publication.'}],
       })));
 
-      const applicationExchange=await stage('complete-application-json-and-csv-exchange',async()=>{
-        const module=await import(pathToFileURL(join(sdk,'grant-portfolio/awards-exchange.mjs')).href),files=[];
-        for(const format of ['json','csv']) {
-          const returned=module.exportAwardApplications(final,{roundId:journal.refs.ids.round,format,spreadsheetSafe:true});
-          assert(returned.schema==='stellar-forge.awards-exchange-file.v1'&&returned.rows===1);
-          assert(returned.portfolioId===final.id&&returned.revision===final.revision&&returned.snapshot===final.snapshot&&
-            returned.awardsRevision===final.definition.awards.revision);
-          assert(returned.bytes instanceof Uint8Array&&sha(returned.bytes)===returned.sha256);
-          const path=join(root,'exports','Internal_Applications.'+format);
-          const body=Buffer.from(returned.bytes),descriptor={...returned,bytes:body.length,path};
-          await retainCompleted('complete original application '+format+' return',async()=>{
-            await writeBytes(path,body,{immutable:true});
-            await save(path+'.receipt.json',descriptor,true);
-          });
-          const original=awardOf(final,'applications',journal.refs.ids.application);
-          if(format==='json') {
-            const decoded=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(body));
-            assert(decoded.schema==='stellar-forge.awards-application-exchange.v1'&&decoded.snapshot===final.snapshot);
-            equal(decoded.applications,[original]);
-            equal(decoded.rounds,[awardOf(final,'rounds',journal.refs.ids.round)]);
-          } else {
-            const decoded=module.parseAwardCsvText(new TextDecoder('utf-8',{fatal:true}).decode(body));
-            assert(decoded.rows.length===1);const row=decoded.rows[0];
-            equal({recordId:row.recordId,recordSha256:row.recordSha256,reference:row.reference,title:row.title,
-              requestedAmount:row.requestedAmount,currency:row.currency,notes:row.notes},
-              {recordId:original.id,recordSha256:original.sha256,reference:original.reference,title:original.title,
-                requestedAmount:original.requestedAmount.value,currency:original.requestedAmount.currency,notes:original.notes});
-            equal(JSON.parse(row.evidenceIds),original.evidenceIds);
-            for(const answer of original.answers)assert(row['answer:'+answer.criterionId]===answer.response);
-          }
-          files.push({...await fileInfo(path,{synchronize:true}),format,rows:returned.rows,selection:{
-            portfolioId:returned.portfolioId,revision:returned.revision,snapshot:returned.snapshot,
-            awardsRevision:returned.awardsRevision}});
-        }
-        return {files,originalCsv:applicationIntake.csv};
-      });
+      const applicationExchange=await stage('complete-application-json-and-csv-exchange',async()=>({
+        ...await browserApplicationExports(final),originalCsv:applicationIntake.csv,
+      }));
       const sourceReadback=await stage('complete-source-history-and-document-streams',()=>verifyHistory(client,final,'source'));
       const sourceViews=await stage('actual-programme-desktop-and-phone',()=>browserReadback('source',final,'source'));
       const customer=await stage('complete-original-export-and-repeat',async()=>{
@@ -1255,10 +1464,11 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
         scope:'Explicitly synthetic internal grant-administration acceptance data and only exact owner-supplied external source editions. No real applicant, CIF criteria, award, acceptance or payment is asserted.',
         portfolioId:final.id,revision:final.revision,snapshot:final.snapshot,programmeRevision:programmeOf(final).revision,
         external,recordIds:journal.refs.ids,monitoringRequestId:monitoring.requestId,
-        awardsRevision:final.definition.awards.revision,applicationIntake,rejectedScoring,immutableArchive,
+        awardsRevision:final.definition.awards.revision,draftApplicationIntake,applicationIntake,rejectedScoring,immutableArchive,
         originalWorkspaceId:journal.refs.workspaces.source,receivingWorkspaceId:journal.refs.workspaces.receiver,
-        customer,reexport,applicationFiles:[applicationIntake.csv,...applicationExchange.files],applicationExchange,
-        images:[...queueViews.screenshots,...claimQueueViews.screenshots,...sourceViews.screenshots,...receiverViews.screenshots],
+        customer,reexport,applicationFiles:[applicationIntake.csv,...draftApplicationIntake.files,...applicationIntake.files,...applicationExchange.files],applicationExchange,
+        images:[...draftApplicationIntake.screenshots,...applicationIntake.screenshots,
+          ...queueViews.screenshots,...claimQueueViews.screenshots,...sourceViews.screenshots,...receiverViews.screenshots],
         documentDownloads:sourceReadback.documentEditions.length+received.observations.documentEditions.length+
           sourceViews.downloads.length+receiverViews.downloads.length,
         sourceFinancialRowsAndGroupsUnchanged:true,paymentInstructions:[],tenantIntegrations:[],nativePhases:journal.phases};

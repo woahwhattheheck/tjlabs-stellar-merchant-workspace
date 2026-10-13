@@ -63,6 +63,19 @@ Each source manifest uses `stellar-forge.partner-product-source.v1`, a title, it
 
 ## Run the complete installed continuation
 
+The closed driver can materialize all its own source and select the actual completed original archives in one operation:
+
+```sh
+python3 -B /private/run-installed.py \\
+  --packet /private/Partner_Installed_Receiving_Source.json \\
+  --original-root /private/existing-partner-source-operation \\
+  --directory /private/partner-installed-receiving \\
+  --browser /absolute/existing/chrome-headless-shell
+```
+
+Use `--inputs` instead of `--original-root` when the complete exact input JSON has already been received. The original root selector defaults to the final restored edition.
+
+
 Use the closed source packet containing all product files, original framework support modules, this driver and the whole Node programme. Select the existing permitted Chromium executable and installed Playwright module.
 
 ```sh

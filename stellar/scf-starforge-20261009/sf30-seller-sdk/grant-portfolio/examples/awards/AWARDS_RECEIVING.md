@@ -8,7 +8,7 @@ The supplied records are explicitly synthetic internal software acceptance data.
 
 ## Complete source and runtime selection
 
-Use the actual published or locally committed complete source edition, with its real commit recorded in `--source-commit`. The source root is the complete `stellar/scf-starforge-20261009/sf30-seller-sdk` tree. Do not substitute a dirty overlay while naming an earlier commit. The original `grant-portfolio/source-files.json` must include all current leaves, the four files in this examples/awards directory, the full awards modules and browser assets, the exchange helper, and the unchanged process-family helper in examples/spc.
+Use the actual published or locally committed complete source edition, with its real commit recorded in `--source-commit`. The source root is the complete `stellar/scf-starforge-20261009/sf30-seller-sdk` tree. Do not substitute a dirty overlay while naming an earlier commit. The original `grant-portfolio/source-files.json` must include all current leaves, the four files in this examples/awards directory, the full awards modules and browser assets, both the shared exchange core and browser intake wizard, and the unchanged process-family helper in examples/spc. The complete browser-intake successor selects 147 source leaves. Keep any already-frozen earlier 145-source receiving invocation on its original source and output directory; its evidence is not a run of this successor.
 
 The caller hashes every original manifest-selected body before opening a workspace. It pins the full source inventory, input bytes, actual client, Node version, browser/runtime paths and original parent selection in its immutable receiving journal. It does not fetch source, install a runtime, use hosted CI, initiate a payment or contact a funding tenant.
 
@@ -82,13 +82,13 @@ The foreground holds the original private worker lock, records its immutable sou
 
 ## The complete application journey
 
-The caller retains stable UUIDs before creating business records and performs each change through the original `portfolio.save` action. Every action input is saved before dispatch; each original returned result is retained before the next stage.
+The caller retains stable UUIDs before creating business records and performs each change through the original `portfolio.save` action. CSV application, document and operation IDs come from the actual reviewed browser plan; those identities are adopted into the receiving journal before the first POST. Every action input is saved before dispatch; each original returned result is retained before the next stage.
 
 The journey:
 
 1. Creates a synthetic programme/project/partner and original specimen documents, including two complete agreement document editions. It records the original financial baseline.
 2. Publishes explicit operator-selected criteria and weights.
-3. Prepares a CSV intake plan using the maintained exchange module. It retains the exact original CRLF, quoted and multiline CSV, stable supplied identities, mapping and complete plan. Verified document upload precedes the single action that records the CSV evidence and submitted application together.
+3. Operates the actual CSV intake wizard with the complete original CRLF, quoted and multiline CSV. Staff select the published round, column meanings and original programme partner/project; the reviewed draft plan supplies the stable application, document and operation IDs. The caller saves the browser-downloaded plan before the first POST, closes and reopens the browser, and resumes that exact plan with its original CSV and historical portfolio. A second reviewed import submits the same application draft while preserving its first edition and both mapping documents.
 4. Records an eligibility query, separate due diligence and a disclosed conflict with a recused assignment. A deliberately attempted assessment on that recused original assignment must fail without a portfolio revision. The failure remains an actual retained request; it is never retried as if it succeeded.
 5. Records a separately attributed following conflict clearance and the exact weighted assessment, then an explicit deferred panel decision. The real desktop and phone work queue must still show the unresolved query and deferral.
 6. Records a following eligibility resolution and separate explicit synthetic award decision, preserving the earlier query and deferred decision.
@@ -96,7 +96,7 @@ The journey:
 8. Separately records a claim submission, review query, following approval and an attributed evidence-based reconciliation. The internal statement specimen is not presented as a real financial row or settlement. The actual work queue must retain the recorded claim query.
 9. Opens the real monitoring form in the browser. It retains the actual UI-generated action before its first POST, then records the monitoring return through the original request API.
 10. Changes the current partner label, agreement document edition and observation; archives the earlier application document and an unused award draft; and closes the round. Every prior award publication must retain the exact original contributors and document bytes. A deliberately attempted archive of a recorded agreement must fail without a new portfolio revision.
-11. Reads every saved revision and complete table page, every award record/history, the original financial picker, round and application positions, and all document editions. It exports application JSON and CSV with the original helper.
+11. Reads every saved revision and complete table page, every award record/history, the original financial picker, round and application positions, and all document editions. It downloads application JSON and CSV through the actual browser controls and compares their complete bytes with the maintained original export helper.
 12. Opens all nine award registers, original saved editions, frozen assessment detail and actual document downloads at desktop and phone sizes. Browser page errors or viewport overflow fail the journey.
 13. Produces the original complete customer ZIP, verifies its source/document inventory, repeats the exact original export, cold-reopens the original workspace, independently receives the complete ZIP into another workspace UUID, compares every original revision/table/record/document, opens the received application, re-exports, and cold-reopens/replays the same completed receive without adding a revision.
 
@@ -110,6 +110,8 @@ Keep the same input, output directory and original source selection on continuat
 - A failed request is resumed only when the original application explicitly marks it retryable.
 - A nonretryable failure remains a failed outcome to resolve.
 - A phase evidence file can precede its journal checkpoint. The exact completed evidence is recovered and the journal repaired without running the phase again.
+- Each actual CSV intake plan and its generated identities are retained before its first POST. Keep the downloaded plan JSON bytes exactly, including the original action key order used by its existing hash; parse a separate in-memory value for review and identity adoption. Reload/resume uses the same complete original CSV, historical portfolio and operation. An interrupted action is reconciled by its original ID; it does not generate a second import.
+- After each actual import, a new browser context reopens the same saved plan and continues its completed original operation. Both the portfolio and workspace revision must remain unchanged. The draft and submitted imports use different plan/document/operation IDs and the same application ID.
 - An actual UI monitoring input is captured before the first POST. Reentry reconciles that same operation rather than clicking again.
 - Local output errors retain the actual returned values and original file bytes. The same programme waits for durable receipt publication.
 - The original completed result is revalidated before any new business phase.

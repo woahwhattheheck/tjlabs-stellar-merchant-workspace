@@ -1,3 +1,4 @@
+import type { FredAlfredMetadataEdition } from '../alfred/model.mjs';
 import type { Buffer } from 'node:buffer';
 import type { FredDdpFileDescriptor } from './files.mjs';
 import type { FredDdpCrosswalkCapture, FredDdpCrosswalkModel } from './crosswalk.mjs';
@@ -127,6 +128,8 @@ export interface FredDdpMigrationAcquireResult extends FredDdpMutationResult {
   captureIds: string[];
   acquisitionId: string;
   reusedReceiving: boolean;
+  sourceMode?: 'ALFRED_VINTAGE';
+  metadataSha256?: string;
 }
 export interface FredDdpMigrationDownload {
   migrationId: FredDdpMigrationPlan['id'];
@@ -165,6 +168,7 @@ export interface FredDdpProjectApi {
   }): Promise<FredDdpMigrationDownload>;
   acquireFredDdpMigration(input: FredDdpMutation & FredDdpSourceAccess & {
     migrationId: FredDdpMigrationPlan['id']; environment?: Record<string, string | undefined>;
+    sourceMode?: 'API_VINTAGE' | 'ALFRED_VINTAGE'; metadata?: FredAlfredMetadataEdition[]; metadataSha256?: string;
   }): Promise<FredDdpMigrationAcquireResult>;
   getFredDdpReceiving(input: FredDdpReceivingPaging & {
     directory: string; receivingId: FredDdpReceiving['id'];

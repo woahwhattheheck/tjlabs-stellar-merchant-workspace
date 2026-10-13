@@ -6,6 +6,8 @@ This interface operates the merchant's existing invoices, customer receipts, all
 
 [Customer remittance receiving](ACCOUNTING_REMITTANCES.md) adds complete CSV intake, exact native review, atomic allocation, retained source delivery and stable-request recovery to the same accounting owner.
 
+[Customer account delivery and response review](ACCOUNTING_CUSTOMER_RESPONSES.md) adds complete dated customer packages, original offline response intake, explicit entry decisions and the same durable prepare/execute/reconcile workflow.
+
 The interfaces are:
 
 - Installed command: `starforge merchant-accounting-receivables`.

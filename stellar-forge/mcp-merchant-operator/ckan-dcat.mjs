@@ -11,6 +11,7 @@ const MAX_CACHED_REPORT_BYTES = 16 * 1024 * 1024;
 const UUID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
 const collections = ['catalogs', 'reviews', 'releases'];
+const sourceCollections = ['sources', 'acquisitions'];
 const reports = new WeakMap();
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 
@@ -51,7 +52,7 @@ function selected(native, collection, value) {
 export function pageDcatState(value, input = {}) {
   const limit = integer(input.limit, 25, 100), result = { ...value }, paging = {};
   need(limit > 0, 'INVALID_PARAMS', 'Use a page limit between 1 and 100.');
-  for (const key of collections) {
+  for (const key of [...collections, ...sourceCollections.filter(key => value[key] !== undefined)]) {
     need(Array.isArray(value[key]), 'CKAN_DCAT_SOURCE_REQUIRED', 'The original DCAT collection shape changed.');
     const offset = integer(input[key + 'Offset'], 0), all = value[key];
     result[key] = all.slice(offset, offset + limit);
@@ -63,15 +64,16 @@ export function pageDcatState(value, input = {}) {
 export function forgetDcatReview(model) { reports.delete(model); }
 
 function fileSelection(kind, itemId) {
-  need(['catalog', 'report', 'candidate', 'current'].includes(kind), 'INVALID_PARAMS',
-    'Select a retained catalog, report, candidate or current release.');
+  need(['catalog', 'report', 'candidate', 'current', 'acquisition-receipt', 'acquisition-response'].includes(kind), 'INVALID_PARAMS',
+    'Select a retained catalog, report, candidate, current release or original acquisition receipt/response.');
   if (kind === 'current') need(itemId === undefined, 'INVALID_PARAMS', 'The current release selects its own original candidate.');
   else id(itemId);
   return { kind, itemId };
 }
 async function descriptor(model, kind, itemId) {
   fileSelection(kind, itemId);
-  const result = kind === 'catalog' ? await model.dcatCatalogDownload(itemId)
+  const result = kind.startsWith('acquisition-') ? await model.dcatAcquisitionDownload(itemId, kind.slice('acquisition-'.length))
+    : kind === 'catalog' ? await model.dcatCatalogDownload(itemId)
     : kind === 'current' ? await model.dcatCurrentDownload()
     : await model.dcatReviewDownload(itemId, kind);
   need(plain(result) && typeof result.file === 'string' && SHA256.test(result.sha256 ?? '') &&
@@ -256,6 +258,38 @@ export async function executeCkanDcat(context, name, input) {
         operation: context.view(native.operation), active: context.view(native.active),
         ...context.view(page), fileReads: context.reads.status(context.scope) };
     }
+    case 'merchant_ckan_dcat_source': {
+      const source = await model.dcatSource(id(input.sourceId)), paging = {};
+      const limit = integer(input.limit, 25, 100);
+      need(limit > 0, 'INVALID_PARAMS', 'Use a page limit between 1 and 100.');
+      for (const key of ['acquisitions', 'reviews']) if (Array.isArray(source[key])) {
+        const offset = integer(input[key + 'Offset'], 0), all = source[key];
+        source[key] = all.slice(offset, offset + limit);
+        paging[key] = { offset, limit, total: all.length,
+          nextOffset: offset + source[key].length < all.length ? offset + source[key].length : null };
+      }
+      return { workspace, ...context.view(source), paging };
+    }
+    case 'merchant_ckan_dcat_source_save': {
+      need((input.sourceId === undefined) === (input.expectedSourceSha256 === undefined),
+        'INVALID_PARAMS', 'Bind a source update to its exact current configuration.');
+      const value = {};
+      for (const key of ['label', 'url', 'profile', 'authTokenEnv', 'intervalMinutes', 'timeoutMs', 'maxResponseBytes', 'enabled'])
+        if (input[key] !== undefined) value[key] = input[key];
+      if (input.sourceId !== undefined) Object.assign(value, { id: id(input.sourceId),
+        expectedSourceSha256: sha(input.expectedSourceSha256) });
+      return launch(() => model.saveDcatSource(value));
+    }
+    case 'merchant_ckan_dcat_source_acquire': {
+      const value = { sourceId: id(input.sourceId), expectedSourceSha256: sha(input.expectedSourceSha256),
+        expectedLatestCatalogId: input.expectedLatestCatalogId === null ? null : id(input.expectedLatestCatalogId),
+        ...(input.unconditional === undefined ? {} : { unconditional: input.unconditional }),
+        ...(input.onlyIfDue === undefined ? {} : { onlyIfDue: input.onlyIfDue }),
+        ...(input.retryOf === undefined ? {} : { retryOf: id(input.retryOf) }) };
+      for (const key of ['unconditional', 'onlyIfDue']) need(input[key] === undefined || typeof input[key] === 'boolean',
+        'INVALID_PARAMS', 'Use a boolean for ' + key + '.');
+      return launch(() => model.acquireDcatSource(value));
+    }
     case 'merchant_ckan_dcat_import': {
       const configured = context.input(input.input);
       need(configured.kind === 'dcat-catalog', 'CKAN_DCAT_INPUT_KIND',
@@ -271,8 +305,23 @@ export async function executeCkanDcat(context, name, input) {
         ...(input.profile === undefined ? {} : { profile: input.profile }),
         ...(input.origin === undefined ? {} : { origin: input.origin }) }));
     }
+    case 'merchant_ckan_dcat_source_review_prepare':
     case 'merchant_ckan_dcat_review_prepare': {
+      const fromSource = name === 'merchant_ckan_dcat_source_review_prepare';
       const value = { sourceId: id(input.sourceId) };
+      if (fromSource) Object.assign(value, {
+        expectedSourceSha256: sha(input.expectedSourceSha256), expectedLatestCatalogId: id(input.expectedLatestCatalogId),
+        baselineReleaseId: input.baselineReleaseId === null ? null : id(input.baselineReleaseId),
+        ...(input.baselineReleaseId === null ? {} : {
+          expectedBaselineSha256: sha(input.expectedBaselineSha256),
+          expectedBaselineReviewSha256: sha(input.expectedBaselineReviewSha256),
+        }),
+        ...(input.reuseMappingIndexes === undefined ? {} : { reuseMappingIndexes: input.reuseMappingIndexes }),
+      });
+      if (input.reuseMappingIndexes !== undefined) need(Array.isArray(input.reuseMappingIndexes) &&
+        input.reuseMappingIndexes.every(value => Number.isSafeInteger(value) && value >= 0) &&
+        new Set(input.reuseMappingIndexes).size === input.reuseMappingIndexes.length,
+        'INVALID_PARAMS', 'Select distinct zero-based mapping indexes from the accepted baseline.');
       for (const key of ['comparisonId', 'candidateId']) if (input[key] !== undefined) value[key] = id(input[key]);
       for (const key of ['label', 'normalizeV3']) if (input[key] !== undefined) value[key] = input[key];
       need(input.normalizeV3 === undefined || typeof input.normalizeV3 === 'boolean',
@@ -290,7 +339,7 @@ export async function executeCkanDcat(context, name, input) {
           'Inspect the exact current mapping file before preparing the review.');
         value.identityMappings = checkedMappings(parseCkanJson(current.content));
       } else if (input.identityMappings !== undefined) value.identityMappings = checkedMappings(input.identityMappings);
-      return launch(() => model.prepareDcatReview(value));
+      return launch(() => fromSource ? model.prepareDcatSourceReview(value) : model.prepareDcatReview(value));
     }
     case 'merchant_ckan_dcat_review': {
       const value = await reportDocument(context, id(input.reviewId), input.expectedReviewSha256);

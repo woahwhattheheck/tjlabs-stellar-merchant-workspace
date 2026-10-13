@@ -12,10 +12,13 @@ import tempfile
 import time
 import uuid
 import zipfile
+from reviewer_source_paths import reviewer_members, reviewer_paths, verify_reviewer_paths
 
 from scf_native_process import (
     preserve_console, record_runtime_selection, retain_runtime_edition, run_receiving_program,
 )
+
+from receive_current import pending_writer_phases
 
 OPERATION = "SCF-GRANT-CURRENT-REVIEW-81CF-20261012"
 PHASE = "SCF-SUBMISSION-SOURCE-PACKAGE-A8CE-20261012"
@@ -61,26 +64,6 @@ def copy_source(source, destination):
     return str(destination)
 
 
-def pending_writer_phases(record, label):
-    """Only the original controller can confirm its complete writer cleanup."""
-    phases = record.get("phases")
-    if not isinstance(phases, dict):
-        return [{"controller": label, "reason": "Original phase record is unavailable."}]
-    pending = []
-    for name, phase in phases.items():
-        if (phase.get("state") in ("NOT_STARTED", "LAUNCH_FAILED") and
-                phase.get("pid") is None and not phase.get("process_identity") and
-                not phase.get("process_group")):
-            continue
-        if (phase.get("group_cleanup_complete") is not True or
-                phase.get("stdout_identity", {}).get("writer_exit_pending") or
-                phase.get("stderr_identity", {}).get("writer_exit_pending")):
-            pending.append({"controller": label, "phase": name,
-                            "pid": phase.get("pid"), "state": phase.get("state"),
-                            "process_identity": phase.get("process_identity"),
-                            "termination": phase.get("termination")})
-    return pending
-
 def receive_source(args, original):
     selected = args.source_input.read_bytes()
     if digest(selected) != args.expected_source_input_sha256:
@@ -94,6 +77,12 @@ def receive_source(args, original):
     package_body = source_package["content"].encode("utf-8")
     if len(package_body) != source_package["bytes"] or digest(package_body) != source_package["sha256"]:
         raise ValueError("The complete selected reviewer package differs.")
+    selected_reviewer_paths = None
+    if "reviewerPaths" in packet["sourceSelection"]:
+        selected_reviewer_paths = reviewer_paths(packet["sourceSelection"]["reviewerPaths"])
+        verify_reviewer_paths(json.loads(package_body),
+                              {row["path"]: checked_body(row) for row in packet["assets"]},
+                              selected_reviewer_paths)
     original_case = packet["originalCase"]
     if args.replace_library_file_id and args.replace_library_file_id != original_case["libraryId"]:
         raise ValueError("Continue the same saved customer case.")
@@ -199,23 +188,11 @@ def receive_source(args, original):
     package_path = output / "source-package-input.json"
     replace_bytes(package_path, package_body)
     envelope = json.loads(package_body)
-    received = envelope["received"]
-    objects = {row["sha256"]: row for row in received["objects"]}
-    expected_roles = {
-        "application": "application.md", "source-index": "source-index.json",
-        "budget": "budget.csv", "product-and-finance": "product-and-finance.md",
-    }
-    files = received["bundle"]["body"]["files"]
-    if len(files) != 4 or {row["role"] for row in files} != set(expected_roles):
-        raise ValueError("Receive all four complete original reviewer files.")
-    for row in files:
-        if row["name"] != expected_roles[row["role"]]:
-            raise ValueError("Retain the selected original reviewer file names.")
-        stored = objects[row["sha256"]]
-        body = base64.b64decode(stored["base64"], validate=True)
-        if len(body) != row["bytes"] or len(body) != stored["bytes"] or digest(body) != row["sha256"]:
-            raise ValueError("The complete reviewer object differs: " + row["name"])
-        relative = "stellar-forge/developer-site/dist/grant-data/" + row["name"]
+    paths = reviewer_paths() if selected_reviewer_paths is None else selected_reviewer_paths
+    for row, body in reviewer_members(envelope):
+        relative = paths[row["role"]]
+        # Explicit selections were checked against every original carrier byte
+        # before materialization. Keep canonical publisher files at their own paths.
         replace_bytes(source_root / relative, body)
         rows[relative] = {"path": relative, "bytes": len(body),
                           "sha256": digest(body), "git_blob": git_blob(body)}

@@ -40,6 +40,12 @@ def add_parser(commands):
     }.items():
         command = actions.add_parser(name, help=help_text)
         command.add_argument("--input", required=True, help="Private UTF-8 JSON body, at most 1 MiB; original request/workspace IDs are explicit")
+    prepared = actions.add_parser("prepare-receiving",
+        help="Export complete original report, reviewed fields and saved pair input for native customer receiving")
+    prepared.add_argument("--input", required=True,
+        help="Private JSON naming the existing operation, workspace, installed source, saved pair revision and reviewer")
+    prepared.add_argument("--destination", required=True,
+        help="Private receiving-input directory outside the original customer warehouse")
     operation = actions.add_parser("request", help="Inspect an original operation; this never resumes it")
     operation.add_argument("request_id")
     resume = actions.add_parser("resume", help="Explicitly resume the exact retained original operation")
@@ -82,6 +88,9 @@ def dispatch(workspace, args):
                 "path": str(path), "filename": original["filename"], "bytes": len(raw),
                 "sha256": digest(raw), "complete": True}
     body = parse(read_original(args.input, _MAX_INPUT))
+    if action == "prepare-receiving":
+        from .receiving_preparation import prepare_receiving
+        return prepare_receiving(workspace, body, args.destination)
     if action == "retain":
         return native.retain_path(body)
     if action == "review":

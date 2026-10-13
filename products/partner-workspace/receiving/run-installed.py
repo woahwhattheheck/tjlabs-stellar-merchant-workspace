@@ -4,7 +4,8 @@ from __future__ import annotations
 import argparse,fcntl,hashlib,json,os,pathlib,shutil,subprocess,sys,time,uuid,zipfile
 os.umask(0o077)
 p=argparse.ArgumentParser()
-p.add_argument("--packet",required=True);p.add_argument("--inputs",required=True)
+p.add_argument("--packet",required=True);selection_args=p.add_mutually_exclusive_group(required=True)
+selection_args.add_argument("--inputs");selection_args.add_argument("--original-root");p.add_argument("--edition",choices=("restored","original"),default="restored")
 p.add_argument("--directory",required=True);p.add_argument("--resume",action="store_true")
 p.add_argument("--browser",default=os.environ.get("PARTNER_BROWSER_EXECUTABLE"))
 a=p.parse_args()
@@ -71,15 +72,28 @@ lock=os.open(root/"installed-receiving.lock",os.O_RDWR|os.O_CREAT,0o600)
 fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
 packet_path=original(a.packet);packet_raw=packet_path.read_bytes();packet=json.loads(packet_raw)
 if packet["schema"]!="stellar-forge.partner-installed-receiving-source.v1":fail("Wrong full source packet")
-input_path=original(a.inputs);input_raw=input_path.read_bytes();selected=json.loads(input_raw)
-if selected["schema"]!="stellar-forge.partner-installed-receiving-input.v1" or set(selected["products"])!={"mobility","education"}:fail("Select both complete original product archives")
-if selected["operation_id"]!=packet["operation_id"]:fail("Keep this exact original installation operation")
 case=root/"case"
 if case.exists() and any(case.iterdir()) and not a.resume:
  print(json.dumps({"existing_native_case":str(case),"result":str(case/"RESULT.json"),"action":"Receive existing output or use --resume for the exact retained inputs."}),flush=True);sys.exit(2)
-save(root/"SOURCE_INPUT.json",packet_raw);save(root/"ORIGINAL_INPUT.json",input_raw)
+save(root/"SOURCE_INPUT.json",packet_raw)
 repo=private(root/"repo")
 for item in packet["files"]+packet["native_support"]+[packet["native_program"]]:member(repo,item)
+selection={"inputs":str(pathlib.Path(a.inputs).absolute()) if a.inputs else None,"original_root":str(pathlib.Path(a.original_root).absolute()) if a.original_root else None,"edition":a.edition}
+save(root/"INPUT_SELECTION.json",encode(selection))
+if (root/"ORIGINAL_INPUT.json").is_file():
+ input_raw=(root/"ORIGINAL_INPUT.json").read_bytes()
+ if a.inputs and pathlib.Path(a.inputs).exists() and original(a.inputs).read_bytes()!=input_raw:fail("The surviving selected input JSON changed")
+else:
+ if a.original_root:
+  selected_output=private(root/"selected-inputs")
+  subprocess.run([sys.executable,"-B",str(repo/"products/partner-workspace/receiving/select-original.py"),"--original-root",selection["original_root"],"--out",str(selected_output),"--edition",a.edition],check=True)
+  input_path=selected_output/"Original_Installed_Inputs.json"
+ else:input_path=original(a.inputs)
+ input_raw=input_path.read_bytes()
+selected=json.loads(input_raw)
+if selected["schema"]!="stellar-forge.partner-installed-receiving-input.v1" or set(selected["products"])!={"mobility","education"}:fail("Select both complete original product archives")
+if selected["operation_id"]!=packet["operation_id"]:fail("Keep this exact original installation operation")
+save(root/"ORIGINAL_INPUT.json",input_raw)
 materialized={"schema":selected["schema"],"operation_id":selected["operation_id"],"products":{}}
 for product,value in selected["products"].items():
  if value["product"]!=product or not value["original_operation"]:fail("Keep each original business operation and product")
@@ -144,7 +158,7 @@ with zipfile.ZipFile(archive,"x",zipfile.ZIP_DEFLATED,compresslevel=6) as z:
    after=path.stat()
    if (info.st_size,info.st_mtime_ns,info.st_ino)!=(after.st_size,after.st_mtime_ns,after.st_ino):fail("Original delivery file changed while being retained")
    rows.append({"path":name,"bytes":info.st_size,"sha256":h.hexdigest()})
- for path in (root/"SOURCE_INPUT.json",root/"ORIGINAL_INPUT.json",root/"RECEIVING_INPUT.json",attempt/"LAUNCH.json",log):
+ for path in (root/"SOURCE_INPUT.json",root/"INPUT_SELECTION.json",root/"ORIGINAL_INPUT.json",root/"RECEIVING_INPUT.json",attempt/"LAUNCH.json",log):
   raw=path.read_bytes();name=str(path.relative_to(root));z.writestr(name,raw);rows.append({"path":name,"bytes":len(raw),"sha256":sha(raw)})
  z.writestr("FILES.json",encode({"schema":"stellar-forge.partner-installed-complete-delivery.v1","operation_id":selected["operation_id"],"files":rows}))
 with archive.open("rb") as stream:os.fsync(stream.fileno());archive_sha=hashlib.file_digest(stream,"sha256").hexdigest()

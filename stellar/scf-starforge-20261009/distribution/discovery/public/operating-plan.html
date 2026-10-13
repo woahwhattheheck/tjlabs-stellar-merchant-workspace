@@ -6,6 +6,7 @@
   <title>Starforge · Operating plans</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/operating-plan.css">
+  <link rel="stylesheet" href="/support-operating-plan.css">
   <link rel="stylesheet" href="/grant-reporting-editor.css">
   <script type="module" src="/operating-plan.mjs"></script>
 </head>
@@ -13,13 +14,14 @@
   <a class="skip" href="#plan-editor">Skip to operating plan</a>
   <header class="topbar">
     <div><p class="eyebrow">STELLAR FORGE</p><h1>Operating plans</h1></div>
-    <nav class="actions" aria-label="Workspace"><a class="button" href="/">Command finder</a><a class="button" href="/operating-plan-return.html">Returned procedures</a><button id="refresh-catalog" type="button">Refresh source</button><button id="export-catalog" type="button">Toolkit catalog JSON</button></nav>
+    <nav class="actions" aria-label="Workspace"><a class="button" href="/">Command finder</a><a class="button" href="/operating-plan-return.html">Returned procedures</a><button id="refresh-catalog" type="button">Refresh source</button><button id="export-catalog" type="button">Toolkit catalog JSON</button><button id="show-support-procedure" type="button">Support procedure</button></nav>
   </header>
   <main>
     <p class="intro">Prepare a customer procedure, keep its selected commands, and record the work as it progresses.</p>
     <section class="source-banner" aria-label="Selected software"><strong id="package">Reading selected package…</strong><span id="catalog-count"></span></section>
     <div id="plan-error" role="alert" hidden></div>
     <p id="plan-status" role="status" aria-live="polite">Opening saved plans…</p>
+    <section id="support-procedure" aria-label="Support operating procedure"></section>
     <div class="plan-layout">
       <section class="plan-shelf panel" aria-label="Saved operating plans">
         <h2>Saved plans</h2>

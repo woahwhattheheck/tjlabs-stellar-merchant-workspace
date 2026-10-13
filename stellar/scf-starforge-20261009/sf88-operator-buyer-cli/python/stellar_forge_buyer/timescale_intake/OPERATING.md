@@ -237,6 +237,7 @@ stellar-forge-duckdb --workspace ORIGINAL_DIR timescale-intake pair-review --inp
 stellar-forge-duckdb --workspace ORIGINAL_DIR timescale-intake pair --input PRIVATE_PAIR_JSON
 stellar-forge-duckdb --workspace ORIGINAL_DIR timescale-intake resume REQUEST_ID --workspace-id CUSTOMER_WORKSPACE_ID
 stellar-forge-duckdb --workspace ORIGINAL_DIR timescale-intake report-file REPORT_SHA --destination PRIVATE_REPORT_COPY
+stellar-forge-duckdb --workspace ORIGINAL_DIR timescale-intake prepare-receiving --input PRIVATE_RECEIVING_METADATA --destination PRIVATE_PREPARATION_DIRECTORY
 ```
 
 Mutation JSON uses the browser contract. A host-local retain body also contains
@@ -286,6 +287,83 @@ travel in the merchant distribution together with the Python package, browser
 assets and this guide. Original source manifests and file chunks provide the
 complete report and source files for portable receiving.
 
+## Prepare receiving from the saved customer pair
+
+The original intake command can prepare the full customer receiving input from
+an already saved Timescale pair. It reads both immutable reviews and editions,
+recovers the complete original report, copies every reviewed field and
+interpretation, and binds the selected pair revision to its original completed
+request. This works with a later saved revision, including its reviewed value
+maps and numeric comparison policies.
+
+Open the current pair in the customer workspace and retain its pair ID and
+revision. Use the customer workspace identity, the actual installed source
+commit and paths, the original native MCP workspace, and the operator who will
+perform the receiving. Save those values in a private JSON file:
+
+~~~json
+{
+  "operation_id": "YOUR_CUSTOMER_RECEIVING_OPERATION",
+  "workspace_id": "ORIGINAL_32_HEX_CUSTOMER_WORKSPACE_ID",
+  "source_commit": "ACTUAL_40_HEX_INSTALLED_SOURCE_COMMIT",
+  "source_root": "/absolute/private/installed/source",
+  "native_workspace": "/absolute/private/original-native-workspace",
+  "pair_id": "ORIGINAL_64_HEX_PAIR_ID",
+  "pair_revision": 2,
+  "actor": "Responsible engineer",
+  "reason": "Receive the reviewed commissioning result into the continuing customer workspace."
+}
+~~~
+
+Replace the example identities and revision with the actual saved values. The
+command uses the warehouse supplied to the existing DuckDB CLI; it checks that
+warehouse against the explicit customer identity.
+
+~~~sh
+stellar-forge-duckdb --workspace /absolute/private/original-customer \
+  timescale-intake prepare-receiving \
+  --input /absolute/private/receiving-request.json \
+  --destination /absolute/private/prepared-customer-receiving
+~~~
+
+The returned directory contains:
+
+| File | Complete retained content |
+| --- | --- |
+| `receiving-input.json` | Input accepted by the existing complete customer receiver |
+| `original-report/ORIGINAL_FILENAME` | Exact original commissioning report bytes |
+| `pair.json` and `pair-request.json` | Selected saved pair revision and its original completed request |
+| `sources/baseline/` and `sources/observed/` | Complete review, edition, original native source file and retained intake guide |
+| `preparation.json` | Every prepared filename, byte count and hash, with original source and pair identities |
+
+The prepared workflow receives the BASELINE and OBSERVED sources from one
+complete original commissioning report. Their reviews retain every native
+field in order and empty import keys. Select the pair's current saved revision;
+the receiver checks it again when it opens the original customer.
+
+Continue with the installed original receiving entry point:
+
+~~~sh
+python -m stellar_forge_buyer.timescale_intake.receiving \
+  --input /absolute/private/prepared-customer-receiving/receiving-input.json \
+  --directory /absolute/private/original-customer-receiving \
+  --node /absolute/path/to/node \
+  --playwright /absolute/path/to/playwright/index.mjs \
+  --chromium /absolute/path/to/chromium
+~~~
+
+The original receiver opens the report and immutable source reviews, reopens
+the selected saved pair request, preserves its existing engineer decisions,
+and receives and reopens the complete portable warehouse. The pair's saved
+revision, mappings, windows and numeric policies travel through the original
+comparison engine.
+
+Repeating preparation with the same metadata and destination verifies and
+reuses the same complete files. To continue a receiving that has already
+started, repeat its original receiving command with the retained input and
+receiving directory. Its native journals carry the original requests across
+listener and browser restarts.
+
 ## Complete browser and customer receiving
 
 The installed `timescale_intake/browser-receiving.mjs` exports
@@ -301,7 +379,7 @@ The complete input contains:
 | `operation_id`, `source_commit`, `workspace_id` | The existing receiving operation, installed source and customer workspace |
 | `report.path`, `report.sha256`, `report.filename` | The exact complete local commissioning report and its original upload filename |
 | `baseline`, `observed` | The selected original source UUID, every field in native order, complete interpretation and empty import keys (`keys: []`) |
-| `pair` | Name, label, all comparison fields, explicit empty value maps, windows and notes |
+| `pair` | Name, label, all comparison fields, windows and notes; a prepared saved pair also carries its original pair ID, revision, definition hash and request ID in `saved` |
 | `actor`, `reason` | The operator and original observation carried into the subsequent reconciliation review |
 
 The browser receiver performs the customer workflow through visible controls:
@@ -311,8 +389,9 @@ The browser receiver performs the customer workflow through visible controls:
 2. Open both native source tables, check the displayed text, NULL and empty
    strings, and edit every field page and interpretation note.
 3. Review each complete mapping and import its original immutable edition.
-4. Select both exact editions, enter the comparison definition and save the
-   reviewed pair through the existing reconciliation journal.
+4. Reopen the explicitly selected saved pair revision and its original request.
+   For an initial pair, select both exact editions, enter the comparison
+   definition and save it through the existing reconciliation journal.
 5. Open that saved pair in the original reconciliation editor with the exact
    source and target editions.
 
@@ -336,7 +415,9 @@ reconciliation journal.
 
 The complete customer receiver then passes that actual saved definition into
 `runReconciliationBrowserReceiving`. Its original request matching reopens the
-same pair before the native run, row review, report and full handover. The
+same pair before the native run, row review, report and full handover.
+A prepared existing pair preserves its current engineer decisions and freezes
+the report at that retained review revision. The
 existing typed client receives every original export file and reopens the
 portable warehouse. The intake source manifest carries the complete original
 commissioning report and this retained guide alongside the reviewed sources.

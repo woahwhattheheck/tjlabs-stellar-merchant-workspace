@@ -12,6 +12,7 @@ import { bindCkanCapture, projectCkanValue } from './source.mjs';
 import { describeCkanSemantics, projectCkanSemantics, checkCkanSemanticReview, compareCkanSemantics } from './semantics.mjs';
 import { createCkanReviewedRefreshes } from './reviewed-refresh.mjs';
 import { createDcatWorkspace, validateDcatState } from './dcat-workspace.mjs';
+import { interruptDcatAcquisitions } from './dcat-acquisition.mjs';
 import { openCkanPublisher } from './publisher/model.mjs';
 import { exportCkanMerchantPackage, stageCkanMerchantRelease, readCkanMerchantBuyerOffer,
   prepareCkanMerchantBuyer } from './publisher/release.mjs';
@@ -104,6 +105,10 @@ export async function openCkanWorkbench({ directory, create = false, origin, sou
       for (const edition of state.editions) if (edition.state === 'CAPTURING') edition.state = 'INTERRUPTED';
       for (const refresh of state.refreshes) if (refresh.state === 'PREPARING') refresh.state = 'INTERRUPTED';
       for (const review of state.dcat?.reviews ?? []) if (review.status === 'PREPARING') review.status = 'INTERRUPTED';
+      await persist();
+    }
+    if ((state.dcat?.acquisitions ?? []).some(row => row.status === 'FETCHING' || row.receiptNeedsRecovery)) {
+      await interruptDcatAcquisitions(directory, state.dcat);
       await persist();
     }
     const find = (collection, value) => {

@@ -261,8 +261,29 @@ export async function receiveCurrentSourceBrowser(page,{
       '/grant-review-round-core.mjs','/grant-submission-core.mjs','/drafts.mjs',
       '/grant-data/application.md','/grant-data/source-index.json',
       '/grant-data/budget.csv','/grant-data/product-and-finance.md'];
-    for(const route of routes){
-      const selected=manifest.files.find(row=>row.path==='stellar-forge/developer-site/dist'+route);
+    const hasReviewerPaths=Object.hasOwn(input,'reviewerPaths');
+    need(hasReviewerPaths===Object.hasOwn(manifest.selection||{},'reviewerPaths')&&
+      (!hasReviewerPaths||(input.reviewerPaths&&typeof input.reviewerPaths==='object'&&
+        !Array.isArray(input.reviewerPaths)&&same(input.reviewerPaths,manifest.selection.reviewerPaths))),
+      'Use the exact reviewer path selection retained in the complete native source edition.');
+    if(hasReviewerPaths){
+      const expectedRoles=['application','source-index','budget','product-and-finance'];
+      need(same(Object.keys(input.reviewerPaths).sort(),expectedRoles.slice().sort()),
+        'Retain exactly four selected reviewer carrier paths.');
+      const selectedPaths=expectedRoles.map(role=>input.reviewerPaths[role]);
+      need(new Set(selectedPaths).size===4,'Select each original reviewer carrier file once.');
+      for(const selectedPath of selectedPaths){
+        const prefix='stellar-forge/developer-site/dist/';
+        need(typeof selectedPath==='string'&&selectedPath.startsWith(prefix+'grant-data/')&&
+          !selectedPath.includes('\\')&&
+          !selectedPath.includes(String.fromCharCode(0))&&
+          selectedPath.split('/').every(part=>part&&part!=='.'&&part!=='..'),
+          'Select an exact source-relative reviewer file.');
+        routes.push('/'+selectedPath.slice(prefix.length).split('/').map(encodeURIComponent).join('/'));
+      }
+    }
+    for(const route of new Set(routes)){
+      const selected=manifest.files.find(row=>row.path==='stellar-forge/developer-site/dist'+decodeURIComponent(route));
       need(selected,'Retain the selected native source for '+route);
       const response=await page.request.get(new URL(route,origin).href);
       need(response.ok(),'Open the existing source-selected route: '+route);

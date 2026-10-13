@@ -6,6 +6,9 @@ export type { FredDdpPublicationOperation, FredDdpPublicationInventory, FredDdpP
   FredDdpPublicationRowsPage, FredDdpPublicationRow, FredDdpPublicationFile, FredDdpPublicationFileChunk }
   from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.mjs';
 import type { Buffer } from 'node:buffer';
+import type { FredAlfredMetadataEdition } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.mjs';
+export type { FredAlfredCapture, FredAlfredModel, FredAlfredSeries, FredAlfredRow,
+  FredAlfredMetadataEdition, FredAlfredMetadataCoverage } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.mjs';
 import type { FredBriefingSelection, FredBriefingPage } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/briefing/model.mjs';
 export type { FredBriefingSelection, FredBriefingPage, FredBriefingComparison, FredBriefingModel, FredBriefingReport, FredBriefingExpandedMeasure } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/briefing/model.mjs';
 
@@ -91,7 +94,7 @@ export interface FredQcewProjectState {
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type JsonObject = { [key: string]: Json };
 export type NativeRecord = JsonObject & { id: string };
-export interface FredSourceInput { path: string; kind: 'public-table' | 'capture' | 'release-capture' | 'ddp-crosswalk' | 'ddp-package'; label?: string; sha256?: string }
+export interface FredSourceInput { path: string; kind: 'public-table' | 'capture' | 'release-capture' | 'ddp-crosswalk' | 'ddp-package' | 'alfred-metadata'; label?: string; sha256?: string }
 export interface FredMerchantProfile { label?: string; origin: string; path?: string; payment: JsonObject }
 export interface FredWorkspaceOptions {
   label?: string; projectId?: string; expectedBindingSha256?: string;
@@ -285,7 +288,14 @@ export type FredDdpMigrationPreviewInput = FredDdpMigrationInput & FredDdpPageIn
   section?: 'series' | 'acquisitions' | 'mappings';
 };
 export type FredDdpMigrationSaveInput = FredDdpMigrationInput & FredJournalInput & { previewId: string };
-export interface FredDdpMigrationAcquireInput extends FredJournalInput { migrationId: string }
+export interface FredDdpMigrationAcquireInput extends FredJournalInput {
+  migrationId: string; sourceMode?: 'API_VINTAGE' | 'ALFRED_VINTAGE';
+  metadata?: FredAlfredMetadataEdition[]; metadataSha256?: string;
+}
+export interface FredDdpMigrationAcquireHostInput extends FredJournalInput {
+  migrationId: string; sourceMode?: 'API_VINTAGE' | 'ALFRED_VINTAGE';
+  metadataInput?: string; metadataFileSha256?: string; metadataSha256?: string;
+}
 export interface FredDdpReceivingInput extends FredDdpPageInput {
   receivingId: string; seriesId?: string | null; changesOnly?: boolean;
 }

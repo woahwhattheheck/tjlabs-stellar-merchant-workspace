@@ -15,6 +15,7 @@ import { readPrivate, hashPrivate, privateDirectory, syncDirectory, fault } from
 const assets = new Map([['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
   ['/dcat-json.mjs', ['dcat-json.mjs', 'text/javascript; charset=utf-8']],
+  ['/dcat-sources.mjs', ['dcat-sources.mjs', 'text/javascript; charset=utf-8']],
   ['/migration.mjs', ['migration.mjs', 'text/javascript; charset=utf-8']], ['/style.css', ['style.css', 'text/css; charset=utf-8']]]);
 const root = fileURLToPath(new URL('./public/', import.meta.url));
 function exactPresentation(value) {
@@ -173,6 +174,15 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
             } });
         }
         if (parts[0] === 'dcat') {
+          if (parts[1] === 'sources' && parts.length === 3)
+            return json(response, await workbench.dcatSource(parts[2]));
+          if (parts[1] === 'acquisitions' && parts.length === 4 && ['receipt', 'response'].includes(parts[3]))
+            return await downloadWorkspaceArchive(response, await workbench.dcatAcquisitionDownload(parts[2], parts[3]));
+          if (parts[1] === 'sources-guide' && parts.length === 2) {
+            response.writeHead(200, { 'content-type': 'text/markdown; charset=utf-8',
+              'content-disposition': 'attachment; filename="RECURRING_CATALOGS.md"' });
+            response.end(await readFile(fileURLToPath(new URL('./RECURRING_CATALOGS.md', import.meta.url)))); return;
+          }
           if (parts[1] === 'guide' && parts.length === 2) {
             response.writeHead(200, { 'content-type': 'text/markdown; charset=utf-8',
               'content-disposition': 'attachment; filename="MIGRATION_OPERATING.md"' });
@@ -289,7 +299,13 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
         if (parts[0] === 'refreshes' && parts[2] === 'preview' && parts.length === 3)
           return json(response, exactPresentation(await workbench.previewRefresh(parts[1], input)));
         let result;
-        if (parts[0] === 'dcat' && parts[1] === 'review' && parts.length === 2) result = workbench.prepareDcatReview(input);
+        if (parts[0] === 'dcat' && parts[1] === 'sources' && parts[2] === 'save' && parts.length === 3)
+          result = workbench.saveDcatSource(input);
+        else if (parts[0] === 'dcat' && parts[1] === 'sources' && parts[2] === 'acquire' && parts.length === 3)
+          result = workbench.acquireDcatSource(input);
+        else if (parts[0] === 'dcat' && parts[1] === 'sources' && parts[2] === 'review' && parts.length === 3)
+          result = workbench.prepareDcatSourceReview(input);
+        else if (parts[0] === 'dcat' && parts[1] === 'review' && parts.length === 2) result = workbench.prepareDcatReview(input);
         else if (parts[0] === 'dcat' && parts[1] === 'cutover' && parts.length === 2) result = workbench.cutoverDcat(input);
         else if (parts[0] === 'dcat' && parts[1] === 'rollback' && parts.length === 2) result = workbench.rollbackDcat(input);
         else if (parts[0] === 'sources' && parts[2] === 'refreshes' && parts.length === 3) result = workbench.prepareRefresh(parts[1], input);
@@ -310,7 +326,9 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
         else if (parts[0] === 'cancel' && parts.length === 1) return json(response, workbench.cancel());
         else throw fault('CKAN_ROUTE_NOT_FOUND', 'The requested project action does not exist.', 404);
         return json(response, { operationId: result.id, ...(result.editionId ? { editionId: result.editionId } : {}),
-          ...(result.reviewId ? { reviewId: result.reviewId } : {}) }, 202);
+          ...(result.reviewId ? { reviewId: result.reviewId } : {}),
+          ...(result.sourceId ? { sourceId: result.sourceId } : {}),
+          ...(result.acquisitionId ? { acquisitionId: result.acquisitionId } : {}) }, 202);
       }
       throw fault('CKAN_ROUTE_NOT_FOUND', 'The requested project action does not exist.', 404);
     } catch (error) {
