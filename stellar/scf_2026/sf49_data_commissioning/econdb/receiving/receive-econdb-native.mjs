@@ -44,6 +44,9 @@ if(process.argv[3]==='inspect-copy'){
   const store=await V.openDatasetVersions({directory:join(WORK,name+'-store'),collectOnOpen:false});
   try{const status=store.status();need(status.current===release.manifest.dataset.snapshot&&status.revision===1,'Copied store does not retain original snapshot');need(source.descriptor.source_sha256===release.manifest.source.source.source_sha256,'Copied source differs');statuses.push({name,source_sha256:source.descriptor.source_sha256,publication_id:release.manifest.publication_id,status});}finally{await store.close()}
  }
+ const projectRelease=await P.inspectPublication(join(WORK,'publications','project'));
+ const projectStore=await V.openDatasetVersions({directory:join(WORK,'project-store'),collectOnOpen:false});
+ try{const status=projectStore.status();need(status.current===projectRelease.manifest.dataset.snapshot&&status.revision===1,'Copied project store does not retain original snapshot');need(projectRelease.manifest.source.selected_rows===15&&projectRelease.manifest.source.value_counts.null===1&&projectRelease.manifest.source.edition_roles==='current','Copied project source selection differs');statuses.push({name:'project',publication_id:projectRelease.manifest.publication_id,status});}finally{await projectStore.close()}
  console.log(json({state:'INDEPENDENT_COMPLETE_SOURCE_REOPENED',node:process.version,statuses}));process.exit(0);
 }
 const steps=[];
@@ -106,15 +109,50 @@ await step('11-project-inspect',[],()=>cli('11-project-inspect','maritime-projec
 await step('12-project-reuse',[join(WORK,'project-delivery')],()=>cli('12-project-reuse','maritime-project-cli.mjs',['build','--project',join(WORK,'project.json'),'--out',join(WORK,'project-delivery')]));
 await step('13-project-independent',[join(WORK,'project-independent')],()=>cli('13-project-independent',join(WORK,'project-delivery/source/maritime-project-cli.mjs'),['reopen','--project',join(WORK,'project-delivery'),'--out',join(WORK,'project-independent')]));
 await step('14-independent-inspect',[],()=>cli('14-independent-inspect',join(WORK,'project-independent/source/maritime-project-cli.mjs'),['inspect','--project',join(WORK,'project-independent')]));
+
+const projectPublication=join(WORK,'publications','project'),projectState=join(WORK,'project-store');
+const projectBuild=['build-project','--project',join(WORK,'project-delivery'),'--editions','current','--name','Issuer maritime project observations','--out',projectPublication];
+await step('14a-project-publication',[projectPublication],()=>cli('14a-project-publication','sf30-publication.mjs',projectBuild));
+await step('14b-project-publication-reopen',[projectPublication],()=>cli('14b-project-publication-reopen','sf30-publication.mjs',projectBuild));
+await step('14c-project-typed-pages',[join(WORK,'typed-pages','project')],async()=>{
+ const release=await P.inspectPublication(projectPublication),dataset=await D.loadDatasetConfig(release.configPath),pages=[],observed=[];let cursor=null;
+ need(release.manifest.format==='econdb.sf30-project-publication.v1'&&release.manifest.source.edition_roles==='current','Original project publication contract differs');
+ need(release.manifest.source.selected_rows===15&&release.manifest.source.value_counts.null===1,'Original project value counts differ');
+ do{
+  const returned=await dataset.handle({query:{limit:'2',...(cursor?{cursor}:{})}});
+  need(returned.status===200&&returned.body.dataset.snapshot===release.manifest.dataset.snapshot,'Original typed project page differs');
+  pages.push(returned.body);observed.push(...returned.body.rows);cursor=returned.body.page.nextCursor;need(pages.length<=16,'Unexpected original project page count');
+ }while(cursor);
+ const expected=[];
+ for(const entry of release.manifest.source.entries){
+  const original=await N.openEdition(join(projectPublication,'project','originals',entry.id,'current'));
+  const period=E.selectPeriod(original.edition,entry.selection);
+  for(const row of period.rows)expected.push({entry_id:entry.id,edition_role:'current',source_sha256:period.source.source_sha256,
+   source_row:row.source_row,series:row.series,date:row.date,status:row.status,exact_value:row.exact,source_lexeme:row.source_lexeme,
+   locode:period.request.locode??null,selection_from:entry.selection.from,selection_until_exclusive:entry.selection.until});
+ }
+ need(observed.length===expected.length&&expected.length===15,'Original project typed row count differs');
+ for(let i=0;i<expected.length;i++)for(const key of Object.keys(expected[i]))need(same(observed[i][key],expected[i][key]),'Original typed project field differs: '+i+'/'+key);
+ for(let i=0;i<pages.length;i++)await put(join(WORK,'typed-pages','project',String(i).padStart(3,'0')+'.json'),json(pages[i]));
+ return {publication_id:release.manifest.publication_id,rows:observed.length,pages:pages.length,known:14,null:1,edition_roles:'current',identified_ports:[],payment:'UNSELECTED; original loader receiving is not a purchase'};
+});
+await step('14d-project-merchant-store',[projectState],async()=>{
+ const release=await P.inspectPublication(projectPublication);
+ if(!await exists(projectState))await cli('14d-project-merchant-store','sf30-publication.mjs',['merchant-init','--publication',projectPublication,'--state',projectState]);
+ need(await exists(join(projectState,'state.json')),'Original project store initialization incomplete; retained for same-operation reconciliation');
+ const store=await V.openDatasetVersions({directory:projectState,collectOnOpen:false});
+ try{const status=store.status();need(status.current===release.manifest.dataset.snapshot&&status.revision===1,'Original project store differs');return {publication_id:release.manifest.publication_id,status,reopened:true};}finally{await store.close()}
+});
+
 await step('15-complete-source-independent',[join(WORK,'independent')],async()=>{
  async function copyTree(source,target){const s=await lstat(source);need(!s.isSymbolicLink(),'Source receiving refuses symlinks');if(s.isDirectory()){await mkdir(target,{recursive:true,mode:0o700});for(const name of (await readdir(source)).sort())await copyTree(join(source,name),join(target,name));}else{need(s.isFile(),'Source receiving accepts regular files only');await put(target,await readFile(source));}}
- for(const name of ['checkout','editions','publications','capacity-store','traffic-store','typed-pages'])await copyTree(join(WORK,name),join(WORK,'independent',name));
+ for(const name of ['checkout','editions','publications','capacity-store','traffic-store','project-store','typed-pages'])await copyTree(join(WORK,name),join(WORK,'independent',name));
  return cli('15-complete-source-independent',process.argv[1],[join(WORK,'independent'),'inspect-copy']);
 });
 const project=await readJSON(join(WORK,'project-delivery/project-analysis.json'));
 need(project.summary.entries===2&&project.summary.selected_cells===15&&project.summary.unknown_cells===1&&project.summary.identified_ports.length===0,'Original issuer project counts differ');
 await J.verifyProject(join(WORK,'project-delivery'));await J.verifyProject(join(WORK,'project-independent'));
-const result={operation:'ECONDB-MARITIME-PERIOD-WORKSHARE-BBBD-20261013',state:'NATIVE_COMPLETE',completed_at:new Date().toISOString(),node:process.version,host:process.env.HOSTNAME??null,steps:steps.map(x=>({id:x.id,state:x.state})),project_summary:project.summary,paid_capture:'UNSELECTED: retained original issuer documentation received; no token or API call invented',buyer_payment:'UNSELECTED: no original approved payment/inbox supplied',browser:'PENDING'};
+const result={operation:'ECONDB-MARITIME-PERIOD-WORKSHARE-BBBD-20261013',state:'NATIVE_COMPLETE',completed_at:new Date().toISOString(),node:process.version,host:process.env.HOSTNAME??null,steps:steps.map(x=>({id:x.id,state:x.state})),project_summary:project.summary,project_publication:(await P.inspectPublication(projectPublication)).manifest.publication_id,paid_capture:'UNSELECTED: retained original issuer documentation received; no token or API call invented',buyer_payment:'UNSELECTED: no original approved payment/inbox supplied',browser:'PENDING'};
 if(!await exists(join(WORK,'native-result.json')))await put(join(WORK,'native-result.json'),json(result));
 else{const original=await readJSON(join(WORK,'native-result.json'));need(original.state==='NATIVE_COMPLETE'&&same(original.project_summary,result.project_summary),'Retained native completion differs');}
 console.log(json(result));

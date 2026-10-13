@@ -149,6 +149,7 @@ export async function inspectPublication(directory){
  await assertEngine();const target=resolve(directory),st=await lstat(target);
  need(st.isDirectory()&&!st.isSymbolicLink(),'Publication directory must be real');await privateDirectory(target);
  const manifest=await readJSON(join(target,'release.json'));
+ if(manifest.format===PROJECT_FORMAT)return inspectProjectPublication(target,manifest);
  need(manifest.format===FORMAT&&HASH.test(manifest.publication_id??'')&&Array.isArray(manifest.files),'Unknown or incomplete publication');
  need(manifest.files.length===FILES.length&&FILES.every(name=>manifest.files.filter(x=>x.path===name).length===1),'Publication file inventory changed');
  const held={};
@@ -169,6 +170,180 @@ export async function inspectPublication(directory){
  const dataset=await loadDatasetConfig(join(target,'dataset.json'));
  need(identity(dataset.describe())===identity(manifest.dataset),'Original SF30 dataset snapshot changed');
  await assertEngine();
+ return {directory:target,configPath:join(target,'dataset.json'),manifest};
+}
+
+
+const PROJECT_FORMAT='econdb.sf30-project-publication.v1';
+const MAX_PROJECT_BYTES=256*1024*1024;
+const PROJECT_ENGINE_URL=new URL('./maritime-project-analysis.mjs',import.meta.url);
+const PROJECT_ENGINE_SHA256=hash(await readFile(PROJECT_ENGINE_URL));
+const PROJECT_COLUMN_TYPES=Object.freeze({
+ project_id:'string',entry_id:'string',entry_title:'string',edition_role:'string',
+ ...COLUMN_TYPES,selection_from:'string',selection_until_exclusive:'string',
+ operator:{type:'string',nullable:true},top:{type:'integer',nullable:true}
+});
+const PROJECT_COLUMN_NAMES=Object.keys(PROJECT_COLUMN_TYPES);
+function safeMember(name){return typeof name==='string'&&name.split('/').every(part=>/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(part)&&part!=='.'&&part!=='..')&&!name.includes('\\');}
+async function assertProjectEngine(){
+ await assertEngine();
+ need(hash(await readFile(PROJECT_ENGINE_URL))===PROJECT_ENGINE_SHA256,'Project analysis source changed after this process loaded it');
+}
+function projectMetadata(period){
+ const counts={known:0,null:0,absent:0,unsupported_value:0};
+ for(const row of period.rows){
+  need(Object.hasOwn(counts,row.status),'Unknown original source value status');counts[row.status]++;
+  need((row.status==='known')===(typeof row.exact==='string'&&typeof row.source_lexeme==='string'),'Known values require exact original decimals and lexemes');
+ }
+ return {edition_id:period.edition_id,selection:period.selection,source:period.source,request:period.request,
+  series:period.series,dates:period.dates,expected_dates:period.expected_dates,missing_dates:period.missing_dates,
+  frequency:period.frequency,issues:period.issues,selected_rows:period.rows.length,value_counts:counts};
+}
+function* projectCsvLines(built){
+ yield PROJECT_COLUMN_NAMES.map(csvCell).join(',')+'\r\n';
+ for(const selected of built.periods)for(const row of selected.period.rows){
+  const p=selected.period,values={project_id:built.project.id,entry_id:selected.entry.id,entry_title:selected.entry.title,
+   edition_role:selected.role,...projectedRow(p,row),selection_from:p.selection.from,selection_until_exclusive:p.selection.until,
+   operator:p.request.query?.operator??null,top:p.request.query?.top??null};
+  yield PROJECT_COLUMN_NAMES.map(key=>csvCell(values[key])).join(',')+'\r\n';
+ }
+}
+function deriveProject(config,editions,{name,editionRoles,defaultLimit=50,maxLimit=250},projectAnalysis){
+ need(typeof name==='string'&&name.trim()&&name.length<=2000,'A reviewed dataset name is required');
+ need(['current','current-and-previous'].includes(editionRoles),'Explicitly select current or current-and-previous editions');
+ need(Number.isSafeInteger(defaultLimit)&&defaultLimit>=1&&Number.isSafeInteger(maxLimit)&&maxLimit>=defaultLimit&&maxLimit<=250,'Page limits must satisfy 1 <= defaultLimit <= maxLimit <= 250');
+ const periods=[],entries=[],counts={known:0,null:0,absent:0,unsupported_value:0};let rows=0;
+ for(const entry of config.entries){
+  const pair=editions.get(entry.id),held={id:entry.id,title:entry.title,selection:entry.selection,before:entry.before??null,after:entry.after??null,current:null,previous:null};
+  for(const role of ['current','previous']){
+   if(role==='previous'&&(editionRoles==='current'||!entry.previous))continue;
+   const period=selectPeriod(pair[role],entry.selection),metadata=projectMetadata(period);
+   rows+=period.rows.length;need(rows<=MAX_ROWS,'Project selection exceeds 250,000 typed rows; choose a smaller explicit project/period or edition selection');
+   for(const state of Object.keys(counts))counts[state]+=metadata.value_counts[state];
+   periods.push({entry,role,period});held[role]=metadata;
+  }
+  entries.push(held);
+ }
+ const datasetConfig={schema:'stellar-forge.csv-dataset.v1',file:'dataset.csv',name,columns:PROJECT_COLUMN_TYPES,
+  filters:['entry_id','edition_role','locode','endpoint','flow','measure','series','status'],
+  ranges:['date'],sorts:['date','entry_id','edition_role','source_row','series'],
+  nullEncoding:'unquoted-empty',maxBytes:MAX_CSV_BYTES,maxRows:MAX_ROWS,maxCellChars:65536,
+  defaultLimit,maxLimit,maxPageBytes:900*1024};
+ const built={project:{id:config.id,title:config.title},periods,config:datasetConfig};
+ const csvHash=createHash('sha256');let csvBytes=0;
+ for(const line of projectCsvLines(built)){const bytes=Buffer.from(line);csvBytes+=bytes.length;need(csvBytes<=MAX_CSV_BYTES,'Project CSV exceeds 64 MiB; no truncated publication is produced');csvHash.update(bytes);}
+ const metadata={schema:'econdb.sf30-project-source.v1',project:built.project,edition_roles:editionRoles,entries,
+  selected_rows:rows,value_counts:counts,original_project_summary:projectAnalysis.summary,
+  row_identity:'Project entry + edition role + original edition/source hash + zero-based source row + series; repeated views are retained separately.',
+  amount_semantics:'Exact decimal text and original lexemes. Distinct measures, populations, ports and source editions are never summed.',
+  date_range:'Each entry uses its explicit local half-open Date window. No provider date filter is inferred.',
+  csv_nulls:'Unquoted empty means null; quoted empty is an original empty string.',
+  prior_scope:'Only explicitly selected previous editions are exposed when edition_roles is current-and-previous. A missing previous edition produces no fabricated row.',
+  receiving_scope:'Complete original project, all current/prior originals and original reports remain in project/ even when only current rows are published.'};
+ need(json(metadata).length<=MAX_METADATA_BYTES,'Complete project publication metadata exceeds 16 MiB');
+ return {...built,metadata,csv:{bytes:csvBytes,sha256:csvHash.digest('hex')}};
+}
+async function projectInputs(directory){
+ await assertProjectEngine();
+ const root=resolve(directory);await privateDirectory(root);
+ const manifestBytes=await regularBytes(join(root,'project-manifest.json'),MAX_METADATA_BYTES);
+ const declared=JSON.parse(strictText(manifestBytes));
+ need(declared.schema==='econdb.maritime-project-bundle.v1'&&Number.isSafeInteger(declared.total_bytes)&&declared.total_bytes>=0&&declared.total_bytes+manifestBytes.length<=MAX_PROJECT_BYTES,'Project publication retains at most 256 MiB of complete original project files');
+ const {verifyProject}=await import('./maritime-project-native.mjs');
+ const inspected=await verifyProject(root);
+ need(inspected.manifest.source_modules?.['maritime-analysis.mjs']?.sha256===ENGINE_SHA256&&
+  inspected.manifest.source_modules?.['maritime-project-analysis.mjs']?.sha256===PROJECT_ENGINE_SHA256,
+  'Use the matching original analysis source cohort to publish this project; an old report is not silently recalculated under another engine');
+ const {analyzeProject}=await import('./maritime-project-analysis.mjs');
+ const editions=new Map();let rawBytes=0;
+ for(const entry of inspected.config.entries){
+  const pair={current:null,previous:null};
+  for(const role of ['current','previous'])if(entry[role]){
+   const original=join(root,entry[role]);
+   const bytes=await regularBytes(join(original,'response.json'),MAX_SOURCE_BYTES);
+   rawBytes+=bytes.length;need(rawBytes<=MAX_SOURCE_BYTES,'Combined current/prior raw source exceeds the 64 MiB publication intake limit');
+   const descriptor=await readJSON(join(original,'descriptor.json'),65536);
+   pair[role]=readSnapshot(strictText(bytes),descriptor);
+  }
+  editions.set(entry.id,pair);
+ }
+ const analysis=analyzeProject(inspected.config,editions);
+ need(identity(analysis)===identity(await readJSON(join(root,'project-analysis.json'),128*1024*1024)),'The retained project analysis differs from the original source-derived result');
+ const files=[...inspected.manifest.files.map(f=>({path:f.path,bytes:f.bytes,sha256:f.sha256})),
+  {path:'project-manifest.json',bytes:manifestBytes.length,sha256:hash(manifestBytes)}].sort((a,b)=>a.path.localeCompare(b.path));
+ need(files.every(f=>safeMember(f.path)),'Unsafe original project member');
+ await assertProjectEngine();
+ return {root,config:inspected.config,analysis,editions,files,project_input_sha256:inspected.input_sha256,
+  project_manifest_sha256:hash(manifestBytes),raw_bytes:rawBytes,total_bytes:declared.total_bytes+manifestBytes.length};
+}
+function projectRelease(original,options){
+ const built=deriveProject(original.config,original.editions,options,original.analysis);
+ const engine={file:'maritime-analysis.mjs',version:VERSION,contract_sha256:CONTRACT_SHA256,sha256:ENGINE_SHA256,
+  project:{file:'maritime-project-analysis.mjs',sha256:PROJECT_ENGINE_SHA256}};
+ const source={...built.metadata,project_input_sha256:original.project_input_sha256,
+  project_manifest_sha256:original.project_manifest_sha256,original_source_bytes:original.raw_bytes,
+  retained_project_bytes:original.total_bytes};
+ const publication_id=identity({format:PROJECT_FORMAT,options,engine,config:built.config,source,
+  project_files:original.files});
+ return {...built,source,engine,publication_id};
+}
+/** Publish the existing complete project, not an altered cached period or a new purchase. */
+export async function createProjectPublication({project,directory,name,editionRoles,defaultLimit=50,maxLimit=250}){
+ const original=await projectInputs(project),options={name,editionRoles,defaultLimit,maxLimit};
+ const built=projectRelease(original,options),target=resolve(directory);
+ await privateDirectory(dirname(target));
+ need(target!==original.root&&!target.startsWith(original.root+'/')&&!original.root.startsWith(target+'/'),'Keep publication separate from its original project');
+ let exists=false;try{await lstat(target);exists=true;}catch(error){if(error.code!=='ENOENT')throw error;}
+ if(exists){
+  const held=await inspectPublication(target);
+  need(held.manifest.format===PROJECT_FORMAT&&held.manifest.publication_id===built.publication_id,'Existing publication belongs to another exact project/selection');
+  return {...held,reused:true};
+ }
+ await mkdir(target,{mode:0o700});await privateDirectory(target);
+ // Same create-only contract as single-period publications: incomplete output is retained,
+ // never promoted without all original files, typed loader receiving and final release.
+ const files=[];
+ await mkdir(join(target,'project'),{mode:0o700});
+ for(const member of original.files){
+  const output=join(target,'project',member.path);await mkdir(dirname(output),{recursive:true,mode:0o700});
+  const bytes=await regularBytes(join(original.root,member.path),128*1024*1024);
+  need(bytes.length===member.bytes&&hash(bytes)===member.sha256,'Original project changed before copy: '+member.path);
+  await privateFile(output,bytes);files.push({path:'project/'+member.path,bytes:member.bytes,sha256:member.sha256});
+ }
+ const csv=await open(join(target,'dataset.csv'),'wx',0o600);
+ try{let chunk='';for(const line of projectCsvLines(built)){chunk+=line;if(Buffer.byteLength(chunk)>=65536){await csv.writeFile(chunk);chunk='';}}if(chunk)await csv.writeFile(chunk);await csv.sync();}finally{await csv.close();}
+ files.push({path:'dataset.csv',...built.csv});files.push(await privateFile(join(target,'dataset.json'),json(built.config)));
+ const copied=await projectInputs(join(target,'project'));need(projectRelease(copied,options).publication_id===built.publication_id,'Copied original project differs');
+ const dataset=await loadDatasetConfig(join(target,'dataset.json')),description=dataset.describe();
+ need(description.rowCount===built.source.selected_rows,'Original typed loader returned another project row count');
+ await assertProjectEngine();
+ const manifest={format:PROJECT_FORMAT,publication_id:built.publication_id,created_at:new Date().toISOString(),
+  options,engine:built.engine,source:built.source,dataset:description,files,
+  disposition:'RETAINED_TYPED_PROJECT_DATASET_NOT_A_PURCHASE',rendered_receiving:null};
+ const bytes=json(manifest);need(bytes.length<=MAX_METADATA_BYTES,'Complete project release exceeds 16 MiB');
+ for(const parent of [...new Set(files.map(f=>dirname(join(target,f.path))))].sort((a,b)=>b.length-a.length))await syncDirectory(parent);
+ await privateFile(join(target,'release.json'),bytes);await syncDirectory(target);await syncDirectory(dirname(target));
+ return {directory:target,configPath:join(target,'dataset.json'),manifest,reused:false};
+}
+async function inspectProjectPublication(target,manifest){
+ need(manifest.format===PROJECT_FORMAT&&HASH.test(manifest.publication_id??'')&&Array.isArray(manifest.files),'Incomplete project publication');
+ const original=await projectInputs(join(target,'project')),built=projectRelease(original,manifest.options);
+ const expected=[...original.files.map(f=>'project/'+f.path),'dataset.csv','dataset.json'].sort();
+ need(manifest.files.length===expected.length&&manifest.files.every(f=>safeMember(f.path))&&
+  identity(manifest.files.map(f=>f.path).sort())===identity(expected),'Project publication inventory changed');
+ for(const f of manifest.files){
+  need(HASH.test(f.sha256??'')&&Number.isSafeInteger(f.bytes)&&f.bytes>=0,'Invalid retained member identity');
+  const actual=await digestFile(join(target,f.path),f.path==='dataset.csv'?MAX_CSV_BYTES:128*1024*1024);
+  need(actual.bytes===f.bytes&&actual.sha256===f.sha256,'Retained project publication changed: '+f.path);
+ }
+ need(built.publication_id===manifest.publication_id&&identity(built.engine)===identity(manifest.engine)&&
+  identity(built.source)===identity(manifest.source),'Project source, interpretation or edition selection changed');
+ const csv=manifest.files.find(f=>f.path==='dataset.csv');
+ need(csv.bytes===built.csv.bytes&&csv.sha256===built.csv.sha256,'Typed project CSV differs from fresh original-source selection');
+ need(identity(await readJSON(join(target,'dataset.json')))===identity(built.config),'Project dataset declaration changed');
+ const dataset=await loadDatasetConfig(join(target,'dataset.json'));
+ need(identity(dataset.describe())===identity(manifest.dataset),'Original SF30 project snapshot changed');
+ await assertProjectEngine();
  return {directory:target,configPath:join(target,'dataset.json'),manifest};
 }
 
@@ -249,9 +424,17 @@ export async function bindBuyerReturn({publication,root,intents,destination}){
  for(const name of outputNames){const record=native.outputs[name];outputBytes+=(await match('dataset/'+name,{path:'dataset/'+name,...record},256*1024*1024)).bytes;}
  need(outputBytes<=256*1024*1024+16*1024*1024,'Original export output total exceeds its declared capacity');
  const manifestFile={path:join(out,'delivery.json'),bytes:bytes.length,sha256:hash(bytes)};
- const binding={format:'econdb.sf30-buyer-source-binding.v1',publication_id:release.manifest.publication_id,
-  snapshot:state.snapshot,source_sha256:release.manifest.source.source.source_sha256,
-  edition_id:release.manifest.source.edition_id,selection:release.manifest.source.selection,
+ const sourceBinding=release.manifest.format===PROJECT_FORMAT
+  ?{project:release.manifest.source.project,project_input_sha256:release.manifest.source.project_input_sha256,
+    project_manifest_sha256:release.manifest.source.project_manifest_sha256,
+    edition_roles:release.manifest.source.edition_roles,
+    entries:release.manifest.source.entries.map(entry=>({id:entry.id,title:entry.title,selection:entry.selection,
+      current:entry.current&&{edition_id:entry.current.edition_id,source_sha256:entry.current.source.source_sha256},
+      previous:entry.previous&&{edition_id:entry.previous.edition_id,source_sha256:entry.previous.source.source_sha256}}))}
+  :{source_sha256:release.manifest.source.source.source_sha256,
+    edition_id:release.manifest.source.edition_id,selection:release.manifest.source.selection};
+ const binding={format:release.manifest.format===PROJECT_FORMAT?'econdb.sf30-project-buyer-source-binding.v1':'econdb.sf30-buyer-source-binding.v1',publication_id:release.manifest.publication_id,
+  snapshot:state.snapshot,...sourceBinding,
   original_buyer_manifest:manifestFile,original_intents:[...intents],
   returned_rows:state.count,query_total:state.total,pages:state.pages.length,
   source_manifest:release.manifest,
@@ -280,6 +463,7 @@ export async function exportBuyerReturn({publication,root,intents,destination}){
 }
 const HELP=`Usage:
  node sf30-publication.mjs build --source RESPONSE.json --descriptor DESCRIPTOR.json --from YYYY-MM-DD --until YYYY-MM-DD --name NAME --out NEW_PUBLICATION
+ node sf30-publication.mjs build-project --project COMPLETE_PROJECT --editions current|current-and-previous --name NAME --out NEW_PUBLICATION
  node sf30-publication.mjs inspect --publication DIRECTORY
  node sf30-publication.mjs merchant-init --publication DIRECTORY --state PRIVATE_STORE
  node sf30-publication.mjs merchant-configure --publication DIRECTORY --payment PUBLIC_TERMS.json --origin HTTPS_ORIGIN --path /data --out NEW_SELLER.json
@@ -300,6 +484,9 @@ export async function main(input=process.argv.slice(2)){
  if(command==='build'){
   const o=args(rest,['--source','--descriptor','--from','--until','--name','--out']);
   result=await createPublication({rawPath:required(o,'--source'),descriptorPath:required(o,'--descriptor'),from:required(o,'--from'),until:required(o,'--until'),name:required(o,'--name'),directory:required(o,'--out')});
+ }else if(command==='build-project'){
+  const o=args(rest,['--project','--editions','--name','--out']);
+  result=await createProjectPublication({project:required(o,'--project'),editionRoles:required(o,'--editions'),name:required(o,'--name'),directory:required(o,'--out')});
  }else if(command==='inspect'){const o=args(rest,['--publication']);result=await inspectPublication(required(o,'--publication'));}
  else if(command==='merchant-init'){const o=args(rest,['--publication','--state']);result=await initializeMerchant({publication:required(o,'--publication'),directory:required(o,'--state')});}
  else if(command==='merchant-configure'){const o=args(rest,['--publication','--payment','--origin','--path','--out']);result=await configureMerchant({publication:required(o,'--publication'),payment:await readJSON(resolve(required(o,'--payment')),16384),origin:required(o,'--origin'),path:o['--path']??'/data',output:required(o,'--out')});}
