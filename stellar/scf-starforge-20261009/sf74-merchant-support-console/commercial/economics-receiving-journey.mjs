@@ -70,7 +70,8 @@ async function waitIdle(page){
   const errors=await page.locator('.cq-economics-status [role="alert"]').allTextContents();
   if(errors.length)throw new Error(errors.join(' '));
 }
-async function browserCourse(input,out,model){
+async function browserCourse(input,out,model,signal){
+  signal?.throwIfAborted();
   const directory=join(out,'browser');await privateDirectory(directory);
   const priorPath=join(directory,'request.json'),donePath=join(directory,'complete.json');
   const before=await model.read({id:input.caseId});
@@ -95,12 +96,18 @@ async function browserCourse(input,out,model){
   const imported=await import(pathToFileURL(absolute(input.playwright)).href);
   const chromium=imported.chromium??imported.default?.chromium;
   if(!chromium)throw new Error('Use the original installed Playwright module.');
-  let browser,context;
+  let browser,context,contextClosing,browserClosing;
+  async function closeOwned(){try{if(context)await(contextClosing??=context.close());}finally{if(browser)await(browserClosing??=browser.close());}}
+  const stop=()=>{void closeOwned().catch(()=>{});};
+  signal?.addEventListener('abort',stop,{once:true});
   const observations=[],screenshots=[],downloads=[];
   let request=prior?parse(prior):null,routeError=null;
   try{
+    signal?.throwIfAborted();
     browser=await chromium.launch({headless:true,executablePath:absolute(input.chromium)});
+    signal?.throwIfAborted();
     context=await browser.newContext({acceptDownloads:true,viewport:{width:1440,height:1000}});
+    signal?.throwIfAborted();
     const page=await context.newPage();
     page.on('dialog',dialog=>dialog.accept());
     await page.route('**/api/cases/*/commercial/economics-save',async route=>{
@@ -171,27 +178,39 @@ async function browserCourse(input,out,model){
     // Reload the original saved case and retain the assessment without another save.
     await page.reload();await page.locator('[data-tab="economics"]').click();await waitIdle(page);
     await page.locator('[data-economics-select="assessment"]').selectOption(assessment.id);
+    signal?.throwIfAborted();
     return retained(donePath,{schema:SCHEMA,state:'BROWSER_COMPLETED',requestId:request.requestId,
       assessmentId:assessment.id,assessmentSha256:assessment.sha256,caseRevision:view.case.revision,
       downloads,screenshots,observations,visualInspection:'PENDING_OWNER_IMAGE_INSPECTION'});
-  }finally{try{await context?.close();}finally{await browser?.close();}}
+  }finally{signal?.removeEventListener('abort',stop);await closeOwned();}
 }
-async function coldRead(inputPath,outPath){
+async function coldRead(inputPath,outPath,signal){
+  signal?.throwIfAborted();
   const child=spawn(process.execPath,[fileURLToPath(import.meta.url),'--cold-read',inputPath],{stdio:['ignore','pipe','pipe']});
-  const chunks=[],errors=[];let size=0,timedOut=false;
-  const timeout=setTimeout(()=>{timedOut=true;child.kill('SIGTERM');},120000);
-  const force=setTimeout(()=>child.kill('SIGKILL'),130000);
+  const chunks=[],errors=[];let size=0,errorBytes=0,timedOut=false,spawnError=null,force=null;
+  const terminate=()=>{
+    if(child.exitCode!==null||child.signalCode!==null)return;
+    child.kill('SIGTERM');
+    force??=setTimeout(()=>{if(child.exitCode===null&&child.signalCode===null)child.kill('SIGKILL');},10000);
+  };
+  const timeout=setTimeout(()=>{timedOut=true;terminate();},120000);
+  signal?.addEventListener('abort',terminate,{once:true});
+  if(signal?.aborted)terminate();
   try{
-    const code=await new Promise((resolve,reject)=>{
-      child.on('error',reject);child.stdout.on('data',b=>{size+=b.length;if(size>32*1024*1024)child.kill('SIGTERM');else chunks.push(b);});
-      child.stderr.on('data',b=>{if(errors.reduce((s,x)=>s+x.length,0)<65536)errors.push(b);});
+    const code=await new Promise(resolve=>{
+      child.once('error',error=>{spawnError=error;});
+      child.stdout.on('data',b=>{size+=b.length;if(size>32*1024*1024)terminate();else chunks.push(b);});
+      child.stderr.on('data',b=>{if(errorBytes<65536){errors.push(b);errorBytes+=b.length;}});
       child.once('close',resolve);
     });
+    signal?.throwIfAborted();
+    if(spawnError)throw spawnError;
     if(code!==0||timedOut||size>32*1024*1024)throw new Error('Original cold read failed: '+Buffer.concat(errors).toString().slice(0,2000));
     const bytes=Buffer.concat(chunks),result=parse(bytes);await retainCaseArtifact(outPath,bytes);return result;
-  }finally{clearTimeout(timeout);clearTimeout(force);}
+  }finally{clearTimeout(timeout);if(force)clearTimeout(force);signal?.removeEventListener('abort',terminate);}
 }
 export async function receiveEconomicsJourney(input,{out,environment=process.env,signal}={}){
+  signal?.throwIfAborted();
   if(input?.schema!==SCHEMA)throw new Error('Use the full original economics receiving input.');
   absolute(out);absolute(input.casesDirectory);absolute(input.receivedCasesDirectory);absolute(input.receivedSourceDirectory);
   const origin=new URL(input.origin);
@@ -201,7 +220,7 @@ export async function receiveEconomicsJourney(input,{out,environment=process.env
     if(value?.quoteId!==input.quoteId||value.quoteSha256!==input.quoteSha256)throw new Error('Bind both explicit inputs to the selected original quote.');
   }
   await privateDirectory(out);await retained(join(out,'intent.json'),input);
-  const cli=(action,values)=>commercialEconomicsCli(argumentsOf(action,values),{environment,signal});
+  const cli=(action,values)=>{signal?.throwIfAborted();return commercialEconomicsCli(argumentsOf(action,values),{environment,signal});};
   const model=await originalModel(input.casesDirectory);
   const common={'cases-dir':input.casesDirectory,case:input.caseId,revision:input.revision};
   const inputFile=join(out,'cli-input.json'),inputBytes=jsonBytes(input.cliInput);
@@ -221,7 +240,7 @@ export async function receiveEconomicsJourney(input,{out,environment=process.env
   const cliView=await model.read({id:input.caseId});
   const cliAssessment=chosen(cliView,input.cliRequestId,input.quoteId,input.quoteSha256,input.cliInput);
   if(saved.assessmentId!==cliAssessment.id)throw new Error('The original CLI save returned a different assessment.');
-  const browser=await browserCourse(input,out,model);
+  const browser=await browserCourse(input,out,model,signal);
   const current=await model.read({id:input.caseId});
   const assessment=chosen(current,browser.assessmentId,input.quoteId,input.quoteSha256,input.browserInput);
   chosen(current,input.cliRequestId,input.quoteId,input.quoteSha256,input.cliInput);
@@ -248,7 +267,7 @@ export async function receiveEconomicsJourney(input,{out,environment=process.env
     revision:received.receiving.case.importedRevision,quoteId:input.quoteId,quoteSha256:input.quoteSha256,
     assessmentId:assessment.id,assessmentSha256:assessment.sha256};
   await retained(join(out,'cold-read-input.json'),coldInput);
-  const reopened=await coldRead(join(out,'cold-read-input.json'),join(out,'cold-read-result.json'));
+  const reopened=await coldRead(join(out,'cold-read-input.json'),join(out,'cold-read-result.json'),signal);
   equal(reopened.assessment,received.review.assessment);equal(reopened.quote,received.review.quote);
   const handoff=await cli('handoff',{...selected,out:join(out,'sf47-handoff'),
     acceptance:input.acceptanceId,'acceptance-sha':input.acceptanceSha256});
@@ -264,9 +283,13 @@ export async function receiveEconomicsJourney(input,{out,environment=process.env
     repeatedReceivingSameCase:true,coldRead:{freshProcess:true,assessmentSha256:reopened.assessment.sha256},
     handoff,onward:{directory:join(out,'received-reexport'),sha256:onward.casePackage.manifestSha256},
     visualInspection:'PENDING_OWNER_IMAGE_INSPECTION'};
-  await retained(join(out,'result.json'),result);return result;
+  signal?.throwIfAborted();await retained(join(out,'result.json'),result);return result;
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+  const controller=new AbortController();
+  const stop=signal=>{if(controller.signal.aborted)return;process.exitCode=signal==='SIGINT'?130:143;controller.abort(new Error('The original receiving operator requested '+signal+'.'));};
+  const interrupt=()=>stop('SIGINT'),terminate=()=>stop('SIGTERM');
+  process.once('SIGINT',interrupt);process.once('SIGTERM',terminate);
   try{
     const {values}=parseArgs({options:{input:{type:'string'},out:{type:'string'},'cold-read':{type:'string'},help:{type:'boolean'}}});
     if(values.help)process.stdout.write(jsonBytes({schema:SCHEMA,usage:'node economics-receiving-journey.mjs --input PRIVATE_INPUT.json --out PRIVATE_DIRECTORY',
@@ -278,6 +301,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
       environment:'Use the original equipped owner listener, installed Node/Playwright/Chromium and same case. No installation or new listener is performed.',
       screenshots:'Captured for explicit owner image inspection; not automatically marked visually accepted.'}));
     else if(values['cold-read'])process.stdout.write(jsonBytes(await inspectEconomicsCase(await read(absolute(values['cold-read'])))));
-    else process.stdout.write(jsonBytes(await receiveEconomicsJourney(await read(absolute(values.input)),{out:absolute(values.out)})));
-  }catch(error){process.stderr.write(JSON.stringify({error:error.code??'ECONOMICS_RECEIVING_FAILED',message:error.message})+'\n');process.exitCode=1;}
+    else process.stdout.write(jsonBytes(await receiveEconomicsJourney(await read(absolute(values.input)),{out:absolute(values.out),signal:controller.signal})));
+  }catch(error){process.stderr.write(JSON.stringify({error:error.code??'ECONOMICS_RECEIVING_FAILED',message:error.message})+'\n');if(!controller.signal.aborted)process.exitCode=1;}
+  finally{process.removeListener('SIGINT',interrupt);process.removeListener('SIGTERM',terminate);}
 }
