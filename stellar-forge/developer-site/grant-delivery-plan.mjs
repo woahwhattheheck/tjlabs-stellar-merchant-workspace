@@ -8,7 +8,7 @@ const SECTIONS = [
       '',
       '|Package|Maintained starting component|Funded change and receiving result|',
       '| --- | --- | --- |',
-      '|T1 resource integration — 80 hours / $7,600|Seller workspace, native HTTP/MCP seller, source adapters, capability selection, saved product plans and managed distribution.|Use the reviewed full capability basket and source edition to adapt the selected source and consumer together. Deliver the exact operation, typed request/result, complete pagination or file output and selected Stellar payment terms in the merchant and buyer applications.|',
+      '|T1 resource integration — 80 hours / $7,600|Seller workspace, native HTTP/MCP seller, source adapters, capability selection, saved product plans and managed distribution.|Use the reviewed full capability basket and source edition to adapt the selected source and consumer together. Deliver the exact operation, typed request/result, complete pagination or file output and selected Stellar payment terms. For each merchant, join one original approved testnet purchase, its independently observed native transfer and complete useful output in the merchant and buyer applications.|',
       '|T1 authority and handover — 40 hours / $3,800|Merchant release store, source/terms change and withdrawal, saved product/native Runtime handoff, Installation and Customer-use Calendar editions, buyer output and receiving workspaces.|Bind the actual merchant, buyer and receiving roles, selected profile, complete useful tasks and dated source periods. Deliver the source/terms change or withdrawal, preserved acquired output and a second operator who can reopen the complete plan, exact installation, selected schedule and original buyer work.|',
       '|T2 provider/ledger deployment — 70 hours / $6,650|Native Stellar facilitator, buyer signer and spend governor, independent transfer reconciliation and merchant settlement accounting.|Implement the selected providers’ actual registration and wire differences for the same useful service. Deliver two-provider operation with each original approval, transfer, complete result and fulfillment joined in the existing applications. Bind the selected dated customer work to original buyer records and review the seven-day cohort in the maintained evaluator.|',
       '|T2 threat response — 50 hours / $4,750|Existing threat model, operations telemetry, buyer inbox and merchant delivery/recovery records.|Bind observations, notifications and responses to the two real installations; repair material integration findings. Deliver the two stated customer recovery journeys and receiving of the same financial and output state.|',
@@ -16,6 +16,8 @@ const SECTIONS = [
       '|T3 recovery and handover — 70 hours / $6,650|Original backup/receiving, complete product plans and installed handoffs, buyer and merchant continuity, release history and support/accounting workspaces.|Integrate the selected supervision and off-host retention; implement receiving-host configuration and post-backup reconciliation. Deliver the restored customer application, original source and buyer state, saved Installation/calendar editions and later actual purchase history, measured recovery, independent support case and readable installation/operating handover.|',
       '',
       'A source change is assigned to one package and one selected installation requirement before it enters the estimate. A reusable fix belongs to the public component; customer data, signing material and private configuration stay with the deployment. Package completion includes the corresponding documentation and receiving changes so the next operator can use the delivered capability.',
+      '',
+      'T1 proves the deployed source-to-payment-to-output path using an existing supported facilitator. Its receiving result identifies the selected Stellar network and asset, payer, recipient, exact atomic amount and successful native transaction, together with the approved request and complete customer output. T2 funds the second independent facilitator\'s registration and compatibility work and the separate seven-day recurring-use cohort. T1 commissioning purchases remain in their original period and do not replace the T2 cohort. Both stages fit the existing package hours and costs.',
     ].join('\n'),
   },
   {
@@ -55,6 +57,39 @@ const SECTIONS = [
 
 const clean = value => String(value).replaceAll('\r\n', '\n').trim() + '\n';
 
+const NATIVE_T1_ACCEPTANCE = "For each service, its selected buyer also completes one approved Stellar testnet purchase through an existing supported facilitator, with the original approval, independently observed native transfer and complete output joined in the delivered application.";
+
+/** Keep the first installed milestone directly connected to the Stellar network. */
+function receiveNativeStellarAcceptance(markdown) {
+  const parent = '## Three funded tranches and six priced deliverables\n';
+  const begin = markdown.indexOf(parent);
+  if (begin < 0 || markdown.indexOf(parent, begin + parent.length) >= 0)
+    throw Object.assign(new Error('Retain the original funded-delivery answer.'), { code: 'GRANT_DELIVERY_ANSWER_REQUIRED' });
+  const start = begin + parent.length;
+  const following = markdown.slice(start).search(/^## /m);
+  const end = following < 0 ? markdown.length : start + following;
+  const section = markdown.slice(start, end);
+  let matches = 0;
+  const received = section.split('\n').map(line => {
+    if (!line.startsWith('|')) return line;
+    const cells = line.slice(1, line.lastIndexOf('|')).split(/(?<!\\)\|/);
+    if (cells.length !== 4 || !/T1/.test(cells[0]) ||
+        !/Merchant-resource integration/.test(cells.slice(0, 2).join(' '))) return line;
+    matches++;
+    if (cells[3].includes(NATIVE_T1_ACCEPTANCE)) {
+      if (cells[3].indexOf(NATIVE_T1_ACCEPTANCE) !== cells[3].lastIndexOf(NATIVE_T1_ACCEPTANCE))
+        throw Object.assign(new Error('Retain one first-tranche Stellar acceptance statement.'), { code: 'GRANT_DELIVERY_ACCEPTANCE_DUPLICATE' });
+      return line;
+    }
+    cells[3] = cells[3].trimEnd() + ' ' + NATIVE_T1_ACCEPTANCE;
+    return '|' + cells.join('|') + '|';
+  }).join('\n');
+  if (matches !== 1)
+    throw Object.assign(new Error('Select one original four-column T1 merchant-resource package.'), { code: 'GRANT_DELIVERY_NATIVE_PACKAGE_REQUIRED' });
+  return markdown.slice(0, start) + received + markdown.slice(end);
+}
+
+
 /** Receive these owned subsections without replacing other application answers. */
 export function applyGrantDeliveryPlan(markdown) {
   if (typeof markdown !== 'string') throw new TypeError('Select the complete application Markdown.');
@@ -84,5 +119,5 @@ export function applyGrantDeliveryPlan(markdown) {
     }
     result = result.slice(0, afterParent) + section + result.slice(end);
   }
-  return clean(result);
+  return receiveNativeStellarAcceptance(clean(result));
 }
