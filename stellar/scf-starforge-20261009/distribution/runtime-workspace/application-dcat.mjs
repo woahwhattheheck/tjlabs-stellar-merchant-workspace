@@ -3,6 +3,7 @@ import { join, relative, isAbsolute, resolve, dirname, basename, delimiter } fro
 import { realpath, lstat, access } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { dcatRuntimeSelection } from '../../sf30-seller-sdk/ckan/dcat-workspace.mjs';
+import { verifyDcatSemanticRuntimeEnvironment } from '../../sf30-seller-sdk/ckan/dcat-semantic-runtime.mjs';
 import { inspectMerchantRuntime } from '../../sf46-release/runtime-package.mjs';
 import { applicationEnvironment as readApplicationEnvironment } from './application-environment.mjs';
 import { absolute, need, plain, digest, json, canonical, regular, readJSON } from './storage.mjs';
@@ -17,6 +18,7 @@ const SOURCE_HELPERS = [
   'stellar/scf-starforge-20261009/sf46-release/runtime-package.mjs',
 ];
 const SEMANTIC_SOURCE = [
+  'dcat-semantic-runtime.mjs', 'dcat_semantic_runtime.py', 'SEMANTIC_RUNTIME.md',
   "dcat-semantic-comparison.mjs",
   "public/dcat-semantic-view.mjs",
   "public/dcat-semantic-comparison.mjs",
@@ -77,7 +79,7 @@ export function dcatApplication(common) {
       field('workspaceDirectory', 'Catalogue workspace', 'path', true,
         'Select the original private DCAT-US project directory. Source editions, reviews, release selection and rollback history remain in that project.'),
       ...common.map(item => item.name === 'environmentFile' ? { ...item,
-        description: 'Use the existing private environment JSON for SCF_DCAT_PYTHON and an explicit SCF_DCAT_RUNTIME_PROFILE. Choose original for Python 3.13 or portable-python312 for Python 3.12. Set SCF_DCAT_SEMANTIC_PYTHON to an absolute Python executable with the retained semantic requirements installed. Values stay on this host.' } : item),
+        description: 'Use the existing private environment JSON for SCF_DCAT_PYTHON and an explicit SCF_DCAT_RUNTIME_PROFILE. Choose original for Python 3.13 or portable-python312 for Python 3.12. For native semantics, use semantic-runtime-environment to select the prepared interpreter and its exact runtime receipt, or explicitly select a manually prepared SCF_DCAT_SEMANTIC_PYTHON. Retained report-only use needs no semantic runtime. Values stay on this host.' } : item),
     ],
   };
 }
@@ -184,6 +186,51 @@ async function verifyPython(selection, environment) {
     runtimeProfile: current.runtimeProfile };
 }
 
+async function semanticCommand(environment) {
+  const prepared = await verifyDcatSemanticRuntimeEnvironment(environment);
+  const command = environment.SCF_DCAT_SEMANTIC_PYTHON;
+  if (command === undefined || command === '') {
+    need(prepared === null, 'APPLICATION_DCAT_SEMANTIC_SELECTION_INVALID');
+    return null;
+  }
+  need(typeof command === 'string' && isAbsolute(command) && absolute(command) === command,
+    'APPLICATION_DCAT_SEMANTIC_PYTHON_INVALID',
+    'Select an absolute semantic Python executable in the private application environment.');
+  const executable = join(await realpath(dirname(command)), basename(command));
+  need(executable === command, 'APPLICATION_DCAT_SEMANTIC_PYTHON_LOCATION_CHANGED');
+  await access(executable, constants.X_OK);
+  need((await lstat(await realpath(executable))).isFile(), 'APPLICATION_DCAT_SEMANTIC_PYTHON_INVALID');
+  return { command, executable, prepared };
+}
+async function verifySemantic(selection, environment) {
+  const current = await semanticCommand(environment);
+  if (current === null) {
+    need(selection === undefined || selection === null, 'APPLICATION_DCAT_SEMANTIC_SELECTION_CHANGED');
+    return null;
+  }
+  need(plain(selection) && selection.command === current.command && selection.executable === current.executable &&
+    Array.isArray(selection.inputs) && selection.inputs.length > 0 &&
+    equal(selection.prepared ?? null, current.prepared), 'APPLICATION_DCAT_SEMANTIC_SELECTION_CHANGED',
+    'Review and save the current semantic interpreter and prepared receipt before launch.');
+  for (const expected of selection.inputs) {
+    need(plain(expected) && expected.exists === true && ['file', 'executable-link'].includes(expected.kind),
+      'APPLICATION_DCAT_SEMANTIC_SELECTION_INVALID');
+    const info = await lstat(absolute(expected.path));
+    need(info.dev === expected.dev && info.ino === expected.ino && info.mtimeMs === expected.mtimeMs &&
+      info.ctimeMs === expected.ctimeMs, 'APPLICATION_DCAT_SEMANTIC_PYTHON_CHANGED');
+    if (expected.kind === 'executable-link')
+      need(info.isSymbolicLink() && await realpath(expected.path) === expected.target,
+        'APPLICATION_DCAT_SEMANTIC_PYTHON_CHANGED');
+    else {
+      need(info.isFile() && !info.isSymbolicLink() && info.size === expected.bytes,
+        'APPLICATION_DCAT_SEMANTIC_PYTHON_CHANGED');
+      if (expected.sha256) need(digest(await regular(expected.path, Math.max(expected.bytes, 4 * 1024 * 1024))) ===
+        expected.sha256, 'APPLICATION_DCAT_SEMANTIC_PYTHON_CHANGED');
+    }
+  }
+  return { command: current.command, executable: current.executable, prepared: current.prepared };
+}
+
 export async function prepareDcatApplication(settings, { inputPath, selectedExecutable, applicationEnvironment, runtimeDirectory } = {}) {
   need(typeof inputPath === 'function' && typeof selectedExecutable === 'function' && typeof applicationEnvironment === 'function',
     'APPLICATION_DCAT_INPUT_READER_REQUIRED');
@@ -196,6 +243,12 @@ export async function prepareDcatApplication(settings, { inputPath, selectedExec
   const pythonSelected = await selectedExecutable(pythonCommand.executable);
   const python = { command: pythonCommand.command, executable: pythonSelected.executable,
     runtimeProfile: pythonCommand.runtimeProfile, inputs: pythonSelected.inputs };
+  const semanticSelected = await semanticCommand(environment);
+  let semantic = null;
+  if (semanticSelected) {
+    const executable = await selectedExecutable(semanticSelected.executable);
+    semantic = { ...semanticSelected, inputs: executable.inputs };
+  }
   const manifestFile = join(runtime.directory, 'package', 'manifest.json');
   const manifest = await readJSON(manifestFile);
   need(Array.isArray(manifest.files), 'APPLICATION_DCAT_SOURCE_MANIFEST_REQUIRED');
@@ -203,7 +256,12 @@ export async function prepareDcatApplication(settings, { inputPath, selectedExec
     typeof file.path === 'string' && (file.path.startsWith(ROOT) || SOURCE_HELPERS.includes(file.path)))
     .map(file => ({ path: file.path, bytes: file.bytes, sha256: file.sha256 }))
     .sort((left, right) => left.path.localeCompare(right.path)));
-  const inputs = [projectInput, ...pythonSelected.inputs];
+  const inputs = [projectInput, ...pythonSelected.inputs, ...(semantic?.inputs ?? [])];
+  if (semantic?.prepared) {
+    inputs.push(await inputPath(semantic.prepared.directory, 'directory', false, true));
+    for (const name of ['runtime.json', 'selection.json', 'requirements.lock', 'wheel-selection.json'])
+      inputs.push(await inputPath(join(semantic.prepared.directory, name), 'file'));
+  }
   for (const filename of [manifestFile, join(runtime.directory, 'runtime-profile.json')])
     inputs.push(await inputPath(filename, 'file'));
   for (const file of files) {
@@ -212,7 +270,7 @@ export async function prepareDcatApplication(settings, { inputPath, selectedExec
     inputs.push(selected);
   }
   need(await realpath(runtime.sourceRoot) === runtime.sourceRoot, 'APPLICATION_DCAT_SOURCE_ROOT_CHANGED');
-  const body = { schema: SELECTION, project, runtime: runtimeIdentity(runtime), python,
+  const body = { schema: SELECTION, project, runtime: runtimeIdentity(runtime), python, semantic,
     source: { root: runtime.sourceRoot, files, sha256: hash(files) } };
   const selection = { ...body, sha256: hash(body) };
   return {
@@ -234,6 +292,7 @@ export async function verifyDcatManagedSelection(selection, { directory, sourceR
   need(equal(project, selection.project), 'APPLICATION_DCAT_PROJECT_CHANGED',
     'The selected workspace has a different original project identity.');
   const python = await verifyPython(selection.python, environment);
+  const semantic = await verifySemantic(selection.semantic, environment);
   const files = validateFiles(selection.source.files);
   need(hash(files) === selection.source.sha256, 'APPLICATION_DCAT_SOURCE_SELECTION_CHANGED');
   const runtime = await inspectMerchantRuntime(absolute(selection.runtime.directory), { load: false });
@@ -241,7 +300,7 @@ export async function verifyDcatManagedSelection(selection, { directory, sourceR
   const root = absolute(sourceRoot ?? selection.source.root);
   await verifySource(root, files);
   return { project, source: { root, files, sha256: selection.source.sha256 },
-    runtime: runtimeIdentity(runtime), python, selectionSha256: sha256 };
+    runtime: runtimeIdentity(runtime), python, semantic, selectionSha256: sha256 };
 }
 function option(request, name, optional = false) {
   const positions = request.args.flatMap((value, index) => value === name ? [index] : []);
@@ -302,6 +361,7 @@ export async function dcatStartup(request, text, context = {}) {
     url: url.href,
     original: { schema: STARTUP, pid: actual.pid, instanceId: actual.instanceId,
       project: verified.project, sourceSha256: verified.source.sha256,
-      selectionSha256: verified.selectionSha256, runtime: verified.runtime, python: verified.python },
+      selectionSha256: verified.selectionSha256, runtime: verified.runtime, python: verified.python,
+      semantic: verified.semantic },
   };
 }

@@ -31,7 +31,8 @@
     "./seller/dcat/workspace": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-workspace.mjs",
     "./seller/dcat/acquisition": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-acquisition.mjs",
     "./seller/dcat/semantic": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic.mjs",
-    "./seller/dcat/semantic/comparison": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic-comparison.mjs"
+    "./seller/dcat/semantic/comparison": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic-comparison.mjs",
+    "./seller/dcat/semantic/runtime": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic-runtime.mjs"
   },
   "applicationProviders": {
     "ckan": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/application-provider.mjs"
@@ -74,6 +75,9 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/public/dcat-semantic-comparison.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic-files.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic-comparison-cli.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_COMPARISONS.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_COMPARISONS.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic-runtime.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat_semantic_runtime.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_RUNTIME.md"
   ]
 }

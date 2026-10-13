@@ -20,10 +20,16 @@ The complete original source inventory is in `source-manifest.json`; the
 installed runtime subset is in `selected-runtime.json`. The bridge checks both
 inventories and the actual selected source before starting a native run.
 
-Prepare an existing Python environment with the retained
-`vendor/semantic-operator/requirements.txt`. It pins RDFLib 7.6.0, pySHACL 0.40.1,
-cryptography 50.0.1 and PyLD 3.3.0. The original RDF engine also checks its
-RDFLib/pySHACL versions when it loads.
+Use the installed `dcat semantic-runtime-prepare` command to create a separate
+private environment from the retained original requirements, then inspect its
+complete receipt and export the exact private environment selection. Follow
+[SEMANTIC_RUNTIME.md](SEMANTIC_RUNTIME.md) for preparation, complete retained
+wheels and hash lock, offline reuse, interruption recovery and Applications.
+
+The original requirements pin RDFLib 7.6.0, pySHACL 0.40.1, cryptography 50.0.1
+and PyLD 3.3.0. A manually prepared interpreter with those same requirements
+remains supported. The original RDF engine also checks its RDFLib/pySHACL
+versions when it loads.
 
 Set `SCF_DCAT_SEMANTIC_PYTHON` to that interpreter's absolute executable path.
 If absent, the bridge uses `SCF_DCAT_PYTHON`, then `python3` from the selected
@@ -37,7 +43,10 @@ manifest. The catalogue launcher and installed distribution include the semantic
 modules, native runtime subset, optional profile sources and this guide. Normal
 project opening and report inspection use retained files; a new semantic run
 starts the selected interpreter. Dependency preparation belongs to deployment;
-the workspace never downloads packages during validation.
+the workspace never downloads packages during validation. When a prepared runtime
+is selected, its exact receipt and interpreter binding are retained in each new
+native request and rechecked before every actual worker phase. Historical
+inspection and replay remain independent of today's interpreter installation.
 
 ## Import an explicit profile
 
