@@ -19,6 +19,7 @@ review-object --session ORIGINAL_DIRECTORY [--max-bytes N] [--max-chunks N] [--t
               [--financial-after-seconds N] [--output-after-seconds N]
 review-x402 --endpoint http://127.0.0.1:PORT/api/observation --token-env ENV
             [--timeout-ms N] [--payment-after-seconds N] [--output-after-seconds N]
+            [--polling summary] [--inputs-sha256 REVIEWED_INPUTS_SHA256]
 init      --state NEW_DIRECTORY --config PRIVATE_CONFIG
 run       --state DIRECTORY
 status    --state DIRECTORY [--details]
@@ -53,7 +54,7 @@ Individual restored deliveries still require the original explicit retry action.
 Snapshot directory publication uses the original SF88 Linux/Python 3 no-replace helper.
 See INCIDENT_RECOVERY.md and INCIDENT_OPERATIONS.md for complete receiving and case import.
 `;
-const shapes={'review-x402':['endpoint','token-env','timeout-ms','payment-after-seconds','output-after-seconds'],'review-object':['session','max-bytes','max-chunks','timeout-ms','financial-after-seconds','output-after-seconds'],init:['config'],run:[],status:[],destination:[],ack:['incident','revision','by','note-file'],
+const shapes={'review-x402':['endpoint','token-env','timeout-ms','payment-after-seconds','output-after-seconds','polling','inputs-sha256'],'review-object':['session','max-bytes','max-chunks','timeout-ms','financial-after-seconds','output-after-seconds'],init:['config'],run:[],status:[],destination:[],ack:['incident','revision','by','note-file'],
   notify:['incident','revision'],retry:['event','attempts','by'],cancel:['event','attempts','by'],
   configure:['config','config-revision'],prune:[],export:['incident','revision','workspace','route','out'],
   snapshot:['out','operation','revision'],'inspect-snapshot':['snapshot','manifest-sha'],
@@ -94,7 +95,8 @@ export async function main(args=process.argv.slice(2)) {
     const controller=new AbortController(),stop=()=>controller.abort();
     process.once('SIGINT',stop);process.once('SIGTERM',stop);
     try {
-      const names={'timeout-ms':'timeoutMs','payment-after-seconds':'paymentAfterSeconds','output-after-seconds':'outputAfterSeconds'};
+      const names={'timeout-ms':'timeoutMs','payment-after-seconds':'paymentAfterSeconds','output-after-seconds':'outputAfterSeconds',
+        'polling':'polling','inputs-sha256':'inputsSha256'};
       const input={endpoint:v.endpoint,tokenEnv:v['token-env'],...Object.fromEntries(Object.entries(names)
         .filter(([flag])=>v[flag]!==undefined).map(([flag,key])=>[key,v[flag]]))};
       const result=await reviewX402Source(input,{signal:controller.signal});

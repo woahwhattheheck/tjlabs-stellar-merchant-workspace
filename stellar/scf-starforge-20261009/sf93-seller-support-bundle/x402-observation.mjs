@@ -1,6 +1,7 @@
 // MIT. Complete x402api source projection carried by the original SF93 capture store.
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
+import {X402_SUMMARY_SCHEMA,validateX402Summary,analyzeX402Summary,x402SummaryConditionSignals} from './x402-summary.mjs';
 export const X402_FILES=['x402-observation.json','x402-source.json'];
 export const X402_FILE_LIMIT=8*1024*1024;
 export const X402_KINDS=['X402_SOURCE_UNAVAILABLE','X402_IDENTITY_CHANGED','X402_PAYMENT_UNRESOLVED',
@@ -31,15 +32,19 @@ export function x402Endpoint(value) {
   return value;
 }
 export function normalizeX402Source(v) {
-  fields(v,['endpoint','tokenEnv','storeId','tenantId','resourceVersionId','configurationSha256','timeoutMs','paymentAfterSeconds','outputAfterSeconds']);
-  return {endpoint:x402Endpoint(v.endpoint),tokenEnv:text(v.tokenEnv,128,/^[A-Za-z_][A-Za-z0-9_]{0,127}$/),
+  fields(v,['endpoint','tokenEnv','storeId','tenantId','resourceVersionId','configurationSha256','timeoutMs','paymentAfterSeconds','outputAfterSeconds','polling','inputsSha256']);
+  const result={endpoint:x402Endpoint(v.endpoint),tokenEnv:text(v.tokenEnv,128,/^[A-Za-z_][A-Za-z0-9_]{0,127}$/),
     storeId:text(v.storeId,36,UUID),tenantId:text(v.tenantId,36,UUID),resourceVersionId:text(v.resourceVersionId,36,UUID),
     configurationSha256:text(v.configurationSha256,64,HASH),timeoutMs:integer(v.timeoutMs??5000,100,30000),
     paymentAfterSeconds:integer(v.paymentAfterSeconds??300,1,31536000),
     outputAfterSeconds:integer(v.outputAfterSeconds??300,1,31536000)};
+  if(v.polling!==undefined){need(v.polling==='summary','SF93_X402_CONFIG_INVALID');result.polling='summary';}
+  if(v.inputsSha256!==undefined){need(v.polling==='summary','SF93_X402_CONFIG_INVALID');result.inputsSha256=text(v.inputsSha256,64,HASH);}
+  return result;
 }
-export const x402SourceKey=v=>JSON.stringify(Object.fromEntries(
-  ['endpoint','tokenEnv','storeId','tenantId','resourceVersionId','configurationSha256'].map(k=>[k,normalizeX402Source(v)[k]])));
+export const x402SourceKey=v=>{const selected=normalizeX402Source(v);return JSON.stringify({
+  ...Object.fromEntries(['endpoint','tokenEnv','storeId','tenantId','resourceVersionId','configurationSha256'].map(k=>[k,selected[k]])),
+  ...(selected.inputsSha256===undefined?{}:{inputsSha256:selected.inputsSha256})});};
 function file(v) {
   if(v===null)return;
   need(plain(v)&&count(v.bytes)&&HASH.test(v.sha256??'')&&typeof v.fileName==='string'&&typeof v.contentType==='string');
@@ -97,10 +102,19 @@ function age(date,now){return instant(date)&&Date.parse(date)<=now+5000?Math.max
 export function analyzeX402Observation(meta,value) {
   const selection=normalizeX402Source(meta.selection);
   need(instant(meta.startedAt)&&instant(meta.generatedAt)&&meta.startedAt<=meta.generatedAt&&(meta.errorCode===null||CODE.test(meta.errorCode)));
+  if(meta.pollSource!==undefined)need(value!==null&&value.schema!==X402_SUMMARY_SCHEMA);
   if(value===null)return {coverage:meta.errorCode==='MERCHANT_OBSERVATION_WORKLOAD_LIMIT'?'WORKLOAD_LIMIT':'UNAVAILABLE',
     identityMatches:null,runtimeId:null,storeCreatedAt:null,sourceCapturedAt:null,counts:null,orders:[],authority:'NO_USABLE_NATIVE_OBSERVATION'};
+  if(value.schema===X402_SUMMARY_SCHEMA)return analyzeX402Summary(meta,value);
   const {orders,histories,fulfillments}=validateX402Source(value);
-  const bound=['storeId','tenantId','resourceVersionId','configurationSha256'].every(k=>selection[k]===value[k]);
+  const poll=meta.pollSource?readPollSource(meta.pollSource):null;
+  const pollMatches=!poll||['storeId','runtimeId','tenantId','resourceVersionId','configurationSha256'].every(k=>poll[k]===value[k])&&
+    poll.capturedAt<=value.capturedAt&&Date.parse(meta.generatedAt)-Date.parse(poll.capturedAt)<=60000&&
+    (!poll.historyBoundary||value.history.some(row=>row.sequence===poll.historyBoundary.sequence&&row.sourceSha256===poll.historyBoundary.sourceSha256))&&
+    ['history','exchanges'].every(group=>value[group].length>=poll.immutablePrefixes[group].rows&&
+      immutablePrefixHash(value[group].slice(0,poll.immutablePrefixes[group].rows))===poll.immutablePrefixes[group].sha256);
+  const bound=['storeId','tenantId','resourceVersionId','configurationSha256'].every(k=>selection[k]===value[k])&&
+    (selection.inputsSha256===undefined||selection.inputsSha256===poll?.binding?.inputsSha256);
   const within=Date.parse(value.startedAt)>=Date.parse(meta.startedAt)-5000&&Date.parse(value.capturedAt)<=Date.parse(meta.generatedAt)+5000;
   const rows=[],now=Date.parse(meta.generatedAt);
   const rejectedOrders=new Set(value.events.filter(e=>e.state==='REJECTED'&&AUTHORITY.has(e.code)).map(e=>e.orderId));
@@ -134,7 +148,7 @@ export function analyzeX402Observation(meta,value) {
       contradiction:contradict,authorityRejected:AUTHORITY.has(r.lastError)||!verified&&rejectedOrders.has(r.id)});
   }
   const n=predicate=>rows.filter(predicate).length;
-  return {coverage:!bound?'IDENTITY_CHANGED':!within?'CLOCK_INVALID':meta.errorCode?'UNAVAILABLE':'COMPLETE',
+  return {coverage:!bound?'IDENTITY_CHANGED':!within?'CLOCK_INVALID':!pollMatches?'POLL_SOURCE_CHANGED':meta.errorCode?'UNAVAILABLE':'COMPLETE',
     identityMatches:bound,runtimeId:value.runtimeId,storeCreatedAt:value.storeCreatedAt,sourceCapturedAt:value.capturedAt,
     snapshotSha256:value.snapshotSha256,historyBoundary:value.history.length?{sequence:value.history.at(-1).sequence,sourceSha256:value.history.at(-1).sourceSha256}:null,counts:{orders:rows.length,receiptVerified:n(r=>r.receiptVerified),
       unresolved:n(r=>r.unresolved),receiptOutputPending:n(r=>r.receiptOutputPending),
@@ -143,14 +157,26 @@ export function analyzeX402Observation(meta,value) {
       authorityRejected:n(r=>r.authorityRejected),authorityRejectionRecords:value.events.filter(e=>e.state==='REJECTED'&&AUTHORITY.has(e.code)).length,providerExchanges:value.exchanges.length,
       incompleteProviderExchanges:value.exchanges.filter(e=>!e.responseComplete).length,
       pendingWebhooks:value.events.filter(e=>e.state==='PENDING').length},
-    orders:rows,authority:'STORED_ORIGINAL_RECEIPT_VERIFICATION; NO_NEW_LEDGER_OR_OUTPUT_BYTE_VERIFICATION'};
+    orders:rows,authority:'STORED_ORIGINAL_RECEIPT_VERIFICATION; NO_NEW_LEDGER_OR_OUTPUT_BYTE_VERIFICATION',
+    ...(poll?{polling:{sourceCapturedAt:poll.capturedAt,snapshotSha256:poll.snapshotSha256,binding:poll.binding??null,
+      sourceBytes:meta.pollSource.bytes,sourceSha256:meta.pollSource.sha256}}:{})};
 }
-export function createX402Observation({registration,selection,startedAt,generatedAt,sourceBytes=null,errorCode=null}) {
+function readPollSource(record) {
+  fields(record,['bytes','sha256','contentBase64']);
+  need(count(record.bytes)&&record.bytes<=2*1024*1024&&HASH.test(record.sha256??'')&&typeof record.contentBase64==='string');
+  const raw=Buffer.from(record.contentBase64,'base64');
+  need(raw.length===record.bytes&&raw.toString('base64')===record.contentBase64&&sha(raw)===record.sha256,'SF93_X402_POLL_SOURCE_CHANGED');
+  return validateX402Summary(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw)));
+}
+export function createX402Observation({registration,selection,startedAt,generatedAt,sourceBytes=null,errorCode=null,fullCaptureError=null,pollSourceBytes=null}) {
   fields(registration,['id','label']);text(registration.id,64,ID);text(registration.label,120);
   const raw=sourceBytes??bytes(null);need(Buffer.isBuffer(raw)&&raw.length<=X402_FILE_LIMIT);
   let value;try{value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));}catch{fail('SF93_X402_SOURCE_JSON_INVALID');}
   const meta={schema:SCHEMA,registration,selection:normalizeX402Source(selection),startedAt,generatedAt,errorCode,
     source:{bytes:raw.length,sha256:sha(raw)}};
+  if(fullCaptureError!==null){need(CODE.test(fullCaptureError));meta.fullCaptureError=fullCaptureError;}
+  if(pollSourceBytes!==null){need(Buffer.isBuffer(pollSourceBytes));meta.pollSource={bytes:pollSourceBytes.length,
+    sha256:sha(pollSourceBytes),contentBase64:pollSourceBytes.toString('base64')};readPollSource(meta.pollSource);}
   meta.summary=analyzeX402Observation(meta,value);
   const encoded=bytes(meta);need(encoded.length<=X402_FILE_LIMIT,'SF93_X402_CAPTURE_SIZE_LIMIT');
   return {kind:'X402_MERCHANT',x402:meta,files:{'x402-observation.json':encoded,'x402-source.json':raw},
@@ -160,14 +186,15 @@ export function readX402ObservationFiles(files) {
   need(plain(files)&&Object.keys(files).length===2&&X402_FILES.every(n=>Buffer.isBuffer(files[n])&&files[n].length>0&&files[n].length<=X402_FILE_LIMIT));
   const read=n=>JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(files[n]));
   const meta=read(X402_FILES[0]),source=read(X402_FILES[1]);
-  fields(meta,['schema','registration','selection','startedAt','generatedAt','errorCode','source','summary']);
+  fields(meta,['schema','registration','selection','startedAt','generatedAt','errorCode','source','summary','fullCaptureError','pollSource']);
   need(meta.schema===SCHEMA&&meta.source.bytes===files[X402_FILES[1]].length&&meta.source.sha256===sha(files[X402_FILES[1]]));
   fields(meta.registration,['id','label']);text(meta.registration.id,64,ID);text(meta.registration.label,120);
+  if(meta.fullCaptureError!==undefined)need(CODE.test(meta.fullCaptureError));
   const summary=analyzeX402Observation(meta,source);need(isDeepStrictEqual(summary,meta.summary),'SF93_X402_SUMMARY_CHANGED');
   return {meta,source,summary};
 }
 // Stable JSON preserves every immutable descriptor field across a later capture.
-function immutablePrefixHash(value) {
+export function immutablePrefixHash(value) {
   const canonical=v=>Array.isArray(v)?v.map(canonical):plain(v)?
     Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
   return sha(JSON.stringify(canonical(value)));
@@ -183,19 +210,23 @@ export function x402ObservationSignals(merchant,observation,now,previous=null) {
   const original=packet.files?.['x402-source.json'];
   const source=original?JSON.parse(original.toString('utf8')):null;
   const history=source?.history;
+  const summarized=s.projection==='COMPLETE_CONDITIONS_WITH_BOUNDED_ORDER_DETAILS';
   // Older checkpoints retain one history row. Keep that original boundary and
   // add complete immutable-prefix witnesses only to the watcher checkpoint:
   // existing capture bytes/summaries and their v1 ABI remain unchanged.
-  const legacyContinuity=!boundary||Array.isArray(history)&&history.some(row=>row.sequence===boundary.sequence&&row.sourceSha256===boundary.sourceSha256);
+  const legacyContinuity=!boundary||(summarized?s.continuity?.sequence===boundary.sequence&&s.continuity.sourceSha256===boundary.sourceSha256:
+    Array.isArray(history)&&history.some(row=>row.sequence===boundary.sequence&&row.sourceSha256===boundary.sourceSha256));
   const prefixes=previous?.immutablePrefixes;
   const prefixContinuity=prefixes===undefined||plain(prefixes)&&
     ['history','exchanges'].every(group=>{
       const pin=prefixes[group],rows=source?.[group];
+      if(summarized)return plain(pin)&&count(pin.rows)&&HASH.test(pin.sha256??'')&&
+        source.prefixContinuity?.[group]?.rows===pin.rows&&source.prefixContinuity[group].sha256===pin.sha256;
       return plain(pin)&&count(pin.rows)&&HASH.test(pin.sha256??'')&&
         Array.isArray(rows)&&rows.length>=pin.rows&&
         immutablePrefixHash(rows.slice(0,pin.rows))===pin.sha256;
     });
-  const continuity=legacyContinuity&&prefixContinuity&&['history','exchanges'].every(group=>Array.isArray(source?.[group]));
+  const continuity=legacyContinuity&&prefixContinuity&&(summarized||['history','exchanges'].every(group=>Array.isArray(source?.[group])));
   const complete=fresh&&continuity&&s.coverage==='COMPLETE',rows=s.orders;
   const aged=(key,ageKey,threshold)=>{const chosen=rows.filter(r=>r[key]),positive=chosen.some(r=>r[ageKey]!==null&&r[ageKey]>=threshold);
     return {bad:!complete?null:positive?true:chosen.some(r=>r[ageKey]===null)?null:false,
@@ -203,7 +234,7 @@ export function x402ObservationSignals(merchant,observation,now,previous=null) {
   const condition=key=>({bad:complete?rows.some(r=>r[key]):null,values:{requests:rows.filter(r=>r[key]).length},openAfter:1});
   return {packet,fresh,successful:complete,error:complete?null:!fresh?'X402_SOURCE_CLOCK_OR_AGE_INVALID':!continuity?'X402_ORIGINAL_HISTORY_CHANGED':meta.errorCode??s.coverage,
     previous:{sessionId:meta.selection.storeId,startedAt:s.storeCreatedAt,capturedAt:meta.generatedAt,historyBoundary:s.historyBoundary??null,
-      ...(complete?{immutablePrefixes:Object.fromEntries(['history','exchanges'].map(group=>[group,
+      ...(complete?{immutablePrefixes:summarized?structuredClone(source.immutablePrefixes):Object.fromEntries(['history','exchanges'].map(group=>[group,
         {rows:source[group].length,sha256:immutablePrefixHash(source[group])}]))}:{})},
     window:{from:meta.startedAt,through:meta.generatedAt,complete,sessionStartedAt:s.storeCreatedAt},
     signals:{X402_SOURCE_UNAVAILABLE:{bad:s.identityMatches===false?null:!complete,values:{}},
@@ -212,5 +243,6 @@ export function x402ObservationSignals(merchant,observation,now,previous=null) {
       X402_VERIFIED_RECEIPT_OUTPUT_PENDING:aged('receiptOutputPending','receiptOutputAgeSeconds',merchant.x402.outputAfterSeconds),
       X402_FULFILLMENT_INTERRUPTED:condition('fulfillmentInterrupted'),
       X402_RESULT_CONTRADICTION:condition('contradiction'),
-      X402_AUTHORITY_REJECTED:condition('authorityRejected')}};
+      X402_AUTHORITY_REJECTED:condition('authorityRejected'),
+      ...(summarized?x402SummaryConditionSignals(s,merchant.x402,complete):{})}};
 }

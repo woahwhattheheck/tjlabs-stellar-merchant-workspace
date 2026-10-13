@@ -10,7 +10,7 @@ import { parseArgs } from 'node:util';
 import { openMerchantWorkspace, openMerchantReview, validateConfig, MerchantError, MerchantResult } from './workspace.mjs';
 import { ProtocolError } from './protocol.mjs';
 import {readMerchantObservation} from './observation.mjs';
-import {readMerchantObservationSummary, merchantSummaryHistorySequence} from './observation-summary.mjs';
+import {readMerchantObservationSummary, merchantSummaryHistorySequence, merchantSummaryPrefixRows} from './observation-summary.mjs';
 import {readInvoiceRegister,invoiceRegisterQuery,createInvoiceRegisterExport} from './invoice-register.mjs';
 import { merchantInputFiles, reviewMerchantInputs, verifyMerchantInputFingerprint, readMerchantInput } from './application-inputs.mjs';
 import { createMerchantProject, resolveMerchantProjectSource } from './portable.mjs';
@@ -175,7 +175,10 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
     if (path === '/api/observation' && request.method === 'GET') return respond(response, 200, readMerchantObservation(workspace));
     if (path === '/api/observation/summary' && request.method === 'GET') {
       const historySequence = merchantSummaryHistorySequence(header(request, 'x-merchant-history-sequence'));
-      return respond(response, 200, readMerchantObservationSummary(workspace, { historySequence }));
+      const historyPrefixRows = merchantSummaryPrefixRows(header(request, 'x-merchant-history-prefix-rows'));
+      const exchangesPrefixRows = merchantSummaryPrefixRows(header(request, 'x-merchant-exchanges-prefix-rows'));
+      if ((historyPrefixRows === null) !== (exchangesPrefixRows === null)) fail('MERCHANT_OBSERVATION_PREFIX_ROWS_INVALID');
+      return respond(response, 200, readMerchantObservationSummary(workspace, { historySequence, historyPrefixRows, exchangesPrefixRows }));
     }
     if (path === '/api/state' && request.method === 'GET') return respond(response, 200, {
       config: workspace.publicConfig(), orders: workspace.listOrders(), mode: workspace.readOnly ? 'review' : 'live' });

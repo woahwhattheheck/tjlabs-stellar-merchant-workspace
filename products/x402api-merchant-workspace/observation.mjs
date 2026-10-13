@@ -11,6 +11,19 @@ const integer=value=>{const n=Number(value);if(!Number.isSafeInteger(n)||n<0)thr
 const err=code=>{throw Object.assign(new Error(code),{code,status:409});};
 const publicCode=value=>typeof value?.code==='string'&&/^[A-Za-z0-9_.:-]{1,120}$/.test(value.code)?value.code:null;
 const file=value=>value?{bytes:value.bytes,sha256:value.sha256,contentType:value.contentType,fileName:value.fileName}:null;
+export function merchantObservationHistoryRow(row) {
+  const d=parsed(row.data_json);
+  return {sequence:integer(row.sequence),orderId:row.order_id,kind:row.kind,at:row.created_at,
+    state:d.set?.state??null,paymentId:d.set?.paymentId??d.data?.paymentId??d.paymentId??null,
+    code:publicCode(d.set?.lastError)??publicCode(d.data)??publicCode(d),
+    receiptVerified:d.set?.receiptVerification!=null,exchangeId:d.exchangeId??null,sourceSha256:sha(row.data_json)};
+}
+export function merchantObservationExchangeRow(row) {
+  return {sequence:integer(row.sequence),orderId:row.order_id,kind:row.kind,
+    status:row.status===null?null:integer(row.status),responseComplete:row.response_complete===1n,
+    bytes:row.raw_bytes===null?null:integer(row.raw_bytes),sha256:row.raw_sha256,
+    code:publicCode(parsed(row.error_json)),at:row.created_at};
+}
 export function readMerchantObservation(workspace) {
   const store=workspace.store;store._assertOpen();
   if(workspace.closing||store._db.isTransaction)err('MERCHANT_OBSERVATION_BUSY');
@@ -41,17 +54,10 @@ export function readMerchantObservation(workspace) {
         source:{frozenSha256:sha(row.frozen_json),dataSha256:sha(row.data_json),identitySha256:sha(row.charge_identity_json)}});
     }
     for(const row of store._statement('SELECT sequence,order_id,kind,data_json,created_at FROM merchant_history ORDER BY sequence').iterate()) {
-      const d=parsed(row.data_json);
-      add('history',{sequence:integer(row.sequence),orderId:row.order_id,kind:row.kind,at:row.created_at,
-        state:d.set?.state??null,paymentId:d.set?.paymentId??d.data?.paymentId??d.paymentId??null,
-        code:publicCode(d.set?.lastError)??publicCode(d.data)??publicCode(d),
-        receiptVerified:d.set?.receiptVerification!=null,exchangeId:d.exchangeId??null,sourceSha256:sha(row.data_json)});
+      add('history',merchantObservationHistoryRow(row));
     }
     for(const row of store._statement('SELECT sequence,order_id,kind,status,raw_bytes,raw_sha256,response_complete,error_json,created_at FROM merchant_exchanges ORDER BY sequence').iterate())
-      add('exchanges',{sequence:integer(row.sequence),orderId:row.order_id,kind:row.kind,
-        status:row.status===null?null:integer(row.status),responseComplete:row.response_complete===1n,
-        bytes:row.raw_bytes===null?null:integer(row.raw_bytes),sha256:row.raw_sha256,
-        code:publicCode(parsed(row.error_json)),at:row.created_at});
+      add('exchanges',merchantObservationExchangeRow(row));
     for(const row of store._statement('SELECT delivery_id,order_id,kind,state,raw_bytes,raw_sha256,details_json,created_at,updated_at FROM merchant_events ORDER BY created_at,delivery_id').iterate()) {
       const d=parsed(row.details_json);
       add('events',{deliveryId:row.delivery_id,orderId:row.order_id,kind:row.kind,state:row.state,
