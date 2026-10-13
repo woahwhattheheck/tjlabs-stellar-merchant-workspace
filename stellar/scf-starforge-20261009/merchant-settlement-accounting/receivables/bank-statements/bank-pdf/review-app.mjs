@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import {createPdfReviewEditor} from './review-editor.mjs';
 import {canonical,digest,decodeBase64,openWorkingCopy,PDF_LIMITS} from './model.mjs';
 import {PDF_REVIEW_SCHEMAS,PDF_REVIEW_LIMITS,issuePdfReview,openPdfReviewIssue,createPdfReviewRecord,openPdfReviewRecord,pdfReviewWorkingCopy,editPdfReviewDraft,receivePdfWorkingCopy,savePdfReviewEdition,exportPdfReviewReturn,openPdfReviewReturn,validatePdfReviewCurrent,previewPdfReviewReturn,decidePdfReviewReturn,applyPdfReviewDecision,pdfReviewTransfer} from './review-model.mjs';
 import {PDF_DESK_SCHEMA,PDF_DESK_MAX_BYTES,checkPdfDesk,openPdfReviewStorage,pdfDeskBytes} from './review-state.mjs';
@@ -8,7 +9,7 @@ const store=openPdfReviewStorage(),offline=globalThis.__PDF_REVIEW_OFFLINE===tru
 let S=null,busy=true,blocked=false,dirty=false,timer=null,tail=Promise.resolve(),storageRevision=0,generation=0,manifest=null;
 let work=null,pdfUrl=null,pdfDocument=null,pdfTask=null,pdfLoading=null,renderEpoch=0,pdfOpenEpoch=0,pdfOpening=null,config=null;
 let casesCursor=null,conflictsCursor=null,caseRows=[],conflictRows=[];
-const actions={accounts:'ACCOUNT',regions:'REGION',rows:'ROWS',balances:'BALANCE',pageReviews:'PAGE_REVIEW'};
+let guided=null,guidedCase=null,guidedSync=false;
 const identity=row=>String(row.id??row.page),hashPattern=/^[a-f0-9]{64}$/;
 function message(value,error=false){$('message').textContent=value;$('message').classList.toggle('error',error);}
 function controls(){
@@ -20,8 +21,56 @@ function controls(){
   for(const id of['new-item','collection','receive-recipient','edition-form','receive-current','compare','keep-all','adopt-all']){const el=$(id);if(el.tagName==='FORM')for(const f of el.elements)f.disabled=busy||blocked||raw;else el.disabled=busy||blocked||raw;}
   for(const b of $('interpretations').querySelectorAll('button'))b.disabled=busy||blocked||raw;
   $('discard-raw').disabled=busy||blocked||!raw;
+  if(S.ui?.guidedDraft?.dirty||guided?.hasUnretainedChanges())for(const field of $('edition-form').elements)field.disabled=true;
  }
  $('more-cases').disabled=busy||blocked||!casesCursor;$('more-conflicts').disabled=busy||!S||!conflictsCursor;
+ updateGuided();
+}
+function keepGuided(current,snapshot){
+ if(!snapshot)return;current.guidedDraftHistory??=[];
+ if(!current.guidedDraftHistory.some(row=>canonical(row)===canonical(snapshot)))current.guidedDraftHistory.push(copy(snapshot));
+}
+function guidedSelection(snapshot){return snapshot.selection.mode==='new'?{mode:'new',key:snapshot.selection.key}:{mode:'existing',id:snapshot.selection.key};}
+function rememberGuided(snapshot){
+ if(guidedSync||!S)return;
+ const current=ui(),previous=current.guidedDraft;
+ if(previous&&(snapshot===null||previous.formId!==snapshot.formId))keepGuided(current,previous);
+ current.guidedDraft=snapshot===null?null:copy(snapshot);
+ if(snapshot){current.collection=snapshot.collection;current.guidedSelection=guidedSelection(snapshot);}
+ changed();
+}
+async function retainGuided(edit){
+ if(!S||busy||blocked)throw new Error('Reopen the current saved review before retaining another proposed form.');
+ const selectedCase=S.caseId,revision=work.revision;busy=true;controls();
+ try{
+  await flush();if(blocked||S.caseId!==selectedCase||work.revision!==revision)throw new Error('The selected interpretation changed before this form was retained.');
+  await retainRawSelection(edit);message('Complete proposed form retained. Review the original source, reviewer and reason, then Apply it to the interpretation draft.');
+ }catch(error){message(error.message,true);throw error;}
+ finally{busy=false;controls();}
+}
+function resetGuided(){guided?.destroy();guided=null;guidedCase=null;}
+async function selectGuided(collection,selection,{snapshot=null}={}){
+ if(S.record.draft.rawDirty||ui().rawOverflow)throw new Error('Apply or preserve the current advanced draft before selecting another guided form.');
+ const live=guided?.exportDraft()??ui().guidedDraft;
+ if(live?.dirty&&!confirm('Keep this complete form in retained draft history and open the selected form?')){await render();return;}
+ const next=copy(S);keepGuided(next.ui,live);
+ next.ui.collection=collection;next.ui.guidedSelection=selection;next.ui.guidedDraft=snapshot?copy(snapshot):null;next.ui.itemOffset=0;
+ resetGuided();await commit(next);
+}
+function updateGuided(){
+ if(!S||!work||!$('guided-editor'))return;
+ guidedSync=true;
+ try{
+  const current=ui();
+  if(guidedCase!==S.caseId){resetGuided();guided=createPdfReviewEditor({mount:$('guided-editor'),onDraft:retainGuided,onFormDraft:rememberGuided,onError:error=>message(error.message??String(error),true)});guidedCase=S.caseId;}
+  const rows=work[current.collection]??[],selection=current.guidedSelection??(rows.length?{mode:'existing',id:identity(rows[0])}:null);
+  const retained=current.guidedDraft,existing=guided.exportDraft();
+  if(retained&&existing&&canonical(existing)!==canonical(retained)){
+   resetGuided();guided=createPdfReviewEditor({mount:$('guided-editor'),onDraft:retainGuided,onFormDraft:rememberGuided,onError:error=>message(error.message??String(error),true)});guidedCase=S.caseId;
+  }
+  guided.update({work,collection:current.collection,selection,rawDirty:S.record.draft.rawDirty||Boolean(current.rawOverflow),busy,blocked});
+  if(retained&&canonical(guided.exportDraft())!==canonical(retained))guided.restoreDraft(copy(retained));
+ }catch(error){message(error.message,true);}finally{guidedSync=false;}
 }
 function changed(){generation++;dirty=true;if(timer)clearTimeout(timer);timer=setTimeout(()=>{timer=null;void persist().catch(()=>{});},350);$('save-status').textContent='Unsaved local changes';}
 function capture(){return copy(checkPdfDesk(S));}
@@ -82,7 +131,12 @@ async function adoptDesk(value,{receiving=null}={}){
 async function openSelectedFile(){
  const file=await fileContent($('open-file').files[0]),value=JSON.parse(file.content);
  if(value.schema===PDF_DESK_SCHEMA)return adoptDesk(value,{receiving:file});
- if(value.schema==='stellar-forge.bank-pdf-review-project.v1'){await verifyPdfReviewSources(value.source);manifest=value.source;return adoptDesk(value.desk,{receiving:file});}
+ if(value.schema==='stellar-forge.bank-pdf-review-project.v1'){
+  await verifyPdfReviewSources(value.source);
+  const next=await verifyDesk(value.desk),content=JSON.stringify(value.source)+'\n';
+  pinInput(next,{name:file.name+'.original-source.json',content,bytes:new TextEncoder().encode(content).length,sha256:await digest(content),originalProject:{name:file.name,bytes:file.bytes,sha256:file.sha256}},'received original project source');
+  checkPdfDesk(next);return adoptDesk(next,{receiving:file});
+ }
  if(value.schema===PDF_REVIEW_SCHEMAS.record)return adoptDesk(await wrap(await openPdfReviewRecord(value)),{receiving:file});
  if(value.schema===PDF_REVIEW_SCHEMAS.issue){const issue=await openPdfReviewIssue(value),record=await createPdfReviewRecord(issue,{localId:crypto.randomUUID(),openedAt:new Date().toISOString()});return adoptDesk(await wrap(record,file));}
  throw new Error('Open a complete named issue, review working record or source project. Use “Issue a review” for an original PDF working copy.');
@@ -165,6 +219,9 @@ function renderAuthor(){
 }
 function renderFiles(){
  $('original-files').innerHTML='<div class="row">'+tableButton('Original issued working copy','issued-copy','')+tableButton('Complete original extraction','extraction','')+'</div>'+S.inputs.map((row,i)=>'<div class="card"><strong>'+esc(row.name)+'</strong><p>'+esc(row.role)+' · '+row.bytes+' bytes</p><p class="break quiet">'+row.sha256+'</p>'+tableButton('Download exact original','input',String(i))+'</div>').join('')+S.returns.map((row,i)=>'<div class="card"><strong>'+esc(row.name)+'</strong><p>Original returned file · '+row.bytes+' bytes</p>'+tableButton('Download exact return','return-file',String(i))+'</div>').join('');
+ const guidedRows=ui().guidedDraftHistory??[],guidedOffset=ui().guidedHistoryOffset??0;
+ $('guided-history').innerHTML=guidedRows.slice(guidedOffset,guidedOffset+10).map((row,i)=>'<div class="card"><strong>'+esc(row.collection+' · original revision '+row.baseRevision)+'</strong><p>'+esc(row.selection?.mode+' '+row.selection?.key)+'</p><div class="row">'+tableButton('Download complete form draft','guided-download',String(guidedOffset+i))+tableButton('Reopen this form draft','guided-restore',String(guidedOffset+i))+'</div></div>').join('')||'<p>No earlier guided form drafts have been retained.</p>';
+ $('guided-range').textContent=range(guidedOffset,guidedRows.length,10);
  $('record-summary').textContent=JSON.stringify({reviewId:S.caseId,originalPdf:S.record.issue.source.pdf,issuedRevision:S.record.issue.source.revision,currentAuthorRevision:S.currentWorkingCopy.revision,recipientRevision:work.revision,editions:S.record.editions.map(e=>({id:e.editionId,status:e.status,sha256:e.sha256})),returns:S.returns.map(r=>({name:r.name,bytes:r.bytes,sha256:r.sha256})),decisions:S.decisions.map(r=>r.decision.decisionId),priorCompleteRecords:S.priorRecords.length,receivingObservations:S.receivingObservations},null,2);
 }
 async function render(){
@@ -177,14 +234,6 @@ async function render(){
 async function retainRawSelection(value){
  if(S.record.draft.rawDirty)throw new Error('Apply or discard the current raw edit before selecting another interpretation.');
  const next=copy(S);next.record.draft.raw=JSON.stringify(value,null,2);next.record.draft.rawDirty=true;await commit(next);
-}
-function newValue(){
- const collection=ui().collection,account=work.accounts[0],page=work.extraction.pages[ui().page-1],source={page:page.number,box:[0,0,Math.min(100,page.width),Math.min(20,page.height)],itemIds:[]};
- if(collection==='accounts')return {id:crypto.randomUUID(),name:'',bankId:'',accountId:'',branchId:'',accountType:'CHECKING',currency:'',scale:2,from:'',until:'',note:''};
- if(collection==='regions')return {id:crypto.randomUUID(),accountId:account?.id||'',page:page.number,box:[0,0,page.width,page.height],columns:{date:[0,Math.max(1,page.width*.2)],debit:[page.width*.5,page.width*.7],credit:[page.width*.7,page.width]},dateFormat:'MDY',yearRule:null,amountMode:'DEBIT_CREDIT',decimalSeparator:'.',groupSeparator:',',lineTolerance:2,descriptionContinuation:false,negativeMeans:'DEBIT'};
- if(collection==='rows')return {id:crypto.randomUUID(),accountId:account?.id||'',regionId:null,source,raw:{},decision:'REVIEW',postedDate:'',amount:'',payee:'',memo:'',reference:'',runningBalance:'',note:''};
- if(collection==='balances')return {id:crypto.randomUUID(),accountId:account?.id||'',kind:'OTHER',date:'',amount:'',source,raw:'',selected:false,note:''};
- return {page:page.number,disposition:'MANUAL_REVIEW',note:''};
 }
 async function refreshConflicts({more=false}={}){
  if(!S)return;const page=await store.listConflicts(S.caseId,{after:more?conflictsCursor:null,limit:20});conflictRows=more?conflictRows.concat(page.items):page.items;conflictsCursor=page.nextCursor;
@@ -207,8 +256,9 @@ bind('download-pdf','click',()=>download(S.record.issue.workingCopy.file.name,de
 bind('open-pdf','click',async()=>{await openPdfForCurrent();window.open(pdfUrl+'#page='+ui().page,'_blank','noopener');});
 for(const [id,delta]of[['previous-page',-1],['next-page',1]])bind(id,'click',async()=>{ui().page=Math.max(1,Math.min(work.extraction.pages.length,ui().page+delta));ui().textOffset=0;changed();await render();});
 for(const [id,key,size,total]of[['previous-text','textOffset',-60,()=>work.extraction.pages[ui().page-1].items.length],['next-text','textOffset',60,()=>work.extraction.pages[ui().page-1].items.length],['previous-item','itemOffset',-25,()=>work[ui().collection].length],['next-item','itemOffset',25,()=>work[ui().collection].length],['previous-edition','editionOffset',-20,()=>S.record.editions.length],['next-edition','editionOffset',20,()=>S.record.editions.length],['previous-change','changeOffset',-20,()=>ui().preview?.changes.length||0],['next-change','changeOffset',20,()=>ui().preview?.changes.length||0]])bind(id,'click',async()=>{ui()[key]=Math.max(0,Math.min(Math.max(0,Math.floor((total()-1)/Math.abs(size))*Math.abs(size)),ui()[key]+size));changed();await render();});
-bind('collection','change',async()=>{if(S.record.draft.rawDirty)throw new Error('Apply or discard the raw edit before changing collection.');ui().collection=$('collection').value;ui().itemOffset=0;changed();await render();});
-bind('new-item','click',()=>{const collection=ui().collection,value=newValue();return retainRawSelection({action:actions[collection],value:collection==='rows'?[value]:value});});
+for(const [id,delta]of[['previous-guided',-10],['next-guided',10]])bind(id,'click',async()=>{const n=ui().guidedDraftHistory?.length??0;ui().guidedHistoryOffset=Math.max(0,Math.min(Math.max(0,Math.floor((n-1)/10)*10),(ui().guidedHistoryOffset??0)+delta));changed();await render();});
+bind('collection','change',async()=>selectGuided($('collection').value,null));
+bind('new-item','click',async()=>selectGuided(ui().collection,{mode:'new',key:crypto.randomUUID()}));
 bind('interpretation-form','submit',async()=>{
  if(ui().rawOverflow)throw new Error('The complete raw edit exceeds 256 KiB. Keep its full text in the working record, then reduce this edit before applying.');
  if(!S.record.draft.rawDirty)throw new Error('Select or write a complete interpretation edit.');
@@ -218,7 +268,7 @@ bind('interpretation-form','submit',async()=>{
 bind('discard-raw','click',async()=>{if(!confirm('Discard only this unapplied text? Saved interpretations and editions remain.'))return;const next=copy(S);next.record.draft.raw='';next.record.draft.rawDirty=false;delete next.ui.rawOverflow;await commit(next);});
 bind('download-recipient-copy','click',()=>download('pdf-recipient-'+S.caseId+'.working-copy.json',work));
 bind('receive-recipient','click',async()=>{const file=await fileContent($('recipient-file').files[0],PDF_LIMITS.transferBytes),next=copy(S);next.record=await receivePdfWorkingCopy(next.record,file.content,{reviewer:$('reviewer').value,comment:next.record.draft.comment});pinInput(next,file,'recipient progressed working copy');await commit(next);message('Complete progressed interpretation received with original source and history.');});
-bind('edition-form','submit',async()=>{const next=copy(S);next.record=await savePdfReviewEdition(next.record,{editionId:crypto.randomUUID(),status:$('edition-status').value,reviewer:$('edition-reviewer').value,comment:$('edition-comment').value,createdAt:new Date().toISOString(),expectedEditionSha256:next.record.editions.at(-1)?.sha256??null});await commit(next);message('Complete immutable '+next.record.editions.at(-1).status+' edition retained.');});
+bind('edition-form','submit',async()=>{if(ui().guidedDraft?.dirty||guided?.hasUnretainedChanges())throw new Error('Retain and apply the active guided form, or explicitly preserve/discard it, before saving a recipient edition. The complete form remains in this working record.');const next=copy(S);next.record=await savePdfReviewEdition(next.record,{editionId:crypto.randomUUID(),status:$('edition-status').value,reviewer:$('edition-reviewer').value,comment:$('edition-comment').value,createdAt:new Date().toISOString(),expectedEditionSha256:next.record.editions.at(-1)?.sha256??null});await commit(next);message('Complete immutable '+next.record.editions.at(-1).status+' edition retained.');});
 bind('receive-return','click',async()=>{const file=await fileContent($('return-file').files[0],PDF_REVIEW_LIMITS.transferBytes),returned=await openPdfReviewReturn(file.content,{issue:S.record.issue}),next=copy(S);if(!next.returns.some(r=>r.sha256===file.sha256))next.returns.push({...file,returnSha256:returned.sha256,editionId:returned.editionId});next.ui.selectedReturn=file.sha256;next.ui.preview=null;next.ui.choices={};await commit(next);message('Exact original returned bytes retained. Select the author’s current copy and compare.');});
 bind('receive-current','click',async()=>{const file=await fileContent($('current-file').files[0],PDF_LIMITS.transferBytes),current=await validatePdfReviewCurrent(S.record.issue,file.content),next=copy(S);next.currentWorkingCopy=current;pinInput(next,file,'selected current author working copy');next.ui.preview=null;next.ui.choices={};await commit(next);message('Author current working copy selected. Its original source and interpretation ancestry match.');});
 bind('selected-return','change',async()=>{ui().selectedReturn=$('selected-return').value;ui().preview=null;ui().choices={};changed();await render();});
@@ -235,12 +285,19 @@ $('changes').addEventListener('change',e=>{if(e.target.dataset.choice&&!busy&&!b
 document.addEventListener('click',e=>{
  const button=e.target.closest('button[data-action]');if(!button)return;e.preventDefault();const action=button.dataset.action,id=button.dataset.id;
  void perform(async()=>{
-  if(action==='edit'){const collection=ui().collection,row=work[collection].find(v=>identity(v)===id);return retainRawSelection({action:actions[collection],value:collection==='rows'?[row]:row});}
+  if(action==='edit'){await selectGuided(ui().collection,{mode:'existing',id});$('guided-editor').scrollIntoView({block:'nearest'});return;}
   if(action==='edition-copy')return download('pdf-edition-'+id+'.working-copy.json',await pdfReviewWorkingCopy(S.record,{editionId:id}));
   if(action==='edition-return')return download('pdf-review-'+S.caseId+'-'+id+'.return.json',pdfReviewTransfer(await exportPdfReviewReturn(S.record,{editionId:id})));
   if(action==='decision')return download('pdf-decision-'+S.decisions[Number(id)].decision.decisionId+'.json',S.decisions[Number(id)].decision);
   if(action==='decision-copy')return download('pdf-decided-'+S.decisions[Number(id)].decision.decisionId+'.working-copy.json',S.decisions[Number(id)].workingCopy);
   if(action==='decision-current'){const row=S.decisions[Number(id)];if(!confirm('Select this retained result as the author’s current interpretation for the next comparison?'))return;const next=copy(S);next.currentWorkingCopy=copy(row.workingCopy);next.ui.preview=null;next.ui.choices={};await commit(next);return;}
+  if(action==='guided-download')return download('pdf-guided-form-'+id+'.json',ui().guidedDraftHistory[Number(id)]);
+  if(action==='guided-restore'){
+   if(S.record.draft.rawDirty||ui().rawOverflow)throw new Error('Apply or preserve the current raw edit before restoring another form.');
+   const original=ui().guidedDraftHistory[Number(id)];if(!original)throw new Error('The retained complete guided form is unavailable.');
+   if(!confirm('Reopen this retained form for review, preserving the current complete form in history? Stale source revisions remain blocked.'))return;
+   ui().tab='source';await selectGuided(original.collection,guidedSelection(original),{snapshot:original});return;
+  }
   if(action==='input'){const row=S.inputs[Number(id)];return download(row.name,row.content);}
   if(action==='return-file'){const row=S.returns[Number(id)];return download(row.name,row.content);}
   if(action==='issued-copy')return download('pdf-issued-'+S.caseId+'.working-copy.json',S.record.issue.workingCopy);

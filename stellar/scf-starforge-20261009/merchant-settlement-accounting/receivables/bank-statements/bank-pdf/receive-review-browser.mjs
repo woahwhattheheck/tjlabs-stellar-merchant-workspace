@@ -102,6 +102,9 @@ export async function receiveBankPdfNamedReviewBrowser({
   return checkedDesk(await fs.readFile(await item.path(),'utf8'),issue);
  };
  const screenshot=async name=>{
+  if(await page.locator('[data-panel="source"]').isVisible()){
+   await page.waitForFunction(selected=>{const d=document.querySelector('#page-display'),label=document.querySelector('#page-label')?.textContent??'',number=label.match(/^Page (\d+) of /)?.[1];return d?.getAttribute('aria-busy')==='false'&&d.dataset.renderPage===number&&d.dataset.renderCase===selected.caseId&&d.dataset.renderSource===selected.sha256&&(d.dataset.renderState==='complete'||globalThis.__PDF_REVIEW_OFFLINE&&d.dataset.renderState==='browser-viewer');},{caseId:issue.reviewId,sha256:issue.source.pdf.sha256},{timeout:180000});
+  }
   const file=path.join(attemptRoot,name+'.png');await page.screenshot({path:file,fullPage:true});const bytes=await fs.readFile(file);
   const pin={file,bytes:bytes.length,sha256:sha(bytes)};journal.screenshots.push(pin);await save();return pin;
  };
@@ -139,9 +142,34 @@ export async function receiveBankPdfNamedReviewBrowser({
   }
   const opened=await observe();need(opened.record.issue.sha256===issue.sha256,'The current page is not the original issued review.');
   if(!journal.phases.length)await stage('issue-open',desk=>desk.record.issue.sha256===issue.sha256,async()=>{});
+  // Exercise the guided path with the exact existing account, without adding a
+  // financial fact or applying an extra model edit. Preserve the form and its
+  // retained advanced draft before continuing the explicitly supplied proposal.
+  const guidedAccount=issue.workingCopy.accounts[0];
+  if(guidedAccount){
+   const guidedRaw=JSON.stringify({action:'ACCOUNT',value:guidedAccount},null,2);
+   const guidedDraftMatches=d=>d.ui?.guidedDraft?.collection==='accounts'&&d.ui.guidedDraft.baseRevision===issue.workingCopy.revision&&canonical(d.ui.guidedDraft.value)===canonical(guidedAccount)&&d.ui.guidedDraft.dirty;
+   await stage('recipient-guided-form',guidedDraftMatches,async()=>{
+    await tab('source');await page.locator('#collection').selectOption('accounts');await idle();
+    while((await observe()).ui.itemOffset>0){await page.locator('#previous-item').click();await idle();}
+    const editButtons=page.locator('[data-action="edit"]'),editIndex=await editButtons.evaluateAll((nodes,id)=>nodes.findIndex(node=>node.dataset.id===id),guidedAccount.id);
+    need(editIndex>=0,'The original guided account edit button is unavailable.');await editButtons.nth(editIndex).click();await idle();
+    await page.locator('#guided-editor [data-focus="Account name"]').fill(guidedAccount.name);
+    await page.locator('#guided-editor [data-focus="Account interpretation note"]').fill(guidedAccount.note);
+    await tab('editions');await tab('source');await page.reload({waitUntil:'domcontentloaded'});await idle();await clean();
+    await screenshot('guided-account-reopened');
+   });
+   const retainedGuided=d=>d.record.draft.rawDirty&&d.record.draft.raw===guidedRaw&&(d.ui?.guidedDraftHistory??[]).some(x=>x.collection==='accounts'&&canonical(x.value)===canonical(guidedAccount));
+   await stage('recipient-guided-retained',retainedGuided,async()=>{
+    await tab('source');await page.locator('#guided-editor [data-focus="retain-edit"]').click();await idle();await tab('editions');await tab('source');
+   });
+   await stage('recipient-guided-preserved',d=>!d.record.draft.rawDirty&&(d.ui?.guidedDraftHistory??[]).some(x=>x.collection==='accounts'&&canonical(x.value)===canonical(guidedAccount)),async()=>{
+    await tab('source');await page.locator('#discard-raw').click();await idle();
+   });
+  }
   const rawEdit=JSON.stringify({action:proposal.action,value:proposal.value},null,2);
   await stage('recipient-raw-draft',d=>d.record.draft.raw===rawEdit&&d.record.draft.rawDirty&&d.record.draft.reviewer===proposal.actor&&d.ui.editReason===proposal.reason,async()=>{
-   await tab('source');await page.locator('#reviewer').fill(proposal.actor);await page.locator('#edit-reason').fill(proposal.reason);await page.locator('#raw-edit').fill(rawEdit);
+   await tab('source');await page.locator('#advanced-edit').evaluate(element=>{element.open=true;});await page.locator('#reviewer').fill(proposal.actor);await page.locator('#edit-reason').fill(proposal.reason);await page.locator('#raw-edit').fill(rawEdit);
    // A normal tab operation drains coalesced fields before reloading the same case.
    await tab('editions');await tab('source');await page.reload({waitUntil:'domcontentloaded'});await idle();await clean();
   });
@@ -194,7 +222,7 @@ export async function receiveBankPdfNamedReviewBrowser({
   for(const name of ['source','editions','author','recovery']){await tab(name);await screenshot('review-'+name+'-desktop');}
   await page.setViewportSize({width:390,height:844});
   for(const name of ['source','editions','author','recovery']){await tab(name);need(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'The narrow review desk overflows.');await screenshot('review-'+name+'-390');}
-  await download('#download-pdf',attemptPrefix+'complete-original.pdf');
+  await tab('source');await download('#download-pdf',attemptPrefix+'complete-original.pdf');
   const finalRecord=await snapshot(attemptPrefix+'complete-review.working.json'),html=await download('#download-html',attemptPrefix+'complete-offline-review.html'),project=await download('#download-project',attemptPrefix+'complete-source-project.json');
   need(canonical(JSON.parse(project.content).desk)===canonical(finalRecord.desk),'The complete project differs from the exact current working record.');
   const offlinePage=await context.newPage();pages.push(offlinePage);offlinePage.on('pageerror',error=>journal.errors.push({attemptId,message:String(error)}));offlinePage.on('dialog',dialog=>dialog.accept());await offlinePage.goto(pathToFileURL(html.file).href,{waitUntil:'domcontentloaded'});

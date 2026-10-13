@@ -134,6 +134,20 @@
         "REVIEW.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/bank-statements/pdf/review-editor.mjs",
+      [
+        "review-editor.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/pdf/review-editor.css",
+      [
+        "review-editor.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }
