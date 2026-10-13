@@ -20,7 +20,11 @@ const hashId=value=>{need(typeof value==='string'&&/^[a-f0-9]{64}$/.test(value),
 const inside=(child,parent)=>child===parent||child.startsWith(parent+sep);
 const failure=error=>({code:error.code??'WORKSPACE_BACKUP_FAILED',message:String(error.message??error).slice(0,4000)});
 async function directory(path){
-  try{await mkdir(path,{mode:0o700});}catch(error){if(error.code!=='EEXIST')throw error;}
+  try{
+    await mkdir(path,{mode:0o700});
+    const parent=await open(dirname(path),constants.O_RDONLY|constants.O_DIRECTORY|constants.O_NOFOLLOW);
+    try{await parent.sync();}finally{await parent.close();}
+  }catch(error){if(error.code!=='EEXIST')throw error;}
   return privateDirectory(path);
 }
 async function boundedJSON(path,optional=false){

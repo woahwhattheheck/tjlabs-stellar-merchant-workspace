@@ -46,7 +46,8 @@ def private(path):
 def make_private(path):
     path = absolute(str(path))
     require(path.parent.resolve() == path.parent, "WORKSPACE_BACKUP_PARENT", "Use a real destination parent.")
-    try: path.mkdir(mode=0o700)
+    try:
+        path.mkdir(mode=0o700); fsync_directory(path.parent)
     except FileExistsError: pass
     return private(path)
 
@@ -663,7 +664,8 @@ def restore_under_ancestors(params):
         for name, row in sorted(rows.items(), key=lambda pair: (pair[0].count("/"), pair[0])):
             if row["kind"] != "directory": continue
             path = target / name
-            try: path.mkdir(mode=0o700)
+            try:
+                path.mkdir(mode=0o700); fsync_directory(path.parent)
             except FileExistsError:
                 require(stat.S_ISDIR(path.lstat().st_mode) and not path.is_symlink(), "WORKSPACE_BACKUP_DESTINATION_CHANGED", "A retained directory changed.")
         received_count = 0
@@ -683,7 +685,13 @@ def restore_under_ancestors(params):
                     require(path.is_symlink() and os.readlink(path) == row["target"], "WORKSPACE_BACKUP_DESTINATION_CHANGED", "Keep the original retained link.")
                 else: os.symlink(row["target"], path); fsync_directory(path.parent)
         for name, row in sorted(rows.items(), key=lambda pair: -pair[0].count("/")):
-            if row["kind"] == "directory": os.chmod(target / name, row["mode"], follow_symlinks=False)
+            if row["kind"] == "directory":
+                # Open while the temporary receiving mode still permits access.
+                # Sync the inode after applying the original mode, including 0000.
+                descriptor = os.open(target / name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                try:
+                    os.fchmod(descriptor, row["mode"]); os.fsync(descriptor)
+                finally: os.close(descriptor)
         require(config_for(target) == manifest["workspace"], "WORKSPACE_BACKUP_IDENTITY", "Restore the original workspace configuration unchanged.")
         verify_restored(target, rows, complete=True)
         completed = marker_for(params, manifest, "BINDINGS_REVIEW_REQUIRED")
