@@ -119,7 +119,7 @@ async function checkReceipt() {
   finally { recovering = false; lock(); }
 }
 async function mutate(path, body, label, file = null) {
-  if (pending || busy) return;
+  if (pending || busy || operatingBusy) return;
   busy = true; lock(); notice('');
   try {
     const requestId = uuid(), payload = { ...clone(body), requestId };
