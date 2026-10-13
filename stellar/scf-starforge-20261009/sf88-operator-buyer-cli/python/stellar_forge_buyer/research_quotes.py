@@ -24,9 +24,10 @@ if TYPE_CHECKING:
         QuoteOperatorResult, QuoteExportResult, QuoteConfiguration, QuoteOperation,
     )
 
-KINDS = ("CASE", "BRIEF", "RESPONSE", "PUBLICATION", "REALIZED")
+KINDS = ("CASE", "CASE_TRANSFER", "BRIEF", "RESPONSE", "PUBLICATION", "REALIZED")
 COMMANDS = ("create-case", "native-case", "pricing", "prepare", "apply",
-            "prepare-response", "prepare-publication", "enroll-publication", "prepare-report")
+            "prepare-response", "prepare-publication", "enroll-publication", "prepare-report",
+            "prepare-case-transfer", "apply-case-transfer")
 CASE_ACTIONS = (
     "preview", "save-draft", "publish", "receive", "receive-pricing", "compare",
     "preview-implementation", "adopt-implementation", "receiving-status",
@@ -53,6 +54,9 @@ _COPY = "sf88-research-quotes-python-export-copy/v1"
 _DOWNLOAD = "sf88-research-quotes-python-download/v1"
 _INPUT_LIMIT = 96 * 1024 * 1024 + 65536
 _FILE_LIMIT = 256 * 1024 * 1024
+# Original SF74 MAX_HANDOFF_BYTES plus the native 65,536-byte transfer envelope.
+# Ordinary quotation and operation-file bounds stay selected separately.
+_CASE_TRANSFER_LIMIT = 602962240
 _CONTROL_LIMIT = 1024 * 1024
 _HASH = re.compile(r"[a-f0-9]{64}")
 _WORKSPACE = re.compile(r"research_[a-f0-9]{64}")
@@ -98,21 +102,25 @@ def _object(body):
     return value
 
 
-def _input_bytes(value):
+def _input_maximum(command=None):
+    return _CASE_TRANSFER_LIMIT if command == "prepare-case-transfer" else _INPUT_LIMIT
+
+
+def _input_bytes(value, maximum=_INPUT_LIMIT):
     body = _json(value)
-    _need(0 < len(body) <= _INPUT_LIMIT, "RESEARCH_QUOTE_REQUEST_TOO_LARGE")
+    _need(0 < len(body) <= maximum, "RESEARCH_QUOTE_REQUEST_TOO_LARGE")
     _object(body)
     return body
 
 
 def _retain(path, body):
     if path.exists() or path.is_symlink():
-        _need(read(path, max(_INPUT_LIMIT, _FILE_LIMIT)) == body, "RESEARCH_QUOTE_RETAINED_INPUT_CHANGED")
+        _need(read(path, max(_INPUT_LIMIT, _FILE_LIMIT, _CASE_TRANSFER_LIMIT)) == body, "RESEARCH_QUOTE_RETAINED_INPUT_CHANGED")
     else:
         write(path, body, exclusive=True)
 
 
-def _retained_input(directory, *, value=None, source=None, expected_sha256=None):
+def _retained_input(directory, *, value=None, source=None, expected_sha256=None, maximum=_INPUT_LIMIT):
     """Keep the first complete raw input before the original call can dispatch."""
     root = private_directory(directory)
     if expected_sha256 is not None:
@@ -122,21 +130,21 @@ def _retained_input(directory, *, value=None, source=None, expected_sha256=None)
         path, metadata_path = root / "input.json", root / "source.json"
         prior = parse(read(metadata_path, 65536)) if metadata_path.exists() else None
         if path.exists() or path.is_symlink():
-            body = read(path, _INPUT_LIMIT)
+            body = read(path, maximum)
             if value is not None:
-                _need(_input_bytes(value) == body, "RESEARCH_QUOTE_RETAINED_INPUT_CHANGED")
+                _need(_input_bytes(value, maximum) == body, "RESEARCH_QUOTE_RETAINED_INPUT_CHANGED")
             if source is not None:
                 selected = Path(source).expanduser().absolute()
                 if selected.exists() or selected.is_symlink():
-                    _need(read(selected, _INPUT_LIMIT) == body, "RESEARCH_QUOTE_RETAINED_INPUT_CHANGED")
+                    _need(read(selected, maximum) == body, "RESEARCH_QUOTE_RETAINED_INPUT_CHANGED")
         else:
             _need(prior is None, "RESEARCH_QUOTE_RETAINED_INPUT_MISSING")
             if source is not None:
-                body = read(Path(source).expanduser().absolute(), _INPUT_LIMIT)
+                body = read(Path(source).expanduser().absolute(), maximum)
             else:
                 _need(value is not None, "RESEARCH_QUOTE_INPUT_REQUIRED")
-                body = _input_bytes(value)
-        _need(0 < len(body) <= _INPUT_LIMIT, "RESEARCH_QUOTE_REQUEST_TOO_LARGE")
+                body = _input_bytes(value, maximum)
+        _need(0 < len(body) <= maximum, "RESEARCH_QUOTE_REQUEST_TOO_LARGE")
         native = _object(body)
         sha256 = digest(body)
         _need(expected_sha256 is None or sha256 == expected_sha256, "RESEARCH_QUOTE_RETAINED_INPUT_CHANGED")
@@ -155,29 +163,35 @@ def _verify_selected_input(selected):
     _need(isinstance(value, dict), "RESEARCH_QUOTE_RETAINED_INPUT_CHANGED")
     if "inputFile" not in value:
         return
+    maximum = _input_maximum(value.get("command"))
     path = value.get("inputFile")
     _need(isinstance(path, str) and Path(path).is_absolute() and
-          type(value.get("inputBytes")) is int and 0 < value["inputBytes"] <= _INPUT_LIMIT,
+          type(value.get("inputBytes")) is int and 0 < value["inputBytes"] <= maximum,
           "RESEARCH_QUOTE_RETAINED_INPUT_CHANGED")
-    body = read(Path(path), _INPUT_LIMIT)
+    body = read(Path(path), maximum)
     _need(len(body) == value["inputBytes"] and digest(body) == _hash(value.get("inputSha256")),
           "RESEARCH_QUOTE_RETAINED_INPUT_CHANGED")
     _object(body)
 
 
-def _retained_file(value):
+def _retained_file(value, maximum=_FILE_LIMIT):
     _need(isinstance(value, dict) and isinstance(value.get("path"), str),
           "RESEARCH_QUOTE_FILE_REQUIRED")
-    return _file_delivery({**value, "file": value["path"]})
+    return _file_delivery({**value, "file": value["path"]}, maximum=maximum)
 
 
-def _file_descriptor(value):
+def _file_descriptor(value, maximum=_FILE_LIMIT):
     _need(isinstance(value, dict) and isinstance(value.get("name"), str) and
           _NAME.fullmatch(value["name"]) and type(value.get("bytes")) is int and
-          0 <= value["bytes"] <= _FILE_LIMIT and isinstance(value.get("contentType"), str),
+          0 <= value["bytes"] <= maximum and isinstance(value.get("contentType"), str),
           "RESEARCH_QUOTE_EXPORT_FILE_CHANGED")
     _hash(value.get("sha256"))
     return value
+
+
+def _export_maximum(value):
+    return (_CASE_TRANSFER_LIMIT if value.get("request", {}).get("kind") == "case" and
+            value.get("selection", {}).get("original", {}).get("kind") == "CASE_RECORD" else _FILE_LIMIT)
 
 
 class ResearchQuoteExport:
@@ -198,13 +212,14 @@ class ResearchQuoteExport:
               isinstance(files, list) and len(files) <= 103 and
               len(files) == len(selected["files"]), "RESEARCH_QUOTE_EXPORT_FILES_CHANGED")
         self._files = {}
+        self._maximum = _export_maximum(self._record)
         for expected, file in zip(selected["files"], files):
-            _file_descriptor(expected)
+            _file_descriptor(expected, self._maximum)
             _need(isinstance(file, dict) and
                   {key: item for key, item in file.items() if key != "path"} == expected and
                   file.get("path") == str(self.directory / "files" / expected["name"]) and
                   expected["name"] not in self._files, "RESEARCH_QUOTE_EXPORT_FILES_CHANGED")
-            self._files[expected["name"]] = _retained_file(file)
+            self._files[expected["name"]] = _retained_file(file, self._maximum)
         self.verify()
 
     @property
@@ -261,13 +276,14 @@ class ResearchQuoteBundle:
         _need(prior == {**manifest, "schema": "sf88-research-quote-export-copy/v1"},
               "RESEARCH_QUOTE_BUNDLE_SELECTION_CHANGED")
         self._files = {}
+        self._maximum = _export_maximum(manifest)
         for item in manifest["files"]:
-            _file_descriptor(item)
+            _file_descriptor(item, self._maximum)
             _need(item["name"] not in self._files and
                   item["name"] not in {"quote-export.json", "quote-export-selection.json"},
                   "RESEARCH_QUOTE_BUNDLE_FILES_CHANGED")
             self._files[item["name"]] = _retained_file({
-                **item, "path": str(self.directory / item["name"])})
+                **item, "path": str(self.directory / item["name"])}, self._maximum)
         self._record, self._manifest = value, manifest
         self.verify()
 
@@ -316,6 +332,9 @@ class ResearchQuoteBundle:
 
 class ResearchQuotes:
     """Complete quotations on the existing, retained ResearchWorkspace client."""
+    _writes = _WRITES
+    _local = _LOCAL
+
     def __init__(self, workspace: ResearchWorkspace):
         self.workspace = workspace
 
@@ -336,7 +355,7 @@ class ResearchQuotes:
               body.get("workspaceId") == descriptor.get("workspaceId") and "result" in body,
               "RESEARCH_QUOTES_PYTHON_RESPONSE_CHANGED")
         identity = body.get("workspaceId")
-        if action in _LOCAL:
+        if action in self._local:
             _need(identity is None, "RESEARCH_LOCAL_WORKSPACE_CHANGED")
         else:
             _need(isinstance(identity, str) and
@@ -351,7 +370,7 @@ class ResearchQuotes:
 
     def _read(self, action, value=None, *, native_input=None, cancel_event=None, _owned_event=None):
         value = _snapshot(value or {})
-        local = action in _LOCAL
+        local = action in self._local
         with self.workspace._operation(cancel_event, owned_event=_owned_event) as event:
             with tempfile.TemporaryDirectory(prefix=".quotes-read-", dir=self.workspace.directory) as temporary:
                 root = Path(temporary).resolve()
@@ -364,10 +383,10 @@ class ResearchQuotes:
                 return self._decode(descriptor, action, selected, expected)
 
     def _write(self, action, value, *, call_id, resume=False, cancel_event=None, _owned_event=None):
-        _need(action in _WRITES, "RESEARCH_QUOTES_ACTION_INVALID")
+        _need(action in self._writes, "RESEARCH_QUOTES_ACTION_INVALID")
         value = _snapshot(value)
         _need(len(_json(value)) <= _CONTROL_LIMIT, "RESEARCH_QUOTES_PYTHON_CONTROL_TOO_LARGE")
-        local = action in _LOCAL
+        local = action in self._local
         with self.workspace._operation(cancel_event, owned_event=_owned_event) as event:
             if self.workspace.workspace_id is None and not local:
                 self.workspace._read("status", _owned_event=event)
@@ -474,7 +493,8 @@ class ResearchQuotes:
             call_id = "quotes-" + command + ":" + _id(native_id)
         with self.workspace._operation(cancel_event) as event:
             root = self.workspace._directory_for_call(_request_id(call_id), create=True)
-            selected, _ = _retained_input(root / "quote-input", value=captured)
+            selected, _ = _retained_input(root / "quote-input", value=captured,
+                                           maximum=_input_maximum(command))
             selected["command"] = command
             for key, item in (("caseId", case_id), ("action", action), ("profile", profile)):
                 if item is not None:
@@ -493,7 +513,8 @@ class ResearchQuotes:
         with self.workspace._operation(cancel_event) as event:
             root = self.workspace._directory_for_call(_request_id(call_id), create=True)
             selected, _ = _retained_input(root / "quote-input", source=source,
-                                         expected_sha256=expected_input_sha256)
+                                         expected_sha256=expected_input_sha256,
+                                         maximum=_input_maximum(command))
             selected["command"] = command
             for key, item in (("caseId", case_id), ("action", action), ("profile", profile)):
                 if item is not None:
@@ -502,6 +523,18 @@ class ResearchQuotes:
 
     def create_case(self, value: QuoteCaseSelection, **options) -> QuoteOperatorResult:
         return self.submit("create-case", value, **options)
+
+    def prepare_case_transfer(self, value, **options) -> QuoteOperatorResult:
+        """Review the full CASE_RECORD while the native operation retains its compact source identity."""
+        return self.submit("prepare-case-transfer", value, **options)
+
+    def apply_case_transfer(self, value: QuoteApplySelection, **options) -> QuoteOperatorResult:
+        return self.submit("apply-case-transfer", value, **options)
+
+    def programmes(self):
+        """One original native programme, complete package and receiving operation."""
+        from .research_quote_programmes import ResearchQuoteProgrammes
+        return ResearchQuoteProgrammes(self.workspace)
 
     def prepare(self, value: QuoteBriefSelection, **options) -> QuoteOperatorResult:
         return self.submit("prepare", value, **options)
@@ -547,7 +580,7 @@ class ResearchQuotes:
         if expected_sha256 is not None:
             _hash(expected_sha256)
         if expected_bytes is not None:
-            _need(type(expected_bytes) is int and 0 <= expected_bytes <= _FILE_LIMIT,
+            _need(type(expected_bytes) is int and 0 <= expected_bytes <= _CASE_TRANSFER_LIMIT,
                   "RESEARCH_QUOTE_FILE_SIZE_INVALID")
         with self.workspace._operation(cancel_event) as event:
             root = self.workspace._directory_for_call(_request_id(call_id), create=True)
@@ -599,7 +632,7 @@ class ResearchQuotes:
         """Read and verify the first complete reply without contacting a host."""
         saved = self.workspace.call_record(_request_id(call_id))
         request, record = saved["request"], saved.get("result")
-        _need(request.get("action") in _WRITES and request.get("replaySafe") is True,
+        _need(request.get("action") in self._writes and request.get("replaySafe") is True,
               "RESEARCH_QUOTE_SAVED_CALL_REQUIRED")
         if not record:
             return {"request": deepcopy(request), "attempts": saved["attempts"], "completed": False}
@@ -615,7 +648,7 @@ class ResearchQuotes:
     def recover(self, call_id, *, cancel_event=None):
         """Continue the same recorded action and complete original input."""
         saved = self.workspace.call_record(_request_id(call_id))["request"]
-        _need(saved.get("action") in _WRITES and saved.get("replaySafe") is True,
+        _need(saved.get("action") in self._writes and saved.get("replaySafe") is True,
               "RESEARCH_QUOTE_SAVED_CALL_REQUIRED")
         with self.workspace._operation(cancel_event) as event:
             descriptor = self.workspace._write_call(saved["action"], saved["input"],
@@ -649,7 +682,7 @@ class ResearchQuotes:
     def inspect_run(self, call_id, *, cancel_event=None):
         """Read the original native request, attempts, selection and complete files."""
         original = self.workspace.call_record(_request_id(call_id))["request"]
-        _need(original.get("action") in _WRITES - {"quotes-copy-export", "quotes-download"},
+        _need(original.get("action") in self._writes - {"quotes-copy-export", "quotes-download"},
               "RESEARCH_QUOTE_OPERATOR_CALL_REQUIRED")
         return self._read("quotes-run-inspect", {"directory": original["input"]["directory"]},
                           cancel_event=cancel_event)

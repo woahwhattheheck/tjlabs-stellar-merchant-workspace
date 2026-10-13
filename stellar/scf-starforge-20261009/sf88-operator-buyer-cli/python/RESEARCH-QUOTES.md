@@ -9,6 +9,24 @@ The same client also receives every selected operation file, keeps exact
 requests across interruption, and copies a complete quotation export into a
 directory that can be reopened using Python alone.
 
+## Retain and receive an entire quotation programme
+
+The [complete Python programme workflow](RESEARCH-QUOTE-PROGRAMMES.md) carries
+the selected case, original steps, all quotation files, frozen customer reports,
+editable dossier history and original paid-publication files in one portable
+handover. `ResearchWorkspace.quote_programmes()` calls the maintained native
+programme, package and receiving engines. A receiving review prepares the exact
+original case transfer before the case and customer dossier are saved through
+their existing writers. Saved work can be reopened from its original directory.
+
+The direct quotation client also supports `prepare_case_transfer(...)` and
+`apply_case_transfer(...)`. Preparation receives a complete original
+`sf88-research-case-transfer/v1` packet; its operation records the compact
+source workspace/case/revision and source SHA beside the full retained input.
+Use `export_case(..., {"kind": "CASE_RECORD", "revision": selected_revision}, ...)`
+to receive that exact source edition. Commercial and service histories remain
+with the original case.
+
 ## Start with the installed Research workspace
 
 Install this Python package from the complete Stellar Forge source or the
@@ -134,7 +152,11 @@ The original quote input budget is 96 MiB plus 65,536 bytes. Complete raw
 commercial backups and pricing inputs therefore remain file-backed. The small
 Python-to-Node request carries their path and exact metadata. Complete native
 replies are retained in a separate response file; stdout carries its descriptor.
-Each streamed quotation file retains the original 256 MiB maximum.
+Ordinary streamed quotation files retain the original 256 MiB maximum. A
+selected `CASE_RECORD` and `prepare-case-transfer` input instead use the native
+602,962,240-byte bound derived from the original SF74 handoff limit. The complete
+case stays in its retained file; the small native operation request preserves
+its source identity. Other quotation requests keep their original budget.
 
 JSON duplicate keys and non-finite numbers are rejected. Integers outside
 JavaScript's exact safe-integer range must be represented according to the

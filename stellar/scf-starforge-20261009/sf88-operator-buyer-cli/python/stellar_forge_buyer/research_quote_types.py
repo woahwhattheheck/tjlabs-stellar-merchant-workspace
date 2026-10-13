@@ -4,11 +4,12 @@ from typing import Any, Literal, TypeAlias, TypedDict
 
 QuoteJson: TypeAlias = None | bool | int | float | str | list["QuoteJson"] | dict[str, "QuoteJson"]
 QuoteObject: TypeAlias = dict[str, QuoteJson]
-QuoteKind: TypeAlias = Literal["CASE", "BRIEF", "RESPONSE", "PUBLICATION", "REALIZED"]
+QuoteKind: TypeAlias = Literal["CASE", "CASE_TRANSFER", "BRIEF", "RESPONSE", "PUBLICATION", "REALIZED"]
 QuoteStatus: TypeAlias = Literal["PREPARING", "REVIEWED", "COMPLETE"]
 QuoteCommand: TypeAlias = Literal[
     "create-case", "native-case", "pricing", "prepare", "apply", "prepare-response",
     "prepare-publication", "enroll-publication", "prepare-report",
+    "prepare-case-transfer", "apply-case-transfer",
 ]
 QuoteCaseAction: TypeAlias = Literal[
     "preview", "save-draft", "publish", "receive", "receive-pricing", "compare",
@@ -117,9 +118,38 @@ class QuoteApplySelection(TypedDict):
     reviewSha256: str
 
 
+class QuoteCaseTransferSource(TypedDict):
+    workspaceId: str
+    casesWorkspaceId: str
+    caseId: str
+    revision: str
+
+
+class QuoteCaseTransferPacket(TypedDict):
+    schema: Literal["sf88-research-case-transfer/v1"]
+    source: QuoteCaseTransferSource
+    case: QuoteObject
+    sha256: str
+
+
+class QuoteCaseTransferSelection(TypedDict):
+    requestId: str
+    caseId: str
+    expectedRevision: str | None
+    source: QuoteCaseTransferPacket
+
+
+class QuoteCaseTransferRequest(TypedDict):
+    requestId: str
+    caseId: str
+    expectedRevision: str | None
+    source: QuoteCaseTransferSource
+    sourceSha256: str
+
+
 QuoteSelection: TypeAlias = (
     QuoteCaseSelection | QuoteBriefSelection | QuoteResponseSelection |
-    QuotePublicationSelection | QuoteReportSelection | QuoteApplySelection
+    QuotePublicationSelection | QuoteReportSelection | QuoteApplySelection | QuoteCaseTransferSelection
 )
 
 
