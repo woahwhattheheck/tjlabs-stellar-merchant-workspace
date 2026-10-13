@@ -1,0 +1,11 @@
+// MIT. Lazy source-owned Harbour contribution to the original merchant tool host.
+import {defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA} from '../../stellar-forge/mcp-merchant-operator/provider-contract.mjs';
+import {harbourTools} from './agent-tools.mjs';
+export default defineMerchantProvider({
+ schema:MERCHANT_PROVIDER_SCHEMA,id:'harbour-source',family:'harbourSource',title:'Harbour source, operating evidence and supplier receiving',order:1096,catalogOrder:1096,
+ configKey:'harbourSource',summary:true,dependencies:[],concurrency:'provider',concurrentTools:[],shutdown:'provider',maxRequestBytes:1024*1024,
+ configuration:{input:'harbourSourceConnection',privateExports:true,read:async(value,{hostPath})=>(await import('./agent-client.mjs')).readHarbourConfiguration(hostPath(value))},
+ tools:harbourTools,load:()=>import('./agent-merchant.mjs'),create:(module,config)=>new module.MerchantHarbourSource(config),
+ initialize:async options=>(await import('./agent-setup.mjs')).initializeHarbourMerchant(options),
+ instructions:[{prefix:'merchant_harbour_source_',order:1096,text:'Use configured complete original files and the exact observed workspace revision/head. Preserve exact source keys, neutral roles, relationship witnesses, document bytes and missing versus empty cells. Permission/history declarations are source data, not enforced authorization or an operational decision. Saved scopes/reviews, prepared tables and actual returned files retain their original basis. Every mutation uses the caller’s stable original operationId/time and the maintained CLI/kernel lease. Replay a lost response through the same saved operation. A too-large operation can select a complete pinned host JSON with apply_input. Download full bytes through file_read and the original readId/SHA/offset; keep every selection field fixed. Working recovery and HTML/ZIP preserve original browser copy, source history, selection and unfinished form drafts. Operating and financial profiles select exact source scopes, policy files, date/code conventions and decimal/currency/account/period coverage. New profiles require fresh review before target preparation. Never infer berth allocation, permit eligibility, tariff invoice, debtor balance or money movement. Supplier imports, rights, agreements and outcomes remain with their actual owners.'}]
+});
