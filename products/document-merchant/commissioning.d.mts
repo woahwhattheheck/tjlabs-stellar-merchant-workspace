@@ -1,23 +1,34 @@
 import type {DocumentProviderId,DocumentSetup,DocumentInstallation} from './index.mjs';
 import type {openDocumentService} from './launch.mjs';
 import type {openDocumentBatchCustomer} from './batch.mjs';
+export const DOCUMENT_ACCOUNT_SOURCE_SCHEMA:'stellar-forge.document-account-source.v1';
 export const DOCUMENT_COMMISSIONING_SCHEMA:'stellar-forge.document-commerce-commissioning.v1';
 export const DOCUMENT_COMMISSIONING_REVIEW_SCHEMA:'stellar-forge.document-commerce-review.v1';
-export interface DocumentCommissioningOptions{
-  commerceDirectory:string;directory:string;intentId:string;provider?:DocumentProviderId;anonymous?:boolean;
+export interface DocumentCommissioningCommonOptions{
+  directory:string;provider?:DocumentProviderId;anonymous?:boolean;
   customerOptionsFile?:string|null;customerDirectory?:string|null;
   sellerPort?:number;customerPort?:number;operatorPort?:number;operationsPort?:number;
 }
+export type DocumentCommissioningOptions=DocumentCommissioningCommonOptions&(
+  {commerceDirectory:string;intentId:string;accountSourceFile?:never}|
+  {accountSourceFile:string;commerceDirectory?:never;intentId?:never});
+export interface DocumentAccountSource{
+  schema:typeof DOCUMENT_ACCOUNT_SOURCE_SCHEMA;operatorProfileFile:string;facilitatorConfigFile:string;
+  publicOrigin:string;payment:DocumentSetup['payment'];
+}
 export interface CommissioningFile{path:string;bytes:number;sha256:string}
 export interface OriginalDocumentCommerce{
-  commerceDirectory:string;operatorWorkspace:string;intentId:string;routeId:string;acceptIndex:number;
+  commerceDirectory?:string;operatorWorkspace:string|null;intentId:string|null;routeId:string|null;acceptIndex:number|null;
+  sourceKind?:'OPERATOR_PROFILE';accountSource?:CommissioningFile;operatorProfile?:CommissioningFile;
+  operatorOwner?:{python:string;actor:string;service:string;policy:string;ledger:string};
   originalTerms:DocumentSetup['payment'];publicOrigin:string;payer:string;
-  sharedBudget:{maxSingleAtomic:string;totalAtomic:string;dailyAtomic:string;selectedTotalAtomic:string;allSelectionsFitTotal:boolean};
+  sharedBudget:{maxSingleAtomic:string;totalAtomic:string;dailyAtomic:string;selectedTotalAtomic:string;allSelectionsFitTotal:boolean}|
+    {policyFile:string;ledger:string;actor:string;service:string};
   facilitator:CommissioningFile;
 }
 export interface DocumentCommissioningReview{
   schema:typeof DOCUMENT_COMMISSIONING_REVIEW_SCHEMA;selectionSha256:string;
-  options:Required<DocumentCommissioningOptions>;original:OriginalDocumentCommerce;
+  options:Required<DocumentCommissioningCommonOptions>&({commerceDirectory:string;intentId:string}|{accountSourceFile:string});original:OriginalDocumentCommerce;
   configurationFiles:CommissioningFile[];sourceFiles:CommissioningFile[];request:DocumentSetup;
   customer:Parameters<typeof openDocumentBatchCustomer>[0];
   paths:{merchant:string;factory:string;customerOptions:string;consumerOptions:string;compositionOptions:string;sourceRoot:string};

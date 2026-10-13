@@ -1,4 +1,4 @@
-# Commission document jobs from an existing commerce setup
+# Commission document jobs from an existing account or commerce setup
 
 Use the retained commerce setup to install a document merchant with the existing payer, original operator budget, original facilitator and a specifically selected native price. This is the practical transition from an HTTP commerce installation to the paid Jobs document workflow. The earlier commerce setup does not need to contain a Jobs configuration.
 
@@ -9,6 +9,68 @@ node products/document-merchant/cli.mjs commission --help
 ~~~
 
 The selected source supplies the real merchant origin, asset, recipient, amount, payment flow and facilitator policy. The new document application uses the maintained Jobs seller, Request intake, original checkout and worker. The existing operator workspace remains the owner of its payer and spending ledger.
+
+## Use an existing operator account directly
+
+An existing native HTTP or MCP buyer can already have a complete SF88 operator profile and a native facilitator policy without an sf66 prepared-commerce directory. In that case, select the original account files directly with `--account-source`. The document customer retains that profile's payer, operator identity, policy, spending ledger and signer module. Each document creates a new request and native intent in the original customer workflow.
+
+Use the source owner's complete private operator profile accepted by the maintained Jobs checkout. Its fields are the existing `operator`, `signerModule`, `trustedPayer`, and any selected `bodyCaptureTimeoutMs`, `buyerTransport` or `requestTimeoutMs`. Keep the original `operator.python`, `actor`, `service`, `policy` and `ledger` values. A historical single-operation buyer JSON has additional operation fields and is a different input; recover the maintained reusable profile from the original owner.
+
+The signer's source remains the original configured module. It must support the selected new document operation through the existing native approval path. An SF103 configuration bound to a previous one-time purchase remains bound to that operation; the original signer setup can prepare the next operation using that same account and policy. The document preparation reads source and configuration; the native buyer's normal review and execution control the actual purchase.
+
+### Select the complete account source
+
+Create one private JSON source record beside the operator's existing configuration:
+
+~~~json
+{
+  "schema": "stellar-forge.document-account-source.v1",
+  "operatorProfileFile": "/absolute/original/operator-profile.json",
+  "facilitatorConfigFile": "/absolute/original/facilitator.json",
+  "publicOrigin": "https://ACTUAL_MERCHANT_ORIGIN",
+  "payment": {
+    "scheme": "exact",
+    "network": "stellar:testnet",
+    "asset": "ACTUAL_CONFIGURED_ASSET",
+    "payTo": "ACTUAL_CONFIGURED_RECIPIENT",
+    "amount": "ACTUAL_DOCUMENT_PRICE_IN_ATOMIC_UNITS",
+    "maxTimeoutSeconds": 120,
+    "extra": {
+      "areFeesSponsored": true,
+      "paymentFlow": "authorization"
+    }
+  }
+}
+~~~
+
+Replace each operating placeholder with the original operator's actual selected source. Preserve the complete payment requirement, including the selected timeout and every `extra` field. Select the new document price within the original buyer allowance and the actual facilitator's configured policy. The facilitator's permitted network, asset, recipient, atomic ceiling and payment flow are checked before preparation. The buyer's original policy and spending ledger govern each subsequent purchase.
+
+Use the actual public HTTPS origin routed to this document service. An original explicit proxy configuration in `buyerTransport` remains unchanged and must name that same origin. The account source, profile and facilitator JSON must be complete private files. The source record contains paths and public terms; existing key values stay in the original environment.
+
+### Review, prepare and operate
+
+~~~sh
+node "$DOCUMENT_CHECKOUT/products/document-merchant/cli.mjs" commission review \
+  --account-source /absolute/private/document-account.json \
+  --directory "$DOCUMENT_COMMISSION" \
+  --provider mintpdf --anonymous \
+  --customer-options /absolute/private/original-customer-options.json \
+  --out /absolute/private/document-account-review.json
+
+node "$DOCUMENT_CHECKOUT/products/document-merchant/cli.mjs" commission prepare \
+  --account-source /absolute/private/document-account.json \
+  --directory "$DOCUMENT_COMMISSION" \
+  --provider mintpdf --anonymous \
+  --customer-options /absolute/private/original-customer-options.json \
+  --expected-selection ACTUAL_REVIEW_SELECTION_SHA256
+~~~
+
+The complete customer options must select that same original profile as `checkout.operatorProfile`. To materialize the selected original customer directory with normal settings, use `--customer-directory "$DOCUMENT_CUSTOMER"` instead. Preparation creates the same `customer-options.json`, `case-document-options.json`, `composition-options.json`, document application and native factory as the retained-commerce route.
+
+Continue with the ordinary `commission inspect` and `commission serve` commands below, and use the existing batch, browser or saved-case customer operation. A stopped service resumes from this same commissioning directory. Changes to the selected profile, operator policy, facilitator or signer source require reviewing that changed source before a new installation is prepared.
+
+The retained mutable spending ledger is selected by its original path. Preparation leaves that journal under its original owner; completed document purchases use the same accounting identity. Historical purchase IDs remain historical, while the new document request retains the actual customer task reference throughout PDF/source receiving.
+
 
 ## 1. Recover the complete original setup
 
