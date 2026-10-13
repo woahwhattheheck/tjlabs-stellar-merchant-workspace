@@ -35,26 +35,31 @@ an offline build requires that exact object in its existing source cache.
 | --- | --- |
 | OpenLineage application | Complete current application, editable workspace receiving, Service Levels, Quality, producer interfaces, operator guides and original upstream notice |
 | Product installation | SF46 release preparation, installation, activation and maintained templates |
-| Operator experience | Runtime Workspace browser assets, saved Applications and the runtime modules required by the selected commands |
+| Operator experience | Runtime Workspace pages, saved Applications, worker entry points and the runtime modules required by the selected commands |
 | Merchant connection | Complete merchant console, authenticated HTTP and stdio hosts, client configuration and the explicitly declared workflow modules |
 | Delivery | Product operating and receiving programmes, package receiver, runtime installer, transfer tools and installation guidance |
 
-The selection keeps the original command, export, runtime-feature, application,
-merchant-provider and browser-route declarations. Required command and provider
-entry points are explicit package inputs. The maintained builder follows actual
-static module imports and each selected server's browser asset map to carry their
-dependencies with them.
+The selection preserves the original selected commands, exports, runtime features,
+OpenLineage Applications provider and OpenLineage merchant provider. It also carries
+the maintained Runtime Workspace and response-cache browser maps used by the
+runtime. Required command and provider entry points are explicit package inputs.
+The maintained builder follows static module imports and each selected server's
+browser asset map to carry their dependencies with them.
 
 Complete directories are retained where the product reads files dynamically: the
 OpenLineage application and its own source inventories, the release templates,
-the Runtime Workspace public pages and the merchant console. The console's
-explicit OpenAPI, gRPC and reviewer workflow source also remains selected.
-The upstream `OPENLINEAGE_LICENSE` is an explicit original source file.
+the Runtime Workspace public pages, the merchant console and the reviewer pages.
+Worker entry points, source files read by release and export operations, and the
+Python helpers with their original local modules are declared explicitly because
+these paths can be loaded without a static JavaScript import. The console's
+OpenAPI, gRPC and reviewer workflow source remains selected. The upstream
+`OPENLINEAGE_LICENSE` is an explicit original source file.
 
 This scope is defined by the product's installed interfaces. A required imported
-module is included even when it lives in another repository component. Optional
-runtime features and their original pinned dependency declarations retain the
-same meaning as in the maintained distribution.
+module is included even when it lives in another repository component. Applications
+and merchant services load their providers from the selected distribution record.
+Additional provider suites can be built from their own maintained selections.
+Optional runtime dependencies retain their original pinned declarations.
 
 ## Install and receive the package
 
