@@ -899,6 +899,79 @@ def _restore_worktree(archive_path, destination, entries):
                 os.chmod(destination / name, entry["mode"] & 0o777)
 
 
+
+def receive_command_receipt(session, receipt_path):
+    """Adopt a real completed command from this original private Git reopen.
+
+    This only reconciles the existing command; it never launches another process.
+    The enclosing source receiver retains its original operation lock.
+    """
+    s = session
+    from native_adapter import _file as artifact
+    incoming_path = Path(receipt_path)
+    if not incoming_path.is_absolute() or incoming_path.is_symlink() or not incoming_path.is_file():
+        raise ValueError("Select the actual complete original native Git command receipt.")
+    raw = incoming_path.read_bytes()
+    receipt_sha256 = _digest(raw)
+    accepted = s.state.setdefault("source_received_command_receipts", {})
+    previous = next((row for row in accepted.values() if row["sha256"] == receipt_sha256), None)
+    if previous is not None:
+        return previous
+    label = s.state.get("pending_command")
+    if not isinstance(label, str) or not re.fullmatch(r"castor-reopen-[A-Za-z0-9_.-]+", label):
+        raise ValueError("This private source Session has no original Git command awaiting a receipt.")
+    if label in accepted:
+        raise ValueError("Preserve the already accepted original Git command receipt.")
+    original_path = s.out / (label + ".command.json")
+    original_raw = original_path.read_bytes()
+    directory = s.out / "received-source-commands"
+    directory.mkdir(mode=0o700, exist_ok=True)
+    prior_path = directory / (label + ".original.json")
+    if prior_path.exists():
+        original_raw = prior_path.read_bytes()
+    original = json.loads(original_raw)
+    retained = directory / (receipt_sha256 + ".json")
+    _stable_file(retained, raw)
+    completed = json.loads(raw)
+    for field in ("argv", "cwd", "started_at", "mutating", "stdin", "pid"):
+        if completed.get(field) != original.get(field):
+            raise ValueError("The received native completion differs from original " + field + ".")
+    if (completed.get("phase") != "complete" or type(completed.get("returncode")) is not int
+            or not completed.get("completed_at") or not isinstance(completed.get("pid"), int)):
+        raise ValueError("The native receipt must retain the actual observed command exit.")
+    outputs = {}
+    for role in ("stdout", "stderr"):
+        descriptor = completed.get(role)
+        if not isinstance(descriptor, dict):
+            raise ValueError("The complete native command output descriptor is missing.")
+        path = Path(descriptor["path"])
+        if not path.is_absolute():
+            raise ValueError("The actual original command output path must be absolute.")
+        expected = {"bytes": descriptor["size"], "sha256": descriptor["sha256"]}
+        destination = directory / (receipt_sha256 + "." + role)
+        if destination.exists():
+            if _file(destination) != expected:
+                raise ValueError("A retained original command output changed.")
+        else:
+            _copy_original(path, destination, expected)
+        outputs[role] = artifact(destination, role)
+    _stable_file(directory / (label + ".original.json"), original_raw)
+    completed.update(outputs)
+    _atomic(original_path, completed)
+    outcome = {"label": label, "sha256": receipt_sha256, "retained_path": str(retained),
+               "received_at": _now(), "returncode": completed["returncode"],
+               "outputs": outputs}
+    accepted[label] = outcome
+    s.state.setdefault("completed_commands", {})[label] = completed
+    s.state.update(phase="native_prepared" if completed["returncode"] == 0 else "native_failed",
+                   pending_command=None)
+    s.save_state()
+    s.add(retained, "castor_source_original_command_receipt")
+    for role in ("stdout", "stderr"):
+        s.add(outputs[role]["path"], "castor_source_received_" + role)
+    return outcome
+
+
 def reopen_source(session, received_directory, checkout_directory):
     """Reopen original Git/index/local work in an independently received project.
 
