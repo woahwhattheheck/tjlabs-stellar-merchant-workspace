@@ -115,6 +115,8 @@ SOURCE_PATHS = [
   "products/x402api-merchant-workspace/project-agent-receiving.mjs",
   "stellar-forge/mcp-merchant-operator/merchant-invoice-connection.mjs",
   "stellar-forge/mcp-merchant-operator/merchant-invoice-files.mjs",
+  "stellar-forge/mcp-merchant-operator/merchant-invoice-reviews.mjs",
+  "products/x402api-merchant-workspace/customer-review-agent-receiving.mjs",
   "stellar-forge/mcp-merchant-operator/merchant-invoice-protocol.mjs",
   "stellar-forge/mcp-merchant-operator/merchant-invoices.mjs",
   "stellar-forge/mcp-merchant-operator/providers/merchant-invoices.mjs",

@@ -1,5 +1,6 @@
 // MIT. Complete live invoice source -> reviewed original plan -> project consumer.
 import {connectMerchantInvoice,selectedInvoiceSource,invoiceHash} from './merchant-invoice-connection.mjs';
+import {executeMerchantReview} from './merchant-invoice-reviews.mjs';
 import {MerchantInvoiceFiles} from './merchant-invoice-files.mjs';
 import {merchantInvoiceArguments,MERCHANT_INVOICE_PREFIX} from './merchant-invoice-protocol.mjs';
 import {projectNeed as need} from './merchant-project-connection.mjs';
@@ -13,7 +14,8 @@ export class MerchantInvoices {
  }
  get summary() {return {configured:this.#owners.size>0,closing:this.#closing,pendingRequests:this.#pending.size,
   merchants:[...this.#owners].map(([merchant,d])=>({merchant,label:d.label,...d.identity,sources:
-   Object.entries(d.sources).map(([source,s])=>({source,name:s.name,format:s.format,sha256:s.sha256}))}))};}
+   Object.entries(d.sources).map(([source,s])=>({source,name:s.name,format:s.format,sha256:s.sha256})),reviewReturns:
+   Object.entries(d.reviewReturns??{}).map(([reviewFile,r])=>({reviewFile,name:r.name,sha256:r.sha256}))}))};}
  #status(value,definition,operation,expectedPlan) {
   need(value?.schema==='stellar-forge.merchant-intake-status.v1'&&value.operation===operation&&
    value.storeId===definition.identity.storeId&&value.tenantId===definition.identity.tenantId&&SHA.test(value.planSha256??'')&&
@@ -106,7 +108,8 @@ export class MerchantInvoices {
   else if(kind==='file_release'){await files.release(a.readId);native={readId:a.readId,released:true};}
   else {
    const client=await connectMerchantInvoice(d);
-   if(kind==='context') {
+   if(kind.startsWith('review_'))native=await executeMerchantReview({kind,args:a,definition:d,files,client});
+   else if(kind==='context') {
     const v=await client.intakeContext();
     need(v?.storeId===d.identity.storeId&&v.tenantId===d.identity.tenantId&&SHA.test(v.configurationSha256??''),
      'MERCHANT_INVOICE_CONTEXT_CHANGED');

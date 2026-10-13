@@ -97,3 +97,9 @@ Before describing this delivery as ready for a customer, the producer must open 
 Operate the important populated, empty, loading, rejection, competing-save and recovery controls. Confirm both findings and all long text appear in the printed review, the 390-pixel view has readable wrapped controls, independent JSON/HTML reopen retains unfinished fields, and the exact Support case/export retains the original return and attachments. Inspect the usable contents of any outgoing ZIP. Keep internal receiving screenshots out of customer attachments unless requested.
 
 Source validation and the authored programme remain distinct from an actual native/browser result. The programme records `AWAITING_PRODUCER_LOOK` until the producer has inspected the real rendered outputs. Existing customer communication remains with its original relationship owner.
+
+## Operate through the existing invoice agent
+
+The same original issue, receive, compare, disposition and Support export are available through the ten `merchant_invoice_review_*` tools in [INVOICE_AGENT.md](INVOICE_AGENT.md#customer-review-merchant-disposition-and-support). The provider retains complete private requests before dispatch and replays the original UUID and body after an uncertain response. Host-selected `reviewReturns` keep large original customer files intact. Review artifacts remain readable after the server stops. These tools use the same native customer-review writer and leave the original financial and fulfillment operations unchanged.
+
+The complete original receiving programme adds `customer-review-agent-receiving.mjs` after the customer-review course. A separately selected `--review-agent-continuation` can operate an already completed installation without replacing its original source selection or completion records; its exact source, request, native stop and offline file results are retained separately.

@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
 import { createRequire } from 'node:module';
 import { join, dirname, resolve, isAbsolute } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { buildDistribution } from '../../stellar/scf-starforge-20261009/distribution/build.mjs';
 import { prepareRuntimeInstall, recoverRuntime, installRuntime, inspectRuntimeInstall, runtimeCommand } from '../../stellar/scf-starforge-20261009/distribution/runtime-install.mjs';
@@ -22,6 +22,7 @@ const { values } = parseArgs({ strict: true, options: {
   repo: { type: 'string' }, 'source-commit': { type: 'string' }, original: { type: 'string' },
   root: { type: 'string' }, playwright: { type: 'string' }, chromium: { type: 'string' },
   portable: { type: 'boolean', default: false },
+  'review-agent-continuation': { type: 'boolean', default: false },
 } });
 const OPERATION = values.portable ? 'SCF-X402API-MERCHANT-PORTABLE-PROJECT-7DE2-20261012' :
   'SCF-X402API-MERCHANT-INSTALLED-7DE2-20261012';
@@ -644,6 +645,59 @@ async function selectedApplications(runtimeModel) {
   await save(path, selected);
   await runtimeModel.createRuntimeWorkspace({ directory: APPLICATIONS });
 }
+async function continueCompletedReviewAgent(previous) {
+  assert(previous.customerReview?.course,'Keep the completed original customer-review course.');
+  const sourceRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
+  const selectorPath=join(sourceRoot,'products/x402api-merchant-workspace/portable-directory.mjs');
+  const selector=await readFile(selectorPath,'utf8'),match=selector.match(/const SOURCE_FILES = (\[[\s\S]*?\]);/);
+  assert(match,'Read the maintained complete Merchant source inventory.');
+  const names=JSON.parse(match[1]);
+  assert(names.includes('stellar-forge/mcp-merchant-operator/merchant-invoice-reviews.mjs'));
+  assert(names.includes('products/x402api-merchant-workspace/customer-review-agent-receiving.mjs'));
+  names.push('products/x402api-merchant-workspace/installed-receiving.mjs');assert.equal(new Set(names).size,names.length);
+  const sources=[];for(const name of names.sort()){
+    assert(typeof name==='string'&&!name.startsWith('/')&&!name.split('/').includes('..'));
+    const path=join(sourceRoot,name),info=await lstat(path);assert(info.isFile()&&!info.isSymbolicLink());
+    const raw=await readFile(path);sources.push({path:name,bytes:raw.length,sha256:sha(raw)});
+  }
+  const parent=join(ROOT,'complete.json'),parentRaw=await readFile(parent),coursePath=join(ROOT,'customer-review-course/complete.json'),courseRaw=await readFile(coursePath);
+  const selected={schema:'stellar-forge.merchant-review-agent-continuation.v1',
+    parent:{bytes:parentRaw.length,sha256:sha(parentRaw)},course:{bytes:courseRaw.length,sha256:sha(courseRaw)},
+    owner:previous.customerReview.course.owner,invoiceId:previous.customerReview.course.invoiceId,
+    originalSourceCommit:previous.sourceCommit,consumerSourceRoot:sourceRoot,sources,sourceSha256:sha(JSON.stringify(sources))};
+  const selectionPath=join(ROOT,'customer-review-agent-continuation-selection.json');
+  await save(selectionPath,selected,{original:true});
+  const module=await import(pathToFileURL(join(sourceRoot,'products/x402api-merchant-workspace/customer-review-agent-receiving.mjs')));
+  const expectedInvoices=previous.invoices.map(order=>order.merchantOrderId),receiptPath=join(ROOT,'customer-review-agent-continuation-complete.json');
+  const retained=await readJSON(receiptPath);
+  RUNTIME=previous.runtime.directory;APPLICATIONS=previous.applications.directory;
+  const runtimeModel=await import(pathToFileURL(join(previous.runtime.sourceRoot,'stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs')));
+  model=await runtimeModel.openRuntimeWorkspace({directory:APPLICATIONS});
+  if(retained){
+    assert.equal(retained.parentSha256,selected.parent.sha256);assert.equal(retained.sourceSha256,selected.sourceSha256);
+    const run=await originalRun(retained.operationId,previous.applications.applicationId);
+    assert(!run.held);assert.deepEqual(run.result,retained.originalProcess);assert.equal(run.result.state,'STOPPED');
+    await module.verifyMerchantReviewAgent(retained.course,{root:ROOT,expectedInvoices});return {...previous,customerReviewAgentContinuation:retained,reopened:true};
+  }
+  const scenario=await readJSON(join(RECEIVED,'scenario.json'));assert.equal(scenario.operation,ORIGINAL_OPERATION);
+  sentinel=await providerSentinel();assert.equal(sentinel.requests.length,0);
+  const opening=await beginOpening('customer-review-agent-continuation',previous.applications.applicationId);let course,ended;
+  if(opening.completed){course=opening.completed.result.course;ended=opening.completed.native;}
+  else{course=await module.receiveMerchantReviewAgent({opening,scenario,root:ROOT,expectedInvoices});
+    ended=(await finishOpening(opening,{course})).result;}
+  assert.equal(ended.state,'STOPPED');assert.equal(sentinel.requests.length,0);
+  await module.verifyMerchantReviewAgent(course,{root:ROOT,expectedInvoices});
+  const lease=await operationLease(join(WORKSPACE,'merchant-owner.lock'));
+  try{const current=databaseSnapshot();assert.equal(current.businessSha256,previous.afterBusinessSha256);
+    assert.equal(current.customerReviewSha256,previous.customerReviewSha256);}
+  finally{await lease.close();}
+  for(const file of sources)await originalFile(join(sourceRoot,file.path),file);
+  await originalFile(parent,selected.parent);await originalFile(coursePath,selected.course);
+  const receipt={schema:selected.schema,parentSha256:selected.parent.sha256,sourceSha256:selected.sourceSha256,
+    course,operationId:opening.operationId,originalProcess:ended,providerCalls:sentinel.requests};
+  await save(receiptPath,receipt,{original:true});
+  return {...previous,customerReviewAgentContinuation:receipt,reopened:true};
+}
 async function receive() {
   await directory(ROOT);
   const selection = { schema: 'stellar-forge.merchant-installed-receiving-selection.v1', operation: OPERATION,
@@ -667,8 +721,15 @@ async function receive() {
       await agent.verifyMerchantInvoiceAgent(previous.invoiceAgent,{expectedInvoices:previous.invoices.map(order=>order.merchantOrderId),
         operation:identity('invoice-agent-intake'),projectOperation:identity('portable-browser-export')});
     }
+    if(previous.customerReviewAgent){
+      const agent=await import('./customer-review-agent-receiving.mjs');
+      await agent.verifyMerchantReviewAgent(previous.customerReviewAgent.course,{root:ROOT,
+        expectedInvoices:previous.invoices.map(order=>order.merchantOrderId)});
+    }
+    if(values['review-agent-continuation'])return continueCompletedReviewAgent(previous);
     return { ...previous, reopened: true };
   }
+  assert(!values['review-agent-continuation'],'Use review-agent-continuation only with the complete original installed case.');
   const scenario = await readJSON(join(RECEIVED, 'scenario.json')), completed = await readJSON(join(RECEIVED, 'complete.json'));
   assert.equal(scenario.operation, ORIGINAL_OPERATION); assert.equal(completed.operation, ORIGINAL_OPERATION);
   assert.equal(completed.state, 'COMPLETE'); assert.equal(completed.orders.length, 5);
@@ -811,6 +872,21 @@ async function receive() {
     await retainCompleted('customer-review-opening',()=>save(join(ROOT,'customer-review-opening.json'),customerReview,{original:true}));
   }
   for(const file of [...customerReview.course.files,...customerReview.course.images])await originalFile(file.path,file);
+  const reviewAgentModule=await import('./customer-review-agent-receiving.mjs');
+  let customerReviewAgent=await readJSON(join(ROOT,'customer-review-agent-opening.json'));
+  if(!customerReviewAgent){
+    const opening=await beginOpening('customer-review-agent',applicationId);
+    if(opening.completed)customerReviewAgent={...opening.completed.result,operationId:opening.operationId,originalProcess:opening.completed.native};
+    else{
+      const course=await reviewAgentModule.receiveMerchantReviewAgent({opening,scenario,root:ROOT,
+        expectedInvoices:completed.orders.map(order=>order.merchantOrderId)});
+      const ended=await finishOpening(opening,{course});
+      customerReviewAgent={course,operationId:opening.operationId,originalProcess:ended.result};
+    }
+    await retainCompleted('customer-review-agent-opening',()=>save(join(ROOT,'customer-review-agent-opening.json'),customerReviewAgent,{original:true}));
+  }
+  await reviewAgentModule.verifyMerchantReviewAgent(customerReviewAgent.course,{root:ROOT,
+    expectedInvoices:completed.orders.map(order=>order.merchantOrderId)});
   const afterFirst = await originalSnapshot('after-first');
   assert.equal(afterFirst.businessSha256, before.businessSha256);
   stopped();
@@ -857,7 +933,7 @@ async function receive() {
       host: profile.host, lockSha256: inspection.lockSha256, dependencies: profile.dependencies },
     applications: { directory: APPLICATIONS, applicationId, reviewId: review.id, revision: saved.revision,
       openingId: first.operationId, reopenedId: second.operationId, history: history.map(run => ({ id: run.id, phase: run.phase, result: run.result })) },
-    customerReview,...(customerReviewPortable?{customerReviewPortable}:{}),beforeBusinessSha256: before.businessSha256, afterBusinessSha256: after.businessSha256,
+    customerReview,customerReviewAgent,...(customerReviewPortable?{customerReviewPortable}:{}),beforeBusinessSha256: before.businessSha256, afterBusinessSha256: after.businessSha256,
     customerReviewSha256:after.customerReviewSha256,
     businessTables: after.business.tables.map(table => ({ name: table.name, rows: table.rows.length })),
     runtimeHistory: after.runtimes, invoices: second.reads.invoices, browser: first.browser,

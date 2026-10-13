@@ -61,7 +61,7 @@ export async function receiveMerchantInvoiceAgent({url,operatorToken,tokenEnviro
    return v.native;
   }
   const catalogue=merchantInvoiceTools((name,description,properties,required,annotations)=>({name,description,properties,required,annotations}));
-  assert.equal(catalogue.length,27);
+  assert.equal(catalogue.length,37);
   for(const action of ['charge','authorize','reconcile','resume_payment']) {
    const tool=catalogue.find(v=>v.name==='merchant_invoice_'+action);
    assert.equal(tool.annotations.readOnly,false);assert.equal(tool.annotations.openWorld,true);
@@ -179,7 +179,7 @@ export async function verifyMerchantInvoiceAgent(result,{expectedInvoices,operat
  // courses must carry every original invoice and three retained action pairs.
  if(result.payments) {
   assert.deepEqual(result.payments.map(v=>v.invoiceId).sort(),[...expectedInvoices].sort());
-  assert.equal(result.tools.length,27);
+  assert([27,37].includes(result.tools.length));
   for(const invoice of result.payments) {
    assert.equal(invoice.state,'COMPLETE');
    assert.deepEqual(invoice.actions.map(v=>v.action),['charge','authorize','reconcile']);

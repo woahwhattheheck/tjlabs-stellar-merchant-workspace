@@ -37,6 +37,33 @@ const defs={
  resume_payment:[{merchant:alias,invoiceId:id,action:{type:'string',enum:['charge','authorize','reconcile']},expectedRequestSha256:sha},
  ['merchant','invoiceId','action','expectedRequestSha256'],
  'After inspecting the same invoice, explicitly resend the exact selected retained charge, authorization or reconciliation request. Preserves its original invoice, envelope and buyer authorization.'],
+ review_status:[{merchant:alias,invoiceId:id},['merchant','invoiceId'],
+ 'Read the original customer-review history and current invoice revision. Retain the complete history artifact before selecting a return or disposition.'],
+ review_issue:[{merchant:alias,invoiceId:id,requestId:id,expectedReviewVersion:sha,invoiceRevision:sha},
+ ['merchant','invoiceId','requestId','expectedReviewVersion','invoiceRevision'],
+ 'Retain the exact original request, then issue an offline customer review for the selected invoice revision. This records local review history without changing payment or fulfillment.'],
+ review_document:[{merchant:alias,invoiceId:id,issueId:id},['merchant','invoiceId','issueId'],
+ 'Receive the complete original issued review as an independently editable offline HTML file. Deliver it only through the customer case\'s authorized channel.'],
+ review_source:[{merchant:alias,invoiceId:id,reviewFile:alias,text:{type:'string',maxLength:1048576},expectedReturnSha256:sha},
+ ['merchant','invoiceId','expectedReturnSha256'],
+ 'Validate an actual returned customer review and retain its exact original bytes, all attributed editions, unfinished draft and original files. Select reviewFile or complete text; this does not adopt it into the merchant history.'],
+ review_receive:[{merchant:alias,invoiceId:id,requestId:id,expectedReviewVersion:sha,reviewFile:alias,text:{type:'string',maxLength:1048576},expectedReturnSha256:sha},
+ ['merchant','invoiceId','requestId','expectedReviewVersion','expectedReturnSha256'],
+ 'Retain the exact returned bytes and original request before receiving them into the same invoice history. Keep the customer-entered attribution distinct from authenticated acceptance.'],
+ review_compare:[{merchant:alias,invoiceId:id,returnSha256:sha},['merchant','invoiceId','returnSha256'],
+ 'Receive the full issued-versus-current invoice comparison, actual returned review, all edition choices and original comparison SHA. Review this complete artifact before a disposition.'],
+ review_decide:[{merchant:alias,invoiceId:id,requestId:id,expectedReviewVersion:sha,invoiceRevision:sha,comparisonSha256:sha,
+ returnSha256:sha,editionSha256:sha,actor:{type:'string',minLength:1,maxLength:240},
+ disposition:{type:'string',enum:['accepted','follow_up','declined']},note:{type:'string',maxLength:16000},supportCaseId:id},
+ ['merchant','invoiceId','requestId','expectedReviewVersion','invoiceRevision','comparisonSha256','returnSha256','editionSha256','actor','disposition','note'],
+ 'Record the actual merchant disposition against one exact returned edition and reviewed current invoice comparison. Optional supportCaseId refers to the original Support case. This does not alter payment or fulfillment.'],
+ review_resume:[{merchant:alias,invoiceId:id,requestId:id,action:{type:'string',enum:['issue','receive','decide']},expectedRequestSha256:sha},
+ ['merchant','invoiceId','requestId','action','expectedRequestSha256'],
+ 'Explicitly replay the selected complete retained review request after inspecting the same invoice history. Original request UUID, bytes, source, revision and disposition stay unchanged; the native journal returns an already completed result.'],
+ review_return:[{merchant:alias,invoiceId:id,returnSha256:sha},['merchant','invoiceId','returnSha256'],
+ 'Receive the exact original returned JSON bytes, including all original attachments and unfinished review work.'],
+ review_support:[{merchant:alias,invoiceId:id},['merchant','invoiceId'],
+ 'Receive the complete original Support workspace with issued sources, returns and dispositions. Open or merge it through the existing Support case workflow and preserve its original case revision.'],
  register:[{merchant:alias,selection,limit:{type:'integer',minimum:1,maximum:200},cursor:text,revision:text},['merchant'],
  'Read an original revision-pinned invoice page. Preserve its source revision and cursor across pages.'],
  invoice:[{merchant:alias,invoiceId:id},['merchant','invoiceId'],'Retain the original complete invoice and history; returns its concise state.'],
@@ -56,7 +83,7 @@ const defs={
  'Read exact artifact bytes using original descriptor ownership, SHA and offset. Continue until nextOffset is null.'],
  file_release:[{merchant:alias,readId:text},['merchant','readId'],'Release one temporary artifact descriptor while preserving its complete retained bytes.'],
 };
-const mutation=new Set(['prepare','resume_prepare','run','project_begin','charge','authorize','reconcile','resume_payment']);
+const mutation=new Set(['prepare','resume_prepare','run','project_begin','charge','authorize','reconcile','resume_payment','review_issue','review_receive','review_decide','review_resume']);
 const external=new Set(['charge','authorize','reconcile','resume_payment']);
 export function merchantInvoiceTools(tool) {
  return Object.entries(defs).map(([k,[properties,required,description]])=>

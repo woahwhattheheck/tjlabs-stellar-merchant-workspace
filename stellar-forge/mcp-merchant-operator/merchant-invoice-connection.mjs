@@ -17,12 +17,12 @@ export async function readMerchantInvoiceConfiguration(file) {
  const merchants=Object.create(null),seen=new Set();
  for(const [alias,value] of Object.entries(raw.merchants)) {
   need(/^[a-z0-9][a-z0-9_-]{0,63}$/.test(alias)&&!['constructor','prototype','__proto__'].includes(alias),'MERCHANT_INVOICE_ALIAS');
-  exact(value,['label','connectionFile','connectionSha256','tokenEnvironment','exportsDirectory','sources'],
+  exact(value,['label','connectionFile','connectionSha256','tokenEnvironment','exportsDirectory','sources','reviewReturns'],
    ['connectionFile','connectionSha256','tokenEnvironment','exportsDirectory']);
   need(SHA.test(value.connectionSha256??'')&&/^[A-Z][A-Z0-9_]{0,127}$/.test(value.tokenEnvironment??'')&&
    (value.label===undefined||typeof value.label==='string'&&value.label.length<=160),'MERCHANT_INVOICE_CONFIGURATION');
   const entry={...value,label:value.label??alias,connectionFile:projectPath(value.connectionFile,base),
-   exportsDirectory:projectPath(value.exportsDirectory,base),sources:Object.create(null)};
+   exportsDirectory:projectPath(value.exportsDirectory,base),sources:Object.create(null),reviewReturns:Object.create(null)};
   const connection=await readMerchantInvoiceConnection(entry);
   entry.identity={storeId:connection.storeId,tenantId:connection.tenantId,connectionSha256:value.connectionSha256};
   entry.scope=invoiceHash(canonicalJson(entry.identity));
@@ -36,6 +36,14 @@ export async function readMerchantInvoiceConfiguration(file) {
     !/[\u0000-\u001f\u007f/\\]/.test(selected.name)&&['csv','json'].includes(selected.format)&&SHA.test(selected.sha256??''),
     'MERCHANT_INVOICE_SOURCE_CONFIGURATION');
    entry.sources[source]={...selected,path:projectPath(selected.path,base)};
+  }
+  need(value.reviewReturns===undefined||plain(value.reviewReturns)&&Object.keys(value.reviewReturns).length<=100,'MERCHANT_REVIEW_RETURN_CONFIGURATION');
+  for(const [name,selected] of Object.entries(value.reviewReturns??{})) {
+   need(/^[a-z0-9][a-z0-9_-]{0,63}$/.test(name)&&!['constructor','prototype','__proto__'].includes(name),'MERCHANT_REVIEW_RETURN_ALIAS');
+   exact(selected,['path','name','sha256']);
+   need(typeof selected.name==='string'&&selected.name.length>0&&selected.name.length<=200&&
+    !/[\u0000-\u001f\u007f/\\]/.test(selected.name)&&SHA.test(selected.sha256??''),'MERCHANT_REVIEW_RETURN_CONFIGURATION');
+   entry.reviewReturns[name]={...selected,path:projectPath(selected.path,base)};
   }
   merchants[alias]=entry;
  }
@@ -70,4 +78,19 @@ export async function selectedInvoiceSource(definition,args) {
  }
  need(plain(source)&&typeof source.text==='string'&&Buffer.byteLength(source.text)<=1048576,'MERCHANT_INVOICE_SOURCE_CAPACITY');
  return structuredClone(source);
+}
+
+/** Complete host-selected return bytes; no parsing or reserialization changes the source. */
+export async function selectedCustomerReturn(definition,args) {
+ need((args.reviewFile!==undefined)!==(args.text!==undefined),'MERCHANT_REVIEW_ONE_RETURN_REQUIRED');
+ let text=args.text,name='Customer_Return.json';
+ if(args.reviewFile!==undefined) {
+  const selected=definition.reviewReturns?.[args.reviewFile];need(selected,'MERCHANT_REVIEW_RETURN_ALIAS_REQUIRED');
+  const saved=await readMerchantInput(selected.path,{maximum:48*1024*1024,collect:true,privateOnly:true,allowMultipleLinks:true});
+  need(saved.descriptor.sha256===selected.sha256,'MERCHANT_REVIEW_RETURN_FILE_CHANGED');
+  text=new TextDecoder('utf-8',{fatal:true}).decode(saved.raw);name=selected.name;
+ } else need(typeof text==='string'&&Buffer.byteLength(text)<=1048576,'MERCHANT_REVIEW_INLINE_CAPACITY');
+ need(typeof text==='string'&&Buffer.byteLength(text)<=48*1024*1024&&invoiceHash(Buffer.from(text))===args.expectedReturnSha256,
+  'MERCHANT_REVIEW_SELECTED_BYTES_CHANGED');
+ return {name,text,bytes:Buffer.byteLength(text),sha256:args.expectedReturnSha256};
 }
