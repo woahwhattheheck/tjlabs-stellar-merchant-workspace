@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {mkdir,lstat,realpath,readdir,open} from 'node:fs/promises';
 import {join} from 'node:path';
 import {MerchantError} from './workspace.mjs';
+import {parseJSONBytes} from './protocol.mjs';
 import {readJSON,saveJSON} from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -42,7 +43,8 @@ export function inspectMerchantIntakeSource(source){
   need(typeof source.text==='string'&&Buffer.byteLength(source.text)<=MAX_SOURCE&&Buffer.from(source.text).toString('utf8')===source.text,'INTAKE_SOURCE_TOO_LARGE_OR_INVALID');
   let rows;
   if(source.format==='csv')rows=csv(source.text);
-  else{try{rows=JSON.parse(source.text.replace(/^\ufeff/,''));}catch{throw new MerchantError('INTAKE_JSON_INVALID');}}
+  else{try{rows=parseJSONBytes(Buffer.from(source.text.replace(/^\ufeff/,'')),{maximumBytes:MAX_SOURCE});}
+    catch(error){throw new MerchantError('INTAKE_JSON_INVALID',400,{sourceCode:error.code??'JSON_INVALID'});}}
   need(Array.isArray(rows)&&rows.length>0&&rows.length<=MAX_ROWS&&rows.every(object),'INTAKE_ROWS_REQUIRED');
   const columns=[...new Set(rows.flatMap(Object.keys))];
   need(columns.length>0&&columns.length<=100&&columns.every(x=>x.length>0&&x.length<=160),'INTAKE_COLUMNS_INVALID');

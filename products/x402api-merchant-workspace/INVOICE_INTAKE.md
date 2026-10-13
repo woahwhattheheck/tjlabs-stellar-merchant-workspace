@@ -17,7 +17,7 @@ Payment requests, buyer authorization, settlement and delivery continue through 
 
 ## Input contract
 
-CSV must have unique nonempty headers, complete equal-width records and correctly quoted fields. A closing quote must be followed by a delimiter, record boundary or end of file. UTF-8 is decoded strictly; a UTF-8 BOM is retained in the source and handled when parsing. JSON is an array of flat records. Mapped JSON values, including amounts and IDs, must be strings.
+CSV must have unique nonempty headers, complete equal-width records and correctly quoted fields. A closing quote must be followed by a delimiter, record boundary or end of file. UTF-8 is decoded strictly; a UTF-8 BOM is retained in the source and handled when parsing. JSON is an array of flat records. The maintained strict parser rejects duplicate object keys, unsafe numeric tokens and trailing data before mapping. Mapped JSON values, including amounts and IDs, must be strings.
 
 The limits are 1 MiB of original UTF-8 source, 4,000 source rows, 500 distinct invoices, and the configured maximum of 16 distinct asset options per invoice. The full serialized retained plan must fit the maintained 4 MiB record reader. Validation completes before plan publication; invoice creation happens only after the separate review action.
 
