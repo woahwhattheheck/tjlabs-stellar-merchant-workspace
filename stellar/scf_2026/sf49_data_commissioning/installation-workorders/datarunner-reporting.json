@@ -85,6 +85,46 @@
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-handler.mjs",
       "blob": "8da9ef8bddbc560aabe1a74f59c258e29f18d5a9"
+    },
+    {
+      "path": "products/source-tables/reporting/programme.mjs",
+      "blob": "aa2f35e125e1ea6232ed43bc95a762bae3c92099"
+    },
+    {
+      "path": "products/source-tables/reporting/programme-cli.mjs",
+      "blob": "aeb7a02646dcdab42b3c2a1933155ee9fe4baf25"
+    },
+    {
+      "path": "products/source-tables/reporting/programme.d.mts",
+      "blob": "500bdbcf2aa15e6c99ae016418031c9f4a0eef32"
+    },
+    {
+      "path": "products/source-tables/reporting/REPORTING_PROGRAMMES.md",
+      "blob": "fa8534c0e9cfec9d1e9b3a7cf3db4a0c1a579e08"
+    },
+    {
+      "path": "products/source-tables/reporting/examples/create-programme.example.json",
+      "blob": "5523bdf76438d1261c28ca13e848178d636f235c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/reporting-programmes.json",
+      "blob": "6fc939d7807789568dd673f325239ac5cdc82c28"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/selections/reporting-programmes.json",
+      "blob": "a826de2ea4453cd9be35387b23deae3b5ec5b87c"
+    },
+    {
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/DATARUNNER_REPORTING.md",
+      "blob": "1fd1104a9f4650553d0b8ae0583cd4c823a1fd8a"
+    },
+    {
+      "path": "products/source-tables/reporting/desk-receive.mjs",
+      "blob": "c2f2888b3fe949c73f416847835d3522f8092f54"
+    },
+    {
+      "path": "products/source-tables/reporting/desk-receive.d.mts",
+      "blob": "cc83aa4c4119408d04d12b3ef32125bb3f5603a1"
     }
   ]
 }
