@@ -1,7 +1,7 @@
 // MIT. Original semantic worker lifecycle for retained DCAT editions.
 import { open, readFile, readdir, lstat } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { join, resolve, isAbsolute, basename } from 'node:path';
+import { join, resolve, relative, isAbsolute, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { bytes, digest, readPrivate, hashPrivate, createFile, atomicJson, privateDirectory, fault, stamp }
@@ -93,6 +93,61 @@ function request(spec) {
       contract:'commons-semantic-native-job/1',runtime_manifest_sha256:RUNTIME_MANIFEST_SHA},
     inputs:selected.map(x=>x.entry)}};
 }
+
+function comparisonRequest(spec,root) {
+  need(spec && typeof spec==='object','DCAT_SEMANTIC_COMPARISON_INVALID');
+  identifier(spec.runId);
+  const selected=[];
+  function side(value,name) {
+    need(value && typeof value==='object','DCAT_SEMANTIC_COMPARISON_SIDE_INVALID');
+    identifier(value.runId);identifier(value.profileId);
+    need(value.runId!==spec.runId && HASH.test(value.runSha256 ?? '')
+      && HASH.test(value.profileSha256 ?? '') && HASH.test(value.nativeResultSha256 ?? ''),
+      'DCAT_SEMANTIC_COMPARISON_BINDING_INVALID');
+    iri(value.baseIRI);
+    const selection=value.selection;
+    need(selection && ['catalog','candidate'].includes(selection.kind) && UUID.test(selection.id ?? '')
+      && HASH.test(selection.sha256 ?? ''),'DCAT_SEMANTIC_COMPARISON_SOURCE_INVALID');
+    integer(selection.bytes,0,DCAT_SEMANTIC_MAX_INPUT,'selected catalog size');
+    if(selection.kind==='candidate')need(HASH.test(selection.reviewSha256 ?? '')
+      && HASH.test(selection.reportSha256 ?? ''),'DCAT_SEMANTIC_COMPARISON_SOURCE_INVALID');
+    const binding={runId:value.runId,runSha256:value.runSha256,profileId:value.profileId,
+      profileSha256:value.profileSha256,nativeResultSha256:value.nativeResultSha256,
+      selection:{...selection},baseIRI:value.baseIRI,snapshot:{}};
+    for(const [part,format,role] of [['graph','nt','snapshot'],['provenance','json','provenance']]) {
+      const file=value.snapshot?.[part];
+      need(file && HASH.test(file.key ?? ''),'DCAT_SEMANTIC_COMPARISON_SNAPSHOT_INVALID');
+      const input=descriptor({...file,id:value.runId+'-'+part,title:name+' original snapshot '+part,
+        sourceReference:{runId:value.runId,runSha256:value.runSha256,profileId:value.profileId,
+          profileSha256:value.profileSha256,selection:binding.selection}},name+'-'+part,role,format);
+      input.entry.original_source_reference=input.entry.source_reference;
+      input.entry.source_reference=value.baseIRI;
+      selected.push(input);
+      const retainedPath=member(relative(root,input.path));
+      need(retainedPath.startsWith(value.runId+'/'),'DCAT_SEMANTIC_COMPARISON_SNAPSHOT_INVALID');
+      binding.snapshot[part]={path:retainedPath,key:file.key,sha256:file.sha256,bytes:file.bytes};
+    }
+    return binding;
+  }
+  const before=side(spec.before,'before'),after=side(spec.after,'after');
+  const supplied=spec.parameters?.edge_predicates ?? [];
+  need(Array.isArray(supplied) && supplied.length<=256,'DCAT_SEMANTIC_IMPACT_PREDICATES_INVALID');
+  const parameters={edge_predicates:[...new Set(supplied.map(iri))].sort(),
+    depth:integer(spec.parameters?.depth ?? 2,0,20,'impact depth'),
+    node_limit:integer(spec.parameters?.node_limit ?? 100000,1,100000,'impact node limit')};
+  const limits={timeout_seconds:integer(spec.limits?.timeout_seconds ?? 120,5,600,'timeout'),
+    memory_mib:integer(spec.limits?.memory_mib ?? 1024,256,4096,'memory limit')};
+  return {selected,value:{schema:'stellar-forge.dcat-semantic-comparison-native-request.v1',
+    kind:'comparison',runId:spec.runId,before,after,parameters,limits,
+    engine:{manifest_sha256:VENDOR_MANIFEST_SHA,worker:'semantic_operator.worker',
+      contract:'commons-semantic-native-job/1',runtime_manifest_sha256:RUNTIME_MANIFEST_SHA},
+    inputs:selected.map(x=>x.entry)}};
+}
+function comparisonFields(request) {
+  return request?.kind==='comparison'?{kind:'comparison',before:request.before,after:request.after,
+    comparison:null,impact:null}: {};
+}
+
 async function exists(path) {
   try {await lstat(path);return true;} catch(error) {if(error.code==='ENOENT')return false;throw error;}
 }
@@ -241,6 +296,53 @@ export function createDcatSemanticNative({root,environment=process.env}) {
       mediaType:'application/json',role:'native_result',title:'Complete native run receipt',downloadName:'result.json'};
     return {...result,resultSha256:digest(raw),resultPath,receipts:[receipt]};
   }
+
+  async function comparisonSide(binding,name,selected) {
+    // All paths come from the selected source run's original native receipt.
+    // The domain additionally verifies the saved run/profile/catalog record hashes.
+    const sourceDirectory=join(root,binding.runId);
+    const source=await completed(sourceDirectory,binding.runId);
+    need(source && source.kind!=='comparison' && source.resultSha256===binding.nativeResultSha256,
+      'DCAT_SEMANTIC_COMPARISON_RUN_CHANGED');
+    const sourceRaw=await readPrivate(join(sourceDirectory,'request.json'),MAX_CONTROL);
+    need(digest(sourceRaw)===source.requestSha256,'DCAT_SEMANTIC_COMPARISON_REQUEST_CHANGED');
+    const original=JSON.parse(sourceRaw),catalog=original.inputs?.find(x=>x.key==='catalog');
+    need(original.schema===REQUEST_SCHEMA && original.runId===binding.runId
+      && original.profile?.id===binding.profileId && original.profile?.sha256===binding.profileSha256
+      && original.baseIRI===binding.baseIRI && catalog?.source_id===binding.selection.id
+      && catalog?.sha256===binding.selection.sha256 && catalog?.bytes===binding.selection.bytes,
+      'DCAT_SEMANTIC_COMPARISON_SELECTION_CHANGED');
+    for(const field of ['kind','id','sha256','bytes','reviewSha256','reportSha256']) {
+      need(catalog.source_reference?.[field]===binding.selection[field],
+        'DCAT_SEMANTIC_COMPARISON_SELECTION_CHANGED');
+    }
+    const snapshot=source.snapshot;
+    need(snapshot?.schema==='commons-semantic-native-result/1' && snapshot.action==='snapshot'
+      && snapshot.job_id===binding.runId+'-snapshot','DCAT_SEMANTIC_COMPARISON_SNAPSHOT_MISSING');
+    const operation=join(sourceDirectory,'native-jobs','snapshot');
+    const jobRaw=await readPrivate(join(operation,'job.json'),MAX_CONTROL);
+    const verified=await verifyNative(operation,jobRaw);
+    need(digest(bytes(verified.result))===digest(bytes(snapshot)),
+      'DCAT_SEMANTIC_COMPARISON_SNAPSHOT_CHANGED');
+    for(const [part,filename,role] of [['graph','graph.nt','graph'],['provenance','provenance.json','provenance']]) {
+      const nativeFile=snapshot.files.find(x=>x.path===filename && x.role===role);
+      need(nativeFile,'DCAT_SEMANTIC_COMPARISON_SNAPSHOT_MISSING');
+      if(part==='graph')need(snapshot.summary?.provenance_complete===true
+        && snapshot.summary?.graph_sha256===nativeFile.sha256,'DCAT_SEMANTIC_COMPARISON_SNAPSHOT_CHANGED');
+      const relative=binding.runId+'/native-jobs/snapshot/attempts/'+snapshot.generation+'/outputs/'+filename;
+      const supplied=binding.snapshot[part],retained=source.artifacts.find(x=>x.path===relative);
+      const input=selected.find(x=>x.entry.key===name+'-'+part);
+      need(retained && input && supplied.path===relative && retained.key===supplied.key
+        && retained.key===digest(Buffer.from(relative))
+        && retained.sha256===supplied.sha256 && retained.bytes===supplied.bytes
+        && nativeFile.sha256===supplied.sha256 && nativeFile.bytes===supplied.bytes
+        && input.path===join(root,relative),'DCAT_SEMANTIC_COMPARISON_SNAPSHOT_CHANGED');
+    }
+    return {profile:original.profile,baseIRI:original.baseIRI,contextMode:original.contextMode,
+      context:original.inputs.find(x=>x.key==='context'),snapshotTriples:snapshot.summary.triples,
+      engine:source.engine,requestSha256:source.requestSha256,nativeResultSha256:source.resultSha256};
+  }
+
   async function finish(directory,result,roles={},handle=null) {
     // Once the native child is drained, final receipt adoption has a single
     // boundary. Later cancel requests observe that same completed receipt.
@@ -269,11 +371,15 @@ export function createDcatSemanticNative({root,environment=process.env}) {
     await privateDirectory(root,true);
     const directory=join(root,runId);await privateDirectory(directory,true);
     const result=await completed(directory,runId);if(result)return result;
-    let requestSha256=null,startedAt=null;
-    if(await exists(join(directory,'request.json')))requestSha256=digest(await readPrivate(join(directory,'request.json'),MAX_CONTROL));
+    let requestSha256=null,startedAt=null,savedRequest=null;
+    if(await exists(join(directory,'request.json'))) {
+      const raw=await readPrivate(join(directory,'request.json'),MAX_CONTROL);
+      requestSha256=digest(raw);savedRequest=JSON.parse(raw);
+    }
     if(await exists(join(directory,'state.json')))startedAt=(await json(join(directory,'state.json'))).startedAt ?? null;
     return finish(directory,{schema:DCAT_SEMANTIC_NATIVE_SCHEMA,runId,status:'INTERRUPTED',
       requestSha256,engine:null,prepared:null,snapshot:null,coverage:null,validation:null,startedAt,
+      ...comparisonFields(savedRequest),
       error:{code:'DCAT_SEMANTIC_OWNER_INTERRUPTED',message:'The prior owner ended before a complete run receipt was retained.'}});
   }
   async function dispatch(handle,argv,cwd,logName,seconds) {
@@ -327,8 +433,9 @@ export function createDcatSemanticNative({root,environment=process.env}) {
     })();
     return handle.stopTask;
   }
-  async function execute(spec,options,handle) {
-    const {selected,value}=request(spec),directory=handle.directory,raw=bytes(value),roles={};
+  async function execute(spec,options,handle,kind) {
+    const {selected,value}=kind==='comparison'?comparisonRequest(spec,root):request(spec);
+    const directory=handle.directory,raw=bytes(value),roles={};
     const prior=await completed(directory,spec.runId);
     if(prior) {need(prior.requestSha256===digest(raw),'DCAT_SEMANTIC_REPLAY_CHANGED',undefined,409);handle.committing=true;return prior;}
     if(await exists(join(directory,'request.json'))) {
@@ -337,13 +444,13 @@ export function createDcatSemanticNative({root,environment=process.env}) {
       handle.committing=true;
       return finish(directory,{schema:DCAT_SEMANTIC_NATIVE_SCHEMA,runId:spec.runId,status:'INTERRUPTED',
         requestSha256:digest(raw),engine:null,prepared:null,snapshot:null,coverage:null,validation:null,
-        startedAt:null,error:{code:'DCAT_SEMANTIC_PRIOR_OWNER_ENDED',
+        ...comparisonFields(value),startedAt:null,error:{code:'DCAT_SEMANTIC_PRIOR_OWNER_ENDED',
           message:'This retained run was interrupted. Create an explicitly linked retry to run the same inputs again.'}});
     }
     await once(join(directory,'request.json'),raw);handle.accepted=true;
     const result={schema:DCAT_SEMANTIC_NATIVE_SCHEMA,runId:spec.runId,status:'FAILED',
       requestSha256:digest(raw),engine:null,prepared:null,snapshot:null,coverage:null,validation:null,
-      startedAt:stamp(),error:null};
+      ...comparisonFields(value),startedAt:stamp(),error:null};
     const update=async phase=>{
       handle.phase=phase;
       const state={schema:'stellar-forge.dcat-semantic-native-state.v1',runId:spec.runId,status:'RUNNING',
@@ -379,11 +486,29 @@ export function createDcatSemanticNative({root,environment=process.env}) {
       result.engine=await vendorIdentity();
       await once(join(directory,'engine-source.json'),bytes(result.engine));
       for(const name of ['sources','native-jobs','temporary','prepared'])await privateDirectory(join(directory,name),true);
+      if(kind==='comparison') {
+        result.sourceProfiles={before:await comparisonSide(value.before,'before',selected),
+          after:await comparisonSide(value.after,'after',selected)};
+      }
       for(const item of selected) {
         const body=await readPrivate(item.path,DCAT_SEMANTIC_MAX_INPUT);
         need(body.length===item.entry.bytes && digest(body)===item.entry.sha256,'DCAT_SEMANTIC_INPUT_CHANGED');
         await once(join(directory,'sources',item.entry.sha256+'.bin'),body);
       }
+      if(kind==='comparison') {
+        const comparison=await job('compare','compare',value.inputs,{
+          before_graph_key:'before-graph',after_graph_key:'after-graph',
+          before_provenance_key:'before-provenance',after_provenance_key:'after-provenance',
+          ...value.parameters});
+        result.comparison=comparison.result;
+        const summary=comparison.result.summary;
+        need(summary.graph_difference_complete===true && summary.provenance_complete===true
+          && summary.before_sha256===value.before.snapshot.graph.sha256
+          && summary.after_sha256===value.after.snapshot.graph.sha256,
+          'DCAT_SEMANTIC_COMPARISON_OUTPUT_CHANGED');
+        result.impact={summary,qualification:
+          'The graph difference is complete for these two retained RDF snapshots. Impact is limited to the selected edges, depth and node limit; profile or base-IRI changes can also change RDF statements.'};
+      } else {
       await dispatch(handle,['-B',PREPARE,'--request',join(directory,'request.json'),
         '--sources',join(directory,'sources'),'--output',join(directory,'prepared')],directory,
         'prepare.log',value.limits.timeout_seconds);
@@ -427,6 +552,7 @@ export function createDcatSemanticNative({root,environment=process.env}) {
         {graph_key:'snapshot',shape_keys:rdfInputs.filter(x=>x.role==='shapes').map(x=>x.key),
           ontology_keys:rdfInputs.filter(x=>x.role==='ontology').map(x=>x.key),...value.parameters});
       result.validation=validation.result;
+      }
       if(handle.stopKind)throw fault('DCAT_SEMANTIC_STOPPED',handle.stopKind);
       result.status='COMPLETE';
     } catch(error) {
@@ -437,7 +563,7 @@ export function createDcatSemanticNative({root,environment=process.env}) {
     } finally {handle.operation=null;handle.jobId=null;}
     return finish(directory,result,roles,handle);
   }
-  function run(spec,options={}) {
+  function begin(spec,options={},kind='validation') {
     need(!closed,'DCAT_SEMANTIC_OWNER_CLOSED');identifier(spec?.runId);
     need(!active.has(spec.runId),'DCAT_SEMANTIC_RUN_ACTIVE','This native run already has an owner.',409);
     const handle={runId:spec.runId,directory:join(root,spec.runId),phase:'preparing',stopKind:null,
@@ -448,10 +574,12 @@ export function createDcatSemanticNative({root,environment=process.env}) {
       await privateDirectory(root,true);await privateDirectory(handle.directory,true);
       if(options.signal?.aborted)await stop(handle,'CANCELLED');
       else options.signal?.addEventListener('abort',onAbort,{once:true});
-      return execute(spec,options,handle);
+      return execute(spec,options,handle,kind);
     })().finally(()=>{options.signal?.removeEventListener('abort',onAbort);active.delete(spec.runId);});
     return handle.promise;
   }
+  function run(spec,options={}) {return begin(spec,options,'validation');}
+  function compare(spec,options={}) {return begin(spec,options,'comparison');}
   async function cancel(runId) {
     identifier(runId);const handle=active.get(runId);
     if(!handle)return inspect(runId);
@@ -463,5 +591,5 @@ export function createDcatSemanticNative({root,environment=process.env}) {
       await stop(handle,'INTERRUPTED');await handle.promise;
     }));
   }
-  return {run,inspect,cancel,close};
+  return {run,compare,inspect,cancel,close};
 }

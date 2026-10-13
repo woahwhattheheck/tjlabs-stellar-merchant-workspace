@@ -17,6 +17,12 @@ const SOURCE_HELPERS = [
   'stellar/scf-starforge-20261009/sf46-release/runtime-package.mjs',
 ];
 const SEMANTIC_SOURCE = [
+  "dcat-semantic-comparison.mjs",
+  "public/dcat-semantic-view.mjs",
+  "public/dcat-semantic-comparison.mjs",
+  "dcat-semantic-files.mjs",
+  "dcat-semantic-comparison-cli.mjs",
+  "SEMANTIC_COMPARISONS.md",
   "dcat-semantic.mjs",
   "dcat-semantic-native.mjs",
   "dcat-semantic-cli.mjs",
@@ -66,7 +72,7 @@ export function dcatApplication(common) {
   return {
     id: 'dcat-migration', command: 'dcat', title: 'DCAT catalog workspace', terminal: false,
     requiredSource: ROOT + 'dcat-cli.mjs',
-    description: 'Open an existing catalogue migration workspace to receive original DCAT-US documents, review conversion, publisher changes and native semantic findings, select catalogue releases and hand over the complete project.',
+    description: 'Open an existing catalogue migration workspace to receive original DCAT-US documents, review conversion, publisher changes, native semantic findings and saved snapshot impact, select catalogue releases and hand over the complete project.',
     fields: [
       field('workspaceDirectory', 'Catalogue workspace', 'path', true,
         'Select the original private DCAT-US project directory. Source editions, reviews, release selection and rollback history remain in that project.'),
