@@ -1,3 +1,15 @@
+# Current complete reviewer edition — 13 October 2026
+
+The same APPLICATION_CONCISE.md now carries the complete nine-answer revision from SCF-REVIEWER-COMPLETE-EDITORIAL-33E6-20261013. Its exact current identity is 31,396 UTF-8 bytes / SHA256 a756bb24c1d467b38e2157995d25f4e51687d90c336b3f75cda0e0a1e448e368 / Git f702bd06f4fc235e1cb4a31220808092d8964b7b. The adjacent source-join.json identifies every current answer and retains its entire prior record.
+
+The current edition explains the shared public capability and complete recovery/handover benefit, retains all six priced deliverables and current customer/operating status, and keeps the decision-relevant cash and staffing assumptions in the reviewer answers. Historical financing detail remains in the original full manuscript and financial companion. The $38,000 request, 400 prospective hours, 150-day plan, three delivery tranches and four payment amounts are unchanged.
+
+The maintained grant-reviewer-edition.mjs generated the existing application-reviewer.md, reviewer-working-index.json and reviewer-working-source.json together. Actual original composer and receiving functions opened that complete edition with all 2,043 original source rows, original full manuscript, unchanged budget and unchanged companion. This was a source execution with explicit reference platform ports; native, rendered, issuer and independent-customer acceptance are not established by it. Existing saved-editor comparison and receiving controls remain authoritative.
+
+The following review is the complete preserved predecessor record. Its dated word counts and browser reservation describe that prior operation, not the current operating state.
+
+---
+
 # Complete concise application editorial contribution
 
 Operation: SCF-CONCISE-EDITORIAL-DFF77-20261013  
