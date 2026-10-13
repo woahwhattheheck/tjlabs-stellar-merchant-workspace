@@ -236,3 +236,7 @@ The existing inspect/create/record/compare/receive/render tools remain available
 The pure model imports the maintained Support source/result and ordinary plan/return modules. The native helper imports the original SF74 source inspector only when a local evidence read is requested. Source contribution exports retain their matching TypeScript declarations.
 
 Source review covered full-history binding, complete byte verification, original case ancestry, grouped comparison, current-head checks, completion replay and file/lease ownership boundaries. Functional checks execute the actual pure modules with explicit UTF-8 and SHA-256 bindings, including conflicting complete results, forged carried bytes, another case, legacy results, readable downloads and preservation of a later compatible plan. These checks establish model behavior; native case execution and original host acceptance retain their separate receiving records.
+
+## Deliver the complete reviewed customer package
+
+The [complete Support handover workflow](OAUTH_SUPPORT_HANDOVER.md) packages this entire returned-work review, the resulting full plan, all compact source descriptors and every original native companion into one portable TAR. The existing Support browser can include its opened review directly. Native pack/open/receive commands preserve original member identities and reopen native case histories through the maintained source receiver. Completed reviews remain bound to their original plan and the exported history retains their result plus any later compatible work.

@@ -4,6 +4,14 @@ const revision={type:'integer',minimum:1,maximum:9007199254740991};
 const read={readOnly:true,idempotent:true};
 export function supportOperatingTools(tool){
   return [
+    tool('merchant_support_operating_handover_create','Prepare a complete Support handover document from the original full plan, all source descriptors, selected returned-work reviews and exact original companion manifests. Retains full editable histories and file identities; the archive/browser/native receiver separately reads every original member. Supply stable id, title, owner and createdAt.',
+      {input:document},['input'],read),
+    tool('merchant_support_operating_handover_inspect','Validate the complete handover document, original plan and return histories, source coverage and exact companion inventories. This value-only action does not read or verify a filesystem archive.',
+      {value:document},['value'],read),
+    tool('merchant_support_operating_handover_receive','Compute original complete-plan prefix receiving from a validated handover document. Preserves later compatible work and rejects divergent histories. Returns the full actual plan, reused and addedRevisions; no plan/case store is changed. Use full archive receiving for native companion verification.',
+      {value:document,existing:{anyOf:[document,{type:'null'}]}},['value'],read),
+    tool('merchant_support_operating_handover_render','Return complete editable handover JSON or readable HTML with the exact member inventory. Original companion files travel in the complete TAR; they are never dropped into a reference-only delivery.',
+      {value:document,format:{enum:['json','html']}},['value','format'],read),
     tool('merchant_support_operating_inspect','Validate a retained compact Support source descriptor and its original case/evidence binding. Does not observe a resource or read an arbitrary file.',
       {source:document},['source'],read),
     tool('merchant_support_operating_create','Prepare one complete ordinary Operating Plan from the supplied retained Support source, actual installed catalog and exact creation input. Supply stable id and savedAt; all phases begin planned. Original commands are retained for operator review and are not executed.',
