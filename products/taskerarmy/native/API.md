@@ -104,7 +104,7 @@ credentials:
   routes: {route-id: environment-reference-present boolean}
 ~~~
 
-The configuration contains names of environment variables, not their values. The returned booleans report whether the current process has a nonempty value for the reference. Save the complete document you opened. Unchanged references stay unchanged; the original CAS and route-generation rules govern concurrent updates.
+The configuration contains names of environment variables, not their values. The returned booleans report the reference availability observed by that operation. A completed named replay retains its original result; configuration.read obtains the current host's availability. Save the complete document you opened. Unchanged references stay unchanged; the original CAS and route-generation rules govern concurrent updates.
 
 For a named configuration request, the same SQLite database retains the exact request and its intended previous/target revisions before the original configuration writer runs. A repeated completed request returns its retained result. A repeated prepared request continues only from its retained previous or target file revision. configuration_outcome_changed identifies a current file that matches neither selection.
 
@@ -254,6 +254,6 @@ An existing managed supervisor owns the child and its inherited process lease. I
 
 ## Local error handling and replay
 
-Preserve a mutation's request ID, full arguments and selected binding before dispatch. A matching completed request returns the retained result with replayed:true. Reusing the ID for another operation or request body returns request_conflict. A changed supplied installation binding returns installation_changed.
+Preserve a mutation's request ID, full arguments and selected binding before dispatch. A matching completed request returns the retained result with replayed:true. Reusing the ID for another operation or request body returns request_conflict. A changed supplied installation binding returns installation_changed. Source adoption has one narrow continuation: the original prior source binding can receive that exact already-selected adoption when its operation ID, complete target source/manifest, original input path, retained prior request and full selected before/after transition all match. Its original native adoption receiver handles the completed result or a selected-pointer/result-write interruption. A different input, operation, installation or later source edition remains a binding conflict.
 
 The adapter reports original validation and local source/database errors in one JSON result. Read requests.get after an uncertain response. The original snapshot and receiving journals own archive replay; their identities remain in the returned native records. Configuration CAS and uncertain Slack transmission require their original reconciliation paths, as described in the application and operator guides.

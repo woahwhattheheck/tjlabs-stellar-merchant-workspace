@@ -128,7 +128,7 @@ python3 -B native/manage.py adopt-source \
 
 The original adoption operation materializes and verifies the full successor before selecting it. It retains the prior source and application lineage while preserving the current routing and SQLite state. Stop or reconcile any managed service that still runs a prior source edition, then start its reviewed successor through the same managed lifecycle. After adoption, inspect the installation and use its new source_identity in subsequent bound operation requests.
 
-The JSON equivalent is installation.adopt_source. It invokes the actual currently installed native implementation and uses the same original adoption journal.
+The JSON equivalent is installation.adopt_source. It invokes the actual currently installed native implementation and uses the same original adoption journal. If its reply is lost after source selection, the original bound request can receive that exact transition: the adapter verifies its complete target source, operation ID, original input path and retained before/after installation before letting the native receiver continue. This exception applies to that selected adoption only; other stale source bindings remain conflicts.
 
 ## Export the complete customer workspace
 

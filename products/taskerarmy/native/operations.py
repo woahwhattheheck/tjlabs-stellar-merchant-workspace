@@ -213,13 +213,75 @@ def identity(value):
     return selected
 
 
+def original_adoption_transition(req, value, expected_source):
+    if req["operation"] != "installation.adopt_source":
+        return False
+    args = req["arguments"]
+    operation_id = identifier(args.get("operation_id", req.get("request_id")), "operation_id")
+    application = manage.ordinary(absolute(args.get("application"), "application"), True)
+    manifest = manage.source_manifest(application, optional_path(args, "manifest_path"))
+    source_id = hashlib.sha256(manage.canonical(manifest).encode("utf-8")).hexdigest()
+    adoption_id = hashlib.sha256(manage.canonical({
+        "operation_id": operation_id, "source_identity": source_id,
+    }).encode("utf-8")).hexdigest()
+    if value["source_identity"] != source_id or value.get("source_edition") != adoption_id:
+        return False
+    root = pathlib.Path(value["paths"]["directory"])
+    working = root / "source-adoptions" / adoption_id
+    record_path = working / "request.json"
+    if not record_path.exists():
+        return False
+    record = manage.read_json(manage.ordinary(absolute(str(record_path), "original adoption request")))
+    previous = record.get("prior_installation")
+    if (record.get("schema") != "taskerarmy.source-adoption-request.v1"
+            or record.get("operation_id") != operation_id
+            or record.get("adoption_id") != adoption_id
+            or record.get("source_identity") != source_id
+            or record.get("application") != str(application)
+            or record.get("installation_id") != value["installation_id"]
+            or not isinstance(previous, dict)
+            or previous.get("installation_id") != value["installation_id"]
+            or previous.get("binding") != value["binding"]
+            or previous.get("source_identity") != expected_source):
+        return False
+    # Check the complete original before/after transition. This reconstructs
+    # the original selection for comparison only; the selected native adoption
+    # method remains the sole writer and completed-result receiver.
+    updated = json.loads(manage.canonical(previous))
+    updated["source_identity"] = source_id
+    updated["source_edition"] = adoption_id
+    updated["paths"]["application"] = str(root / "source-editions" / adoption_id / "application")
+    updated["lineage"] = list(previous.get("lineage", [])) + [{
+        "source_adoption_id": adoption_id, "operation_id": operation_id,
+        "created_at": record["created_at"],
+        "previous_source_identity": expected_source, "source_identity": source_id,
+    }]
+    if updated != value:
+        return False
+    result_path = working / "result.json"
+    if result_path.exists():
+        result = manage.read_json(manage.ordinary(absolute(str(result_path), "original adoption result")))
+        if (result.get("schema") != "taskerarmy.source-adoption-result.v1"
+                or result.get("adoption_id") != adoption_id
+                or result.get("operation_id") != operation_id
+                or result.get("previous_source_identity") != expected_source
+                or result.get("installation") != value):
+            return False
+    return True
+
+
 def checked_installation(req):
     root = absolute(req.get("installation"), "installation")
     value = manage.installation(root)
-    for key, expected in (req.get("binding") or {}).items():
-        if value.get(key) != expected:
-            fail("installation_changed", "The selected installation " + key + " changed")
-    return value
+    binding = req.get("binding") or {}
+    if "installation_id" in binding and value["installation_id"] != binding["installation_id"]:
+        fail("installation_changed", "The selected installation installation_id changed")
+    recovery = False
+    if "source_identity" in binding and value["source_identity"] != binding["source_identity"]:
+        recovery = original_adoption_transition(req, value, binding["source_identity"])
+        if not recovery:
+            fail("installation_changed", "The selected installation source_identity changed")
+    return value, recovery
 
 
 def selected_module(path, prefix):
@@ -243,7 +305,7 @@ def installed_sources(req):
     bootstrap_manage, bootstrap_package = manage, package
     root = bootstrap_manage.ordinary(absolute(req.get("installation"), "installation"), True)
     with bootstrap_manage.locked(root):
-        value = checked_installation(req)
+        value, adoption_recovery = checked_installation(req)
         native = pathlib.Path(value["paths"]["application"]) / "native"
         old_path = list(sys.path)
         prior_archive = sys.modules.get("archive")
@@ -278,7 +340,7 @@ def installed_sources(req):
             selected_manage.locked = original_owned_lock
             manage, package = selected_manage, selected_archive
             sys.modules["manage"] = selected_manage
-            yield value
+            yield value, adoption_recovery
         finally:
             manage, package = bootstrap_manage, bootstrap_package
             if selected_manage is not None and selected_lock is not None:
@@ -707,7 +769,8 @@ def perform(raw):
 
     # The selected archive/manage/worker/operator all come from this actual
     # installed application. Its original flock spans selection and operation.
-    with installed_sources(req) as value:
+    with installed_sources(req) as selected:
+        value, adoption_recovery = selected
         root = value["paths"]["directory"]
         if name == "installation.inspect":
             return response(req, value, manage.inspect(root))
@@ -717,7 +780,7 @@ def perform(raw):
                 root, absolute(args.get("application"), "application"),
                 optional_path(args, "manifest_path"), operation_id,
             )
-            return response(req, manage.installation(root), result, result.get("replayed", False))
+            return response(req, manage.installation(root), result, adoption_recovery or result.get("replayed", False))
         if name == "installation.snapshot":
             operation_id = identifier(args.get("operation_id", req.get("request_id")), "operation_id")
             result = manage.snapshot(root, absolute(args.get("output"), "output"), operation_id)
