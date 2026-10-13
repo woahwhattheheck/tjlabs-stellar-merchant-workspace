@@ -54,7 +54,9 @@
     "stellar-forge/mcp-merchant-operator/CANADABUYS_CUSTOMER.md",
     "stellar-forge/mcp-merchant-operator/catalog/canadabuys-workspace.mjs",
     "stellar-forge/mcp-merchant-operator/providers/canadabuys-workspaces.mjs",
-    "stellar-forge/mcp-merchant-operator/examples/run-canadabuys-customer-receiving.mjs"
+    "stellar-forge/mcp-merchant-operator/examples/run-canadabuys-customer-receiving.mjs",
+    "stellar-forge/mcp-merchant-operator/CANADABUYS_EVIDENCE_INTAKE.md",
+    "stellar-forge/mcp-merchant-operator/examples/run-canadabuys-intake-receiving.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
