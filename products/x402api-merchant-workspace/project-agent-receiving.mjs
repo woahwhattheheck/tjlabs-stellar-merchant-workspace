@@ -53,13 +53,13 @@ async function fileIdentity(path,expected) {
   return {path,bytes:position,sha256:expected.sha256};
  } finally {await handle.close();}
 }
-async function artifactBytes(owner,artifact,destination,{restart=false}={}) {
+async function artifactBytes(owner,artifact,destination,{restart=false,prefix='merchant_project_',selector='project',alias='original'}={}) {
  const stage=destination+'.'+randomUUID()+'.partial';
  const file=await open(stage,'wx',0o600),digest=createHash('sha256');
  let offset=0,readId,interrupted=false;
  try {
   for(;;) {
-   const response=await owner.call('merchant_project_file',{project:'original',
+   const response=await owner.call(prefix+'file',{[selector]:alias,
     artifactId:artifact.artifactId,expectedSha256:artifact.payload.sha256,offset,
     limit:offset===0?31:MAX_RETAINED_CHUNK_BYTES,...(readId?{readId}:{})});
    const piece=response.native;
@@ -73,7 +73,7 @@ async function artifactBytes(owner,artifact,destination,{restart=false}={}) {
    assert.equal(piece.nextOffset,offset);assert(bytes.length>0);
    readId=piece.readId;
    if(restart&&!interrupted) {
-    await owner.call('merchant_project_file_release',{project:'original',readId});
+    await owner.call(prefix+'file_release',{[selector]:alias,readId});
     readId=undefined;interrupted=true;
    }
   }
@@ -85,7 +85,7 @@ async function artifactBytes(owner,artifact,destination,{restart=false}={}) {
   return {path:destination,bytes:offset,sha256:artifact.payload.sha256,reopenedRead:interrupted};
  } finally {
   await file.close().catch(()=>{});
-  if(readId)await owner.call('merchant_project_file_release',{project:'original',readId});
+  if(readId)await owner.call(prefix+'file_release',{[selector]:alias,readId});
   await unlink(stage).catch(error=>{if(error.code!=='ENOENT')throw error;});
  }
 }
@@ -217,3 +217,5 @@ export async function verifyMerchantProjectAgent(result,{selectionSha256,expecte
  return {state:'COMPLETE',selectionSha256,originalOperation:result.operation,artifacts:result.artifacts.length,
   invoices:result.invoices.length,files:result.files.length,offlineReopened:true};
 }
+
+export {artifactBytes as receiveMerchantArtifact,fileIdentity as verifyMerchantArtifact,save as saveMerchantReceiving,directory as merchantReceivingDirectory};

@@ -100,6 +100,14 @@ SOURCE_PATHS = [
   "stellar-forge/mcp-merchant-operator/retained-file-reads.mjs",
   "products/x402api-merchant-workspace/PROJECT_AGENT.md",
   "products/x402api-merchant-workspace/project-agent-receiving.mjs"
+,
+  "stellar-forge/mcp-merchant-operator/merchant-invoice-connection.mjs",
+  "stellar-forge/mcp-merchant-operator/merchant-invoice-files.mjs",
+  "stellar-forge/mcp-merchant-operator/merchant-invoice-protocol.mjs",
+  "stellar-forge/mcp-merchant-operator/merchant-invoices.mjs",
+  "stellar-forge/mcp-merchant-operator/providers/merchant-invoices.mjs",
+  "products/x402api-merchant-workspace/invoice-agent-receiving.mjs",
+  "products/x402api-merchant-workspace/INVOICE_AGENT.md"
 ]
 
 def digest(raw): return hashlib.sha256(raw).hexdigest()
