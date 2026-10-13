@@ -349,6 +349,295 @@
           "sha256": "e692cae22b6e4c5a30f05b6e2277d0b6a4e3c68e1d20d6e4fe774ee84c23de6b"
         }
       ]
+    },
+    {
+      "id": "installation-collection-agent",
+      "label": "Complete source collection agent",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-agent.mjs",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "3016b4a3a23181cafe0ddfd559ec972868ebd33c",
+          "bytes": 31467,
+          "sha256": "d73788787c97bb02d80f70eb77acae9a1b0c3ca9f53757b0c17faee9a21d2c8b"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-agent-types",
+      "label": "Source collection agent declarations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-agent.d.mts",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "eb0a48bc0a1b1ad9eaf78e392b5fc02bd96c0aa8",
+          "bytes": 11779,
+          "sha256": "3b3a518080a451ba100cdd6b1a4d5735ec9780a3917500002ca7c1eaf4ed7fb4"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-store",
+      "label": "Durable source collection working-copy store",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-store.mjs",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "bbd1184633a724a68ef3527b648e24020ab1e32d",
+          "bytes": 14003,
+          "sha256": "71281771229291d0e1f1051bf5865737a5a928cd3450e437cdd15ba431793232"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-store-types",
+      "label": "Working-copy store declarations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-store.d.mts",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "da91c518f5a5941117b2a9f30e6b001cc8fd8957",
+          "bytes": 1741,
+          "sha256": "cd03b6782719ab74a82e2a55d85480ab521d66bb109ef8100e2a8ff071779a3c"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-session",
+      "label": "Original Grant client collection session",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-session.mjs",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "70a862048f22a086c71807af7ef1bca0c50091c0",
+          "bytes": 3536,
+          "sha256": "004f0fa0fa31c12f8cde4446b365689033e9ba72d750a6eaa2084c5090eb7cbc"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-session-types",
+      "label": "Collection session declarations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-session.d.mts",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "511a36f393052c160761d1b4ffacc82d94977611",
+          "bytes": 3089,
+          "sha256": "c9e7a59ff94a70ff6807a05c771b0ccce8bb88f5f7966f97f081fb793ed1c1c6"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-cli",
+      "label": "Installed whole collection command",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-cli.mjs",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "c3c0af407d741a54814faff067d668f417e7ca2f",
+          "bytes": 10859,
+          "sha256": "1f83dde786662312888fa1056c607f65dd2ebe80f0de75ec997af07ca1e92af7"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-cli-types",
+      "label": "Installed command declarations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-cli.d.mts",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "241c8f51984e3c0f3697d4c40debde441ee8452a",
+          "bytes": 449,
+          "sha256": "a000fd09ec316468135ee1ee4dcbf1f2236fd29d3d50aafa8f8ca078fe6cd577"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-operation",
+      "label": "Source collection operator and recovery guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_COLLECTION_AGENT.md",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "7669ef03704cbf97797dc13bbfa8f475084ed1d9",
+          "bytes": 11015,
+          "sha256": "d53a06755d5d670d74d9967a0384da73468c54c5ac68ad182d6c26681141fdeb"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-mcp-adapter",
+      "label": "Same-owner collection MCP adapter",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/grant-source-collection.mjs",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "23628effed729ddb5a919ebbc9b7b14dfb1d6efd",
+          "bytes": 6485,
+          "sha256": "de9110cbfd1110b82c0d285e7215de9911436c0d0e94e7647dc249b1f921d084"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-mcp-catalogue",
+      "label": "Sixteen collection tool definitions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/catalog/grant-source-collection.mjs",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "2652612451482c7aa168b828c759a291475f5401",
+          "bytes": 5711,
+          "sha256": "08313e87b0d33ae22afa80a467f1f3de490b1f87b0518c76f5ce3c7b07858ac5"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-grant-host",
+      "label": "Original Grant host collection integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/grant-workspace.mjs",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "38b57a5df6058b173e671e60a885970391829507",
+          "bytes": 73065,
+          "sha256": "ac41c9ce07b8a487c28c84fef8dd8ad438dc2379e6374dcebd129f4a78d77934"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-grant-catalogue",
+      "label": "Original Grant tool catalogue integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/catalog/grant-workspace.mjs",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "74b2f633c4dddc414a66eb3553eec832802220c4",
+          "bytes": 101124,
+          "sha256": "fefdda9ac2cd5e819310cbee5a73c9cb124a12096754c1213ed64c9c15289b61"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-grant-provider",
+      "label": "Configured original Grant workspace provider",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/providers/grant-workspaces.mjs",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "f588ee814af00fd989447971b8a757efd42775f5",
+          "bytes": 3165,
+          "sha256": "4fdb9e7ec51f568e654ed153c7685dbdfcbb93eb845b7e8106a742a0dfe96440"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-workspace-selection",
+      "label": "Selected workspace distribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/grant-workspace.json",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "db44f2451fa5c6efcb017cf713aaed9ce1e76691",
+          "bytes": 6388,
+          "sha256": "e092b7ae2c716b84b66b489d718e84899258aa19713956bc232301f9785703f4"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-agent-selection",
+      "label": "Selected agent distribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/grant-agent.json",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "a86f6e61f21a0bb9ff0e71bd66c8776286de1c51",
+          "bytes": 3717,
+          "sha256": "3a223b41ccc80780d441e8f12780457377bdd6ac98716a265e1c031383ab78fb"
+        }
+      ]
+    },
+    {
+      "id": "installation-collection-provider-selection",
+      "label": "Selected Grant provider distribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/merchant-provider-grant-workspaces.json",
+      "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6557ed2ee327a690983e6ea6dff259eecfb7a785",
+          "git_blob": "a04c036efbe79b40a5819c59a05782d457ea0b30",
+          "bytes": 2597,
+          "sha256": "245615c8ef12fc277f4952a310e35556e590a932951bfe020d4a9498ed69160e"
+        }
+      ]
     }
   ]
 }
