@@ -28,9 +28,9 @@ function tab(name) {
   document.querySelectorAll('[data-view]').forEach(e => e.setAttribute('aria-current', e.dataset.view === name ? 'page' : 'false'));
 }
 function lock() {
-  $('workspace-controls').disabled = !state || busy || Boolean(pending) || operatingBusy;
-  for (const id of ['check-operation','resume-operation','retry-operation','dismiss-operation','retry-file']) $(id).disabled = busy || recovering || operatingRunning;
-  $('retry-operation').disabled = busy || recovering || operatingRunning || (!retryPayload && Boolean(pending?.file));
+  $('workspace-controls').disabled = !state || busy || Boolean(pending) || operatingBusy || Boolean(handoverPending);
+  for (const id of ['check-operation','resume-operation','retry-operation','dismiss-operation','retry-file']) $(id).disabled = busy || recovering || operatingRunning || Boolean(handoverPending);
+  $('retry-operation').disabled = busy || recovering || operatingRunning || Boolean(handoverPending) || (!retryPayload && Boolean(pending?.file));
 }
 const markerPrefix = directory => 'stellar.grist.pending.v1:' + directory + ':';
 const activeKey = directory => 'stellar.grist.active.v1:' + directory;
@@ -48,7 +48,7 @@ function showRecovery(message) {
   $('retry-operation').hidden = known !== null;
   $('dismiss-operation').hidden = known?.status !== 'failed';
   $('retry-file-label').hidden = known !== null || !pending.file || Boolean(retryPayload);
-  $('retry-operation').disabled = busy || recovering || operatingRunning || !retryPayload && Boolean(pending.file);
+  $('retry-operation').disabled = busy || recovering || operatingRunning || Boolean(handoverPending) || !retryPayload && Boolean(pending.file);
   lock();
 }
 async function sha(content) {
@@ -109,7 +109,7 @@ async function finish(result, marker) {
   notice('Saved. Original request ' + marker.requestId + '.');
 }
 async function checkReceipt() {
-  if (!pending || recovering || operatingRunning) return;
+  if (!pending || recovering || operatingRunning || handoverPending) return;
   recovering = true; lock();
   try {
     const reply = await api('/api/operation?id=' + encodeURIComponent(pending.requestId));
@@ -119,7 +119,7 @@ async function checkReceipt() {
   finally { recovering = false; lock(); }
 }
 async function mutate(path, body, label, file = null) {
-  if (pending || busy || operatingBusy) return;
+  if (pending || busy || operatingBusy || Boolean(handoverPending)) return;
   busy = true; lock(); notice('');
   try {
     const requestId = uuid(), payload = { ...clone(body), requestId };
@@ -140,7 +140,7 @@ async function mutate(path, body, label, file = null) {
   finally { busy = false; lock(); }
 }
 async function readAction(action) {
-  if (busy || pending || operatingBusy) return;
+  if (busy || pending || operatingBusy || Boolean(handoverPending)) return;
   busy = true; lock(); notice('');
   try { await action(); } catch (issue) { notice(errorMessage(issue), true); } finally { busy = false; lock(); }
 }
@@ -157,7 +157,7 @@ function table(parent, headings, rows) {
   const b=node('tbody');for(const cells of rows){const r=node('tr');for(const value of cells){const c=node('td');c.append(value instanceof Node?value:node('span',shown(value)));r.append(c);}b.append(r);}t.append(b);parent.append(t);
 }
 function button(label, action) {
-  const b=node('button',label);b.type='button';b.addEventListener('click',async event=>{event.preventDefault();if(busy||pending||operatingBusy)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}});return b;
+  const b=node('button',label);b.type='button';b.addEventListener('click',async event=>{event.preventDefault();if(busy||pending||operatingBusy||handoverPending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}});return b;
 }
 function actions(...buttons){const n=node('div');n.append(...buttons);return n;}
 function description(title, detail){const n=node('div');n.append(node('strong',title),node('small',detail));return n;}
@@ -208,15 +208,15 @@ function defaultSpec(field,index){
   return{alias:alias(field.title,index),enabled:false,source:field.id,providerType:field.type,type:base==='Bool'?'boolean':'string',encoding,nullable:true,empty:'preserve'};
 }
 function selectInput(values,value,changed){
-  const input=node('select');for(const item of values){const [v,label]=Array.isArray(item)?item:[item,item];const o=node('option',label);o.value=v;input.append(o);}input.value=value;input.addEventListener('change',()=>{if(!busy&&!pending&&!operatingBusy)changed(input.value);});return input;
+  const input=node('select');for(const item of values){const [v,label]=Array.isArray(item)?item:[item,item];const o=node('option',label);o.value=v;input.append(o);}input.value=value;input.addEventListener('change',()=>{if(!busy&&!pending&&!operatingBusy&&!handoverPending)changed(input.value);});return input;
 }
 function fieldTable(parent,fields,map,onChange){
   table(parent,['Use','Native field / observed values','Public alias','Scalar type','Value encoding','Nulls','Empty strings'],fields.map((f,index)=>{
     let spec=map.get(f.id);if(!spec){spec=defaultSpec(f,index);map.set(f.id,spec);}
-    const check=node('input');check.type='checkbox';check.checked=spec.enabled;check.setAttribute('aria-label','Use '+f.title);check.addEventListener('change',()=>{if(!busy&&!pending&&!operatingBusy){spec.enabled=check.checked;onChange();}});
+    const check=node('input');check.type='checkbox';check.checked=spec.enabled;check.setAttribute('aria-label','Use '+f.title);check.addEventListener('change',()=>{if(!busy&&!pending&&!operatingBusy&&!handoverPending){spec.enabled=check.checked;onChange();}});
     const details=description(f.title,(f.id==='$recordId'?'Native identity':f.type)+' · '+f.id);
     if(f.counts){details.append(node('small',Object.entries(f.counts).filter(([,n])=>n).map(([k,n])=>k+' '+n).join(' · ')));details.append(node('small',(f.samples??[]).map(s=>s.kind+': '+shown(s.value)).join(' | ')));}
-    const name=node('input');name.value=spec.alias;name.maxLength=48;name.setAttribute('aria-label','Public alias for '+f.title);name.addEventListener('input',()=>{if(!busy&&!pending&&!operatingBusy){spec.alias=name.value;onChange();}});
+    const name=node('input');name.value=spec.alias;name.maxLength=48;name.setAttribute('aria-label','Public alias for '+f.title);name.addEventListener('input',()=>{if(!busy&&!pending&&!operatingBusy&&!handoverPending){spec.alias=name.value;onChange();}});
     const type=selectInput(['string','integer','number','boolean'],spec.type,v=>{spec.type=v;onChange();});type.setAttribute('aria-label','Scalar type for '+f.title);
     const encoding=selectInput(f.id==='$recordId'?['identity-text','native','number-text']:['native','number-text','epoch-seconds-text','reference-id-text','typed-json'],spec.encoding,v=>{spec.encoding=v;onChange();});encoding.setAttribute('aria-label','Encoding for '+f.title);
     const nullable=selectInput([['false','Required'],['true','Allow null']],String(spec.nullable),v=>{spec.nullable=v==='true';onChange();});nullable.setAttribute('aria-label','Null policy for '+f.title);if(f.id==='$recordId')nullable.disabled=true;
@@ -399,11 +399,11 @@ function filterInput(){
   return value;
 }
 for(const id of ['connection','doc-id','table-id','filter'])$(id).addEventListener('input',()=>{
-  if(busy||pending||operatingBusy)return;sourceIntent++;metadata=null;$('acquisition').hidden=true;
+  if(busy||pending||operatingBusy||handoverPending)return;sourceIntent++;metadata=null;$('acquisition').hidden=true;
   if(['connection','doc-id'].includes(id))clearDocument();
   else if(documentView)selectedDocumentText();
 });
-function guarded(action){return async event=>{event?.preventDefault();if(busy||pending||operatingBusy)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}};}
+function guarded(action){return async event=>{event?.preventDefault();if(busy||pending||operatingBusy||handoverPending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}};}
 for(const b of document.querySelectorAll('[data-view]'))b.addEventListener('click',()=>tab(b.dataset.view));
 $('refresh').addEventListener('click',guarded(()=>readAction(()=>refresh())));
 $('load-current-draft').addEventListener('click',guarded(()=>readAction(async()=>{await refresh();if(state.draft)await loadDraft(state.draft,state.draftRevision);})));
@@ -460,7 +460,7 @@ $('import-form').addEventListener('submit',guarded(async()=>{
   if(!upload)throw new Error('Wait for the complete selected packet to be read.');
   await mutate('/api/import-package',{packet:upload.packet,title:$('import-title').value.trim(),expectedDraftRevision:state.draftRevision},'Import original complete source',upload.file);
 }));
-$('draft-title').addEventListener('input',()=>{if(!busy&&!pending&&!operatingBusy)change();});
+$('draft-title').addEventListener('input',()=>{if(!busy&&!pending&&!operatingBusy&&!handoverPending)change();});
 $('query-select').addEventListener('change',guarded(()=>{flushQuery();queryName=$('query-select').value;renderQuery();}));
 $('rename-query').addEventListener('click',guarded(()=>{
   flushQuery();const next=$('query-name').value.trim();
@@ -523,13 +523,13 @@ for(const [name,get,set]of [
 })));
 $('check-operation').addEventListener('click',()=>checkReceipt());
 $('resume-operation').addEventListener('click',async()=>{
-  if(!pending||busy||recovering||operatingRunning)return;recovering=true;lock();
+  if(!pending||busy||recovering||operatingRunning||handoverPending)return;recovering=true;lock();
   try{const marker=pending,result=await api('/api/resume',{body:{requestId:marker.requestId}});await finish(result,marker);}
   catch(issue){notice(errorMessage(issue),true);const reply=await api('/api/operation?id='+pending.requestId).catch(()=>null);if(reply){known=reply.operation;showRecovery();}}
   finally{recovering=false;lock();}
 });
 $('retry-file').addEventListener('change',async()=>{
-  if(!pending||busy||recovering||operatingRunning)return;
+  if(!pending||busy||recovering||operatingRunning||handoverPending)return;
   try{const value=await readUpload($('retry-file').files[0]);if(value.file.bytes!==pending.file.bytes||value.file.sha256!==pending.file.sha256)throw new Error('Reselect the exact original packet bytes.');
     const payload={...pending.small,packet:value.packet,requestId:pending.requestId};
     if(await bodyHash(payload)!==pending.bodySha256)throw new Error('The retained request payload differs. Keep this original request for receipt lookup.');
@@ -537,7 +537,7 @@ $('retry-file').addEventListener('change',async()=>{
   }catch(issue){notice(errorMessage(issue),true);}
 });
 $('retry-operation').addEventListener('click',async()=>{
-  if(!pending||busy||recovering||operatingRunning)return;recovering=true;lock();
+  if(!pending||busy||recovering||operatingRunning||handoverPending)return;recovering=true;lock();
   try{const body=retryPayload??pending.small;
     if(!body||await bodyHash(body)!==pending.bodySha256)throw new Error('The identical input is not available. Reselect its original packet or inspect the receipt.');
     const marker=pending,result=await api(marker.path,{body});await finish(result,marker);
@@ -545,18 +545,242 @@ $('retry-operation').addEventListener('click',async()=>{
   finally{recovering=false;lock();}
 });
 $('dismiss-operation').addEventListener('click',async()=>{
-  if(!pending||busy||recovering||operatingRunning||known?.status!=='failed')return;
+  if(!pending||busy||recovering||operatingRunning||handoverPending||known?.status!=='failed')return;
   const original=pending.requestId;forget();await refresh().catch(issue=>notice(errorMessage(issue),true));
   notice('Recorded failure acknowledged. Original request '+original+' and its retained files remain in the workspace.');
 });
+// Whole editable workspace handover. Private archive bytes never enter browser storage.
+let handoverPending = null, handoverUpload = null, handoverFile = null, handoverAbort = null, handoverRejected = [];
+const HANDOVER_MAX = 32 * 1024 * 1024 * 1024 + 32 * 1024 * 1024 + 13, HANDOVER_CHUNK = 1024 * 1024;
+const handoverKey = () => 'stellar.grist.workspace-handover.v1:' + state.directory;
+function saveHandoverState() {
+  localStorage.setItem(handoverKey(), JSON.stringify({ pending: handoverPending, upload: handoverUpload, rejected:handoverRejected }));
+}
+function renderHandoverRecovery(message = '') {
+  $('handover-recovery').hidden = !handoverPending;
+  if (handoverPending) {
+    $('handover-request').textContent = handoverPending.requestId;
+    $('handover-recovery-title').textContent = handoverPending.kind === 'upload' ? 'Complete workspace upload retained' : 'Original workspace ' + handoverPending.kind + ' retained';
+    $('handover-recovery-message').textContent = message || 'Keep this original request. Check its saved receipt or continue the identical input.';
+    $('handover-reselect-label').hidden = handoverPending.kind !== 'upload';
+    $('handover-retry').textContent = handoverPending.kind === 'upload' ? 'Resume with the same file' : 'Retry original request';
+  }
+  for (const name of ['handover-check','handover-retry','handover-reselect']) $(name).disabled = busy || recovering || operatingRunning;
+  $('handover-pause').hidden = !handoverAbort;
+  $('handover-pause').disabled = !handoverAbort;
+  lock();
+  operating?.contextChanged();
+}
+function renderHandoverUpload() {
+  const out = $('handover-upload-summary'); out.replaceChildren();
+  $('handover-receive').disabled = !handoverUpload?.complete || Boolean(handoverPending);
+  if (!handoverUpload) { out.append(node('p', 'Select a whole-workspace .grwh file. Its complete bytes remain on this host.', 'help')); return; }
+  out.append(node('p', (handoverUpload.complete ? 'Verified complete archive' : 'Retained upload') + ' · ' + handoverUpload.received + ' / ' + handoverUpload.bytes + ' bytes'));
+  if (handoverUpload.sha256) out.append(node('code', handoverUpload.sha256));
+  out.append(node('p', 'Upload ID: ' + handoverUpload.id, 'path'));
+  $('handover-receive').disabled = !handoverUpload.complete || Boolean(handoverPending);
+}
+async function handoverApi(path, { method = 'GET', body, raw, signal } = {}) {
+  const control = new AbortController(), timeout = setTimeout(() => control.abort(), 180000);
+  const abort = () => control.abort();
+  signal?.addEventListener('abort', abort, { once:true });
+  if (signal?.aborted) control.abort();
+  try {
+    const response = await fetch(path, { method, headers: {
+      'x-grist-workspace-token': token || '',
+      ...(raw !== undefined ? { 'content-type':'application/octet-stream' } : body !== undefined ? { 'content-type':'application/json' } : {})
+    }, ...(raw !== undefined ? { body:raw } : body !== undefined ? { body:JSON.stringify(body) } : {}), cache:'no-store', signal:control.signal });
+    const value = await response.json();
+    if (!response.ok) throw Object.assign(new Error(value.message || value.error || response.statusText), { code:value.error, status:response.status });
+    return value;
+  } catch (issue) { if (!issue.status) issue.uncertain = true; throw issue; }
+  finally { clearTimeout(timeout); signal?.removeEventListener('abort', abort); }
+}
+function rememberHandover(kind, input, file = null) {
+  const marker = { kind, requestId:input.requestId, input:clone(input), ...(file ? {file:{name:file.name,bytes:file.size}} : {}), createdAt:new Date().toISOString() };
+  // Persist the exact intent before the first native request.
+  const previous = handoverPending; handoverPending = marker;
+  try { saveHandoverState(); } catch (issue) { handoverPending = previous; throw issue; }
+  renderHandoverRecovery(); return marker;
+}
+function finishHandoverMarker(marker) {
+  if (handoverPending?.requestId !== marker.requestId) return;
+  const previous = handoverPending; handoverPending = null;
+  try { saveHandoverState(); } catch (issue) { handoverPending = previous; throw issue; }
+  renderHandoverRecovery();
+}
+async function downloadWorkspace(id) {
+  const ticket = await handoverApi('/api/workspace/download', { method:'POST', body:{id} });
+  const url = new URL(ticket.url, location.href);
+  if (url.origin !== location.origin || !url.pathname.startsWith('/api/workspace/')) throw new Error('The archive download must stay on this original workspace.');
+  const link = node('a'); link.href = url.href; link.download = ticket.filename; link.rel = 'noreferrer'; link.click();
+  $('handover-download-note').textContent = 'Download requested: ' + ticket.filename + ' · ' + ticket.bytes + ' bytes · SHA256 ' + ticket.sha256 + '. If interrupted, choose Download again for this same archive.';
+}
+function handoverCounts(value) {
+  return Object.entries(value ?? {}).map(([name,count]) => name + ': ' + shown(count)).join(' · ') || 'Full saved workspace';
+}
+async function refreshHandovers() {
+  const [exportsValue, receivedValue] = await Promise.all([
+    handoverApi('/api/workspace/exports'), handoverApi('/api/workspace/received')
+  ]);
+  table($('handover-exports'), ['Archive','Saved work','Exact identity','Actions'], exportsValue.exports.map(item => [
+    description(item.filename, item.bytes + ' bytes'), handoverCounts(item.counts),
+    node('code', item.sha256),
+    button('Download complete workspace', () => readAction(() => downloadWorkspace(item.id)))
+  ]));
+  table($('handover-received'), ['Independent workspace','Saved work','Original archive','Actions'], receivedValue.received.map(item => [
+    description(item.name, item.workspaceIdentity), handoverCounts(item.counts), node('code', item.archiveSha256),
+    button('Open received workspace', () => readAction(async () => {
+      const result = await handoverApi('/api/workspace/open', {method:'POST',body:{name:item.name}});
+      const url = new URL(result.url, location.href);
+      if (!['http:','https:'].includes(url.protocol) || !['127.0.0.1','localhost','[::1]'].includes(url.hostname) || url.username || url.password)
+        throw new Error('The received workspace must use its original private local listener.');
+      const out=$('handover-opened');out.hidden=false;out.replaceChildren(node('p','Independent workspace ' + result.name + ' is open. Its edits remain separate from this source.'));
+      const link=node('a','Open '+result.name);link.href=url.href;link.target='_blank';link.rel='noreferrer';out.append(link);
+    }))
+  ]));
+}
+async function completeHandover(result, marker) {
+  await refreshHandovers();
+  if (marker.kind === 'export') {
+    $('handover-download-note').textContent = 'Saved ' + result.filename + ' · ' + result.bytes + ' bytes · SHA256 ' + result.sha256 + '. Download the exact file from the list.';
+    await refresh();
+  } else if (marker.kind === 'receive') {
+    $('handover-opened').hidden=false;$('handover-opened').replaceChildren(node('p','Received independent workspace ' + result.name + '. Open it from the saved receiving list.'));
+  }
+  finishHandoverMarker(marker);
+  notice('Saved original whole-workspace ' + marker.kind + ' request ' + marker.requestId + '.');
+}
+async function submitHandover(marker) {
+  try {
+    const result = await handoverApi('/api/workspace/' + marker.kind, {method:'POST',body:marker.input});
+    await completeHandover(result, marker);
+  } catch (issue) {
+    if ([400,409,413,422].includes(issue.status)) {
+      const status = await handoverApi('/api/workspace/' + marker.kind + '-status?id=' + encodeURIComponent(marker.requestId)).catch(() => undefined);
+      if (status === null) {
+        handoverRejected.push({...clone(marker),rejectedAt:new Date().toISOString(),error:{code:issue.code,message:issue.message}});
+        finishHandoverMarker(marker);
+      }
+    }
+    throw issue;
+  }
+}
+async function checkHandover() {
+  if (!handoverPending || busy || recovering || operatingRunning) return;
+  recovering=true;renderHandoverRecovery();
+  try {
+    const marker=handoverPending;
+    if(marker.kind==='upload'){
+      handoverUpload=await handoverApi('/api/workspace/upload?id='+encodeURIComponent(marker.requestId));
+      saveHandoverState();renderHandoverUpload();
+      if(!handoverUpload){renderHandoverRecovery('No original upload receipt is visible. Resume the same file and original request.');return;}
+      // Even a complete prior upload must be rechecked byte-for-byte if the response
+      // was unknown. Resume replays its full selected file from offset zero.
+      renderHandoverRecovery(handoverUpload.complete ?
+        'The complete original upload is retained. Resume with the same file to reconcile every byte before accepting this local selection.' :
+        'The original upload retains '+handoverUpload.received+' bytes. Resume rechecks every retained range before appending.');
+    }else{
+      const status=await handoverApi('/api/workspace/'+marker.kind+'-status?id='+encodeURIComponent(marker.requestId));
+      const saved=status?.operation ?? status;
+      if(saved?.status==='complete') await completeHandover(saved.result,marker);
+      else renderHandoverRecovery(saved?.error ? errorMessage(saved.error) :
+        saved ? 'Original request state: '+saved.status+'. Retry only this same retained request.' : 'No original receipt is visible. Retry this exact request.');
+    }
+  }catch(issue){notice(errorMessage(issue),true);renderHandoverRecovery('The original request remains retained. '+errorMessage(issue));}
+  finally{recovering=false;renderHandoverRecovery();}
+}
+async function streamHandoverUpload(file, marker) {
+  if(!file || file.size!==marker.file.bytes)throw new Error('Select the complete original archive with the same byte length. Every retained byte is compared by the original host.');
+  handoverAbort=new AbortController();renderHandoverRecovery('Uploading original archive…');
+  try{
+    try {
+      handoverUpload=await handoverApi('/api/workspace/upload/start',{method:'POST',body:marker.input,signal:handoverAbort.signal});
+    } catch(issue) {
+      if([400,409,413,422].includes(issue.status)){
+        const saved=await handoverApi('/api/workspace/upload?id='+encodeURIComponent(marker.requestId)).catch(()=>undefined);
+        if(saved===null){
+          handoverRejected.push({...clone(marker),rejectedAt:new Date().toISOString(),error:{code:issue.code,message:issue.message}});
+          finishHandoverMarker(marker);
+        }
+      }
+      throw issue;
+    }
+    for(let offset=0;offset<file.size;offset+=HANDOVER_CHUNK){
+      if(handoverAbort.signal.aborted)throw new Error('Upload paused. The original host retains its bytes and request.');
+      const block=file.slice(offset,Math.min(file.size,offset+HANDOVER_CHUNK));
+      handoverUpload=await handoverApi('/api/workspace/upload?'+new URLSearchParams({id:marker.requestId,offset}),{method:'PUT',raw:block,signal:handoverAbort.signal});
+      $('handover-progress').textContent='Compared / uploaded '+Math.min(file.size,offset+block.size)+' of '+file.size+' bytes.';
+      renderHandoverUpload();
+    }
+    handoverUpload=await handoverApi('/api/workspace/upload/finish',{method:'POST',body:{requestId:marker.requestId},signal:handoverAbort.signal});
+    if(!handoverUpload.complete || handoverUpload.bytes!==file.size || !/^[a-f0-9]{64}$/.test(handoverUpload.sha256))
+      throw new Error('The host has not returned a complete exact archive identity.');
+    saveHandoverState();finishHandoverMarker(marker);renderHandoverUpload();
+    $('handover-progress').textContent='Complete archive retained and verified. Review its SHA256 before receiving.';
+  }finally{handoverAbort=null;renderHandoverRecovery();}
+}
+async function runHandover(action) {
+  if(busy||recovering||pending||operatingBusy)return;
+  busy=true;lock();renderHandoverRecovery();notice('');
+  try{await action();}catch(issue){notice(errorMessage(issue),true);renderHandoverRecovery('The original request is retained. '+errorMessage(issue));}
+  finally{busy=false;lock();renderHandoverRecovery();}
+}
+$('handover-refresh').addEventListener('click',guarded(()=>readAction(refreshHandovers)));
+$('handover-export-form').addEventListener('submit',guarded(()=>runHandover(async()=>{
+  if(handoverPending)throw new Error('Finish the retained handover request first.');
+  if(dirty)throw new Error('Save or reload the current draft before exporting the whole workspace.');
+  if(!$('handover-export-confirm').checked)throw new Error('Confirm that export closes the owned publisher and release consoles.');
+  const marker=rememberHandover('export',{requestId:uuid(),expectedDraftRevision:state.draftRevision,expectedSelectedVersion:state.selectedVersion});
+  await submitHandover(marker);
+})));
+$('handover-file').addEventListener('change',guarded(()=>{
+  handoverFile=$('handover-file').files[0]??null;
+  $('handover-file-info').textContent=handoverFile?handoverFile.name+' · '+handoverFile.size+' bytes. The complete file will be streamed in 1 MiB chunks.':'';
+}));
+$('handover-upload-form').addEventListener('submit',guarded(()=>runHandover(async()=>{
+  if(handoverPending)throw new Error('Finish the retained handover request first.');
+  if(!handoverFile||handoverFile.size<1||handoverFile.size>HANDOVER_MAX)throw new Error('Select a complete .grwh archive within the native limit: 32 GiB of contents plus its manifest and header.');
+  const marker=rememberHandover('upload',{requestId:uuid(),sha256:null,bytes:handoverFile.size,filename:handoverFile.name},handoverFile);
+  await streamHandoverUpload(handoverFile,marker);
+})));
+$('handover-receive-form').addEventListener('submit',guarded(()=>runHandover(async()=>{
+  if(handoverPending)throw new Error('Finish the retained handover request first.');
+  if(!handoverUpload?.complete)throw new Error('Finish uploading the complete archive first.');
+  const latest=await handoverApi('/api/workspace/upload?id='+encodeURIComponent(handoverUpload.id));
+  if(!latest.complete||latest.sha256!==handoverUpload.sha256||latest.bytes!==handoverUpload.bytes)throw new Error('The retained archive identity changed. Review it again.');
+  if(!$('handover-receive-confirm').checked)throw new Error('Confirm the complete private archive and independent receiving destination.');
+  const name=$('handover-name').value.trim();
+  if(!/^[a-z][a-z0-9_-]{0,47}$/.test(name))throw new Error('Use a lowercase receiving name beginning with a letter, at most 48 characters.');
+  const marker=rememberHandover('receive',{requestId:uuid(),uploadId:latest.id,expectedSha256:latest.sha256,name});
+  await submitHandover(marker);
+})));
+$('handover-check').addEventListener('click',checkHandover);
+$('handover-reselect').addEventListener('change',()=>{
+  handoverFile=$('handover-reselect').files[0]??null;
+  renderHandoverRecovery(handoverFile?'Selected '+handoverFile.name+'. Resume will compare its complete bytes against this original upload.':'');
+});
+$('handover-retry').addEventListener('click',()=>runHandover(async()=>{
+  const marker=handoverPending;if(!marker)return;
+  if(marker.kind==='upload')await streamHandoverUpload(handoverFile,marker);else await submitHandover(marker);
+}));
+$('handover-pause').addEventListener('click',()=>handoverAbort?.abort());
+async function restoreHandoverState() {
+  const saved=localStorage.getItem(handoverKey());
+  if(saved){const value=JSON.parse(saved);handoverPending=value.pending??null;handoverUpload=value.upload??null;handoverRejected=Array.isArray(value.rejected)?value.rejected:[];}
+  renderHandoverRecovery();renderHandoverUpload();
+  await refreshHandovers();
+}
+
 operating = mountGristOperatingPlans({
   api,
-  getContext:()=>({directory:state?.directory,ready:Boolean(state),blocked:busy||Boolean(pending)||recovering,active:busy||recovering}),
+  getContext:()=>({directory:state?.directory,ready:Boolean(state),blocked:busy||Boolean(pending)||recovering||Boolean(handoverPending),active:busy||recovering||Boolean(handoverPending)}),
   setBlocked:(value,detail)=>{operatingBusy=Boolean(value);operatingRunning=Boolean(detail?.working);lock();},
   notice
 });
 try{
   await refresh();
+  await restoreHandoverState();
   const active=sessionStorage.getItem(activeKey(state.directory));
   if(active){try{pending=JSON.parse(localStorage.getItem(markerPrefix(state.directory)+active));}catch{}}
   if(pending){retryPayload=pending.file?null:pending.small;showRecovery();await checkReceipt();}

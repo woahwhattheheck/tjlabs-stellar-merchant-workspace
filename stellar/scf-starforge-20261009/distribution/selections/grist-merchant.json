@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "grist-merchant",
   "title": "Grist merchant",
-  "description": "Complete Grist document/table source capture, typed public projection review, original publisher/SF82 and managed browser/MCP/Applications.",
+  "description": "Complete Grist document/table source capture, typed public projection review, original publisher/SF82 and managed browser/MCP/Applications. Complete editable .grwh handover and independent receiving preserve saved operating-plan identities.",
   "base": {
     "commands": [
       "installation",
@@ -90,7 +90,8 @@
     "stellar/scf-starforge-20261009/sf103-native-buyer-signer",
     "stellar/scf-starforge-20261009/native-facilitator",
     "stellar-forge/mcp-merchant-operator",
-    "stellar-forge/mcp-paid-agent"
+    "stellar-forge/mcp-paid-agent",
+    "products/grist"
   ],
   "supportFiles": [
     "stellar-forge/payment-auto-catalog/schema-validation.mjs",
@@ -104,7 +105,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Grist private source authoring, complete typed capture receiving, original publisher and SF82 deployment with managed browser/MCP operation",
+    "description": "Grist private source authoring, complete typed capture receiving, original publisher and SF82 deployment with managed browser/MCP operation; independent complete workspace receiving and customer commissioning",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""
