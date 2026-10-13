@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "analysis-events",
+  "description": "Receive complete acquired event windows through the original Analysis agent and independently reopen every customer handover file.",
+  "commands": {
+    "mcp-analysis-events": "stellar-forge/mcp-paid-agent/native-analysis-events-download.mjs"
+  },
+  "commandDescriptions": {
+    "mcp-analysis-events": "Receive original event files, inspect and resume the complete customer delivery, and reopen all files offline"
+  },
+  "exports": {
+    "./buyer/mcp/analysis-events": "./source/stellar-forge/mcp-paid-agent/native-analysis-events.mjs",
+    "./buyer/mcp/analysis-events-schema": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-schema.mjs",
+    "./buyer/mcp/analysis-events-contract": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-contract.mjs",
+    "./buyer/mcp/analysis-events-client": {
+      "types": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-client.d.mts",
+      "import": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-client.mjs"
+    },
+    "./buyer/mcp/analysis-events-download": {
+      "types": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-download.d.mts",
+      "import": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-download.mjs"
+    }
+  },
+  "supportFiles": [
+    "stellar-forge/mcp-paid-agent/ANALYSIS_EVENTS.md"
+  ]
+}
