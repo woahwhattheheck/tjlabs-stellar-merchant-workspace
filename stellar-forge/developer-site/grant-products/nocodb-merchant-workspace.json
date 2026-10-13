@@ -16,6 +16,12 @@
           "bytes": 43188,
           "sha256": "115b8f86805ee0dd09c3a84570520b1ee74c7918c310e08568f6709eb42d6aec",
           "git_blob": "59e789816dd080bde5d6172c85415195138205c3"
+        },
+        {
+          "commit": "3555ef265b3a17bd0366b8011d614b739445fd79",
+          "bytes": 64361,
+          "sha256": "8f09b8d1ac5e2888b12ef32bc04f9bfb3110077261b488c1deec179680a9007b",
+          "git_blob": "27e34bc329d016895d20a4969b1a86298313d240"
         }
       ]
     },
@@ -32,6 +38,12 @@
           "bytes": 27800,
           "sha256": "2087748b9ca1d921d01788e2c6c1ea2176fcc7f64165e565522b2d77409488cf",
           "git_blob": "c58ba57d7fe096a7d1f66aca9cd49d2ce6bfd3d6"
+        },
+        {
+          "commit": "3555ef265b3a17bd0366b8011d614b739445fd79",
+          "bytes": 29476,
+          "sha256": "0dd87d094a16482268d8f29037c6d6bf2e99c5a50c359991ad6182671804cd9b",
+          "git_blob": "776fb94c41b0fb4c1ca8414300a7ed7e65d7f2f0"
         }
       ]
     },
@@ -48,6 +60,12 @@
           "bytes": 35182,
           "sha256": "b68e162141d9222d964271a212d06ff1705903fbe2a1f0116755511c7c491d06",
           "git_blob": "5158e6e90269b4eb19bf557472b5891b7d9b080b"
+        },
+        {
+          "commit": "3555ef265b3a17bd0366b8011d614b739445fd79",
+          "bytes": 36918,
+          "sha256": "7ce5ad59433dd2144e87b682265695bae552f492fa9e736b90f93dc39de8b216",
+          "git_blob": "3961f0108ac445e7e572c8b22082099b3006bddf"
         }
       ]
     },
@@ -64,6 +82,12 @@
           "bytes": 14222,
           "sha256": "a041ed72b57eef1da2ba3a4ef046264bbc8def5df18c6d99024d73085078b21b",
           "git_blob": "76d5368550b09aa84e2afb90720a3ca9f0bbcc27"
+        },
+        {
+          "commit": "3555ef265b3a17bd0366b8011d614b739445fd79",
+          "bytes": 21448,
+          "sha256": "88c93c134a70f9b4edd441b23e1b101d873c3ad4fbf615a798bdaae1493d7723",
+          "git_blob": "ae640b42cda57be965a8774f6e52f26271d945c6"
         }
       ]
     },
@@ -80,6 +104,12 @@
           "bytes": 72293,
           "sha256": "d24cfad2f9e81e53dce3d73f415552693071debe592b6020df9df8c8ace2f3e9",
           "git_blob": "af87378ef71da26ceb055345e31b2ef977860754"
+        },
+        {
+          "commit": "3555ef265b3a17bd0366b8011d614b739445fd79",
+          "bytes": 84145,
+          "sha256": "452909881befa6d972a01b59ca2686ddac6b0e7ca356ae8081da207e9e2869d7",
+          "git_blob": "871ca93bcedb8165d25b324736a323a8e164532d"
         }
       ]
     },
@@ -96,6 +126,12 @@
           "bytes": 18969,
           "sha256": "02d8f11d2cc2b3650c12465d62a8b27a006013d48ccedfa804801a37cf64132e",
           "git_blob": "bd80c3bcc2568a1560fc7145589a66ef0e7f74b1"
+        },
+        {
+          "commit": "3555ef265b3a17bd0366b8011d614b739445fd79",
+          "bytes": 20633,
+          "sha256": "87131bfe806fba8fe238a3d7444028ba81c2604b5f18744d340dcbbcf8c4949c",
+          "git_blob": "7d0032d2b5eb3bedd817df6e7dda7f66002804ce"
         }
       ]
     },
@@ -109,6 +145,12 @@
       "editions": [
         {
           "commit": "a2cc8a625fd8ea7bfb82dd0e1fb2f95584d43f55",
+          "bytes": 1084,
+          "sha256": "6a455b7e43902c5fedfb64dde29ffd69c97e1aaadf230a68c8dc95a8a02d8671",
+          "git_blob": "cce4c7f329f0c421fe11901758c210c490c85b8b"
+        },
+        {
+          "commit": "3555ef265b3a17bd0366b8011d614b739445fd79",
           "bytes": 1084,
           "sha256": "6a455b7e43902c5fedfb64dde29ffd69c97e1aaadf230a68c8dc95a8a02d8671",
           "git_blob": "cce4c7f329f0c421fe11901758c210c490c85b8b"
@@ -128,6 +170,28 @@
           "bytes": 29046,
           "sha256": "2c0255e8143a2dd3df68629cc491a307e31bd9307191b70557a0ae33b8093e69",
           "git_blob": "b4c9354ae5ff9e46f25a1d167c035c1008442753"
+        },
+        {
+          "commit": "3555ef265b3a17bd0366b8011d614b739445fd79",
+          "bytes": 29046,
+          "sha256": "2c0255e8143a2dd3df68629cc491a307e31bd9307191b70557a0ae33b8093e69",
+          "git_blob": "b4c9354ae5ff9e46f25a1d167c035c1008442753"
+        }
+      ]
+    },
+    {
+      "id": "nocodb-returned-customer-review-engine",
+      "label": "Source-bound NocoDB customer correction and concurrent draft reconciliation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/workspace/returns.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "3555ef265b3a17bd0366b8011d614b739445fd79",
+          "bytes": 7208,
+          "sha256": "5000420d4ddfde982e8c4106998225978d9ce6b65403fbc70485f40015cbe897",
+          "git_blob": "e7a59e790f99acf302f074b00aca21bd0e76a591"
         }
       ]
     }
