@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Choose a research handover</title>
+<link rel="stylesheet" href="/intake.css"><script type="module" src="/intake.js"></script>
+</head>
+<body>
+<header><div><p class="eyebrow">Research / Customer handover</p><h1>Choose the delivery and return scope</h1></div><button id="refresh" type="button">Refresh saved state</button></header>
+<main>
+<div id="notice" role="status" aria-live="polite">Connecting to the original workspace…</div>
+<section aria-labelledby="workspace-title"><h2 id="workspace-title">Connected workspace</h2><div id="workspace" class="facts"></div><details><summary>Selected original source</summary><pre id="engine"></pre></details><p id="job" role="status" aria-live="polite"></p></section>
+<div class="layout">
+<section aria-labelledby="baseline-title">
+<h2 id="baseline-title">1. Retain the published delivery</h2>
+<p class="explanation">Choose an existing dossier and its published delivery. The complete original handover is retained at that delivery’s historical revision.</p>
+<div class="chooser"><label for="dossier">Dossier</label><select id="dossier"><option value="">Load the workspace dossiers</option></select><div class="actions"><button id="load-dossiers" type="button">Load dossiers</button><button id="more-dossiers" type="button" hidden>More dossiers</button></div><p id="inventory-note"></p></div>
+<div class="chooser"><label for="delivery">Published delivery</label><select id="delivery" disabled><option value="">Choose a dossier first</option></select><div class="actions"><button id="more-deliveries" type="button" hidden>More deliveries</button></div><p id="delivery-note"></p></div>
+<details><summary>Include an original source workspace</summary><p>Use only a source library and actor already selected for this original dossier. Leave both fields empty when the published handover is sufficient.</p><label for="source-library">Source library</label><input id="source-library" type="text" autocomplete="off" placeholder="original or received-&lt;SHA256&gt;"><label for="source-actor">Original source actor</label><input id="source-actor" type="text" maxlength="200" autocomplete="off"></details>
+<div class="actions"><button id="retain-baseline" type="button" disabled>Retain this original handover</button></div>
+<p id="baseline-note"></p>
+<label for="baseline">Retained original handover</label><select id="baseline"><option value="">Choose a retained handover</option></select><div id="baseline-facts" class="facts"></div>
+</section>
+<section aria-labelledby="scope-title">
+<h2 id="scope-title">2. Review the return scope</h2>
+<p class="explanation">Enter the scope selected for this customer. Limits are cumulative across prior accepted returns and the new rounds.</p>
+<div class="fields"><label for="operation-id">Operation name<input id="operation-id" type="text" maxlength="120" autocomplete="off"></label><label for="customer-label">Customer or delivery label<input id="customer-label" type="text" maxlength="240" autocomplete="off"></label><label for="scope-source-actor">Source actor (optional)<input id="scope-source-actor" type="text" maxlength="512" autocomplete="off"></label><label for="total-items">Maximum differing items, cumulative<input id="total-items" type="number" min="0" max="100000" step="1" inputmode="numeric"></label><label for="total-returns">Maximum accepted returns, cumulative<input id="total-returns" type="number" min="1" max="100000" step="1" inputmode="numeric"></label></div>
+<p class="explanation">Operation names, round names and the filename stem start with a letter or digit and use only letters, digits, dots, underscores or hyphens, up to 120 characters.</p>
+<h3>New return rounds</h3><p>Every round needs a unique name, its item limit and the maximum complete original return file size in bytes.</p><div id="rounds"></div><button id="add-round" type="button">Add a return round</button>
+<div class="fields output"><label for="filename-stem">Handover filename stem<input id="filename-stem" type="text" maxlength="120" autocomplete="off"></label><label for="archive-bytes">Maximum complete archive bytes<input id="archive-bytes" type="number" min="1" max="268435456" step="1" inputmode="numeric"></label></div>
+<p class="explanation">1 MiB = 1,048,576 bytes. Source and archive limits cannot exceed 268,435,456 bytes. Enter the explicit selected limits; no commercial defaults are applied.</p>
+<p id="draft-state" role="status" aria-live="polite"></p>
+<div class="actions"><button id="save-draft" type="button">Save scope draft</button><button id="use-saved" type="button">Load saved scope</button><button id="export-draft" type="button">Export these scope fields</button></div>
+<div class="actions"><button id="preview" type="button" disabled>Inspect the complete selection</button></div>
+</section>
+</div>
+<section aria-labelledby="review-title"><h2 id="review-title">3. Inspect and prepare the original selection</h2>
+<p class="explanation">The preview includes the original handover, selected native workspace and current revision, complete history and prior accepted return receipts, source engine and all limits. Preparation retains this exact selection and initializes the existing return programme.</p>
+<div id="preview-facts" class="facts"></div><details id="preview-details"><summary>Complete selection and native history</summary><pre id="preview-json">Save a complete scope and inspect it to produce the original preview.</pre></details>
+<label class="check"><input id="acknowledge" type="checkbox"><span>I have reviewed this exact saved preview, including prior return counts and all selected limits.</span></label>
+<div class="actions"><button id="prepare" type="button" disabled>Prepare this reviewed selection</button><button id="launch" type="button" disabled>Start the handover desk</button><a id="open-desk" hidden target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Open the handover desk</a></div>
+<p id="prepared-note"></p><p class="explanation">The desk receives each complete original returned dossier, displays every difference, and retains the exact reviewed request for recovery. Authored changes and retained typed proposals follow the original native rules.</p>
+</section>
+<section aria-labelledby="files-title"><h2 id="files-title">Complete retained files</h2><p>Downloads keep the complete original file and verify its byte count and SHA-256 before saving.</p><div id="files"></div></section>
+</main>
+</body>
+</html>

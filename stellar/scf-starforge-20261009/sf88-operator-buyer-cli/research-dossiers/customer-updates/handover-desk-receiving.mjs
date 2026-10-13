@@ -48,11 +48,12 @@ async function syncDirectory(path){
  try{await file.sync();}finally{await file.close();}
 }
 function validateInput(input){
- fields(input,['schema','connectionFile','workspaceDirectory','selectionFile','selectionSha256','directory',
+ fields(input,['schema','connectionFile','workspaceDirectory','selectionFile','selectionSha256','directory','deskDirectory',
   'rounds','playwrightModule','chromiumExecutable','python','node','jobTimeoutMs']);
  need(input.schema===HANDOVER_DESK_RECEIVING_SCHEMA,'DESK_RECEIVING_SCHEMA');
  for(const name of ['connectionFile','selectionFile','directory','playwrightModule','chromiumExecutable'])absolute(input[name]);
  if(input.workspaceDirectory!==undefined)absolute(input.workspaceDirectory);
+ if(input.deskDirectory!==undefined)absolute(input.deskDirectory);
  checksum(input.selectionSha256);
  need(Array.isArray(input.rounds)&&input.rounds.length<=32,'DESK_RECEIVING_ROUNDS_REQUIRED');
  const keys=new Set();
@@ -353,7 +354,7 @@ export async function runCustomerHandoverDeskReceiving(options){
   need(input.rounds.every(row=>selected.rounds.some(r=>r.key===row.key)),'DESK_RECEIVING_ROUND_NOT_SELECTED');
   const binding={schema:HANDOVER_DESK_RECEIVING_SCHEMA,selectionSha256:input.selectionSha256,
    operationId:selected.operation_id,workspaceId:selected.workspace_id,dossierId:selected.dossier_id,
-   deskDirectory:join(root,'desk'),playwrightModule:input.playwrightModule,chromiumExecutable:input.chromiumExecutable,
+   deskDirectory:input.deskDirectory??join(root,'desk'),playwrightModule:input.playwrightModule,chromiumExecutable:input.chromiumExecutable,
    python:input.python,node:input.node};
   await save(privateRoot,'BINDING.json',binding);await retain(publicRoot,'SELECTION.original.json',selection);
   const attempt=await customerDirectory(join(privateRoot,'attempts',randomUUID()));
