@@ -338,22 +338,35 @@ The existing customer-source receiver also imports `grant-a2a.mjs` and calls its
 
 ## Receive merchant invoices and complete operating projects
 
-Receive the complete canonical §9A chapter **Merchant invoices, paid fulfillment and portable operating projects** through the existing --manuscript operation. The whole-section receiver carries its full operator journey, completed commissioning, current installation and portable execution states, customer handover and existing funded-work assignment.
+Receive the complete canonical §9A chapter **Merchant invoices, paid fulfillment and portable operating projects** through the existing `--manuscript` operation. The whole-section receiver carries the original operator and buyer journey, complete accounting-source intake, both agent interfaces, completed commissioning, installation and complete portable customer handover.
 
-The existing customer source receiver registers four immutable guides from that chapter:
+The existing customer source receiver retains the four original immutable guides and adds the nine complete current operating guides:
 
-- x402api-merchant-operating selects the complete products/x402api-merchant-workspace/OPERATING.md.
-- x402api-merchant-application selects README.md in that same original product directory.
-- x402api-merchant-native-receiving selects NATIVE_RECEIVING.md.
-- x402api-merchant-installed-receiving selects INSTALLED_RECEIVING.md.
+| Source ID | Selected file in `products/x402api-merchant-workspace/` |
+| --- | --- |
+| `x402api-merchant-operating` | `OPERATING.md` |
+| `x402api-merchant-application` | `README.md` |
+| `x402api-merchant-native-receiving` | `NATIVE_RECEIVING.md` |
+| `x402api-merchant-installed-receiving` | `INSTALLED_RECEIVING.md` |
+| `x402api-merchant-portable-project` | `PORTABLE_PROJECT.md` |
+| `x402api-merchant-portable-archive` | `PORTABLE.md` |
+| `x402api-merchant-received-review` | `RECEIVED_REVIEW.md` |
+| `x402api-merchant-project-intake` | `PROJECT_INTAKE.md` |
+| `x402api-merchant-invoice-register` | `INVOICE_REGISTER.md` |
+| `x402api-merchant-invoice-intake` | `INVOICE_INTAKE.md` |
+| `x402api-merchant-operator-client` | `OPERATOR_CLIENT.md` |
+| `x402api-merchant-project-agent` | `PROJECT_AGENT.md` |
+| `x402api-merchant-invoice-agent` | `INVOICE_AGENT.md` |
 
-Each guide retains its actual repository, commit and path. A changed identity clears an obsolete blob pin through the original receive helper. An older manuscript that has no merchant chapter or guide link preserves the existing source register. The chapter does not install a second section projector.
+Each guide retains its actual repository, commit and path. A changed identity clears an obsolete blob pin through the original receive helper. An older manuscript without a particular merchant guide preserves the existing selection. The complete chapter uses the original whole-section projector, including every new H3 heading; its source registration composes with every other current chapter.
 
-The original native result contains five local x402api commissioning invoices and their complete received files. Keep those fixture observations separate from the canonical eighteen Stellar purchases, their 0.0411 XLM, and all independent-customer targets. The installed and portable programmes retain their own original operation IDs and actual returned completion state. Source publication or parsing does not supply a missing native receiving result.
+The original native result contains five local x402api commissioning invoices and their complete received files. Keep those fixture observations separate from the canonical eighteen Stellar purchases, their 0.0411 XLM, and all independent-customer targets. The complete installed, portable and agent continuation retains the original commissioning input, its saved Applications case and operation `SCF-RECEIVED-MERCHANT-APPLICATION-CEDAR-8047-20261013`. Add the actual whole continuation result when returned by that original programme.
 
-Compose this chapter and its four sources with every current chapter and registration, including the accepted Haystack and Connected Systems changes. Preserve the application's current answers, budget, six packages, prospective hours, independent merchants and buyers, purchase targets and tranches. The completed merchant foundation supports future customer-specific operating and handover work within those existing allocations.
+The chapter's current product selection is `256258c314503fa2f716fe05b9d33f46b0f9e6cf`. It includes the original accounting source and reviewed invoice plan, typed operator client, 22-operation live invoice agent, complete browser project capture, reservation recovery, managed archive intake, received review and 14-operation received-project agent. The guides retain the original source/request and same-case recovery contracts. Original commissioning guides continue to select `b934614c8488c86b6444294543f4e98dfdf424e3`.
 
-Run the original composer and retain its four source pins for grant.html, grant-data/application.md, grant-data/product-and-finance.md, and grant-data/source-index.json. Continue the same saved draft/review, Page and owner-private Site publication. The [full merchant chapter and receiving boundary](./GRANT_X402API_MERCHANT.md) explains this source contribution.
+Preserve the application's current answers, $38,000 request, 400 prospective hours, 150 days, six funded packages, independent merchants and buyers, purchase targets and tranches. This completed merchant foundation supports customer-specific installation, operation and handover within those existing allocations.
+
+Run the original composer and retain its four source pins for `grant.html`, `grant-data/application.md`, `grant-data/product-and-finance.md` and `grant-data/source-index.json`. Continue the same saved draft/review, Page and owner-private Site publication. The [full merchant chapter](./GRANT_X402API_MERCHANT.md) supplies the exact source contribution.
 
 ## Receive SQL preparation and reusable pipelines
 

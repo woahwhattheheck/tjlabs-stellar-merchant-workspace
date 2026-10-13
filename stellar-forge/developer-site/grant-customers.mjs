@@ -555,6 +555,25 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/NATIVE_RECEIVING\.md)/, x402apiMerchant);
   receive('x402api-merchant-installed-receiving', 'Installed merchant Applications and completed-workspace receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INSTALLED_RECEIVING\.md)/, x402apiMerchant);
+  receive('x402api-merchant-portable-project', 'Complete merchant project, native reservation recovery and customer activation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/PORTABLE_PROJECT\.md)/, x402apiMerchant);
+  receive('x402api-merchant-portable-archive', 'Original merchant browser archive and whole-file receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/PORTABLE\.md)/, x402apiMerchant);
+  receive('x402api-merchant-received-review', 'Managed received merchant invoice review and cold reopen',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/RECEIVED_REVIEW\.md)/, x402apiMerchant);
+  receive('x402api-merchant-project-intake', 'Managed complete merchant project intake and recovery',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/PROJECT_INTAKE\.md)/, x402apiMerchant);
+  receive('x402api-merchant-invoice-register', 'Complete invoice register, original amounts and exports',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INVOICE_REGISTER\.md)/, x402apiMerchant);
+  receive('x402api-merchant-invoice-intake', 'Original accounting source, retained invoice plan and continuation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INVOICE_INTAKE\.md)/, x402apiMerchant);
+  receive('x402api-merchant-operator-client', 'Original typed merchant operator client and CLI',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/OPERATOR_CLIENT\.md)/, x402apiMerchant);
+  receive('x402api-merchant-project-agent', 'Received merchant project agent and retained file delivery',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/PROJECT_AGENT\.md)/, x402apiMerchant);
+  receive('x402api-merchant-invoice-agent', 'Live merchant invoice agent, original operation and complete delivery',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INVOICE_AGENT\.md)/, x402apiMerchant);
+
   const preparation = section(companion, "## SQL preparation, reusable pipelines and complete analyst receiving")?.text || '';
   receive("preparation-workspace-operating", "Complete installed SQL preparation and managed pipeline operation",
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/OPERATING\.md)/, preparation);
