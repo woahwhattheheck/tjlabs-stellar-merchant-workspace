@@ -424,6 +424,20 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/NATIVE_RECEIVING\.md)/, x402apiMerchant);
   receive('x402api-merchant-installed-receiving', 'Installed merchant Applications and completed-workspace receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INSTALLED_RECEIVING\.md)/, x402apiMerchant);
+  const preparation = section(companion, "## SQL preparation, reusable pipelines and complete analyst receiving")?.text || '';
+  receive("preparation-workspace-operating", "Complete installed SQL preparation and managed pipeline operation",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/OPERATING\.md)/, preparation);
+  receive("preparation-pipeline-original-engine", "Original saved pipeline, stage execution and complete delivery",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/data-preparation\/pipelines\/README\.md)/, preparation);
+  receive("preparation-workspace-selection", "Complete installed data-preparation product selection",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/distribution\/selections\/data-preparation-workspace\.json)/, preparation);
+  receive("preparation-workspace-receiving", "Original complete preparation and pipeline customer receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/RECEIVING\.md)/, preparation);
+  receive("preparation-workspace-source", "Complete frozen source for original customer receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/receiving-source\.json)/, preparation);
+  receive("preparation-workspace-native-receiving", "Native original-case continuation, shutdown and complete preservation",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/receiving\.py)/, preparation);
+
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),
