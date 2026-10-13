@@ -71,6 +71,27 @@
         "quality.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/quality-followup-ui.mjs",
+      [
+        "quality-followup-ui.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/quality-followup-drafts.mjs",
+      [
+        "quality-followup-drafts.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/quality-followup.css",
+      [
+        "quality-followup.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

@@ -9,9 +9,11 @@ import { serveStdio } from "./protocol.mjs";
 import { LineageClient } from "./client.mjs";
 import { producerConfiguration } from "./producer.mjs";
 import { qualityCommand, QUALITY_HELP } from "./quality-cli.mjs";
+import { qualityFollowupCommand, QUALITY_FOLLOWUP_HELP } from "./quality-followup-cli.mjs";
 
 const HELP = [
   ...QUALITY_HELP,
+  ...QUALITY_FOLLOWUP_HELP,
   "OpenLineage operations workspace",
   "",
   "  scf-lineage init --workspace DIR [--title TITLE]",
@@ -156,6 +158,7 @@ export async function main(argv = process.argv.slice(2)) {
     check(options, ["workspace", "id"]); print(await workspace.recoverLock(need(options.id, "--id"))); return 0;
   }
   await workspace.read();
+  if (command === "quality-followup") { print(await qualityFollowupCommand(workspace, positional, options)); return 0; }
   if (command === "quality") { print(await qualityCommand(workspace, positional, options)); return 0; }
   if (command === "status") {
     check(options, ["workspace", "edition"]); print(await workspace.view({ edition: options.edition ?? null })); return 0;
