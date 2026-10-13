@@ -116,6 +116,10 @@ export async function receiveProjectBrowser({work,product,page,capture,exactOpen
   await exactOpen(join(root,'report.html'),label+'-desktop');await exactOpen(join(root,'report.html'),label+'-narrow',{narrow:true});
   for(const path of await walk(root))await exactOpen(path,label+'-member-'+relative(root,path).replaceAll('/','-'),{captureImage:false});
  }
+ checked.files=[];
+ for(const root of [nativeRoot,independent,nativeRoot+'.browser-inputs']){
+  for(const path of await walk(root)){const bytes=await readFile(path);checked.files.push({path:relative(work,path),bytes:bytes.length,sha256:sha(bytes)});}
+ }
  checked.state='CAPTURED_REQUIRES_PIXEL_REVIEW';checked.saved_workspace={path:relative(work,saved),bytes:savedBytes.length,sha256:sha(savedBytes)};checked.summary=analysis.summary;
  return checked;
 }
