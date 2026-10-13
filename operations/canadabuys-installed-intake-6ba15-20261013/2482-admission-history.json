@@ -1,0 +1,33 @@
+{
+  "schema": "commons.canadabuys-installed-intake-admission-closure.v1",
+  "operationId": "CANADABUYS-INSTALLED-INTAKE-6BA15-20261013",
+  "functionsCell": "2482",
+  "sourceInput": {
+    "bytes": 4685476,
+    "sha256": "9c178e83f92a8d11b2dedafcc1466c25701c79621a1ef50edcc78ef1f767815a"
+  },
+  "sourceCarrier": {
+    "bytes": 5073668,
+    "sha256": "58ae95a39324712ea39718324b11bc15707a66a429793cead0b29f2441c829c8",
+    "gitBlob": "59b8d44e35d51771147832a3cabcd777f1993de1"
+  },
+  "observedController": {
+    "schema": "commons.canadabuys-intake-native-controller.v1",
+    "operationId": "CANADABUYS-INSTALLED-INTAKE-6BA15-20261013",
+    "sourceCommit": "5b509c7b9ba416036b7cd3de0c2dbd6d2de106b0",
+    "inputSha256": "9c178e83f92a8d11b2dedafcc1466c25701c79621a1ef50edcc78ef1f767815a",
+    "wireSha256": "9c178e83f92a8d11b2dedafcc1466c25701c79621a1ef50edcc78ef1f767815a",
+    "startedAt": "2026-10-13T05:01:50.723Z",
+    "prior": null,
+    "calls": [],
+    "events": [],
+    "error": "exec_command failed: CreateProcess { message: \"Io(Custom { kind: Other, error: \\\"failed to query exec-server capabilities: exec-server connection attempt failed: environment registry request failed (409 Conflict, environment_offline): Environment is not connected.\\\" })\" }",
+    "endedAt": "2026-10-13T05:06:50.727Z"
+  },
+  "nativeSession": null,
+  "inputSent": false,
+  "applicationActions": 0,
+  "saveCalls": 0,
+  "state": "CLOSED_BEFORE_CREATE_PROCESS",
+  "at": "2026-10-13T05:07:39.382Z"
+}
