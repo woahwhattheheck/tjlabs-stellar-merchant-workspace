@@ -4,7 +4,7 @@ TokenJunkieLabs · Original operation: SCF-RECEIVABLES-NATIVE-2A51-20261012
 
 This continuation keeps an existing merchant account useful after a receiving programme ends. Staff receive a dated case index, complete original customer documents, published response forms, received response files, reviewed outcomes, collection histories, credit decisions and selected cash-plan editions. The same customer remains editable in the original merchant workspace.
 
-The original PAYMENT_CHECK.mjs and MCP_RECEIVABLES_CHECK.mjs remain the predecessor programmes recorded in programs/original-programs.json. The new named MCP_RECEIVABLES_CUSTOMER_CASE.mjs retains that complete MCP commercial lifecycle and adds the customer publication and durable case leg. It writes its own result and retains its workspace on success and failure.
+The original PAYMENT_CHECK.mjs and MCP_RECEIVABLES_CHECK.mjs remain the predecessor programmes recorded in programs/original-programs.json. The new named MCP_RECEIVABLES_CUSTOMER_CASE.mjs retains that complete MCP commercial lifecycle and adds the complete follow-up, customer return and durable case leg. It writes its own result and retains its workspace on success and failure.
 
 ## Original owner receiving
 
@@ -14,6 +14,7 @@ The original PAYMENT_CHECK.mjs and MCP_RECEIVABLES_CHECK.mjs remain the predeces
 - durable-customer-case-html.mjs: local desktop and phone staff handover.
 - durable-customer-case-cli.mjs: create, inspect, capture, prepare, execute, reconcile and checkpoint commands.
 - serve-retained-customer-case.mjs: reopen the retained native customer workspace on its original loopback endpoint.
+- retained-customer-followup.mjs and retained-customer-followup-cli.mjs: complete saved follow-up and its resumable customer delivery.
 - programs/MCP_RECEIVABLES_CUSTOMER_CASE.mjs: complete retained successor of the original MCP programme.
 - stellar-forge/mcp-merchant-operator/accounting-receivables-client.mjs: current original connector with a 32 MiB complete-response default; caller overrides remain available.
 
@@ -27,7 +28,52 @@ SCF_MCP_RECEIVABLES_TMP selects the owner's existing private working volume. Its
 
 RETENTION.json lives inside the retained workspace from startup onward. It records STARTED, INCOMPLETE or COMPLETE, original programme provenance and the current exact paths. Failure keeps both the workspace and the original operation journals. Closing the programme closes its owned handles; it leaves the business records in place.
 
-The original commercial programme records an explicit USD 100 invoice, USD 25 credit, replaced preliminary receipt, corrected USD 75 receipt and original allocation. Its saved Stellar observation uses its existing controlled NOT_FOUND programme. The added customer publication uses that same committed account and its actual issued documents. Returned customer notes or commitments enter through the original customer response intake when a customer supplies them.
+The original commercial programme records an explicit USD 100 invoice, USD 25 credit, replaced preliminary receipt, corrected USD 75 receipt and original allocation. Its saved Stellar observation uses its existing controlled NOT_FOUND programme. The added follow-up uses that same customer and the original invoice, credit, collection, cash-plan and response writers. The reusable customer case also accepts actual customer returns through the original intake.
+
+## Complete payment follow-up in the same customer case
+
+The named successor now continues the original paid implementation invoice with a complete authored demonstration order. The following amounts are the programme's explicit input to the original ledger, policies and reporting engines.
+
+| Stage | Original application records |
+| --- | --- |
+| New implementation order | USD 4,800 draft; explicit customer policy with a USD 6,000 limit, 14 allowed overdue days, dispute review and review of every order |
+| Invoice release | Complete current credit assessment, reasoned approval and original invoice issue; the approval is consumed in the same ledger commit |
+| Assigned follow-up | Named case owner and next action; original contact, USD 3,000 payment promise and USD 800 delivery query |
+| Initial cash plan | Original invoice and promise dates; the disputed amount stays separate from expected cash |
+| Customer return | Exact account-bound JSON with a revised USD 2,800 promise and a USD 1,000 payment notice |
+| Statement entry | Separate original USD 1,000 receipt and allocation matched to the reported reference |
+| Merchant review | Current balance changes are acknowledged; the previous promise is explicitly withdrawn and replaced; the payment correspondence remains on the case |
+| Delivery clarification | Original dispute resolution retains the invoice and complete case history |
+| Updated plan and account | Second immutable cash-plan edition, full comparison JSON/CSV, updated customer account; USD 3,800 remains due |
+| Cold reopening | Same invoice, USD 2,800 promise, resolved query, consumed approval and both response decisions reopen under their original identities |
+
+The programme calls the original provider for every draft, credit policy, decision, issued invoice, collection event, cash-plan edition, account, received response, receipt and allocation. It saves complete durable requests before submitting those mutations. Its customer-response JSON is an explicitly authored private receiving scenario, and its separate statement entry exercises the original receipt writer. The resulting documents remain editable and exportable through the same merchant workspace.
+
+The final case captures both immutable cash-plan editions alongside the collection history, consumed credit decision, both published follow-up accounts, exact inbound response bytes and merchant reviews. The original USD 100 account remains in the same customer history.
+
+### Resume an interrupted follow-up
+
+Two additive files own this leg:
+
+- retained-customer-followup.mjs uses the original durable provider requests and retains each stage.
+- retained-customer-followup-cli.mjs inspects or continues the same saved selection and finishes its complete case delivery.
+
+RETENTION.json records followupDirectory and the original workspace identity before this leg begins. The follow-up directory contains selection.json, flow.json, every operations/<stage>/request.json and its original recovery state, plus documents/customer-response.json. All IDs are retained before their dependent provider writes.
+
+After the original programme has closed, reopen its same merchant host with the existing serve-retained-customer-case.mjs and RETENTION.json. Then inspect or continue that retained directory:
+
+    node operations/scf-receivables-native-2a51-20261012/retained-customer-followup-cli.mjs inspect \
+      --directory /private/retained-workspace/customer-followup
+
+    node operations/scf-receivables-native-2a51-20261012/retained-customer-followup-cli.mjs continue \
+      --directory /private/retained-workspace/customer-followup
+
+Continue first reconciles each original request against the provider journal. Committed stages keep their original IDs; an uncommitted stage uses its saved complete request. An unchanged completed follow-up returns its retained completion. A stale date, revision or credit assessment remains attached to that actual request so the owner can review its current source through the original operator rather than silently changing the decision.
+
+The resume command produces a complete customer/staff case under customer-followup/customer-case and returns its index path. Its delivery-selection.json retains the case and capture UUIDs before creation. Once delivery.json exists, repeating the command returns that same delivery. Use the regular durable case capture command with a new edition UUID to retain later account work.
+
+The named full programme already delivers the final case at its original customer-case path. Use the resume entry point for an interrupted leg or its already retained completion; keep the original programme history and complete workspace together.
+
 
 ## Use an already retained customer
 
