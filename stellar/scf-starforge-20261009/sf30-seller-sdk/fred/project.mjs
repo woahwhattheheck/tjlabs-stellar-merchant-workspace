@@ -976,6 +976,12 @@ export async function receiveFredProject({ directory, bundle, qcewSourceContexts
     const current = await optionalJson(join(directory, 'project.json'), STATE_LIMIT);
     need(current === null || canonical(current) === canonical(original),
       'Receive into an empty private project directory.', 'FRED_RECEIVING_CONFLICT', 409);
+    const source = { schema: 'stellar-forge.fred-receiving-source.v1',
+      bundleSha256: bundle.bundleSha256, projectId: original.id };
+    const retainedSource = await optionalJson(join(directory, 'receiving-source.json'));
+    if (retainedSource) need(canonical(retainedSource) === canonical(source),
+      'Resume this directory with its original complete project bundle.', 'FRED_RECEIVING_CONFLICT', 409);
+    else await atomicJson(directory, 'receiving-source.json', source, { exclusive: true });
     for (const capture of bundle.captures) {
       validateCapture(capture);
       need(original.captures.some(item => item.id === capture.captureSha256), 'Unexpected source in receiving bundle.');
