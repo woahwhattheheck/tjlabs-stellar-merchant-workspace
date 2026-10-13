@@ -31,13 +31,13 @@ function filters(search) {
   return {asOf: search.get('asOf') || undefined, through: search.get('through') || undefined,
     customerId: search.get('customerId') || undefined};
 }
-export async function paymentPlanAsset(path, {apiPath = '/api/receivables/payment-plans', uiPath = '/payment-plans'} = {}) {
+export async function paymentPlanAsset(path, {apiPath = '/api/receivables/payment-plans', uiPath = '/payment-plans', receivablesUi = '/receivables/'} = {}) {
   apiPath = basePath(apiPath, '/api/receivables/payment-plans');
   uiPath = basePath(uiPath, '/payment-plans');
   if (path !== uiPath && !path.startsWith(uiPath + '/')) return null;
   const name = path === uiPath ? 'index.html' : path.slice(uiPath.length + 1) || 'index.html';
   if (name === 'config.json') {
-    return {bytes: Buffer.from(JSON.stringify({apiPath, uiPath, requestBytes: PAYMENT_PLAN_REQUEST_BYTES})),
+    return {bytes: Buffer.from(JSON.stringify({apiPath, uiPath, receivablesUi:basePath(receivablesUi,'/receivables')+'/', requestBytes: PAYMENT_PLAN_REQUEST_BYTES})),
       type: 'application/json; charset=utf-8'};
   }
   const asset = STATIC.get('/payment-plans/' + name);

@@ -4,6 +4,8 @@ import {NETWORKS, validStrKey} from '../../sf86-rpc-transfer-reconcile/terms.mjs
 import {json, sha, need, plain, field, identifier, currencyOf, currencyKey, minor,
   money, today, dateValue, invoiceSummary, receiptSummary, allocationActive} from './core.mjs';
 
+import {compilePlanCollection, planCollectionStatus} from './payment-plans/collection.mjs';
+
 export const PAYMENT_REQUEST_SCHEMA = 'stellar-forge.invoice-payment-request.v1';
 export const PAYMENT_PROPOSAL_SCHEMA = 'stellar-forge.invoice-payment-proposal.v1';
 export const PAYMENT_TRANSFER_SCHEMA = 'stellar-forge.invoice-stellar-transfer.v1';
@@ -96,7 +98,10 @@ export function compilePaymentProposal(invoice, data, input, {now = timestamp(),
   need(['OPEN', 'PARTIALLY_PAID'].includes(current.paymentStatus), 'INVOICE_NOT_COLLECTIBLE',
     'This invoice has no current amount due for a new payment request.', 409);
   const invoiceCurrency = currencyOf(current.currency);
-  const units = minor(input.invoiceAmount ?? current.amountDue, invoiceCurrency, 'requested invoice amount', {positive: true});
+  const collection = input.paymentPlan === undefined ? null : compilePlanCollection(invoice,data,input.paymentPlan,{network:input.network,now,exceptId:id});
+  const units = minor(input.invoiceAmount ?? collection?.invoiceAmount ?? current.amountDue, invoiceCurrency, 'requested invoice amount', {positive: true});
+  need(!collection || money(units,invoiceCurrency) === collection.invoiceAmount, 'PAYMENT_PLAN_COLLECTION_AMOUNT_CHANGED',
+    'The invoice collection must equal the exact selected installment amounts.',409);
   need(Object.hasOwn(NETWORKS, input.network), 'INVALID_STELLAR_PAYMENT_NETWORK',
     'Select the public Stellar network or the Stellar test network.');
   const reserved = reservedInvoiceAmount(data, invoice.id, input.network, now, id);
@@ -125,6 +130,7 @@ export function compilePaymentProposal(invoice, data, input, {now = timestamp(),
     invoiceAmount: money(units, invoiceCurrency), network: input.network,
     networkPassphrase: NETWORKS[input.network].passphrase, destination: input.destination, asset,
     stellarAmount: amount.amount, amountAtomic: amount.atomic, memo, msg, expiresAt, valuationNote};
+  if (collection) proposal.paymentPlan = collection;
   proposal.uri = sep7PaymentUri(proposal);
   return proposal;
 }
@@ -203,13 +209,15 @@ export function paymentRequestSummary(row, data, asOf = today(), observedAt = ti
     lastObservation && /^(TRANSFER_|FAILED|NOT_FOUND|VERIFICATION_UNAVAILABLE)/.test(lastObservation.status) ? lastObservation.status :
     returns.length ? 'AWAITING_VERIFICATION' : 'OPEN';
   if (receipts.length && received === 0n && applied === 0n) status = 'RECEIPT_REVERSED';
+  const collection = planCollectionStatus(row.proposal, invoice, data, asOf, observedAt);
   return {id: row.id, invoiceId: row.invoiceId, invoiceNumber: row.proposal.invoice.number,
     customerId: row.customerId, customerName: row.proposal.invoice.customer.name,
     status, issuedAt: row.issuedAt, expiresAt: expires, cancelledAt: row.cancelledAt ?? null,
     currency, invoiceAmount: row.proposal.invoiceAmount, currentAmountDue: current.amountDue,
     balanceChanged: current.amountDue !== row.proposal.invoice.amountDue,
     received: money(received, currency), applied: money(applied, currency), unapplied: money(available, currency),
-    payable: ['OPEN', 'FAILED'].includes(status) && invoice.status === 'ISSUED' && !expired &&
+    ...(collection ? {paymentPlan:collection} : {}),
+    payable: ['OPEN', 'FAILED'].includes(status) && invoice.status === 'ISSUED' && !expired && (!collection || collection.current) &&
       minor(current.amountDue, currency) >= minor(row.proposal.invoiceAmount, currency),
     network: row.proposal.network, asset: structuredClone(row.proposal.asset),
     stellarAmount: row.proposal.stellarAmount, destination: row.proposal.destination,
@@ -233,6 +241,12 @@ export function paymentRequestHtml(row, data) {
     ' · ' + e(p.invoice.customer.name) + '</p></header><section><h2>Invoice amount selected</h2><p class="amount">' +
     e(p.invoice.currency.code + ' ' + p.invoiceAmount) + '</p><p>Status: ' + e(s.status.replaceAll('_', ' ')) +
     '</p><p>Current invoice amount due: ' + e(p.invoice.currency.code + ' ' + s.currentAmountDue) + '</p></section>' +
+    (p.paymentPlan ? '<section><h2>Original installment selection</h2><p>' + e(p.paymentPlan.title) +
+      ' · Effective ' + e(p.paymentPlan.effectiveDate) + '</p><p>' + e(p.paymentPlan.reference) + '</p><table><thead><tr><th>Installment</th><th>Due</th><th>Selected</th></tr></thead><tbody>' +
+      p.paymentPlan.installments.map(item=>'<tr><td>'+e(item.label || item.id)+'</td><td>'+e(item.dueDate)+'</td><td>'+e(p.invoice.currency.code+' '+item.amount)+'</td></tr>').join('') +
+      '</tbody></table><p>Schedule edition ' + e(p.paymentPlan.editionId) + '</p><p>' + e(p.paymentPlan.allocationMethod) +
+      '</p><p>Current schedule: ' + e(s.paymentPlan?.collectionStatus) + (s.paymentPlan?.current ? '' : ' · review these earlier instructions before use') +
+      '</p><p>Selection records the original collection purpose. The current account records actual receipt allocation and schedule satisfaction.</p></section>' : '') +
     '<section><h2>Exact wallet payment</h2><table>' + line('Network', p.network === 'stellar:pubnet' ? 'Stellar public network' : 'Stellar test network') +
     line('Destination', p.destination) + line('Asset', p.asset.kind === 'native' ? 'Native XLM' : p.asset.code) +
     (p.asset.issuer ? line('Asset issuer', p.asset.issuer) : '') + line('Amount received', p.stellarAmount) +

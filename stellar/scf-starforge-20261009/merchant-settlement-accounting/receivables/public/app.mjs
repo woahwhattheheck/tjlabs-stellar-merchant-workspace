@@ -32,7 +32,14 @@ function invoiceOpeningSelection() {
       !Number.isFinite(Date.parse(asOf + 'T00:00:00Z')) ||
       new Date(asOf + 'T00:00:00Z').toISOString().slice(0,10) !== asOf)
     return {error: 'The selected original invoice link is incomplete or invalid.'};
-  return {invoiceId, workspaceId, asOf};
+  const planId=query.get('planId'),editionId=query.get('editionId');
+  if(query.has('planId')||query.has('editionId')) {
+    if(query.getAll('planId').length!==1||query.getAll('editionId').length!==1||
+       !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(planId)||
+       !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(editionId))
+      return {error:'Choose one original payment plan and schedule edition.'};
+  }
+  return {invoiceId, workspaceId, asOf,...(planId?{planId,editionId}:{})};
 }
 const openingInvoice = invoiceOpeningSelection();
 
@@ -863,8 +870,10 @@ if (openingInvoice) {
   else {
     if (ui.editor) { ui.parkedEditor = ui.editor; persistEditor(); ui.editor = null; }
     ui.view = 'invoices';
+    if(openingInvoice.planId) paymentUi.setPlanSelection(openingInvoice);
     await selectInvoice(openingInvoice.invoiceId);
     if (ui.detail) setMessage('Opened the original invoice at ' + openingInvoice.asOf +
+      (openingInvoice.planId ? '. Select Collect selected schedule to review its current installment instructions. Existing forms remain retained.' : '') +
       (ui.parkedEditor ? '. Your unfinished invoice remains available through New invoice or Edit draft.' : '.'));
   }
 }

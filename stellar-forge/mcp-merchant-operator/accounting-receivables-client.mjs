@@ -47,7 +47,7 @@ export const ACCOUNTING_RECEIVABLES_METHODS = Object.freeze({
   invoicePreviewSummary: 'invoice_preview', issueInvoice: 'invoice_issue', invoice: 'invoice_detail',
   voidInvoice: 'invoice_void', issueCredit: 'credit', recordReceipt: 'receipt_record', voidReceipt: 'receipt_void',
   settlementLedger: 'settlement_ledger', importSettlement: 'settlement_import', allocate: 'allocate',
-  releaseAllocation: 'release', customerExport: 'customer_export', previewPaymentRequest: 'payment_preview',
+  releaseAllocation: 'release', customerExport: 'customer_export', paymentPlanCollection: 'payment_plan_collection', previewPaymentRequest: 'payment_preview',
   createPaymentRequest: 'payment_create', paymentRequests: 'payment_list', paymentRequest: 'payment_detail',
   cancelPaymentRequest: 'payment_cancel', reportPaymentReturn: 'payment_return',
   receivePaymentRequest: 'payment_receive', lookupOperation: 'request_lookup',

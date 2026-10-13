@@ -50,12 +50,15 @@ const expiresAt = {anyOf: [
   {type: 'string', pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]{1,3})?Z$'},
   {type: 'null'}
 ]};
+const paymentPlanSelection = object({planId:uuid,editionId:uuid,
+  installments:{type:'array',minItems:1,maxItems:1000,items:object({id:lineId,amount:money},['id','amount'])}},
+  ['planId','editionId','installments']);
 const paymentTerms = {id: uuid, invoiceAmount: money, network, destination: account, asset,
   stellarAmount: {type: 'string', pattern: '^(0|[1-9][0-9]{0,18})(?:[.][0-9]{1,7})?$'},
-  memo, msg: text(300), expiresAt, valuationNote: text(4000)};
+  memo, msg: text(300), expiresAt, valuationNote: text(4000), paymentPlan: paymentPlanSelection};
 const proposal = object({
   schema: {type: 'string', enum: ['stellar-forge.invoice-payment-proposal.v1']},
-  ...paymentTerms,
+  ...paymentTerms, paymentPlan:object({},[],true),
   invoice: object({id: uuid, number: text(100, 1), sha256: hash, version: revision, currency,
     total: money, amountDue: money, asOf: date, customer: {type: 'object', properties: {}, additionalProperties: true}, issuer: {type: 'object', properties: {}, additionalProperties: true}},
     ['id', 'number', 'sha256', 'version', 'currency', 'total', 'amountDue', 'asOf', 'customer', 'issuer'], true),
@@ -201,6 +204,8 @@ export const receivablesDefinitions = [
     {allocationId: uuid, releasedDate: date, reason: text(3000, 1)}, ['allocationId', 'releasedDate', 'reason']),
   read('customer_export', 'Prepare the original dated customer account inventory and exact source/file identities. Read account.tar or any original manifest member through merchant_accounting_file.',
     {customerId: uuid, asOf: date}, ['customerId']),
+  read('payment_plan_collection', 'Read exact current installment balances and existing same-network instructions from one original effective schedule edition. This does not create a request or record a payment.',
+    {invoiceId:uuid,planId:uuid,editionId:uuid,network},['invoiceId','planId','editionId','network']),
   read('payment_preview', 'Review an invoice-bound Stellar SEP7 wallet request using the current issued invoice balance. Returns the exact proposal, reviewSha256 and revision; keeps invoice value and received Stellar amount distinct.',
     {invoiceId: uuid, ...paymentTerms}, ['invoiceId', 'network', 'destination', 'asset', 'stellarAmount']),
   mutate('payment_create', 'Issue the exact original proposal from payment_preview. The original invoice snapshot, selected amount, network, asset, destination, memo and reviewSha256 remain bound together.',

@@ -60,6 +60,7 @@ export interface ScheduleEdition {
   files: Record<ScheduleFileName, {bytes: number; sha256: string; type: string}>;
 }
 export interface PaymentPlanDetail {
+  paymentCollections: Array<import('../client.js').PaymentRequestSummary>;
   workspaceId: string; revision: number; plan: PaymentPlanProjection; draft: NormalizedPaymentPlanDraft;
   editions: ScheduleEdition[]; history: Array<Record<string, unknown>>; ledger: unknown;
 }

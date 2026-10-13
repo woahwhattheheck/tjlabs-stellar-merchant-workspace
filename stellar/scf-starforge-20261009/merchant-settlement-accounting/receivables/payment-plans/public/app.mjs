@@ -316,6 +316,24 @@ function accountActivity(ledger = {}, plan) {
       '</tr></thead><tbody>' + creditRows + '</tbody></table></div>' : '<p class="muted">No credit notes for this invoice.</p>') + '</section>';
 }
 
+function collectionLink(plan, select=true) {
+  return (ui.config.receivablesUi||'/receivables/') + queryString({workspaceId:ui.state.workspaceId,
+    invoiceId:plan.invoiceId,asOf:new Date().toISOString().slice(0,10),
+    ...(select?{planId:plan.id||plan.planId,editionId:plan.editionId}:{})});
+}
+function collectionHistory(detail) {
+  const rows=detail.paymentCollections||[],plan=detail.plan;
+  return '<section class="subsection"><h3>Stellar installment collections</h3>'+
+    (plan.editionId&&!['CANCELLED','INVOICE_CLOSED','DRAFT','FUTURE','SATISFIED'].includes(plan.collectionStatus)?
+     '<p><a class="button" href="'+esc(collectionLink(plan))+'">Review current installment collection</a></p>':'')+
+    '<p class="muted">The invoice desk reviews current outstanding rows and exact wallet terms. Requests retain their original schedule edition. Verified payments use the original invoice allocation and dated schedule projection.</p>'+
+    (rows.length?'<div class="table-wrap"><table><thead><tr><th>Request / network</th><th>Value</th><th>Status</th><th>Original edition</th></tr></thead><tbody>'+
+      rows.map(row=>'<tr><td>'+esc(row.id)+'<span class="secondary-line">'+esc(row.network)+'</span></td><td>'+money(row.invoiceAmount,row.currency)+
+       '</td><td>'+badge(row.status)+(row.paymentPlan?.current?'':'<span class="secondary-line">Historical schedule selection</span>')+
+       '</td><td>'+esc(row.paymentPlan?.editionId)+'</td></tr>').join('')+'</tbody></table></div>':'<p>No original schedule-bound wallet request has been issued.</p>')+
+    '<p><a href="'+esc(collectionLink(plan,false))+'">Open original invoice, payment requests and receiving</a></p></section>';
+}
+
 async function openDetail(id) {
   const detail = await ui.client.detail(id,{asOf:$('#as-of').value});
   ui.detail = detail; ui.editor = null;
@@ -337,7 +355,7 @@ async function openDetail(id) {
       empty('Schedule starts ' + (plan.effectiveDate || detail.draft?.balanceDate || ''),'Select its effective date or a later balance date to see the installment balances.') :
       empty('Draft schedule','Save and review the draft to activate a customer schedule.')) +
     (detail.draft?.customerNote ? '<section class="subsection"><h3>Draft customer note</h3><p class="review-note">' + esc(detail.draft.customerNote) + '</p></section>' : '') +
-    accountActivity(detail.ledger,plan) +
+    collectionHistory(detail) + accountActivity(detail.ledger,plan) +
     '<section class="subsection"><h3>Saved customer editions</h3>' + (editions.length ? editions.map(edition =>
       '<div class="form-section"><p><strong>Edition ' + esc(edition.editionNumber || edition.id) + '</strong> · effective ' + esc(edition.effectiveDate) +
       '<span class="secondary-line">Saved ' + esc(edition.createdAt) + ' by ' + esc(edition.actor) + '</span></p><div class="file-list">' +

@@ -8,6 +8,7 @@ import {accountingWorkspaceBinding} from '../../workspace/binding.mjs';
 import {need, plain, identifier, field, dateValue, today, json, sha, invoiceSummary} from '../core.mjs';
 import {PLAN_SCHEMA, addDays, normalizePlanDraft, generateInstallments, compilePlanReview,
   scheduleDocument, planProjection, collectionsReport, scheduleFiles, reportFiles} from './core.mjs';
+import {paymentRequestSummary} from '../payment-requests.mjs';
 
 export const PAYMENT_PLAN_REQUEST_BYTES = RECEIVABLE_REQUEST_BYTES;
 const at = () => new Date().toISOString();
@@ -109,6 +110,8 @@ export class PaymentPlanWorkspace extends ReceivablesWorkspace {
       const receiptIds = new Set(allocations.map(row => row.receiptId));
       return structuredClone({plan: planProjection(plan, data, asOf), draft: plan.draft,
         editions: plan.editions.map(editionSummary), history: plan.history,
+        paymentCollections: (data.paymentRequests ?? []).filter(row=>row.invoiceId===invoice.id&&row.proposal.paymentPlan?.planId===plan.id)
+          .map(row=>paymentRequestSummary(row,data,asOf)),
         ledger: {invoice: invoiceSummary(invoice, data, asOf), allocations,
           credits: data.credits.filter(row => row.invoiceId === invoice.id).map(row => ({
             id: row.id, number: row.number, date: row.document.creditDate, amount: row.document.totals.total,
