@@ -16,8 +16,8 @@ The guide's command examples also work through the installed alias, for example:
 
 ~~~sh
 starforge merchant-recovery-host --help
-starforge merchant-recovery-host operation \\
-  --operation /srv/handoff-control/original-adoption \\
+starforge merchant-recovery-host operation \
+  --operation /srv/handoff-control/original-adoption \
   --expected-review-sha256 ORIGINAL_REVIEW_SHA256
 ~~~
 

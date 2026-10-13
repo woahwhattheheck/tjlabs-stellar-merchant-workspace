@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-recovery",
-  "description": "Original merchant recovery Applications, connected workspace CLI and complete managed-fleet operator receiving; complete original host custody and resumable cold adoption",
+  "description": "Original merchant recovery Applications, connected workspace CLI and complete managed-fleet operator receiving; complete original host custody and resumable cold adoption; trusted standalone host-handoff agent tools over the original offline engine",
   "applicationProviders": {
     "merchant-recovery": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/merchant-recovery.mjs"
   },
@@ -24,7 +24,12 @@
       "import": "./source/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff.mjs",
       "default": "./source/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff.mjs"
     },
-    "./merchant/remote-recovery/workspace/host-handoff/cli": "./source/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-cli.mjs"
+    "./merchant/remote-recovery/workspace/host-handoff/cli": "./source/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-cli.mjs",
+    "./merchant/remote-recovery/workspace/host-handoff/merchant": {
+      "types": "./source/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant.mjs",
+      "default": "./source/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant.mjs"
+    }
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/GUIDE.md",
@@ -38,6 +43,15 @@
     "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff.d.mts",
     "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff.mjs",
     "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-profile-paths.mjs",
-    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-request-paths.mjs"
-  ]
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-request-paths.mjs",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant.mjs",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant.d.mts",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant-provider.mjs",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant-catalog.mjs",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant-setup.mjs",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/HOST_HANDOFF_MCP.md"
+  ],
+  "merchantProviders": {
+    "recovery-host-handoffs": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-merchant-provider.mjs"
+  }
 }
