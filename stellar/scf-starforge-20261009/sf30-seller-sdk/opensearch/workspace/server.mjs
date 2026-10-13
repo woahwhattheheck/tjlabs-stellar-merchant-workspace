@@ -121,6 +121,8 @@ export async function startOpenSearchWorkspace({ workspace, port = 8447 } = {}) 
           catalogQuery(url, []);
           return send(res, 200, await workspace.catalog.state());
         }
+        if (path === '/api/catalog/bmecat/profile')
+          return send(res, 200, workspace.catalog.bmecatInputProfile(catalogQuery(url, ['sourceId'])));
         if (path.startsWith('/api/catalog/supplier/')) {
           const action = path.slice('/api/catalog/supplier/'.length), supplier = workspace.catalog.supplier;
           const fields = { profile: ['target'], state: ['catalogId'], plan: ['planId'], history: ['planId'],

@@ -81,6 +81,7 @@
   ],
   "supportFiles": [
     "LICENSE",
+    "products/material-catalog/BMECAT.md",
     "stellar-forge/mcp-merchant-operator/OPENSEARCH_MATERIALS.md",
     "stellar-forge/mcp-merchant-operator/OPENSEARCH_WORKSPACE.md",
     "stellar-forge/mcp-merchant-operator/opensearch-material-client.d.mts",
