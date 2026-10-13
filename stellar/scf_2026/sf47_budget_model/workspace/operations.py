@@ -61,17 +61,17 @@ STATES = {
 }
 
 
-def decoded(raw):
+def decoded(raw, *, maximum=MAX_SOURCE):
     if not isinstance(raw, str):
         domain.fail("Attachment content must be base64 text.")
-    if len(raw) > (MAX_SOURCE + 2) * 4 // 3 + 16:
-        domain.fail("An original source attachment may be at most 8 MiB.", status=413)
+    if len(raw) > (maximum + 2) * 4 // 3 + 16:
+        domain.fail("The original source attachment exceeds its selected native byte bound.", status=413)
     try:
         value = base64.b64decode(raw, validate=True)
     except Exception as exc:
         raise Problem("The original source encoding is invalid.", 422, "INVALID_SOURCE") from exc
-    if not value or len(value) > MAX_SOURCE:
-        domain.fail("Attach a nonempty original source up to 8 MiB.", status=413)
+    if not value or len(value) > maximum:
+        domain.fail("Attach a nonempty original source within its selected native byte bound.", status=413)
     return value
 
 
@@ -262,8 +262,13 @@ class Operations:
         self.db.execute("INSERT INTO ops_records VALUES(?,?,?,?,?) ON CONFLICT(program_id,kind,id) DO UPDATE SET state=excluded.state,body_json=excluded.body_json",
                         (program_id, kind, row["id"], row["state"], canonical(row)))
 
-    def _source_add(self, program_id, data):
-        content = decoded(data.get("contentBase64"))
+    def _source_add(self, program_id, data, *, _maximum=MAX_SOURCE):
+        if _maximum not in (MAX_SOURCE, buyer.MAX_CUSTOMER_USE_HANDOFF):
+            domain.fail("Use the supported original source bound.", status=413)
+        content = decoded(data.get("contentBase64"), maximum=_maximum)
+        if _maximum > MAX_SOURCE:
+            if json.loads(content).get("schema") != buyer.CUSTOMER_USE_SCHEMA:
+                domain.fail("The larger source bound is reserved for the native customer-use return.", status=413)
         name = text(data.get("filename"), "Original source filename", 240, True)
         if "/" in name or "\\" in name or name in (".", "..") or any(ord(char) < 32 for char in name):
             domain.fail("Use a plain original filename.")
@@ -957,7 +962,7 @@ class Operations:
     def preview_buyer(self, program_id, body):
         with self.workspace.mutex:
             context = deepcopy(self._context(identifier(program_id, "operation")))
-        return buyer.preview(context, body)
+            return buyer.preview(context, body, operations=self)
 
     def inspect_statement(self, program_id, body):
         with self._snapshot():
@@ -1483,7 +1488,10 @@ class Operations:
             if not re.fullmatch(r"[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+", item.get("mediaType", "")):
                 domain.fail("Use a plain source media type.")
             content = files["sources/" + item["id"]]
-            if len(content) != item["bytes"] or hashlib.sha256(content).hexdigest() != item["sha256"] or len(content) > MAX_SOURCE:
+            association = item.get("buyerHandoff", {})
+            maximum = buyer.MAX_CUSTOMER_USE_HANDOFF if (isinstance(association, dict)
+                and association.get("sourceSchema") == buyer.CUSTOMER_USE_SCHEMA) else MAX_SOURCE
+            if len(content) != item["bytes"] or hashlib.sha256(content).hexdigest() != item["sha256"] or len(content) > maximum:
                 domain.fail("An original attachment differs from its source record.")
         installations.selection_from_files(document, files)
         task_outcomes.selection_from_files(document, files)
@@ -1605,6 +1613,7 @@ class Operations:
         saved_installations = document.get("installations", [])
         installations.validate_import(context, saved_installations, events, source_program["version"], files,
                                       plan_for_version=selected_plan_at)
+        buyer.validate_customer_use_import(context, events, reviews, files, saved_installations)
         task_outcomes.validate_import(context, events, files, saved_installations, plan_for_version=selected_plan_at)
         issuer_receiving.validate_import(context, events, files)
         award_terms.validate_import(context, events, files, plan_for_version=selected_plan_at, saved_amendments=saved_amendments)

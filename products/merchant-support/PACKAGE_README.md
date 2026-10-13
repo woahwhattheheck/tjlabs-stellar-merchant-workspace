@@ -28,6 +28,24 @@ Use this archive's actual SHA-256 with the maintained runtime profile and instal
 
 The optional accounting and buyer connection fields attach the existing native owners for Service adjustments, buyer periods and accountant work. The optional Handoffs profile connects the original remote receiving sources. The application retains its reviewed native profile identity through startup and reopening.
 
+## OAuth resource support and original operator tools
+
+The package includes the original OAuth resource observer, the SF93 observation collector and the Merchant Support OAuth desk. In **Merchant support → Incidents**, select an existing named OAuth resource from the customer's private incident-source profile and inspect its original configuration revision. Register the reviewed source through the original manager, then use the existing incident watcher and case flow. Browser and MCP callers select a source alias; they do not supply a replacement endpoint or token environment reference.
+
+The installed `starforge mcp-oauth` command is the original OAuth resource operator. Start with `starforge mcp-oauth --help`. Its `describe --config /absolute/private/config.json` reads the original selected configuration; its `discover` and `probe` commands perform their explicit original network operations. The probe uses the selected operator token through `--token-env` or its private token-file option and retains the complete tool catalog evidence. It does not create a Support incident or start a watcher. Use `init` only when commissioning a new authorized resource configuration; existing customer configurations stay with their original owner.
+
+The original public interfaces are included as `./mcp/oauth-resource`, `./mcp/oauth-host`, `./mcp/oauth-discovery` and `./mcp/oauth-operator`, together with their complete adjacent `.d.mts` declarations. They are the same source modules and types used by the existing OAuth host and operator.
+
+Select `--feature mcp` in the maintained `runtime-install prepare` command, then complete `runtime-install install` and `runtime-install inspect --load` for that same installation. The source-selected MCP manifest pins JOSE 6.2.12 and its existing MCP/payment dependencies. The source archive itself contains no `node_modules`; the original installer places the selected graph beside `package/` so module resolution reaches it. Selecting a recipe makes the feature available; it does not itself install dependencies. The complete Support installation also uses the existing `schema`, `openapi`, native and operator selections described above.
+
+- [OAuth observations, before/after comparison and customer repair queue](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/OAUTH_SUPPORT.md)
+- [Original MCP inventory, reviewed inspection and incident-to-case workflow](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/OAUTH_MCP.md)
+- [Full native programme, portable receiving and retained-context continuation](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/OAUTH_RECEIVING.md)
+
+Authentication, authorization, host-authority and JWKS counters describe separate original checks. Normal token, scope and host denials remain visible enforcement observations; they do not become outage incidents. The repair queue uses the original classified failures, and missing or incomplete observations remain explicit.
+
+The whole selected SF74 and SF93 components carry the native programme, receiving module, retained-context helper and all three guides. A full producer run additionally needs the guide's actual Node/Linux, OpenSSL, Python and optional Playwright/Chromium prerequisites. Browser binaries and browser automation are supplied runtime inputs; they are not installed by the MCP feature. To continue a preserved receiving context after its original host has closed, use the exact context path and SHA-256 with the guide's retained-context command. This consumes the original captures and incident revisions without running the verifier, watcher or producer again.
+
 ## Accepted quotations through delivery
 
 1. Open **Commercial** for the actual saved merchant case. Prepare the quotation from its retained implementation, Service and pricing sources, then record the customer's response against the saved quote edition.

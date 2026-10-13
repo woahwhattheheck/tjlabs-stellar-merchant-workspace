@@ -6,6 +6,10 @@ The original Workspace, Operations, forecast and portfolio implementations remai
 
 The complete Merchant setup, tools, input references, source-bound pages, downloads, same-ID recovery and receiving workflow are in [Grant workspaces through Merchant MCP](../../../../stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md).
 
+## Named financial desk continuity
+
+[FINANCIAL_DESK_RECOVERY.md](FINANCIAL_DESK_RECOVERY.md) documents the complete ten-desk workflow, in-page same-operator sign-in, original pending-action recovery, earlier browser copies, and complete Issuer Terms / Customer Billing editor receiving. The public staff session returns its native `installationId`. Context-bound clients send `X-Grant-Staff` and `X-Grant-Installation` alongside the current cookie/CSRF credentials; the original role, assigned-case and financial command rules remain authoritative. Capture these identifiers before preparing or awaiting a write, and retain the original request body and actor through renewal or response recovery.
+
 ## Delivery agenda across selected cases
 
 Open **Delivery agenda** in the original application to review multiple existing cases together, navigate to each original payment or Completion assignment, and export the complete selected cases. The typed client exposes `read('delivery-agenda', {caseIds, asOfDate, expectedVersions})` and `download('delivery-agenda', {...report.selection, format})`. Both use one original workspace snapshot; a supplied version map covers every selected case. The adjacent declarations include the complete report, original case metadata and wrapped native entries.

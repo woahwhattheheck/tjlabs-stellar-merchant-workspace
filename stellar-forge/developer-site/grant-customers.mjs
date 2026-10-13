@@ -43,8 +43,10 @@ function receiveIatiOperatingApplication(value) {
 }
 
 const INSTITUTIONAL_REPOSITORY = '## Institutional repository services and complete scholarly receiving';
+const AIRBYTE = '## Custom API commissioning and complete dataset receiving';
 const JOURNEY = '# 9A. Current demonstration and operator journey';
 const INSTALLATION_USE = '## Product selection, installation and recurring buyer work';
+const HAYSTACK = "## Haystack building models: reviewed point lists, validation and contractor handover";
 const BILLING = '## Merchant settlement, customer billing and accountant receiving';
 const DEDICATED = new Set(['## Recurring economic-report installation', '## Coastal model-input installation', '## Datasette editions and customer analysis']);
 const OPENFN_PARAGRAPHS = [
@@ -61,6 +63,7 @@ function need(value, message) { if (!value) throw new Error(message); }
 const PRIVATE_SOURCE_REPOSITORIES = new Set(['woahwhattheheck/commons']);
 const PRIVATE_SOURCE_WORKFLOWS = [
   [/\/opportunities\/discoverygarden_msu2026112_\d{8}\/tind-operator(?:\/|$)/, 'institutional-repository-services-and-complete-scholarly-receiving'],
+  [/\/opportunities\/airbyte-connector-commissioning-\d{8}(?:\/|$)/, 'custom-api-commissioning-and-complete-dataset-receiving'],
   [/\/opportunities\/openfn-commissioning-\d{8}(?:\/|$)/, 'openfn-paid-workflow-commissioning-and-complete-receiving'],
   [/\/case_assets\/elimu-gravity-referral-implementation-\d{8}-450e(?:\/|$)/, 'referral-implementation-source-changes-returned-outcomes-and-complete-receiving'],
   [/\/case_assets\/risingwave-subscription-delivery-pilot-\d{8}(?:\/|$)/, 'recurring-subscription-delivery-and-streaming-data-commissioning'],
@@ -102,6 +105,11 @@ export function projectGrantMarkdown(markdown, { application = false } = {}) {
     .replace(/ \. /g, '. ').replace(/\.\s*·\s*\[/g, '. [')
     .replaceAll('enterprise@openfn.org', 'OpenFn’s published enterprise mailbox');
   if (application) {
+  // Canvas retains the chapter label when it removes a relative Markdown link.
+  // Give both historical and current authoring text the same installed chapter link.
+  const connectedSystemsScope = "The [Connected Systems observations chapter](#connected-systems-observations-customer-commissioning-and-repeat-use) retains the full eight-phase scope and acceptance outputs; the grant's base request and payment sensitivities are unchanged.";
+  value = value.replaceAll("§9A retains the full eight-phase scope and acceptance outputs; the grant's base request and payment sensitivities are unchanged.", connectedSystemsScope)
+    .replaceAll("The Connected Systems observations chapter retains the full eight-phase scope and acceptance outputs; the grant's base request and payment sensitivities are unchanged.", connectedSystemsScope);
     value = receiveIatiOperatingApplication(value);
     value = currentGrantCompanionLinks(value);
     // Canvas authoring uses an absolute public link; installed readers keep the sibling file.
@@ -457,6 +465,15 @@ export function receiveGrantCustomerSources(index, companion) {
   receive('tind-institutional-repository-contribution', 'Repository commissioning, recurring service and funded contribution',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/tind\/GRANT\.md)/, institutionalRepository);
   const companyResearch = section(companion, '## Company research, recurring reference data and complete receiving')?.text || '';
+  const airbyte = section(companion, AIRBYTE)?.text || '';
+  receive('airbyte-native-commissioning', 'Original Airbyte CDK environment and completed native receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/airbyte-connector-commissioning-\d{8}\/reference\/openfema\/NATIVE_ENVIRONMENT\.md)/, airbyte);
+  receive('airbyte-source-contract', 'Original source, acknowledged state and complete dataset contract',
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/airbyte-connector-commissioning-\d{8}\/reference\/openfema\/README\.md)/, airbyte);
+  receive('airbyte-managed-receiving', 'Complete managed Application and second-operator receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/airbyte-connector-commissioning-\d{8}\/applications\/MANAGED_RECEIVING\.md)/, airbyte);
+  receive('airbyte-customer-commissioning', 'Customer commissioning scope, selected source and complete handover',
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/airbyte-connector-commissioning-\d{8}\/commercial\/metaops-\d{8}\/IMPLEMENTATION-AND-HANDOVER\.md)/, airbyte);
   receive('gleif-company-research-operating', 'Company research, source review, customer files and native dataset receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/gleif\/OPERATING\.md)/, companyResearch);
   receive('gleif-company-source-contract', 'Original legal-entity records, source editions and complete receiving contract',
@@ -464,6 +481,27 @@ export function receiveGrantCustomerSources(index, companion) {
   receive('gleif-company-grant-workflow', 'Company research service, customer commissioning and existing funded packages',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/gleif\/GRANT\.md)/, companyResearch);
   const x402apiMerchant = section(companion, '## Merchant invoices, paid fulfillment and portable operating projects')?.text || '';
+  const haystack = section(companion, HAYSTACK)?.text || '';
+  receive("haystack-installed-operations", "Haystack installed modelling, corrective work and contractor receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/haystack\/OPERATING\.md)/, haystack);
+  receive("haystack-point-modelling", "Original point lists, reviewed mapping, dictionary and model history",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/haystack-workspace\/SEMANTIC_MODELLING\.md)/, haystack);
+  receive("haystack-native-semantic", "Exact Brick 1.4.4 native validation and offline receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/haystack-workspace\/SEMANTIC_NATIVE\.md)/, haystack);
+  receive("haystack-source-contract", "Original typed Haystack grid and source meaning",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/haystack-workspace\/HAYSTACK_CONTRACT\.md)/, haystack);
+  receive("haystack-charlie-original", "Original anonymized Charlie example source",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/haystack-workspace\/fixture-charlie\.json)/, haystack);
+  receive("haystack-corrective-work", "Corrective work, event ancestry and returned contractor history",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/haystack-workspace\/CORRECTIVE_WORK\.md)/, haystack);
+  receive("haystack-source-license", "Original Haystack source licence and attribution",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/haystack-workspace\/HAYSTACK_LICENSE\.txt)/, haystack);
+  receive("haystack-semantic-dependencies", "Complete offline semantic dependency archive selection",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/haystack-workspace\/semantic-dependencies\.json)/, haystack);
+  receive("haystack-semantic-native-receiving", "Complete original point modelling native receiving programme",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/haystack-workspace\/SEMANTIC_RECEIVING\.mjs)/, haystack);
+  receive("haystack-semantic-browser-receiving", "Complete original model and contractor browser programme",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-20261009\/sf30-seller-sdk\/haystack-workspace\/SEMANTIC_BROWSER\.mjs)/, haystack);
   receive('x402api-merchant-operating', 'Merchant invoices, installed application and operator handover',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/OPERATING\.md)/, x402apiMerchant);
   receive('x402api-merchant-application', 'Merchant invoice, payment, fulfillment and result interfaces',

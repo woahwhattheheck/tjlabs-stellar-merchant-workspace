@@ -352,10 +352,11 @@ function GrantProgrammeConsole(H) {
   async function downloadDocument(record, selection) {
     const descriptor = record.object;
     let target = null;
-    if (typeof showSaveFilePicker === "function")
+    if (descriptor.bytes > 64 * 1024 ** 2) {
+      if (typeof showSaveFilePicker !== "function")
+        throw new Error("For documents larger than 64 MiB, use a browser with direct file saving or the workspace document client.");
       target = await showSaveFilePicker({suggestedName:descriptor.filename});
-    else if (descriptor.bytes > 64 * 1024 ** 2)
-      throw new Error("For documents larger than 64 MiB, use a browser with direct file saving or the workspace document client.");
+    }
     const stream = await response("/api/programme/document?" + new URLSearchParams({...selection, id:record.id}));
     let reader = null, output = null, completed = false;
     try {

@@ -7,7 +7,7 @@ import re
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from model import Problem
-from staff_access import SCHEMA, owner_principal, fail
+from staff_access import SCHEMA, MEMBER_ID, owner_principal, fail
 from operations_agenda_http import ROUTE as DELIVERY_AGENDA_ROUTE, selection as agenda_selection
 
 FINANCE_COMMANDS = {
@@ -42,6 +42,10 @@ def register_static(static):
     static.update({"/team": ("staff.html", "text/html; charset=utf-8"),
                    "/staff.mjs": ("staff.mjs", "text/javascript; charset=utf-8"),
                    "/staff-session.mjs": ("staff-session.mjs", "text/javascript; charset=utf-8"),
+                   "/staff-recovery.mjs": ("staff-recovery.mjs", "text/javascript; charset=utf-8"),
+                   "/staff-desk-recovery.mjs": ("staff-desk-recovery.mjs", "text/javascript; charset=utf-8"),
+                   "/staff-recovery.css": ("staff-recovery.css", "text/css; charset=utf-8"),
+                   "/FINANCIAL_DESK_RECOVERY.md": ("FINANCIAL_DESK_RECOVERY.md", "text/markdown; charset=utf-8"),
                    "/staff.css": ("staff.css", "text/css; charset=utf-8")})
 
 
@@ -94,16 +98,51 @@ def operations(handler):
 def bind_actor(handler, body):
     principal = handler.principal
     if principal["role"] != "owner":
+        if (handler.headers.get("X-Grant-Staff") is not None and "actor" in body
+                and (not isinstance(body["actor"], str) or body["actor"].strip() != principal["actor"])):
+            fail("This retained request belongs to its original recording operator. "
+                 "Keep it and receive it with that operator.", "STAFF_REQUEST_ACTOR_CHANGED", 403)
         # Keep the original command journal and its replay fingerprint. The stable
         # actor assigned on enrollment survives later display-name edits.
         body["actor"] = principal["actor"]
     return body
 
 
+def require_context(handler):
+    """Keep an open desk with its original installation and named principal."""
+    expected = {}
+    for name, pattern in (("X-Grant-Staff", MEMBER_ID),
+                          ("X-Grant-Installation", re.compile(r"[0-9a-f]{32}"))):
+        values = handler.headers.get_all(name, [])
+        if not values:
+            continue
+        if (len(values) != 1 or not isinstance(values[0], str)
+                or not pattern.fullmatch(values[0])):
+            fail("Use one original ASCII staff or installation ID in each context header.",
+                 "STAFF_CONTEXT_INVALID", 403)
+        expected[name] = values[0]
+    if not expected:
+        return
+    principal = handler.principal
+    if principal is None:
+        fail("Sign in as the original staff member to continue this desk.",
+             "ACCESS_REQUIRED", 401)
+    installation_id = expected.get("X-Grant-Installation")
+    if installation_id is not None and not hmac.compare_digest(
+            installation_id, handler.server.staff.installation_id):
+        fail("This desk belongs to another installation. Reopen the selected installation before continuing.",
+             "STAFF_INSTALLATION_CHANGED", 403)
+    member_id = expected.get("X-Grant-Staff")
+    if member_id is not None and not hmac.compare_digest(member_id, principal["id"]):
+        fail("This desk belongs to another sign-in. Reopen it as the original staff member or open a separate desk.",
+             "STAFF_IDENTITY_CHANGED", 403)
+
+
 def authorize(handler):
     parsed = urlsplit(handler.path)
     path, method = parsed.path, handler.command
     handler.principal = authenticate(handler)
+    require_context(handler)
     if (method in ("GET", "HEAD") and path == "/api/staff/session"
             or method == "POST" and path == "/api/staff/login"):
         return
@@ -246,6 +285,8 @@ def read(handler, parsed):
         result = handler.staff_session or (
             {"authenticated": True, "principal": handler.principal, "csrfToken": None}
             if handler.principal else {"authenticated": False})
+        if result.get("authenticated"):
+            result = {**result, "installationId": access.installation_id}
     elif path == "/api/staff/workboard":
         result = access.contributor_board(handler.principal, operations(handler))
     elif path == "/api/staff/members":
@@ -282,13 +323,15 @@ def write(handler, parsed):
         if set(body) != {"staffId", "accessCode"}:
             fail("Enter the staff ID and access code.", "STAFF_INPUT", 422)
         result, token = access.login(body["staffId"], body["accessCode"])
-        handler.send(200, result, headers={"Set-Cookie": cookie_header(handler, token)})
+        handler.send(200, {**result, "installationId": access.installation_id},
+                     headers={"Set-Cookie": cookie_header(handler, token)})
     elif path == "/api/staff/owner-session":
         if not handler.headers.get("Authorization") or handler.principal["role"] != "owner":
             fail("Use the original private owner key for owner sign-in.", "ACCESS_REQUIRED", 401)
         handler.json_body()
         result, token = access.start_session(owner_principal())
-        handler.send(200, result, headers={"Set-Cookie": cookie_header(handler, token)})
+        handler.send(200, {**result, "installationId": access.installation_id},
+                     headers={"Set-Cookie": cookie_header(handler, token)})
     elif path == "/api/staff/logout":
         handler.json_body()
         access.logout(handler.staff_cookie, handler.principal)

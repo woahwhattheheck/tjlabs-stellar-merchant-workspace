@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // MIT. Complete receiving of product source, installed Collections and original recovery.
 import { constants, createReadStream } from 'node:fs';
-import { open, readFile, writeFile, mkdir, lstat, realpath, readdir, rename, chmod } from 'node:fs/promises';
+import { open, readFile, writeFile, mkdir, lstat, realpath, readdir, rename, chmod, link, unlink } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomUUID, randomBytes } from 'node:crypto';
@@ -13,6 +13,9 @@ import { runtimeCommand, inspectRuntimeInstall } from '../runtime-install.mjs';
 import { saveJSON, operationLease, processIdentity } from '../runtime-workspace/storage.mjs';
 import { validateCollectionPlan, resolveCollectionEdition, stableJson } from '../../sf88-operator-buyer-cli/collection-composer/plan.mjs';
 import { openProductCollectionsBrowser } from './product-collections-browser.mjs';
+
+import { readCustomerUseSource, customerUseDocument, canonical, customerUseReview, customerUseCsv } from '../../sf88-operator-buyer-cli/collection-composer/customer-use-definition.mjs';
+import { inspectCustomerUseReturn } from '../../sf88-operator-buyer-cli/collection-composer/customer-use-return.mjs';
 
 export const RECEIVING_SCHEMA = 'stellar-forge.product-collections-receiving.v1';
 const JOURNAL_SCHEMA = 'stellar-forge.product-collections-receiving-state.v1';
@@ -42,7 +45,7 @@ function disjoint(left, right) {
 /** Select actual existing files, two real plan revisions and two explicit periods. */
 export function validateReceivingInput(value) {
   fields(value, ['schema', 'operationId', 'outputDirectory', 'source', 'runtime',
-    'collections', 'recovery', 'browser', 'operationTimeoutSeconds']);
+    'collections', 'recovery', 'browser', 'operationTimeoutSeconds', 'customerUse']);
   need(value.schema === RECEIVING_SCHEMA && typeof value.operationId === 'string'
     && value.operationId.length > 0 && value.operationId.length <= 200, 'RECEIVING_OPERATION_REQUIRED');
   absolute(value.outputDirectory);
@@ -108,6 +111,46 @@ export function validateReceivingInput(value) {
   if (value.operationTimeoutSeconds !== undefined)
     need(Number.isSafeInteger(value.operationTimeoutSeconds) && value.operationTimeoutSeconds >= 60
       && value.operationTimeoutSeconds <= 86400, 'RECEIVING_OPERATION_TIMEOUT_INVALID');
+
+  if (value.customerUse !== undefined) {
+    const selected = value.customerUse;
+    fields(selected, ['calendar', 'commissionFiles', 'actor', 'expectedHeadSha256', 'requestIds', 'buyerReturn']);
+    const pin = value => {
+      fields(value, ['path', 'bytes', 'sha256']); absolute(value.path);
+      need(Number.isSafeInteger(value.bytes) && value.bytes > 0 && HASH.test(value.sha256 ?? ''),
+        'RECEIVING_COMPLETE_CUSTOMER_USE_FILE_REQUIRED');
+    };
+    pin(selected.calendar);
+    need(selected.calendar.bytes <= 32 * 1024 * 1024
+      && Array.isArray(selected.commissionFiles) && selected.commissionFiles.length === 2,
+    'RECEIVING_ORIGINAL_CALENDAR_AND_TWO_COMMISSION_REVISIONS_REQUIRED');
+    selected.commissionFiles.forEach(value => {
+      pin(value); need(value.bytes <= 2 * 1024 * 1024, 'RECEIVING_COMMISSION_FILE_TOO_LARGE');
+    });
+    need(typeof selected.actor === 'string' && selected.actor.trim().length > 0
+      && selected.actor.length <= 200 && !selected.actor.includes('\0')
+      && (selected.expectedHeadSha256 === null || HASH.test(selected.expectedHeadSha256 ?? '')),
+    'RECEIVING_ORIGINAL_COMMISSION_HEAD_AND_ACTOR_REQUIRED');
+    fields(selected.requestIds, ['save', 'prepare', 'create', 'capture']);
+    const uuids = [];
+    for (const key of ['save', 'prepare', 'create']) {
+      need(Array.isArray(selected.requestIds[key]) && selected.requestIds[key].length === 2,
+        'RECEIVING_ORIGINAL_CUSTOMER_USE_REQUESTS_REQUIRED');
+      uuids.push(...selected.requestIds[key]);
+    }
+    uuids.push(selected.requestIds.capture);
+    need(uuids.every(value => typeof value === 'string'
+      && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(value))
+      && new Set(uuids).size === uuids.length, 'RECEIVING_DISTINCT_RETAINED_CUSTOMER_USE_REQUESTS_REQUIRED');
+    fields(selected.buyerReturn, ['bindingIds', 'maxVerifyBytes', 'requireSavedResponses']);
+    need(Array.isArray(selected.buyerReturn.bindingIds) && selected.buyerReturn.bindingIds.length > 0
+      && selected.buyerReturn.bindingIds.length <= 2000 && selected.buyerReturn.bindingIds.every(value => ID.test(value))
+      && new Set(selected.buyerReturn.bindingIds).size === selected.buyerReturn.bindingIds.length
+      && Number.isSafeInteger(selected.buyerReturn.maxVerifyBytes) && selected.buyerReturn.maxVerifyBytes > 0
+      && selected.buyerReturn.maxVerifyBytes <= 1073741824
+      && selected.buyerReturn.requireSavedResponses === true,
+    'RECEIVING_EXPLICIT_ORIGINAL_BUYER_RETURN_REQUIRED');
+  }
   return JSON.parse(JSON.stringify(value));
 }
 async function present(path) {
@@ -207,6 +250,25 @@ async function receiveFile(host, item, path, signal) {
   try { await parent.sync(); } finally { await parent.close(); }
   return { path, bytes, sha256: item.sha256 };
 }
+async function retainBytes(path, bytes) {
+  await directory(dirname(path), { create: true, privateMode: true });
+  if (await present(path)) {
+    const actual = await fileIdentity(path);
+    need(actual.bytes === bytes.length && actual.sha256 === sha(bytes), 'RECEIVING_FROZEN_FILE_CHANGED');
+    return;
+  }
+  const temporary = path + '.partial-' + randomUUID(), handle = await open(temporary, 'wx', 0o600);
+  try { await handle.writeFile(bytes); await handle.sync(); } finally { await handle.close(); }
+  try { await link(temporary, path); } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    const actual = await fileIdentity(path);
+    need(actual.bytes === bytes.length && actual.sha256 === sha(bytes), 'RECEIVING_FROZEN_FILE_CHANGED');
+  }
+  await unlink(temporary);
+  const parent = await open(dirname(path), constants.O_RDONLY | constants.O_DIRECTORY);
+  try { await parent.sync(); } finally { await parent.close(); }
+}
+
 function memberPath(root, name) {
   need(typeof name === 'string' && name.length > 0 && !isAbsolute(name)
     && !name.includes('\\') && name.split('/').every(part => part && part !== '.' && part !== '..'),
@@ -402,7 +464,244 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       await delay(1500, undefined, { signal });
     }
   }
+
+  async function customerUseInputs() {
+    const selected = config.customerUse;
+    if (!selected) return null;
+    const retained = journal.customerUseInputs;
+    if (retained) {
+      for (const pin of [retained.calendar, ...retained.commissions]) {
+        const actual = await fileIdentity(pin.path);
+        need(actual.bytes === pin.bytes && actual.sha256 === pin.sha256, 'RECEIVING_RETAINED_CUSTOMER_USE_INPUT_CHANGED');
+      }
+      return retained;
+    }
+    const sources = [selected.calendar, ...selected.commissionFiles], copies = [];
+    for (let index = 0; index < sources.length; index++) {
+      const pin = sources[index], raw = await regular(pin.path, index === 0 ? 32 * 1024 * 1024 : 2 * 1024 * 1024);
+      need(raw.length === pin.bytes && sha(raw) === pin.sha256, 'RECEIVING_CUSTOMER_USE_ORIGINAL_INPUT_CHANGED');
+      const path = join(config.outputDirectory, 'inputs', index === 0 ? 'original-customer-use-calendar.json'
+        : 'original-customer-use-commission-' + (index - 1) + '.json');
+      await retainBytes(path, raw);
+      copies.push({ path, bytes: raw.length, sha256: sha(raw), originalPath: pin.path });
+    }
+    const calendar = readCustomerUseSource(await regular(copies[0].path, 32 * 1024 * 1024));
+    const documents = [];
+    const nativePlans = journal.planInputs.map(pin => pin.definitionSha256);
+    for (let index = 0; index < 2; index++) {
+      const value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await regular(copies[index + 1].path)));
+      const document = customerUseDocument(value, calendar.value, calendar.sha256);
+      need(document.periods.length === 2, 'RECEIVING_COMMISSION_TWO_ORIGINAL_PERIODS_REQUIRED');
+      for (let periodIndex = 0; periodIndex < 2; periodIndex++) {
+        const period = config.collections.periods[periodIndex], bound = document.periods.find(row => row.collectionId === period.collectionId);
+        need(bound && bound.planId === journal.planInputs[periodIndex].planId
+          && bound.planSha256 === nativePlans[periodIndex] && bound.name === period.name
+          && canonical(bound.values) === canonical(period.values), 'RECEIVING_COMMISSION_PLAN_PERIOD_SELECTION_CHANGED');
+      }
+      need(selected.buyerReturn.bindingIds.every(id => document.bindings.some(binding => binding.id === id)),
+        'RECEIVING_ORIGINAL_RETURN_BINDING_MISSING');
+      documents.push(document);
+    }
+    need(documents[0].id === documents[1].id && canonical(documents[0]) !== canonical(documents[1]),
+      'RECEIVING_TWO_EXPLICIT_COMMISSION_REVISIONS_REQUIRED');
+    journal.customerUseInputs = { calendar: copies[0], commissions: copies.slice(1),
+      commissionId: documents[0].id, source: calendar.value.source, selections: calendar.value.selection };
+    await persist();
+    return journal.customerUseInputs;
+  }
+  async function retainedCustomerUseDocument(index) {
+    const inputs = journal.customerUseInputs;
+    const calendar = readCustomerUseSource(await regular(inputs.calendar.path, 32 * 1024 * 1024));
+    const raw = await regular(inputs.commissions[index].path, 2 * 1024 * 1024);
+    need(raw.length === inputs.commissions[index].bytes && sha(raw) === inputs.commissions[index].sha256,
+      'RECEIVING_RETAINED_CUSTOMER_USE_INPUT_CHANGED');
+    const value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw));
+    const document = customerUseDocument(value, calendar.value, calendar.sha256);
+    for (let periodIndex = 0; periodIndex < document.periods.length; periodIndex++) {
+      const period = document.periods[periodIndex];
+      const pin = journal.planInputs.find(row => row.planId === period.planId && row.definitionSha256 === period.planSha256);
+      need(pin, 'RECEIVING_ORIGINAL_COMMISSION_PLAN_CHANGED');
+      const plan = validateCollectionPlan(JSON.parse(await regular(pin.retained)));
+      need(sha(encoded(plan)) === pin.definitionSha256, 'RECEIVING_RETAINED_PLAN_INPUT_CHANGED');
+      document.periods[periodIndex] = { ...period, values: resolveCollectionEdition(plan, period).values };
+    }
+    return document;
+  }
+  async function customerUseAction(key, operation, input) {
+    const selected = journal.customerUseInputs, prefix = '/api/customer-use/commissions';
+    const path = operation === 'save' ? prefix : prefix + '/' + selected.commissionId + '/' + operation;
+    // Freeze the full original native action before dispatch. Reentry uses the
+    // same request UUID and native controller's own request/result recovery.
+    await retainBytes(join(config.outputDirectory, 'customer-use', 'requests', key + '.json'),
+      encoded({ operationId: config.operationId, path, input }));
+    const result = await original(collection.host, path, input);
+    await artifact('customer-use/actions/' + key + '.json', result);
+    return result;
+  }
+  async function saveCustomerUse() {
+    const inputs = await customerUseInputs(), selected = config.customerUse;
+    const raw = await regular(inputs.calendar.path, 32 * 1024 * 1024);
+    let imported = await original(collection.host, '/api/customer-use/sources/' + inputs.calendar.sha256,
+      undefined, { optional: true });
+    if (!imported) {
+      const response = await fetch(new URL('/api/customer-use/sources/' + inputs.calendar.sha256, collection.host.origin), {
+        method: 'POST', headers: { ...headers(collection.host), 'content-type': 'application/octet-stream',
+          'x-customer-use-name': encodeURIComponent(basename(inputs.calendar.originalPath)) }, body: raw, signal });
+      imported = await response.json();
+      need(response.ok, imported.error || 'RECEIVING_CALENDAR_IMPORT_FAILED');
+    }
+    need(imported.metadata?.sha256 === inputs.calendar.sha256 && imported.metadata.bytes === inputs.calendar.bytes
+      && canonical(imported.source.source) === canonical(inputs.source), 'RECEIVING_IMPORTED_CALENDAR_CHANGED');
+    await artifact('customer-use/original-calendar-import.json', imported);
+    const revisions = journal.customerUseRevisions ??= [];
+    for (let index = 0; index < 2; index++) {
+      const document = await retainedCustomerUseDocument(index);
+      if (!revisions[index]) {
+        const result = await customerUseAction('save-' + index, 'save', { document,
+          expectedHeadSha256: index === 0 ? selected.expectedHeadSha256 : revisions[index - 1].sha256,
+          actor: selected.actor, requestId: selected.requestIds.save[index] });
+        need(result.id === inputs.commissionId && HASH.test(result.sha256 ?? '')
+          && result.requestId === selected.requestIds.save[index], 'RECEIVING_ORIGINAL_COMMISSION_SAVE_CHANGED');
+        revisions[index] = result; await persist();
+      }
+      const reopened = await original(collection.host, '/api/customer-use/commissions/' + inputs.commissionId
+        + '/revisions/' + revisions[index].sha256);
+      need(reopened.selected.sha256 === revisions[index].sha256
+        && canonical(reopened.document) === canonical(document)
+        && reopened.calendar.metadata.sha256 === inputs.calendar.sha256,
+      'RECEIVING_SAVED_COMMISSION_REVISION_CHANGED');
+      await artifact('customer-use/revision-' + index + '.json', reopened);
+    }
+    need(revisions[1].parentSha256 === revisions[0].sha256
+      && revisions[1].revision === revisions[0].revision + 1,
+    'RECEIVING_COMMISSION_REVISIONS_NOT_CONSECUTIVE');
+    await browser.showCustomerUse(collectionsPage, revisions[1], 'saved-customer-use-commission');
+    return { source: inputs.calendar, sourceCase: inputs.source, commissionId: inputs.commissionId,
+      revisions: revisions.map(row => ({ id: row.id, revision: row.revision, sha256: row.sha256,
+        parentSha256: row.parentSha256, documentSha256: row.documentSha256, requestId: row.requestId })) };
+  }
+  async function customerUsePeriod(index, operation, edition) {
+    const selected = config.customerUse, revision = journal.customerUseRevisions[1];
+    const input = { sha256: revision.sha256, collectionId: config.collections.periods[index].collectionId,
+      actor: selected.actor, requestId: selected.requestIds[operation][index] };
+    if (operation === 'create') {
+      need(edition?.editionSha256 && edition.preview?.previewSha256, 'RECEIVING_ORIGINAL_PERIOD_REVIEW_REQUIRED');
+      input.expectedEditionSha256 = edition.editionSha256;
+      input.expectedPreviewSha256 = edition.preview.previewSha256;
+    }
+    const result = await customerUseAction(operation + '-' + index, operation, input);
+    const native = result.current ?? result.native;
+    need(result.requestId === input.requestId && result.commission?.id === revision.id
+      && result.commission.sha256 === revision.sha256 && native?.collectionId === input.collectionId,
+    'RECEIVING_COMMISSION_PERIOD_RESULT_CHANGED');
+    await browser.openEdition(collectionsPage, input.collectionId);
+    return native;
+  }
+  async function verifyCustomerUse(name) {
+    const selected = journal.completed.SAVE_ORIGINAL_CUSTOMER_USE, inputs = journal.customerUseInputs;
+    const result = await original(collection.host, '/api/customer-use/receiving');
+    const current = result.commissions.find(row => row.id === selected.commissionId);
+    need(current && current.currentHead.sha256 === selected.revisions[1].sha256
+      && current.source.sha256 === inputs.calendar.sha256 && current.source.bytes === inputs.calendar.bytes
+      && current.periods.length === 2 && current.periods.every(row => !row.error)
+      && current.responses.every(row => !row.error), 'RECEIVING_ORIGINAL_COMMISSION_RECEIVING_CHANGED');
+    for (let index = 0; index < 2; index++) {
+      const revision = selected.revisions[index], view = await original(collection.host, '/api/customer-use/commissions/'
+        + selected.commissionId + '/revisions/' + revision.sha256);
+      const document = await retainedCustomerUseDocument(index);
+      need(view.selected.sha256 === revision.sha256 && view.selected.documentSha256 === revision.documentSha256
+        && canonical(view.document) === canonical(document)
+        && canonical(view.calendar.source.source) === canonical(inputs.source),
+      'RECEIVING_ORIGINAL_COMMISSION_HISTORY_CHANGED');
+    }
+    await artifact('customer-use/' + name + '.json', result);
+    return current;
+  }
+  async function receiveCustomerUseReturn() {
+    const selected = config.customerUse, revision = journal.customerUseRevisions[1], commissionId = revision.id;
+    const prior = await original(collection.host, '/api/customer-use/commissions/' + commissionId
+      + '/actions/' + selected.requestIds.capture, undefined, { optional: true });
+    const view = await original(collection.host, '/api/customer-use/commissions/' + commissionId + '/revisions/' + revision.sha256);
+    const failures = [];
+    if (!prior?.result) {
+    for (const bindingId of selected.buyerReturn.bindingIds) {
+      const row = view.observations.rows.find(row => row.bindingId === bindingId);
+      need(row, 'RECEIVING_ORIGINAL_BUYER_BINDING_CHANGED');
+      for (const request of row.requests) {
+        const item = request.item;
+        if (request.error || !item?.job || item.error || item.job.outcome?.responseFile?.status !== 'SAVED')
+          failures.push({ bindingId, collectionId: request.selection.collectionId,
+            requestKey: request.selection.requestKey, intentId: request.request?.intentId ?? null,
+            state: item?.state ?? null, responseStatus: item?.job?.outcome?.responseFile?.status ?? null,
+            error: request.error ?? item?.error ?? null });
+      }
+      for (const response of row.responses) if (response.error || response.nativeFile?.status !== 'SAVED')
+        failures.push({ bindingId, selection: response.selection, error: response.error ?? null });
+    }
+    await artifact('customer-use/original-buyer-observations-before-return.json', { view, unavailable: failures });
+    need(failures.length === 0, 'RECEIVING_ORIGINAL_BUYER_RESULTS_REQUIRED',
+      'Use the original Collections approval/run/recovery controls for the selected requests, then continue this exact receiving input; no buyer was called by this receiver.');
+    }
+    const captured = await customerUseAction('capture', 'capture', { sha256: revision.sha256,
+      bindingIds: selected.buyerReturn.bindingIds, maxVerifyBytes: selected.buyerReturn.maxVerifyBytes,
+      actor: selected.actor, requestId: selected.requestIds.capture });
+    need(captured.requestId === selected.requestIds.capture && captured.commission?.id === commissionId
+      && captured.commission.sha256 === revision.sha256, 'RECEIVING_ORIGINAL_BUYER_CAPTURE_CHANGED');
+    const returnPath = '/api/customer-use/commissions/' + commissionId + '/returns/' + selected.requestIds.capture;
+    const returned = await receiveFile(collection.host, { ...captured.file, url: returnPath },
+      join(config.outputDirectory, 'customer-use', 'original-buyer-return.json'), signal);
+    const raw = await regular(returned.path, 16 * 1024 * 1024), report = inspectCustomerUseReturn(raw);
+    need(report.customerUse.commission.revisionSha256 === revision.sha256
+      && report.customerUse.source.calendarSha256 === journal.customerUseInputs.calendar.sha256
+      && canonical(report.customerUse.bindings.map(row => row.id).sort()) === canonical([...selected.buyerReturn.bindingIds].sort()),
+    'RECEIVING_RETURN_COMMISSION_BINDING_CHANGED');
+    need(report.rows.length > 0 && report.rows.every(row => row.output?.state === 'VERIFIED'),
+      'RECEIVING_ORIGINAL_RETURN_OUTPUT_NOT_VERIFIED',
+      'Retain the original capture and its actual output verification; do not label a limited or unavailable output complete.');
+    await artifact('customer-use/original-buyer-return-review.json', report);
+    const exported = [];
+    for (const format of ['json', 'csv']) {
+      const path = join(config.outputDirectory, 'customer-use', 'complete-commission.' + format);
+      let bytes;
+      if (await present(path)) bytes = await regular(path, 64 * 1024 * 1024);
+      else {
+        const target = new URL('/api/customer-use/commissions/' + commissionId + '/revisions/'
+          + revision.sha256 + '/export/' + format, collection.host.origin);
+        const response = await fetch(target, { headers: headers(collection.host), signal });
+        need(response.ok && response.headers.get('x-customer-use-revision') === revision.sha256,
+          'RECEIVING_COMMISSION_EXPORT_FAILED');
+        bytes = Buffer.from(await response.arrayBuffer());
+        need(bytes.length <= 64 * 1024 * 1024 && sha(bytes) === response.headers.get('x-content-sha256'),
+          'RECEIVING_COMMISSION_EXPORT_CHANGED');
+      }
+      if (format === 'csv') need(sha(bytes) === sha(customerUseCsv(customerUseReview(view.document, view.calendar.source))),
+        'RECEIVING_FROZEN_COMMISSION_CSV_CHANGED');
+      else {
+        const packet = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+        need(packet.schema === 'stellar-forge.sf88.customer-use-commissioning.v1.export'
+          && packet.selectedSha256 === revision.sha256 && packet.currentHead.sha256 === revision.sha256
+          && packet.current.selected.sha256 === revision.sha256
+          && canonical(packet.current.document) === canonical(view.document)
+          && packet.revisions.length === view.history.length
+          && packet.revisions.every((row, index) => row.sha256 === view.history[index].sha256
+            && sha(Buffer.from(JSON.stringify(row.record, null, 2) + '\n')) === row.sha256)
+          && packet.sources.some(row => row.metadata.sha256 === journal.customerUseInputs.calendar.sha256
+            && row.encoding === 'base64'
+            && sha(Buffer.from(row.content, 'base64')) === journal.customerUseInputs.calendar.sha256),
+        'RECEIVING_FROZEN_COMMISSION_EXPORT_CHANGED');
+      }
+      await retainBytes(path, bytes); exported.push(await fileIdentity(path));
+    }
+    await browser.showCustomerUse(collectionsPage, revision, 'original-buyer-return', {
+      requestId: selected.requestIds.capture, returnSha256: returned.sha256 });
+    return { commissionId, revisionSha256: revision.sha256, calendarSha256: journal.customerUseInputs.calendar.sha256,
+      captureRequestId: selected.requestIds.capture, originalIntents: report.rows.map(row => row.intentId),
+      file: returned, exports: exported, sourceCase: journal.customerUseInputs.source,
+      originalBuyerSource: report.buyerSource, counts: report.counts };
+  }
+
   async function ensureEdition(index) {
+    if (config.customerUse) return customerUsePeriod(index, 'prepare');
     const saved = journal.plans[index], period = config.collections.periods[index];
     const payload = { planId: saved.id, planSha256: saved.planSha256,
       collectionId: period.collectionId, name: period.name, values: period.values };
@@ -540,6 +839,7 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
         browserDriver: await fileIdentity(fileURLToPath(new URL('./product-collections-browser.mjs', import.meta.url))),
         plans };
     });
+    if (config.customerUse) await step('RETAIN_CUSTOMER_USE_INPUTS', customerUseInputs);
     browser = await openProductCollectionsBrowser({ ...config.browser, outputDirectory: config.outputDirectory });
     runtimeServer = await startRuntimeWorkspace({ directory: config.runtime.workspaceDirectory, port: 0 });
     runtimeHost = endpoint(runtimeServer.url, 'runtime');
@@ -658,9 +958,11 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
         await artifact('collections/saved-plan-revisions.json', journal.plans);
         return journal.plans.map(value => ({ id: value.id, planSha256: value.planSha256 }));
       });
+      if (config.customerUse) await step('SAVE_ORIGINAL_CUSTOMER_USE', saveCustomerUse);
       const first = await step('CREATE_FIRST_PERIOD', async () => {
         let edition = await ensureEdition(0);
-        edition = await browser.createPeriod(collectionsPage, edition);
+        edition = config.customerUse ? await customerUsePeriod(0, 'create', edition)
+          : await browser.createPeriod(collectionsPage, edition);
         need(edition.phase === 'CREATED', 'RECEIVING_FIRST_PERIOD_NOT_CREATED');
         if (config.collections.enqueueFirstPeriod) {
           const queued = await original(collection.host, '/api/collections/' + edition.collectionId + '/enqueue',
@@ -758,6 +1060,8 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       await collectionsPage.goto(collection.url);
       await collectionsPage.locator('#open-composer').waitFor({ state: 'visible' });
     } else need(status.directory === config.collections.directory, 'RECEIVING_RESTORED_COLLECTION_STORE_CHANGED');
+    if (config.customerUse) await step('RECEIVE_ORIGINAL_CUSTOMER_USE_HISTORY',
+      () => verifyCustomerUse('after-native-restore'));
     await step('REOPEN_SAVED_PLANS_AND_CREATE_LATER_PERIOD', async () => {
       for (const plan of journal.plans) {
         const reopened = await browser.openPlan(collectionsPage, plan);
@@ -769,7 +1073,8 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       need(edition.editionSha256 === previous.editionSha256 && edition.planSha256 === previous.planSha256
         && edition.preview?.previewSha256 === previous.previewSha256
         && ['PREPARED', 'CREATED'].includes(edition.phase), 'RECEIVING_RESTORED_PERIOD_CHANGED');
-      edition = await browser.createPeriod(collectionsPage, edition);
+      edition = config.customerUse ? await customerUsePeriod(1, 'create', edition)
+        : await browser.createPeriod(collectionsPage, edition);
       const shown = await browser.showCollection(collectionsPage, edition, 'later-period-restored-collection');
       const exported = await retainCollection(shown.edition, 'later-period');
       return { ...exported, editionSha256: shown.edition.editionSha256,
@@ -796,6 +1101,50 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       return { periods, installedSourceCommit: journal.runtime.sourceCommit,
         restoredStateRoot: config.recovery.stateRoot, retainedOriginalStateRoot: config.recovery.retainedStateRoot };
     });
+
+    if (config.customerUse) {
+      const buyerReturn = await step('CAPTURE_ORIGINAL_CUSTOMER_USE_RETURN', receiveCustomerUseReturn);
+      await collectionsPage.close(); collectionsPage = null; await closeCollection();
+      await startCollection('collections');
+      collectionsPage = await browser.collectionsPage(collection.url);
+      await step('REOPEN_EXACT_CUSTOMER_USE_RETURN', async () => {
+        const original = await verifyCustomerUse('final-native-reopen');
+        const returned = await receiveFile(collection.host, { bytes: buyerReturn.file.bytes, sha256: buyerReturn.file.sha256,
+          url: '/api/customer-use/commissions/' + buyerReturn.commissionId + '/returns/' + buyerReturn.captureRequestId },
+        join(config.outputDirectory, 'customer-use', 'reopened-original-buyer-return.json'), signal);
+        need(returned.sha256 === buyerReturn.file.sha256, 'RECEIVING_REOPENED_BUYER_RETURN_CHANGED');
+        await browser.showCustomerUse(collectionsPage, journal.customerUseRevisions[1], 'reopened-customer-use-return', {
+          requestId: buyerReturn.captureRequestId, returnSha256: buyerReturn.file.sha256 });
+        return { original, returned, commissionId: buyerReturn.commissionId, captureRequestId: buyerReturn.captureRequestId };
+      });
+      const finalReview = await step('REVIEW_FINAL_CUSTOMER_USE_NATIVE_BACKUP', async () => {
+        const review = await original(collection.host, '/api/recovery/review', { stateRoot: config.recovery.stateRoot });
+        need(HASH.test(review.profile?.reviewSha256 ?? ''), 'RECEIVING_FINAL_BACKUP_REVIEW_REQUIRED');
+        await artifact('customer-use/final-native-recovery-review.json', review);
+        return review;
+      });
+      await step('FINAL_CUSTOMER_USE_NATIVE_BACKUP', async () => {
+        const review = finalReview;
+        const saved = await recovery('customer-use-final-snapshot', 'SNAPSHOT', {
+          stateRoot: config.recovery.stateRoot, output: join(config.outputDirectory, 'customer-use-final-encrypted-backup'),
+          expectedReviewSha256: review.profile.reviewSha256, passEnv: config.recovery.passphraseEnv, quiesced: true });
+        need(HASH.test(saved.result?.recordSha256 ?? ''), 'RECEIVING_FINAL_CUSTOMER_USE_BACKUP_REQUIRED');
+        const selected = await original(collection.host, '/api/recovery/' + saved.requestId + '/files', {});
+        need(selected.recordSha256 === saved.result.recordSha256, 'RECEIVING_FINAL_CUSTOMER_USE_BACKUP_CHANGED');
+        const root = join(config.outputDirectory, 'received-customer-use-final-backup'), files = [];
+        for (const item of selected.files)
+          files.push(await receiveFile(collection.host, item, memberPath(root, item.relativePath), signal));
+        const verified = await recovery('verify-customer-use-final-snapshot', 'VERIFY', {
+          bundle: root, passEnv: config.recovery.passphraseEnv, python: config.recovery.python,
+          expected: saved.result.recordSha256, expectedStateRoot: config.recovery.stateRoot });
+        need(verified.result.recordSha256 === saved.result.recordSha256,
+          'RECEIVING_FINAL_CUSTOMER_USE_BACKUP_VERIFICATION_CHANGED');
+        await browser.showRecovery(collectionsPage, saved.requestId, 'complete-customer-use-backup');
+        return { requestId: saved.requestId, verifyRequestId: verified.requestId,
+          recordSha256: saved.result.recordSha256, bundle: root, files };
+      });
+    }
+
     await collectionsPage.close(); collectionsPage = null; await closeCollection();
     if (runtimePage) { await runtimePage.close(); runtimePage = null; }
     if (runtimeServer) { await runtimeServer.close(); runtimeServer = null; }
@@ -809,7 +1158,16 @@ export async function receiveProductCollections(input, { onProgress = () => {}, 
       backup: { requestId: backup.requestId, recordSha256: backup.recordSha256, bundle: backup.bundle },
       restoreRequestId: restored.requestId, originalStateRoot: config.recovery.stateRoot,
       retainedOriginalStateRoot: config.recovery.retainedStateRoot, views: views.artifacts,
-      originalRequestIds: journal.ids };
+      originalRequestIds: journal.ids,
+      ...(config.customerUse ? { customerUse: {
+        source: journal.completed.SAVE_ORIGINAL_CUSTOMER_USE,
+        restored: journal.completed.RECEIVE_ORIGINAL_CUSTOMER_USE_HISTORY,
+        buyerReturn: journal.completed.CAPTURE_ORIGINAL_CUSTOMER_USE_RETURN,
+        reopened: journal.completed.REOPEN_EXACT_CUSTOMER_USE_RETURN,
+        finalBackup: journal.completed.FINAL_CUSTOMER_USE_NATIVE_BACKUP,
+        originalRequestIds: config.customerUse.requestIds,
+        execution: 'Existing Collections operator owns approvals and native buyer execution; this receiver captures actual retained results.'
+      } } : {}) };
     await artifact('RESULT.json', result);
     journal.completed.PRODUCT_JOURNEY = result; await persist();
     return await packageDelivery(result);

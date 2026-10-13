@@ -1,0 +1,19 @@
+{
+  "schema": "stellar-forge.customer-use-source-references.v1",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "sourceRef": "09c451b525e5d16b5d74826576c6e467929a9803",
+  "originals": [
+    {
+      "path": "collection-composer-source.json",
+      "gitBlob": "15060ed63ce21b48d0cd2e0f9df7438335bdd163",
+      "bytes": 111689,
+      "sha256": "30183085b8bcd3faa33cf97aa655ac92a72fd75ab92e8062a8fe75f80d1da090"
+    },
+    {
+      "path": "buyer-receiving-source.json",
+      "gitBlob": "1c4309f4a0c34f04abb50fe5bf1d0fb5c2d1df79",
+      "bytes": 138851,
+      "sha256": "65932792f9bcf0fa1715f4c9c057be05e91ec4cc774d2adb8fa469e81b7e9f3e"
+    }
+  ]
+}

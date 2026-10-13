@@ -1,0 +1,87 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "haystack",
+  "heading": "## Haystack building models: reviewed point lists, validation and contractor handover",
+  "sources": [
+    {
+      "id": "haystack-installed-operations",
+      "label": "Haystack installed modelling, corrective work and contractor receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/haystack/OPERATING.md",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+    },
+    {
+      "id": "haystack-point-modelling",
+      "label": "Original point lists, reviewed mapping, dictionary and model history",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_MODELLING.md",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+    },
+    {
+      "id": "haystack-native-semantic",
+      "label": "Exact Brick 1.4.4 native validation and offline receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_NATIVE.md",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+    },
+    {
+      "id": "haystack-source-contract",
+      "label": "Original typed Haystack grid and source meaning",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/HAYSTACK_CONTRACT.md",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+    },
+    {
+      "id": "haystack-charlie-original",
+      "label": "Original anonymized Charlie example source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/fixture-charlie.json",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+    },
+    {
+      "id": "haystack-corrective-work",
+      "label": "Corrective work, event ancestry and returned contractor history",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CORRECTIVE_WORK.md",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+    },
+    {
+      "id": "haystack-source-license",
+      "label": "Original Haystack source licence and attribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/HAYSTACK_LICENSE.txt",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+    },
+    {
+      "id": "haystack-semantic-dependencies",
+      "label": "Complete offline semantic dependency archive selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/semantic-dependencies.json",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+    },
+    {
+      "id": "haystack-semantic-native-receiving",
+      "label": "Complete original point modelling native receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_RECEIVING.mjs",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+    },
+    {
+      "id": "haystack-semantic-browser-receiving",
+      "label": "Complete original model and contractor browser programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/SEMANTIC_BROWSER.mjs",
+      "commit": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96"
+    }
+  ]
+}

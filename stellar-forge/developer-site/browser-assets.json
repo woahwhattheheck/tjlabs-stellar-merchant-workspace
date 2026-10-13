@@ -822,6 +822,27 @@
       ]
     ],
     [
+      "/grant-data/application-reviewer.md",
+      [
+        "grant-data/application-reviewer.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-data/reviewer-working-index.json",
+      [
+        "grant-data/reviewer-working-index.json",
+        "application/json; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-data/reviewer-working-source.json",
+      [
+        "grant-data/reviewer-working-source.json",
+        "application/json; charset=utf-8"
+      ]
+    ],
+    [
       "/grant-data/financial-walkthrough.md",
       [
         "grant-data/financial-walkthrough.md",

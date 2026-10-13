@@ -1,6 +1,6 @@
 // Complete original-source preparation and native Workshare/Installation handover.
 import {Sha256, sha256File} from './operations_installation_source_hash.mjs';
-import {bindingTemplate, prepareInstallation, renderWorkorder} from './installation-prepare-core.mjs';
+import {bindingTemplate, prepareInstallation, renderWorkorder} from '/installation-prepare-core.mjs';
 
 const SCHEMA='stellar-forge.installation-source-desk.v1';
 const SELECTION='stellar-forge.installation-source-selection.v1';

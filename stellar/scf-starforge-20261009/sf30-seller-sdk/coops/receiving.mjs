@@ -125,6 +125,10 @@ export async function runCoopsOperatorJourney(initialPage,options={}){
   assert(!cp.sourceHistory.length||String(options.continuationNote??'').trim(),'Record a concrete fix-forward continuation note before changing an incomplete operator module.');
   cp.sourceHistory.push({...moduleIdentity,note:options.continuationNote??'Original selected operator source',at:new Date().toISOString()});persist();
  }
+ // A previously retained independent packet remains its exact accepted input.
+ // New receiving work includes the inspection before the original reviewer runs.
+ cp.observationInspection??={version:1,enabled:!cp.artifacts['source-review-packet']&&!cp.issued['save-independent-source-review']?.request&&!cp.phases.original_source_packet_and_independent_review};
+ persist();
  const operationTimeout=Number(options.operationTimeoutMs??180000),captureTimeout=Number(options.captureTimeoutMs??1800000);
  const progress=async(message,extra={})=>{if(options.onProgress)await options.onProgress({operationId:cp.id,message,...extra});};
  async function waitUntil(read,label,timeout=operationTimeout){
@@ -514,6 +518,44 @@ export async function runCoopsOperatorJourney(initialPage,options={}){
    await saveJSON('reference-edition','reference-edition.json',received.edition);
    return{captureId:started.captureId,editionId:received.edition.id,sourceSha256:received.edition.sourceSha256,sourceRequestComplete:received.edition.complete,actualCoverage:received.edition.summary};
   });
+  if(cp.observationInspection.enabled)await phase('inspect_original_observation_window',async()=>{
+   const edition=await openEdition('select-edition-for-observation-inspection',cp.ids.edition),form='inspection:'+edition.id;
+   const chosen={product:'water_level',beginDate:edition.query.beginDate,endDate:edition.query.endDate,buckets:240};
+   let draft=(await browserState())?.drafts[form];
+   assert(draft&&draft.product===chosen.product&&draft.beginDate===chosen.beginDate&&draft.endDate===chosen.endDate&&Number(draft.buckets)===chosen.buckets,'Keep the original full water-level selection; a different entered inspection remains untouched.');
+   const pending=page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname==='/api/inspection',{timeout:operationTimeout});
+   await page.locator('#inspection-form button[type="submit"]').click();
+   const response=await pending,inspection=await response.json();
+   assert(response.ok()&&inspection.source.editionId===edition.id&&inspection.source.sourceSha256===edition.sourceSha256,'The visible inspection changed its original edition/source.');
+   assert(inspection.selection.product===chosen.product&&inspection.selection.beginDate===chosen.beginDate&&inspection.selection.endDate===chosen.endDate,'The visible inspection changed the full selected source window.');
+   await waitUntil(async()=>((await browserState())?.drafts[form]?.snapshot?.inspectionSha256===inspection.inspectionSha256),'Retaining the original observation inspection');
+   await saveJSON('observation-inspection','Observation_Inspection.json',inspection);
+   assert(inspection.counts.records===edition.summary.products.water_level.rowsInsideWindow,'The explorer must count every original water-level record, including unavailable and duplicate values.');
+   const rowRead=page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname==='/api/inspection-rows',{timeout:operationTimeout});
+   await page.locator('[data-cmd="inspection-rows"]').click();
+   const rowResponse=await rowRead,rows=await rowResponse.json();assert(rowResponse.ok()&&rows.total===inspection.counts.records&&rows.rows.length>0,'The explorer row browser must preserve the complete original count.');
+   await waitUntil(async()=>((await browserState())?.drafts[form]?.rowPage?.total===rows.total),'Retaining the actual first original row page');
+   await saveJSON('observation-inspection-first-page','Observation_Inspection_First_Page.json',rows);
+   const pointRead=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname==='/api/inspection-point',{timeout:operationTimeout});
+   await page.locator('[data-cmd="inspection-row"][data-id="0"]').click();
+   const pointResponse=await pointRead,point=await pointResponse.json();
+   assert(pointResponse.ok()&&stable(point.reference)===stable(rows.rows[0].reference)&&stable(point.row)===stable(rows.rows[0].row),'The selected point must reopen that exact original row, not another duplicate timestamp.');
+   assert(point.reference.rowSha256===hash(stable(point.row))&&stable(point.original)===stable(JSON.parse(point.row.detailsJson)),'The exact projected/source point bytes changed.');
+   assert(stable(edition.pages[point.pageIndex])===stable(point.receipt),'The selected point lost its exact response receipt.');
+   await saveJSON('observation-inspection-point','Observation_Inspection_Original_Point.json',point);
+   const original=await downloaded('observation-inspection-response',()=>page.locator('#dialog[open] [data-cmd="inspection-source"]').click(),'Observation_Inspection_Original_Response.json',point.receipt);
+   draft=(await browserState()).drafts[form];
+   if(!(draft.points??[]).some(p=>stable(p)===stable(point.reference)))await page.locator('#dialog[open] [data-cmd="inspection-keep"]').click();
+   await closeDialog();
+   await waitUntil(async()=>((await browserState())?.drafts[form]?.points??[]).some(p=>stable(p)===stable(point.reference)),'Keeping the original point in the review selection');
+   draft=(await browserState()).drafts[form];
+   const payload={selection:clone(inspection.selection),expectedInspectionSha256:inspection.inspectionSha256,points:clone(draft.points)};
+   cp.observationInspection.payload??=payload;assert(stable(cp.observationInspection.payload)===stable(payload),'A later original point selection remains separate from this retained review selection.');persist();
+   await openSession(sessionURL.href);await navigate('editions');
+   const reopened=(await browserState()).drafts[form];assert(reopened.snapshot.inspectionSha256===inspection.inspectionSha256&&stable(reopened.points)===stable(payload.points),'Reload lost the exact inspected selection or original points.');
+   await screenshot('original-observation-inspection-desktop');await screenshot('original-observation-inspection-mobile',390,844);await page.setViewportSize({width:1365,height:1000});
+   return{inspection,firstPage:rows,point,originalResponse:original,payload,sourceRequestsUnchanged:true,browserReloadPreserved:true};
+  });
   await phase('original_source_packet_and_independent_review',async()=>{
    const edition=await openEdition('select-original-edition',cp.ids.edition);
    await page.locator('[data-cmd="table"][data-id="observations"]').click();
@@ -528,19 +570,36 @@ export async function runCoopsOperatorJourney(initialPage,options={}){
    const source=await downloaded('water-level-original',()=>page.locator('[data-cmd="source-download"][data-id="'+sourceIndex+'"]').click(),'La_Jolla_Water_Level_Original.json',edition.pages[sourceIndex]);
    const packet={schema:'stellar-forge.coops-independent-source-review.v1',role:'public_reference',operatorId:cp.id,workspaceId:cp.workspaceId,edition,
     capture:cp.phases.capture_original_reference.result,sourcePackage:packageFile.artifact,verifiedSourcePackage:verified,projection:{...ledger,sample:ledger.sample},
+    ...(cp.observationInspection.enabled?{observationInspection:cp.phases.inspect_original_observation_window.result}:{}),
     reviewScope:{reference:'Regional coastal datum and observation handoff; project-boundary suitability is unestablished.',measurementVsRequestCompletion:'Use the actual separate source/measurement coverage fields; no missing slots are filled.',
      expectedSlotBasis:'For the default seven-day six-minute GMT choice, the theoretical grid is 1680 slots. This is not a count of valid observations.',
      quality:'Original q and f control the flag meaning: verified f[0] is an inferred-value flag; preliminary f[0] is an excluded-sample count. Preserve unknown fields and original numeric strings.',
      declaration:'An independent reviewer must inspect these exact original receipts and values before providing reviewed or follow_up. No response is supplied by this journey.'}};
-   const review=await resolveSourceReview(packet,{sourcePackage:packageFile.artifact,sourcePackageReceipt:packageFile.receipt,originalResponse:source,projection:ledger,edition:cp.artifacts['reference-edition']});
+   const review=await resolveSourceReview(packet,{sourcePackage:packageFile.artifact,sourcePackageReceipt:packageFile.receipt,originalResponse:source,projection:ledger,edition:cp.artifacts['reference-edition'],...(cp.observationInspection.enabled?{inspection:cp.artifacts['observation-inspection'],point:cp.artifacts['observation-inspection-point'],pointResponse:cp.artifacts['observation-inspection-response']}:{})});
    const reviewKey='review:'+edition.id;
    if(!cp.issued['save-independent-source-review']?.request)await openEdition('select-edition-for-independent-review',edition.id);
    const annotation=await action('save-independent-source-review','annotation.save',async()=>{
     await input(reviewKey,'subject',review.subject);await input(reviewKey,'status',review.status);
     await input(reviewKey,'note',review.note+'\nReviewer: '+review.reviewer+'\nReviewed source packet SHA-256: '+review.packetSha256+'\nReview performed: '+review.performedAt);
+    if(cp.observationInspection.enabled){
+     const selected=cp.phases.inspect_original_observation_window.result.payload;
+     const note=review.note+'\nReviewer: '+review.reviewer+'\nReviewed source packet SHA-256: '+review.packetSha256+'\nReview performed: '+review.performedAt;
+     await waitUntil(async()=>{const d=(await browserState())?.drafts[reviewKey];return d?.subject===review.subject&&d?.status===review.status&&d?.note===note;},'Retaining the actual independent review fields before inspection attachment');
+     const entered=(await browserState()).drafts[reviewKey];
+     const before={subject:entered.subject,status:entered.status,note:entered.note};
+     await page.locator('[data-cmd="inspection-review"]').click();
+     await page.locator('#dialog[open] [data-cmd="inspection-attach"]').click();
+     await waitUntil(async()=>stable((await browserState())?.drafts[reviewKey]?.inspection)===stable(selected),'Attaching the exact independently reviewed observation selection');
+     const after=(await browserState()).drafts[reviewKey];
+     assert(stable({subject:after.subject,status:after.status,note:after.note})===stable(before),'Attaching inspection evidence must preserve the actual entered review decision and note.');
+    }
     await page.locator('#review-form button[type="submit"]').click();
    });
    assert(annotation.editionId===edition.id&&annotation.status===review.status&&annotation.note.includes(review.packetSha256),'The saved independent review lost its original source packet.');
+   if(cp.observationInspection.enabled){
+    const original=cp.phases.inspect_original_observation_window.result;
+    assert(annotation.inspection?.inspectionSha256===original.inspection.inspectionSha256&&stable(annotation.inspection.selection)===stable(original.payload.selection)&&stable(annotation.inspection.points.map(p=>p.reference))===stable(original.payload.points),'The saved review changed the exact independently selected inspection or original points.');
+   }
    cp.ids.annotation=annotation.id;persist();
    await screenshot('reviewed-source-desktop');await screenshot('reviewed-source-mobile',390,844);await page.setViewportSize({width:1365,height:1000});
    return{editionId:edition.id,sourceSha256:edition.sourceSha256,annotation,reviewPacket:cp.artifacts['source-review-packet'],reviewResponse:cp.artifacts['source-review-response'],sourcePackage:packageFile,projection:ledger};
@@ -574,6 +633,41 @@ export async function runCoopsOperatorJourney(initialPage,options={}){
    cp.artifacts.mapping_draft=await downloaded('mapping-convention-draft',()=>page.locator('[data-cmd="mapping-json"]').click(),'La_Jolla_Model_Input_Convention.json');persist();
    await screenshot('selected-mapping-desktop');await screenshot('selected-mapping-mobile',390,844);await page.setViewportSize({width:1365,height:1000});
    return mapping;
+  });
+  if(cp.observationInspection.enabled)await phase('complete_inspected_window_export_and_original_replay',async()=>{
+   const inspected=cp.phases.inspect_original_observation_window.result,mapping=cp.phases.explicit_model_input_mapping.result,key='export-inspected-window',form='inspection:'+cp.ids.edition;
+   if(!cp.issued[key]?.request){
+    await openEdition('select-inspected-edition-for-export',cp.ids.edition);
+    const entered=(await browserState())?.drafts[form];
+    assert(entered?.snapshot?.inspectionSha256===inspected.inspection.inspectionSha256&&stable(entered.points)===stable(inspected.payload.points),'Preserve the original inspected window; do not replace a later inspection draft.');
+   }
+   const item=await action(key,'export.create',async()=>{
+    await page.locator('[data-cmd="inspection-export"]').click();
+    await page.locator('#inspection-export-form select[name="format"]').selectOption('jsonl');
+    await page.locator('#inspection-export-form select[name="mappingId"]').selectOption(mapping.id);
+    await page.locator('#inspection-export-form button[type="submit"]').click();
+   },{loseResponse:true});
+   const replayed=await settleIssued(key);assert(stable(replayed)===stable(item),'The uncertain selected export changed its original file result.');
+   const selected=inspected.inspection.selection,expectedSelection={table:selected.table,beginDate:selected.beginDate,endDate:selected.endDate,products:selected.products};
+   assert(stable(item.metadata.selection)===stable(expectedSelection)&&item.mapping.id===mapping.id&&item.mapping.revision===mapping.revision,'Selected export lost its exact dates, product or mapping revision.');
+   const annotation=item.metadata.annotations.find(a=>a.id===cp.ids.annotation);
+   assert(annotation?.inspection?.inspectionSha256===inspected.inspection.inspectionSha256,'The selected export must retain the saved independent inspection evidence.');
+   await navigate('exports');
+   const artifact=await downloaded('inspected-window-jsonl',()=>page.locator('[data-cmd="download-export"][data-id="'+item.id+'"]').click(),'Observation_Inspected_Window_Complete.jsonl',item);
+   const receipt=await saveJSON('inspected-window-export-receipt','Observation_Inspected_Window_Export.json',item);
+   const ledger=cp.phases.original_source_packet_and_independent_review.result.projection;
+   const input=createInterface({input:fs.createReadStream(ledger.path),crlfDelay:Infinity}),outputRows=createInterface({input:fs.createReadStream(artifact.path),crlfDelay:Infinity});
+   const iterator=outputRows[Symbol.asyncIterator]();let count=0;
+   try{
+    for await(const line of input){if(!line)continue;const row=JSON.parse(line);if(row.product!==selected.product||row.timestamp.slice(0,10)<selected.beginDate||row.timestamp.slice(0,10)>selected.endDate)continue;
+     const next=await iterator.next();assert(!next.done&&next.value,'The full selected export ended before its original source rows.');
+     const expected=Object.fromEntries(mapping.columns.map(c=>[c.heading,row[c.source]]));
+     assert(stable(JSON.parse(next.value))===stable(expected),'The selected export changed an original value, quality field, source identity, duplicate or unavailable value.');count++;
+    }
+    assert((await iterator.next()).done&&count===inspected.inspection.counts.records,'The complete selected export must contain exactly every inspected record.');
+   }finally{input.close();outputRows.close();}
+   cp.ids.inspectedWindowExport=item.id;persist();
+   return{item,artifact,receipt,completeRows:count,originalRequestReplayed:cp.issued[key].replay?.reused===true,responseLossInjected:cp.issued[key].lossInjected===true};
   });
   await phase('complete_reviewed_model_input_handoff',async()=>{
    const edition=await api('/api/edition?editionId='+cp.ids.edition),files={};
@@ -968,6 +1062,7 @@ export async function runCoopsOperatorJourney(initialPage,options={}){
 
   await phase('same_origin_reopen_and_saved_receiving',async()=>{
    const before=await api('/api/view'),pins={workspaceId:before.workspaceId,stationId:cp.ids.station,editionId:cp.ids.edition,receivedEditionId:cp.ids.importedEdition,mapping:before.mappings.find(m=>m.id===cp.ids.mapping),annotation:before.annotations.find(a=>a.id===cp.ids.annotation),dataset:before.datasets.find(d=>d.id===cp.ids.dataset),exports:before.exports.filter(e=>[...Object.values(cp.phases.complete_reviewed_model_input_handoff.result.files),cp.phases.returned_mapping_file_and_versioned_handoff.result.current].some(f=>f.item.id===e.id)),historicalEditionIds:cp.ids.historicalEditions??[]};
+   if(cp.observationInspection.enabled)pins.inspectedExport=before.exports.find(e=>e.id===cp.ids.inspectedWindowExport);
    if(study)pins.study={current:before.studies.find(s=>s.id===cp.ids.study),review:before.studyReviews.find(r=>r.id===cp.ids.studyReview),release:before.studyReleases.find(r=>r.id===cp.ids.studyRelease),returned:before.studyReturns.find(r=>r.id===cp.ids.studyReturn),receiving:before.studyReceivings.find(r=>r.id===cp.ids.studyReceiving),dataset:before.datasets.find(d=>d.id===cp.ids.studyDataset)};
    await saveJSON('before-reopen-source-pins','before-reopen-source-pins.json',pins);
    await restart('after-complete-source-and-query-handoff');
@@ -986,6 +1081,15 @@ export async function runCoopsOperatorJourney(initialPage,options={}){
     await saveJSON('study-query-after-reopen','Study_Query_After_Reopen.json',query);
     await saveJSON('study-after-reopen','Study_After_Reopen.json',{...retained,rowPage:rows,query});
    }
+   if(cp.observationInspection.enabled){
+    const original=cp.phases.inspect_original_observation_window.result,chosen=original.inspection.selection;
+    assert(stable(after.exports.find(e=>e.id===cp.ids.inspectedWindowExport))===stable(pins.inspectedExport),'Reopen changed the complete selected observation export.');
+    const inspection=await api('/api/inspection?'+new URLSearchParams({editionId:cp.ids.edition,product:chosen.product,beginDate:chosen.beginDate,endDate:chosen.endDate,buckets:chosen.buckets}));
+    assert(stable(inspection)===stable(original.inspection),'Native reopen changed exact original observation counts, extrema or source identities.');
+    const entered=(await browserState())?.drafts['inspection:'+cp.ids.edition];
+    assert(entered?.snapshot?.inspectionSha256===inspection.inspectionSha256&&stable(entered.points)===stable(original.payload.points),'Reopen lost the retained inspection draft or original point selection.');
+    await saveJSON('observation-inspection-after-reopen','Observation_Inspection_After_Reopen.json',inspection);
+   }
    const journal=await browserState();assert(journal?.drafts.station.note===cp.stationLaterNote&&journal.drafts.station.profileId===cp.ids.station,'The original later station draft was lost across the complete workflow.');
    const query=await queryDataset('query-original-sf30-after-reopen',pins.dataset,'limit=20&sort=timestampUtc');
    assert(stable(query)===stable(cp.phases.prepare_and_query_original_sf30_dataset.result.first),'The saved native dataset query changed after same-origin reopen.');
@@ -995,7 +1099,7 @@ export async function runCoopsOperatorJourney(initialPage,options={}){
   });
   const finalView=await api('/api/view'),result={schema:'stellar-forge.coops-operator-result.v1',status:'PASS',operationId:cp.id,workspaceId:cp.workspaceId,completedAt:new Date().toISOString(),resultPath,checkpointPath,
    scope:'Actual original NOAA capture, independent source review, explicit mapping-file intake/versioned complete model-input handoff, retained-package receiving/comparison, mapped native SF30 cursor/query preserved across a later mapping revision, declared serial historical capture and same-origin saved-workspace reopen.'+(study?' The same original flow also completes exact study selection, independent review, complete release, native returned-file comparison and receiving, and its exact CSV in the original SF30 query with a complete SF82 source handoff, while preserving a later working revision.':''),
-   sourceModule:moduleIdentity,selected:cp.selected,ids:cp.ids,reviewStatus:cp.review.status,sourceCoverage:cp.phases.capture_original_reference.result.actualCoverage,finalRevision:finalView.revision,
+   sourceModule:moduleIdentity,selected:cp.selected,ids:cp.ids,reviewStatus:cp.review.status,observationInspection:{enabled:cp.observationInspection.enabled,reason:cp.observationInspection.enabled?'Exact inspection, reviewer packet, saved evidence and complete selected export operated.':'Earlier retained review packet preserved; no retroactive inspection approval or operation is claimed.'},sourceCoverage:cp.phases.capture_original_reference.result.actualCoverage,finalRevision:finalView.revision,
    checks:Object.fromEntries(Object.entries(cp.phases).map(([key,value])=>[key,value.result])),artifacts:cp.artifacts,
    nativeOperations:Object.fromEntries(Object.entries(cp.issued).map(([key,value])=>[key,{action:value.action,operationId:value.request?.operationId,state:value.state,native:value.native??null,replayed:value.replay?.reused===true}])),
    receivingBoundary:'This result records only completed original operations. It establishes no project-boundary suitability, client model acceptance, payment or customer purchase.'};
