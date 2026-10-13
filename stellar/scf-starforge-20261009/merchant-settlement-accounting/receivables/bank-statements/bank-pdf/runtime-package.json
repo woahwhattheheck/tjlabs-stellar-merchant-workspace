@@ -1,0 +1,13 @@
+{
+  "name": "@starforge/merchant-bank-pdf-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "dependencies": {
+    "pdfjs-dist": "6.4.299",
+    "@napi-rs/canvas": "1.0.10"
+  }
+}

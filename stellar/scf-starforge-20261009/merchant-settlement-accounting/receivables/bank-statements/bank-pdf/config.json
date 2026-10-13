@@ -1,0 +1,12 @@
+{
+  "schema": "stellar-forge.bank-pdf-config.v1",
+  "apiBase": "/api/receivables/bank-statements",
+  "bankUi": "/bank-statements/",
+  "uiPath": "/bank-statements/pdf/",
+  "pdfEngineUrl": "/bank-statements/pdf/runtime/build/pdf.mjs",
+  "pdfWorkerUrl": "/bank-statements/pdf/runtime/build/pdf.worker.mjs",
+  "pdfRuntimeBase": "/bank-statements/pdf/runtime/",
+  "pdfVersion": "6.4.299",
+  "fileBytes": 16000000,
+  "requestBytes": 24000000
+}

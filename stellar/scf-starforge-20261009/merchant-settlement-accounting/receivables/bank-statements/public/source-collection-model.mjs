@@ -21,6 +21,7 @@ export function decodeBytes(value){
  return bytes;
 }
 function mapping(value){
+ if(value?.format==='PDF_REVIEW')fail('COLLECTION_PDF_REVIEW','Open PDF statements in the dedicated PDF desk and transfer the complete PDF working copy; source collections do not retain page mappings.');
  if(!object(value)||!formats.has(value.format)||!object(value.columns))fail('COLLECTION_MAPPING','Retain the complete original file interpretation.');
  const encoded=JSON.stringify(value);if(encoded.length>COLLECTION_LIMITS.mappingBytes)fail('COLLECTION_MAPPING','The working interpretation exceeds the supported size.');
  return clone(value);

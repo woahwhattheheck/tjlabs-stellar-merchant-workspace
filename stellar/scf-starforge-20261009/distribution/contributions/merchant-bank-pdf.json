@@ -1,0 +1,48 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-bank-pdf",
+  "description": "Original PDF statements, complete page geometry, explicit reviewed cash interpretation and original Bank receiving",
+  "commands": {
+    "bank-pdf": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/cli.mjs"
+  },
+  "commandDescriptions": {
+    "bank-pdf": "Extract every original PDF page, inspect or export the complete editable working copy and reviewed Bank source"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/model.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/runtime-package.json",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/PDF_STATEMENTS.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/EXTRACTION.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/receive-browser.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/RECEIVING.md"
+  ],
+  "exports": {
+    "./merchant/bank-pdf/model": {
+      "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/model.d.ts",
+      "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/model.mjs"
+    },
+    "./merchant/bank-pdf/extractor": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/extractor.mjs",
+    "./merchant/bank-pdf/source": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source-pdf.mjs"
+  },
+  "featurePeers": {
+    "bank-pdf": {
+      "pdfjs-dist": {
+        "version": "6.4.299",
+        "probe": "pdfjs-dist/legacy/build/pdf.mjs"
+      },
+      "@napi-rs/canvas": {
+        "version": "1.0.10",
+        "probe": "@napi-rs/canvas"
+      }
+    }
+  },
+  "runtimePackageManifests": {
+    "bank-pdf": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/runtime-package.json"
+  },
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/browser-assets.json"
+    }
+  ]
+}
