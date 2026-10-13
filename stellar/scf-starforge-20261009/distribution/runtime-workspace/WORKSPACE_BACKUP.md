@@ -568,6 +568,22 @@ archive, restore and receiving identities. Publish the complete private case
 through the existing artifact handoff for the operation; the programme does not
 send it to an external service.
 
+The read-work continuation runs at the end of that same original course. It opens
+the actual restored workspace, retains one additional review/export request pair
+in `OPERATING_CASE.json`, and preserves every earlier export/receiving checkpoint.
+It operates the new completed backup through the existing browser, opens **Backup
+read totals** at desktop and 390-pixel widths, downloads its full archive, inspects
+that downloaded archive through the original receiver and reopens the same export
+request. Its complete native result is `operator-output/BACKUP_READ_WORK.json`;
+the original `COMPLETE_RECEIVING_RESULT.json` remains intact. A resumed partial
+phase reuses those same retained requests and complete downloaded bytes.
+
+The producing operator must personally view the new desktop/phone captures and
+open the actual downloaded archive through its normal receiving workflow. The
+course records actual source identities and work totals; generating those records
+or screenshots does not replace that observation. Keep this continuation on the
+original 9F05/3459/8910/F2A6/0C7A receiving operation and its existing lease.
+
 ## Model and HTTP integration
 
 The existing `openRuntimeWorkspace()` model exposes the complete backup
