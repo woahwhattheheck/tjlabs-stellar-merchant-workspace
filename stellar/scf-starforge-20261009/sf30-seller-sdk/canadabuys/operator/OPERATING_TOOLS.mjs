@@ -113,8 +113,50 @@ export async function operateCanadaBuysTools({ sourceDirectory, caseDirectory, o
     const provider = (await moduleAt(providerContribution.merchantProviders['canadabuys-workspaces'])).default;
     const toolCatalog = provider.tools((name, description, properties, required, annotations) =>
       ({ name, description, inputSchema: { type: 'object', properties, required }, annotations }));
-    need(toolCatalog.length === 37 && new Set(toolCatalog.map(tool => tool.name)).size === 37,
-      'The registered native tool catalog changed.');
+    const requiredTools = [
+      "merchant_canadabuys_workspaces",
+      "merchant_canadabuys_open",
+      "merchant_canadabuys_close",
+      "merchant_canadabuys_status",
+      "merchant_canadabuys_notice",
+      "merchant_canadabuys_entries",
+      "merchant_canadabuys_entry",
+      "merchant_canadabuys_compare",
+      "merchant_canadabuys_source",
+      "merchant_canadabuys_inputs",
+      "merchant_canadabuys_import",
+      "merchant_canadabuys_capture",
+      "merchant_canadabuys_capture_record",
+      "merchant_canadabuys_review",
+      "merchant_canadabuys_workshare",
+      "merchant_canadabuys_workshare_create",
+      "merchant_canadabuys_workshare_update",
+      "merchant_canadabuys_qualify",
+      "merchant_canadabuys_bidder_intake_inspect",
+      "merchant_canadabuys_bidder_intake",
+      "merchant_canadabuys_bidder_status",
+      "merchant_canadabuys_bidder_list",
+      "merchant_canadabuys_bidder_record",
+      "merchant_canadabuys_bidder_create",
+      "merchant_canadabuys_bidder_update",
+      "merchant_canadabuys_bidder_fit",
+      "merchant_canadabuys_bidder_assess",
+      "merchant_canadabuys_bidder_compare",
+      "merchant_canadabuys_receive",
+      "merchant_canadabuys_receiving",
+      "merchant_canadabuys_export",
+      "merchant_canadabuys_files",
+      "merchant_canadabuys_file_read",
+      "merchant_canadabuys_file_release",
+      "merchant_canadabuys_merchant_prepare",
+      "merchant_canadabuys_merchant_preview",
+      "merchant_canadabuys_merchant_start",
+      "merchant_canadabuys_merchant_stop",
+      "merchant_canadabuys_delivery_adopt"
+    ];
+    const toolNames = new Set(toolCatalog.map(tool => tool.name));
+    need(toolNames.size === toolCatalog.length && requiredTools.every(name => toolNames.has(name)),
+      'The registered native tool catalog lost or repeated an original customer operation.');
     const exportsDirectory = join(directory, 'exports');
     await mkdir(exportsDirectory, { mode: 0o700 });
     const connectionPath = join(directory, 'canadabuys-connection.json');

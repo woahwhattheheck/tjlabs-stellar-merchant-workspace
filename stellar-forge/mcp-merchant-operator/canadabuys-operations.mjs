@@ -299,22 +299,40 @@ export async function adoptCanadaBuysPublication({ directory, publicationId, not
   return locked(directory, async initial => {
     const c = await context(initial.root, initial.lease), complete = await savedCompletion(c);
     if (complete) return { ...complete.complete, state: 'COMPLETE', reused: true, value: complete.result.value, networkRequests: 0 };
-    need(c.request.request.name === CANADABUYS_TOOL_PREFIX + 'export'
+    const tool=c.request.request.name.slice(CANADABUYS_TOOL_PREFIX.length);
+    need(['export','response_export','response_compare'].includes(tool)
       && (await attempts(c)).some(value => value.started && !value.result),
-      'Publication adoption is for the original export whose entered request has no retained response.');
+      'Publication adoption is for the original entered export or response comparison with no retained response.');
     let client, failure;
     try {
       client = await selectedClient(c, supplied, environment, signal);
       const value = await client.files({ publicationId }, { signal }), publication = value.publication;
       const args = c.request.request.arguments;
-      const selection = { scope: args.scope ?? 'all' };
-      for (const key of ['noticeIds', 'sourceId', 'entryId', 'decisionId', 'evidenceId', 'recordRevision', 'beforeId', 'afterId'])
-        if (args[key] !== undefined) selection[key] = args[key];
-      need(publication?.id === publicationId && publication.kind === 'canadabuys-export'
-        && publication.format === args.format && publication.sourceRevision === args.expectedRevision
-        && equal(publication.selection, selection) && Array.isArray(value.files) && value.files.length === 1
-        && value.files[0].bytes === publication.bytes && value.files[0].sha256 === publication.sha256,
-        'The selected original publication contradicts the entered export request.');
+      let matches=false;
+      if(tool==='export') {
+        const selection={scope:args.scope??'all'};
+        for(const key of ['noticeIds','sourceId','entryId','decisionId','evidenceId','recordRevision','beforeId','afterId'])
+          if(args[key]!==undefined)selection[key]=args[key];
+        matches=publication?.format===args.format&&publication.sourceRevision===args.expectedRevision&&equal(publication.selection,selection);
+      } else {
+        const selection=publication?.selection;
+        const identity=plain(selection)&&selection.workspaceId===c.request.connection.workspaceId
+          && typeof selection.recordId==='string'&&selection.recordId
+          && Number.isSafeInteger(selection.recordRevision)&&selection.recordRevision>0
+          && SHA.test(selection.editionSha256??'')&&SHA.test(selection.evidenceSha256??'');
+        if(tool==='response_export')
+          matches=identity&&publication.format==='response-'+args.format&&selection.format===args.format
+            && publication.sourceRevision===args.expectedRevision&&selection.recordId===args.recordId
+            && (args.recordRevision===undefined||selection.recordRevision===args.recordRevision);
+        else matches=identity&&publication.format==='response-comparison'&&selection.format==='comparison'
+          && selection.inputSha256===args.expectedSha256&&SHA.test(selection.incomingSha256??'')
+          && SHA.test(selection.reviewSha256??'')&&SHA.test(selection.contextSha256??'')
+          && publication.sourceRevision===args.expectedRevision;
+      }
+      need(matches&&publication?.id===publicationId&&publication.kind==='canadabuys-export'
+        &&Array.isArray(value.files)&&value.files.length===1
+        &&value.files[0].bytes===publication.bytes&&value.files[0].sha256===publication.sha256,
+        'The selected original publication contradicts the entered request and original workspace.');
       const evidence = { schema: CANADABUYS_CUSTOMER_OPERATION_SCHEMA + '.publication-evidence',
         operationId: c.request.operationId, requestSha256: c.requestSha256,
         publicationId, note: note.trim(), value };

@@ -53,7 +53,8 @@
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-client.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-client.mjs"
     },
-    "./seller/openlineage/review-return/receiving": "./source/operations/openlineage-recipient-review-returns-e496-20261013/RECIPIENT_RETURNS_RECEIVING.mjs"
+    "./seller/openlineage/review-return/receiving": "./source/operations/openlineage-recipient-review-returns-e496-20261013/RECIPIENT_RETURNS_RECEIVING.mjs",
+    "./seller/openlineage/customer-review/receiving": "./source/operations/openlineage-customer-review-receiving-e496-20261013/CUSTOMER_REVIEW_RECEIVING.mjs"
   },
   "applicationProviders": {
     "openlineage-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/application-provider.mjs"
@@ -89,6 +90,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-cli.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/REVIEW_RETURNS.md",
     "operations/openlineage-recipient-review-returns-e496-20261013/RECIPIENT_RETURNS_RECEIVING.mjs",
-    "operations/openlineage-recipient-review-returns-e496-20261013/RECEIVING.md"
+    "operations/openlineage-recipient-review-returns-e496-20261013/RECEIVING.md",
+    "operations/openlineage-customer-review-receiving-e496-20261013/CUSTOMER_REVIEW_RECEIVING.mjs",
+    "operations/openlineage-customer-review-receiving-e496-20261013/RECEIVING.md"
   ]
 }

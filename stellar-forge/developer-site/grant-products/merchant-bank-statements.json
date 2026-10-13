@@ -2003,7 +2003,7 @@
       "label": "Complete offline PDF review HTML and whole source-project generation",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review-portable.mjs",
-      "commit": "34e1169601881922ad17924ddba1c8bc931e4bdc",
+      "commit": "074dd71407f371cccdc42479ba96b604910a4086",
       "editions": [
         {
           "commit": "b694441cb3ca4d73a1b7908fe657a088fea59538",
@@ -2016,6 +2016,12 @@
           "git_blob": "0c09cf6b3e9d5faddf747127b2cd558bd1aa1178",
           "sha256": "8c8b60c2b478f5565754ce1a89fc5d6194d9daafbda295c3fd321a70d0179e98",
           "bytes": 4886
+        },
+        {
+          "commit": "074dd71407f371cccdc42479ba96b604910a4086",
+          "git_blob": "c0423bf72d6f322d9f546095642f24a5a5959a89",
+          "sha256": "3aa6e269a657e99a322218804662cef473da0566a81fcf782656784597b656e1",
+          "bytes": 5247
         }
       ]
     },
@@ -2060,7 +2066,7 @@
       "label": "All ten complete offline PDF review source members",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review-source.json",
-      "commit": "34e1169601881922ad17924ddba1c8bc931e4bdc",
+      "commit": "074dd71407f371cccdc42479ba96b604910a4086",
       "editions": [
         {
           "commit": "b694441cb3ca4d73a1b7908fe657a088fea59538",
@@ -2073,6 +2079,12 @@
           "git_blob": "ca75c8f4ed3601043e82fea9c7e195ffde8d92d0",
           "sha256": "1ccaa99801fd2ad593803a894bd1275834a624a570f3f59b03c7e4be952ad4c2",
           "bytes": 209758
+        },
+        {
+          "commit": "074dd71407f371cccdc42479ba96b604910a4086",
+          "git_blob": "110b55876245e94807c1a379ba87402b6ef72fa2",
+          "sha256": "480065c6d02d8b8e0d05b054e512c12a741d220fbb2c098a205a994de4638c34",
+          "bytes": 211096
         }
       ]
     },
@@ -2081,7 +2093,7 @@
       "label": "Whole named PDF review, installed continuation and receiving guide",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/REVIEW.md",
-      "commit": "34e1169601881922ad17924ddba1c8bc931e4bdc",
+      "commit": "074dd71407f371cccdc42479ba96b604910a4086",
       "editions": [
         {
           "commit": "b694441cb3ca4d73a1b7908fe657a088fea59538",
@@ -2094,6 +2106,12 @@
           "git_blob": "5cf51c9c7bcdd235ed9164e8ce092e1889a5d6a3",
           "sha256": "e10c3efaf83f7c2b369f9c43d77c5dc83703651405e0199b65ef87fac7861df5",
           "bytes": 38721
+        },
+        {
+          "commit": "074dd71407f371cccdc42479ba96b604910a4086",
+          "git_blob": "a0d54e24c0b491ad90ea98739d1214bab3cf548b",
+          "sha256": "8de53130d2387fcfaefcdf0ca9954568cc88db710eb8f0f1337eb1ab775d04bc",
+          "bytes": 40186
         }
       ]
     },

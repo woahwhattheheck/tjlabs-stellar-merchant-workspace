@@ -111,6 +111,37 @@ const hourlyAuthorityId=value=>{
   need(typeof value==='string'&&/^hourly-authority-[a-f0-9]{32}-r[1-9][0-9]*$/.test(value),
     'GRANT_INVALID_INPUT','Use the original customer hourly authority edition.');return value;
 };
+
+const evidenceId=value=>id(value,'billing-evidence');
+const evidencePath=(caseId,reviewId)=>'/api/operations/'+id(caseId,'operation')+'/billing-evidence'+
+  (reviewId===undefined?'':'/'+evidenceId(reviewId));
+const evidenceRevision=revision=>revision===undefined||revision===null?'':'?revision='+integer(revision,'Saved evidence revision');
+function evidenceInput(body,save=false){
+  const fields=['expectedVersion','reviewId','expectedRevision','selection',...(save?['requestId','actor','expectedPreviewSha256']:[])];
+  exact(body,fields,['expectedVersion','expectedRevision','selection',...(save?['requestId','actor','expectedPreviewSha256']:[])]);
+  integer(body.expectedVersion,'Original case version');integer(body.expectedRevision,'Prior evidence revision',0);
+  if(body.reviewId!==undefined&&body.reviewId!==null)evidenceId(body.reviewId);
+  need(Boolean(body.reviewId)===Boolean(body.expectedRevision),'GRANT_INVALID_INPUT','A revised explanation needs its original review and revision.');
+  const s=body.selection,keys=['title','accountKey','endpointId','customerId','periodStart','periodEnd','asOf','explanation','items'];
+  exact(s,keys,keys);sha(s.accountKey);
+  for(const key of ['title','endpointId','customerId'])text(s[key],key,300);
+  text(s.explanation,'Customer introduction',12000);
+  for(const key of ['periodStart','periodEnd','asOf'])completionDate(s[key]);
+  need(s.periodEnd>=s.periodStart,'GRANT_INVALID_INPUT','The service period must end on or after its start.');
+  need(Array.isArray(s.items)&&s.items.length>=1&&s.items.length<=100,'GRANT_INVALID_INPUT','Select one to 100 original billing chains.');
+  const seen=new Set();
+  for(const item of s.items){
+    const keys=['key','expectedChainSha256','basis','reason','customerExplanation','shareDescriptions','shareQuantities'];
+    exact(item,keys,keys);text(item.key,'Original chain key',200);sha(item.expectedChainSha256);
+    need(!seen.has(item.key),'GRANT_INVALID_INPUT','Select each original billing chain once.');seen.add(item.key);
+    need(['SOURCE_DATES','REVIEWED_INCLUSION'].includes(item.basis),'GRANT_INVALID_INPUT','Select the original service-period inclusion basis.');
+    text(item.reason,'Inclusion reason',3000,item.basis==='SOURCE_DATES');
+    text(item.customerExplanation,'Customer-facing explanation',6000);
+    need(typeof item.shareDescriptions==='boolean'&&typeof item.shareQuantities==='boolean','GRANT_INVALID_INPUT','Choose both supplemental source disclosure controls explicitly.');
+  }
+  if(save){requestId(body.requestId);text(body.actor,'Recording operator',300);sha(body.expectedPreviewSha256);}
+}
+
 const workBillingPath=(caseId,chargeId)=>'/api/operations/'+encodeURIComponent(id(caseId,'operation'))+'/work-billing'+
   (chargeId===undefined?'':'/'+encodeURIComponent(id(chargeId,'work-billing')));
 const workHours=value=>{
@@ -1581,6 +1612,26 @@ export class GrantWorkspaceClient {
       body:{...original,action:'installation.save',data:{installationId,expectedRevision,document,expectedPreviewSha256,
         ...(returnReview===undefined?{}:{returnReview})}}});
   }
+
+  billingEvidenceCatalog(caseId){return this.#request(evidencePath(caseId),{});}
+  billingEvidencePreview(caseId,body){evidenceInput(body);return this.#request(evidencePath(caseId)+'/preview',{body,mutation:false});}
+  billingEvidenceSave(caseId,body){
+    evidenceInput(body,true);
+    return this.#request(evidencePath(caseId)+'/save',{body,originalRequestId:body.requestId,
+      recovery:'Retain this exact evidence save body and requestId. Retry the original request after response loss; saved evidence does not create or change accounting transactions.'});
+  }
+  billingEvidence(caseId,reviewId,revision){
+    return this.#request(evidencePath(caseId,evidenceId(reviewId))+evidenceRevision(revision),{});
+  }
+  billingEvidenceCompare(caseId,reviewId,revision){
+    const body=revision===undefined||revision===null?{}:{revision:integer(revision,'Saved evidence revision')};
+    return this.#request(evidencePath(caseId,evidenceId(reviewId))+'/compare',{body,mutation:false});
+  }
+  billingEvidenceInspect(caseId,bytes){
+    need(Buffer.isBuffer(bytes)&&bytes.length>0&&bytes.length<=64*1024*1024&&4*Math.ceil(bytes.length/3)+20<=GRANT_MAX_BUNDLE_BYTES,'GRANT_INPUT_TOO_LARGE','The complete evidence ZIP must fit the original JSON request limit after base64 encoding; larger bundles use the native CLI.');
+    return this.#request(evidencePath(caseId)+'/inspect',{body:{contentBase64:bytes.toString('base64')},mutation:false});
+  }
+
   workBillingCatalog(caseId){
     return this.#request(workBillingPath(caseId),{});
   }
@@ -2019,6 +2070,11 @@ export class GrantWorkspaceClient {
       'cost-funding':() => '/api/operations/' + id(args.caseId,'operation') + '/cost-funding/export.zip?revision=' +
         integer(args.revision,'Funding edition',1,1000000) + '&expectedVersion=' +
         integer(args.expectedVersion,'Reviewed case version') + '&expectedReportSha256=' + sha(args.expectedReportSha256),
+      'billing-evidence':() => {
+        need(['internal','customer'].includes(args.audience),'GRANT_INVALID_INPUT','Choose the explicit evidence audience.');
+        const query=evidenceRevision(args.revision);
+        return evidencePath(args.caseId,evidenceId(args.reviewId))+'/export.zip'+(query||'?')+(query?'&':'')+'audience='+args.audience;
+      },
       'work-billing':() => workBillingPath(args.caseId,id(args.chargeId,'work-billing'))+'/export.zip',
       'expense-billing':() => expenseBillingPath(args.caseId,id(args.chargeId,'expense-billing'))+'/export.zip',
       'expense-attributions':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-attributions.csv',
