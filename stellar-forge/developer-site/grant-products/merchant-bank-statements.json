@@ -8,7 +8,7 @@
       "label": "Original bank statements and shared customer payment coverage",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "products/merchant-bank-statements/README.md",
-      "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
       "editions": [
         {
           "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
@@ -45,6 +45,12 @@
           "git_blob": "5de86ac627dbba92c1f33051c7920f2cba8df6a1",
           "sha256": "70ecfd7eaf1b8ad2b33ecd277d355bbd96199bcd2c7363e7d7e7abc461ea6164",
           "bytes": 34336
+        },
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "0e424c84c3f872a0e7d231adf425f2bbab40d04c",
+          "sha256": "3b7e61e25edbb514c583065c4a44d796dc20ee708fbb91713ba327e311e0ea51",
+          "bytes": 35879
         }
       ]
     },
@@ -260,7 +266,7 @@
       "label": "Installed original-file preparation, complete-page assembly and accountant receiving command",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/cli.mjs",
-      "commit": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
       "editions": [
         {
           "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
@@ -285,6 +291,12 @@
           "git_blob": "abcc2fce5f41d20fbf675cc707812318b7e490c8",
           "sha256": "571de46e6a395d10a4eae86c6cd39d4b29f770886f61b673c03bd616462bbdc1",
           "bytes": 14659
+        },
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "2823580e74fac0b816633cb4357f265dd33deb64",
+          "sha256": "3226bed831d91ab347c3115112b65c882acd49328dc73ca4c06226843a52906e",
+          "bytes": 15332
         }
       ]
     },
@@ -1001,13 +1013,19 @@
       "label": "Complete Bank installed command, exports and support contribution",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/merchant-bank-statements.json",
-      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
       "editions": [
         {
           "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
           "git_blob": "1f26f1af40df9b1f16aeae4a2fa7d4d26d98bfaa",
           "sha256": "f59bb8dcddbda7523fc013829e1f906e07919f91f8dfd9286ebb0f3c4017f463",
           "bytes": 5912
+        },
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "810858ad3c3e9fd470b177c2e218b562172e3afd",
+          "sha256": "e5bc2ca7d81f08eb281426f0723cad276e3aa32f653cf8e1818753fc45c924b1",
+          "bytes": 6318
         }
       ]
     },
@@ -1074,6 +1092,201 @@
           "git_blob": "e4f52cb53a2cb58579c86f6c754704d1727c2dbe",
           "sha256": "a66cba366671e06f58d0b59754340d5f550651d5fc5e571346f5d8fb2a9db9e8",
           "bytes": 22354
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-page",
+      "label": "Installed source-preparation desk page",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/public/source-preparation.html",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "a3fa080657481470d7e8eb02da87b44754cad29a",
+          "sha256": "4fe42be5e61b7e9dde80d7c16c9ca4916ae79670dcc48f1c07bebe7c8a618ef2",
+          "bytes": 11292
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-browser",
+      "label": "Complete request authoring, recovery and receiving controls",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/public/source-preparation.mjs",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "1ff0a35df5045ad2e23c73ebe82399fc0122a5ae",
+          "sha256": "f25e860272f407cc3becd8b13acf91ada233588a59cc3c25377311eaafbf3fe4",
+          "bytes": 65319
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-state",
+      "label": "Draft, action and conflict recovery state",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/public/source-preparation-state.mjs",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "0d6ee1d76608aa5aa00b957b556491956c5c69cc",
+          "sha256": "4ac2983230887348627a2280ccbe18376c7f6999c188e6839d2fcceb08635136",
+          "bytes": 8994
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-styles",
+      "label": "Industrial desktop and narrow desk layout",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/public/source-preparation.css",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "55039dd6d2ffacd0865cde38a03ad34d05a55267",
+          "sha256": "5c04cc92362f0bb4c83e233b5ce563f47391c52555dd89429854233e44bd1f65",
+          "bytes": 5201
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-workflow",
+      "label": "Complete desk operating and receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PREPARATION_DESK.md",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "d4468276baaa76d76e91fafb0fbb4c2b99c0849a",
+          "sha256": "c42dfcc5630c0fe54f054a93cb993b5c09e9cd86671a5df7e6dbe5ced151308b",
+          "bytes": 18904
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-navigation",
+      "label": "Original Bank entry and source-preparation navigation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/public/index.html",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "fcc656926b782e484156602cb00c7066f7ae720e",
+          "sha256": "8027ac2cd48719588f657aa78168d33a22fc4cfc7392fef40ed0fd78886d2ee4",
+          "bytes": 2915
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-assets",
+      "label": "Complete installed Bank browser asset selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/browser-assets.json",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "8b2ff3c9cf631d1705e372af5acb49d7afc4e1da",
+          "sha256": "280d412ddf30190f7a629ec4a49c2c861b9593ad17f4f60e2ff431d51dc7ce07",
+          "bytes": 5017
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-host",
+      "label": "Original-owner configured-source HTTP routes",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source-preparation-server.mjs",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "19c9431811c48074c6c212a67ab3c5dc10cb4131",
+          "sha256": "65fd9af430c8390accd17c4d4b006aee34fecc12bf6821719ce43945ac8db7da",
+          "bytes": 12489
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-client",
+      "label": "Workspace-bound source and complete-file client",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/public/source-preparation-client.mjs",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "e6b3ea44ecb392506a1d5e9db1f21240c9636423",
+          "sha256": "c721a71fa6ac98583bcf171993f58712df807ddd8d1e9168e63c2037871eb372",
+          "bytes": 7013
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-bank-server",
+      "label": "Bank server configured-source integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/server.mjs",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "a87b094a87315bcb220ba6879efcd280bf3171fe",
+          "sha256": "8e16c795ed811d05a30b893780bc622971c8579fc2eae97e0bda451cba12087b",
+          "bytes": 5220
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-accounting-server",
+      "label": "Shared accounting owner and source-request lifetime",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/server.mjs",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "7a809eeb0fd49b33a4b6a13917006f3047b58bd2",
+          "sha256": "b37f19f792843a8cee58c809823c384e1db9f654e25dd8e522b5a693f2bdaef0",
+          "bytes": 38525
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-capsule",
+      "label": "Whole preparation independent receiving and extraction",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source-preparation-capsule.py",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "055bec3f74a071ee1fe189bc67f6e24a268557bd",
+          "sha256": "009b0eba99fc83eda0fc6e4bb72016cc600ef2466a2db1c930e937317013a30a",
+          "bytes": 6630
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-desk-host-guide",
+      "label": "Installed owner, original configuration and complete capsule receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PREPARATIONS_DESK.md",
+      "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+      "editions": [
+        {
+          "commit": "05e48222720a8b13f0e30d0990d505ed771bbe36",
+          "git_blob": "e5e0ac72bb8101bac72a95e094adc718ff4a3ffc",
+          "sha256": "916ed10d64616f0f310a61e25d633e5b597895d167ed1a90e7e33ee32cbfc0db",
+          "bytes": 14581
         }
       ]
     }
