@@ -1,0 +1,52 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "financing-basis",
+  "heading": "## Delivery capacity, payment timing and sustainability",
+  "sources": [
+    {
+      "id": "grant-financing-basis",
+      "label": "Complete grant financing, original commercial scope and readable cost provenance",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/GRANT_FINANCING_BASIS.md",
+      "editions": [
+        {
+          "commit": "9a87f99a90b10d9fde7d76c7c141b9c4a5fa6808",
+          "bytes": 18791,
+          "sha256": "30937de22e99d48e726f46bf5fcf614c186258a9b6c1d064f4136245a1a9c0cf",
+          "git_blob": "5c99125578107d5e5102a851fe733e2a18a39036"
+        }
+      ]
+    },
+    {
+      "id": "grant-financing-complete-inputs",
+      "label": "All eight original resource alternatives and 27 dated cash-curve inputs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/grant-sources/financing-basis.json",
+      "editions": [
+        {
+          "commit": "9a87f99a90b10d9fde7d76c7c141b9c4a5fa6808",
+          "bytes": 266451,
+          "sha256": "7cd72899cc5514c42fddd2e94a96d7ea836717f9afdab38821a74e763fa8412a",
+          "git_blob": "da019ad7f134572d0d63d7e26c858a12ecb4eb76"
+        }
+      ]
+    },
+    {
+      "id": "grant-financing-cash-calculation",
+      "label": "Exact-cents reproduction of the retained 27 cash projections",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/grant-sources/financing-basis.mjs",
+      "editions": [
+        {
+          "commit": "9a87f99a90b10d9fde7d76c7c141b9c4a5fa6808",
+          "bytes": 5136,
+          "sha256": "50d0f399fe23850496ce5df9a088ea749c952d09468b2abc5d3ec79cdc5bfa53",
+          "git_blob": "b56046f9fcff5def6b3c29a5d6e2616e0a159f3d"
+        }
+      ]
+    }
+  ]
+}
