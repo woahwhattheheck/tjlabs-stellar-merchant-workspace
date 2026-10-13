@@ -10,6 +10,7 @@ import { RetainedFileReads, MAX_RETAINED_CHUNK_BYTES } from './retained-file-rea
 import { checkCkanProjectDeclaration, CkanWorkspaceTransferInspections, ckanTransferDescriptor,
   ckanTransferPage, CKAN_TRANSFER_MAX_BYTES, CKAN_TRANSFER_MAX_ARCHIVE_BYTES } from './ckan-workspace-transfers.mjs';
 import { ExactCkanNumber } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/capture.mjs';
+import { executeCkanDcat, pageDcatState, forgetDcatReview, DCAT_INPUT_MAX_BYTES } from './ckan-dcat.mjs';
 
 export const CKAN_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.ckan-workbench-connection.v1';
 const NATIVE_SCHEMA = 'stellar-forge.ckan-workbench.v1';
@@ -96,14 +97,14 @@ export async function readCkanWorkspaceConfiguration(path) {
       throw failure('CONFIGURATION_ERROR', 'Bind each original or receiving project through one canonical alias.');
     directories.add(canonical);
     if (input.inputs !== undefined && (!plain(input.inputs) || Object.keys(input.inputs).length > 64))
-      throw failure('CONFIGURATION_ERROR', 'Declare at most 64 named capture or whole-workspace inputs.');
+      throw failure('CONFIGURATION_ERROR', 'Declare at most 64 named capture, catalog, mapping or whole-workspace inputs.');
     const inputs = Object.create(null);
     for (const [key, item] of Object.entries(input.inputs ?? {})) {
       identifier(key, 'CKAN input alias');
       exact(item, ['file', 'label', 'kind'], ['file']);
       const kind = item.kind ?? 'capture';
-      if (!['capture', 'workspace-archive'].includes(kind))
-        throw failure('CONFIGURATION_ERROR', 'Declare capture or workspace-archive as the original input kind.');
+      if (!['capture', 'workspace-archive', 'dcat-catalog', 'dcat-mappings'].includes(kind))
+        throw failure('CONFIGURATION_ERROR', 'Declare capture, workspace-archive, dcat-catalog or dcat-mappings as the original input kind.');
       inputs[key] = { file: hostPath(item.file, base), label: line(item.label ?? key, 'CKAN input label'), kind };
     }
     let merchant = null;
@@ -165,11 +166,13 @@ function safeError(issue) {
 const collectionNames = ['editions', 'sources', 'publications', 'exports', 'buyerRequests', 'refreshes'];
 
 export class MerchantCkanWorkspaces {
-  #config; #entries = new Map(); #opening = new Map(); #closing = false; #close;
+  #config; #environment; #entries = new Map(); #opening = new Map(); #closing = false; #close;
   #reads = new RetainedFileReads({ errorPrefix: 'CKAN_FILE' });
   #transferInspections = new CkanWorkspaceTransferInspections();
   #receiving = new Map();
-  constructor(config) { this.#config = config; }
+  constructor(config, options = {}) {
+    this.#config = config; this.#environment = { ...(options.environment ?? process.env) };
+  }
   #storeMatches(definition) {
     return typeof this.#config.releaseStore === 'string' &&
       resolve(this.#config.releaseStore) === join(definition.directory, 'seller-releases');
@@ -216,6 +219,12 @@ export class MerchantCkanWorkspaces {
       paging[collection] = { offset: start, limit, total: all.length,
         nextOffset: start + native[collection].length < all.length ? start + native[collection].length : null };
     }
+    if (native.dcat) {
+      const selected = pageDcatState(native.dcat, { limit,
+        catalogsOffset: options.dcatCatalogsOffset, reviewsOffset: options.dcatReviewsOffset,
+        releasesOffset: options.dcatReleasesOffset });
+      native.dcat = selected.dcat; paging.dcat = selected.paging;
+    }
     return { workspace: entry.alias, instanceId: entry.instanceId, browserUrl: entry.service.url,
       releaseStoreMatches: this.#storeMatches(this.#definition(entry.alias)), native: view(native), paging,
       fileReads: this.#reads.status(this.#scope(entry.alias)) };
@@ -231,7 +240,7 @@ export class MerchantCkanWorkspaces {
       const { startCkanServer } = await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/server.mjs');
       let model, service;
       try {
-        model = await openCkanWorkbench({ directory: definition.directory });
+        model = await openCkanWorkbench({ directory: definition.directory, environment: this.#environment });
         const instanceId = randomUUID();
         service = await startCkanServer({ workbench: model, port: 0, instanceId });
         if (this.#closing) throw failure('CKAN_WORKSPACE_CLOSING', 'The merchant operator is closing.');
@@ -255,6 +264,7 @@ export class MerchantCkanWorkspaces {
       const drained = await Promise.allSettled([entry.model.close(), browserClosing, this.#reads.closeScope(this.#scope(entry.alias))]);
       if (drained.some(result => result.status === 'rejected'))
         throw failure('CKAN_SHUTDOWN_INCOMPLETE', 'An original owned CKAN workbench reported incomplete shutdown.');
+      forgetDcatReview(entry.model);
       if (this.#entries.get(entry.alias) === entry) this.#entries.delete(entry.alias);
       return { workspace: entry.alias, instanceId: entry.instanceId, state: 'CLOSED' };
     })();
@@ -271,6 +281,8 @@ export class MerchantCkanWorkspaces {
     const started = start(), native = this.#native(entry);
     return { workspace: entry.alias, instanceId: entry.instanceId, operationId: started.id,
       ...(started.editionId ? { editionId: started.editionId } : {}),
+      ...(started.catalogId ? { catalogId: started.catalogId } : {}),
+      ...(started.reviewId ? { reviewId: started.reviewId } : {}),
       native: view({ operation: native.operation, active: native.active }) };
   }
   #input(alias, input) {
@@ -284,7 +296,8 @@ export class MerchantCkanWorkspaces {
     if (selectedInput === undefined) return { workspace: alias,
       inputs: Object.entries(configured).map(([input, item]) => ({ input, label: item.label, kind: item.kind ?? 'capture' })) };
     const input = this.#input(alias, selectedInput);
-    const current = await privateFile(input.file, input.kind === 'workspace-archive' ? CKAN_TRANSFER_MAX_ARCHIVE_BYTES : 16777216);
+    const current = await privateFile(input.file, input.kind === 'workspace-archive' ? CKAN_TRANSFER_MAX_ARCHIVE_BYTES
+      : ['dcat-catalog', 'dcat-mappings'].includes(input.kind) ? DCAT_INPUT_MAX_BYTES : 16777216);
     return { workspace: alias, input: selectedInput, label: input.label, kind: input.kind ?? 'capture',
       file: { name: basename(input.file), bytes: current.bytes, sha256: current.sha256 } };
   }
@@ -342,6 +355,12 @@ export class MerchantCkanWorkspaces {
   async #execute(entry, name, args) {
     const original = entry.model, { workspace, expectedOperationId, ...input } = args;
     const launch = start => this.#launch(entry, expectedOperationId, start);
+    if (name.startsWith('merchant_ckan_dcat_')) return await executeCkanDcat({
+      model: original, workspace, instanceId: entry.instanceId, browserUrl: entry.service.url,
+      native: () => this.#native(entry), launch, input: value => this.#input(workspace, value),
+      directory: this.#definition(workspace).directory, scope: this.#scope(workspace),
+      reads: this.#reads, privateFile, publicData, view,
+    }, name, input);
     switch (name) {
       case 'merchant_ckan_status': return this.#state(entry, input);
       case 'merchant_ckan_workspace_archives': {

@@ -1,0 +1,22 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "document-merchant",
+  "heading": "## Document processing and complete customer receiving",
+  "sources": [
+    {
+      "id": "document-merchant-applications",
+      "label": "Document merchant Applications and customer operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/document-merchant/APPLICATIONS.md",
+      "editions": [
+        {
+          "commit": "039e8f2a82fa1e63bc72894a748cf7c0a24ef9f4",
+          "bytes": 13664,
+          "sha256": "fd05791f26cfc7edcd5276ec327cc52c1df4bf09ae3569fd5882d10907ba3ee7",
+          "git_blob": "91cf506dc1e080229c4903bbde3dd7d0e0e4caf0"
+        }
+      ]
+    }
+  ]
+}

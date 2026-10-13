@@ -22,6 +22,7 @@
       "import": "./source/stellar-forge/developer-site/dist/grant-operating-plan-core.mjs"
     },
     "./grant/operating-plan/cli": "./source/stellar-forge/developer-site/grant-operating-plan.mjs",
+    "./grant/customer-closing/composition": "./source/stellar-forge/developer-site/grant-customer-closing.mjs",
     "./grant/financial-walkthrough": "./source/stellar-forge/developer-site/grant-financial-walkthrough.mjs"
   },
   "commands": {
@@ -53,6 +54,9 @@
     "operations/scf-submission-review-round-7108-20261012/complete-model-artifacts.json",
     "operations/scf-submission-review-round-7108-20261012/model-result.json",
     "operations/scf-submission-review-round-7108-20261012/current-native-compatibility.json",
-    "operations/scf-submission-review-round-7108-20261012/README.md"
+    "operations/scf-submission-review-round-7108-20261012/README.md",
+    "stellar-forge/developer-site/GRANT_CUSTOMER_CLOSING.md",
+    "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
+    "products/bls-labor/GRANT.md"
   ]
 }

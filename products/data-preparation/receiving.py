@@ -143,12 +143,23 @@ def retire_unrecorded_group(child):
         'innerGroupPresentBeforeDrain': existed, 'innerGroupPresentAfterDrain': exists(),
         'activeBeforeDrain': None, 'activeAfterDrain': None}
 
+def portable_run(record):
+    if record is None:
+        return None
+    result = dict(record)
+    if isinstance(record.get('files'), dict):
+        result['files'] = {name: descriptor for name, descriptor in record['files'].items()
+            if name != 'result.sqlite'}
+    return result
+
 def retained_records(current, original):
     for collection in ('sources', 'recipes', 'runs', 'reviews'):
         for record in original['workspace'][collection]:
             found = next((item for item in current[collection] if item['id'] == record['id']
                 and (collection != 'recipes' or item['revision'] == record['revision'])), None)
-            if found != record:
+            actual = portable_run(found) if collection == 'runs' else found
+            expected = portable_run(record) if collection == 'runs' else record
+            if actual != expected:
                 raise ValueError('The delivered project changed an original '+collection+' record')
 
 def verify_pipeline_project(path, original, pipeline, *, customer=False):

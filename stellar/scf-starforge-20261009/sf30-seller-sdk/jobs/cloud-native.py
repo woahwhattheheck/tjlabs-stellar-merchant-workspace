@@ -328,10 +328,12 @@ def selected_source_tools():
     return module
 
 
-def selected_source_options(workspace, commit, logs, repository, selection, node, npm, python, offline):
+def selected_source_options(workspace, commit, logs, repository, selection, node, npm, python, offline,
+                            received_source=None):
     return {"workspace": workspace, "commit": commit, "logs": logs, "repository": repository,
             "selection": selection, "node": node, "npm": npm, "python": python,
-            "offline": offline, "operations": globals()}
+            "offline": offline, "operations": globals(),
+            **({"received_source": received_source} if received_source is not None else {})}
 
 
 def required_source_files(source):
@@ -358,11 +360,12 @@ def required_source_files(source):
 
 
 def source_checkout(workspace, commit, logs, repository=REPOSITORY, *,
-                    selection=None, node=None, npm=None, python=None, offline=False):
+                    selection=None, node=None, npm=None, python=None, offline=False, received_source=None):
     if selection is not None:
         source = selected_source_tools().prepare_source(**selected_source_options(
-            workspace, commit, logs, repository, selection, node, npm, python, offline))
+            workspace, commit, logs, repository, selection, node, npm, python, offline, received_source))
         return source, required_source_files(source)
+    require(received_source is None, "RECEIVED_OBJECT_CACHE_REQUIRES_SOURCE_SELECTION")
     source = workspace / "source"
     if not source.exists():
         private_directory(source)
@@ -387,10 +390,11 @@ def source_checkout(workspace, commit, logs, repository=REPOSITORY, *,
 
 
 def install_runtime(source, workspace, node, npm, python, logs, offline, *,
-                    selection=None, commit=None, repository=REPOSITORY):
+                    selection=None, commit=None, repository=REPOSITORY, received_source=None):
     if selection is not None:
         return selected_source_tools().install_selected(source=source, **selected_source_options(
-            workspace, commit, logs, repository, selection, node, npm, python, offline))
+            workspace, commit, logs, repository, selection, node, npm, python, offline, received_source))
+    require(received_source is None, "RECEIVED_OBJECT_CACHE_REQUIRES_SOURCE_SELECTION")
     profile_cli = source / SOURCE / "distribution/runtime-profile-cli.mjs"
     selection = ["--source-root", source, "--native", "--feature", "schema", "--operator",
                  "--pin", "@stellar/stellar-sdk@16.3.1"]
@@ -557,13 +561,14 @@ def applications_receiving(source, workspace, out, node, args, env, state, state
 
     release_directory = workspace / "merchant-release"
     build_argv = [node, source / SOURCE / "distribution/build.mjs", "--repo",
-                  workspace / "source-repository.git" if selected else source,
+                  (selected["identity"].get("receivedSource", {}).get("repository") or
+                   workspace / "source-repository.git") if selected else source,
                   "--ref", args.source_commit, "--out", release_directory, "--python", sys.executable]
     if selected:
         build_argv.extend(["--selection", args.source_selection])
     if release_directory.exists():
         build_argv.append("--resume")
-    if args.offline:
+    if args.offline or (selected and selected["identity"].get("receivedSource")):
         build_argv.append("--offline")
     release = output_json(step("build", build_argv))
     require(release.get("status") == "PACKAGED" and release.get("sourceCommit") == args.source_commit and
@@ -778,6 +783,8 @@ def main():
                         help="Exact selected source repository; retained with the original run.")
     parser.add_argument("--source-selection",
                         help="Build this committed distribution recipe and use one installed runtime for every receiving phase.")
+    parser.add_argument("--received-source", type=Path,
+                        help="Use this original verified Git-object cache offline; --offline separately selects runtime dependency installation.")
     parser.add_argument("--capsule", required=True, type=Path)
     parser.add_argument("--sha256", required=True)
     parser.add_argument("--input-mode", choices=("prepared", "completed-core"), default="prepared")
@@ -816,6 +823,12 @@ def main():
             (re.fullmatch(r"[a-z][a-z0-9-]{0,63}", args.source_selection) and
              args.source_selection not in ("all", "base") and args.applications and
              args.input_mode == "completed-core"), "SELECT_COMPLETE_INSTALLED_SOURCE_RECEIVING")
+    require(args.received_source is None or args.source_selection is not None,
+            "RECEIVED_OBJECT_CACHE_REQUIRES_SOURCE_SELECTION")
+    if args.received_source is not None:
+        require(args.received_source.is_absolute() and
+                args.received_source.resolve(strict=True) == args.received_source,
+                "SELECT_ORIGINAL_ABSOLUTE_RECEIVED_SOURCE_DIRECTORY")
     if args.validation_operation is not None:
         require(re.fullmatch(r"[A-Z0-9][A-Z0-9._:-]{0,127}", args.validation_operation), "VALIDATION_OPERATION_INVALID")
     require(not (args.input_files or args.applications) or args.validation_operation,
@@ -865,12 +878,15 @@ def main():
                  if args.browser_module else None,
              "validationOperation": args.validation_operation, "nodeVersion": args.node_version,
              "phases": {}, "status": "RUNNING"}
+    if args.received_source is not None:
+        state["receivedSourceDirectory"] = str(args.received_source)
     if placement is not None:
         state["storagePlacement"] = placement
     previous = read_json(state_path) if state_path.exists() else None
     if previous:
         require(previous.get("sourceSelection") == args.source_selection and
                 previous.get("sourceRepository", REPOSITORY) == args.source_repository and
+                previous.get("receivedSourceDirectory") == state.get("receivedSourceDirectory") and
                 previous.get("inputMode", "prepared") == args.input_mode and
                 previous.get("approvalMode", "terminal") == args.approval and
                 previous.get("inputFiles", False) == args.input_files and
@@ -910,7 +926,8 @@ def main():
         if args.input_mode == "completed-core":
             source, hashes = source_checkout(workspace, args.source_commit, logs, args.source_repository,
                                              selection=args.source_selection, node=node, npm=npm,
-                                             python=sys.executable, offline=args.offline)
+                                             python=sys.executable, offline=args.offline,
+                                             received_source=args.received_source)
             completed_tools = completed_capsule_tools(source)
             capsule = completed_tools.read_completed_capsule(args.capsule, args.sha256)
             require(capsule["manifest"] == input_header, "COMPLETED_INPUT_HEADER_CHANGED")
@@ -946,16 +963,20 @@ def main():
             restored = True
             source, hashes = source_checkout(workspace, args.source_commit, logs, args.source_repository,
                                              selection=args.source_selection, node=node, npm=npm,
-                                             python=sys.executable, offline=args.offline)
+                                             python=sys.executable, offline=args.offline,
+                                             received_source=args.received_source)
         state["sourceFiles"] = hashes
         state["installation"] = install_runtime(source, workspace, node, npm, sys.executable, logs, args.offline,
                                                 selection=args.source_selection, commit=args.source_commit,
-                                                repository=args.source_repository)
+                                                repository=args.source_repository, received_source=args.received_source)
         if args.source_selection:
             selected = read_json(workspace / "source-selection-state.json")
             state["selectedSource"] = {"sourceRoot": selected["sourceRoot"], "release": selected["release"],
                                        "runtimeDirectory": selected["runtimeDirectory"],
                                        "footprint": selected["footprint"]}
+            if selected["identity"].get("receivedSource"):
+                state["selectedSource"]["receivedSource"] = selected["identity"]["receivedSource"]
+                state["selectedSource"]["receiving"] = selected["receivedSourceObservation"]
         if placement is not None:
             adapter = source / SOURCE / "sf30-seller-sdk/jobs/native-placement.mjs"
             require(adapter.is_file() and not adapter.is_symlink(), "ORIGINAL_NATIVE_PLACEMENT_ADAPTER_REQUIRED")

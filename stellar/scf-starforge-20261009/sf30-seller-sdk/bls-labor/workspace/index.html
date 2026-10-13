@@ -12,7 +12,7 @@
 <div><p class="eyebrow">Stellar Forge · Regional analysis</p><h1 id="workspace-title">BLS labor workspace</h1><p id="workspace-meta">Opening the original workspace…</p></div>
 <button type="button" id="refresh">Refresh workspace</button>
 </header>
-<nav aria-label="Workspace areas"><a href="#source">Source editions</a><a href="#observations">Observations</a><a href="#reports">Briefings</a><a href="#publication">Publication</a><a href="#handover">Handover</a></nav>
+<nav aria-label="Workspace areas"><a href="#source">Source editions</a><a href="#observations">Observations</a><a href="#reports">Briefings</a><a href="#regional-analysis">Regional analysis</a><a href="#publication">Publication</a><a href="#handover">Handover</a></nav>
 <main>
 <div id="notice" role="status" aria-live="polite"></div>
 <section id="pending" hidden aria-labelledby="pending-heading">
@@ -81,6 +81,76 @@
 </div>
 <div class="table-wrap"><table><caption>Complete saved outputs</caption><thead><tr><th>Title</th><th>Source and rows</th><th>Download</th></tr></thead><tbody id="reports-body"></tbody></table></div>
 </section>
+<section id="regional-analysis" aria-labelledby="regional-heading">
+<h2 id="regional-heading">Regional analysis</h2>
+<p><a href="./regional-guide.md" target="_blank" rel="noopener noreferrer">Open the complete regional analysis guide</a></p>
+<p>Save a complete regional labor report from an original source edition. Choose every county in the region, then keep resident labor, workplace jobs and wages in their own series. Each saved revision includes charts, all selected source observations and customer downloads.</p>
+<form id="regional-form">
+<input type="hidden" name="previous_report_id" value="">
+<div class="grid">
+<label>Source edition<select name="edition_id" required aria-describedby="regional-source-info"></select></label>
+<div class="align-end"><button type="button" id="regional-use-edition">Use this edition’s complete selection</button></div>
+<label>Analysis title<input name="title" required maxlength="250" value="Regional labor analysis"></label>
+<label>Region name<input name="region_name" required maxlength="160" value="Selected counties"></label>
+<label>Observation years<input name="years" required placeholder="2024, 2025, 2026" aria-describedby="regional-years-help"></label>
+<label>Chart counties<input name="chart_counties" placeholder="50005, 50009, 50019" aria-describedby="regional-chart-help"></label>
+</div>
+<p id="regional-source-info" class="meta"></p>
+<p id="regional-years-help" class="meta">Enter the original years separated by commas. Each projection uses its available source periods within those years.</p>
+<fieldset><legend>Complete county membership</legend><div id="regional-counties" class="regional-county-options"></div></fieldset>
+<p id="regional-chart-help" class="meta">Charts include this region and up to eight selected county FIPS codes. Leave Chart counties empty to show the region alone. All selected counties remain in the complete tables and downloads.</p>
+<div class="columns regional-projections">
+<div>
+<label class="check"><input type="checkbox" name="laus" checked> Resident labor · LAUS</label>
+<fieldset id="regional-laus-fields"><legend>Resident-labor selection</legend>
+<label>Original adjustment<select name="seasonal"><option value="U">Not seasonally adjusted · U</option><option value="S">Seasonally adjusted · S</option></select></label>
+<label class="check"><input type="checkbox" name="period_kinds" value="month" checked> Monthly observations</label>
+<label class="check"><input type="checkbox" name="period_kinds" value="annual_average" checked> Annual averages</label>
+<p class="meta">Regional unemployment uses total unemployed residents divided by total civilian labor force. Original annual coverage stays with every value.</p>
+</fieldset>
+</div>
+<div>
+<label class="check"><input type="checkbox" name="qcew" checked> Workplace employment and wages · QCEW</label>
+<fieldset id="regional-qcew-fields"><legend>Workplace selection</legend>
+<div class="grid">
+<label>Ownership code<input name="ownership_code" value="0" required maxlength="20"></label>
+<label>Industry code<input name="industry_code" value="10" required maxlength="20"></label>
+<label>Size code<input name="size_code" value="0" required maxlength="20"></label>
+<label>Quarters<input name="quarters" value="1, 2, 3, 4" required></label>
+</div>
+<p class="meta">Choose one original ownership, industry and size group. Regional totals add distinct counties. Weekly wages use original quarterly wages and all three monthly job counts.</p>
+</fieldset>
+</div>
+</div>
+<label>Customer commentary<textarea name="narrative" rows="6" maxlength="40000" placeholder="Explain the customer’s question, the selected region and the observed changes."></textarea></label>
+<p id="regional-parent" class="meta">First saved analysis in this customer series.</p>
+<div class="actions"><button type="submit">Save complete regional analysis</button><button type="button" id="regional-new">Start another analysis</button></div>
+</form>
+<details><summary>Reopen an exported analysis definition</summary>
+<p>Receive the complete working project on another host first. The definition opens its original analysis and source edition for a new saved revision.</p>
+<label>Original regional-definition.json<input type="file" id="regional-definition-file" accept=".json,application/json"></label>
+<button type="button" id="regional-import-definition">Open definition for editing</button>
+</details>
+<h3>Saved regional analyses</h3>
+<div id="regional-saved"></div>
+<div id="regional-view" hidden aria-labelledby="regional-view-title">
+<h3 id="regional-view-title"></h3>
+<p id="regional-view-summary" class="meta"></p>
+<p id="regional-view-commentary" class="regional-commentary"></p>
+<p id="regional-view-history" class="meta"></p>
+<div id="regional-view-files" class="actions" aria-label="Complete customer downloads"></div>
+<details><summary>Calculation methods and original definitions</summary><div id="regional-methods"></div>
+<p>Annual differences require the same period, membership, adjustment, statistical meaning and source coverage. Missing or suppressed members stay unavailable. Released QCEW level changes can differ from BLS news-release changes that use administratively adjusted prior data.</p>
+</details>
+<p id="regional-chart-status" class="meta" role="status" aria-live="polite"></p>
+<button type="button" id="regional-cancel-read" hidden>Stop chart reading</button>
+<div id="regional-charts"></div>
+<h3>Complete analysis values</h3>
+<p id="regional-table-count" class="meta"></p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Area</th><th scope="col">Measure</th><th scope="col">Period</th><th scope="col">Value</th><th scope="col">Unit</th><th scope="col">Annual difference</th><th scope="col">Status</th><th scope="col">Formula and original membership</th></tr></thead><tbody id="regional-values"></tbody></table></div>
+<div class="actions"><button type="button" id="regional-values-previous" disabled>Previous values</button><button type="button" id="regional-values-next" disabled>Next values</button></div>
+</div>
+</section>
 <section id="publication">
 <h2>Original native publication</h2>
 <p>Open the existing BLS publisher with this workspace’s active source. It retains its typed plan, candidate inspection, review, version store and customer handoff. Resident observations, workplace observations and complete original files have separate publication targets.</p>
@@ -111,7 +181,7 @@
 </section>
 <section id="handover">
 <h2>Complete editable handover</h2>
-<p>The full workspace ZIP carries original captures, observations, analyst note revisions, saved reports and local native publication files. Receiving reopens every original source edition in a separate editable workspace.</p>
+<p>The full workspace ZIP carries original captures, observations, analyst note revisions, saved county and regional report revisions, editable analysis definitions and local native publication files. Receiving reopens every original source edition in a separate editable workspace.</p>
 <button type="button" id="export-project">Prepare complete workspace ZIP</button>
 <div id="export-results"></div>
 <details><summary>Receive a complete working project on this host</summary>

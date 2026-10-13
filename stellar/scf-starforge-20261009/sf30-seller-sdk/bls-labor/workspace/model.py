@@ -28,6 +28,7 @@ sys.path.insert(0, str(SDK))
 import capture
 import project
 import source_bundle_archive as archives
+from regional_workspace import save_regional as save_regional_analysis, REGIONAL_FILES
 from analysis import (PROJECTIONS, FILTER_COLUMNS, DERIVED_COLUMNS, encoded, filters,
                       report_input, briefing_rows, year_change, matches, compare_observation, methodology, html_document)
 
@@ -274,7 +275,7 @@ class Workspace:
                 "Use id, kind, input and expected_revision.")
         operation_id = identifier(request["id"])
         kind = request["kind"]
-        require(kind in ("capture", "import", "select", "note", "report", "compare", "export", "publisher-open", "publisher-stop", "receive", "native-receive"),
+        require(kind in ("capture", "import", "select", "note", "report", "compare", "regional", "export", "publisher-open", "publisher-stop", "receive", "native-receive"),
                 "Choose a supported BLS workspace operation.")
         require(isinstance(request["input"], dict), "Operation input must be an object.")
         require(type(request["expected_revision"]) is int and request["expected_revision"] >= 0,
@@ -322,6 +323,7 @@ class Workspace:
             request = json.loads(row["input"])
             action = {"capture": self.acquire, "import": self.acquire, "select": self.select,
                       "note": self.save_note, "report": self.save_report, "compare": self.save_comparison,
+                      "regional": self.save_regional,
                       "export": self.export_project, "publisher-open": self.open_publisher,
                       "publisher-stop": self.stop_publisher, "receive": self.receive,
                       "native-receive": self.native_receive}[row["kind"]]
@@ -499,6 +501,9 @@ class Workspace:
         root = self.directory / "reports" / identifier(report_id)
         root.mkdir(mode=0o700, exist_ok=True)
         return root
+
+    def save_regional(self, operation_id, value, operation):
+        return save_regional_analysis(self, operation_id, value, operation)
 
     def save_report(self, operation_id, value, operation):
         request = report_input(value)
@@ -889,7 +894,8 @@ class Workspace:
         identifier(item_id)
         if kind == "report":
             metadata = self.report(item_id)
-            require(name in ("rows.jsonl", "report.csv", "report.json", "report.html") and name in metadata["files"],
+            allowed = REGIONAL_FILES if metadata.get("kind") == "regional" else ("rows.jsonl", "report.csv", "report.json", "report.html")
+            require(name in allowed and name in metadata["files"],
                     "Choose an original saved report file.")
             path = self.directory / "reports" / item_id / name
             require(file_pin(path) == metadata["files"][name], "The complete report file changed.")

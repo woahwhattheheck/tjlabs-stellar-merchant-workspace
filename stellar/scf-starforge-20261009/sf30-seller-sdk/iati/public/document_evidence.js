@@ -469,7 +469,9 @@ window.IatiDocumentEvidenceUi = function (api) {
       '<p id="ide-correction-state" class="ide-context"></p><div id="ide-correction-table"></div><div id="ide-correction-detail"></div></article>',
       '<article class="card"><h2>Complete selected reports</h2><p>The selected evidence revision is retained in every original file. Each browser download verifies the native byte count and SHA-256.</p>',
       '<div class="ide-actions"><button id="ide-report-html" data-ide-control="download">Download HTML report</button>',
-      '<button id="ide-report-csv" data-ide-control="download">Download full document register CSV</button><button id="ide-report-json" data-ide-control="download">Download full evidence plan JSON</button></div>',
+      '<button id="ide-report-csv" data-ide-control="download">Download full document register CSV</button><button id="ide-report-json" data-ide-control="download">Download full evidence plan JSON</button>',
+      '<button id="ide-operating-source" data-ide-control="download">Download operating source</button></div>',
+      '<p class="ide-muted">Import the operating source into Command finder → Operating plans to create an editable customer procedure from this saved case. Keep the complete source package with its reports and receiving ZIP.</p>',
       '<div id="ide-download-state" class="ide-context"></div></article></div>',
       '<div data-ide-panel="receive" hidden><article class="card"><h2>Complete portable receiving</h2>',
       '<p>The full ZIP retains the original organisation selection, every selected observation and body, reviews, comparisons and history. The receiving operation imports saved data into this workspace.</p>',
@@ -540,6 +542,7 @@ window.IatiDocumentEvidenceUi = function (api) {
     $('report-html').onclick = () => run('Download complete evidence report', () => downloadPlanFile('report'));
     $('report-csv').onclick = () => run('Download complete evidence register', () => downloadPlanFile('register'));
     $('report-json').onclick = () => run('Download complete evidence plan', () => downloadPlanFile('plan'));
+    $('operating-source').onclick = () => run('Download complete operating source', downloadOperatingSource);
     $('export').onclick = () => run('Download complete evidence package', exportPlan);
     $('import-file').onchange = () => { receiveFile = $('import-file').files?.[0] || null; $('receiving-state').textContent = receiveFile ? receiveFile.name + ' · ' + bytesLabel(receiveFile.size) : ''; buttons(); };
     $('import').onclick = () => run('Receive exact evidence package', receivePacket);
@@ -1273,6 +1276,20 @@ window.IatiDocumentEvidenceUi = function (api) {
     note('Verified the complete original bytes for ' + filename + '.');
     return {filename,bytes:received,sha256:actualHash,mime};
   }
+  async function downloadOperatingSource() {
+    if (!plan) throw new Error('Open an exact evidence revision.');
+    const token = identity(), selected = { id: plan.id, revision: plan.revision, recordSha256: plan.recordSha256 };
+    const source = await api.get(BASE + 'operating-source?' + query({ id: selected.id, revision: selected.revision }));
+    if (!valid(token)) return;
+    if (source?.schema !== 'stellar-forge.iati-document-operating-source.v1' ||
+        source.plan?.id !== selected.id || source.plan?.revision !== selected.revision ||
+        source.plan?.recordSha256 !== selected.recordSha256 || source.snapshotSha256 !== selected.recordSha256)
+      throw new Error('The operating source differs from the selected saved case.');
+    if (new TextEncoder().encode(JSON.stringify(source, null, 2) + '\n').length > 64 * 1024 * 1024)
+      throw new Error('The complete operating-source JSON exceeds the 64 MiB file capacity.');
+    downloadJson(source, 'iati-operating-source-' + selected.id + '-r' + selected.revision + '.json');
+    note('Downloaded the complete saved case input. Import it in Operating plans, then add the customer and receiving details.');
+  }
   async function downloadPlanFile(kind) {
     if (!plan) throw new Error('Open an exact evidence revision.');
     const extension = {report:'html',register:'csv',plan:'json',correction:'json'}[kind];
@@ -1407,7 +1424,7 @@ window.IatiDocumentEvidenceUi = function (api) {
     $('add-pair').disabled ||= !selectedComparisonMatches();
     $('comparison-download').disabled ||= !comparison;
     $('open-comparison').disabled ||= !sha($('comparison-id').value);
-    for (const id of ['report-html','report-csv','report-json','export','organisation-open']) $(id).disabled ||= !plan;
+    for (const id of ['report-html','report-csv','report-json','operating-source','export','organisation-open']) $(id).disabled ||= !plan;
     $('correction-load').disabled ||= !plan?.review;
     $('correction-file').disabled ||= !plan?.review;
     $('revise').disabled ||= !pending?.rejected || !pending?.checkedNotRecorded || pending.route === 'receive';

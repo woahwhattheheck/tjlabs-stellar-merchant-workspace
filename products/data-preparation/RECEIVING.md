@@ -4,6 +4,8 @@ This receiver operates the unchanged PREP12 customer project through the install
 
 The original project contains three sources and 120,012 input rows. Its orders source has 120,000 rows, including integer identifiers outside the safe JavaScript number range. The original reviewed closed-order SQL and the independent open-order edit each produce six complete result rows. The receiver compares every result column and row to the corresponding original preparation result.
 
+Receiving rebuilds each native SQLite result from the verified portable CSV, JSONL and schema; history comparisons retain every original run field and portable file descriptor while accepting the reconstructed `result.sqlite` descriptor.
+
 ## Original case and selected source
 
 Use the original Starforge_Data_Preparation_2026-10-12.zip from the PREP12 work order:

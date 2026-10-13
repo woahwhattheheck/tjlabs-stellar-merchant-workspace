@@ -16,7 +16,7 @@
     .shell-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
     .shell button, .shell-upload { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 7px 12px; border: 1px solid #777; border-radius: 2px; background: #fff; color: #202020; font: inherit; cursor: pointer; }
     .shell button:hover, .shell-upload:hover { background: #e9e9e9; }
-    .shell button:focus-visible, .shell-upload:focus-within, .shell input:focus-visible, .shell summary:focus-visible { outline: 2px solid #222; outline-offset: 3px; }
+    .shell button:focus-visible, .shell-upload:focus-within, .shell input:focus-visible, .shell select:focus-visible, .shell summary:focus-visible { outline: 2px solid #222; outline-offset: 3px; }
     .shell button:disabled { color: #777; cursor: default; background: #eee; border-color: #bbb; }
     .shell .shell-primary { background: #292929; color: #fff; border-color: #292929; }
     .shell .shell-primary:hover { background: #111; }
@@ -31,7 +31,7 @@
     .shell-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
     .shell-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
     .shell-field label { font-weight: 550; }
-    .shell-field input { width: 100%; min-height: 36px; padding: 7px 9px; border: 1px solid #999; border-radius: 2px; background: #fff; color: #202020; font: inherit; }
+    .shell-field input, .shell-field select { width: 100%; min-height: 36px; padding: 7px 9px; border: 1px solid #999; border-radius: 2px; background: #fff; color: #202020; font: inherit; }
     .shell-field input[type=file] { padding: 5px; }
     .shell-field small { color: #555; }
     .shell-full { grid-column: 1 / -1; }
@@ -65,6 +65,10 @@
         <input id="shell-workspace-file" type="file" accept=".json,application/json" disabled aria-label="Open a saved workspace JSON file">
       </label>
       <button id="shell-save" type="button" disabled>Save workspace</button>
+      <button id="shell-baseline-save" type="button" disabled>Save baseline source</button>
+      <button id="shell-candidate-save" type="button" disabled>Save candidate source</button>
+      <button id="shell-baseline-archive" type="button" hidden>Baseline source archive</button>
+      <button id="shell-candidate-archive" type="button" hidden>Candidate source archive</button>
       <span class="shell-spacer"></span>
       <p id="shell-save-state" class="shell-state" aria-live="polite">Loading review tools…</p>
     </div>
@@ -72,7 +76,7 @@
     <div id="shell-error" class="shell-notice" role="alert"></div>
 
     <details id="shell-comparison" class="shell-comparison" open>
-      <summary>Create a comparison from CSV files</summary>
+      <summary>Create a comparison from source editions</summary>
       <form id="shell-form" class="shell-form">
         <div class="shell-grid">
           <div class="shell-field">
@@ -86,32 +90,52 @@
             <small>Select the rules JSON for this supplier mapping.</small>
           </div>
           <div class="shell-field">
-            <label for="shell-baseline">Baseline CSV</label>
+            <label for="shell-baseline-format">Baseline format</label>
+            <select id="shell-baseline-format">
+              <option value="csv">CSV file</option>
+              <option value="source-json">Exported source JSON</option>
+              <option value="native-archive">Complete Datasette source archive</option>
+            </select>
+            <label for="shell-baseline">Baseline source</label>
             <input id="shell-baseline" name="baseline" type="file" accept=".csv,text/csv,text/plain" required>
-            <small>The existing or earlier edition.</small>
+            <small>The existing or earlier edition. Exported source JSON preserves its original identity.</small>
           </div>
           <div class="shell-field">
-            <label for="shell-candidate">Candidate CSV</label>
+            <label for="shell-candidate-format">Candidate format</label>
+            <select id="shell-candidate-format">
+              <option value="csv">CSV file</option>
+              <option value="source-json">Exported source JSON</option>
+              <option value="native-archive">Complete Datasette source archive</option>
+            </select>
+            <label for="shell-candidate">Candidate source</label>
             <input id="shell-candidate" name="candidate" type="file" accept=".csv,text/csv,text/plain" required>
-            <small>The incoming edition to review.</small>
+            <small>The incoming edition to review. Choose the complete original native source archive.</small>
           </div>
           <div class="shell-field">
             <label for="shell-baseline-source">Baseline source ID</label>
-            <input id="shell-baseline-source" name="baseline-source" type="text" autocomplete="off" placeholder="Defaults to the selected file name">
+            <input id="shell-baseline-source" name="baseline-source" type="text" autocomplete="off" placeholder="CSV file name or original native selection ID">
           </div>
           <div class="shell-field">
             <label for="shell-candidate-source">Candidate source ID</label>
-            <input id="shell-candidate-source" name="candidate-source" type="text" autocomplete="off" placeholder="Defaults to the selected file name">
+            <input id="shell-candidate-source" name="candidate-source" type="text" autocomplete="off" placeholder="CSV file name or original native selection ID">
           </div>
           <div class="shell-field">
             <label for="shell-baseline-captured">Baseline capture time, if known</label>
             <input id="shell-baseline-captured" name="baseline-captured" type="text" autocomplete="off" placeholder="2026-10-12T12:00:00Z">
-            <small>Leave blank to record the time this file is imported.</small>
+            <small>CSV uses the import time; a native edition uses its retained capture time.</small>
           </div>
           <div class="shell-field">
             <label for="shell-candidate-captured">Candidate capture time, if known</label>
             <input id="shell-candidate-captured" name="candidate-captured" type="text" autocomplete="off" placeholder="2026-10-12T15:00:00Z">
             <small>Original file name and last modified time are retained separately.</small>
+          </div>
+          <div class="shell-field shell-full">
+            <label for="shell-numeric-format">Native numeric values</label>
+            <select id="shell-numeric-format">
+              <option value="source">Preserve the original numeric spelling</option>
+              <option value="plain-decimal">Expand numeric exponents to exact decimals</option>
+            </select>
+            <small>Choose exact decimals when the supplier rules use decimal prices. Original tokens and every conversion remain with the source.</small>
           </div>
         </div>
         <div class="shell-form-actions">
@@ -128,7 +152,7 @@
       </div>
     </section>
     <section id="shell-workbook" aria-label="Offline workbook review"></section>
-    <footer class="shell-footer">CSV and workspace files are read in this browser. XLSX conversion uses this original local server. Use the command-line export for a complete delivery folder.</footer>
+    <footer class="shell-footer">CSV, source JSON and workspaces are read in this browser. Native archive reading and XLSX conversion use this original local server. The command-line export includes the complete editor and original native archives.</footer>
   </main>
 
   <script type="module">
@@ -140,9 +164,14 @@
       request: byId('shell-request'), rules: byId('shell-rules'), baseline: byId('shell-baseline'),
       candidate: byId('shell-candidate'), baselineSource: byId('shell-baseline-source'),
       candidateSource: byId('shell-candidate-source'), baselineCaptured: byId('shell-baseline-captured'),
-      candidateCaptured: byId('shell-candidate-captured'), create: byId('shell-create'), review: byId('shell-review'), workbook: byId('shell-workbook')
+      candidateCaptured: byId('shell-candidate-captured'),
+      baselineFormat: byId('shell-baseline-format'), candidateFormat: byId('shell-candidate-format'),
+      numericFormat: byId('shell-numeric-format'), baselineSave: byId('shell-baseline-save'), candidateSave: byId('shell-candidate-save'),
+      baselineArchive: byId('shell-baseline-archive'), candidateArchive: byId('shell-candidate-archive'), create: byId('shell-create'), review: byId('shell-review'), workbook: byId('shell-workbook')
     };
     let domain;
+    let sourceTools;
+    const uploadedArchives = new Map();
     let mountSupplierReview;
     let controller;
     let workbookController;
@@ -161,6 +190,17 @@
       elements.uploadLabel.setAttribute('aria-disabled', String(!ready || busy));
       elements.create.disabled = !ready || busy;
       elements.save.disabled = !report || busy;
+      elements.review.inert = busy;
+      elements.form.inert = busy;
+      for (const role of ['baseline', 'candidate']) {
+        elements[role + 'Save'].disabled = !report || busy;
+        const archived = Boolean(report?.[role]?.source?.native?.archive?.sha256);
+        elements[role + 'Archive'].hidden = !archived;
+        elements[role + 'Archive'].disabled = busy;
+        const preserved = elements[role + 'Format'].value === 'source-json';
+        elements[role + 'Source'].disabled = busy || preserved;
+        elements[role + 'Captured'].disabled = busy || preserved;
+      }
       if (report) {
         elements.current.textContent = report.requestId + ' · revision ' + report.revision + ' · ' + report.status.replaceAll('_', ' ');
       }
@@ -215,8 +255,29 @@
       }
     }
 
-    async function makeEdition(file, side, csv, sourceId, capturedAt, requestId) {
-      const importedAt = new Date().toISOString();
+    async function makeEdition(file, side, sourceId, capturedAt, requestId) {
+      const format = elements[side + 'Format'].value;
+      if (format === 'source-json') return sourceTools.reopenSourceEdition(await readFile(file));
+      if (format === 'native-archive') {
+        const options = {id: requestId + ':' + side, numericFormat: elements.numericFormat.value};
+        if (sourceId.trim()) options.sourceId = sourceId.trim();
+        if (capturedAt.trim()) options.capturedAt = capturedAt.trim();
+        const url = new URL('./api/native-source/read', window.location.href);
+        url.searchParams.set('options', JSON.stringify(options));
+        const response = await fetch(url, {
+          method: 'POST', headers: {'X-Conapi-Native-Source': '1', 'Content-Type': 'application/gzip'}, body: file
+        });
+        let result;
+        try { result = await response.json(); }
+        catch { throw new Error('The local native source reader did not return a complete response.'); }
+        if (!response.ok || result.error) {
+          throw Object.assign(new Error(result.error?.message || 'The original native source could not be read.'), {code: result.error?.code});
+        }
+        const edition = sourceTools.reopenSourceEdition(result.source);
+        uploadedArchives.set(edition.source.native.archive.sha256, file);
+        return edition;
+      }
+      const csv = await readFile(file), importedAt = new Date().toISOString();
       return domain.createEdition({
         id: requestId + ':' + side,
         sourceId: sourceId.trim() || 'file:' + file.name,
@@ -276,25 +337,57 @@
         const baselineFile = elements.baseline.files[0];
         const candidateFile = elements.candidate.files[0];
         const rulesFile = elements.rules.files[0];
-        const [baselineCSV, candidateCSV, rulesText] = await Promise.all([
-          readFile(baselineFile), readFile(candidateFile), readFile(rulesFile)
-        ]);
+        const rulesText = await readFile(rulesFile);
         let rules;
         try { rules = JSON.parse(stripJSONBOM(rulesText)); }
         catch (failure) { throw new Error('Rules JSON is invalid: ' + failure.message); }
-        const baseline = await makeEdition(baselineFile, 'baseline', baselineCSV, elements.baselineSource.value, elements.baselineCaptured.value, requestId);
-        const candidate = await makeEdition(candidateFile, 'candidate', candidateCSV, elements.candidateSource.value, elements.candidateCaptured.value, requestId);
+        const baseline = await makeEdition(baselineFile, 'baseline', elements.baselineSource.value, elements.baselineCaptured.value, requestId);
+        const candidate = await makeEdition(candidateFile, 'candidate', elements.candidateSource.value, elements.candidateCaptured.value, requestId);
         setReport(domain.reconcile({ requestId, baseline, candidate, rules }), true);
       });
     });
+
+    for (const role of ['baseline', 'candidate']) {
+      elements[role + 'Format'].addEventListener('change', () => {
+        const format = elements[role + 'Format'].value;
+        elements[role].accept = format === 'csv' ? '.csv,text/csv,text/plain' :
+          format === 'source-json' ? '.json,application/json' : '.gz,application/gzip,application/octet-stream';
+        elements[role].value = '';
+        renderState();
+      });
+      elements[role + 'Save'].addEventListener('click', () => {
+        if (!report || busy) return;
+        try {
+          const edition = report[role], csv = typeof edition.rawCSV === 'string';
+          download({filename: role + '-source.' + (csv ? 'csv' : 'json'),
+            mimeType: csv ? 'text/csv;charset=utf-8' : 'application/json;charset=utf-8',
+            content: csv ? edition.rawCSV : sourceTools.serializeSourceEdition(edition)});
+        } catch (failure) { showError(failure); }
+      });
+      elements[role + 'Archive'].addEventListener('click', () => run(async () => {
+        const receipt = report?.[role]?.source?.native?.archive;
+        if (!receipt) return;
+        let content = uploadedArchives.get(receipt.sha256);
+        if (!content) {
+          const response = await fetch('./api/native-source/archive/' + receipt.sha256);
+          if (!response.ok) {
+            const result = await response.json();
+            throw Object.assign(new Error(result.error?.message || 'The original native archive could not be opened.'), {code: result.error?.code});
+          }
+          content = await response.blob();
+        }
+        download({filename: role + '-native-source.datasette.json.gz', mimeType: 'application/gzip', content});
+      }));
+    }
 
     window.addEventListener('beforeunload', event => {
       if (dirty) { event.preventDefault(); event.returnValue = ''; }
     });
 
     try {
-      const modules = await Promise.all([import('./supplier-report.mjs'), import('./review-ui.mjs'), import('./review-workbook-ui.mjs')]);
+      const modules = await Promise.all([import('./supplier-report.mjs'), import('./review-ui.mjs'), import('./review-workbook-ui.mjs'), import('./source-editions.mjs')]);
       domain = modules[0];
+      sourceTools = modules[3];
       mountSupplierReview = modules[1].mountSupplierReview;
       if (typeof mountSupplierReview !== 'function') throw new Error('The review interface module is incomplete.');
       workbookController = modules[2].mountWorkbookReview(elements.workbook, {
