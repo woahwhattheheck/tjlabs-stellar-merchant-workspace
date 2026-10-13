@@ -982,6 +982,134 @@
           "git_blob": "5e7265ce775410cbf98da506ae644ff86f2bd105"
         }
       ]
+    },
+    {
+      "id": "runtime-browser-merchant-build",
+      "label": "Complete immutable selected-product browser and native dependency closure (Merchant source)",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/build.mjs",
+      "commit": "efc49cf28469eb1967495a9d77147d7a1a241eaa",
+      "editions": [
+        {
+          "commit": "efc49cf28469eb1967495a9d77147d7a1a241eaa",
+          "git_blob": "7b08f60a5fbb5f897ce7678f2ca830e96eae7b98",
+          "bytes": 31232,
+          "sha256": "0e9619365ca6b6054ee3c6cfad504041104918e53a6fa039eab1cd0c96a601ac"
+        }
+      ]
+    },
+    {
+      "id": "runtime-browser-merchant-routes",
+      "label": "Original server route contexts and dependency-only browser declarations (Merchant source)",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/browser-assets.mjs",
+      "commit": "efc49cf28469eb1967495a9d77147d7a1a241eaa",
+      "editions": [
+        {
+          "commit": "efc49cf28469eb1967495a9d77147d7a1a241eaa",
+          "git_blob": "aefe2df3b0c799a0b21b617c31ea64c4d8c33df5",
+          "bytes": 7009,
+          "sha256": "068fc68209fcc86b77c484376353e938751a029460fb2d6ebe48f226019fdf09"
+        }
+      ]
+    },
+    {
+      "id": "runtime-browser-merchant-admission",
+      "label": "Authenticated installed donor admission with selected capability composition (Merchant source)",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/specification.mjs",
+      "commit": "efc49cf28469eb1967495a9d77147d7a1a241eaa",
+      "editions": [
+        {
+          "commit": "efc49cf28469eb1967495a9d77147d7a1a241eaa",
+          "git_blob": "c6d3ca93a5afc233c2b642dbf56c9cf566f4b7d0",
+          "bytes": 29002,
+          "sha256": "c1bc927b90c033aa0789642cac6b53a27a93df3968b672341de60825d1ea7a6f"
+        }
+      ]
+    },
+    {
+      "id": "runtime-browser-merchant-guide",
+      "label": "Selected source, original receiving and actual rendered-browser operating guide (Merchant source)",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/BROWSER_ASSETS.md",
+      "commit": "efc49cf28469eb1967495a9d77147d7a1a241eaa",
+      "editions": [
+        {
+          "commit": "efc49cf28469eb1967495a9d77147d7a1a241eaa",
+          "git_blob": "d2e2e4bb42daf8bd02c8f367bc3d163d8e52cde4",
+          "bytes": 9868,
+          "sha256": "b0afc8a68483b29d77ca454f00802d4c8490641f525598a8d6e3e264d74ecfb6"
+        }
+      ]
+    },
+    {
+      "id": "runtime-browser-public-build",
+      "label": "Complete immutable selected-product browser and native dependency closure (public distribution)",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/build.mjs",
+      "commit": "1ae51ab170e573f293669f2f622d92622103de2a",
+      "editions": [
+        {
+          "commit": "1ae51ab170e573f293669f2f622d92622103de2a",
+          "git_blob": "b6959ecbb7ef0f68b26b0d5356fda83b66cbe37e",
+          "bytes": 30913,
+          "sha256": "90edc2823b15077f1e370d08a66d9472a9d42b8b3fbe91bca43ac5e4b24d2cf7"
+        }
+      ]
+    },
+    {
+      "id": "runtime-browser-public-routes",
+      "label": "Original server route contexts and dependency-only browser declarations (public distribution)",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/browser-assets.mjs",
+      "commit": "1ae51ab170e573f293669f2f622d92622103de2a",
+      "editions": [
+        {
+          "commit": "1ae51ab170e573f293669f2f622d92622103de2a",
+          "git_blob": "aefe2df3b0c799a0b21b617c31ea64c4d8c33df5",
+          "bytes": 7009,
+          "sha256": "068fc68209fcc86b77c484376353e938751a029460fb2d6ebe48f226019fdf09"
+        }
+      ]
+    },
+    {
+      "id": "runtime-browser-public-admission",
+      "label": "Authenticated installed donor admission with selected capability composition (public distribution)",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/specification.mjs",
+      "commit": "1ae51ab170e573f293669f2f622d92622103de2a",
+      "editions": [
+        {
+          "commit": "1ae51ab170e573f293669f2f622d92622103de2a",
+          "git_blob": "0422b080e20ac88f3c1bc18c87ab8a02257361df",
+          "bytes": 24900,
+          "sha256": "74d7501b70dc78f9059890ca1a4eba16832af9038efbeb20651a9d0bf0b72e7a"
+        }
+      ]
+    },
+    {
+      "id": "runtime-browser-public-guide",
+      "label": "Selected source, original receiving and actual rendered-browser operating guide (public distribution)",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/BROWSER_ASSETS.md",
+      "commit": "1ae51ab170e573f293669f2f622d92622103de2a",
+      "editions": [
+        {
+          "commit": "1ae51ab170e573f293669f2f622d92622103de2a",
+          "git_blob": "588d26fbfa70aa9ec796d67366f76c11a4c3ba6a",
+          "bytes": 10216,
+          "sha256": "114de9b0b5db10586e8c1746973a9d80751d0f2f3df7caeaa7863d96d9be34b3"
+        }
+      ]
     }
   ]
 }
