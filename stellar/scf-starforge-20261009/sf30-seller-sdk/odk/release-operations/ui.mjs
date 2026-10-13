@@ -157,6 +157,19 @@ async function openSource(id,container){
     if(resource.sha256)row.append(button('Download original',async()=>{const blob=await api(API+'/files/'+encodeURIComponent(id)+'/'+encodeURIComponent(resource.key),undefined,{blob:true});if(blob.size!==resource.bytes||await sha(blob)!==resource.sha256)throw Error('The received file differs from its retained original.');download(blob,resource.name||resource.key);}));
     container.append(row);
   }
+  if(arr(full.attempts).length){
+    const history=el('details'),summary=el('summary','Original HTTP response history');history.append(summary);
+    for(const [index,attempt]of full.attempts.entries()){
+      const row=el('div',null,'resource'),description=el('div');
+      description.append(el('strong',attempt.key+' · HTTP '+attempt.status),el('p',(attempt.observedAt||attempt.at||'')+' · '+attempt.bytes+' bytes'),el('p',attempt.sha256,'mono'));
+      row.append(description,button('Download original response',async()=>{
+        const blob=await api(API+'/files/'+encodeURIComponent(id)+'/'+encodeURIComponent('attempt:'+index),undefined,{blob:true});
+        if(blob.size!==attempt.bytes||await sha(blob)!==attempt.sha256)throw Error('The received response differs from its retained original.');
+        download(blob,'original-response-'+index+'.body');
+      }));history.append(row);
+    }
+    container.append(history);
+  }
 }
 function renderSources(){
   const target=$('sources');target.replaceChildren();
@@ -289,7 +302,7 @@ function renderOperation(){
     const retained=S.working.decisions[issue.id]??arr(op.decisions).find(x=>x.issueId===issue.id)??{decision:'',note:''};
     options(select,allowed.map(x=>({value:x,label:label(x)})),retained.decision,'Choose disposition');memo.rows=2;memo.maxLength=20000;memo.value=retained.note||'';
     const l=el('label','Disposition'),m=el('label','Decision note');l.append(select);m.append(memo);card.append(l,m);
-    const keep=()=>{S.working.decisionRevision??=op.revision;S.working.decisions[issue.id]={issueId:issue.id,decision:select.value,note:memo.value};persistEditor();};
+    const keep=()=>{S.working.decisionRevision??=op.revision;S.working.decisions[issue.id]={issueId:issue.id,decision:select.value,note:memo.value};persistEditor();lock($('freeze'),true);};
     select.onchange=keep;memo.oninput=keep;lock(select,Boolean(op?.planId)||!allowed.length);lock(memo,Boolean(op?.planId));issues.append(card);
   }
   if(op&&!issues.childNodes.length)issues.append(el('p','No unresolved source issues are listed.','muted'));
@@ -299,7 +312,7 @@ function renderOperation(){
   lock($('reload-decisions'),!op||Boolean(S.pending));
   const ready=op?.readiness??{};$('readiness').textContent=op?(op.planId?'Frozen plan '+op.planId+'. ':ready.canFreeze?'Ready to freeze the reviewed plan. ':'Resolve the current source and decision items before freezing. ')+friendly(ready.issues??[]):'Save an operation to review readiness.';
   lock($('save-decisions'),!op||Boolean(op.planId)||Boolean(S.pending));
-  lock($('freeze'),!op||Boolean(op.planId)||!ready.canFreeze||Boolean(S.pending));
+  lock($('freeze'),!op||Boolean(op.planId)||!ready.canFreeze||Boolean(S.pending)||Object.keys(S.working.decisions||{}).length>0||S.working.decisionRevision!=null);
   lock($('download-plan'),!op?.planId);
   lock($('begin-recovery'),!op?.planId||op.activePhase==='recovery'||['ACCEPTED','RECOVERED'].includes(op.status)||Boolean(S.pending));
   lock($('accept-operation'),!op?.planId||!ready.canAccept||Boolean(S.pending));
@@ -423,7 +436,7 @@ $('reload-decisions').onclick=()=>run(async()=>{
 });
 $('print-plan').onclick=()=>run(()=>{preparePrint();window.print();});
 window.addEventListener('beforeprint',preparePrint);
-$('freeze').onclick=()=>run(async()=>{await performAction('freeze',reviewInput());});
+$('freeze').onclick=()=>run(async()=>{if(Object.keys(S.working.decisions||{}).length||S.working.decisionRevision!=null)throw Error('Save these local decisions or explicitly reload saved decisions before freezing the plan.');await performAction('freeze',reviewInput());});
 $('begin-recovery').onclick=()=>run(async()=>{const input=reviewInput();if(!confirm('Begin the recovery phase of this frozen plan? Existing release results remain retained.'))return;await performAction('beginRecovery',input);});
 $('accept-operation').onclick=()=>run(async()=>{await performAction('acceptOperation',reviewInput());});
 $('download-plan').onclick=()=>run(async()=>{if(S.op?.planId)download(await api(API+'/plans/'+encodeURIComponent(S.op.planId)),'release-plan-'+S.op.planId+'.json');});

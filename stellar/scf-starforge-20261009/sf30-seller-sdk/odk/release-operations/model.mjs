@@ -48,8 +48,8 @@ function selectedSourceFacts(kind,value){
    projectIds:s.project_ids,checkedAt:iso(s.checked_at),at:iso(value.at),authenticated:true};
  }
  if(kind==='form-publication'){
-  need(value?.schema==='stellar-forge.odk-form-publication-receiving.v1'&&value.planId&&value.source?.contentHash&&['MATCHED','RECEIVED_DIFFERENT'].includes(value.outcome),'Receive the existing original form-publication result.');
-  return {planId:value.planId,reviewId:value.reviewId,outcome:value.outcome,differences:list(value.differences),
+  need(value?.schema==='stellar-forge.odk-form-publication-receiving.v1'&&typeof value.id==='string'&&value.planId&&value.source?.contentHash&&['MATCHED','RECEIVED_DIFFERENT'].includes(value.outcome),'Receive the complete existing original form-publication record, including its native ID.');
+  return {nativeId:value.id,nativeRecordHash:hash(value),planId:value.planId,reviewId:value.reviewId,outcome:value.outcome,differences:list(value.differences),
    contentHash:value.source.contentHash,form:value.source.form,receivedAt:value.receivedAt};
  }
  return {description:'Operator supplied original; its bytes are retained without claiming provider execution.'};
@@ -439,10 +439,10 @@ export function createCentralReleaseOperations({workspace,store,formReleases,fet
   }else if(step.evidenceKind==='form-publication'){
    if(s.kind!=='form-publication'){mismatch('Receive the original form publication receiving result.');return {outcome,differences};}
    if(f.planId!==step.formPlanId)mismatch('Original form publication plan differs.');
-   if(!afterStart(f.receivedAt))mismatch('The native publication receiving result predates the frozen phase.');
-   const native=store.list('form-release-publication').find(p=>p.planId===f.planId&&p.source?.contentHash===f.contentHash&&p.outcome===f.outcome);
-   if(!native)mismatch('This original publication receiving result is not present in the same workspace.');
-   outcome=f.outcome==='MATCHED'?'success':'failure';if(list(f.differences).length)mismatch('The original publisher recorded changed output.');
+   const native=store.get('form-release-publication',f.nativeId,false);
+   if(!native||hash(native)!==f.nativeRecordHash){mismatch('Receive the exact complete immutable native publication record from this workspace.');return {outcome,differences};}
+   if(!afterStart(native.receivedAt))mismatch('The native publication receiving result predates the frozen phase.');
+   outcome=native.outcome==='MATCHED'?'success':'failure';if(list(native.differences).length)mismatch('The original publisher recorded changed output.');
   }else{
    if(!['operator-evidence','upgrade-instructions'].includes(s.kind))mismatch('Select the actual operator evidence document.');
    if(!afterStart(s.createdAt))mismatch('Receive the actual later operator evidence for this frozen phase.');
@@ -494,7 +494,17 @@ export function createCentralReleaseOperations({workspace,store,formReleases,fet
    sources:store.list(K.source),operations,activeOperations:[...running.keys()],sourceKinds:SOURCE_KINDS,stepKinds:STEP_KINDS,evidenceKinds:EVIDENCE_KINDS,
    connections:gitlab.connections(),centralConnections:store.list('connection').map(c=>({id:c.id,name:c.name,url:c.url,verifiedAt:c.verifiedAt})),formPlans:store.list('form-release-plan').map(p=>({id:p.id,reviewId:p.reviewId,target:p.target,candidateContentHash:p.candidate?.contentHash,createdAt:p.createdAt}))};
  }
- async function file(input){const {source:s,resource:r}=resource(input.sourceId,input.resourceKey);return {...await store.sourceFile(r.sha256),name:r.name,kind:r.kind,sourceId:s.id};}
+ async function file(input){
+  const selected=/^attempt:(0|[1-9][0-9]*)$/.exec(input.resourceKey);
+  if(selected){
+   const s=getSource(input.sourceId),index=Number(selected[1]);
+   need(Number.isSafeInteger(index),'Choose an original HTTP attempt.',404);
+   const attempt=s.attempts?.[index];need(attempt,'This original HTTP attempt is absent.',404);
+   const original=await store.sourceFile(attempt.sha256);need(original.bytes===attempt.bytes,'The original HTTP attempt byte count changed.',409);
+   return {...original,name:'http-attempt-'+index+'-'+attempt.kind+'-'+attempt.status+'.bin',kind:'original-http-attempt',sourceId:s.id};
+  }
+  const {source:s,resource:r}=resource(input.sourceId,input.resourceKey);return {...await store.sourceFile(r.sha256),name:r.name,kind:r.kind,sourceId:s.id};
+ }
  function exportHandover(input){
   const operation=getOperation(input),ids=new Set(operation.assessment.sourceBindings.map(x=>x.sourceId));
   for(const result of [...operation.results,...operation.checkResults])ids.add(result.sourceId);
