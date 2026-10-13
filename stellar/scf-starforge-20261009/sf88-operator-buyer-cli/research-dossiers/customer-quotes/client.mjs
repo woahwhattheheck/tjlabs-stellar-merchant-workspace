@@ -229,7 +229,7 @@ export function createResearchQuotesClient({request,download,run}={}){
     const value=await request(prefix+'/operations/'+requestId+'/files',undefined,o);
     need(value?.schema===QUOTES_SCHEMA&&value.id===requestId&&Array.isArray(value.files)&&value.files.length<=103,
      'RESEARCH_QUOTE_FILES_CHANGED');
-    value.files.forEach(descriptor);need(new Set(value.files.map(row=>row.name)).size===value.files.length,'RESEARCH_QUOTE_FILES_CHANGED');
+    value.files.forEach(file=>descriptor(file));need(new Set(value.files.map(row=>row.name)).size===value.files.length,'RESEARCH_QUOTE_FILES_CHANGED');
     return bound(value);
    });
   },
