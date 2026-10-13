@@ -68,8 +68,8 @@ async function parseEnvelope(text){
   if(await sha(JSON.stringify(value.draft))!==value.sha256)throw new Error('This draft file differs from its exported content. Reopen the original complete export.');
   return verifyDraft(value.draft);
 }
-async function boundedRead(url,maximum){
-  const response=await fetch(url,{cache:'no-cache',credentials:'same-origin'});
+async function boundedRead(url,maximum,signal){
+  const response=await fetch(url,{cache:'no-cache',credentials:'same-origin',signal});
   if(!response.ok)throw new Error('The current application source returned HTTP '+response.status+'. Reopen a retained draft or read the source again.');
   const reader=response.body?.getReader();if(!reader){const bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length>maximum)throw new Error('The selected source exceeds the receiving limit.');return bytes;}
   const parts=[];let size=0;
@@ -81,13 +81,18 @@ async function readPublished(signal){
   return readReviewerSource({baseUrl:document.baseURI,
     fetchImpl:(url,options)=>fetch(url,{...options,signal})});
 }
+async function readWorkingEdition(signal){
+  const url=new URL('./grant-data/reviewer-working-source.json',document.baseURI);
+  const body=await boundedRead(url.href,MAX_BYTES*2+65536,signal);
+  return openReviewerSourcePackage(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(body));
+}
 function sourceReadControls(){
   const reading=publishedRead!==null;
   $('workspace-root').dataset.sourceReadState=reading?'reading':'idle';
   $('refresh-source').textContent=reading?'Cancel source read':'Read current source';
   $('refresh-source').setAttribute('aria-busy',String(reading));
   for(const element of document.querySelectorAll('[data-source-read-control]')){
-    element.textContent=reading?'Cancel source read':'Read current source';
+    element.textContent=reading?'Cancel source read':(element.dataset.sourceEdition==='concise'?'Read concise working edition':'Read current source');
     element.setAttribute('aria-busy',String(reading));
   }
 }
@@ -102,6 +107,15 @@ function sourceReadButton(){
   value.addEventListener('click',()=>{
     if(publishedRead)cancelPublishedRead('Source read cancelled. Continue with the selected draft or open a source package.');
     else void refreshSource();
+  });
+  return value;
+}
+function workingEditionButton(){
+  const value=node('button','Read concise working edition');value.type='button';
+  value.dataset.sourceReadControl='';value.dataset.sourceEdition='concise';
+  value.addEventListener('click',()=>{
+    if(publishedRead)cancelPublishedRead('Source read cancelled. The current working answers remain available.');
+    else void refreshSource({edition:'concise'});
   });
   return value;
 }
@@ -330,7 +344,8 @@ function reviewerFiles(bundle){
 }
 function sourceView(root){
   root.append(node('h2','Source editions'),node('p','The full source text stays with its edition. Receiving another edition updates untouched answers and preserves edited answers against their original baselines. A source package carries all four reviewer files for comparison and receiving.'));
-  root.append(button('Open source package',()=>chooseFile('source')),button('Author product sources',()=>{$('view').value='products';render();}));
+  root.append(button('Open source package',()=>chooseFile('source')),workingEditionButton(),button('Author product sources',()=>{$('view').value='products';render();}));
+  root.append(node('p','The concise working edition is a dated, complete source choice. Compare its nine answers before receiving them; the full current manuscript remains available through Read current source.','muted'));
   if(published){
     const card=node('section',undefined,'card');card.dataset.reviewerSourceBundleId=publishedBundle?.bundle.id||'';
     card.append(node('h3',publishedLabel),node('p',published.url,'code'),node('p',published.gitBlob,'code'),node('p',published.receivedAt,'muted'));
@@ -427,25 +442,26 @@ function render(){
   const root=$('editor');root.replaceChildren();root.classList.toggle('grant-handover',view()==='handover');
   root.classList.toggle('product-authoring',view()==='products');
   delete root.dataset.productSourceAuthoring;delete root.dataset.productSourceBundleId;
-  if(!draft){root.append(node('h2','Open a retained application'),node('p','Read the current source, open a complete draft JSON, or select a saved browser draft.'),button('Open source package',()=>chooseFile('source')));
+  if(!draft){root.append(node('h2','Open a retained application'),node('p','Read the current source, open a complete draft JSON, or select a saved browser draft.'),button('Open source package',()=>chooseFile('source')),workingEditionButton());
     if(view()==='saved')savedView(root);return;}
   $('draft-title').value=draft.title;
   $('copy-all').textContent=view()==='fields'?'Copy all form fields':'Copy all answers';
   ({answers:answerView,fields:fieldView,review:reviewView,source:sourceView,planning:planningView,products:productSourcesView,handover:handoverView,history:historyView,saved:savedView}[view()]||answerView)(root);updateStats();sourceReadControls();
 }
-async function refreshSource({initial=false}={}){
+async function refreshSource({initial=false,edition='current'}={}){
+  if(!['current','concise'].includes(edition))throw new Error('Select the current manuscript or the concise working edition.');
   cancelPublishedRead();
-  const request={controller:new AbortController(),view:view()};
+  const request={controller:new AbortController(),view:view(),edition};
   publishedRead=request;sourceReadControls();clearError();
-  status('Reading the current application. Saved drafts and source packages remain available.');
+  status(edition==='concise'?'Reading the complete concise working edition. Current answers remain available.':'Reading the current application. Saved drafts and source packages remain available.');
   try{
-    const received=await readPublished(request.controller.signal);
+    const received=edition==='concise'?await readWorkingEdition(request.controller.signal):await readPublished(request.controller.signal);
     if(publishedRead!==request)return;
     published=received.source;publishedBundle={bundle:received.bundle,objects:received.objects};
-    publishedLabel='Current application reader';
+    publishedLabel=edition==='concise'?'Concise working edition · '+received.source.receivedAt.slice(0,10):'Current application reader';
     if(!draft){draft=retainPublishedBundle(createDraft(published,{id:uid()}));dirty=false;}
     if(!initial&&view()===request.view)$('view').value='source';
-    render();status('Read the current application edition. Compare its complete source before receiving it.');
+    render();status(edition==='concise'?'Read the dated concise working edition with its full original manuscript, budget and companion. Compare before receiving its answers.':'Read the current application edition. Compare its complete source before receiving it.');
   }catch(error){
     if(publishedRead===request&&error.name!=='AbortError')fail(error);
   }finally{
