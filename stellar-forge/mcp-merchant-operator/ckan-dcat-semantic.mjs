@@ -1,4 +1,5 @@
 // MIT. Native semantic validation through the original DCAT workspace owner.
+import { executeCkanDcatSemanticComparison } from './ckan-dcat-semantic-comparison.mjs';
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import { basename } from 'node:path';
@@ -179,6 +180,8 @@ function boundedFindings(value, input, context) {
 
 /** Uses the caller's existing mutation guard, source aliases and retained reader. */
 export async function executeCkanDcatSemantic(context, name, input) {
+  if (name.startsWith('merchant_ckan_dcat_semantic_comparison_'))
+    return executeCkanDcatSemanticComparison(context, name, input);
   const { model, workspace } = context;
   switch (name) {
     case 'merchant_ckan_dcat_semantic_status': {

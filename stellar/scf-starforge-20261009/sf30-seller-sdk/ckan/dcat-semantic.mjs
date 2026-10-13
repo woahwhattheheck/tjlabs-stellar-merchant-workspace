@@ -3,6 +3,8 @@ import { join } from 'node:path';
 import { lstat } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { createDcatSemanticNative } from './dcat-semantic-native.mjs';
+import { createDcatSemanticComparisons, validateDcatSemanticComparisons,
+  validateDcatSemanticComparisonFiles, dcatSemanticComparisonSummary } from './dcat-semantic-comparison.mjs';
 import { object, bytes, digest, readPrivate, hashPrivate, createFile, privateDirectory, fault, stamp }
   from '../postgres/publisher/files.mjs';
 
@@ -164,6 +166,7 @@ export function validateDcatSemanticState(dcat) {
       review.previousReviewSha256 === (previous?.reviewSha256 ?? null), 'DCAT_SEMANTIC_REVIEW_INVALID');
     prior.set(review.runId, review);
   }
+  validateDcatSemanticComparisons(dcat);
 }
 function recordPath(kind, id) {
   need(['profiles', 'runs', 'reviews'].includes(kind) && uuid(id), 'DCAT_SEMANTIC_NOT_FOUND');
@@ -227,11 +230,12 @@ export async function validateDcatSemanticFiles(directory, dcat) {
       await checkedArtifact(directory, file);
   }
   for (const review of dcat.semantic.reviews) await readRecord(directory, 'reviews', review, 'reviewSha256');
+  await validateDcatSemanticComparisonFiles(directory, dcat);
 }
 export function dcatSemanticSummary(dcat) {
   if (!dcat?.semantic) return undefined;
   const value = dcat.semantic;
-  return { schema: value.schema,
+  return { schema: value.schema, ...dcatSemanticComparisonSummary(dcat),
     profiles: value.profiles.map(({ id, label, profileSha256, supersedesProfileId }) =>
       ({ id, label, profileSha256, supersedesProfileId })),
     runs: value.runs.map(({ id, profileId, profileSha256, selection, status, runSha256, summary }) =>
@@ -542,5 +546,7 @@ export async function createDcatSemanticWorkspace({ directory, state, dcat, laun
         file.downloadName ?? file.path.split('/').at(-1), id);
     },
   };
-  return { api, close: () => native.close() };
+  const comparisons = await createDcatSemanticComparisons({ directory, state, launch, persist,
+    native, readRun, readProfile });
+  return { api: { ...api, ...comparisons }, close: () => native.close() };
 }

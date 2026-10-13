@@ -1,59 +1,10 @@
+import { node, note, row, card, field, input, details, time, select, bind, table, action, api, mutate } from './dcat-semantic-view.mjs';
+import { renderDcatSemanticComparison } from './dcat-semantic-comparison.mjs';
 // MIT. Explicit RDF/SHACL profiles and retained findings in the original catalogue project.
 const memories = new Map();
 const MAX_FILE_BYTES = 16 * 1024 * 1024;
 const MAX_PROFILE_BYTES = 32 * 1024 * 1024;
 const PAGE = 50;
-function node(tag, attrs = {}, ...children) {
-  const value = document.createElement(tag);
-  for (const [key, item] of Object.entries(attrs)) {
-    if (key.startsWith('on')) value.addEventListener(key.slice(2), item);
-    else if (['disabled', 'selected', 'checked'].includes(key)) value[key] = Boolean(item);
-    else if (item !== undefined && item !== null) value.setAttribute(key, item);
-  }
-  for (const item of children.flat()) if (item !== undefined && item !== null)
-    value.append(item instanceof Node ? item : document.createTextNode(String(item)));
-  return value;
-}
-const note = text => node('p', { class: 'muted' }, text);
-const row = (...items) => node('div', { class: 'row' }, ...items);
-const card = (...items) => node('section', { class: 'card' }, ...items);
-const field = (label, input) => node('label', { class: 'grow' }, label, input);
-const input = (name, value = '', attrs = {}) => node('input', { name, value, ...attrs });
-const details = (label, value) => node('details', {}, node('summary', {}, label),
-  node('pre', {}, JSON.stringify(value, null, 2)));
-const time = value => value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString() : value || '—';
-function select(name, choices, selected) {
-  return node('select', { name }, choices.map(([value, label]) =>
-    node('option', { value, selected: String(selected ?? '') === String(value) }, label)));
-}
-function bind(control, receive) {
-  control.addEventListener('input', receive); control.addEventListener('change', receive); return control;
-}
-function table(headings, rows) {
-  return node('div', { class: 'table-wrap' }, node('table', {},
-    node('thead', {}, node('tr', {}, headings.map(text => node('th', {}, text)))),
-    node('tbody', {}, rows.map(cells => node('tr', {}, cells.map(value => node('td', {}, value)))))));
-}
-function action(ctx, label, callback, disabled = false) {
-  const button = node('button', { type: 'button', disabled }, label);
-  button.addEventListener('click', () => ctx.protect(async () => {
-    if (button.disabled || !ctx.current()) return;
-    button.disabled = true;
-    try { return await callback(); } finally { if (button.isConnected) button.disabled = disabled; }
-  }));
-  return button;
-}
-async function api(ctx, path, value) {
-  const response = await fetch('/api/dcat/semantic/' + path, {
-    method: value === undefined ? 'GET' : 'POST',
-    headers: { authorization: 'Bearer ' + ctx.token,
-      ...(value === undefined ? {} : { 'content-type': 'application/json' }) },
-    ...(value === undefined ? {} : { body: JSON.stringify(value) }),
-  });
-  const result = await response.json();
-  if (!response.ok) throw new Error((result.error ?? response.status) + ': ' + (result.message ?? 'Semantic operation failed.'));
-  return result;
-}
 function memory(ctx) {
   const key = JSON.stringify([ctx.state.createdAt, ctx.state.catalogOrigin]);
   if (!memories.has(key)) memories.set(key, {
@@ -62,14 +13,6 @@ function memory(ctx) {
     offset: 0, previous: [], severity: '', search: '', reviewDrafts: new Map(),
   });
   return memories.get(key);
-}
-async function mutate(ctx, saved, path, body, receive) {
-  if (saved.pending || ctx.state.active) throw new Error('Finish the current project operation first.');
-  saved.pending = true;
-  try {
-    const result = await api(ctx, path, body); receive?.(result);
-    ctx.acceptOperation(result); await ctx.refresh(); return result;
-  } finally { saved.pending = false; }
 }
 function formatFor(file) {
   const suffix = file.name.toLowerCase().split('.').at(-1);
@@ -169,11 +112,17 @@ function profileEditor(ctx, saved, profiles) {
 async function profilesView(ctx, saved, semantic) {
   ctx.view.append(profileEditor(ctx, saved, semantic.profiles));
   if (!semantic.profiles.length) return;
+  if (saved.profileId && !semantic.profiles.some(value => value.id === saved.profileId) && ctx.state.active) {
+    ctx.view.append(note('Retaining the selected profile under the current project operation.')); return;
+  }
   const chosen = select('semantic-profile', semantic.profiles.map(p => [p.id, p.label + ' · ' + p.id]),
     saved.profileId || semantic.profiles.at(-1).id);
   saved.profileId = chosen.value;
   chosen.addEventListener('change', () => ctx.protect(async () => { saved.profileId = chosen.value; await ctx.render(); }));
-  const value = await api(ctx, 'profiles/' + encodeURIComponent(saved.profileId));
+  const profileKey = semantic.profiles.find(item => item.id === saved.profileId)?.profileSha256;
+  if (!profileKey || saved.profileRecord?.key !== profileKey)
+    saved.profileRecord = { key: profileKey, value: await api(ctx, 'profiles/' + encodeURIComponent(saved.profileId)) };
+  const value = saved.profileRecord.value;
   if (!ctx.current()) return;
   ctx.view.append(card(node('h3', {}, 'Saved profile'), field('Profile edition', chosen),
     details('Complete profile and original file identities', value),
@@ -231,6 +180,9 @@ function findingsTable(rows) {
     ]));
 }
 async function runsView(ctx, saved, semantic) {
+  if (saved.runId && !semantic.runs.some(value => value.id === saved.runId) && ctx.state.active) {
+    ctx.view.append(note('Preparing the selected run under the current project operation.')); return;
+  }
   if (!semantic.runs.length) { ctx.view.append(note('No semantic runs have been saved.')); return; }
   const choose = select('semantic-run', [...semantic.runs].reverse().map(r => [r.id,
     (r.label || r.id) + ' · ' + (r.status || r.state || '')]),
@@ -239,7 +191,12 @@ async function runsView(ctx, saved, semantic) {
   choose.addEventListener('change', () => ctx.protect(async () => {
     saved.runId = choose.value; saved.offset = 0; saved.previous = []; await ctx.render();
   }));
-  const run = await api(ctx, 'runs/' + encodeURIComponent(saved.runId));
+  const selectedRun = semantic.runs.find(item => item.id === saved.runId);
+  const reviewHash = semantic.reviews.filter(item => item.runId === saved.runId).at(-1)?.reviewSha256 ?? '';
+  const runKey = selectedRun?.runSha256 ? selectedRun.runSha256 + ':' + reviewHash : null;
+  if (!runKey || saved.runRecord?.key !== runKey)
+    saved.runRecord = { key: runKey, value: await api(ctx, 'runs/' + encodeURIComponent(saved.runId)) };
+  const run = saved.runRecord.value;
   if (!ctx.current()) return;
   const result = run.result ?? {}, status = run.status ?? run.state;
   ctx.view.append(card(node('h3', {}, 'Retained semantic run'), field('Run', choose),
@@ -306,8 +263,10 @@ export async function renderDcatSemantic(ctx) {
     row(action(ctx, 'Profiles · ' + semantic.profiles.length, async () => { saved.tab = 'profiles'; await ctx.render(); }),
       action(ctx, 'Run validation', async () => { saved.tab = 'run'; await ctx.render(); }),
       action(ctx, 'Runs · ' + semantic.runs.length, async () => { saved.tab = 'runs'; await ctx.render(); }),
+      action(ctx, 'Compare editions · ' + (semantic.comparisons?.length ?? 0), async () => { saved.tab = 'comparisons'; await ctx.render(); }),
       action(ctx, 'Operating guide', () => ctx.download('dcat/semantic/guide', 'SEMANTIC_CATALOGS.md'))));
   if (saved.tab === 'profiles') await profilesView(ctx, saved, semantic);
   else if (saved.tab === 'run') ctx.view.append(runEditor(ctx, saved, semantic));
+  else if (saved.tab === 'comparisons') await renderDcatSemanticComparison(ctx);
   else await runsView(ctx, saved, semantic);
 }

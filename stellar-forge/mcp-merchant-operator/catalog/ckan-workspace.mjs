@@ -2,6 +2,7 @@
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
 import { dcatWorkspaceDefinitions } from './ckan-dcat.mjs';
 import { dcatSemanticDefinitions } from './ckan-dcat-semantic.mjs';
+import { dcatSemanticComparisonDefinitions } from './ckan-dcat-semantic-comparison.mjs';
 
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 
@@ -48,6 +49,7 @@ const projection = { type: 'object', minProperties: 1, maxProperties: 64,
 const definitions = [
   ...dcatWorkspaceDefinitions({ selected, changing, changed, alias, uuid, digest, offset, read, mutation }),
   ...dcatSemanticDefinitions({ selected, changing, changed, alias, uuid, digest, offset, read, mutation }),
+  ...dcatSemanticComparisonDefinitions({ selected, changing, changed, uuid, digest, offset, read, mutation }),
   ['merchant_ckan_workspaces', 'List host-declared original and receiving CKAN project aliases, browser ownership, current receiving operation, configured inputs and merchant/buyer availability. Does not open a project or read a catalogue.', {}, [], read],
   ['merchant_ckan_open', 'Open one existing CKAN project under its original lease and serve the same browser on loopback. Browser and agent actions share the original model. Reuse the returned current instanceId; close a separately running workbench first.', selected, ['workspace'], { idempotent: true }],
   ['merchant_ckan_close', 'Close this exact owned CKAN browser/model instance, drain pending calls and native operation, close retained file reads, and release its original project lease. Saved editions, publisher state and merchant packages remain available on reopen.', { ...selected, instanceId: uuid }, ['workspace', 'instanceId'], { destructive: true, idempotent: false }],

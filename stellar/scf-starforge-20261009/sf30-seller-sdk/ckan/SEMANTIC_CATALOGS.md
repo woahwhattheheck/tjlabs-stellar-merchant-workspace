@@ -152,7 +152,7 @@ especially when a context or profile has just changed.
 
 Findings retain all RDF terms, original focus nodes, source statements,
 constraint components, messages, details and nested results. The browser
-shows pages of 50 results; CLI and MCP support explicit pages up to 500. Search
+shows pages of 50 results; CLI and HTTP support pages up to 500, and MCP supports pages up to 100. Search
 and severity filters apply to the saved complete findings file. Follow
 `page.nextOffset` until it is null when receiving a complete filtered set.
 
@@ -277,3 +277,7 @@ original files and confirm its review history. A new receiving host only needs
 the prepared semantic interpreter when starting another native run. Keep the
 whole project archive with the source/application distribution for continued
 customer operation.
+
+## Compare saved snapshots
+
+Use **Compare editions** to select two retained native snapshots, inspect complete RDF additions/removals and source-linked relationship impact, and record a scoped operator decision. [Saved catalogue snapshot comparison](SEMANTIC_COMPARISONS.md) describes the ordered source selection, traversal limits, full files and independent receiving workflow.

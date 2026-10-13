@@ -20,6 +20,8 @@ const assets = new Map([['/', ['index.html', 'text/html; charset=utf-8']],
   ['/capture-plans.mjs', ['capture-plans.mjs', 'text/javascript; charset=utf-8']],
   ['/dcat-sources.mjs', ['dcat-sources.mjs', 'text/javascript; charset=utf-8']],
   ['/dcat-semantic.mjs', ['dcat-semantic.mjs', 'text/javascript; charset=utf-8']],
+  ['/dcat-semantic-view.mjs', ['dcat-semantic-view.mjs', 'text/javascript; charset=utf-8']],
+  ['/dcat-semantic-comparison.mjs', ['dcat-semantic-comparison.mjs', 'text/javascript; charset=utf-8']],
   ['/migration.mjs', ['migration.mjs', 'text/javascript; charset=utf-8']], ['/style.css', ['style.css', 'text/css; charset=utf-8']]]);
 const root = fileURLToPath(new URL('./public/', import.meta.url));
 function exactPresentation(value) {
@@ -178,6 +180,26 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
             } });
         }
         if (parts[0] === 'dcat' && parts[1] === 'semantic') {
+          if (parts[2] === 'comparisons') {
+            if (parts[3] === 'guide' && parts.length === 4) {
+              response.writeHead(200, { 'content-type': 'text/markdown; charset=utf-8',
+                'content-disposition': 'attachment; filename="SEMANTIC_COMPARISONS.md"' });
+              response.end(await readFile(fileURLToPath(new URL('./SEMANTIC_COMPARISONS.md', import.meta.url)))); return;
+            }
+            if (parts[3] === 'files' && parts.length === 6)
+              return await downloadWorkspaceArchive(response, await workbench.dcatSemanticComparisonDownload({
+                kind: parts[4], id: parts[5], ...(url.searchParams.has('key') ? { key: url.searchParams.get('key') } : {}),
+              }));
+            if (parts.length === 4) return json(response, await workbench.dcatSemanticComparison(parts[3]));
+            if (parts[4] === 'rows' && parts.length === 5)
+              return json(response, await workbench.dcatSemanticComparisonRows({
+                comparisonId: parts[3], section: url.searchParams.get('section'),
+                offset: Number(url.searchParams.get('offset') ?? 0), limit: Number(url.searchParams.get('limit') ?? 50),
+                ...(url.searchParams.has('search') ? { search: url.searchParams.get('search') } : {}),
+                ...(url.searchParams.has('change') ? { change: url.searchParams.get('change') } : {}),
+                ...(url.searchParams.has('snapshot') ? { snapshot: url.searchParams.get('snapshot') } : {}),
+              }));
+          }
           if (parts[2] === 'profiles' && parts.length === 4)
             return json(response, await workbench.dcatSemanticProfile(parts[3]));
           if (parts[2] === 'runs' && parts.length === 4)
@@ -382,6 +404,10 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
           result = workbench.publishRemotePublication(parts[2], input);
         else if (parts[0] === 'remote' && parts[1] === 'publications' && parts[3] === 'reconcile' && parts.length === 4)
           result = workbench.reconcileRemotePublication(parts[2]);
+        else if (parts[0] === 'dcat' && parts[1] === 'semantic' && parts[2] === 'comparisons' && parts.length === 3)
+          result = workbench.startDcatSemanticComparison(input);
+        else if (parts[0] === 'dcat' && parts[1] === 'semantic' && parts[2] === 'comparisons' && parts[3] === 'reviews' && parts.length === 4)
+          result = workbench.reviewDcatSemanticComparison(input);
         else if (parts[0] === 'dcat' && parts[1] === 'semantic' && parts[2] === 'profiles' && parts.length === 3)
           result = workbench.importDcatSemanticProfile(input);
         else if (parts[0] === 'dcat' && parts[1] === 'semantic' && parts[2] === 'runs' && parts.length === 3)
@@ -418,6 +444,8 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
           ...(result.profileId ? { profileId: result.profileId } : {}),
           ...(result.runId ? { runId: result.runId } : {}),
           ...(result.semanticReviewId ? { semanticReviewId: result.semanticReviewId } : {}),
+          ...(result.comparisonId ? { comparisonId: result.comparisonId } : {}),
+          ...(result.semanticComparisonReviewId ? { semanticComparisonReviewId: result.semanticComparisonReviewId } : {}),
           ...(result.planId ? { planId: result.planId } : {}),
           ...(result.refreshId ? { refreshId: result.refreshId } : {}),
           ...(result.targetId ? { targetId: result.targetId } : {}),
