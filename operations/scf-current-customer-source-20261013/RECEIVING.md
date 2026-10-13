@@ -1,6 +1,56 @@
 # Receive the complete current SCF application
 
-## Current selected edition: complete product union and reviewed nine-answer application
+## Current selected edition: installed OpenLineage sources in the complete application
+
+This following edition adopts the complete already published OpenLineage chapter and its 49-source declaration into the same grant application. The selected union now contains **1,843 source records, 92 product registrations and 111 companion chapters**. Every earlier source ID remains. All **1,794 source rows outside this declaration and all 110 unrelated chapters remain exact**. The complete full application, reviewer HTML, reviewed concise answers, Bank's 116 records and original 597-byte budget are unchanged.
+
+The original request remains **USD 38,000 / 400 prospective hours / 150 days / six funded packages**. This source adoption adds the installed canonical contribution, installed operating guide and source-selected package guide. It also advances the two existing portable contribution and receiving-guide selections to their measured PR1880 edition. The full author chapter retains the original service workspace, actual results, dated Quality editions, complete recipient workflow and historical 889-file prepared package as separate source selections.
+
+## Open the complete installed-source edition
+
+The immutable four-output source commit is **d3c9a58f7d750fa403be07adb941014db9e68517**. Continue through the existing reviewer application and its complete companion; the explicit concise choice remains `grant-submission.html?source=concise`.
+
+| Complete selected file | Bytes | SHA-256 |
+| --- | ---: | --- |
+| [grant.html](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d3c9a58f7d750fa403be07adb941014db9e68517/stellar-forge/developer-site/dist/grant.html) | 120006 | 7531bd602fafeacec3d3bbbc3fb9f13fc9a0da9c97accd9e3097e65f5c5e0248 |
+| [application.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d3c9a58f7d750fa403be07adb941014db9e68517/stellar-forge/developer-site/dist/grant-data/application.md) | 66962 | d426ab4fcdf77bc0802e1d65d845ba373e9e41ac1ea637e21cc0d5174c11ca55 |
+| [product-and-finance.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d3c9a58f7d750fa403be07adb941014db9e68517/stellar-forge/developer-site/dist/grant-data/product-and-finance.md) | 2273280 | c899c393ae2209180adaacb0bab621c29f70e643cbb08c6665c92b69be20d385 |
+| [source-index.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d3c9a58f7d750fa403be07adb941014db9e68517/stellar-forge/developer-site/dist/grant-data/source-index.json) | 2443430 | a7048320b2f4894ca00d91601d79dce678ffa5110bfc3c06a0e861968c3a6b9e |
+| budget.csv, unchanged | 597 | 4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00 |
+
+The [complete four-role source package](./current-source-package.json) contains **6449588 bytes**, SHA-256 **6c0ceeb7c5fafd8cd83b61ad687dade2f4508bd92ace16b26467c60a13c07fdc**, bundle **455bf476f4b02e6f7b6a9373aecab4a6172465d51d4a5ad5b1b89d06001d4a94**. It contains the entire application, source index, unchanged budget and complete companion. The maintained original package reader cold-opened the exported package and matched each of those four full byte sequences.
+
+| Concise choice | Bytes | SHA-256 |
+| --- | ---: | --- |
+| application-reviewer.md | 20167 | 773c26c2f3b221f43fce2a730dcbae6e2a9416fe28ecea41234dbcdbdac663b6 |
+| reviewer-working-index.json | 2519197 | b9347798151f98d028d6d0586df82ad1ed839aafebe2e32c59b2bddc76be2649 |
+| reviewer-working-source.json | 6441198 | df48f32b9c69f6d70d9b23c62023615380c4d7554aaab917bdbd851617cf3f87 |
+
+Concise bundle **f1ee2a094675d3283dde2d311df76d529cf9369b3a5fc49ba8b3dcf66403ba6d** preserves the entire original full application in its source index and carries the same unchanged budget and full companion. Its reviewed 20,167-byte application remains exactly the accepted PR1893 wording. The original package reader cold-opened this complete package and matched all four original roles as well.
+
+## Receive through the existing saved application
+
+Continue **SCF-CURRENT-CUSTOMER-SOURCE-05C7-20261013** and the original 22B7/81CF saved-v7/Page/profile course. The earlier selected 1,259-source phase keeps its actual case, directory, saved version, source hash and request journal until its real completed/save boundary. At the next explicit source-change boundary, select this complete following package using:
+
+`--expected-source-sha256 6c0ceeb7c5fafd8cd83b61ad687dade2f4508bd92ace16b26467c60a13c07fdc`
+
+Use the same source-comparison controls before receiving the new edition. Preserve manually edited answers, issuer fields, requirements, planning selections, decisions, correspondence, review rounds, original attachments and all earlier source editions. Full and concise remain deliberate choices in that saved application. The exact issuer invitation and field limits continue through the existing form intake.
+
+The adopted author pair is PR1886 / 742e915621ef41dd31ade68272bc3d8f44255eb0. The installed source selection is PR1880 / 58cb1940e175b180e26f89785e489c06cc437158. E258 retains the following Airflow chapter and declaration; this generated successor uses the already published 49-source pair and preserves those independently authored files.
+
+## Complete-source composition and operator inspection
+
+The complete 40-module original dependency closure matched every pinned byte count, SHA-256 and Git blob before execution. The unchanged original composition and package functions loaded 24 modules for this operation. They produced the complete companion/index, full receiving package and concise receiving package; both exported packages reopened through the original reader with all four embedded files exact. The reviewer application and HTML did not change.
+
+Before presenting this exact outgoing edition, its existing equipped receiver opens and operates the real application, compares and receives the new source at the saved-case boundary, reads full and concise answers and finance tables, and opens every complete outgoing attachment. Inspect the actual desktop and relevant narrow/mobile screens and every important control, download and reopened working copy. View the actual captured images; code or source checks do not replace the owner's required product inspection. Current human browser use and actual release messages govern local equipment.
+
+[source-selection.json](./source-selection.json) retains all 92 declaration identities, the exact current author pair, all 40 original module pins, the actual 24 loaded modules, complete output/source-package identities, precise preservation results and the entire preceding publication. Reuse this complete current output when composing a following author contribution.
+
+## Retained complete preceding publication
+
+The following complete instructions and source identities describe the earlier selected edition of this same application. They remain available for its existing receiving phase and source history.
+
+## Prior selected edition: complete product union and reviewed nine-answer application
 
 This edition delivers the complete current application, its shorter reviewed nine-answer choice, and the complete product and finance companion together. The full answer explains the actual Stellar payment execution from the approved HTTP402 request through Soroban authorization, independent settlement confirmation and original delivery recovery. The concise choice makes the customer need, paid unit, funded work and acceptance outcomes easier to assess while keeping that same execution sequence.
 
