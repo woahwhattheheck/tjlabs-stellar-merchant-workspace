@@ -112,3 +112,69 @@ The files directory contains source sets, complete comparison, Research source b
 The result records zero live Zotero requests, customer calls, remote mutations and payments. Protocol history records request metadata and successful ephemeral exercise authentication, never its credential.
 
 For CONTINUATION_REQUIRED, preserve the directory and run the same command after resolving the concrete cause. All accepted pages, revisions, exports and receipts remain. A running operator whose close fails retains its original database writer and unfinished child handles: retry that same close call to finish them. Completed children stay closed, a child that finishes opening during shutdown remains owned by its parent or original Research bridge, and the inactive connection receipt follows complete resource closure. The serving CLI retains its signal handlers after a failed close so the same signal or returned close method can finish the existing shutdown; successful closure removes those handlers. Source publication alone does not claim this native/browser journey completed.
+
+
+## Customer-agent continuation in the original completed OSF case
+
+Use the original completed SDK12 / Root2D58 workspace for
+`SCF-ZOTERO-LIBRARY-RESEARCH-DELIVERY-20261012`, not a newly generated
+catalogue. Its source is OSF group479248 at library version11212, with 58
+official response documents, 5,503 items and 18 collections. The original
+four-root project has 1,254 items and the existing Research dossier has its
+accepted revision5. Keep the original capture, project, source terms and
+receiving identities.
+
+1. Install this exact selected Zotero source into the original receiving
+   checkout. Retain the completed source project; run the maintained agent
+   initializer from MERCHANT_SETUP.md using its existing canonical private
+   workspace and connection.
+2. Open the actual alias. Read state, profile/capture/project histories and
+   `project.page` through its terminal page. Confirm the selected original
+   library version and project revision. Open the same project in the existing
+   browser at desktop and 390-pixel widths and inspect the actual rendered
+   screens.
+3. Choose one actual existing project decision and save its deliberately
+   authored continuation with `merchant_zotero_save`, a stable new UUID,
+   original project ID and expected revision. Poll that request. Repeat the
+   identical saved request and confirm its same native result, then inspect
+   the changed project in the browser.
+4. For the original import portion, use the already-retained complete original
+   document-set JSON and its exact saved profile revision through a configured
+   source alias. Preserve the returned source SHA256 and native request.
+   Receive the original edition without acquiring a replacement catalogue.
+5. Export the complete current project using one stable export UUID. Read
+   every retained-file chunk, assemble its complete bytes, check original
+   byte count and SHA256, and repeat the same export UUID after a later edit
+   to confirm its original edition stays selected.
+6. Put that exact full JSON in the configured complete-project alias and
+   receive it through the original named child with one saved receiving UUID.
+   Use the returned `childWorkspace` alias for state, project history and
+   original Research preview. Continue an actual child project decision,
+   export its complete progressed project and reopen the same received
+   directory cold. Retain the original Research handoff IDs and history
+   prefix as the native transfer engine resolves its local binding.
+7. Exercise managed detach, same owned-listener close, capture cancellation
+   against the selected original attempt, and interrupted request lookup
+   without changing accepted UUIDs. Reopen the same native directory with
+   its current private listener binding. Keep all saved results and complete
+   artifacts with the original case and return actual browser screens to the
+   original source owner.
+
+The original full source archive is
+`OSF_Original_Catalogue_And_Research_Reports_2026-10-13.zip`,
+8,150,009 bytes, SHA256
+`c3fa9d12ea5bfbac58e19303d63a4b94c91f52f2b6d479691080814764c412d3`.
+The original native owner retains the completed 258,846,497-byte project
+archive. Recover that already-saved case using its actual file locator before
+this continuation; keep its retained source and earlier browser outcomes.
+
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk; do not run broad suites or build a verification product.
+
+Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
