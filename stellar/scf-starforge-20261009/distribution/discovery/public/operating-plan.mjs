@@ -6,6 +6,10 @@ import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapsho
   receiveOperatingPlan, compareOperatingPlan, summarizeOperatingPlan, shellArgument,
   renderOperatingPlanMarkdown, renderOperatingPlanHTML } from '/operating-plan-core.mjs';
 
+import { IATI_OPERATING_SOURCE_SCHEMA, IATI_OPERATING_PROCEDURE_SCHEMA,
+  createDocumentOperatingProcedure, inspectDocumentOperatingProcedure,
+  receiveDocumentOperatingProcedure } from '/iati/document_evidence/operating_procedure.mjs';
+
 const $ = id => document.getElementById(id);
 const clone = value => JSON.parse(JSON.stringify(value));
 const maximumBytes = 32 * 1024 * 1024;
@@ -388,10 +392,37 @@ async function receivePlan(incoming) {
     : 'Imported the complete plan · ' + received.addedRevisions + ' received revisions.');
   broadcast?.postMessage({ id: received.plan.id, revision: received.plan.revisions.length });
 }
+async function readProcedureFile(file) {
+  if (!file || file.size > 64 * 1024 * 1024) throw new TypeError('Choose one complete JSON file up to 64 MiB.');
+  return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer()));
+}
+function completePlanCapacity(plan) {
+  if (new TextEncoder().encode(JSON.stringify(plan, null, 2) + '\n').length > maximumBytes)
+    throw new TypeError('The complete editable plan exceeds the existing 32 MiB plan capacity.');
+  return plan;
+}
+function completeProcedureCapacity(bundle) {
+  completePlanCapacity(bundle.plan);
+  if (new TextEncoder().encode(JSON.stringify(bundle, null, 2) + '\n').length > 64 * 1024 * 1024)
+    throw new TypeError('The complete IATI procedure package exceeds the 64 MiB file capacity.');
+  return bundle;
+}
 async function importFile(file) {
   if (!file) return;
-  if (file.size > maximumBytes) throw new TypeError('Choose a complete JSON plan up to 32 MiB.');
-  const incoming = inspectOperatingPlan(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer())));
+  const value = await readProcedureFile(file);
+  if (value?.schema === IATI_OPERATING_SOURCE_SCHEMA) {
+    if (!catalog) await refreshCatalog();
+    if (!catalog) throw new Error('Load the installed toolkit catalog before creating a customer procedure.');
+    const bundle = completeProcedureCapacity(createDocumentOperatingProcedure(value, catalog, { id: crypto.randomUUID() }));
+    await flushDraft();
+    await receivePlan(bundle.plan);
+    download(bundle, 'iati-procedure-' + bundle.plan.id + '.json');
+    status('Created the IATI procedure and downloaded its complete source package. Add the customer, period and receiving details, then save a revision.');
+    return;
+  }
+  const incoming = value?.schema === IATI_OPERATING_PROCEDURE_SCHEMA
+    ? inspectDocumentOperatingProcedure(value).plan : inspectOperatingPlan(value);
+  completePlanCapacity(incoming);
   await flushDraft();
   try { await receivePlan(incoming); } catch (error) {
     if (!['PLAN_ORIGIN_CONFLICT', 'PLAN_HISTORY_DIVERGED'].includes(error.code)) throw error;
@@ -529,6 +560,24 @@ $('import-copy').addEventListener('click', () => run(async () => {
   const copied = forkOperatingPlan(incoming, { id: crypto.randomUUID(),
     title: incoming.revisions.at(-1).title.slice(0, 293) + ' (copy)' });
   await receivePlan(copied);
+}));
+const iatiPackageFile = node('input');
+iatiPackageFile.type = 'file'; iatiPackageFile.accept = '.json,application/json'; iatiPackageFile.hidden = true;
+const updateIatiPackage = node('button', 'Update IATI package');
+updateIatiPackage.type = 'button';
+updateIatiPackage.title = 'Join this saved plan history to its original complete IATI source package';
+$('export-json').parentElement.append(updateIatiPackage, iatiPackageFile);
+updateIatiPackage.addEventListener('click', () => run(async () => {
+  if (!current) throw new Error('Open and save the IATI operating plan first.');
+  iatiPackageFile.value = ''; iatiPackageFile.click();
+}));
+iatiPackageFile.addEventListener('change', () => run(async () => {
+  const file = iatiPackageFile.files[0]; if (!file) return;
+  if (!current) throw new Error('Open the corresponding saved operating plan.');
+  await flushDraft();
+  const joined = completeProcedureCapacity(receiveDocumentOperatingProcedure(await readProcedureFile(file), current));
+  download(joined, 'iati-procedure-' + joined.plan.id + '-r' + joined.plan.revisions.length + '.json');
+  status('Downloaded the complete IATI package with saved plan revision ' + joined.plan.revisions.length + ' and all original case source records.');
 }));
 for (const format of ['json', 'markdown', 'html', 'draft', 'comparison'])
   $('export-' + format).addEventListener('click', () => run(() => exportPlan(format)));

@@ -401,6 +401,11 @@ class NativeWorkflowAdapter:
             handover = original["record"]
             files.append(_preserve_bytes(self.outputs / (filename_prefix + "Original_Handover.json"),
                                          original["raw"], "application/json"))
+            if handover["delivery"].get("kind") == "native-edition":
+                delivery = handover["delivery"]
+                files.append(self._source_archive(
+                    str(_absolute(delivery["edition"])), delivery["sha256"],
+                    config.get("node", "node"), alias=alias))
 
         elif kind == "csv":
             path = _absolute(config["path"])
@@ -847,10 +852,13 @@ class NativeWorkflowAdapter:
         self._bind("supplierInput:" + filename, {"original": original, "retained": retained})
         return retained
 
-    def _supplier_module(self, component, coverage):
+    def _supplier_module(self, component, coverage, *, native=False):
         names = ["supplier-report.mjs", "supplier-report-cli.mjs", "supplier_attachments.py"]
         if coverage is not None:
             names.append("catalogue-coverage.mjs")
+        if native:
+            names.extend(["datasette-bridge.mjs", "source-editions.mjs",
+                          "native-source-io.mjs", "native-runtime.json"])
         source = {name: _file(component / name) for name in names}
         self._bind("supplierInstalledSource", source)
         key = "_starforge_supplier_attachments_" + source["supplier_attachments.py"]["sha256"]
@@ -870,7 +878,7 @@ class NativeWorkflowAdapter:
                  "WORKFLOW_SUPPLIER_ATTACHMENT_MODULE_REQUIRED")
         return module, source
 
-    def _supplier_export(self, config, component, original, module, reserved):
+    def _supplier_export(self, config, component, original, module, reserved, *, native_archives=None):
         """Continue the maintained CLI export; adopt its complete manifest."""
         directory = private_directory(self.directory / "supplier", create=True)
         selected = self.state.get("bindings", {}).get("supplierExport")
@@ -921,6 +929,12 @@ class NativeWorkflowAdapter:
         command = [config.get("node", "node"), str(component / "supplier-report-cli.mjs"),
                    "export", "--workspace", original["path"], "--out-dir", str(bundle),
                    "--table-name", config.get("tableName", "supplier_feed_accepted")]
+        if native_archives:
+            command += ["--native-cache", str(directory / "native-source-cache")]
+            for role, filename in sorted(native_archives.items()):
+                command += ["--" + role + "-native-archive", filename]
+        if config.get("nativeDirectory") is not None:
+            command += ["--native-directory", str(_absolute(config["nativeDirectory"]))]
         self._bind("supplierCommand:" + export_id, command)
         stdout_path = self.records / ("supplier-export-" + export_id + ".stdout")
         stderr_path = self.records / ("supplier-export-" + export_id + ".stderr")
@@ -1021,6 +1035,58 @@ class NativeWorkflowAdapter:
         self._bind("supplierCoverage", binding)
         return binding, files
 
+    def _supplier_native_binding(self, alias, role, prepared, bundle, declared, manifest):
+        filename = role + "-source.json"
+        member = declared.get(filename)
+        _require(member is not None, "WORKFLOW_SUPPLIER_NATIVE_SOURCE_REQUIRED",
+                 {"source": alias, "role": role})
+        _file(bundle / filename, expected=member)
+        original = _record(bundle / filename)
+        metadata = original.get("source", {})
+        native = metadata.get("native", {})
+        source = prepared["source"]
+        _require(metadata.get("kind") == "datasette-native-edition"
+                 and metadata.get("bridge") == "conapi.datasette-supplier-edition.v1"
+                 and isinstance(native, dict)
+                 and native.get("editionSha256") == source.get("edition_sha256")
+                 and native.get("captureSha256") == source.get("capture_sha256")
+                 and native.get("edition", {}).get("reviewSha256") == source.get("review_sha256"),
+                 "WORKFLOW_SUPPLIER_NATIVE_SOURCE_CHANGED", {"source": alias, "role": role})
+        _require(native.get("projection") == source.get("reviewed_projection")
+                 and native.get("sourceColumns") == source.get("source_columns")
+                 and native.get("projectedColumns") == source.get("projected_columns")
+                 and original.get("columns") == source.get("projected_columns")
+                 and isinstance(original.get("rows"), list)
+                 and len(original["rows"]) == prepared["row_count"]
+                 and isinstance(native.get("nativeRowsJSON"), str)
+                 and native.get("edition", {}).get("rowCount") == prepared["row_count"]
+                 and native.get("capture", {}).get("rowCount") == prepared["row_count"],
+                 "WORKFLOW_SUPPLIER_NATIVE_PROJECTION_CHANGED", {"source": alias, "role": role})
+        archives = manifest.get("nativeSources", {})
+        archive = archives.get(role) if isinstance(archives, dict) else None
+        archive_name = role + "-native-source.datasette.json.gz"
+        archive_member = declared.get(archive_name)
+        _require(isinstance(archive, dict) and archive.get("archive") == archive_name
+                 and archive_member is not None
+                 and archive.get("bytes") == archive_member["bytes"]
+                 and archive.get("sha256") == archive_member["sha256"]
+                 and archive.get("editionSha256") == source["edition_sha256"]
+                 and archive.get("captureSha256") == source["capture_sha256"],
+                 "WORKFLOW_SUPPLIER_NATIVE_ARCHIVE_CHANGED", {"source": alias, "role": role})
+        _file(bundle / archive_name, expected=archive_member)
+        return {"role": role, "filename": filename, "editionId": prepared["edition_id"],
+                "bytes": member["bytes"], "sha256": member["sha256"],
+                "collections": prepared["collections"], "sourceMode": "native-edition",
+                "nativeEditionSha256": source["edition_sha256"],
+                "nativeCaptureSha256": source["capture_sha256"],
+                "nativeReviewSha256": source["review_sha256"],
+                "projection": source["reviewed_projection"],
+                "rowCount": prepared["row_count"],
+                "sourceDigest": original["sourceDigest"],
+                "supplierEditionDigest": original["digest"],
+                "archive": {"filename": archive_name, "bytes": archive_member["bytes"],
+                            "sha256": archive_member["sha256"]}}
+
     def _supplier(self, request, editions, views, native_files):
         config = self.configuration.get("delivery", {}).get("supplier")
         if config is None:
@@ -1032,18 +1098,48 @@ class NativeWorkflowAdapter:
                          for alias, role in roles.items()),
                  "WORKFLOW_SUPPLIER_SOURCE_BINDINGS_REQUIRED")
         for alias in roles:
-            _require(editions[alias]["source"].get("source_mode") == "original-csv",
-                     "WORKFLOW_SUPPLIER_ORIGINAL_CSV_REQUIRED", {"source": alias})
+            _require(editions[alias]["source"].get("source_mode") in {"original-csv", "native-edition"},
+                     "WORKFLOW_SUPPLIER_ORIGINAL_SOURCE_REQUIRED", {"source": alias})
         component = _absolute(config["component"])
         original = self._supplier_input(config["workspace"], "original-supplier-workspace.json",
                                          "application/json")
-        module, component_files = self._supplier_module(component, config.get("coverage"))
+        native_roles = {alias: role for alias, role in roles.items()
+                        if editions[alias]["source"].get("source_mode") == "native-edition"}
+        module, component_files = self._supplier_module(
+            component, config.get("coverage"), native=bool(native_roles))
         reserved = [item["name"] for item in native_files]
+        native_archives = {}
+        if native_roles:
+            workspace = _record(Path(original["path"]))
+            retained = workspace.get("payload", {})
+            _require(workspace.get("format") == "conapi-supplier-report" and isinstance(retained, dict),
+                     "WORKFLOW_SUPPLIER_WORKSPACE_REQUIRED")
+            for alias, role in sorted(native_roles.items()):
+                source = editions[alias]["source"]
+                edition = retained.get(role, {})
+                native = edition.get("source", {}).get("native", {})
+                _require(native.get("editionSha256") == source["edition_sha256"]
+                         and native.get("captureSha256") == source["capture_sha256"],
+                         "WORKFLOW_SUPPLIER_NATIVE_SOURCE_CHANGED", {"source": alias, "role": role})
+                original_archive = native.get("archive", {})
+                archive_name = ("" if alias == self.source_alias else alias + "_") + "Source_Edition.datasette.json.gz"
+                available = [item for item in native_files if item["name"] == archive_name
+                             and (not original_archive or item["sha256"] == original_archive.get("sha256"))]
+                if available:
+                    _require(len(available) == 1, "WORKFLOW_SUPPLIER_NATIVE_ARCHIVE_AMBIGUOUS")
+                    if role in native_archives:
+                        _require(_file(native_archives[role])["sha256"] == available[0]["sha256"],
+                                 "WORKFLOW_SUPPLIER_NATIVE_SOURCE_CHANGED", {"role": role})
+                    native_archives[role] = available[0]["path"]
         bundle, manifest, manifest_file = self._supplier_export(
-            config, component, original, module, reserved)
+            config, component, original, module, reserved, native_archives=native_archives)
         source_bindings = {}
         declared = {item["filename"]: item for item in manifest["files"]}
         for alias, role in sorted(roles.items()):
+            if editions[alias]["source"].get("source_mode") == "native-edition":
+                source_bindings[alias] = self._supplier_native_binding(
+                    alias, role, editions[alias], bundle, declared, manifest)
+                continue
             filename = role + "-source.csv"
             member = declared.get(filename)
             native_sha = editions[alias]["source"].get("csv_sha256")

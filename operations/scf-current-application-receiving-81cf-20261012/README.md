@@ -217,3 +217,11 @@ Keep the original draft identity, edited answer text and baselines, form-field m
 A companion/index-only change can retain the application source SHA while changing the selected bundle. The complete-application review target includes draft extensions, so renew that decision against the actual new complete draft capture. Individual unchanged answers retain their own comparison behavior. The original publisher is integrating the concrete Connected Systems chapter-reference correction in the canonical manuscript and maintained projector; the complete accepted projector successor is `2945b8931ee43fb01e187b60e62da444f0eaa756` against preimage `5de4750484049c30862b00585d1922c34101000f`. Receive its later composed source as another ordinary source edition.
 
 The original case remains `libfile_7b82273778008191b8469d83ce95be8c`, with draft `scf-technical-buyer-draft-7108-20261012`, publication operation `SCF-GRANT-REVIEWER-PUBLICATION-8910-20261012`, and Site project `appgprj_6acba66ca7a08191897b5a8c22611397`. The source and review handoff continues in the [original application thread](https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791733597745419).
+
+## Run the complete current source and review phase
+
+The following source phase is implemented in this original operation. [SOURCE_RECEIVING.md](SOURCE_RECEIVING.md) gives the complete local input composition and native command.
+
+The local composer reads the equipped owner's existing saved case, complete source package, rendered application and original transfer controller. It uses the source-specific nineteen-decision/five-resolution review already maintained in `following-application-review.json`. Current reusable browser assets are retained under `assets/` at the exact source identities in `source-assets-selection.json`.
+
+The source phase preserves authored answers and baselines, issuer fields, planning inputs, original review history and the same saved case. It prepares all complete outputs, receives the original authors' matching current decisions, and independently reopens and exports the full submission and review. Current authored differences remain attached to their original targets. The existing PR854 controller records both sequential native processes and the original writer saves the resulting complete case.

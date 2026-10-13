@@ -9,7 +9,7 @@
   },
   "commandDescriptions": {
     "bls-publisher": "Publish official BLS labor observations and original customer deliveries",
-    "bls-labor-workspace": "Receive original LAUS and QCEW sources, save county briefings and comparisons, publish native datasets and reopen the complete editable project.",
+    "bls-labor-workspace": "Receive original LAUS and QCEW sources, save regional analysis revisions and county briefings, publish native datasets and reopen complete editable customer projects.",
     "bls-native-receiving": "Continue one saved BLS publication and original customer receiving operation."
   },
   "exports": {

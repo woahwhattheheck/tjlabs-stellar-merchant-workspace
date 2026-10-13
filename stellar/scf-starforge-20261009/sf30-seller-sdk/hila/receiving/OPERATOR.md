@@ -55,6 +55,8 @@ Add the seven actual path fields to this example before use. The source identity
 
 The receiver verifies the complete core result and every file in its original selection. It verifies the source workspace marker and directory identity, actual installed READY binding, zero-dependency profile and every critical full source body before starting Applications. It saves those exact selections under `selection.json`; a later invocation must use the same input, source, runtime, workspace and operator.
 
+The installed Applications path is the original `model.mjs` and `server.mjs` over `applications-core.mjs` and the manifest-verified `application-providers.mjs` registry. The runtime preparation checks those complete bodies, the HILA provider/application implementation, the managed workspace and original runtime/lease modules before returning READY. The browser route named `/applications.mjs` serves the separate selected file `runtime-workspace/public/applications.mjs`.
+
 ## Native source and application ownership
 
 The original source workspace is the core receiver's full-cohort revision 4. Its four cohort axes are empty arrays, selecting the complete consenting cohort. The saved row exclusion and earlier cell decision remain in that revision.

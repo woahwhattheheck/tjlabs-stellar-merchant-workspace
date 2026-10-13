@@ -162,9 +162,13 @@ def verify_selection(envelope):
     return selected
 
 
-def process_start():
+def process_identity():
+    # A container may expose procfs from an enclosing PID namespace. Retain the
+    # PID and start time from that same observable proc entry for its readers.
     text = Path("/proc/self/stat").read_text()
-    return text[text.rfind(")") + 2:].split()[19]
+    fields = text[text.rfind(")") + 2:].split()
+    return {"pid": int(text[:text.find("(")].strip()), "ppid": int(fields[1]),
+            "processStart": fields[19], "runtimePid": os.getpid(), "runtimePpid": os.getppid()}
 
 
 def run(envelope, port):
@@ -198,7 +202,7 @@ def run(envelope, port):
         desk = start_desk(workspace, profile_config=(selected.get("profiles") or {}).get("path"), port=port)
         instance = str(uuid.uuid4())
         entry = {"schema": READY, "state": "LISTENING", "instanceId": instance,
-                 "pid": os.getpid(), "ppid": os.getppid(), "processStart": process_start(),
+                 **process_identity(),
                  "sourceCommit": SOURCE_COMMIT, "sourceTree": SOURCE_TREE,
                  "sourceDirectory": selected["sourceDirectory"], "executionSourceDirectory": str(HERE),
                  "selectionSha256": envelope["selectionSha256"],

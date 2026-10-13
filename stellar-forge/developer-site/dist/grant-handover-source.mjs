@@ -1,3 +1,4 @@
+import {verifyProductSourceImports} from './grant-product-authoring-core.mjs';
 import {verifyIssuerProgrammes,issuerContextSection} from './grant-issuer-source.mjs';
 import {selectedIssuerContext} from './grant-issuer-core.mjs';
 // MIT. Exact original files and prepared output inside the existing submission draft.
@@ -377,6 +378,7 @@ export function comparePrepared(draft,id) {
 }
 export async function verifyHandover(draft,{planningOptions={}}={}) {
   validateDraft(draft);validateHandover(draft);
+  await verifyProductSourceImports(draft,contentHash);
   for(const source of draft.sources)await verifyOriginalApplication(source);
   for(const source of draft.planSources||[])await verifyPlanningSource(source,planningOptions);
   if(!draft.handover)return draft;
@@ -389,6 +391,7 @@ export async function verifyHandover(draft,{planningOptions={}}={}) {
   for(const edition of value.editions) {
     const body=edition.body,snapshot=hydrateAuthorSnapshot(draft,body.snapshot);
     validateDraft(snapshot);
+    await verifyProductSourceImports(snapshot,contentHash);
     for(const source of snapshot.sources) {
       await verifyOriginalApplication(source);
       need(draft.sources.some(row=>row.sha256===source.sha256&&row.markdown===source.markdown),

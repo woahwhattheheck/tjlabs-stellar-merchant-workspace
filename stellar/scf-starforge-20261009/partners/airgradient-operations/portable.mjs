@@ -3,6 +3,7 @@ import {need,encoded,digest,sha,envelope,verifyEnvelope,canonical,MAX_PACKAGE,MA
 import {verifyConnection,acquisitionTasks,normalizeCapture} from './source.mjs';
 import {reviewReport} from './analysis.mjs';
 import {readDeliveryZip} from './exports.mjs';
+import {inspectSourceSet,retainedTasks,verifyRetainedCapture} from './source-intake.mjs';
 
 function reportTasks(report,plan){
  const captures=new Map(report.sources.map(c=>[c.taskKey,c])),issues=new Map(report.issues.map(x=>[x.task,x]));
@@ -11,13 +12,13 @@ function reportTasks(report,plan){
  });
 }
 export function createHandover(store,root){
- const reports=new Map(),plans=new Map(),projects=new Map(),connections=new Map(),captures=new Map(),visiting=new Set();
+ const reports=new Map(),plans=new Map(),projects=new Map(),connections=new Map(),captures=new Map(),sourceSets=new Map(),visiting=new Set();
  function capture(id){if(captures.has(id))return captures.get(id);const c=store.capture(id),item={metadata:c.metadata,rawBase64:c.raw.toString('base64')};captures.set(id,item);return item;}
  function project(id){if(projects.has(id))return;const v=store.object('project-revision',id);need(v,'PROJECT_HISTORY_MISSING');projects.set(id,v);if(v.parentId)project(v.parentId);connections.set(v.value.connectionId,store.object('connection',v.value.connectionId));}
  function report(id){
   need(!visiting.has(id),'REPORT_BASELINE_CYCLE');if(reports.has(id))return;visiting.add(id);
   const v=store.object('report',id);need(v,'REPORT_HISTORY_MISSING');if(v.baselineReportId)report(v.baselineReportId);reports.set(id,v);visiting.delete(id);
-  const plan=store.object('plan',v.planId);need(plan,'REPORT_PLAN_MISSING');plans.set(plan.id,plan);project(plan.projectId);connections.set(plan.connectionId,store.object('connection',plan.connectionId));
+  const plan=store.object('plan',v.planId);need(plan,'REPORT_PLAN_MISSING');plans.set(plan.id,plan);if(plan.sourceSetId){const source=store.object('source-set',plan.sourceSetId);need(source&&source.sha256===plan.sourceSetSha256,'REPORT_SOURCE_SET_MISSING');sourceSets.set(source.id,source);}project(plan.projectId);connections.set(plan.connectionId,store.object('connection',plan.connectionId));
   for(const source of v.sources)need(capture(source.id).metadata.sha256===source.sha256,'FROZEN_SOURCE_CHANGED');
  }
  report(root.id);
@@ -26,7 +27,7 @@ export function createHandover(store,root){
  for(const task of taskStates)if(task.capture_id)capture(task.capture_id);
  const body={originWorkspaceId:store.workspaceId,rootReportId:root.id,createdAt:root.createdAt,
   reports:[...reports.values()],plans:[...plans.values()],projects:[...projects.values()],connections:[...connections.values()],captures:[...captures.values()],
-  attempts,taskStates,
+  attempts,taskStates,...(sourceSets.size?{sourceSets:[...sourceSets.values()]}:{}),
   receivingHistory:store.objects('receiving').filter(v=>reports.has(v.reportId))};
  const result=envelope('handover',{id:'handover_'+digest(body),...body});need(encoded(result).length<=MAX_PACKAGE,'HANDOVER_TOO_LARGE');return result;
 }
@@ -38,9 +39,10 @@ export function inspectHandover(input){
  const map=(array,kind)=>{need(Array.isArray(array),'HANDOVER_COLLECTION_REQUIRED');const result=new Map();for(const v of array){verifyEnvelope(v,kind);need(!result.has(v.id),'DUPLICATE_HANDOVER_OBJECT');result.set(v.id,v);}return result;};
  const connections=map(value.connections,'connection'),projects=map(value.projects,'project-revision'),plans=map(value.plans,'plan'),reports=map(value.reports,'report');
  for(const connection of connections.values())verifyConnection(connection);
+ const sourceSets=map(value.sourceSets??[],'source-set'),sourceInputs=new Map([...sourceSets].map(([id,v])=>[id,inspectSourceSet(v)]));
  const captures=new Map();need(Array.isArray(value.captures),'CAPTURES_REQUIRED');let total=0;
  for(const item of value.captures){
-  verifyEnvelope(item.metadata,'capture');need(!captures.has(item.metadata.id)&&Number.isInteger(item.metadata.status)&&item.metadata.status>=100&&item.metadata.status<=599,'INVALID_HANDOVER_CAPTURE');
+  verifyEnvelope(item.metadata,'capture');need(!captures.has(item.metadata.id)&&(item.metadata.origin==='retained-source'?item.metadata.status===null:Number.isInteger(item.metadata.status)&&item.metadata.status>=100&&item.metadata.status<=599),'INVALID_HANDOVER_CAPTURE');
   need(typeof item.rawBase64==='string'&&/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(item.rawBase64),'INVALID_CAPTURE_ENCODING');
   const raw=Buffer.from(item.rawBase64,'base64');total+=raw.length;need(total<=MAX_PACKAGE&&raw.length<=MAX_BODY&&raw.length===item.metadata.bytes&&sha(raw)===item.metadata.rawSha256,'CAPTURE_BYTES_CHANGED');captures.set(item.metadata.id,{metadata:item.metadata,raw});
  }
@@ -51,12 +53,13 @@ export function inspectHandover(input){
  for(const plan of plans.values()){
   need(canonical(period(plan.period,plan.period.bucket))===canonical(plan.period),'PLAN_PERIOD_CHANGED');
   const project=projects.get(plan.projectId),connection=connections.get(plan.connectionId);need(project&&connection&&connection.sha256===plan.connectionSha256,'PLAN_BINDING_CHANGED');
-  need(canonical(acquisitionTasks(project.value,plan.period,connection))===canonical(plan.tasks),'PLAN_REQUESTS_CHANGED');
+  const source=plan.sourceSetId?sourceInputs.get(plan.sourceSetId):null;if(plan.sourceSetId)need(source&&source.record.sha256===plan.sourceSetSha256,'PLAN_SOURCE_SET_CHANGED');
+  need(canonical(source?retainedTasks(project.value,plan.period,connection,source):acquisitionTasks(project.value,plan.period,connection))===canonical(plan.tasks),'PLAN_REQUESTS_CHANGED');
  }
  for(const {metadata}of captures.values()){
   const plan=plans.get(metadata.planId),task=plan?.tasks.find(t=>t.key===metadata.taskKey);
   need(task&&metadata.requestSha256===task.requestSha256&&metadata.connectionSha256===plan.connectionSha256&&metadata.sourceUrl===task.url,'CAPTURE_PLAN_CHANGED');
-  need(Number.isFinite(Date.parse(metadata.retrievedAt))&&typeof metadata.attemptId==='string','CAPTURE_ATTEMPT_REQUIRED');
+  if(plan.sourceSetId)verifyRetainedCapture(metadata,task,plan);else need(metadata.origin!=='retained-source'&&Number.isFinite(Date.parse(metadata.retrievedAt))&&typeof metadata.attemptId==='string','CAPTURE_ATTEMPT_REQUIRED');
  }
  const checked=new Set(),visiting=new Set();
  function checkReport(id){
@@ -79,26 +82,26 @@ export function inspectHandover(input){
   if(attempt.capture_id!==null){const capture=captures.get(attempt.capture_id);need(capture&&capture.metadata.attemptId===attempt.id&&capture.metadata.planId===attempt.plan_id&&capture.metadata.taskKey===attempt.task_key&&capture.metadata.status===attempt.status,'ATTEMPT_CAPTURE_CHANGED');}
   attempts.set(attempt.id,attempt);
  }
- for(const {metadata}of captures.values()){const attempt=attempts.get(metadata.attemptId);need(attempt&&attempt.capture_id===metadata.id,'CAPTURE_ATTEMPT_MISSING');}
+ for(const {metadata}of captures.values()){if(metadata.origin==='retained-source'){need(metadata.attemptId===null,'RETAINED_CAPTURE_ATTEMPT_CHANGED');continue;}const attempt=attempts.get(metadata.attemptId);need(attempt&&attempt.capture_id===metadata.id,'CAPTURE_ATTEMPT_MISSING');}
  need(Array.isArray(value.taskStates),'HANDOVER_TASK_STATES_REQUIRED');const taskStates=new Map();
  for(const task of value.taskStates){
   const plan=plans.get(task.plan_id),request=plan?.tasks.find(t=>t.key===task.task_key),key=JSON.stringify([task.plan_id,task.task_key]);
   need(request&&!taskStates.has(key)&&['PENDING','RUNNING','FAILED','COMPLETE','INTERRUPTED'].includes(task.status)&&Number.isFinite(Date.parse(task.updated_at))&&(task.error===null||typeof task.error==='string'),'HANDOVER_TASK_STATE_CHANGED');
   const capture=task.capture_id===null?null:captures.get(task.capture_id);
   if(task.capture_id!==null)need(capture&&capture.metadata.planId===plan.id&&capture.metadata.taskKey===request.key,'TASK_CAPTURE_CHANGED');
-  if(task.status==='COMPLETE'){need(capture&&capture.metadata.status===200,'COMPLETE_TASK_SOURCE_REQUIRED');normalizeCapture(capture.raw,request,connections.get(plan.connectionId),plan.period);}
+  if(task.status==='COMPLETE'){need(capture&&(plan.sourceSetId?capture.metadata.origin==='retained-source':capture.metadata.status===200),'COMPLETE_TASK_SOURCE_REQUIRED');normalizeCapture(capture.raw,request,connections.get(plan.connectionId),plan.period);}
   taskStates.set(key,task);
  }
  need(taskStates.size===[...plans.values()].reduce((count,plan)=>count+plan.tasks.length,0),'HANDOVER_TASK_STATES_INCOMPLETE');
  const root=reports.get(value.rootReportId);
- return {value,root,connections,projects,plans,reports,captures,taskStates,summary:{packageId:value.id,packageSha256:value.sha256,reportId:root.id,title:root.title,organisation:root.organisation,period:root.period,
-  reports:reports.size,projects:projects.size,plans:plans.size,captures:captures.size,sourceBytes:total,rows:root.rows,readiness:root.readiness}};
+ return {value,root,connections,projects,plans,reports,captures,sourceSets,taskStates,summary:{packageId:value.id,packageSha256:value.sha256,reportId:root.id,title:root.title,organisation:root.organisation,period:root.period,
+  reports:reports.size,projects:projects.size,plans:plans.size,captures:captures.size,sourceBytes:total,...(sourceSets.size?{sourceSets:[...sourceInputs.values()].map(v=>v.summary)}:{}),rows:root.rows,readiness:root.readiness}};
 }
 export function receiveHandover(store,input){
  const inspected=inspectHandover(input),value=inspected.value,receiptId='receiving_'+value.sha256;
  const existing=store.object('receiving',receiptId);if(existing)return existing;
  return store.transaction(()=>{
-  for(const [kind,values]of [['connection',inspected.connections],['project-revision',inspected.projects],['plan',inspected.plans],['report',inspected.reports]])for(const v of values.values())store.put(kind,v);
+  for(const [kind,values]of [['connection',inspected.connections],['source-set',inspected.sourceSets],['project-revision',inspected.projects],['plan',inspected.plans],['report',inspected.reports]])for(const v of values.values())store.put(kind,v);
   for(const c of inspected.captures.values())store.putCapture(c.metadata,c.raw);
   for(const v of value.receivingHistory)store.put('receiving',v);
   for(const attempt of value.attempts)store.importAttempt(attempt);

@@ -12,7 +12,7 @@ from ._review_transport import ReviewError
 if TYPE_CHECKING:
     from .review_library import ResourceLibrary
 
-BrowserPage = Literal["resources", "comparisons", "returns", "collections"]
+BrowserPage = Literal["resources", "comparisons", "returns", "review-returns", "collections"]
 
 
 @dataclass(repr=False)
@@ -61,22 +61,44 @@ class ReviewBrowser:
             raise StateError("REVIEW_BROWSER_STALE_SESSION")
         return result
 
-    def page_url(self, page: BrowserPage, *, return_id: str | None = None) -> str:
-        """Open one of the actual selected native pages; never construct a remote URL."""
+    def page_url(self, page: BrowserPage, *, return_id: str | None = None,
+                 plan_id: str | None = None, comparison_id: str | None = None) -> str:
+        """Open the actual native page with its original case or plan identifier."""
         if page not in self.pages:
             raise StateError("REVIEW_BROWSER_PAGE_UNAVAILABLE")
-        query = ""
-        if return_id is not None:
-            if page != "returns" or len(return_id) != 64 or any(c not in "0123456789abcdef" for c in return_id):
-                raise StateError("REVIEW_RETURN_ID_INVALID")
-            query = urlencode({"id": return_id})
+        values = {"return_id": return_id, "plan_id": plan_id, "comparison_id": comparison_id}
+        for value in values.values():
+            if value is not None and (not isinstance(value, str) or len(value) != 64
+                    or any(c not in "0123456789abcdef" for c in value)):
+                raise StateError("REVIEW_BROWSER_ID_INVALID")
+        if return_id is not None and page != "returns":
+            raise StateError("REVIEW_RETURN_PAGE_INVALID")
+        if plan_id is not None and page != "review-returns":
+            raise StateError("REVIEW_JOURNAL_PAGE_INVALID")
+        if comparison_id is not None and page not in {"comparisons", "returns", "review-returns"}:
+            raise StateError("REVIEW_COMPARISON_PAGE_INVALID")
+        query = {}
+        if page == "comparisons" and comparison_id is not None:
+            query["id"] = comparison_id
+        else:
+            if return_id is not None:
+                query["id"] = return_id
+            if plan_id is not None:
+                query["id"] = plan_id
+            if comparison_id is not None:
+                query["comparison"] = comparison_id
         source = urlsplit(self.url)
-        return urlunsplit((source.scheme, source.netloc, self.pages[page], query, source.fragment))
+        return urlunsplit((source.scheme, source.netloc, self.pages[page],
+                          urlencode(query), source.fragment))
 
-    def open_tab(self, page: BrowserPage | None = None, *, return_id: str | None = None) -> bool:
+    def open_tab(self, page: BrowserPage | None = None, *, return_id: str | None = None,
+                 plan_id: str | None = None, comparison_id: str | None = None) -> bool:
         """Explicit desktop action. Never automatically called during native startup."""
         import webbrowser
-        url = self.url if page is None else self.page_url(page, return_id=return_id)
+        if page is None and any(value is not None for value in (return_id, plan_id, comparison_id)):
+            raise StateError("REVIEW_BROWSER_PAGE_REQUIRED")
+        url = self.url if page is None else self.page_url(page, return_id=return_id,
+            plan_id=plan_id, comparison_id=comparison_id)
         return bool(webbrowser.open(url, new=2))
 
     def close(self) -> None:

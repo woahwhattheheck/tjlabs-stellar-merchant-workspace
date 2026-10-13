@@ -360,27 +360,6 @@
       ]
     ],
     [
-      "/grant-issuer-core.mjs",
-      [
-        "grant-issuer-core.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/grant-issuer-source.mjs",
-      [
-        "grant-issuer-source.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/grant-issuer-workspace.mjs",
-      [
-        "grant-issuer-workspace.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
       "/grant-operating-plan-core.mjs",
       [
         "grant-operating-plan-core.mjs",
@@ -707,6 +686,62 @@
       [
         "woo.html",
         "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-product-authoring-core.mjs",
+      [
+        "grant-product-authoring-core.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-product-authoring-source.mjs",
+      [
+        "grant-product-authoring-source.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-product-authoring-workspace.mjs",
+      [
+        "grant-product-authoring-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-product-authoring.css",
+      [
+        "grant-product-authoring.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-product-sources-core.mjs",
+      [
+        "grant-product-sources-core.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-issuer-core.mjs",
+      [
+        "grant-issuer-core.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-issuer-source.mjs",
+      [
+        "grant-issuer-source.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-issuer-workspace.mjs",
+      [
+        "grant-issuer-workspace.mjs",
+        "text/javascript; charset=utf-8"
       ]
     ]
   ]

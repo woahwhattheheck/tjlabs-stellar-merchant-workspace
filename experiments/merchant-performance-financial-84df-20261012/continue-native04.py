@@ -277,6 +277,73 @@ def install_original_performance(packet, target):
     return receipt
 
 
+def receive_performance_continuation(payload, original_source, original_receipt, status, logs):
+    """Compose an explicitly selected entry with the original complete source graph."""
+    selected = payload.get("performanceContinuation")
+    if selected is None:
+        return original_source
+    expected_fields = {"sourceFile", "preimage", "gitBlob", "bytes", "sha256"}
+    if not isinstance(selected, dict) or set(selected) != expected_fields:
+        raise RuntimeError("performanceContinuation requires one complete selected source entry")
+    for field, size in (("preimage", 40), ("gitBlob", 40), ("sha256", 64)):
+        value = selected[field]
+        if not isinstance(value, str) or len(value) != size or any(c not in "0123456789abcdef" for c in value):
+            raise RuntimeError("Selected Performance source identity differs: " + field)
+    if (not isinstance(selected["bytes"], int) or isinstance(selected["bytes"], bool)
+        or not 0 < selected["bytes"] <= 1024 * 1024):
+        raise RuntimeError("Selected Performance entry has an invalid byte count")
+    source_file = selected["sourceFile"]
+    if not isinstance(source_file, str) or not source_file or "\0" in source_file:
+        raise RuntimeError("Select the original local Performance source file")
+    source_file = pathlib.Path(source_file)
+    if not source_file.is_absolute() or pathlib.Path(os.path.abspath(source_file)) != source_file:
+        raise RuntimeError("Performance source file must be absolute and normalized")
+    for parent in [source_file, *source_file.parents]:
+        if parent.is_symlink():
+            raise RuntimeError("Performance source file contains a symbolic link")
+    body = native_read_regular(source_file)
+    if len(body) != selected["bytes"] or git_blob(body) != selected["gitBlob"] or sha(body) != selected["sha256"]:
+        raise RuntimeError("Selected Performance source bytes differ")
+    entry = str(SCF / "sf74-merchant-support-console/commercial/performance-native.mjs")
+    originals = [row for row in original_receipt if row["path"] == entry]
+    if len(original_receipt) != 411 or len(originals) != 1 or originals[0]["gitBlob"] != selected["preimage"]:
+        raise RuntimeError("Continue this entry's original complete Performance source graph")
+    inventory = []
+    for row in original_receipt:
+        relative = checked_relative(row["path"])
+        original_path = original_source / relative
+        for parent in [original_path, *original_path.parents]:
+            if parent.is_symlink():
+                raise RuntimeError("Original Performance source contains a symbolic link")
+        original = native_read_regular(original_path)
+        if len(original) != row["bytes"] or git_blob(original) != row["gitBlob"]:
+            raise RuntimeError("Original Performance source changed before composition: " + row["path"])
+        data = body if row["path"] == entry else original
+        inventory.append({"path": row["path"], "gitBlob": git_blob(data), "bytes": len(data), "sha256": sha(data)})
+    inventory_sha = sha(native_encoded(inventory))
+    target = WORK / "performance-source" / inventory_sha
+    receipt = {
+        "schema": "commons.scf-native04-performance-source-continuation.v1",
+        "operation": "SCF-TARIFF-USAGE-PERFORMANCE-25FD-20261012",
+        "originalSourceRoot": str(original_source), "sourceRoot": str(target),
+        "baseCarrier": FINANCIAL_BASE, "entry": entry,
+        "preimage": selected["preimage"], "gitBlob": selected["gitBlob"],
+        "bytes": selected["bytes"], "sha256": selected["sha256"],
+        "inventorySha256": inventory_sha, "fileCount": len(inventory), "files": inventory,
+    }
+    for row in inventory:
+        relative = checked_relative(row["path"])
+        data = body if row["path"] == entry else native_read_regular(original_source / relative)
+        if len(data) != row["bytes"] or sha(data) != row["sha256"] or git_blob(data) != row["gitBlob"]:
+            raise RuntimeError("Performance source changed while receiving: " + row["path"])
+        retain_source_bytes(target / relative, data)
+    retain_source_bytes(target / "PERFORMANCE_SOURCE.json", native_encoded(receipt))
+    write_json(logs / "performance-source-continuation.json", receipt)
+    status["performanceSourceRoot"] = str(target)
+    status["source"].append({key: value for key, value in receipt.items() if key != "files"})
+    return target
+
+
 def selected_financial_paths(payload):
     requested = WORK / checked_relative(payload.get("financialOutput", "performance-financial"))
     candidates = [requested]
@@ -1267,6 +1334,7 @@ def main(payload):
             "existingFilesPreserved":sum(row["existingSourcePreserved"] for row in original_receipt),
             "sourceRoot":str(source)})
         write_json(logs/"original-performance-source.json",original_receipt)
+        performance_source = receive_performance_continuation(payload,source,original_receipt,status,logs)
         write_json(WORK/"FINANCIAL_NATIVE_OPERATION.json",status)
         node = os.environ.get("CODEX_PRIMARY_RUNTIME_NODE") or shutil.which("node")
         python = os.environ.get("CODEX_PRIMARY_RUNTIME_PYTHON") or sys.executable
@@ -1292,7 +1360,7 @@ def main(payload):
                 "result":str(completed),"resultSha256":sha(completed.read_bytes())})
         else:
             run_phase("performance-customer-operation",
-                [node,str(source/SCF/"sf74-merchant-support-console/commercial/performance-native.mjs"),
+                [node,str(performance_source/SCF/"sf74-merchant-support-console/commercial/performance-native.mjs"),
                  "--native-run",str(WORK/"original-native"),"--output",str(WORK/"performance"),"--python",python],
                 completed,status,logs,environment)
         financial_complete = retain_completed_financial(financial_output,financial_operation,status)

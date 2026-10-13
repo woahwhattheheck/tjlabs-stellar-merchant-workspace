@@ -1,0 +1,67 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "bls-labor",
+  "heading": "## Regional labor analysis and recurring data delivery",
+  "sources": [
+    {
+      "id": "bls-regional-analyst-workspace",
+      "label": "Complete BLS regional labor application and editable customer delivery",
+      "path": "products/bls-labor/OPERATING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+          "bytes": 16841,
+          "sha256": "6c6be4112428599bc25e705efa5f519f64bf3277df0b12e71003ffce43970d9c",
+          "git_blob": "7b69e910a6ff30bfc9818da86dd307de314e3f24"
+        }
+      ]
+    },
+    {
+      "id": "bls-labor-source-contract",
+      "label": "Original LAUS and QCEW source definitions and statistical contract",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/contract.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+          "bytes": 12868,
+          "sha256": "53db621b6a0a7164b6b43980430e5b2d364974b794ca1ab728fd55755f8feeab",
+          "git_blob": "6d949648ee368475807256095f8ea54164306f07"
+        }
+      ]
+    },
+    {
+      "id": "bls-original-case-receiving",
+      "label": "Complete original NEK source, reports and independently editable receiving",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/receiving.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+          "bytes": 7761,
+          "sha256": "2c61c9110228b47af36477de47d3aeed1491fda5996c7307240bad3178e4a25b",
+          "git_blob": "f725dc1bdf6873fe42683b2b9797af9e790bbfd7"
+        }
+      ]
+    },
+    {
+      "id": "bls-native-customer-receiving",
+      "label": "Original BLS publication and SF88/Vitality customer receiving",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/NATIVE_RECEIVING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "353f917bb4e152b1bced7055b9dbe29c17ff76a8",
+          "bytes": 10201,
+          "sha256": "b2c6196ddeaa82ef9ca98e2813b6b44907d0bc7b5dc7ffc2da184ea859bf0639",
+          "git_blob": "bff15e5916aebb5903b47bc1251fa52c05226f04"
+        }
+      ]
+    }
+  ]
+}

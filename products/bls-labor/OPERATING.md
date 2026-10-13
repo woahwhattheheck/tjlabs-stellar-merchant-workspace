@@ -2,7 +2,7 @@
 
 The labor workspace turns complete original Bureau of Labor Statistics captures into an editable regional analysis project. It keeps LAUS resident labor and QCEW workplace employment and wages as separate original projections, with their source files, dictionaries, footnotes, capture receipts and source identities.
 
-An analyst can receive a retained ZIP or capture the selected official files, keep several source editions, read every selected observation, save revisioned notes, produce complete county briefings, compare releases, publish original datasets and hand the full editable project to another operator. The browser and typed client use the same saved requests and workspace.
+An analyst can receive a retained ZIP or capture the selected official files, keep several source editions, read every selected observation, save revisioned notes, produce complete county briefings and saved regional analyses, compare releases, publish original datasets and hand the full editable project to another operator. The browser and typed client use the same saved requests and workspace.
 
 ## Install and open
 
@@ -73,9 +73,9 @@ starforge bls-labor-workspace --python /absolute/python \
   --name "Northeast Kingdom labor analysis"
 ~~~
 
-This command continues the same saved intake if restarted. It imports the original files through the maintained capture engine, selects the source edition, produces six complete county briefings and one complete resident-labor change report, saves the original analyst note, exports the editable project, and reopens it in a separate received-workspace directory. The output names the complete original-receiving.json, source counts, report files, archive and reopened workspace.
+This command continues the same saved intake if restarted. It imports the original files through the maintained capture engine, selects the source edition, produces six complete county briefings and one complete resident-labor change report, saves two complete regional analysis revisions and the original analyst note, exports the editable project, and reopens it in a separate received-regional-workspace directory. Earlier case handovers remain retained. The output names the complete original-receiving.json, source counts, report files, archive and reopened workspace.
 
-The case retains these seven outputs:
+The case retains these seven original briefings, plus the full regional labor/workplace report and its saved customer-commentary revision:
 
 | Customer output | Original content |
 | --- | --- |
@@ -130,6 +130,16 @@ A customer briefing uses the currently selected source edition, projection and e
 Choose **Original source values** for the original observations. Choose **LAUS change from the same period one year earlier** to retain the exact prior original observation and decimal difference. Matching requires the same series, period, unit, residence basis, seasonal status and annual coverage. Rate changes use percentage points. Incomparable or unavailable observations retain the reason; no missing month is filled.
 
 **Compare complete source editions** joins original observation identities across the two selected editions. The result retains added, removed, changed and unchanged observations, complete before/after rows and changed field names. Acquisition identity is separate from a changed original value or footnote.
+
+## Save a complete regional analysis
+
+Choose **Regional analysis** in the same browser. Select the original edition, complete county membership, years, LAUS adjustment and period kinds, and one QCEW ownership/industry/size group. Save customer commentary with regional totals, original county observations, separate resident/workplace charts and exact annual differences.
+
+The regional rate uses total unemployed residents and total civilian labor force. Workplace employment totals and derived weekly wages retain their original county inputs. Unavailable members and unequal annual coverage remain explicit. Every statistic keeps its source edition, complete source membership and exact fractional value.
+
+**Revise this analysis** opens the saved definition for a new revision. A received definition opens in the full restored project, with its original source and parent report. Complete report JSON, CSV, HTML, original-observation stream, editable definition, revision comparison and analysis ZIP are available for every saved analysis.
+
+See the [complete regional analysis guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/bls-labor/workspace/REGIONAL_ANALYSIS.md) for the method, customer files, API and exact original NEK receiving programme. The local browser also opens that complete guide.
 
 ## Publish and receive original datasets
 

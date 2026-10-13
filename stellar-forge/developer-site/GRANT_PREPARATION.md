@@ -45,7 +45,7 @@ The contribution uses the existing six package IDs, USD 38,000 request, 400 pros
 
 ## Maintained source registration
 
-The current `grant-customers.mjs` receives the six immutable guide and runtime references below from this chapter. Keep their source IDs when extending the original source catalogue or adopting them into a per-product declaration. `GRANT_COMPOSITION.md` gives the same complete four-output receiving command.
+The complete `grant-products/data-preparation.json` declaration registers all six original source IDs below with the current `grant-compose.mjs` product registry. The composer loads this file from its packaged `grant-products` directory, captures the chapter’s selected immutable links before public projection, and retains the declaration’s own complete byte identity in the source index. The existing `grant-customers.mjs` source receiver continues to recognize the same six IDs.
 
 | Source ID | Selected file |
 | --- | --- |
@@ -57,3 +57,19 @@ The current `grant-customers.mjs` receives the six immutable guide and runtime r
 | `preparation-workspace-native-receiving` | `products/data-preparation/receiving.py` |
 
 The current receiver refreshes a selected repository, commit and path from the chapter and clears an obsolete Git blob pin. Repeating the same selection retains the source identities. A preceding manuscript that omits this chapter preserves the original selected references. The complete chapter and its six-package table travel with all other current customer contributions.
+
+
+### Receive the current manuscript into the original four readers
+
+From the maintained repository root, select the existing complete reader directory and the current canonical manuscript:
+
+```sh
+node stellar-forge/developer-site/grant-compose.mjs \
+  --directory /absolute/path/to/existing/developer-site/dist \
+  --manuscript /absolute/path/to/current-canonical.md \
+  --source-pins-output /absolute/path/to/current-source-pins.json
+```
+
+The retained source index supplies the existing economic, coastal and other selected product commits. The complete composer writes the same `grant.html`, `grant-data/application.md`, `grant-data/product-and-finance.md` and `grant-data/source-index.json` files; the returned source pins identify that complete edition for the original Page, private Site, saved draft and review operation. The registry loads every selected product declaration, including preparation, in the same invocation.
+
+Each preparation declaration records the measured Git blob, full byte length and SHA-256 for the current installed guide, pipeline guide, product selection, receiving guide, frozen source manifest and native controller. The actual chapter selects the commit. A later complete source edition can be added to that file while preserving the six source IDs. When the manuscript selects an unmeasured later edition, the registry retains its original repository, commit and path and clears obsolete measured fields. Repeating a selected edition preserves its source and declaration identities, including after the public link projection. An earlier manuscript without this chapter retains the existing preparation records.

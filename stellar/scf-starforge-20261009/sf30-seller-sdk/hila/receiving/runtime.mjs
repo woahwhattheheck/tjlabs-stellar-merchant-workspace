@@ -68,7 +68,15 @@ const criticalPaths = [
   "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/workspace.py",
   "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/server.py",
   "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/native.mjs",
-  "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-handler.mjs"
+  "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-handler.mjs",
+  "stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs",
+  "stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs",
+  "stellar/scf-starforge-20261009/distribution/runtime-workspace/applications-core.mjs",
+  "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-providers.mjs",
+  "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs",
+  "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-workspace.mjs",
+  "stellar/scf-starforge-20261009/sf46-release/runtime-package.mjs",
+  "stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs"
 ];
 
 function absolute(value, name) {

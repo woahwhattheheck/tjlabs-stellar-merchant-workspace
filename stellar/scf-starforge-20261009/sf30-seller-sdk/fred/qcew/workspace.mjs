@@ -8,13 +8,13 @@ import { need, clone, period, periodKey } from './model.mjs';
 import { defaultSanFranciscoProfile } from './profile.mjs';
 import { qcewProjectSummary } from './state.mjs';
 import { MAX_QCEW_CAPTURE_BYTES, readQcewCapture, readQcewOriginalMember } from './source.mjs';
-import { importQcewSource, saveQcewProfile, produceQcewEdition, getQcewEdition, downloadQcewMember } from './project.mjs';
+import { importQcewSource, saveQcewProfile, produceQcewEdition, getQcewEdition, downloadQcewMember, publishQcewEdition } from './project.mjs';
 import { readFredProject, importFredCapture, receiveFredProject, transactFredProject } from '../project.mjs';
 import { FRED_DDP_PROJECT_BUNDLE_MAX_BYTES } from '../ddp/project-validation.mjs';
 
 export const QCEW_WORKSPACE_REQUEST_BYTES = FRED_DDP_PROJECT_BUNDLE_MAX_BYTES + 65536;
 export const QCEW_WORKSPACE_ACTIONS = Object.freeze([
-  'qcew.import', 'qcew.cpi', 'qcew.profile', 'qcew.produce', 'qcew.receive', 'qcew.continue', 'qcew.clear'
+  'qcew.import', 'qcew.cpi', 'qcew.profile', 'qcew.produce', 'qcew.publish', 'qcew.receive', 'qcew.continue', 'qcew.clear'
 ]);
 const domainActions = QCEW_WORKSPACE_ACTIONS.filter(action => !['qcew.continue', 'qcew.clear'].includes(action));
 const WORKSPACE_OPERATION = 'stellar-forge.qcew-workspace-operation.v1';
@@ -151,6 +151,8 @@ async function runOriginalQcewWorkspaceAction({ directory, projectId, request, e
   }
   if (request.action === 'qcew.cpi') return importFredCapture({ ...common, capture: request.capture });
   if (request.action === 'qcew.profile') return saveQcewProfile({ ...common, profile: request.profile });
+  if (request.action === 'qcew.publish') return publishQcewEdition({ ...common, editionId: request.editionId,
+    origin: request.origin, path: request.path, payment: request.payment });
   if (request.action === 'qcew.produce') {
     need(typeof request.pdf === 'boolean', 'Choose whether to create the PDF edition.');
     const browserPath = request.pdf ? configuredBrowser(environment) : null;
@@ -210,6 +212,8 @@ function requestSelection(request) {
     ...(request.captureSha256 ? { captureSha256: sourceId(request.captureSha256, 'BLS source') } : {}),
     ...(request.cpiCaptureSha256 ? { cpiCaptureSha256: sourceId(request.cpiCaptureSha256, 'price source') } : {}),
     ...(request.profileId ? { profileId: sourceId(request.profileId, 'report profile') } : {}),
+    ...(request.editionId ? { editionId: sourceId(request.editionId, 'county report edition') } : {}),
+    ...(request.action === 'qcew.publish' ? { origin: request.origin, path: request.path ?? '/county-reports' } : {}),
     ...(request.period ? { period: period(request.period) } : {}),
     ...(request.targetDirectory ? { targetDirectory: absoluteDirectory(request.targetDirectory) } : {}),
     ...(request.bundle?.bundleSha256 ? { bundleSha256: sourceId(request.bundle.bundleSha256, 'complete project handover') } : {})

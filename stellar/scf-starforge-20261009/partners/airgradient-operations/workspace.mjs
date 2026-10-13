@@ -7,7 +7,8 @@ import {need,now,newId,digest,sha,envelope,verifyEnvelope,normalizeProject,perio
 import {MAP_CONNECTION,DEFAULT_DASHBOARD_CONNECTION,verifyConnection,dashboardConnection,acquisitionTasks,privateRequest,normalizeCapture,decodeJson,inspectDashboardDefinition} from './source.mjs';
 import {reviewReport,freezeReport} from './analysis.mjs';
 import {createHandover,inspectHandover,receiveHandover} from './portable.mjs';
-import {deliveryFiles,publishDelivery,reopenDelivery} from './exports.mjs';
+import {deliveryFiles,publishDelivery,reopenDelivery,readPublishedDelivery} from './exports.mjs';
+import {inspectSourcePacket,inspectSourceSet,sourceProject,retainedTasks,retainedCapture,verifyRetainedCapture} from './source-intake.mjs';
 
 async function bodyBytes(response){
  const reader=response.body?.getReader();if(!reader)return Buffer.alloc(0);const chunks=[];let length=0;
@@ -43,13 +44,14 @@ export async function openWorkspace(directory,{create=false,network={}}={}){
  const networkOptions=origin=>{const {routes,...fallback}=configuration.network;return {...(routes?.[origin]??fallback),timeoutMs:60000};};
  const object=(kind,id)=>{const value=store.object(kind,id);need(value,kind.toUpperCase()+'_NOT_FOUND');return value;};
  const connection=id=>verifyConnection(object('connection',id));
+ const sourceCache=new Map(),sourceSet=id=>{const value=object('source-set',id);if(!sourceCache.has(value.sha256))sourceCache.set(value.sha256,inspectSourceSet(value));return sourceCache.get(value.sha256);};
  const currentProject=()=>{const id=store.meta('current_project');return id?object('project-revision',id):null;};
  function review(planId){
   const plan=object('plan',planId),project=object('project-revision',plan.projectId),selected=connection(plan.connectionId);
   need(selected.sha256===plan.connectionSha256,'PLAN_CONNECTION_CHANGED');
   return reviewReport({plan,project,connection:selected,tasks:store.tasks(planId),captures:id=>store.capture(id),baseline:plan.baselineReportId?object('report',plan.baselineReportId):null});
  }
- const summarizeReport=report=>({id:report.id,sha256:report.sha256,title:report.title,createdAt:report.createdAt,period:report.period,baselineReportId:report.baselineReportId,readiness:report.readiness,rows:report.rows});
+ const summarizeReport=report=>({id:report.id,sha256:report.sha256,planId:report.planId,projectId:report.projectId,title:report.title,createdAt:report.createdAt,period:report.period,baselineReportId:report.baselineReportId,readiness:report.readiness,rows:report.rows});
  async function acquire(plan,task,selected){
   const attemptId=store.startAttempt(plan.id,task.key);let status=null,captureId=null;
   try{
@@ -73,6 +75,7 @@ export async function openWorkspace(directory,{create=false,network={}}={}){
  async function continueAcquisition(planId,{retryFailed=false}={}){
   need(!closed,'WORKSPACE_CLOSED');need(!active,'ACQUISITION_ALREADY_RUNNING');
   const plan=object('plan',planId),selected=connection(plan.connectionId);need(selected.sha256===plan.connectionSha256,'PLAN_CONNECTION_CHANGED');
+  need(!plan.sourceSetId,'RETAINED_PLAN_USES_SAVED_SOURCE');
   const controller=new AbortController(),job={id:newId('run'),planId,controller,startedAt:now(),finishedAt:null,results:[]};active=job;
   job.promise=(async()=>{
    try{
@@ -92,8 +95,10 @@ export async function openWorkspace(directory,{create=false,network={}}={}){
  const api={directory,workspaceId:store.workspaceId,configurationSha256:digest(configuration),store,review,
   state(){return {schema:'stellar-forge.airgradient-workspace-state.v1',workspaceId:store.workspaceId,currentProject:currentProject(),
    connections:store.objects('connection').map(({definition,binding,...v})=>({...v,...(binding?{binding:{...binding,tokenAvailable:Boolean(process.env[binding.tokenEnv])}}:{})})),
+   sourceSets:store.objects('source-set').map(v=>sourceSet(v.id).summary),
    projects:store.objects('project-revision'),plans:store.objects('plan').map(p=>({...p,tasks:store.tasks(p.id)})),
    reports:store.objects('report').map(summarizeReport),receiving:store.objects('receiving'),deliveries:store.objects('delivery'),
+   pendingDeliveries:store.objects('delivery-request').filter(request=>!store.object('delivery',request.id)),
    active:active?{runId:active.id,planId:active.planId,startedAt:active.startedAt,results:active.results}:null};},
   saveProject(input,{expectedCurrent=null}={}){
    const selected=connection(input.connectionId??MAP_CONNECTION.id),value=normalizeProject({...input,...(selected.kind==='dashboard'&&Array.isArray(input.locations)?{locations:input.locations.map(v=>({...v,sourceType:'dashboard'}))}:{})});if(selected.kind==='dashboard')need(value.measures.every(m=>selected.binding.measures[m]),'MEASURES_NOT_IN_CONNECTION');
@@ -102,15 +107,19 @@ export async function openWorkspace(directory,{create=false,network={}}={}){
   },
   selectProject(id){const selected=object('project-revision',id);store.setMeta('current_project',selected.id);return selected;},
   addDashboard(raw,binding){const selected=dashboardConnection(raw,binding);return store.put('connection',selected);},
+  inspectSource:input=>inspectSourcePacket(input).summary,
+  importSource(input,expectedPacketSha256){const selected=inspectSourcePacket(input);if(expectedPacketSha256)need(selected.record.packetSha256===expectedPacketSha256,'SOURCE_SELECTION_CHANGED');return store.transaction(()=>{store.put('connection',selected.connection);store.put('source-set',selected.record);return selected.summary;});},
+  sourceProject(id,input){return sourceProject(sourceSet(id),input);},
   createPlan(input){
-   const project=currentProject();need(project,'SAVE_PROJECT_FIRST');need(input.expectedProjectId===project.id,'PROJECT_CHANGED_REOPEN_CURRENT');
+   const project=input.projectId?object('project-revision',input.projectId):currentProject();need(project,'SAVE_PROJECT_FIRST');need(input.expectedProjectId===project.id,'PROJECT_CHANGED_REOPEN_CURRENT');
    const selected=connection(project.value.connectionId),window=period(input.period,project.value.bucket);
    need(window.expectedBuckets*project.value.locations.length*project.value.measures.length<=500000,'SELECT_LARGER_BUCKET_FOR_THIS_PERIOD');
    const baseline=input.baselineReportId?object('report',input.baselineReportId):null;
    if(baseline)need(baseline.organisation===project.value.organisation,'BASELINE_ORGANISATION_CHANGED');
-   const tasks=acquisitionTasks(project.value,window,selected),record=envelope('plan',{id:newId('plan'),createdAt:now(),projectId:project.id,connectionId:selected.id,connectionSha256:selected.sha256,
-    title:typeof input.title==='string'&&input.title.trim()?input.title.trim().slice(0,300):project.value.title,notes:typeof input.notes==='string'?input.notes.slice(0,8000):'',period:window,baselineReportId:baseline?.id??null,tasks});
-   return store.transaction(()=>{store.put('plan',record);for(const task of tasks)store.setTask(record.id,task.key,'PENDING');return record;});
+   const retained=input.sourceSetId?sourceSet(input.sourceSetId):null;
+   const tasks=retained?retainedTasks(project.value,window,selected,retained):acquisitionTasks(project.value,window,selected),record=envelope('plan',{id:newId('plan'),createdAt:now(),projectId:project.id,connectionId:selected.id,connectionSha256:selected.sha256,
+    title:typeof input.title==='string'&&input.title.trim()?input.title.trim().slice(0,300):project.value.title,notes:typeof input.notes==='string'?input.notes.slice(0,8000):'',period:window,baselineReportId:baseline?.id??null,...(retained?{sourceSetId:retained.record.id,sourceSetSha256:retained.record.sha256}:{}),tasks});
+   return store.transaction(()=>{store.put('plan',record);for(const task of tasks){if(retained){const capture=retainedCapture(record,task,selected,retained);store.putCapture(capture.metadata,capture.raw);store.setTask(record.id,task.key,'COMPLETE',{captureId:capture.metadata.id});}else store.setTask(record.id,task.key,'PENDING');}return record;});
   },
   async run(planId,options){const job=await continueAcquisition(planId,options);return job.promise;},
   async start(planId,options){const job=await continueAcquisition(planId,options);job.promise.catch(()=>{});return {runId:job.id,planId,startedAt:job.startedAt};},
@@ -127,13 +136,26 @@ export async function openWorkspace(directory,{create=false,network={}}={}){
   async deliver(id,destination){
    const report=object('report',id),deliveryId='delivery_'+digest({reportId:id,directory:destination}),previous=store.object('delivery',deliveryId);
    if(previous){await reopenDelivery(previous,report);return previous;}
-   const delivered=await publishDelivery(await api.files(id),destination,report);
-   return store.put('delivery',envelope('delivery',{id:deliveryId,completedAt:now(),...delivered}));
+   let selected=store.object('delivery-request',deliveryId);
+   if(!selected){
+    const retained=await readPublishedDelivery(destination,report);let files;
+    if(retained){
+     const inspected=inspectHandover(retained.handoverBytes);need(inspected.root.id===report.id&&inspected.root.sha256===report.sha256,'DESTINATION_CONTAINS_DIFFERENT_EDITION');
+     files=retained.files??deliveryFiles(report,inspected.value);
+    }else files=await api.files(id);
+    const manifest=JSON.parse(files.find(file=>file.name==='manifest.json').bytes.toString('utf8'));
+    selected=store.retainDeliveryFiles(envelope('delivery-request',{id:deliveryId,workspaceId:store.workspaceId,createdAt:now(),directory:destination,
+     reportId:report.id,reportSha256:report.sha256,packageId:manifest.packageId,packageSha256:manifest.packageSha256,
+     files:files.map(file=>({name:file.name,bytes:file.bytes.length,sha256:sha(file.bytes)}))}),files);
+   }
+   verifyEnvelope(selected,'delivery-request');need(selected.workspaceId===store.workspaceId&&selected.directory===destination&&selected.reportId===report.id&&selected.reportSha256===report.sha256,'DELIVERY_SELECTION_CHANGED');
+   const delivered=await publishDelivery(store.retainedDeliveryFiles(deliveryId),destination,report);
+   return store.transaction(()=>store.object('delivery',deliveryId)??store.put('delivery',envelope('delivery',{id:deliveryId,completedAt:now(),...delivered})));
   },
   reprocess(planId){
    const plan=object('plan',planId),selected=connection(plan.connectionId),results=[];
    for(const task of plan.tasks){const state=store.task(planId,task.key);if(!state?.capture_id||state.status==='COMPLETE')continue;
-    const capture=store.capture(state.capture_id);if(capture.metadata.status!==200)continue;
+    const capture=store.capture(state.capture_id);if(plan.sourceSetId)verifyRetainedCapture(capture.metadata,task,plan);else if(capture.metadata.status!==200)continue;
     try{normalizeCapture(capture.raw,task,selected,plan.period);store.setTask(planId,task.key,'COMPLETE',{captureId:capture.metadata.id});results.push({task:task.key,status:'COMPLETE',captureId:capture.metadata.id});}
     catch(error){results.push({task:task.key,status:'FAILED',error:error.code??'SOURCE_CONTRACT_CHANGED'});}
    }return {planId,results,tasks:store.tasks(planId)};
