@@ -94,8 +94,8 @@ export async function readGeoapifyWorkspaceConfiguration(path) {
       if (item.kind === 'intake') {
         if (!['csv','json'].includes(item.format))
           throw failure('CONFIGURATION_ERROR', 'Choose CSV or JSON original records.');
-        if (!plain(item.mapping)) throw failure('CONFIGURATION_ERROR', 'Declare explicit original address fields.');
-        configured.format=item.format; configured.mapping=structuredClone(item.mapping);
+        if (item.mapping!==undefined&&!plain(item.mapping)) throw failure('CONFIGURATION_ERROR', 'Declare explicit original address fields.');
+        configured.format=item.format; if(item.mapping!==undefined)configured.mapping=structuredClone(item.mapping);
         configured.provenance=line(item.provenance, 'Source rights and provenance');
         if(item.name!==undefined)configured.name=line(item.name,'Source name');
         if(item.sourceURL!==undefined)configured.sourceURL=line(item.sourceURL,'Original source URL');
@@ -423,12 +423,14 @@ export class MerchantGeoapifyWorkspaces {
             limit:count(payload.limit??25,'Source history page size',1,250)});
         }
         if(args.action==='stage') {
-          only(payload,['sourceImport','mapping','baselineEditionId','expectedRevision']);
+          only(payload,['sourceImport','mapping','baselineEditionId','expectedRevision','expectedSourceSha256','expectedMappingSha256']);
           const source=entry.imports[identifier(payload.sourceImport,'Successor source import')];
           if(!source||source.kind!=='intake')throw failure('GEOAPIFY_IMPORT_NOT_CONFIGURED','Choose a declared complete CSV or JSON successor source.');
           const {file,label,kind,...input}=source;
           return call('source.stage',{...input,path:file,mapping:payload.mapping??source.mapping,
-            baselineEditionId:originalId(payload.baselineEditionId),expectedRevision:payload.expectedRevision});
+            baselineEditionId:originalId(payload.baselineEditionId),expectedRevision:payload.expectedRevision,
+            ...(payload.expectedSourceSha256===undefined?{}:{expectedSourceSha256:payload.expectedSourceSha256}),
+            ...(payload.expectedMappingSha256===undefined?{}:{expectedMappingSha256:payload.expectedMappingSha256})});
         }
         if(args.action==='compare') {
           only(payload,['sourceSha256','offset','limit','status','search','reuseOffset','reuseLimit','sourceOffset','sourceLimit']);
@@ -451,12 +453,28 @@ export class MerchantGeoapifyWorkspaces {
         }
         throw failure('INVALID_PARAMS','Choose history, stage, compare or activate.');
       }
+      case 'merchant_geoapify_inspect_source': {
+        only(args,['workspace','sourceImport','mapping','fieldOffset','fieldLimit','fieldSearch','rowOffset','rowLimit']);
+        const source=entry.imports[identifier(args.sourceImport,'Source import')];
+        if(!source||source.kind!=='intake')throw failure('GEOAPIFY_IMPORT_NOT_CONFIGURED','Choose a declared original CSV or JSON source.');
+        const payload={path:source.file,format:source.format,name:source.name??source.label??args.sourceImport,
+          fieldOffset:count(args.fieldOffset??0,'Field offset'),fieldLimit:count(args.fieldLimit??100,'Field page size',1,250),
+          rowOffset:count(args.rowOffset??0,'Row offset',0,1000000),rowLimit:count(args.rowLimit??25,'Row page size',1,250),
+          fieldSearch:args.fieldSearch??''};
+        if(typeof payload.fieldSearch!=='string'||payload.fieldSearch.length>200)
+          throw failure('INVALID_PARAMS','Search original field names with at most 200 characters.');
+        const selected=args.mapping??source.mapping;
+        if(selected!==undefined)payload.mapping=selected;
+        return call('intake.preview',payload);
+      }
       case 'merchant_geoapify_intake': {
         const source=entry.imports[identifier(args.sourceImport,'Source import')];
         if(!source||source.kind!=='intake')throw failure('GEOAPIFY_IMPORT_NOT_CONFIGURED','Choose a declared original CSV or JSON intake.');
         const {file,label,kind,...input}=source;
         return call('intake.import',{...input,path:file,expectedRevision:args.expectedRevision,
-          mapping:args.mapping??source.mapping});
+          mapping:args.mapping??source.mapping,
+          ...(args.expectedSourceSha256===undefined?{}:{expectedSourceSha256:args.expectedSourceSha256}),
+          ...(args.expectedMappingSha256===undefined?{}:{expectedMappingSha256:args.expectedMappingSha256})});
       }
       case 'merchant_geoapify_provider': {
         const payload=args.payload??{};

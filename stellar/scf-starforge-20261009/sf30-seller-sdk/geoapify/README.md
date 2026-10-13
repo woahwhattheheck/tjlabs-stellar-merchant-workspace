@@ -1,5 +1,124 @@
 # Geoapify address operations
 
+## Inspect and map a customer's actual file
+
+The Source screen and Following source screen now inspect the chosen CSV or JSON
+before adoption. **Inspect original file** shows real field names, nested paths,
+types, examples and original rows. Choose **One complete address field** or
+**Separate address fields**, then select the actual columns for the address,
+optional identifier, and optional original latitude/longitude. Mapping both
+coordinates preserves the original coordinate choice in the later address review.
+
+No detected field becomes a mapping automatically. A selected field remains
+visible even when a field search or later page does not contain it. **Preview
+selected mapping** uses the same parser, mapping normalizer and intake model as
+the original import. It shows distinct queries, rows without a valid query,
+reported row problems, repeated identifier groups, and coordinate coverage across
+the complete file. The source-row pages retain every original field; exact address
+queries may group several rows, while repeated business identifiers stay explicit.
+
+A CSV header containing a dot and a nested JSON path can share a display path.
+The field inspector explains collisions; the existing mapper resolves an exact
+literal key first. Unsupported paths remain visible for inspection. Field
+examples are bounded previews, while the original row view and retained source
+remain complete. JSON numerical identifiers use the original number-preserving
+parser.
+
+The original source and selected mapping are checked again when importing or
+staging. Changing either requires another preview. Browser uploads retain the
+original bytes, including any UTF-8 BOM; host files are read and hashed again
+before adoption. Inspection makes no provider request and does not change the
+selected source, customer edition, jobs, reviews or publications.
+
+### Keep unfinished mapping work
+
+**Save working forms** retains each screen's mapping setup with the existing
+source-specific editor. The setup includes raw advanced JSON, human source name,
+URL, provenance, host path, address layout and field search. Unfinished or invalid
+mapping text remains editable. The separate **Download complete setup** action
+creates a portable setup file; **Open selected setup** restores it after an
+explicit replacement choice. Its source SHA and format are checked when the
+original CSV/JSON is selected again. The setup describes its source and does not
+embed or replace the customer's original data file.
+
+Use **Start a new setup** to choose a different original source deliberately.
+Clear selected files explicitly before opening a different setup. Until source
+import/staging succeeds, an upload is still a browser file selection; keep the
+original file and retain or clear it before exporting the entire workspace.
+
+Following-source preparation uses the same guided mapping with an explicit
+frozen comparison baseline. **Retain following source for review** saves the new
+source and its comparison; the current editor intake and selected frozen customer
+edition keep their original independent selections. Existing comparison,
+decision reuse, customer review returns, Installation and publication flows then
+continue from their original sources.
+
+### Native source inspection and byte guards
+
+The ordinary HTTP `POST /api/action`, installed CLI and typed operator accept
+read-only `intake.preview`. A fresh request supplies exactly one of `path`,
+UTF-8 `text`, or canonical original-byte `base64`, plus `format`. Mapping is
+optional for schema inspection. The same 256 MiB original-file limit applies;
+browser upload is capped at 16 MiB inside the existing 24 MiB action envelope.
+
+Example schema request:
+
+```json
+{
+  "path": "/private/customer/original-addresses.json",
+  "format": "json",
+  "name": "Customer address source",
+  "fieldOffset": 0,
+  "fieldLimit": 100,
+  "fieldSearch": "",
+  "rowOffset": 0,
+  "rowLimit": 25
+}
+```
+
+Add the chosen `mapping` to inspect its result. An invalid mapping produces a
+mapped-error result alongside the still-readable source schema; invalid original
+file bytes or format remain source errors. Fields and rows are independently
+paged, with `nextOffset` and totals. `fieldsPage.search` identifies the applied
+field search.
+
+The live operator returns `inspectionId`, an in-process handle to one retained
+parsed source. Later pages or mapping edits can send that handle instead of
+uploading again. Opening another source or restarting the operator expires the
+handle; reopen the actual file. Separate CLI invocations open their own operator
+and therefore supply the original path/text/base64 again. Parsed schema and the
+last mapped result are reused within one inspection.
+
+```sh
+starforge geoapify act intake.preview --dir /private/address-workspace --payload /private/preview.json
+```
+
+The installed command uses the selected Geoapify product's original CLI. The
+same operation is available directly as `node cli.mjs act intake.preview`.
+
+A subsequent `intake.import` or `source.stage` carries the existing metadata,
+explicit mapping and current `expectedRevision`, plus
+`expectedSourceSha256` from `source.sha256` and
+`expectedMappingSha256` from `mapped.mappingSha256`. Both checks run against
+the newly read original bytes and normalized original mapping before any source
+file or state adoption. Existing callers can continue using the original inputs;
+the guided browser supplies both guards.
+
+### Same original customer receiving course
+
+Use the already retained complete NYC DOHMH `43nn-pn8j` source and its original
+metadata to exercise first-source setup, structured-field selection, exact source
+preview, setup download/reopen and following-source staging. CAMIS identifies a
+permit, so repeated violation rows must remain intact. Read the actual file's
+fields and row totals rather than inferring them from a requested URL limit.
+
+On the same equipped original course, operate the normal desktop and narrow
+controls, inspect the actual rendered examples and counts, download/reopen the
+setup and original complete workspace, and check changed-file/mapping recovery.
+Continue the existing provider, customer edition and Installation steps only
+through their original account and source selections.
+
+
 This operator takes an original CSV or JSON source through Geoapify's generic asynchronous batch API, complete candidate review, immutable SF30 dataset editions, the original merchant publisher, seller releases and buyer acquisition. The browser, CLI and merchant tools share the same private workspace and original job history.
 
 ## Open the actual workspace
@@ -183,7 +302,7 @@ The existing authenticated action endpoint and CLI expose the same actions. Muta
 | source.inspect / review.list / review.query | Optional sourceSha256 | Read the original historical source without selecting it |
 | editor.save / provider.prepare / review.decide / edition.build | Optional expectedIntakeSha256, in addition to revision | Reject a change aimed at a different active intake |
 
-The native provider includes merchant_geoapify_sources for recurring source work; the Customer Installation and customer-review continuations below bring its current total to twenty tool families. It uses declared host-file aliases, independently pages source changes/reusable decisions and preserves the same original operator, writer lease and account. Browser and native reads show the intake identity used for each decision. A historical query read should pass its returned intake SHA when later saving; the active source must match.
+The native provider includes merchant_geoapify_sources for recurring source work; the Customer Installation and customer-review continuations below bring its current total to twenty-one tool families. It uses declared host-file aliases, independently pages source changes/reusable decisions and preserves the same original operator, writer lease and account. Browser and native reads show the intake identity used for each decision. A historical query read should pass its returned intake SHA when later saving; the active source must match.
 
 Example first activation without reusing a decision:
 
@@ -212,7 +331,7 @@ The shared package inspector validates every retained source, job request/return
 
 Preparation first retains the original inputs and request in an owned private directory. Resume using only that directory, then reopen without the original external source files; both paths recheck the same source and rebuild the original derived outputs. In the existing Customer installations interface, Preview and Save use the prepared input and original case. Preserve pending original save recovery, inspect every outgoing attachment, and operate the exact desktop/narrow customer flow and independent reopening through the same receiving course.
 
-The current native provider exposes twenty tool families. Its new Installation actions use declared host directories, exact retained package imports or original export IDs, and chunked complete-file downloads. Source staging and published-edition selection retain their existing meaning.
+The current native provider exposes twenty-one tool families. Its new Installation actions use declared host directories, exact retained package imports or original export IDs, and chunked complete-file downloads. Source staging and published-edition selection retain their existing meaning.
 
 ## Offline customer review and complete returned choices
 
@@ -220,4 +339,4 @@ Use [Customer address review and complete returns](CUSTOMER_REVIEW.md) for the f
 
 The original operator receives that return without changing decisions, compares issued/current/customer values, resolves conflicts explicitly and commits selected decisions through the original native validator. Both accepted-candidate and keep-source choices remain bound to the original intake and response. Whole-workspace backups and Customer Installation retain the issued originals, complete returns, raw forms/history, exact adoption request/preview/result and resulting decisions.
 
-The installed provider now has twenty tool families. The new merchant_geoapify_customer family uses the same seven native customer actions, declared return-file imports, independent query/source-row pages, original request recovery and complete retained downloads. The existing original equipped customer course covers the operator, standalone HTML, all attachments and full independent reopening.
+The installed provider now has twenty-one tool families. The new merchant_geoapify_customer family uses the same seven native customer actions, declared return-file imports, independent query/source-row pages, original request recovery and complete retained downloads. The existing original equipped customer course covers the operator, standalone HTML, all attachments and full independent reopening.

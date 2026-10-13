@@ -37,16 +37,37 @@ Commercial scoping and the proposed customer installation workshare are in [Cust
 
 Following source stages a complete refreshed CSV/JSON against an existing frozen edition, reviews original business-record changes and chooses explicit reuse of exact-query baseline decisions. Source switching restores each source's working forms and preserves every original provider job. The selected customer dataset remains independent. Build and select the following edition, then inspect its full source-comparison HTML/JSON together with the original review, dataset, GeoJSON and full workspace package.
 
-The complete browser/CLI/twenty-tool action contract and same-case receiving continuation are in the [recurring source section of the operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/README.md#recurring-customer-sources-and-following-editions). Exercise both retained sources and both frozen editions in the original receiving operation. Inspect actual desktop/narrow controls and every outgoing export/reopened package before customer presentation.
+The complete browser/CLI/twenty-one-tool action contract and same-case receiving continuation are in the [recurring source section of the operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/README.md#recurring-customer-sources-and-following-editions). Exercise both retained sources and both frozen editions in the original receiving operation. Inspect actual desktop/narrow controls and every outgoing export/reopened package before customer presentation.
 
 ## Customer Installation and Workshare
 
 The installed product also includes `geoapify-installation` and the `merchant_geoapify_installation` native tool family. Follow [Customer Installation and complete receiving](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/GEOAPIFY_CUSTOMER.md) for the complete original-case seed, actual commercial/payment/receiving bindings, source inspection, preparation, resume and independent reopening.
 
-Choose an original frozen edition independently of the active source. The preparation retains its unchanged dataset/review/basis files and the entire original workspace, then composes the established SF47 Customer Installation input and workorder. Original grant assignments, commercial Workshare and OPEN acceptance checks remain source-bound. The native operator now has twenty tool families over the same private host. Use the original equipped receiving operation for the populated customer interface and full outgoing package.
+Choose an original frozen edition independently of the active source. The preparation retains its unchanged dataset/review/basis files and the entire original workspace, then composes the established SF47 Customer Installation input and workorder. Original grant assignments, commercial Workshare and OPEN acceptance checks remain source-bound. The native operator now has twenty-one tool families over the same private host. Use the original equipped receiving operation for the populated customer interface and full outgoing package.
 
 ## Offline customer review and returned decisions
 
 Follow [the complete customer review guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/CUSTOMER_REVIEW.md) to issue a frozen address edition, work offline in the complete customer HTML/JSON, retain unfinished forms and return attributed choices. The original operator previews issued/current/customer differences and adopts explicit resolutions through the existing native decision writer. Every grouped source row, exact response, original baseline and full return history remain available.
 
-The complete product includes the operator receiving panel, standalone offline interface, native CLI and merchant_geoapify_customer family. Twenty tool families share the original private operator. Original issue/adoption requests survive uncertain outcomes; saved customer files stay byte-identical on later exports. Whole backups and Customer Installation carry the complete review and adoption history. Operate the exact populated desktop/narrow interfaces, all downloaded attachments and full reopening in the existing customer course.
+The complete product includes the operator receiving panel, standalone offline interface, native CLI and merchant_geoapify_customer family. Twenty-one tool families share the original private operator. Original issue/adoption requests survive uncertain outcomes; saved customer files stay byte-identical on later exports. Whole backups and Customer Installation carry the complete review and adoption history. Operate the exact populated desktop/narrow interfaces, all downloaded attachments and full reopening in the existing customer course.
+
+## Guided original-source intake
+
+Open Source (or Following source), choose the actual CSV/JSON or its original host
+path and use **Inspect original file**. Real fields, nested paths, examples and
+source rows appear before import. Select a complete-address column or separate
+address fields, optional business identifier and paired original coordinates.
+**Preview selected mapping** reports the full-file query, invalid-row,
+repeated-identity and coordinate counts using the same native intake model.
+
+The ordinary customer form supplies source and mapping SHA guards when importing
+or staging. It retains unfinished mapping setup in working forms and offers
+complete setup download/reopen against the same original bytes. The new native
+`merchant_geoapify_inspect_source` tool uses a declared private source alias; the
+original CLI/HTTP operation is `intake.preview`. Source inspection makes no
+Geoapify API request. All21 native tool families use the existing private operator.
+
+Follow the [complete guided intake course](../../stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/README.md#inspect-and-map-a-customers-actual-file),
+including actual source matching, failed-preview recovery, setup reopening and
+the same chosen customer Installation. Preserve duplicated original business
+rows, especially the NYC DOHMH permit/violation source's repeated CAMIS identities.

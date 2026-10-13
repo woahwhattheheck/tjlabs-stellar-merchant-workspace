@@ -81,7 +81,7 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/workspace.mjs",
-      "blob": "0e764b7fa76db44f60523910857903ec79541eb8"
+      "blob": "56cde4477ce9b231545d6c896fc1a0b844d09f88"
     },
     {
       "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/geoapify-installation-source.mjs",
@@ -94,6 +94,10 @@
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/customer-review-store.mjs",
       "blob": "b083ca3c8c1424e9ed8baafdd536e44b4ffb74f2"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/source-inspection.mjs",
+      "blob": "2498d842605ca1a7eb0a775b5f5636d8cf588c3b"
     }
   ]
 }

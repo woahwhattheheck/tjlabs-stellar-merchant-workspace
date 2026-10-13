@@ -9,6 +9,7 @@ import {buildDatasetSellerConfig,datasetQueryParameters} from '../dataset-cli.mj
 import {hash,canonical,json,object,own,fail,parseJSON,text,integer,readCsvRecords,readJSONSourceRecords,
   createIntake,inspectIntake,prepareBatch,inspectRequest,sanitizeReply,inspectReply,reviewIntake,validateDecision,buildRows,csvBytes} from './source.mjs';
 import {reviewHtml,sourceComparisonHtml} from './report.mjs';
+import {createSourceInspection} from './source-inspection.mjs';
 import {inspectGeoapifyPackage} from './package.mjs';
 import {createGeoapifyCustomerReviewStore} from './customer-review-store.mjs';
 import {compareSources,inheritedMatches,reusableDecisions,validateComparison} from './source-history.mjs';
@@ -41,6 +42,33 @@ async function fileBytes(path,max=MAX){
     if(b.length>max||BigInt(b.length)!==a.size||a.size!==z.size||a.mtimeNs!==z.mtimeNs)throw fail('SOURCE_CHANGED','The file changed while being read.',409);
     return b;
   }finally{await h.close();}
+}
+async function sourceBytes(input){
+  const provided=['text','base64','path'].filter(key=>input[key]!==undefined);
+  if(provided.length!==1)throw fail('SOURCE_INPUT','Choose exactly one complete source: text, base64 bytes or a host path.');
+  let raw;
+  if(provided[0]==='path')raw=await fileBytes(resolve(text(input.path,'Original source path')));
+  else if(provided[0]==='text'){
+    if(typeof input.text!=='string')throw fail('SOURCE_INPUT','Source text must be a string.');
+    raw=Buffer.from(input.text,'utf8');
+  }else{
+    if(typeof input.base64!=='string'||input.base64.length>Math.ceil(MAX/3)*4||
+        input.base64.length%4!==0||!/^[A-Za-z0-9+/]*={0,2}$/.test(input.base64))
+      throw fail('SOURCE_INPUT','Use the complete canonical base64 of the original source bytes.');
+    raw=Buffer.from(input.base64,'base64');
+    if(raw.toString('base64')!==input.base64)throw fail('SOURCE_INPUT','The source base64 bytes are not canonical.');
+  }
+  if(raw.length>MAX)throw fail('SOURCE_LIMIT','The original source exceeds256MiB.');
+  if(input.expectedSourceSha256!==undefined)sourceGuard(input.expectedSourceSha256,hash(raw),'SOURCE_CHANGED','The original source bytes differ from the inspected file. Inspect this source again.');
+  return raw;
+}
+function sourceGuard(expected,actual,code,message){
+  if(expected===undefined)return;
+  if(typeof expected!=='string'||!HASH.test(expected))throw fail('SOURCE_GUARD','Use a complete SHA-256 source or mapping guard.');
+  if(expected!==actual)throw fail(code,message,409);
+}
+function mappingGuard(input,value){
+  sourceGuard(input.expectedMappingSha256,hash(canonical(value.mapping)),'MAPPING_CHANGED','The selected field mapping differs from the inspected mapping. Preview these choices again.');
 }
 const descriptor=(file,b)=>({file,bytes:b.length,sha256:hash(b)});
 function shape(s){
@@ -148,16 +176,38 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
         notBefore:state.providerNotBefore??null,
         spec:'https://apidocs.geoapify.com/assets/openapi/specs/batch/batch-api-openapi-specs.json'}};
   }
+  let sourceInspection=null;
+  async function previewSource(input){
+    let inspection;
+    if(input.inspectionId!==undefined){
+      if(['text','base64','path'].some(key=>input[key]!==undefined))throw fail('SOURCE_INPUT','Use the retained inspection or a complete source, not both.');
+      if(!HASH.test(input.inspectionId??'')||sourceInspection?.id!==input.inspectionId)
+        throw fail('INSPECTION_EXPIRED','This source inspection is no longer open. Inspect the original file again.',409);
+      inspection=sourceInspection;
+      if(input.format!==undefined&&input.format!==inspection.format)throw fail('SOURCE_CHANGED','The selected format differs from this inspection.',409);
+      sourceGuard(input.expectedSourceSha256,inspection.model.source.sha256,'SOURCE_CHANGED','The selected source differs from this inspection.');
+    }else{
+      const bytes=await sourceBytes(input),id=hash(canonical({sourceSha256:hash(bytes),format:input.format}));
+      if(sourceInspection?.id!==id){
+        const name=input.name??(input.path?basename(input.path):'address-source');
+        sourceInspection={id,format:input.format,model:createSourceInspection({bytes,format:input.format,name})};
+      }
+      inspection=sourceInspection;
+    }
+    const result=inspection.model.inspect({mapping:input.mapping,fieldOffset:input.fieldOffset,fieldLimit:input.fieldLimit,
+      fieldSearch:input.fieldSearch,rowOffset:input.rowOffset,rowLimit:input.rowLimit});
+    if(input.name!==undefined||input.path!==undefined)result.source.name=text(input.name??basename(input.path),'Source name',200);
+    return {...result,inspectionId:inspection.id};
+  }
   async function importSource(input){
     if(state.intake)throw fail('INTAKE_EXISTS','Use a new workspace for another original source.',409);
-    const raw=typeof input.text==='string'?Buffer.from(input.text):await fileBytes(resolve(text(input.path,'Original source path')));
-    if(raw.length>MAX)throw fail('SOURCE_LIMIT','The original source exceeds256MiB.');
+    const raw=await sourceBytes(input);
     const records=input.format==='csv'?readCsvRecords(raw).rows:input.format==='json'?readJSONSourceRecords(raw):
       (()=>{throw fail('FORMAT','Choose CSV or JSON records.');})();
     const source={name:text(input.name??(input.path?basename(input.path):'address-source'),'Source name',200),
       url:input.sourceURL??null,format:input.format,bytes:raw.length,sha256:hash(raw),rows:records.length,
       provenance:text(input.provenance,'Source rights and provenance')};
-    const value=createIntake({records,source,mapping:input.mapping});
+    const value=createIntake({records,source,mapping:input.mapping});mappingGuard(input,value);
     const original=await immutable('source/'+source.sha256+(input.format==='csv'?'.csv':'.json'),raw);
     const body=json(value),record={...await immutable('source/intake-'+hash(body)+'.json',body),original};
     await commit(s=>{s.intake=record;ensureHistory(s);});return {intake:record,summary:inspectIntake(value)};
@@ -190,15 +240,15 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     if(!state.intake)throw fail('INTAKE_REQUIRED','Import the first original source before staging a following edition.');
     const baseline=state.editions.find(e=>e.id===input.baselineEditionId);
     if(!baseline)throw fail('EDITION','Choose the actual frozen edition used as the comparison baseline.');
-    const raw=typeof input.text==='string'?Buffer.from(input.text):await fileBytes(resolve(text(input.path,'Refreshed original source path')));
-    if(raw.length>MAX)throw fail('SOURCE_LIMIT','The original source exceeds256MiB.');
+    const raw=await sourceBytes(input);
     const records=input.format==='csv'?readCsvRecords(raw).rows:input.format==='json'?readJSONSourceRecords(raw):
       (()=>{throw fail('FORMAT','Choose CSV or JSON records.');})();
     const beforeSha256=boundSource(baseline),before=await getIntake(beforeSha256);
     const source={name:text(input.name??(input.path?basename(input.path):'following-address-source'),'Source name',200),
       url:input.sourceURL??null,format:input.format,bytes:raw.length,sha256:hash(raw),rows:records.length,
       provenance:text(input.provenance,'Source rights and provenance')};
-    const value=createIntake({records,source,mapping:input.mapping??before.mapping}),body=json(value),sha=hash(body);
+    const value=createIntake({records,source,mapping:input.mapping??before.mapping});mappingGuard(input,value);
+    const body=json(value),sha=hash(body);
     const prior=sourceEntries().find(e=>e.intake.sha256===sha);
     if(prior){
       if(prior.baselineEditionId!==baseline.id)throw fail('SOURCE_EXISTS','This exact intake already has its own retained original history and baseline. Select it in source history.',409);
@@ -436,7 +486,7 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     return {restored:true,id:state.id,rows:state.intake?inspected.sourceIntakes.get(state.intake.sha256).rows.length:0,
       jobs:state.jobs.length,editions:state.editions.length};
   }
-  const reads=new Set(['status','review.list','review.query','provider.request','source.inspect','source.history','source.compare','customer.list','customer.inspect','customer.preview']);
+  const reads=new Set(['intake.preview','status','review.list','review.query','provider.request','source.inspect','source.history','source.compare','customer.list','customer.inspect','customer.preview']);
   async function dispatch(action,input){
     if(action==='customer.issue'||action==='customer.adopt'||action==='customer.receive'){const recovered=await customerReviews.recovery(action,input);if(recovered)return recovered;}
     if(!reads.has(action)&&input.expectedRevision!==state.revision)throw fail('REVISION_CONFLICT','Refresh the original workspace before saving this change.',409);
@@ -458,6 +508,7 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
       await commit(s=>{ensureHistory(s);s.editor={...structuredClone(input.editor),intakeSha256:s.intake?.sha256??null,savedAt:now()};
         if(s.intake)s.editors[s.intake.sha256]=s.editor;});return {editor:state.editor};
     }
+    if(action==='intake.preview')return previewSource(input);
     if(action==='intake.import')return importSource(input);
     if(action==='provider.prepare')return prepare(input);
     if(action==='provider.run')return invoke(input,'POST');
@@ -508,6 +559,6 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
         filename.endsWith('.html')?'text/html; charset=utf-8':filename.endsWith('.csv')?'text/csv; charset=utf-8':
         filename.endsWith('.json')||filename.endsWith('.geojson')?'application/json; charset=utf-8':'text/plain; charset=utf-8'};
     }),
-    close:async()=>{if(closed)return;closed=true;await tail;cache=null;comparisonCache=null;try{lease.exec('ROLLBACK');}finally{lease.close();}}
+    close:async()=>{if(closed)return;closed=true;await tail;cache=null;comparisonCache=null;sourceInspection=null;try{lease.exec('ROLLBACK');}finally{lease.close();}}
   };
 }

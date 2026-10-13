@@ -66,7 +66,7 @@ The reusable product accepts structured or text addresses. Repeated records and 
 ## Complete receiving course
 
 1. Install the selected Geoapify product and native provider on the existing customer host. Open the original private workspace through its actual browser.
-2. Import the complete selected source and inspect original IDs, repeated records and invalid addresses. Confirm that the actual mapping matches the intended source.
+2. Inspect the complete selected source, choose the actual address/identity/coordinate fields in the guided form and preview all-file counts and original row pages. Download/reopen the source-bound setup, then import with its exact source and mapping guards. Preserve repeated records and review invalid addresses.
 3. Prepare one explicit generic batch with original query IDs, priority, candidate limit and geographic options. Inspect and retain both the prepared envelope and actual POST body.
 4. Send once through the authorized account, or import the actual original acknowledgment/result. Continue the same returned job with its original poll clock. Inspect actual quota/error returns without discarding them.
 5. Review complete competing candidates and original/provider coordinate differences. Save an unfinished source-bound decision, reopen it, make the selected explicit decision and retain reviewer/reason.
@@ -112,3 +112,26 @@ Receive the complete returned JSON in the original workspace. Compare its issued
 Include this customer review in the existing commissioning responsibilities: name the source owner, actual reviewer and receiving engineer, agree which address/coordinate choices they own, and carry the returned full review into the next retained dataset edition. The original commercial Workshare supplies the actual scope and fees. The proposed first-installation $4,800/40-hour offer is unchanged; this implementation adds a concrete receiving workflow within the same product and source operation.
 
 The complete workspace and prepared Customer Installation retain the issued review, customer return, unfinished forms/history and original adoption request/preview/result. Exercise the populated offline interface, operator conflict review, original pending-request recovery, full JSON/HTML/CSV downloads and independent restore before presenting the outgoing customer version. Preserve the same original equipped receiving owner and exact attachment set.
+
+## Let the source owner commission the actual columns
+
+First-source and following-source setup now begin with the actual file rather than
+a blank mapping code exercise. The normal operator inspects the real CSV headers
+or nested JSON fields, shows representative values and every original row through
+paged views, and lets the source owner explicitly choose their address layout,
+business identifier and coordinate fields. The same original parser computes the
+full-file mapped preview before adoption.
+
+This supports the existing eight-hour source/mapping workstream in the proposed
+installation scope. Preserve the customer's own filenames, source rights and
+business identifiers; discuss the rows and mapping choices in ordinary language.
+Unfinished mappings remain in saved working forms and complete portable setup
+files. A reopened setup verifies the original source hash and format; importing or
+staging checks the actual original bytes and selected mapping again.
+
+Use the declared source alias through the native agent, original CLI, or ordinary
+browser. No provider calls are needed to inspect and agree the source mapping.
+Continue the actual approved source into the existing provider/customer review,
+dataset, Installation and independent receiving workflow. The original commercial
+Workshare, proposed fee and actual relationship owner remain the authority for
+customer scope and correspondence.

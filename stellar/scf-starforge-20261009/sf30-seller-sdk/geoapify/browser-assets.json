@@ -43,6 +43,13 @@
         "public/customer-review.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/source-intake.mjs",
+      [
+        "public/source-intake.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
