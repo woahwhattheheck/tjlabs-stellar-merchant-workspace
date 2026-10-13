@@ -22,6 +22,16 @@ Choose Analyze selected exports. Duplicate exact keys remain findings; no row is
 
 Save complete input. Record the actual reviewer, UTC time, decision authority and each selected issue's outcome/reason/source reference. Leave other issues pending. Save source-bound review. Report/CSV downloads show the current analyzed or recorded result; unsaved form dispositions enter the result only when Save source-bound review validates them. Keep both saved JSON files. The page is a local editor; the original case is the durable operating record.
 
+### Complete browser working copies
+
+The browser’s **Working copies** section retains the complete input text, including invalid or unfinished JSON, separately from the original analyzed input and last recorded review. It also keeps every raw disposition, reason and reference, the reviewer fields, and the original opened review text. Recording selected decisions does not remove unfinished notes on findings left pending. The report continues to show the last native analysis or recorded review; Save complete input and Save source-bound review retain their original strict validation.
+
+Use **Download complete working copy** to keep all current fields in one JSON file. This remains available if local storage cannot open or a save fails. **Open complete working copy** validates the retained native source and recorded review before replacing any fields; unfinished input and review fields remain editable. The complete-copy receiver allows up to 512 MiB to carry original and editable source representations together. The existing 40 MiB input, 16 MiB review and 16 MiB CSV file limits remain unchanged. Every file is decoded as strict UTF-8; an optional leading BOM is removed only for JSON parsing, while original input/review text and CSV bytes remain retained.
+
+Local copies are separate for each browser window. Saves use a serialized IndexedDB transaction and a revision comparison; a conflict preserves the other saved copy and leaves the current fields available for download or **Save as a separate copy**. Reloading forks the window’s last committed complete copy into a new local copy. **Saved local window copies** lists all retained copies with readable save dates and exact identity/revision details. Opening a copy or replacing input, analyzed source, or a recorded review downloads the complete preceding work and retains its original local copy before changing the active fields. Autosave does not disable typing, and the browser warns before leaving with fields that have neither committed locally nor been downloaded completely.
+
+Working-copy files preserve editing state. Continue using the original validated input/review files and CLI review, inspect and attach commands for the complete native Merchant Support receiving package and case history.
+
 ## Create and inspect the complete original package
 
 Use the complete installed Merchant Support distribution, including the original SF74, SF49 and their existing transitive dependencies. Add these files at their exact relative paths. Node 20 or newer provides the existing application's normal runtime; no npm dependency is introduced by this contribution.
@@ -39,6 +49,10 @@ node "$SUPPORT/commerce-reconciliation-cli.mjs" inspect \
 ```
 
 The package retains request.json, complete input.json, both original CSVs, deterministic result/HTML/CSV, review template, original reviewer return when selected and the exact manifest. Inspect verifies every member and reexecutes the original engine over the original source and return. It does not accept a self-consistent report that differs from its original input.
+
+
+Original file decoding preserves an initial UTF-8 BOM. JSON parsing consumes that marker only for the parsed value; complete input/review files, CSV originals, their byte lengths and hashes, and original case material retain it unchanged. Invalid UTF-8 and JSON string escapes that cannot represent exact UTF-8 source text are rejected before packaging.
+
 
 Repeat a partially completed package build with the same input/review bytes and directory. The existing immutable publisher verifies already written bytes; a different source requires a deliberately new package. Do not replace original files under a retained package.
 
