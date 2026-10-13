@@ -44,6 +44,7 @@ function receiveIatiOperatingApplication(value) {
 
 const INSTITUTIONAL_REPOSITORY = '## Institutional repository services and complete scholarly receiving';
 const JOURNEY = '# 9A. Current demonstration and operator journey';
+const INSTALLATION_USE = '## Product selection, installation and recurring buyer work';
 const BILLING = '## Merchant settlement, customer billing and accountant receiving';
 const DEDICATED = new Set(['## Recurring economic-report installation', '## Coastal model-input installation', '## Datasette editions and customer analysis']);
 const OPENFN_PARAGRAPHS = [
@@ -259,6 +260,11 @@ export function receiveGrantCustomerSources(index, companion) {
     }
     if (at < 0) index.sources.push(source); else index.sources[at] = source;
   };
+  const installationUse = section(companion, INSTALLATION_USE)?.text || '';
+  receive('customer-use-calendar', 'Saved customer-use calendar and complete editable receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/CUSTOMER_USE_CALENDAR\.md)/, installationUse);
+  receive('customer-use-installations', 'Original Installation selection, preview, immutable editions and receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/INSTALLATIONS\.md)/, installationUse);
   const economic = section(companion, '## Recurring economic-report installation')?.text || '';
   receive('economic-county-report', 'County report publication, original purchase and complete customer receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/fred\/qcew\/MERCHANT\.md)/, economic);
