@@ -11,7 +11,7 @@ export interface PointInspection { schema:'stellar-forge.coops-observation-point
 export interface InspectionReviewInput { selection:InspectionSelection; expectedInspectionSha256:string; points?:PointReference[] }
 export interface InspectionReviewEvidence extends Omit<Inspection,'schema'|'bins'|'sourceRequestsComplete'> { schema:'stellar-forge.coops-observation-review-evidence.v1'; points:{reference:PointReference;row:Record<string,string>;receipt:Record<string,unknown>;pageIndex:number}[] }
 export const INSPECTION_SCHEMA:'stellar-forge.coops-observation-inspection.v1';
-export const INSPECTION_LIMITS:{buckets:480;identityKeys:200000;selectedPoints:32};
+export const INSPECTION_LIMITS:{buckets:480;identityKeys:200000;selectedPoints:32;gridSlots:2000000};
 export function inspectionSelection(edition:Record<string,any>,input?:InspectionSelection):SelectedInspection;
 export function inspectionPointReference(value:PointReference):PointReference;
 export function inspectEdition(store:any,edition:Record<string,any>,input?:InspectionSelection):Promise<Inspection>;
