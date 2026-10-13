@@ -147,7 +147,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       (p?'<p class="cp-report-state" data-cp-report-state>'+esc(inputMatchesReport()?'Report matches this draft.':'Draft changed. Update the report to calculate these inputs.')+'</p>':'')+
       (state.incomingCalendar?'<aside class="cp-recovery"><h3>Received customer-use calendar</h3><p>The complete selected Installation editions and native Cohort seed are retained for an editable adoption plan.</p>'+btn('Open calendar as new plan','receive-calendar')+'</aside>':'')+
       (pending?'<aside class="cp-recovery"><h3>Original save awaiting its result</h3><p>The exact source attachment request is retained for case version '+esc(pending.payload.expectedVersion)+'. Continue it to recover the original receipt.</p><code>'+esc(pending.payload.requestId)+'</code><div class="cp-actions">'+btn('Continue original save','retry','data-cp-recovery="true"')+btn('Download retained request','pending-export','data-cp-recovery="true"')+'</div></aside>':'')+
-      (accepted?'<aside class="cp-recovery"><h3>Edition accepted</h3><p>Read back the original source file to finish this save.</p>'+btn('Read back saved source','readback','data-cp-recovery="true"')+'</aside>':'')+
+      (accepted||state.caseRefreshReceipt?'<aside class="cp-recovery"><h3>Edition accepted</h3><p>Read back the original source file to finish this save.</p>'+btn('Read back saved source','readback','data-cp-recovery="true"')+'</aside>':'')+
       (p&&p.source.programId!==caseId?'<p class="cp-alert">This imported plan belongs to '+esc(p.source.programId)+'. Its original source and report are available here. Open that original case to attach an edition.</p>':'');
   }
   function navigation(){return '<nav class="cp-tabs" aria-label="Cohort planning sections">'+tabNames.map(([key,title])=>btn(title,'tab','data-tab="'+key+'" data-cp-view="true" aria-current="'+(key===state.tab?'page':'false')+'"',!plan()&&!['setup','editions','compare'].includes(key))).join('')+'</nav>';}
@@ -518,18 +518,18 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     state.viewedSource={meta:copy(source),raw,envelope};state.accepted=null;state.caseRefreshReceipt=result;
     state.notice='Saved and reopened '+source.filename+' as a new source edition in this case.';
     try{persist(true);}catch(error){state.accepted=accepted;throw error;}
-    if(available()){state.caseRefreshReceipt=null;persist();await onCaseUpdated(next,result);if(available())inform(isComparison?'Saved the complete comparison and both original plan documents in this case.':'Saved the complete cohort plan and report as an original case source.');}
+    if(available()){await refreshRetainedCaseReceipt({next,source,raw});if(available())inform(isComparison?'Saved the complete comparison and both original plan documents in this case.':'Saved the complete cohort plan and report as an original case source.');}
   }
-  async function refreshRetainedCaseReceipt(){
+  async function refreshRetainedCaseReceipt(verified=null){
     const result=state.caseRefreshReceipt,viewed=state.viewedSource;
     if(!result||!available())return;
     if(result.id!==caseId||!Number.isInteger(result.version)||result.version<1||viewed?.meta?.id!==result.recordId||typeof viewed.raw!=='string')
       throw new Error('The retained source receipt does not match its original case and opened source.');
-    const next=await saveApi(prefix),source=next?.sources?.find(row=>row.id===result.recordId);
+    const next=verified?.next||await saveApi(prefix),source=verified?.source||next?.sources?.find(row=>row.id===result.recordId);
     if(next?.program?.id!==caseId||next.program.version<result.version||!source)
       throw new Error('The retained accepted source has not appeared in its original case readback.');
-    const raw=await readSource(source);
-    if(raw!==viewed.raw||source.filename!==viewed.meta.filename)
+    const raw=verified?verified.raw:await readSource(source);
+    if(source.id!==result.recordId||raw!==viewed.raw||source.filename!==viewed.meta.filename)
       throw new Error('The retained source receipt differs from the exact original reopened source.');
     if(!available()||state.caseRefreshReceipt!==result||state.viewedSource!==viewed)return;
     caseValue=next;await onCaseUpdated(next,result);
@@ -1389,7 +1389,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       if(action==='evaluate'){evaluate();state.tab='report';state.notice='Calculated the named schedule, payment groups, costs, and original proposed targets.';return;}
       if(action==='save'){await saveEdition();return;}
       if(action==='retry'){await sendPending();return;}
-      if(action==='readback'){await finishAccepted();return;}
+      if(action==='readback'){if(state.accepted)await finishAccepted();else await refreshRetainedCaseReceipt();return;}
       if(action==='pending-export'){const retained=state.pending||state.accepted;if(retained)download(JSON.stringify(retained,null,2)+'\n','cohort-original-source-request.json');return;}
       if(action==='edit'||action==='copy-row'){openEditor(target.dataset.kind,target.dataset.id||null,action==='copy-row');return;}
       if(action==='editor-close'){closeEditor();return;}

@@ -99,7 +99,9 @@ function editor(value,data,label){
   if(value.kind==='schedules'){object(data.cadence,label+' cadence');object(data.payment,label+' payment');}
   if(value.kind==='capacityPools')object(data.hoursByWeekday,label+' weekday capacity');
   const variants=object(value.variants,label+' saved choices');
-  map(variants.cadence,label+' saved cadence choices');map(variants.payment,label+' saved payment choices');
+  for(const key of ['cadence','payment'])for(const [kind,choice] of Object.entries(map(variants[key],label+' saved '+key+' choices'))){
+    object(choice,label+' saved '+key+' choice');need(choice.kind===kind,label+' saved '+key+' identity differs from its choice.');
+  }
   if(variants.economics!==null&&variants.economics!==undefined)object(variants.economics,label+' saved economics');
   if(variants.fundingGroupIds!==undefined)array(variants.fundingGroupIds,label+' saved funding groups');
 }
@@ -150,11 +152,17 @@ export function validateCohortPlanningState(value,caseId){
   for(const key of ['lastEditorKey','parentSourceId','savedSourceId','comparisonSavedSourceId','comparisonMetric','schedulingEditorId'])optionalString(value[key],key);
   need(value.tab===undefined||tabs.includes(value.tab),'The retained panel is unsupported.');
   need(value.tranche===undefined||[2,3].includes(value.tranche),'The selected tranche is unsupported.');
-  if(value.pages)for(const page of Object.values(map(value.pages,'Report pages')))integer(page,'Report page');
+  for(const page of Object.values(map(value.pages,'Report pages')))integer(page,'Report page');
   if(value.latestSeed){object(value.latestSeed,'Current seed');object(value.latestSeed.source,'Current seed source');need(value.latestSeed.source.programId===caseId,'The retained current seed belongs to another case.');}
+  if(value.incomingCalendar!==null&&value.incomingCalendar!==undefined){
+    const received=object(value.incomingCalendar,'Incoming customer calendar');
+    object(received.nativeSeed,'Incoming calendar seed');object(received.nativeSeed.source,'Incoming calendar case');
+    need(received.nativeSeed.source.programId===caseId,'The incoming calendar belongs to another original case.');
+    object(received.calendarSelection,'Incoming calendar selection');optionalString(received.requestId,'Incoming calendar request');
+  }
   editor(value.editor,value.editorDraft,'Open row editor');
-  for(const row of Object.values(map(value.rowDrafts||{},'Unfinished rows')))editor(row.editor,row.data,'Unfinished row');
-  for(const row of array(value.priorDrafts||[],'Earlier drafts')){
+  for(const row of Object.values(map(value.rowDrafts,'Unfinished rows')))editor(row.editor,row.data,'Unfinished row');
+  for(const row of array(value.priorDrafts,'Earlier drafts')){
     string(row.id,'Earlier draft id');string(row.retainedAt,'Earlier draft time');string(row.reason,'Earlier draft reason');
     planShape(row.plan,'Earlier draft');checkReport(row.report,'Earlier draft report');
     checkReportInput(row.report,row.reportInput,'Earlier draft report');

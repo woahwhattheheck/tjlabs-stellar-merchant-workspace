@@ -16,7 +16,7 @@ export interface CohortPlanningWorkingState {
   editorDraft: Record<string,WorkingJson>|null;
   priorDrafts: WorkingJson[];
   pages: Record<string,number>;
-  [key:string]: WorkingJson;
+  [key:string]: unknown;
 }
 export interface CohortWorkingEntry {
   id: string;
