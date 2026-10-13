@@ -199,7 +199,7 @@ export async function receiveQualityBrowser(directory, configuration) {
       await fixed(path, {workspaceId: pending.workspaceId, action: pending.action, args: pending.args,
         bodyUtf8, bytes: bytes.length, sha256: sha256(bytes)});
     }
-    async function recoverPending() {
+    async function recoverPending(resultRevision) {
       const button = page.getByRole("button", {name: "Recover saved request", exact: true});
       if (await button.count() && await button.isVisible()) {
         assert.ok(active, "Retain the original receiving intent before recovering its UI request");
@@ -212,7 +212,36 @@ export async function receiveQualityBrowser(directory, configuration) {
           await retainPreparedIntent(); return;
         }
         assert.equal(canonical({action: pending.action, args: pending.args}), canonical({action: intent.action, args: intent.args}));
-        await button.click(); await ready();
+        assert.ok(Number.isSafeInteger(resultRevision) && resultRevision >= 0);
+        await button.click();
+        await page.waitForFunction(async ({operationId, revision}) => {
+          const pending = await new Promise((resolve, reject) => {
+            const request = indexedDB.open("openlineage-operator", 1);
+            request.onerror = () => reject(request.error);
+            request.onblocked = () => reject(new Error("The original browser request journal is blocked"));
+            request.onsuccess = () => {
+              const db = request.result;
+              if (!db.objectStoreNames.contains("pending")) { db.close(); resolve(null); return; }
+              const transaction = db.transaction("pending", "readonly");
+              const value = transaction.objectStore("pending").get(location.origin + location.pathname);
+              let found;
+              value.onsuccess = () => { found = value.result ?? null; };
+              transaction.oncomplete = () => { db.close(); resolve(found); };
+              transaction.onabort = transaction.onerror = () => { db.close(); reject(transaction.error); };
+            };
+          });
+          if (pending) {
+            if (pending.args?.operationId !== operationId)
+              throw new Error("The original recovery request changed before it completed");
+            return false;
+          }
+          const panel = document.querySelector("#pending-panel");
+          const match = document.querySelector("#revision-label")?.textContent.match(/^Revision\s+(\d+)$/);
+          return Boolean(panel?.hidden && match && Number(match[1]) >= revision &&
+            document.querySelector("#catalog")?.getAttribute("aria-busy") !== "true");
+        }, {operationId: intent.args.operationId, revision: resultRevision}, {timeout: 30000});
+        assert.equal(await readPendingJournal(), null, "The exact recovered browser request must be cleared");
+        await ready();
       }
     }
     async function mutation(label, action, click) {
@@ -230,7 +259,7 @@ export async function receiveQualityBrowser(directory, configuration) {
             const prior = await read(resultPath), normalize = value => {const copy = structuredClone(value); delete copy.replayed; return copy;};
             assert.deepEqual(normalize(result), normalize(prior));
           } else await fixed(resultPath, result);
-          await recoverPending(); report.steps[label] = {status: "COMPLETE", operationId: intent.args.operationId, revision: result.revision};
+          await recoverPending(result.revision); report.steps[label] = {status: "COMPLETE", operationId: intent.args.operationId, revision: result.revision};
           await save(reportPath, report); return result;
         }
         await click();
