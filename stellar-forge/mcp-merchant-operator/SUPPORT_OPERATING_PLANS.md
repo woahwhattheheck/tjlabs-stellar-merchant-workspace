@@ -1,6 +1,6 @@
 # Support Operating Plans through the original Merchant MCP
 
-The fourteen tools extend the configured Merchant Support provider and use the same pure OperatingPlan model as the installed CLI and browser. The original provider configuration check, closing guard, delegated call boundary and error translation remain intact. No tool here reads an arbitrary filesystem path, contacts OAuth, dispatches an incident response or writes a case.
+The eighteen tools extend the configured Merchant Support provider and use the same pure OperatingPlan model as the installed CLI and browser. The original provider configuration check, closing guard, delegated call boundary and error translation remain intact. No tool here reads an arbitrary filesystem path, contacts OAuth, dispatches an incident response or writes a case.
 
 ## Retain the source first
 
@@ -38,7 +38,7 @@ The merchant-support selection adds operator-discovery and merchant-support-oper
 - `@tokenjunkielabs/starforge-merchant/merchant/support-operating-plans`
 - `@tokenjunkielabs/starforge-merchant/merchant/support-operating-source`
 
-The original Command Finder contribution already exposes the generic `operator/operating-plans` model. The existing Support MCP provider includes the fourteen tools through one additive catalog hook and one dispatch hook inside its existing lifecycle. The current OAuth, Object, CKAN, Recovery, commercial, service and case-package routes are retained.
+The original Command Finder contribution already exposes the generic `operator/operating-plans` model. The existing Support MCP provider includes the eighteen tools through one additive catalog hook and one dispatch hook inside its existing lifecycle. The current OAuth, Object, CKAN, Recovery, commercial, service and case-package routes are retained.
 
 ## Complete customer returned work
 
@@ -61,3 +61,9 @@ The native read-only source helper is available through the installed CLI and ty
 
 - `@tokenjunkielabs/starforge-merchant/merchant/support-operating-returns`
 - `@tokenjunkielabs/starforge-merchant/merchant/support-operating-return-source`
+
+## Complete portable handovers
+
+Four additional pure actions accept the complete handover document: handover_create {input}, handover_inspect {value}, handover_receive {value,existing?}, and handover_render {value,format:'json'|'html'}. These actions retain the original full plan/returned-review histories and complete companion inventories, with a 256 MiB metadata limit. They do not read archive bytes or arbitrary host paths. Use the installed handover-pack, handover-open and handover-receive CLI commands or shared browser archive workflow for complete original member verification and native source receiving.
+
+The typed handover, handover-archive and handover-native exports join the existing source and returned-work exports. Full request schemas, recovery and receiving instructions are in [Complete customer Support handovers](../../stellar/scf-starforge-20261009/distribution/discovery/OAUTH_SUPPORT_HANDOVER.md).
