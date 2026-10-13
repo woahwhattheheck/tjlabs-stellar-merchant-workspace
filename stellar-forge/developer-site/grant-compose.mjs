@@ -94,6 +94,17 @@ export function renderGrantMarkdown(markdown) {
         rows.slice(2).map(row => '<tr>' + row.map((cell, column) => column === 0 ? '<th scope="row">' + inline(cell) + '</th>' : '<td>' + inline(cell) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>');
       continue;
     }
+    if (/^[-*+]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length) {
+        const item = lines[i].match(/^[-*+]\s+(.+)$/);
+        if (!item) break;
+        items.push('<li>' + inline(item[1]) + '</li>');
+        i++;
+      }
+      output.push('<ul>' + items.join('') + '</ul>');
+      continue;
+    }
     const ordered = line.match(/^(\d+)\.\s+(.+)$/);
     if (ordered) {
       const items = [];
@@ -260,7 +271,9 @@ export function composeGrantApplication({
     customerClosing = attached.customerClosing;
     customerClosingSources = attached.customerClosingSources;
   }
-  // Register complete canonical source identities before projecting reader links.
+  // Normalize retained identities before receiving raw or already projected companion text.
+  // Original authenticated references keep their repository, commit and path.
+  index = projectGrantSourceIndex(index);
   receiveGrantCustomerSources(index, productAndFinanceMarkdown);
   receiveGrantProductSources(index, productAndFinanceMarkdown, productRegistrations);
   index = projectGrantSourceIndex(index);
