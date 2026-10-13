@@ -24,6 +24,8 @@ import {createCustomerUpdateStore,validateCustomerUpdateTransition} from './cust
 import {createRisSourceStore,validateRisState,validateRisTransition} from './ris-source/store.mjs';
 import {createStudyFlowStore} from './study-flow/store.mjs';
 import {createComparisonStore} from './comparison/store.mjs';
+import {createComparisonAdoptionStore} from './comparison/adoption-store.mjs';
+import {adoptionBlobMetadata,validateAdoptionState,validateAdoptionTransition} from './comparison/adoption-model.mjs';
 import {comparisonBlobMetadata,validateComparisonState,validateComparisonTransition} from './comparison/model.mjs';
 import {validateStudyFlowState,validateStudyFlowTransition} from './study-flow/model.mjs';
 import {validateCustomerUpdateState,customerUpdateBlobMetadata} from './customer-updates/model.mjs';
@@ -32,7 +34,8 @@ import {createTemplateExchange,validateTemplateExchangeState,
 import {publicationDigest,publicationInput,extractionPublicationModel,extractionPublicationPage,extractionPublicationReport,
   extractionPublicationExport,recordExtractionPublication,validateExtractionPublicationState,validateExtractionPublicationTransition} from './extraction-publication.mjs';
 
-import {createDossierReturnSourceAdapter} from './dossier-returns/source.mjs';
+import {createDossierReturnSourceAdapter,returnSourceChunks} from './dossier-returns/source.mjs';
+import {Readable} from 'node:stream';
 import {createDossierReturnStore,dossierReturnBlobMetadata,validateDossierReturnState,
   validateDossierReturnTransition} from './dossier-returns/store.mjs';
 
@@ -653,7 +656,7 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
 
   function collectBlobMetadata(state, contents) {
     for (const metadata of [...state.editions.filter(edition => edition.mode === 'retained').map(edition => edition.raw),
-      ...customerUpdateBlobMetadata(state), ...templateExchangeBlobs(state), ...dossierReturnBlobMetadata(state), ...comparisonBlobMetadata(state)]) {
+      ...customerUpdateBlobMetadata(state), ...templateExchangeBlobs(state), ...dossierReturnBlobMetadata(state), ...comparisonBlobMetadata(state), ...adoptionBlobMetadata(state)]) {
       const existing = contents.get(metadata.sha256);
       need(!existing || existing.bytes === metadata.bytes, 'RESEARCH_BLOB_CHANGED');
       contents.set(metadata.sha256, metadata);
@@ -769,6 +772,7 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
       await validateRisState(state,readContent,occurrenceCache);
       await validateDossierReturnState(state,readContent,occurrenceCache);
       await validateComparisonState(state,readContent,occurrenceCache);
+      await validateAdoptionState(state,readContent,occurrenceCache);
       const findings = new Set();
       for (const finding of state.findings) {
         need(object(finding) && typeof finding.id === 'string' && /^f_[a-f0-9-]{36}$/.test(finding.id) &&
@@ -796,6 +800,9 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
     }
     occurrenceCache.set(key(state.revision),digest(jsonBytes(state)));
     validateComparisonTransition(previous,state);
+    await validateAdoptionTransition(previous,state,{
+      readSourceBranch:(source,work)=>returnSourceAdapter.withPortableBranch(Readable.from(returnSourceChunks(source,readContent)),work),
+      historyPin:revision=>occurrenceCache.get(key(revision))});
     if(await validateDossierReturnTransition(previous,state,{readContent,
       withPortableBranch:returnSourceAdapter.withPortableBranch,
       historyPin:revision=>occurrenceCache.get(key(revision))}))return;
@@ -1023,13 +1030,15 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
     sourceAdapter:returnSourceAdapter,validateCandidate:validateReturnCandidate,validateCapacity:validateReturnCapacity});
 
   const comparisonStore=createComparisonStore({head,commit,metadata,get,blob,putBlob,validateCapacity:validateReturnCapacity});
+  const comparisonAdoptionStore=createComparisonAdoptionStore({dossierDirectory,head,history,commit,metadata,blob,
+    sourceAdapter:returnSourceAdapter,comparisonStore,validateCapacity:validateReturnCapacity,validateCandidate:validateReturnCandidate});
   const studyFlowStore=createStudyFlowStore({head,commit,metadata,get,projections});
   const risSourceStore=createRisSourceStore({head,commit,metadata,blob,putBlob});
   const customerUpdateStore=createCustomerUpdateStore({head,commit,metadata,get,projections,blob,putBlob,exportStream});
   const templateExchange=createTemplateExchange({head,commit,blob,putBlob,reviewExtraction,
     workbookOptions:{python:extractionOptions.python??'python3',signal:extractionOptions.signal}});
   return Object.freeze({ directory, list, create, get, getMetadata, readRetainedEdition, listRevisions, update, addQuestion, updateQuestion,
-    ...customerUpdateStore,...risSourceStore,...dossierReturnStore,...studyFlowStore,...comparisonStore,templateExchange,
+    ...customerUpdateStore,...risSourceStore,...dossierReturnStore,...studyFlowStore,...comparisonStore,...comparisonAdoptionStore,templateExchange,
     receive, previewSourceBundle, receiveSourceBundle, receiveBuyerResult, receiveReference, selectEvidence, updateSelection, addFinding, updateFinding,
     citationUpdates,reviewCitationUpdate,eligibility,reviewEligibility,exportEligibility,
     riskOfBias,reviewRiskOfBias,exportRiskOfBias,

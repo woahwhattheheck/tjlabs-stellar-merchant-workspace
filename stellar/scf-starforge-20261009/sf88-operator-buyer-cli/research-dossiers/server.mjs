@@ -23,6 +23,7 @@ import {QUOTE_REQUEST_LIMIT} from './customer-quotes/contracts.mjs';
 import {handleRiskOfBiasRoute,readRiskOfBiasAsset,RISK_OF_BIAS_REQUEST_LIMIT} from './risk-of-bias/routes.mjs';
 import {handleStudyExtractionRoute,STUDY_EXTRACTION_REVIEW_LIMIT} from './study-extraction-routes.mjs';
 import {handleStudyFlowRoute,STUDY_FLOW_REQUEST_LIMIT} from './study-flow/routes.mjs';
+import {handleComparisonAdoptionRoute,COMPARISON_ADOPTION_REQUEST_LIMIT,comparisonAdoptionErrorStatus} from './comparison/adoption-routes.mjs';
 import {handleOriginalOutputRoute} from './comparison/original-output/desk-routes.mjs';
 import {handleComparisonRoute,COMPARISON_REQUEST_LIMIT} from './comparison/routes.mjs';
 import {createTemplateExchangeDispatcher,TEMPLATE_POST_ACTIONS} from './template-exchange/http.mjs';
@@ -53,6 +54,9 @@ const TYPES = Object.freeze({
   'app.js': 'text/javascript; charset=utf-8',
   'comparison.js': 'text/javascript; charset=utf-8',
   'comparison.css': 'text/css; charset=utf-8',
+  'comparison-adoption.js':'text/javascript; charset=utf-8',
+  'comparison-adoption-store.js':'text/javascript; charset=utf-8',
+  'comparison-adoption.css':'text/css; charset=utf-8',
   'original-output.js':'text/javascript; charset=utf-8',
   'original-output.css':'text/css; charset=utf-8',
   'ris-sources.js':'text/javascript; charset=utf-8',
@@ -267,7 +271,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
   const api = {schema:RESEARCH_WORKSPACE_API,metadata:true,revisionPages:true,streamedPortable:true,sourceBundles:true,sourceInspection:true,studyProtocolInspection:true,
     studyExtraction:true,studyExtractionRequestLimit:STUDY_EXTRACTION_REVIEW_LIMIT,extractionPublications:true,zoteroBridge:zotero!==null,
     studyFlow:true,studyFlowRequestLimit:STUDY_FLOW_REQUEST_LIMIT,
-    comparison:true,comparisonRequestLimit:COMPARISON_REQUEST_LIMIT,originalOutputPreparation:true,
+    comparison:true,comparisonRequestLimit:COMPARISON_REQUEST_LIMIT,comparisonAdoption:true,comparisonAdoptionRequestLimit:COMPARISON_ADOPTION_REQUEST_LIMIT,originalOutputPreparation:true,
     customerUpdates:true,customerUpdateRequestLimit:16*1024*1024,
     dossierReturns:true,dossierReturnSourceLimit:DOSSIER_RETURN_SOURCE_LIMIT,dossierReturnRequestLimit:DOSSIER_RETURN_REQUEST_LIMIT,
     customerCommerce:true,customerCommerceConfigured:customerCommerceConfiguration!==null,customerCommerceRequestLimit:2*1024*1024,
@@ -491,6 +495,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
       if(await handleRisRoute({store,dossierId:id,action,req,url,readBody:readJson,send,
         setHeader:(name,value)=>res.setHeader(name,value)}))return;
       if(action==='comparison'||action.startsWith('comparison/'))sourceProjection='full';
+      if(await handleComparisonAdoptionRoute({store,dossierId:id,action,req,res,url,headers,readBody:readJson,send,setHeader:(name,value)=>res.setHeader(name,value)}))return;
       if(await handleOriginalOutputRoute({store,dossierId:id,action,req,url,readBody:readJson,send,setHeader:(name,value)=>res.setHeader(name,value)}))return;
       if(await handleComparisonRoute({store,dossierId:id,action,req,url,projection,
         readBody:readJson,send,setHeader:(name,value)=>res.setHeader(name,value)}))return;
@@ -776,7 +781,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
       if (res.headersSent) {res.destroy(); return;}
       const code = safeCode(error);
       const status = code === 'AUTH_REQUIRED' ? 401 : ['HOST_REFUSED', 'ORIGIN_REFUSED'].includes(code) ? 403 :
-        DOSSIER_RETURN_ERROR_STATUS[code]??(
+        DOSSIER_RETURN_ERROR_STATUS[code]??comparisonAdoptionErrorStatus(code)??(
         ['COMPARISON_REQUEST_CHANGED','COMPARISON_ENTITY_VERSION_CONFLICT','COMPARISON_EXTERNAL_RUN_CHANGED'].includes(code)?409:
         ['COMPARISON_RUN_NOT_FOUND','COMPARISON_ARTIFACT_NOT_FOUND','COMPARISON_CASE_NOT_FOUND','COMPARISON_CASE_VERSION_NOT_FOUND'].includes(code)?404:
         ['COMPARISON_RUN_TOO_LARGE','COMPARISON_ARTIFACTS_TOO_LARGE'].includes(code)?413:
@@ -789,7 +794,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
           'RESEARCH_OBJECT_INVENTORY_CHANGED','RESEARCH_OBJECT_CURSOR_CHANGED','RESEARCH_OBJECT_REVIEW_REQUEST_CHANGED'].includes(code) ? 409 : code === 'ENOENT' || code === 'DOSSIER_NOT_FOUND' ? 404 :
           ['UPLOAD_SIZE_LIMIT','PORTABLE_SIZE_LIMIT','PORTABLE_RECORD_SIZE_LIMIT','PIPELINE_UPLOAD_TOO_LARGE'].includes(code) ? 413 : 400);
       send(status, {error: code, ...(error.openAlexImport ? {openAlexImport:error.openAlexImport} : {}),
-        ...(code.startsWith('RETURN_')&&plain(error.details)?{details:error.details}:{})});
+        ...((code.startsWith('RETURN_')||code.startsWith('ADOPTION_')||plain(error.details?.adoption))&&plain(error.details)?{details:error.details}:{})});
     }
   });
   server.requestTimeout = 60000;

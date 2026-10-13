@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Comparisons in the existing Research dossier, with complete saved requests.
+import {createComparisonAdoptionPanel} from './comparison-adoption.js';
 import {createOriginalOutputDesk} from './original-output.js';
 import {openProtocolDraftStore} from './study-protocol-storage.js';
 const SCHEMA='sf88-comparison-browser-draft/v1';
@@ -20,12 +21,13 @@ function field(name,label,value='',type='text',options=null){const l=node('label
 const group=(...children)=>{const n=node('div',null,'comparison-grid');n.append(...children);return n;};
 const named=(form,name)=>form.elements.namedItem(name)?.value??'';
 function parsed(value,label,kind){let v;try{v=JSON.parse(value);}catch{throw new Error(label+' must contain complete valid JSON.');}if(kind==='object'&&(!v||typeof v!=='object'||Array.isArray(v)))throw new Error(label+' must be a JSON object.');if(kind==='array'&&!Array.isArray(v))throw new Error(label+' must be a JSON array.');return v;}
-export function createComparisonPanel({root,api,task,notify,getDossier,getWorkspace,isBusy,onReceived}){
+export function createComparisonPanel({root,api,task,notify,getDossier,getWorkspace,isBusy,onReceived,openReturnedWork}){
   let visible=false,epoch=0,busy=false,overview=null,page=null,selectedCase=null,selectedCaseVersion=null,caseEditions=[],kind='candidates',offset=0,current=null,storageFailure=null;
   let storePromise=null,writer=Promise.resolve(),seenSelection=null;
   const drafts=new Map(),diskRevisions=new Map(),unwritten=new Map();
-  let outputDesk=null;
+  let outputDesk=null,adoptionPanel=null;
   if(!document.querySelector('link[data-original-output-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/original-output.css';link.dataset.originalOutputStyle='';document.head.append(link);}
+  if(!document.querySelector('link[data-comparison-adoption-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/comparison-adoption.css';link.dataset.comparisonAdoptionStyle='';document.head.append(link);}
   const store=()=>storePromise??=openProtocolDraftStore().catch(e=>{storePromise=null;throw e;});
   const selection=()=>({workspaceId:getWorkspace()?.workspaceId,dossierId:getDossier()?.id});
   const same=(a,b)=>a.workspaceId===b.workspaceId&&a.dossierId===b.dossierId;
@@ -286,8 +288,11 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
     root.append(section('Saved working copies',saved,upload),draftEditor());
     const outputRoot=node('div');root.append(outputRoot);
     outputDesk??=createOriginalOutputDesk({api,task:runTask,notify,getSelection:selection,getCase:activeCase,getRevision:()=>overview?.revision??getDossier()?.revision,getWorkspace,isBusy:()=>busy||isBusy(),onReceived});
-    outputDesk.mount(outputRoot);updateBusy();
+    outputDesk.mount(outputRoot);
+    const adoptionRoot=node('div');root.append(adoptionRoot);
+    adoptionPanel??=createComparisonAdoptionPanel({api,task:runTask,notify,getSelection:selection,getRevision:()=>overview?.revision??getDossier()?.revision,getDossier,isBusy:()=>busy||isBusy(),onReceived,openReturnedWork});
+    adoptionPanel.mount(adoptionRoot);updateBusy();
   }
-  function updateBusy(){for(const e of root.querySelectorAll('button,input,select,textarea')){if(e.closest('.output-desk'))continue;if(e.closest('form')&&current?.request&&e.tagName!=='BUTTON'){e.disabled=true;continue;}if(busy||isBusy()){if(e.dataset.comparisonDisabled===undefined)e.dataset.comparisonDisabled=e.dataset.wasDisabled??(e.disabled?'1':'0');e.disabled=true;}else if(e.dataset.comparisonDisabled!==undefined){e.disabled=e.dataset.comparisonDisabled==='1';delete e.dataset.comparisonDisabled;}}root.setAttribute('aria-busy',String(busy||isBusy()));outputDesk?.updateBusy();}
-  return{show(value){visible=value;const sel=selection();if(!same(sel,seenSelection??{})){++epoch;seenSelection=sel;overview=null;page=null;selectedCase=null;selectedCaseVersion=null;caseEditions=[];current=null;offset=0;if(value)render();}if(value)refresh().catch(e=>notify(e.message,'error'));else{++epoch;outputDesk?.hide();}},updateBusy};
+  function updateBusy(){for(const e of root.querySelectorAll('button,input,select,textarea')){if(e.closest('.output-desk,.comparison-adoption'))continue;if(e.closest('form')&&current?.request&&e.tagName!=='BUTTON'){e.disabled=true;continue;}if(busy||isBusy()){if(e.dataset.comparisonDisabled===undefined)e.dataset.comparisonDisabled=e.dataset.wasDisabled??(e.disabled?'1':'0');e.disabled=true;}else if(e.dataset.comparisonDisabled!==undefined){e.disabled=e.dataset.comparisonDisabled==='1';delete e.dataset.comparisonDisabled;}}root.setAttribute('aria-busy',String(busy||isBusy()));outputDesk?.updateBusy();adoptionPanel?.updateBusy();}
+  return{show(value){visible=value;const sel=selection();if(!same(sel,seenSelection??{})){++epoch;seenSelection=sel;overview=null;page=null;selectedCase=null;selectedCaseVersion=null;caseEditions=[];current=null;offset=0;if(value)render();}if(value)refresh().catch(e=>notify(e.message,'error'));else{++epoch;outputDesk?.hide();adoptionPanel?.hide();}},updateBusy};
 }

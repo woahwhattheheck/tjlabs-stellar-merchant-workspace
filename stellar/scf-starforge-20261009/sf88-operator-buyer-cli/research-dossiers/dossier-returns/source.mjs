@@ -116,7 +116,9 @@ export function createDossierReturnSourceAdapter({directory,dossierDirectory,hea
     validateReturnId(sourceId,'source');
     const state=(await head(id)).state;
     const matches=(state.dossierReturnEvents??[]).filter(row=>row.sourceId===sourceId);
-    return matches.length?copy(matches.at(-1).source):null;
+    if(matches.length)return copy(matches.at(-1).source);
+    const adopted=(state.comparisonAdoptionEvents??[]).filter(row=>row.source?.id===sourceId);
+    return adopted.length?copy(adopted.at(-1).source):null;
   }
   async function readSource(id,sourceId){
     validateReturnId(sourceId,'source');await head(id);

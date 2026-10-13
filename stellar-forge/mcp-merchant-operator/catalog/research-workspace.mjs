@@ -7,6 +7,7 @@ import {researchEligibilityTools,RESEARCH_ELIGIBILITY_EXPORTS,RESEARCH_ELIGIBILI
 import {researchCustomerUpdateTools,RESEARCH_CUSTOMER_UPDATE_EXPORTS,RESEARCH_CUSTOMER_UPDATE_EXPORT_FIELDS} from './research-customer-updates.mjs';
 import {researchRisTools,RESEARCH_RIS_EXPORTS,RESEARCH_RIS_EXPORT_FIELDS} from './research-ris.mjs';
 import {researchDossierReturnTools,RESEARCH_DOSSIER_RETURN_EXPORTS,RESEARCH_DOSSIER_RETURN_EXPORT_FIELDS} from './research-dossier-returns.mjs';
+import {researchComparisonTools,RESEARCH_COMPARISON_EXPORTS,RESEARCH_COMPARISON_EXPORT_FIELDS} from './research-comparison.mjs';
 import {researchCommerceTools,RESEARCH_COMMERCE_EXPORTS,RESEARCH_COMMERCE_EXPORT_FIELDS} from './research-commerce.mjs';
 import {researchProgrammeTools} from './research-programmes.mjs';
 import {researchQuoteTools,RESEARCH_QUOTE_EXPORTS,RESEARCH_QUOTE_EXPORT_FIELDS} from './research-quotes.mjs';
@@ -37,6 +38,7 @@ export const RESEARCH_EXPORTS=Object.freeze({
   ...RESEARCH_CUSTOMER_UPDATE_EXPORTS,
   ...RESEARCH_RIS_EXPORTS,
   ...RESEARCH_DOSSIER_RETURN_EXPORTS,
+  ...RESEARCH_COMPARISON_EXPORTS,
   ...RESEARCH_COMMERCE_EXPORTS,
   ...RESEARCH_QUOTE_EXPORTS,
   ...RESEARCH_RISK_EXPORTS,
@@ -112,9 +114,9 @@ export function researchWorkspaceTools(tool){
     tool('merchant_research_crossref_receive','Receive the exact reviewed Crossref edition into the original question using its plan hash, edition hash and current dossier revision. The native receiver reconciles a lost committed reply.',{
       ...operation,expectedRevision:revision,expectedPlanSha256:digest,expectedEditionSha256:digest},
       ['workspace','dossierId','operationId','expectedRevision','expectedPlanSha256','expectedEditionSha256'],{idempotent:true}),
-    tool('merchant_research_export','Stream and retain a complete portable dossier, report, edition, comparison, original occurrence content/record or selected bundle file. Select revision for exact previous/reviewed/current HTML, Markdown or portable history. Source kinds bind editionId/key; source-file also requires original fileName and expectedSha256. Europe PMC exports require library and their native operationId or workspace requestId; omit dossierId for those library-wide exports. Eligibility exports require dossierId, reviewId and a retained revision; workSetId and section select the original review report. Commerce file kinds require commerceKind, commerceId and the exact expectedSha256; commerce-operation-json requires commerceOperationId. Both retain the complete original file for the same reader. Dossier-return files require returnReviewId; dossierReturnId binds an accepted return. The value kind also requires returnItemId and returnSide. Reports without dossierReturnId retain only the immutable comparison, and the source kind preserves the complete original returned portable. Quote operation files require quoteOperationId/quoteFileName/quoteExpectedBytes; case and tariff files require quoteCaseId and exactly one quoteInput or quoteInputSource. Inspect quote file metadata first and provide its exact expectedSha256. Study Flow kinds require dossierId, revision and flowId or flowEditionId; flowSection selects counts, records, reports, studies, reasons or issues for study-flow-csv. They retain complete original report/diagram bytes. Returns the same content-addressed export ID for reads and restart recovery.',{
+    tool('merchant_research_export','Stream and retain a complete portable dossier, report, edition, comparison, original occurrence content/record or selected bundle file. Select revision for exact previous/reviewed/current HTML, Markdown or portable history. Source kinds bind editionId/key; source-file also requires original fileName and expectedSha256. Europe PMC exports require library and their native operationId or workspace requestId; omit dossierId for those library-wide exports. Eligibility exports require dossierId, reviewId and a retained revision; workSetId and section select the original review report. Commerce file kinds require commerceKind, commerceId and the exact expectedSha256; commerce-operation-json requires commerceOperationId. Both retain the complete original file for the same reader. Dossier-return files require returnReviewId; dossierReturnId binds an accepted return. The value kind also requires returnItemId and returnSide. Reports without dossierReturnId retain only the immutable comparison, and the source kind preserves the complete original returned portable. Quote operation files require quoteOperationId/quoteFileName/quoteExpectedBytes; case and tariff files require quoteCaseId and exactly one quoteInput or quoteInputSource. Inspect quote file metadata first and provide its exact expectedSha256. Study Flow kinds require dossierId, revision and flowId or flowEditionId; flowSection selects counts, records, reports, studies, reasons or issues for study-flow-csv. They retain complete original report/diagram bytes. Comparison-case files bind caseId and optional caseVersionId/revision. Comparison run/artifact files bind runId and optional artifactId. Adoption reports/source bind adoptionPlanId; adoption run/artifact files bind adoptionSourceId, caseVersionId and runId, plus artifactId for a member. The receiver pins the complete native selection and file digest. Returns the same content-addressed export ID for reads and restart recovery.',{
       ...dossier,kind:exportKind,operationId:nativeId,editionId:nativeId,before:revision,after:revision,
-      ...RESEARCH_RIS_EXPORT_FIELDS,...RESEARCH_DOSSIER_RETURN_EXPORT_FIELDS,...RESEARCH_DOCUMENT_EXPORT_FIELDS,...RESEARCH_EUROPE_PMC_EXPORT_FIELDS,...RESEARCH_ELIGIBILITY_EXPORT_FIELDS,...RESEARCH_EXTRACTION_EXPORT_FIELDS,...RESEARCH_STUDY_FLOW_EXPORT_FIELDS,...RESEARCH_CUSTOMER_UPDATE_EXPORT_FIELDS,...RESEARCH_COMMERCE_EXPORT_FIELDS,...RESEARCH_QUOTE_EXPORT_FIELDS,...RESEARCH_RISK_EXPORT_FIELDS,revision,
+      ...RESEARCH_RIS_EXPORT_FIELDS,...RESEARCH_DOSSIER_RETURN_EXPORT_FIELDS,...RESEARCH_COMPARISON_EXPORT_FIELDS,...RESEARCH_DOCUMENT_EXPORT_FIELDS,...RESEARCH_EUROPE_PMC_EXPORT_FIELDS,...RESEARCH_ELIGIBILITY_EXPORT_FIELDS,...RESEARCH_EXTRACTION_EXPORT_FIELDS,...RESEARCH_STUDY_FLOW_EXPORT_FIELDS,...RESEARCH_CUSTOMER_UPDATE_EXPORT_FIELDS,...RESEARCH_COMMERCE_EXPORT_FIELDS,...RESEARCH_QUOTE_EXPORT_FIELDS,...RESEARCH_RISK_EXPORT_FIELDS,revision,
       key:{type:'string',pattern:'^(0|[1-9][0-9]{0,8})$'},fileName:{type:'string',minLength:1,maxLength:1024},
       sourceId:{type:'string',pattern:'^ctsrc_[a-f0-9]{64}$'},criteria:RESEARCH_CLINICALTRIALS_CRITERIA,expectedSha256:digest},
       ['workspace','kind'],{}),
@@ -137,6 +139,7 @@ export function researchWorkspaceTools(tool){
     ...researchCustomerUpdateTools(tool),
     ...researchRisTools(tool),
     ...researchDossierReturnTools(tool),
+    ...researchComparisonTools(tool),
     ...researchCommerceTools(tool),
     ...researchQuoteTools(tool),
     ...researchProgrammeTools(tool),
