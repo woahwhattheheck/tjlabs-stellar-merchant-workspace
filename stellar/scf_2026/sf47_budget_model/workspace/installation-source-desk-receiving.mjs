@@ -8,6 +8,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import {dirname,basename,resolve,isAbsolute,relative,sep} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {bindingTemplate,prepareInstallation,renderWorkorder} from '../../sf49_data_commissioning/installation-workorders/prepare-core.mjs';
+import {composeCustomerProgramme,programmeFiles} from '../../sf49_data_commissioning/installation-workorders/customer-programme-core.mjs';
 
 const SCHEMA='stellar-forge.installation-source-desk-receiving.v1';
 const DESK_SCHEMA='stellar-forge.installation-source-desk.v1';
@@ -93,6 +94,11 @@ async function prepareProfile(input){
     same(JSON.parse(source),input.profile.profile),'The original installed profile changed before preparation.');
   const bindings=input.bindings??bindingTemplate(input.seed,input.profile.profile);
   const value=prepareInstallation(input.seed,input.profile.profile,bindings);
+  if(input.programmeInputs){
+    const programme=composeCustomerProgramme({seed:input.seed,document:value.document,profile:input.profile.profile,...input.programmeInputs});
+    value.document=structuredClone(programme.document);value.preview.document=structuredClone(programme.document);
+    value.customerProgramme=programme;
+  }
   const output=await retain(input.output,pretty(value));
   emit({schema:SCHEMA,mode:'prepare-profile',state:'COMPLETE',output});
   return value;
@@ -497,7 +503,8 @@ class BrowserReceiving{
     const first=current.files[0];
     await this.downloads(()=>this.click('file-download','[data-id="'+first.id+'"]'),[first],'original-input');
     for(const selected of this.input.sourceSelection.cases){
-      const file=current.files.find(x=>x.filename===selected.packet.filename);
+      const original=selected.handover??selected.packet;
+      const file=current.files.find(x=>x.filename===original.filename);
       await this.click('inspect','[data-id="'+file.id+'"]');
       await this.details('Complete original JSON, unchanged');
       const displayed=await this.page.locator('.source-desk-inspection details').filter({
@@ -574,7 +581,7 @@ class BrowserReceiving{
       'The complete browser cohort was not attached atomically.');
     const native=await this.api(this.prefix);
     for(const source of attached.sources){
-      const actual=native.sources.find(x=>x.id===source.id);
+      const actual=native.sources.find(x=>x.id===source.sourceId);
       need(actual?.sha256===source.sha256&&actual.bytes===source.bytes,
         'The actual original case lost an attached complete source.');
     }
@@ -600,7 +607,16 @@ class BrowserReceiving{
       work.prepared.document.workshare.planSha256===selected.planSha256&&
       same(work.preview.document,work.prepared.document),
       'The original profile preview changed its complete customer or commercial scope.');
-    const raw=Buffer.from(JSON.stringify(work.prepared,null,2)+'\n'),markdown=Buffer.from(renderWorkorder(work.prepared));
+    if(selected.programme){
+      const programme=work.prepared.customerProgramme;
+      need(programme?.workshareCaseId===selected.caseId&&programme.planSha256===selected.planSha256&&
+        Array.isArray(programme.customerRows)&&programme.customerRows.length>0&&
+        same(programme.document,work.prepared.document),
+        'Keep the complete original customer programme with its native Installation.');
+    }
+    const programmeMarkdown=work.prepared.customerProgramme?programmeFiles(work.prepared.customerProgramme).get('CUSTOMER_PROGRAMME.md'):'';
+    const raw=Buffer.from(JSON.stringify(work.prepared,null,2)+'\n'),
+      markdown=Buffer.from(renderWorkorder(work.prepared)+(programmeMarkdown?'\n\n'+programmeMarkdown:''));
     await this.downloads(()=>this.click('profile-download'),[
       {filename:'INSTALLATION_PREPARATION.json',bytes:raw.length,sha256:sha(raw)},
       {filename:'INSTALLATION_WORKORDER.md',bytes:markdown.length,sha256:sha(markdown)}

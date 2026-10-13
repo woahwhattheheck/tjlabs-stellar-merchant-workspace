@@ -1,11 +1,13 @@
 // Complete original-source preparation and native Workshare/Installation handover.
 import {Sha256, sha256File} from './operations_installation_source_hash.mjs';
 import {bindingTemplate, prepareInstallation, renderWorkorder} from '/installation-prepare-core.mjs';
+import {composeCustomerProgramme, programmeFiles} from '/installation-workorders/customer-programme-core.mjs';
 import {createCommissioningReceivingDesk} from './operations_installation_commissioning.mjs';
 
 const SCHEMA='stellar-forge.installation-source-desk.v1';
 const SELECTION='stellar-forge.installation-source-selection.v1';
 const NATIVE_SELECTION='stellar-forge.canadabuys-workshare-selection.v1';
+const HANDOVER_SELECTION='stellar-forge.installation-handover-selection.v1';
 const MAX_FILE=8*1024*1024, MAX_ARCHIVE=192*1024*1024;
 const clone=value=>structuredClone(value);
 const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
@@ -333,7 +335,7 @@ export function mountInstallationSources(root,bridge){
   async function saveSelection(){
     requireEdit();if(state.caseForm?.dirty)throw new Error('Apply the edited customer mapping to the complete selection first.');
     const selection=parseObject(state.work?.selectionText||'','Complete source selection');
-    if(selection.schema!==SELECTION)throw new Error('Use the native complete source selection schema.');
+    if(![SELECTION,HANDOVER_SELECTION].includes(selection.schema))throw new Error('Use the complete original packet or saved handover source selection.');
     return issue('selection.save',{selection});
   }
   async function receiveNative(fileId){
@@ -360,7 +362,9 @@ export function mountInstallationSources(root,bridge){
       if(!profile)throw new Error('Select an installed profile for every original customer.');
       profiles[profile.id]=profile.sha256;
     }
-    return issue('prepare',{expectedEngineSha256:catalogue.engine.sha256,expectedSelectionSha256:hash(stable(selected)),expectedProfiles:profiles});
+    const engine=catalogue.sourceFormats?.find(x=>x.schema===selected.schema)?.engine??(selected.schema===SELECTION?catalogue.engine:null);
+    if(!engine?.sha256)throw new Error('Open the installed source reader for this complete original format.');
+    return issue('prepare',{expectedEngineSha256:engine.sha256,expectedSelectionSha256:hash(stable(selected)),expectedProfiles:profiles});
   }
   async function readPreparation(id){
     const value=await bridge.api(prefix+'/'+state.draftId+'/preparations/'+id);
@@ -414,7 +418,7 @@ export function mountInstallationSources(root,bridge){
   }
   function selectionValue(){
     const value=state.work?.selectionText?.trim()?parseObject(state.work.selectionText,'Complete source selection'):blankSelection();
-    if(!((value.schema===SELECTION&&Array.isArray(value.cases))||(value.schema===NATIVE_SELECTION&&Array.isArray(value.workshares))))throw new Error('Keep the complete original source selection and its customer cases or native Workshares.');
+    if(!(([SELECTION,HANDOVER_SELECTION].includes(value.schema)&&Array.isArray(value.cases))||(value.schema===NATIVE_SELECTION&&Array.isArray(value.workshares))))throw new Error('Keep the complete original source selection and its customer cases or native Workshares.');
     return value;
   }
   function keepSelection(value){
@@ -444,7 +448,7 @@ export function mountInstallationSources(root,bridge){
   function emptyCase(){
     return {index:null,caseId:'',profile:'',packetId:'',fileIds:[],phaseRows:[],
       total:{hours:'',sourcePointer:'',sourceFile:'',unit:'hours'},
-      amendmentText:'',bindingsText:'',packet:null,reviewedAmendment:null,dirty:false,earlierPhaseRows:[]};
+      amendmentText:'',bindingsText:'',programmeText:'',packet:null,sourceKind:'workshare-packet',reviewedAmendment:null,dirty:false,earlierPhaseRows:[]};
   }
   async function editCase(index=null){
     requireEdit();
@@ -453,19 +457,23 @@ export function mountInstallationSources(root,bridge){
     if(index!==null&&!row)throw new Error('Select the original mapped customer row.');
     if(row){
       form.index=index;form.caseId=row.caseId;form.profile=row.profile;
-      form.packetId=files().find(f=>f.filename===row.packet.filename&&f.sha256===row.packet.sha256)?.id??'';
+      const original=row.handover??row.packet;
+      if(!original)throw new Error('Retain this mapping’s complete original packet or saved handover.');
+      form.packetId=files().find(f=>f.filename===original.filename&&f.sha256===original.sha256)?.id??'';
       form.fileIds=row.files.map(x=>files().find(f=>f.filename===x.filename&&f.sha256===x.sha256)?.id).filter(Boolean);
       form.phaseRows=clone(row.productionEffort||[]).map(x=>({...x,sourceFile:x.sourceFile??''}));
       form.total={...clone(row.effortTotal||{}),sourceFile:row.effortTotal?.sourceFile??''};
       form.amendmentText=row.phaseIdAmendment?pretty(row.phaseIdAmendment):'';
       form.bindingsText=row.bindings?pretty(row.bindings):'';
+      form.programmeText=row.programme?pretty(row.programme):'';
+      form.sourceKind=row.handover?'delivery-handover':'workshare-packet';
     }
     state.caseForm=form;state.tab='mapping';changed();
     if(form.packetId)await reviewPacket();
   }
   async function reviewPacket(){
     requireEdit();const form=state.caseForm;
-    if(!form?.packetId)throw new Error('Choose the original complete Workshare packet.');
+    if(!form?.packetId)throw new Error('Choose the complete original Workshare packet or saved delivery handover.');
     const amendment=form.amendmentText.trim()?parseObject(form.amendmentText,'Explicit phase-ID amendment'):null;
     const epoch=generation,fingerprint=stable({packetId:form.packetId,amendment});
     const value=await inspectFile(form.packetId,amendment);
@@ -475,7 +483,9 @@ export function mountInstallationSources(root,bridge){
     const previous=form.phaseRows,byId=new Map(previous.map(x=>[x.phaseId,x]));
     form.earlierPhaseRows=previous.filter(x=>!value.packet.plan.phases.some(p=>p.id===x.phaseId));
     form.phaseRows=value.packet.plan.phases.map(p=>byId.get(p.id)||{phaseId:p.id,hours:'',sourcePointer:'',sourceFile:'',unit:'hours',basis:''});
-    form.packet=clone(value.packet);form.reviewedAmendment=clone(amendment);form.amendmentReceipt=clone(value.phaseAmendmentReceipt);
+    form.packet=clone(value.packet);form.sourceKind=value.sourceKind??'workshare-packet';
+    form.originalHandover=clone(value.originalHandover??null);
+    form.reviewedAmendment=clone(amendment);form.amendmentReceipt=clone(value.phaseAmendmentReceipt);
     if(!form.caseId&&value.packet.caseId)form.caseId=value.packet.caseId;
     form.dirty=true;inspection=value;state.inspectionFileId=form.packetId;changed();
     state.notice='Opened all '+form.phaseRows.length+' original phases. Select the exact source pointer for every assigned effort.';
@@ -506,10 +516,26 @@ export function mountInstallationSources(root,bridge){
     const phases=form.phaseRows.map(x=>effortRow(x,true)),total=effortRow(form.total);
     for(const x of [...phases,total])if(x.sourceFile&&!declared.has(x.sourceFile))
       throw new Error('Include the complete '+x.sourceFile+' document selected by an effort pointer.');
-    const row={caseId:form.caseId,profile:form.profile,packet:originalFile(packet),planSha256:form.packet.planSha256,
+    const handover=form.sourceKind==='delivery-handover',schema=handover?HANDOVER_SELECTION:SELECTION;
+    if(selected.cases.some((x,i)=>i!==form.index)&&(selected.schema!==schema))
+      throw new Error('Keep saved handovers and original receiving packets in separate named preparations. Each preparation carries its complete original reader.');
+    if(handover&&(amendment||form.caseId!==form.packet.caseId))
+      throw new Error('Keep this saved handover’s exact original customer and phase identities.');
+    selected.schema=schema;
+    const row={caseId:form.caseId,profile:form.profile,[handover?'handover':'packet']:originalFile(packet),planSha256:form.packet.planSha256,
       productionEffort:phases,effortTotal:total,files:selectedFiles};
     if(amendment)row.phaseIdAmendment=amendment;
     if(form.bindingsText.trim())row.bindings=parseObject(form.bindingsText,'Complete native bindings');
+    if(form.programmeText?.trim()){
+      const programme=parseObject(form.programmeText,'Complete original customer programme');
+      const keys=['calendarFile','selectionFile','taskBudgetFile','nativeChangeFile'];
+      if(programme.schema!=='stellar-forge.installation-customer-programme.v1'||!programme.calendarFile||
+         Object.keys(programme).some(key=>key!=='schema'&&!keys.includes(key)))
+        throw new Error('Use the original customer programme schema and selected complete source filenames.');
+      for(const key of keys)if(Object.hasOwn(programme,key)&&!declared.has(programme[key]))
+        throw new Error('Include the full '+key+' document in this customer’s selected source files.');
+      row.programme=programme;
+    }
     if(selected.cases.some((x,i)=>x.caseId===row.caseId&&i!==form.index))throw new Error('Keep each original customer case once in this complete selection.');
     if(form.index===null)selected.cases.push(row);else selected.cases[form.index]=row;
     keepSelection(selected);state.caseForm=null;state.notice='Applied all original phases and document bindings to the complete editable selection.';
@@ -535,6 +561,22 @@ export function mountInstallationSources(root,bridge){
     row.sourcePointer=item.pointer;form.dirty=true;changed();
     state.notice='Selected the original value '+item.text+'. Enter its explicit assigned hours and original unit; native preparation checks the exact conversion.';
   }
+  async function preparedObject(preparation,filename){
+    const file=preparation.files.find(row=>row.filename===filename);
+    if(!file||file.bytes>MAX_FILE)throw new Error('Keep the complete selected preparation output: '+filename+'.');
+    const controller=new AbortController();downloads.add(controller);
+    try{
+      const response=await bridge.api(prefix+'/'+state.draftId+'/preparations/'+preparation.id+
+        '/outputs/'+encodeURIComponent(filename)+'?expectedSha256='+file.sha256,undefined,
+        {download:true,signal:controller.signal});
+      if(response.headers.get('content-length')!==String(file.bytes))
+        throw new Error('The complete preparation output length changed: '+filename+'.');
+      const raw=new Uint8Array(await response.arrayBuffer());
+      if(controller.signal.aborted||!alive||raw.length!==file.bytes||hash(raw)!==file.sha256)
+        throw new Error('The complete preparation output differs from its saved original: '+filename+'.');
+      return parseObject(new TextDecoder('utf-8',{fatal:true}).decode(raw),filename);
+    }finally{controller.abort();downloads.delete(controller);}
+  }
   function latestAttachment(){
     return [...(saved?.attachments||[])].reverse().find(a=>a.state==='ATTACHED_SOURCES'&&(!state.preparationId||a.preparationId===state.preparationId))??null;
   }
@@ -552,11 +594,13 @@ export function mountInstallationSources(root,bridge){
     }
     const originalPreparation=await readPreparation(attachment.preparationId);
     const nativeSelection=originalPreparation.report.nativeReview?.selection??null;
+    const sourceSelection=await preparedObject(originalPreparation,'SOURCE_SELECTION.json');
     state.profileWork={attachmentId:attachment.preparationId,selection,inventory,nativeSelection:clone(nativeSelection),
+      sourceSelection,programmeInputs:null,
       workshareCaseId:inventory.cases[0]?.caseId??'',profileId:'',bindingsText:'',seed:null,
       profileSha256:null,prepared:null,preview:null,dirty:false};
     const mapping=nativeSelection?.workshares.find(x=>x.workshareId===state.profileWork.workshareCaseId)??
-      (saved.selection?.cases||[]).find(x=>x.caseId===state.profileWork.workshareCaseId);
+      (sourceSelection.cases||[]).find(x=>x.caseId===state.profileWork.workshareCaseId);
     if(mapping)state.profileWork.profileId=mapping.profile;
     state.tab='installation';changed();
   }
@@ -573,7 +617,9 @@ export function mountInstallationSources(root,bridge){
        value.expectedRevision!==0||value.workshare?.caseId!==work.workshareCaseId)
       throw new Error('The native installation seed differs from the selected original Workshare.');
     const bindings=bindingTemplate(value,selected.profile);
-    const originalBindings=work.nativeSelection?.workshares.find(x=>x.workshareId===work.workshareCaseId&&x.profile===work.profileId)?.bindings;
+    const originalMapping=work.nativeSelection?.workshares.find(x=>x.workshareId===work.workshareCaseId&&x.profile===work.profileId)??
+      work.sourceSelection?.cases?.find(x=>x.caseId===work.workshareCaseId&&x.profile===work.profileId);
+    const originalBindings=originalMapping?.bindings;
     if(originalBindings!==undefined){
       if(!originalBindings||typeof originalBindings!=='object'||Array.isArray(originalBindings))throw new Error('Keep the original optional Installation bindings as a complete object.');
       for(const [key,original] of Object.entries(originalBindings)){
@@ -583,6 +629,18 @@ export function mountInstallationSources(root,bridge){
         }else bindings[key]=clone(original);
       }
     }
+    let programmeInputs=null;
+    if(originalMapping?.programme){
+      const preparation=await readPreparation(work.attachmentId),mapping=originalMapping.programme;
+      if(mapping.schema!=='stellar-forge.installation-customer-programme.v1'||!mapping.calendarFile)
+        throw new Error('Keep the complete original customer programme selection.');
+      const roles=preparation.sourceRoles??{commissioning:'Supplier_Workshare_Commissioning.json'};
+      programmeInputs={commissioning:await preparedObject(preparation,roles.commissioning),
+        calendarInput:await preparedObject(preparation,mapping.calendarFile)};
+      for(const [key,target] of [['selectionFile','selection'],['taskBudgetFile','taskBudget'],['nativeChangeFile','nativeChange']])
+        if(mapping[key])programmeInputs[target]=await preparedObject(preparation,mapping[key]);
+    }
+    work.programmeInputs=programmeInputs;
     work.selection=selection;work.seed=value;work.profile=clone(selected.profile);work.profileSha256=selected.sha256;
     work.bindingsText=pretty(bindings);work.dirty=false;work.prepared=null;work.preview=null;changed();
     state.notice='Prepared the full native profile binding template. Enter only actual known deployment, receiving and payment selections.';
@@ -592,6 +650,11 @@ export function mountInstallationSources(root,bridge){
     if(!work?.seed)throw new Error('Read the full original Workshare/profile binding template first.');
     const bindings=parseObject(work.bindingsText,'Complete profile bindings'),beforeText=work.bindingsText;
     const value=prepareInstallation(work.seed,work.profile,bindings);
+    if(work.programmeInputs){
+      const programme=composeCustomerProgramme({seed:work.seed,document:value.document,profile:work.profile,...work.programmeInputs});
+      value.document=clone(programme.document);value.preview.document=clone(programme.document);
+      value.customerProgramme=programme;
+    }
     await bridge.refreshCase();await readCatalogue();
     if(current().version!==work.seed.source.version||catalogue.profiles.find(x=>x.id===work.profileId)?.sha256!==work.profileSha256)
       throw new Error('The case or installed profile changed. Preserve your bindings and reopen the original current source.');
@@ -640,7 +703,7 @@ export function mountInstallationSources(root,bridge){
         '<code>'+esc(f.sha256)+'</code><br>'+esc(f.sourceUrl)+'<br>'+esc(f.observedAt),
         (f.filename.toLowerCase().endsWith('.zip')?btn('Receive native CanadaBuys source','native-receive','data-id="'+f.id+'"',historic()||workingDirty()||pending()):btn('Inspect JSON','inspect','data-id="'+f.id+'"'))+btn('Download original','file-download','data-id="'+f.id+'"')+
         btn('Remove from next edition','remove','data-id="'+f.id+'"',historic()||pending())
-      ])):empty('Retain the whole Workshare packet and each document that supplies original effort or commissioning context.'))+
+      ])):empty('Retain the complete Workshare packet or saved delivery handover, plus every document supplying original effort or customer programme context.'))+
       hint('For a native CanadaBuys Workshare, retain the complete ZIP produced by the installed canadabuys package command, then choose Receive native CanadaBuys source. Its original package, explicit mapping and all five prepared files stay together.')+inspectionView();
   }
   function inspectionView(){
@@ -677,13 +740,14 @@ export function mountInstallationSources(root,bridge){
       '<div class="source-desk-fields">'+
       field('Original customer case ID','caseForm.caseId',form.caseId,{wide:true})+
       field('Installed receiving profile','caseForm.profile',form.profile,{options:profileOptions})+
-      field('Whole original Workshare packet','caseForm.packetId',form.packetId,{options:[['','Select original packet'],...files().map(f=>[f.id,f.filename])]})+
-      '</div><details><summary>Explicit original phase-ID amendment, if required</summary>'+
+      field('Whole original Workshare packet or saved handover','caseForm.packetId',form.packetId,{options:[['','Select original source'],...files().map(f=>[f.id,f.filename])]})+
+      '</div><details><summary>Explicit original packet phase-ID amendment, if required</summary>'+
       hint('Only an explicitly reviewed phase-ID/dependency mapping is supported. Keep reason, source URL and selected receiving filename; native inspection verifies the complete inverse against the original packet.')+
       field('Complete phaseIdAmendment JSON','caseForm.amendmentText',form.amendmentText,{area:true,rows:8,wide:true})+'</details>'+
-      '<div class="source-desk-actions">'+btn('Review complete packet and phases','packet-review')+'</div>'+
+      '<div class="source-desk-actions">'+btn('Review original source and every phase','packet-review')+'</div>'+
       (form.packet?'<p><strong>'+esc(form.packet.plan.title)+'</strong><br>'+esc(form.packet.plan.customer)+' / '+esc(form.packet.plan.supplier)+
-       '</p><p>Native selected plan SHA-256 <code>'+esc(form.packet.planSha256)+'</code></p>'+
+       '</p>'+hint(form.sourceKind==='delivery-handover'?'Saved delivery handover: '+(form.originalHandover?.originalCompletedPhases??0)+' of '+(form.originalHandover?.originalTotalPhases??form.phaseRows.length)+' phases recorded complete in its original source.':'Original complete Workshare receiving packet.')+
+       '<details><summary>Original plan and handover identities</summary><pre>'+esc(pretty({planSha256:form.packet.planSha256,handover:form.originalHandover??null}))+'</pre></details>'+
        '<details><summary>Complete original commercial terms</summary><pre>'+esc(pretty(form.packet.plan.commercial))+'</pre></details>'+
        '<fieldset><legend>Whole supporting documents</legend>'+files().filter(f=>f.id!==form.packetId).map(f=>
          '<label class="source-desk-check"><input type="checkbox" data-source-case-file="'+f.id+'" data-source-edit'+
@@ -698,8 +762,11 @@ export function mountInstallationSources(root,bridge){
        (form.earlierPhaseRows?.length?'<details open><summary>Retained earlier mapping fields for changed phase IDs</summary><pre>'+esc(pretty(form.earlierPhaseRows))+'</pre></details>':'')+
        '<details><summary>Optional complete native profile bindings</summary>'+
        field('Original bindings JSON','caseForm.bindingsText',form.bindingsText,{area:true,rows:10,wide:true})+'</details>'+
+       '<details><summary>Existing customer calendar and operating programme</summary>'+
+       hint('Select the retained original programme by its complete source filenames. Its calendar, commercial selection, optional task budget and native editor change are received through the maintained programme composer.')+
+       field('Original programme selection JSON','caseForm.programmeText',form.programmeText||'',{area:true,rows:8,wide:true})+'</details>'+
        '<div class="source-desk-actions">'+btn('Apply complete mapping to selection','case-add')+'</div>':
-       empty('Review the original packet to expose its full phases and commercial scope.'))+'</section>';
+       empty('Review the original packet or saved delivery handover to expose every phase and its full commercial scope.'))+'</section>';
   }
   function nativeMappingView(selected){
     return header('Original CanadaBuys Workshare mapping','Review the exact native package and explicitly selected parties, effort and delivery phases.')+
@@ -764,7 +831,7 @@ export function mountInstallationSources(root,bridge){
         (selected.cases.length?table(['Original customer / installed profile','Complete selected plan','Effort and source files','Actions'],selected.cases.map((c,i)=>[
           '<strong>'+esc(c.caseId)+'</strong><br>'+esc(c.profile),
           '<code>'+esc(c.planSha256)+'</code>',esc(c.effortTotal?.hours??'')+' hours · '+(c.productionEffort?.length??0)+' phases<br>'+
-            esc(c.packet?.filename)+' + '+(c.files?.length??0)+' complete documents',
+            esc((c.handover??c.packet)?.filename)+' + '+(c.files?.length??0)+' complete documents',
           btn('Edit mapping','case-edit','data-index="'+i+'"',historic())+btn('Remove from selection','case-remove','data-index="'+i+'"',historic())
         ])):empty('Add each original customer with the complete quoted plan, explicit effort pointers and full source documents.')):hint(error))+
       caseFormView()+inspectionView()+
@@ -838,6 +905,11 @@ export function mountInstallationSources(root,bridge){
           (work.prepared?'<section class="source-desk-review"><h4>Actual selections still required</h4>'+
             (work.prepared.selections.length?table(['Field','Operating purpose'],work.prepared.selections.map(x=>[esc(x.field),esc(x.purpose)])):
               hint('The profile’s required operating selections are present. Original native acceptance checks remain under their own receiving workflow.'))+
+            (work.prepared.customerProgramme?'<h4>Original customer operating programme</h4>'+
+              '<p>'+work.prepared.customerProgramme.customerRows.length+' complete selected tasks from '+esc(work.prepared.customerProgramme.calendar.startDate)+' through '+esc(work.prepared.customerProgramme.calendar.endDateInclusive)+'.</p>'+
+              table(['UTC review','Source start, inclusive','Source end, exclusive','Snapshot requested'],work.prepared.customerProgramme.customerRows.map(row=>[
+                esc(row.scheduledAt),esc(row.sourceStartInclusive||''),esc(row.sourceEndExclusive||''),esc(row.requestedSnapshotAt||'')]))+
+              '<details><summary>Complete programme and original commercial terms</summary><pre>'+esc(pretty(work.prepared.customerProgramme))+'</pre></details>':'')+
             '<details><summary>Complete original native Installation preview</summary><pre>'+esc(pretty(work.preview))+'</pre></details></section>':''):''):
         '<div class="source-desk-actions">'+btn('Read attached Workshare inventory','installation-open')+'</div>');
   }
@@ -1046,7 +1118,8 @@ export function mountInstallationSources(root,bridge){
       if(action==='profile-download'){
         const w=state.profileWork;if(!w?.prepared||w.previewBindings!==w.bindingsText)throw new Error('Review the complete current profile bindings.');
         downloadBlob(pretty(w.prepared),'INSTALLATION_PREPARATION.json');
-        downloadBlob(renderWorkorder(w.prepared),'INSTALLATION_WORKORDER.md','text/markdown;charset=utf-8');return;
+        const programme=w.prepared.customerProgramme?programmeFiles(w.prepared.customerProgramme).get('CUSTOMER_PROGRAMME.md'):'';
+        downloadBlob(renderWorkorder(w.prepared)+(programme?'\n\n'+programme:''),'INSTALLATION_WORKORDER.md','text/markdown;charset=utf-8');return;
       }
       if(action==='request-status')return readOriginal();
       if(action==='request-retry')return sendOriginal();

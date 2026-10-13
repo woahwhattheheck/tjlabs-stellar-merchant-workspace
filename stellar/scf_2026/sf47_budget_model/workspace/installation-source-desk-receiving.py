@@ -757,12 +757,14 @@ class Receiving:
                  "Keep receiving control files outside the original workspace and installed source.")
         selected_raw = regular(self.args.selection, 8 * 1024 * 1024)
         selected = json.loads(selected_raw)
-        need(selected.get("schema") == "stellar-forge.installation-source-selection.v1" and
+        need(selected.get("schema") in ("stellar-forge.installation-source-selection.v1",
+                                        "stellar-forge.installation-handover-selection.v1") and
              isinstance(selected.get("cases"), list) and selected["cases"],
              "Select the complete original source preparation input.")
         original_files = {}
         for case in selected["cases"]:
-            for item in [case["packet"], *case["files"]]:
+            source_key = "handover" if selected["schema"] == "stellar-forge.installation-handover-selection.v1" else "packet"
+            for item in [case[source_key], *case["files"]]:
                 need(item["path"] == item["filename"] and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,199}", item["filename"]),
                      "Keep the original selected receiving filename at the source root.")
                 receipt = file_receipt(self.args.source_root / item["path"], 8 * 1024 * 1024)
@@ -837,7 +839,8 @@ class Receiving:
         files = {item["filename"]: item for item in current["files"]}
         results = []
         for case in self.selected["cases"]:
-            file = files[case["packet"]["filename"]]
+            source_key = "handover" if self.selected["schema"] == "stellar-forge.installation-handover-selection.v1" else "packet"
+            file = files[case[source_key]["filename"]]
             value = self.desk.inspect(self.case_id, self.draft_id, file["id"], current["revision"], case.get("phaseIdAmendment"))
             need(value["packet"]["caseId"] == case["caseId"] and
                  value["packet"]["planSha256"] == case["planSha256"] and
@@ -856,7 +859,12 @@ class Receiving:
         def pins():
             catalogue = self.desk.profiles()
             profiles = {row["id"]: row["sha256"] for row in catalogue["profiles"]}
-            return {"expectedEngineSha256": catalogue["engine"]["sha256"],
+            engine = next((row["engine"] for row in catalogue.get("sourceFormats", [])
+                           if row["schema"] == self.selected["schema"]), None)
+            if engine is None and self.selected["schema"] == "stellar-forge.installation-source-selection.v1":
+                engine = catalogue["engine"]
+            need(engine is not None, "Retain the installed complete original source-format engine.")
+            return {"expectedEngineSha256": engine["sha256"],
                     "expectedSelectionSha256": value_sha(self.selected),
                     "expectedProfiles": {row["profile"]: profiles[row["profile"]] for row in self.selected["cases"]}}
         result = self.desk_request("05-prepare", "prepare", pins)
@@ -866,7 +874,8 @@ class Receiving:
              "The complete native preparation differs from the original selected cohort.")
         for expected, received in zip(self.selected["cases"], value["report"]["nativeWorkshares"]):
             need(received["planSha256"] == expected["planSha256"] and
-                 str(received["hours"]) == str(expected["effortTotal"]["hours"]) and received["packetPresent"],
+                 str(received["hours"]) == str(expected["effortTotal"]["hours"]) and
+                 received["packetPresent"] == (self.selected["schema"] != "stellar-forge.installation-handover-selection.v1"),
                  "The original complete effort or packet changed.")
         self.freeze("native-preparation.json", value)
         return value
@@ -949,6 +958,24 @@ class Receiving:
                 profile = next(row for row in profiles["profiles"] if row["id"] == selected["profile"])
                 source = {"mode": "prepare-profile", "seed": seed, "profile": profile,
                           "bindings": selected.get("bindings"), "output": str(prepared_path)}
+                if selected.get("programme") is not None:
+                    preparation = self.prepared()
+                    mapping = selected["programme"]
+                    def original_output(name):
+                        metadata, raw = self.desk.output(self.case_id, self.draft_id, preparation["id"], name)
+                        need(len(raw) == metadata["bytes"] and sha(raw) == metadata["sha256"],
+                             "The original programme source differs from its complete preparation.")
+                        value = json.loads(raw)
+                        need(isinstance(value, dict), "Select the complete original programme JSON object.")
+                        return value
+                    roles = preparation.get("sourceRoles", {"commissioning": "Supplier_Workshare_Commissioning.json"})
+                    programme = {"commissioning": original_output(roles["commissioning"]),
+                                 "calendarInput": original_output(mapping["calendarFile"])}
+                    for key, target in (("selectionFile", "selection"), ("taskBudgetFile", "taskBudget"),
+                                        ("nativeChangeFile", "nativeChange")):
+                        if key in mapping:
+                            programme[target] = original_output(mapping[key])
+                    source["programmeInputs"] = programme
                 self.freeze(source_path.name, source)
             command(self.control, label + "-profile", [str(self.args.node), str(HERE / "installation-source-desk-receiving.mjs"), str(source_path)])
             prepared = object_file(prepared_path)
