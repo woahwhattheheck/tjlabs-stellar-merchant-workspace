@@ -11,9 +11,10 @@ import {reviewDocumentCommissioning,prepareDocumentCommissioning,inspectDocument
   openCommissionedDocumentService} from './commissioning.mjs';
 import {documentError} from './contracts.mjs';
 const HELP=[
-  'Document merchant commissioning from original commerce','',
+  'Document merchant commissioning from original commerce or an operator account','',
   '  document-merchant commission offers --commerce-directory DIR [--out FILE]',
   '  document-merchant commission review|prepare --commerce-directory DIR --directory DIR --intent ID',
+  '  document-merchant commission review|prepare --account-source FILE --directory DIR',
   '       --provider mintpdf|snaplab|pdfmint [--anonymous]',
   '       (--customer-options FILE | --customer-directory DIR)',
   '       [--seller-port N] [--customer-port N] [--operator-port N] [--operations-port N]',
@@ -33,9 +34,9 @@ function parse(argv){
   if(!command||['--help','-h','help'].includes(command)){if(tail.length)fail('Help takes no options.');return {command:'help'};}
   const byCommand={
     offers:['commerce-directory','out'],
-    review:['commerce-directory','directory','intent','provider','anonymous','customer-options','customer-directory',
+    review:['account-source','commerce-directory','directory','intent','provider','anonymous','customer-options','customer-directory',
       'seller-port','customer-port','operator-port','operations-port','out'],
-    prepare:['commerce-directory','directory','intent','provider','anonymous','customer-options','customer-directory',
+    prepare:['account-source','commerce-directory','directory','intent','provider','anonymous','customer-options','customer-directory',
       'seller-port','customer-port','operator-port','operations-port','expected-selection','out'],
     inspect:['directory','out'],serve:['directory','expected-selection']
   };
@@ -49,14 +50,20 @@ function parse(argv){
     options[name]=value;
   }
   const required=command==='offers'?['commerce-directory']:['directory',
-    ...(['review','prepare'].includes(command)?['commerce-directory','intent','provider']:[])];
+    ...(['review','prepare'].includes(command)?['provider']:[])];
   for(const name of required)if(!options[name])fail('Supply --'+name+'.');
+  if(['review','prepare'].includes(command)){
+    if(options['account-source']){
+      if(options['commerce-directory']||options.intent)fail('Choose account-source or original commerce-directory and intent.');
+    }else if(!options['commerce-directory']||!options.intent)fail('Supply --account-source FILE or --commerce-directory DIR with --intent ID.');
+  }
   if(options['expected-selection']&&!/^[a-f0-9]{64}$/.test(options['expected-selection']))fail('Supply the complete selected SHA256.');
   return {command,options};
 }
 function input(options){
-  const value={commerceDirectory:absolute(resolve(options['commerce-directory'])),
-    directory:absolute(resolve(options.directory)),intentId:options.intent,provider:options.provider,
+  const value={...(options['account-source']?{accountSourceFile:absolute(resolve(options['account-source']))}:
+    {commerceDirectory:absolute(resolve(options['commerce-directory'])),intentId:options.intent}),
+    directory:absolute(resolve(options.directory)),provider:options.provider,
     anonymous:options.anonymous===true};
   if(Boolean(options['customer-options'])===Boolean(options['customer-directory']))
     fail('Select one complete --customer-options FILE or the original --customer-directory DIR.');
@@ -101,7 +108,7 @@ export async function runDocumentCommissioningCommand(argv=process.argv.slice(2)
       expectedSelection:options['expected-selection']},{environment,signal:combined});
     const c=opened.commissioning,l=opened.launch;
     print(JSON.stringify({schema:'stellar-forge.document-commerce-launch.v1',state:'LISTENING',
-      selectionSha256:c.selectionSha256,directory:c.directory,originalOperator:c.original.operatorWorkspace,
+      selectionSha256:c.selectionSha256,directory:c.directory,originalOperator:c.original.operatorWorkspace??c.original.operatorProfile?.path,
       originalIntentId:c.original.intentId,publicOrigin:c.original.publicOrigin,
       seller:l.seller,customer:l.customer,operator:l.operator,operations:l.operations,
       customerOptions:c.customerOptions,consumerOptions:c.consumerOptions,
