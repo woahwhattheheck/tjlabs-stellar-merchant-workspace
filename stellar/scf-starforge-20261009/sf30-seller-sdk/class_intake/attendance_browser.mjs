@@ -9,6 +9,9 @@ const HERE=dirname(fileURLToPath(import.meta.url)),need=(v,m)=>{if(!v)throw new 
 const same=(a,b)=>{const order=v=>Array.isArray(v)?v.map(order):v&&typeof v==="object"?Object.fromEntries(Object.keys(v).sort().map(k=>[k,order(v[k])])):v;return JSON.stringify(order(a))===JSON.stringify(order(b))};
 const hash=b=>createHash("sha256").update(b).digest("hex"),pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function retain(path,value){const body=Buffer.from(JSON.stringify(value,null,2)+"\n"),stage=path+"."+randomUUID()+".partial";await writeFile(stage,body,{mode:0o600});await rename(stage,path)}
+async function immutable(path,value){try{need(same(JSON.parse(await readFile(path,"utf8")),value),"Original retained selection changed: "+path)}catch(error){if(error.code!=="ENOENT")throw error;await retain(path,value)}}
+async function originalPending(page,workspaceId){return page.evaluate(key=>new Promise((accept,reject)=>{const r=indexedDB.open("class-attendance-operations",1);r.onupgradeneeded=()=>r.result.createObjectStore("pending");r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction("pending"),q=tx.objectStore("pending").get(key);q.onerror=()=>{db.close();reject(q.error)};q.onsuccess=async()=>{try{const v=q.result;if(v?.file instanceof Blob){const raw=await v.file.arrayBuffer();v.packet={bytes:raw.byteLength,sha256:[...new Uint8Array(await crypto.subtle.digest("SHA-256",raw))].map(n=>n.toString(16).padStart(2,"0")).join("")};delete v.file}accept(v??null)}catch(e){reject(e)}finally{db.close()}}}}),workspaceId+":attendance")}
+async function restoreSave(page,workspaceId,body){await page.evaluate(({key,body})=>new Promise((accept,reject)=>{const r=indexedDB.open("class-attendance-operations",1);r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction("pending","readwrite"),s=tx.objectStore("pending"),q=s.get(key);q.onsuccess=()=>{if(q.result){tx.abort();return}s.put({kind:"save",body},key)};tx.oncomplete=()=>{db.close();accept()};tx.onabort=()=>{db.close();reject(new Error("Original pending operation changed"))};tx.onerror=()=>reject(tx.error)}}),{key:workspaceId+":attendance",body});await page.reload();await page.waitForSelector("#pending:not([hidden])")}
 async function identity(path){const b=await readFile(path);return{path,bytes:b.length,sha256:hash(b)}}
 async function until(fn,test,timeout=90000){const end=Date.now()+timeout;let value;while(Date.now()<end){value=await fn();if(test(value))return value;await pause(250)}throw new Error("The original operator state did not finish: "+JSON.stringify(value))}
 export async function runAttendanceBrowser(config){
@@ -23,9 +26,9 @@ export async function runAttendanceBrowser(config){
  const resultPath=join(root,"result.json");try{const complete=JSON.parse(await readFile(resultPath,"utf8"));for(const f of complete.files)need(same(await identity(f.path),f),"Completed browser output changed");return complete}catch(e){if(e.code!=="ENOENT")throw e}
  const module=await import(pathToFileURL(config.playwrightModule).href),pw=module.chromium?module:module.default;
  let server=null,context=null;const files=[];
- async function stop(){if(context){await context.close();context=null}if(server){const child=server;server=null;if(child.exitCode===null&&child.signalCode===null)child.kill("SIGINT");await new Promise(resolve=>{if(child.exitCode!==null||child.signalCode!==null)resolve();else child.once("close",resolve)})}}
+ async function stop(){const errors=[],ownedContext=context,ownedServer=server;context=null;server=null;await Promise.all([ownedContext?ownedContext.close().catch(e=>errors.push(e)):Promise.resolve(),ownedServer?(async()=>{try{if(ownedServer.child.exitCode===null&&ownedServer.child.signalCode===null)ownedServer.child.kill("SIGINT");await ownedServer.closed}catch(e){errors.push(e)}})():Promise.resolve()]);if(errors.length)throw new AggregateError(errors,"Original attendance operator cleanup failed")}
  async function start(directory,label){
-  const child=spawn(config.pythonExecutable,["-B",join(HERE,"server.py"),"--workspace",directory],{cwd:HERE,env:{...process.env,PYTHONDONTWRITEBYTECODE:"1"},stdio:["ignore","pipe","pipe"]});server=child;
+  const child=spawn(config.pythonExecutable,["-B",join(HERE,"server.py"),"--workspace",directory],{cwd:HERE,env:{...process.env,PYTHONDONTWRITEBYTECODE:"1"},stdio:["ignore","pipe","pipe"]});const closed=new Promise((accept,reject)=>{child.once("error",reject);child.once("close",(code,signal)=>accept({code,signal}))});closed.catch(()=>{});server={child,closed};
   let stdout="",stderr="";child.stdout.on("data",b=>stdout+=b);child.stderr.on("data",b=>stderr+=b);
   const launch=await new Promise((accept,reject)=>{const timer=setTimeout(()=>reject(new Error("Original attendance server startup timed out")),60000);
    child.once("error",error=>{clearTimeout(timer);reject(error)});child.once("exit",code=>{clearTimeout(timer);reject(new Error("Original server exited "+code+": "+stderr))});
@@ -34,23 +37,52 @@ export async function runAttendanceBrowser(config){
   context=await pw.chromium.launchPersistentContext(join(root,"private-profile-"+label),{executablePath:config.chromiumExecutable,headless:true,acceptDownloads:true,viewport:{width:1365,height:960},args:config.chromiumArgs??["--no-sandbox","--disable-dev-shm-usage"]});
   const page=context.pages()[0]??await context.newPage();page.setDefaultTimeout(90000);await page.goto(launch.url+"/attendance");
   await page.waitForFunction(()=>document.getElementById("status").textContent.startsWith("Local workspace ready."));
-  const intake=new ClassIntakeClient(launch.url);await intake.state();return{page,url:launch.url,client:new AttendanceClient(intake)};
+  const intake=new ClassIntakeClient(launch.url),workspace=await intake.state();return{page,url:launch.url,label,workspaceId:workspace.workspaceId,client:new AttendanceClient(intake)};
  }
  async function open(page,id){await page.locator("#reviews").selectOption(id);await page.waitForFunction(id=>document.getElementById("revision").textContent.includes(id),id)}
  async function decision(opened,reason){
-  const latest=await opened.client.view(core.attendance.id);
-  if(latest.definition.sessions.find(x=>x.id==="drawing-oct21")?.reason===reason)return latest;
-  await opened.page.locator("#actor").fill(config.actor);
-  await opened.page.locator("#session-form select[name=existing]").selectOption("drawing-oct21");
-  await opened.page.locator("#session-form select[name=state]").selectOption("cancelled");
-  await opened.page.locator("#session-form input[name=reason]").fill(reason);
-  await opened.page.locator("#session-form button").click();
-  const value=await until(()=>opened.client.view(core.attendance.id),v=>v.definition.sessions.find(x=>x.id==="drawing-oct21")?.reason===reason);
-  await opened.page.waitForFunction(()=>document.getElementById("pending").hidden);
-  need(value.revision===latest.revision+1,"The same visible session decision created another number of editions");
-  return value;
+  const {page,client,workspaceId,label}=opened;
+  const intentPath=join(root,label+"-session-intent.json"),requestPath=join(root,label+"-session-request.json");
+  let intent;try{intent=JSON.parse(await readFile(intentPath,"utf8"))}catch(error){
+   if(error.code!=="ENOENT")throw error;
+   const latest=await client.view(core.attendance.id),definition=structuredClone(latest.definition);
+   const session=definition.sessions.find(x=>x.id==="drawing-oct21");need(session,"Original dated session is absent");
+   session.state="cancelled";session.reason=reason;definition.note=reason;
+   intent={workspaceId,bookId:latest.id,expectedRevision:latest.revision,actor:config.actor,definition};
+   await immutable(intentPath,intent);
+  }
+  need(intent.workspaceId===workspaceId&&intent.bookId===core.attendance.id&&intent.actor===config.actor,"Original attendance intent changed");
+  const validate=body=>need(body&&body.id===intent.bookId&&body.expectedRevision===intent.expectedRevision&&body.actor===intent.actor&&same(body.definition,intent.definition)&&typeof body.requestId==="string"&&typeof body.at==="string","Original pending attendance request differs");
+  let body,pending=await originalPending(page,workspaceId);
+  try{body=JSON.parse(await readFile(requestPath,"utf8"));validate(body)}catch(error){if(error.code!=="ENOENT")throw error}
+  if(pending){need(pending.kind==="save","Another complete receiving operation is pending");validate(pending.body);if(body)need(same(body,pending.body),"Retained request differs from browser pending body");else{body=pending.body;await immutable(requestPath,body)}}
+  if(body){
+   const lookup=await client.request(body.requestId);
+   if(lookup.state==="RECORDED")need(same(lookup.request,body),"Original recorded attendance body differs");
+   if(!pending&&lookup.state!=="RECORDED"){await restoreSave(page,workspaceId,body);pending=await originalPending(page,workspaceId)}
+   if(pending){need(pending.kind==="save"&&same(pending.body,body),"Pending attendance changed");await page.locator("#resume").click()}
+  }else{
+   const latest=await client.view(intent.bookId);need(latest.revision===intent.expectedRevision,"Original attendance edition changed before dispatch");
+   await page.locator("#actor").fill(config.actor);
+   await page.locator("#session-form select[name=existing]").selectOption("drawing-oct21");
+   await page.locator("#session-form select[name=state]").selectOption("cancelled");
+   await page.locator("#session-form input[name=reason]").fill(reason);
+   let accept,reject;const intercepted=new Promise((a,b)=>{accept=a;reject=b});intercepted.catch(()=>{});const tasks=new Set();
+   const handler=route=>{const task=(async()=>{try{body=route.request().postDataJSON();validate(body);await immutable(requestPath,body);await route.continue();accept()}catch(error){reject(error);await route.abort("failed").catch(()=>{})}})();tasks.add(task);task.finally(()=>tasks.delete(task)).catch(()=>{});return task};
+   await page.route("**/api/attendance/save",handler);let timer;
+   try{
+    const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("Original attendance save has not reached dispatch; its retained operation can resume")),30000)});deadline.catch(()=>{});
+    await page.locator("#session-form button").click();await Promise.race([intercepted,deadline]);
+   }finally{clearTimeout(timer);try{await page.unroute("**/api/attendance/save",handler)}finally{await Promise.allSettled([...tasks])}}
+  }
+  need(body,"Original complete attendance request was not selected");
+  await page.waitForSelector("#pending[hidden]");
+  const recorded=await client.request(body.requestId);need(recorded.state==="RECORDED"&&same(recorded.request,body),"Original attendance request did not complete");
+  const result=await client.view(recorded.result.id,recorded.result.revision);
+  need(result.revision===intent.expectedRevision+1&&same(result.definition,intent.definition),"Original visible attendance decision differs");
+  await open(page,result.id);files.push(await identity(intentPath),await identity(requestPath));return result;
  }
- async function download(opened,name){const event=opened.page.waitForEvent("download");await opened.page.locator("#export").click();const received=await event;const path=join(root,name);await received.saveAs(path);const file=await identity(path);files.push(file);return file}
+ async function download(opened,name){const event=opened.page.waitForEvent("download");event.catch(()=>{});await opened.page.locator("#export").click();const received=await event;const path=join(root,name);await received.saveAs(path);const file=await identity(path);files.push(file);return file}
  try{
   const sourceDirectory=resolve(core.workspace),source=await start(sourceDirectory,"source");
   await open(source.page,core.attendance.id);
@@ -61,12 +93,18 @@ export async function runAttendanceBrowser(config){
   const sourcePacket=await download(source,"Class_Attendance_Source_Browser.zip");
   await retain(join(root,"source-review.json"),reviewed);files.push(await identity(join(root,"source-review.json")));await stop();
   const receiverDirectory=join(root,"received-workspace"),recipient=await start(receiverDirectory,"received");
-  const current=await recipient.client.state();
-  if(!current.reviews.some(x=>x.id===core.attendance.id)){
+  const current=await recipient.client.state(),receiveIntent={workspaceId:recipient.workspaceId,packet:sourcePacket};
+  await immutable(join(root,"original-receive-intent.json"),receiveIntent);
+  const incoming=await originalPending(recipient.page,recipient.workspaceId);
+  if(incoming){
+   need(incoming.kind==="receive"&&incoming.packet?.bytes===sourcePacket.bytes&&incoming.packet?.sha256===sourcePacket.sha256,"Independent workspace has another pending original operation");
+   await recipient.page.locator("#resume").click();
+  }else if(!current.reviews.some(x=>x.id===core.attendance.id)){
    await recipient.page.locator("#packet").setInputFiles(sourcePacket.path);
-   await until(()=>recipient.client.state(),v=>v.reviews.some(x=>x.id===core.attendance.id));
-   await recipient.page.waitForFunction(()=>document.getElementById("pending").hidden);
   }
+  await until(()=>recipient.client.state(),v=>v.reviews.some(x=>x.id===core.attendance.id));
+  await recipient.page.waitForFunction(()=>document.getElementById("pending").hidden);
+  files.push(await identity(join(root,"original-receive-intent.json")));
   await open(recipient.page,core.attendance.id);
   const received=await recipient.client.view(core.attendance.id,reviewed.revision);
   need(JSON.stringify(received)===JSON.stringify(reviewed),"Whole browser receiving changed the exact saved source edition");

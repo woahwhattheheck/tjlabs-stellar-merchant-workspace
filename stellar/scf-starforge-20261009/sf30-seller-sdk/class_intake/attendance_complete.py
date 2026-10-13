@@ -1,6 +1,6 @@
 """Run the complete attendance case and optional existing Chromium operator, then package."""
 import argparse,fcntl,hashlib,json,os,pathlib,subprocess,sys,tempfile,zipfile
-from class_intake import atomic,canonical,sha
+from class_intake import Workspace,atomic,canonical,sha
 HERE=pathlib.Path(__file__).resolve().parent
 def identity(path):
  raw=path.read_bytes();return {"path":str(path),"bytes":len(raw),"sha256":sha(raw)}
@@ -11,6 +11,33 @@ def run(config):
  need(root.resolve()==root and not root.is_relative_to(HERE) and not HERE.is_relative_to(root),"Keep the original private operation beside the complete source directory")
  with (root/"complete.lock").open("a+b") as lease:
   fcntl.flock(lease,fcntl.LOCK_EX|fcntl.LOCK_NB)
+  original_path=pathlib.Path(config["intakeResult"]).absolute();original=json.loads(original_path.read_bytes())
+  need(original.get("schema")=="class-intake.complete-engineering-receiving.v1" and original.get("state")=="COMPLETE","Select the original complete intake result")
+  for descriptor in original["files"]:need(identity(pathlib.Path(descriptor["path"]))==descriptor,"Original complete intake member changed")
+  selected_sources=[identity(path) for path in sorted(HERE.rglob("*")) if path.is_file() and not any(part in ("__pycache__",".git") for part in path.relative_to(HERE).parts)]
+  base_selection={"operation":"CLASS-INTAKE-BEREA-ATTENDANCE-7108-20261013","outputDirectory":str(root),"intakeResult":identity(original_path),"workspace":original["workspace"],"source":selected_sources}
+  def selected(path,value):
+   if path.exists():need(json.loads(path.read_bytes())==value,"Original complete operation selection changed: "+str(path))
+   else:atomic(path,canonical(value))
+  selected(root/"complete-selection.json",base_selection)
+  original_browser=None
+  if config.get("intakeBrowserResult"):
+   original_browser_path=pathlib.Path(config["intakeBrowserResult"]).absolute();original_browser=json.loads(original_browser_path.read_bytes())
+   need(original_browser.get("schema")=="class-intake.browser-receiving.v1" and original_browser.get("operationId")=="CLASS-INTAKE-BEREA-BROWSER-7108-20261013" and original_browser.get("state")=="COMPLETE","Select the complete original intake browser operation")
+   need(original_browser["review"]==original["sourceCase"]["id"],"The browser belongs to a different original intake")
+   for descriptor in original_browser["files"]:need(identity(pathlib.Path(descriptor["path"]))==descriptor,"Original browser member changed")
+   browser_selection=[x for x in original_browser["files"] if pathlib.Path(x["path"]).name=="selection.json"]
+   need(len(browser_selection)==1,"Original browser source selection is absent")
+   browser_input=json.loads(pathlib.Path(browser_selection[0]["path"]).read_bytes())
+   need(browser_input.get("coreResult")==identity(original_path),"Original browser selected a different complete core result")
+   workspace=Workspace(original["workspace"])
+   try:
+    view=workspace.view(original_browser["review"],original_browser["revision"])
+    need(view["revision"]>=original["sourceCase"]["revision"] and len(view["derived"]["datasets"]["catalogue"])==26,"Original browser edition differs")
+   finally:workspace.close()
+   selected(root/"intake-browser-selection.json",{"intakeBrowserResult":identity(original_browser_path),"coreResult":identity(original_path)})
+  if config.get("browser"):
+   selected(root/"attendance-browser-selection.json",{"nodeExecutable":config["nodeExecutable"],"browser":config["browser"],"intakeResult":identity(original_path)})
   def child(name,argv):
    folder=root/"attempts";folder.mkdir(exist_ok=True);index=len(list(folder.glob(name+"-*.stdout")))
    out=folder/(name+"-"+str(index)+".stdout");err=folder/(name+"-"+str(index)+".stderr")
@@ -20,11 +47,8 @@ def run(config):
    if code:raise RuntimeError(name+" returned "+str(code)+"; complete stderr: "+str(err)+"\n"+err.read_text()[-12000:])
   child("core",[sys.executable,"-B",str(HERE/"attendance_operate.py"),"--output",str(root/"core"),"--intake-result",str(pathlib.Path(config["intakeResult"]).absolute())])
   core_path=root/"core/result.json";core=json.loads(core_path.read_bytes());need(core["state"]=="COMPLETE","Original core did not complete")
-  original_path=pathlib.Path(config["intakeResult"]).absolute();original=json.loads(original_path.read_bytes())
   groups={"intake":[identity(original_path),*original["files"]],"core":[identity(core_path),*core["files"]]}
-  if config.get("intakeBrowserResult"):
-   original_browser_path=pathlib.Path(config["intakeBrowserResult"]).absolute();original_browser=json.loads(original_browser_path.read_bytes())
-   need(original_browser["state"]=="COMPLETE","Select the original completed intake browser")
+  if original_browser is not None:
    groups["intake-browser"]=[identity(original_browser_path),*original_browser["files"]]
   if config.get("browser"):
    browser={**config["browser"],"outputDirectory":str(root/"browser"),"coreResult":str(core_path),"pythonExecutable":str(pathlib.Path(sys.executable).resolve())}

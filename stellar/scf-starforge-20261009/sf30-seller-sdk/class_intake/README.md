@@ -6,7 +6,7 @@ The application never submits a registration, sends email, executes a payment or
 
 ## Run
 
-Python 3.11 or later and its standard library are sufficient. No package installation is required.
+Python 3.11 or later on a POSIX host (including Linux) and its standard library are sufficient. The original workspace/server ownership uses fcntl file locks. No package installation is required.
 
     python3 -B server.py --workspace /ABS/PRIVATE/class-intake --port 0
 
@@ -108,7 +108,7 @@ The example JSON is a factual transcription, explicitly public-derived. It is no
 
 ## Commercial and skills-transfer handover
 
-48DB retains the existing CourseStorm prospect contact and offer. The engineering contribution can support that original conversation with a working source review, exact documented import constraints, a completed operated handback when run, and a short input list:
+48DB retains the existing CourseStorm prospect contact and offer. Its actual first contact to integrations@coursestorm.com was sent on 13 October 2026 at 03:50:48 UTC (provider message 1a13362642ae55eb), with TONDO course/form/tuition and next-term setup as the principal use case. Berea is the source-qualified small-course affordability comparison; the example does not assert that Berea has selected CourseStorm. The engineering contribution can support that original conversation with a working source review, exact documented import constraints, a completed operated handback when run, and a short input list:
 - approved current catalogue/source and actual tenant export/template;
 - approved registration and transaction export, with exact sheet/header meanings;
 - current instructor-confirmation record and the owner's intended cutover window;
@@ -138,6 +138,6 @@ The local server persists operator-endpoint.json under its original workspace an
 
 SF30_PLAYWRIGHT_MODULE and SF30_CHROMIUM_EXECUTABLE are supported if the corresponding input path is omitted. No browser is installed. The Python parent holds the original output flock through the Node child; Node owns its local servers and persistent browser context. The input file must be outside the receiver's normalized selection.json path.
 
-The full journey opens the original catalogue/register, performs one clearly identified engineering note edition, preserves its exact UUID/body before deliberately losing the HTTP reply, recovers that same request, displays a historical edition, compares, downloads the verified whole ZIP, receives it through the UI in an independent workspace, closes/reopens the recipient and retains desktop/mobile screenshots. It does not correct or approve the real unresolved school source questions. Completed reentry verifies the original outputs before opening any application.
+The full journey opens the original catalogue/register, performs one clearly identified engineering note edition, preserves its exact UUID/body before deliberately losing the HTTP reply, recovers that same request, displays a historical edition, compares, downloads the verified whole ZIP, receives it through the UI in an independent workspace, closes/reopens the recipient and retains desktop/mobile screenshots. It does not correct or approve the real unresolved school source questions. Completed reentry verifies the original outputs before opening any application. The full core-result descriptor and receiver source are pinned before dispatch. If the UI save stops before reaching its HTTP mutation, the bounded interception records the original IndexedDB request and drains its route callbacks before cleanup; retry keeps that complete original request.
 
-The final Class_Intake_Complete_Browser_Handback.zip includes the complete native handback, full browser output, original packet members expanded for inspection, and both browser source files. A browser completion is claimed only when result.json and complete-handover.json actually report COMPLETE. Preserve the same input, original workspace and browser profile on a failed run; reconcile any uncertain process lifetime before invoking the same receiver again.
+The final Class_Intake_Complete_Browser_Handback.zip includes the complete native handback, full browser output and logs, original packet members expanded for inspection, and both browser source files. One immutable full member selection precedes deterministic ZIP creation. Reentry verifies and reuses the completed archive; an archive published before its completion receipt is reconciled from that same selection and never overwritten. A browser completion is claimed only when result.json and complete-handover.json actually report COMPLETE. Preserve the same input, original workspace and browser profile on a failed run; reconcile any uncertain process lifetime before invoking the same receiver again.
