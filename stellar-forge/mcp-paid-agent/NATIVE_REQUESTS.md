@@ -2,7 +2,7 @@
 
 The native request workflow connects Bazaar browse/search to the original SF88
 durable buyer inbox. Select an HTTP offer from any acquired catalog page, supply
-the actual query and body, save a stable intent, review its original offer, run the
+the actual path parameters, query and body, save a stable intent, review its original offer, run the
 configured operator, and open the complete saved response. The operator console
 and installed client use the same running MCP endpoint and original request IDs.
 
@@ -11,7 +11,9 @@ and installed client use the same running MCP endpoint and original request IDs.
 Set up and serve the original native operator using [NATIVE_WORKSPACE.md](NATIVE_WORKSPACE.md).
 The tool is **sf43_discover_review_and_pay**. Its new **request-workspace** action
 reports the configured merchant origin, pathname, HTTP method, Content-Type,
-payment network, scheme, asset, recipient and current maximum atomic amount.
+payment network, scheme, asset, recipient, current maximum atomic amount and
+original `catalogUrl`.
+A host configured with a trusted route template also reports **route.routeTemplate**.
 
 The workspace also reports actual request, source-page, preparation and response
 limits. Its response limit comes from the operator's original manifest. The
@@ -19,8 +21,11 @@ default saved-response limit is 64 MiB; an operator can configure another positi
 safe-integer limit when initializing the native workspace.
 
 A native workspace selects one route and one payment binding. Catalog search can
-cover other resources, but native preparation requires this configured route and
-a matching offered payment option. The existing standalone quote workflow remains
+cover other resources, but native preparation requires a concrete URL admitted by
+that configured route and a matching offered payment option. The default is the
+configured exact pathname. An operator can explicitly configure the original
+route template when its service accepts variable path values; that template is
+checked against the original configured concrete operation URL. The existing standalone quote workflow remains
 available on a broker workspace.
 
 ## Use several configured services
@@ -28,17 +33,23 @@ available on a broker workspace.
 The [native registry](NATIVE_REGISTRY.md) joins existing native workspaces in one
 console and endpoint. Read **request-workspaces** or **client.workspaces()**, then
 retain the selected **workspaceId** with each intent. The console chooses among
-route/payment-compatible services. The typed client exposes
+catalog/route/payment-compatible services. The typed client exposes
 **client.forWorkspace(id)** and **client.allHistoryPages()** for service-bound
 operations and complete shared history. Each original inbox, signer, approval
 channel and spending ledger remains in its configured service.
 
 ## Find an offer across the complete catalog
 
-Use **bazaar_resources** for browsing or **bazaar_search** for text search.
+Read **bazaar_catalogs** and select the configured source whose URL equals the
+chosen native workspace's **catalogUrl**. Use its **catalogId** with
+**bazaar_resources** for browsing or **bazaar_search** for text search. The
+registry also reports **catalogId** and **catalogLabel** on its service descriptors.
 The [discovery workflow](DISCOVERY.md) retains the complete provider pagination
 object, source request, row coverage, partial-result flag and next tool arguments.
-Follow the returned cursor or offset without changing filters.
+Follow the returned cursor or offset with its original catalog and filters.
+The [catalog guide](CATALOGS.md) covers source selection for hosts serving several
+original providers. Native preparation verifies the selected source against the
+service's immutable original catalog URL.
 
 The native broker privately retains the complete original provider page for each
 current handle, together with its row and original payment-option indexes.
@@ -47,7 +58,7 @@ page. Native preparation does not run another first-page search to rediscover it
 
 Call **bazaar_describe** for the selected handle. The description includes the
 original request schema, eligible payment options and page byte count/digest.
-Use its query field descriptions and encoding rules to enter explicit values.
+Use its path and query field descriptions and encoding rules to enter explicit values.
 Payment indexes presented with a handle refer to its eligible **accepts** array;
 the broker maps that selected index to the original upstream listing before
 calling the maintained SF88 preparation module.
@@ -55,7 +66,8 @@ calling the maintained SF88 preparation module.
 The broker's handles retain their existing expiry and capacity behavior. It also
 limits retained complete page buffers to 16 MiB. If a handle has expired or its
 original page is unavailable, discover and inspect the offer again. An already
-saved native intent remains independent of that temporary handle.
+saved native intent remains independent of that temporary handle and retains its
+original **preparation.source.catalog** with the complete page identity.
 
 ## Prepare the original request
 
@@ -86,6 +98,34 @@ serialization rules apply, including the existing form/explode codec. Fixed
 values on the advertised URL remain unchanged. Required fields must appear in
 the completed request URL.
 
+For a published template such as **/inspect/:address**, pass
+**input.path: {address: selectedAddress}**. Each value is an explicit raw string.
+The selected catalog declaration supplies its original route template and path
+schema. Inspect **description.preview.input.path** for required values, fixed
+bindings, source descriptions and limits. The same route identity codec used by
+the original SF88 preparation resolves the concrete path before native admission.
+
+~~~js
+const service = buyer.forWorkspace(selectedWorkspaceId);
+const description = await buyer.discovery.describe(selectedHandle);
+const prepared = await service.prepare({
+  intentId: originalIntentId,
+  handle: description.handle,
+  acceptIndex: selectedPaymentIndex,
+  maxAtomic: originalAtomicCeiling,
+  input: { path: { address: selectedAddress }, query: {} },
+});
+console.log(prepared.request.url);
+~~~
+
+Use these values from the actual selected service and current handle. The
+configured host template controls which concrete paths its native operator
+accepts. An existing exact-path workspace can prepare the matching concrete
+resource without changing its configuration. Every saved intent retains the
+concrete URL used by the original approval, payment binding, signer, inbox and
+saved result. Changing a path value is a different request; retain each request's
+own durable intent identity through execution and recovery.
+
 For the configured POST, PUT, PATCH or DELETE route, **input.body** carries the
 exact UTF-8 text. An empty body string is distinct from omitting a body. The
 configured Content-Type comes from the original operator workspace. Body bytes
@@ -109,6 +149,7 @@ The response includes:
 | preparation.acceptIndex | Original listing's payment-option index |
 | preparation.originalListing | Complete selected original listing |
 | preparation.accepted | Selected original payment terms |
+| preparation.pathBinding | Original route template, path values, advertised URL and exact concrete request URL |
 | preparation.body | Retained text, bytes, SHA-256 and Content-Type, or null |
 | availableActions | Actions currently available for this intent |
 
@@ -210,7 +251,11 @@ const buyer = await openNativeRequestClient({
 
 try {
   const workspace = await buyer.workspace();
+  const configured = await buyer.discovery.catalogs();
+  const catalog = configured.catalogs.find(source => source.url === workspace.catalogUrl);
+  if (!catalog) throw new Error('The service requires its original configured catalog.');
   for await (const page of buyer.discovery.searchPages({
+    catalogId: catalog.id,
     query: 'weather',
     type: 'http',
     scheme: workspace.payment.scheme,
@@ -276,8 +321,8 @@ retry a payment automatically.
 ## Operator console
 
 Open the original authenticated console and inspect a discovered HTTP resource.
-Its native form shows the configured route, original payment options, query
-schema, explicit body mode and atomic ceiling. Saving records a durable intent
+Its native form shows the configured route, original payment options, path and
+query schemas, explicit body mode and atomic ceiling. Saving records a durable intent
 before execution. The **HTTP requests** view combines history, reopen, retained
 source/body inspection, original execution/cancellation/recovery and complete
 saved responses.

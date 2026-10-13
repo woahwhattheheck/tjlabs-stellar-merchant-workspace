@@ -9,6 +9,10 @@ This workspace prepares and reconciles customer document handovers from the exis
 | Prepare documents | Select issued invoices and credits, inspect mapping issues, review exact totals and file identities, then prepare the reviewed package. |
 | Package and results | Download handover files, record original Xero document results, inspect row outcomes, correct unresolved documents and download the complete history. |
 
+## Commission customer cash across billing cycles
+
+Open **Cash commissioning** from an original package to compare retained Xero cash responses with the original customer ledger, match source movements to native allocation, credit, and refund portions, retain a reviewed cycle, and continue the following cycle from its saved baseline. The desk retains complete provider responses, original package files, dated customer accounts, applicable bank/refund advice, and the saved review. See [Customer cash commissioning](CASH_COMMISSIONING.md) for the operator workflow and native client routes.
+
 ## Install the complete selected product
 
 Build the exact maintained source commit with the existing distribution builder:

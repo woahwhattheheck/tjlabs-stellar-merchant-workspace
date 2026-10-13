@@ -47,9 +47,17 @@ export async function openProfileStore({directory, ownershipDirectory, create = 
     const path = join(profiles, name + '.json');
     const source = await readPrivateFile(path);
     const config = parseJson(source), reviewed = review(config);
-    requireValue(isDeepStrictEqual(reviewed.config, config) && digest(source) === reviewed.sha256,
-      'FACILITATOR_PROFILE_CHANGED');
-    return {name, path, ...reviewed, commands:{
+    // Earlier immutable profiles can omit optional catalog and payment timing.
+    // Preserve that original encoding and byte hash; the current review supplies
+    // the same disabled catalog and authorization-only runtime defaults.
+    const encodedConfig = {...reviewed.config, payments:{...reviewed.config.payments}};
+    if (!Object.hasOwn(config, 'catalog')) delete encodedConfig.catalog;
+    if (!Object.hasOwn(config.payments, 'paymentFlows')) delete encodedConfig.payments.paymentFlows;
+    const sourceSha256 = digest(source);
+    requireValue(isDeepStrictEqual(encodedConfig, config) &&
+      sourceSha256 === digest(bytes(encodedConfig)), 'FACILITATOR_PROFILE_CHANGED');
+    return {name, path, ...reviewed, config:encodedConfig, sha256:sourceSha256,
+      bytes:source.length, reviewSha256:reviewed.sha256, commands:{
       review:[process.execPath, cli, '--review', '--config', path],
       serve:[process.execPath, cli, '--serve', '--config', path],
     }};
@@ -68,7 +76,8 @@ export async function openProfileStore({directory, ownershipDirectory, create = 
       catch (error) {
         if (error.code !== 'EEXIST') throw error;
         const existing = await read(name);
-        requireValue(existing.sha256 === reviewed.sha256, 'FACILITATOR_PROFILE_NAME_ALREADY_EXISTS', 409);
+        requireValue(existing.reviewSha256 === reviewed.sha256,
+          'FACILITATOR_PROFILE_NAME_ALREADY_EXISTS', 409);
         reused = true;
       }
       const parent = await open(profiles, 'r');

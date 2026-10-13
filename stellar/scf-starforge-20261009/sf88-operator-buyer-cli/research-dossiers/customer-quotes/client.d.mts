@@ -3,7 +3,7 @@ import type {ResearchQuoteLaunchView} from './launch-inspection.mjs';
 export type ResearchQuoteJson = null | boolean | number | string | ResearchQuoteJson[] | {[key:string]:ResearchQuoteJson};
 export interface ResearchQuoteObject {[key:string]:ResearchQuoteJson}
 export type ResearchQuoteActor = ResearchQuoteObject;
-export type ResearchQuoteKind = 'CASE'|'BRIEF'|'RESPONSE'|'PUBLICATION'|'REALIZED';
+export type ResearchQuoteKind = 'CASE'|'CASE_TRANSFER'|'BRIEF'|'RESPONSE'|'PUBLICATION'|'REALIZED';
 export interface ResearchQuoteOptions {signal?:AbortSignal}
 export interface ResearchQuotePage {
  offset?:number; limit?:number; snapshot?:string; dossierId?:string; kind?:ResearchQuoteKind;
@@ -31,8 +31,28 @@ export interface ResearchQuoteReportSelection {
  requestId:string;bindingId:string;publicationId:string;purchaseIds:string[];revision:number;
  pricing:null|{profile:string;version:string;costEdition?:string};actor:ResearchQuoteActor;
 }
+export interface ResearchCaseTransferSource extends ResearchQuoteObject {
+ workspaceId:string;casesWorkspaceId:string;caseId:string;revision:string;
+}
+export interface ResearchTransferredCase extends ResearchQuoteObject {
+ id:string;revision:string;previousRevision:string|null;name:string;createdAt:string;updatedAt:string;
+ metadata:ResearchQuoteObject;inputs:ResearchQuoteObject;sources:ResearchQuoteObject;
+ workspaceBytes:number;runtimeSupport:ResearchQuoteJson;workspaceText:string;supportText:string|null;
+ workspaceSha256:string;supportSha256:string|null;
+}
+export interface ResearchCaseTransferPacket extends ResearchQuoteObject {
+ schema:'sf88-research-case-transfer/v1';source:ResearchCaseTransferSource;
+ case:ResearchTransferredCase;sha256:string;
+}
+export interface ResearchCaseTransferInput {
+ requestId:string;caseId:string;expectedRevision:string|null;source:ResearchCaseTransferPacket;
+}
+export interface ResearchCaseTransferSelection extends ResearchQuoteObject {
+ requestId:string;caseId:string;expectedRevision:string|null;
+ source:ResearchCaseTransferSource;sourceSha256:string;
+}
 export interface ResearchQuoteApplySelection {id:string;reviewSha256:string}
-export type ResearchQuoteSelection = ResearchQuoteCaseSelection|ResearchQuoteBriefSelection|
+export type ResearchQuoteSelection = ResearchCaseTransferInput|ResearchQuoteCaseSelection|ResearchQuoteBriefSelection|
  ResearchQuoteResponseSelection|ResearchQuotePublicationSelection|ResearchQuoteReportSelection;
 export interface ResearchQuoteReview extends ResearchQuoteObject {reviewSha256:string}
 export interface ResearchQuoteOperation {
@@ -109,6 +129,8 @@ export interface ResearchQuotesClient {
  configuration(options?:ResearchQuoteOptions):Promise<ResearchQuoteConfiguration>;
  listCases(query?:ResearchQuoteCaseQuery,options?:ResearchQuoteOptions):Promise<ResearchQuoteNativeResponse<ResearchQuoteCaseList>>;
  readCase(caseId:string,query?:{revision?:string},options?:ResearchQuoteOptions):Promise<ResearchQuoteNativeResponse<ResearchQuoteCaseView>>;
+ prepareCaseTransfer(input:ResearchCaseTransferInput,options?:ResearchQuoteOptions):Promise<ResearchQuoteOperation>;
+ applyCaseTransfer(input:ResearchQuoteApplySelection,options?:ResearchQuoteOptions):Promise<ResearchQuoteOperation>;
  createCase(input:ResearchQuoteCaseSelection,options?:ResearchQuoteOptions):Promise<ResearchQuoteOperation>;
  caseAction(caseId:string,action:ResearchQuoteCaseAction,input?:ResearchQuoteObject,options?:ResearchQuoteOptions):Promise<ResearchQuoteNativeResponse>;
  pricing(profile:string,action:ResearchQuotePricingAction,input?:ResearchQuoteObject,options?:ResearchQuoteOptions):Promise<ResearchQuoteNativeResponse>;
@@ -136,7 +158,7 @@ export interface ResearchQuotesTransport {
 }
 export declare const RESEARCH_QUOTES_CASE_ACTIONS:readonly ResearchQuoteCaseAction[];
 export declare const RESEARCH_QUOTES_PRICING_ACTIONS:readonly ResearchQuotePricingAction[];
-export declare function captureResearchQuoteInput(value:object):ResearchQuoteObject;
+export declare function captureResearchQuoteInput(value:object,options?:{maximum?:number}):ResearchQuoteObject;
 export declare function validateResearchQuoteOperation(value:unknown,selection?:{
  requestId?:string;kind?:ResearchQuoteKind;input?:object;reviewSha256?:string;
 }):ResearchQuoteOperation;

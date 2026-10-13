@@ -224,11 +224,18 @@ class Workspace(model.QgisWorkspace):
             return plans.rebase_plan(previous, capture)
         return plans.default_plan(capture)
 
-    def save_plan(self, value, *, revision, request_id, actor, original_base64=None):
+    def save_plan(self, value, *, revision, request_id, actor, original_base64=None, workbook_source=None):
         value = files.parse_json(files.canonical(value))
         original = _original(original_base64)
         payload = {"planJson": files.canonical(value), "originalBase64": original_base64}
+        if workbook_source is not None:
+            payload["workbookSource"] = workbook_source
         def update(state):
+            # Replay remains inside the original journal before reopening imported files.
+            proposed = None
+            if workbook_source is not None:
+                from . import workbook
+                proposed = workbook.propose(self, workbook_source)
             capture_id = value.get("captureId") if isinstance(value, dict) else None
             capture_row = self._metadata("captures", capture_id, state=state)
             captured = vector.open_capture(self._path(capture_row["path"]), capture_id)
@@ -239,8 +246,10 @@ class Workspace(model.QgisWorkspace):
             prior = _find(state, "plans", identifier)
             source_input = self._input(state, original, "plan", request_id, plan)
             software = self._retain_software(state)
+            workbook_input = workbook.retain(self, state, workbook_source, proposed, plan, request_id) if proposed is not None else None
             if prior is not None:
-                return {"plan": copy.deepcopy(prior), "existing": True, "input": source_input}
+                return {"plan": copy.deepcopy(prior), "existing": True, "input": source_input,
+                        **({"workbookInput": workbook_input} if workbook_input is not None else {})}
             relative = "migration/plans/" + identifier
             plan_file = self._put_json(relative + "/plan.json", plan)
             report, profile = plans.audit(captured, plan, self._path(relative))
@@ -255,8 +264,11 @@ class Workspace(model.QgisWorkspace):
                    "inputId": source_input["id"], "input": source_input, "softwareId": software["id"],
                    "valid": report["valid"], "issues": report["issues"],
                    "features": report["features"], "createdAt": model.utc_now(), "files": records}
+            if workbook_input is not None:
+                row["workbookInputId"] = workbook_input["id"]
             _extension(state)["plans"].append(row)
-            return {"plan": copy.deepcopy(row)}
+            return {"plan": copy.deepcopy(row),
+                    **({"workbookInput": workbook_input} if workbook_input is not None else {})}
         return self._mutate(revision, request_id, actor, "migration.plan-saved", payload, update)
 
     def review_plan(self, plan_id, outcome, note, *, revision, request_id, actor):

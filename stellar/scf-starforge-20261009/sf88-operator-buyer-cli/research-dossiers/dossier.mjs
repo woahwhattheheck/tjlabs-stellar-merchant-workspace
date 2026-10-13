@@ -30,6 +30,10 @@ import {createTemplateExchange,validateTemplateExchangeState,
 import {publicationDigest,publicationInput,extractionPublicationModel,extractionPublicationPage,extractionPublicationReport,
   extractionPublicationExport,recordExtractionPublication,validateExtractionPublicationState,validateExtractionPublicationTransition} from './extraction-publication.mjs';
 
+import {createDossierReturnSourceAdapter} from './dossier-returns/source.mjs';
+import {createDossierReturnStore,dossierReturnBlobMetadata,validateDossierReturnState,
+  validateDossierReturnTransition} from './dossier-returns/store.mjs';
+
 const DOCUMENT = 'sf88-research-dossier-v1';
 const PORTABLE = 'sf88-research-dossier-portable-v1';
 const MAX_RESPONSE = 64 * 1024 * 1024;
@@ -49,7 +53,9 @@ const summary = state => ({
   createdAt: state.createdAt, updatedAt: state.updatedAt,
   questionCount: state.questions.length, editionCount: state.editions.length,
   selectedCount: state.selections.filter(selection => selection.selected).length,
-  findingCount: state.findings.length, citationReviewCount:(state.citationReviews??[]).length,
+  findingCount: state.findings.length, dossierReturnCount:(state.dossierReturnEvents??[]).length,
+  dossierReturnProposalCount:(state.dossierReturnEvents??[]).reduce((count,event)=>count+event.proposalCount,0),
+  citationReviewCount:(state.citationReviews??[]).length,
   eligibilityReviewCount:(state.eligibilityEvents??[]).filter(value=>value.action==='create-review').length,
   riskOfBiasReviewCount:(state.riskOfBiasEvents??[]).filter(value=>value.action==='create-review').length,
   customerProjectCount:(state.customerUpdateEvents??[]).filter(value=>value.action==='create-project').length,
@@ -643,7 +649,7 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
 
   function collectBlobMetadata(state, contents) {
     for (const metadata of [...state.editions.filter(edition => edition.mode === 'retained').map(edition => edition.raw),
-      ...customerUpdateBlobMetadata(state), ...templateExchangeBlobs(state)]) {
+      ...customerUpdateBlobMetadata(state), ...templateExchangeBlobs(state), ...dossierReturnBlobMetadata(state)]) {
       const existing = contents.get(metadata.sha256);
       need(!existing || existing.bytes === metadata.bytes, 'RESEARCH_BLOB_CHANGED');
       contents.set(metadata.sha256, metadata);
@@ -757,6 +763,7 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
       validateCustomerUpdateState(state,editions);
       validateTemplateExchangeState(state);
       await validateRisState(state,readContent,occurrenceCache);
+      await validateDossierReturnState(state,readContent,occurrenceCache);
       const findings = new Set();
       for (const finding of state.findings) {
         need(object(finding) && typeof finding.id === 'string' && /^f_[a-f0-9-]{36}$/.test(finding.id) &&
@@ -776,6 +783,16 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
   }
 
   async function validateReviewTransitions(previous,state,readContent,occurrenceCache){
+    const key=revision=>'return-history:'+state.id+':'+revision;
+    if(previous){
+      const sha256=digest(jsonBytes(previous)),saved=occurrenceCache.get(key(previous.revision));
+      need(saved===undefined||saved===sha256,'PORTABLE_HISTORY_CHANGED');
+      occurrenceCache.set(key(previous.revision),sha256);
+    }
+    occurrenceCache.set(key(state.revision),digest(jsonBytes(state)));
+    if(await validateDossierReturnTransition(previous,state,{readContent,
+      withPortableBranch:returnSourceAdapter.withPortableBranch,
+      historyPin:revision=>occurrenceCache.get(key(revision))}))return;
     await validateRisTransition(previous,state,readContent,occurrenceCache);
     const hasCitation=(state.citationReviews?.length??0)>(previous?.citationReviews?.length??0);
     const hasEligibility=(state.eligibilityEvents?.length??0)>(previous?.eligibilityEvents?.length??0);
@@ -960,13 +977,52 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
     } finally { await rm(staging, {recursive: true, force: true}); }
   }
 
+  const returnSourceAdapter=createDossierReturnSourceAdapter({directory,dossierDirectory,head,history,blob,putBlob,
+    validateEnvelope,validateState:validatePortableState,validateTransitions:validateReviewTransitions});
+  async function validateReturnCandidate(id,state,{withTransition=false}={}){
+    const versions=await history(id),current=versions.at(-1),cache=new Map();
+    need(current&&state.revision===current.state.revision+1&&state.previous===current.sha256,'REVISION_CONFLICT');
+    const envelope={sha256:digest(jsonBytes(state)),state};
+    need(jsonBytes(envelope).length<=MAX_STATE,'DOSSIER_STATE_TOO_LARGE');
+    await validatePortableState(state,blob,cache);
+    if(withTransition){
+      for(const version of versions)
+        cache.set('return-history:'+id+':'+version.state.revision,version.sha256);
+      await validateReviewTransitions(current.state,state,blob,cache);
+    }
+  }
+  async function validateReturnCapacity(id,state){
+    const versions=await history(id),current=versions.at(-1);
+    need(current&&state.previous===current.sha256&&state.revision===current.state.revision+1,'REVISION_CONFLICT');
+    const contents=new Map();
+    const complete=[...versions,{sha256:digest(jsonBytes(state)),state}];
+    let wire=jsonBytes({schema:PORTABLE,id,exportedAt:timestamp(),versions:[],blobs:[]}).length,raw=0;
+    // Count the complete buffered original v1 representation conservatively.
+    // Its indentation is larger than the streamed representation. This prevents
+    // committing a return whose retained branches cannot travel in a full export.
+    for(const envelope of complete){
+      const bytes=jsonBytes(envelope);
+      wire+=bytes.length+4*(bytes.toString('utf8').match(/\n/g)?.length??0)+8;
+      collectBlobMetadata(envelope.state,contents);
+    }
+    for(const metadata of contents.values()){
+      raw+=metadata.bytes;
+      const header=jsonBytes({...metadata,bodyBase64:''});
+      wire+=header.length+4*(header.toString('utf8').match(/\n/g)?.length??0)+8+Math.ceil(metadata.bytes/3)*4;
+    }
+    need(raw<=MAX_PORTABLE&&wire<=MAX_PORTABLE,'PORTABLE_SIZE_LIMIT');
+    return{rawBytes:raw,maximumWireBytes:wire,maxBytes:MAX_PORTABLE};
+  }
+  const dossierReturnStore=createDossierReturnStore({directory,dossierDirectory,head,history,readRevision,commit,blob,putBlob,
+    sourceAdapter:returnSourceAdapter,validateCandidate:validateReturnCandidate,validateCapacity:validateReturnCapacity});
+
   const studyFlowStore=createStudyFlowStore({head,commit,metadata,get,projections});
   const risSourceStore=createRisSourceStore({head,commit,metadata,blob,putBlob});
   const customerUpdateStore=createCustomerUpdateStore({head,commit,metadata,get,projections,blob,putBlob,exportStream});
   const templateExchange=createTemplateExchange({head,commit,blob,putBlob,reviewExtraction,
     workbookOptions:{python:extractionOptions.python??'python3',signal:extractionOptions.signal}});
   return Object.freeze({ directory, list, create, get, getMetadata, readRetainedEdition, listRevisions, update, addQuestion, updateQuestion,
-    ...customerUpdateStore,...risSourceStore,...studyFlowStore,templateExchange,
+    ...customerUpdateStore,...risSourceStore,...dossierReturnStore,...studyFlowStore,templateExchange,
     receive, previewSourceBundle, receiveSourceBundle, receiveBuyerResult, receiveReference, selectEvidence, updateSelection, addFinding, updateFinding,
     citationUpdates,reviewCitationUpdate,eligibility,reviewEligibility,exportEligibility,
     riskOfBias,reviewRiskOfBias,exportRiskOfBias,

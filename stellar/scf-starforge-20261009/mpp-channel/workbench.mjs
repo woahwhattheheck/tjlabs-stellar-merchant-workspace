@@ -4,14 +4,18 @@ import { regular } from '../distribution/runtime-workspace/storage.mjs';
 import { createPublicHttpsFetch } from '../sf31-buyer-client/public-transport.mjs';
 import { requireValue as need, hash, stable, now } from '../mpp-charge/storage.mjs';
 import { responseRecord, storedResponse } from '../mpp-charge/merchant.mjs';
-import { publicURL, merchantConfig, profileKey, streamKey, channel, draftTask, MAX_BODY } from './config.mjs';
+import { publicURL, merchantConfig, profileKey, streamKey, channel, draftTask, funderConfig, draftFunder, draftOpening, MAX_BODY } from './config.mjs';
 import { saveTask, authorizeTask, resumeTaskAuthority, stopTask } from './authority.mjs';
 import { preparePurchase, executePurchase, refreshChallenge, responseFor, cancelPurchase } from './buyer.mjs';
 import { createMerchant, merchantContract } from './merchant.mjs';
 import { registerLocalMerchant } from './transport.mjs';
-import { prepareClose, executeClose, reconcileClose, cancelUnsignedClose } from './settlement.mjs';
+import { prepareClose, executeClose, reconcileClose, cancelUnsignedClose,
+  prepareCollection, executeCollection, reconcileCollection, cancelUnsignedCollection, closeView } from './settlement.mjs';
+import { prepareOpening, executeOpening, reconcileOpening, cancelOpening, openingView } from './opening.mjs';
+import { prepareFunding, executeFunding, reconcileFunding, cancelUnsignedFunding, fundingView } from './funding.mjs';
+import { loadChannelNative, dependencyRootFor, observeChannel } from './runtime.mjs';
 import { exportChannel, receiveChannel, parseBundle, assertOperating } from './receiving.mjs';
-import { groups, snapshot, drainChannels, serialChannel, readTask, purchaseView } from './state.mjs';
+import { groups, snapshot, drainChannels, serialChannel, readTask, purchaseView, rememberObservation } from './state.mjs';
 const portValue=value=>{
   need(Number.isInteger(value) && value>=0 && value<=65535, 'MPP_CHANNEL_PORT_INVALID'); return value;
 };
@@ -87,9 +91,10 @@ export function createChannelWorkbench({workspace,environment=process.env}) {
   }
   async function state() {
     const selected=await snapshot(workspace),profiles=await workspace.list(groups.settings);
-    const channels=new Map([...selected.streams,...profiles].map(row=>[streamKey(row.channel),{streamKey:streamKey(row.channel),channel:row.channel}]));
+    const channels=new Map([...selected.streams,...profiles,...selected.funderProfiles,...selected.observations].map(row=>[streamKey(row.channel),{streamKey:streamKey(row.channel),channel:row.channel}]));
     return {...selected,streams:selected.streams.map(row=>({...row,streamKey:streamKey(row.channel)})),channels:[...channels.values()],
       merchantProfiles:profiles.map(row=>({...row,streamKey:streamKey(row.channel)})),
+      funderProfiles:selected.funderProfiles.map(row=>({...row,streamKey:streamKey(row.channel)})),
       merchants:[...merchants.entries()].map(([key,value])=>({stream:key,port:value.port,
         profileId:value.merchant.profileId,publicOrigin:value.merchant.config.publicOrigin,
         active:value.merchant.active()})),
@@ -106,6 +111,41 @@ export function createChannelWorkbench({workspace,environment=process.env}) {
           revision:(current?.revision ?? 0)+1,updatedAt:now(),title:config.title};
         return {op:'set',value:setting,result:setting};
       });
+    });
+  }
+  async function funderProfile(key) {
+    const setting=await workspace.read(groups.funders,key);
+    need(setting?.profileId,'MPP_CHANNEL_FUNDER_SELECTION_REQUIRED',404);
+    const profile=await workspace.read('profiles',setting.profileId);
+    need(profile && profileKey(funderConfig(profile))===setting.profileId,'MPP_CHANNEL_ORIGINAL_FUNDER_PROFILE_REQUIRED');
+    return {setting,profile};
+  }
+  async function selectedChannelProfile(key) {
+    if(await workspace.read(groups.funders,key))return (await funderProfile(key)).profile;
+    if(await workspace.read(groups.settings,key))return (await merchantProfile(key)).profile;
+    const task=(await workspace.list(groups.tasks)).find(row=>streamKey(row.config.channel)===key);
+    need(task,'MPP_CHANNEL_SELECTED_PROFILE_REQUIRED',404);
+    return (await readTask(workspace,task.config.taskId)).config;
+  }
+  async function configureFunder(body) {
+    const config=funderConfig(body.profile),key=streamKey(config.channel),profileId=profileKey(config);
+    return serialChannel(workspace,config.channel,async()=>{
+      await assertOperating(workspace,config.channel);await workspace.put('profiles',profileId,config);
+      return workspace.update(groups.funders,key,current=>{
+        need((current?.revision ?? 0)===(body.expectedRevision ?? 0),'MPP_CHANNEL_FUNDER_REVISION_CHANGED',409);
+        const setting={schema:'stellar-forge.mpp-channel-funder-selection.v1',channel:config.channel,profileId,
+          title:config.title,revision:(current?.revision ?? 0)+1,updatedAt:now()};
+        return {op:'set',value:setting,result:setting};
+      });
+    });
+  }
+  async function refreshChannel(body) {
+    const config=await selectedChannelProfile(body.stream);
+    return serialChannel(workspace,config.channel,async()=>{
+      await assertOperating(workspace,config.channel);
+      const native=await loadChannelNative(await dependencyRootFor(workspace,config));
+      const observation=await observeChannel(native,config.channel);
+      return rememberObservation(workspace,config.channel,observation,{operation:'channel-observe'});
     });
   }
   async function startMerchant(body) {
@@ -126,6 +166,31 @@ export function createChannelWorkbench({workspace,environment=process.env}) {
   }
   async function action(name,body) {
     need(body && typeof body==='object' && !Array.isArray(body), 'MPP_CHANNEL_OPERATION_INPUT_REQUIRED');
+    if(name==='opening-template')return draftOpening();
+    if(name==='opening-prepare')return prepareOpening({...body,workspace});
+    if(name==='opening-execute' || name==='opening-resume')return executeOpening({...body,workspace,environment});
+    if(name==='opening-reconcile')return reconcileOpening({...body,workspace});
+    if(name==='opening-cancel')return cancelOpening({...body,workspace});
+    if(name==='funder-template') {
+      const selected=body.stream?await selectedChannelProfile(body.stream):null;
+      return {...draftFunder(selected?.channel ?? body.channel),
+        ...(selected?{dependencyRoot:await dependencyRootFor(workspace,selected)}:{})};
+    }
+    if(name==='funder-save')return configureFunder(body);
+    if(name==='channel-observe')return refreshChannel(body);
+    if(name==='funding-prepare') {
+      const {profile}=await funderProfile(body.stream);
+      return prepareFunding({workspace,profile,fundingId:body.fundingId,action:body.action,amountAtomic:body.amountAtomic});
+    }
+    if(name==='funding-execute' || name==='funding-resume')return executeFunding({...body,workspace,environment});
+    if(name==='funding-reconcile')return reconcileFunding({...body,workspace});
+    if(name==='funding-cancel')return cancelUnsignedFunding({...body,workspace});
+    if(name==='collection-prepare') {
+      const {profile}=await merchantProfile(body.stream);return prepareCollection({workspace,profile,settlementId:body.settlementId});
+    }
+    if(name==='collection-execute' || name==='collection-resume')return executeCollection({...body,workspace,environment});
+    if(name==='collection-reconcile')return reconcileCollection({...body,workspace});
+    if(name==='collection-cancel')return cancelUnsignedCollection({...body,workspace});
     if(name==='task-template') return body.contract?taskFromOffer(body.contract,body.offerId):draftTask();
     if(name==='task-save') return saveTask({...body,workspace});
     if(name==='task-authorize') return authorizeTask({...body,workspace});
@@ -175,6 +240,18 @@ export function createChannelWorkbench({workspace,environment=process.env}) {
     if(kind==='tasks') return readTask(workspace,key);
     if(kind==='purchases') {
       const row=await workspace.read(groups.purchases,key);need(row,'MPP_CHANNEL_PURCHASE_NOT_FOUND',404);return purchaseView(row);
+    }
+    if(kind==='openings') {
+      const row=await workspace.read(groups.openings,key);
+      need(row,'MPP_CHANNEL_OPENING_NOT_FOUND',404);return openingView(row);
+    }
+    if(kind==='funders')return funderProfile(key);
+    if(kind==='funding' || kind==='settlements') {
+      const row=await workspace.read(groups[kind],key);need(row,'MPP_CHANNEL_FINANCIAL_OPERATION_NOT_FOUND',404);
+      return kind==='funding'?fundingView(row):closeView(row);
+    }
+    if(kind==='observations') {
+      const row=await workspace.read(groups.observations,key);need(row,'MPP_CHANNEL_OBSERVATION_NOT_FOUND',404);return row;
     }
     if(kind==='contracts') return merchantContract((await merchantProfile(key)).profile);
     need(false, 'MPP_CHANNEL_READ_NOT_FOUND',404);

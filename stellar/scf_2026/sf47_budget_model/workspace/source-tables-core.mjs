@@ -5,6 +5,11 @@ import {
   reviewIsCurrent, normalizeTable, compareReviews, sha256, parseTable,
 } from '../../../../stellar-forge/developer-site/dist/source-table-workspace.mjs';
 
+import {
+  validateWorkbookSource, validateWorkbookProjection, validateWorkbookMaterials, requireWorkbookProjectCapacity,
+  workbookSelectionBody, planningWorkbookRows, workbookOperatingGuide,
+} from './source-workbooks.mjs';
+
 export const BOOK_SCHEMA = 'stellar-forge.planning-source-tables.v1';
 export const STORAGE_SCHEMA = BOOK_SCHEMA + '.retained';
 export const PREVIEW_SCHEMA = 'stellar-forge.planning-source-tables.preview.v1';
@@ -125,8 +130,59 @@ export async function addReviewedPlanningDocument(book, {role, project, document
 export async function receivePlanningEdition(book, role, {filename, sourceText}) {
   const next = copy(book), binding = bindingIn(next, role);
   next.project = (await addEdition(next.project, binding.documentId, {filename, sourceText})).project;
+  if (next.selectedWorkbooks) next.selectedWorkbooks[binding.documentId] = null;
   return next;
 }
+
+export async function retainPlanningWorkbookSource(book, source) {
+  await validateWorkbookSource(source);
+  const next = copy(book);
+  next.workbookSources ??= []; next.workbookSelections ??= []; next.selectedWorkbooks ??= {};
+  const existing = next.workbookSources.find(item => item.id === source.id);
+  if (existing) need(existing.dataBase64 === source.dataBase64, 'WORKBOOK_BYTES', 'The original workbook identity must retain the same complete bytes.');
+  else next.workbookSources.push(copy(source));
+  requireWorkbookProjectCapacity(next);
+  return next;
+}
+export async function receivePlanningWorkbook(book, {role, source, projection, receivedAt = stamp()}) {
+  await validateWorkbookSource(source);
+  const body = await validateWorkbookProjection(projection, source);
+  let next = await retainPlanningWorkbookSource(book, source);
+  const filename = (source.filename + '.' + body.mapping.plan.sheet.replace(/[\\/]/g, '-')).slice(0,480) + '.csv';
+  if (next.bindings.some(item => item.role === role))
+    next = await receivePlanningEdition(next, role, {filename, sourceText: body.csv.text});
+  else next = await addPlanningTable(next, {role, filename, sourceText: body.csv.text, delimiter:',', header:true});
+  const binding = bindingIn(next, role), doc = documentIn(next, binding), edition = selectedEdition(doc);
+  const id = 'wbsel-' + await sha256(source.id + '\n' + doc.id + '\n' + projection.sha256);
+  if (!next.workbookSelections.some(item => item.id === id))
+    next.workbookSelections.push({id, sourceId: source.id, documentId: doc.id, editionId: edition.id,
+      text: projection.text, bytes: new TextEncoder().encode(projection.text).length, sha256: projection.sha256, receivedAt});
+  next.selectedWorkbooks[doc.id] = id;
+  await validateWorkbookMaterials(next);
+  return next;
+}
+export function selectPlanningWorkbook(book, selectionId) {
+  const next = copy(book), selected = next.workbookSelections?.find(item => item.id === selectionId);
+  need(selected, 'WORKBOOK_SELECTION', 'Choose a complete retained worksheet selection.');
+  const doc = next.project.documents.find(item => item.id === selected.documentId);
+  need(doc?.editions.some(item => item.id === selected.editionId), 'WORKBOOK_SELECTION', 'Retain the original projected source edition.');
+  doc.selectedEditionId = selected.editionId;
+  next.selectedWorkbooks ??= {};
+  next.selectedWorkbooks[doc.id] = selected.id;
+  return next;
+}
+export function selectPlanningSourceEdition(book, role, editionId) {
+  const next = copy(book), doc = documentIn(next, bindingIn(next, role));
+  need(doc.editions.some(item => item.id === editionId), 'SOURCE_EDITION', 'Choose an original source edition.');
+  doc.selectedEditionId = editionId;
+  const choices = (next.workbookSelections || []).filter(item => item.documentId === doc.id && item.editionId === editionId);
+  if (next.selectedWorkbooks) {
+    if (choices.length < 2) next.selectedWorkbooks[doc.id] = choices[0]?.id || null;
+    else delete next.selectedWorkbooks[doc.id];
+  }
+  return next;
+}
+
 export function changePlanningMapping(book, role, mapping) {
   const next = copy(book), binding = bindingIn(next, role);
   next.project = replaceMapping(next.project, binding.documentId, mapping);
@@ -212,6 +268,7 @@ export async function importPlanningBook(input) {
     reviewIds.add(review.id);
   }
   need(book.appliedReviewId === null || reviewIds.has(book.appliedReviewId), 'REVIEW', 'Retain the selected applied review.');
+  await validateWorkbookMaterials(book);
   return book;
 }
 function resolveRule(binding, field, row, existing) {
@@ -250,10 +307,13 @@ function rowsForBinding(book, binding) {
   const records = new Set(review.sourceRecords.map(x => x.record));
   need([...exclusions.keys()].every(record => records.has(record)), 'SOURCE_ROW', 'Each exclusion must refer to a retained source data record.');
   const rows = [], sourceRows = [], keys = new Set();
+  const workbookRows = planningWorkbookRows(book, doc.id, review.editionId);
   for (let i = 0; i < data.rows.length; i++) {
     const sourceRow = data.rows[i], position = review.sourceRecords[i];
     const provenance = {role: binding.role, documentId: doc.id, editionId: review.editionId,
-      reviewId: review.id, sourceSha256: review.sourceSha256, record: position.record, line: position.line};
+      reviewId: review.id, sourceSha256: review.sourceSha256, record: position.record, line: position.line,
+      ...(workbookRows ? {workbook: workbookRows.get(position.record)} : {})};
+    need(!workbookRows || provenance.workbook, 'WORKBOOK_ROW_MAP', 'Retain the original selected worksheet row for this table review.');
     if (exclusions.has(position.record)) {
       string(exclusions.get(position.record), 'Reason for excluding source record ' + position.record, 2000, true);
       sourceRows.push({...provenance, choice: 'exclude', note: exclusions.get(position.record)}); continue;
@@ -444,6 +504,6 @@ export function tableImportGuide(book) {
     'CSV amounts, rates and hours remain decimal text through mapping. The original planning calculator applies the saved hours/fixed pricing choices ' +
     'and its documented rounding and payment model. The source-import preview shows that complete result before applying it.\n\n' +
     'Table inputs replace or merge only the chosen planning roles. The original payment timing and capital settings remain available in the same plan. ' +
-    'The exact source rows and explicit exclusions travel in the portable source project and every native planning revision that retains it.\n';
+    'The exact source rows and explicit exclusions travel in the portable source project and every native planning revision that retains it.\n' + workbookOperatingGuide(book);
 }
 export const serializePlanningBook = book => json(book);

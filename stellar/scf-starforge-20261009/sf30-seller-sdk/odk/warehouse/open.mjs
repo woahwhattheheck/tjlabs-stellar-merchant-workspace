@@ -7,16 +7,19 @@ import { fault } from '../../odata/state.mjs';
 import { createCentralWarehouse } from './model.mjs';
 import { createWarehouseExtension } from './extension.mjs';
 
-export async function openCentralWarehouse({directory,connection,profiles=[],fetchImpl=globalThis.fetch}={}) {
+export async function openCentralWarehouse({directory,connection,profiles=[],fetchImpl=globalThis.fetch,extend,extraExtensions=[]}={}) {
+  if(extend!==undefined&&typeof extend!=='function')throw fault('CENTRAL_WAREHOUSE_EXTENSION','Use a trusted Store extension callback.');
+  if(!Array.isArray(extraExtensions))throw fault('CENTRAL_WAREHOUSE_EXTENSIONS','Compose an array of trusted listener extensions.');
   let workspace=null,commissioning=null,warehouse=null,closed=false;
   try {
-    workspace=await openCentralWorkspace({directory,fetchImpl,extend:({workspace:original,store})=>{
+    workspace=await openCentralWorkspace({directory,fetchImpl,extend:async({workspace:original,store})=>{
       commissioning=createCentralCommissioning({workspace:original,store,connection,fetchImpl});
       warehouse=createCentralWarehouse({workspace:original,store,profiles});
+      if(extend)await extend({workspace:original,store,commissioning,warehouse});
     }});
     if(!warehouse||!commissioning)throw fault('CENTRAL_WAREHOUSE_EXTENSION_MISSING',
       'Use the complete original Central source with its trusted Store extension callback.');
-    const extensions=[createCommissioningExtension({workspace,commissioning}),createWarehouseExtension({workspace,warehouse})];
+    const extensions=[createCommissioningExtension({workspace,commissioning}),createWarehouseExtension({workspace,warehouse}),...extraExtensions];
     return {workspace,commissioning,warehouse,extensions,
       async close(){if(closed)return;closed=true;
         try{await warehouse.close();}finally{try{await commissioning.close();}finally{await workspace.close();}}}};
@@ -25,8 +28,8 @@ export async function openCentralWarehouse({directory,connection,profiles=[],fet
     throw error;
   }
 }
-export async function serveCentralWarehouse({directory,connection,profiles=[],host='127.0.0.1',port=0,token,fetchImpl=globalThis.fetch}={}) {
-  const owner=await openCentralWarehouse({directory,connection,profiles,fetchImpl});
+export async function serveCentralWarehouse({directory,connection,profiles=[],host='127.0.0.1',port=0,token,fetchImpl=globalThis.fetch,extend,extraExtensions=[]}={}) {
+  const owner=await openCentralWarehouse({directory,connection,profiles,fetchImpl,extend,extraExtensions});
   let server=null,closed=false;
   try {
     server=await createCentralServer({workspace:owner.workspace,host,port,...(token?{token}:{}),extensions:owner.extensions});

@@ -10,6 +10,29 @@ The reviewer reads the retained purchase. Receiving, reading, closing and
 exporting it preserve the original quote identities, outcome and source vintage.
 They do not dispatch another payment or refresh the underlying data.
 
+## Prepare the saved draft from the command line
+
+The installed exporter opens the original saved submission and retains its full
+source, manual answers, issuer fields, planning, reviews and handover history:
+
+~~~sh
+starforge grant-export \
+  --draft /private/scf/saved-submission.json \
+  --out /private/scf/prepared-submission
+~~~
+
+Open the resulting `review.html` to copy or print the complete selected values.
+The same output includes exact field text, native counts and recorded limits,
+the original form map, all nine current answers and a checksummed `draft.json`
+that the existing **Prepare submission** workspace can reopen. A recorded limit
+exceeded returns exit 2 after preserving the complete values. The output must
+be a new private directory.
+
+The [export guide](../../../../stellar-forge/developer-site/GRANT_EXPORT.md)
+covers complete four-file source receiving, saved issuer maps and native output
+selection. The command and `./grant/application-exporter` package export both
+select the same maintained source included by this original product.
+
 ## Build or receive the selected source
 
 Use the archive and SHA-256 returned by the original distribution builder. To
@@ -153,6 +176,21 @@ Ctrl+C closes this reader. Reopen the same command to read the same installed
 source. For a checkout, the original entry is
 `node stellar-forge/developer-site/grant.mjs --port 8787`.
 The retained purchase workbench below keeps its own saved packet and lifecycle.
+
+## Turn selected grant work into an operating procedure
+
+This product also includes Command finder and Operating plans. In the saved
+submission's **Planning** section, select the native revision and work packages,
+enter the customer and receiving details, then create the complete operating
+JSON. Import it at `/operating-plan.html` on the `starforge discover serve`
+listener and continue the detailed work as saved operating revisions.
+
+The installed `starforge grant-operating-plan --file ORIGINAL --out NEW.json`
+command accepts the same complete submission or native SF47 JSON/ZIP. Export
+the toolkit's complete registration source with `starforge discover plan
+catalog --out NEW.json` when selecting commands for its packages. The
+[complete procedure guide](../../../../stellar-forge/developer-site/GRANT_OPERATING_PLANS.md)
+travels with the installed product.
 
 ## Open through Applications
 
@@ -370,7 +408,7 @@ runtime declarations.
 
 The selected command catalog contains `installation`, `runtime-profile`,
 `runtime-install`, `runtime-workspace`, `runtime-transfer`, `grant-application`,
-`grant-compose`, `grant-demo`,
+`grant-compose`, `grant-export`, `grant-operating-plan`, `discover`, `grant-demo`,
 `merchant-mcp`, `merchant-grant-reviewer` and
 `merchant-console-application-receive`.
 Its Applications providers are `grant-reviewer` and `merchant-console`; its

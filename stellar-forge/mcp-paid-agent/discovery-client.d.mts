@@ -6,8 +6,26 @@ export type NativeRecord = Record<string, unknown>;
 export type DiscoveryMode = 'search' | 'resources';
 export type ResourceType = 'http' | 'mcp';
 
+export interface CatalogDescription {
+  /** Exact host-configured ID; 1–64 lowercase letters, digits or hyphens. */
+  id: string;
+  label: string;
+  /** Original HTTP(S) discovery base; supplied only by trusted host configuration. */
+  url: string;
+}
+export interface CatalogConfiguration {
+  schema: 'stellar-forge.bazaar-catalogs.v1';
+  defaultCatalogId: string;
+  catalogs: CatalogDescription[];
+}
+export interface CatalogList extends CatalogConfiguration {
+  total: number;
+}
+
 /** Asset, recipient and network values are copied from original offered terms. */
 export interface DiscoveryFilters {
+  /** Exact source from catalogs(); an omitted value selects the host default. */
+  catalogId?: string;
   type?: ResourceType;
   payTo?: string;
   network?: string;
@@ -43,6 +61,8 @@ export interface PaymentOption extends NativeRecord {
 }
 export interface ResourceSummary extends NativeRecord {
   handle: string;
+  /** Present on hosts supporting named catalogs. */
+  catalogId?: string;
   resource: NativeRecord & { url: string };
   resourceType: ResourceType;
   method: string | null;
@@ -65,6 +85,8 @@ export interface DiscoveryPage {
     observedAt: string;
     mode: DiscoveryMode;
     request: NormalizedBrowseRequest | NormalizedSearchRequest;
+    /** Actual original source, including when the request used an implicit default. */
+    catalog?: CatalogDescription;
     /** Exact retained provider page, when supplied by this server. */
     pageSha256?: string;
     pageBytes?: number;
@@ -88,8 +110,47 @@ export interface HttpQueryParameter {
   encoding: 'literal-or-repeated' | 'form-comma' | 'form-repeated';
   source: string;
 }
+/** Explicit raw strings are encoded once into their advertised URL segments. */
+export type HttpPath = Record<string, string>;
+export interface HttpPathBinding {
+  routeTemplate: string | null;
+  values: HttpPath;
+  /** Complete original advertised resource URL, before explicit path values. */
+  advertisedUrl: string;
+  /** Concrete URL retained by the original preparation and durable intent. */
+  requestUrl: string;
+}
+export interface HttpPathParameter {
+  name: string;
+  required: boolean;
+  type: string | string[] | null;
+  title: string | null;
+  description: string | null;
+  source: string;
+}
+export interface HttpPathInput extends NativeRecord {
+  /** Original published route template, or null for an exact resource URL. */
+  routeTemplate: string | null;
+  advertisedKeys: string[];
+  /** Unbound path fields that the caller must explicitly supply. */
+  requiredKeys: string[];
+  /** Already concrete URL bindings retained by the original advertisement. */
+  fixedValues: HttpPath;
+  parameters: HttpPathParameter[];
+  keysSource: string | null;
+  valueType: 'string';
+  maxKeys: number;
+  maxKeyLength: number;
+  maxValueLength: number;
+  maxEncodedPathBytes: number;
+}
 export interface HttpPreviewInput extends NativeRecord {
   container: 'query';
+  /** Present on path-aware servers; query metadata remains beside this descriptor. */
+  path?: HttpPathInput | null;
+  containers?: ['path', 'query'];
+  additionalContainers?: false;
+  pathInputError?: (ContinuationError & { details?: NativeRecord }) | null;
   advertisedKeys: string[];
   keysSource: string | null;
   parameters: HttpQueryParameter[];
@@ -122,6 +183,9 @@ export interface ResourceDescription extends NativeRecord {
     url: string;
     observedAt: string;
     resource: string | NativeRecord;
+    catalog?: CatalogDescription;
+    mode?: DiscoveryMode;
+    request?: NormalizedBrowseRequest | NormalizedSearchRequest;
     /** Exact retained provider response identity, when available on this server. */
     pageSha256?: string;
     pageBytes?: number;
@@ -143,10 +207,19 @@ export type HttpQuery = Record<string, HttpQueryScalar | HttpQueryScalar[]>;
 export interface PreviewRequest {
   handle: string;
   acceptIndex?: number;
-  input: { query: HttpQuery } | { arguments: JsonObject };
+  input: { query?: HttpQuery; path?: HttpPath } | { arguments: JsonObject };
+}
+export interface PreviewHttpRequest {
+  handle: string;
+  acceptIndex?: number;
+  path?: HttpPath;
+  /** Defaults to an empty explicit query. Original fixed URL pairs are retained. */
+  query?: HttpQuery;
 }
 export interface PreparedQuote extends NativeRecord {
   quoteId: string;
+  /** Immutable original discovery page identity and row retained with this quote. */
+  source?: DiscoveryPage['source'] & {rowIndex:number};
   status: 'PREVIEWED';
   resource: string;
   requestUrl: string;
@@ -184,6 +257,8 @@ export type DiscoveryClientOptions = {
 );
 export interface BazaarDiscoveryClient {
   readonly endpoint: string;
+  /** Complete host-configured source list; this call makes no provider discovery request. */
+  catalogs(options?: CallOptions): Promise<CatalogList>;
   browse(request?: BrowseRequest, options?: CallOptions): Promise<DiscoveryPage>;
   search(request: SearchRequest, options?: CallOptions): Promise<DiscoveryPage>;
   /** Demand-driven pages preserve source coverage and partialResults. */
@@ -192,6 +267,8 @@ export interface BazaarDiscoveryClient {
   searchPages(request: SearchRequest, options?: CallOptions): AsyncGenerator<DiscoveryPage, void, unknown>;
   describe(handle: string, options?: CallOptions): Promise<ResourceDescription>;
   preview(request: PreviewRequest, options?: CallOptions): Promise<PreparedQuote>;
+  /** Prepare a concrete GET/HEAD request from the original advertised route and explicit inputs. */
+  previewHttp(request: PreviewHttpRequest, options?: CallOptions): Promise<PreparedQuote>;
   previewHttpQuery(
     request: { handle: string; query: HttpQuery; acceptIndex?: number },
     options?: CallOptions,

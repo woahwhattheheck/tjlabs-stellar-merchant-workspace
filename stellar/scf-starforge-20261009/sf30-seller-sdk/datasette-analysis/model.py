@@ -354,6 +354,10 @@ class DatasetteAnalysis:
                               "published zero amounts. Profile counts are integers. Original field "
                               "names, source keys, row/line records and complete publisher metadata "
                               "travel with the source file in the workspace.")
+        introduction = plan.get("introduction", introduction)
+        require(isinstance(introduction, str), "DATASETTE_REPORT_INTRODUCTION_INVALID")
+        publication_note = plan.get("publication_note", publication_note)
+        workbook_notes = plan.get("workbook_note", workbook_notes)
         definition = self.analysis.reports.save(report_name, {
             "id": self.identifier(edition["edition_id"] + ":REPORT_DEFINITION"),
             "expected_revision": 0, "title": (edition["title"] + " — Analysis")[:200],
@@ -686,6 +690,10 @@ class DatasetteAnalysis:
 
     @contextmanager
     def open_download(self, name, *, edition_id=None, export_id=None):
+        if isinstance(name, str) and name.startswith("nld-"):
+            with _sibling("nld_adapter").open_nld_download(self, name) as selected:
+                yield selected
+            return
         record = self._read()
         files = []
         if edition_id is not None or record.get("current_edition"):
@@ -725,6 +733,11 @@ class DatasetteAnalysis:
     def dispatch(self, action, body=None):
         body = {} if body is None else body
         require(isinstance(body, dict), "DATASETTE_REQUEST_OBJECT_REQUIRED")
+        if action in {"nld.status", "nld.rows"}:
+            return _sibling("nld_adapter").DatasetteNld(self).dispatch(action, body)
+        if isinstance(action, str) and action.startswith("nld."):
+            with self._mutex:
+                return _sibling("nld_adapter").DatasetteNld(self).dispatch(action, body)
         if action == "status":
             return self.status()
         if action == "prepare":

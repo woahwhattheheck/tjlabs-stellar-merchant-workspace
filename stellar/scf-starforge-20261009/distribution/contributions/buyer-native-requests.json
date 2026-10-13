@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "buyer-native-requests",
-  "description": "Complete catalog-to-native intent workflow, request console, typed saved-response client and source-native journey",
+  "description": "Complete source-bound catalog-to-native intent workflow, request console, typed saved-response client and original-source journey",
   "supportFiles": [
     "stellar-forge/mcp-paid-agent/NATIVE_REQUESTS.md",
     "stellar-forge/mcp-paid-agent/NATIVE_WORKSPACE.md",
@@ -9,7 +9,11 @@
     "stellar-forge/mcp-paid-agent/native-request-schema.mjs",
     "stellar-forge/mcp-paid-agent/operator-ui/native-request.mjs",
     "stellar-forge/mcp-paid-agent/catalog-native-journey.mjs",
-    "stellar-forge/mcp-paid-agent/CATALOG_JOURNEY.md"
+    "stellar-forge/mcp-paid-agent/CATALOG_JOURNEY.md",
+    "stellar-forge/route-identity/http-path.mjs",
+    "stellar-forge/route-identity/identity.mjs",
+    "stellar-forge/mcp-paid-agent/catalogs.mjs",
+    "stellar-forge/mcp-paid-agent/CATALOGS.md"
   ],
   "exports": {
     "./buyer/mcp/native-requests": {
@@ -21,6 +25,6 @@
     "mcp-catalog-journey": "stellar-forge/mcp-paid-agent/catalog-native-journey.mjs"
   },
   "commandDescriptions": {
-    "mcp-catalog-journey": "Walk the original catalog, prepare a later-page native service, execute and save its complete response"
+    "mcp-catalog-journey": "Walk the selected service’s original catalog, prepare a later-page native request and save its complete response"
   }
 }

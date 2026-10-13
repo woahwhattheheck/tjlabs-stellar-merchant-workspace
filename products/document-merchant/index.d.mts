@@ -59,6 +59,14 @@ export interface DocumentInstallation {
   functions: string[]; workerCount: number; maxPending: number; environmentNames: string[];
   files: Array<{name: string; bytes: number; sha256: string}>;
 }
+export interface DocumentPreparationReview {
+  schema: 'stellar-forge.document-merchant-review.v1'; state: 'NEW' | 'INCOMPLETE' | 'PREPARED';
+  directory: string; input: DocumentSetup; inputSha256: string; request: DocumentSetup;
+  jobsConfig: string; merchantState: string; providerConfig: string; customerSetup: string;
+  files: Array<{name: string; bytes: number; sha256: string}>;
+  configuration: {[key: string]: JsonValue}; supplierPrice: {[key: string]: JsonValue};
+  setupId?: string; planSha256?: string;
+}
 export interface DocumentWorkerContext {
   jobId: string; attemptId: string; signal?: AbortSignal;
   files: {
@@ -79,6 +87,7 @@ export const DOCUMENT_PROVIDER_SCHEMA: 'stellar-forge.document-provider.v1';
 export const DOCUMENT_RENDER_SCHEMA: 'stellar-forge.document-render.v1';
 export const DOCUMENT_PLAN_SCHEMA: 'stellar-forge.document-merchant-plan.v1';
 export const DOCUMENT_INSTALLATION_SCHEMA: 'stellar-forge.document-merchant-installation.v1';
+export const DOCUMENT_REVIEW_SCHEMA: 'stellar-forge.document-merchant-review.v1';
 export const SOURCE_CHECKED_ON: string;
 export function documentProviders(): DocumentProvider[];
 export function documentProvider(id: DocumentProviderId): DocumentProvider;
@@ -101,6 +110,7 @@ export function normalizeDocumentSetup(value: DocumentSetup): DocumentSetup;
 export function documentJobConfiguration(request: DocumentSetup): {[key: string]: JsonValue};
 export function prepareDocumentMerchant(input: {directory: string; request: DocumentSetup}): Promise<DocumentInstallation>;
 export function inspectDocumentMerchant(directory: string): Promise<DocumentInstallation>;
+export function reviewDocumentMerchant(options: {directory: string; request?: DocumentSetup}): Promise<DocumentPreparationReview>;
 export function readDocumentSetupRequest(path: string): Promise<DocumentSetup>;
 export function renderDocumentBytes(configuration: DocumentProviderConfiguration, format: DocumentFormat,
   input: DocumentInput, sourceBytes: Uint8Array, options?: DocumentFetchOptions & {
@@ -113,3 +123,6 @@ export function readDocumentSupplierUsage(configuration: DocumentProviderConfigu
     schema: 'stellar-forge.document-supplier-usage.v1'; provider: DocumentProviderId;
     observedAt: string; url: string; status: number; bytes: number; sha256: string; account: JsonValue;
   }>;
+export * from './batch.mjs';
+export * from './batch-render.mjs';
+export * from './launch.mjs';

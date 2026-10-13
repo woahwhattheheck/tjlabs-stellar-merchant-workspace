@@ -1,4 +1,4 @@
-import type { ChannelOperation, ChannelRecord, ChannelJob, ChannelBytes } from '../../stellar/scf-starforge-20261009/mpp-channel/client.mjs';
+import type { ChannelOperation, ChannelRecordKind, ChannelRecord, ChannelJob, ChannelBytes } from '../../stellar/scf-starforge-20261009/mpp-channel/client.mjs';
 import type { MppContract, CustomerBundle, CustomerExport, CustomerDraft, CustomerWorkbenchProfile,
   CustomerRequestPreview, CustomerResourcePreview, PurchaseInputs, PurchaseView, WorkbenchSnapshot,
   NativeReceipt } from '../../stellar/scf-starforge-20261009/mpp-charge/customer/index.mjs';
@@ -42,7 +42,7 @@ export class MppProductClient {
   state():Promise<ConsoleState>;
   channelState():Promise<ChannelRecord>;
   channelAction(name:ChannelOperation,input:ChannelRecord):Promise<ChannelJob>;
-  channelRecord(kind:'tasks'|'purchases'|'contracts',key:string):Promise<ChannelRecord>;
+  channelRecord(kind:ChannelRecordKind,key:string):Promise<ChannelRecord>;
   channelResponse(purchaseId:string):Promise<ChannelBytes>;
   channelHandover(sha256:string):Promise<ChannelBytes>;
   catalog():Promise<Catalog>;

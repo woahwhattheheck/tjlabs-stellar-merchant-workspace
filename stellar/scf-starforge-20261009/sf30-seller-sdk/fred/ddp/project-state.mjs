@@ -1,7 +1,8 @@
 // MIT. DDP project persistence uses the existing economic-project transaction.
 import { join, resolve } from 'node:path';
 import { open, link, unlink } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
+import { constants } from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
 import { readBytes } from '../../../sf88-operator-buyer-cli/node/store.mjs';
 import { privateDirectory, atomicJson, readPrivateJson } from '../../routescan/quota.mjs';
 import { canonical, clone, need, plain, operationId, normalizeSelection, MAX_CAPTURE_BYTES } from '../model.mjs';
@@ -14,7 +15,7 @@ import { inspectFredDdpCrosswalk } from './crosswalk.mjs';
 import { inspectFredDdpPackage } from './package.mjs';
 import { buildFredDdpMigrationPlan, validateFredDdpMigrationPlan, pageFredDdpMigrationPlan } from './migration.mjs';
 import { buildFredDdpReceiving, validateFredDdpReceiving, pageFredDdpReceiving } from './receiving.mjs';
-import { createFredDdpReceivingFiles, fredDdpReceivingFileManifest, validateFredDdpReceivingFileManifest,
+import { generateFredDdpReceivingFiles, validateFredDdpReceivingFileManifest,
   FRED_DDP_RECEIVING_RENDERER, FRED_DDP_RECEIVING_FILE_LIMIT } from './receiving-report.mjs';
 import { validateFredDdpProjectBundle, fredDdpSourceSummary, fredDdpMigrationSummary,
   fredDdpReceivingSummary, fredDdpReceivingCoreSummary, fredDdpMigrationPreviewIdentity, fredDdpMigrationSavePayload,
@@ -79,6 +80,27 @@ async function immutableJson(directory, name, value) {
     'This original DDP file already retains another immutable value.', 'FRED_DDP_FILE_CONFLICT', 409);
   else await atomicJson(directory, name, value, { exclusive: true });
 }
+async function verifyFileBytes(path, { bytes, sha256 = null }, expected = null) {
+  const handle = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+  try {
+    const stat = await handle.stat();
+    need(stat.isFile() && stat.size === bytes && bytes <= FRED_DDP_RECEIVING_FILE_LIMIT,
+      'The retained DDP receiving file changed.', 'FRED_DDP_FILE_CHANGED');
+    const checksum = sha256 === null ? null : createHash('sha256'), buffer = Buffer.allocUnsafe(65536);
+    let offset = 0;
+    for (;;) {
+      const { bytesRead } = await handle.read(buffer, 0, buffer.length, null);
+      if (bytesRead === 0) break;
+      const chunk = buffer.subarray(0, bytesRead);
+      need(offset + bytesRead <= bytes &&
+        (!expected || expected.subarray(offset, offset + bytesRead).equals(chunk)),
+        'The original DDP receiving file differs.', 'FRED_DDP_FILE_CONFLICT', 409);
+      checksum?.update(chunk); offset += bytesRead;
+    }
+    need(offset === bytes && (checksum === null || checksum.digest('hex') === sha256),
+      'The retained DDP receiving file changed.', 'FRED_DDP_FILE_CHANGED');
+  } finally { await handle.close(); }
+}
 async function exactBytes(directory, name, bytes) {
   const temporary = join(directory, '.' + name + '.' + randomUUID() + '.part'), destination = join(directory, name);
   let handle;
@@ -88,9 +110,7 @@ async function exactBytes(directory, name, bytes) {
     try { await link(temporary, destination); }
     catch (error) {
       if (error.code !== 'EEXIST') throw error;
-      const original = await readBytes(destination, bytes.length);
-      need(original.length === bytes.length && original.equals(bytes),
-        'The original DDP receiving file differs.', 'FRED_DDP_FILE_CONFLICT', 409);
+      await verifyFileBytes(destination, { bytes: bytes.length }, bytes);
     }
     await unlink(temporary);
     const folder = await open(directory, 'r');
@@ -101,7 +121,7 @@ async function exactBytes(directory, name, bytes) {
   }
 }
 async function storeMigration(directory, plan) {
-  validateFredDdpMigrationPlan(plan);
+  validateFredDdpMigrationPlan(plan, { copy: false });
   await immutableJson(fredDdpMigrationDirectory(directory), migrationId(plan.id) + '.json', plan);
 }
 function matchingReceivingSummary(model, summary) {
@@ -118,20 +138,34 @@ async function readReceivingMember(directory, summary, definition) {
   return { ...clone(definition), body };
 }
 async function storeReceiving(directory, receiving, expected = null) {
-  validateFredDdpReceiving(receiving);
+  validateFredDdpReceiving(receiving, { copy: false });
   const root = await privateDirectory(fredDdpReceivingDirectory(directory, receiving.id));
   const retained = await optionalJson(join(root, 'files.json'), 65536);
+  const preparation = await optionalJson(join(root, 'preparation.json'), 65536);
   if (retained) matchingReceivingSummary(receiving, retained);
   if (expected) matchingReceivingSummary(receiving, expected);
-  const rendererVersion = expected?.rendererVersion ?? retained?.rendererVersion ?? FRED_DDP_RECEIVING_RENDERER;
-  const prepared = createFredDdpReceivingFiles(receiving, { rendererVersion });
-  const summary = fredDdpReceivingSummary(receiving, fredDdpReceivingFileManifest(prepared));
+  const rendererVersion = expected?.rendererVersion ?? retained?.rendererVersion ??
+    preparation?.rendererVersion ?? FRED_DDP_RECEIVING_RENDERER;
+  const prepared = { schema: 'stellar-forge.fred-ddp-receiving-preparation.v1',
+    receivingId: receiving.id, rendererVersion };
+  if (preparation) need(canonical(preparation) === canonical(prepared),
+    'The original DDP receiving preparation changed.');
+  else await atomicJson(root, 'preparation.json', prepared, { exclusive: true });
+  // Retain the original renderer before any member, and write one full member at a time.
+  // Existing files.json preparations keep their exact original descriptors and bytes.
+  const files = [];
+  for (const { body, ...descriptor } of generateFredDdpReceivingFiles(receiving, { rendererVersion })) {
+    for (const original of [retained, expected]) if (original)
+      need(canonical(original.files[files.length]) === canonical(descriptor),
+        'The original DDP receiving renderer or file bytes changed.');
+    await exactBytes(root, descriptor.path, body);
+    files.push(descriptor);
+  }
+  const summary = fredDdpReceivingSummary(receiving, { rendererVersion, files });
   for (const original of [retained, expected]) if (original)
     need(canonical(original) === canonical(summary), 'The original DDP receiving renderer or file bytes changed.');
-  // The small preparation pins the original renderer before any member is written.
-  // Project adoption occurs only after all three exact files have completed.
+  // Project adoption occurs after all three files and their complete inventory commit.
   if (!retained) await atomicJson(root, 'files.json', summary, { exclusive: true });
-  for (const file of prepared.files) await exactBytes(root, file.path, file.body);
   return summary;
 }
 
@@ -192,8 +226,11 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
   }
   async function acquireFredDdpCrosswalk({ directory, id, expectedRevision, url, signal, fetchImpl } = {}) {
     const original = await readProject(directory);
-    if (url === undefined && original.pending?.id === id && original.pending.kind === 'ddp-crosswalk-capture')
-      url = original.pending.payload.url;
+    if (url === undefined) {
+      if (original.pending?.id === id && original.pending.kind === 'ddp-crosswalk-capture')
+        url = original.pending.payload.url;
+      else url = original.operations.find(item => item.id === id && item.kind === 'ddp-crosswalk-capture')?.result.url;
+    }
     url = crosswalkUrl(url);
     return transact(directory, { id, expectedRevision, kind: 'ddp-crosswalk-capture', payload: { url } },
       async (state, root) => {
@@ -227,27 +264,35 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
     if (sourceContext) {
       const context = await originalPlanInputs(directory, state,
         { packageId: plan.packageId, crosswalkId: plan.crosswalkId });
-      validateFredDdpMigrationPlan(plan, context);
-    } else validateFredDdpMigrationPlan(plan);
+      validateFredDdpMigrationPlan(plan, { ...context, copy: false });
+    } else validateFredDdpMigrationPlan(plan, { copy: false });
     return plan;
   }
-  async function retainedReceiving(directory, state, id, { includeFiles = false } = {}) {
+  async function retainedReceivingSummary(directory, state, id) {
     receivingId(id);
     const summary = (state.ddpReceivings ?? []).find(item => item.id === id);
     need(summary, 'Select a complete migration receiving retained by this project.',
       'FRED_DDP_RECEIVING_NOT_FOUND', 404);
+    validateFredDdpReceivingFileManifest(summary);
     const retained = await readPrivateJson(join(fredDdpReceivingDirectory(directory, id), 'files.json'), 65536);
     need(canonical(retained) === canonical(summary), 'The original DDP receiving file inventory changed.');
-    const jsonFile = await readReceivingMember(directory, summary, summary.files[0]);
-    let receiving;
+    return summary;
+  }
+  async function retainedReceiving(directory, state, id, { includeFiles = false, verifyFiles = false } = {}) {
+    const summary = await retainedReceivingSummary(directory, state, id);
+    let jsonFile = await readReceivingMember(directory, summary, summary.files[0]), receiving;
     try { receiving = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(jsonFile.body)); }
     catch { need(false, 'Retain the complete original UTF-8 DDP receiving JSON.'); }
-    validateFredDdpReceiving(receiving); matchingReceivingSummary(receiving, summary);
     const files = includeFiles ? [jsonFile] : [];
-    if (includeFiles) for (const definition of summary.files.slice(1))
-      files.push(await readReceivingMember(directory, summary, definition));
+    if (!includeFiles) jsonFile = null;
+    validateFredDdpReceiving(receiving, { copy: false }); matchingReceivingSummary(receiving, summary);
+    if (includeFiles || verifyFiles) for (const definition of summary.files.slice(1)) {
+      if (includeFiles) files.push(await readReceivingMember(directory, summary, definition));
+      else await verifyFileBytes(join(fredDdpReceivingDirectory(directory, id), definition.path), definition);
+    }
     return { receiving, summary: clone(summary), ...(includeFiles ? { files } : {}) };
   }
+
   function migrationRequest({
     packageId, crosswalkId, name, asOf, window = { kind: 'source' }, decisions = [], bindings = [],
     pageSize = 1000, maxRows = 1000000, bookmark = null, note = ''
@@ -299,15 +344,17 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
     migrationId(selectedId);
     return transact(directory, { id, expectedRevision, kind: 'ddp-migration-acquire', payload: { migrationId: selectedId } },
       async (state, root) => {
-        const plan = await retainedMigration(root, state, selectedId, { sourceContext: true });
+        const plan = await retainedMigration(root, state, selectedId);
         need(plan.summary.ready && plan.acquisitions.length > 0,
           'Review all original mappings and selected periods before acquiring the complete migration.');
         const existing = (state.ddpReceivings ?? []).find(item => item.planId === plan.id);
         if (existing) {
-          const retained = await retainedReceiving(root, state, existing.id, { includeFiles: true });
+          const retained = await retainedReceiving(root, state, existing.id, { verifyFiles: true });
           return { migrationId: plan.id, receivingId: existing.id, receiving: retained.summary,
             captureIds: [...existing.captureIds], acquisitionId: id, reusedReceiving: true };
         }
+        const source = await originalPlanInputs(root, state, { packageId: plan.packageId, crosswalkId: plan.crosswalkId });
+        validateFredDdpMigrationPlan(plan, { ...source, copy: false });
         const operationRoot = await privateDirectory(join(root, 'ddp-migration-acquisitions', id));
         let progress = await optionalJson(join(operationRoot, 'progress.json'), PROGRESS_LIMIT);
         if (progress) {
@@ -337,7 +384,6 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
           progress.activeBatchId = null;
           await atomicJson(operationRoot, 'progress.json', progress);
         }
-        const source = await originalPlanInputs(root, state, { packageId: plan.packageId, crosswalkId: plan.crosswalkId });
         const receiving = buildFredDdpReceiving({ ...source, plan, captures });
         const summary = await storeReceiving(root, receiving);
         const captureIds = [];
@@ -362,9 +408,9 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
   }
   async function downloadFredDdpReceiving({ directory, receivingId: id, format = 'html' } = {}) {
     need(['json', 'csv', 'html'].includes(format), 'Choose the complete original JSON, CSV or HTML receiving file.');
-    const state = await readProject(directory), retained = await retainedReceiving(directory, state, id);
-    const definition = retained.summary.files.find(item => item.path === 'ddp-receiving.' + format);
-    return { receivingId: id, ...(await readReceivingMember(directory, retained.summary, definition)) };
+    const state = await readProject(directory), summary = await retainedReceivingSummary(directory, state, id);
+    const definition = summary.files.find(item => item.path === 'ddp-receiving.' + format);
+    return { receivingId: id, ...(await readReceivingMember(directory, summary, definition)) };
   }
 
   async function exportDdp(directory, state, captures) {
@@ -376,7 +422,7 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
     for (const item of state.ddpMigrations ?? [])
       values.ddpMigrations.push(await retainedMigration(directory, state, item.id));
     for (const item of state.ddpReceivings ?? [])
-      values.ddpReceivings.push((await retainedReceiving(directory, state, item.id, { includeFiles: true })).receiving);
+      values.ddpReceivings.push((await retainedReceiving(directory, state, item.id, { verifyFiles: true })).receiving);
     validateFredDdpProjectBundle({ state, captures, ...values });
     return values;
   }

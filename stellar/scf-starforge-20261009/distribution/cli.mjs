@@ -206,11 +206,14 @@ function pairs(args, allowed) {
   return result;
 }
 export async function doctor({ requireNative = false, requiredFeatures = [] } = {}) {
-  const featurePeers = { ...specification.featurePeers }, featureResolvers = {};
+  const featurePeers = { ...specification.featurePeers }, featureResolvers = {}, featureEngines = {};
   for (const [group, path] of Object.entries(specification.runtimePackageManifests ?? {})) {
     const filename = resolve(sourceRoot, path), manifest = JSON.parse(await readFile(filename, 'utf8'));
+    const engine = manifest.engines?.node;
     if (!manifest.dependencies || typeof manifest.dependencies !== 'object' || Array.isArray(manifest.dependencies) ||
-        !Object.keys(manifest.dependencies).length) throw new TypeError('Runtime dependencies missing: ' + path);
+        !Object.keys(manifest.dependencies).length && !/^>=\d+(?:\.\d+)?(?:\.\d+)?$/.test(engine ?? ''))
+      throw new TypeError('Runtime dependencies or an explicit Node engine are required: ' + path);
+    if (/^>=\d+(?:\.\d+)?(?:\.\d+)?$/.test(engine ?? '')) featureEngines[group] = engine;
     featurePeers[group] = Object.fromEntries(Object.entries(manifest.dependencies ?? {}).map(([name, version]) =>
       [name, { version, probe: specification.featurePeers?.[group]?.[name]?.probe ?? name }]));
     // Match the original adapter's location, including a checkout that installed
@@ -232,7 +235,15 @@ export async function doctor({ requireNative = false, requiredFeatures = [] } = 
   const features = Object.entries(featurePeers).map(([name, definitions]) => {
     const dependencies = inspectPeers(definitions, featureResolvers[name] ?? ((probe, dependency) =>
       resolvePeer(distribution.origins.featurePeers[name]?.[dependency]?.[0] ?? distribution.sources[0].path, probe)));
-    return { name, available: dependencies.every(peer => peer.available), dependencies };
+    const requested = featureEngines[name];
+    let node = null;
+    if (requested) {
+      const actual = process.versions.node.split('.').map(Number), minimum = requested.slice(2).split('.').map(Number);
+      const difference = [0, 1, 2].map(index => (actual[index] ?? 0) - (minimum[index] ?? 0)).find(value => value !== 0) ?? 0;
+      node = { requested, actual: process.versions.node, ready: difference >= 0 };
+    }
+    return { name, available: dependencies.every(peer => peer.available) && (node === null || node.ready), dependencies,
+      ...(node ? { node } : {}) };
   });
   const python = spawnSync('python3', ['--version'], { encoding: 'utf8', timeout: 2000, windowsHide: true });
   const nativeDependenciesPresent = peers.every(peer => peer.available);

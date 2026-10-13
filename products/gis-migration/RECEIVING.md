@@ -16,11 +16,11 @@ node stellar/scf-starforge-20261009/distribution/build.mjs \
 
 The source-owned [gis-migration selection](../../stellar/scf-starforge-20261009/distribution/selections/gis-migration.json) composes the original runtime/merchant platform with:
 
-- `migration-workspaces`: the existing 44-tool native merchant attachment, typed client and complete receiver.
+- `migration-workspaces`: the complete 46-tool native merchant attachment, typed client and complete receiver.
 - `migration-operator`: the original server lifecycle, private connection setup, Applications registration and this product guide.
 - `stac-qgis`: the existing native QGIS command and desktop integration.
 
-The named recipe selects these contributions directly from the maintained contribution directory. It retains their source paths and exact registrations in the generated product manifest. Its Python/QGIS portable application has 57 declared files, including `source-files.json`; the five Field dependencies accompany the original plugin and canonical PostGIS namespace. The installed Node Applications and merchant code use the complete selected distribution.
+The named recipe selects these contributions directly from the maintained contribution directory. It retains their source paths and exact registrations in the generated product manifest. Its Python/QGIS portable application has 84 declared files, including `source-files.json`. The original Field/PostGIS and complete analyst sources accompany the plugin; the mapping workbook reader, unchanged exporter/renderer and guide are retained in that same source set. The installed Node Applications and merchant code use the complete selected distribution.
 
 The builder follows selected static imports, browser maps and declared source components. Use Node 22.16 or newer as required by the original distribution. A different source commit gets its own output. An interrupted build resumes through the same output:
 
@@ -124,6 +124,14 @@ The source owner's full [receiving guide](../../stellar/scf-starforge-20261009/s
 The original journey's configuration records its actual source/workspace/output paths and IDs. Preserve its current operation directory and complete result. If it has already begun, continue its original configuration instead of creating a second operation.
 
 When moving that existing journey to another host, use its documented `--remap` input. Keep the original saved snapshot and complete action inputs. The helper checks workspace identity, original edition bytes, source files, event prefix and committed requests before continuing. Copy each completed archive with its receipt; the saved old path remains historical metadata while the remap supplies its current location.
+
+### Keep the returned mapping workbook with the saved plan
+
+When the selected plan was saved from a reviewed workbook, its **Retained mapping workbooks** panel lists the exact register, XLSX, proposed plan, final plan and complete edit review. The original input record declares all five files; the full workspace archive includes them with the original capture, plan and review history.
+
+Open the saved plan in the independently received workspace and download those five original files. Read the complete workbook-change and native-editor comparison, then reopen the selected data edition, QGIS maps and publications. Continue with the application source included in that archive. The same five files and source remain present in its complete onward export.
+
+Follow [Mapping workbooks](../../stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/MAPPING_WORKBOOK.md) for the complete browser, CLI and merchant workflow. Keep the existing receiving journey and its original request directory when adopting this source edition.
 
 ## 6. Download and receive through the original merchant
 

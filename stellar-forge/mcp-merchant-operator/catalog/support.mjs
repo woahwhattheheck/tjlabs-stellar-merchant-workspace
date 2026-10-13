@@ -32,7 +32,10 @@ const selected = { id: uuid, expectedRevision: digest };
 const page = { offset: { type: 'integer', minimum: 0 }, limit: { type: 'integer', minimum: 1, maximum: 100 } };
 
 const notificationStatuses = ['PENDING', 'RETRY', 'IN_FLIGHT', 'PAUSED', 'EXHAUSTED', 'DELIVERED', 'CANCELLED'];
-const incidentSource = { ...alias, description: 'Original host-declared incident source ID. Required when multiple sources have no host default.' };
+const incidentSource = { ...alias, description: 'Original host-declared source or an original recovered-* source opened by this MCP owner. Required when multiple initial sources have no host default. Reopen a received source after restart with its retained receive name and manifest.' };
+const recoveryName = { type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$' };
+const recoverySelection = { incidentSource,workspaceId:digest };
+const recoveryPage = { offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:20} };
 const sourceTools = new Set(['merchant_support_profiles', 'merchant_support_configure', 'merchant_support_watch_status',
   'merchant_support_watch_start', 'merchant_support_watch_stop', 'merchant_notifications', 'merchant_incident_notify',
   'merchant_notification_update', 'merchant_incidents', 'merchant_incident_ack', 'merchant_incident_case']);
@@ -45,7 +48,43 @@ function supportTools(tool) {
     ...serviceAdjustmentTools(tool),
     ...casePackageTools(tool),
     ...commercialTools(tool),
-    tool('merchant_support_incident_sources', 'Inspect the original support connection mode, configured incident source IDs/labels, bound source-file digest and host default. Reads no arbitrary path and starts no watcher.', {}, [], read),
+    tool('merchant_support_incident_sources', 'Inspect the original support connection mode, configured incident source IDs/labels, named saved Object/CKAN selections, bound source-file digest and host default. Reads no arbitrary path and starts no watcher.', {}, [], read),
+    tool('merchant_support_ckan_inspect', 'Inspect a named original CKAN workspace from the private incident source configuration. Retains both saved workbench reads and the complete selected source, refresh and publication cohort. Returns the exact reviewed CKAN registration and original operational summary for the existing watcher profile.',
+      { incidentSource, ckanSourceId: { type:'string',pattern:'^[A-Za-z0-9_-]{1,64}$' },
+        expectedConfigRevision:{type:'integer',minimum:1},
+        sourceId:{anyOf:[uuid,{type:'null'}]},refreshId:{anyOf:[uuid,{type:'null'}]},publicationId:{anyOf:[uuid,{type:'null'}]},
+        maxBytes:{type:'integer',minimum:1024,maximum:6*1024*1024-65536},
+        maxFiles:{type:'integer',minimum:1,maximum:4096},
+        maxStateBytes:{type:'integer',minimum:1024,maximum:3*1024*1024-65536},
+        timeoutMs:{type:'integer',minimum:100,maximum:300000},
+        operationAfterSeconds:{type:'integer',minimum:1,maximum:31536000},
+        reviewAfterSeconds:{type:'integer',minimum:0,maximum:31536000},
+        publicationAfterSeconds:{type:'integer',minimum:0,maximum:31536000},
+        requirePublication:{type:'boolean'} },['ckanSourceId','expectedConfigRevision'],read),
+    tool('merchant_support_recovery', 'Read the original host-bound recovery workspace, exact source revision, current queue/config review, complete snapshot pins and paged saved or incomplete operations. Follow returned original requests to resume interrupted work. A received source exposes its own workspaceId.',
+      { incidentSource,...recoveryPage },[],read),
+    tool('merchant_support_recovery_snapshot', 'Create or resume an original SF93 snapshot at the exact state revision. One operationId retains original state bytes and capture pins, complete selected captures and recovery history. Identical replay reopens the verified snapshot after later source changes.',
+      { ...recoverySelection,operationId:recoveryName,expectedRevision:{type:'integer',minimum:1} },
+      ['workspaceId','operationId','expectedRevision'],{idempotent:true}),
+    tool('merchant_support_recovery_inspect', 'Verify every original file of a saved snapshot against its exact manifest digest. Use its host-bound snapshot name and workspaceId; arbitrary source paths are not accepted.',
+      { ...recoverySelection,snapshotName:recoveryName,expectedManifestSha256:digest },
+      ['workspaceId','snapshotName','expectedManifestSha256'],read),
+    tool('merchant_support_recovery_receive', 'Receive or resume the complete inspected snapshot under one original operationId in the host recovery workspace. Preserves configuration, all captures, incident/notification IDs and recovery history. The original engine retains receiver edits on identical completed replay.',
+      { ...recoverySelection,operationId:recoveryName,snapshotName:recoveryName,expectedManifestSha256:digest },
+      ['workspaceId','operationId','snapshotName','expectedManifestSha256'],{idempotent:true}),
+    tool('merchant_support_recovery_open', 'Open an original completed received store and verify its current state, selected captures and history. Returns its stable recovered-* incidentSource, own workspaceId and original reopen arguments. Use that source with existing incidents, profiles, cases and watcher tools. Repeating open after restart restores the same source selection.',
+      { ...recoverySelection,receiveName:recoveryName,expectedManifestSha256:digest },
+      ['workspaceId','receiveName','expectedManifestSha256'],read),
+    tool('merchant_support_recovery_reconcile', 'Record the original received queue/config review with exact current digests and recovery identity after the original writer has stopped. Retain this operationId and full input for replay. Original in-flight deadlines and individual notification retry/ownership controls remain active.',
+      { ...recoverySelection,operationId:recoveryName,expectedRecoveryId:recoveryName,
+        expectedManifestSha256:digest,expectedQueueSha256:digest,expectedConfigHash:digest,
+        originalWriterStopped:{type:'boolean',const:true},by:text(160),notes:text(2000) },
+      ['workspaceId','operationId','expectedRecoveryId','expectedManifestSha256','expectedQueueSha256',
+        'expectedConfigHash','originalWriterStopped','by'],{idempotent:true}),
+    tool('merchant_support_recovery_abandon', 'Finish an explicitly selected original incomplete snapshot as abandoned using its exact retained pin, named operator and reason. Releases its original capture protection through the existing transaction while preserving partial files and abandonment history. Completed snapshots cannot be abandoned.',
+      { ...recoverySelection,operationId:recoveryName,expectedPinSha256:{anyOf:[digest,{type:'null'}]},
+        by:text(160),notes:text(2000) },
+      ['workspaceId','operationId','expectedPinSha256','by','notes'],{idempotent:true}),
     tool('merchant_support_destination', 'Inspect the currently selected source notification configuration at its exact revision. Slack resolves the original host token and reads the actual authenticated workspace/channel; webhook reports configuration resolution. Sends no notification.',
       { incidentSource, expectedConfigRevision: { type: 'integer', minimum: 1 } }, ['expectedConfigRevision'], { ...read, openWorld: true }),
     tool('merchant_incident_view', 'Open one retained original incident with its current revision, last notification ID, sanitized events and actual advertised routes from before/after capture files. Returns capture issues without replacing the original files or observing a seller.',
