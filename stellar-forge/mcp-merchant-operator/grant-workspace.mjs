@@ -808,6 +808,20 @@ export class MerchantGrantWorkspaces {
       original=verb==='installation_preview'?await client.installationPreview(caseId,{...body,document}):
         await client.installationSave(caseId,{...body,document});
     }
+    else if (verb === 'expense_billing_catalog') original=await client.expenseBillingCatalog(args.caseId);
+    else if (verb === 'expense_billing') original=await client.expenseBilling(args.caseId,args.chargeId);
+    else if (verb === 'expense_billing_preview'||verb === 'expense_billing_prepare') {
+      const {caseId,...body}=rest;
+      original=verb==='expense_billing_preview'?await client.expenseBillingPreview(caseId,body):
+        await client.expenseBillingPrepare(caseId,body);
+    }
+    else if (['expense_billing_apply','expense_billing_cancel','expense_billing_issue'].includes(verb)) {
+      const {caseId,chargeId,...body}=rest;
+      const methods={expense_billing_apply:'expenseBillingApply',expense_billing_cancel:'expenseBillingCancel',expense_billing_issue:'expenseBillingIssue'};
+      original=await client[methods[verb]](caseId,chargeId,body);
+    }
+    else if (verb === 'expense_billing_preview_issue') original=await client.expenseBillingPreviewIssue(args.caseId,args.chargeId);
+    else if (verb === 'expense_billing_refresh') original=await client.expenseBillingRefresh(args.caseId,args.chargeId);
     else if (verb === 'commercial_changes') original=await client.commercialChanges(args.caseId,args.billingId,args.milestoneId);
     else if (verb === 'commercial_change') original=await client.commercialChange(args.caseId,args.changeId);
     else if (verb === 'commercial_change_preview'||verb === 'commercial_change_prepare') {

@@ -16,11 +16,15 @@ import operations_agenda_http as agenda_http
 import operations_use_calendar as use_calendar
 import operations_workflows as operating_workflows
 from operations_commercial_http import handle as commercial_http
+from operations_expense_billing_http import handle as expense_billing_http
 import operations_installation_sources as installation_sources
 from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/operations_expense_billing.mjs": ("operations_expense_billing.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_expense_billing.css": ("operations_expense_billing.css", "text/css; charset=utf-8"),
+                   "/EXPENSE_BILLING.md": ("EXPENSE_BILLING.md", "text/markdown; charset=utf-8")})
     workbook_http.register_static(static)
     static.update({"/operations_supplier_statements.mjs": ("operations_supplier_statements.mjs", "text/javascript; charset=utf-8"),
                    "/operations_supplier_statements.css": ("operations_supplier_statements.css", "text/css; charset=utf-8"),
@@ -182,6 +186,8 @@ def read(handler, parsed):
     if agenda_http.read(handler, parsed.path, parse_qs(parsed.query, keep_blank_values=True), ops):
         return True
     if award_terms_http(handler, parsed, ops, "GET"):
+        return True
+    if expense_billing_http(handler, parsed, ops, "GET"):
         return True
     if commercial_http(handler, parsed, ops, "GET"):
         return True
@@ -483,6 +489,8 @@ def write(handler, parsed):
     if workbook_http.handle(handler, parsed, ops, "POST"):
         return True
     if award_terms_http(handler, parsed, ops, "POST"):
+        return True
+    if expense_billing_http(handler, parsed, ops, "POST"):
         return True
     if commercial_http(handler, parsed, ops, "POST"):
         return True

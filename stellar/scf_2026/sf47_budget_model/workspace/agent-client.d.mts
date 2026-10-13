@@ -669,6 +669,74 @@ export interface GrantCommercialChangeIssuePreview extends GrantObject {
   eligibility?:GrantCommercialEligibility;retainedCommand?:GrantObject;
 }
 
+
+/** Source-backed customer charges over reviewed original Buyer Expense portions.
+ * Decimal amounts and integer native units remain strings; native Receivables owns all financial effects. */
+export type GrantExpenseBillingMode = 'NEW' | 'DRAFT_EDIT' | 'CREDIT' | 'VOID' | 'REPLACE';
+export interface GrantExpenseBillingLineInput {
+  attributionId:string; expectedContentSha256:string; costId:string; nativeAmount:string;
+  amountBasis:'REVIEWED_USD'|'AGREED_AMOUNT'; amount:string; description:string;
+}
+export interface GrantExpenseBillingInput {
+  requestId:string; actor:string; expectedVersion:number; previousId?:string|null;
+  mode:GrantExpenseBillingMode; endpointId?:string; customerId?:string; currency?:GrantCommercialCurrency;
+  sourceIds:string[]; authorization:string; authorizedOn:GrantCivilDate; creditReviewNote:string; reason:string;
+  issueDate?:GrantCivilDate; dueDate?:GrantCivilDate; effectiveDate?:GrantCivilDate; resolution?:'CREDIT'|'VOID';
+  purchaseOrder?:string; note?:string; lines:GrantExpenseBillingLineInput[]; expectedPreviewSha256?:string;
+}
+export type GrantExpenseBillingPrepareInput = GrantExpenseBillingInput & {expectedPreviewSha256:string};
+export interface GrantExpenseBillingLine extends GrantObject {
+  portionKey:string; originalKey:string; attribution:GrantExpenseAttribution;
+  allocation:GrantExpenseSplit & GrantObject; nativeAmount:string;
+  amountBasis:'REVIEWED_USD'|'AGREED_AMOUNT'; amount:string; description:string;
+}
+export interface GrantExpenseBillingProposal extends GrantObject {
+  schema:'stellar-forge.customer-expense-billing.v1'; programId:string; expectedVersion:number; caseMode:string;
+  requestId:string; chainId:string; previousId:string|null; mode:GrantExpenseBillingMode; actor:string;
+  endpointId:string; accountingIdentity:GrantObject; customerId:string; customer:GrantObject;
+  currency:GrantCommercialCurrency; invoiceId:string|null;
+  /** Complete original expense and customer-authorization source bodies, not excerpts. */
+  sources:Array<{id:string;metadata:GrantObject;contentBase64:string}>;
+  authorizationSourceIds:string[]; authorization:string; authorizedOn:GrantCivilDate;
+  creditReviewNote:string; buyerCredits:GrantObject[]; reason:string; issueDate:GrantCivilDate;
+  dueDate:GrantCivilDate; effectiveDate:GrantCivilDate; resolution:'CREDIT'|'VOID';
+  purchaseOrder:string; note:string; lines:GrantExpenseBillingLine[]; terms:GrantObject;
+  termsSha256:string; amount:string; nativeBefore:GrantObject|null; nativeFingerprint:string|null;
+  steps:Array<{action:'draft'|'credit'|'void';body:GrantObject}>; consequences:GrantObject;
+}
+export interface GrantExpenseBillingCommand extends GrantObject {
+  index:number; action:'draft'|'credit'|'void'|'issue'; body:GrantObject; requestId:string;
+  state:'PENDING'|'REJECTED'|'ACKNOWLEDGED'; createdAt:string; attempts:GrantObject[]; intentSha256:string;
+  review?:GrantExpenseBillingIssuePreview; result?:GrantObject; lastError?:GrantObject;
+}
+export interface GrantExpenseBillingCharge extends GrantObject {
+  schema:'stellar-forge.customer-expense-billing.v1'; id:string; chainId:string; sequence:number; createdAt:string;
+  state:'PREPARED'|'RUNNING'|'APPLIED'|'CANCELLED'; proposal:GrantExpenseBillingProposal;
+  proposalSha256:string; activeInvoiceId:string|null; commands:GrantExpenseBillingCommand[];
+  history:GrantObject[]; appliedAt?:string; current?:boolean; currentNative?:GrantObject[];
+}
+export interface GrantExpenseBillingCatalog extends GrantObject {
+  attributions: GrantExpenseAttribution[];
+  schema:'stellar-forge.customer-expense-billing.v1'; programId:string; version:number; mode:string;
+  sources:GrantObject[]; buyerCredits:GrantObject[];
+  portions:Array<{attribution:GrantExpenseAttribution;allocation:GrantExpenseSplit & GrantObject;
+    portionKey:string;reservedNativeAmount:string;availableNativeAmount:string;selectable:boolean}>;
+  items:Array<{id:string;chainId:string;sequence:number;state:GrantExpenseBillingCharge['state'];
+    mode:GrantExpenseBillingMode;customerName:string;currency:GrantCommercialCurrency;amount:string;
+    createdAt:string;activeInvoiceId:string|null;pending:boolean}>;
+}
+export interface GrantExpenseBillingPreview {
+  schema:'stellar-forge.customer-expense-billing.v1';proposal:GrantExpenseBillingProposal;previewSha256:string;
+}
+export interface GrantExpenseBillingIssuePreview extends GrantObject {
+  schema:'stellar-forge.customer-expense-billing.v1';id:string;proposalSha256:string;invoiceId:string;
+  nativePreview:GrantCommercialIssuePreview['nativePreview'];supersedesRejectedCommand:number|null;
+  termsSha256:string;issuePreviewSha256:string;retainedCommand?:GrantExpenseBillingCommand;
+}
+export interface GrantExpenseBillingApplyInput {actor:string;expectedProposalSha256:string}
+export interface GrantExpenseBillingCancelInput extends GrantExpenseBillingApplyInput {requestId:string;reason:string}
+export interface GrantExpenseBillingIssueInput {actor:string;expectedIssuePreviewSha256:string;creditDecisionId?:string}
+
 export interface GrantAmendmentInputs {
   /** Explicit budget attribution; null leaves a retained observation unassigned. */
   packageMappings?: Array<{ fromCostId: string; toCostId: string | null; note: string }>;
@@ -4122,6 +4190,7 @@ export interface GrantRiskComparisonView {
 }
 
 export interface GrantDownloadSelections {
+  'expense-billing': {caseId:string;chargeId:string};
   'risk-comparison': GrantRiskComparisonZipSelection;
   'risk-comparison-json': GrantRiskComparisonExportSelection;
   'risk-comparison-report': GrantRiskComparisonExportSelection;
@@ -4293,6 +4362,18 @@ export class GrantWorkspaceClient {
   installationEffortSelection(caseId: string, body: GrantInstallationEffortSelectionInput): Promise<GrantJsonResponse<GrantInstallationEffortSelection>>;
   installationPreview(caseId: string, body: GrantInstallationPreviewInput): Promise<GrantJsonResponse<GrantInstallationPreview>>;
   installationSave(caseId: string, body: GrantInstallationSaveInput): Promise<GrantJsonResponse<GrantInstallationSaveReceipt>>;
+  expenseBillingCatalog(caseId:string):Promise<GrantJsonResponse<GrantExpenseBillingCatalog>>;
+  expenseBilling(caseId:string,chargeId:string):Promise<GrantJsonResponse<GrantExpenseBillingCharge>>;
+  expenseBillingPreview(caseId:string,body:GrantExpenseBillingInput):Promise<GrantJsonResponse<GrantExpenseBillingPreview>>;
+  /** Persist the original reviewed preparation. Retry only the same complete body and requestId. */
+  expenseBillingPrepare(caseId:string,body:GrantExpenseBillingPrepareInput):Promise<GrantJsonResponse<GrantExpenseBillingCharge>>;
+  /** Resume the same immutable native commands after response loss; no client-generated request replacement. */
+  expenseBillingApply(caseId:string,chargeId:string,body:GrantExpenseBillingApplyInput):Promise<GrantJsonResponse<GrantExpenseBillingCharge>>;
+  expenseBillingCancel(caseId:string,chargeId:string,body:GrantExpenseBillingCancelInput):Promise<GrantJsonResponse<GrantExpenseBillingCharge>>;
+  expenseBillingPreviewIssue(caseId:string,chargeId:string):Promise<GrantJsonResponse<GrantExpenseBillingIssuePreview>>;
+  /** Retain the original issue preview and credit decision on every retry. */
+  expenseBillingIssue(caseId:string,chargeId:string,body:GrantExpenseBillingIssueInput):Promise<GrantJsonResponse<GrantExpenseBillingCharge>>;
+  expenseBillingRefresh(caseId:string,chargeId:string):Promise<GrantJsonResponse<GrantExpenseBillingCharge>>;
   commercialChanges(caseId:string,billingId:string,milestoneId:string):Promise<GrantJsonResponse<GrantCommercialChanges>>;
   commercialChange(caseId:string,changeId:string):Promise<GrantJsonResponse<GrantCommercialChange>>;
   commercialChangePreview(caseId:string,billingId:string,milestoneId:string,body:GrantCommercialChangeInput):Promise<GrantJsonResponse<GrantCommercialChangePreview>>;
