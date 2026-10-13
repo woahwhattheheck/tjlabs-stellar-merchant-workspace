@@ -60,6 +60,9 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_commissioning.py",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_commissioning_archive.py",
     "stellar/scf_2026/sf47_budget_model/workspace/installation_source_desk_client.py",
-    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_COMMISSIONING_ARCHIVE.md"
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_COMMISSIONING_ARCHIVE.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK_AGENT.md"
   ]
 }
