@@ -256,6 +256,8 @@ export async function receiveBrowser({work,playwrightPath,chromiumPath,projectBr
    need(typeof hook.receiveProjectBrowser==='function','Application project hook must export receiveProjectBrowser');
    result.project_browser=await hook.receiveProjectBrowser({work:W,product:PRODUCT,browser,context,page,capture,exactOpen,download,result});
   }else result.project_browser={state:'UNSELECTED',scope:'Original native project and reports received; an unstarted revised project-editor source can supply its application-owned hook.'};
+  const installedHook=await import(pathToFileURL(join(PRODUCT,'receiving/receive-econdb-operator.mjs')));
+  result.installed_operator=await installedHook.receiveOperatorBrowser({work:W,product:PRODUCT,browser,context,page,capture,exactOpen,result});
   assertRunning();need(result.errors.length===0,'Browser page errors are retained for repair');
   result.state='CAPTURED_REQUIRES_PIXEL_REVIEW';
  }catch(error){result.state='FAILED';result.failure={message:error.message,stack:error.stack};if(page&&!page.isClosed())try{await capture('failure')}catch{};throw error}
@@ -266,9 +268,10 @@ export async function receiveBrowser({work,playwrightPath,chromiumPath,projectBr
   result.completed_at=new Date().toISOString();result.files=[];
   for(const p of await walk(attempt)){const b=await readFile(p);result.files.push({path:relative(W,p),bytes:b.length,sha256:sha(b)})}
   const retainedPaths=new Map(result.files.map(row=>[row.path,row]));
-  if(result.project_browser?.files){
-   need(Array.isArray(result.project_browser.files),'Project browser receipt files must be an array');
-   for(const row of result.project_browser.files){await retainedFile(row);const prior=retainedPaths.get(row.path);need(!prior||(prior.bytes===row.bytes&&prior.sha256===row.sha256),'Conflicting project browser member identity');retainedPaths.set(row.path,{path:row.path,bytes:row.bytes,sha256:row.sha256})}
+  const joinedFiles=[...(result.project_browser?.files??[]),...(result.installed_operator?.files??[])];
+  if(joinedFiles.length){
+   need(Array.isArray(joinedFiles),'Project browser receipt files must be an array');
+   for(const row of joinedFiles){await retainedFile(row);const prior=retainedPaths.get(row.path);need(!prior||(prior.bytes===row.bytes&&prior.sha256===row.sha256),'Conflicting project browser member identity');retainedPaths.set(row.path,{path:row.path,bytes:row.bytes,sha256:row.sha256})}
   }
   result.files=[...retainedPaths.values()].sort((a,b)=>a.path.localeCompare(b.path));
   await write(join(attempt,'result.json'),json(result));
