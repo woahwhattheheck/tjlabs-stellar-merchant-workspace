@@ -108,6 +108,55 @@
       ]
     ],
     [
+      "/collection-review-guide.md",
+      [
+        "collection-review-guide.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-report.mjs",
+      [
+        "collection-review-report.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-source.mjs",
+      [
+        "collection-review-source.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-workspace.mjs",
+      [
+        "collection-review-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review.css",
+      [
+        "collection-review.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review.html",
+      [
+        "collection-review.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review.mjs",
+      [
+        "collection-review.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/drafts.mjs",
       [
         "drafts.mjs",
@@ -374,6 +423,13 @@
       ]
     ],
     [
+      "/grant-data/financial-native-result.json",
+      [
+        "grant-data/financial-native-result.json",
+        "application/json; charset=utf-8"
+      ]
+    ],
+    [
       "/grant-data/financial-walkthrough.md",
       [
         "grant-data/financial-walkthrough.md",
@@ -468,6 +524,13 @@
       "/grant-issuer-workspace.mjs",
       [
         "grant-issuer-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-offline-package.mjs",
+      [
+        "grant-offline-package.mjs",
         "text/javascript; charset=utf-8"
       ]
     ],
@@ -595,6 +658,13 @@
       [
         "grant-review-round.html",
         "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-review-working-copy.mjs",
+      [
+        "grant-review-working-copy.mjs",
+        "text/javascript; charset=utf-8"
       ]
     ],
     [
@@ -752,6 +822,34 @@
       ]
     ],
     [
+      "/saved-project-library.mjs",
+      [
+        "saved-project-library.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/saved-projects.css",
+      [
+        "saved-projects.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/saved-projects.html",
+      [
+        "saved-projects.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/saved-projects.mjs",
+      [
+        "saved-projects.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/scf46-stellar-bazaar/src/entry-identity.mjs",
       [
         "../../../scf46-stellar-bazaar/src/entry-identity.mjs",
@@ -794,6 +892,13 @@
       ]
     ],
     [
+      "/source-table-intake.mjs",
+      [
+        "source-table-intake.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/source-table-workspace.mjs",
       [
         "source-table-workspace.mjs",
@@ -832,6 +937,13 @@
       "/stellar/scf-starforge-20261009/distribution/discovery/catalog.mjs",
       [
         "../../../stellar/scf-starforge-20261009/distribution/discovery/catalog.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs",
+      [
+        "../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs",
         "text/javascript; charset=utf-8"
       ]
     ],
@@ -896,111 +1008,6 @@
       [
         "woo.html",
         "text/html; charset=utf-8"
-      ]
-    ],
-    [
-      "/stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs",
-      [
-        "../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/source-table-intake.mjs",
-      [
-        "source-table-intake.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/grant-review-working-copy.mjs",
-      [
-        "grant-review-working-copy.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/collection-review.html",
-      [
-        "collection-review.html",
-        "text/html; charset=utf-8"
-      ]
-    ],
-    [
-      "/collection-review.css",
-      [
-        "collection-review.css",
-        "text/css; charset=utf-8"
-      ]
-    ],
-    [
-      "/collection-review.mjs",
-      [
-        "collection-review.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/collection-review-source.mjs",
-      [
-        "collection-review-source.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/collection-review-workspace.mjs",
-      [
-        "collection-review-workspace.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/collection-review-report.mjs",
-      [
-        "collection-review-report.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/collection-review-guide.md",
-      [
-        "collection-review-guide.md",
-        "text/markdown; charset=utf-8"
-      ]
-    ],
-    [
-      "/saved-projects.html",
-      [
-        "saved-projects.html",
-        "text/html; charset=utf-8"
-      ]
-    ],
-    [
-      "/saved-projects.mjs",
-      [
-        "saved-projects.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/saved-projects.css",
-      [
-        "saved-projects.css",
-        "text/css; charset=utf-8"
-      ]
-    ],
-    [
-      "/saved-project-library.mjs",
-      [
-        "saved-project-library.mjs",
-        "text/javascript; charset=utf-8"
-      ]
-    ],
-    [
-      "/grant-data/financial-native-result.json",
-      [
-        "grant-data/financial-native-result.json",
-        "application/json; charset=utf-8"
       ]
     ]
   ]

@@ -1,3 +1,4 @@
+import {collectBrowserOfflineRuntime,createOfflineEditor,OFFLINE_SCHEMA} from './grant-offline-package.mjs';
 import {renderRequirementReviews} from './grant-requirement-review-workspace.mjs';
 import {renderProductSources} from './grant-product-authoring-workspace.mjs';
 // MIT. Uses the maintained application source and original shared IndexedDB drafts.
@@ -11,6 +12,8 @@ import {renderPlanning} from './grant-plan-workspace.mjs';
 import {readReviewerSource,retainSourceBundle,verifyHandover,createDraftEnvelope,
   openReviewerSourcePackage,createReviewerSourcePackage,reviewerSourceFromDraft,receiveReviewerSource} from './grant-handover-source.mjs';
 import {renderHandover} from './grant-handover-workspace.mjs';
+const offlineEdition=globalThis.__STELLAR_GRANT_OFFLINE__;
+if(offlineEdition&&offlineEdition.schema!==OFFLINE_SCHEMA)throw new Error('Open the complete original offline editor.');
 const $=id=>document.getElementById(id);
 const node=(tag,text,cls)=>{const value=document.createElement(tag);if(text!==undefined)value.textContent=String(text);if(cls)value.className=cls;return value;};
 const uid=()=>crypto.randomUUID();
@@ -89,6 +92,11 @@ async function readWorkingEdition(signal){
 }
 function sourceReadControls(){
   const reading=publishedRead!==null;
+  if(offlineEdition){
+    $('workspace-root').dataset.sourceReadState='offline';
+    for(const element of [$('refresh-source'),...document.querySelectorAll('[data-source-read-control]')]){element.textContent='Open source package';element.setAttribute('aria-busy','false');}
+    return;
+  }
   $('workspace-root').dataset.sourceReadState=reading?'reading':'idle';
   $('refresh-source').textContent=reading?'Cancel source read':'Read current source';
   $('refresh-source').setAttribute('aria-busy',String(reading));
@@ -445,6 +453,7 @@ function render(){
   ({answers:answerView,fields:fieldView,review:reviewView,source:sourceView,planning:planningView,products:productSourcesView,handover:handoverView,history:historyView,saved:savedView}[view()]||answerView)(root);updateStats();sourceReadControls();
 }
 async function refreshSource({initial=false,edition='current'}={}){
+  if(offlineEdition){chooseFile('source');return;}
   if(!['current','concise'].includes(edition))throw new Error('Select the current manuscript or the concise working edition.');
   cancelPublishedRead();
   const request={controller:new AbortController(),view:view(),edition,
@@ -480,6 +489,24 @@ $('draft-title').addEventListener('input',()=>{if(draft){draft.title=$('draft-ti
 $('view').addEventListener('change',render);$('format').addEventListener('change',()=>{nav();updateStats();});
 $('save').addEventListener('click',()=>work(()=>save(false)));$('save-copy').addEventListener('click',()=>work(()=>save(true)));
 $('export-draft').addEventListener('click',()=>work(async()=>{if(!draft)throw new Error('Open a source or draft first.');download(await envelope(draft),filename()+'-complete-draft.json');status('Downloaded the complete draft with source files, native plans, product declarations, field mapping, saved versions, prepared editions and observations.');}));
+let offlineExportController=null;
+async function downloadOfflineEditor(){
+  if(!draft)throw new Error('Open a source or draft first.');
+  const controller=new AbortController();offlineExportController=controller;
+  const timeout=setTimeout(()=>controller.abort(new Error('Editor capture timed out. Keep the full draft and retry from the current installed workspace.')),90000);
+  try{
+    status(offlineEdition?'Preparing the complete updated offline edition…':'Retaining the original editor and complete draft…');
+    const runtime=offlineEdition?.runtime||await collectBrowserOfflineRuntime({signal:controller.signal});
+    if(controller.signal.aborted)throw controller.signal.reason;
+    const html=await createOfflineEditor({envelope:await envelope(draft),runtime});
+    if(controller.signal.aborted)throw controller.signal.reason;
+    download(html,filename()+'-offline-editor.html','text/html;charset=utf-8');
+    status('Downloaded the complete editable HTML. Open it in your browser, edit the same application, and download a new offline edition or full draft to keep changes.');
+  }finally{clearTimeout(timeout);if(offlineExportController===controller)offlineExportController=null;}
+}
+window.addEventListener('pagehide',()=>offlineExportController?.abort());
+$('export-offline').addEventListener('click',()=>work(downloadOfflineEditor));
+
 $('import-draft').addEventListener('click',()=>chooseFile('draft'));
 $('file-input').addEventListener('change',()=>work(()=>openFile($('file-input').files[0])));
 $('refresh-source').addEventListener('click',()=>{
@@ -493,7 +520,15 @@ window.addEventListener('beforeprint',printPacket);
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 render();
 const requestedSavedProject=new URL(location.href).searchParams.get('draft');
-if(requestedSavedProject){
+if(offlineEdition){
+  void work(async()=>{
+    draft=await parseEnvelope(offlineEdition.envelope);savedId=null;savedRevision=0;dirty=false;
+    selectedField=draft.fields[0]?.id||null;$('view').value='answers';render();
+    const note=node('p','This file contains the complete application and original editor. Changes stay in this browser until you download an updated offline editor or full draft. Local browser saves use the existing draft store.','muted');
+    document.querySelector('.intro').append(note);
+    status('Opened the complete retained application. Edit all answers, fields, history and handover; use Open source package to receive another original source edition.');
+  });
+}else if(requestedSavedProject){
   void work(async()=>{
     const current=await loadDraft(requestedSavedProject);
     if(!current)throw new Error('This saved submission is absent. Return to Saved projects and refresh the library.');

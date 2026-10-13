@@ -1,3 +1,4 @@
+import {createNativeOfflineEditor} from './grant-offline.mjs';
 import {inflateRawSync} from 'node:zlib';
 import {receiveIssuerContext} from './grant-issuer-context.mjs';
 import {selectedIssuerContext,MAX_ISSUER_BYTES} from './dist/grant-issuer-core.mjs';
@@ -165,6 +166,7 @@ export async function writeGrantExport(options) {
   const exported = await prepareGrantExport(draft,{selection:options.select || 'auto',format:options.format || 'plain'});
   draft = exported.draft;
   const {prepared,files} = exported;
+  if(options['offline-editor'])files.set('edit.html',await createNativeOfflineEditor({envelope:files.get('draft.json'),planningOptions:nativePlanningOptions,exportedAt:prepared.generatedAt}));
   for (const field of prepared.fields) requireValue(Buffer.from(field.value,'utf8').toString('utf8') === field.value, 'Correct invalid Unicode text in field ' + field.id + '.');
   const directory = resolve(options.out);
   await mkdir(dirname(directory),{recursive:true,mode:0o700});
@@ -185,17 +187,19 @@ export async function writeGrantExport(options) {
 
 export async function runCLI(args=process.argv.slice(2)) {
   const {values} = parseArgs({args,options:{
-    help:{type:'boolean'},draft:{type:'string'},source:{type:'string'},'source-index':{type:'string'},'source-url':{type:'string'},budget:{type:'string'},companion:{type:'string'},
+    help:{type:'boolean'},'offline-editor':{type:'boolean'},draft:{type:'string'},source:{type:'string'},'source-index':{type:'string'},'source-url':{type:'string'},budget:{type:'string'},companion:{type:'string'},
     'receive-source-package':{type:'string'},'receive-issuer-case':{type:'string'},'issuer-profile':{type:'string'},'issuer-context':{type:'string'},'form-map':{type:'string'},out:{type:'string'},select:{type:'string'},format:{type:'string'},id:{type:'string'},title:{type:'string'}
   },allowPositionals:false});
   if (values.help) {
     process.stdout.write('Export the existing SCF submission model.\n\n' +
       '  node grant-export.mjs --draft saved-submission.json --out /private/new-export\n' +
+      '  node grant-export.mjs --draft saved-submission.json --offline-editor --out /private/new-editable-export\n' +
       '  node grant-export.mjs --draft saved-submission.json --receive-source-package source-package.json --out /private/received-export\n' +
       '  node grant-export.mjs --draft saved-submission.json --receive-issuer-case complete-issuer-case.zip --issuer-profile issuer-profile.json --out /private/issuer-export\n' +
       '  node grant-export.mjs --source application.md --source-index source-index.json --source-url https://original/source --out /private/new-export\n\n' +
       'Options: --budget budget.csv --companion product-and-finance.md; --form-map native-map.json; --select auto|answers|fields; --format plain|markdown.\n' +
       'New source drafts may use --id and --title. Saved draft identities and all history are retained.\n' +
+      '--offline-editor adds edit.html with the complete original draft, editor modules and styles. Open it directly in a browser; export an updated HTML or full draft after editing. Guide: GRANT_OFFLINE.md.\n' +
       'A selected complete reviewer bundle is also exported as source-package.json for source receiving.\n' +
       'Issuer receiving retains the original case, terms, correspondence and exact selected native plan. The profile explicitly chooses whether to receive that plan.\n' +
       'Select an existing issuer context with --issuer-context ID, or clear the working selection with --issuer-context none. Complete receiving guide: GRANT_ISSUER_CONTEXT.md.\n');

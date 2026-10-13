@@ -447,3 +447,7 @@ The original saved five-revision case used for this delivery is `plan-93b727c8a4
 ## Review the exact required content
 
 Required content now records the named reviewer and complete selected answer/issuer-field text. Later edits show the full prior/current comparison; historical unbound decisions remain readable. Explicit re-review uses the original Saved versions, complete draft export and prepared handover. Follow [the full required-content review journey](./GRANT_REQUIRED_CONTENT_REVIEW.md) for selection, unfinished-work recovery, actual-output coverage and frozen prepared reports.
+
+## Continue the same application offline
+
+Choose **Download offline editor** to retain one editable HTML with the complete current draft and original editor modules. It keeps all nine views, source files, field limits, planning, histories and handover. Open it directly in a supported browser, download an updated offline edition or the original full draft, and return that JSON through **Open draft file**. Source controls in the file receive an actual source-package file. The complete desktop/phone, native export and return workflow is in [GRANT_OFFLINE.md](./GRANT_OFFLINE.md).

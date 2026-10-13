@@ -30,7 +30,9 @@
     "./grant/financial-walkthrough": "./source/stellar-forge/developer-site/grant-financial-walkthrough.mjs",
     "./grant/review-round/working-copy": "./source/stellar-forge/developer-site/dist/grant-review-working-copy.mjs",
     "./grant/saved-projects": "./source/stellar-forge/developer-site/dist/saved-project-library.mjs",
-    "./grant/saved-projects/composition": "./source/stellar-forge/developer-site/saved-projects.mjs"
+    "./grant/saved-projects/composition": "./source/stellar-forge/developer-site/saved-projects.mjs",
+    "./grant/offline-editor": "./source/stellar-forge/developer-site/grant-offline.mjs",
+    "./grant/offline-editor/package": "./source/stellar-forge/developer-site/dist/grant-offline-package.mjs"
   },
   "commands": {
     "grant-application": "stellar-forge/developer-site/grant.mjs",
@@ -42,7 +44,7 @@
   "commandDescriptions": {
     "grant-application": "Read or export the complete source-selected SCF application, inspect its retained catalog and continue original buyer workflows",
     "grant-compose": "Compose the complete selected SCF manuscript and maintained product sections into the existing reviewer and source downloads",
-    "grant-export": "Prepare a complete saved SCF draft as exact field text, native handover files and an offline copy and print page",
+    "grant-export": "Prepare a complete saved SCF draft as exact field text, native handover files, a copy and print page, and an optional self-contained editable application",
     "grant-operating-plan": "Prepare an editable customer operating procedure from selected original SF47 work packages or a complete saved submission",
     "grant-financial-walkthrough": "Render the complete merchant financial walkthrough and retain its exact source and page identities in the existing grant reader"
   },
@@ -69,6 +71,7 @@
     "stellar-forge/developer-site/GRANT_ISSUER_RECEIVING.mjs",
     "stellar-forge/developer-site/GRANT_CATALOG.md",
     "stellar-forge/developer-site/SAVED_PROJECTS.md",
-    "stellar-forge/developer-site/dist/grant-data/financial-native-result.json"
+    "stellar-forge/developer-site/dist/grant-data/financial-native-result.json",
+    "stellar-forge/developer-site/GRANT_OFFLINE.md"
   ]
 }
