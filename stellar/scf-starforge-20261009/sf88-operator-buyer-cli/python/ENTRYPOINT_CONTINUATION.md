@@ -65,8 +65,12 @@ original JSON into the other existing customer workspace and reopen its comparis
 BROWSER_REVIEW.md and the generated customer README provide all exact customer
 commands, original ID meanings and the Python API. The existing original large
 data programmes and native browser receiving remain accepted inputs. Save the
-updated customer ZIP, complete reports and desktop/phone views into the current
-SCF-SOURCE-WORKSPACE-7737-20261012 receiving programme.
+updated customer ZIP, complete reports and desktop/phone views through the original
+SCF-REVIEW-RETURNS-COMPOSITION-B41A-20261012 customer receiving programme. Its
+accepted complete customer and twelve-view receiving are the baseline. Use
+CUSTOMER_CONTINUATION.md and continue_review_customer.py to retain the full source
+selection, apply both merged overlays in order, run the captured original B41A
+browser command against the installed customer, and resume the same durable save.
 
 ## Source identity
 
