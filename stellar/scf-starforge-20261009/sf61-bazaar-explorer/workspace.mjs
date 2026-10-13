@@ -12,6 +12,7 @@ import { createOperationHandoff } from '../sf88-operator-buyer-cli/operation-han
 import { MAX_REQUEST_BODY_BYTES, requestBodyPin } from '../sf88-operator-buyer-cli/request-body.mjs';
 import { parseOperationTicketBytes, operationTicketView } from '../sf88-operator-buyer-cli/operation-ticket.mjs';
 import { InputError, need } from '../sf88-operator-buyer-cli/config.mjs';
+import { inspectCatalogReview, catalogReviewSummary, CATALOG_REVIEW_SCHEMA, CATALOG_REVIEW_LIMITS } from './catalog-review.mjs';
 import { AtlasCaptureSearch, ATLAS_CAPTURE_SEARCH_SCHEMA, normalizeCaptureSearch, matchingCaptureAcceptIndexes } from './capture-search.mjs';
 
 export const ATLAS_WORKSPACE_SCHEMA = 'stellar-forge.sf61.workspace.v1';
@@ -376,6 +377,45 @@ export async function openAtlasWorkspace({ directory, create = true }) {
     await state();
   } catch (error) { await release(); throw error; }
 
+  async function receivePageOwned({ name, pageText }) {
+      name = label(name);
+      const bytes = textBytes(pageText, PAGE_BYTES, 'ATLAS_PAGE_TOO_LARGE'), value = decode(bytes), rows = rowsOf(value);
+      const digest = hash(bytes), id = `page-${digest.slice(0, 40)}`, current = await state();
+      if (!current.captures[id]) {
+        await ensureDir(`captures/${id}/native`);
+        await write(`captures/${id}/native/page-000000.json`, bytes, true);
+        current.captures[id] = { id, captureId: id, name, kind: 'SINGLE_PAGE', status: 'READY', nativeStatus: 'SINGLE_PAGE',
+          source: value.source ?? value.sourceUrl ?? null, rows: rows.length, reportedTotal: value.pagination?.total ?? null,
+          observedAt: value.observedAt ?? value.capture?.capturedAt ?? null, receivedAt: now(), updatedAt: now(),
+          files: [{ file: 'page-000000.json', sha256: digest, rows: rows.length, offset: value.pagination?.offset ?? null }] };
+        await saveState(current);
+      }
+      return { ...current.captures[id], captureId: id, pages: 1 };
+  }
+  async function saveSelectionOwned(input, reviewOrigin = null) {
+      const current = await state(), item = await entry(input.captureId, current);
+      const page = await sourcePage(item, input.pageFile);
+      need(Number.isSafeInteger(input.row) && input.row >= 0 && Number.isSafeInteger(input.accept) && input.accept >= 0 &&
+        plain(page.rows[input.row]?.accepts?.[input.accept]), 'ATLAS_EXPLICIT_OFFER_REQUIRED');
+      const name = label(input.label), binding = { captureId: item.id, pageFile: input.pageFile, row: input.row, accept: input.accept, label: name };
+      const id = input.selectionId ?? `selection-${identity(binding).slice(0, 36)}`;
+      need(idOK(id), 'ATLAS_SELECTION_ID_INVALID');
+      if (current.selections[id]) {
+        const existing = await record(id, current);
+        need(identity(Object.fromEntries(Object.keys(binding).map(key => [key, existing[key]]))) === identity(binding), 'ATLAS_SELECTION_ID_CONFLICT');
+        need(reviewOrigin === null || plain(existing.catalogReview) && identity(existing.catalogReview) === identity(reviewOrigin), 'ATLAS_REVIEW_SELECTION_CONFLICT');
+        return selectionView(existing);
+      }
+      const root = `selections/${id}/versions/000000`; await ensureDir(root);
+      const old = await read(`${root}/record.json`, MANIFEST_BYTES, true);
+      const listing = page.rows[input.row], resource = typeof listing.resource === 'string' ? listing.resource : listing.resource?.url;
+      const value = old ? decode(old) : { id, ...binding, resource, revision: 0, stage: 'SELECTED',
+        updatedAt: now(), request: null, inputs: { body: null, ticket: null }, prepared: null, handoff: null,
+        ...(reviewOrigin ? { catalogReview: copy(reviewOrigin) } : {}) };
+      need(identity(Object.fromEntries(Object.keys(binding).map(key => [key, value[key]]))) === identity(binding), 'ATLAS_SELECTION_ID_CONFLICT');
+      need(reviewOrigin === null || plain(value.catalogReview) && identity(value.catalogReview) === identity(reviewOrigin), 'ATLAS_REVIEW_SELECTION_CONFLICT');
+      return commit(current, root, value);
+  }
   const api = {
     directory,
     async summary() {
@@ -446,21 +486,49 @@ export async function openAtlasWorkspace({ directory, create = true }) {
       item.updatedAt = now(); await saveState(current);
       return { ...item, captureId, pages: item.files.length };
     }); },
-    receivePage({ name, pageText }) { return mutate(async () => {
-      name = label(name);
-      const bytes = textBytes(pageText, PAGE_BYTES, 'ATLAS_PAGE_TOO_LARGE'), value = decode(bytes), rows = rowsOf(value);
-      const digest = hash(bytes), id = `page-${digest.slice(0, 40)}`, current = await state();
-      if (!current.captures[id]) {
-        await ensureDir(`captures/${id}/native`);
-        await write(`captures/${id}/native/page-000000.json`, bytes, true);
-        current.captures[id] = { id, captureId: id, name, kind: 'SINGLE_PAGE', status: 'READY', nativeStatus: 'SINGLE_PAGE',
-          source: value.source ?? value.sourceUrl ?? null, rows: rows.length, reportedTotal: value.pagination?.total ?? null,
-          observedAt: value.observedAt ?? value.capture?.capturedAt ?? null, receivedAt: now(), updatedAt: now(),
-          files: [{ file: 'page-000000.json', sha256: digest, rows: rows.length, offset: value.pagination?.offset ?? null }] };
-        await saveState(current);
-      }
-      return { ...current.captures[id], captureId: id, pages: 1 };
+    async inspectCatalogReview({ reviewText }) {
+      need(!closed, 'ATLAS_WORKSPACE_CLOSED');
+      return catalogReviewSummary(await inspectCatalogReview(reviewText));
+    },
+    receiveCatalogReview({ reviewText, name, selectionId }) { return mutate(async () => {
+      const reviewed = await inspectCatalogReview(reviewText), { packet } = reviewed;
+      const captureName = name === undefined ? packet.label : label(name);
+      const capture = await receivePageOwned({ name: captureName, pageText: packet.source.pageText });
+      const root = 'captures/' + capture.captureId + '/reviews/' + packet.packetId;
+      await ensureDir(root);
+      const rel = root + '/' + reviewed.sha256 + '.json';
+      const prior = await read(rel, CATALOG_REVIEW_LIMITS.packetBytes, true);
+      if (prior) need(hash(prior) === reviewed.sha256, 'ATLAS_REVIEW_SOURCE_CHANGED');
+      else await write(rel, Buffer.from(reviewText, 'utf8'), true);
+      const origin = { schema: CATALOG_REVIEW_SCHEMA, packetId: packet.packetId,
+        pageSha256: packet.source.pageSha256, sourceUrl: packet.source.sourceUrl,
+        capturedAt: packet.source.capturedAt, search: copy(packet.search) };
+      const selection = await saveSelectionOwned({ captureId: capture.captureId,
+        pageFile: packet.source.pageFile, row: packet.selection.row, accept: packet.selection.acceptIndex,
+        label: packet.label, selectionId: selectionId ?? 'review-' + packet.packetId.slice(0, 40) }, origin);
+      return { schema: CATALOG_REVIEW_SCHEMA, review: catalogReviewSummary(reviewed),
+        capture, selection, retained: { path: rel, bytes: reviewed.bytes, sha256: reviewed.sha256 } };
     }); },
+    async catalogReview({ selectionId, sha256 }) {
+      need(!closed, 'ATLAS_WORKSPACE_CLOSED'); await queue;
+      need(sha256 === undefined || digestOK(sha256), 'ATLAS_REVIEW_SOURCE_DIGEST_INVALID');
+      const selected = await record(selectionId), origin = selected.catalogReview;
+      need(origin?.schema === CATALOG_REVIEW_SCHEMA && digestOK(origin.packetId), 'ATLAS_REVIEW_NOT_FOUND');
+      const root = 'captures/' + selected.captureId + '/reviews/' + origin.packetId;
+      const names = (await readdir(path(root))).filter(name => /^[a-f0-9]{64}\.json$/.test(name)).sort();
+      need(names.length > 0, 'ATLAS_REVIEW_NOT_FOUND');
+      const file = sha256 === undefined ? names[0] : sha256 + '.json';
+      need(names.includes(file), 'ATLAS_REVIEW_NOT_FOUND');
+      const bytes = await read(root + '/' + file, CATALOG_REVIEW_LIMITS.packetBytes);
+      need(hash(bytes) + '.json' === file, 'ATLAS_REVIEW_SOURCE_CHANGED');
+      const reviewed = await inspectCatalogReview(bytes.toString('utf8')), packet = reviewed.packet;
+      need(packet.packetId === origin.packetId && packet.source.pageSha256 === origin.pageSha256 &&
+        packet.selection.row === selected.row && packet.selection.acceptIndex === selected.accept &&
+        packet.source.pageFile === selected.pageFile, 'ATLAS_REVIEW_SELECTION_CHANGED');
+      return { ...catalogReviewSummary(reviewed), text: reviewed.text,
+        retainedFiles: names.map(name => ({ sha256: name.slice(0, -5) })) };
+    },
+    receivePage(input) { return mutate(() => receivePageOwned(input)); },
     async capture(input) { return mutate(async () => {
       const request = normalizeCaptureSearch(input), item = await entry(request.captureId);
       const indexed = await indexedCapture(item);
@@ -491,27 +559,7 @@ export async function openAtlasWorkspace({ directory, create = true }) {
         yield page;
       }
     },
-    saveSelection(input) { return mutate(async () => {
-      const current = await state(), item = await entry(input.captureId, current);
-      const page = await sourcePage(item, input.pageFile);
-      need(Number.isSafeInteger(input.row) && input.row >= 0 && Number.isSafeInteger(input.accept) && input.accept >= 0 &&
-        plain(page.rows[input.row]?.accepts?.[input.accept]), 'ATLAS_EXPLICIT_OFFER_REQUIRED');
-      const name = label(input.label), binding = { captureId: item.id, pageFile: input.pageFile, row: input.row, accept: input.accept, label: name };
-      const id = input.selectionId ?? `selection-${identity(binding).slice(0, 36)}`;
-      need(idOK(id), 'ATLAS_SELECTION_ID_INVALID');
-      if (current.selections[id]) {
-        const existing = await record(id, current);
-        need(identity(Object.fromEntries(Object.keys(binding).map(key => [key, existing[key]]))) === identity(binding), 'ATLAS_SELECTION_ID_CONFLICT');
-        return selectionView(existing);
-      }
-      const root = `selections/${id}/versions/000000`; await ensureDir(root);
-      const old = await read(`${root}/record.json`, MANIFEST_BYTES, true);
-      const listing = page.rows[input.row], resource = typeof listing.resource === 'string' ? listing.resource : listing.resource?.url;
-      const value = old ? decode(old) : { id, ...binding, resource, revision: 0, stage: 'SELECTED',
-        updatedAt: now(), request: null, inputs: { body: null, ticket: null }, prepared: null, handoff: null };
-      need(identity(Object.fromEntries(Object.keys(binding).map(key => [key, value[key]]))) === identity(binding), 'ATLAS_SELECTION_ID_CONFLICT');
-      return commit(current, root, value);
-    }); },
+    saveSelection(input) { return mutate(() => saveSelectionOwned(input)); },
     async selection({ selectionId }) { need(!closed, 'ATLAS_WORKSPACE_CLOSED'); await queue; return selectionView(await record(selectionId)); },
     prepareSelection(input) { return mutate(async () => {
       need(plain(input.request) && Object.keys(input.request).every(key =>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import type { CatalogReviewSummary, CatalogReviewPacket } from './catalog-review.mjs';
 export const ATLAS_WORKSPACE_SCHEMA: 'stellar-forge.sf61.workspace.v1';
 export type OriginalListing = Record<string, unknown> & {
   resource?: string | { url?: string; [key: string]: unknown };
@@ -112,6 +113,8 @@ export interface AtlasSelection {
   revision: number;
   stage: 'SELECTED' | 'PREPARED' | 'HANDOFF';
   updatedAt: string;
+  catalogReview?: { schema: 'stellar-forge.sf61.catalog-review.v1'; packetId: string;
+    pageSha256: string; sourceUrl: string | null; capturedAt: string | null; search: CatalogReviewPacket['search'] };
   request: AtlasRequest | null;
   listing: OriginalListing;
   acceptedTerms: Record<string, unknown>;
@@ -141,6 +144,12 @@ export interface AtlasWorkspace {
   putCapturePage(input: { captureId: string; file: string; text: string }): Promise<{
     captureId: string; file: string; sha256: string; status: 'RECEIVED' }>;
   finishCapture(input: { captureId: string }): Promise<RetainedCapture>;
+  inspectCatalogReview(input: { reviewText: string }): Promise<CatalogReviewSummary>;
+  receiveCatalogReview(input: { reviewText: string; name?: string; selectionId?: string }): Promise<{
+    schema: 'stellar-forge.sf61.catalog-review.v1'; review: CatalogReviewSummary; capture: RetainedCapture;
+    selection: AtlasSelection; retained: { path: string; bytes: number; sha256: string } }>;
+  catalogReview(input: { selectionId: string; sha256?: string }): Promise<CatalogReviewSummary & {
+    text: string; retainedFiles: Array<{ sha256: string }> }>;
   receivePage(input: { name: string; pageText: string }): Promise<RetainedCapture>;
   capture(input: CaptureSearchInput): Promise<CaptureSearchResult>;
   capturePages(input: CaptureSearchInput): AsyncGenerator<CaptureSearchResult, void, unknown>;

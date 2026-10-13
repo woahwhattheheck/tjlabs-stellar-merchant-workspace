@@ -11,6 +11,13 @@ const MARKUP = `
       <div class="aw-buttons"><button type="button" class="secondary" id="aw-import-folder">Open capture folder</button><button type="button" class="secondary" id="aw-import-page">Open saved page</button><button type="button" class="secondary" id="aw-retain-live">Retain displayed page</button><button type="button" class="secondary" id="aw-refresh">Reload saved workspace</button></div>
       <input id="aw-folder-input" type="file" webkitdirectory multiple hidden><input id="aw-page-input" type="file" accept=".json,application/json" hidden>
     </div>
+    <details id="aw-review-intake" class="aw-review-intake"><summary>Receive a catalog selection</summary>
+      <p>Open the complete selection downloaded from the grant reader. Review its original page, exact payment option and applied search before saving it in this workspace.</p>
+      <label for="aw-review-file">Complete catalog review JSON</label><input id="aw-review-file" type="file" accept=".json,application/json">
+      <p id="aw-review-status" class="status" role="status" aria-live="polite">Choose the original complete review file.</p>
+      <div id="aw-review-preview" hidden><dl id="aw-review-terms" class="review-terms"></dl><details><summary>Selected original declaration</summary><pre id="aw-review-declaration"></pre></details>
+      <div class="aw-buttons"><button id="aw-review-receive" type="button" class="primary" disabled>Receive and open this request</button><button id="aw-review-clear" type="button" class="secondary">Clear review</button></div></div>
+    </details>
     <div id="aw-import-progress" class="aw-progress" hidden><span id="aw-import-progress-text" role="status" aria-live="polite"></span><button id="aw-import-stop" type="button" class="secondary small">Stop after current page</button></div>
     <p id="aw-summary" class="aw-summary"></p>
     <div class="aw-tabs" role="tablist" aria-label="Saved workspace views"><button id="aw-tab-captures" role="tab" aria-selected="true" aria-controls="aw-captures-panel" type="button">Saved catalogs</button><button id="aw-tab-requests" role="tab" aria-selected="false" aria-controls="aw-requests-panel" tabindex="-1" type="button">Buyer requests</button></div>
@@ -45,6 +52,7 @@ const MARKUP = `
       <div class="aw-section-head"><div><span class="caption">ORIGINAL BUYER PREPARATION</span><h3 id="aw-request-title" tabindex="-1"></h3></div><button type="button" class="secondary small" id="aw-reload-request">Reload saved revision</button></div>
       <p id="aw-request-context" class="status"></p>
       <dl id="aw-request-terms" class="review-terms"></dl>
+      <div id="aw-request-review" hidden><p id="aw-request-review-origin" class="muted"></p><button id="aw-request-review-download" type="button" class="secondary small">Download original catalog review</button></div>
       <div id="aw-asset-workflow" hidden><h4>File delivery</h4><p class="muted">Choose an absolute output path on the buyer host. The original buyer checks the advertised file checksum, byte count and content type when receiving the purchase.</p><dl id="aw-asset-terms" class="review-terms"></dl></div>
       <form id="aw-request-form" class="review-form">
         <div class="field"><label for="aw-intent">Stable operation ID</label><input id="aw-intent" required maxlength="128" autocomplete="off" spellcheck="false" placeholder="service-request-001"></div>
@@ -115,7 +123,7 @@ export async function mountAtlasWorkspace({ getObservedPage = () => null } = {})
   const token = /^[a-f0-9]{64}$/.test(location.hash.slice(1)) ? location.hash.slice(1) : '';
   const state = { summary: null, capture: null, captureId: null, page: 0, query: '', selection: null,
     busy: false, dirty: false, selected: new Set(), importStopped: false, requestGeneration: 0,
-    filters: {}, pageSize: 25, snapshotId: null, searchRevision: 0 };
+    filters: {}, pageSize: 25, snapshotId: null, searchRevision: 0, catalogReview: null };
 
   // Keep the private session fragment intact while navigating sections.
   if (token) document.addEventListener('click', event => {
@@ -141,6 +149,10 @@ export async function mountAtlasWorkspace({ getObservedPage = () => null } = {})
       if (node.id === 'aw-import-stop') continue;
       node.disabled = state.busy;
     }
+    $('aw-review-file').disabled = state.busy;
+    $('aw-review-receive').disabled = state.busy || !state.catalogReview;
+    $('aw-review-clear').disabled = state.busy || !state.catalogReview;
+    $('aw-request-review-download').disabled = state.busy || !state.selection?.catalogReview;
     $('aw-retain-live').disabled = state.busy || !getObservedPage();
     $('aw-save-search').disabled = state.busy || !state.capture;
     $('aw-prev').disabled = state.busy || !state.capture || state.page === 0;
@@ -315,6 +327,10 @@ export async function mountAtlasWorkspace({ getObservedPage = () => null } = {})
     state.selection = value; state.dirty = false;
     const listing = value.listing ?? value.originalListing, accepted = value.acceptedTerms ?? listing?.accepts?.[value.accept] ?? {}, request = value.request ?? value.prepared?.config?.operation ?? {};
     $('aw-request').hidden = false; $('aw-request-title').textContent = value.label ?? titleOf(listing);
+    $('aw-request-review').hidden = !value.catalogReview;
+    $('aw-request-review-origin').textContent = value.catalogReview ? 'Original catalog review ' + value.catalogReview.packetId +
+      ' · source ' + value.catalogReview.pageSha256 + ' · ' + (value.catalogReview.capturedAt ?? 'Capture time undeclared') +
+      ' · applied query: ' + (value.catalogReview.search.query || 'All retained rows') : '';
     $('aw-request-context').textContent = 'Revision ' + value.revision + ' · ' + displayState(value.stage) + ' · ' + text(value.pageFile) + ' / row ' + value.row + ' / option ' + (Number(value.accept) + 1);
     const terms = $('aw-request-terms'); terms.replaceChildren();
     for (const [name, shown] of [['Network', accepted.network], ['Scheme', accepted.scheme], ['Amount / atomic units', accepted.amount ?? accepted.maxAtomic],
@@ -434,6 +450,57 @@ export async function mountAtlasWorkspace({ getObservedPage = () => null } = {})
     () => openCapture(state.captureId, state.query, state.page - 1, { snapshotId: state.snapshotId })));
   $('aw-next').addEventListener('click', () => run('Opening next saved page…',
     () => openCapture(state.captureId, state.query, state.page + 1, { snapshotId: state.snapshotId })));
+  function clearCatalogReview() {
+    state.catalogReview = null; $('aw-review-file').value = '';
+    $('aw-review-preview').hidden = true;
+    status('Choose the original complete review file.', false, $('aw-review-status')); updateControls();
+  }
+  $('aw-review-clear').addEventListener('click', clearCatalogReview);
+  $('aw-review-file').addEventListener('change', event => {
+    const file = event.target.files?.[0]; if (!file || state.busy) return;
+    run('Reading the complete catalog selection…', async () => {
+      state.catalogReview = null; $('aw-review-preview').hidden = true;
+      const reviewText = await fileText(file, 8 * 1048576);
+      const reviewed = await api('catalog-review/inspect', { reviewText });
+      state.catalogReview = { reviewText, reviewed };
+      const terms = $('aw-review-terms'); terms.replaceChildren();
+      for (const [name, value] of [['Label', reviewed.label], ['Original rows', reviewed.source.rows],
+        ['Provider total', reviewed.coverage?.reportedTotal], ['Selected row / payment option', reviewed.selection.row + ' / ' + (reviewed.selection.acceptIndex + 1)],
+        ['Query', reviewed.search.query || 'All retained rows'], ['Network', reviewed.acceptedTerms.network],
+        ['Asset', reviewed.acceptedTerms.asset], ['Amount / atomic units', reviewed.acceptedTerms.amount ?? reviewed.acceptedTerms.maxAtomic],
+        ['Recipient', reviewed.acceptedTerms.payTo], ['Complete page SHA-256', reviewed.source.pageSha256]]) {
+        const cell = element('div', 'review-term'); cell.append(element('dt', '', name), element('dd', '', value)); terms.append(cell);
+      }
+      $('aw-review-declaration').textContent = JSON.stringify(reviewed.listing, null, 2);
+      $('aw-review-preview').hidden = false;
+      status('Complete original selection ready. Receive it to continue in the existing request editor.', false, $('aw-review-status'));
+    }, $('aw-review-status'));
+  });
+  $('aw-review-receive').addEventListener('click', () => {
+    const selected = state.catalogReview; if (!selected) return;
+    run('Receiving the original source and selected terms…', async () => {
+      const result = await api('catalog-review/receive', { reviewText: selected.reviewText,
+        ...($('aw-capture-name').value.trim() ? { name: $('aw-capture-name').value.trim() } : {}) });
+      await refreshSummary(); renderSelection(result.selection);
+      status('Original catalog review retained with this request. Continue its explicit request preparation.', false, $('aw-review-status'));
+    }, $('aw-review-status'));
+  });
+  $('aw-request-review-download').addEventListener('click', () => {
+    const selected = state.selection;
+    if (!selected?.catalogReview) return;
+    run('Reading the complete original catalog review…', async () => {
+      const result = await api('catalog-review?' + new URLSearchParams({ selectionId: idOf(selected) }));
+      if (state.selection !== selected) return;
+      const bytes = new TextEncoder().encode(result.text);
+      if (result.packetId !== selected.catalogReview.packetId || bytes.length !== result.bytes)
+        throw new Error('The returned review does not match this selected request.');
+      const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
+        .map(value => value.toString(16).padStart(2, '0')).join('');
+      if (digest !== result.sha256) throw new Error('The complete original review digest differs.');
+      saveDownload(result.text, 'atlas-catalog-review-' + result.packetId.slice(0, 16) + '.json');
+      status('Complete catalog review downloaded with its original source page.', false, $('aw-request-status'));
+    }, $('aw-request-status'));
+  });
   $('aw-import-folder').addEventListener('click', () => $('aw-folder-input').click());
   $('aw-import-page').addEventListener('click', () => $('aw-page-input').click());
   $('aw-import-stop').addEventListener('click', () => { state.importStopped = true; $('aw-import-stop').disabled = true; });
