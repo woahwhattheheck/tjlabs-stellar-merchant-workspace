@@ -7,7 +7,8 @@ import { readFile, mkdir, open, link, unlink, lstat } from 'node:fs/promises';
 import { resolve, dirname, basename, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { openWorkspace } from '../workspace/model.mjs';
+import { readSavedPlanningSource, openWorkspace } from '../workspace/model.mjs';
+import { openTariffWorkingCopies } from './working-copies.mjs';
 import { openTariffWorkspace } from './workspace.mjs';
 import { startTariffServer } from './server.mjs';
 
@@ -29,6 +30,10 @@ export const HELP = [
   '  --release-runtime FILE  Original release runtime JSON object',
   '',
   'Commands:',
+  '  working-list          List native named tariff studies; only --state is required',
+  '  working-load --input FILE | working-save --input FILE',
+  '  working-export --input FILE | working-import --input FILE',
+  '                        Exact working-copy/revision/request JSON; only --state required',
   '  serve                 Start the local merchant console; --port NUMBER defaults to 0',
   '  state                 Print current pricing and tariff state',
   '  source --version ID   Print the selected source version',
@@ -74,6 +79,11 @@ const COMMON_FLAGS = new Set([
   'native-outbox', 'source-package', 'release-store', 'release-runtime'
 ]);
 const COMMAND_FLAGS = Object.freeze({
+  'working-list': new Set(['output']),
+  'working-load': new Set(['input','output']),
+  'working-save': new Set(['input','output']),
+  'working-export': new Set(['input','output']),
+  'working-import': new Set(['input','output']),
   serve: new Set(['port']),
   state: new Set(['output']),
   source: new Set(['version', 'output']),
@@ -95,6 +105,7 @@ const COMMAND_FLAGS = Object.freeze({
   'repricing-stage': new Set(['input', 'output'])
 });
 const INPUT_COMMANDS = new Set([
+  'working-load','working-save','working-export','working-import',
   'preview', 'save', 'commit', 'inspect', 'receive',
   'repricing-preview', 'repricing-save', 'repricing-stage'
 ]);
@@ -127,10 +138,10 @@ function parseArguments(argv) {
     }
     flags[name] = value;
   }
-  for (const name of ['config', 'state']) {
+  for (const name of (command.startsWith('working-')?['state']:['config', 'state'])) {
     if (!flags[name]) throw new UsageError('--' + name + ' is required');
   }
-  if (!flags.snapshot && !flags.history && !flags['ops-url']) {
+  if (!command.startsWith('working-') && !flags.snapshot && !flags.history && !flags['ops-url']) {
     throw new UsageError('Supply --snapshot and/or --history, or --ops-url');
   }
   if (flags['ops-url'] && (flags.snapshot || flags.history)) {
@@ -205,6 +216,8 @@ async function writeCreateOnly(filename, content) {
     }
     // A hard link creates the destination only when it does not already exist.
     await link(temporary, target);
+    const directoryHandle=await open(parent,'r');
+    try{await directoryHandle.sync();}finally{await directoryHandle.close();}
   } catch (error) {
     failure = error;
     throw error;
@@ -324,6 +337,11 @@ export async function runTariffCli(argv = process.argv.slice(2)) {
   // Read user payloads before opening mutable workspace storage.
   const input = flags.input ? await readInput(flags.input) : undefined;
   const directory = resolve(flags.state);
+  if(command.startsWith('working-')) {
+    const working=await openTariffWorkingCopies({directory,source:version=>readSavedPlanningSource({directory,version})});
+    const methods={'working-list':'list','working-load':'load','working-save':'save','working-export':'exportCopy','working-import':'importCopy'};
+    await emitJson(await working[methods[command]](input),flags.output);return;
+  }
   const model = await openWorkspace(await workspaceOptions(flags));
   // The tariff owner derives tariff-plans and scenario-plans inside this same state.
   const workspace = await openTariffWorkspace({ model, directory });

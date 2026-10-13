@@ -5,6 +5,7 @@ import { resolve, join, isAbsolute } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { createTariffReview } from './model.mjs';
 import { createScenarioReview } from '../planning/scenarios.mjs';
+import { openTariffWorkingCopies } from './working-copies.mjs';
 import { openPlanningWorkspace } from '../planning/workspace.mjs';
 
 const PLAN = 'stellar-forge.merchant-tariff-plan.v1';
@@ -201,6 +202,7 @@ export async function openTariffWorkspace({model, directory} = {}) {
   const intents = join(root, 'selections'), results = join(root, 'selection-results');
   for (const path of [root, pending, intents, results]) await privateDirectory(path, true);
   const planning = await openPlanningWorkspace({model, directory});
+  const working = await openTariffWorkingCopies({directory,source:version=>model.planningSource(version)});
 
   async function read(path) {
     const handle = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
@@ -273,7 +275,7 @@ export async function openTariffWorkspace({model, directory} = {}) {
     return {total:records.length, plans:records.slice(0,100).map(summary), selections:await selectionHistory()};
   }
   async function state() {
-    return {schema:'stellar-forge.merchant-tariff-workspace.v1', pricing:await model.state(), tariffs:await list()};
+    return {schema:'stellar-forge.merchant-tariff-workspace.v1', workspaceId:hash(directory), pricing:await model.state(), tariffs:await list()};
   }
   async function context(version) {
     id(version, 'pricing review');
@@ -488,11 +490,65 @@ export async function openTariffWorkspace({model, directory} = {}) {
     }
     return {status:'TARIFF_PORTFOLIO_RECEIVED',plans:received,selections:journals.length};
   }
-  return {state,source,preview,save,list,load,selection,commitSelection,download,bundle,inspectPortfolio,receive,
+  return {state,source,preview,save,list,load,selection,commitSelection,download,bundle,inspectPortfolio,receive,working,
     repricingSource:version=>model.repricingSource(version),
     downloadRepricing:(decision,name)=>model.downloadRepricing(decision,name),
     downloadPricing:(version,name)=>model.download(version,name),
     previewRepricing:input=>model.previewRepricing(copy(input)),
     saveRepricing:input=>model.saveRepricing(copy(input)),
     stageRepricing:input=>model.stageRepricing(copy(input))};
+}
+
+/** Capture complete original tariff records before their scenario/pricing dependencies. */
+export async function captureTariffBackup({directory}) {
+  const root=join(directory,'tariff-plans'),files=[],versions=new Set(),plans=[],selections=[];
+  try{await privateDirectory(root);}catch(error){if(absent(error))return {files,plans,selections,pricingVersions:[]};throw error;}
+  async function capture(name,optional=false) {
+    const path=join(root,...name.split('/'));let handle;
+    try{handle=await open(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0));}
+    catch(error){if(optional&&absent(error))return null;throw error;}
+    let bytes;
+    try {
+      const stat=await handle.stat();
+      if(!stat.isFile()||(stat.mode&0o077)||stat.size>MAX_FILE)throw fault('TARIFF_BACKUP_CHANGED','A retained tariff record changed.');
+      bytes=await handle.readFile();
+      if(bytes.length>MAX_FILE)throw fault('TARIFF_BACKUP_CHANGED','A retained tariff record exceeds its source limit.');
+    }finally{await handle.close();}
+    const envelope=JSON.parse(bytes.toString('utf8'));
+    if(!HASH.test(envelope.sha256??'')||fingerprint(envelope.record)!==envelope.sha256)
+      throw fault('TARIFF_BACKUP_CHANGED','The original tariff envelope changed.');
+    const expected=hash(bytes);
+    files.push({name:'tariff-plans/'+name,read:async()=>{
+      const file=await open(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0));
+      try {
+        const stat=await file.stat();
+        if(!stat.isFile()||(stat.mode&0o077)||stat.size>MAX_FILE)throw fault('TARIFF_BACKUP_CHANGED','A selected tariff record changed.',409);
+        const actual=await file.readFile();
+        if(hash(actual)!==expected)throw fault('TARIFF_BACKUP_CHANGED','A selected tariff record changed during backup.',409);
+        return actual;
+      }finally{await file.close();}
+    }});
+    return envelope.record;
+  }
+  // An acknowledged result refers to an earlier immutable intent, tariff plan,
+  // scenario plan and pricing review. Capture these dependents before those stores.
+  const intents=join(root,'selections'),results=join(root,'selection-results');
+  let intentNames=[];
+  try {await privateDirectory(intents);await privateDirectory(results);intentNames=await readdir(intents);}
+  catch(error){if(!absent(error))throw error;}
+    for(const name of intentNames.filter(name=>name.endsWith('.json')&&UUID.test(name.slice(0,-5))).sort()) {
+      const intent=await capture('selections/'+name),result=await capture('selection-results/'+name,true);
+      if(intent?.schema!=='stellar-forge.merchant-tariff-selection-intent.v1'||!UUID.test(intent.selection?.planId??''))
+        throw fault('TARIFF_BACKUP_CHANGED','The retained quote intent has no original tariff plan.');
+      selections.push({requestId:name.slice(0,-5),planId:intent.selection.planId,completed:result!==null});
+    }
+  for(const name of (await readdir(root)).filter(name=>name.endsWith('.json')&&UUID.test(name.slice(0,-5))).sort()) {
+    const record=await capture(name);
+    if(record?.schema!==PLAN||record.planId!==name.slice(0,-5)||!UUID.test(record.version??''))
+      throw fault('TARIFF_BACKUP_CHANGED','The retained tariff plan has no original pricing source.');
+    versions.add(record.version);plans.push(summary(record));
+  }
+  if(selections.some(row=>!plans.some(plan=>plan.planId===row.planId)))
+    throw fault('TARIFF_BACKUP_SOURCE_MISSING','A retained quote intent has no original tariff plan.');
+  return {files,plans,selections,pricingVersions:[...versions]};
 }

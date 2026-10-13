@@ -4,6 +4,10 @@ Plan merchant prices against an exact source version, compare volume assumptions
 
 The tariff workspace uses the original seller configuration, observations, commercial terms, pricing state, request identities and native repricing operations. The command-line operator, HTTP client and browser console share the same workspace methods.
 
+## Named unfinished studies
+
+[Named tariff studies](STUDIES.md) keep raw bands, quantities and payment valuation inputs with their exact saved Pricing sources. Save, reopen, fork or receive a study before its values are ready for calculation. The page retains original plan/quote/native-price request bodies before dispatch, and the complete workspace backup carries the original tariff plans, quote journals and selected study histories alongside their source reviews.
+
 ## Run the operator
 
 Use the product's existing Node runtime. Commands below run from `sf97-merchant-revenue-ops/`.
