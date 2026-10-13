@@ -21,6 +21,7 @@ import platform
 import sys
 import tomllib
 from collections import defaultdict
+from decimal import Decimal
 from pathlib import Path
 
 SCHEMA = "migration-review.v1"
@@ -53,9 +54,51 @@ class MigrationError(Exception):
         return result
 
 
+def _decimal_canonical(value):
+    """Compare decimal values without binary rounding or context precision."""
+    if not value.is_finite():
+        raise ValueError("Non-JSON numeric constant: " + str(value))
+    sign, digits, exponent = value.as_tuple()
+    coefficient = "".join(str(digit) for digit in digits).lstrip("0")
+    if not coefficient:
+        return "-0e0" if sign else "0e0"
+    trimmed = coefficient.rstrip("0")
+    exponent += len(coefficient) - len(trimmed)
+    return ("-" if sign else "") + trimmed + "e" + str(exponent)
+
+
+def _json_exact(value, *, canonical=False):
+    """Write retained Decimal values as JSON numbers, keeping other JSON types."""
+    if isinstance(value, Decimal):
+        if not value.is_finite():
+            raise ValueError("Non-JSON numeric constant: " + str(value))
+        rendered = str(value)
+        return _decimal_canonical(value) if canonical else (
+            rendered if any(marker in rendered for marker in ".eE") else rendered + "e0")
+    if canonical and isinstance(value, int) and not isinstance(value, bool):
+        # JSON has one numeric type: the browser may render 1e0 as 1.
+        return _decimal_canonical(Decimal(value))
+    if canonical and isinstance(value, float):
+        return _decimal_canonical(Decimal(str(value)))
+    if isinstance(value, dict):
+        keys = sorted(value) if canonical else value
+        if any(not isinstance(key, str) for key in keys):
+            raise TypeError("JSON object keys must be strings")
+        return "{" + ",".join(
+            json.dumps(key, ensure_ascii=False) + ":" +
+            _json_exact(value[key], canonical=canonical) for key in keys) + "}"
+    if isinstance(value, (list, tuple)):
+        return "[" + ",".join(_json_exact(item, canonical=canonical) for item in value) + "]"
+    return json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+
+
 def _canonical(value):
-    return json.dumps(value, sort_keys=True, separators=(",", ":"),
-                      ensure_ascii=False, allow_nan=False)
+    return _json_exact(value, canonical=True)
+
+
+def encode_review(result):
+    """Serialize a callable review result without rounding its Decimal values."""
+    return _json_exact(result)
 
 
 def _sha256(value):
@@ -109,6 +152,24 @@ def _parse_bytes(value, label):
     if not isinstance(catalog, dict):
         raise MigrationError("INVALID_CATALOG", label + " must have an object root")
     return catalog, {"sha256": _sha256(raw), "bytes": len(raw), "encoding": encoding}, text
+
+
+def _comparison_integer(value):
+    return Decimal(value) if value == "-0" else int(value)
+
+
+def _comparison_inventory(text, profile):
+    # Converter/validator input remains the original Python JSON model. Review
+    # values independently follow the exact decimal values in the retained bytes.
+    catalog = json.loads(text, object_pairs_hook=_strict_object,
+                         parse_float=Decimal, parse_int=_comparison_integer,
+                         parse_constant=_reject_constant)
+    return _inventory(catalog, profile)
+
+
+def _validation_inventory(catalog, profile, retained):
+    # Original validator bodies, exact retained identifiers for displayed rows.
+    return {**retained, "_bodies": _inventory(catalog, profile)["_bodies"]}
 
 
 def _declared_profile(catalog):
@@ -824,19 +885,22 @@ def review_catalog(source_bytes, *, source_profile="auto", comparison_bytes=None
     selected, declared = _select_profile(source_catalog, source_profile, "source")
     source.update(profile=selected, declared_profile=declared,
                   conforms_to=copy.deepcopy(source_catalog.get("conformsTo")))
-    source_inventory = _inventory(source_catalog, selected)
+    source_inventory = _comparison_inventory(source_text, selected)
     runtime = _OriginalRuntime(original_root or DEFAULT_ORIGINAL_ROOT,
                                runtime_profile=runtime_profile)
-    source_validation = runtime.validate(source_catalog, selected, source_inventory)
+    source_validation = runtime.validate(
+        source_catalog, selected, _validation_inventory(source_catalog, selected, source_inventory))
     comparison, comparison_catalog, comparison_inventory, comparison_validation = None, None, None, None
     if comparison_bytes is not None:
-        comparison_catalog, comparison, _ = _parse_bytes(comparison_bytes, "comparison")
+        comparison_catalog, comparison, comparison_text = _parse_bytes(comparison_bytes, "comparison")
         compare_selected, compare_declared = _select_profile(
             comparison_catalog, comparison_profile, "comparison")
         comparison.update(profile=compare_selected, declared_profile=compare_declared,
                           conforms_to=copy.deepcopy(comparison_catalog.get("conformsTo")))
-        comparison_inventory = _inventory(comparison_catalog, compare_selected)
-        comparison_validation = runtime.validate(comparison_catalog, compare_selected, comparison_inventory)
+        comparison_inventory = _comparison_inventory(comparison_text, compare_selected)
+        comparison_validation = runtime.validate(
+            comparison_catalog, compare_selected,
+            _validation_inventory(comparison_catalog, compare_selected, comparison_inventory))
     baseline_catalog, baseline_bytes = None, None
     if selected == "3.0" and not normalize_v3:
         baseline_catalog, baseline_bytes = copy.deepcopy(source_catalog), bytes(source_bytes)
@@ -865,8 +929,9 @@ def review_catalog(source_bytes, *, source_profile="auto", comparison_bytes=None
     else:
         candidate_raw = None
     if candidate_catalog is not None:
-        candidate_inventory = _inventory(candidate_catalog, "3.0")
-        candidate_validation = runtime.validate(candidate_catalog, "3.0", candidate_inventory)
+        candidate_inventory = _comparison_inventory(candidate_text, "3.0")
+        candidate_validation = runtime.validate(
+            candidate_catalog, "3.0", _validation_inventory(candidate_catalog, "3.0", candidate_inventory))
         changes = compare_catalogs(source_inventory, candidate_inventory, identity_mappings)
     else:
         if identity_mappings:
@@ -892,7 +957,7 @@ def review_catalog(source_bytes, *, source_profile="auto", comparison_bytes=None
         if candidate_bytes is not None:
             converter_output["base64"] = base64.b64encode(baseline_bytes).decode("ascii")
             converter_output["text"] = _parse_bytes(baseline_bytes, "converter output")[2]
-            baseline_inventory = _inventory(baseline_catalog, "3.0")
+            baseline_inventory = _comparison_inventory(converter_output["text"], "3.0")
             source_baseline = compare_catalogs(source_inventory, baseline_inventory)
             baseline_paths = {row["source_path"]: row["target_path"]
                               for row in source_baseline["conservation"]["mappings"]}
@@ -945,6 +1010,7 @@ def review_catalog(source_bytes, *, source_profile="auto", comparison_bytes=None
                                                   or comparison_changes["catalog_changes"])
     result = {
         "schema": SCHEMA, "mode": mode, "engine": runtime.metadata,
+        "numeric_comparison": "exact-decimal.v1",
         "source": source, "candidate": candidate, "comparison": comparison,
         "candidate_text": candidate_text,
         "candidate_base64": base64.b64encode(candidate_raw).decode("ascii") if candidate_raw is not None else None,
@@ -1030,12 +1096,13 @@ def main(argv=None):
         else:
             try:
                 request = json.load(sys.stdin, object_pairs_hook=_strict_object,
+                                    parse_float=Decimal, parse_int=_comparison_integer,
                                     parse_constant=_reject_constant)
             except (ValueError, RecursionError) as error:
                 raise MigrationError("INVALID_REQUEST", "The engine request is invalid JSON: " + str(error)) from error
             result = process_request(request, original_root=options.original_root,
                                      runtime_profile=options.runtime_profile)
-        print(json.dumps(result, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
+        print(encode_review(result))
         return 0 if result.get("can_receive", result.get("ok", False)) else 2
     except MigrationError as error:
         print(json.dumps({"schema": "migration-error.v1", "error": error.as_dict()},
