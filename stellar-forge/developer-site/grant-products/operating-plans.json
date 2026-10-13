@@ -1,0 +1,126 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "operating-plans",
+  "heading": "## Customer operating procedures and returned work",
+  "sources": [
+    {
+      "id": "customer-operating-plan-guide",
+      "label": "Complete saved customer operating procedure and receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/OPERATING_PLANS.md",
+      "commit": "2ea5b8953f1a5860b9aff6ab381c7b4c2d7ef64f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2ea5b8953f1a5860b9aff6ab381c7b4c2d7ef64f",
+          "git_blob": "30fc9d6a11b693b727b0ba3e65469bc4de9cb679",
+          "sha256": "c30ddd5e3a15985b91b4238449da4cdc0b06119112de67c784d78b8a6a9aa4ed",
+          "bytes": 10208
+        }
+      ]
+    },
+    {
+      "id": "customer-operating-plan-model",
+      "label": "Original editable operating history and same-identity receiving model",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs",
+      "commit": "2ea5b8953f1a5860b9aff6ab381c7b4c2d7ef64f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "2ea5b8953f1a5860b9aff6ab381c7b4c2d7ef64f",
+          "git_blob": "4b533a926214e78811d02d94c7d8adf07a078be8",
+          "sha256": "69eca516640d07e8305c1a7a37e83235e8a4462034ee04e6344bd761756b4fe6",
+          "bytes": 21725
+        }
+      ]
+    },
+    {
+      "id": "grant-customer-operating-procedures",
+      "label": "Editable customer procedures from original grant work packages",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/GRANT_OPERATING_PLANS.md",
+      "commit": "36f1786ef88267addc955473cde7420427a820ce",
+      "required": false,
+      "editions": [
+        {
+          "commit": "36f1786ef88267addc955473cde7420427a820ce",
+          "git_blob": "da5cf945f2b68cf6a398b0e82398636922c337f9",
+          "sha256": "b56cf06c4c8bb972c5ef8223cdfd7bb31b99b37aec76e4c62c8f6e48c1e1f517",
+          "bytes": 17352
+        }
+      ]
+    },
+    {
+      "id": "grant-customer-operating-return-model",
+      "label": "Complete native-package preparation and customer-return model",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/dist/grant-operating-plan-core.mjs",
+      "commit": "36f1786ef88267addc955473cde7420427a820ce",
+      "required": false,
+      "editions": [
+        {
+          "commit": "36f1786ef88267addc955473cde7420427a820ce",
+          "git_blob": "13edb65d175f411693fea294fa12064cb267eb99",
+          "sha256": "96296e2a13c665402e42b7f042fb4955590664c66cc877fcbe90aaba8872f5ea",
+          "bytes": 20603
+        }
+      ]
+    },
+    {
+      "id": "grant-customer-operating-return-editor",
+      "label": "Original saved planning editor and durable returned-work review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/dist/grant-operating-plan-workspace.mjs",
+      "commit": "36f1786ef88267addc955473cde7420427a820ce",
+      "required": false,
+      "editions": [
+        {
+          "commit": "36f1786ef88267addc955473cde7420427a820ce",
+          "git_blob": "572a8f2f18a02e2e055211bdb343ee8bb2820630",
+          "sha256": "498fc42f745da5386a00449412a3f9b7d6320eab7ee897cea8a0621c7ecb98a3",
+          "bytes": 22104
+        }
+      ]
+    },
+    {
+      "id": "grant-customer-operating-return-cli",
+      "label": "Installed complete customer procedure and saved-draft command",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/grant-operating-plan.mjs",
+      "commit": "36f1786ef88267addc955473cde7420427a820ce",
+      "required": false,
+      "editions": [
+        {
+          "commit": "36f1786ef88267addc955473cde7420427a820ce",
+          "git_blob": "49d4e05647a09dc2f784f07fb497190fd79741a1",
+          "sha256": "464c580104c601b58c6732cd06c2729afe6e22660a39f84efee46b2962a4e6d6",
+          "bytes": 15616
+        }
+      ]
+    },
+    {
+      "id": "grant-customer-operating-return-types",
+      "label": "Typed complete customer procedure and return-review API",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/dist/grant-operating-plan-core.d.mts",
+      "commit": "36f1786ef88267addc955473cde7420427a820ce",
+      "required": false,
+      "editions": [
+        {
+          "commit": "36f1786ef88267addc955473cde7420427a820ce",
+          "git_blob": "bc57317de74ee5f073bc5eca6df0be678140d816",
+          "sha256": "3d2fc5d206be071f19b2f3afde81b780061c0c3932e6455add7148a3bfa1f418",
+          "bytes": 5964
+        }
+      ]
+    }
+  ]
+}
