@@ -541,6 +541,8 @@
     "cohort_planning_agent.mjs",
     "installation-source-collection-agent.mjs",
     "installation-source-collection-session.mjs",
-    "installation-source-collection-store.mjs"
+    "installation-source-collection-store.mjs",
+    "portfolio-working-copies-browser.mjs",
+    "PORTFOLIO_WORKING_COPIES_BROWSER.md"
   ]
 }
