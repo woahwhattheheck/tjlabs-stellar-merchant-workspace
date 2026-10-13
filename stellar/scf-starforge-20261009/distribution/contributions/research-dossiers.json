@@ -24,6 +24,11 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/OPERATING.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RECEIVING.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/comparison.js",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/comparison.css"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/comparison.css",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/inspect-handover.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/handover.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/handover-archive.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/handover-cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/HANDOVER.md"
   ]
 }
