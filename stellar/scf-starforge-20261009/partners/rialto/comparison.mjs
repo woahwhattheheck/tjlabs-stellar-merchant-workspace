@@ -30,7 +30,7 @@ export function comparisonBrowserSource(){
 }
 function mountCatalogueComparison(host,engine){
  const $=id=>document.getElementById(id),schema='stellar-forge.rialto-catalogue-review.v1',limit=192*1024*1024;
- const s={before:null,after:null,result:null,selectedKey:null,page:0,printing:false,notes:{},note:'',drafts:[],generation:0,saveQueue:Promise.resolve(),history:[],historyPackets:new Map()};
+ const s={before:null,after:null,result:null,selectedKey:null,page:0,printing:false,notes:{},note:'',drafts:[],generation:0,saveQueue:Promise.resolve(),pendingSave:null,saving:false,history:[],historyPackets:new Map()};
  const labels={added:'Only in after edition',removed:'Only in before edition',changed:'Changed original content',unchanged:'Unchanged original content'};
  const copy=value=>JSON.parse(JSON.stringify(value));
  const sha=async bytes=>{if(!globalThis.crypto?.subtle)throw Error('This browser needs Web Crypto to receive exact original source. Open the report in a current browser.');return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');};
@@ -50,10 +50,17 @@ function mountCatalogueComparison(host,engine){
   const db=await database();
   try{return await new Promise((resolve,reject)=>{const tx=db.transaction('views',mode),table=tx.objectStore('views'),r=mode==='readonly'?table.get(host.hash):value===null?table.delete(host.hash):table.put(value,host.hash);let result;r.onsuccess=()=>{result=r.result;};tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??Error('Browser storage transaction interrupted'));});}finally{db.close();}
  }
- function persist(){
-  if(!s.result)return;const saved=packet();
-  s.saveQueue=s.saveQueue.catch(()=>{}).then(()=>dbAction('readwrite',saved)).then(()=>{$('comparison-storage').textContent='Complete sources, notes and request drafts saved in this browser. Download the complete comparison or receiving report for another browser.';}).catch(()=>{$('comparison-storage').textContent='Browser storage is unavailable or full. Download the complete comparison to retain both sources, notes and request drafts.';});
+ function scheduleSave(){
+  if(s.saving)return;s.saving=true;
+  s.saveQueue=s.saveQueue.catch(()=>{}).then(async()=>{
+   while(s.pendingSave){
+    const saved=s.pendingSave;s.pendingSave=null;
+    try{await dbAction('readwrite',saved);$('comparison-storage').textContent='Complete sources, notes and request drafts saved in this browser. Download the complete comparison or receiving report for another browser.';}
+    catch{$('comparison-storage').textContent='Browser storage is unavailable or full. Download the complete comparison to retain both sources, notes and request drafts.';}
+   }
+  }).finally(()=>{s.saving=false;if(s.pendingSave)scheduleSave();});
  }
+ function persist(){if(!s.result)return;s.pendingSave=packet();scheduleSave();}
  async function historyAction(action,value){
   const db=await database(),index='history-index:'+host.hash,key='history:'+host.hash+':';
   try{return await new Promise((resolve,reject)=>{
@@ -75,7 +82,7 @@ function mountCatalogueComparison(host,engine){
   try{await historyAction('save',{header,packet:saved});}
   catch{message('Earlier complete comparison retained in this open report. Browser storage is unavailable or full; use Earlier saved comparisons to download it.',true);}
  }
- async function archiveCurrent(){if(s.result)await archivePacket(packet());}
+ function archiveCurrent(){if(s.result)void archivePacket(packet());}
  async function historyPacket(id){
   const value=s.historyPackets.get(id)??await historyAction('read',id);if(!value)throw Error('This saved comparison is unavailable. Receive its downloaded complete comparison JSON.');return value;
  }
@@ -97,7 +104,7 @@ function mountCatalogueComparison(host,engine){
   const incomingView=value.view??{},incomingNotes=incomingView.notes&&typeof incomingView.notes==='object'&&!Array.isArray(incomingView.notes)?copy(incomingView.notes):{};
   for(const x of Object.values(incomingNotes))if(typeof x!=='string')throw Error('Review notes must retain their complete text');
   if(generation!==s.generation)return;
-  if(save)await archiveCurrent();if(generation!==s.generation)return;
+  if(save)archiveCurrent();if(generation!==s.generation)return;
   const existing=drafts();s.before=before;s.after=after;s.result=result;s.drafts=carried;
   for(const x of existing)if(!s.drafts.some(y=>engine.canonical(x)===engine.canonical(y)))s.drafts.push(x);
   const v=incomingView;s.notes=incomingNotes;
@@ -159,9 +166,9 @@ function mountCatalogueComparison(host,engine){
  };
  $('comparison-receive').onchange=async event=>{const generation=++s.generation;try{const value=JSON.parse(await readFile(event.target.files[0]));await receive(value,{generation});if(generation===s.generation)message('Complete saved comparison received. The current request editor remains on its original draft.');}catch(error){if(generation===s.generation)message(error.message,true);}finally{event.target.value='';}};
  $('comparison-reset').onclick=async()=>{
-  const generation=++s.generation;await archiveCurrent();if(generation!==s.generation)return;
+  const generation=++s.generation;archiveCurrent();if(generation!==s.generation)return;
   s.before=null;s.after=null;s.result=null;s.selectedKey=null;s.notes={};s.note='';s.drafts=drafts();$('comparison-body').hidden=true;
-  s.saveQueue=s.saveQueue.catch(()=>{}).then(()=>dbAction('readwrite',null)).catch(()=>{});message('Choose an earlier complete catalogue. The previous complete comparison is available under Earlier saved comparisons; the current request draft remains in its editor.');
+  s.pendingSave=null;s.saveQueue=s.saveQueue.catch(()=>{}).then(()=>dbAction('readwrite',s.result?packet():null)).catch(()=>{});message('Choose an earlier complete catalogue. The previous complete comparison is available under Earlier saved comparisons; the current request draft remains in its editor.');
  };
  $('comparison-history-open').onclick=async()=>{
   const id=$('comparison-history').value,generation=++s.generation;try{const saved=await historyPacket(id);await receive(saved,{generation});if(generation===s.generation)message('Earlier complete comparison reopened. The view it replaced remains in Earlier saved comparisons.');}catch(error){if(generation===s.generation)message(error.message,true);}
@@ -171,6 +178,7 @@ function mountCatalogueComparison(host,engine){
  (async()=>{try{const items=await historyAction('list');for(const item of Array.isArray(items)?items:[])if(!s.history.some(x=>x.id===item.id))s.history.push(item);historyList();}catch{}})();
  for(const id of ['comparison-status','comparison-type','comparison-search','comparison-duplicates'])$(id).addEventListener(id==='comparison-search'?'input':'change',()=>{s.page=0;render();persist();});
  $('comparison-previous').onclick=()=>{s.page--;render();persist();};$('comparison-next').onclick=()=>{s.page++;render();persist();};
+ for(const event of ['input','change'])$('selection').addEventListener(event,persist);
  $('comparison-note').oninput=persist;$('comparison-row-note').oninput=()=>{if(s.selectedKey){s.notes[s.selectedKey]=$('comparison-row-note').value;persist();}};
  $('comparison-open-request').onclick=()=>{const row=host.catalogue.rows[Number($('comparison-native-row').value)];if(s.after?.sha256===host.hash&&row?.key===s.selectedKey){s.drafts=drafts();host.openCurrent(row);persist();}};
  $('comparison-drafts').onchange=renderDrafts;
