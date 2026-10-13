@@ -554,7 +554,24 @@ class Receiving:
         need(saved["caseId"] == self.case_id, "Keep the original native case for request replay.")
         self.remember(path)
         if target == "desk":
-            result = self.desk.command(self.case_id, self.draft_id, body)
+            if body["action"] in ("commissioning.archive.receive", "commissioning.attach"):
+                from installation_source_desk_client import InstallationSourceDeskClient
+                client = InstallationSourceDeskClient(self.desk, self.case_id, self.draft_id,
+                            workspace_directory=str(self.args.workspace))
+                reviewed = object_file(self.control / (label + "-preview.json"))
+                operation = client.prepare_review(reviewed, body["action"],
+                            actor=body["actor"], request_id=body["requestId"], note=body.get("note", ""))
+                need(operation["request"] == body,
+                     "The durable native client must retain the unchanged original reviewed request.")
+                operation_path = self.requests / (label + ".operation.json")
+                retain(operation_path, encoded(operation)); self.remember(operation_path)
+                retained_operation = object_file(operation_path)
+                result = client.execute(retained_operation)
+                observed = client.reconcile(retained_operation)
+                need(observed["state"] == "RECORDED" and observed["result"] == result,
+                     "The native client must reconcile the same complete original journal receipt.")
+            else:
+                result = self.desk.command(self.case_id, self.draft_id, body)
         else:
             result = self.ops.command(self.case_id, body)
         result_path = self.requests / (label + ".result.json")
@@ -592,14 +609,16 @@ class Receiving:
             return None
         selected_path = self.args.commissioning_receiving.expanduser().absolute()
         selected = object_file(selected_path, 8 * 1024 * 1024)
-        need(set(selected) == {"schema", "sourceRoot", "files", "projects"} and
+        archive_mode = "archive" in selected
+        required = {"schema", "sourceRoot", "projects", "archive" if archive_mode else "files"}
+        need(set(selected) >= required and not set(selected) - required - ({"replaceFileIds"} if archive_mode else set()) and
              selected["schema"] == "stellar-forge.installation-commissioning-run.v1",
              "Select the complete commissioning receiving descriptor.")
         source_root = directory(selected["sourceRoot"])
         need(source_root != self.root and source_root not in self.root.parents and self.root not in source_root.parents,
              "Keep original capture inputs separate from this run's retained control files.")
-        files, names = selected["files"], set()
-        need(isinstance(files, list) and 5 <= len(files) <= 200,
+        files, names = ([selected["archive"]] if archive_mode else selected["files"]), set()
+        need(isinstance(files, list) and (len(files) == 1 if archive_mode else 5 <= len(files) <= 200),
              "Select every complete original capture identity and each requested report once.")
         retained_root = directory(self.control / "commissioning-original-files", create=True)
         retained = []
@@ -618,7 +637,7 @@ class Receiving:
             output = retained_root / filename
             retain(output, raw)
             retained.append({"selection": deepcopy(item), "receipt": self.remember(output)})
-        need({"commissioning-capture.json", "commissioning-manifest.json",
+        need(archive_mode or {"commissioning-capture.json", "commissioning-manifest.json",
               "commissioning-review.json", "commissioning-source.json", "original-workshares.json"} <= names,
              "Select the complete original capture, review, manifest and Workshare source.")
         projects = selected["projects"]
@@ -659,9 +678,44 @@ class Receiving:
                 return {**metadata, "contentBase64": base64.b64encode(raw).decode("ascii")}
             result = self.desk_request("12c-file-" + str(index), "file.add", body)
             files.append(result["result"]["file"])
+        archive_receipt = None
+        if "archive" in selected["selection"]:
+            need(len(files) == 1, "Retain the one complete selected merchant archive.")
+            archive_file = files[0]
+            label = "12c-archive"
+            preview_path = self.control / (label + "-preview.json")
+            if not (self.requests / (label + ".json")).exists():
+                state = self.desk.get(self.case_id, self.draft_id)
+                preview = self.desk.commissioning_archive_inspect(self.case_id, self.draft_id, {
+                    "expectedRevision": state["revision"], "archiveFileId": archive_file["id"],
+                    "replaceFileIds": selected["selection"].get("replaceFileIds", [])})
+                need(preview["ready"], "Resolve the original archive's exact reviewed filename conflicts and source capacity.")
+                self.freeze(preview_path.name, preview)
+            preview = object_file(preview_path)
+            archive_receipt = self.desk_request(label, "commissioning.archive.receive", lambda: {
+                **preview["selection"], "expectedPreviewSha256": preview["previewSha256"]})
+            returned = archive_receipt["result"]
+            need(returned["state"] == "RECEIVED_COMMISSIONING_ARCHIVE" and
+                 returned["archive"]["sha256"] == archive_file["sha256"] and
+                 returned["previewSha256"] == preview["previewSha256"],
+                 "The original archive receiving result differs from its reviewed complete source.")
+            state = self.desk.get(self.case_id, self.draft_id)
+            native_files = {row["id"]: row for row in state["files"]}
+            files = [native_files[ident] for ident in returned["receivingSelection"]["fileIds"]]
+            archive_snapshot = next((row for row in returned["files"] if
+                row.get("originalMemberName", row["filename"]) == "commissioning-account-snapshot.json"), None)
+            replay = self.desk.command(self.case_id, self.draft_id,
+                                      object_file(self.requests / (label + ".json"))["body"])
+            need(replay == archive_receipt and self.desk.get(self.case_id, self.draft_id) == state,
+                 "Complete archive replay must preserve the current original draft and receipt.")
+        else:
+            archive_snapshot = None
         capture_file = next(row for row in files if row["filename"] == "commissioning-capture.json")
         results = []
         for index, mapping in enumerate(selected["selection"]["projects"]):
+            project_files = list(files)
+            if mapping["includeAccountSnapshot"] and archive_snapshot is not None:
+                project_files.append(archive_snapshot)
             label = "12c-receive-" + str(index)
             before_path = self.control / (label + "-before.json")
             preview_path = self.control / (label + "-preview.json")
@@ -671,7 +725,7 @@ class Receiving:
                 state = self.desk.get(self.case_id, self.draft_id)
                 inspected = self.desk.commissioning_inspect(self.case_id, self.draft_id, {
                     "expectedRevision": state["revision"], "captureFileId": capture_file["id"],
-                    "fileIds": [row["id"] for row in reversed(files)]})
+                    "fileIds": [row["id"] for row in reversed(project_files)]})
                 project = next((row for row in inspected["projects"] if row["id"] == mapping["projectId"]), None)
                 need(project is not None and project["caseId"] == mapping["workshareCaseId"],
                      "The saved project must name the exact original Workshare case.")
@@ -679,7 +733,7 @@ class Receiving:
                 need(len(candidates) == 1, "Select one original Installation created for this exact Workshare case.")
                 target = self.ops.installation(self.case_id, candidates[0]["id"])
                 selection = {"expectedRevision": state["revision"], "captureFileId": capture_file["id"],
-                             "fileIds": [row["id"] for row in reversed(files)],
+                             "fileIds": [row["id"] for row in reversed(project_files)],
                              "expectedVersion": inspected["version"], "projectId": mapping["projectId"],
                              "installationId": target["id"], "expectedInstallationRevision": target["revision"],
                              "milestonePhases": deepcopy(mapping["milestonePhases"]),
@@ -746,6 +800,8 @@ class Receiving:
                             "previewSha256": preview["previewSha256"], "receiptSha256": value_sha(result)})
         return {"schema": "stellar-forge.installation-commissioning-receiving.v1",
                 "selections": len(results), "receipts": results,
+                "archiveReceiving": ({"requestId": archive_receipt["requestId"],
+                    "receiptSha256": value_sha(archive_receipt)} if archive_receipt else None),
                 "originalObservationsPreserved": True, "originalReplayPreserved": True}
 
     def bind_inputs(self):
@@ -757,12 +813,14 @@ class Receiving:
                  "Keep receiving control files outside the original workspace and installed source.")
         selected_raw = regular(self.args.selection, 8 * 1024 * 1024)
         selected = json.loads(selected_raw)
-        need(selected.get("schema") == "stellar-forge.installation-source-selection.v1" and
+        need(selected.get("schema") in ("stellar-forge.installation-source-selection.v1",
+                                        "stellar-forge.installation-handover-selection.v1") and
              isinstance(selected.get("cases"), list) and selected["cases"],
              "Select the complete original source preparation input.")
         original_files = {}
         for case in selected["cases"]:
-            for item in [case["packet"], *case["files"]]:
+            source_key = "handover" if selected["schema"] == "stellar-forge.installation-handover-selection.v1" else "packet"
+            for item in [case[source_key], *case["files"]]:
                 need(item["path"] == item["filename"] and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,199}", item["filename"]),
                      "Keep the original selected receiving filename at the source root.")
                 receipt = file_receipt(self.args.source_root / item["path"], 8 * 1024 * 1024)
@@ -837,7 +895,8 @@ class Receiving:
         files = {item["filename"]: item for item in current["files"]}
         results = []
         for case in self.selected["cases"]:
-            file = files[case["packet"]["filename"]]
+            source_key = "handover" if self.selected["schema"] == "stellar-forge.installation-handover-selection.v1" else "packet"
+            file = files[case[source_key]["filename"]]
             value = self.desk.inspect(self.case_id, self.draft_id, file["id"], current["revision"], case.get("phaseIdAmendment"))
             need(value["packet"]["caseId"] == case["caseId"] and
                  value["packet"]["planSha256"] == case["planSha256"] and
@@ -856,7 +915,12 @@ class Receiving:
         def pins():
             catalogue = self.desk.profiles()
             profiles = {row["id"]: row["sha256"] for row in catalogue["profiles"]}
-            return {"expectedEngineSha256": catalogue["engine"]["sha256"],
+            engine = next((row["engine"] for row in catalogue.get("sourceFormats", [])
+                           if row["schema"] == self.selected["schema"]), None)
+            if engine is None and self.selected["schema"] == "stellar-forge.installation-source-selection.v1":
+                engine = catalogue["engine"]
+            need(engine is not None, "Retain the installed complete original source-format engine.")
+            return {"expectedEngineSha256": engine["sha256"],
                     "expectedSelectionSha256": value_sha(self.selected),
                     "expectedProfiles": {row["profile"]: profiles[row["profile"]] for row in self.selected["cases"]}}
         result = self.desk_request("05-prepare", "prepare", pins)
@@ -866,7 +930,8 @@ class Receiving:
              "The complete native preparation differs from the original selected cohort.")
         for expected, received in zip(self.selected["cases"], value["report"]["nativeWorkshares"]):
             need(received["planSha256"] == expected["planSha256"] and
-                 str(received["hours"]) == str(expected["effortTotal"]["hours"]) and received["packetPresent"],
+                 str(received["hours"]) == str(expected["effortTotal"]["hours"]) and
+                 received["packetPresent"] == (self.selected["schema"] != "stellar-forge.installation-handover-selection.v1"),
                  "The original complete effort or packet changed.")
         self.freeze("native-preparation.json", value)
         return value
@@ -949,6 +1014,24 @@ class Receiving:
                 profile = next(row for row in profiles["profiles"] if row["id"] == selected["profile"])
                 source = {"mode": "prepare-profile", "seed": seed, "profile": profile,
                           "bindings": selected.get("bindings"), "output": str(prepared_path)}
+                if selected.get("programme") is not None:
+                    preparation = self.prepared()
+                    mapping = selected["programme"]
+                    def original_output(name):
+                        metadata, raw = self.desk.output(self.case_id, self.draft_id, preparation["id"], name)
+                        need(len(raw) == metadata["bytes"] and sha(raw) == metadata["sha256"],
+                             "The original programme source differs from its complete preparation.")
+                        value = json.loads(raw)
+                        need(isinstance(value, dict), "Select the complete original programme JSON object.")
+                        return value
+                    roles = preparation.get("sourceRoles", {"commissioning": "Supplier_Workshare_Commissioning.json"})
+                    programme = {"commissioning": original_output(roles["commissioning"]),
+                                 "calendarInput": original_output(mapping["calendarFile"])}
+                    for key, target in (("selectionFile", "selection"), ("taskBudgetFile", "taskBudget"),
+                                        ("nativeChangeFile", "nativeChange")):
+                        if key in mapping:
+                            programme[target] = original_output(mapping[key])
+                    source["programmeInputs"] = programme
                 self.freeze(source_path.name, source)
             command(self.control, label + "-profile", [str(self.args.node), str(HERE / "installation-source-desk-receiving.mjs"), str(source_path)])
             prepared = object_file(prepared_path)
@@ -1120,7 +1203,10 @@ class Receiving:
                  "The original complete native case did not reopen.")
             commissioning = self.report["phases"].get("12c-original-commissioning-capture-receiving")
             if commissioning is not None:
-                for received in commissioning["receipts"]:
+                retained_receipts = list(commissioning["receipts"])
+                if commissioning.get("archiveReceiving"):
+                    retained_receipts.append(commissioning["archiveReceiving"])
+                for received in retained_receipts:
                     lookup = desk.request(self.case_id, self.draft_id, received["requestId"])
                     need(lookup["state"] == "RECORDED" and
                          value_sha(lookup["result"]) == received["receiptSha256"],

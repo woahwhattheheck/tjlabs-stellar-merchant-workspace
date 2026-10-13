@@ -281,6 +281,21 @@ Use the original Source Preparation Desk and selected-product guides for the exi
 
 The **Receive commissioning** tab in the existing Installation Source Desk joins the completed commercial review to the original Workshare Installation. It uses the same browser journal, source files, draft editions, recording operator and original request recovery as the other Source Desk steps.
 
+### Receive the complete original archive
+
+The saved merchant capture can travel as its complete `handover.tar`. Download it from the saved capture, then use **Original files** to retain the complete archive in the current Source Desk draft with its actual source reference and observation time. Open **Receive commissioning** and select it under **Receive a complete merchant handover archive**.
+
+1. Review the complete original archive. The native reader checks the original uncompressed USTAR member set, exact manifest hashes and lengths, required capture/source identities and available draft capacity.
+2. Inspect the member inventory and any changed current filenames. Select each exact current file you intend to replace, then review again. Previous draft editions and complete source blobs remain retained.
+3. Enter the existing source receiving reason and receive the reviewed archive. The original request journal records its exact archive, replacement selection and preview identity.
+4. Inspect the suggested received capture selection. It contains the five required JSON originals and selected reports; map the project and Workshare phases using the same workflow below.
+
+The archive remains a complete private original. Its member inventory includes the complete account snapshot and other private source files. Receiving the archive retains those bytes in the private Source Desk; the later Installation attachment selection includes the complete account snapshot only when explicitly selected. Empty original members remain exact inside the retained archive. Nested original member names retain their original identity and use deterministic native receiving filenames.
+
+The original per-upload limit is 8 MiB, the selected draft limit is 64 MiB, and retained draft blobs are limited to 256 MiB. The complete review reports all three measures. A larger archive can use the individual original-file path below.
+
+The installed command and durable preparation, receiving, replay and reconciliation workflow are documented in [Installation commissioning archive receiving](../../sf47_budget_model/workspace/INSTALLATION_COMMISSIONING_ARCHIVE.md). The same original actual-source receiving programme also accepts an `archive` descriptor instead of `files`, preserving its complete fifteen-step customer operation.
+
 ### Retain and inspect the original files
 
 Download the following files from the saved Commissioning Collections capture, then retain each complete file in the current Source Desk draft through **Original files**:
