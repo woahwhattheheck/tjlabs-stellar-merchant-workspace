@@ -57,9 +57,20 @@ function normalizeDefinition(input){
 function verifyVersion(value){
   need(plain(value)&&UUID.test(value.id??'')&&Number.isSafeInteger(value.version)&&value.version>0,'Use a complete saved calendar edition.','EDITION');
   const definition=normalizeDefinition(Object.fromEntries(['name','active','customerId','bindingId','periodIdentitySha256','orderRef','anchor','cadence','interval','dueDays','endDate','notes'].map(k=>[k,value[k]])));
-  need(typeof value.savedAt==='string'&&Number.isFinite(Date.parse(value.savedAt))&&hash({id:value.id,version:value.version,savedAt:value.savedAt,...definition})===value.sha256,
+  let saveRequest;
+  if(Object.hasOwn(value,'saveRequest')){
+    fields(value.saveRequest,['requestId','expectedRevision','id','inputSha256']);
+    const selected=value.saveRequest;
+    need(UUID.test(selected.requestId??'')&&Number.isSafeInteger(selected.expectedRevision)&&selected.expectedRevision>=0&&
+      (selected.id===null?value.version===1:UUID.test(selected.id??'')&&selected.id===value.id&&value.version>1)&&
+      selected.inputSha256===hash({expectedRevision:selected.expectedRevision,id:selected.id,definition}),
+      'The saved settings request differs from its original edition.','EDITION');
+    saveRequest={requestId:selected.requestId,expectedRevision:selected.expectedRevision,id:selected.id,inputSha256:selected.inputSha256};
+  }
+  need(typeof value.savedAt==='string'&&Number.isFinite(Date.parse(value.savedAt))&&
+    hash({id:value.id,version:value.version,savedAt:value.savedAt,...definition,...(saveRequest?{saveRequest}:{})})===value.sha256,
     'The saved calendar edition differs from its content.','EDITION');
-  return {...definition,id:value.id,version:value.version,savedAt:value.savedAt,sha256:value.sha256};
+  return {...definition,id:value.id,version:value.version,savedAt:value.savedAt,sha256:value.sha256,...(saveRequest?{saveRequest}:{})};
 }
 export function serviceSchedulePeriods(definition,{from,until,asOf=new Date().toISOString()}={}){
   definition=verifyVersion(definition);
@@ -96,11 +107,12 @@ function periodFromTarget(state,target){
 function validateCatalogue(value,workspace,endpoint){
   need(plain(value)&&value.schema===PREFIX+'.v1'&&value.workspace===workspace&&value.endpoint===endpoint&&
     Number.isSafeInteger(value.revision)&&value.revision>=0&&Array.isArray(value.definitions),'Open this calendar catalogue in its original merchant workspace.','WORKSPACE');
-  const seen=new Set();
+  const seen=new Set(),saveRequests=new Set();
   for(const row of value.definitions){
     need(UUID.test(row.id??'')&&!seen.has(row.id)&&Array.isArray(row.versions)&&row.versions.length>0,'Keep every calendar and its complete saved editions.','CATALOGUE');
     seen.add(row.id);
     row.versions.forEach((version,index)=>{verifyVersion(version);need(version.id===row.id&&version.version===index+1,'Keep consecutive saved calendar editions.','EDITION');
+      if(version.saveRequest){need(!saveRequests.has(version.saveRequest.requestId),'Keep each original settings request bound to one saved edition.','REQUEST_CHANGED');saveRequests.add(version.saveRequest.requestId);}
       need(['customerId','bindingId','periodIdentitySha256','orderRef'].every(key=>version[key]===row.versions[0][key]),
         'Keep the original customer assignment and purchased pass throughout this calendar history.','EDITION');});
   }
@@ -170,16 +182,31 @@ export async function createAccountingStatementServiceSchedules({directory,url,w
     return result.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||a.requestId.localeCompare(b.requestId));
   }
   async function catalogue(){const state=await read();return {...state,current:currentDefinitions(state)};}
-  async function save({expectedRevision,id=null,definition}={}){
+  function savedSettingsRequest(state,request){
+    if(!request)return null;
+    const version=state.definitions.flatMap(row=>row.versions).find(row=>row.saveRequest?.requestId===request.requestId);
+    if(!version)return null;
+    need(version.saveRequest.inputSha256===request.inputSha256,
+      'This settings request already belongs to another original calendar input. Recover its unchanged request.','REQUEST_CHANGED');
+    return {revision:state.revision,definition:copy(version),replayed:true};
+  }
+  async function save({expectedRevision,id=null,definition,requestId=null}={}){
     integer(expectedRevision,0,Number.MAX_SAFE_INTEGER);definition=normalizeDefinition(definition);
-    const inventory=await readInventory();need(!definition.active||rowFor(inventory,definition),'Select the current original customer assignment and purchased pass. Refresh their service records.','PASS');
+    need(id===null||UUID.test(id),'Select an original calendar identity.');
+    need(requestId===null||UUID.test(requestId),'Keep a stable settings request identity.');
+    const saveRequest=requestId===null?null:{requestId,expectedRevision,id,inputSha256:hash({expectedRevision,id,definition})};
+    // A saved original edition is authoritative even after assignment or catalogue changes.
+    const retained=saveRequest?savedSettingsRequest(await read(),saveRequest):null;if(retained)return retained;
+    const inventory=await readInventory();
     return mutation(async lease=>{
-      const state=await read();need(state.revision===expectedRevision,'Another operator saved calendars. Refresh them while keeping your draft.','CHANGED');
-      let row=id?state.definitions.find(item=>item.id===id):null;need(!id||row,'Select an existing saved calendar.','EDITION');
+      const state=await read(),previous=savedSettingsRequest(state,saveRequest);if(previous)return previous;
+      need(!definition.active||rowFor(inventory,definition),'Select the current original customer assignment and purchased pass. Refresh their service records.',saveRequest?'SAVE_PASS':'PASS');
+      need(state.revision===expectedRevision,'Another operator saved calendars. Refresh them while keeping your draft.',saveRequest?'SAVE_CHANGED':'CHANGED');
+      let row=id?state.definitions.find(item=>item.id===id):null;need(!id||row,'Select an existing saved calendar.',saveRequest?'SAVE_EDITION':'EDITION');
       if(row){const original=row.versions[0];need(['customerId','bindingId','periodIdentitySha256','orderRef'].every(k=>original[k]===definition[k]),
-        'Create a new calendar for another customer assignment or purchased pass. This calendar retains its original service history.','PASS');}
+        'Create a new calendar for another customer assignment or purchased pass. This calendar retains its original service history.',saveRequest?'SAVE_PASS':'PASS');}
       if(!row){row={id:randomUUID(),versions:[]};state.definitions.push(row);}
-      const body={id:row.id,version:row.versions.length+1,savedAt:new Date().toISOString(),...definition},version={...body,sha256:hash(body)};
+      const body={id:row.id,version:row.versions.length+1,savedAt:new Date().toISOString(),...definition,...(saveRequest?{saveRequest}:{})},version={...body,sha256:hash(body)};
       row.versions.push(version);state.revision++;lease.assertHeld();await atomicJson(cataloguePath,state);
       return {revision:state.revision,definition:version};
     });
@@ -304,6 +331,7 @@ export async function createAccountingStatementServiceSchedules({directory,url,w
           if(incoming.versions.length>existing.versions.length)existing.versions=copy(incoming.versions);
         }else next.definitions.push(copy(incoming));
       }
+      validateCatalogue(next,workspace,endpoint);
       const originals=new Map((await allPreparations()).map(record=>[record.requestId,record]));
       for(const incoming of bundle.preparations){
         checkScheduledPlan(incoming.scheduledPlan,next);

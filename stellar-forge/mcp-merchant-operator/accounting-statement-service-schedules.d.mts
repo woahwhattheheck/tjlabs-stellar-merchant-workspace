@@ -3,7 +3,8 @@ export interface ServiceCalendarDefinition {
   name:string;active:boolean;customerId:string;bindingId:string;periodIdentitySha256:string;orderRef:string;
   anchor:string;cadence:'weekly'|'monthly';interval:number;dueDays:number;endDate:string|null;notes:string;
 }
-export interface ServiceCalendarVersion extends ServiceCalendarDefinition {id:string;version:number;savedAt:string;sha256:string}
+export interface ServiceCalendarSaveRequest {requestId:string;expectedRevision:number;id:string|null;inputSha256:string}
+export interface ServiceCalendarVersion extends ServiceCalendarDefinition {id:string;version:number;savedAt:string;sha256:string;saveRequest?:ServiceCalendarSaveRequest}
 export interface ServiceCalendarCatalogue {
   schema:'stellar-forge.accounting-statement-service-schedules.v1';workspace:string;endpoint:string;revision:number;
   definitions:Array<{id:string;versions:ServiceCalendarVersion[]}>;
@@ -44,7 +45,7 @@ export interface ServiceCalendarPage {
 export interface CalendarFile {filename:string;mimeType:string;content:string;total:number}
 export interface ServiceCalendarStore {
   catalogue():Promise<ServiceCalendarCatalogue&{current:ServiceCalendarVersion[]}>;
-  save(input:{expectedRevision:number;id?:string|null;definition:ServiceCalendarDefinition}):Promise<{revision:number;definition:ServiceCalendarVersion}>;
+  save(input:{requestId?:string|null;expectedRevision:number;id?:string|null;definition:ServiceCalendarDefinition}):Promise<{revision:number;definition:ServiceCalendarVersion;replayed?:boolean}>;
   calendar(input:ServiceCalendarWindow&{format?:null}):Promise<ServiceCalendarPage>;
   calendar(input:ServiceCalendarWindow&{format:'csv'|'html'}):Promise<CalendarFile>;
   compile(input:{selections:ServiceCalendarSelection[]}):Promise<ScheduledServicePlan>;

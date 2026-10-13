@@ -34,9 +34,13 @@ A preparation retains the selected edition, period index and dates, complete ser
 
 The store is inside the existing private closing directory at **.service-schedules**. Its settings use atomic replacement, and original preparation files are written before the native cycle begins. The installed state lease coordinates separate operators using that same directory. A stale settings revision asks the operator to refresh while the browser keeps the edited form.
 
-Browser choices are scoped to the original merchant/workspace/directory. **Download complete plan** and **Download original request** preserve the reviewed selection and an interrupted preparation independently of browser storage.
+Browser choices are scoped to the original merchant/workspace/directory. An unfinished settings save retains its exact request and the form from which it was submitted before contacting the workbench. **Download original settings request** preserves that save independently of browser storage. **Download complete plan** and **Download original request** preserve the reviewed selection and an interrupted preparation independently of browser storage.
 
 ## Interrupted operations
+
+A lost settings-save response keeps its original request identity, catalogue revision, selected calendar and complete submitted definition. **Recover original calendar save** sends that same request after reconnecting or reopening the browser. An accepted save returns its original immutable edition even if another operator has since saved newer settings or the customer assignment has changed. It does not append another edition or replace newer saved settings. The form keeps later local text, dates and other edits. If it is still the form used to create the calendar, recovery adopts the returned calendar identity; a deliberately selected different calendar or new form keeps its own identity. A definite stale-revision or assignment refusal clears only that unaccepted attempt, so the operator can refresh and save the retained edits deliberately. An unknown response or request-identity conflict keeps the original attempt for recovery.
+
+The browser must retain the exact request before dispatching either a settings save or a cycle preparation. If browser storage fails, the operation is not sent; the form and downloadable request remain available in the current page.
 
 A lost preparation response keeps the original request. **Recover or continue original preparation** reuses the exact saved plan and request; the existing cycle engine checks its saved request and resumes its original review. Saved preparation history provides the same continuation after the browser reopens.
 
@@ -46,7 +50,7 @@ For a failed settings import, refresh and retry the same complete export. Import
 
 ## Complete export and receiving
 
-**Download complete calendar workspace** includes all saved settings editions and every complete preparation plan, with source hashes and original request/cycle identities. Import it into the same merchant URL and workspace using **Import complete calendar workspace**. The import preserves longer local histories and rejects divergent copies of the same edition. It also checks the combined preparation history before saving: one scheduled period must retain one original request and cycle across both installations. If separately prepared copies conflict, both source exports remain available so the operator can resolve the original cycles before importing.
+**Download complete calendar workspace** includes all saved settings editions and every complete preparation plan, with source hashes and original request/cycle identities. Import it into the same merchant URL and workspace using **Import complete calendar workspace**. The import preserves longer local histories and rejects divergent copies of the same edition. Stable settings-save receipts travel with their immutable editions, so the original request can also recover after receiving. A reused settings request identity cannot name two different editions. It also checks the combined preparation history before saving: one scheduled period must retain one original request and cycle across both installations. If separately prepared copies conflict, both source exports remain available so the operator can resolve the original cycles before importing.
 
 The calendar export retains planning and handoff history. Receive the original saved cycle folders through the existing closing-cycle handover to continue the actual prepared reviews and statements on another installation. Imported preparation references open their existing original cycle; they do not manufacture a second cycle from an absent received folder.
 
@@ -76,7 +80,7 @@ Set **format** to **html** or **csv** to receive the whole window as a readable 
 | Operation | Complete request |
 | --- | --- |
 | catalogue | No request required. Returns all calendar editions and current settings. |
-| save | expectedRevision, optional id, and definition with name, active, customerId, bindingId, periodIdentitySha256, orderRef, anchor, cadence, interval, dueDays, endDate, notes. |
+| save | Stable requestId (recommended for retry/recovery), expectedRevision, optional id, and definition with name, active, customerId, bindingId, periodIdentitySha256, orderRef, anchor, cadence, interval, dueDays, endDate, notes. |
 | calendar | from, until; optional asOf, includePaused, offset, limit and format. |
 | compile | selections containing scheduleId, version, index, runId, usageOpeningId, usageId and optional acceptDifferentBoundaries. |
 | prepare | requestId, label and the complete scheduledPlan returned by compile. |
@@ -86,7 +90,7 @@ Set **format** to **html** or **csv** to receive the whole window as a readable 
 | export | Empty object. Returns the complete portable calendar workspace. |
 | import | bundle from export and expectedRevision from the receiving catalogue. |
 
-Use the full returned identifiers and source objects. Save the original preparation request before sending it, and recover that identity after a lost response.
+Use the full returned identifiers and source objects. Save the complete original settings or preparation request before sending it, and recover that identity after a lost response. For settings, repeat **save** with the unchanged requestId, expectedRevision, id and definition. Its accepted receipt is returned as **definition.saveRequest**; a replay also returns **replayed: true** and the current catalogue revision. Existing callers that omit requestId retain their original revision-based behavior. The **request** and **resume** commands continue to refer to cycle preparations.
 
 ## Library interface
 
