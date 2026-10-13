@@ -43,7 +43,8 @@ UNPACK_PATH = SOURCE_ROOT / "stellar/scf-starforge-20261009/distribution/runtime
 ARCHIVE_SHA = "934f29399f12349e2836e1c4fd890b67eb023e3735fc5707a50c98ce5cb3b7a8"
 UNPACK_SHA = "683c241e74d2ef4c6bbf1502a8aa58af40195bb53e70fb0b7731191c53795d5f"
 REQUIRED_PRODUCT = (
-    "portable_native.py", "portable.mjs", "server.mjs", "workspace.mjs",
+    "portable_native.py", "portable.mjs", "portable-directory.mjs",
+    "portable-reservations.mjs", "server.mjs", "workspace.mjs",
     "store.mjs", "protocol.mjs", "provider.mjs", "application-inputs.mjs",
     "fulfillment/file-delivery.mjs", "web/index.html", "web/app.mjs", "web/style.css",
 )
