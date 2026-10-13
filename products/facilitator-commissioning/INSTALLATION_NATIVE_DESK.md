@@ -79,7 +79,7 @@ The final screen exposes the full receiving result, original import response and
 
 ## Full original observations and files
 
-Every returned native observation retains its complete original files in the existing commissioning operator’s content-addressed inputs. Large native files are stored as exact 16 MiB parts with a whole-file byte count and SHA256. The same original operator export contains those parts, their immutable observation records, all original commands and exact preparation bindings.
+Every returned native observation retains the complete original bridge snapshot as native-journal.json, together with its complete original files in the existing commissioning operator’s content-addressed inputs. Large native files are stored as exact 16 MiB parts with a whole-file byte count and SHA256. The same original operator export contains those parts, their immutable observation records, all original commands and exact preparation bindings.
 
 Catalog results are compact. Open one original operation to inspect its saved observation. File pages and captures take its snapshotSha256 so a later response cannot silently change a page or download that the reviewer selected. The screen offers **Open latest saved observation** explicitly.
 
@@ -95,7 +95,7 @@ Depending on actual completed phases, files include:
 
 A native error does not mark its outer command complete. Its returned observation is still retained, including any already accepted native phase. Open that actual observation and recover the pending original command.
 
-Keep the original native receiving journal and the source/receiving workspaces with their existing backup procedures. The complete commissioning transfer carries the original observed files and prepared commands. Active native continuation still requires the original inspected workspace bindings and original bridge journal; a received historical observation does not authorize a replacement workspace or application.
+The complete commissioning transfer now carries the original bridge journal snapshot, observed files and prepared commands. Before continuing a native phase, the desk supplies that exact snapshot to the original bridge’s restore method. It verifies the owner, selected preparation, complete inventory and current destination before the original create-only publication. Compatible later original work remains retained. Keep source and receiving application backups through their existing procedures: restoring the journal does not restore or replace an accepted native application database.
 
 ## Interrupted requests and restart
 
@@ -110,7 +110,7 @@ The original native bridge handles any lost native Save or import response with 
 
 The form draft retains its original job revision, selected preparation and native observation basis. The interface locks mutating and navigation controls during asynchronous capture. Drafts clear only when the same submitted snapshot is accepted. If another tab owns a pending request, recover or deliberately release that original claim first.
 
-Opening the same commissioning transfer on another operator keeps all observed native files readable from exact retained content. A host configuration that points to different source or receiving selections is refused for continuation. Apply current host configuration deliberately to the original services and journal; browser inputs cannot rebind them.
+Opening the same commissioning transfer on another operator keeps all native files and the complete journal snapshot readable from exact retained content. The desk restores through the original bridge before continuing the saved phase. A host configuration that points to different source or receiving selections is refused. Configure the original services and journal deliberately; browser inputs cannot rebind them. Known acceptance still requires the actual accepted state in those original services.
 
 ## Authenticated customer and agent interfaces
 

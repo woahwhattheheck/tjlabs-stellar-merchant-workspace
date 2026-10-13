@@ -69,7 +69,7 @@ export function createInstallationView({api,esc,detail,badge,when,size,option,in
     const observed=await api.installationReceiving({id:q.receivingId,snapshotSha256:snap});q.nativeDetail=observed;q.snapshotSha256=observed.snapshotSha256;
     const linkNative=(name,label)=>'<a class="button" href="'+esc(api.fileURL({kind:'installation-native',id:q.receivingId,name,snapshotSha256:observed.snapshotSha256}))+'">'+esc(label??name)+'</a>';
     let body='<dl><dt>Native state</dt><dd>'+badge(observed.state)+'</dd><dt>Original operation</dt><dd>'+esc(observed.receivingOperationId)+'</dd><dt>Saved observation</dt><dd>'+when(observed.observedAt)+'</dd></dl>'+
-      '<div class="actions">'+button('Open latest saved observation','installation-native-latest')+linkNative('operation.json','Complete operation and responses')+linkNative('intent.json','Original native choices')+'</div>'+
+      '<div class="actions">'+button('Open latest saved observation','installation-native-latest')+button('Receive original phase command','recover-id','data-id="'+esc(observed.outerOperationId)+'"')+linkNative('operation.json','Complete operation and responses')+linkNative('intent.json','Original native choices')+'</div>'+
       detail('Original source and receiving workspaces',observed.host);
     if(observed.errorCount)body+='<p class="notice">'+esc(observed.errorCount)+' original error observations are retained. Open the complete operation or selected error file and recover the same saved command. Accepted native work keeps its original request.</p>';
     html+=panel('Native receiving position',body);

@@ -5,7 +5,7 @@ import {readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {GrantWorkspaceClient} from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-client.mjs';
 import {readInstallationReceivingHost} from './installation-receiving-cli.mjs';
-import {openInstallationReceiving} from './installation-receiving.mjs';
+import {openInstallationReceiving,RECEIVING_SCHEMA} from './installation-receiving.mjs';
 import {readWorkflowSeriesPrivateFile} from '../../stellar-forge/mcp-merchant-operator/workflow-series-connection.mjs';
 import {writeConsoleWorkflowFile} from '../../stellar-forge/mcp-merchant-operator/console/client-files.mjs';
 
@@ -64,6 +64,11 @@ export function createInstallationReceivingDesk({ui,installation,hosts={}}){
     let bridge;
     try{bridge=await openInstallationReceiving({directory:config.directory,sourceClient,receivingClient,sourceBinding:config.source,receivingBinding:config.receiving});}
     catch(error){const errors=[error];for(const client of [sourceClient,receivingClient])try{await client.close();}catch(e){errors.push(e);}throw errors.length>1?new AggregateError(errors,'Opening and closing the borrowed Installation clients failed.'):error;}
+    if(typeof bridge.snapshot!=='function'||typeof bridge.restore!=='function'){
+      const errors=[];try{await bridge.close();}catch(e){errors.push(e);}for(const client of [sourceClient,receivingClient])try{await client.close();}catch(e){errors.push(e);}
+      const error=Object.assign(new Error('Install the complete original receiving bridge with journal snapshot and restore before this native phase.'),{code:'INSTALLATION_RECEIVING_SOURCE_REQUIRED',status:409});
+      if(errors.length)throw new AggregateError([error,...errors],'The original receiving source and client close both failed.');throw error;
+    }
     const result={config,identity,sourceClient,receivingClient,bridge};connections.set(alias,result);return result;
   }
   function checkCommand(command){
@@ -119,7 +124,12 @@ export function createInstallationReceivingDesk({ui,installation,hosts={}}){
     need(value.operationId===bound.receivingOperationId&&value.preparation.sha256===bound.preparation.sha256&&value.preparation.bytes===bound.preparation.bytes&&
       stable(value.intent.owner.source)===stable(bound.host.source)&&stable(value.intent.owner.receiving)===stable(bound.host.receiving),
       'The native journal belongs to another complete original preparation or workspace.');
-    const files=[],names=['operation.json','intent.json'];
+    const nativeJournal=await bridge.snapshot(bound.receivingOperationId);
+    need(nativeJournal.schema===RECEIVING_SCHEMA+'.snapshot'&&HASH.test(nativeJournal.contentSha256??'')&&nativeJournal.operationId===bound.receivingOperationId&&nativeJournal.preparation.sha256===bound.preparation.sha256&&nativeJournal.preparation.bytes===bound.preparation.bytes&&
+      stable(nativeJournal.owner.source)===stable(bound.host.source)&&stable(nativeJournal.owner.receiving)===stable(bound.host.receiving),
+      'The complete original native journal belongs to another preparation or inspected workspace.');
+    const journal=await retainBytes(encode(nativeJournal));
+    const files=[{name:'native-journal.json',...journal,contentType:'application/json'}],names=['operation.json','intent.json'];
     if(value.saveRequest)names.push('save-request.json');
     if(value.receiveRequest)names.push('receive-request.json');
     if(value.completion)names.push('RECEIVED.json');
@@ -138,7 +148,7 @@ export function createInstallationReceivingDesk({ui,installation,hosts={}}){
     }
     const snapshot={schema:NATIVE_DESK_SCHEMA+'.snapshot',jobId:bound.jobId,selectionSha256:bound.selectionSha256,
       receivingOperationId:bound.receivingOperationId,hostAlias:bound.hostAlias,host:bound.host,
-      preparationOperationId:bound.preparationOperationId,observedAt:new Date().toISOString(),summary:summary(value),files};
+      preparationOperationId:bound.preparationOperationId,observedAt:new Date().toISOString(),summary:summary(value),journal,files};
     const identity=await retainBytes(encode(snapshot));
     const prefix=bound.receivingOperationId+'-';
     const previous=(await readdir(join(ui,'installation-observations'))).filter(n=>n.startsWith(prefix)&&/^[0-9]{10}\.json$/.test(n.slice(prefix.length))).sort();
@@ -154,6 +164,15 @@ export function createInstallationReceivingDesk({ui,installation,hosts={}}){
     const p=originalBound.command.payload;
     let result,error;
     try{
+      const retained=(await retainedSnapshots(current)).filter(x=>x.bound.receivingOperationId===bound.receivingOperationId).at(-1);
+      if(retained){
+        need(retained.snapshot.journal,'Select the complete original native journal before continuation.','INSTALLATION_JOURNAL_REQUIRED');
+        const snapshot=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await bytes(retained.snapshot.journal)));
+        need(snapshot.schema===RECEIVING_SCHEMA+'.snapshot'&&HASH.test(snapshot.contentSha256??'')&&snapshot.operationId===bound.receivingOperationId&&snapshot.preparation.sha256===bound.preparation.sha256&&
+          stable(snapshot.owner.source)===stable(bound.host.source)&&stable(snapshot.owner.receiving)===stable(bound.host.receiving),
+          'The retained native journal belongs to another original operation.');
+        await c.bridge.restore(snapshot);
+      }
       if(command.action==='installation-preview'){
         const prepared=await installation.restorePackage(bound.preparationOperationId);
         need(stable(prepared.receipt)===stable(bound.preparation),'The original complete preparation changed.');
@@ -180,12 +199,15 @@ export function createInstallationReceivingDesk({ui,installation,hosts={}}){
       const observation=await json(join(ui,'installation-observations',name));
       need(observation.schema===NATIVE_DESK_SCHEMA+'.observation'&&observation.jobId===current.id&&observation.selectionSha256===current.selectionSha256,
         'The native observation belongs to another original job.');
-      const bound=await original(observation.receivingOperationId,current);
+      const bound=await original(observation.receivingOperationId,current),phase=await json(path(observation.operationId));
+      need(phase.schema===NATIVE_DESK_SCHEMA+'.binding'&&phase.command.operationId===observation.operationId&&phase.receivingOperationId===bound.receivingOperationId&&
+        phase.jobId===current.id&&phase.selectionSha256===current.selectionSha256&&phase.logicalSha256===sha(stable(phase.command)),
+        'The native observation differs from its original complete outer command.');
       const snapshot=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await bytes(observation.snapshot)));
       need(snapshot.schema===NATIVE_DESK_SCHEMA+'.snapshot'&&snapshot.jobId===current.id&&snapshot.selectionSha256===current.selectionSha256&&
         snapshot.receivingOperationId===bound.receivingOperationId&&stable(snapshot.host)===stable(bound.host),
         'The retained complete native observation changed.');
-      rows.push({observation,snapshot,bound});
+      rows.push({observation,snapshot,bound,phase});
     }
     return rows.sort((a,b)=>a.observation.sequence-b.observation.sequence);
   }
@@ -209,14 +231,14 @@ export function createInstallationReceivingDesk({ui,installation,hosts={}}){
       return{schema:NATIVE_DESK_SCHEMA,jobId:current.id,selectionSha256:current.selectionSha256,
         hosts:Object.entries(hosts).map(([alias,v])=>({alias,title:v.title})),
         items:[...latest.values()].map(row=>{const {snapshot,bound}=row;return({receivingOperationId:bound.receivingOperationId,preparationOperationId:bound.preparationOperationId,hostAlias:bound.hostAlias,
-          ...snapshot.summary,observedAt:snapshot.observedAt,snapshotSha256:row.observation.snapshot.sha256});}).concat(pending)};
+          ...snapshot.summary,observedAt:snapshot.observedAt,snapshotSha256:row.observation.snapshot.sha256,outerOperationId:row.observation.operationId,action:row.phase.command.action});}).concat(pending)};
     },
     async view(operationId,current,{kind='summary',offset=0,limit=50,expectedSnapshotSha256}={}){
       const row=await selectedObservation(operationId,current,expectedSnapshotSha256),snapshot=row.snapshot;
       const base={schema:NATIVE_DESK_SCHEMA,jobId:current.id,selectionSha256:current.selectionSha256,receivingOperationId:operationId,
-        preparationOperationId:row.bound.preparationOperationId,hostAlias:row.bound.hostAlias,observedAt:snapshot.observedAt,snapshotSha256:row.observation.snapshot.sha256,...snapshot.summary};
+        preparationOperationId:row.bound.preparationOperationId,hostAlias:row.bound.hostAlias,observedAt:snapshot.observedAt,snapshotSha256:row.observation.snapshot.sha256,outerOperationId:row.observation.operationId,action:row.phase.command.action,...snapshot.summary};
       if(kind==='files')return{...base,...pages(snapshot.files.map(({parts,...f})=>f),offset,limit)};
-      if(kind==='summary')return{...base,host:row.bound.host,files:snapshot.files.length,originalCommand:row.bound.command};
+      if(kind==='summary')return{...base,host:row.bound.host,files:snapshot.files.length,originalCommand:row.bound.command,observedCommand:row.phase.command};
       const named={preview:'native-preview.json',saved:'original-saved-edition.json',received:'independently-received-edition.json',operation:'operation.json'}[kind];
       need(named,'Choose summary, files, preview, saved, received or operation.');
       const f=snapshot.files.find(x=>x.name===named);need(f,'This original native phase has not returned a complete file.','INSTALLATION_NATIVE_PENDING');
