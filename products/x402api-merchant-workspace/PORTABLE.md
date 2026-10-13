@@ -82,7 +82,7 @@ Completed invoices reopen their original retained outputs. An interrupted in-pro
 
 ## Original five-invoice receiving
 
-The complete native receiving programme for this feature is `portable-receiving.mjs`, with `receive-portable-native.py` restoring the original previously completed commissioning package at its recorded paths. It uses the complete original five-invoice case and its retained files, exports the whole merchant, opens every delivery in the offline browser, restores a fresh workspace, reopens the existing application and downloads all five original outputs again. Its result records the original and received identities and any provider invocation during reopening.
+The complete native receiving programme for this feature is `portable-directory-receiving.mjs`, with `receive-portable-native.py` restoring the original previously completed commissioning package at its recorded paths. It uses the complete original five-invoice case and its retained files, exports the whole merchant, opens every delivery in the offline browser, restores a fresh workspace, reopens the existing application and downloads all five original outputs again. Its result records the original and received identities and any provider invocation during reopening.
 
 ## Recover an interrupted retained delivery
 
@@ -97,3 +97,14 @@ The source inventory includes the current merchant configuration review, applica
 A handover also preserves the exact adapter selected by the original configuration at `original/fulfillment/file-delivery.mjs`. The manifest records both the original and operating adapter identities. The original 6,737-byte file adapter can adopt the reviewed 6,994-byte successor: its added check binds the delivery manifest to the current input review while retaining the same file binding, delivery and reconciliation behavior. All other selected adapter versions must match the operating adapter exactly. First export, repeated export and archive inspection check that recorded relationship.
 
 The installed workflow guides describe the complete maintained distribution at [source commit 0ee26c5a](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/0ee26c5acfcd021b1dcf4346de9ef909290027e7). Run the installed receiving programme from that distribution and its original selected package. The portable archive carries the complete merchant operating source and the original native five-invoice receiving programme. Its registration descriptor links the merchant to an existing maintained runtime; installation continues through the distribution’s normal build and install workflow.
+
+## Browser project handover and retained directories
+
+The same maintained installation also supplies [Project handover](PORTABLE_PROJECT.md) in the invoice browser. It exports the complete original source archive and a committed database to a request-bound ZIP, receives an independent runtime, and opens the original merchant in read-only review before operational activation. The `x402api-merchant-project` command uses that ZIP format; the `x402api-merchant export`, `inspect`, `restore` and `serve-archive` commands retain the complete directory handover documented above. Each command keeps its original archive schema, source selection and receiving identity.
+
+Both original engines are included. `portable.mjs` supplies the project interface and preserves the directory handover's named API exports from `portable-directory.mjs`. `receive-portable-native.py` invokes the complete directory receiving programme; the installed foreground's `--portable` option continues the original project programme. Continue an existing receiving intent with its frozen source and arguments. Select this cumulative edition for a new original operation only before that input has been frozen.
+
+The browser project ZIP now uses the same original reservation inspector and
+relocator as this directory format, including empty locks, retained partial
+prefixes and final hardlinks. Its durable private receiving preparation preserves
+later runtime recovery on replay. See [Portable project](PORTABLE_PROJECT.md#interrupted-paid-file-recovery-in-either-handover).
