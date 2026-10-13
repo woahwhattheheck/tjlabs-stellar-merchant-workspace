@@ -24,7 +24,8 @@
     "./merchant/x402api/observation": "./source/products/x402api-merchant-workspace/observation.mjs",
     "./merchant/x402api/incident-source": "./source/stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-source.mjs",
     "./merchant/x402api/incident-capture": "./source/stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-observation.mjs",
-    "./merchant/x402api/review": "./source/products/x402api-merchant-workspace/received-project-review.mjs"
+    "./merchant/x402api/review": "./source/products/x402api-merchant-workspace/received-project-review.mjs",
+    "./merchant/x402api/invoice-register": "./source/products/x402api-merchant-workspace/invoice-register.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf31-buyer-client/response-file.mjs",
