@@ -15,6 +15,7 @@ import { MerchantPortfolio, portfolioFileSelectors } from './accounting-portfoli
 import { adjustmentDefinitions, MerchantAdjustments } from './accounting-adjustments.mjs';
 import { statementDefinitions, statementFileNames, statementFileSelectors, MerchantCustomerStatements } from './accounting-statements.mjs';
 import { MerchantReceivables, receivablesFileSelectors } from './accounting-receivables.mjs';
+import { MerchantCommissioning } from './accounting-commissioning.mjs';
 import { platformDefinitions, platformFileNames, normalizePlatformConfig, platformSourceView, platformPathReferences, MerchantPlatforms } from './accounting-platforms.mjs';
 import { bitwaveDefinitions, normalizeBitwaveConfig, bitwaveSourceView, bitwavePathReferences, MerchantBitwave } from './bitwave.mjs';
 import { callRozoAccounting } from './accounting-rozo.mjs';
@@ -269,7 +270,7 @@ export class MerchantAccounting {
   #result(key, value, operation) {
     // These providers project host metadata themselves. Reviewed operator text
     // and hash-bound native requests must cross the wire without substitutions.
-    if (operation.startsWith('merchant_accounting_rozo_') || operation === 'merchant_accounting_file' || operation.startsWith('merchant_accounting_cryptoworth_') || operation.startsWith('merchant_accounting_runbooks_') || operation.startsWith('merchant_accounting_portfolio_') || operation.startsWith('merchant_accounting_receivables_')) return value;
+    if (operation.startsWith('merchant_accounting_rozo_') || operation === 'merchant_accounting_file' || operation.startsWith('merchant_accounting_cryptoworth_') || operation.startsWith('merchant_accounting_runbooks_') || operation.startsWith('merchant_accounting_portfolio_') || operation.startsWith('merchant_accounting_receivables_') || operation.startsWith('merchant_accounting_commissioning_')) return value;
     if (value?.record?.revisions) value = { ...value, record: handoffBrief(value.record) };
     if (value?.definition?.versions) value = { ...value, definition: periodBrief(value.definition) };
     const result = value?.state ? { ...value, state: this.#state(key, value.state) } : value;
@@ -334,7 +335,7 @@ export class MerchantAccounting {
     const buyerOnly = configuredAccountingMode(definition) === 'buyer';
     const settings = buyerOnly ? await buyerAccountingOpenSettings(definition) : { directory, outboxDir, proofDir, termsFile };
     const workspace = await openAccountingWorkspace(settings);
-    const runtime = { workspace, collection: null, accountant: null, bitwave: null, adjustments: null, statements: null, receivables: null, platforms: null, cryptoworth: null, runbooks: null, portfolio: null, clientWorkspaces: new Set() };
+    const runtime = { workspace, collection: null, accountant: null, bitwave: null, adjustments: null, statements: null, receivables: null, commissioning: null, platforms: null, cryptoworth: null, runbooks: null, portfolio: null, clientWorkspaces: new Set() };
     try {
       runtime.accountant = new AccountantWorkspace(workspace);
       if (!buyerOnly) {
@@ -354,6 +355,10 @@ export class MerchantAccounting {
       await runtime.statements.init();
       runtime.receivables = new MerchantReceivables(workspace, { readSource: (source, maximum) => sourceBytes(this.#source(key, 'receivablesInputs', source), maximum) });
       await runtime.receivables.init();
+      runtime.commissioning = new MerchantCommissioning(runtime.receivables.controller, {
+        readSource: (source, maximum) => sourceBytes(this.#source(key, 'receivablesInputs', source), maximum),
+      });
+      await runtime.commissioning.init();
       }
       runtime.platforms = new MerchantPlatforms(workspace, runtime.accountant, { ...this.#platformOptions, definition: definition.platforms, buyerOnly,
         readSource: (source, maximum) => sourceBytes(this.#source(key, 'platformInputs', source), maximum) });
@@ -408,7 +413,7 @@ export class MerchantAccounting {
       finally { if (owner.tasks) await Promise.allSettled([...owner.tasks]); }
     }
     if (problem) throw problem;
-    if (record.workspace === runtime.workspace) Object.assign(record, { workspace: null, collection: null, accountant: null, bitwave: null, adjustments: null, statements: null, receivables: null, platforms: null, cryptoworth: null, runbooks: null, portfolio: null, clientWorkspaces: null });
+    if (record.workspace === runtime.workspace) Object.assign(record, { workspace: null, collection: null, accountant: null, bitwave: null, adjustments: null, statements: null, receivables: null, commissioning: null, platforms: null, cryptoworth: null, runbooks: null, portfolio: null, clientWorkspaces: null });
   }
   async #open(key, { borrower, initialization = null } = {}) {
     const selectedDefinition = this.#definition(key);
@@ -428,7 +433,7 @@ export class MerchantAccounting {
       else existing.explicitOpened = true;
       return this.#openResult(key, existing, recovered);
     }
-    const definition = selectedDefinition, record = { workspace: null, collection: null, accountant: null, bitwave: null, adjustments: null, statements: null, receivables: null, platforms: null, cryptoworth: null, runbooks: null, portfolio: null, clientWorkspaces: null, maintenance: null, closing: false, explicitOpened: !borrower, borrowers: new Set(), calls: new Set() };
+    const definition = selectedDefinition, record = { workspace: null, collection: null, accountant: null, bitwave: null, adjustments: null, statements: null, receivables: null, commissioning: null, platforms: null, cryptoworth: null, runbooks: null, portfolio: null, clientWorkspaces: null, maintenance: null, closing: false, explicitOpened: !borrower, borrowers: new Set(), calls: new Set() };
     this.#sessions.set(key, record);
     record.opening = (async () => {
       if (initialization) record.initialized = await initializeBuyerAccounting(definition, this.#source(key, 'buyerSources', initialization.source), initialization);
@@ -493,6 +498,8 @@ export class MerchantAccounting {
       'receivables-bank': ['bankImportId', 'file'],
       'receivables-remittance': ['batchId', 'file'],
       'receivables-customer': ['customerId', 'asOf', 'file'],
+      'commissioning-source': ['sourceId', 'file'],
+      'commissioning-capture': ['captureId', 'file'],
       cryptoworth: ['profileId', 'planId', 'captureId', 'returnId', 'rollbackId', 'scope', 'file'],
       runbooks: ['cycleId', 'fileId', 'file'],
       portfolio: ['captureId', 'receivedId', 'clientId', 'cycleId', 'planId', 'file'],
@@ -508,6 +515,10 @@ export class MerchantAccounting {
     if (kind === 'portfolio') return session.portfolio.file(args);
     if (['qbo', 'xero', 'qbo-source-change', 'xero-source-change', 'qbo-worksheet'].includes(kind)) return session.platforms.file(args);
     if (['customer-statement', 'customer-statement-preview', 'customer-usage-period-preview'].includes(kind)) return session.statements.file(args);
+    if (kind === 'commissioning-source' || kind === 'commissioning-capture') {
+      if (!session.commissioning) throw fail('ACCOUNTING_MERCHANT_SOURCE_REQUIRED', 'Open the original merchant accounting workspace for commissioning files.');
+      return session.commissioning.file(args);
+    }
     if (kind.startsWith('receivables-')) {
       if (!session.receivables) throw fail('ACCOUNTING_MERCHANT_SOURCE_REQUIRED', 'Open the original merchant accounting workspace for receivables files.');
       return session.receivables.file(args);
@@ -561,6 +572,10 @@ export class MerchantAccounting {
     if (operation.startsWith('merchant_accounting_portfolio_')) return session.portfolio.call(operation, args);
     if (operation.startsWith('merchant_accounting_qbo_') || operation.startsWith('merchant_accounting_xero_')) return session.platforms.call(operation, args);
     if (operation.startsWith('merchant_accounting_customer_')) return session.statements.call(operation, args);
+    if (operation.startsWith('merchant_accounting_commissioning_')) {
+      if (!session.commissioning) throw fail('ACCOUNTING_MERCHANT_SOURCE_REQUIRED', 'Open the original merchant accounting workspace for commissioning collections.');
+      return session.commissioning.call(operation, args);
+    }
     if (operation.startsWith('merchant_accounting_receivables_')) {
       if (!session.receivables) throw fail('ACCOUNTING_MERCHANT_SOURCE_REQUIRED', 'Open the original merchant accounting workspace for invoice collection.');
       return session.receivables.call(operation, args);

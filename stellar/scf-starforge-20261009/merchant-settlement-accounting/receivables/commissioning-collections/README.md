@@ -281,3 +281,7 @@ node SELECTED_RECEIVABLES_CHECK.mjs \
 ```
 
 It invokes the original distribution builder, installs the produced archive using existing cached dependencies, opens the installed command help and actual exported modules, reads the installed browser assets, and retains the original source identities. The original Xero/commissioning journey exercises the private customer lifecycle; the selected-package receiver exercises the resulting installation. Preserve each program's complete output with that same source revision.
+
+## Existing merchant agent interface
+
+The selected product also includes the complete eleven-operation commissioning workflow through the existing accounting MCP owner. Use `starforge merchant-accounting-commissioning` for prepared remote operations and original downloads, or the typed `@tokenjunkielabs/starforge-merchant/merchant/accounting-commissioning` SDK. [Agent workflow and recovery](MCP.md) covers configured source aliases, retained inspected bytes, immutable previews, operation reconciliation, private exports and the original file-reader lifecycle.
