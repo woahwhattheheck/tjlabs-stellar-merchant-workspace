@@ -9,6 +9,7 @@ import sys
 from .errors import BuyerError
 from .storage import parse, read
 from .research_workspace import ResearchError, ResearchWorkspace, _file_delivery
+from .research_remote_programmes import ResearchRemoteError
 from .research_documents import ResearchDocumentSource
 from .research_citation_cli import add_citation_commands, run_citation_command
 from .research_extraction_cli import add_extraction_commands, run_extraction_command
@@ -18,6 +19,7 @@ from .research_customer_cli import add_customer_commands, run_customer_command
 from .research_commerce_cli import add_commerce_commands, run_commerce_command
 from .research_quotes_cli import add_quotes_commands, run_quotes_command
 from .research_quote_programmes_cli import add_quote_programme_commands, run_quote_programme_command
+from .research_remote_programmes_cli import add_remote_programme_commands, run_remote_programme_command
 
 _READ = {"status", "dossiers", "metadata", "section", "compare", "documents-list",
          "documents-review", "documents-elements", "pipelines-list", "pipelines-operation",
@@ -48,6 +50,7 @@ def parser():
     add_commerce_commands(commands)
     add_quotes_commands(commands)
     add_quote_programme_commands(commands)
+    add_remote_programme_commands(commands)
     commands.add_parser("status")
     saved = commands.add_parser("calls")
     saved.add_argument("--offset", type=int, default=0)
@@ -79,7 +82,9 @@ def parser():
 def main(argv=None):
     arguments = parser().parse_args(argv)
     try:
-        if arguments.command.startswith("quotes-programme-"):
+        if arguments.command.startswith("quotes-remote-"):
+            result = run_remote_programme_command(arguments)
+        elif arguments.command.startswith("quotes-programme-"):
             result = run_quote_programme_command(arguments)
         elif arguments.command.startswith("quotes-"):
             result = run_quotes_command(arguments)
@@ -151,6 +156,11 @@ def main(argv=None):
                             request_id=arguments.request_id, replay_safe=arguments.action in _SAFE)
         print(json.dumps(result, ensure_ascii=False, allow_nan=False, indent=2))
         return 0
+    except ResearchRemoteError as error:
+        print(json.dumps({"error": error.code, "callId": error.call_id,
+                          "outcomeUnknown": error.outcome_unknown, "record": error.record},
+                         ensure_ascii=False), file=sys.stderr)
+        return 2
     except ResearchError as error:
         print(json.dumps({"error": error.code, "requestId": error.request_id,
                           "record": error.record}, ensure_ascii=False), file=sys.stderr)

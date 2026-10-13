@@ -118,7 +118,7 @@ export class MerchantHaystackWorkspaces {
       const found = await readHaystackHostInput(entry, args.input, args.expectedSha256, "source");
       return client.action("source.import", {
         operationId: args.operationId, expectedRevision: args.expectedRevision,
-        name: found.input.name, base64: found.bytes.toString("base64"), format: "json-v4",
+        name: found.input.name, base64: found.bytes.toString("base64"), format: found.input.format ?? "json-v4",
         sourceUrl: args.sourceUrl ?? found.input.sourceReference,
         ...(args.select === undefined ? {} : { select: args.select })
       });

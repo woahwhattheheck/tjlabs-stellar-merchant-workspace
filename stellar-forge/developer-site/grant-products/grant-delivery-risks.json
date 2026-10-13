@@ -1,0 +1,215 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "grant-delivery-risks",
+  "heading": "## Delivery risks, accountable mitigation and complete project handover",
+  "sources": [
+    {
+      "id": "grant-delivery-risks-engine",
+      "label": "Original risk normalization, source binding, lineage and case receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_risks.py",
+      "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+      "editions": [
+        {
+          "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+          "bytes": 35210,
+          "sha256": "7a9515a2cb5dc35edba3433a25822e2707a3f84baa717cb070bec694d76c7230",
+          "git_blob": "877b58c21196d7d83f2ecdcab21774ae8a77e1d0"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-operator",
+      "label": "Complete browser assessment, mitigation, history and request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_risks.mjs",
+      "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+      "editions": [
+        {
+          "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+          "bytes": 54215,
+          "sha256": "4b694428eff107f3d54bc2533d9f2cd8f199d8c4bd1e52d8de0c8271244fb33f",
+          "git_blob": "ffec1674cb67c6235c3fa3890e27c9e691b54c8e"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-operator-guide",
+      "label": "Complete Delivery risks operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_OPERATOR.md",
+      "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+      "editions": [
+        {
+          "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+          "bytes": 15976,
+          "sha256": "f25790a876f360482a04e19246f7a506ddef52759fa4d90f99afbd270edb8825",
+          "git_blob": "e3f4c4c9a3078d01cc9cae3bbc148bff423a784c"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-cli",
+      "label": "Original Operations risk CLI",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_cli.py",
+      "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+      "editions": [
+        {
+          "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+          "bytes": 5154,
+          "sha256": "a41bc0fdd14a90a230dc09e8525bfac9d38ced7d9b5545443623c3bdd06f04bd",
+          "git_blob": "08541eab713c89b166e48dcc76948006232ce08d"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-client",
+      "label": "Original typed agent client and risk command binding",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/agent-client.mjs",
+      "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+      "editions": [
+        {
+          "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+          "bytes": 113792,
+          "sha256": "dbdaf218692150db8ef1f52a1a9c5f01578af296e17a03355591ff542d43c76e",
+          "git_blob": "51819dd5160ba708f0d01e35aa99512ae0a5ccd3"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-agent-guide",
+      "label": "Complete original agent and Merchant operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/AGENT.md",
+      "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+      "editions": [
+        {
+          "commit": "25b25073ccf65c17287d002e814a50f73abda5e0",
+          "bytes": 54040,
+          "sha256": "91ca4d123a87c79e09667d294075a6b158152752dace8e0154200e06bfbcda0d",
+          "git_blob": "0f54a8643ec91f4e7c8e9ec40adc98974e5288ca"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-native-course",
+      "label": "Original two-edition native course and independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_walkthrough.py",
+      "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+      "editions": [
+        {
+          "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+          "bytes": 35895,
+          "sha256": "3e3d9e271c9c245d1a4be36e491bc5fe9ace03b5bc4f039239efa2dfe29dacdd",
+          "git_blob": "21cd03fddf567c3f3aaf10885f672121537f89a0"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-browser-course",
+      "label": "Installed same-case browser receiving companion",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_browser.mjs",
+      "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+      "editions": [
+        {
+          "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+          "bytes": 57703,
+          "sha256": "83c844e0dcae558d30a47ecb957d4243fec72e6f2df10db592319990722edae2",
+          "git_blob": "230e31e08ee0f3ac3251a43deca2d813b5c95494"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-execution",
+      "label": "Whole original host, browser, archive and private save owner",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_execution.py",
+      "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+      "editions": [
+        {
+          "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+          "bytes": 40809,
+          "sha256": "dfb5c22308c47697e0f0316a244d31dd2988f7f9710f8f9fbef119acb71ded14",
+          "git_blob": "da2fb367a8bc99aa206b33cccc297a27d3899e7a"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-preparation",
+      "label": "Complete source and runtime preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_risks_prepare.py",
+      "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+      "editions": [
+        {
+          "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+          "bytes": 17697,
+          "sha256": "e53a68923ca88476b18c803b29a591ea2b656a23a678b8c6700aee8c66c2dadd",
+          "git_blob": "5952978b256b6c7c438d4708dac2592ca39e768a"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-runtime-selection",
+      "label": "Exact original315 runtime selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/risk-runtime-source-selection.json",
+      "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+      "editions": [
+        {
+          "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+          "bytes": 65153,
+          "sha256": "6847fa45f919cfe9d6920d78e080e8c0136ad99341858ac6fb5a496f457e90f5",
+          "git_blob": "a287c383267e90c6e6ea4d1db7d536d31ec74a4c"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-receiving-guide",
+      "label": "Complete native receiving operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_RECEIVING.md",
+      "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+      "editions": [
+        {
+          "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+          "bytes": 7625,
+          "sha256": "363864dfe0134d6cbfce37a2dc0d91ebf9a9928612901087dfac6568a6201df1",
+          "git_blob": "0311eee2b7aebcec1e797d681ba074c1bb19ed23"
+        }
+      ]
+    },
+    {
+      "id": "grant-delivery-risks-preparation-guide",
+      "label": "Complete materialization and execution instructions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/RISK_REGISTER_PREPARATION.md",
+      "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+      "editions": [
+        {
+          "commit": "37676b6882f4b1626df1de7d1cbaf0ecc7d2fb6d",
+          "bytes": 7021,
+          "sha256": "edeb7abee47cba04bf8106ca4e102fd35b228b71724446e324efe98919e3d1c0",
+          "git_blob": "921a111ce3ea9dcc626f7d07e1fe2674657cb09c"
+        }
+      ]
+    }
+  ]
+}

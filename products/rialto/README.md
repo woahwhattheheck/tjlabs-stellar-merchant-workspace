@@ -101,3 +101,9 @@ starforge rialto-customer installation-pack --directory "$NEW_PRIVATE_PREPARATIO
 ```
 
 The whole prepared edition retains the original request, every catalogue page, native history, exact source seed/bindings/profile, complete Installation input, workorder and relative request annex. Independent receiving uses the existing `receive` command followed by `installation-open`; the original SF88 import reconstructs its native machine-local paths. Case creation, payment execution and Installation preview/save continue through their existing applications.
+
+## Catalogue changes and complete customer handover
+
+The existing offline report compares complete original catalogue editions using the native resource-plus-tool identity and original comparison engine. Review every before/after row and payment option, distinguish source coverage and repeated identities, retain handover notes, and continue the exact current row in the request editor. Saved and replaced reviews preserve both source texts and original customer drafts. Complete JSON and self-contained HTML reopen independently; print includes all filtered results and full original rows.
+
+Use the [complete catalogue comparison guide](../../stellar/scf-starforge-20261009/partners/rialto/CATALOGUE_COMPARISON.md). The selected Rialto package includes the comparison module with the original complete component.

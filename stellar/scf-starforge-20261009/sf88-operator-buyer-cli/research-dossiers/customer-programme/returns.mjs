@@ -595,3 +595,16 @@ export async function runCustomerReturnsCli(args){
     python:selected['--python']??'python3',node:selected['--node']??process.execPath});
   process.stdout.write(JSON.stringify(result,null,2)+'\n');
 }
+
+
+export {
+  head as readCustomerReturnHead,
+  prefix as assertCustomerReturnPrefix,
+  comparison as readCustomerReturnComparison,
+  reviewExports as retainCustomerReturnReview,
+  validateRequest as validateCustomerReturnRequest,
+  acceptedReceipt as validateCustomerReturnReceipt,
+  copyStage as publishCustomerReturnReview,
+  originalFinalExport as retainCustomerReturnDossierExport
+};
+

@@ -35,3 +35,7 @@ Start with [the installed RIS operating chapter](OPERATING.md#review-original-ri
 ## Complete customer programme
 
 [Customer-selected Research receiving](OPERATING.md#complete-a-selected-customer-research-programme) carries exact original documents, citation decisions, source chronology and Europe PMC editions through the original Python/Analysis workbook, browser and Merchant interfaces into a complete editable handover. Use the installed research-customer-programme command with the actual customer selection and original source manifest. The [complete receiving chapter](RECEIVING.md#20-receive-the-complete-customer-selected-programme) covers the original archive, included engine, extraction and continued customer editing.
+
+## Customer handover returns
+
+[Continue a published customer handover through reviewed returns](OPERATING.md#continue-customer-handovers-through-reviewed-returns) with the installed research-customer-handover-returns command. It uses the original customer-updates baseline, full native comparisons and explicit reviewed requests, enforces cumulative inherited/new item and round scope, and delivers the complete original source, accepted dossier and independently reopened editable workspace. The [receiving chapter](RECEIVING.md#22-receive-a-customer-handover-and-accepted-returns) and [complete course guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/HANDOVER_RETURNS.md) preserve both the original published delivery and the accepted later history.

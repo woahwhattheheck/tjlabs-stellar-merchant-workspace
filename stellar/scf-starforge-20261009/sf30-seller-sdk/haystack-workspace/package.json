@@ -1,9 +1,9 @@
 {
   "name": "@tokenjunkielabs/haystack-workspace",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
-  "description": "Native Haystack turnover, corrective work, point-list mappings, reviewed semantic models and offline Brick validation; typed-grid projection and source-linked returned corrections",
+  "description": "Native Haystack turnover, corrective work, point-list mappings, reviewed semantic models and offline Brick validation; typed-grid projection and source-linked returned corrections; native Zinc 3.0 source retention and export",
   "license": "MIT",
   "engines": {
     "node": ">=22"
@@ -28,7 +28,8 @@
     "./protocol": "./protocol.mjs",
     "./corrective-work": "./corrective-work.mjs",
     "./semantic-model": "./semantic-model.mjs",
-    "./projection-model": "./projection-model.mjs"
+    "./projection-model": "./projection-model.mjs",
+    "./volttron": "./volttron-registry.mjs"
   },
   "bin": {
     "haystack-workspace": "./cli.mjs",

@@ -18,6 +18,7 @@ import { intakeImport, intakeSummary, semanticModelRows, semanticModelRead, prev
   previewSemanticReturn, applySemanticReturn } from "./semantic-model.mjs";
 import { runSemanticNative, semanticCatalog } from "./semantic-native.mjs";
 import { makeSemanticReport, semanticNativeDelivery } from "./semantic-reports.mjs";
+import { readVolttronAction, previewVolttronReturn, applyVolttronReturn, volttronDelivery } from "./volttron-registry.mjs";
 
 function assertRevision(state, expectedRevision) {
   integer(expectedRevision, "reviewed workspace revision");
@@ -403,6 +404,8 @@ export class HaystackWorkspace {
         const nativeModel = semanticNativeModel(state, args);
         const received = await runSemanticNative(this.directory, operationId, { action: "validate", model: nativeModel });
         result = retainSemanticValidation(state, args, received.result, received.execution);
+      } else if (action === "volttron.return.apply") {
+        result = applyVolttronReturn(state, args, verifyBundle(base64(args.base64, PACKAGE_MAX_BYTES)));
       } else if (action === "semantic.return.apply") {
         result = applySemanticReturn(state, args, verifyBundle(base64(args.base64, PACKAGE_MAX_BYTES)));
       } else {
@@ -486,7 +489,19 @@ export class HaystackWorkspace {
     } else {
       need(args.projectionId === undefined, "Use projection identity only for a projection delivery.");
     }
-    if (semanticKind) {
+    const volttronKind = ["volttron-report", "volttron-output", "volttron-receiving-output"].includes(args.kind);
+    if (!volttronKind) need(args.registryEditionId === undefined && args.receivingId === undefined, "Use registry selectors only for a VOLTTRON delivery.");
+    if (volttronKind) {
+      need(args.editionId === undefined && args.sourceId === undefined && args.role === undefined &&
+        args.modelId === undefined && args.versionId === undefined && args.validationId === undefined && args.projectionId === undefined,
+        "Registry deliveries retain their own exact edition or receiving record; omit unrelated grid/model selectors.");
+      if (args.kind === "volttron-report") need(args.registryEditionId && args.receivingId === undefined && args.name === undefined &&
+        (args.format === undefined || ["json", "csv", "html"].includes(args.format)), "Choose one saved registry edition for its complete review report.");
+      else if (args.kind === "volttron-output") need(args.registryEditionId && args.name && args.receivingId === undefined && args.format === undefined,
+        "Choose an exact retained registry/configuration filename from one saved edition.");
+      else need(args.receivingId && args.name && args.registryEditionId === undefined && args.format === undefined,
+        "Choose an exact original output filename from one retained receiving record.");
+    } else if (semanticKind) {
       need(args.editionId === undefined && args.sourceId === undefined && args.role === undefined, "Semantic reports retain the chosen model version and its own complete source context.");
       if (args.kind === "semantic-output") need(args.validationId && args.name && args.modelId === undefined && args.versionId === undefined && args.format === undefined, "Download an exact retained native output by its validation and filename.");
       else need(args.modelId && args.validationId === undefined && args.name === undefined, "Choose one complete model version for its report or dictionary.");
@@ -494,7 +509,7 @@ export class HaystackWorkspace {
     if (args.kind === "workspace") need(args.format === undefined && args.editionId === undefined && args.sourceId === undefined && args.role === undefined,
       "The complete workspace delivery includes every source, edition and application file; omit report-only fields.");
     else if (args.kind === "work-register") need(args.editionId === undefined && args.sourceId === undefined && args.role === undefined, "The complete corrective-work register retains every finding and review; omit asset-report scope fields.");
-    else if (args.kind === "native-grid") need(args.sourceId && args.role === undefined && (args.format === undefined || args.format === "json"), "Native grid delivery needs one selected source and JSON format.");
+    else if (args.kind === "native-grid") need(args.sourceId && args.role === undefined && (args.format === undefined || ["json", "zinc"].includes(args.format)), "Native grid delivery needs one selected source and JSON or Zinc format.");
     else need(args.sourceId === undefined, "Register and diagnostic reports use their complete selected source set.");
     return this.withWriter(async () => {
       const target = this.deliveryDirectory(operationId);
@@ -506,7 +521,8 @@ export class HaystackWorkspace {
       }
       const state = await this.read(); assertRevision(state, args.expectedRevision);
       need(!state.operations.some(item => item.id === operationId), "This identity belongs to an original saved mutation.", "HAYSTACK_OPERATION", 409);
-      const result = projectionKind ? makeProjectionDelivery(state, args) : args.kind === "workspace" ? await buildBundle(state) :
+      const result = volttronKind ? volttronDelivery(state, args) :
+        projectionKind ? makeProjectionDelivery(state, args) : args.kind === "workspace" ? await buildBundle(state) :
         args.kind === "work-register" ? makeWorkReport(state, args) :
         ["semantic-report", "semantic-dictionary"].includes(args.kind) ? makeSemanticReport(state, args) :
         args.kind === "semantic-output" ? semanticNativeDelivery(state, args) :
@@ -535,7 +551,7 @@ export class HaystackWorkspace {
     if (action === "semantic.catalog") return semanticCatalog();
     if (action === "source.read") {
       const original = await this.originalSource(args.sourceId);
-      return range(original.bytes, { sourceId: original.source.id, sha256: original.source.id, name: original.source.name, mediaType: "application/json" }, args);
+      return range(original.bytes, { sourceId: original.source.id, sha256: original.source.id, name: original.source.name, mediaType: original.source.format === "zinc" ? "text/zinc; charset=utf-8" : "application/json" }, args);
     }
     const state = await this.read();
     if (action === "workspace.status") return summary(state);
@@ -570,6 +586,8 @@ export class HaystackWorkspace {
     if (action === "projection.preview") return { ...envelope, ...previewProjection(state, args) };
     if (action === "projection.compare") return { ...envelope, ...compareProjections(state, args) };
     if (action === "projection.return.preview") return { ...envelope, ...previewProjectionReturn(state, args) };
+    if (action === "volttron.return.preview") return { ...envelope, ...previewVolttronReturn(state, verifyBundle(base64(args.base64, PACKAGE_MAX_BYTES))) };
+    if (action.startsWith("volttron.")) return { ...envelope, ...readVolttronAction(state, action, args) };
     if (action === "semantic.intakes.list") return paginate((state.semantics?.intakes || []).map(intakeSummary));
     if (action === "semantic.intake.read") {
       const intake = state.semantics?.intakes.find(row => row.id === id(args.intakeId));

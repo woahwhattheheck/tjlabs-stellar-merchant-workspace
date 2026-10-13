@@ -3,6 +3,10 @@ import { planSummary, selectedPlan, validatePlanningState, validatePlanSources, 
 import { createOperatingPlan, createOperatingStep, inspectOperatingPlan, receiveOperatingPlan, compareOperatingFiles } from
   '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 
+import { OPERATING_RETURN_SCHEMA, inspectOperatingPlanReturn, applyOperatingPlanReturn } from
+  '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs';
+
+export const GRANT_OPERATING_REVIEW_RECEIPT_SCHEMA = 'stellar-forge.grant-operating-review-receipt.v1';
 export const GRANT_OPERATING_SELECTION_SCHEMA = 'stellar-forge.grant-operating-selection.v1';
 export const GRANT_OPERATING_PREPARATION_SCHEMA = 'stellar-forge.grant-operating-preparation.v1';
 export const GRANT_OPERATING_CONTINUATION_SCHEMA = 'stellar-forge.grant-operating-continuation.v1';
@@ -57,9 +61,14 @@ export function validateGrantOperatingSelection(value, source, revision) {
     text(pending.filename, 'Returned procedure filename', 300);
     text(pending.note, 'Procedure receiving note'); receivingTime(pending.openedAt);
     const incoming = inspectOperatingPlan(pending.incoming);
+    if (pending.reviewedReturn !== undefined) {
+      const returned = grantOperatingReturnInput(pending.reviewedReturn);
+      need(sameValue(returned.plan, incoming), 'Keep the pending review with its exact completed original procedure.');
+    }
     const prepared = value.prepared.find(item => item.plan.id === incoming.id);
     need(prepared && pending.planId === incoming.id, 'Keep the unfinished return with its prepared procedure.');
     receiveOperatingPlan(incoming, prepared.plan);
+    if (pending.reviewedReturn !== undefined) validateReviewOrigin(pending.reviewedReturn, prepared);
     const current = grantOperatingContinuationPlan(prepared);
     need(Number.isSafeInteger(pending.comparedRevision) &&
       pending.comparedRevision >= prepared.plan.revisions.length &&
@@ -141,7 +150,44 @@ function receivingTime(value) {
     Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 19) === value.slice(0, 19),
   'Retain the procedure receiving time as a complete UTC timestamp.');
 }
+/** Accept the original procedure or an entire completed original reconciliation review. */
+export function grantOperatingReturnInput(value) {
+  if (value?.schema !== OPERATING_RETURN_SCHEMA)
+    return { plan: inspectOperatingPlan(value), reviewedReturn: null };
+  const reviewedReturn = inspectOperatingPlanReturn(value);
+  need(reviewedReturn.completion !== null,
+    'Complete this return in Returned procedures, then open its complete review JSON here.');
+  const result = applyOperatingPlanReturn(reviewedReturn, { current: reviewedReturn.current });
+  need(sameValue(result.review, reviewedReturn), 'Retain the complete original completed review.');
+  return { plan: inspectOperatingPlan(reviewedReturn.completion.plan), reviewedReturn };
+}
+function validateReviewOrigin(value, prepared) {
+  const result = grantOperatingReturnInput(value);
+  need(result.reviewedReturn, 'Retain the complete original reconciliation review.');
+  receiveOperatingPlan(result.reviewedReturn.current, prepared.plan);
+  receiveOperatingPlan(result.plan, prepared.plan);
+  return result;
+}
+function validateReviewedReturns(prepared) {
+  if (prepared.reviewedReturns === undefined) return;
+  need(Array.isArray(prepared.reviewedReturns), 'Retain the complete received reconciliation reviews.');
+  const ids = new Set(), current = inspectOperatingPlan(prepared.continuation?.plan ?? prepared.plan);
+  for (const entry of prepared.reviewedReturns) {
+    need(plain(entry) && entry.schema === GRANT_OPERATING_REVIEW_RECEIPT_SCHEMA,
+      'Retain the original completed-review receiving entry.');
+    receivingTime(entry.at); text(entry.filename, 'Returned review filename', 300);
+    text(entry.note, 'Reviewed procedure receiving note');
+    const returned = validateReviewOrigin(entry.review, prepared);
+    need(!ids.has(returned.reviewedReturn.id), 'Retain each complete reconciliation review once.');
+    ids.add(returned.reviewedReturn.id);
+    need(entry.resultRevision === returned.plan.revisions.length,
+      'Keep the review result revision separately from later customer work.');
+    const applied = applyOperatingPlanReturn(returned.reviewedReturn, { current });
+    need(applied.alreadyPresent, 'Keep the completed review result in the selected original history.');
+  }
+}
 function validateContinuation(prepared) {
+  validateReviewedReturns(prepared);
   if (prepared.continuation === undefined) return;
   const value = prepared.continuation;
   need(plain(value) && value.schema === GRANT_OPERATING_CONTINUATION_SCHEMA &&
@@ -169,7 +215,8 @@ export function grantOperatingContinuationPlan(prepared) {
 }
 function returnContext(source, review, incoming) {
   validatePlanSources([source]); validatePlanningState(review, [source]);
-  const selection = grantOperatingSelectionOf(review, source), received = inspectOperatingPlan(incoming);
+  const selection = grantOperatingSelectionOf(review, source), receivedInput = grantOperatingReturnInput(incoming);
+  const received = receivedInput.plan, reviewedReturn = receivedInput.reviewedReturn;
   const index = selection.prepared.findIndex(item => item.plan.id === received.id);
   need(index >= 0, 'Open the original native planning review containing this prepared operating-plan identity.');
   const prepared = selection.prepared[index], native = selectedPlan([source], review).plan;
@@ -183,6 +230,10 @@ function returnContext(source, review, incoming) {
     awardRequestUsd: summary.award, projectEndDay: summary.duration };
   need(sameValue(prepared.source, basis) && sameValue(prepared.totals, totals),
     'Receive customer work against the complete original native preparation and its selected totals.');
+  if (reviewedReturn) validateReviewOrigin(reviewedReturn, prepared);
+  const retainedReview = reviewedReturn ? (prepared.reviewedReturns ?? []).find(entry => entry.review.id === reviewedReturn.id) : null;
+  need(!retainedReview || sameValue(retainedReview.review, reviewedReturn),
+    'A different completed review already uses this identity. Keep its original source and prepare a new review.');
   const original = prepared.plan.revisions.at(-1), existing = grantOperatingContinuationPlan(prepared);
   const merged = receiveOperatingPlan(received, existing);
   const packages = prepared.packageIds.map(packageId => {
@@ -193,7 +244,7 @@ function returnContext(source, review, incoming) {
       'Retain the prepared native work and completion measure for package ' + packageId + '.');
     return { packageId, stepId, native: copy(cost), original: copy(baseline) };
   });
-  return { selection, index, prepared, received, existing, merged, packages };
+  return { selection, index, prepared, received, reviewedReturn, retainedReview, existing, merged, packages };
 }
 /** Inspect the whole incoming history before receiving it into the original planning review. */
 export function compareGrantOperatingReturn(source, review, incoming) {
@@ -215,6 +266,14 @@ export function compareGrantOperatingReturn(source, review, incoming) {
     preparedRevision: prepared.plan.revisions.length, previousRevision: existing.revisions.length,
     incomingRevision: received.revisions.length, selectedRevision: merged.plan.revisions.length,
     addedRevisions: merged.addedRevisions, reused: merged.reused,
+    reviewedReturn: context.reviewedReturn ? {
+      id: context.reviewedReturn.id, reviewer: context.reviewedReturn.reviewer,
+      notes: context.reviewedReturn.notes, completedAt: context.reviewedReturn.completion.savedAt,
+      currentRevision: context.reviewedReturn.current.revisions.length,
+      incomingRevision: context.reviewedReturn.incoming.revisions.length,
+      resultRevision: received.revisions.length, decisions: context.reviewedReturn.decisions.length,
+      retained: !!context.retainedReview,
+    } : null,
     originalTitle: original.title, previousTitle: previous.title, incomingTitle: next.title,
     planChanges: PLAN_COMPARISON_FIELDS.filter(field => !sameValue(previous[field], next[field])).map(field =>
       ({ field, original: copy(original[field]), previous: copy(previous[field]), returned: copy(next[field]) })),
@@ -235,29 +294,36 @@ export function compareGrantOperatingReturn(source, review, incoming) {
 export function receiveGrantOperatingReturn(source, review, incoming, {
   at = new Date().toISOString(), filename = '', note, expectedRevision,
 } = {}) {
-  if (note === undefined) note = sameValue(review.operatingSelection?.returnDraft?.incoming, incoming)
+  const returned = grantOperatingReturnInput(incoming);
+  const pendingMatches = pending => !!pending &&
+    sameValue(pending.reviewedReturn ?? pending.incoming, returned.reviewedReturn ?? returned.plan);
+  if (note === undefined) note = pendingMatches(review.operatingSelection?.returnDraft)
     ? review.operatingSelection.returnDraft.note : '';
   receivingTime(at); text(filename, 'Returned procedure filename', 300); text(note, 'Procedure receiving note');
   const comparison = compareGrantOperatingReturn(source, review, incoming);
   if (expectedRevision !== undefined) need(Number.isSafeInteger(expectedRevision) &&
     expectedRevision === comparison.previousRevision, 'The procedure advanced after comparison. Reopen its current return before receiving.');
-  if (comparison.reused) {
-    const next = copy(review);
-    if (sameValue(next.operatingSelection?.returnDraft?.incoming, incoming)) next.operatingSelection.returnDraft = null;
-    return { review: next, comparison, reused: true, addedRevisions: 0 };
-  }
   const next = copy(review), selection = grantOperatingSelectionOf(next, source);
   const prepared = selection.prepared.find(item => item.plan.id === comparison.planId);
-  const current = grantOperatingContinuationPlan(prepared);
-  const received = receiveOperatingPlan(incoming, current);
-  prepared.continuation = { schema: GRANT_OPERATING_CONTINUATION_SCHEMA, plan: received.plan,
-    receipts: [...copy(prepared.continuation?.receipts ?? []), {
-      at, filename, note, fromRevision: comparison.previousRevision, toRevision: comparison.incomingRevision,
-    }] };
-  validateGrantOperatingSelection(selection, source, next.revision);
-  if (sameValue(selection.returnDraft?.incoming, incoming)) selection.returnDraft = null;
-  next.operatingSelection = selection;
-  return { review: next, comparison, reused: false, addedRevisions: received.addedRevisions };
+  if (!comparison.reused) {
+    const current = grantOperatingContinuationPlan(prepared);
+    const received = receiveOperatingPlan(returned.plan, current);
+    prepared.continuation = { schema: GRANT_OPERATING_CONTINUATION_SCHEMA, plan: received.plan,
+      receipts: [...copy(prepared.continuation?.receipts ?? []), {
+        at, filename, note, fromRevision: comparison.previousRevision, toRevision: comparison.incomingRevision,
+      }] };
+  }
+  const reviewAdded = !!returned.reviewedReturn && !comparison.reviewedReturn.retained;
+  if (reviewAdded) {
+    prepared.reviewedReturns = [...copy(prepared.reviewedReturns ?? []), {
+      schema: GRANT_OPERATING_REVIEW_RECEIPT_SCHEMA, at, filename, note,
+      resultRevision: returned.plan.revisions.length, review: copy(returned.reviewedReturn),
+    }];
+  }
+  if (pendingMatches(selection.returnDraft)) selection.returnDraft = null;
+  next.operatingSelection = validateGrantOperatingSelection(selection, source, next.revision);
+  return { review: next, comparison, reused: comparison.reused && !reviewAdded,
+    addedRevisions: comparison.addedRevisions, reviewAdded };
 }
 
 /** Keep the complete unfinished source and review in the original saved planning selection. */
@@ -267,9 +333,12 @@ export function stageGrantOperatingReturn(source, review, incoming, {
   receivingTime(openedAt); text(filename, 'Returned procedure filename', 300); text(note, 'Procedure receiving note');
   const comparison = compareGrantOperatingReturn(source, review, incoming);
   const next = copy(review), selection = grantOperatingSelectionOf(next, source);
+  const returned = grantOperatingReturnInput(incoming);
   selection.returnDraft = { schema: GRANT_OPERATING_RETURN_DRAFT_SCHEMA,
     sourceSha256: source.sha256, nativeRevision: review.revision, planId: comparison.planId,
-    incoming: inspectOperatingPlan(incoming), filename, note, openedAt,
+    incoming: returned.plan,
+    ...(returned.reviewedReturn ? { reviewedReturn: returned.reviewedReturn } : {}),
+    filename, note, openedAt,
     comparedRevision: comparison.previousRevision };
   next.operatingSelection = validateGrantOperatingSelection(selection, source, next.revision);
   return { review: next, comparison };
@@ -277,7 +346,7 @@ export function stageGrantOperatingReturn(source, review, incoming, {
 export function refreshGrantOperatingReturn(source, review) {
   const next = copy(review), selection = grantOperatingSelectionOf(next, source);
   need(selection.returnDraft, 'Open a retained customer return first.');
-  const comparison = compareGrantOperatingReturn(source, next, selection.returnDraft.incoming);
+  const comparison = compareGrantOperatingReturn(source, next, selection.returnDraft.reviewedReturn ?? selection.returnDraft.incoming);
   selection.returnDraft.comparedRevision = comparison.previousRevision;
   next.operatingSelection = validateGrantOperatingSelection(selection, source, next.revision);
   return { review: next, comparison };

@@ -1,0 +1,62 @@
+{
+  "schema": "stellar-forge.commerce-export-reconciliation.v1",
+  "reference": "Authored receiving exercise — no customer records",
+  "scope": {
+    "from": "2026-10-01T00:00:00Z",
+    "through": "2026-10-02T00:00:00Z",
+    "completeness": "selected_scope_complete",
+    "description": "Authored order-export acceptance cases; no Rigby, Septeo or Healthletic customer data"
+  },
+  "currency_scales": {
+    "USD": 2,
+    "JPY": 0
+  },
+  "comparison": {
+    "customer": true,
+    "status": true
+  },
+  "status_pairs": [
+    {
+      "source": "completed",
+      "destination": "won"
+    },
+    {
+      "source": "pending",
+      "destination": "open"
+    }
+  ],
+  "source": {
+    "name": "commerce.csv",
+    "content": "order_id,amount,currency,customer,status\nord-A,120.50,usd,cust-1,completed\nord-B,99.00,usd,cust-2,pending\nord-C,1,JPY,cust-3,completed\nord-D,200.00,USD,cust-4,completed\nord-D,200.00,USD,cust-4,completed\nord-E,10.005,USD,cust-5,completed\n",
+    "bytes": 237,
+    "sha256": "36d3cdb2ff9544b053310eed3e58d086754ee1d69ee4b03b926fd0a63929344d",
+    "system": "Authored Medusa-shaped export",
+    "export_reference": "Acceptance fixture, not API capture",
+    "captured_at": "2026-10-02T01:00:00Z",
+    "amount_unit": "major",
+    "mapping": {
+      "key": "order_id",
+      "amount": "amount",
+      "currency": "currency",
+      "customer": "customer",
+      "status": "status"
+    }
+  },
+  "destination": {
+    "name": "crm.csv",
+    "content": "external_order_id,amount_minor,currency,account_key,state\nord-A,12050,USD,cust-1,won\nord-B,9900,USD,cust-2,open\nord-C,1,JPY,cust-3,won\nord-F,1000,USD,cust-6,won\n",
+    "bytes": 161,
+    "sha256": "9de06ada7e2b0339ec444e911506e780c8d48ee5e4033dc642795055e5b52e4f",
+    "system": "Authored CRM export",
+    "export_reference": "Acceptance fixture, not API capture",
+    "captured_at": "2026-10-02T01:00:00Z",
+    "amount_unit": "minor",
+    "mapping": {
+      "key": "external_order_id",
+      "amount": "amount_minor",
+      "currency": "currency",
+      "customer": "account_key",
+      "status": "state"
+    }
+  }
+}

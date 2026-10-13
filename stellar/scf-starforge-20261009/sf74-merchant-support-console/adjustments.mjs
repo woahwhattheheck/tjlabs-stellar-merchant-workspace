@@ -1,7 +1,8 @@
 import {buyerWorkflowActions,createBuyerWorkbench} from './service-buyer-workbench.mjs';
+import {reviewServiceBuyerDraft,sameServiceBuyerDraftScope,SERVICE_BUYER_DRAFT_LIMIT} from './service-buyer-draft.mjs';
 // MIT. Complete saved-case Service adjustments and original buyer/accountant operation.
 const $=id=>document.getElementById(id),uuid=()=>crypto.randomUUID(),copy=value=>structuredClone(value);
-const state={caseId:null,view:null,buyerView:null,buyer:null,prepared:null,pending:null,busy:false,cases:[],caseOffset:null,runs:[],runOffset:null,events:[],eventOffset:null,buyerInstance:null,labelBasis:null,centerBasis:null,periodBasis:null,accountantReturn:null,buyerScope:null,buyerDraftDirty:false};
+const state={caseId:null,view:null,buyerView:null,buyer:null,prepared:null,pending:null,busy:false,cases:[],caseOffset:null,runs:[],runOffset:null,events:[],eventOffset:null,buyerInstance:null,labelBasis:null,centerBasis:null,periodBasis:null,accountantReturn:null,buyerScope:null,buyerDraftDirty:false,buyerDraftImport:null};
 const text=(id,value)=>{$(id).textContent=String(value??'');};
 const message=(value,error=false)=>{text('message',value);$('message').dataset.error=String(error);};
 const value=id=>$(id).value.trim();
@@ -64,11 +65,12 @@ async function http(path,body){
 }
 async function work(operation){
   if(state.busy)return;
-  state.busy=true;const controls=[...document.querySelectorAll('button,input,select,textarea')].map(node=>[node,node.disabled]);
+  state.busy=true;const buyerForm=$('buyer-form'),buyerWasInert=buyerForm.inert;buyerForm.inert=true;
+  const controls=[...document.querySelectorAll('button,input,select,textarea')].map(node=>[node,node.disabled]);
   for(const [node] of controls)node.disabled=true;
   try{await operation();}
   catch(error){message(error.message,true);}
-  finally{state.busy=false;for(const [node,disabled] of controls)if(node.isConnected)node.disabled=disabled;renderPending();}
+  finally{state.busy=false;for(const [node,disabled] of controls)if(node.isConnected)node.disabled=disabled;buyerForm.inert=buyerWasInert;renderPending();$('buyer-draft-receive').disabled=!state.buyerDraftImport;}
 }
 function options(id,items,getValue,getLabel,{empty='Choose…',append=false}={}){
   const node=$(id),selected=node.value;
@@ -378,6 +380,90 @@ function draftFields(){
     Object.fromEntries([...row.querySelectorAll('[data-label-field]')].map(node=>[node.dataset.labelField,node.value])));
   return {fields,allocations,labels,labelBasis:copy(state.labelBasis),centerBasis:copy(state.centerBasis),periodBasis:copy(state.periodBasis)};
 }
+
+function buyerDraftFieldSpec(){
+  return Object.fromEntries([...$('buyer-form').querySelectorAll('input[id],select[id],textarea[id]')]
+    .filter(node=>node.type!=='file'&&!node.id.startsWith('allocation-')).map(node=>[node.id,{
+      type:node.type==='checkbox'?'boolean':'string',
+      maximum:node.maxLength>0?node.maxLength:65536,
+      ...(node.tagName==='SELECT'?{options:[...node.options].map(option=>option.value)}:{})
+    }]));
+}
+const draftHistoryKey=scope=>draftKey(scope)+':receiving';
+function clearBuyerDraftImport(){
+  state.buyerDraftImport=null;$('buyer-draft-receive').disabled=true;
+  $('buyer-draft-import-review').replaceChildren();
+}
+async function draftReceivingHistory(){
+  const scope=currentDraftScope(),history=await storage('get',draftHistoryKey(scope))??[];
+  options('buyer-draft-receipts',history,row=>row.id,row=>row.receivedAt+' · '+row.file.name,{empty:'Choose a retained draft receipt'});
+  return history;
+}
+async function reviewBuyerDraftFile(){
+  await preserveBuyerDraft();clearBuyerDraftImport();
+  const file=$('buyer-draft-file').files?.[0];
+  if(!file||file.size<1||file.size>SERVICE_BUYER_DRAFT_LIMIT)throw new Error('Choose the complete original buyer draft JSON, up to2MiB.');
+  const bytes=new Uint8Array(await file.arrayBuffer()),source=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);
+  let candidate;try{candidate=JSON.parse(source.charCodeAt(0)===0xFEFF?source.slice(1):source);}catch{throw new Error('Read the complete original buyer draft JSON.');}
+  await inspectBuyer();
+  const scope=currentDraftScope(),draft=reviewServiceBuyerDraft(candidate,{scope,fieldSpec:buyerDraftFieldSpec()});
+  const previous=await storage('get',draftKey(scope))??null;
+  const sha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
+  const receiptId=uuid();
+  state.buyerDraftImport={scope,draft,previous,receiptId,file:{name:file.name,bytes:bytes.length,sha256,source}};
+  detail('buyer-draft-import-review',[
+    ['Original file',file.name+' · '+bytes.length+' bytes · '+sha256],
+    ['Saved draft',draft.savedAt],['Case revision',draft.caseRevision??'Unspecified'],
+    ['Original workflow',scope.caseId+' · '+scope.captureOutcomeId+' · '+scope.buyerWorkspace+' · '+scope.workspaceId],
+    ['Fields / allocations / labels',Object.keys(draft.fields).length+' / '+draft.allocations.length+' / '+draft.labels.length],
+    ['Current saved draft',previous?'Preserved in the receiving record before replacement.':'No earlier local draft.']
+  ]);
+  $('buyer-draft-receive').disabled=false;
+  message('Reviewed the whole original draft. Receive it to restore the editable fields in this workflow.');
+}
+async function receiveBuyerDraft(){
+  const selected=state.buyerDraftImport;if(!selected)throw new Error('Review the original draft file first.');
+  if(state.buyerDraftDirty)throw new Error('The form changed after review. Save it and review the incoming draft again.');
+  await inspectBuyer();
+  const scope=currentDraftScope();
+  if(state.buyerDraftImport!==selected||!sameServiceBuyerDraftScope(scope,selected.scope))
+    throw new Error('The reviewed draft no longer selects this original buyer workflow.');
+  reviewServiceBuyerDraft(selected.draft,{scope,fieldSpec:buyerDraftFieldSpec()});
+  const receipt={schema:'stellar-forge.service-buyer-draft-receiving.v1',id:selected.receiptId,
+    receivedAt:new Date().toISOString(),scope:copy(scope),file:copy(selected.file),
+    previousDraft:copy(selected.previous),receivedDraft:copy(selected.draft)};
+  const db=await idb,key=draftKey(scope),historyKey=draftHistoryKey(scope);
+  await new Promise((accept,reject)=>{
+    const tx=db.transaction('requests','readwrite'),s=tx.objectStore('requests');
+    let error;const read=s.get(key);
+    read.onsuccess=()=>{
+      const current=read.result??null;
+      if(JSON.stringify(current)!==JSON.stringify(selected.previous)){
+        error=new Error('Another tab changed this saved draft. Review the whole incoming file again; its original preview is retained.');tx.abort();return;
+      }
+      const historyRead=s.get(historyKey);
+      historyRead.onsuccess=()=>{
+        const history=historyRead.result??[];
+        if(history.some(row=>row.id===receipt.id)){error=new Error('Reopen the original receiving record before accepting it again.');tx.abort();return;}
+        s.add(receipt,historyKey+':'+receipt.id);
+        s.put([...history,{id:receipt.id,receivedAt:receipt.receivedAt,file:{name:receipt.file.name,bytes:receipt.file.bytes,sha256:receipt.file.sha256}}],historyKey);
+        s.put(copy(selected.draft),key);
+      };
+    };
+    tx.oncomplete=()=>accept();tx.onerror=tx.onabort=()=>reject(error??new Error('The complete original draft and receiving record could not be saved.'));
+  });
+  clearBuyerDraftImport();await restoreBuyerDraft();await draftReceivingHistory();
+  $('buyer-draft-receipts').value=receipt.id;
+  message('Received the complete original draft and restored its editable fields. The previous draft and original file remain in the receiving record.');
+}
+async function selectedDraftReceipt(){
+  const scope=currentDraftScope(),id=required('buyer-draft-receipts');
+  const receipt=await storage('get',draftHistoryKey(scope)+':'+id);
+  if(receipt?.schema!=='stellar-forge.service-buyer-draft-receiving.v1'||receipt.id!==id||!sameServiceBuyerDraftScope(scope,receipt.scope))
+    throw new Error('Select the original receiving record for this buyer workflow.');
+  return receipt;
+}
+
 async function saveBuyerDraft(scope=currentDraftScope()){
   const draft={schema:'stellar-forge.service-buyer-browser-draft.v1',scope,savedAt:new Date().toISOString(),
     caseRevision:state.view?.case.revision??null,...draftFields()};
@@ -388,9 +474,9 @@ async function saveBuyerDraft(scope=currentDraftScope()){
 async function readBuyerDraft(){
   const scope=currentDraftScope(),draft=await storage('get',draftKey(scope));
   if(!draft)throw new Error('No saved draft for this exact capture and buyer workspace.');
-  if(draft.schema!=='stellar-forge.service-buyer-browser-draft.v1'||JSON.stringify(draft.scope)!==JSON.stringify(scope))
+  if(draft.schema!=='stellar-forge.service-buyer-browser-draft.v1'||!sameServiceBuyerDraftScope(draft.scope,scope))
     throw new Error('The saved draft belongs to another buyer selection.');
-  return draft;
+  return reviewServiceBuyerDraft(draft,{scope,fieldSpec:buyerDraftFieldSpec()});
 }
 async function restoreBuyerDraft(){
   const draft=await readBuyerDraft(),fields=draft.fields,action=fields['buyer-action'],selection={};
@@ -400,23 +486,33 @@ async function restoreBuyerDraft(){
   if(action==='credit_coding_save'&&fields['buyer-credit'])selection.creditId=fields['buyer-credit'];
   const inspected=await inspectBuyer(selection);
   if(inspected.buyer.workspaceId!==draft.scope.workspaceId)throw new Error('This alias now opens a different buyer workspace. Keep the original draft and select its original configured owner.');
+  const period=$('buyer-period'),originalPeriod=fields['buyer-period'];
+  if(originalPeriod&&!Array.from(period.options).some(option=>option.value===originalPeriod))
+    period.append(new Option('Original period needs review · '+originalPeriod,originalPeriod));
+  period.value=originalPeriod;renderBuyerWork();
   for(const [id,stored] of Object.entries(draft.fields)){
     const node=$(id);
     if(!node||!$('buyer-form').contains(node)||node.type==='file')continue;
     if(node.type==='checkbox')node.checked=stored===true;
-    else if(node.tagName==='SELECT')node.value=[...node.options].some(option=>option.value===stored)?String(stored):'';
+    else if(node.tagName==='SELECT'){
+      if(stored!==''&&![...node.options].some(option=>option.value===stored))node.append(new Option('Original choice needs review · '+stored,String(stored)));
+      node.value=String(stored);
+    }
     else node.value=String(stored);
     if(id==='period-issue')renderIssue();
   }
   $('allocations').replaceChildren();for(const row of draft.allocations){addAllocation();const element=$('allocations').lastElementChild;
-    element.querySelector('.allocation-center').value=row.center;element.querySelector('.allocation-amount').value=row.amount;
+    const center=element.querySelector('.allocation-center');
+    if(row.center&&!Array.from(center.options).some(option=>option.value===row.center))center.append(new Option('Original centre needs review · '+row.center,row.center));
+    center.value=row.center;element.querySelector('.allocation-amount').value=row.amount;
     element.querySelector('.allocation-project').value=row.project;element.querySelector('.allocation-account').value=row.account;}
   $('asset-labels').replaceChildren();for(const row of draft.labels)addLabel(row);
   state.labelBasis=copy(draft.labelBasis);state.centerBasis=copy(draft.centerBasis);state.periodBasis=copy(draft.periodBasis);
-  $('return-file').value='';clearReturnPreview();buyerFields();renderBuyerWork();state.buyerDraftDirty=false;
+  $('return-file').value='';clearReturnPreview();buyerFields();state.buyerDraftDirty=false;
   text('buyer-draft-status','Restored draft saved '+draft.savedAt+'. Review the current source and rechoose any accountant return file.');
 }
 function resetBuyerFields(){
+  clearBuyerDraftImport();$('buyer-draft-file').value='';options('buyer-draft-receipts',[],row=>row.id,row=>row.id);
   $('buyer-form').reset();$('allocations').replaceChildren();$('asset-labels').replaceChildren();
   for(const id of ['buyer-packet','buyer-credit','buyer-period','center-picker','period-edit','period-issue','issue-kind'])options(id,[],row=>row.id,row=>row.id);
   state.buyer=null;state.buyerScope=null;state.buyerDraftDirty=false;state.labelBasis=null;state.centerBasis=null;state.periodBasis=null;
@@ -439,6 +535,7 @@ async function selectBuyerWorkflow(group){
   const draft=await storage('get',draftKey(currentDraftScope()));
   text('buyer-draft-status',draft?'A draft saved '+draft.savedAt+' is available. Choose Restore saved draft to review it.':'No saved draft for this workflow.');
   const url=new URL(location.href);url.searchParams.set('buyer',group.buyer.alias);url.searchParams.set('capture',group.capture.id);url.searchParams.set('buyerWorkspaceId',group.buyer.workspaceId);history.replaceState(null,'',url);
+  await draftReceivingHistory();
   message('Opened the original capture and buyer workflow.');
 }
 async function useBuyerReferences(row){
@@ -644,6 +741,11 @@ $('buyer-form').addEventListener('submit',event=>{event.preventDefault();void wo
 click('execute-buyer-intent',()=>{const intentId=required('buyer-intent-picker');if(!buyerRows().some(row=>row.id===intentId))throw new Error('Select a saved action from this exact capture and buyer workflow.');return effect('buyer-execute',{intentId,requestId:uuid()},'Execute saved buyer action');});
 click('buyer-draft-save',()=>saveBuyerDraft());click('buyer-draft-restore',restoreBuyerDraft);
 click('buyer-draft-download',async()=>saveJson('service-buyer-draft.json',await readBuyerDraft()));
+click('buyer-draft-review',reviewBuyerDraftFile);click('buyer-draft-receive',receiveBuyerDraft);
+$('buyer-draft-file').addEventListener('change',clearBuyerDraftImport);
+click('buyer-draft-refresh-receipts',draftReceivingHistory);
+click('buyer-draft-download-receipt',async()=>saveJson('service-buyer-draft-receiving-'+required('buyer-draft-receipts')+'.json',await selectedDraftReceipt()));
+click('buyer-draft-download-previous',async()=>{const receipt=await selectedDraftReceipt();if(!receipt.previousDraft)throw new Error('This receiving record has no earlier local draft.');saveJson('service-buyer-draft-before-'+receipt.id+'.json',receipt.previousDraft);});
 click('buyer-draft-clear',async()=>{await storage('delete',draftKey(currentDraftScope()));text('buyer-draft-status','Discarded this workflow’s saved draft. Current form fields remain available.');});
 for(const [id,target,key] of [['saved-period-review','period-review-id','reviewId'],['saved-delivery-close','delivery-close-id','closeId'],['saved-return-close','return-close-id','closeId']])change(id,async()=>{const row=buyerRows().find(row=>row.id===value(id));if(row){$(target).value=row.reference[key];if(target==='return-close-id')clearReturnPreview();}});
 click('open-accountant',async()=>{await http('/api/adjustments/accounting/open',{accountingId:required('accountant-workspace')});message('Opened the original accountant workspace.');});
