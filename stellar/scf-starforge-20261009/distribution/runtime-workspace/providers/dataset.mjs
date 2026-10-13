@@ -4,9 +4,9 @@ import { need } from "../storage.mjs";
 
 export default {
   schema: APPLICATION_PROVIDER_SCHEMA, id: "dataset", order: 420,
-  catalog({ common, field }) { return [{ id: 'dataset', command: 'dataset-workspace', title: 'Dataset preview', terminal: false,
-    description: 'Open an original dataset file or retained dataset state with its native query and preview controls.',
-    fields: [field('datasetFile', 'Dataset file'), field('stateDirectory', 'Retained dataset state'), field('catalogDirectory', 'Catalog directory'),
+  catalog({ common, field }) { return [{ id: 'dataset', command: 'dataset-workspace', title: 'Dataset queries', terminal: false,
+    description: 'Work with original dataset queries, named working studies, retained snapshots and complete result exports.',
+    fields: [field('datasetFile', 'Dataset file'), field('stateDirectory', 'Retained dataset state'), field('catalogDirectory', 'Catalog directory'), field('studiesDirectory', 'Private query studies directory'),
       field('resource', 'Resource URL', 'text'), ...common] }]; },
   validateSettings(type, settings) {
     need(Boolean(settings.datasetFile) !== Boolean(settings.stateDirectory),
@@ -17,7 +17,9 @@ export default {
     const { args, inputs, createDirectories, path, option } = applicationPreparation(settings, inputPath);
     await path('datasetFile', 'file'); await path('stateDirectory', 'directory', false, true);
     await path('catalogDirectory', 'directory', false, true);
+    await path('studiesDirectory', 'directory', false, true);
     option('--dataset', settings.datasetFile); option('--state', settings.stateDirectory);
+    option('--studies', settings.studiesDirectory);
     option('--catalog', settings.catalogDirectory); option('--resource', settings.resource);
     return { args, inputs, createDirectories };
   },
