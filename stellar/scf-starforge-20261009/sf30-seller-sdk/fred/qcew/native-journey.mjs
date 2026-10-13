@@ -139,7 +139,7 @@ export async function runQcewNativeJourney({directory,intakeDirectory,cpiFile,pr
       need(before.sha256===after.sha256&&before.bytes.equals(after.bytes),'The complete original county source changed during receiving.');
       const retainedCpi=await getFredCapture(receivedProject,cpiCapture.captureSha256);
       need(canonical(retainedCpi)===canonical(cpiCapture),'The original complete CPI table changed during receiving.');
-      return {originalMember:originalFile.member,bytes:after.bytes.length,sha256:after.sha256,cpiCaptureSha256:cpiCapture.captureSha256};
+      return {originalMember:originalFile.member??originalFile.file,bytes:after.bytes.length,sha256:after.sha256,cpiCaptureSha256:cpiCapture.captureSha256};
     });
     const reopenedBundle=await exportFredProject({directory:receivedProject,qcewSourceContexts:sourceContexts});
     await step('export_received_project_and_replay_receiving',async()=>{
