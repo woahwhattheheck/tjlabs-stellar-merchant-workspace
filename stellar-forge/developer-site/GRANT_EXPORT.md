@@ -109,3 +109,7 @@ Keep generated drafts and prepared files in the original internal application wo
 
 See [the submission guide](GRANT_SUBMISSION.md) for editing and form mapping, and [review rounds](GRANT_REVIEW_ROUNDS.md) for the existing named review and author handover.
 
+
+## Complete editable offline application
+
+Add **--offline-editor** to the existing export command to include **edit.html**. It contains the complete final native draft and the actual original Prepare submission runtime, with the existing answers, issuer fields and limits, planning, source editions, histories and handover. The original review.html, draft.json and field exports are retained. The complete export manifest includes the added HTML bytes and hash. Open edit.html in a supported browser, then download an updated complete HTML or native JSON after editing. [GRANT_OFFLINE.md](./GRANT_OFFLINE.md) covers browser export, phone opening, local source receiving and return through the authoritative draft importer.
