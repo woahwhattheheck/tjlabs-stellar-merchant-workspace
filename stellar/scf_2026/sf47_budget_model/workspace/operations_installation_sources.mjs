@@ -3,6 +3,7 @@ import {Sha256, sha256File} from './operations_installation_source_hash.mjs';
 import {bindingTemplate, prepareInstallation, renderWorkorder} from '/installation-prepare-core.mjs';
 import {composeCustomerProgramme, programmeFiles} from '/installation-workorders/customer-programme-core.mjs';
 import {createCommissioningReceivingDesk} from './operations_installation_commissioning.mjs';
+import {createSourceCollectionDesk, validateCollection} from './operations_installation_source_collection.mjs';
 import {currentStaffContext, staffDeskStorageKey, assertStaffRequestActor} from './staff-session.mjs';
 
 const SCHEMA='stellar-forge.installation-source-desk.v1';
@@ -173,7 +174,7 @@ export function mountInstallationSources(root,bridge){
   activeCopies.set(pointerKey,copyId);
   const initial={schema:SCHEMA,scope,open:false,tab:'files',draftId:null,revision:null,work:null,note:'',newTitle:'',
     upload:{filename:'',mediaType:'application/json',sourceUrl:'',observedAt:''},
-    caseForm:null,pendingId:null,preparationId:null,profileWork:null,commissioningWork:null,
+    caseForm:null,pendingId:null,preparationId:null,profileWork:null,commissioningWork:null,collectionWork:null,
     inspectionFileId:null,notice:'',error:'',rejected:[],copyName:'Source working copy',rawFields:{},fieldErrors:{},historyRevisionText:null};
   let state=clone(initial),alive=true,busy=false,hostBusy=false,initialized=false;
   let saved=null,edition=null,heads=[],catalogue=null,prepared=null,inspection=null,request=null,chosenFile=null;
@@ -192,6 +193,12 @@ export function mountInstallationSources(root,bridge){
     requireEdit,changed,render,issue,esc,pretty,stable,header,table,empty,hint,btn,field,
     api:(suffix,value)=>bridge.api(prefix+'/'+state.draftId+suffix,value),
     download:downloadBlob
+  });
+  const collection=createSourceCollectionDesk({
+    state:()=>state,draft:()=>saved,displayedDraft:()=>selectedDraft(),
+    request:id=>requestRecords.get(id),allRequests:()=>[...requestRecords.values()],pending:()=>state.pendingId,
+    requireEdit,changed,persistNow,parkWorking,render,snapshot,available,hash,base64,checkedFile,clone,esc,pretty,header,table,empty,hint,btn,
+    issue,recoverRequest,refreshCurrent:refreshSelectedCopy,readonly:()=>readonly()||historic(),editing:()=>editing(),download:downloadBlob
   });
   function snapshot(){return {
     schema:SCHEMA,workingCopySchema:WORKING_COPY,scope:clone(scope),staffContext:clone(staffContext),
@@ -304,6 +311,8 @@ export function mountInstallationSources(root,bridge){
     const merged=mergeRequests(requests),pending=next.pendingId?merged.get(next.pendingId):null;
     if(next.pendingId&&(!pending||pending.draftId!==next.draftId))throw new Error('The complete pending original request is missing from this copy.');
     checkedFile(value.selectedFile);
+    if(next.collectionWork!==null&&next.collectionWork!==undefined)
+      validateCollection(next.collectionWork,{hash,checkedFile,draftId:next.draftId,requests:[...merged.values()]});
     return {...value,state:{...clone(initial),...next,rawFields:next.rawFields||{},fieldErrors:next.fieldErrors||{}},
       requests:[...merged.values()],pendingRequest:pending||null,current:value.current??value.saved??null,
       selected:value.selected??value.saved??null,selectedFile:value.selectedFile??null,earlierCopies:value.earlierCopies||[]};
@@ -434,7 +443,8 @@ export function mountInstallationSources(root,bridge){
     root.setAttribute('aria-busy',String(busy||hostBusy||copyLoading));
     for(const node of root.querySelectorAll('button,input,textarea,select')){
       const action=node.dataset.sourceAction;
-      if(action==='working-download'){node.disabled=false;continue;}
+      if(action==='working-download'||action==='collection-download'){node.disabled=false;continue;}
+      if(action==='collection-pause'){node.disabled=!collection.running();continue;}
       const liveDisabled={
         'working-open-saved':!selectedLocalCopy,
         'save-selection':!saved||historic()||!state.work?.dirty,
@@ -501,7 +511,7 @@ export function mountInstallationSources(root,bridge){
     const latest=await bridge.api(prefix+'/'+id);
     const value=revision===null||revision===latest.revision?latest:await bridge.api(prefix+'/'+id+'?revision='+revision);
     if(!available()||epoch!==generation)return;
-    state.draftId=id;state.commissioningWork=null;state.rawFields={};state.fieldErrors={};state.historyRevisionText=null;acceptState(latest,{replace:true});
+    state.draftId=id;state.commissioningWork=null;state.collectionWork=null;state.rawFields={};state.fieldErrors={};state.historyRevisionText=null;acceptState(latest,{replace:true});
     if(value.revision!==latest.revision){
       state.revision=value.revision;
       state.work={draftId:id,baseRevision:value.revision,selectionText:value.selection?pretty(value.selection):'',dirty:false};
@@ -522,7 +532,7 @@ export function mountInstallationSources(root,bridge){
     await parkWorking('Before creating another source preparation');if(!available())return;
     const id='source-desk-'+crypto.randomUUID().replaceAll('-','');
     state.rawFields={};state.fieldErrors={};state.historyRevisionText=null;edition=null;prepared=null;inspection=null;
-    state.draftId=id;state.work=null;state.caseForm=null;state.profileWork=null;state.commissioningWork=null;state.revision=null;saved=null;
+    state.draftId=id;state.work=null;state.caseForm=null;state.profileWork=null;state.commissioningWork=null;state.collectionWork=null;state.revision=null;saved=null;
     return issue('create',{title},0);
   }
   function verifyReceipt(value,original){
@@ -567,7 +577,7 @@ export function mountInstallationSources(root,bridge){
     }catch(error){state.error='Saved original request; refresh its current case to finish readback. '+(error.message||String(error));changed();}
     return value;
   }
-  async function issue(action,data,expected=saved?.revision){
+  async function issue(action,data,expected=saved?.revision,onPrepared=null){
     checkContext();
     if(readonly())throw new Error(bridge.readOnlyReason?.()||'The operating workspace is busy.');
     if(pending())throw new Error('Recover the original request before recording another change.');
@@ -580,6 +590,7 @@ export function mountInstallationSources(root,bridge){
     const original={schema:SCHEMA,caseId,draftId:state.draftId,body,createdAt:new Date().toISOString(),
       requestSha256:hash(stable({schema:SCHEMA,caseId,draftId:state.draftId,body})),
       editorText:state.work?.selectionText??null,state:'PREPARED'};
+    if(onPrepared)onPrepared(original);
     // Full upload and request bytes must be retained before their first POST.
     await retainRequest(original);
     state.pendingId=body.requestId;request=original;changed();await persistNow();
@@ -602,6 +613,21 @@ export function mountInstallationSources(root,bridge){
       original.state='UNRESOLVED';request=original;await retainRequest(original);throw error;
     }
     return adoptReceipt(value,original);
+  }
+  async function recoverRequest(value){
+    checkContext();validateRequest(value);
+    if(value.draftId!==state.draftId||value.caseId!==caseId)
+      throw new Error('Open this collection in its original current source draft before recovering its request.');
+    if(state.pendingId&&state.pendingId!==value.body.requestId)
+      throw new Error('Recover the selected original source request before continuing another collection file.');
+    let original=mergeRequests([value]).get(value.body.requestId);
+    if(original.state==='REJECTED'&&!original.receipt)
+      throw new Error('Keep the rejected original request in its history and review the corrected collection row before creating another request.');
+    state.pendingId=original.body.requestId;request=original;changed();
+    original=await retainRequest(original);request=original;await persistNow();
+    if(original.receipt)return adoptReceipt(original.receipt,original);
+    const result=await readOriginal();
+    return result?.state==='NOT_RECORDED'?sendOriginal(request):result;
   }
   async function readOriginal(){
     const original=request;if(!original)throw new Error('No original request is pending.');
@@ -994,7 +1020,7 @@ export function mountInstallationSources(root,bridge){
   }
   function filesView(){
     const selected=files();
-    return header('Complete original files','Keep the original bytes, receiving filename, source reference and observation time together.')+
+    return collection.render()+header('Complete original files','Keep the original bytes, receiving filename, source reference and observation time together.')+
       '<div class="source-desk-upload"><label>Choose complete original file<input type="file" data-source-upload data-source-edit></label>'+
       (chosenFile?hint('Selected '+chosenFile.name+' · '+chosenFile.size+' bytes. The complete input is retained before its first request.'):'')+
       '<div class="source-desk-fields">'+field('Receiving filename','upload.filename',state.upload.filename)+
@@ -1368,6 +1394,7 @@ export function mountInstallationSources(root,bridge){
       if(target.matches('[data-source-copy-name]')){state.copyName=target.value;changed();return;}
       if(target.matches('[data-source-revision]')){state.historyRevisionText=target.value;changed();return;}
       if(target.matches('[data-source-new-title]')){state.newTitle=target.value;changed();return;}
+      if(collection.edit(target))return;
       if(target.matches('[data-source-binding]')){bindingEdit(target);return;}
       if(target.matches('[data-source-field]')&&target.tagName!=='SELECT')dispatchField(target);
     }catch(error){fieldFailure(target,error);}
@@ -1378,6 +1405,8 @@ export function mountInstallationSources(root,bridge){
     try{
       if(target.matches('[data-source-working-copy]')){selectedLocalCopy=target.value;controls();return;}
       if(target.matches('[data-source-working-file]')){const file=target.files?.[0];run(()=>openWorkingFile(file));return;}
+      if(target.matches('[data-source-collection-files]')){const selected=Array.from(target.files||[]);run(()=>collection.readFiles(selected));return;}
+      if(collection.edit(target)){render();return;}
       if(commissioning.edit(target))return;
       if(target.matches('[data-source-upload]')){
         if(!editing())return;
@@ -1413,8 +1442,11 @@ export function mountInstallationSources(root,bridge){
     const target=event.target.closest('[data-source-action]');if(!target||!root.contains(target)||target.disabled)return;
     event.preventDefault();const action=target.dataset.sourceAction;
     if(action==='working-download'){snapshotDownload();status();return;}
+    if(action==='collection-download'){own(Promise.resolve().then(()=>collection.action(action,target))).catch(error=>{state.error=error.message||String(error);status();});return;}
+    if(action==='collection-pause'){collection.pause();controls();status();return;}
     if(action==='close'){own(closeView()).catch(error=>{state.error=error.message;status();});return;}
     run(async()=>{
+      if(action.startsWith('collection-'))return collection.action(action,target);
       if(action==='working-refresh')return refreshCopies();
       if(action==='working-fork')return forkWorking();
       if(action==='working-open-legacy')return receiveCopy(await legacyEnvelope());
@@ -1494,7 +1526,7 @@ export function mountInstallationSources(root,bridge){
     });
   });
   const beforeUnload=event=>{
-    if(workingDirty()||pending()||storageError||persistedGeneration<generation){
+    if(workingDirty()||collection.collectionDirty()||pending()||storageError||persistedGeneration<generation){
       event.preventDefault();event.returnValue='';
     }
   };
