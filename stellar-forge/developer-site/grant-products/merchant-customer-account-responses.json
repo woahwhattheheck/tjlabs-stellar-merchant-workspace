@@ -1,0 +1,119 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "merchant-customer-account-responses",
+  "heading": "## Merchant settlement, customer billing and accountant receiving",
+  "sources": [
+    {
+      "id": "merchant-customer-account-guide",
+      "label": "Complete customer account publication, offline responses and staff receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/CUSTOMER_ACCOUNT_RESPONSES.md",
+      "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+      "editions": [
+        {
+          "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+          "git_blob": "c8914e5d24e7332f618d3d25f726a59ac74c8ef4",
+          "sha256": "189a1ee3a6cd3837e55790b6505888e62bea1a7c8d0c8681ffaa6d1191f99742",
+          "bytes": 15657
+        }
+      ]
+    },
+    {
+      "id": "merchant-customer-account-model",
+      "label": "Original customer response normalization and dated review rules",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/customer-account-response.mjs",
+      "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+      "editions": [
+        {
+          "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+          "git_blob": "58e5ad33ad8c481472a2bc549b974303e3d3cfee",
+          "sha256": "911eb74a92bbfa415d2edb0c7718bfcfff1bd1db055f10cb76737b46e459e752",
+          "bytes": 15145
+        }
+      ]
+    },
+    {
+      "id": "merchant-customer-account-workspace",
+      "label": "Original atomic account publication, source receiving and Collections decisions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/customer-account-response-workspace.mjs",
+      "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+      "editions": [
+        {
+          "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+          "git_blob": "5bfa2daa7dc8a10c34968c039e52f0d542d9b787",
+          "sha256": "136974cb8327d34d1ca4dfd6e75fbe106065c0b9740a65982e2491c6b19f062f",
+          "bytes": 17575
+        }
+      ]
+    },
+    {
+      "id": "merchant-customer-account-customer-desk",
+      "label": "Complete offline customer account and editable invoice response desk",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/public/customer-account-customer.mjs",
+      "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+      "editions": [
+        {
+          "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+          "git_blob": "6de3a05d8eb9161709ed0676e4771f6586d5159e",
+          "sha256": "c51050fb9bae9bd9df0b43e193a887dfad445eb2474fd4a7d752c3d806defc79",
+          "bytes": 20073
+        }
+      ]
+    },
+    {
+      "id": "merchant-customer-account-staff-desk",
+      "label": "Staff publication, response intake, current invoice review and retained forms",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/public/customer-account-response.mjs",
+      "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+      "editions": [
+        {
+          "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+          "git_blob": "3560de1f81ddfb6260fa348c1b340cbf0686fc47",
+          "sha256": "fbf82502559f31056bd228da6e04b8c80574dd53f9a7444f1435c6e647533fd5",
+          "bytes": 20094
+        }
+      ]
+    },
+    {
+      "id": "merchant-customer-account-agent-guide",
+      "label": "Complete merchant MCP, typed client and durable CLI customer workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_CUSTOMER_RESPONSES.md",
+      "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+      "editions": [
+        {
+          "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+          "git_blob": "a15edbf850d9eab71dfe62d6717bb7ca6146f147",
+          "sha256": "1400383743fdab28ec554c7d07db38d3c8457e95bb392317043eef25cb1a6f41",
+          "bytes": 12878
+        }
+      ]
+    },
+    {
+      "id": "merchant-customer-account-agent-cli",
+      "label": "Original saved-preview preparation, execution, reconciliation and complete files",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/accounting-receivables-cli.mjs",
+      "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+      "editions": [
+        {
+          "commit": "03b310b8998f420dfa4cc71647c054f123073954",
+          "git_blob": "54e1f674a330e480323a81555ba2111751497883",
+          "sha256": "fcb6aa103e1d7b471b37b39e4c13a8a5198e1311045c725655711ea70c05636b",
+          "bytes": 41949
+        }
+      ]
+    }
+  ]
+}
