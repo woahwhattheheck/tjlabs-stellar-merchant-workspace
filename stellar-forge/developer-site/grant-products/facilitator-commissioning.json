@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/facilitator-commissioning/OPERATING.md",
-      "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+      "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
       "required": true,
       "editions": [
         {
@@ -17,6 +17,12 @@
           "git_blob": "43ec3e8f7b295793f0abb11f9298268e41a1fba9",
           "bytes": 38697,
           "sha256": "c2fdc7ca16994319800f1349407920725ce0c2cc27a4bed1077c841329af05c7"
+        },
+        {
+          "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+          "git_blob": "b43df78a538999581b1f6652bae65576b51072a9",
+          "bytes": 40089,
+          "sha256": "f0b41254eac82da48667d73fdb5070c3ff868dc01a17cb6462068b1d81cf6b3a"
         }
       ]
     },
@@ -111,7 +117,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/facilitator-commissioning/receive-operator.mjs",
-      "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+      "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
       "required": true,
       "editions": [
         {
@@ -119,6 +125,12 @@
           "git_blob": "cee1f22db16e60d51158b6f4b85a96df050b2112",
           "bytes": 18174,
           "sha256": "b90de57a7b3324177b785b3f179a2887f2f4110d6aca18061135bbc70c1e7bea"
+        },
+        {
+          "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+          "git_blob": "a067ce70fca1005facea9966a8f2828775811cd6",
+          "bytes": 19843,
+          "sha256": "d5718c45558290718a5ca15c9a6464bf541d62829d99fb74912ac976a10a378c"
         }
       ]
     },
@@ -153,6 +165,108 @@
           "git_blob": "0a7abb1cd77cced1b5ffff069a9ba48fcbdc2a58",
           "bytes": 4940,
           "sha256": "6e25c2baa4a2566cd439aee250b48b2e88245d7eb78dda8920ca916eba5e91bc"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-customer-guide",
+      "label": "Complete customer agent installation and same-job receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/CUSTOMER_AGENT.md",
+      "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+          "git_blob": "5f7ce30843b56976245ac9e286dd446513a85c7b",
+          "bytes": 22094,
+          "sha256": "c0a00fae93b8ff76a655348758b6180040c4cb983633fd3502bc2a5afd501812"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-customer-agent",
+      "label": "Original authenticated customer, full command recovery and complete file receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/agent-customer.mjs",
+      "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+          "git_blob": "a0160a42162b1d68521b3988a5f3875a2ce827c5",
+          "bytes": 30338,
+          "sha256": "94468be5dd00cd15ba91a700f7b129aaa29e25c3cf8d3e7ce5609d1362d1f8bd"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-customer-provider",
+      "label": "Installed Merchant provider and consumed whole-product receiving instructions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/agent-provider.mjs",
+      "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+          "git_blob": "98b37686191f6cc8e7c61f1a856622eede4fad8a",
+          "bytes": 2729,
+          "sha256": "b4aabbf779ba8f028bcd8977fc9ebef5cf56e3da4131f4a229fbe193a650ce5c"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-customer-contracts",
+      "label": "Exact typed customer source, command, history and file operation contracts",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/agent-contracts.mjs",
+      "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+          "git_blob": "5551ed3e1280ccf1f1a8751ee8c2899b434a0182",
+          "bytes": 9965,
+          "sha256": "eaebf8d01a06adaacdc12f1ffecef79fc6d1b73def43a115966074584ee10474"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-customer-client",
+      "label": "Typed customer client with complete original history pagination",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/agent-client.mjs",
+      "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+          "git_blob": "ffa8138155e99159fe8c9b22a7adf175a95d7b15",
+          "bytes": 2672,
+          "sha256": "3408d472bed99dc01f74972fc6ff943a01a57bfddf09b4b04f350ddc64640119"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-customer-command",
+      "label": "Installed customer command and complete hash-checked download receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/agent-cli.mjs",
+      "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+      "required": true,
+      "editions": [
+        {
+          "commit": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+          "git_blob": "8a4d8f44ef6b759d4e022e24b90cfa21e59a55b9",
+          "bytes": 6911,
+          "sha256": "51158da065b559e9cbf53faf2284e418f4c34525e7cd05a31fb0c76e8cf1a7a2"
         }
       ]
     }
