@@ -1,6 +1,6 @@
 # Operate supplier costs, tariffs, recorded usage and customer pricing
 
-Use one saved merchant pricing workspace from its original traffic capture through supplier-source review, cost allocation, graduated and volume tariff comparisons, recorded usage reviews, pricing proposals, customer quotation and receiving. The original customer case carries the selected price into accepted implementation, Service work and complete editable handover. The browser, merchant MCP and CLI use the same sources, immutable editions and revision checks.
+Use one saved merchant pricing workspace from its original traffic capture through supplier-source review, cost allocation, complete commercial history, unfinished scenario decisions, graduated and volume tariff comparisons, recorded usage reviews, pricing proposals, customer quotation and receiving. The original customer case carries the selected price into accepted implementation, Service work and complete editable handover. The browser, merchant MCP and CLI use the same sources, immutable editions and revision checks.
 
 This workflow is included in the Stellar merchant product as `revenue-workspace`, `merchant-tariffs`, `merchant-performance` and `merchant-mcp pricing`. Its source and browser use the existing SF97 engine. The MCP interface uses the original merchant MCP runtime. Select the merchant’s existing payment, database or provider runtime separately when starting that merchant.
 
@@ -45,6 +45,44 @@ Startup prints the private pricing `url`, `planningUrl` and `costsUrl`. Open `ur
 Enter unit-price quotations, quote basis, known assumptions and intended monthly paid-request targets explicitly. Leave unknown costs unknown. The original observer’s finished HTTP-2xx response count measures successful HTTP responses; provider quota units, paid settlements and bank receipts remain separate records. Original retention and selected-period limits remain visible when a history cannot supply the whole requested period.
 
 Optional `--supplier-usage ORIGINAL_USAGE_JSON` and `--accounting-report ORIGINAL_ACCOUNTING_JSON` expose the selected original context files for capture. Their units and accounting groups retain their original meaning. A provider’s dispatch allowance does not determine its billed monetary cost.
+
+### Reopen the complete commercial history
+
+The recent-review selector is a starting point. Open **Commercial history** in
+the same Pricing workspace to find every original saved review and prepared
+price decision. Select reviews or price decisions, then use literal text,
+saved UTC dates, original observation/source and route scope to narrow the
+complete retained chain. The page can show 25, 50 or 100 entries at a time.
+
+Opening history fixes the selected original revision. New saves in another
+window leave that historical selection stable while you move between pages.
+Refresh explicitly to select the later complete history. This read selection
+keeps the working Pricing revision separate: an old review does not become the
+current draft merely because you inspected it.
+
+An older review can supply an original file download, either side of a
+comparison, reusable assumptions or the complete **Prepare price change**
+source. The browser retains that older selection even when it is outside the
+recent-review list. Selecting different comparison inputs clears the previous
+result until the actual comparison has run. A prepared price decision reopens
+its original files and existing release continuation. The decision record is
+historical; release receipts displayed beside it describe their current saved
+state.
+
+The same history reader works without a live merchant listener:
+
+~~~sh
+starforge revenue-workspace \
+  --commercial-history reviews \
+  --state /private/merchant/pricing-workspace \
+  --output /private/merchant/reviews-page.json
+~~~
+
+Use `decisions` for prepared price decisions and
+`--history-query ORIGINAL_QUERY_JSON` to continue an exact returned selection
+or apply the documented filters. Output files are private and created
+exclusively. The [complete history guide](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/HISTORY.md)
+defines the native request, fixed original head and page cursor.
 
 ## 2. Retain original supplier documents
 
@@ -93,6 +131,57 @@ Use the original scenario page at `planningUrl` for modeled demand, fixed-cost a
 When a seller price change is intended, use the original repricing workflow. Select the complete ordered payment choice, enter the exact atomic amount as a string, inspect its preview and save the source-bound decision. The [pricing operating guide](../../stellar-forge/mcp-merchant-operator/PRICING.md) and [planning guide](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/PLANNING.md) describe those native contracts.
 
 For deployment, the pricing workspace can also be opened with its original `--source-package`, existing `--release-store` and selected `--release-runtime` file. Supply that complete source/release selection together. Continue the saved repricing decision through the original retained-release stage, comparison, selection and restart workflow. An economics backup preserves pricing work; external merchant releases and runtimes keep their own operating records.
+
+### Retain an unfinished scenario decision
+
+Open **Scenario planning** against the selected original review and name the
+decision in **Unfinished decision work**. Enter alternatives, route quotations,
+volume assumptions, fulfillment/challenge costs, shared fixed costs and
+optional contribution or margin targets. Raw partial values remain in the
+form until the original calculator accepts a complete calculation.
+
+Choose **Save working copy** to retain those inputs, the selected scenario and
+service page, the original pricing source and any exact pending final-save
+request. Reopen the named copy or an earlier **Original revision** when
+continuing the decision. Use **Save as new copy** to branch a distinct
+commercial proposal without changing the original history. A source review
+remains fixed throughout one working-copy chain.
+
+Two browser windows can keep distinct work. If both save the same copy, the
+native predecessor check accepts one next revision and retains the other
+form for explicit reopening or a separate copy. An interrupted save keeps its
+original request for **Retry working-copy save**. Later edits remain
+available for their own following save.
+
+**Download unfinished inputs** retains the current form directly in JSON,
+including values that are not yet valid calculation inputs.
+**Export saved revision** instead downloads the exact selected saved record.
+Receive either file with **Receive as new copy**; the native receiver checks
+the original pricing-source identity and records the received copy under a
+new local identity. Keep the same import request after an interrupted
+response. An explicit invalid-package rejection allows a corrected file.
+
+When ready, use **Calculate comparison**, review every alternative and choose
+**Save comparison**. Before dispatch the browser saves the exact final
+request in its working history. After a lost response, reopen and choose
+**Recover pending comparison save**. A definite original validation rejection
+returns the raw form to editing; an uncertain response keeps the same request
+available for recovery.
+
+The finished comparison offers **Complete decision review**, **Plan JSON**,
+**Comparison CSV** and its original merchant terms. The script-free decision
+HTML includes the saved baseline and alternatives, exact totals, unknown cost
+coverage, all route results, targets and suggestions, changed assumptions and
+original source/payment identities. It reads the saved result and its original
+observed scope. Review the selected source, period, label and exact amounts
+before using the document with a customer.
+
+The [full unfinished-work guide](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/WORKING_COPIES.md)
+covers native list/load/save/export/import commands, authenticated routes and
+complete backup/restore. Those state-only commands reopen the original saved
+pricing source without requiring a live seller configuration. The
+[planning guide](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/PLANNING.md)
+retains the calculator's original commercial units and validation rules.
 
 ## 5. Compare graduated and volume tariffs
 
@@ -301,6 +390,35 @@ starforge merchant-tariffs receive \
 
 The receiver matches each referenced original pricing version and the exact source, request and manifest identities before receiving the plans and selections. Reopen a saved tariff plan, download its original JSON/CSV, reopen the selected original scenario and pricing version, then inspect any saved price decision and its files. Continue ordinary editing and next pricing review in that received directory. An interrupted portfolio receive retains the same complete input and original identities for continuation.
 
+### Preserve the unfinished decision in the complete handover
+
+A raw-input or selected-working-revision JSON carries its decision and exact
+source identities. The complete **WORKSPACE_BACKUP** carries the actual
+original pricing files and all selected working-copy records. The backup
+captures those working histories before its pricing-source prefix, so every
+referenced original source is included. Receive it into the selected new
+private directory through the same Supplier costs/Applications/CLI restore,
+then reopen the working copy against that received original source.
+
+Keep the companion tariff portfolio with the backup when handing over tariff
+plans and their retained selections. Commercial cases retain their own
+quotation, response and performance materials; invoices, agreements and
+account exports remain in the original accounting workspace. Select the
+complete files appropriate to the customer's operation:
+
+| Original retained unit | What the receiving operator can continue |
+| --- | --- |
+| Pricing `WORKSPACE_BACKUP` | Original reviews and decisions, supplier sources/cost editions, finished comparisons, unfinished working histories and saved performance operations. |
+| Original tariff portfolio | Complete tariff plans and their exact selections in the same restored Pricing workspace. |
+| Commercial case package | Customer scope, quotation editions, accepted responses, complete pricing/performance material and implementation history. |
+| Accounting workspace exports | Original customer invoices, agreement/calendar sources, payment/credit records and the selected account state. |
+| Finished decision HTML and original JSON/CSV/terms | The selected readable decision plus its complete maintained machine-readable outputs. |
+
+The source and request identities connect those units; a file from a different
+review, quotation edition or customer requires its own explicit receiving
+review. Continue the original operation after export and reopening before
+handing the next operator its actual retained workspace and files.
+
 ## 8. Carry the selected tariff into a customer quotation
 
 The installed Merchant economics and Merchant Support editions both include the original Pricing and Support applications. A customer can prepare a price, retain its exact tariff basis in the saved case, agree the work, deliver it and reopen the complete result through the same edition.
@@ -490,6 +608,8 @@ The [merchant economics receiving operation](../../operations/merchant-economics
 
 ## Original implementation and detailed contracts
 
+- [Complete retained commercial history](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/HISTORY.md)
+- [Unfinished decisions, original-request recovery and complete handover](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/WORKING_COPIES.md)
 - [Pricing workspace and source selection](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/WORKSPACE.md)
 - [Supplier-source, cost-book and archive contracts](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/economics/README.md)
 - [MCP and CLI costs, files and recovery](../../stellar-forge/mcp-merchant-operator/COSTS.md)
