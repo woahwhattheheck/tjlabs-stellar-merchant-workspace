@@ -1,16 +1,18 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-bank-statements",
-  "description": "Original bank collections, versioned interpretations, configured-source operator preparation, complete parser receiving, cash reconciliation and accountant handover",
+  "description": "Original bank collections, versioned interpretations, configured-source preparation, complete recipient reviews and explicit returned choices, parser receiving, cash reconciliation and accountant handover",
   "commands": {
     "bank-statements": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/cli.mjs",
     "merchant-accounting-bank-statements": "stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.mjs",
-    "merchant-accounting-bank-sources": "stellar-forge/mcp-merchant-operator/accounting-bank-sources-cli.mjs"
+    "merchant-accounting-bank-sources": "stellar-forge/mcp-merchant-operator/accounting-bank-sources-cli.mjs",
+    "merchant-accounting-bank-source-review": "stellar-forge/mcp-merchant-operator/accounting-bank-source-review-cli.mjs"
   },
   "commandDescriptions": {
     "bank-statements": "Receive original bank collections, save and review recurring source interpretations, reconcile exact cash and retain complete account closes",
     "merchant-accounting-bank-statements": "Operate the original Bank reconciliation through authenticated Merchant accounting, saved exact requests and full files",
-    "merchant-accounting-bank-sources": "Retain exact configured bank originals, libraries and collections; review source mappings and receive complete immutable parser outputs through authenticated accounting"
+    "merchant-accounting-bank-sources": "Retain exact configured bank originals, libraries and collections; review source mappings and receive complete immutable parser outputs through authenticated accounting",
+    "merchant-accounting-bank-source-review": "Issue complete original bank source reviews, retain named proposals and reconcile returned choices into an explicit original collection edit"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/README.md",
@@ -34,7 +36,9 @@
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_BANK_SOURCES.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PREPARATION_DESK.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PREPARATIONS_DESK.md",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source-preparation-capsule.py"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source-preparation-capsule.py",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_REVIEW.md",
+    "stellar-forge/mcp-merchant-operator/accounting-bank-source-review-client.d.mts"
   ],
   "exports": {
     "./merchant/bank-statements": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/store.mjs",
@@ -61,7 +65,12 @@
       "types": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-sources-client.d.mts",
       "default": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-sources-client.mjs"
     },
-    "./merchant/accounting-bank-sources/contract": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-sources-contract.mjs"
+    "./merchant/accounting-bank-sources/contract": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-sources-contract.mjs",
+    "./merchant/bank-statements/source-review": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/public/source-review-model.mjs",
+    "./merchant/accounting-bank-source-review": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-source-review-client.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-source-review-client.mjs"
+    }
   },
   "browserAssets": [
     {

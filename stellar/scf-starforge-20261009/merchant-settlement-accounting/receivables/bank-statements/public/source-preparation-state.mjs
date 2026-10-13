@@ -5,9 +5,12 @@ const copy=value=>structuredClone(value);
 const fail=(code,message,extra={})=>Object.assign(new Error(message),{code,...extra});
 const ordered=v=>Array.isArray(v)?v.map(ordered):v!==null&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
 const digest=value=>JSON.stringify(ordered(value));
-export function openSourceDeskState({workspaceId,origin=location.origin,indexedDB=globalThis.indexedDB}={}){
+export function openSourceDeskState({workspaceId,origin=location.origin,indexedDB=globalThis.indexedDB,namespace='source-preparation-desk',schema=DESK_SCHEMA}={}){
+ const reviewNamespace=/^source-review:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(namespace);
+ if(!((namespace==='source-preparation-desk'&&schema===DESK_SCHEMA)||(reviewNamespace&&schema==='stellar-forge.bank-source-review.v1.desk')))throw fail('STORAGE_NAMESPACE','Use the original desk or an explicitly separate source-review case.');
+ const deskSchema=schema;
  if(!/^[a-f0-9]{64}$/.test(workspaceId))throw fail('WORKSPACE','Open the actual accounting workspace before retaining a request.');
- const prefix='merchant-bank:'+workspaceId+':source-preparation-desk:'+origin;
+ const prefix='merchant-bank:'+workspaceId+':'+namespace+':'+origin;
  let opening;
  function db(){
   if(!opening)opening=new Promise((resolve,reject)=>{
@@ -21,15 +24,15 @@ export function openSourceDeskState({workspaceId,origin=location.origin,indexedD
   const database=await db();return new Promise((resolve,reject)=>{
    const tx=database.transaction('records','readonly'),request=tx.objectStore('records').get(prefix);
    request.onsuccess=()=>{
-    const result=request.result??{schema:DESK_SCHEMA,workspaceId,origin,revision:0,draft:null,pending:null,operations:[],selected:null};
-    if(result.schema!==DESK_SCHEMA||result.workspaceId!==workspaceId||result.origin!==origin||!Number.isSafeInteger(result.revision)){
+    const result=request.result??{schema:deskSchema,workspaceId,origin,revision:0,draft:null,pending:null,operations:[],selected:null};
+    if(result.schema!==deskSchema||result.workspaceId!==workspaceId||result.origin!==origin||!Number.isSafeInteger(result.revision)){
      reject(fail('STORAGE_BINDING','The retained desk belongs to another workspace or source format.'));return;
     }resolve(copy(result));
    };request.onerror=()=>reject(request.error);
   });
  }
  async function save(value,expectedRevision){
-  if(value.schema!==DESK_SCHEMA||value.workspaceId!==workspaceId||value.origin!==origin)throw fail('STORAGE_BINDING','Retain the original desk identity.');
+  if(value.schema!==deskSchema||value.workspaceId!==workspaceId||value.origin!==origin)throw fail('STORAGE_BINDING','Retain the original desk identity.');
   const snapshot=copy(value),database=await db(),conflictId=crypto.randomUUID();
   return new Promise((resolve,reject)=>{
    const tx=database.transaction('records','readwrite'),store=tx.objectStore('records');let conflict,output;
@@ -37,7 +40,7 @@ export function openSourceDeskState({workspaceId,origin=location.origin,indexedD
    request.onsuccess=()=>{
     const current=request.result,revision=current?.revision??0;
     if(revision!==expectedRevision){
-     conflict={schema:DESK_SCHEMA+'.conflict',workspaceId,origin,expectedRevision,actualRevision:revision,at:new Date().toISOString(),snapshot};
+     conflict={schema:deskSchema+'.conflict',workspaceId,origin,expectedRevision,actualRevision:revision,at:new Date().toISOString(),snapshot};
      store.put(conflict,prefix+':conflict:'+conflictId);return;
     }
     output={...snapshot,revision:revision+1};store.put(output,prefix);
@@ -49,13 +52,13 @@ export function openSourceDeskState({workspaceId,origin=location.origin,indexedD
  async function preserveConflict(value){
   const database=await db(),id=crypto.randomUUID(),snapshot=copy(value);
   return new Promise((resolve,reject)=>{
-   const tx=database.transaction('records','readwrite');tx.objectStore('records').put({schema:DESK_SCHEMA+'.conflict',workspaceId,origin,at:new Date().toISOString(),snapshot},prefix+':conflict:'+id);
+   const tx=database.transaction('records','readwrite');tx.objectStore('records').put({schema:deskSchema+'.conflict',workspaceId,origin,at:new Date().toISOString(),snapshot},prefix+':conflict:'+id);
    tx.oncomplete=()=>resolve(id);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
   });
  }
  function conflictKey(id){if(typeof id!=='string'||!(/^[0-9a-f-]{36}$/).test(id))throw fail('CONFLICT_ID','Select the original retained conflict.');return prefix+':conflict:'+id;}
  function verifyConflict(value){
-  if(!value||value.schema!==DESK_SCHEMA+'.conflict'||value.workspaceId!==workspaceId||value.origin!==origin||value.snapshot?.schema!==DESK_SCHEMA||value.snapshot.workspaceId!==workspaceId||value.snapshot.origin!==origin)throw fail('STORAGE_BINDING','This retained conflict belongs to another workspace or source format.');
+  if(!value||value.schema!==deskSchema+'.conflict'||value.workspaceId!==workspaceId||value.origin!==origin||value.snapshot?.schema!==deskSchema||value.snapshot.workspaceId!==workspaceId||value.snapshot.origin!==origin)throw fail('STORAGE_BINDING','This retained conflict belongs to another workspace or source format.');
   return value;
  }
  async function readConflict(id){
@@ -98,4 +101,19 @@ export function observeOperation(state,pending,result){
  const row={...previous,sourceSha256:result.sourceSha256??previous?.sourceSha256,observations:[...(previous?.observations??[]),{at:new Date().toISOString(),action:pending.action,result:copy(result)}]};
  const draft=state.draft&&['PREPARED','COMPLETE'].includes(result.state)&&!state.draft.rawDirty&&digest(state.draft.request)===digest(pending.request)?{...state.draft,frozen:true}:state.draft;
  return {...state,draft,operations:state.operations.filter(x=>x.request.requestId!==row.request.requestId).concat(row),pending:completed?null:{...pending,observed:copy(result)},selected:copy(result)};
+}
+
+/** Enumerate only the actual saved review cases at this origin; no replacement case index. */
+export async function listSourceReviewDesks({origin=location.origin,indexedDB=globalThis.indexedDB,after=null,limit=20}={}){
+ if(!Number.isSafeInteger(limit)||limit<1||limit>100||after!==null&&typeof after!=='string')throw fail('PAGE','Use a bounded page of retained review cases.');
+ if(!indexedDB)throw fail('STORAGE','IndexedDB is required for retained review cases.');
+ const database=await new Promise((resolve,reject)=>{const r=indexedDB.open('stellar-forge-bank-reconciliation-v1',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('records'))r.result.createObjectStore('records');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+ try{return await new Promise((resolve,reject)=>{
+  const tx=database.transaction('records','readonly'),range=IDBKeyRange.bound(after??'merchant-bank:','merchant-bank:\uffff',after!==null,false),r=tx.objectStore('records').openCursor(range),items=[];let last=null,scanned=0,more=false;
+  r.onsuccess=()=>{const cursor=r.result;if(!cursor)return;const row=cursor.value;last=String(cursor.key);scanned++;
+   if(row?.schema==='stellar-forge.bank-source-review.v1.desk'&&row.origin===origin&&row.package?.issue?.id===row.caseId&&/^[a-f0-9]{64}$/.test(row.workspaceId)&&last==='merchant-bank:'+row.workspaceId+':source-review:'+row.caseId+':'+origin)items.push({key:last,workspaceId:row.workspaceId,caseId:row.caseId,revision:row.revision,author:row.package.issue.author,recipient:row.package.issue.recipient,createdAt:row.package.issue.createdAt,purpose:row.package.issue.purpose,editions:row.package.editions?.length??0,returns:row.returns?.length??0,decisions:row.decisions?.length??0});
+   if(items.length>=limit||scanned>=1000){more=true;return;}cursor.continue();
+  };
+  tx.oncomplete=()=>resolve({items,nextCursor:more?last:null});tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+ });}finally{database.close();}
 }
