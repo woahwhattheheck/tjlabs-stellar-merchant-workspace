@@ -1,0 +1,175 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "gravitee-commissioning",
+  "heading": "## API commissioning, complete native source and independent customer operation",
+  "sources": [
+    {
+      "id": "gravitee-api-workspace",
+      "label": "Original source, mappings and parent/child native API commissioning",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/gravitee-merchant/workspace.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "d0a40d222a3572bcf81adbcd461f19b27f3ffe58",
+          "git_blob": "e07f50acb57511982378824d60cd539fc603ef91",
+          "bytes": 32087,
+          "sha256": "f3dca3774caf0ee52ab0a264daa15684988287e13c41515561f8108b19f89083"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-native-api",
+      "label": "Native Management API capture and full response/gateway operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/gravitee-merchant/native.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "d0a40d222a3572bcf81adbcd461f19b27f3ffe58",
+          "git_blob": "ea07f07384151d45401e3ed4754bc2633321b519"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-delivery",
+      "label": "Complete source-bearing workspace handover and independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/gravitee-merchant/delivery.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "d0a40d222a3572bcf81adbcd461f19b27f3ffe58",
+          "git_blob": "dd25ad5278f9ebbe4b914cd74db432d247fd1a76",
+          "bytes": 5920,
+          "sha256": "8afd6ac797e36fe90b3ea0436e9230af0c3daee964a8a72db567996a2e888229"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-application-provider",
+      "label": "Original installed Applications provider and actual session receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/gravitee-merchant/application-provider.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "d0a40d222a3572bcf81adbcd461f19b27f3ffe58",
+          "git_blob": "d78bad397997e0e22e677dae51c3688cc329bc5a",
+          "bytes": 5809,
+          "sha256": "801458979e1de95c2ca7afba477fda73ee2049e27e8235877582c1bdea902ffa"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-operating-guide",
+      "label": "Complete original API operator workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/gravitee-merchant/OPERATING.md",
+      "required": true,
+      "editions": [
+        {
+          "commit": "d0a40d222a3572bcf81adbcd461f19b27f3ffe58",
+          "git_blob": "4132fb382bbd1139514abab249556c153af79d35",
+          "bytes": 11271,
+          "sha256": "36683b5f80368f36a2c93765e9e2178b3ebf2a240b8ded07a558c294913f87e5"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-installed-source-selection",
+      "label": "Whole Gravitee and Grant Operations installed source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/gravitee-installation.json",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1bdffb2b2e36d944f2bf7fb94416cfa22100fbf3",
+          "bytes": 3405,
+          "sha256": "e7b7154a4641b66fe30101be70c21fceaa745c0755dad437a33779c908e6c45e"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-installation-profile",
+      "label": "Complete customer commissioning workorder",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/gravitee-commissioning.json",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1bdffb2b2e36d944f2bf7fb94416cfa22100fbf3",
+          "bytes": 13004,
+          "sha256": "5a1672bdfe9df97e4b6dfd8344fb722eb38db37af60b9b570353de24d3b693db"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-installation-source-core",
+      "label": "Exact native source/cohort and original Installation bindings",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/gravitee-installation-core.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1bdffb2b2e36d944f2bf7fb94416cfa22100fbf3",
+          "bytes": 12278,
+          "sha256": "9a7d782f19184989353f7384a67492b826a796308043ddceb453dd04d640c2f1"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-installation-preparation",
+      "label": "Complete source-bound local preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/gravitee-installation.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1bdffb2b2e36d944f2bf7fb94416cfa22100fbf3",
+          "bytes": 6374,
+          "sha256": "129e1affad0811072ac3ae0ea6e17ad358fea6abcc3776b215ddea85c7e6d013"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-installation-receiving",
+      "label": "Whole independent API workspace and original case receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/gravitee-installation-receiving.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1bdffb2b2e36d944f2bf7fb94416cfa22100fbf3",
+          "bytes": 11104,
+          "sha256": "476b5d414e586351df87803ab1c7e2518143f43c58be531818503759a0bb0d06"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-installation-guide",
+      "label": "Complete source-to-customer operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/GRAVITEE_INSTALLATION.md",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1bdffb2b2e36d944f2bf7fb94416cfa22100fbf3",
+          "bytes": 16948,
+          "sha256": "3bbc4ac03ee4d923adc59e1a95f80d52ac1ff1a4a1143396572384438bad081b"
+        }
+      ]
+    }
+  ]
+}
