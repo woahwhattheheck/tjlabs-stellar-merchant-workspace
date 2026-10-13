@@ -20,12 +20,24 @@ Install the returned archive in the intended application directory and keep its 
 npm install --ignore-scripts --offline --omit=optional /absolute/path/to/package.tgz
 npx --no-install starforge doctor
 npx --no-install starforge reporting-programme help
-npx --no-install starforge source-tables serve --port 8787
+npx --no-install starforge reporting-programme serve --port 8787
 ~~~
 
-Open the printed Source Tables URL. Keep the existing managed application and stable host/port when one is already installed. [Source Tables operating guidance](../OPERATING.md) gives the complete Applications, runtime-transfer, merchant and buyer continuation.
+Open the printed Reporting Programmes URL. The same local listener serves the original Source Tables workbench at `/source-tables.html`. In an installed managed workspace, choose **Reporting Programmes** in Applications; its original lifecycle retains the command, exact source inputs and observed local startup URL. Keep the existing managed application and stable host/port when one is already installed. [Source Tables operating guidance](../OPERATING.md) gives the complete Applications, runtime-transfer, merchant and buyer continuation.
 
 From a full checkout, replace `starforge reporting-programme` below with `node products/source-tables/reporting/programme-cli.mjs`. Every output uses a new path. The CLI writes a complete temporary file in that directory, syncs it, and creates the selected output only if that path is absent. It preserves input files and existing outputs. Create the intended private parent directory before running it.
+
+## Operate the complete browser workbench
+
+The installed entry is `/products/source-tables/reporting/workbench.html`. It uses the same `programme.mjs` and `desk-receive.mjs` operations as the CLI. [Workbench operating guidance](WORKBENCH.md) explains the complete browser controls and receiving course.
+
+Open the complete original programme JSON, or receive a full DataRunner desk handover with its original operation context. Retain all report revisions, SQL, source files, run periods and route observations in that selected project. The workbench supports the complete native request flow: review the operation and original preimage, apply the exact saved request, preserve the returned project, and replay that same request when recovering its original outcome. Export the complete native ZIP for the next operator.
+
+The browser's complete work file also retains unfinished drafts, selected files and any pending operation. Save that full work file before moving to another browser or host. Browser persistence belongs to the exact origin, including port, and can fail because of storage quota; a complete download remains a portable source. Resolve a changed cross-tab save by reviewing the other complete edition. The static local listener serves application source; original customer content remains in the selected browser/work files.
+
+Use the **Source Tables** link for the original field mapping, source corrections, review and comparison controls. Download the current full native project before opening it there. After the source review, export its complete project JSON and reopen that whole project in Reporting Programmes; its original reporting history travels with the same project. Keep both predecessor and returned editions. The reporting browser and Source Tables browser have independent active selections.
+
+For the receiving operator, run the installed command, open the actual page at its printed local URL, reopen the complete saved work file, inspect every original file and retained definition/run/receipt, complete the agreed operation and save/reopen its result. Open the exact native ZIP and its complete project. Use desktop and narrow layouts and inspect the displayed text, controls and attachments under the repository's retained rendered-product instruction below.
 
 ## Prepare the programme
 
@@ -272,7 +284,7 @@ Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/arch
 
 ## GitHub Actions zero spend — existing owner instruction
 
-Keep GitHub Actions disabled in this repository's provider settings and preserve the disabled source policy in [.github/hosted-ci-policy.json](.github/hosted-ci-policy.json). Every workflow job must retain the established literal-false condition, including manual dispatch and reusable jobs. Preserve its original condition inside the wrapper, and preserve the complete steps, commands, source and delivery artifacts.
+Keep GitHub Actions disabled in this repository's provider settings and preserve the disabled source policy in [.github/hosted-ci-policy.json](../../../.github/hosted-ci-policy.json). Every workflow job must retain the established literal-false condition, including manual dispatch and reusable jobs. Preserve its original condition inside the wrapper, and preserve the complete steps, commands, source and delivery artifacts.
 
 Run focused product work in the existing cloud Linux or original local receiving operation. A public repository, available free minutes, cloud admission failure or a missing green check does not authorize enabling or dispatching hosted Actions. Do not set `HOSTED_CI=on`, add scheduled hosted runs or choose a paid runner. Keep source-native receiving moving with its original owner and saved operation.
 

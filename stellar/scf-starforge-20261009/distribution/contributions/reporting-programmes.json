@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "reporting-programmes",
-  "description": "Complete recurring report definitions, source editions, actual run and delivery observations, and editable native handover on Source Tables",
+  "description": "Operate complete recurring reporting programmes in the installed browser, retaining original SQL, results, route receipts, pending work and complete native handover",
   "supportFiles": [
     "products/source-tables/reporting/programme.mjs",
     "products/source-tables/reporting/programme-cli.mjs",
@@ -9,13 +9,20 @@
     "products/source-tables/reporting/REPORTING_PROGRAMMES.md",
     "products/source-tables/reporting/examples/create-programme.example.json",
     "products/source-tables/reporting/desk-receive.mjs",
-    "products/source-tables/reporting/desk-receive.d.mts"
+    "products/source-tables/reporting/desk-receive.d.mts",
+    "products/source-tables/reporting/workbench.html",
+    "products/source-tables/reporting/workbench.mjs",
+    "products/source-tables/reporting/workbench.css",
+    "products/source-tables/reporting/workbench-model.mjs",
+    "products/source-tables/reporting/workbench-server.mjs",
+    "products/source-tables/reporting/workbench-application.mjs",
+    "products/source-tables/reporting/WORKBENCH.md"
   ],
   "commands": {
     "reporting-programme": "products/source-tables/reporting/programme-cli.mjs"
   },
   "commandDescriptions": {
-    "reporting-programme": "Create or advance a full reporting project; inspect original SQL/period/run/receipt history and export the complete native handover"
+    "reporting-programme": "Serve the complete local Reporting Programmes workbench; create or advance full native projects, receive desk handovers, inspect original SQL/period/run/receipt history and export complete native archives"
   },
   "exports": {
     "./reporting-programmes": {
@@ -26,5 +33,8 @@
       "types": "./source/products/source-tables/reporting/desk-receive.d.mts",
       "default": "./source/products/source-tables/reporting/desk-receive.mjs"
     }
+  },
+  "applicationProviders": {
+    "reporting-programmes": "products/source-tables/reporting/workbench-application.mjs"
   }
 }
