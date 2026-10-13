@@ -9,6 +9,7 @@ import {createZoteroCapturer,newCapture,restartCaptureState} from './capture.mjs
 import {decodeDocumentSet,buildEdition,compareEditions,selectedItems,projectView,researchSourceBundle} from './source.mjs';
 import {exportWorkspace,receiveWorkspace,resolveResearchTarget,receivedResearchDirectory} from './transfer.mjs';
 
+import {createProjectReturns} from './project-returns.mjs';
 import {createZoteroAgentRequests} from './agent-requests.mjs';
 import {retainZoteroCleanup} from './agent-cleanup.mjs';
 
@@ -16,7 +17,7 @@ const ref=(kind,value)=>({record:{kind,id:value.id,revision:value.revision}});
 const researchIdentity=directory=>'research_'+sha256(Buffer.from(directory));
 export async function openZoteroWorkspace({directory,researchDirectory=null,dossierStore=null,fetchImpl,environment,transport=null}={}) {
   const store=await openZoteroStore(directory);
-  let dossiers,capturer,agentRequests,closing=false,closePromise;
+  let dossiers,capturer,agentRequests,projectReturns,closing=false,closePromise;
   const pending=new Set(),handoffWork=new Map(),admission=new AsyncLocalStorage(),admittedToken={};
   try{
     need(researchDirectory===null||isAbsolute(researchDirectory)&&resolve(researchDirectory)===researchDirectory,
@@ -115,10 +116,8 @@ export async function openZoteroWorkspace({directory,researchDirectory=null,doss
           profileId:p.id,profileRevision:p.revision,createdAt:value.createdAt}));
       });
     }
-    async function saveProject(input,op) {
+    async function projectDefinition(input,original=null) {
       live();need(plain(input),'ZOTERO_PROJECT_REQUIRED');
-      const recordId=input.id??'project:'+requestId(op),expected=input.expectedRevision??0;
-      const original=expected?store.get('project',recordId,expected):null;
       const e=await edition(input.editionId??original?.editionId);
       const scope=clone(input.scope??original?.scope??e.scope);
       need(plain(scope)&&Array.isArray(scope.collectionKeys)&&scope.collectionKeys.length<=1000&&
@@ -146,6 +145,13 @@ export async function openZoteroWorkspace({directory,researchDirectory=null,doss
       const definition={schema:SCHEMA.project,title:text(input.title??original?.title,'ZOTERO_PROJECT_TITLE_REQUIRED',240),
         description:text(input.description??original?.description??'','ZOTERO_PROJECT_DESCRIPTION_INVALID',20000,true),
         editionId:e.id,libraryIdentity:e.libraryIdentity,scope,decisions,findings};
+      return definition;
+    }
+    async function saveProject(input,op) {
+      live();need(plain(input),'ZOTERO_PROJECT_REQUIRED');
+      const recordId=input.id??'project:'+requestId(op),expected=input.expectedRevision??0;
+      const original=expected?store.get('project',recordId,expected):null;
+      const definition=await projectDefinition(input,original);
       return action(op,'project.save',{id:recordId,expectedRevision:expected,definition},()=>{
         return ref('project',store.put('project',recordId,expected,definition));
       });
@@ -223,6 +229,7 @@ export async function openZoteroWorkspace({directory,researchDirectory=null,doss
     }
     async function download(input) {
       live();const record=store.get(input.kind,input.id,input.revision??null);
+      if(input.kind==='project-delivery'||input.kind==='project-return')return projectReturns.download(record,input.role);
       let object,name;
       if(input.kind==='edition'&&input.role==='document'){
         const selected=record.documents.find(d=>d.name===input.name);need(selected,'ZOTERO_DOCUMENT_NOT_FOUND');
@@ -232,12 +239,13 @@ export async function openZoteroWorkspace({directory,researchDirectory=null,doss
       else {return {bytes:json(record),filename:input.kind+'.json',mediaType:'application/json'};}
       return {bytes:await store.objectBytes(object),filename:name,mediaType:'application/json',sha256:object.sha256};
     }
+    const returnSummary=r=>({schema:r.schema,id:r.id,revision:r.revision,projectId:r.projectId,status:r.status,packetSha256:r.packetSha256,returned:r.returned,editionId:r.editionId,libraryIdentity:r.libraryIdentity,importedAt:r.importedAt,updatedAt:r.updatedAt,result:r.result,review:r.review?{note:r.review.note,reviewedAt:r.review.reviewedAt,summary:r.review.summary,issues:r.review.issues}:null});
     async function snapshot() {
-      live();const kinds=['profile','capture','edition','project','comparison','handoff','agent-request'],result={};
+      live();const kinds=['profile','capture','edition','project','comparison','handoff','agent-request','project-return','project-delivery'],result={};
       for(const kind of kinds){
         const page=store.list(kind,{limit:100});
         result[kind]={...page,rows:page.rows.map(r=>kind==='capture'?captureView(r.id):
-          kind==='profile'?r:kind==='project'?r:kind==='handoff'?r:r)};
+          kind==='project-return'?returnSummary(r):kind==='profile'?r:kind==='project'?r:kind==='handoff'?r:r)};
       }
       return {schema:SCHEMA.api,workspaceId:store.identity.workspaceId,transport:capturer.transport,researchWorkspaceId:dossiers?researchIdentity(dossiers.directory):null,
         records:result,research:dossiers?await dossiers.list():[]};
@@ -246,11 +254,15 @@ export async function openZoteroWorkspace({directory,researchDirectory=null,doss
       live();
       if(method==='state')return snapshot();
       if(method==='record.get')return store.get(input.kind,input.id,input.revision??null);
-      if(method==='record.list')return store.list(input.kind,input);
+      if(method==='record.list'){
+        const result=store.list(input.kind,input);
+        return input.kind==='project-return'&&input.projection==='summary'?{...result,rows:result.rows.map(returnSummary)}:result;
+      }
       if(method==='record.history')return store.history(input.kind,input.id);
       if(method==='edition.get')return edition(input.id);
       if(method==='project.get')return viewProject(input.id,input.revision??null);
       if(method==='project.page')return pageProject(input);
+      if(method==='project.return.preview')return projectReturns.preview(input);
       if(method==='capture.get')return captureView(input.id);
       if(method==='research.get'){need(dossiers,'ZOTERO_RESEARCH_WORKSPACE_NOT_CONFIGURED');return dossiers.getMetadata(input.id);}
       if(method==='research.preview'){need(dossiers,'ZOTERO_RESEARCH_WORKSPACE_NOT_CONFIGURED');const h=store.get('handoff',input.id);
@@ -258,10 +270,11 @@ export async function openZoteroWorkspace({directory,researchDirectory=null,doss
         return originalTarget.previewSourceBundle(h.target.dossierId,{questionId:h.target.questionId,rawBytes:await store.objectBytes(h.object)});}
       requestId(op);
       const methods={'profile.save':saveProfile,'capture.prepare':capture,'capture.control':captureControl,'documents.import':importDocuments,
-        'project.save':saveProject,'project.decide':decide,'edition.compare':compare,'research.prepare':prepareHandoff,'research.receive':receiveHandoff};
+        'project.save':saveProject,'project.decide':decide,'project.return.prepare':projectReturns.prepare,'project.return.import':projectReturns.importReturned,'project.return.review':projectReturns.review,'project.return.apply':projectReturns.apply,'edition.compare':compare,'research.prepare':prepareHandoff,'research.receive':receiveHandoff};
       need(methods[method],'ZOTERO_METHOD_INVALID');
       return methods[method](input,op);
     }
+    projectReturns=createProjectReturns({store,validateProject:projectDefinition});
     agentRequests=createZoteroAgentRequests({store,invoke,admit});
     async function close() {
       if(closePromise)return closePromise;closing=true;agentRequests.requestClose();
