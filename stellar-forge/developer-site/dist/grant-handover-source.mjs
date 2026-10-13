@@ -4,7 +4,7 @@ import {selectedIssuerContext} from './grant-issuer-core.mjs';
 // MIT. Exact original files and prepared output inside the existing submission draft.
 import {
   ANSWERS, REQUIREMENTS, SCHEMA, ENVELOPE, MAX_BYTES, makeSource, validateDraft,
-  validateSource, retainVersion, receiveSource, outputText, applicationOutput, fieldStatus,
+  validateSource, retainVersion, receiveSource, outputText, applicationOutput, fieldStatus, formSourceReview,
 } from './grant-submission-core.mjs';
 import {verifyPlanningSource} from './grant-plan-source.mjs';
 import {
@@ -328,6 +328,7 @@ export async function prepareSubmission(draft,{at=now(),planningOptions={}}={}) 
     output:{kind:selection.outputKind,format:selection.format,items,text:output,bytes:utf8(output).length,sha256:await contentHash(output)},
     fieldIssues:selection.outputKind==='fields'?draft.fields.map(row=>({id:row.id,label:row.label,
       ...fieldStatus(row,draft.form,selection.format)})):[],
+    fieldSourceReview:selection.outputKind==='fields'?formSourceReview(draft):null,
     contextIssues:context.issues,
     statusMeaning:'Prepared exact output and retained context. Preparation is not a submission, issuer receipt, award decision, payment or approval.',
   };
@@ -403,6 +404,9 @@ export async function verifyHandover(draft,{planningOptions={}}={}) {
       'The frozen output differs from its complete retained authoring state.');
     const expected=body.output.kind==='fields'?snapshot.fields.map(row=>({id:row.id,label:row.label,...fieldStatus(row,snapshot.form,body.output.format)})):[];
     need(same(expected,body.fieldIssues),'The frozen field observations differ from their actual retained fields.');
+    // Earlier prepared editions predate this observation and keep their exact bodies.
+    if(Object.prototype.hasOwnProperty.call(body,'fieldSourceReview'))need(same(body.fieldSourceReview,body.output.kind==='fields'?formSourceReview(snapshot):null),
+      'The prepared field source comparison differs from its frozen authoring state.');
   }
   return draft;
 }
@@ -460,6 +464,11 @@ export function preparedReport(draft,id) {
     '<h2>Recorded field observations</h2>',
     ...(body.fieldIssues.length?body.fieldIssues.map(row=>'<h3>'+escaped(row.label||row.id)+'</h3>'+para(JSON.stringify(row.counts))+
       (row.issues.length?row.issues.map(para).join(''):para('No issue from the recorded field conventions.'))):[para('Canonical-answer output; no issuer-field limit comparison was recorded.')]),
+    ...(body.fieldSourceReview?[
+      '<h2>Answer coverage and source wording at preparation</h2>',para(body.fieldSourceReview.meaning),
+      table(['Answer area','Mapped field identities'],body.fieldSourceReview.answers.map(row=>[row.title,row.fieldIds.join(', ')||'No association entered'])),
+      table(['Field','Source state','Changed answer identities','Last wording choice','Reviewed at'],body.fieldSourceReview.fields.map(row=>[row.label||row.id,row.status,row.changedAnswerIds.join(', '),row.choice||'',row.reviewedAt||''])),
+    ]:[]),
     '<h2>Original issuer observations</h2>',
     para('These are the operator’s retained observations and original files. File hashes identify received bytes; they do not independently authenticate an issuer or prove submission or approval.'),
     ...(returns.length?returns.map(row=>'<h3>'+escaped(row.body.kind)+'</h3>'+

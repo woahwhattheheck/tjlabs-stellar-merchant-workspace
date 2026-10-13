@@ -12,7 +12,7 @@ const print = value => process.stdout.write(JSON.stringify(value, null, 2) + '\n
 const fail = code => { throw Object.assign(new Error(code), {code}); };
 const commands = {init:['--workspace','--catalog','--route-template','--max-response-bytes','--response-timeout-ms'],
   call:['--input'], serve:['--port','--duckdb-description','--duckdb-description-sha256','--duckdb-workspace-id'], report:['--out'], inspect:[],
-  'objects-register':['--description'], 'datasets-register':['--description'],
+  'objects-register':['--description'], 'object-recovery-register':['--description'], 'datasets-register':['--description'],
   'datasets-receive':['--id','--room','--session'],
   'analysis-register':['--name','--database'], 'analysis-inbox-register':['--name','--inbox'],
   'collections-register':['--description'], 'duckdb-register':['--description'],
@@ -54,6 +54,7 @@ async function main(args) {
       'duckdb-register --dir ABS --description PRIVATE_ORIGINAL_DUCKDB_REGISTRATION_JSON\n' +
       'call --dir ABS --input REQUEST_JSON\n' +
       'objects-register --dir ABS --description ORIGINAL_S3_OBJECTS_JSON\n' +
+      'object-recovery-register --dir ABS --description PRIVATE_STANDALONE_RECOVERY_PROFILE_JSON\n' +
       'datasets-register --dir ABS --description ORIGINAL_SF30_DATASET_DESCRIPTION_JSON\n' +
       'datasets-receive --dir ABS --id ID --room FINALIZED_ORIGINAL_SF100 [--session COMPLETE_ORIGINAL_SF88]\n' +
       'analysis-register --dir ABS --name ALIAS --database RUNNING_ORIGINAL_ANALYSIS_DIRECTORY\n' +
@@ -81,6 +82,10 @@ async function main(args) {
     } finally { await native.close(); }
   }
   const native = await openNativeWorkspace(directory);
+  if (command === 'object-recovery-register') {
+    try { return print(await native.registerObjectRecovery(await input(v['--description'], 256 * 1024))); }
+    finally { await native.close(); }
+  }
   if (command === 'duckdb-register') {
     try { return print(await native.registerDuckDB(await input(v['--description'], 256 * 1024))); }
     finally { await native.close(); }
@@ -129,6 +134,7 @@ async function main(args) {
       network:native.manifest.workspaceBinding.network, response:native.manifest.response,
       history:await native.call({action:'history', limit:25}),
       objectSources:await native.call({action:'object-sources',limit:25}),
+      objectRecoveryProfiles:await native.call({action:'object-recovery',objectRecoveryOperation:'profiles',limit:25}),
       objectAcquisitions:await native.call({action:'object-history',limit:25}),
       datasetSources:await native.call({action:'dataset-sources',limit:25}),
       datasetAcquisitions:await native.call({action:'dataset-history',limit:25}),
