@@ -257,6 +257,8 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_navigation_ui.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_navigation.css",
     "stellar/scf_2026/sf47_budget_model/workspace/OPERATING_DESK.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_lazy.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/DESK_LOADING.md",
     "stellar/scf_2026/sf47_budget_model/workspace/case-planning.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/case-planning.css",
     "stellar/scf_2026/sf47_budget_model/workspace/CASE_PLANNING.md",

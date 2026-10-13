@@ -28,6 +28,8 @@ Use the saved-workflow action to continue the selected original desk. Statement 
 
 For the full navigation, search, source coverage and keyboard workflow, see [Grant Operations operating desk](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATING_DESK.md). The complete saved-edition and source handoff is described in [Saved workflows](../../stellar/scf_2026/sf47_budget_model/workspace/SAVED_WORKFLOWS.md).
 
+Each section loads its own desk when you open it. A loading message remains in that section until its original controls are ready. If the desk code cannot be loaded, use **Retry loading** in the same section; the case stays selected. Returning to an opened section uses the original retained draft and request recovery. A saved-workflow result waits for its original desk to load before applying the selected source or edition. See [Desk loading and recovery](../../stellar/scf_2026/sf47_budget_model/workspace/DESK_LOADING.md) for the complete operator workflow.
+
 ## 1. What the operator retains
 
 | Work | Retained source and decisions |
