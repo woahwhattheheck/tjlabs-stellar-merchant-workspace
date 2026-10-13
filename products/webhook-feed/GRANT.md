@@ -524,7 +524,7 @@ application and native receiving boundary remain in place.
 
 Public Merchant PR1898 at 0762b76c074e46db57e681b7851a2ccbe37bfa2f completes the installed command and typed agent course. Its ten full files were read back after merge. Six existing source IDs advance; the original parent service, private source receiver, typed receiving implementation and its declaration add four explicit source identities. All forty-two entries retain their preceding complete editions. The original publisher receives this chapter and declaration in the same application source selection, with the six funded packages and original native commissioning operation preserved.
 
-The owner handoff at https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791906463475599 quotes Bryce's LOCAL Codex in-app browser reservation from 16:00 UTC on 13 October 2026 until explicit release. Preserve that browser without navigation, capture, inspection or control changes. Continue the original source and native shell work and its already authorized isolated cloud browser. Retain the quoted handoff's attribution and the producing maintainer's actual screen, attachment and reopened-file inspection responsibilities.
+The earlier local in-app-browser meeting reservation quoted in owner handoff1791906463.475599 was released by owner handoff https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791908979290839, which quotes Bryce's meeting-end direction. Preserve the user's existing tabs and saved state, every other actual owner instruction, and the producing maintainer's actual screen, attachment and reopened-file inspection responsibilities. These are attributed owner handoffs, not separate raw-user timestamps.
 
 ## Following complete offline mapping source selection
 
@@ -544,3 +544,23 @@ USD 38,000 / 400 hours / 150 days / six-package budget and both selected
 installations. The complete mapping product is an already delivered foundation;
 its future customer-specific deployment and acceptance remain in those original
 funded packages.
+
+## Following complete mapping agent receiving and source selection
+
+Public Merchant PR2004 is merged at `0f6c6f9f9261f6c62ccbce8384e6272338e01943`. Its thirteen complete source files were independently read back after merge. The installed `event-mapping-receiving` command and typed `./buyer/mcp/analysis-events-mapping` API receive the same original Analysis source, let the engineer finish an independent whole working document, and return an attributed decision to the original native action.
+
+Start with the actual named Analysis alias, workspace ID, programme, input and selected comparison. Keep the original capture directory. The complete source transfer owns both NDJSON exports, both manifests, the comparison and draft, and four exact installed parser/model/renderer/control modules. A completed copy can finish its JSON and editable HTML without the producer; a partial transfer resumes its same source request. Independently reopen the full capture before handing it to the receiving engineer.
+
+Keep the returned complete working JSON and its original capture when preparing Review. The helper preserves the returned raw object and files before deriving the original compact native request. It validates the ready reasons, source pair and original context, then receives both full selection and full Review request through immutable named request sources. Each compact request is bounded at 1,046,528 bytes and transfers in contiguous 64 KiB pieces. The full source/working allowance is 192 MiB; ordinary comparison and saved-action records retain 64 MiB. The separate file-only native-review JSON retains its existing 32 MiB allowance. These limits belong to different complete objects.
+
+Inspect the actual state returned by each command. After an uncertain Review response, `review-receive` observes the original action and retains its complete current edition. It does not infer failure from a missing reply. Select a saved action by its exact digest with `review-reopen`; reopening without that digest verifies the prepared source and returns PREPARED. A deliberate resume uses the same action, operation and directory. Continue native Apply and the customer report/workbook/delivery through the existing programme after the operator accepts the reviewed decision.
+
+The complete command sequence and exact retained filenames are in
+[EVENT_MAPPING_RECEIVING.md](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_RECEIVING.md).
+The named agent and source operation contract is in
+[ANALYSIS_EVENTS.md](../../stellar-forge/mcp-paid-agent/ANALYSIS_EVENTS.md).
+The producing peer must open and use the actual outgoing HTML and every attachment, inspect desktop and narrow layouts, original populations/full values, unfinished fields/reasons, saves and independently reopened files, and the native Saved actions review. Keep real images and whole returned outputs with the existing Mercury/A66C/22B7 receiving operation and repair visible defects before presentation.
+
+The complete same-H2 author chapter now joins this source-to-agent-to-customer course. Seven existing source IDs select their measured current Merchant editions, and six new complete contract/helper/types/request-receiver/CLI/guide IDs bring the declaration to 54 entries. Each of those thirteen current paths has an explicit `repository`, `commit` and matching immutable chapter link. The compact Analysis recipe also has the explicit current `e971839b16b169ef3bbf2ad664331878fc715062` pin requested by the original publisher. The previously declared colleague-review typed contract now has its exact historical link. Every earlier ID and measured edition is retained, including its actual original repository.
+
+Receive the complete chapter and declaration through the unchanged original source selector before composing the current cumulative manuscript. Use the publisher's current source union and saved-v7 operation; preserve every other author, full companion and generated reviewer output. Historical declarations and their complete chapter bodies remain in the original source editions for independent historical receiving. This product is the delivered foundation for the selected customer installation. The six prospective packages remain USD 38,000 / 400 hours / 150 days across both installations.
