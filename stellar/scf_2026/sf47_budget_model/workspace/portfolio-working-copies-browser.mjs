@@ -77,14 +77,32 @@ export async function operatePortfolioWorkingCopies(host){
   function copy(c){session(c.head);for(const h of c.checkpoints)session(h.session);for(const l of c.lineage)copy(l.sourceCopy);}
   copy(value.copy);return {value,sessions,attachments};
  }
+ async function verifyRetainedArtifacts(record,directory,label){
+  for(const [name,expected]of Object.entries(record.files||{})){
+   assert.ok(expected&&typeof expected.path==='string'&&Number.isSafeInteger(expected.bytes)&&expected.bytes>=0&&/^[a-f0-9]{64}$/.test(expected.sha256||''),'Retain the complete original file identity: '+label+' / '+name);
+   let actual;try{actual=await fileIdentity(expected.path);}catch(error){throw new Error('Recover the exact retained Portfolio output '+expected.path+' before continuing '+label+'. Prior phase and file identity remain unchanged. '+error.message);}
+   assert.equal(actual.bytes,expected.bytes,'Retained Portfolio output size changed: '+expected.path);
+   assert.equal(actual.sha256,expected.sha256,'Retained Portfolio output bytes changed: '+expected.path);
+  }
+  for(const [name,expected]of Object.entries(record.visualReview||{})){
+   assert.ok(expected&&typeof expected.filename==='string'&&Number.isSafeInteger(expected.bytes)&&expected.bytes>=0&&/^[a-f0-9]{64}$/.test(expected.sha256||''),'Retain the original rendered image identity: '+label+' / '+name);
+   const path=join(directory,expected.filename);let actual;
+   try{actual=await fileIdentity(path);}catch(error){throw new Error('Recover the exact original rendered Portfolio image '+path+' before continuing '+label+'. Prior visual review remains unchanged. '+error.message);}
+   assert.equal(actual.bytes,expected.bytes,'Original Portfolio image size changed: '+path);
+   assert.equal(actual.sha256,expected.sha256,'Original Portfolio image bytes changed: '+path);
+  }
+ }
  // Re-read actual served bytes on every continuation; completed phase data is not a source check.
  const actual={};
  for(const name of sourcePaths){const bytes=await native('/'+name,{binary:true});actual[name]=createHash('sha256').update(bytes).digest('hex');assert.equal(actual[name],input.portfolioSourceSha256[name],'Receive the exact selected source: '+name);}
  progress.phases['portfolio-exact-installed-source']={complete:true,completedAt:stamp(),result:actual};
  await saveProgress();
+ await verifyRetainedArtifacts(progress,out,'the same receiving continuation');
  await open(page);
  if(cold){
   const previous=JSON.parse(await readFile(join(input.directory,'browser-portfolio-result.json'),'utf8'));
+  assert.equal(previous.operationId,input.operationId);assert.equal(previous.caseId,input.caseId);
+  await verifyRetainedArtifacts(previous,join(input.directory,'browser-portfolio'),'the original completed receiving result');
   await phase('portfolio-cold-original-case-and-copy',async()=>{
    await chooseCopy(page,previous.selectedCopyId);const copy=await selected(page);assert.equal(copy.head.state.pending,null);assert.equal(copy.head.state.savedChoice,previous.savedPortfolioId);
    const saved=await native('/api/operations/'+input.caseId+'/portfolios/'+previous.savedPortfolioId);assert.equal(saved.sha256,previous.savedPortfolioSha256);
@@ -92,6 +110,7 @@ export async function operatePortfolioWorkingCopies(host){
    return {copyId:copy.id,portfolioId:saved.id,sha256:saved.sha256};
   });
   await saveDownload(page,()=>action(page,'working-export'),'portfolio-cold-working-copy.json');await verifyFile(join(folder,'portfolio-cold-working-copy.json'));
+  await verifyRetainedArtifacts(progress,out,'the cold receiving result');
   return {schema:'stellar-forge.portfolio-working-copy-browser.v1',operationId:input.operationId,caseId:input.caseId,mode:'cold',completedAt:stamp(),phases:progress.phases,files:progress.files,visualReview:progress.visualReview};
  }
  const baseline=await phase('portfolio-original-source-and-first-images',async()=>{
@@ -203,8 +222,10 @@ export async function operatePortfolioWorkingCopies(host){
   const reviewFile=await saveDownload(page,()=>av('review-json'),'portfolio-resource-availability-before.json');
   const review=JSON.parse(await readFile(reviewFile.path,'utf8'));assert.equal(review.rows.length,3);assert.ok(review.rows.every(r=>r.proposed.hours==='0'));
   const already=(await selected(page)).head.state.availabilityDesk.history.find(h=>h.proposal.command.kind==='RANGE'&&h.proposal.command.operation==='SET'&&h.proposal.command.hours==='0'&&h.proposal.command.from===start&&h.proposal.command.to===last&&h.proposal.command.note===requestedNote('three-day capacity planning review'));
-  if(already)await av('clear-review');else await av('apply');
-  current=await retained(page,c=>c.head.state.availabilityDesk.history.some(h=>h.proposal.command.note===requestedNote('three-day capacity planning review'))&&c.head.state.draft.resources[0].hoursByDate[start]==='0','Retain complete applied resource review');
+  const rangeDates=Array.from({length:3},(_,i)=>new Date(Date.parse(start+'T00:00:00Z')+i*86400000).toISOString().slice(0,10));
+  const alreadyCurrent=(await selected(page)).head.state.draft.resources.find(r=>r.id===resource.id);
+  if(already&&rangeDates.every(d=>String(alreadyCurrent.hoursByDate[d])==='0'))await av('clear-review');else await av('apply');
+  current=await retained(page,c=>c.head.state.availabilityDesk.history.some(h=>h.proposal.command.note===requestedNote('three-day capacity planning review'))&&rangeDates.every(d=>String(c.head.state.draft.resources.find(r=>r.id===resource.id).hoursByDate[d])==='0'),'Retain complete applied resource review');
   assert.equal(current.head.state.draft.resources[0].hoursByDate[start],'0');
   const appliedHistory=structuredClone(current.head.state.availabilityDesk.history);
   await saveDownload(page,()=>av('csv'),'portfolio-resource-availability-calendar.csv');
@@ -288,5 +309,6 @@ export async function operatePortfolioWorkingCopies(host){
   await capture('portfolio-05-final-desktop.png');await capture('portfolio-05-final-phone.png',{width:390,height:844});
   return {copyId:saved.copyId,portfolioId:saved.portfolioId};
  });
+ await verifyRetainedArtifacts(progress,out,'the complete receiving result');
  return {schema:'stellar-forge.portfolio-working-copy-browser.v1',operationId:input.operationId,caseId:input.caseId,mode:'operate',completedAt:stamp(),selectedCopyId:saved.copyId,savedPortfolioId:saved.portfolioId,savedPortfolioSha256:saved.sha256,phases:progress.phases,files:progress.files,visualReview:progress.visualReview,sourcePortfolioId:original.id,sourcePortfolioSha256:original.sha256};
 }
