@@ -2,6 +2,24 @@
 
 Receive a complete original Rialto catalogue, choose a useful HTTP request, prepare its actual merchant challenge through the original Stellar Forge buyer, and hand the whole operation to another operator.
 
+## Original published path inputs
+
+The installed request editor reads each HTTP resource's published path declaration through the same maintained route helper used by the original buyer. For a route with parameters, open **Review source**, fill its required path values and choose **Apply path values**. The complete request URL updates while retaining its query parameters. Concrete segments already present in the original advertised resource stay fixed. Published examples remain source context; the editor asks for the customer's actual values.
+
+The downloaded request retains those explicit path values with the complete catalogue identity, original row and payment option. The native `select` operation binds the concrete URL against the original template, validates fixed values and retains its full `pathBinding`. The actual merchant challenge is independently bound to the same concrete request. The original SF88 preparation, payment approval and receiving then continue unchanged.
+
+A CLI selection may supply `pathValues` alongside its complete concrete `url`. Omit it when entering an already concrete URL directly; the maintained helper still validates and derives the original binding. The pure SDK exports `describeRequestPath`, `prepareRequestPath` and `bindRequestPath` for applications using these same source declarations. Conflicting top-level and Bazaar route templates are reported explicitly.
+
+Saved browser drafts retain unfinished path fields, body, headers, task, useful output and current URL. Previously saved native requests continue reopening after upgrade; their original request is validated again, and their retained selection remains intact. Existing captured catalogue reports also remain intact. To generate the updated editor from an existing catalogue, choose a new report path:
+
+```sh
+starforge rialto-customer report \
+  --directory /absolute/private/catalogue-001 \
+  --out /absolute/private/catalogue-001-path-editor.html
+```
+
+Continue the original selected customer directory for challenge recovery and native receiving. A distinct customer request starts its own request directory and explicit intent.
+
 ## Installation
 
 Use Node.js 22 or later and Linux `flock`. The receiving modules use Node built-ins. The original buyer retains its own native dependencies, account configuration and authorization.
