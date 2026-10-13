@@ -41,7 +41,7 @@ starforge runtime-install run --dir /srv/starforge/document-runtime -- document-
 
 The archive's own manifest supplies its dependency declarations. Add the existing `mcp` feature when this merchant will also be controlled by the merchant MCP operator. Keep provider keys and native signer credentials in the selected private runtime environment.
 
-Continue with the provider selection and retained merchant setup below. The same archive contains `jobs`, `job-workspace`, the original resolution commands and the four Applications providers for the paid merchant, checkout, result receiver and Collections. The customer flow uses their existing saved records throughout.
+Continue with the provider selection and retained merchant setup below. The same archive contains `jobs`, `job-workspace`, the original resolution commands and Applications for the paid merchant, checkout, result receiver and Collections, together with Document merchant and Document production. The customer flow uses their existing saved records throughout.
 
 ## 1. Select the renderer and its real account
 
@@ -371,6 +371,28 @@ Use [COMPOSITION.md](COMPOSITION.md) when the customer starts with order rows, r
 ~~~sh
 starforge document-merchant compose --help
 ~~~
+
+## Operate the customer's document workspace
+
+The installed **Document production** application combines the dataset/template workflow with the customer's original authenticated workspace. Its local `/documents/` page uses the same original customer, native Checkout and Resource library as Request and Jobs. The complete private customer-options JSON supplies the original state, nested Checkout/operator configuration and allowed file roots.
+
+~~~sh
+starforge document-merchant compose inspect-service \
+  --workspace-options /srv/starforge/private/customer-options.json \
+  --provider snaplab \
+  --merchant-origin https://YOUR_MERCHANT_ORIGIN
+
+starforge document-merchant compose serve \
+  --workspace-options /srv/starforge/private/customer-options.json \
+  --provider snaplab \
+  --merchant-origin https://YOUR_MERCHANT_ORIGIN
+~~~
+
+Use the actual configured provider and commissioned merchant origin. The service returns its original authenticated launch and the document page. In Applications, select **Document production**, the same private options file, and the same customer source directory. Start and Stop retain that customer's original payment, request, job and received-file history.
+
+Choose a saved dataset and template recipe or start from the complete shipped examples. Each uploaded file is received in full. Review the generated document count and parent task references, then select **Prepare merchant price**. This runs the original Request preparation and shows the native quote grouped by network, asset, recipient and payment flow. **Render at this saved price** executes that saved plan through the original customer. The page receives complete binary PDFs through the existing resource downloads and can export the original Collection with all source data, templates and native result files.
+
+Large source plans can be received from an original local file inside an allowed customer file root. After an interrupted rendering, reopen the same saved composition and continue its original jobs or receive accepted work. An interrupted Collection export continues in its retained original export directory. The [complete composition guide](COMPOSITION.md) gives the private options shape, every browser action and the equivalent installed commands.
 
 ## Fulfill and deliver complete document batches
 

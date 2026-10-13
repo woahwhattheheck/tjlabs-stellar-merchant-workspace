@@ -1,0 +1,402 @@
+{
+  "schema": "stellar-forge.oecd-product-source.v1",
+  "edition": "oecd-installed-economic-editions-20261013",
+  "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "standalone_base_commit": "97b7f0943f5b539204cc7be73e7b0c0365ba4b9b",
+  "original": {
+    "repository": "https://github.com/woahwhattheheck/public-commons-sprint-2026",
+    "complete_projection_commit": "7f50967f05c943c4ae9eb2c02b1c375e147a1cb8",
+    "complete_projection_files": 290,
+    "complete_projection_bytes": 3852489,
+    "source_rights_merge": "ef4c6c57b08bb67b750aa251ccdaeb79dc84031b",
+    "files": [
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/sdmx_source.py",
+        "bytes": 26213,
+        "sha256": "a5f26d4a66212fb9cf3eb9356a65f683bd3050d017d2a9ed6ddfcec401a40c57",
+        "git_blob": "c192acd45de64eb5cf838bb99f0547e119c5b4a8",
+        "composition": "maintained-shared-postimage",
+        "standalone_before_git_blob": "1146ac94850c34cf2912c22e42682e1b8f5b332a",
+        "change": "Retain Header StructureUsage/dataflow versus direct DSD reference kind."
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/sdmx_workspace.py",
+        "bytes": 66239,
+        "sha256": "f9671bec77bd380fb7cc3df490912257883d97274dfce9c9bed563bac87e83ee",
+        "git_blob": "532e5a3ebd734e05d391d2b67ed588dc2108247b",
+        "composition": "maintained-shared-postimage",
+        "standalone_before_git_blob": "d6a2a98d2d5818b6d7696660f8cf1260ede0d670",
+        "change": "Resolve the exact retained dataflow/DSD relation and register/reuse the original XML module identity before execution."
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/macrobond/catalog.py",
+        "bytes": 49192,
+        "sha256": "521d5b501ae2bb2f44d89bf499f5100e7178b7e9bb2faad2a684ee21b6e0b89b",
+        "git_blob": "abe75ec6cb3ef4e60955079afd6c2ec09ff5a210",
+        "composition": "maintained-shared-postimage",
+        "standalone_before_git_blob": "5d71c9e5feb84b0a0f305371206cd06776f32d25",
+        "change": "Use the native UNIT_MEASURE dimension when a source does not supply the UNIT attribute."
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/bootstrap.py",
+        "bytes": 784,
+        "sha256": "e07cdf3d493b19c9613342f032f4abf2b65050409777977ecf099b1f03b4ba79",
+        "git_blob": "0ac78441225af50fd70c73866f733b23363195e0",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/workspace.py",
+        "bytes": 35300,
+        "sha256": "d6a9699279ea583756f29c8f96500822e8996dcce26373fe6764270b9cb7d94a",
+        "git_blob": "0cf305e17b9a491d3a243fb9aad352863b377b00",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/briefing.py",
+        "bytes": 18789,
+        "sha256": "4ba43e9ac354e3de2f30b03c0d1122e9a64e4b5c306427aaabf9d87dd455f2f4",
+        "git_blob": "5cfa2537229ec39dbbac1c0eeb58d68ee5635937",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/cli-seven-countries-20261012.xml",
+        "bytes": 68398,
+        "sha256": "6d3404545aeef55f7b000249d9b97e83604d34cf03710a9e93535be3cfa43ae8",
+        "git_blob": "f0722a225d32ce9c85d906b6230a8c8020901fa5",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/dataflow-4.1.xml",
+        "bytes": 6720,
+        "sha256": "8f3ff8812b28cd0f9d4baeb75fb90b884be9541c2d96d843df687172f43afb11",
+        "git_blob": "41906267e0cac9d463a89777cb5a195a2b3bf606",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/datastructure-4.1.xml",
+        "bytes": 14361,
+        "sha256": "4eac9eff1d401ac7f58a572445c5eebf8bcbd17bfba3836b020ea065ccfd5814",
+        "git_blob": "289d385c54f425703918e47d77dcf6ad44d792d8",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/OECD-CL_AREA-1.1.xml",
+        "bytes": 5887,
+        "sha256": "aaf91cafffc664866727512b07e441fd749bbe2e9600266a638380657779f1ce",
+        "git_blob": "89fb107d09de3ac171639e250e0c281f26af549b",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/SDMX-CL_FREQ-2.1.xml",
+        "bytes": 15220,
+        "sha256": "783b50047ab7668d0bb0c1f5e50b5dedfb5d92ebadebc0202ffe5bb45f88d767",
+        "git_blob": "ab21b787d4f5d52597f6078f34c26aa17213acef",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/OECD.SDD.STES-CL_MEASURE-1.1.xml",
+        "bytes": 46695,
+        "sha256": "1b2af6dd6bec57a6588e522b404d6ac2b61d5ffac7e151042c18a838b1f31864",
+        "git_blob": "dfb450905e99ac1fc323e342d2e1b58e69073348",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/OECD-CL_UNIT_MEASURE-1.0.xml",
+        "bytes": 1603,
+        "sha256": "bde0aa43b4e2652a6bbec1588e4e5698927b9902b7736f46b728b25f56b191df",
+        "git_blob": "11cbfec79da7f3a4f9e1fef62225dc481878ba7c",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/OECD-CL_ACTIVITY_ISIC4-1.0.xml",
+        "bytes": 1922,
+        "sha256": "82568a1a1eed849978b0f8fd1532da89ea75c82e91efe8e456cf6df7a2b6fa3f",
+        "git_blob": "17ef9a2d2f787e97dfb4769132e331e5d90c9c89",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/OECD-CL_ADJUSTMENT-1.0.xml",
+        "bytes": 11217,
+        "sha256": "8c99864a55bdcc4d0e21de7e9b6dc51da6fbcdfed857c91195b8f1a2b7a66e69",
+        "git_blob": "77abef8c6b1929e833ca36a46f6ca58f587c5b4f",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/OECD-CL_TRANSFORMATION-1.0.xml",
+        "bytes": 37144,
+        "sha256": "da77b1459118c613a680ca1ff9ac5c83a9445de67b4f162bf87c92104b752eaf",
+        "git_blob": "e9b8f7426825feaf0376833aabb393b537f5ca07",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/OECD.SDD.STES-CL_TIME_HORIZ-1.0.xml",
+        "bytes": 1663,
+        "sha256": "06c15ba96166448dff99858918b5ef28a66ce9761b4a7c805958731c103f5722",
+        "git_blob": "05cf7adb16455ce2ad2f89c44b0115971b3a1a0c",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/OECD.SDD.STES-CL_METHODOLOGY-1.0.xml",
+        "bytes": 1503,
+        "sha256": "7ec2d41e663c235a0429b9778dd749c60c5d03cbd8c58786f2dc0c3c621942cd",
+        "git_blob": "b08e3e6043c54f615abe22b914417fb5ac3de87d",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/SDMX-CL_OBS_STATUS-2.2.xml",
+        "bytes": 11134,
+        "sha256": "b5936db5455af931cb6fb5c572e691ea7c4c679ef65667cd5a9c8aeb09b97a19",
+        "git_blob": "001557eebfd5bf17db663d9dcc1c342c159966e3",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/SDMX-CL_UNIT_MULT-1.1.xml",
+        "bytes": 9868,
+        "sha256": "59c913eb4d5f7e2f8d34a080909b473fd0e5fa52fb15ac8e25b183fe9ad8dcc7",
+        "git_blob": "59ab02154151684b608e5f27bfdeff231cf2570d",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/SDMX-CL_DECIMALS-1.0.xml",
+        "bytes": 3307,
+        "sha256": "e5284d52666a3c0c9194dd6dc0a07fbbbf94865ad1a5613de07e26e742298150",
+        "git_blob": "b5285f9e794bc0dad47cebb6fb0c9be3db194cc3",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/bundle.json",
+        "bytes": 9283,
+        "sha256": "00c7ec37a912034ce9e179b354b05678e24dfe5d03b06368315aa942185a8254",
+        "git_blob": "07c57b63aa434e8e27cbe0263ed402fb8805f273",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/acquire.py",
+        "bytes": 5418,
+        "sha256": "2d22222f64edc99d990abc08e17260cf6032d767cccd7f1becd8b7195d81835f",
+        "git_blob": "40e4730fd12591b0c5db63609f9ec84b7594c2fb",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/server.py",
+        "bytes": 5251,
+        "sha256": "0f1f39d7bf0c4209f2c80eba34c8ff854f929350ac0cca96709bc91962a50210",
+        "git_blob": "d0b14fc5af053b5e9a21b84a233b2cd90f5a9e34",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/cli.py",
+        "bytes": 5837,
+        "sha256": "0ce6a4de6ca935be40af75278ca95a006fbe8e84dc47f011d60554e96db20717",
+        "git_blob": "9420744b6207881a10bfb8af85f58a8585290468",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/client.mjs",
+        "bytes": 8218,
+        "sha256": "cec5d82e59b50dfbe877405ee7c647edd04cf6f58a27f5b58a9c7152d03357f4",
+        "git_blob": "d9f96bd4507bc276f9424b86c89349df14e22f13",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/client.d.ts",
+        "bytes": 8157,
+        "sha256": "ae61402f7e1369df27253731d8607262d0df11d8c2448c447f474b7e03a49dd4",
+        "git_blob": "5c3f9bb7354dd9350dccb82f49ea51ec6a9d4f3d",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/mcp.mjs",
+        "bytes": 10318,
+        "sha256": "77c61d1c2526c9e6243289109f01228c628707e1b6782acda89554591d2e94a1",
+        "git_blob": "3f7406c1a34715e6b6549e865cbfaf17d5c6b499",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/cli.mjs",
+        "bytes": 3164,
+        "sha256": "84fe1fe79ab0a605e6697c379bd6e6fc4953296c1a232fd6f6c01ffa79a12ba9",
+        "git_blob": "660d32db90feaee85ff2b4669cd9c8d01e31e966",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/public/index.html",
+        "bytes": 4785,
+        "sha256": "5d6dab6c9a210d09f7196a18a5a2bb3690f0b306e19a093471d33b1e37555eed",
+        "git_blob": "46283934adf40431aa8604a64b37a517e9b620bb",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/public/style.css",
+        "bytes": 3283,
+        "sha256": "ed9e522ba5ef8ccabf768b46b62598730f3b84c0edb6b3b8c211be5987932372",
+        "git_blob": "4df900a116cf2cc755851cd18a1b86a4aa610195",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/public/app.mjs",
+        "bytes": 15071,
+        "sha256": "e2da7a02500613cbcf5d967c4bdf69378e6acf82771f96ab194cd2db6d026908",
+        "git_blob": "b279f8523440825520c248316cc1d339b966ce38",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/receiving.mjs",
+        "bytes": 19954,
+        "sha256": "62f015384ce4c81add93c44a6b2f0712e383f9efb00763b79631ac80758416cc",
+        "git_blob": "c2166be9efefc7a876ccb6898582afdf2e6f7b5d",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/oecd.mjs",
+        "bytes": 3223,
+        "sha256": "2596ad7e95f6b5f79c66812b4aa09dd8f07da37778ccf713303be721537d73c7",
+        "git_blob": "9dc0e9c72e8c8e02638168c45f57502753c0e4d6",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/contributions/oecd.json",
+        "bytes": 1254,
+        "sha256": "243b6f2665d77d0b74a205cd316a4513190facfc45786c87decb3d8100d53cd7",
+        "git_blob": "62682f3dae8e7c802632c8768de319dd12255c8d",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/examples/selection.json",
+        "bytes": 458,
+        "sha256": "3b135392e37e25d07fde2758c9c8d60632579ef080f32057740a37838f6fa668",
+        "git_blob": "ef299bbe24f08811cf34c17356c4fb8f60f81543",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/examples/receiving.json",
+        "bytes": 1122,
+        "sha256": "253f7b3e67e4b4e7ee69657a413aa959e075b1fac2909cb3e17e902d4b184345",
+        "git_blob": "f1d47210e34492f6569d406dffe00644f8fed406",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/examples/create-briefing.mjs",
+        "bytes": 4604,
+        "sha256": "81bb3a51c3d011b59030ad5fed756cd0f8ecef5aa237021b34600c35ab35ef7b",
+        "git_blob": "e52a0a64a2224c1d750f76a42b397f816cff1313",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/README.md",
+        "bytes": 16520,
+        "sha256": "602bb52c2e2653dcbbcdae9d77e929e5b9d2a5d5cf681aff1b9e78a55e9366ee",
+        "git_blob": "181e5206144a1ace0b22f8022f412bb514b8e5a9",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/SOURCE.md",
+        "bytes": 3865,
+        "sha256": "d00ea3a736a666ac07e1ffa40d0589dcac63c6b9c67a2da15791ba4ce1952229",
+        "git_blob": "217175a0ff0b1ef40d5fad80696a79a2ac2ef9c1",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/LICENSE",
+        "bytes": 1085,
+        "sha256": "6695de0415214b1e01ea31a8d3d8c6e7f7933e3db88d80b92adaf0b388d006e8",
+        "git_blob": "54efb8658cd964e1b31d959ba92cc9ceff856532",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/rights.py",
+        "bytes": 7985,
+        "sha256": "98dafbe70e90d2b9e43bf10a37a83981dd497d91b7065850cbc28e044c882e53",
+        "git_blob": "5bdfe828819dbe572df50db5358e09b4bf2d1e92",
+        "composition": "unchanged-original-OECD-source"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/SOURCE_RIGHTS.md",
+        "bytes": 5609,
+        "sha256": "1503f6555d994c9608680f1f3a9f3dee1bfe175d84894b03a8d8f54061ac5dfe",
+        "git_blob": "34b22e273d17bc15720bd044862fa198310054fc",
+        "composition": "unchanged-original-OECD-source"
+      }
+    ]
+  },
+  "product": {
+    "files": [
+      {
+        "path": "products/oecd/cli.mjs",
+        "bytes": 9180,
+        "sha256": "6439a70f5876fe54dbff2aceba552875e53ba1559c44cc1c439821f8472936ce",
+        "git_blob": "e953c3981e60b404f7ed23b684f552927dbd3190"
+      },
+      {
+        "path": "products/oecd/README.md",
+        "bytes": 6428,
+        "sha256": "9021c382c4db314165e701982e9c752cd3798392d0cc5b56c14474353599bbb7",
+        "git_blob": "4769dc31fb5301eb072b0540386e3149213836ce"
+      },
+      {
+        "path": "products/oecd/OPERATING.md",
+        "bytes": 10636,
+        "sha256": "74b33e764ceda4c5996004817d8fc568727e158b585c8e90b0a71684685b5dac",
+        "git_blob": "0124d3ff3e00005da3e0824f7865461ce30c6c34"
+      },
+      {
+        "path": "products/oecd/RECEIVING.md",
+        "bytes": 8954,
+        "sha256": "a63a61809b67dcd777fefe6c148bef231f2e2282212e89cc2a0d41ed373f1487",
+        "git_blob": "a2940c747b2a628800f9a4a5e90007e83cfa1d86"
+      },
+      {
+        "path": "products/oecd/SCF_PRODUCT.md",
+        "bytes": 6666,
+        "sha256": "c26545c5a9f91ea0f19b709c89294f34cb2dce5143dba071927010647d1fb2d5",
+        "git_blob": "e569e2ffbcc5d91288adf20882d66b503226965d"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/selections/oecd.json",
+        "bytes": 5092,
+        "sha256": "9b774e68ace1114f45215a3656eb75d600cf72c00c252511bf078b7ea9827ff4",
+        "git_blob": "af8f6f1c91ec115bc8923b9d0767be920e4d0566"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/contributions/oecd-product.json",
+        "bytes": 405,
+        "sha256": "01954da272e4af2eda015c02daebd378423c183b20d8995c8d476851e09cf9b3",
+        "git_blob": "d2148311e6c6cfcd5c4d9e9b1510a4b281435982"
+      }
+    ],
+    "excluded_self": "products/oecd/SOURCE.json"
+  },
+  "original_provider_source": {
+    "manifest": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/bundle.json",
+    "responses": 15,
+    "bytes": 236642,
+    "observations": 231,
+    "countries": [
+      "CAN",
+      "DEU",
+      "FRA",
+      "GBR",
+      "ITA",
+      "JPN",
+      "USA"
+    ],
+    "flow": {
+      "agency": "OECD.SDD.STES",
+      "id": "DSD_STES@DF_CLI",
+      "version": "4.1"
+    },
+    "structure": {
+      "agency": "OECD.SDD.STES",
+      "id": "DSD_STES",
+      "version": "4.1"
+    },
+    "readback_recorded_at": "2026-10-12T12:01:14.820Z",
+    "rights": "OECD Data Terms, section 3",
+    "terms_url": "https://www.oecd.org/en/about/terms-conditions.html"
+  },
+  "licenses": {
+    "application": "MIT",
+    "product": "MIT",
+    "provider": "Retained original OECD/SDMX source terms, annotations and acknowledgments"
+  }
+}

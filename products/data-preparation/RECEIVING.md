@@ -4,6 +4,8 @@ This receiver operates the unchanged PREP12 customer project through the install
 
 The original project contains three sources and 120,012 input rows. Its orders source has 120,000 rows, including integer identifiers outside the safe JavaScript number range. The original reviewed closed-order SQL and the independent open-order edit each produce six complete result rows. The receiver compares every result column and row to the corresponding original preparation result.
 
+Receiving rebuilds each native SQLite result from the verified portable CSV, JSONL and schema; history comparisons retain every original run field and portable file descriptor while accepting the reconstructed `result.sqlite` descriptor.
+
 ## Original case and selected source
 
 Use the original Starforge_Data_Preparation_2026-10-12.zip from the PREP12 work order:
@@ -65,20 +67,20 @@ Use --continue directly at the operation's current canonical path. To move the c
 
 Select the complete closed customer or checkpoint ZIP produced by this receiver and its full SHA-256 from the saved receiving result. The archive includes files.json, the unchanged original package/project, both preparation workspaces, any received pipeline child, every retained invocation, and the operation's saved progress. Use this complete case to continue the same operation on another Linux host or at a different canonical path.
 
-Supply the maintained receiver files and their complete selected source, the new host's Python, Node, Playwright and Chromium, and the same five delivery helpers when available. Choose a new directory under an owned mode-0700 parent. The following single command verifies and restores the case, then enters the original receiving.py --continue operation:
+Supply the five maintained receiver files, the new host's Python, Node, Playwright and Chromium, and the same five delivery helpers when available. The complete checkpoint already includes the selected runtime. The restore command reuses one matching saved invocation, verifies every runtime file against the current source manifest, and continues the original case without fetching source files or installing another copy. Choose a new directory under an owned mode-0700 parent. The following single command verifies and restores the case, then enters the original receiving.py --continue operation:
 
 ~~~bash
-python3 /ABSOLUTE/SOURCE_ROOT/products/data-preparation/restore-receiving.py \
+python3 /ABSOLUTE/RECEIVER/restore-receiving.py \
   --checkpoint /ABSOLUTE/Starforge_Data_Preparation_Pipelines_Checkpoint.zip \
   --expected-sha256 COMPLETE_CHECKPOINT_SHA256 \
   --directory /ABSOLUTE/PRIVATE/restored-preparation \
-  --source-root /ABSOLUTE/SOURCE_ROOT \
-  --source-commit SOURCE_COMMIT \
   --node /ABSOLUTE/node \
   --playwright-module /ABSOLUTE/node_modules/playwright \
   --chromium /ABSOLUTE/chromium \
   --save-helper /ABSOLUTE/helpers/library_upload.py
 ~~~
+
+The runtime commit defaults to the adjacent receiving-source.json. To continue with another maintained source edition, supply --source-root /ABSOLUTE/SOURCE_ROOT and, optionally, --source-commit SOURCE_COMMIT; the commit must match that same manifest. Automatic selection requires all selected source files from one original invocation, including byte lengths, SHA-256 and Git blob identities. It never assembles a runtime from partial invocations. If the checkpoint predates that complete source edition, use the explicit source root. A changed receiving driver can reuse the same saved runtime when its selected runtime files and source commit are unchanged.
 
 The receiver verifies the whole selected ZIP and every original inventory member, including the complete source and result files and the empty directories. It checks the unchanged PREP12 package and native project and their full 120,012-row source population. Only after those checks does it publish the verified directory through Linux create-only rename, with private directory/file permissions. An existing unrelated destination is preserved.
 

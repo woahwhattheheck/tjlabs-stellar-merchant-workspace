@@ -1,0 +1,37 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "weather-report-renewal",
+  "heading": "## Weather report receiving and renewal",
+  "sources": [
+    {
+      "id": "weather-report-renewal",
+      "label": "Customer receiving and report renewal",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/open-meteo-operations/REPORT_RENEWAL.md",
+      "editions": [
+        {
+          "commit": "e5380c046370b58c350d16a35b48b13bf91cd510",
+          "bytes": 10470,
+          "sha256": "6371c2f0069516cc610d6633e45c07b89849dbaf05c87a5e70ca51fb30ed7d12",
+          "git_blob": "fc8a286d3641b8ad1aeb556190070b94904b0b51"
+        }
+      ]
+    },
+    {
+      "id": "weather-report-renewal-contribution",
+      "label": "Weather report renewal installed contribution and typed interface",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/open-meteo-report-renewal.json",
+      "editions": [
+        {
+          "commit": "e5380c046370b58c350d16a35b48b13bf91cd510",
+          "bytes": 501,
+          "sha256": "0d77042f04e11176911072b7c47bd2dbf976f100535602cafe110a1b32e77265",
+          "git_blob": "03ffe6e5f0655e19f2915a4728de8b6b8f72f5a9"
+        }
+      ]
+    }
+  ]
+}

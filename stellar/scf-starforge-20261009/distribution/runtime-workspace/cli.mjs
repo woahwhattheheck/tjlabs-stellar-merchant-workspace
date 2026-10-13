@@ -18,6 +18,8 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace attach --workspace DIRECTORY --runtime EXISTING_RUNTIME [--label NAME]
   runtime-workspace serve --workspace DIRECTORY [--port 8465]
   runtime-workspace status --workspace DIRECTORY [--runtime-id ID]
+  runtime-workspace operation-status --workspace DIRECTORY --operation-id UUID
+  runtime-workspace operation-log --workspace DIRECTORY --operation-id UUID
   runtime-workspace source-plans --workspace DIRECTORY [--query TEXT --limit 30 --cursor ID] [--receiving-query TEXT --receiving-status all --receiving-limit 30 --receiving-cursor ID]
   runtime-workspace source-plan-inspect --document COMPLETE_JSON
   runtime-workspace source-plan-save --workspace DIRECTORY --request COMPLETE_JSON
@@ -138,6 +140,7 @@ const allowed = {
   'managed-config': ['--workspace', '--home-id', '--path'],
   init: ['--workspace', '--runtime-home'], attach: ['--workspace', '--runtime', '--label'],
   serve: ['--workspace', '--port'], status: ['--workspace', '--runtime-id'], handoff: ['--workspace', '--runtime-id'],
+  'operation-status': ['--workspace', '--operation-id'], 'operation-log': ['--workspace', '--operation-id'],
 };
 export async function main(argv = process.argv.slice(2)) {
   if (!argv.length || argv.length === 1 && argv[0] === '--help') { process.stdout.write(HELP); return; }
@@ -360,6 +363,10 @@ export async function main(argv = process.argv.slice(2)) {
   } else if (command === 'handoff') {
     if (!options['--runtime-id']) fail('RUNTIME_WORKSPACE_RUNTIME_ID_REQUIRED');
     result = await model.handoff(options['--runtime-id']);
+  } else if (command === 'operation-status') result = await model.operationStatus({ operationId: options['--operation-id'] });
+  else if (command === 'operation-log') {
+    if (!options['--operation-id']) fail('RUNTIME_WORKSPACE_OPERATION_INVALID');
+    result = await model.logs({ operationId: options['--operation-id'] });
   } else result = await model.state({ runtimeId: options['--runtime-id'] ?? null });
   process.stdout.write(json(result));
 }

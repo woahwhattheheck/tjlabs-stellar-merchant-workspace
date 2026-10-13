@@ -1,4 +1,4 @@
-import base64, hashlib, json, os, pathlib, shutil, signal, stat, subprocess, sys, tempfile, time, zipfile, zlib, urllib.request
+import base64, fcntl, hashlib, json, os, pathlib, shutil, signal, stat, subprocess, sys, tempfile, time, zipfile, zlib, urllib.request
 configuration = sys.argv[1]
 payload = json.loads(configuration if configuration.lstrip().startswith("{") else pathlib.Path(configuration).read_text(encoding="utf-8"))
 root = pathlib.Path(tempfile.mkdtemp(prefix="dff77-bank-product-release-", dir="/dev"))
@@ -107,7 +107,114 @@ def run(name,args,cwd=None,timeout=600,acceptable=(0,)):
         emit({"stage":name,"stdout":out.read_text(errors="replace")[-4000:],"stderr":err.read_text(errors="replace")[-12000:]})
         raise RuntimeError(name+" exited "+str(code))
     return out.read_bytes()
+directory_delivery = None
+directory_delivery_lock = None
+directory_delivery_records = {}
+def prepare_directory_delivery():
+    global directory_delivery, directory_delivery_lock, directory_delivery_records
+    value=payload.get("artifactDirectory")
+    if value is None:
+        return None
+    if directory_delivery is not None:
+        return directory_delivery
+    if not isinstance(value,str) or not pathlib.Path(value).is_absolute():
+        raise ValueError("artifactDirectory must name an absolute private output directory")
+    destination=pathlib.Path(value).resolve()
+    if destination==root or root in destination.parents:
+        raise ValueError("Keep the complete output outside the producer's temporary root")
+    destination.mkdir(parents=True,exist_ok=True,mode=0o700)
+    marker=destination/".bank-release-operation.json"
+    expected={"schema":"stellar-forge.bank-release-directory.v1","operation_id":payload["operation_id"],
+              "sourceCommit":payload["commit"],"selection":payload["selection"],"producer":producer_identity()}
+    if marker.exists():
+        if marker.is_symlink() or json.loads(marker.read_text(encoding="utf-8"))!=expected:
+            raise ValueError("The output directory belongs to a different original receiving operation")
+    elif any(path.name!=".bank-release.lock" for path in destination.iterdir()):
+        raise ValueError("Select a fresh output directory for this complete receiving operation")
+    lock=destination/".bank-release.lock"
+    if lock.is_symlink():
+        raise ValueError("The original receiving lock must be an ordinary file")
+    handle=lock.open("a+b")
+    try:
+        fcntl.flock(handle.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
+        if marker.exists():
+            if json.loads(marker.read_text(encoding="utf-8"))!=expected:
+                raise ValueError("The original output operation changed")
+        else:
+            if any(path.name!=".bank-release.lock" for path in destination.iterdir()):
+                raise ValueError("The original output directory changed before receiving")
+            write_json_atomic(marker,expected)
+        index=destination/".bank-release-artifacts.json"
+        if index.exists():
+            if index.is_symlink():
+                raise ValueError("The retained artifact index must be an ordinary file")
+            retained=json.loads(index.read_text(encoding="utf-8"))
+            if any(retained.get(key)!=expected[key] for key in expected):
+                raise ValueError("The retained artifact index selects another original operation")
+            records=retained.get("files",[])
+            directory_delivery_records={row["filename"]:row for row in records}
+            if len(directory_delivery_records)!=len(records):
+                raise ValueError("The retained artifact index repeats a file")
+            for name,row in directory_delivery_records.items():
+                if pathlib.PurePosixPath(name).name!=name or name.startswith("."):
+                    raise ValueError("The retained artifact index names an unrelated file")
+                if row.get("storage")!="directory" or row.get("artifact_path")!=str(destination/name):
+                    raise ValueError("The retained artifact coordinate differs")
+        directory_delivery=destination
+        directory_delivery_lock=handle
+    except BaseException:
+        handle.close()
+        raise
+    emit({"stage":"artifact-directory","status":"ready","directory":str(destination),
+          "retainedFiles":len(directory_delivery_records)})
+    return destination
+def save_directory_paths(label,paths):
+    destination=prepare_directory_delivery()
+    rows=[]
+    for path in paths:
+        expected=file_identity(path)
+        target=destination/path.name
+        temporary=destination/(".part-"+path.name+"-"+str(time.monotonic_ns()))
+        prior=directory_delivery_records.get(path.name)
+        pending={"label":label,"local_path":str(path),"storage":"directory",
+                 "artifact_path":str(target),**expected}
+        pending_saves[str(path)]=pending
+        try:
+            if target.is_symlink():
+                raise ValueError("The receiving output must be an ordinary file")
+            observed=file_identity(target) if target.exists() else None
+            if observed is not None and observed!=expected:
+                if prior is None or observed!={key:prior[key] for key in ("bytes","sha256")}:
+                    raise ValueError("The retained artifact changed outside this original operation: "+path.name)
+            if observed!=expected:
+                with path.open("rb") as incoming,temporary.open("xb") as output:
+                    os.chmod(temporary,0o600)
+                    shutil.copyfileobj(incoming,output,1024*1024)
+                    output.flush();os.fsync(output.fileno())
+                if file_identity(temporary)!=expected:
+                    raise ValueError("The complete output copy differs from its original bytes")
+                os.replace(temporary,target)
+            row={"status":"succeeded","storage":"directory","filename":path.name,
+                 "local_path":str(path),"artifact_path":str(target),**expected}
+            directory_delivery_records[path.name]=row
+            index={"schema":"stellar-forge.bank-release-directory.v1","operation_id":payload["operation_id"],
+                   "sourceCommit":payload["commit"],"selection":payload["selection"],"producer":producer_identity(),
+                   "files":[directory_delivery_records[name] for name in sorted(directory_delivery_records)]}
+            write_json_atomic(destination/".bank-release-artifacts.json",index)
+            saved.append(row);saved_by_path[str(path)]=row;rows.append(row)
+            pending_saves.pop(str(path),None)
+            uncertain_saves.pop(str(path),None)
+        except BaseException:
+            uncertain_saves[str(path)]=pending_saves.pop(str(path))
+            raise
+        finally:
+            temporary.unlink(missing_ok=True)
+    emit({"stage":label,"exit_code":0,"storage":"directory","files":rows})
+    return rows
+
 def save_paths(label,paths):
+    if payload.get("artifactDirectory") is not None:
+        return save_directory_paths(label,paths)
     requests=[]
     for path in paths:
         if str(path) in pending_saves or str(path) in uncertain_saves:
@@ -478,11 +585,12 @@ def cleanup_expansions():
             else:path.unlink()
             removed.append(name)
     emit({"stage":"released-owned-expansions","directories":removed})
-for row in payload["libraryHelpers"]:
+for row in payload.get("libraryHelpers",[]):
     put(row,root/"helpers")
 (root/"delivery"/"source-operation.json").write_text(json.dumps({k:v for k,v in payload.items() if k!="libraryHelpers"},indent=2)+"\n")
 emit({"stage":"start","operation_id":payload["operation_id"],"directory":str(root),"sourceCommit":payload["commit"]})
 try:
+    prepare_directory_delivery()
     git=shutil.which("git");node=shutil.which("node");npm=shutil.which("npm")
     if not all((git,node,npm)):raise RuntimeError("The original product builder requires Git, Node and npm.")
     versions={name:subprocess.check_output([binary,"--version"],env=env,text=True).strip() for name,binary in [("git",git),("node",node),("npm",npm)]}

@@ -8,12 +8,23 @@ import json
 from model import Problem
 from operations import Operations, decoded
 import operations_calendar as calendar_model
+import operations_agenda_http as agenda_http
 import operations_use_calendar as use_calendar
 from operations_commercial_http import handle as commercial_http
+import operations_installation_sources as installation_sources
 from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/operations_navigation.mjs": ("operations_navigation.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_navigation_ui.mjs": ("operations_navigation_ui.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_navigation.css": ("operations_navigation.css", "text/css; charset=utf-8")})
+    installation_sources.register_static(static)
+    static.update({
+        "/operations_agenda.mjs": ("operations_agenda.mjs", "text/javascript; charset=utf-8"),
+        "/operations_agenda.css": ("operations_agenda.css", "text/css; charset=utf-8"),
+        "/DELIVERY_AGENDA.md": ("DELIVERY_AGENDA.md", "text/markdown; charset=utf-8"),
+    })
     static.update({
         "/operations_procedures.mjs": ("operations_procedures.mjs", "text/javascript; charset=utf-8"),
         "/operations_procedures.css": ("operations_procedures.css", "text/css; charset=utf-8"),
@@ -108,9 +119,13 @@ def read(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, query = store(handler), parse_qs(parsed.query)
+    if agenda_http.read(handler, parsed.path, parse_qs(parsed.query, keep_blank_values=True), ops):
+        return True
     if award_terms_http(handler, parsed, ops, "GET"):
         return True
     if commercial_http(handler, parsed, ops, "GET"):
+        return True
+    if installation_sources.handle(handler, parsed, ops, "GET"):
         return True
     path = parsed.path
     funding_match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/cost-funding(?:/(edition|request|export.zip))?", path)
@@ -368,6 +383,8 @@ def write(handler, parsed):
     if award_terms_http(handler, parsed, ops, "POST"):
         return True
     if commercial_http(handler, parsed, ops, "POST"):
+        return True
+    if installation_sources.handle(handler, parsed, ops, "POST"):
         return True
     if path == "/api/operations/import":
         query = parse_qs(parsed.query)

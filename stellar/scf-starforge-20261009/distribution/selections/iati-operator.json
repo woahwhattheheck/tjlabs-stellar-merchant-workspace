@@ -32,7 +32,8 @@
   },
   "contributions": [
     "iati",
-    "merchant-provider-source-workspaces"
+    "merchant-provider-source-workspaces",
+    "operator-discovery"
   ],
   "components": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/iati",

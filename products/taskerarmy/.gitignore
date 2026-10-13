@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+notices.json
+state/
+*.sqlite3*
+job-event.json
+*.operator.lock
+.operator-read-*
+.operator-write-*

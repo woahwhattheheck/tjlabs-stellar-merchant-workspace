@@ -12,7 +12,11 @@ The source capsule is 2849294 bytes, SHA-256 fbf603d96e53e99d91a2d6864607e5da354
 
 ## Run the original complete operation
 
-Use the existing private Library upload helper and its complete dependency helper files for the active receiving seat. Add those unchanged original helper rows to a private configuration's `libraryHelpers` array, each with path, content, bytes, sha256 and git_blob_sha1. The original upload entrypoint is named `library_upload.py`. These active helper bodies stay in the receiving process's private configuration.
+Choose the receiving host's actual artifact destination in the private configuration. On a ChatGPT receiving seat, add its unchanged original upload/dependency helper rows to `libraryHelpers`, each with path, content, bytes, sha256 and git_blob_sha1. The original entrypoint is `library_upload.py`; these active helper bodies stay in the private configuration.
+
+On an ordinary Linux or Muse worker, set `artifactDirectory` to a fresh absolute private directory on that worker's retained storage and use `libraryHelpers: []`. The producer writes the complete source/build checkpoint, TGZ, manifest, portable runtime, operating guide and full result into that directory at the same early-save boundaries. Each returned record has `storage: "directory"`, its actual `artifact_path`, byte count and SHA-256. Include this directory in the worker's existing job artifact capture and deliver those complete files back to the original receiving thread.
+
+The directory remains associated with this exact operation, programme and fixed source. Its original lock prevents two active producers from writing it together. Each file copy is streamed, verified and atomically installed; repeat saves retain the tracked original artifact identity and reject unrelated file changes. A subsequent same-programme continuation can use the retained checkpoint in that directory. Choose a directory outside the producer's temporary root so its output survives the producer's own cleanup.
 
 Run:
 
@@ -51,3 +55,13 @@ To resume, obtain that original saved ZIP using its actual receiving metadata an
 The producer emits original builder phases plus its own child PID, RSS/high-water memory and cgroup usage every 30 seconds. All full stdout/stderr and observations remain in the operations archive. `buildHeapMiB` defaults to 512 and is passed to the producer’s Node build process; choose an explicit larger budget only for the receiving host’s available memory. It does not alter the selected product, its installed runtime or any original application module.
 
 The early source checkpoint precedes the complete TGZ save; the complete runtime transfer is still saved before the fresh offline installation. A failed closed build retains its whole resumable output through the same checkpoint before owned temporary expansions are released. The separate accepted RD12/9F05 bank browser case continues through its existing source-and-screens receiver.
+
+## Ordinary Linux worker invocation
+
+Fetch the three complete receiving files from the same published source revision. Copy `configuration.template.json` to the worker's private operation configuration, set `artifactDirectory` to its actual retained output directory, and leave `libraryHelpers` empty. Retain the configured f570 source, original source capsule and builder identities.
+
+    python3 receive_bank_release.py /absolute/private/configuration.json
+
+The complete operation then saves its outputs directly at the selected directory while it progresses through original source, packaging, native installation, full runtime transfer and fresh offline installation. The existing worker's normal completion record should include the entire directory and the full command output. The final `merchant-bank-statements-complete-release-result.json` links the actual artifacts and both original runtime observations. The `START_HERE.md` artifact is the customer installation entrypoint. The directory's complete artifact index carries the current hashes of each saved file.
+
+For a retained source/build continuation, set `resumeCheckpoint.path` to the actual saved ZIP and copy its actual byte count and SHA-256 from that index. The same source-bound verification and original builder resume run before the rest of the full operation. These ordinary directory outputs use their actual filesystem coordinates; the receiving owner publishes them through that worker's established artifact transport.

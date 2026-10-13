@@ -180,7 +180,7 @@ export class MerchantAlliumWorkspaces {
         await lstat(target.directory);
         const current=await this.#received(scope,args.destination);
         alliumNeed(current.workspaceId===bundle.workspaceId&&current.imports.some(item=>
-          item.exportId===bundle.id&&item.manifestSha256===bundle.manifestSha256&&item.sourceDirectory===bundle.sourceDirectory),
+          item.exportId===bundle.id&&item.manifestSha256===bundle.manifestSha256&&item.originalDirectory===bundle.sourceDirectory),
         'ALLIUM_RECEIVING_CONFLICT','The destination belongs to a different original export.',409);
         return {...current,reused:true,sourceSha256:source.sha256};
       } catch(error) { if(error.code!=='ENOENT') throw error; }

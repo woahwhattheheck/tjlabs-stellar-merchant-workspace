@@ -9,6 +9,8 @@ import { inspectResultPacket } from './portable.mjs';
 import { readA2AConnections, reviewA2AInputs, requireA2ASelection } from './managed-launch.mjs';
 import { LIMITS, canonical, fail, publicError, readVerifiedFile, atomicFile, sha } from './foundation.mjs';
 
+import { commissioningTemplate } from './commissioning.mjs';
+
 export const HELP=String.raw`A2A merchant task workspace — original SDK 1.3.0 / protocol 1.0
 
 node cli.mjs workspace --workspace PRIVATE --connections HOST_JSON [--port 0]
@@ -29,6 +31,9 @@ node cli.mjs release-activate --releases STORE --release ID --generation N --not
 node cli.mjs release-rollback --releases STORE --generation N --note TEXT
 node cli.mjs release-run --releases STORE --generation N
 node cli.mjs connections --connections HOST_JSON
+node cli.mjs commission-template --out NEW_JSON
+node cli.mjs commissioning --workspace PRIVATE --id PROJECT [--revision N] [--out NEW_JSON]
+node cli.mjs commission-source --workspace PRIVATE --id PROJECT --revision N --request-id ORIGINAL --input FILE --role ROLE --note TEXT [--media-type TYPE]
 
 An ACTION_JSON is {action:"...",payload:{requestId:"...",id:"...",expectedRevision:N,...}}.
 Create omits id/expectedRevision. Every remote message keeps one original attempt.
@@ -37,7 +42,7 @@ Source, packet and result writes require a new file or the exact already saved b
 Use --private only with source --out for explicitly selected local private source custody.
 Payment verification and settlement stay in the original SF30/SF82 native seller.
 `;
-const VALUES=new Set(['--workspace','--connections','--port','--id','--revision','--request-id','--input','--out','--handoff','--edition','--sha256','--publication','--facilitator','--releases','--release','--runtime','--generation','--note','--operator','--expected-workspace-identity','--expected-connections-sha256']);
+const VALUES=new Set(['--workspace','--connections','--port','--id','--revision','--request-id','--input','--out','--handoff','--edition','--sha256','--publication','--facilitator','--releases','--release','--runtime','--generation','--note','--operator','--expected-workspace-identity','--expected-connections-sha256','--role','--media-type']);
 const FLAGS=new Set(['--allow-local-facilitator','--private','--help']);
 function parse(argv){const result={verb:argv[0]??'help',values:{},flags:new Set()};for(let i=1;i<argv.length;i++){const key=argv[i];if(result.flags.has(key)||Object.hasOwn(result.values,key))fail('DUPLICATE_OPTION',key);if(FLAGS.has(key)){result.flags.add(key);continue;}if(!VALUES.has(key)||i+1===argv.length||argv[i+1].startsWith('--'))fail('CLI_OPTION','Unknown or incomplete option '+key);result.values[key]=argv[++i];}return result;}
 function required(v,name){if(!v[name])fail('CLI_REQUIRED','Required option '+name);return v[name];}
@@ -49,6 +54,7 @@ function signals(owner,signal){let closed=false;const close=()=>{if(closed)retur
 export async function runA2ACli(argv=process.argv.slice(2),options={}){
   const out=options.stdout??(s=>process.stdout.write(s)),{verb,values:v,flags}=parse(argv);
   if(['help','--help'].includes(verb)||flags.has('--help')){out(HELP);return{help:true};}
+  if(verb==='commission-template'){const result=commissioningTemplate();written(result,required(v,'--out'),out);return result;}
   if(verb==='connections'){const c=readA2AConnections(required(v,'--connections'));const review=reviewA2AInputs({directory:v['--workspace']??process.cwd(),connectionFile:c.filename,optional:true});report({schema:'stellar-forge.a2a-connections-inspection.v1',sha256:c.sha256,connections:review.connections},out);return review;}
   if(verb==='inspect-result'){const bytes=readVerifiedFile(required(v,'--input')),result=inspectResultPacket(bytes),body=Buffer.from(canonical(result));if(v['--out'])written({bytes:body,mediaType:'application/json',sha256:sha(body)},v['--out'],out);else report(result,out);return result;}
   if(verb.startsWith('release-')&&verb!=='release-stage'){
@@ -73,6 +79,8 @@ export async function runA2ACli(argv=process.argv.slice(2),options={}){
     }
     let result;
     if(verb==='list')result=workspace.list();
+    else if(verb==='commissioning'){result=workspace.commissioningReport(required(v,'--id'),{revision:number(v,'--revision')});if(v['--out']){const bytes=Buffer.from(canonical(result)+'\n');written({bytes,mediaType:'application/json',sha256:sha(bytes)},v['--out'],out);return result;}}
+    else if(verb==='commission-source'){const input=resolve(required(v,'--input')),bytes=readVerifiedFile(input,LIMITS.artifactBytes);result=await workspace.dispatch('commission_retain_source',{id:required(v,'--id'),expectedRevision:number(v,'--revision'),requestId:required(v,'--request-id'),contentBase64:bytes.toString('base64'),filename:input.split(/[\\/]/).at(-1),mediaType:v['--media-type']??'application/octet-stream',role:required(v,'--role'),note:required(v,'--note')});}
     else if(verb==='show')result=workspace.get(required(v,'--id'),{revision:number(v,'--revision')});
     else if(verb==='request')result=workspace.request(required(v,'--request-id'));
     else if(verb==='action'){const input=readJSON(required(v,'--input'));result=await workspace.dispatch(input.action,input.payload);}

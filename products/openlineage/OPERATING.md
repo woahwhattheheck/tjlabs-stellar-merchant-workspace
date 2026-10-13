@@ -19,6 +19,12 @@ The [complete source/API guide](../../stellar/scf-starforge-20261009/sf30-seller
 
 ## Build the selected source
 
+The [selected-package guide](SELECTED_PACKAGE.md) describes the complete runtime,
+worker, browser and source inputs carried by this product. The
+[installed Quality receiving guide](INSTALLED_RECEIVING.md) follows that exact
+package through installation, Applications, merchant connection, restart and an
+independently received editable customer workspace.
+
 Choose `openlineage-operations` in the existing Runtime workspace's **Build a product** view. Select the full source commit, review the product, and build into a new owned output directory. The resulting archive opens in the existing **Source & profile** view.
 
 The same operation is available from the source checkout:

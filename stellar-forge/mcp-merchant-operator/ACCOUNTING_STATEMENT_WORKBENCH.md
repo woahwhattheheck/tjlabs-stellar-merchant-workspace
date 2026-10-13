@@ -23,7 +23,7 @@ starforge customer-closing \
 
 Use port 0 to let the operating system choose a listener. The command prints the selected local address. Its structured startup also binds that address to the same directory, merchant connection, workspace, operator and requested port for Applications.
 
-The maintained merchant receivables source selection includes this workbench and the same browser manifest consumed by its HTTP server. The original source builder packages the declared HTML, styles and all three browser modules together. Typed package interfaces are available under merchant/customer-closing, merchant/customer-closing/cycles, merchant/customer-closing/customer-dossiers, merchant/customer-closing/operations and merchant/customer-closing/client.
+The maintained merchant receivables source selection includes this workbench and the same browser manifest consumed by its HTTP server. The original source builder packages the declared HTML, styles and every browser module together. Typed package interfaces are available under merchant/customer-closing, merchant/customer-closing/cycles, merchant/customer-closing/customer-dossiers, merchant/customer-closing/operations and merchant/customer-closing/client.
 
 ## Start the workbench
 

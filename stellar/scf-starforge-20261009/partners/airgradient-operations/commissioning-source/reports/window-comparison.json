@@ -1,0 +1,252 @@
+{
+  "schema": "airgradient.selected-source-window-comparison.v1",
+  "source_packet": {
+    "bytes": 1939630,
+    "sha256": "5465e53d831cedae734f9f4225b97fc683ea49eed038190c80271ff01fa1d99f"
+  },
+  "initial": {
+    "id": "initial",
+    "start": "2026-09-12T00:00:00Z",
+    "end": "2026-10-12T00:00:00Z",
+    "hours": 720,
+    "interval": "Half-open [start, end), one-hour UTC buckets"
+  },
+  "later": {
+    "id": "later",
+    "start": "2026-09-13T00:00:00Z",
+    "end": "2026-10-13T00:00:00Z",
+    "hours": 720,
+    "interval": "Half-open [start, end), one-hour UTC buckets"
+  },
+  "interpretation": "Both reports use the same frozen source capture. Differences describe movement of the report window; they do not assert a subsequent provider revision.",
+  "totals": {
+    "initial_rows": 13833,
+    "later_rows": 13876,
+    "retained_rows": 13398,
+    "leaving_rows": 435,
+    "entering_rows": 478,
+    "net_rows": 43
+  },
+  "locations": [
+    {
+      "source": "outdoor",
+      "location_id": 1,
+      "initial_rows": 711,
+      "later_rows": 711,
+      "retained_rows": 687,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/outdoor/history-1.json"
+    },
+    {
+      "source": "outdoor",
+      "location_id": 2,
+      "initial_rows": 688,
+      "later_rows": 694,
+      "retained_rows": 670,
+      "leaving_rows": 18,
+      "entering_rows": 24,
+      "net_rows": 6,
+      "source_file": "public/outdoor/history-2.json"
+    },
+    {
+      "source": "outdoor",
+      "location_id": 3,
+      "initial_rows": 720,
+      "later_rows": 720,
+      "retained_rows": 696,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/outdoor/history-3.json"
+    },
+    {
+      "source": "outdoor",
+      "location_id": 8,
+      "initial_rows": 666,
+      "later_rows": 666,
+      "retained_rows": 642,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/outdoor/history-8.json"
+    },
+    {
+      "source": "outdoor",
+      "location_id": 9,
+      "initial_rows": 636,
+      "later_rows": 645,
+      "retained_rows": 621,
+      "leaving_rows": 15,
+      "entering_rows": 24,
+      "net_rows": 9,
+      "source_file": "public/outdoor/history-9.json"
+    },
+    {
+      "source": "outdoor",
+      "location_id": 10,
+      "initial_rows": 720,
+      "later_rows": 720,
+      "retained_rows": 696,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/outdoor/history-10.json"
+    },
+    {
+      "source": "outdoor",
+      "location_id": 13,
+      "initial_rows": 720,
+      "later_rows": 720,
+      "retained_rows": 696,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/outdoor/history-13.json"
+    },
+    {
+      "source": "outdoor",
+      "location_id": 14,
+      "initial_rows": 720,
+      "later_rows": 720,
+      "retained_rows": 696,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/outdoor/history-14.json"
+    },
+    {
+      "source": "outdoor",
+      "location_id": 15,
+      "initial_rows": 718,
+      "later_rows": 718,
+      "retained_rows": 694,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/outdoor/history-15.json"
+    },
+    {
+      "source": "outdoor",
+      "location_id": 18,
+      "initial_rows": 708,
+      "later_rows": 708,
+      "retained_rows": 684,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/outdoor/history-18.json"
+    },
+    {
+      "source": "indoor",
+      "location_id": 102112442,
+      "initial_rows": 720,
+      "later_rows": 720,
+      "retained_rows": 696,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/indoor/history-102112442.json"
+    },
+    {
+      "source": "indoor",
+      "location_id": 102112443,
+      "initial_rows": 440,
+      "later_rows": 464,
+      "retained_rows": 440,
+      "leaving_rows": 0,
+      "entering_rows": 24,
+      "net_rows": 24,
+      "source_file": "public/indoor/history-102112443.json"
+    },
+    {
+      "source": "indoor",
+      "location_id": 102112444,
+      "initial_rows": 664,
+      "later_rows": 662,
+      "retained_rows": 640,
+      "leaving_rows": 24,
+      "entering_rows": 22,
+      "net_rows": -2,
+      "source_file": "public/indoor/history-102112444.json"
+    },
+    {
+      "source": "indoor",
+      "location_id": 102112445,
+      "initial_rows": 720,
+      "later_rows": 720,
+      "retained_rows": 696,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/indoor/history-102112445.json"
+    },
+    {
+      "source": "indoor",
+      "location_id": 102112447,
+      "initial_rows": 694,
+      "later_rows": 700,
+      "retained_rows": 676,
+      "leaving_rows": 18,
+      "entering_rows": 24,
+      "net_rows": 6,
+      "source_file": "public/indoor/history-102112447.json"
+    },
+    {
+      "source": "indoor",
+      "location_id": 102112448,
+      "initial_rows": 708,
+      "later_rows": 708,
+      "retained_rows": 684,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/indoor/history-102112448.json"
+    },
+    {
+      "source": "indoor",
+      "location_id": 102112449,
+      "initial_rows": 720,
+      "later_rows": 720,
+      "retained_rows": 696,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/indoor/history-102112449.json"
+    },
+    {
+      "source": "indoor",
+      "location_id": 102112451,
+      "initial_rows": 720,
+      "later_rows": 720,
+      "retained_rows": 696,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/indoor/history-102112451.json"
+    },
+    {
+      "source": "indoor",
+      "location_id": 102112452,
+      "initial_rows": 720,
+      "later_rows": 720,
+      "retained_rows": 696,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/indoor/history-102112452.json"
+    },
+    {
+      "source": "indoor",
+      "location_id": 102112453,
+      "initial_rows": 720,
+      "later_rows": 720,
+      "retained_rows": 696,
+      "leaving_rows": 24,
+      "entering_rows": 24,
+      "net_rows": 0,
+      "source_file": "public/indoor/history-102112453.json"
+    }
+  ]
+}

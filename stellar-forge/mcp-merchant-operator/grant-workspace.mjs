@@ -598,7 +598,7 @@ export class MerchantGrantWorkspaces {
       case_report:'case-report', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       settlements:'settlements',settlement:'settlement',
-      engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar',
+      engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar', delivery_agenda:'delivery-agenda',
       work_intakes:'work-intakes',work_intake:'work-intake',task_outcomes:'task-outcomes',task_outcome:'task-outcome',
       cost_funding:'cost-funding',funding_edition:'funding-edition',funding_request:'funding-request',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
@@ -823,7 +823,9 @@ export class MerchantGrantWorkspaces {
             expectedInputSha256:args.expectedConstraintsSha256,inputPointer:args.constraintsPointer},
             'Complete delivery constraints',GRANT_MAX_BUNDLE_BYTES);
           value=scheduleCohortAdoption({document,...(constraints===undefined?{}:{constraints}),
-            ...(args.name===undefined?{}:{name:args.name})});
+            ...(args.name===undefined?{}:{name:args.name}),
+            ...(args.method===undefined?{}:{method:args.method}),
+            ...(args.maxSearchSteps===undefined?{}:{maxSearchSteps:args.maxSearchSteps})});
         } else if (verb === 'adoption_compare') {
           const candidate=await this.#modelInputs(alias,{inputs:args.candidate,input:args.candidateInput,
             expectedInputSha256:args.expectedCandidateSha256,inputPointer:args.candidatePointer},

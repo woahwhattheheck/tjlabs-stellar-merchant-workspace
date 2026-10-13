@@ -5,6 +5,7 @@ import shutil
 from iati_source import InputError
 from workspace import file_digest, load_json
 from organisation_http import fields, integer
+from document_evidence.operating_source import operating_source
 
 PREFIX = "/api/iati/document-evidence/"
 MAX_METADATA = 64 * 1024 * 1024
@@ -26,6 +27,9 @@ def get(handler, path, query):
         fields(query, {"id"})
         result = getattr(work, route)(query["id"])
         handler._json({"history": result} if route == "history" else result)
+    elif route == "operating-source":
+        fields(query, {"id"}, {"revision"})
+        handler._json(operating_source(work, query["id"], integer(query.get("revision"))))
     elif route == "plan":
         fields(query, {"id"}, {"revision"})
         handler._json(work.plan(query["id"], integer(query.get("revision"))))

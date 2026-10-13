@@ -46,7 +46,7 @@ def file_digest(path):
             selected.update(piece)
     return selected.hexdigest()
 
-def unpack_case(archive, destination, native_review=False):
+def unpack_case(archive, destination, native_review=False, additional_members=()):
     with zipfile.ZipFile(archive) as bundle:
         members = bundle.infolist()
         names = [row.filename for row in members]
@@ -55,8 +55,9 @@ def unpack_case(archive, destination, native_review=False):
         selected_names = None
         if native_review:
             config = json.loads(bundle.read("config.json"))
-            selected_names = {"config.json", "review-continuation-native.json",
-                              "review-continuation-config.json", "runtime-selection.json"}
+            selected_names = {str(relative_path(name)) for name in additional_members}
+            selected_names.update({"config.json", "review-continuation-native.json",
+                              "review-continuation-config.json", "runtime-selection.json"})
             selected_names.update("source/" + str(relative_path(row["path"])) for row in config["files"])
             if config.get("retainedReviewPath"):
                 selected_names.add(str(relative_path(config["retainedReviewPath"])))
@@ -134,6 +135,8 @@ def main():
     parser.add_argument("--parent", type=Path, required=True)
     parser.add_argument("--node", type=Path, required=True)
     parser.add_argument("--engine", choices=("browser", "native"), default="browser")
+    parser.add_argument("--source-input", type=Path)
+    parser.add_argument("--expected-source-input-sha256")
     parser.add_argument("--node-modules", type=Path)
     parser.add_argument("--chromium", type=Path)
     parser.add_argument("--timeout-seconds", type=int, default=900)
@@ -148,7 +151,13 @@ def main():
         raise ValueError("A replacement requires the exact original file ID and current version")
     if args.expected_library_version is not None and args.expected_library_version < 0:
         raise ValueError("Select an existing Library version")
+    if bool(args.source_input) != bool(args.expected_source_input_sha256):
+        raise ValueError("A complete source input requires its selected SHA-256.")
+    if args.source_input and args.engine != "native":
+        raise ValueError("Continue the current source package through the native receiving engine.")
     selected_paths = [args.case, args.parent, args.node]
+    if args.source_input:
+        selected_paths.append(args.source_input)
     if args.engine == "browser":
         if args.node_modules is None or args.chromium is None:
             raise ValueError("The browser engine requires --node-modules and --chromium")
@@ -162,6 +171,9 @@ def main():
     original_case_bytes = args.case.stat().st_size
     if selected_hash != args.expected_case_sha256:
         raise ValueError("The complete case differs from the selected saved version")
+    if args.source_input:
+        from receive_source import receive_source
+        return receive_source(args, sys.modules[__name__])
 
     root = Path(tempfile.mkdtemp(prefix="scf-review-continuation-", dir=args.parent))
     case, private, temporary = root / "case", root / "private", root / "tmp"

@@ -156,6 +156,7 @@ export async function runWorkbookReceiving(options={}){
   }
   const releaseOwner=await acquire(output,operationId);
   let context=null,receiverContext=null,server=null,serverLog=null,page=null,closed=false,stage='preparing';
+  let serverClosed=false,serverClose=null;
   const events=[];
   const out=name=>path.join(output,name);
   const pyEnv={CONAPI_WORKBOOK_PYTHON:pythonExecutable};
@@ -186,13 +187,14 @@ export async function runWorkbookReceiving(options={}){
         serverLog=await fs.open(out('server.log'),'a',0o600);
         server=spawn(process.execPath,[path.join(SOURCE_DIRECTORY,'supplier-report-cli.mjs'),'serve','--port',String(port)],
           {env:{...process.env,...pyEnv},cwd:SOURCE_DIRECTORY,stdio:['ignore',serverLog.fd,serverLog.fd],shell:false});
+        serverClose=new Promise(resolve=>server.once('close',()=>{serverClosed=true;resolve();}));
         await new Promise((resolve,reject)=>{server.once('spawn',resolve);server.once('error',reject);});
         state.serverOwner=await processIdentity(server.pid);await saveState();
       }
     }
     const deadline=Date.now()+30000;let last;
     while(Date.now()<deadline){
-      if(server&&server.exitCode!==null)throw Error('The original supplier HTTP process ended before its ready response.');
+      if(server&&(serverClosed||server.exitCode!==null||server.signalCode!==null))throw Error('The original supplier HTTP process ended before its ready response.');
       try{
         const response=await fetch(new URL('/api/workbook/status',state.url),{signal:AbortSignal.timeout(2000)}),body=await response.json();
         if(response.ok&&body.schema==='conapi.supplier-review-workbook-io.v1'&&body.status==='ready'){last=null;break;}
@@ -248,10 +250,11 @@ export async function runWorkbookReceiving(options={}){
     if(receiverContext)await receiverContext.close().catch(()=>{});
     if(context)await context.close().catch(()=>{});
     if(server){
-      if(server.exitCode===null){
-        server.kill('SIGTERM');
-        await Promise.race([new Promise(resolve=>server.once('close',resolve)),delay(10000)]);
-        if(server.exitCode===null){server.kill('SIGKILL');await new Promise(resolve=>server.once('close',resolve));}
+      if(!serverClosed){
+        if(server.exitCode===null&&server.signalCode===null)server.kill('SIGTERM');
+        await Promise.race([serverClose,delay(10000)]);
+        if(!serverClosed&&server.exitCode===null&&server.signalCode===null)server.kill('SIGKILL');
+        await serverClose;
       }
       state.serverClosed={pid:server.pid,exitCode:server.exitCode,signal:server.signalCode,at:new Date().toISOString()};
     }else if(state.reusedServer&&!state.borrowedServer&&state.serverOwner){

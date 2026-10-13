@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "bls-labor",
   "title": "BLS regional labor workspace",
-  "description": "Complete original LAUS and QCEW source acquisition, regional observations, saved county briefings and release comparisons, original native publication and whole editable customer receiving.",
+  "description": "Complete original LAUS and QCEW source acquisition, saved regional and county analysis revisions with charts and full customer files, release comparisons, native dataset publication and editable customer receiving.",
   "base": {
     "commands": [
       "installation",
@@ -127,7 +127,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete original LAUS and QCEW source acquisition, regional observations, saved county briefings and release comparisons, original native publication and whole editable customer receiving.",
+    "description": "Complete original LAUS and QCEW source acquisition, saved regional and county analysis revisions with charts and full customer files, release comparisons, native dataset publication and editable customer receiving.",
     "readme": "products/bls-labor/OPERATING.md",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",

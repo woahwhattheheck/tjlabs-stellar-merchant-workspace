@@ -1,7 +1,7 @@
 // MIT. Install the original release beside its selected native dependencies.
 import { spawn, spawnSync } from 'node:child_process';
 import { constants as fsConstants } from 'node:fs';
-import { open, writeFile, mkdir, lstat, realpath, rename } from 'node:fs/promises';
+import { open, writeFile, mkdir, lstat, realpath, rename, link, unlink } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -98,7 +98,7 @@ async function unpack(archive, sha256, directory, { verify = false, python = 'py
     child.stdout.on('data', data => { stdout += data; if (stdout.length > 1024 * 1024) { overflow = true; child.kill('SIGTERM'); } });
     child.stderr.on('data', data => { if (stderr.length < 16384) stderr += data; });
     child.once('error', () => reject(fail('RUNTIME_PYTHON_UNAVAILABLE', 'Python 3.11+ is required to unpack the original release')));
-    child.once('exit', code => {
+    child.once('close', code => {
       if (code !== 0 || overflow) {
         let detail = 'Original release extraction failed';
         try { detail = JSON.parse(stderr).error || detail; } catch {}
@@ -172,7 +172,7 @@ export async function prepareRuntimeInstall({ directory, archive, sha256, native
   }
 }
 
-async function readInstall(directory) {
+async function readInstall(directory,{allowPendingLock=false}={}) {
   const target = await privateDirectory(directory);
   const plan = await readJson(join(target, 'runtime-install.json'));
   need(plan.schema === INSTALL_SCHEMA && plan.directory === target &&
@@ -196,7 +196,9 @@ async function readInstall(directory) {
     ['PREPARED', 'INSTALLING', 'FAILED', 'READY'].includes(state.phase), 'RUNTIME_INSTALL_STATE_INVALID');
   const selected = await resolveRuntimeProfile({ sourceRoot: plan.sourceRoot, ...sourceSelection(profile) });
   need(selected.profileId === profile.profileId, 'RUNTIME_SOURCE_DECLARATIONS_CHANGED');
-  return { directory: target, plan, profile, state };
+  const installed={directory:target,plan,profile,state};
+  await verifyRetainedLock(installed,{allowPending:allowPendingLock});
+  return installed;
 }
 async function lockDigest(directory) {
   try { return hash(await regular(join(directory, 'package-lock.json'), 16 * 1024 * 1024)); }
@@ -447,6 +449,154 @@ export async function inspectRuntimeInstall({ directory, load = false, source = 
     sourceRoot: installed.plan.sourceRoot, dependencyRoot: installed.directory,
     entrypoint: installed.plan.entrypoint, state: installed.state, ...observed,
     ...(source ? { sourceVerified: true } : {}) };
+}
+
+
+// Portable source retention shares the original installation exclusion. The
+// callback is trusted in-process code; uploaded archive code is never executed.
+export async function withRuntimeSourceCopy({directory,python}={}, action) {
+  need(typeof action==='function','RUNTIME_SOURCE_COPY_CALLBACK_REQUIRED');
+  const target=await privateDirectory(directory),lease=await installationLease(target);
+  try {
+    const installed=await readInstall(target);
+    await unpack(installed.plan.archivePath,installed.plan.archiveSha256,join(target,'package'),
+      {verify:true,python:python??installed.plan.python??'python3'});
+    const lockSha256=await lockDigest(target);
+    if(installed.state.phase==='READY')need(lockSha256===installed.state.lockSha256&&lockSha256!==null,'RUNTIME_PREVIOUS_LOCK_CHANGED');
+    return await action({...installed,sourceVerified:true,lockSha256});
+  } finally { await lease.close(); }
+}
+const RETAINED_LOCK_SCHEMA='stellar-forge.runtime-retained-lock.v1';
+const RETAINED_LOCK_INTENT='stellar-forge.runtime-retained-lock-intent.v1';
+async function optionalJson(file) {
+  try{return await readJson(file);}catch(error){if(error.code==='ENOENT')return null;throw error;}
+}
+const stableLock=value=>JSON.stringify(canonicalLock(value));
+function canonicalLock(value) {
+  return Array.isArray(value)?value.map(canonicalLock):plain(value)?
+    Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonicalLock(value[key])])):value;
+}
+async function retainedBytes(directory,name,data) {
+  const target=join(directory,name);
+  try {
+    need((await regular(target,32*1024*1024)).equals(data),'RUNTIME_RETAINED_SOURCE_CHANGED');
+    const parent=await open(directory,fsConstants.O_RDONLY|fsConstants.O_DIRECTORY);
+    try{await parent.sync();}finally{await parent.close();}
+    return;
+  }catch(error){if(error.code!=='ENOENT')throw error;}
+  const temporary=join(directory,'.retained-lock-'+randomUUID());let handle;
+  try {
+    handle=await open(temporary,'wx',0o600);await handle.writeFile(data);await handle.sync();
+    await handle.close();handle=null;
+    try{await link(temporary,target);}catch(error){
+      if(error.code!=='EEXIST')throw error;
+      need((await regular(target,32*1024*1024)).equals(data),'RUNTIME_RETAINED_SOURCE_CHANGED');
+    }
+    const parent=await open(directory,fsConstants.O_RDONLY|fsConstants.O_DIRECTORY);
+    try{await parent.sync();}finally{await parent.close();}
+  } finally {
+    await handle?.close();
+    await unlink(temporary).catch(error=>{if(error.code!=='ENOENT')throw error;});
+    const parent=await open(directory,fsConstants.O_RDONLY|fsConstants.O_DIRECTORY);
+    try{await parent.sync();}finally{await parent.close();}
+  }
+}
+function lockContent(raw,profile) {
+  const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw)),root=value.packages?.[''];
+  need(plain(value)&&[2,3].includes(value.lockfileVersion)&&plain(value.packages)&&plain(root)&&
+    value.name===profile.packageJson.name&&value.version===profile.packageJson.version&&
+    (root.name===undefined||root.name===profile.packageJson.name)&&
+    (root.version===undefined||root.version===profile.packageJson.version)&&
+    stableLock(root.dependencies??{})===stableLock(profile.packageJson.dependencies)&&
+    !root.devDependencies&&!root.optionalDependencies&&!root.link,
+    'RUNTIME_RETAINED_LOCK_PROFILE_MISMATCH');
+  for(const dependency of profile.dependencies) {
+    const selected=value.packages['node_modules/'+dependency.name];
+    need(plain(selected)&&selected.version===dependency.version&&!selected.link,
+      'RUNTIME_RETAINED_LOCK_DEPENDENCY_MISMATCH');
+  }
+  return value;
+}
+function lockBindingMatches(binding,installed) {
+  const {plan,profile}=installed;
+  need(plain(binding)&&binding.installationId===plan.installationId&&
+    binding.profileId===profile.profileId&&binding.sourceCommit===plan.source.sourceCommit&&
+    binding.sourceManifestSha256===plan.source.manifestSha256&&binding.archiveSha256===plan.archiveSha256&&
+    /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(binding.operationId??'')&&
+    /^[a-f0-9]{64}$/.test(binding.lockSha256??'')&&/^[a-f0-9]{64}$/.test(binding.sourceReceiptSha256??''),
+    'RUNTIME_RETAINED_LOCK_BINDING_CHANGED');
+}
+async function verifyRetainedLock(installed,{allowPending=false}={}) {
+  const {directory,state,profile}=installed,intent=await optionalJson(join(directory,'retained-lock-intent.json')),
+    receipt=await optionalJson(join(directory,'retained-lock.json'));
+  if(!intent&&!receipt)return;
+  need(intent?.schema===RETAINED_LOCK_INTENT,'RUNTIME_RETAINED_LOCK_INTENT_CHANGED');
+  lockBindingMatches(intent.binding,installed);
+  if(!receipt){need(allowPending,'RUNTIME_LOCK_RECEIVING_INCOMPLETE','Resume the original retained-lock request before installing dependencies.');return;}
+  need(receipt.schema===RETAINED_LOCK_SCHEMA&&stableLock(receipt.binding)===stableLock(intent.binding),
+    'RUNTIME_RETAINED_LOCK_RECEIPT_CHANGED');
+  const raw=await regular(join(directory,'package-lock.json'),16*1024*1024),
+    source=await regular(join(directory,'retained-lock-source.json'),32*1024*1024);
+  need(hash(raw)===intent.binding.lockSha256&&hash(source)===intent.binding.sourceReceiptSha256&&
+    receipt.lockBytes===raw.length&&receipt.sourceReceiptBytes===source.length,
+    'RUNTIME_RETAINED_LOCK_CHANGED');
+  lockContent(raw,profile);
+  if(state.phase==='READY')need(state.lockSha256===intent.binding.lockSha256,'RUNTIME_READY_LOCK_CHANGED');
+}
+/** Receive one explicitly selected original transitive lock into a PREPARED
+ * source/profile, before npm. The original source, receipt and bytes are retained.
+ * A completed request can be read back after normal installation without replay.
+ */
+export async function retainRuntimeLock({directory,lockFile,expectedLockSha256,expectedProfileId,
+  expectedSourceManifestSha256,expectedArchiveSha256,sourceReceipt,expectedSourceReceiptSha256,
+  operationId}={}) {
+  need(typeof directory==='string'&&directory&&typeof lockFile==='string'&&lockFile&&
+    typeof sourceReceipt==='string'&&sourceReceipt,'RUNTIME_RETAINED_LOCK_INPUT_REQUIRED');
+  for(const value of [expectedLockSha256,expectedProfileId,expectedSourceManifestSha256,expectedArchiveSha256,expectedSourceReceiptSha256])
+    need(/^[a-f0-9]{64}$/.test(value??''),'RUNTIME_RETAINED_LOCK_HASH_REQUIRED');
+  need(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(operationId??''),'RUNTIME_RETAINED_LOCK_OPERATION_REQUIRED');
+  const target=await privateDirectory(directory),lease=await installationLease(target);
+  try {
+    const installed=await readInstall(target,{allowPendingLock:true}),{plan,profile,state}=installed;
+    const binding={installationId:plan.installationId,operationId,profileId:expectedProfileId,
+      sourceCommit:plan.source.sourceCommit,sourceManifestSha256:expectedSourceManifestSha256,
+      archiveSha256:expectedArchiveSha256,lockSha256:expectedLockSha256,sourceReceiptSha256:expectedSourceReceiptSha256};
+    lockBindingMatches(binding,installed);
+    await unpack(plan.archivePath,plan.archiveSha256,join(target,'package'),{verify:true,python:plan.python??'python3'});
+    const previous=await optionalJson(join(target,'retained-lock-intent.json')),
+      receipt=await optionalJson(join(target,'retained-lock.json'));
+    if(previous)need(previous.schema===RETAINED_LOCK_INTENT&&stableLock(previous.binding)===stableLock(binding),
+      'RUNTIME_RETAINED_LOCK_OPERATION_CHANGED');
+    if(receipt) {
+      await verifyRetainedLock(installed);
+      await retainedBytes(target,'retained-lock.json',Buffer.from(json(receipt)));
+      return {status:'LOCK_RETAINED',directory:target,reused:true,...binding,receipt};
+    }
+    need(state.phase==='PREPARED'&&state.attempts===0,'RUNTIME_LOCK_INSTALLATION_STARTED',
+      'Import the exact retained lock before the first dependency installation; preserve an existing installation.');
+    try{await lstat(join(target,'node_modules'));throw fail('RUNTIME_RETAINED_GRAPH_EXISTS',
+      'Use the existing retained-dependency adoption path for a populated graph.');}
+    catch(error){if(error.code!=='ENOENT')throw error;}
+    // Complete byte/profile validation precedes the retained intent. Invalid
+    // selected files do not strand a fresh PREPARED installation.
+    let raw,sourceRaw;
+    try{raw=await regular(join(target,'package-lock.json'),16*1024*1024);}
+    catch(error){if(error.code!=='ENOENT')throw error;raw=await regular(resolve(lockFile),16*1024*1024);}
+    try{sourceRaw=await regular(join(target,'retained-lock-source.json'),32*1024*1024);}
+    catch(error){if(error.code!=='ENOENT')throw error;sourceRaw=await regular(resolve(sourceReceipt),32*1024*1024);}
+    need(hash(raw)===expectedLockSha256&&hash(sourceRaw)===expectedSourceReceiptSha256,'RUNTIME_RETAINED_LOCK_CHANGED');
+    lockContent(raw,profile);
+    const intent=previous??{schema:RETAINED_LOCK_INTENT,binding,selectedAt:now(),
+      originalFiles:{lockFile:resolve(lockFile),sourceReceipt:resolve(sourceReceipt)}};
+    await retainedBytes(target,'retained-lock-intent.json',Buffer.from(json(intent)));
+    await retainedBytes(target,'retained-lock-source.json',sourceRaw);
+    await retainedBytes(target,'package-lock.json',raw);
+    const result={schema:RETAINED_LOCK_SCHEMA,binding,retainedAt:now(),lockBytes:raw.length,sourceReceiptBytes:sourceRaw.length,
+      sourceAuthority:'EXPLICIT_ORIGINAL_LOCK_AND_SOURCE_RECEIPT',dependencyInstallation:'NOT_STARTED',providerInvocations:0};
+    await retainedBytes(target,'retained-lock.json',Buffer.from(json(result)));
+    await verifyRetainedLock(installed);
+    return {status:'LOCK_RETAINED',directory:target,reused:false,...binding,receipt:result};
+  } finally { await lease.close(); }
 }
 
 /** New source/dependencies get a new runtime path; the previous one stays runnable. */

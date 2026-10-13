@@ -140,6 +140,28 @@ function planComparisonQuery(args, exported = false) {
     values.set('expectedComparisonSha256',sha(args.expectedComparisonSha256));
   return '?' + values.toString();
 }
+function deliveryAgendaQuery(args, exported = false) {
+  const fields = ['caseIds','asOfDate','expectedVersions'];
+  if (exported) fields.push('format','kind');
+  exact(args, fields, ['caseIds']);
+  if (args.kind !== undefined)
+    need(args.kind === 'delivery-agenda','GRANT_INVALID_INPUT','Select the delivery-agenda export.');
+  need(Array.isArray(args.caseIds) && args.caseIds.length > 0,
+    'GRANT_INVALID_INPUT','Select at least one original operations case.');
+  const identities = args.caseIds.map(value => id(value, 'operation'));
+  need(new Set(identities).size === identities.length,
+    'GRANT_INVALID_INPUT','Select each original case once.');
+  const query = new URLSearchParams();
+  for (const ident of identities) query.append('caseId', ident);
+  if (args.asOfDate !== undefined) query.set('asOfDate', completionDate(args.asOfDate));
+  if (args.expectedVersions !== undefined) {
+    exact(args.expectedVersions, identities, identities);
+    const versions = Object.fromEntries(identities.map(ident =>
+      [ident, integer(args.expectedVersions[ident], 'Selected agenda case version')]));
+    query.set('expectedVersions', JSON.stringify(versions));
+  }
+  return '?' + query.toString();
+}
 function deliveryCalendarQuery(args) {
   const query = new URLSearchParams();
   if (args.asOfDate !== undefined) query.set('asOfDate', completionDate(args.asOfDate));
@@ -743,6 +765,7 @@ export class GrantWorkspaceClient {
       'installation-history':() => '/api/operations/' + cid() + '/installations/' + id(args.installationId,'installation') +
         '/history?limit=' + integer(args.limit ?? 25,'Installation history page',1,100) +
         (args.before === undefined ? '' : '&before=' + integer(args.before,'Earlier installation edition',1,500)),
+      'delivery-agenda':() => '/api/operations/delivery-agenda' + deliveryAgendaQuery(args),
       'delivery-calendar':() => '/api/operations/' + cid() + '/delivery-calendar' + deliveryCalendarQuery(args),
       completion:() => '/api/operations/' + cid() + '/completion' +
         (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
@@ -1479,6 +1502,8 @@ export class GrantWorkspaceClient {
       settlement:() => '/api/operations/' + id(args.caseId,'operation') + '/settlements/' + id(args.reviewId,'settlement') + '/export',
       'customer-use-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/customer-use-calendar/export.' +
         deliveryCalendarFormat(args.format ?? 'json') + customerUseQuery(args),
+      'delivery-agenda':() => '/api/operations/delivery-agenda/export.' +
+        deliveryCalendarFormat(args.format) + deliveryAgendaQuery(args, true),
       'delivery-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-calendar/export.' +
         deliveryCalendarFormat(args.format) + deliveryCalendarQuery(args),
       completion:() => '/api/operations/' + id(args.caseId,'operation') + '/completion-reviews/' + id(args.reviewId,'review') + '/export.zip',

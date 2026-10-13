@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TaskerArmy · Notification operations</title>
+<style>
+:root{color-scheme:light;--ink:#172027;--muted:#5c6570;--line:#d9dee3;--paper:#fff;--field:#f6f7f8;--dark:#20282f;--soft:#edf0f2}
+*{box-sizing:border-box}body{margin:0;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:#f3f5f6}button,input,select,textarea{font:inherit}button,a,input,select,textarea{outline-offset:3px}button{cursor:pointer;border:1px solid #aeb6bd;border-radius:4px;background:var(--paper);color:var(--ink);padding:8px 12px;font-weight:600}button:hover{background:var(--soft)}button:disabled{cursor:default;opacity:.5}button.primary{background:var(--dark);color:white;border-color:var(--dark)}button.primary:hover{background:#38434c}button.quiet{border-color:transparent;background:transparent}button.small{font-size:12px;padding:5px 9px}a{color:var(--ink);text-underline-offset:3px}input,select,textarea{border:1px solid #adb6bf;border-radius:4px;padding:8px 10px;color:var(--ink);background:white;max-width:100%}input[type=checkbox]{width:16px;height:16px;accent-color:var(--dark)}textarea{min-height:92px;resize:vertical;width:100%}label{display:block;font-weight:600}label span.hint{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:4px}h1,h2,h3,p{margin:0}h1{font-size:25px;line-height:1.25;font-weight:650;letter-spacing:-.4px}h2{font-size:17px;line-height:1.4;font-weight:650}h3{font-size:14px}small,.muted{color:var(--muted)}small{font-size:12px}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;overflow-wrap:anywhere}.hidden,[hidden]{display:none!important}.wrap{overflow-wrap:anywhere}
+.shell{display:grid;grid-template-columns:214px minmax(0,1fr);min-height:100vh}.rail{background:var(--dark);color:white;padding:25px 17px;display:flex;flex-direction:column;gap:24px}.brand{font-size:19px;font-weight:750;letter-spacing:-.2px}.brand small{display:block;color:#c2cad0;font-size:11px;letter-spacing:.8px;text-transform:uppercase;margin-top:4px}.rail nav{display:grid;gap:5px}.nav-button{text-align:left;background:transparent;border-color:transparent;color:#d8dee2;padding:10px 12px}.nav-button[aria-current=page]{color:white;background:#3a444d;border-color:#535e68}.nav-button:hover{background:#35404a}.rail-foot{margin-top:auto;font-size:12px;color:#c1cad1}.rail-foot strong{display:block;color:white;font-size:12px;margin-bottom:5px}.main{padding:28px 34px 48px;min-width:0;max-width:1600px;width:100%;margin:auto}.mast{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:22px}.eyebrow{text-transform:uppercase;color:var(--muted);font-size:11px;letter-spacing:1px;font-weight:700;margin-bottom:7px}.mast p{color:var(--muted);margin-top:8px;max-width:720px}.mast-actions{display:flex;gap:8px;align-items:center}.status-pill{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:3px;font-size:11px;line-height:1.3;padding:4px 7px;background:#f6f7f8;white-space:nowrap}.toolbar{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:20px}.toolbar label{font-size:12px}.toolbar select,.toolbar input{display:block;min-width:165px;margin-top:4px}.toolbar .grow{flex:1}.check-line{display:flex;align-items:center;gap:7px;font-weight:400;font-size:12px}.toolbar .check-line input{min-width:0;margin:0;display:inline}.panel{background:white;border:1px solid var(--line);border-radius:6px;margin-bottom:20px;min-width:0}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}.panel-head p{font-size:12px;color:var(--muted);margin-top:4px}.panel-body{padding:20px}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}.metric{border:1px solid var(--line);border-radius:5px;padding:16px 18px;background:white}.metric .label{font-size:12px;color:var(--muted)}.metric .value{font-size:27px;font-weight:650;margin-top:5px;line-height:1.2}.metric .context{font-size:11px;color:var(--muted);margin-top:5px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px;text-align:left}th{color:#535e67;font-size:11px;letter-spacing:.4px;text-transform:uppercase;background:#f8f9fa;white-space:nowrap}th,td{padding:12px 16px;border-bottom:1px solid #e5e8eb;vertical-align:top}tbody tr:last-child td{border-bottom:0}td p+p{margin-top:3px}td .sub{display:block;font-size:11px;color:var(--muted);margin-top:3px}.table-job{min-width:155px}.table-channel{min-width:150px}.table-actions{white-space:nowrap}.empty{padding:35px 20px;text-align:center;color:var(--muted)}.empty strong{display:block;color:var(--ink);margin-bottom:6px}.notice{background:white;border:1px solid #aeb8c1;border-left:4px solid #4a5660;padding:12px 15px;border-radius:4px;margin-bottom:18px}.notice p+p{margin-top:4px}.notice .dismiss{float:right}.notice.error{border-color:#8b939a;border-left-color:#303941}.notice.success{border-left-color:#697580}.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.form-grid .wide{grid-column:1/-1}.form-grid input,.form-grid select{width:100%;display:block;margin-top:5px}.form-grid textarea{display:block;margin-top:5px}.form-note{font-size:12px;color:var(--muted);padding:12px 14px;border:1px solid var(--line);border-radius:4px;background:var(--field)}.actions{display:flex;justify-content:flex-end;gap:8px;align-items:center;margin-top:20px;flex-wrap:wrap}.event-checks{display:grid;gap:8px;margin-top:10px}.event-checks label{display:flex;gap:9px;align-items:center;font-size:13px;font-weight:400}.event-checks input{display:inline;width:16px;margin:0}.route-list{display:grid;gap:12px}.route-card{border:1px solid var(--line);border-radius:5px;padding:16px}.route-card .row{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}.route-card p{margin-top:5px;font-size:12px}.route-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px}.route-card .actions{margin-top:12px}.definition{display:grid;grid-template-columns:135px minmax(0,1fr);gap:8px 16px;font-size:12px}.definition dt{color:var(--muted)}.definition dd{margin:0;overflow-wrap:anywhere}.preview{background:#f8f9fa;border:1px solid var(--line);border-left:3px solid #7b8792;border-radius:4px;padding:16px;margin-top:14px}.preview p{margin-top:6px}.preview a{display:inline-block;margin-top:10px}.timeline{display:grid;gap:15px}.timeline-item{border:1px solid var(--line);border-radius:5px;padding:16px}.timeline-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.timeline-deliveries{display:grid;gap:8px;margin-top:12px}.timeline-delivery{padding:10px;background:var(--field);border:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center}.footer-line{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted);padding:11px 16px;border-top:1px solid var(--line)}pre{white-space:pre-wrap;word-break:break-word;background:#f7f8f9;border:1px solid var(--line);padding:12px;border-radius:4px;font-size:11px;max-height:280px;overflow:auto}details{margin-top:16px}summary{font-size:12px;cursor:pointer;font-weight:600}dialog{border:1px solid #9ca6af;border-radius:7px;padding:0;max-width:780px;width:calc(100% - 32px);max-height:calc(100vh - 40px);color:var(--ink)}dialog::backdrop{background:rgba(12,19,24,.45)}.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:white;z-index:1}.dialog-body{padding:22px}.dialog-head h2{max-width:90%}.login{max-width:620px;margin:65px auto}.login .panel-body{padding:25px}.login label{margin-top:20px}.login input{display:block;width:100%;margin-top:7px}.login p{margin-top:10px;color:var(--muted)}.login .actions{justify-content:flex-start}.settings-description{margin-bottom:16px;color:var(--muted);font-size:13px}
+@media(max-width:1000px){.shell{grid-template-columns:176px minmax(0,1fr)}.main{padding:24px 20px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.rail{padding:23px 12px}.mast{flex-direction:column}.mast-actions{align-self:stretch}.toolbar .grow{display:none}}
+@media(max-width:680px){.shell{display:block}.rail{padding:15px 16px;gap:13px}.brand{font-size:16px}.brand small{display:none}.rail nav{display:flex;overflow:auto;gap:4px}.nav-button{white-space:nowrap;font-size:12px;padding:7px 9px}.rail-foot{display:none}.main{padding:21px 14px}.mast{gap:14px}h1{font-size:22px}.metrics{gap:8px}.metric{padding:13px}.metric .value{font-size:23px}.panel-head,.panel-body{padding:15px}.panel-head{align-items:flex-start}.toolbar{gap:10px}.toolbar label:not(.check-line){flex:1;min-width:130px}.toolbar select,.toolbar input{min-width:0;width:100%}.form-grid{grid-template-columns:1fr}.form-grid .wide{grid-column:auto}.route-card .row{flex-direction:column;gap:8px}.definition{grid-template-columns:110px minmax(0,1fr)}.dialog-body{padding:17px}.dialog-head{padding:15px 17px}.footer-line{flex-direction:column}.login{margin:30px auto}.timeline-delivery{align-items:flex-start}.timeline-heading{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="rail">
+<div class="brand">TaskerArmy<small>Notification operations</small></div>
+<nav aria-label="Operator sections">
+<button class="nav-button" data-view="deliveries" aria-current="page">Delivery queue</button>
+<button class="nav-button" data-view="routing">Connections &amp; routing</button>
+<button class="nav-button" data-view="history">Job history</button>
+</nav>
+<div class="rail-foot"><strong>Local operator</strong>Routes, delivery recovery and job history for the running notification worker.</div>
+</aside>
+<main class="main">
+<div id="notice" class="notice" role="status" hidden></div>
+<div id="login" class="login panel">
+<div class="panel-body">
+<div class="eyebrow">Operator access</div><h1>Open the notification console</h1>
+<p>Use the local link printed by the operator process, or enter its operator token below.</p>
+<form id="login-form"><label for="operator-token">Operator token</label><input id="operator-token" type="password" autocomplete="off" spellcheck="false" required><div class="actions"><button class="primary" type="submit">Open console</button></div></form>
+<p><small>The token stays in this tab’s memory. Use the original local link when reopening the console.</small></p>
+</div></div>
+<div id="app" hidden>
+<header class="mast"><div><div class="eyebrow">Notification operations</div><h1 id="view-title">Delivery queue</h1><p id="view-description">Follow notification delivery and resolve events that need operator attention.</p></div><div class="mast-actions"><span class="status-pill" id="connection-state">Connecting</span><button id="refresh" type="button">Refresh</button></div></header>
+<div class="toolbar">
+<label>Tenant<select id="tenant-filter" aria-label="Tenant filter"><option value="">All tenants</option></select></label>
+<div class="grow"></div>
+<label class="check-line"><input id="auto-refresh" type="checkbox" checked>Refresh every 15 seconds</label>
+<small id="last-refreshed">Waiting for worker state</small>
+</div>
+<div id="view-deliveries">
+<div id="metrics" class="metrics"></div>
+<section id="route-failures" class="panel" hidden><div class="panel-head"><div><h2>Connections need attention</h2><p>Restore the installed connection, then resume its existing deliveries.</p></div></div><div id="route-failure-list" class="panel-body route-list"></div></section>
+<section class="panel"><div class="panel-head"><div><h2>Recent deliveries</h2><p>Newest 200 saved deliveries for the selected tenant.</p></div><button id="export-deliveries" class="small" type="button">Export visible CSV</button></div>
+<div class="panel-body toolbar"><label>Delivery state<select id="state-filter"><option value="">All states</option></select></label><label>Job or route<input id="delivery-search" type="search" placeholder="Filter these deliveries"></label></div>
+<div id="delivery-table" class="table-wrap"></div><div class="footer-line"><span id="delivery-count"></span><span>Open a job’s history to retrieve its earlier revisions.</span></div></section>
+</div>
+<div id="view-routing" hidden>
+<p class="settings-description">Each route joins a tenant, installed Slack channel, store selection and actionable event types. Changes take effect in the running worker’s next operation.</p>
+<section class="panel"><div class="panel-head"><div><h2>Tenant connections</h2><p>Approved review origins and receiving credentials.</p></div><button id="add-tenant" type="button">Add tenant</button></div><div id="tenant-list" class="panel-body route-list"></div></section>
+<section class="panel"><div class="panel-head"><div><h2>Slack routes</h2><p>Choose which store events reach each installed destination.</p></div><button id="add-route" type="button">Add route</button></div><div id="route-list" class="panel-body route-list"></div></section>
+</div>
+<div id="view-history" hidden>
+<section class="panel"><div class="panel-head"><div><h2>One job, every recorded revision</h2><p>Includes quiet and stale events and their saved delivery history.</p></div></div><div class="panel-body">
+<form id="history-form" class="toolbar"><label>Tenant<select id="history-tenant" required></select></label><label>Job ID<input id="history-job" required placeholder="Original job ID"></label><button class="primary" type="submit">Open history</button></form>
+<div id="job-summary"></div><div id="job-timeline" class="timeline"><div class="empty">Choose a tenant and enter an original job ID.</div></div><div class="actions"><button id="history-more" type="button" hidden>Load earlier revisions</button></div>
+</div></section>
+</div>
+</div>
+</main></div>
+<dialog id="dialog" aria-labelledby="dialog-title"><div class="dialog-head"><h2 id="dialog-title"></h2><button id="dialog-close" class="quiet" type="button" aria-label="Close dialog">Close</button></div><div id="dialog-content" class="dialog-body"></div></dialog>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const STATES = {clarification_required:'Clarification required',execution_blocked:'Execution blocked',qa_failed:'QA failed',preview_ready:'Preview ready',approval_requested:'Approval requested',quiet:'Quiet'};
+const DELIVERY_STATES = ['pending','dispatching','sent','uncertain','route_failed','route_changed','failed','superseded','expired','cancelled'];
+const S = {token:'',config:null,revision:'',credentials:{tenants:{},routes:{}},status:{counts:[],deliveries:[],route_failures:[]},tenant:'',view:'deliveries',loading:false,mutating:false,history:null,rows:[]};
+const clone = value => JSON.parse(JSON.stringify(value));
+function el(tag, attrs={}, ...children) {
+  const node=document.createElement(tag);
+  for(const [key,value] of Object.entries(attrs)) {
+    if(key==='class')node.className=value;else if(key==='text')node.textContent=value;
+    else if(key.startsWith('on'))node.addEventListener(key.slice(2),value);
+    else if(key==='checked')node.checked=!!value;else if(key==='disabled')node.disabled=!!value;
+    else if(key==='value')node.value=value;else if(value!==false&&value!=null)node.setAttribute(key,value===true?'':String(value));
+  }
+  for(const child of children.flat())if(child!=null)node.append(child instanceof Node?child:document.createTextNode(String(child)));
+  return node;
+}
+function clear(node,...children){node.replaceChildren(...children);return node}
+function labelState(value){return STATES[value]||String(value||'').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase())}
+function pill(value){return el('span',{class:'status-pill'},labelState(value))}
+function date(value){if(value==null||value==='')return '—';let n=Number(value);const d=Number.isFinite(n)?new Date(n<1e12?n*1000:n):new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString()}
+function formatId(value){return value==null?'—':String(value)}
+function notice(message,error=false){const node=$('notice');node.hidden=false;node.className='notice '+(error?'error':'success');clear(node,el('button',{class:'quiet small dismiss',type:'button',onclick:()=>node.hidden=true},'Dismiss'),el('p',{},message));}
+function showError(error){notice(error.message||String(error),true)}
+async function api(path, body) {
+  const response=await fetch(path,{method:body===undefined?'GET':'POST',headers:{Authorization:'Bearer '+S.token,...(body===undefined?{}:{'Content-Type':'application/json'})},body:body===undefined?undefined:JSON.stringify(body),cache:'no-store',credentials:'omit'});
+  const result=await response.json();
+  if(!response.ok){const error=new Error(result.message||result.error||'Request failed');error.code=result.error;error.status=response.status;throw error}
+  return result;
+}
+function options(select,items,selected,blank) {
+  clear(select,...(blank===undefined?[]:[el('option',{value:''},blank)]),...items.map(([value,name])=>el('option',{value},name)));
+  select.value=selected||'';
+}
+function tenants(){return Object.keys(S.config?.tenants||{}).sort()}
+function empty(title,text){return el('div',{class:'empty'},el('strong',{},title),el('p',{},text))}
+async function refresh() {
+  if(S.loading||S.mutating||!S.token||$('dialog').open)return;
+  S.loading=true;$('refresh').disabled=true;
+  const tenant=S.tenant;
+  try{
+    const [config,status]=await Promise.all([api('/api/config'),api('/api/status?limit=200'+(tenant?'&tenant_id='+encodeURIComponent(tenant):''))]);
+    if(tenant!==S.tenant)return;
+    S.config=config.configuration;S.revision=config.revision;S.credentials=config.credentials;S.status=status;
+    if(S.tenant&&!S.config.tenants[S.tenant])S.tenant='';
+    options($('tenant-filter'),tenants().map(x=>[x,x]),S.tenant,'All tenants');
+    const previous=$('history-tenant').value;
+    options($('history-tenant'),tenants().map(x=>[x,x]),tenants().includes(previous)?previous:S.tenant,'Choose tenant');
+    $('app').hidden=false;$('login').hidden=true;$('connection-state').textContent='Connected';
+    $('last-refreshed').textContent='Updated '+new Date().toLocaleTimeString();
+    render();
+  }catch(error){$('connection-state').textContent='Needs attention';showError(error);if(error.status===401){S.token='';$('app').hidden=true;$('login').hidden=false;}if(error.code==='tenant_not_found')S.tenant='';}
+  finally{S.loading=false;$('refresh').disabled=false;if(tenant!==S.tenant)queueMicrotask(refresh);}
+}
+function showView(name){
+  S.view=name;const titles={deliveries:['Delivery queue','Follow notification delivery and resolve events that need operator attention.'],routing:['Connections & routing','Control which store events reach each installed Slack destination.'],history:['Job history','Reopen the actual job revisions and delivery decisions saved by the worker.']};
+  $('view-title').textContent=titles[name][0];$('view-description').textContent=titles[name][1];
+  for(const key of Object.keys(titles))$('view-'+key).hidden=key!==name;
+  for(const button of document.querySelectorAll('[data-view]')){if(button.dataset.view===name)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')}
+}
+function renderMetrics(){
+  const counts=Object.fromEntries((S.status.counts||[]).map(x=>[x.status,x.count]));
+  const sum=keys=>keys.reduce((a,k)=>a+Number(counts[k]||0),0);
+  const data=[['Waiting',sum(['pending','dispatching']),'Queued or in delivery'],['Delivered',sum(['sent']),'Recorded received in Slack'],['Needs attention',sum(['uncertain','route_failed','route_changed','failed']),'An operator action can resolve these'],['Retained history',sum(['superseded','expired','cancelled']),'Replaced, expired or cancelled']];
+  clear($('metrics'),...data.map(([label,value,context])=>el('div',{class:'metric'},el('div',{class:'label'},label),el('div',{class:'value'},value.toLocaleString()),el('div',{class:'context'},context))));
+}
+function visibleRows(){
+  const state=$('state-filter').value,search=$('delivery-search').value.trim().toLowerCase();
+  return (S.status.deliveries||[]).filter(row=>(!state||row.status===state)&&(!search||[row.job_id,row.route_id,row.event_id,row.id].some(x=>String(x||'').toLowerCase().includes(search))));
+}
+function renderDeliveries(){
+  S.rows=visibleRows();$('delivery-count').textContent=S.rows.length+' shown of '+(S.status.deliveries||[]).length+' recent deliveries';
+  if(!S.rows.length){clear($('delivery-table'),empty('No matching deliveries',tenants().length?'Change a filter or wait for an original job event.':'Add a tenant and Slack route to begin.'));return;}
+  const table=el('table',{},el('thead',{},el('tr',{},...['Job / event','Route / channel','Delivery state','Attempts','Updated',''].map(x=>el('th',{scope:'col'},x)))),el('tbody',{},...S.rows.map(row=>el('tr',{},
+    el('td',{class:'table-job'},el('button',{class:'quiet small',type:'button',onclick:()=>openHistory(row.tenant_id,row.job_id)},row.job_id),el('span',{class:'sub'},row.tenant_id+' · version '+row.version),el('span',{class:'sub mono'},row.event_id)),
+    el('td',{class:'table-channel'},el('strong',{},row.route_id),el('span',{class:'sub mono'},row.channel_key)),
+    el('td',{},pill(row.status),row.last_error?el('span',{class:'sub wrap'},row.last_error):null),
+    el('td',{},row.attempts),
+    el('td',{},date(row.updated_at)),
+    el('td',{class:'table-actions'},el('button',{class:'small',type:'button',onclick:()=>openDelivery(row.id)},'Inspect'))
+  ))));
+  clear($('delivery-table'),table);
+}
+function renderFailures(){
+  const failures=S.status.route_failures||[];$('route-failures').hidden=!failures.length;
+  clear($('route-failure-list'),...failures.map(row=>el('div',{class:'route-card'},
+    el('div',{class:'row'},el('div',{},el('h3',{},row.route_id),el('p',{},row.reason),el('p',{class:'muted'},date(row.failed_at))),el('button',{type:'button',onclick:()=>resumeRoute(row.route_id)},'Resume connection'))
+  )));
+}
+function renderRouting(){
+  const selected=tenants().filter(x=>!S.tenant||S.tenant===x);
+  clear($('tenant-list'),...(selected.length?selected.map(id=>{
+    const tenant=S.config.tenants[id];
+    return el('div',{class:'route-card'},el('div',{class:'row'},el('div',{},el('h3',{},id),el('p',{},tenant.review_origins.join(', ')),el('p',{class:'muted'},'Receiving credential '+(S.credentials.tenants[id]?'configured':'not found in operator environment'))),el('button',{class:'small',type:'button',onclick:()=>tenantDialog(id)},'Edit')));
+  }):[empty('No tenant connection','Add the tenant and its approved review origin. Delivery credentials remain in the host environment.')]));
+  const routes=(S.config.routes||[]).filter(x=>!S.tenant||x.tenant_id===S.tenant);
+  clear($('route-list'),...(routes.length?routes.map(route=>el('div',{class:'route-card'},
+    el('div',{class:'row'},el('div',{},el('h3',{},route.id),el('p',{},route.tenant_id+' · '+route.team_id+' / '+route.channel_id),el('p',{class:'muted'},'Stores: '+route.store_ids.join(', ')+' · Generation '+route.generation),el('p',{class:'muted'},'Webhook credential '+(S.credentials.routes[route.id]?'configured':'not found in operator environment'))),pill(route.enabled?'Enabled':'Disabled')),
+    el('div',{class:'route-tags'},...route.states.map(pill)),
+    el('div',{class:'actions'},el('button',{class:'small',type:'button',onclick:()=>toggleRoute(route)},route.enabled?'Disable':'Enable'),el('button',{class:'small',type:'button',onclick:()=>routeDialog(route.id)},'Edit route'))
+  )):[empty('No Slack route','Add the workspace and channel from an installed incoming webhook, then choose stores and event types.')]));
+  $('add-route').disabled=!tenants().length;
+}
+function render(){renderMetrics();renderDeliveries();renderFailures();renderRouting()}
+function dialog(title,body){$('dialog-title').textContent=title;clear($('dialog-content'),body);$('dialog').showModal()}
+function field(name,node,hint){return el('label',{},name,node,hint?el('span',{class:'hint'},hint):null)}
+function input(value='',attrs={}){return el('input',{value,required:true,...attrs})}
+function errors(form){const box=el('div',{class:'notice error',role:'alert',hidden:true});form.prepend(box);return error=>{box.hidden=false;box.textContent=error.message||String(error);box.scrollIntoView({block:'nearest'})}}
+async function saveConfig(config,expected){
+  const result=await api('/api/config',{expected_revision:expected,configuration:config});
+  S.config=result.configuration;S.revision=result.revision;S.credentials=result.credentials;
+}
+function formActions(form,saveLabel,handler){
+  const save=el('button',{class:'primary',type:'submit'},saveLabel);
+  form.append(el('div',{class:'actions'},el('button',{type:'button',onclick:()=>$('dialog').close()},'Cancel'),save));
+  const show=errors(form);
+  form.addEventListener('submit',async event=>{event.preventDefault();if(S.mutating)return;S.mutating=true;save.disabled=true;try{await handler();$('dialog').close();notice('Configuration saved. The worker will use it on its next operation.')}catch(error){show(error)}finally{S.mutating=false;save.disabled=false;if(!$('dialog').open)await refresh()}});
+}
+function tenantDialog(id){
+  const original=clone(S.config),expected=S.revision,row=id?original.tenants[id]:{ingress_token_env:'',review_origins:['https://dashboard.taskerarmy.com']};
+  const form=el('form'),key=input(id||'',{disabled:!!id,placeholder:'merchant-tenant-id'}),env=input(row.ingress_token_env,{placeholder:'TASKER_TENANT_INGRESS_TOKEN'}),origins=el('textarea',{required:true},row.review_origins.join('\n'));
+  if(!id)key.addEventListener('change',()=>{if(!env.value)env.value='TASKER_'+key.value.trim().toUpperCase().replace(/[^A-Z0-9]+/g,'_').slice(0,70)+'_INGRESS_TOKEN'});
+  form.append(el('div',{class:'form-grid'},field('Tenant ID',key,'Use the original tenant identity resolved by the product.'),field('Receiving credential variable',env,'Name of the existing host environment variable.'),el('div',{class:'wide'},field('Approved review origins',origins,'One HTTPS origin per line. Notification links must use these exact origins.'))),el('p',{class:'form-note'},'Set the receiving secret in the ingress host environment. This form stores its variable name.'));
+  formActions(form,id?'Save tenant':'Add tenant',async()=>{const value=key.value.trim();if(!id&&original.tenants[value])throw new Error('This tenant already exists');original.tenants[value]={ingress_token_env:env.value.trim(),review_origins:origins.value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(value=>{const url=new URL(value);if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash||(url.pathname&&url.pathname!=='/'))throw new Error('Use a complete HTTPS origin without a job path');return url.origin})};await saveConfig(original,expected)});
+  dialog(id?'Edit tenant connection':'Add tenant connection',form);
+}
+function routeDialog(id){
+  const original=clone(S.config),expected=S.revision,old=original.routes.find(x=>x.id===id),row=old||{id:'',tenant_id:S.tenant||'',store_ids:['*'],states:['preview_ready'],team_id:'',channel_id:'',webhook_env:'TASKER_SLACK_WEBHOOK',generation:1,enabled:true};
+  const form=el('form'),key=input(row.id,{disabled:!!old,placeholder:'preview-reviews'}),tenant=el('select',{required:true}),stores=input(row.store_ids.join(', ')),team=input(row.team_id,{placeholder:'T…'}),channel=input(row.channel_id,{placeholder:'C…'}),env=input(row.webhook_env),enabled=el('input',{type:'checkbox',checked:row.enabled}),checks=Object.keys(STATES).filter(x=>x!=='quiet').map(state=>[state,el('input',{type:'checkbox',checked:row.states.includes(state)})]);
+  options(tenant,tenants().map(x=>[x,x]),row.tenant_id,'Choose tenant');
+  form.append(el('div',{class:'form-grid'},field('Route name',key),field('Tenant',tenant),field('Installed Slack workspace',team),field('Installed Slack channel',channel),field('Webhook credential variable',env,'Name of the installed webhook’s host environment variable.'),field('Store IDs',stores,'Comma-separated IDs, or * for every store in this tenant.')),
+    el('p',{class:'form-note'},'Use the workspace and channel returned by the Slack webhook installation. A webhook has a fixed destination; changing the recorded channel ID does not redirect it.'),
+    el('div',{class:'event-checks'},el('h3',{},'Notify on'),...checks.map(([state,node])=>el('label',{},node,STATES[state]))),
+    el('label',{class:'check-line'},enabled,'Route enabled'));
+  formActions(form,old?'Save route':'Add route',async()=>{
+    const states=checks.filter(([,node])=>node.checked).map(([state])=>state);if(!states.length)throw new Error('Choose at least one actionable event');
+    const value={id:key.value.trim(),tenant_id:tenant.value,store_ids:stores.value.split(/[,\s]+/).map(x=>x.trim()).filter(Boolean),states,team_id:team.value.trim(),channel_id:channel.value.trim(),webhook_env:env.value.trim(),generation:old?old.generation:1,enabled:enabled.checked};
+    if(old){const fields=['tenant_id','store_ids','states','team_id','channel_id','webhook_env'];if(fields.some(k=>JSON.stringify(old[k])!==JSON.stringify(value[k])))value.generation=old.generation+1;original.routes=original.routes.map(x=>x.id===old.id?value:x)}
+    else{if(original.routes.some(x=>x.id===value.id))throw new Error('This route already exists');original.routes.push(value)}
+    await saveConfig(original,expected);
+  });
+  dialog(old?'Edit Slack route':'Add Slack route',form);
+}
+async function toggleRoute(route){
+  if(S.mutating)return;const config=clone(S.config),target=config.routes.find(x=>x.id===route.id);target.enabled=!target.enabled;
+  S.mutating=true;try{await saveConfig(config,S.revision);notice('Route '+route.id+' '+(target.enabled?'enabled':'disabled')+'.')}catch(error){showError(error)}finally{S.mutating=false;await refresh()}
+}
+async function resumeRoute(id){
+  if(S.mutating)return;S.mutating=true;
+  try{const result=await api('/api/resume-route',{route_id:id});notice('Connection resumed. '+result.resumed+' matching deliveries returned to the queue.')}
+  catch(error){showError(error)}finally{S.mutating=false;await refresh()}
+}
+function definition(rows){return el('dl',{class:'definition'},...rows.flatMap(([key,value])=>[el('dt',{},key),el('dd',{},value==null?'—':value)]))}
+async function openDelivery(id){
+  try{
+    const row=await api('/api/deliveries/'+encodeURIComponent(id)),event=row.event||{},body=el('div');
+    body.append(definition([['Job',row.job_id],['Tenant',row.tenant_id],['Event',row.event_id],['Version',row.version],['Route',row.route_id],['Destination',row.channel_key],['Delivery',labelState(row.status)],['Attempts',row.attempts],['Next attempt',date(row.due_at)],['Expires',date(row.expires_at)],['Recorded sent',date(row.sent_at)],['Last response',row.http_status],['Last error',row.last_error]]));
+    if(event.title){const preview=el('div',{class:'preview'},el('h3',{},event.title),el('p',{},labelState(event.state)),event.reason?el('p',{},event.reason):null);try{const url=new URL(event.review_url);if(url.protocol==='https:'&&!url.username&&!url.password&&!url.search&&!url.hash)preview.append(el('a',{href:url.href,target:'_blank',rel:'noopener noreferrer'},'Open job in TaskerArmy'))}catch(_){}body.append(preview)}
+    if(row.can_resolve){
+      const form=el('form'),note=el('textarea',{required:true,minlength:'8',maxlength:'300',placeholder:'What did you find, and why is this the correct resolution?'}),choice=el('select',{required:true});
+      options(choice,[['sent','Received in Slack — mark sent'],['retry','Retry the original notification'],['cancelled','Cancel this notification']],'','Choose resolution');
+      form.append(el('h3',{},'Resolve this delivery'),field('Resolution',choice),field('Operator note',note),el('p',{class:'form-note'},row.status==='uncertain'?'Check the installed Slack channel before choosing a retry. An uncertain response may already have delivered the original notification.':'The original event, message and resolution remain in the job’s history.'));
+      const button=el('button',{type:'submit',class:'primary'},'Apply resolution'),show=errors(form);form.append(el('div',{class:'actions'},button));
+      form.addEventListener('submit',async ev=>{ev.preventDefault();if(S.mutating)return;S.mutating=true;button.disabled=true;try{const result=await api('/api/resolve',{delivery_id:id,resolution:choice.value,note:note.value});$('dialog').close();notice('Delivery resolved as '+labelState(result.status)+'.')}catch(error){show(error)}finally{S.mutating=false;button.disabled=false;if(!$('dialog').open)await refresh()}});
+      body.append(form);
+    }
+    if(row.resolution)body.append(el('div',{class:'preview'},el('h3',{},'Operator resolution'),el('pre',{},typeof row.resolution==='string'?row.resolution:JSON.stringify(row.resolution,null,2))));
+    body.append(el('details',{},el('summary',{},'Saved delivery record'),el('pre',{},JSON.stringify(row,null,2))));
+    dialog('Delivery · '+row.job_id,body);
+  }catch(error){showError(error)}
+}
+async function openHistory(tenant,job,more=false){
+  if(!tenant||!job){notice('Choose a tenant and enter a job ID.',true);return}
+  const previous=S.history;
+  const key=JSON.stringify([tenant,job]);
+  if(more&&(!previous||previous.tenant!==tenant||previous.job_id!==job||previous.next_before_version==null||S.historyLoading))return;
+  const request=(S.historyRequest||0)+1;
+  S.historyRequest=request;S.historyLoading=key;$('history-more').disabled=true;
+  try{
+    let path='/api/jobs?tenant_id='+encodeURIComponent(tenant)+'&job_id='+encodeURIComponent(job)+'&limit=50';
+    if(more)path+='&before_version='+encodeURIComponent(previous.next_before_version);
+    const data=await api(path);
+    if(request!==S.historyRequest)return;
+    S.history={tenant,job_id:job,job:data.job,events:more?[...previous.events,...data.events]:data.events,next_before_version:data.next_before_version};
+    $('history-tenant').value=tenant;$('history-job').value=job;showView('history');renderHistory();
+  }catch(error){if(request===S.historyRequest)showError(error)}
+  finally{if(request===S.historyRequest){S.historyLoading='';$('history-more').disabled=false;}}
+}
+function renderHistory(){
+  const h=S.history;if(!h)return;
+  clear($('job-summary'),h.job?el('div',{class:'preview'},el('h3',{},h.job_id),el('p',{},h.tenant+' · '+h.job.store_id+' · Current version '+h.job.version),el('p',{},labelState(h.job.state)+' · '+date(h.job.updated_at))):empty('No current job record','Retained received events, when present, appear below.'));
+  clear($('job-timeline'),...(h.events.length?h.events.map(event=>el('article',{class:'timeline-item'},
+    el('div',{class:'timeline-heading'},el('h3',{},'Version '+event.version+' · '+labelState(event.state)),pill(event.outcome)),
+    el('p',{class:'mono'},event.event_id),el('p',{class:'muted'},'Received '+date(event.received_at)),
+    el('div',{class:'timeline-deliveries'},...(event.deliveries||[]).map(row=>el('div',{class:'timeline-delivery'},el('div',{},el('strong',{},row.route_id),el('p',{},labelState(row.status)+' · '+row.attempts+' attempts'),row.last_error?el('small',{class:'wrap'},row.last_error):null),el('button',{class:'small',type:'button',onclick:()=>openDelivery(row.id)},'Inspect')))),
+    !(event.deliveries||[]).length?el('p',{class:'muted'},'No delivery was queued for this received event.'):null
+  )):[empty('No retained events','Check the original tenant and job identities.')]));
+  $('history-more').hidden=h.next_before_version==null;
+}
+function exportCsv(){
+  const fields=['id','tenant_id','job_id','version','event_id','route_id','channel_key','status','attempts','due_at','expires_at','updated_at','http_status','last_error','sent_at'];
+  const csvCell=value=>{let v=String(value??'');if(/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
+  const content=[fields.join(','),...S.rows.map(row=>fields.map(key=>csvCell(row[key])).join(','))].join('\r\n')+'\r\n';
+  const url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8'})),a=el('a',{href:url,download:'taskerarmy-visible-deliveries.csv'});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$('login-form').addEventListener('submit',event=>{event.preventDefault();S.token=$('operator-token').value.trim();$('operator-token').value='';refresh()});
+$('refresh').addEventListener('click',refresh);
+$('tenant-filter').addEventListener('change',()=>{S.tenant=$('tenant-filter').value;refresh()});
+$('state-filter').addEventListener('change',renderDeliveries);$('delivery-search').addEventListener('input',renderDeliveries);
+$('export-deliveries').addEventListener('click',exportCsv);
+$('add-tenant').addEventListener('click',()=>tenantDialog());$('add-route').addEventListener('click',()=>routeDialog());
+$('dialog-close').addEventListener('click',()=>$('dialog').close());
+$('history-form').addEventListener('submit',event=>{event.preventDefault();openHistory($('history-tenant').value,$('history-job').value.trim())});
+$('history-more').addEventListener('click',()=>{if(S.history)openHistory(S.history.tenant,S.history.job_id,true)});
+for(const button of document.querySelectorAll('[data-view]'))button.addEventListener('click',()=>showView(button.dataset.view));
+options($('state-filter'),DELIVERY_STATES.map(x=>[x,labelState(x)]),'','All states');
+setInterval(()=>{if(!$('auto-refresh').checked||document.visibilityState!=='visible'||$('dialog').open)return;refresh()},15000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&$('auto-refresh').checked)refresh()});
+const initial=new URLSearchParams(location.hash.slice(1)).get('token');
+if(location.hash)history.replaceState(null,'',location.pathname+location.search);
+if(initial){S.token=initial;refresh()}
+</script>
+</body>
+</html>

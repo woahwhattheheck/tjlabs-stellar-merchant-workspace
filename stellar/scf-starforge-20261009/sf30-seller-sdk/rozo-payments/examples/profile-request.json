@@ -1,0 +1,24 @@
+{
+  "workspaceId": "REPLACE_WITH_ACTUAL_WORKSPACE_ID",
+  "requestId": "profile:merchant:original",
+  "expectedRevision": 0,
+  "actor": "Selected operator",
+  "command": "profile.save",
+  "payload": {
+    "id": "merchant",
+    "label": "Original merchant account",
+    "type": "merchant-key-v2",
+    "connection": "merchant",
+    "appId": "REPLACE_WITH_OBSERVED_APP_ID",
+    "assets": [
+      {
+        "chainId": "REPLACE_WITH_PROVIDER_CHAIN_ID",
+        "network": "REPLACE_WITH_ACTUAL_NETWORK",
+        "tokenSymbol": "REPLACE_WITH_TOKEN_SYMBOL",
+        "tokenAddress": "REPLACE_WITH_ACTUAL_TOKEN_ADDRESS",
+        "decimals": 6
+      }
+    ],
+    "notes": "Replace the example asset and its precision with the actual selected merchant configuration."
+  }
+}
