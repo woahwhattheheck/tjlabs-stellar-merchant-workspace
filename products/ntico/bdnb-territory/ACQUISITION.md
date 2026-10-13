@@ -117,6 +117,30 @@ On native-to-hosted continuation, already extracted complete tables and their
 exact saved profile sidecars are verified and passed through the original
 saving helper without extracting or profiling the archive again.
 
+## Actual retained publisher archive assertions
+
+The complete Nord59 YAML metadata was acquired from each original catalogue
+link and retained alongside the complete catalogue and workbook sources. The
+acquisition reads the publisher's complete five-field metadata, binds its archive
+and metadata URLs to the selected catalogue links, and checks the entire ZIP's
+byte count and SHA-256 before inventory or extraction.
+
+| Release | Complete ZIP bytes | Publisher SHA-256 |
+| --- | ---: | --- |
+| 2025-07.a | 1,069,529,107 | `c7f494a200bdfcccdabbe8b2d1c40eb1b40b1ecf4f9e454035c7f2782c805ebc` |
+| 2026-02.a | 1,115,251,835 | `ba1f110df1d8c70eb8412cd0eae483b86634dc0393a8a05cf2ebccbd52017520` |
+
+These two ZIPs alone total 2,184,780,942 bytes. Their `real_size` fields are
+`null`; reserve additional ordinary persistent-disk capacity for the complete
+selected CSV tables, workbook extraction and resulting report/workspace.
+Do not select a memory-backed shared directory solely because its free-byte
+counter appears sufficient for the compressed downloads. Keep whole archives,
+original metadata and original source identities in the same accepted operation.
+
+This source also accepts the exact PR1515 acquisition predecessor: 48,606 bytes /
+SHA-256 `613fc130f655a24fe4c73d750595afccff6f4fc0f9b217d305b680a33235e95b`,
+through the same historical-source and persisted PREPARED migration.
+
 ## Rendered product inspection — owner instruction, 2026-10-13
 
 This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
