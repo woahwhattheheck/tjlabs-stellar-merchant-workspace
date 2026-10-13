@@ -23,7 +23,7 @@ async function exactHtml(selection){
 }
 async function validateSuppliedHtml(supplied,originalBytes,originalName){
  const blank=await exactHtml(supplied?.blank),populated=await exactHtml(supplied?.populated);
- const names=['sha256.mjs','core.mjs','review.mjs','review-panel.mjs','workspace.mjs','reader.html'];
+ const names=['sha256.mjs','core.mjs','review.mjs','renewal.mjs','renewal-panel.mjs','review-panel.mjs','workspace.mjs','reader.html'];
  const sources=Object.fromEntries(await Promise.all(names.map(async name=>[name,await readFile(join(ROOT,name),'utf8')])));
  if(blank.text!==assembleRecipient(sources))throw new Error('SUPPLIED_BLANK_HTML_IS_NOT_THIS_COMPLETE_SOURCE_EDITION');
  const matches=[...populated.text.matchAll(/<script id="catalog-payload" type="application\/json">([\s\S]*?)<\/script>/g)];
@@ -36,7 +36,7 @@ async function validateSuppliedHtml(supplied,originalBytes,originalName){
 }
 // The caller owns the browser/context. A supplied Page must be a fresh about:blank Page.
 // This API does not launch a browser, navigate an existing user tab, or close its caller's Page.
-export async function receiveRecipientBrowser({context:assignedContext,page:assignedPage=null,bundlePath,bundleSha256,directory:output,pageSource='file',suppliedHtml=null,operationId=DEFAULT_OPERATION,reviewReturn=false,resumeReviewReturn=false}){
+export async function receiveRecipientBrowser({context:assignedContext,page:assignedPage=null,bundlePath,bundleSha256,directory:output,pageSource='file',suppliedHtml=null,operationId=DEFAULT_OPERATION,reviewReturn=false,resumeReviewReturn=false,renewalFollowing=null}){
  if(typeof reviewReturn!=='boolean'||typeof resumeReviewReturn!=='boolean'||(reviewReturn&&resumeReviewReturn))throw Error('SELECT_ONE_ORIGINAL_REVIEW_PHASE');
  if(!['file','supplied-html'].includes(pageSource))throw new Error('SELECT_FILE_OR_SUPPLIED_HTML');
  if(typeof operationId!=='string'||!operationId.trim())throw new Error('KEEP_THE_ORIGINAL_RECEIVING_OPERATION');
@@ -49,7 +49,9 @@ export async function receiveRecipientBrowser({context:assignedContext,page:assi
  const supplied=pageSource==='supplied-html'?await validateSuppliedHtml(suppliedHtml,bytes,bundle.name):null;
  if(pageSource==='file'&&suppliedHtml!==null)throw new Error('SUPPLIED_HTML_REQUIRES_ITS_EXPLICIT_PAGE_SOURCE');
  const resume=Boolean(resumeReviewReturn);
-const sourceNames=['sha256.mjs','core.mjs','review.mjs','review-panel.mjs','workspace.mjs','reader.html','assemble.mjs','build.mjs','receive.mjs',
+ if(renewalFollowing&&!reviewReturn&&!resume)throw Error('FOLLOWING_REVIEW_REQUIRES_THE_ORIGINAL_REVIEW_PHASE');
+const sourceNames=['sha256.mjs','core.mjs','review.mjs','renewal.mjs','renewal-panel.mjs','review-panel.mjs','workspace.mjs','reader.html','assemble.mjs','build.mjs','receive.mjs',
+ ...(renewalFollowing?['receive-renewal.mjs']:[]),
  ...(reviewReturn||resume?['receive-review.mjs',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/workspace.mjs',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/recipient-return.mjs',
@@ -207,6 +209,7 @@ try{
  }else{await openHtml(page,blank,'original-review-resume');await page.getByLabel('Open original catalogue bundle',{exact:true}).setInputFiles(input);await requireVisible(page.getByRole('heading',{name:'Complete recipient workspace',exact:true}));}
  record.reviewBlank={path:blank.path,bytes:blank.bytes,sha256:blank.sha256};
  if(reviewReturn||resume){const {receiveReviewReturn}=await import('./receive-review.mjs');await receiveReviewReturn({page,context,directory,input,bundle,record,save,openDocument:openHtml});}
+ if(renewalFollowing){const {receiveRecipientRenewal}=await import('./receive-renewal.mjs');await receiveRecipientRenewal({context,directory,record,save,openDocument:openHtml,following:renewalFollowing});}
  if(record.browserErrors.length)throw new Error('BROWSER_ERRORS_RECORDED');
  record.status='BROWSER_COURSE_COMPLETE';record.completedAt=new Date().toISOString();if(!resume)record.customerReader=join(directory,'Downloaded_Complete_Recipient.html');
  await save();return record;
@@ -218,7 +221,7 @@ async function cli(){
  const rawArgs=process.argv.slice(2),flags=rawArgs.filter(x=>['--review-return','--resume-review-return'].includes(x));
  if(flags.length>1)throw Error('Choose one original review suffix or its same-directory continuation.');
  const args=rawArgs.filter(x=>!flags.includes(x)),get=key=>{const i=args.indexOf(key);return i<0?undefined:args[i+1];};
- const allowed=['--bundle','--sha256','--directory','--playwright','--cdp','--executable','--page-source','--blank-html','--blank-sha256','--populated-html','--populated-sha256','--operation'];
+ const allowed=['--bundle','--sha256','--directory','--playwright','--cdp','--executable','--page-source','--blank-html','--blank-sha256','--populated-html','--populated-sha256','--operation','--following-bundle','--following-sha256'];
  if(args.length%2||args.some((x,i)=>i%2===0&&!allowed.includes(x))||new Set(args.filter((_,i)=>i%2===0)).size!==args.length/2)throw new Error('Use one value for each supported receiving option.');
  for(const key of ['--bundle','--sha256','--directory','--playwright'])if(!get(key))throw new Error('Required: '+key);
  if(Boolean(get('--cdp'))===Boolean(get('--executable')))throw new Error('Select exactly one assigned CDP endpoint or installed browser executable.');
@@ -227,13 +230,14 @@ async function cli(){
  const htmlFlags=['--blank-html','--blank-sha256','--populated-html','--populated-sha256'];
  if(pageSource==='supplied-html'&&htmlFlags.some(k=>!get(k)))throw new Error('Supplied HTML requires both original file paths and SHA-256 values.');
  if(pageSource==='file'&&htmlFlags.some(k=>get(k)))throw new Error('Use --page-source supplied-html with original HTML selections.');
+ if(Boolean(get('--following-bundle'))!==Boolean(get('--following-sha256')))throw Error('Keep both following bundle path and exact SHA-256.');
  const installed=await import(pathToFileURL(resolve(get('--playwright'))).href),playwright=installed.chromium?installed:installed.default;
  let browser;
  try{
   browser=get('--cdp')?await playwright.chromium.connectOverCDP(get('--cdp')):await playwright.chromium.launch({executablePath:resolve(get('--executable')),headless:true,args:['--no-sandbox']});
   const context=get('--cdp')?browser.contexts()[0]:await browser.newContext({acceptDownloads:true});
   const record=await receiveRecipientBrowser({context,bundlePath:get('--bundle'),bundleSha256:get('--sha256'),directory:get('--directory'),pageSource,reviewReturn:flags.includes('--review-return'),resumeReviewReturn:flags.includes('--resume-review-return'),
-   operationId:get('--operation')??DEFAULT_OPERATION,suppliedHtml:pageSource==='supplied-html'?{blank:{path:get('--blank-html'),sha256:get('--blank-sha256')},populated:{path:get('--populated-html'),sha256:get('--populated-sha256')}}:null});
+   operationId:get('--operation')??DEFAULT_OPERATION,renewalFollowing:get('--following-bundle')?{path:get('--following-bundle'),sha256:get('--following-sha256')}:null,suppliedHtml:pageSource==='supplied-html'?{blank:{path:get('--blank-html'),sha256:get('--blank-sha256')},populated:{path:get('--populated-html'),sha256:get('--populated-sha256')}}:null});
   console.log(JSON.stringify(record,null,2));
  }finally{if(browser&&!get('--cdp'))await browser.close().catch(()=>{});}
  // End only this CLI client; never terminate an importing caller or its assigned browser.

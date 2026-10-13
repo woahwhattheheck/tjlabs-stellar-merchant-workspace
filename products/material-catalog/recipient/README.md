@@ -62,3 +62,8 @@ Follow [RECEIVING.md](./RECEIVING.md) against the selected actual bundle. The re
 An assigned browser can also receive the exact blank and populated attachments through the supplied-HTML mode and exported existing-context API described in RECEIVING.md. The complete source and embedded original bundle are checked before rendering, and the actual downloaded recipient is reopened through that same explicit transport.
 
 The source shell and modules are maintained separately. The build embeds them without fetching packages or running hosted CI. It also preserves the original source notice in the resulting HTML.
+
+
+## Following catalogue reviews
+
+[Following-edition re-review](./FOLLOWING_EDITION_REVIEW.md) retains the complete previous working review and both original catalogues while the reviewer explicitly carries an unchanged proposal, revises against a selected current material, or leaves that proposal out with a reason. Full working JSON/HTML, old sources, choice history and every completed normal new-review return remain downloadable and reopenable. Original author comparison and native receiving remain authoritative. The same original course accepts the optional exact following bundle; no new runtime or customer operation is created.

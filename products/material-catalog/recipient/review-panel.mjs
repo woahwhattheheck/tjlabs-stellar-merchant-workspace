@@ -1,6 +1,9 @@
 // MIT. Local named review and explicit author comparison over the original recipient.
 import {createRecipientReview,saveRecipientProposal,exportRecipientReview,openRecipientReview,recipientView,compareRecipientReview,selectRecipientAdoption,exportRecipientWorking,openRecipientWorking,MAX_REVIEW_BYTES,MAX_WORKING_BYTES} from './review.mjs';
+import {createRecipientRenewalPanel} from './renewal-panel.mjs';
+import {openRecipientRenewal,RENEWAL_SCHEMA} from './renewal.mjs';
 export function createRecipientReviewPanel(document,host){
+ let renewal;
  let review=null,draft={},returned=null,comparison=null,choices={},receiving={},epoch=0,busy=false,message='',error='',dirty=false,savedReview=null;
  const node=(tag,value,attrs={})=>{const n=document.createElement(tag);if(value!==null)n.textContent=String(value??'');for(const[k,v]of Object.entries(attrs))n.setAttribute(k,String(v));return n;};
  const button=(label,fn,disabled=false)=>{const b=node('button',label,{type:'button'});b.disabled=disabled||busy;b.addEventListener('click',()=>{try{fn();}catch(e){error=e.message;host.render();}});return b;};
@@ -19,15 +22,18 @@ export function createRecipientReviewPanel(document,host){
  const same=c=>c.epoch===epoch&&c.bundle===current();
  const acknowledge=()=>{error='';message='';};
  function authorSnapshot(){return returned&&comparison?{returned,comparisonSha256:comparison.sha256,choices,receiving}:null;}
- function snapshot(){return {review,draft,author:authorSnapshot()};}
+ function snapshot(){return {review,draft,author:authorSnapshot(),renewal:renewal?.model()?renewal.text():null};}
  function reset(value={}){
-  epoch++;review=value.review??null;draft=value.draft??{};returned=value.author?.returned??null;comparison=returned?compareRecipientReview(recipientView(current()),returned):null;choices=value.author?.choices??{};receiving=value.author?.receiving??{};busy=false;error='';message='';dirty=false;savedReview=review;
+  const renew=value.renewal?typeof value.renewal==='string'?openRecipientRenewal(value.renewal):value.renewal:null;
+  if(renew&&renew.previous.bundle.identity.sha256!==current()?.identity.sha256)throw Error('The retained re-review belongs to a different original bundle.');
+  epoch++;renewal?.reset(renew);review=value.review??null;draft=value.draft??{};returned=value.author?.returned??null;comparison=returned?compareRecipientReview(recipientView(current()),returned):null;choices=value.author?.choices??{};receiving=value.author?.receiving??{};busy=false;error='';message='';dirty=false;savedReview=review;
  }
  function invalidate(){epoch++;returned=null;comparison=null;choices={};receiving={};}
  function setBusy(value){busy=value;}
- function hasUnsaved(){return dirty||review!==savedReview||busy;}
- function markSaved(){savedReview=review;dirty=false;}
- function workingText(){return exportRecipientWorking(current(),review,draft,authorSnapshot());}
+ function hasUnsaved(){return dirty||review!==savedReview||busy||renewal?.dirty();}
+ function markSaved(){savedReview=review;dirty=false;renewal?.markSaved();}
+ function originalWorkingText(){return exportRecipientWorking(current(),review,draft,authorSnapshot());}
+ function workingText(){return renewal?.model()?renewal.text():originalWorkingText();}
  async function restore(file){
   if(!file||busy)return;
   if(hasUnsaved()&&!document.defaultView.confirm('Cancel to save the complete current working review first. Choose OK only after preserving it.'))return;
@@ -35,8 +41,9 @@ export function createRecipientReviewPanel(document,host){
   try{
    if(file.size>MAX_WORKING_BYTES)throw Error('Choose a complete working copy of at most 400 MiB.');
    const source=await file.text();if(!same(c))return;
-   const opened=openRecipientWorking(source);if(!same(c))return;
-   host.replace(opened.bundle,opened);message='The complete original bundle, saved review and unfinished form are restored.';
+   const metadata=JSON.parse(source),renew=metadata?.schema===RENEWAL_SCHEMA?openRecipientRenewal(source):null;
+   const opened=renew?renew.previous:openRecipientWorking(source);if(!same(c))return;
+   host.replace(opened.bundle,{...opened,...(renew?{renewal:renew}:{})});message='The complete original bundle, saved review and unfinished form are restored.';
   }catch(e){if(same(c)){error=e.message;host.render();}}
   finally{if(same(c)){busy=false;host.render();}}
  }
@@ -65,6 +72,7 @@ export function createRecipientReviewPanel(document,host){
   s.append(toolbar(picker('Restore complete working review','.json',restore),
    button('Save complete working review',()=>{host.download('Material_Review_Working.json',workingText(),'application/json;charset=utf-8');markSaved();host.render();}),
    button('Save complete working HTML',()=>{host.downloadReader();markSaved();host.render();},document.documentElement.dataset.standalone!=='true')));
+  if(renewal.model()){s.append(renewal.render());return s;}
   if(!review){
    s.append(field('Named reviewer','reviewer',draft,{max:160}),button('Start named review',()=>{
     acknowledge();review=createRecipientReview(b,{id:crypto.randomUUID(),reviewer:draft.reviewer,at:new Date().toISOString()});dirty=true;host.render();
@@ -111,7 +119,10 @@ export function createRecipientReviewPanel(document,host){
      message='Run this unchanged request with catalog-receive-review in the original author workspace. Exact replay reuses its original Journal result.';host.render();
     }));
   }
-  s.append(a);return s;
+  s.append(renewal.render(),a);return s;
  }
+ renewal=createRecipientRenewalPanel(document,{review:()=>review,workingText:originalWorkingText,capture,same,
+  busy:value=>{busy=value;},changed:()=>{dirty=true;},render:host.render,download:host.download,
+  restorePrevious:opened=>host.replace(opened.bundle,opened)});
  return {render,reset,invalidate,setBusy,hasUnsaved,snapshot,workingText,markSaved,restore,readReturn};
 }
