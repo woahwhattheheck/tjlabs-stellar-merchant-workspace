@@ -40,7 +40,7 @@
       "label": "Complete selected application review, working-copy, required-content and handover source",
       "kind": "tree",
       "path": "stellar-forge/developer-site",
-      "commit": "d95d566b049e7047a560fad74d0a6320e22049dd",
+      "commit": "20818fb16490921f31c372442006a52dfacdc89b",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace"
     },
     {
@@ -88,6 +88,22 @@
           "git_blob": "135b08bdb8e6f281aff8d8d0ec4054f851db7403",
           "sha256": "00e14f2e4bf9f775b9759561be9a344ed3acd42e6ebc830ad90a47d2bd974ead",
           "bytes": 9884
+        }
+      ]
+    },
+    {
+      "id": "grant-issuer-form-workbook-guide",
+      "label": "Complete issuer-form spreadsheet preparation, concurrent return and native handover",
+      "kind": "blob",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/GRANT_FORM_WORKBOOK.md",
+      "commit": "20818fb16490921f31c372442006a52dfacdc89b",
+      "editions": [
+        {
+          "commit": "20818fb16490921f31c372442006a52dfacdc89b",
+          "git_blob": "64c4651363a4fcefaa69f3bff5b7cb5c8ba1f4f7",
+          "bytes": 17429,
+          "sha256": "07dcddb9408bee603e06586981b199164496ba4f2c4684dcaa48262eaefdd972"
         }
       ]
     }
