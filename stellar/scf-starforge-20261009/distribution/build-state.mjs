@@ -252,6 +252,20 @@ async function immutableRecord(root, name, value) {
   await unlink(pending); await syncDirectory(root);
 }
 
+function sourceLength(file) {
+  if (Buffer.isBuffer(file.bytes)) return file.bytes.length;
+  need(typeof file.read === 'function' && Number.isSafeInteger(file.byteLength) && file.byteLength >= 0 &&
+    SHA256.test(file.sha256 ?? ''), 'DISTRIBUTION_SOURCE_DESCRIPTOR_INVALID', file.path);
+  return file.byteLength;
+}
+async function sourceContent(file) {
+  const bytes = Buffer.isBuffer(file.bytes) ? file.bytes : await file.read();
+  need(Buffer.isBuffer(bytes) && bytes.length === sourceLength(file) &&
+    (Buffer.isBuffer(file.bytes) || hash(bytes) === file.sha256),
+  'DISTRIBUTION_SOURCE_CONTENT_CHANGED', file.path);
+  return bytes;
+}
+
 /** Materialize and pack one manifest, keeping all mutations under one lease. */
 export async function openDistributionBuild({ output, resume = false, manifest, files, onProgress = () => {} }) {
   const root = resolve(output), stage = join(root, 'package'), pack = join(root, 'pack-work');
@@ -273,6 +287,7 @@ export async function openDistributionBuild({ output, resume = false, manifest, 
         (['package', 'pack-work', 'npm-cache', 'pack-tmp'].includes(entry.name) ? entry.isDirectory() : entry.isFile()),
       'DISTRIBUTION_UNEXPECTED_OUTPUT', entry.name);
     }
+    for (const file of files) sourceLength(file);
     const expected = new Set(files.map(file => relativePath(file.path)));
     need(expected.size === files.length, 'DISTRIBUTION_DUPLICATE_PACKAGE_FILE');
     if (await info(stage)) await inventory(stage, expected);
@@ -283,7 +298,8 @@ export async function openDistributionBuild({ output, resume = false, manifest, 
       async materialize() {
         const result = { copiedFiles: 0, resumedFiles: 0, reusedFiles: 0, writtenBytes: 0 };
         for (const [index, file] of files.entries()) {
-          const outcome = await writeOriginal(stage, file.path, file.bytes, file.mode);
+          const bytes = await sourceContent(file);
+          const outcome = await writeOriginal(stage, file.path, bytes, file.mode);
           result[outcome.reused ? 'reusedFiles' : outcome.resumed ? 'resumedFiles' : 'copiedFiles']++;
           result.writtenBytes += outcome.writtenBytes;
           if ((index + 1) % 64 === 0 || index === files.length - 1)
@@ -293,7 +309,7 @@ export async function openDistributionBuild({ output, resume = false, manifest, 
       },
       async pack({ npm = process.platform === 'win32' ? 'npm.cmd' : 'npm', python = 'python3' } = {}) {
         const candidate = join(pack, archiveName), published = join(root, archiveName);
-        const installedBytes = files.reduce((total, file) => total + file.bytes.length, 0);
+        const installedBytes = files.reduce((total, file) => total + sourceLength(file), 0);
         for (const entry of await readdir(pack, { withFileTypes: true }))
           need([archiveName, 'pack.json', 'pack.json.pending', 'failed-pack.json', 'failed-pack.json.pending'].includes(entry.name) &&
             entry.isFile() && !entry.isSymbolicLink(), 'DISTRIBUTION_UNEXPECTED_PACK_FILE', entry.name);

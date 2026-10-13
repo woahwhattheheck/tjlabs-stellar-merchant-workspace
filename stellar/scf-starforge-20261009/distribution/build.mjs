@@ -155,31 +155,34 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   const names = new Set(selected.map(item => item.path));
   for (const path of [...required, ...spec.supportFiles, ...moduleTemplates, ...dataSources, ...specificationPaths, ...Object.values(spec.runtimePackageManifests ?? {})])
     if (!names.has(path)) throw new TypeError('Missing packaged entry: ' + path);
+  // Retain identity metadata, not the complete selected source body in memory.
   const sources = new Map();
+  const readSource = path => source.readFiles([byPath.get(path)]).get(path);
   let totalBytes = 0;
   const loadSources = items => {
-    const loaded = source.readFiles(items);
-    for (const [path, bytes] of loaded) {
+    const loaded = new Map();
+    for (const [path, bytes] of source.readEntries(items)) {
       totalBytes += bytes.length;
       if (bytes.length > MAX_SOURCE_FILE_BYTES)
         throw new RangeError(`Distribution source file exceeds ${MAX_SOURCE_FILE_BYTES} bytes (${bytes.length}): ${path}`);
       if (totalBytes > MAX_SOURCE_BYTES)
         throw new RangeError(`Distribution source exceeds ${MAX_SOURCE_BYTES} bytes: ${totalBytes}`);
-      sources.set(path, bytes);
+      const identity = { bytes: bytes.length, sha256: digest(bytes) };
+      sources.set(path, identity); loaded.set(path, identity);
     }
     return loaded;
   };
   source.progress('selected', { files: selected.length, components: spec.components.length, contributions: distribution.contributions.length,
     ...(recipe ? { sourceSelection: recipe.id } : {}) });
   loadSources(selected);
-  for (const [path, format] of Object.entries(sourceFormats)) parseOriginalSourceData(path, format, sources.get(path));
+  for (const [path, format] of Object.entries(sourceFormats)) parseOriginalSourceData(path, format, readSource(path));
   // The same manifests drive the actual servers. Retain every mapped source
   // and resolve browser imports in its served URL context, not by inventing a
   // missing file beside the importer. Ordinary Node imports keep filesystem
   // resolution, and physical files never lose precedence or exclusion checks.
   const browserAssets = createBrowserAssetIndex(spec.browserAssets ?? [], path => {
     if (!names.has(path)) throw new TypeError('Missing packaged browser entry: ' + path);
-    return sources.get(path);
+    return readSource(path);
   });
   const missingModules = [];
   const enqueue = (target, importer, discovered, executable = true) => {
@@ -206,8 +209,9 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   let frontier = sources;
   while (frontier.size) {
     const discovered = [];
-    const executableSources = new Map([...frontier].filter(([path]) => !dataSources.has(path)));
-    for (const [path, requests] of staticModuleRequests(executableSources)) {
+    const executableSources = [...frontier.keys()]
+      .filter(path => !dataSources.has(path) && /\.(?:mjs|js)$/.test(path)).map(path => byPath.get(path));
+    for (const [path, requests] of staticModuleRequests(source.readEntries(executableSources))) {
       if (moduleTemplates.has(path)) continue;
       for (const request of requests) {
         const served = browserAssets.resolve(path, request);
@@ -226,7 +230,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   const runtimeDependencies = Object.create(null), runtimePackageSources = {}, runtimeEngines = {};
   const featurePeers = { ...spec.featurePeers };
   for (const [group, path] of Object.entries(spec.runtimePackageManifests ?? {})) {
-    const original = JSON.parse(sources.get(path));
+    const original = JSON.parse(readSource(path));
     if (!original.dependencies || typeof original.dependencies !== 'object' || Array.isArray(original.dependencies) ||
         !Object.keys(original.dependencies).length && !/^>=\d+(?:\.\d+)?(?:\.\d+)?$/.test(original.engines?.node ?? ''))
       throw new TypeError('Runtime dependencies or an explicit Node engine are required: ' + path);
@@ -266,7 +270,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     repository: product.repository,
   };
   const metadataBytes = Buffer.from(json(metadata));
-  const readme = sources.get(product.readme);
+  const readme = readSource(product.readme);
   const license = initial.get('LICENSE');
   if (!readme || !byPath.get('LICENSE')) throw new TypeError('Distribution README and license required');
   const manifest = {
@@ -278,28 +282,43 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     components: spec.components, sourceBytes: totalBytes,
     ...(dataSources.size ? { sourceFormats } : {}),
     distributionInputs: specificationPaths.map(path => ({ path, gitBlob: byPath.get(path).blob,
-      sha256: digest(sources.get(path)), bytes: sources.get(path).length })),
+      sha256: sources.get(path).sha256, bytes: sources.get(path).bytes })),
     distributionContributions: distribution.contributions.map(({ id, path }) => ({ id, path })),
     files: selected.map(item => ({ path: item.path, packagePath: 'source/' + item.path,
-      gitBlob: item.blob, sha256: digest(sources.get(item.path)), bytes: sources.get(item.path).length, mode: item.mode })),
+      gitBlob: item.blob, sha256: sources.get(item.path).sha256, bytes: sources.get(item.path).bytes, mode: item.mode })),
     packageFiles: { 'package.json': digest(metadataBytes), 'README.md': digest(readme), 'LICENSE': digest(license) },
     optionalNativePeers: Object.fromEntries(Object.entries(spec.nativePeers).map(([name, value]) => [name, value.version])),
     optionalFeaturePeers: Object.fromEntries(Object.entries(featurePeers).map(([feature, peers]) =>
       [feature, Object.fromEntries(Object.entries(peers).map(([name, value]) => [name, value.version]))])),
     optionalRuntimeDependencies: runtimeDependencies, runtimePackageSources,
   };
-  const files = selected.map(item => ({ path: 'source/' + item.path, bytes: sources.get(item.path),
-    mode: item.mode === '100755' ? 0o755 : 0o644 }));
+  let materializationEntries = null, nextSourceIndex = 0;
+  const readPackagedSource = index => {
+    if (!materializationEntries || index !== nextSourceIndex) {
+      materializationEntries?.return();
+      materializationEntries = source.readEntries(selected.slice(index));
+    }
+    const entry = materializationEntries.next();
+    if (entry.done || entry.value[0] !== selected[index].path)
+      throw new TypeError('Original materialization source order differs');
+    nextSourceIndex = index + 1;
+    return entry.value[1];
+  };
+  const releaseContents = () => { materializationEntries?.return(); materializationEntries = null; source.clearContentCache(); };
+  const files = selected.map((item, index) => ({ path: 'source/' + item.path,
+    byteLength: sources.get(item.path).bytes, sha256: sources.get(item.path).sha256,
+    read: () => readPackagedSource(index), mode: item.mode === '100755' ? 0o755 : 0o644 }));
   for (const [path, bytes] of Object.entries({ 'package.json': metadataBytes, 'manifest.json': Buffer.from(json(manifest)),
     'README.md': readme, 'LICENSE': license })) files.push({ path, bytes, mode: 0o644 });
   // Match the original runtime-unpack.py limits before publishing an archive.
   // Source, generated manifest, package metadata, README and license all count.
-  const packageBytes = files.reduce((sum, file) => sum + file.bytes.length, 0);
+  const fileBytes = file => file.byteLength ?? file.bytes.length;
+  const packageBytes = files.reduce((sum, file) => sum + fileBytes(file), 0);
   if (packageBytes > MAX_SOURCE_BYTES)
     throw new RangeError(`Distribution package exceeds ${MAX_SOURCE_BYTES} unpacked bytes: ${packageBytes}`);
   for (const file of files)
-    if (file.bytes.length > MAX_SOURCE_FILE_BYTES)
-      throw new RangeError(`Distribution package member exceeds ${MAX_SOURCE_FILE_BYTES} bytes (${file.bytes.length}): ${file.path}`);
+    if (fileBytes(file) > MAX_SOURCE_FILE_BYTES)
+      throw new RangeError(`Distribution package member exceeds ${MAX_SOURCE_FILE_BYTES} bytes (${fileBytes(file)}): ${file.path}`);
 
   const operation = await openDistributionBuild({ output: out, resume, manifest, files,
     onProgress: (phase, details) => source.progress(phase, details) });
@@ -308,6 +327,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     if (previous) return { ...previous, reused: true };
     source.progress('materializing', { files: selected.length, bytes: totalBytes, resume });
     const materialization = await operation.materialize();
+    releaseContents();
     const packed = await operation.pack({ python });
     const receipt = { status: 'PACKAGED', packageName: spec.name, packageVersion: version,
       sourceCommit: commit, ...(manifest.sourceSelection ? { sourceSelection: manifest.sourceSelection } : {}),
@@ -316,7 +336,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     await operation.complete(receipt);
     source.progress('packaged', { files: selected.length, archiveBytes: receipt.archiveBytes, sha256: receipt.sha256 });
     return receipt;
-  } finally { await operation.close(); }
+  } finally { releaseContents(); await operation.close(); }
 }
 
 async function main(args) {
