@@ -66,6 +66,54 @@
         }
       ],
       "commit": "0287e051ef121e9842072f93ad839378cdc06af4"
+    },
+    {
+      "id": "customer-handover-desk",
+      "label": "Complete private customer handover desk and original-input operating guide",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/HANDOVER_DESK.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "52ca056d8991ed68ecb721c885e4c9096dbd125b",
+          "bytes": 19263,
+          "sha256": "b9211548314496cdfa5f34d385e5081b327ee20082ee856e3efc9b0fae145948",
+          "git_blob": "b83cbb131377a1a33039c2528321d1d967ba791a"
+        }
+      ],
+      "commit": "52ca056d8991ed68ecb721c885e4c9096dbd125b"
+    },
+    {
+      "id": "customer-handover-returns",
+      "label": "Original customer-handover return programme with cumulative scope and complete receiving",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-returns.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "4541dba01faa0e8121866fbb273be65a74542af0",
+          "bytes": 44450,
+          "sha256": "4c435f24abae49a90a8beacb654c7a210f4366c6c249698e840b8720b7559b9c",
+          "git_blob": "0a716faf39ae02a2fbd4329254a3f8b8ee02b5b5"
+        }
+      ],
+      "commit": "4541dba01faa0e8121866fbb273be65a74542af0"
+    },
+    {
+      "id": "customer-handover-desk-receiving",
+      "label": "Whole original-input browser handover receiving and recovery course",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-receiving.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "editions": [
+        {
+          "commit": "52ca056d8991ed68ecb721c885e4c9096dbd125b",
+          "bytes": 31802,
+          "sha256": "5849808a992d6a2ebfba1cb4e919e3fec819eff98d278e864a377df191b30843",
+          "git_blob": "a532189984b7e2d7723bda1012c13e894e9a0ac1"
+        }
+      ],
+      "commit": "52ca056d8991ed68ecb721c885e4c9096dbd125b"
     }
   ]
 }

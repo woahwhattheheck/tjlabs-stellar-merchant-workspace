@@ -43,3 +43,7 @@ Start with [the installed RIS operating chapter](OPERATING.md#review-original-ri
 ## Customer handover operator
 
 The installed `research-customer-handover-desk` command opens a private operator for that same handover-return course. Select each complete returned dossier, inspect every comparison and full value, save named review drafts, apply the exact reviewed request, recover interrupted responses and download the independently received editable package. The [complete desk guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/HANDOVER_DESK.md) covers installation, the whole browser journey, separate-tab draft handling, original-request recovery and reopening.
+
+## Start from an existing customer handover
+
+Use `research-customer-handover-intake` when continuing an original published customer delivery. Select the actual dossier and delivery, inspect its complete saved handover and the current native head, and review explicit round, item and source limits before preparing the selection. The intake freezes that reviewed baseline and launches the existing handover desk with its same operation and original native API. Draft scope remains recoverable before preparation; the prepared selection and accepted request identities remain stable afterward. [HANDOVER_INTAKE.md](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/HANDOVER_INTAKE.md) contains the complete first-use commands, browser journey and original-input receiving course.

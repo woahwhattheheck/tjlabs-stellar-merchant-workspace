@@ -21,7 +21,9 @@
     "research-quotes-remote": "stellar-forge/mcp-merchant-operator/research-programme-cli.mjs",
     "research-customer-handover-returns": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-returns-cli.mjs",
     "research-customer-handover-desk": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-cli.mjs",
-    "research-customer-handover-desk-receiving": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-receiving.mjs"
+    "research-customer-handover-desk-receiving": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-receiving.mjs",
+    "research-customer-handover-intake": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake-cli.mjs",
+    "research-customer-handover-intake-receiving": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake-receiving.mjs"
   },
   "commandDescriptions": {
     "research-client": "Operate the Research listener, source and eligibility reviews, study extraction, evidence tables, appraisals, customer updates, Documents/Pipelines, and complete receiving",
@@ -42,7 +44,9 @@
     "research-quotes-remote": "Operate the original remote quotation programme, retain exact jobs and complete exports, stream source-to-receiving archives, and reopen the native case/customer handover.",
     "research-customer-handover-returns": "Continue an original customer handover through explicit reviewed dossier returns, cumulative scope, complete source/archive and independent editable receiving.",
     "research-customer-handover-desk": "Operate a selected customer handover through complete original return review, saved draft recovery and independently received editable delivery in the private browser.",
-    "research-customer-handover-desk-receiving": "Run the complete private handover desk against original selected source files and explicit reviewed decisions, preserving the same operation and independent receiving."
+    "research-customer-handover-desk-receiving": "Run the complete private handover desk against original selected source files and explicit reviewed decisions, preserving the same operation and independent receiving.",
+    "research-customer-handover-intake": "Select an original published customer delivery and native workspace, review complete return scope, prepare the exact handover selection and open its existing private desk.",
+    "research-customer-handover-intake-receiving": "Operate first-use handover selection and explicit commercial scope through the original intake browser, then receive the same selected returns and complete editable handover."
   },
   "exports": {
     "./buyer/research-dossiers/client": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/workspace-client.mjs",
@@ -150,7 +154,11 @@
     "./buyer/research-dossiers/customer-quotes/python-remote-bridge": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/research-programme-remote-bridge.mjs",
     "./buyer/research-dossiers/customer-updates/handover-desk": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk.mjs",
     "./buyer/research-dossiers/customer-updates/handover-desk-cli": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-cli.mjs",
-    "./buyer/research-dossiers/customer-updates/handover-desk-receiving": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-receiving.mjs"
+    "./buyer/research-dossiers/customer-updates/handover-desk-receiving": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-receiving.mjs",
+    "./buyer/research-dossiers/customer-updates/handover-intake": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake.mjs",
+    "./buyer/research-dossiers/customer-updates/handover-intake-desk": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake-desk.mjs",
+    "./buyer/research-dossiers/customer-updates/handover-intake-cli": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake-cli.mjs",
+    "./buyer/research-dossiers/customer-updates/handover-intake-receiving": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake-receiving.mjs"
   },
   "components": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/europe-pmc",
@@ -466,7 +474,15 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-public/index.html",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-public/desk.js",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-public/desk.css",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-receiving.mjs"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-desk-receiving.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake-desk.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake-cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake-receiving.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/HANDOVER_INTAKE.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake-public/index.html",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake-public/intake.css",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/handover-intake-public/intake.js"
   ],
   "browserAssets": [
     {
