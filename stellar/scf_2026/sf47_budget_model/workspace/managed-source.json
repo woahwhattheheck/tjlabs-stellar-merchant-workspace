@@ -544,6 +544,10 @@
     "installation-source-collection-store.mjs",
     "portfolio-working-copies-browser.mjs",
     "PORTFOLIO_WORKING_COPIES_BROWSER.md",
+    "portfolio-availability.mjs",
+    "portfolio-availability-desk.mjs",
+    "portfolio-availability.css",
+    "PORTFOLIO_AVAILABILITY.md",
     "operations_statement_copies.mjs",
     "STATEMENT_WORKING_COPIES.md"
   ]

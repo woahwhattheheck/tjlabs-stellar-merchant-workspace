@@ -11,7 +11,7 @@ import { acquireDeliveryLease } from '../../sf98-merchant-delivery/delivery-lock
 import { inspectLocalFleetRestore, runLocalFleetPreparation } from './fleet.mjs';
 import { compileObjectSessions, createObjectRecoveryAdapter } from './object-sessions.mjs';
 import { createRecoverySupport } from './recovery-support.mjs';
-import {compileObjectBundleArchives,createObjectBundleAdapter,objectBundleCommand} from './object-bundles.mjs';
+import {compileObjectBundleArchives,createObjectBundleAdapter,objectBundleCommand,comparisonBundlePair} from './object-bundles.mjs';
 
 import {createObjectComparisonAdapter} from './object-comparisons.mjs';
 
@@ -310,11 +310,22 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
     need(raw.length===ref.bytes&&hash(raw)===ref.sha256,'WORKSPACE_COMPARISON_ARTIFACT_CHANGED');return raw;
   }
   const bundleAdapter=createObjectBundleAdapter({directory,workspaceId:workspaceState.id,
-    readRequestBytes:originalRequestBytes,readEvidenceBytes:originalEvidenceBytes});
+    readRequestBytes:originalRequestBytes,readEvidenceBytes:originalEvidenceBytes,readComparisonArtifactBytes:originalComparisonArtifactBytes});
   const support = createRecoverySupport({directory,workspaceId:workspaceState.id,profiles:host.profiles,currentHost,
     readRequestBytes:originalRequestBytes,readEvidenceBytes:originalEvidenceBytes,
     readComparisonArtifactBytes:originalComparisonArtifactBytes,
     isActive:(profileId,id)=>active?.key===requestPath(profileId,id),isClosing:()=>closing||closed,readOnly});
+  async function bundlePairSelected(profileId,beforeId,afterId){
+    await currentHost();selectedProfile(profileId);identifier(beforeId,'before original export');identifier(afterId,'after original export');
+    const entries={};
+    for(const [side,id]of Object.entries({before:beforeId,after:afterId})){
+      const request=await readRequest(profileId,id);
+      need(request?.review.command==='object-bundle-export'&&request.result?.status==='COMPLETE','WORKSPACE_BUNDLE_EXPORT_REQUIRED');
+      entries[side]={archive:await bundleAdapter.artifact(profileId,id),
+        transport:{...request.result,workspaceOperationId:id}};
+    }
+    return {entries,pair:comparisonBundlePair(entries.before,entries.after)};
+  }
   const objectReviews = join(directory,'object-reviews');
   function declaredObject(profile,id) {
     identifier(id,'Object-session declaration');
@@ -814,10 +825,10 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
   async function selection(input) {
     exact(input, ['profileId', 'action', 'id', 'bundleId', 'snapshotId', 'destinationName',
       'capturePlanId', 'quiesced', 'restoreId', 'publisherRestoreId', 'fleetRestoreId', 'fleetTargetId',
-      'objectSessionId','expectedRecordSha256','archiveId','sourceRequestId','sourceReviewHash','sourceAttempt',
+      'objectSessionId','expectedRecordSha256','archiveId','sourceRequestId','sourceReviewHash','sourceAttempt','sourceSide',
       'beforeObjectSessionId','afterObjectSessionId','beforeExpectedRecordSha256','afterExpectedRecordSha256'], 'recovery selection');
     if(!comparisonCommand(input.action))need(['beforeObjectSessionId','afterObjectSessionId','beforeExpectedRecordSha256','afterExpectedRecordSha256'].every(key=>input[key]===undefined),'WORKSPACE_COMPARISON_SELECTION_NOT_APPLICABLE');
-    if(!objectBundleCommand(input.action))need(['archiveId','sourceRequestId','sourceReviewHash','sourceAttempt'].every(key=>input[key]===undefined),
+    if(!objectBundleCommand(input.action))need(['archiveId','sourceRequestId','sourceReviewHash','sourceAttempt','sourceSide'].every(key=>input[key]===undefined),
       'WORKSPACE_BUNDLE_SELECTION_NOT_APPLICABLE');
     if(!objectCommand(input.action)&&!objectBundleCommand(input.action))need(input.objectSessionId===undefined&&input.expectedRecordSha256===undefined,
       'WORKSPACE_OBJECT_SELECTION_NOT_APPLICABLE');
@@ -1149,6 +1160,14 @@ export async function openRecoveryWorkspace({ configFile, directory, readOnly = 
         'WORKSPACE_BUNDLE_EXPORT_REQUIRED');
       const archive=await bundleAdapter.artifact(input.profileId,input.id),{id,...selected}=input;
       return support.attachArchive({...selected,archive,transport:{...request.result,workspaceOperationId:id}});
+    }),
+    bundlePair:async(profileId,beforeId,afterId)=>(await bundlePairSelected(profileId,beforeId,afterId)).pair,
+    bundlePairAttach:input=>transition(async()=>{
+      exact(input,['profileId','beforeId','afterId','transferId','expectedReviewSha256','expectedRevision','actor','expectedPairSha256'],'comparison bundle attachment');
+      need(!readOnly&&!closing,'WORKSPACE_READ_ONLY');need(!active,'WORKSPACE_EXECUTION_ACTIVE');
+      const {entries,pair}=await bundlePairSelected(input.profileId,input.beforeId,input.afterId);
+      need(pair.pairSha256===input.expectedPairSha256,'WORKSPACE_BUNDLE_COMPARISON_PAIR_CHANGED');
+      const {beforeId,afterId,...selected}=input;return support.attachComparison({...selected,...entries});
     }),
     bundleAttachment:input=>transition(()=>support.attachment(input)),
     bundleCaseExport:input=>transition(()=>support.exportAttached(input)),

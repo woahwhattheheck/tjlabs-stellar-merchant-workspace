@@ -1,3 +1,4 @@
+@import url('/portfolio-availability.css');
 /* Original SF47 operator surface: neutral, compact and responsive. */
 .portfolio{font:inherit;color:#202124;min-width:0}
 .portfolio *{box-sizing:border-box}

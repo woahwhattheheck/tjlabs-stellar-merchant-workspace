@@ -14,14 +14,15 @@ function options(select,rows,value){
 const bundleAction=command=>['object-bundle-export','object-bundle-receive'].includes(command);
 export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails,download}){
   let state=null,profile=null,rows=[],generation=0,review=null,original=null,active=false,closed=false;
-  let sourceTuple='',profileKey='',transfers=[],selectedSupport=null;
+  let sourceTuple='',profileKey='',transfers=[],selectedSupport=null,pairPreview=null;
   node('h2','Encrypted Object backup transfer',root);
   node('p','Export every encrypted member from an existing recovery record, or receive a pinned archive into a host-declared bundle. Receiving authenticates the record and session. Canonical state-root acceptance and restore remain a separate explicit Object review.',root);
   const controls=node('div',undefined,root);controls.className='form-grid';
   const action=field(controls,'Transfer action','select');
   options(action,[{id:'object-bundle-export',label:'Export original encrypted backup'},{id:'object-bundle-receive',label:'Receive and authenticate archive'}]);
   const id=field(controls,'Retained transfer operation ID');id.autocomplete='off';
-  const source=field(controls,'Original Object recovery request','select');
+  const source=field(controls,'Original Object recovery or completed comparison request','select');
+  const sourceSide=field(controls,'Original comparison edition','select');options(sourceSide,[{id:'before',label:'Before backup'},{id:'after',label:'After backup'}]);
   const archive=field(controls,'Host-declared archive','select');
   const destination=field(controls,'Declared Object-session bundle destination','select');
   const actions=node('div',undefined,root);actions.className='actions';
@@ -80,39 +81,57 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
       notice('The complete encrypted archive was downloaded. Keep its SHA-256 and native record identity with it.');
   },reports);
   const support=node('details',undefined,root);node('summary','Attach the actual archive to an existing commissioned Support case',support);
-  node('p','This optional path requires an already saved recovery Support transfer and that case’s actual commissioning terms. Standalone archive receiving above does not require terms. The original textual capture stays unchanged; source delivery adds the real binary archive.',support);
+  node('p','This optional path requires an already saved recovery or comparison Support transfer and that case’s actual commissioning terms. Standalone archive receiving above does not require terms. The original textual capture stays unchanged; source delivery adds the real binary archive, or both original archives together for a comparison.',support);
   const supportControls=node('div',undefined,support);supportControls.className='form-grid';
-  const transfer=field(supportControls,'Saved recovery Support transfer','select');
+  const transfer=field(supportControls,'Saved recovery or comparison Support transfer','select');
+  const beforeExport=field(supportControls,'Completed before-backup export','select');
+  const afterExport=field(supportControls,'Completed after-backup export','select');
   const caseRevision=field(supportControls,'Exact current case revision SHA-256');
   const actor=field(supportControls,'Operator');
   const attachmentConfirmed=field(support,'I reviewed this saved transfer, exported archive and exact case revision.');attachmentConfirmed.type='checkbox';
   const supportActions=node('div',undefined,support);supportActions.className='actions';
+  const refreshTransfers=button('Refresh saved Support transfers',loadSupportTransfers,supportActions);
   const supportRead=button('Read saved Support transfer',async()=>{
     const epoch=generation,selected=transfer.value;
     const result=await api(query('/api/support-transfer',{profile:profile.id,id:selected}));
     if(epoch!==generation||selected!==transfer.value)return;
     if(result.status!=='SAVED')throw new Error('Save the original reviewed Support transfer first.');
-    selectedSupport=result;caseRevision.value=result.result.revision;attachmentConfirmed.checked=false;
+    selectedSupport=result;pairPreview=null;caseRevision.value=result.result.revision;attachmentConfirmed.checked=false;
     supportSummary.textContent=encoded(result);
   },supportActions);
-  const attach=button('Attach whole encrypted archive',async()=>{
-    const context=uiIdentity(),selected=attachmentSelection();await post('/api/bundle-attach',selected);
+  const readPair=button('Review complete archive pair',async()=>{
+    const selected=uiIdentity(),value=await api(query('/api/bundle-pair',{profile:profile.id,before:beforeExport.value,after:afterExport.value}));
+    if(selected!==uiIdentity())return;pairPreview=value;attachmentConfirmed.checked=false;
+    supportSummary.textContent=JSON.stringify({support:selectedSupport,pair:value},null,2);sync();
+  },supportActions);
+  const attach=button('Attach complete encrypted source',async()=>{
+    const context=uiIdentity(),selected=attachmentSelection();await post(comparisonSupport()?'/api/bundle-pair-attach':'/api/bundle-attach',selected);
     if(context!==uiIdentity())return;
-    attachmentConfirmed.checked=false;notice('The original case contains the complete native archive source attachment.');
+    attachmentConfirmed.checked=false;notice('The original case contains the complete selected encrypted source attachment.');
     await readAttachment();
   },supportActions);
   const attachmentRead=button('Read retained attachment',readAttachment,supportActions);
   const caseExport=button('Export whole attached case',async()=>{
-    const selected=uiIdentity(),value=await post('/api/bundle-case-export',{profileId:profile.id,transferId:transfer.value,archiveSha256:exportHash()});
+    const selected=uiIdentity(),value=await post('/api/bundle-case-export',{profileId:profile.id,transferId:transfer.value,...attachmentIdentity()});
     if(selected!==uiIdentity())return;
     showDetails('Whole case with original encrypted archive',value);
     notice('The complete attached case revision, history and original binary source editions were exported.');
   },supportActions);
   const supportSummary=node('pre',undefined,support);
+  async function loadSupportTransfers(){
+    if(!profile?.supportConfigured)return;
+    const epoch=generation,selected=profile.id,previous=transfer.value;
+    const page=await api(query('/api/support-transfers',{profile:selected}));
+    if(epoch!==generation||profile?.id!==selected||transfer.value!==previous)return;
+    transfers=page.transfers.filter(row=>row.status==='SAVED_RECORDED');
+    options(transfer,transfers.map(row=>({id:row.transferId,label:row.transferId+' · '+row.requestId})),previous);
+    if(transfer.value!==previous){selectedSupport=null;pairPreview=null;attachmentConfirmed.checked=false;supportSummary.textContent='';}
+    sync();
+  }
   function uiIdentity(){return encoded([generation,profile?.id,action.value,id.value,source.value,
-    archive.value,destination.value,transfer.value,caseRevision.value,actor.value,original?.operationId]);}
+    archive.value,destination.value,sourceSide.value,transfer.value,caseRevision.value,actor.value,beforeExport.value,afterExport.value,pairPreview?.pairSha256,original?.operationId]);}
   function clear(){
-    generation++;review=null;original=null;selectedSupport=null;confirmed.checked=false;attachmentConfirmed.checked=false;
+    generation++;review=null;original=null;selectedSupport=null;pairPreview=null;confirmed.checked=false;attachmentConfirmed.checked=false;
     summary.textContent='';outcome.textContent='';supportSummary.textContent='';sync();
   }
   function intent(){
@@ -121,7 +140,8 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
     if(action.value==='object-bundle-receive')return {...input,archiveId:archive.value,objectSessionId:destination.value};
     const request=rows.find(row=>row.operationId===source.value);
     if(!request)throw new Error('Select the retained original Object request.');
-    return {...input,sourceRequestId:request.operationId,sourceReviewHash:request.review.reviewHash,sourceAttempt:request.attempts};
+    return {...input,sourceRequestId:request.operationId,sourceReviewHash:request.review.reviewHash,sourceAttempt:request.attempts,
+      ...(request.review.command==='object-compare'?{sourceSide:sourceSide.value}:{})};
   }
   function drawReview(){summary.textContent=review?JSON.stringify(review,null,2):'';sync();}
   function drawOriginal(){outcome.textContent=original?JSON.stringify(original,null,2):'';sync();}
@@ -141,21 +161,34 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
     if(original?.review.command!=='object-bundle-export'||original.operation?.status!=='COMPLETE'||!HASH.test(hash??''))
       throw new Error('Read the completed original archive export first.');return hash;
   }
+  function comparisonSupport(){return selectedSupport?.review.command==='object-compare';}
+  function attachmentIdentity(){
+    if(comparisonSupport()){
+      if(!pairPreview||pairPreview.archives.before.requestId!==beforeExport.value||pairPreview.archives.after.requestId!==afterExport.value)
+        throw new Error('Review the exact completed before/after archive pair first.');
+      return {pairSha256:pairPreview.pairSha256};
+    }
+    return {archiveSha256:exportHash()};
+  }
   function attachmentSelection(){
-    exportHash();if(!attachmentConfirmed.checked||!selectedSupport||selectedSupport.review.transferId!==transfer.value)
+    const selectedIdentity=attachmentIdentity();if(!attachmentConfirmed.checked||!selectedSupport||selectedSupport.review.transferId!==transfer.value)
       throw new Error('Read and confirm this original saved Support transfer.');
     if(!HASH.test(caseRevision.value)||!actor.value.trim())throw new Error('Enter the current case revision and actual operator.');
-    return {profileId:profile.id,id:original.operationId,transferId:transfer.value,
-      expectedReviewSha256:selectedSupport.review.reviewSha256,expectedRevision:caseRevision.value,actor:actor.value};
+    return {profileId:profile.id,transferId:transfer.value,
+      expectedReviewSha256:selectedSupport.review.reviewSha256,expectedRevision:caseRevision.value,actor:actor.value,
+      ...(comparisonSupport()?{beforeId:beforeExport.value,afterId:afterExport.value,expectedPairSha256:selectedIdentity.pairSha256}:{id:original.operationId})};
   }
   async function readAttachment(){
-    const selected=uiIdentity(),value=await api(query('/api/bundle-attachment',{profile:profile.id,id:transfer.value,sha256:exportHash()}));
+    const selected=uiIdentity(),identity=attachmentIdentity(),value=await api(query('/api/bundle-attachment',{profile:profile.id,id:transfer.value,sha256:identity.archiveSha256,pair:identity.pairSha256}));
     if(selected!==uiIdentity())return;
     supportSummary.textContent=JSON.stringify(value,null,2);attachmentConfirmed.checked=false;
   }
   function sync(){
     const receive=action.value==='object-bundle-receive';
     source.parentElement.hidden=receive;archive.parentElement.hidden=!receive;destination.parentElement.hidden=!receive;
+    sourceSide.parentElement.hidden=receive||rows.find(row=>row.operationId===source.value)?.review.command!=='object-compare';
+    const paired=comparisonSupport();beforeExport.parentElement.hidden=!paired;afterExport.parentElement.hidden=!paired;readPair.hidden=!paired;
+    readPair.disabled=active||!beforeExport.value||!afterExport.value||!selectedSupport;
     for(const b of [prepare,reopen])b.disabled=closed||active||!profile||state?.readOnly;
     inspect.disabled=closed||active||!receive||!archive.value||state?.readOnly;
     start.disabled=active||!review||!confirmed.checked||!!state?.active||state?.readOnly;
@@ -166,8 +199,9 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
     publication.disabled=active||!original?.operation?.publication;
     for(const b of [artifact,saveFile])b.disabled=active||original?.operation?.status!=='COMPLETE'||original?.review.command!=='object-bundle-export';
     support.hidden=!profile?.caseSourceConfigured;
+    refreshTransfers.disabled=closed||active||!profile?.supportConfigured;
     for(const b of [supportRead,attachmentRead,caseExport])b.disabled=active||!transfer.value;
-    attach.disabled=active||!attachmentConfirmed.checked||!selectedSupport||state?.readOnly;
+    attach.disabled=active||!attachmentConfirmed.checked||!selectedSupport||(paired&&!pairPreview)||state?.readOnly;
   }
   async function work(button,fn){
     if(active||closed)return;active=true;sync();const epoch=generation;
@@ -176,9 +210,9 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
       notice((error.code?error.code+': ':'')+error.message,true);}}
     finally{active=false;sync();}
   }
-  for(const input of [action,id,source,archive,destination])input.addEventListener('input',clear);
-  for(const input of [transfer,caseRevision,actor])input.addEventListener('input',()=>{
-    attachmentConfirmed.checked=false;if(input===transfer)selectedSupport=null;sync();});
+  for(const input of [action,id,source,sourceSide,archive,destination])input.addEventListener('input',clear);
+  for(const input of [transfer,caseRevision,actor,beforeExport,afterExport])input.addEventListener('input',()=>{
+    attachmentConfirmed.checked=false;if(input===transfer){selectedSupport=null;pairPreview=null;}if(input===beforeExport||input===afterExport)pairPreview=null;sync();});
   confirmed.addEventListener('change',sync);attachmentConfirmed.addEventListener('change',sync);
   return {
     isRequest:row=>bundleAction(row.review?.command),
@@ -196,7 +230,12 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
       const key=selected?encoded({workspace:next.id,profile:selected}):'';
       const changed=key!==profileKey;
       state=next;profile=selected;if(changed){profileKey=key;clear();transfers=[];transfer.replaceChildren();}
-      rows=requestRows.filter(row=>row.profileId===profileId&&['object-snapshot','object-verify','object-restore'].includes(row.review?.command));
+      rows=requestRows.filter(row=>row.profileId===profileId&&(['object-snapshot','object-verify','object-restore'].includes(row.review?.command)||row.review?.command==='object-compare'&&row.phase==='COMPLETE'));
+      const beforeValue=beforeExport.value,afterValue=afterExport.value;
+      const exported=requestRows.filter(row=>row.profileId===profileId&&row.review?.command==='object-bundle-export'&&row.operation?.status==='COMPLETE');
+      for(const [side,control]of [['before',beforeExport],['after',afterExport]])options(control,
+        exported.filter(row=>row.operation.sourceComparison?.side===side).map(row=>({id:row.operationId,label:row.operationId+' · '+row.operation.originalRequest.id})),control.value);
+      if(beforeValue!==beforeExport.value||afterValue!==afterExport.value){pairPreview=null;attachmentConfirmed.checked=false;}
       const selectedId=source.value,previousTuple=sourceTuple;
       options(source,rows.map(row=>({id:row.operationId,label:row.operationId+' · '+row.phase+' · attempt '+row.attempts})),selectedId);
       const current=rows.find(row=>row.operationId===source.value);
@@ -212,13 +251,8 @@ export function createObjectBundleDesk({root,api,post,refresh,notice,showDetails
         }
       }
       if(changed&&profile?.supportConfigured){
-        const epoch=generation,selected=profile.id;
-        try{const page=await api(query('/api/support-transfers',{profile:selected}));
-          if(epoch===generation&&profile?.id===selected){
-            transfers=page.transfers.filter(row=>row.status==='SAVED_RECORDED');
-            options(transfer,transfers.map(row=>({id:row.transferId,label:row.transferId+' · '+row.requestId})));
-          }
-        }catch(error){if(epoch===generation)notice(error.message,true);}
+        const epoch=generation;
+        try{await loadSupportTransfers();}catch(error){if(epoch===generation)notice(error.message,true);}
       }
       sync();
     },
