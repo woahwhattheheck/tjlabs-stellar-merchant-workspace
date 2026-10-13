@@ -121,3 +121,21 @@ saved customer evaluation, decisions and reports.
 When handing the installed product to another operator, retain the full package
 and complete receiving ZIP. The same source and customer data can then be opened,
 installed and independently received without the original development checkout.
+
+## Complete customer-review installation and returning recipients
+
+The same `openlineage-operations` contribution now exposes the original typed customer-review client, typed recipient-return client and complete same-Page receiving programme. The canonical contribution is the builder input; the application's portable `contribution.json` remains its full portable metadata. The two declarations preserve their different Google/Airflow scope.
+
+The selected source carries all thirteen recipient-return application leaves and the original customer-review guides, plus both complete files under `operations/openlineage-recipient-review-returns-e496-20261013/`. The original application directory includes its model, operator, styles and declared routes. The original selection and merchant host closure are retained unchanged.
+
+Read `package.json` in the returned selected archive to use these actual exports:
+
+- `@tokenjunkielabs/starforge-merchant/seller/openlineage/customer-review`
+- `@tokenjunkielabs/starforge-merchant/seller/openlineage/review-return`
+- `@tokenjunkielabs/starforge-merchant/seller/openlineage/review-return/receiving`
+
+The installed CLI's `openlineage customer-review` and `openlineage review-return` groups operate the same source and native workspace. The original merchant catalogue exposes the eight return actions and paginated `customerReviewRequests` / `customerReviewResponses` collections through the existing connection.
+
+Use the complete [product operating guide](OPERATING.md#customer-reviews-and-recipient-returns) for the actual **Customer reviews → Recipient returns** task, request-file recovery, client and original Page receiving invocation. Continue the prior original selected customer operation at its existing saved source boundary. A preceding installed package continues to identify its own source; build the changed source once with the maintained builder and preserve both complete editions.
+
+All actual application, desktop/narrow, download, receiving and visual-use instructions in the product guide apply to this same complete output. The producing engineer uses and observes the exact outgoing screens and attachments before presenting them. The source composition itself does not open the installed runtime.
