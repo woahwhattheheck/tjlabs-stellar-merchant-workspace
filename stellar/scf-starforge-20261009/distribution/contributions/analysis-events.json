@@ -30,7 +30,8 @@
     },
     "./buyer/mcp/analysis-events-installation-core": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-installation-core.mjs",
     "./buyer/event-workbook-columns": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-columns.mjs",
-    "./buyer/event-workbook-editor": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.mjs"
+    "./buyer/event-workbook-editor": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.mjs",
+    "./buyer/event-workbook-returns": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-returns.mjs"
   },
   "supportFiles": [
     "stellar-forge/mcp-paid-agent/ANALYSIS_EVENTS.md",

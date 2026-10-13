@@ -9,13 +9,13 @@
   }
   function safeJSON(value){return JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');}
   function file(raw,name,type){
-    if(new TextEncoder().encode(raw).byteLength>LIMIT)throw Error('This complete editable file exceeds 128 MiB. Keep this window open; no work has been removed. Complete choices can be returned only within their separate 16 MiB allowance.');
+    if(new TextEncoder().encode(raw).byteLength>LIMIT)throw Error('This complete editable file exceeds 128 MiB. Keep this window open; no work has been removed. Use the whole working review for complete receiving history; the separate original native proposal and legacy choices downloads retain their own 16 MiB allowance.');
     const url=URL.createObjectURL(new Blob([raw],{type})),a=document.createElement('a');
     a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
   }
   function state(){return {schema:'stellar-forge.event-workbook-editor.v1',choices:editor.snapshot(),view:editor.view()};}
-  function save(){
-    const value=state(),copy=document.documentElement.cloneNode(true);
+  function save(working,view){
+    const value=working?{schema:'stellar-forge.event-workbook-editor.v1',choices:reopen(working),view:view||editor.view()}:state(),copy=document.documentElement.cloneNode(true);
     copy.querySelector('#editor-data').textContent=safeJSON(value);
     copy.querySelector('#editor-root').replaceChildren();
     copy.querySelector('#editor-identity').replaceChildren();
@@ -27,11 +27,14 @@
   }
   function run(fn){if(!ready)return;try{fn();}catch(error){message(error.message,true);}}
   $('save-editor').addEventListener('click',()=>run(save));
-  $('save-choices').addEventListener('click',()=>run(()=>editor.download()));
+  $('save-choices').addEventListener('click',()=>run(()=>{
+    const value=editor.snapshot();file(JSON.stringify(value,null,2)+'\n','event-workbook-review-'+value.original.proposal.operation_id+'.json','application/json');
+    message('Requested the complete working review JSON with all original and returned sources, unfinished choices and receipts. Confirm the saved file before replacing this copy.');
+  }));
   $('save-original').addEventListener('click',()=>run(()=>{
     const value=editor.snapshot().original;
     file(serializeNativeJSON(value.proposal),'event-workbook-proposal-'+value.proposal.operation_id+'.json','application/json');
-    message('Downloaded the complete original native worksheet proposal. Workspace and programme also remain in the full choice file.');
+    message('Requested the complete original native worksheet proposal download. Workspace and programme also remain in the full choice file.');
   }));
   addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
   try{
@@ -50,9 +53,9 @@
       onChange:(_columns,retention)=>{if(typeof retention?.retained==='boolean')storageUnavailable=!retention.retained;if(ready){dirty=true;message('Unfinished choices changed. Save editable worksheet to retain this complete edition.');}},
       onMessage:message,onEditableDownload:save
     });
-    editor.open(context,{columns:choices.columns});
+    editor.open(context,{working:choices});
     if(value.view!==undefined)editor.view(value.view);
     ready=true;document.querySelector('main').setAttribute('aria-busy','false');
-    message('Complete original worksheet opened. Edit and save locally, then return the full choices JSON to the original Event programme.');
+    message('Complete original worksheet and review history opened. Edit columns or use assignments and returned reviews; save the full working file and continue its original Event programme.');
   }catch(error){message(error.message,true);document.querySelector('main').setAttribute('aria-busy','false');}
 })();

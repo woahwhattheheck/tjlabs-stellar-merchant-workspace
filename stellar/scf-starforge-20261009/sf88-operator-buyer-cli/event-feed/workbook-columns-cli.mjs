@@ -67,10 +67,11 @@ async function main(){
     need(a.out,'Choose a new --out path for the complete selected file.');
     let raw;
     if(a.command==='editor'){
-      const [coreSource,controllerSource]=await Promise.all([
+      const [coreSource,controllerSource,returnSource]=await Promise.all([
         readFile(new URL('./workbook-columns.mjs',import.meta.url),'utf8'),
-        readFile(new URL('./workbook-editor.js',import.meta.url),'utf8')]);
-      raw=renderEditableWorkbookColumns(value,{coreSource,controllerSource});
+        readFile(new URL('./workbook-editor.js',import.meta.url),'utf8'),
+        readFile(new URL('./workbook-returns.mjs',import.meta.url),'utf8')]);
+      raw=renderEditableWorkbookColumns(value,{coreSource,controllerSource,returnSource});
     }else raw=a.command==='columns'?serializeNativeJSON(nativeColumns(value)):reviewHTML(value);
     console.log(JSON.stringify(await publish(a.out,raw),null,2));
   }
