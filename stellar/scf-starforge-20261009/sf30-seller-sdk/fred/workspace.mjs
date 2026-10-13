@@ -3,7 +3,7 @@ import { RESEARCH_ACTIONS, runResearchAction, researchView, researchEntry, resea
 import { createServer } from 'node:http';
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
+import { resolve, join, isAbsolute } from 'node:path';
 import { loadDatasetConfig } from '../dataset-handler.mjs';
 import { readPrivateJson } from '../routescan/quota.mjs';
 import { Buyer } from '../../sf88-operator-buyer-cli/node/index.mjs';
@@ -34,15 +34,52 @@ import { readQcewMerchant, startQcewMerchant } from './qcew/merchant.mjs';
 import { prepareQcewPurchase, executeQcewPurchase, recoverQcewPurchase, exportQcewPurchase, listQcewPurchases,
   receiveQcewPurchase, readQcewPurchaseReceiving, exportQcewPurchaseReceiving } from './qcew/purchase.mjs';
 
+import { RESEARCH_COMMERCE_ACTIONS, publishResearchEdition, receiveResearchEdition,
+  resumeResearchCommerceAction, researchCommerceView, getResearchPublication,
+  downloadResearchPublication } from './research/commerce.mjs';
+import { readResearchMerchant, startResearchMerchant, researchPublicationDirectory } from './research/merchant.mjs';
+import { prepareResearchPurchase, executeResearchPurchase, recoverResearchPurchase,
+  exportResearchPurchase, listResearchPurchases, receiveResearchPurchase,
+  readResearchPurchaseReceiving, exportResearchPurchaseReceiving } from './research/purchase.mjs';
+
+const RESEARCH_PACKAGE_BYTES = 256 * 1024 * 1024;
+const RESEARCH_HTTP_BYTES = Math.ceil(RESEARCH_PACKAGE_BYTES / 3) * 4 + 1024 * 1024;
+function researchPackageBody(value) {
+  need(typeof value === 'string' && value.length > 0 && value.length <= Math.ceil(RESEARCH_PACKAGE_BYTES / 3) * 4,
+    'Choose the complete original Research package.', 'RESEARCH_PACKAGE_REQUIRED', 413);
+  const bytes = Buffer.from(value, 'base64');
+  need(bytes.length > 0 && bytes.length <= RESEARCH_PACKAGE_BYTES && bytes.toString('base64') === value,
+    'The original Research package encoding or size changed.');
+  return bytes;
+}
+function researchReceivingDirectory(value, source) {
+  need(typeof value === 'string' && value.length <= 4096 && isAbsolute(value) && !/[\x00-\x1f]/.test(value),
+    'Choose an absolute customer receiving directory.');
+  const target = resolve(value), parent = resolve(source);
+  need(target !== parent && !target.startsWith(parent + '/') && !parent.startsWith(target + '/'),
+    'Choose a separate customer directory outside this original project.');
+  return target;
+}
+const researchMerchantEngine = { read: readResearchMerchant, start: startResearchMerchant,
+  prepare: prepareResearchPurchase, execute: executeResearchPurchase, recover: recoverResearchPurchase,
+  download: exportResearchPurchase, list: listResearchPurchases, receive: receiveResearchPurchase,
+  receiving: readResearchPurchaseReceiving, receivingDownload: exportResearchPurchaseReceiving };
 const fredMerchantEngine = { read: readFredMerchant, start: startFredMerchant, prepare: prepareFredPurchase,
   execute: executeFredPurchase, recover: recoverFredPurchase, download: exportFredPurchase };
 const countyMerchantEngine = { read: readQcewMerchant, start: startQcewMerchant, prepare: prepareQcewPurchase,
-  execute: executeQcewPurchase, recover: recoverQcewPurchase, download: exportQcewPurchase };
+  execute: executeQcewPurchase, recover: recoverQcewPurchase, download: exportQcewPurchase, list: listQcewPurchases, receive: receiveQcewPurchase,
+  receiving: readQcewPurchaseReceiving, receivingDownload: exportQcewPurchaseReceiving };
 async function selectEconomicPublication(directory, publicationId) {
   const state = await readFredProject(directory);
   const county = state.qcew?.publications?.some(item => item.id === publicationId);
-  need(!(county && state.publications.some(item => item.id === publicationId)),
+  const research = state.researchCommerce?.publications?.some(item => item.id === publicationId);
+  const fred = state.publications.some(item => item.id === publicationId);
+  need(Number(Boolean(county)) + Number(Boolean(research)) + Number(fred) <= 1,
     'The original publication identity is ambiguous.', 'FRED_PUBLICATION_CONFLICT', 409);
+  if (research) {
+    await getResearchPublication(directory, publicationId);
+    return { kind: 'RESEARCH', directory: researchPublicationDirectory(directory, publicationId), engine: researchMerchantEngine };
+  }
   return county ? { kind: 'QCEW', directory: await selectQcewPublication(directory, publicationId), engine: countyMerchantEngine } :
     { kind: 'FRED', directory: await selectFredPublication(directory, publicationId), engine: fredMerchantEngine };
 }
@@ -115,6 +152,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     ['/ddp-published.js', ['ddp-published.js', 'text/javascript; charset=utf-8']],
     ['/ddp-published-guide', ['../ddp/PUBLISHED-WORKSPACE.md', 'text/plain; charset=utf-8']],
     ['/research.js', ['research.js', 'text/javascript; charset=utf-8']],
+    ['/research-merchant-guide', ['../research/COMMERCE.md', 'text/plain; charset=utf-8']],
     ['/qcew.js', ['qcew.js', 'text/javascript; charset=utf-8']],
     ['/customer-work.mjs', ['customer-work.mjs', 'text/javascript; charset=utf-8']],
     ['/qcew-guide', ['../qcew/WORKSPACE.md', 'text/plain; charset=utf-8']],
@@ -144,6 +182,14 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
   };
   const run = async request => {
     const id = request.id, expectedRevision = request.expectedRevision, common = { directory, id, expectedRevision };
+    if (RESEARCH_COMMERCE_ACTIONS.includes(request.action)) {
+      if (request.resume === true) return resumeResearchCommerceAction(common);
+      if (request.action === 'research-publish') return publishResearchEdition({ ...common,
+        productId: request.productId, editionId: request.editionId, note: request.note ?? '',
+        origin: request.origin, path: request.path, payment: request.payment });
+      return receiveResearchEdition({ ...common, receivingDirectory: request.receivingDirectory,
+        bytes: researchPackageBody(request.bodyBase64) });
+    }
     if (RESEARCH_ACTIONS.includes(request.action)) return runResearchAction({directory,request,signal:abort.signal});
     if (FRED_DDP_ACTIONS.has(request.action))
       return runFredDdpAction({ request, directory, environment, signal: abort.signal });
@@ -202,13 +248,17 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         await originalPurchase(request,selected);
         return output(await selected.engine.recover({ directory: selected.directory, buyer, intentId: request.intentId }));
       }
-      case 'receive-county-purchase': {
+      case 'receive-county-purchase':
+      case 'receive-research-purchase': {
         need(buyer, 'Start this workspace with the original configured buyer.', 'FRED_BUYER_REQUIRED');
         const selected = await selectEconomicPublication(directory, request.publicationId);
-        need(selected.kind === 'QCEW', 'Choose the original county-report publication.');
+        need(selected.kind === (request.action === 'receive-research-purchase' ? 'RESEARCH' : 'QCEW'),
+          'Choose the original publication for this receiving operation.');
         await originalPurchase(request,selected);
-        return receiveQcewPurchase({ directory: selected.directory, buyer, intentId: request.intentId,
-          receivingDirectory: request.receivingDirectory ?? null });
+        const receivingDirectory = selected.kind === 'RESEARCH' && request.receivingDirectory != null
+          ? researchReceivingDirectory(request.receivingDirectory, directory) : request.receivingDirectory ?? null;
+        return selected.engine.receive({ directory: selected.directory, buyer, intentId: request.intentId,
+          receivingDirectory });
       }
       default: need(false, 'Unknown economic workspace action.');
     }
@@ -256,6 +306,22 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         need((await readFredProject(directory)).id === binding.projectId,
           'The original project directory changed.', 'FRED_WORKSPACE_BINDING_CHANGED', 409);
         return send(res, 200, launchView());
+      }
+      if (req.method === 'GET' && url.pathname === '/api/research/commerce') return send(res, 200,
+        await researchCommerceView(directory, { section: url.searchParams.get('section') ?? 'publications',
+          offset: pageNumber(url.searchParams.get('offset')), limit: url.searchParams.has('limit') ? pageNumber(url.searchParams.get('limit'), 500) : 100,
+          expectedRevision: url.searchParams.has('expectedRevision') ? pageNumber(url.searchParams.get('expectedRevision'), Number.MAX_SAFE_INTEGER) : null }));
+      if (req.method === 'GET' && url.pathname === '/api/research/publication') {
+        const publicationId = url.searchParams.get('publication'), file = url.searchParams.get('file');
+        if (file !== null) {
+          const result = await downloadResearchPublication({ directory, publicationId, file });
+          return send(res, 200, result.bytes, result.contentType, result.filename);
+        }
+        const merchant = await getResearchPublication(directory, publicationId);
+        return send(res, 200, { kind: 'RESEARCH', projectId: merchant.projectId, revision: merchant.revision,
+          record: merchant.record, edition: merchant.edition, plan: merchant.plan,
+          sourceRecords: merchant.checked.delivery.research.sources,
+          requests: await listResearchPurchases(merchant.directory, { merchant }) });
       }
       if (req.method === 'GET' && url.pathname === '/api/research/catalog') return send(res,200,await researchView(directory,{query:url.searchParams.get('query')??'',topic:url.searchParams.get('topic')??'',geography:url.searchParams.get('geography')??'',status:url.searchParams.get('status')??'',due:url.searchParams.get('due')==='true',offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??100),...(url.searchParams.has('asOf')?{asOf:url.searchParams.get('asOf')}:{})}));
       if (req.method === 'GET' && url.pathname === '/api/research/entry') return send(res,200,await researchEntry(directory,url.searchParams.get('id')));
@@ -362,8 +428,8 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       if (req.method === 'GET' && url.pathname === '/api/publication') {
         const selected = await selectEconomicPublication(directory, url.searchParams.get('publication'));
         const merchant = await selected.engine.read(selected.directory), { edition, plan, offers } = merchant;
-        if (selected.kind === 'QCEW') return send(res, 200, { kind: selected.kind, edition, plan, offers,
-          requests: await listQcewPurchases(selected.directory, { merchant }) });
+        if (selected.engine.list) return send(res, 200, { kind: selected.kind, edition, plan, offers,
+          requests: await selected.engine.list(selected.directory, { merchant }) });
         const names = await readdir(join(selected.directory, 'customer-requests')).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
         const requests = [];
         for (const name of names) {
@@ -401,22 +467,31 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       if (await handleFredDdpHttp({ req, res, url, directory, body, send, sendJsonFile, execute, busy: () => Boolean(pending) })) return;
       if (req.method === 'GET' && url.pathname === '/api/customer-received') {
         const selected = await selectEconomicPublication(directory, url.searchParams.get('publication'));
-        need(selected.kind === 'QCEW', 'Choose the original county-report purchase.');
+        need(selected.engine.receiving, 'Choose an original county report or Research product purchase.');
         const intentId = url.searchParams.get('intent'), file = url.searchParams.get('file');
         if (file !== null) {
-          const result = await exportQcewPurchaseReceiving({ directory: selected.directory, intentId,
+          const result = await selected.engine.receivingDownload({ directory: selected.directory, intentId,
             file, editionId: url.searchParams.get('edition') });
           return send(res, 200, result.bytes, result.contentType, result.filename);
         }
-        const received = await readQcewPurchaseReceiving({ directory: selected.directory, intentId });
+        const received = await selected.engine.receiving({ directory: selected.directory, intentId });
+        if (selected.kind === 'RESEARCH') {
+          const manifestBytes=Buffer.from(JSON.stringify(received.delivery.manifest,null,2)+'\n');
+          return send(res, 200, { kind: selected.kind, projectId: binding.projectId, publicationId: url.searchParams.get('publication'),
+            intentId, receipt: received.receipt, directory: received.directory ?? received.receipt.directory,
+            edition: received.edition, sourceRecords: received.delivery.research.sources, files: [
+              {path:'research-package.json.gz',bytes:received.bytes.length,sha256:received.receipt.packageSha256,contentType:'application/gzip'},
+              {path:'manifest.json',bytes:manifestBytes.length,sha256:hash(manifestBytes),contentType:'application/json'},
+              ...received.files.map(({bodyBase64, ...file}) => file)] });
+        }
         return send(res, 200, { receipt: received.receipt, directory: received.directory,
           editions: received.editions.map(item => ({ manifest: item.manifest,
             title: item.report.profile.definition.title, period: item.report.period })) });
       }
       if (req.method === 'POST' && ['/api/action', '/api/qcew/action'].includes(url.pathname)) {
         const countyAction = url.pathname === '/api/qcew/action';
-        const request = await body(req, countyAction ? QCEW_WORKSPACE_REQUEST_BYTES : Math.max(MAX_DDP_CAPTURE_BYTES, MAX_CAPTURE_BYTES * 2));
-        need(countyAction || FRED_DDP_ACTIONS.has(request?.action) || jsonBytes(request).length <= MAX_CAPTURE_BYTES * 2,
+        const request = await body(req, countyAction ? QCEW_WORKSPACE_REQUEST_BYTES : Math.max(RESEARCH_HTTP_BYTES, MAX_DDP_CAPTURE_BYTES, MAX_CAPTURE_BYTES * 2));
+        need(countyAction || FRED_DDP_ACTIONS.has(request?.action) || request?.action === 'research-receive' || jsonBytes(request).length <= MAX_CAPTURE_BYTES * 2,
           'Request exceeds its original source capacity.', 'FRED_REQUEST_TOO_LARGE', 413);
         need(!countyAction || QCEW_WORKSPACE_ACTIONS.includes(request?.action), 'Choose a county report action.');
         return send(res, 200, await execute(request));

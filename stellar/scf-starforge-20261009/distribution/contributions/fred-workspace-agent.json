@@ -1,13 +1,13 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "fred-workspace-agent",
-  "description": "Complete economic-workspace typed client, recurring briefings, release/vintage catch-up and original DDP package migration receiving and complete current-publication customer editions; complete original Research catalogues, sources, product editions and version7 project receiving",
+  "description": "Complete economic-workspace typed client, recurring briefings, release/vintage catch-up and original DDP package migration receiving and complete current-publication customer editions; complete original Research catalogues, sources, product editions and version 7/8 project receiving, selected paid Research editions and editable customer delivery",
   "commands": {
     "fred-workspace": "stellar-forge/mcp-merchant-operator/fred-workspace-cli.mjs",
     "fred-research-receive": "stellar-forge/mcp-merchant-operator/fred-research-journey.mjs"
   },
   "commandDescriptions": {
-    "fred-workspace": "Capture original economic and DDP sources, review migration and release plans, acquire complete editions, inspect and receive portable workspaces; Research APIs share this attachment through the typed client and MCP provider",
+    "fred-workspace": "Operate original economic and DDP sources, complete Research catalogues and issued products, paid customer intents and full portable economic-workspace receiving through the same configured host",
     "fred-research-receive": "Continue the completed original economic Research programme through its installed agent, retained sources and complete independent project receiving"
   },
   "exports": {
@@ -155,7 +155,19 @@
     "stellar-forge/mcp-merchant-operator/fred-research.mjs",
     "stellar-forge/mcp-merchant-operator/catalog/fred-research.mjs",
     "stellar-forge/mcp-merchant-operator/fred-research-journey.mjs",
-    "stellar-forge/mcp-merchant-operator/FRED_RESEARCH_WORKSPACE.md"
+    "stellar-forge/mcp-merchant-operator/FRED_RESEARCH_WORKSPACE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-model.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/merchant.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/purchase.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-bundle.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-journey.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/delivery.mjs",
+    "stellar-forge/mcp-merchant-operator/fred-research-commerce.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/fred-research-commerce.mjs",
+    "stellar-forge/mcp-merchant-operator/FRED_RESEARCH_COMMERCE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/commerce-browser.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/COMMERCE.md"
   ],
   "merchantProviders": {
     "fred-workspaces": "stellar-forge/mcp-merchant-operator/providers/fred-workspaces.mjs"

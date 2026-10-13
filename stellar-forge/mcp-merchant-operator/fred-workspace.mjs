@@ -1,4 +1,5 @@
 // MIT. Complete agent workflow on the original FRED economic-edition host.
+import { RESEARCH_PACKAGE_MAX_BYTES, researchCommerceSources } from './fred-research-commerce.mjs';
 import { handlesFredOperating, callFredOperating } from './fred-operating.mjs';
 import { basename, join } from 'node:path';
 import { inspectFredOperatingArchiveFile } from './fred-operating-transfer.mjs';
@@ -62,14 +63,15 @@ function purchaseView(result) {
 function projectSummary(project) {
   const { captures, reviews, publications, operations, briefingTemplates = [], briefingSuccessors = [],
     releaseCaptures = [], releaseWatches = [], releasePlans = [], releaseCatchUps = [],
-    ddpCrosswalks = [], ddpPackages = [], ddpMigrations = [], ddpReceivings = [], research, ...state } = project;
+    ddpCrosswalks = [], ddpPackages = [], ddpMigrations = [], ddpReceivings = [], research, researchCommerce, ...state } = project;
   return { ...state, counts: { captures: captures.length, reviews: reviews.length, publications: publications.length,
     operations: operations.length, briefingTemplates: briefingTemplates.length, briefingSuccessors: briefingSuccessors.length,
     releaseCaptures: releaseCaptures.length, releaseWatches: releaseWatches.length, releasePlans: releasePlans.length,
     releaseCatchUps: releaseCatchUps.length, ddpCrosswalks: ddpCrosswalks.length, ddpPackages: ddpPackages.length,
     ddpMigrations: ddpMigrations.length, ddpReceivings: ddpReceivings.length,
     researchEntries: research?.entries.length ?? 0, researchSources: research?.sources.length ?? 0,
-    researchReviews: research?.reviews.length ?? 0, researchProducts: research?.products.length ?? 0 } };
+    researchReviews: research?.reviews.length ?? 0, researchProducts: research?.products.length ?? 0,
+    researchPublications: researchCommerce?.publications.length ?? 0, researchReceivings: researchCommerce?.receivings.length ?? 0 } };
 }
 const actionMethods = new Map([
   ['merchant_fred_configure', 'configure'], ['merchant_fred_capture', 'capture'], ['merchant_fred_combine', 'combine'],
@@ -150,9 +152,10 @@ export class MerchantFredWorkspaces {
   }
   async #researchInput(alias, name, expectedSha256) {
     const input = this.#entry(alias).inputs?.[name];
-    if (!input || !['research-source', 'research-catalogue'].includes(input.kind))
+    if (!input || !['research-source', 'research-catalogue', 'research-package'].includes(input.kind))
       fail('FRED_MCP_INPUT_INVALID', 'Choose a configured Research source or catalogue input alias.');
-    const bytes = await readFredHostFile(input.path, input.kind === 'research-source' ? 16 * 1024 * 1024 : 8 * 1024 * 1024,
+    const bytes = await readFredHostFile(input.path, input.kind === 'research-package' ? RESEARCH_PACKAGE_MAX_BYTES :
+      input.kind === 'research-source' ? 16 * 1024 * 1024 : 8 * 1024 * 1024,
       { expectedSha256: expectedSha256 ?? input.sha256 });
     const sha256 = fredDigest(bytes);
     if (input.sha256 && sha256 !== input.sha256)
@@ -178,7 +181,7 @@ export class MerchantFredWorkspaces {
       return {workspace:alias,input:args.input,kind:input.kind,name:basename(input.path),bytes:descriptor.bytes,sha256:descriptor.sha256};
     }
     if (name === 'merchant_fred_input_inspect' &&
-        ['research-source', 'research-catalogue'].includes(this.#entry(alias).inputs?.[args.input]?.kind)) {
+        ['research-source', 'research-catalogue', 'research-package'].includes(this.#entry(alias).inputs?.[args.input]?.kind)) {
       const source = await this.#researchInput(alias, args.input);
       return { workspace: alias, input: args.input, kind: source.input.kind, name: basename(source.input.path),
         bytes: source.bytes.length, sha256: source.sha256 };
@@ -213,11 +216,42 @@ export class MerchantFredWorkspaces {
         merchant_fred_research_product: 'researchProduct', merchant_fred_research_entry_save: 'saveResearchEntry',
         merchant_fred_research_source_acquire: 'acquireResearchSource', merchant_fred_research_review: 'reviewResearchSource',
         merchant_fred_research_product_save: 'saveResearchProduct', merchant_fred_research_product_issue: 'issueResearchProduct',
-        merchant_fred_research_resume: 'resumeResearch'
+        merchant_fred_research_resume: 'resumeResearch',
+        merchant_fred_research_commerce: 'researchCommerce', merchant_fred_research_publication: 'researchPublication',
+        merchant_fred_research_commerce_resume: 'resumeResearchCommerce',
+        merchant_fred_research_purchase_receive: 'receiveResearchPurchase', merchant_fred_research_received: 'researchReceived'
       };
+      if (name === 'merchant_fred_research_publication' || name === 'merchant_fred_research_received') {
+        const value = await client[methods[name]](input), section = input.section ?? 'files';
+        const collections = name === 'merchant_fred_research_publication'
+          ? {files:value.plan.downloads,sources:researchCommerceSources(value),requests:value.requests??[]}
+          : {files:value.files,sources:researchCommerceSources(value)};
+        if (!Object.hasOwn(collections,section)) fail('FRED_MCP_INPUT_INVALID','Choose an original Research inventory section.');
+        const viewSha256 = fredDigest(Buffer.from(canonicalFredJSON(value)));
+        if ((input.offset??0)>0 && !input.expectedViewSha256 ||
+            input.expectedViewSha256!==undefined && input.expectedViewSha256!==viewSha256)
+          fail('FRED_MCP_VIEW_CHANGED','Continue the same original Research view digest, or reopen at offset zero.',{viewSha256});
+        const edition = { ...value.edition, ...(Array.isArray(value.edition.files) ? { files:value.edition.files.length } : {}) };
+        const plan=value.plan?Object.fromEntries(Object.entries(value.plan).filter(([key])=>key!=='downloads')):null;
+        return {projectId:value.projectId,revision:value.revision,publicationId:input.publicationId,
+          ...(input.intentId===undefined?{}:{intentId:input.intentId}),section,viewSha256,
+          edition,...(plan?{plan,record:value.record}:{receipt:value.receipt,directory:value.directory}),
+          counts:Object.fromEntries(Object.entries(collections).map(([key,rows])=>[key,rows.length])),
+          ...page(collections[section],input)};
+      }
       if (Object.hasOwn(methods, name)) return client[methods[name]](input);
+      if (name === 'merchant_fred_research_publish') {
+        const profile = this.#entry(alias).merchantProfiles?.[input.profile];
+        if (!profile) fail('FRED_MCP_PROFILE_NOT_FOUND', 'Choose a configured original merchant/payment profile.');
+        const { profile: _, ...request } = input;
+        return client.publishResearchEdition({ ...request, origin: profile.origin, path: profile.path, payment: profile.payment });
+      }
       const { input: selectedInput, expectedSha256, ...request } = input;
       const source = await this.#researchInput(alias, selectedInput, expectedSha256);
+      if (name === 'merchant_fred_research_receive') {
+        if (source.input.kind !== 'research-package') fail('FRED_MCP_INPUT_INVALID', 'Select the complete original Research package.');
+        return client.receiveResearchEdition({ ...request, bodyBase64: source.bytes.toString('base64') });
+      }
       if (name === 'merchant_fred_research_import') {
         if (source.input.kind !== 'research-catalogue')
           fail('FRED_MCP_INPUT_INVALID', 'Select a complete catalogue CSV input.');
