@@ -140,6 +140,10 @@ submission and the native planning review that created that procedure. Under
 **Customer operating procedure**, choose **Receive customer procedure** and
 open the returned file.
 
+Opening a return retains its complete JSON, filename, original planning source and native revision, comparison revision and receiving note inside the original draft. Save the submission to keep an unfinished review, then export or reopen that same complete draft on another browser. The normal saved-draft revision check preserves competing copies. Replacing an opened return retains the preceding draft version; closing it marks the draft changed. **Download opened customer return** retains the complete file separately.
+
+The comparison shows the entire **Originally prepared**, **Previously selected** and **Returned** step sequences. Each list includes its actual positions, original native package mapping and additional customer steps. Moves, insertions and removals are explicit; the downloaded comparison and typed API carry the same three orders and positions, including the CLI's `--format comparison` output.
+
 The comparison presents each funded package's unchanged native work and
 completion measure beside the customer's current status, owner, actual due
 date and full recorded result. Expand a package to read every changed
@@ -161,6 +165,8 @@ matching file keeps the current selection. A copy with a different plan ID
 belongs to its own operating procedure. Divergent shared edits remain in their
 original files for the operator to reconcile through the existing Operating
 plans editor before receiving the continuing original plan.
+
+If the procedure advances after the file was compared, **Refresh comparison with current operating revision** retains the opened file and review note while showing the current work. Review the changes and save before receiving. The receive action checks that compared revision again. An actual successful receipt removes its matching pending review and retains the full returned history and receiving note with the original procedure.
 
 The native planning file, original preparation, prices, hours, tranche scope
 and payment calculation remain the selected original basis. Customer progress
@@ -227,11 +233,17 @@ The same pure model serves the UI and CLI:
 ~~~js
 import {
   compareGrantOperatingReturn,
+  openGrantOperatingReturn,
   receiveGrantOperatingReturn,
   grantOperatingContinuationPlan,
 } from '@tokenjunkielabs/starforge-merchant/grant/operating-plan';
 
-const comparison = compareGrantOperatingReturn(nativeSource, planningReview, returnedPlan);
+// To keep an unfinished comparison in the original durable draft:
+const opened = openGrantOperatingReturn(nativeSource, planningReview, returnedPlan, {
+  filename: 'returned-operator-plan.json', note: receivingReviewNote,
+});
+// Save opened.review as that original draft's planningReview through its normal save.
+const comparison = compareGrantOperatingReturn(nativeSource, opened.review, returnedPlan);
 const received = receiveGrantOperatingReturn(nativeSource, planningReview, returnedPlan, {
   expectedRevision: comparison.previousRevision,
   filename: 'returned-operator-plan.json',
