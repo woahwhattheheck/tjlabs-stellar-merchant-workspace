@@ -205,3 +205,7 @@ API explorer: https://developers.econdb.com/swagger/
 ## Producing analysis source
 
 The native analysis-source.json records the producing module version, exact SHA-256 and issuer contract SHA-256. Each saved browser workspace records the same identities. Reopen with its accompanying exact offline file; the workbench rejects a workspace made by another engine hash. To analyze older original observations under a changed engine, load the original response and descriptor as a new explicit analysis and keep both outputs. The source generation helper refreshes the embedded module and its engine identity together.
+
+## Browser project production
+
+Use the fifth panel of the existing offline workbench to collect explicitly applied source reviews, edit/reorder/remove/undo entries, save and cold-reopen complete projects, and download the full standalone report/CSV/analysis. Each entry retains complete originals and separate source semantics. Read the full browser/native continuation section in PROJECT_GUIDE.md before receiving this version. Native project builds now include a browser workspace; the `import-workspace` CLI consumes a saved browser project, retains its original intake file, reproduces the same result and enters the existing immutable project publication/reopen workflow. Carry the complete current rendered/attachment inspection instructions above into that original course.
