@@ -239,6 +239,8 @@ export class ReceivablesWorkspace {
   async withdrawCreditDecision(id, value) { return this.creditControlWorkspace.withdraw(id, value); }
   async creditDecisionFile(id, name) { return this.creditControlWorkspace.file(id, name); }
   async creditControlOperation(requestId) { return this.creditControlWorkspace.operation(requestId); }
+  async compareCashRealizations(query) { return this.cashRealizationWorkspace.compare(query); }
+  async cashRealizationComparisonFile(name, query) { return this.cashRealizationWorkspace.comparisonFile(name, query); }
   async cashRealizations(query = {}) { return this.cashRealizationWorkspace.list(query); }
   async previewCashRealization(value) { return this.cashRealizationWorkspace.preview(value); }
   async saveCashRealization(value) { return this.cashRealizationWorkspace.save(value); }

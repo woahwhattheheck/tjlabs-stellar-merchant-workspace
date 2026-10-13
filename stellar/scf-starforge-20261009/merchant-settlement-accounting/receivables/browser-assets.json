@@ -162,6 +162,13 @@
         "cash-realization.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/receivables/cash-realization-comparison.mjs",
+      [
+        "cash-realization-comparison.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

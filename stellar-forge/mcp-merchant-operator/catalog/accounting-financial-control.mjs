@@ -59,6 +59,8 @@ export function financialControlDefinitions({read, mutate, uuid, hash, date, rev
       ['workspaceId', 'cashPlanId', 'expectedVersion', 'note']),
     read('cash_plan_compare', 'Compare two explicitly selected original plan editions, preserving each source revision and complete per-currency and date differences.',
       comparison, ['leftId', 'rightId']),
+    read('cash_realization_compare', 'Compare two saved actual-cash reviews of one immutable forecast. Return bounded identity, counts and the original complete comparison.json file selector; receive that whole file through merchant_accounting_file. The typed client retrieves and validates the complete source and exact currency bridges.',
+      {leftId:uuid,rightId:uuid}, ['leftId','rightId']),
     read('cash_realization_list', 'Read every immutable actual-receipt review for the selected original cash plan or this workspace.', {planId: uuid}),
     read('cash_realization_preview', 'Review an exact saved cash-plan edition against the complete original dated ledger. Preserve cash date, allocation date, prior funds, credits, reversals and opening corrections separately.',
       {workspaceId, planId: uuid, editionId: uuid, through: date, note: text(6000)}, ['workspaceId', 'planId', 'editionId', 'through']),

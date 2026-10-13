@@ -499,6 +499,7 @@ export class MerchantAccounting {
       'receivables-customer-response': ['customerResponseId','file'],
       'receivables-collection': ['collectionCaseId', 'asOf', 'file'],
       'receivables-collections': ['customerId', 'asOf', 'owner', 'status', 'search', 'file'],
+      'receivables-cash-realization-comparison': ['leftId', 'rightId', 'file'],
       'receivables-cash-realization': ['cashRealizationId', 'file'],
       'receivables-cash-plan': ['cashPlanId', 'editionId', 'file'],
       'receivables-cash-plan-comparison': ['leftId', 'rightId', 'leftEditionId', 'rightEditionId', 'file'],

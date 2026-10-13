@@ -1,4 +1,5 @@
 // MIT. Original saved cash-plan realization in the existing operator and pending request flow.
+import {createCashRealizationComparisonUi} from './cash-realization-comparison.mjs';
 import {cashDate,cashCurrency} from './cash-planning-display.mjs';
 const e=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const button=(label,action,id='',more='')=>'<button type="button" data-action="cash-realization-'+e(action)+'" data-id="'+e(id)+'" '+more+'>'+e(label)+'</button>';
@@ -9,6 +10,7 @@ export function createCashRealizationUi(host){
   const {api,openDialog,mutate,saveBlob}=host;
   const methods=new Set(['saveCashRealization']);
   let list={realizations:[]},draft=host.readSession('cashRealizationDraft'),preview=null,error='',generation=0,dialogGeneration=0;
+  const comparison=createCashRealizationComparisonUi(host,()=>list);
   const workspace=()=>host.getState()?.workspaceId;
   const persist=()=>host.saveSession('cashRealizationDraft',draft);
   function body(r){
@@ -34,7 +36,7 @@ export function createCashRealizationUi(host){
   }
   function render(){
     return '<section class="panel"><div class="panel-head"><div><h2>Realized receipts</h2><p class="small-text muted">Open a saved plan edition and choose Review actual receipts to retain its realization against the original account.</p></div>'+
-      (draft?button('Continue unsaved review','continue','','data-write'):'')+'</div><div class="panel-body">'+
+      comparison.renderButton()+(draft?button('Continue unsaved review','continue','','data-write'):'')+'</div><div class="panel-body">'+
       (error?'<p class="notice error">'+e(error)+'</p>':'')+
       (list.realizations.length?'<div class="table-wrap"><table><thead><tr><th>Plan / edition</th><th>Opening / reviewed through</th><th>Saved by</th><th>Source changes</th></tr></thead><tbody>'+
         list.realizations.map(x=>'<tr><td>'+button(x.planTitle,'open',x.id,'class="link"')+'<span class="subline">Edition '+x.editionNumber+'</span></td>'+
@@ -80,6 +82,7 @@ export function createCashRealizationUi(host){
       fileNames.map(name=>button(name,'download',row.id,'data-name="'+name+'"')).join('')+'</div>'+body(r));
   }
   async function submit(form){
+    if(await comparison.submit(form))return true;
     if(form.id!=='cash-realization-form')return false;
     if(host.isLocked())throw Error('Complete the current account operation before preparing another review.');
     remember(form.querySelector('input'));const snapshot=structuredClone(draft),signature=JSON.stringify(snapshot),n=++dialogGeneration;
@@ -91,6 +94,7 @@ export function createCashRealizationUi(host){
     }finally{host.setBusy(false);}return true;
   }
   async function click(control){
+    if(await comparison.click(control))return true;
     const action=control.dataset.action;if(!action?.startsWith('cash-realization-'))return false;
     if(host.isLocked()&&!['cash-realization-open','cash-realization-download'].includes(action))throw Error('Complete the retained account operation first.');
     if(action==='cash-realization-new')await start(control.dataset.id,control.dataset.edition);

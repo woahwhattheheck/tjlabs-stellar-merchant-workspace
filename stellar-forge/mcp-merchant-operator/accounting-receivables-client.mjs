@@ -398,6 +398,11 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       return client.fileBytes({kind: 'receivables-cash-plan', cashPlanId, file,
         ...(editionId === undefined ? {} : {editionId})}, options);
     },
+    cashRealizationComparisonFile({file,...query}, options) {
+      identifier(query.leftId, UUID, 'original earlier realization UUID');
+      identifier(query.rightId, UUID, 'original later realization UUID');
+      return client.fileBytes({kind:'receivables-cash-realization-comparison',...query,file}, options);
+    },
     cashRealizationFile({cashRealizationId, file}, options) {
       identifier(cashRealizationId, UUID, 'original cash realization UUID');
       return client.fileBytes({kind: 'receivables-cash-realization', cashRealizationId, file}, options);
@@ -505,6 +510,40 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       return result;
     };
   }
+  const comparisonReference = client.compareCashRealizations;
+  client.compareCashRealizations = async (args, options) => {
+    const selection = wire(args);
+    identifier(selection.leftId, UUID, 'original earlier realization UUID');
+    identifier(selection.rightId, UUID, 'original later realization UUID');
+    const reference = await comparisonReference(selection, options);
+    need(reference.schema === 'stellar-forge.cash-comparison-file-reference.v1' &&
+      reference.reportSchema === 'stellar-forge.merchant-cash-realization-comparison.v1' &&
+      SHA.test(reference.workspaceId ?? '') && SHA.test(reference.comparisonSha256 ?? '') &&
+      reference.selection?.leftId === selection.leftId && reference.selection?.rightId === selection.rightId &&
+      UUID.test(reference.selection.planId ?? '') && UUID.test(reference.selection.editionId ?? '') &&
+      reference.file?.kind === 'receivables-cash-realization-comparison' &&
+      reference.file.file === 'comparison.json' && reference.file.leftId === selection.leftId &&
+      reference.file.rightId === selection.rightId,
+      'The comparison file reference differs from the two selected original reviews.', 'PREVIEW');
+    const complete = await client.cashRealizationComparisonFile({
+      leftId:selection.leftId,rightId:selection.rightId,file:'comparison.json'
+    }, {maximumBytes:128_000_000,signal:options?.requestSignal});
+    let result;
+    try { result = JSON.parse(decodeOriginal(complete.bytes)); }
+    catch { throw fail('PREVIEW', 'The complete comparison is not valid original UTF-8 JSON.'); }
+    need(plain(result) && result.schema === reference.reportSchema &&
+      result.workspaceId === reference.workspaceId && digest(result.selection) === digest(reference.selection) &&
+      result.comparisonSha256 === reference.comparisonSha256,
+      'The complete comparison belongs to different original reviews or account source.', 'PREVIEW');
+    const {comparisonSha256, ...basis} = result;
+    need(digest(basis) === comparisonSha256 &&
+      ['currencies','invoices','dates','receipts','sourceChanges'].every(key => Array.isArray(result[key])) &&
+      result.currencies.length === reference.counts?.currencies &&
+      result.invoices.length === reference.counts?.invoices && result.dates.length === reference.counts?.dates &&
+      result.receipts.length === reference.counts?.receipts && result.sourceChanges.length === reference.counts?.sourceGroups,
+      'The full comparison differs from its retained original digest or population.', 'PREVIEW');
+    return result;
+  };
   const paymentPreview = client.previewPaymentRequest;
   client.previewPaymentRequest = async (args, options) => {
     const result = accountingPaymentRequestPreview(await paymentPreview(args, options));

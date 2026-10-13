@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-receivables",
-  "description": "Customer invoicing and service quotations; Stellar collection, refunds and credit transfers; installment schedules and account delivery; collections and reminders; cash scenarios, edition comparisons and original cash realization; credit policies and account decisions; original bank statements, source coverage and balanced reconciliation; remittance CSV receiving and invoice allocations; dated customer account packages, offline invoice responses and reviewed original collection activity.",
+  "description": "Customer invoicing and service quotations; Stellar collection, refunds and credit transfers; installment schedules and account delivery; collections and reminders; cash scenarios, edition comparisons and original cash realization with complete source-correction and period-movement comparisons; credit policies and account decisions; original bank statements, source coverage and balanced reconciliation; remittance CSV receiving and invoice allocations; dated customer account packages, offline invoice responses and reviewed original collection activity.",
   "commands": {
     "receivables": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cli.mjs",
     "customer-account": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/customer-account-cli.mjs"
@@ -77,7 +77,11 @@
     "./merchant/receivables/cash-realization-workspace": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-workspace.mjs",
     "./merchant/receivables/cash-realization-exercise": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-exercise.mjs",
     "./merchant/receivables/cash-realization-receiving": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-receiving.mjs",
-    "./merchant/receivables/cash-realization-browser": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-browser.mjs"
+    "./merchant/receivables/cash-realization-browser": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-browser.mjs",
+    "./merchant/receivables/cash-realization-comparison": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-comparison.mjs",
+    "./merchant/receivables/cash-realization-comparison-exercise": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-comparison-exercise.mjs",
+    "./merchant/receivables/cash-realization-comparison-receiving": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-comparison-receiving.mjs",
+    "./merchant/receivables/cash-realization-comparison-browser": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-comparison-browser.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.d.ts",

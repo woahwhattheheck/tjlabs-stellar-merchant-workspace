@@ -370,6 +370,8 @@ export class ReceivablesClient {
   withdrawCreditDecision(id:string,value:WithdrawCreditDecisionInput,options?:RequestOptions):Promise<CreditDecisionMutationResult>;
   creditDecisionFile(id:string,name:CreditDecisionFileName,options?:RequestOptions):Promise<Response>;
   creditControlOperation(requestId:string,options?:RequestOptions):Promise<CreditControlOperationResult>;
+  compareCashRealizations(query:Realization.CashRealizationCompareQuery,options?:RequestOptions):Promise<Realization.CashRealizationComparison>;
+  cashRealizationComparisonFile(name:Realization.CashRealizationComparisonFileName,query:Realization.CashRealizationCompareQuery,options?:RequestOptions):Promise<Response>;
   cashRealizations(query?:Realization.CashRealizationListQuery, options?:RequestOptions):Promise<Realization.CashRealizationList>;
   previewCashRealization(value:Realization.CashRealizationPreviewInput, options?:RequestOptions):Promise<Realization.CashRealizationPreview>;
   cashRealization(id:string, options?:RequestOptions):Promise<Realization.CashRealizationDetail>;

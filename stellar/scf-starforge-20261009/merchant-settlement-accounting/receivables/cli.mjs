@@ -48,6 +48,8 @@ const HELP = 'Merchant receivables\n\n' +
   'starforge receivables credit-control-operation --directory /private/accounting --request ORIGINAL_REQUEST_ID\n' +
   'Issue through the original apply --action issue command with the reviewed invoice and creditDecisionId. Assessments use the current account date.\n\n' +
   'Cash receipt planning:\n' +
+  'starforge receivables cash-realization-compare --directory /private/accounting --left UUID --right UUID [--out /private/comparison.json]\n' +
+  'starforge receivables cash-realization-comparison-file --directory /private/accounting --left UUID --right UUID --name comparison.html --out /private/new-comparison.html\n' +
   'starforge receivables cash-realizations --directory /private/accounting [--plan UUID]\n' +
   'starforge receivables cash-realization-preview|cash-realization-save --directory /private/accounting --input /private/realization.json [--out /private/review.json]\n' +
   'starforge receivables cash-realization --directory /private/accounting --id UUID\n' +
@@ -203,6 +205,14 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
     else if (command === 'credit-decision-file') {
       const file=await receivables.creditDecisionFile(flags.id,flags.name);
       await newFile(flags.out,file.bytes);
+      result={path:flags.out,name:file.name,bytes:file.bytes.length,type:file.type,sha256:createHash('sha256').update(file.bytes).digest('hex')};
+    }
+    else if (command === 'cash-realization-compare') {
+      result=await receivables.compareCashRealizations({leftId:flags.left,rightId:flags.right});
+      if(flags.out)await newFile(flags.out,Buffer.from(json(result)));
+    }
+    else if (command === 'cash-realization-comparison-file') {
+      const file=await receivables.cashRealizationComparisonFile(flags.name,{leftId:flags.left,rightId:flags.right});await newFile(flags.out,file.bytes);
       result={path:flags.out,name:file.name,bytes:file.bytes.length,type:file.type,sha256:createHash('sha256').update(file.bytes).digest('hex')};
     }
     else if (command === 'cash-realizations') result=await receivables.cashRealizations({planId:flags.plan});

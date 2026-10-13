@@ -75,3 +75,20 @@ export interface CashRealizationOperationResult {
  cashRealization?:CashRealizationSummary;realization?:CashRealizationRecord;
 }
 export type CashRealizationFileName='realization.json'|'realization.html'|'invoices.csv'|'dates.csv'|'events.csv'|'receipts.csv'|'manifest.json';
+
+export interface CashRealizationCompareQuery {leftId:string;rightId:string}
+export interface CashComparisonAmounts {left:Money;restatedLeft:Money;right:Money;sourceChange:Money;periodChange:Money;totalChange:Money}
+export interface CashComparisonRow {
+ id:string;currency:Currency;leftPresent:boolean;restatedLeftPresent:boolean;rightPresent:boolean;metrics:Record<string,CashComparisonAmounts>;
+ invoiceNumber?:string|null;customerId?:string;customerName?:string;date?:DateOnly;reference?:string;receivedDate?:DateOnly;accountingDate?:DateOnly;voidDate?:DateOnly|null;
+}
+export interface CashComparisonSourceChange {id:string;status:'ADDED'|'REMOVED'|'CHANGED';fields:string[];leftSha256:string|null;rightSha256:string|null;leftPointer:string|null;rightPointer:string|null}
+export interface CashRealizationComparison {
+ schema:'stellar-forge.merchant-cash-realization-comparison.v1';workspaceId:string;
+ selection:CashRealizationCompareQuery & {planId:string;editionId:string};left:CashRealizationRecord;right:CashRealizationRecord;
+ restatedLeft:Omit<CashRealizationReport,'source'|'plan'> & {sourcePointer:'/right/report/source';planPointer:'/right/report/plan'};
+ policy:Record<string,string>;currencies:CashComparisonRow[];invoices:CashComparisonRow[];dates:CashComparisonRow[];receipts:CashComparisonRow[];
+ sourceChanges:Array<{kind:'invoices'|'receipts'|'allocations'|'credits'|'refunds';counts:{unchanged:number;added:number;removed:number;changed:number};changes:CashComparisonSourceChange[]}>;
+ comparisonSha256:string;
+}
+export type CashRealizationComparisonFileName='comparison.json'|'comparison.html'|'currencies.csv'|'invoices.csv'|'dates.csv'|'receipts.csv'|'source-changes.csv'|'manifest.json';

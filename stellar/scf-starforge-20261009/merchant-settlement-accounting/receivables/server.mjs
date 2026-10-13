@@ -183,6 +183,10 @@ export async function handleReceivablesRequest(receivables, {method, path, query
     }
     else if (parts[0] === 'credit-control' && parts[1] === 'operations' && parts.length === 3)
       result = await receivables.creditControlOperation(parts[2]);
+    else if (route === 'cash-realizations/compare') result = await receivables.compareCashRealizations({leftId:search.get('leftId'),rightId:search.get('rightId')});
+    else if (parts[0] === 'cash-realizations' && parts[1] === 'compare' && parts[2] === 'files' && parts.length === 4) {
+      const selected=await receivables.cashRealizationComparisonFile(parts[3],{leftId:search.get('leftId'),rightId:search.get('rightId')});return {file:selected,type:selected.type};
+    }
     else if (route === 'cash-realizations') result = await receivables.cashRealizations({planId:search.get('planId')||undefined});
     else if (parts[0] === 'cash-realizations' && parts[1] === 'operations' && parts.length === 3) result = await receivables.cashRealizationOperation(parts[2]);
     else if (parts[0] === 'cash-realizations' && parts.length === 2) result = await receivables.cashRealization(parts[1]);

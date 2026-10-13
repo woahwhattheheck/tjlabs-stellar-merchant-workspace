@@ -90,3 +90,137 @@ Import `receiveCashRealizationBrowser` with the same native result, already auth
 `runCashRealizationCourse()` in `cash-realization-exercise.mjs` runs the unchanged original invoice, credit, receipt and cash-plan modules. Its two original invoices, earlier receipt, incoming receipt, release/reallocation, credit, invoice void, backdated correction, corrected receipt and refund exercise the whole reconciliation. Final exact figures are saved opening 400.00, opening correction -10.00, allocation change 75.00, credit change 20.00, lifecycle -100.00 and current balance 195.00. Gross incoming cash is 100.00, attributed incoming cash 60.00, prior-cash allocation change 15.00 and refund change 10.00. An earlier date review retains the earlier receipt state. Full source replay and all seven export identities agree after reopening the serialized record.
 
 The source course does not create ledger entries in a customer workspace. The native continuation receives the actual original account and records its own exact outcomes.
+
+## Compare complete saved actual-receipt reviews
+
+Cash planning → Realized receipts → **Compare saved reviews** opens the original two-review selector. Choose an earlier and later review of the **same saved forecast edition**. The later through date must be on or after the earlier date. The original save times, actors and source revisions are shown separately; selecting a later through date does not imply that its source was recorded later.
+
+This is a complete read-only financial workflow over the existing saved records. It does not create another plan, invoice, receipt, allocation, credit, refund, account writer or customer message. The original native owner and private receiving case remain in use.
+
+### Three views explain every difference
+
+The comparison retains both full original reviews and derives a third view with the unchanged financial projector:
+
+1. **Earlier** is the complete first saved review.
+2. **Restated earlier** uses the second review's complete retained source at the first review's through date, with the same original forecast.
+3. **Later** is the complete second saved review.
+
+For every shown amount:
+
+`source change = restated earlier − earlier`
+
+`period movement = later − restated earlier`
+
+`total change = source change + period movement = later − earlier`
+
+The source-change column isolates newly recorded or corrected source affecting the earlier date. The period column moves through time with the second source held fixed. It includes changes to allocation choices, releases, credits, invoice lifecycle, receipt reversals and refunds. **Period movement is not a new-cash total.** Incoming receipt value, cash allocated to the planned invoices, prior funds, unused customer funds and refunds remain separate named measures.
+
+The exact native BigInt/currency arithmetic is reused. All original, restated and difference invoice/currency balance bridges are checked:
+
+`saved opening + opening correction − allocation change − credit change + lifecycle change = current signed balance`
+
+Currency code and explicit precision travel with every row. No currency conversion, inferred customer commitment, tax conclusion or accounting recognition is added.
+
+The selected forecast population is fixed. Different forecast editions belong in the existing projected-plan comparison; this actual-review comparison rejects that mismatch. Daily tables show per-day amounts rather than cumulative differences. Each row explicitly says whether it was present in the earlier, restated and later views, so a missing source record is not displayed as an observed zero.
+
+### Operate the complete tables and originals
+
+The ordinary table form chooses currencies, invoices, dates or receipts and a named measure. It shows all six amounts for that measure, pages through the entire selected population in groups of100 and reports the complete row count. Changing table adjusts to its first available measure if the previous measure is not part of that table.
+
+Original source changes cover invoices, receipts, allocations, credits and refunds. Open each source group, then a changed record to see both complete retained JSON values. Added/removed source records retain explicit absence. Original identities, changed top-level field names and exact stored JSON digests remain visible. The complete comparison includes JSON Pointers to those actual retained records; it does not replace records with a difference summary.
+
+Source history can legitimately change independently of a through date. For example, a later-recorded backdated credit can change the opening basis without representing a cash receipt. A corrected receipt may preserve its cash date but enter accounting on its explicit replacement date. Both situations use the original financial reader and complete source, not a new timing convention.
+
+### Native interfaces
+
+On the already-open original `ReceivablesWorkspace` or `ReceivablesClient`:
+
+```js
+const selection = {leftId: EARLIER_SAVED_REVIEW_UUID, rightId: LATER_SAVED_REVIEW_UUID};
+const report = await receivables.compareCashRealizations(selection);
+const file = await receivables.cashRealizationComparisonFile('comparison.json', selection);
+```
+
+The HTTP client returns a normal Response for the file. The in-process workspace returns the original `{name,type,bytes}` descriptor. The receiver explicitly distinguishes these forms.
+
+Read-only HTTP routes:
+
+- `GET /api/receivables/cash-realizations/compare?leftId=UUID&rightId=UUID`
+- `GET /api/receivables/cash-realizations/compare/files/NAME?leftId=UUID&rightId=UUID`
+
+The original authenticated host, private workspace and route permissions remain authoritative. No additional service starts.
+
+Original installed CLI:
+
+```sh
+starforge receivables cash-realization-compare --directory ORIGINAL_ACCOUNT --left EARLIER_UUID --right LATER_UUID --out NEW_COMPARISON_JSON
+starforge receivables cash-realization-comparison-file --directory ORIGINAL_ACCOUNT --left EARLIER_UUID --right LATER_UUID --name comparison.html --out NEW_COMPARISON_HTML
+```
+
+The CLI preserves the existing lease, create-only private output and complete source. Use the actual original directory and two returned native UUIDs.
+
+Original customer-agent operation:
+
+`merchant_accounting_receivables_cash_realization_compare`
+
+Arguments are the existing workspace alias plus `leftId` and `rightId`. The raw MCP operation returns bounded identity, population counts, comparison digest and the exact complete `comparison.json` selector. Its large original payload travels through the maintained retained-file reader, so an MCP wrapper's text/structured duplication cannot enlarge the response beyond the supported transport. The typed connected client retrieves that whole file, validates the original selection, workspace, full digest and every population count, then returns the same complete financial report. It exposes `compareCashRealizations({leftId,rightId})` and `cashRealizationComparisonFile({leftId,rightId,file})`. The original generic file route accepts kind `receivables-cash-realization-comparison` with exactly those two selectors and the file name. It uses the maintained retained-download engine, full-file hashes and original read lifecycle.
+
+### Complete exports and independent reopening
+
+The eight files are:
+
+| File | Complete content |
+| --- | --- |
+| comparison.json | Both original saved reviews, full original ledger source, restated earlier projection, all monetary/source comparisons and comparison digest |
+| comparison.html | Readable whole comparison, every table, source-change inventory and interpretation |
+| currencies.csv | Every measure for every currency and explicit precision |
+| invoices.csv | Every original invoice measure and its six amounts |
+| dates.csv | Every selected date/measure, with view presence |
+| receipts.csv | Every retained customer receipt/measure, with view presence |
+| source-changes.csv | Every added, removed or changed original source identity, field list, digest and exact JSON Pointer |
+| manifest.json | Exact complete byte length and SHA256 of the preceding seven files, selected review UUIDs and comparison digest |
+
+CSV uses the original formula-safe exporter. HTML contains all rows and has normal horizontal table scrolling. Individual file generation does not keep all other report byte buffers resident. The manifest computes each full file identity in sequence. The complete report is capped at112MiB, inside the original128,000,000-byte retained-file contract; the two original reviews keep their existing32MiB bounds. The raw MCP comparison response contains only the bounded original file reference; each retained-file chunk remains within the existing reader's transport contract. Ordinary account operation limits are unchanged.
+
+`receiveCashRealizationComparison(value)` validates a downloaded JSON by reproducing the whole comparison from both original saved reviews. Each review's source digest, original preview digest and full financial replay are checked. The receiving function rejects changed content, foreign workspace, another forecast or reversed through-date ordering. Source and forecast objects remain complete; the restated view references the later retained source and original plan to avoid another full source duplicate.
+
+### Continue the original native and browser course
+
+The original C94/405F/2A51/F47A/SDK12 receiver already owns the opened accounting case. After its original realization course has produced two saved reviews, use the actual returned IDs:
+
+```js
+import {receiveCashRealizationComparisonNative}
+  from './cash-realization-comparison-receiving.mjs';
+
+const native = await receiveCashRealizationComparisonNative({
+  receivables: originalOpenedClient,
+  leftId: originalEarlierReviewId,
+  rightId: originalLaterReviewId,
+  operationId: originalOperationId,
+  load: originalPrivateCaseRead,
+  save: originalPrivateCaseWrite,
+  reopen: originalOwnerReopen
+});
+```
+
+The callback must persist complete JSON before resolving. The receiver retains one comparison subdirectory keyed by the two original UUIDs, fixes the existing operation/selection, checks complete native comparison against the full source, downloads and validates all eight files, then invokes the original owner's optional close/drain/reopen callback. It compares the two complete saved rows, all files and comparison after reopening. A missing reopen callback leaves the explicit `NATIVE_COMPLETE_REOPEN_PENDING` result. It performs no account mutation, host launch or duplicate customer operation.
+
+Continue through the owner's existing isolated authenticated browser:
+
+```js
+import {receiveCashRealizationComparisonBrowser}
+  from './cash-realization-comparison-browser.mjs';
+
+await receiveCashRealizationComparisonBrowser({
+  page: originalAuthenticatedPage,
+  receivables: currentOriginalOpenedClient,
+  nativeResult: native,
+  save: originalPrivateBrowserCaseWrite
+});
+```
+
+The course operates the actual two-review form, all four table groups and every page at1440px and390px; opens both sides of an actual changed source record; downloads and verifies all eight complete originals; and reloads the original operator. It retains actual rendered text, screenshots, complete downloaded bytes and final result. The caller keeps ownership of browser/context/server cleanup. The producing operator must LOOK at the actual saved wide/narrow views and open/use the full HTML, JSON and CSV/manifest attachments; a source-only result does not stand in for that operation. Keep any concrete source/UI correction in the same original case and source publication.
+
+The full source operating course is `runCashRealizationComparisonCourse()` in `cash-realization-comparison-exercise.mjs`. It runs the complete maintained worked account with its real original modules. In that account, the earlier balance195.00 restates to185.00 and later returns to195.00: source change−10.00, period movement+10.00 and total change0.00. A same-date source comparison has−20.00 source change and zero period movement. Receipt replacement counts incoming cash once, the10.00 refund stays distinct, every original source pointer resolves exactly, all eight export files reopen identically and modified comparison content is rejected. These are worked source results, separate from the original customer's native/browser execution.
+
+The typed-client source course also operates the complete original financial-control, receivables and maintenance client modules. Its135,089-byte worked comparison travels through three original65,536-byte-limit file requests with one retained read ID, validates exact complete SHA/digest and population, rejects a changed comparison and finishes with zero active file reads. The comparison kind is included in the maintained file reader's existing allowlist. This source execution is retained with the full original module closure; the equipped account owner's native/browser case remains the same operation.

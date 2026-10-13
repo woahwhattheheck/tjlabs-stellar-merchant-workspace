@@ -2,6 +2,7 @@
 import {randomUUID} from 'node:crypto';
 import {need,field,identifier,json,sha} from './core.mjs';
 import {normalizeCashRealization,cashRealizationRows,projectCashRealization,cashRealizationSummary,cashRealizationFiles} from './cash-realization.mjs';
+import {compareCashRealizations,cashRealizationComparisonFile} from './cash-realization-comparison.mjs';
 export class CashRealizationWorkspace {
   constructor(receivables){this.receivables=receivables;this.workspace=receivables.workspace;this.plans=receivables.cashPlanningWorkspace;}
   workspaceId(){return this.plans.workspaceId();}
@@ -20,6 +21,15 @@ export class CashRealizationWorkspace {
     const row=this.row(record.cashRealizationId);return {workspaceId:this.workspaceId(),
       cashRealization:cashRealizationSummary(row),realization:structuredClone(row)};
   }
+  comparison(query){
+    const left=this.row(query.leftId),right=this.row(query.rightId);
+    need(left.workspaceId===this.workspaceId()&&right.workspaceId===this.workspaceId(),'CASH_COMPARISON_WORKSPACE_CHANGED','Choose reviews retained in this original account.',409);
+    return compareCashRealizations(left,right);
+  }
+  async compare(query){return this.workspace.serial(async()=>this.comparison(query));}
+  async comparisonFile(name,query){return this.workspace.serial(async()=>{
+    return cashRealizationComparisonFile(this.comparison(query),name);
+  });}
   async list(query={}){
     return this.workspace.serial(async()=>{
       if(query.planId)identifier(query.planId,'cash plan');
