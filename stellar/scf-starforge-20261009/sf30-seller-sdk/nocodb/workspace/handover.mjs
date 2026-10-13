@@ -273,7 +273,9 @@ export async function installNocoDBReceivedRelease(directory,releaseId,requestId
 
 /** Reconcile only the original publisher's exact two-name publication window.
  * All normal reads continue through hashPrivate's single-link contract. */
-export async function existingNocoDBWorkspaceArchive(file, descriptor) {
+export async function existingNocoDBWorkspaceArchive(file, descriptor, temporaryKind = 'workspace') {
+  if(!['workspace','return'].includes(temporaryKind))throw fault('NOCODB_WORKSPACE_OUTPUT_KIND_REQUIRED');
+  const temporaryPrefix='.nocodb-'+temporaryKind+'-';
   absolute(file);await privateDirectory(dirname(file));
   if(!descriptor||!Number.isSafeInteger(descriptor.bytes)||descriptor.bytes<1||
       descriptor.bytes>MAX_WORKSPACE_BYTES+32*1024*1024+13||!SHA.test(descriptor.sha256??''))
@@ -294,7 +296,8 @@ export async function existingNocoDBWorkspaceArchive(file, descriptor) {
         before.size!==BigInt(descriptor.bytes))throw issue;
     const candidates=[];
     for(const name of await readdir(parent)){
-      if(!/^\.nocodb-workspace-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.partial$/.test(name))continue;
+      if(!name.startsWith(temporaryPrefix)||!name.endsWith('.partial')||
+          !UUID.test(name.slice(temporaryPrefix.length,-'.partial'.length)))continue;
       const path=join(parent,name);if(path===file)continue;
       let observed;try{observed=await lstat(path,{bigint:true});}
       catch(error){if(error.code==='ENOENT')continue;throw error;}

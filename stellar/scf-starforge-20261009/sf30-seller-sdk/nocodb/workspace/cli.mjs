@@ -4,7 +4,7 @@ import { constants } from 'node:fs';
 import { open, link, unlink } from 'node:fs/promises';
 import { resolve, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { readJson, bytes, createFile, privateDirectory, hashPrivate, syncDirectory, fault } from '../../postgres/publisher/files.mjs';
+import { readJson, bytes, createFile, privateDirectory, syncDirectory, fault } from '../../postgres/publisher/files.mjs';
 import { openNocoDBAuthoring } from './model.mjs';
 import { MAX_WORKSPACE_BYTES, existingNocoDBWorkspaceArchive } from './handover.mjs';
 import { serveNocoDBAuthoring } from './server.mjs';
@@ -178,11 +178,12 @@ async function saveReturnedReviewFile(file,artifact) {
   const result={file,bytes:size,sha256:digest};
   await privateDirectory(dirname(file));
   async function identical() {
-    let existing;
-    try{existing=await hashPrivate(file,size);}catch(issue){if(issue.code==='ENOENT')return false;throw issue;}
-    if(existing.bytes!==size||existing.hash!==digest)
-      throw fault('NOCODB_RETURN_OUTPUT_CHANGED','The output already contains different bytes. Keep it and choose a new output for this review revision.');
-    return true;
+    try{return await existingNocoDBWorkspaceArchive(file,{bytes:size,sha256:digest},'return');}
+    catch(issue){
+      if(issue.code==='NOCODB_WORKSPACE_OUTPUT_CHANGED')
+        throw fault('NOCODB_RETURN_OUTPUT_CHANGED','The output already contains different bytes. Keep it and choose a new output for this review revision.');
+      throw issue;
+    }
   }
   if(await identical())return result;
   const temporary=join(dirname(file),'.nocodb-return-'+randomUUID()+'.partial');
@@ -190,7 +191,10 @@ async function saveReturnedReviewFile(file,artifact) {
   try{
     await createFile(temporary,content);
     try{await link(temporary,file);}catch(issue){if(issue.code!=='EEXIST'||!await identical())throw issue;}
-    await unlink(temporary);await syncDirectory(dirname(file));return result;
+    try{await unlink(temporary);}catch(issue){if(issue.code!=='ENOENT')throw issue;}
+    await syncDirectory(dirname(file));
+    if(!await identical())throw fault('NOCODB_RETURN_OUTPUT_CHANGED','The original published output is no longer present.');
+    return result;
   }catch(issue){primary=issue;throw issue;}
   finally{try{await unlink(temporary);}catch(issue){if(issue.code!=='ENOENT'&&!primary)throw issue;}}
 }
