@@ -51,6 +51,9 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/runtime-output.mjs', 'runtime-output.mjs', 'text/javascript; charset=utf-8'],
     ['/application-library.mjs', 'application-library.mjs', 'text/javascript; charset=utf-8'],
     ['/application-inputs.mjs', 'application-inputs.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-input-sets.mjs', 'application-input-sets.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-input-sets.css', 'application-input-sets.css', 'text/css; charset=utf-8'],
+    ['/application-input-set-format.mjs', 'application-input-set-format.mjs', 'text/javascript; charset=utf-8'],
     ['/application-groups.mjs', 'application-groups.mjs', 'text/javascript; charset=utf-8'],
     ['/application-groups.css', 'application-groups.css', 'text/css; charset=utf-8'],
     ['/application-drafts.mjs', 'application-drafts.mjs', 'text/javascript; charset=utf-8'],
@@ -301,6 +304,18 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
         }
         return send(200, await model.applicationGroupsState(value));
       }
+      if (req.method === 'GET' && url.pathname === '/api/application-input-sets') {
+        const value=params(url,['query','offset','limit','workingOffset','workingLimit']);
+        for(const key of ['offset','limit','workingOffset','workingLimit'])if(value[key]!==undefined) {
+          need(/^(0|[1-9][0-9]*)$/.test(value[key])&&Number.isSafeInteger(Number(value[key])),'APPLICATION_INPUT_SET_PAGE_INVALID');
+          value[key]=Number(value[key]);
+        }
+        return send(200,await model.applicationInputSetsState(value));
+      }
+      if (req.method === 'GET' && url.pathname === '/api/application-input-sets/inspect')
+        return send(200,await model.applicationInputSetInspect(params(url,['setId'])));
+      if (req.method === 'GET' && url.pathname === '/api/application-input-sets/selection')
+        return send(200,await model.applicationInputSetSelection(params(url,['requestId'])));
       if (req.method === 'GET' && url.pathname === '/api/application-inputs') {
         const value=params(url,['query','offset','limit','workingOffset','workingLimit']);
         for(const name of ['offset','limit','workingOffset','workingLimit']) if(value[name]!==undefined) {
@@ -348,6 +363,12 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
       if (req.method === 'GET' && url.pathname === '/api/managed/config')
         return send(200, await model.managedConfig(params(url, ['homeId', 'path'])));
       need(req.method === 'POST' && req.headers.origin === origin, 'RUNTIME_WORKSPACE_ORIGIN_REQUIRED', undefined, 403);
+      if (url.pathname === '/api/application-input-sets/begin')
+        return send(200,await model.applicationInputSetBegin(await body(req,['manifest'],2*1024*1024)));
+      if (url.pathname === '/api/application-input-sets/complete')
+        return send(200,await model.applicationInputSetComplete(await body(req,['setId'],4096)));
+      if (url.pathname === '/api/application-input-sets/prepare')
+        return send(200,await model.applicationInputSetPrepare(await body(req,['requestId','setId','kind','field','memberPath'],8192)));
       if (url.pathname === '/api/application-inputs/begin')
         return send(200,await model.applicationInputBegin(await body(req,['manifest'],16384)));
       if (url.pathname === '/api/application-inputs/chunk') {
