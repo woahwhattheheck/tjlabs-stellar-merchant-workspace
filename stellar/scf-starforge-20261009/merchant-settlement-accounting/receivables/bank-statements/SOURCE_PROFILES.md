@@ -25,7 +25,7 @@ Existing imported statements, payment links, reconciliations and closes continue
 
 ## Retain and receive the whole history
 
-**Download complete profile library** carries every saved profile and every version as one UTF-8 JSON file. The library has its own UUID, original Bank workspace UUID and revision. Each version contains a SHA-256 over its complete canonical mapping, operator, reason, time, name, version number and preceding version hash.
+**Download complete profile library** carries every saved profile and every version as one UTF-8 JSON file. The library has its own UUID, original Bank workspace SHA-256 identity and revision. Each version contains a SHA-256 over its complete canonical mapping, operator, reason, time, name, version number and preceding version hash.
 
 **Receive complete library as copies** adds independent profiles to the receiving workspace. Each copy retains its complete original version history and receiving lineage. Receiving the same original edition again leaves that edition's existing copy in place. A source library with a newer head is received as a separate complete edition. The receiving operator can revise a copy without changing the sender's retained history.
 
@@ -59,11 +59,11 @@ A mapping JSON uses the same fields as the Bank form and each collection item. F
 }
 ~~~
 
-Save a library using the actual receiving collection's workspace UUID:
+Save a library using the actual receiving collection's accounting workspace SHA-256 identity:
 
 ~~~sh
 starforge bank-statements profile create \
-  --workspace ORIGINAL_WORKSPACE_UUID \
+  --workspace ORIGINAL_WORKSPACE_SHA256 \
   --mapping /private/bundesbank-mapping.json \
   --name "Bundesbank original camt.053.001.08" \
   --actor "Receiving operator" \
@@ -140,15 +140,15 @@ Use the receiving profile UUIDs reported by inspect. Original version material a
 
 ## Complete original receiving course
 
-Run the maintained source course with a new private output directory and actual workspace UUID:
+Run the maintained source course with a new private output directory and actual accounting workspace SHA-256 identity:
 
 ~~~sh
 node SOURCE_PROFILES_RECEIVE.mjs \
-  --workspace-id ORIGINAL_WORKSPACE_UUID \
+  --workspace-id ORIGINAL_WORKSPACE_SHA256 \
   --out /private/new-source-profile-receiving
 ~~~
 
-It carries the original two Bundesbank ZIPs and all twenty-two XML files through the existing complete collection receiver, creates and revises a named source profile, records the selected originals' full mapping review, applies that review, inspects the resulting sources, and receives the full version history into another library. Its complete output directory retains every intermediate library, review, original collection and source report, plus the original files.
+It carries the original two Bundesbank ZIPs and all twenty-two XML files through the existing complete collection receiver, creates and revises a named source profile, records the selected originals' full mapping review, applies that review, inspects the resulting sources, and receives the full version history into another library for the same original merchant workspace. Its complete output directory retains every intermediate library, review, original collection and source report, plus the original files.
 
 The original [Bundesbank guide](BUNDESBANK.md) explains the source choices and published statement arithmetic. The [collection guide](SOURCE_COLLECTIONS.md) describes whole-original preparation, source inspection, receiving and extraction.
 
@@ -159,3 +159,5 @@ A complete library carries up to 256 profiles, 2,048 total saved versions and 16
 The existing collection limits continue to apply: up to 1,000 originals, 16,000,000 bytes per original and 128,000,000 total original bytes, within a 192,000,000-byte complete collection transfer.
 
 The three source modules are source-profile-model.mjs, source-profiles.mjs and profile-cli.mjs. Browser application, original-file collection rows, asset manifest and installed command registration compose them into the existing product.
+
+The accounting engine supplies the original 64-character SHA-256 workspace identity. Collection, library, profile and item IDs retain their own UUIDs. Earlier standalone v1 collections/libraries with UUID workspace tags remain readable as source handovers; receive them into the actual Bank workspace to continue there.
