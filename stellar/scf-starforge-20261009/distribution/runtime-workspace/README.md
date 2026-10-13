@@ -409,3 +409,12 @@ See [OUTPUT.md](OUTPUT.md#runtime-operations-and-installation-attempt-handover)
 for the full operator journey, source-bound API, native `output-sources`,
 `output-page` and exclusive `output-export` commands, and the existing native
 customer/backup receiving course.
+
+## Original application input files
+
+**Applications → Original input files** retains complete desktop or phone uploads,
+resumes the original transfer and prepares a separate working copy for an explicit
+application file setting. The native CLI, current review/save flow and complete
+workspace backup use the same saved source and request. See
+[Original application input files](APPLICATION_INPUTS.md) for the full operating
+and recovery workflow.
