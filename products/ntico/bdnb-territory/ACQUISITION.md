@@ -66,7 +66,7 @@ of whether a prior hash is available; if supplied, the prior hash must match.
 
 The predecessor dictionary key is `2025-07-a-dictionary`; its exact requested
 URL is the versioned 2025 workbook URL already selected above. C40F's original
-complete workbook is176,304 bytes and is retained at
+complete workbook is 176,304 bytes and is retained at
 https://app.notion.com/p/3f8dd772310081068f0ce0edc01f2eb7 .
 Use the stable file reference in that source page through the original file
 receiving service. Keep that page/reference and FileUpload
@@ -94,6 +94,28 @@ route before releasing the operation. The same root can later use the default
 hosted helper to preserve each retained file and record its real provider IDs.
 This mode reuses existing host storage and transfer; it does not allocate a new
 service or a separate data engine.
+
+## Continue the authorized original source and its saved outputs
+
+An existing root may adopt this successor only when its retained acquisition
+source is the exact merged predecessor: 39,190 bytes, SHA-256
+`e18162e23ed7b3e173c78be3f1a1e6041a4c3cd3d2412bc0e0027b5848779adc`.
+The receiver preserves that whole file under `source-history/<sha256>/`, updates
+any local source receipt to that historical path, and records the full old/new
+source identities before continuing the same source selection. The prepared
+receipt and retargeted predecessor path are persisted before the atomic source
+replacement; a restarted process reconciles the same prepared successor. Other source
+changes require their own original-owner reconciliation.
+
+Growing HTTP prefixes are retained as mutable observations in
+`native_prefix_observations`, separate from immutable saved-file receipts.
+The original download slot preserves their exact prefix identity and validator;
+a resume verifies that prefix before appending, or preserves the prior file
+under its own historical filename before receiving a complete response.
+JSON snapshots are immutable original inodes retained before the journal advances.
+On native-to-hosted continuation, already extracted complete tables and their
+exact saved profile sidecars are verified and passed through the original
+saving helper without extracting or profiling the archive again.
 
 ## Rendered product inspection — owner instruction, 2026-10-13
 
