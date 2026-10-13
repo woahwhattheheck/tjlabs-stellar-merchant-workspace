@@ -8,6 +8,7 @@ import {absolute,privateDirectory,readPrivate,readJson,bytes,digest,identity,has
   createFile,atomicJson,syncDirectory,acquireWorkspace,fault,stamp} from '../../postgres/publisher/files.mjs';
 import {makeGristPlacement,readGristPlacement,validateGristPlacement,gristRuntimeSettings} from './placement.mjs';
 import {installDatasetReleaseStore,readReleaseState,listReleases} from '../../../sf82-seller-pilot/releases.mjs';
+import {resolveDatasetInstallation} from '../../../sf82-seller-pilot/release-dataset-installation.mjs';
 
 import {acquireDatasetLease} from '../../dataset-refresh/writer-lease.mjs';
 export const MAX_WORKSPACE_BYTES=32*1024*1024*1024;
@@ -195,11 +196,24 @@ async function installReceivedDatasets(directory,requestId,selected){
   for(const release of catalog.releases??catalog){if(!release.dataset)continue;
     const path=join(root,'releases',release.id);
     // Prior machine placements stay in history; only this local pointer is replaced.
-    const pointer=join(path,'dataset-installation.json');let previous=null;
-    if(!await absent(pointer)){const old=await readJson(pointer);previous=identity(old);}
+    const pointer=join(path,'dataset-installation.json'),operationId=identity({requestId,releaseId:release.id,archive:selected.sha256});
+    let previous=null,expectedSnapshot=dataset.current,expectedRevision=dataset.revision;
+    if(!await absent(pointer)){
+      const old=await readJson(pointer);previous=identity(old);
+      if(SHA.test(old?.id??'')){
+        const retained=await readJson(join(path,'dataset-installations',old.id+'.json'),1048576);
+        if(retained.operationId===operationId){
+          // Retry the original native content, including its original preimage.
+          // The native writer revalidates the same immutable installation.
+          const installed=await resolveDatasetInstallation(path,{dataset:release.dataset});
+          previous=installed.previousInstallationSha256;
+          expectedSnapshot=installed.snapshot;expectedRevision=installed.datasetRevision;
+        }
+      }
+    }
     await installDatasetReleaseStore(root,release.id,{expectedExecutionSha256:release.dataset.executionSha256,
-      expectedDatasetDirectory:release.dataset.datasetDirectory,datasetDirectory,operationId:identity({requestId,releaseId:release.id,archive:selected.sha256}),
-      expectedSnapshot:dataset.current,expectedRevision:dataset.revision,previousInstallationSha256:previous,
+      expectedDatasetDirectory:release.dataset.datasetDirectory,datasetDirectory,operationId,
+      expectedSnapshot,expectedRevision,previousInstallationSha256:previous,
       source:{schema:SCHEMA,manifestFile,manifestSha256:selected.manifestSha256,planSha256:identity(selected.manifest.source),datasetPrefix:'dataset'}});
   }
   return state;
@@ -261,19 +275,66 @@ export async function installGristReceivedRelease(directory,releaseId,requestId)
   }finally{await lease.close();}
 }
 
+
+/** Reconcile only the original publisher's exact two-name publication window.
+ * All normal reads continue through hashPrivate's single-link contract. */
+export async function existingGristWorkspaceArchive(file, descriptor) {
+  absolute(file);await privateDirectory(dirname(file));
+  if(!descriptor||!Number.isSafeInteger(descriptor.bytes)||descriptor.bytes<1||
+      descriptor.bytes>MAX_WORKSPACE_BYTES+32*1024*1024+13||!SHA.test(descriptor.sha256??''))
+    throw fault('GRIST_WORKSPACE_ARCHIVE_IDENTITY_REQUIRED');
+  const matches=saved=>{
+    if(saved.bytes!==descriptor.bytes||saved.hash!==descriptor.sha256)
+      throw fault('GRIST_WORKSPACE_OUTPUT_CHANGED','This output already holds different bytes. Select another new private output.');
+    return true;
+  };
+  try{return matches(await hashPrivate(file,descriptor.bytes));}
+  catch(issue){
+    if(issue.code==='ENOENT')return false;
+    if(issue.code!=='PRIVATE_FILE_REQUIRED')throw issue;
+    // A complete link() followed by interruption before unlink() leaves exactly
+    // two names for one private inode. Never admit unrelated additional links.
+    const parent=dirname(file),before=await lstat(file,{bigint:true});
+    if(!before.isFile()||before.nlink!==2n||before.mode&0o077n||
+        before.size!==BigInt(descriptor.bytes))throw issue;
+    const candidates=[];
+    for(const name of await readdir(parent)){
+      if(!/^\.grist-workspace-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.partial$/.test(name))continue;
+      const path=join(parent,name);if(path===file)continue;
+      let observed;try{observed=await lstat(path,{bigint:true});}
+      catch(error){if(error.code==='ENOENT')continue;throw error;}
+      if(observed.isFile()&&observed.dev===before.dev&&observed.ino===before.ino&&
+          observed.nlink===2n&&!(observed.mode&0o077n))candidates.push(path);
+    }
+    if(candidates.length!==1)throw issue;
+    const temporary=candidates[0],source=await open(file,constants.O_RDONLY|constants.O_NOFOLLOW);
+    try{
+      const opened=await source.stat({bigint:true});
+      if(stableStat(opened)!==stableStat(before)||opened.nlink!==2n||opened.mode&0o077n)throw fault('SOURCE_CHANGED_DURING_READ');
+      const hash=createHash('sha256');let total=0;
+      for await(const chunk of source.createReadStream({autoClose:false,highWaterMark:WORKSPACE_CHUNK_BYTES})){
+        total+=chunk.length;if(total>descriptor.bytes)throw fault('GRIST_WORKSPACE_OUTPUT_CHANGED');hash.update(chunk);
+      }
+      matches({bytes:total,hash:hash.digest('hex')});
+      const after=await source.stat({bigint:true});
+      const named=await lstat(file,{bigint:true}),partial=await lstat(temporary,{bigint:true});
+      if(stableStat(after)!==stableStat(before)||stableStat(named)!==stableStat(before)||
+          stableStat(partial)!==stableStat(before)||after.nlink!==2n||named.nlink!==2n||
+          partial.nlink!==2n||!named.isFile()||!partial.isFile()||
+          (after.mode|named.mode|partial.mode)&0o077n)throw fault('SOURCE_CHANGED_DURING_READ');
+      await unlink(temporary);await syncDirectory(parent);
+    }finally{await source.close();}
+    return matches(await hashPrivate(file,descriptor.bytes));
+  }
+}
+
 export async function saveGristWorkspaceArchive(file, descriptor) {
   await privateDirectory(dirname(file));
   if (!descriptor || !Number.isSafeInteger(descriptor.bytes) || descriptor.bytes < 1 ||
       descriptor.bytes > MAX_WORKSPACE_BYTES + 32 * 1024 * 1024 + 13 || !/^[a-f0-9]{64}$/.test(descriptor.sha256))
     throw fault('GRIST_WORKSPACE_ARCHIVE_IDENTITY_REQUIRED');
   const result = { file, bytes:descriptor.bytes, sha256:descriptor.sha256 };
-  async function exactOutput() {
-    let saved; try { saved = await hashPrivate(file, descriptor.bytes); }
-    catch (issue) { if(issue.code==='ENOENT')return false;throw issue; }
-    if(saved.bytes!==descriptor.bytes || saved.hash!==descriptor.sha256)
-      throw fault('GRIST_WORKSPACE_OUTPUT_CHANGED','This output already holds different bytes. Select another new private output.');
-    return true;
-  }
+  const exactOutput=()=>existingGristWorkspaceArchive(file,descriptor);
   if(await exactOutput())return result;
   const temporary=join(dirname(file),'.grist-workspace-'+randomUUID()+'.partial');
   let source, outputHandle, primary;
@@ -303,7 +364,8 @@ export async function saveGristWorkspaceArchive(file, descriptor) {
     await outputHandle.sync();await outputHandle.close();outputHandle=null;
     try{await link(temporary,file);}
     catch(issue){if(issue.code!=='EEXIST')throw issue;if(!await exactOutput())throw issue;}
-    await unlink(temporary);await syncDirectory(dirname(file));
+    try{await unlink(temporary);}catch(issue){if(issue.code!=='ENOENT')throw issue;}
+    await syncDirectory(dirname(file));await exactOutput();
     return result;
   } catch(issue) { primary=issue;throw issue; } finally {
     const issues=[];

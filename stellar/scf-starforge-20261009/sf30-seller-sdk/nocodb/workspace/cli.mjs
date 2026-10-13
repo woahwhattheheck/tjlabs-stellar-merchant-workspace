@@ -6,7 +6,7 @@ import { resolve, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { readJson, bytes, createFile, privateDirectory, hashPrivate, syncDirectory, fault } from '../../postgres/publisher/files.mjs';
 import { openNocoDBAuthoring } from './model.mjs';
-import { MAX_WORKSPACE_BYTES } from './handover.mjs';
+import { MAX_WORKSPACE_BYTES, existingNocoDBWorkspaceArchive } from './handover.mjs';
 import { serveNocoDBAuthoring } from './server.mjs';
 import { makeNocoDBSourcePacket, MAX_PACKET_BYTES } from './packet.mjs';
 import { readNocoDBLaunchConnections, inspectNocoDBAuthoring, inspectNocoDBLaunchSource,
@@ -118,11 +118,7 @@ async function saveWorkspaceArchive(file, descriptor) {
     throw fault('NOCODB_WORKSPACE_ARCHIVE_IDENTITY_REQUIRED');
   const result = { file, bytes:descriptor.bytes, sha256:descriptor.sha256 };
   async function exactOutput() {
-    let saved; try { saved = await hashPrivate(file, descriptor.bytes); }
-    catch (issue) { if(issue.code==='ENOENT')return false;throw issue; }
-    if(saved.bytes!==descriptor.bytes || saved.hash!==descriptor.sha256)
-      throw fault('NOCODB_WORKSPACE_OUTPUT_CHANGED','This output already holds different bytes. Select another new private output.');
-    return true;
+    return existingNocoDBWorkspaceArchive(file, descriptor);
   }
   if(await exactOutput())return result;
   const temporary=join(dirname(file),'.nocodb-workspace-'+randomUUID()+'.partial');
@@ -153,7 +149,9 @@ async function saveWorkspaceArchive(file, descriptor) {
     await outputHandle.sync();await outputHandle.close();outputHandle=null;
     try{await link(temporary,file);}
     catch(issue){if(issue.code!=='EEXIST')throw issue;if(!await exactOutput())throw issue;}
-    await unlink(temporary);await syncDirectory(dirname(file));
+    try{await unlink(temporary);}catch(issue){if(issue.code!=='ENOENT')throw issue;}
+    await syncDirectory(dirname(file));
+    await exactOutput();
     return result;
   } catch(issue) { primary=issue;throw issue; } finally {
     const issues=[];
