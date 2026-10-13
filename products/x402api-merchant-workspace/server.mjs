@@ -153,6 +153,11 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
     if (!authorization || !authorization.startsWith('Bearer ') || !constantEqual(authorization.slice(7), operatorToken)) {
       response.setHeader('WWW-Authenticate', 'Bearer realm="merchant"'); fail('OPERATOR_AUTHENTICATION_REQUIRED', 401);
     }
+    const expectedStore = header(request, 'x-merchant-store-id'), expectedTenant = header(request, 'x-merchant-tenant-id');
+    if (expectedStore !== null && expectedStore !== workspace.store.storeId) fail('MERCHANT_OPERATOR_STORE_CHANGED', 409);
+    if (expectedTenant !== null && expectedTenant !== workspace.config.tenantId) fail('MERCHANT_OPERATOR_TENANT_CHANGED', 409);
+    response.setHeader('X-Merchant-Store-Id', workspace.store.storeId);
+    response.setHeader('X-Merchant-Tenant-Id', workspace.config.tenantId);
     const origin = header(request, 'origin'), localOrigin = 'http://' + header(request, 'host');
     if (origin && origin !== workspace.config.publicOrigin && origin !== localOrigin) fail('ORIGIN_NOT_ALLOWED', 403);
     if(request.method==='GET'&&path==='/api/register')
