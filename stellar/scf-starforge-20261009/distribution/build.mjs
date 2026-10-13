@@ -6,6 +6,7 @@ import { resolve, posix } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openGitSource, MAX_SOURCE_FILE_BYTES, MAX_SOURCE_BYTES } from './git-source.mjs';
 import { createBrowserAssetIndex } from './browser-assets.mjs';
+import { runtimeNodeRequirement } from './runtime-profile.mjs';
 import { productPackageMetadata } from './product-package.mjs';
 import { distributionPath, contributionDirectory, contributionPaths, composeDistribution } from './specification.mjs';
 import { sourceSelectionDirectory, sourceSelectionPath, validateSourceSelection,
@@ -222,13 +223,14 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   if (missingModules.length) throw new TypeError('Unpackaged relative modules:\n' + missingModules.join('\n'));
   // Runtime drivers follow the exact source commit, including new production
   // dependencies such as the PostgreSQL cursor. Development fixtures stay out.
-  const runtimeDependencies = Object.create(null), runtimePackageSources = {};
+  const runtimeDependencies = Object.create(null), runtimePackageSources = {}, runtimeEngines = {};
   const featurePeers = { ...spec.featurePeers };
   for (const [group, path] of Object.entries(spec.runtimePackageManifests ?? {})) {
     const original = JSON.parse(sources.get(path));
     if (!original.dependencies || typeof original.dependencies !== 'object' || Array.isArray(original.dependencies) ||
         !Object.keys(original.dependencies).length && !/^>=\d+(?:\.\d+)?(?:\.\d+)?$/.test(original.engines?.node ?? ''))
       throw new TypeError('Runtime dependencies or an explicit Node engine are required: ' + path);
+    runtimeEngines[group] = original.engines?.node ?? null;
     featurePeers[group] = {};
     for (const [name, version] of Object.entries(original.dependencies)) {
       if (!/^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/.test(name) ||
@@ -255,7 +257,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   const metadata = {
     name: spec.name, version, private: true, type: 'module', license: 'MIT',
     description: product.description,
-    engines: { node: '>=22.16.0' },
+    engines: { node: runtimeNodeRequirement(runtimeEngines) },
     bin: Object.fromEntries(Object.entries(product.bin).map(([name, path]) => [name, './source/' + path])),
     exports: spec.exports, files: ['source/', 'manifest.json', 'README.md', 'LICENSE'],
     peerDependencies: Object.fromEntries(Object.entries(optionalPeers).map(([name, value]) => [name, value.version])),
