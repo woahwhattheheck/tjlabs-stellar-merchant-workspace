@@ -22,7 +22,7 @@
   "composition": [
     "Preserve the maintained Socrata facilitator source and CLI setting while composing the original property workspace and scoped publisher.",
     "Expose the same four existing facilitator actions and two downloads through selected property publishers and SDK types; reset browser facilitator selection when changing publisher resource.",
-    "Constrain receiving browser settings to the two runtime selectors and use the original requested 390x844 mobile viewport.",
+    "Constrain receiving browser settings to the two runtime selectors, accept the selected ES module or CommonJS Playwright export, use the original requested 390x844 mobile viewport and keep screenshots in private local inspection while retaining full browser reports/downloads.",
     "Update historical RentCheck documentation-access statements to the retained complete official OpenAPI source while preserving account-specific review.",
     "Select original source-owned Property/Socrata/merchant declarations and maintained Console; retain the source recipe with the product guides."
   ],
@@ -142,9 +142,9 @@
     },
     {
       "path": "operations/scf-property-operations-receiving-20261012/README.md",
-      "bytes": 6302,
-      "sha256": "631c3d11f15bc6857b1982f6a16ffb37c623e61f1b273576b3bf461f0f93c661",
-      "gitBlob": "bcebd17a39b433d4f9c75008ef6b81e5abf4c44d",
+      "bytes": 6731,
+      "sha256": "8f345bda9ab337f271f24886b7d570abdea76de76627f463dd4e3d42ebf041b9",
+      "gitBlob": "67af6edf9ee4cc48a8af85d317257739e6e6bcd3",
       "originalGitBlob": "bcebd17a39b433d4f9c75008ef6b81e5abf4c44d"
     },
     {
@@ -170,16 +170,16 @@
     },
     {
       "path": "operations/scf-property-operations-receiving-20261012/run-browser.mjs",
-      "bytes": 5477,
-      "sha256": "dd8523b62a21e85d0af719800b79ef0ce9aaede5227b598a58e2684bc2be82ac",
-      "gitBlob": "9aa89ea1a660c8c198a11e4fa362f27eda9a87fc",
+      "bytes": 5725,
+      "sha256": "476214b28a838d4914e5206e5788b33dbf200bf3fb97610823a252f06d2e126b",
+      "gitBlob": "6dd83685a51eb4714895e09d52418522f676f1c2",
       "originalGitBlob": "1617b9caa758cd83f9c3f7ab6780a5d0e29ceaf4"
     },
     {
       "path": "operations/scf-property-operations-receiving-20261012/run-receiving.mjs",
-      "bytes": 27044,
-      "sha256": "72d086569559362602b099d634f19c15fb6be92ad2dfdabaf39df2ca6cd08deb",
-      "gitBlob": "307a916217eb3129a1fc8bd261f8d469fda539ba",
+      "bytes": 27129,
+      "sha256": "ca9a761adad94a451eb578585df9f65f55d73a2643d80250924ef5814a929f03",
+      "gitBlob": "3c7dcdfe6ef1be475c7f7bc56fa1d0e72fe18048",
       "originalGitBlob": "8ed2703dc12bba35053d42eb4d08dcdf9d40e11a"
     },
     {
@@ -303,16 +303,16 @@
     },
     {
       "path": "products/property-operations/OPERATING.md",
-      "bytes": 16013,
-      "sha256": "8c30138ecb18620f40b1706899a2dbbc7bbfdb6426e7fceb8bf16e8281c17c1c",
-      "gitBlob": "ab0676587523646429ff1429205469199152f1d0",
+      "bytes": 16252,
+      "sha256": "6b7e093764f0c706b6ef273e45a83518264f7e1242bdb3c1bd21dbba83a73976",
+      "gitBlob": "4444016d0151089e8ead80e79e48faf0bd3cdabb",
       "originalGitBlob": null
     },
     {
       "path": "products/property-operations/RECEIVING.md",
-      "bytes": 10172,
-      "sha256": "c9b1187c3bd0b7a2d4bc2f901e06b808b871015054e3af3c2878a46e3e84db2e",
-      "gitBlob": "00aa164c2c24354139e0fded4fb12f24fad79816",
+      "bytes": 10629,
+      "sha256": "b2525c95b42fa8fe5a8a167ea538ba16045c7f63ac00d6b0590d165fe4af4d2c",
+      "gitBlob": "81be332e9c965416b8191fc278c6e9e8a4ce0f02",
       "originalGitBlob": null
     }
   ]

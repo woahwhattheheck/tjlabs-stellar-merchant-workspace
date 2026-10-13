@@ -41,9 +41,9 @@ Browser receiving is optional. When its original operation calls for it, add exa
 }
 ~~~
 
-The receiver accepts exactly these two keys and validates both absolute paths **before dispatch**. Additional keys, missing runtime fields and non-object browser values fail with `PROPERTY_RECEIVING_BROWSER_INPUT`. The programme supplies the actual application URL, original creation time, Property ID and output directory; those identities cannot be replaced through browser options.
+The receiver accepts exactly these two keys and validates both absolute paths **before dispatch**. Additional keys, missing runtime fields and non-object browser values fail with `PROPERTY_RECEIVING_BROWSER_INPUT`; invalid or relative runtime paths fail with `PROPERTY_RECEIVING_PATH`. The programme supplies the actual application URL, original creation time, Property ID and output directory; those identities cannot be replaced through browser options.
 
-The original browser visits all eight workspace sections and four Property views, receives the largest existing export member through its normal UI button, and records desktop 1440×1000 and mobile **390×844** images. Its route policy allows reads and the four selected original Property read actions. Preserve the actual browser result and any failure with the same receiving operation.
+The original browser visits all eight workspace sections and four Property views, receives the largest existing export member through its normal UI button, and checks desktop 1440×1000 and mobile **390×844** views. The selected Playwright module supports both its ES module namespace and its CommonJS default export. Screenshots stay in the operation's private `private/browser-inspection/` directory for local inspection. Only `Browser_Receiving.json` and the complete downloaded native member enter the customer directory. Its route policy allows reads and the four selected original Property read actions. Preserve the actual browser result and any failure with the same receiving operation.
 
 ## Run the complete original programme
 
@@ -87,7 +87,7 @@ A process exit is separate from a native business outcome. A missing startup res
 
 ## Complete output and custody
 
-The result report is `customer/Property_Operations_Operation.json`. The customer directory contains the complete existing paid ZIP/identity, native collection and file receiving, full query pages, all source/merchant manifests and exports, original application histories, closure receipts, the cold receiver/re-export, operating instructions and actual selected browser artifacts.
+The result report is `customer/Property_Operations_Operation.json`. The customer directory contains the complete existing paid ZIP/identity, native collection and file receiving, full query pages, all source/merchant manifests and exports, original application histories, closure receipts, the cold receiver/re-export, operating instructions, actual selected browser reports and complete native browser downloads. Private inspection screenshots are excluded.
 
 `customer/MANIFEST.json` declares all final members. `Property_Operations_Complete_Delivery.tar.gz` contains that whole customer directory. Retain the private receiving journal separately for exact continuation, along with the archive's actual length/SHA and the receiving report.
 

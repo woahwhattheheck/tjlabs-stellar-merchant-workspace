@@ -6,7 +6,7 @@ The maintained source selection is `property-operations`. It includes the origin
 
 ## Install a complete selected runtime
 
-Use **Node 24 or later**. The original workspace uses Node's native SQLite; the Applications provider checks this requirement before launch. The complete receiving programme also uses Linux, Python 3 and GNU tar/flock. Browser receiving uses an explicitly selected existing Playwright module and Chromium executable.
+Use **Node 24 or later**. The original workspace uses Node's native SQLite; the Applications provider checks this requirement before launch. The complete receiving programme also uses Linux, Python 3 and GNU tar/flock. Browser receiving uses an explicitly selected existing Playwright module and Chromium executable. The module may expose Chromium directly or through its CommonJS default export. Desktop/mobile screenshots stay in the operation's private inspection directory; the customer package retains the browser report and complete native download.
 
 From an owned checkout containing this integration, select one immutable source commit:
 
