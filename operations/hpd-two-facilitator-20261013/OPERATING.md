@@ -41,11 +41,11 @@ python3 operations/hpd-two-facilitator-20261013/assemble_source.py \
   --original /absolute/original-hpd-source.json \
   --commissioning-product /absolute/commissioning-product.json \
   --integration /absolute/hpd-integration.json \
-  --integration-sha256 7245e198e4931a6c869690e19ac76266850ec8a9312456bb97bda9755cb2b82c \
+  --integration-sha256 1eb002a8265ce3ec08943d5141c097f11310d6470a3a4c9ca82d2e1e8d9c4126 \
   --out /absolute/private/hpd-complete-installation
 ~~~
 
-The resulting source directory contains 210 files and 3,114,617 bytes. SOURCE_INSTALLATION.json records the complete installed inventory and preimages; SOURCE_INSTALLATION_RESULT.json is written after all installed bodies match. Repeating the same command completes an interrupted installation or reopens the same complete source. The source root supplied to preparation is /absolute/private/hpd-complete-installation/source.
+The resulting source directory contains 210 files and 3,115,599 bytes. SOURCE_INSTALLATION.json records the complete installed inventory and preimages; SOURCE_INSTALLATION_RESULT.json is written after all installed bodies match. Repeating the same command completes an interrupted installation or reopens the same complete source. The source root supplied to preparation is /absolute/private/hpd-complete-installation/source.
 
 The selected native release is the dataset release. Its original runActiveRelease selects release-dataset.mjs through release-child.mjs, with the retained SF30 dataset handler and native SDK. Optional Python/database release families are separate source selections.
 
@@ -175,3 +175,5 @@ Export retains and verifies the complete original selection, source/output blobs
 The complete customer handover consists of the exported commissioning directory, original 722,634-byte customer ZIP, entire source intake, readable latest report and matching source/installation manifest. Continue merchant and buyer private workspace backup/restore through their original product interfaces. These preserve the source store and actual account/spend authority needed to reopen the exported job on the receiving host.
 
 The completed historical 144-row customer remains available throughout. The new report describes the actual later paired commissioning under its own original provider/page operations, while the existing SCF cohort and observation-window records retain their original owners.
+
+If the operation fails while its original job also fails to close, the command retains both error codes and messages in one error result. Reopen the same saved operation and result identities when continuing.

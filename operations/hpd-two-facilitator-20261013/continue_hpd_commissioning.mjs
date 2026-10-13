@@ -60,7 +60,7 @@ async function main(){
   return {revision:current.revision,state:value.state,usefulTasks:value.usefulTasks,
     originalAttempts:value.originalAttempts,report:join(root,'reports',name+'.html')};
  }
- let result;
+ let result, primaryError;
  try{
   if(o.action==='serve'){
    const provider=o['--provider'],operationId=prepared.runIds[provider],status=await job.inspect();
@@ -131,8 +131,19 @@ async function main(){
      completeCustomerIntake:prepared.sourceIntake,customerOutputs:prepared.customerOutputs,
      receiving:'Keep the original completed customer ZIP and complete prepared source/intake beside this commissioning transfer. Receive the original merchant/buyer stores with their maintained recovery tools.'};
   }
- }finally{await job.close();}
+ }catch(error){primaryError=error;throw error;}
+ finally{
+  try{await job.close();}
+  catch(closeError){
+   if(primaryError){
+    const combined=new AggregateError([primaryError,closeError],'The original operation and its job close both failed.');
+    combined.code=primaryError.code??'HPD_OPERATION_AND_CLOSE_FAILED';
+    throw combined;
+   }
+   throw closeError;
+  }
+ }
  if(o.action==='export')result.inspectedTransfer=await engine.inspectCommissioningTransfer(resolve(o['--out']));
  process.stdout.write(JSON.stringify(result)+'\n');
 }
-main().catch(error=>{process.stderr.write(JSON.stringify({code:error.code??error.name,message:error.message})+'\n');process.exitCode=1;});
+main().catch(error=>{process.stderr.write(JSON.stringify({code:error.code??error.name,message:error.message,...(error instanceof AggregateError?{errors:error.errors.map(e=>({code:e?.code??e?.name??'ERROR',message:e?.message??String(e)}))}:{})})+'\n');process.exitCode=1;});

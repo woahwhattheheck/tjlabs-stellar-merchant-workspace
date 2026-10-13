@@ -138,7 +138,7 @@ async function main(){
  const directory=join(out,'commissioning');
  await engine.createCommissioningJob({directory,selection});
  const job=await engine.openCommissioningJob({directory});
- let result;
+ let result, primaryError;
  try{
   const completed=await optional(join(out,'prepared-hpd-commissioning.json'));
   if(completed){
@@ -204,9 +204,20 @@ async function main(){
          expectedOutput:f.expectedOutput}))}))},
    continuation:'Use the original seller ingress and original customer authority. Keep each foreground native seller alive for its own prepared buyer requests, then retain original results and receive through the commissioning CLI.'};
   await save(join(out,'prepared-hpd-commissioning.json'),bytes(result));
- }finally{await job.close();}
+ }catch(error){primaryError=error;throw error;}
+ finally{
+  try{await job.close();}
+  catch(closeError){
+   if(primaryError){
+    const combined=new AggregateError([primaryError,closeError],'The original operation and its job close both failed.');
+    combined.code=primaryError.code??'HPD_OPERATION_AND_CLOSE_FAILED';
+    throw combined;
+   }
+   throw closeError;
+  }
+ }
  process.stdout.write(JSON.stringify({state:'ORIGINAL_HPD_COMMISSIONING_PREPARED',
   directory:result.directory,manifest:join(out,'prepared-hpd-commissioning.json'),
   customerId:CUSTOMER,sessionId:SESSION,snapshot:SNAPSHOT,providers:2,pagesPerProvider:2,rowsPerProvider:144})+'\n');
 }
-main().catch(error=>{process.stderr.write(JSON.stringify({code:error.code??error.name,message:error.message})+'\n');process.exitCode=1;});
+main().catch(error=>{process.stderr.write(JSON.stringify({code:error.code??error.name,message:error.message,...(error instanceof AggregateError?{errors:error.errors.map(e=>({code:e?.code??e?.name??'ERROR',message:e?.message??String(e)}))}:{})})+'\n');process.exitCode=1;});
