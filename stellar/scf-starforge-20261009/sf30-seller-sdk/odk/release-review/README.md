@@ -130,6 +130,14 @@ Keep the existing approved age output and the original row-count output. Retain 
 
 Original baseline XML: 827 bytes, SHA-256 `93fdcefabfe5b6ea49f207e0c6fc8ba72ceb34828bff9c7929ef56eafd2d84cc`. Exact structural candidate: 833 bytes, SHA-256 `bc2cc021848d1cdf66107b118f0cbd407eb35c0f138324ec0b0628576da661f5`. The guide records the provider case and expected source selection; the native receiving operator retains its actual operation result in the original programme.
 
+## Complete colleague review and returned feedback
+
+**Colleague review** now exports the saved comparison and both source editions into a complete self-contained working HTML. It carries the original XML, fields, form media, applicable inventory/reporting originals and native review history. The colleague can retain unfinished work, save attributed editions, download/reopen complete HTML and return the complete JSON.
+
+The installed desk receives that original file, displays changed current/colleague dispositions and applies explicit staff choices through the same revision-bound review transaction. Changed source comparisons or current report definitions remain visible before a following current package is prepared. Accepted same-request replay, full original downloads and receiving history stay with this workspace.
+
+See [COLLEAGUE_REVIEW.md](./COLLEAGUE_REVIEW.md) for the complete staff course, native metadata custody, original-file receiving, SDK and existing installed/rendered continuation.
+
 ## Primary provider sources
 
 - [Official form, version, draft, field and attachment API](https://docs.getodk.org/central-api-form-management/).
@@ -138,3 +146,13 @@ Original baseline XML: 827 bytes, SHA-256 `93fdcefabfe5b6ea49f207e0c6fc8ba72ceb3
 - [Native draft scalar, structure and repeat compatibility cases](https://github.com/getodk/central-backend/blob/de0d2a07fd7c9ff698cbc312e550dd40ff058340/test/integration/api/forms/draft.js).
 - [Production native type predicate and published-schema history](https://github.com/getodk/central-backend/blob/de0d2a07fd7c9ff698cbc312e550dd40ff058340/lib/model/query/forms.js).
 - [Published OData source selection](https://github.com/getodk/central-backend/blob/de0d2a07fd7c9ff698cbc312e550dd40ff058340/lib/resources/odata.js) and [original field/table exporter](https://github.com/getodk/central-backend/blob/de0d2a07fd7c9ff698cbc312e550dd40ff058340/lib/formats/odata.js).
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk; do not run broad suites or build a verification product.
+
+Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999

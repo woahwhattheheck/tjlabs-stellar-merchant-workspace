@@ -69,6 +69,7 @@ export interface FormReleaseReview extends FormRecord {
   baselineId:string;candidateId:string;assessment:FormImpact;decisions:SavedFormDisposition[];
   approval:FormReleaseApproval|null;history:FormRecord[];readiness:FormReleaseReadiness;
   reporting:ReportingInventory;createdAt:string;updatedAt:string;
+  colleague:{packages:FormColleagueSummary[];returns:FormColleagueSummary[]};
 }
 export interface FormPublicationPlan extends FormRecord {
   schema:typeof FORM_PLAN_SCHEMA;id:string;revision:number;contentHash:string;
@@ -98,6 +99,12 @@ export interface CentralFormReleaseState extends FormRecord {
   activeOperations:number;
 }
 export interface CentralFormReleaseReview {
+  exportColleague(input:{id:string;expectedRevision:number;packageId:string}):Promise<FormColleagueSummary>;
+  receiveColleague(input:{id:string;reviewId:string;originalText:string}):Promise<FormColleaguePreview>;
+  receiveColleagueFile(input:{id:string;reviewId:string;sourceSha256:string}):Promise<FormColleaguePreview>;
+  receiveColleagueStream(input:{id:string;reviewId:string},stream:AsyncIterable<Uint8Array>):Promise<FormColleaguePreview>;
+  previewColleague(input:{id:string}):Promise<FormColleaguePreview>;
+  applyColleague(input:FormColleagueApply):Promise<FormColleagueApplied>;
   state():Promise<CentralFormReleaseState>;
   getSource(input:{id:string}):RetainedFormSource;
   getReview(input:{id:string}):FormReleaseReview;
@@ -139,3 +146,35 @@ export function openCentralFormReleaseReview(input:{directory:string;fetchImpl?:
   extend?:CentralWorkspaceExtension;authoring?:CentralFormAuthoring}):Promise<OpenCentralFormReleaseReview>;
 export function composeCentralFormReleaseReview(input:{workspace:CentralWorkspace;store:CentralExtensionStore;
   authoring?:CentralFormAuthoring;fetchImpl?:typeof fetch}):{review:CentralFormReleaseReview;extension:CentralServerExtension};
+
+// Complete colleague files and feedback remain bound to the original review.
+export interface FormColleaguePackage extends FormRecord {
+ schema:typeof FORM_COLLEAGUE_PACKAGE_SCHEMA;id:string;workspaceId:string;reviewId:string;reviewRevision:number;
+ createdAt:string;review:FormReleaseReview;sources:{baseline:RetainedFormSource;candidate:RetainedFormSource};
+ files:{sha256:string;bytes:number;base64:string;names:{sourceId:string;side:string;name:string;label:string}[]}[];
+ fileCoverage:{nativeOnly:{sourceId:string;side:string;label:string;receipt:OriginalFileReceipt;reason:string}[]};
+ contentHash:string;
+}
+export interface FormColleagueDraft {reviewer:string;note:string;decisions:FormDisposition[]}
+export interface FormColleagueEdition extends FormColleagueDraft {id:string;createdAt:string}
+export interface FormColleagueWork {
+ schema:typeof FORM_COLLEAGUE_RETURN_SCHEMA;package:FormColleaguePackage;draft:FormColleagueDraft;editions:FormColleagueEdition[];
+}
+export interface FormColleagueSummary extends FormRecord {
+ id:string;reviewId:string;packageId:string;createdAt:string;status:string;
+ source:OriginalFileReceipt;html?:OriginalFileReceipt;reviewer:string|null;editionCount:number;applied:FormRecord|null;
+}
+export interface FormColleaguePreview extends FormColleagueSummary {
+ currentRevision:number;originalRevision:number;sourceMatches:boolean;dependenciesMatch:boolean;canApply:boolean;previewHash:string;
+ draft:FormColleagueDraft;editions:FormColleagueEdition[];
+ rows:{change:FormChange;original:FormDisposition|null;current:FormDisposition|null;colleague:FormDisposition|null;
+ different:boolean;proposed:boolean;nativeChanged:boolean;incomplete:boolean}[];
+ currentApproval:FormReleaseApproval|null;currentStatus:string;message:string;
+}
+export interface FormColleagueApply {
+ id:string;expectedRevision:number;previewHash:string;reviewer:string;note:string;overall?:'review'|'revise';
+ choices:{changeId:string;source:'current'|'colleague'}[];
+}
+export interface FormColleagueApplied {receiving:FormColleagueSummary;review:FormReleaseReview;applied:FormRecord;replayed:boolean}
+export const FORM_COLLEAGUE_PACKAGE_SCHEMA:'stellar-forge.odk-form-colleague-package.v1';
+export const FORM_COLLEAGUE_RETURN_SCHEMA:'stellar-forge.odk-form-colleague-return.v1';

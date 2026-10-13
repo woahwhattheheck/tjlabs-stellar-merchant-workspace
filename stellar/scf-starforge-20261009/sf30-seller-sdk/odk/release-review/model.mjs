@@ -1,6 +1,7 @@
 // MIT. The original Central Store owns review state, originals and publication receiving.
 import {randomUUID} from 'node:crypto';
 import {receiveCentralDraft} from './draft-source.mjs';
+import {createColleagueReview} from './colleague.mjs';
 import {digest, fault, stable, now, identifier} from '../../odata/state.mjs';
 import {normalizeFormSource, normalizeReportingBindings, normalizeReportingTableBindings, reportingInventory, compareFormSources, formIdentity} from './impact.mjs';
 
@@ -177,7 +178,7 @@ export function createCentralFormReleaseReview({workspace,store,authoring,fetchI
    const record=store.get(kinds.review,input.id);
    const baseline=snapshot(record.baselineId),candidate=snapshot(record.candidateId);
    const reporting=reportingInventory({baseline:sourceValue(baseline),candidate:sourceValue(candidate),dependencies:dependenciesFor(store,baseline),bindings:record.assessment.bindings??record.assessment.reporting?.bindings??[],tableBindings:record.assessment.tableBindings??record.assessment.reporting?.tableBindings??[]});
-   return {...record,readiness:readiness(record),reporting};
+   return {...record,readiness:readiness(record),reporting,colleague:colleague.list(record.id)};
   }
   function createReview(input){
    const reviewId=id(input.id,'release review ID'),request={baselineId:input.baselineId,candidateId:input.candidateId,name:input.name??'Form release review',
@@ -206,7 +207,7 @@ export function createCentralFormReleaseReview({workspace,store,authoring,fetchI
    store.put(kinds.review,record.id,{...record,assessment,history,decisions:[],approval:null,status:'REVIEWING'},record.revision);
    return getReview({id:record.id});
   }
-  function decide(input){
+  function decide(input,continuation=null){
     const record=store.get(kinds.review,input.id);requireRevision(record,input.expectedRevision);
     const reviewer=note(input.reviewer,'the reviewer name'),reason=note(input.note,'the release decision');
     need(['review','approve','revise'].includes(input.overall??'review'),'FORM_REVIEW_DECISION','Choose review, approve or revise.');
@@ -221,7 +222,7 @@ export function createCentralFormReleaseReview({workspace,store,authoring,fetchI
     }
     const updated={...record,decisions:[...next.values()],approval:null,
       status:input.overall==='revise'?'REVISION_REQUESTED':'REVIEWING',
-      history:[...record.history,{kind:'staff-decision',reviewer,note:reason,at,overall:input.overall??'review',decisions:clone(input.decisions)}]};
+      history:[...record.history,{kind:'staff-decision',reviewer,note:reason,at,overall:input.overall??'review',decisions:clone(input.decisions)},...(continuation?.history??[])]};
     let plan=null;
     if(input.overall==='approve'){
       const ready=readiness(updated);
@@ -244,7 +245,8 @@ export function createCentralFormReleaseReview({workspace,store,authoring,fetchI
     store.transaction(()=>{
       const current=store.get(kinds.review,record.id);requireRevision(current,record.revision);
       if(plan)store.writeRecord(kinds.plan,plan.id,plan,0);
-      store.writeRecord(kinds.review,record.id,updated,record.revision);
+      const saved=store.writeRecord(kinds.review,record.id,updated,record.revision);
+      continuation?.commit(saved);
     });
     return getReview({id:record.id});
   }
@@ -289,7 +291,14 @@ export function createCentralFormReleaseReview({workspace,store,authoring,fetchI
       captures,snapshots,reviews,publications:store.list(kinds.publication).map(({source,...value})=>({...value,form:source.form,xml:source.xml})),
       authoringCandidates:authoring?.listCandidates?await authoring.listCandidates():[],activeOperations:active};
   }
-  const api={state,getReview,createReview,mapReports,decide,publicationPlan,validatePublicationPlan,
+  const colleague=createColleagueReview({store,getReview,getSource:input=>snapshot(input.id),decide});
+  const api={exportColleague:input=>operation(()=>colleague.exportPackage(input)),
+    receiveColleague:input=>operation(()=>colleague.receiveText(input)),
+    receiveColleagueFile:input=>operation(()=>colleague.receiveFile(input)),
+    receiveColleagueStream:(input,stream)=>operation(()=>colleague.receiveStream(input,stream)),
+    previewColleague:input=>operation(()=>colleague.preview(input)),
+    applyColleague:input=>operation(()=>colleague.apply(input)),
+    state,getReview,createReview,mapReports,decide,publicationPlan,validatePublicationPlan,
     getSource:input=>snapshot(input.id),retainCapture:input=>operation(()=>retainCapture(input)),
     retainDraft:input=>operation(()=>retainDraft(input)),
     retainAuthoring:input=>operation(()=>retainAuthoring(input)),retainSource:input=>operation(()=>retainSource(input)),
