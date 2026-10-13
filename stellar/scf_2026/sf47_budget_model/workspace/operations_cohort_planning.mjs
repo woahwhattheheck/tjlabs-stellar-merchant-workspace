@@ -1160,7 +1160,8 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     download(raw,cleanName(document.snapshots[document.current.snapshotSha256].plan?.name||caseValue.program.name)+'-working-session.json');
   }
   async function mergeWorkingSession(document,origin){
-    const durable=await storeCohortWorkingSnapshots(caseId,document.snapshots);
+    workingGraph();
+    const durable=await storeCohortWorkingSnapshots(caseId,{...state.workingSnapshots,...document.snapshots});
     workingGraph();
     const snapshots={...state.workingSnapshots};
     for(const [id,snapshot] of Object.entries(document.snapshots)){
@@ -1179,7 +1180,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       (kind==='history'?history:incoming).push(entry);all.set(id,entry);
     }
     state.workingSnapshots=snapshots;state.workingHistory=history;state.workingIncoming=incoming;
-    if(durable){state.workingStorage='INDEXED_DB';state.workingSnapshotIds=Object.keys(snapshots);}
+    state.workingStorage=durable?'INDEXED_DB':'INLINE';state.workingSnapshotIds=durable?Object.keys(snapshots):[];
     state.notice='The complete incoming working session is retained in Saved editions. Review it and choose Open as working session; current edits remain selected.';
     persist();
   }
