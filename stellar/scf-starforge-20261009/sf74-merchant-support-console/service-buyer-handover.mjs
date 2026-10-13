@@ -329,6 +329,67 @@ export async function readServiceBuyerHandovers(context){
   const r=await readContext(context);return {schema:SERVICE_BUYER_VIEW_SCHEMA,revision:r.commissioning.revision,
     captures:[...r.captures.values()].map(captureReference),intents:[...r.intents.values()].map(copy),outcomes:[...r.outcomes.values()].map(copy)};
 }
+
+/** A navigation projection over validated original materials. A saved action with
+ * no case outcome may already have committed in its native owner's journal; its
+ * status therefore describes only the saved case, never dispatch safety. */
+export function serviceBuyerWorkflow(view){
+  const groups=new Map(),outcomes=new Map();
+  for(const outcome of view.outcomes??[]){
+    const list=outcomes.get(outcome.intentId)??[];list.push(outcome);outcomes.set(outcome.intentId,list);
+  }
+  const string=value=>typeof value==='string'&&value.length?value:null;
+  const stage=action=>({adjustment_capture:'receipt',refund_review:'receipt',
+    center_save:'coding',labels_save:'coding',coding_save:'coding',credit_coding_save:'coding',
+    period_save:'period',disposition:'period',period_review:'period',period_close:'period',period_reopen:'period',
+    delivery:'delivery',accountant_create:'accountant',accountant_return_save:'accountant'})[action]??'other';
+  for(const intent of view.intents??[]){
+    const key=JSON.stringify([intent.capture.id,intent.buyer.alias,intent.buyer.workspaceId]);
+    let group=groups.get(key);
+    if(!group){
+      group={id:key,capture:copy(intent.capture),buyer:{alias:intent.buyer.alias,workspaceId:intent.buyer.workspaceId,
+        schema:intent.buyer.schema,dataContext:intent.buyer.dataContext},actions:[],stages:[]};
+      groups.set(key,group);
+    }
+    const returned=outcomes.get(intent.id)??[];
+    // readServiceBuyerHandovers validates unique retained outcomes before this projection.
+    need(returned.length<=1,'The original buyer action has conflicting case outcomes.','SERVICE_BUYER_OUTCOME_CONFLICT',409);
+    const outcome=returned[0]??null,result=outcome?.result??{},record=result.response?.result??result.record??{};
+    const input=intent.input??{},basis=intent.basis??{};
+    const reference={
+      packetId:string(basis.packet?.id??input.packetId??(
+        intent.action==='refund_review'?input.id:intent.action==='adjustment_capture'?record.id:null)),
+      purchaseItemId:string(basis.packet?.item_id??(
+        intent.action==='refund_review'?record.item_id:intent.action==='coding_save'?input.id:null)),
+      creditId:string(intent.action==='credit_coding_save'?input.id:null),
+      periodId:string(basis.period?.id??basis.issued?.period_id??(
+        ['period_review','period_close','period_reopen'].includes(intent.action)?input.id:
+        intent.action==='disposition'?input.periodId:intent.action==='period_save'?record.id:null)),
+      reviewId:string(intent.action==='period_review'?record.id:intent.action==='period_close'?input.reviewId:null),
+      closeId:string(input.closeId??(intent.action==='period_close'?record.id:null)),
+      deliveryOutcomeId:string(input.deliveryOutcomeId??(intent.action==='delivery'?outcome?.id:null)),
+      accountantWorkspace:string(intent.accountant?.alias??input.accountingWorkspace),
+      handoffId:string(intent.action==='accountant_create'?record.id:null),
+      buyerReturnId:string(intent.action==='accountant_return_save'?record.id:null)
+    };
+    group.actions.push({id:intent.id,sha256:intent.sha256,action:intent.action,stage:stage(intent.action),
+      actor:intent.actor,preparedAt:intent.createdAt,buyerRevision:intent.buyer.revision,
+      status:outcome?'OUTCOME_SAVED':'ACTION_SAVED',reference,
+      outcome:outcome?{id:outcome.id,sha256:outcome.sha256,createdAt:outcome.createdAt,
+        revision:result.response?.revision??result.revision??null,
+        files:(result.files??[]).map(({base64,...file})=>copy(file))}:null});
+  }
+  const order=['receipt','coding','period','delivery','accountant','other'];
+  for(const group of groups.values()){
+    group.stages=order.map(id=>{
+      const actions=group.actions.filter(row=>row.stage===id);
+      return {id,actions:actions.length,savedOutcomes:actions.filter(row=>row.outcome).length,
+        actionsAwaitingCaseOutcome:actions.filter(row=>!row.outcome).length};
+    }).filter(row=>row.actions);
+  }
+  return {schema:'stellar-forge.merchant-service-buyer-workflow.v1',groups:[...groups.values()]};
+}
+
 export function serviceBuyerSummary(view){
   const summary={schema:view.schema,revision:view.revision,captures:copy(view.captures),
     intents:view.intents.map(v=>({id:v.id,createdAt:v.createdAt,actor:v.actor,capture:copy(v.capture),buyer:copy(v.buyer),action:v.action,sha256:v.sha256,
@@ -336,7 +397,8 @@ export function serviceBuyerSummary(view){
     outcomes:view.outcomes.map(v=>({id:v.id,createdAt:v.createdAt,actor:v.actor,intentId:v.intentId,intentSha256:v.intentSha256,
       capture:copy(v.capture),buyer:copy(v.buyer),action:v.action,sha256:v.sha256,
       recordId:v.result.response?.result?.id??v.result.record?.id??v.result.closeId??null,revision:v.result.response?.revision??v.result.revision??null,
-      files:(v.result.files??[]).map(({base64,...file})=>file)}))};return summary;
+      files:(v.result.files??[]).map(({base64,...file})=>file)}))};
+  summary.workflow=serviceBuyerWorkflow(view);return summary;
 }
 
 
