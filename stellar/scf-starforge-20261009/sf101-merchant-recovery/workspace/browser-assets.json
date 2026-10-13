@@ -29,6 +29,13 @@
         "object-sessions-desk.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/recovery-support-desk.mjs",
+      [
+        "recovery-support-desk.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
