@@ -97,6 +97,14 @@ export interface MerchantOperatorClient {
   paymentEnvelope(id:string,settings?:RequestSettings):Promise<PaymentEnvelope>;
   submitPaymentAuthorization(id:string,paymentSignature:string,settings?:RequestSettings):Promise<InvoiceOutcome>;
   reconcileInvoice(id:string,settings?:RequestSettings):Promise<InvoiceInspection>;
+  customerReviews(id:string,settings?:RequestSettings):Promise<CustomerReviewHistory>;
+  issueCustomerReview(input:CustomerReviewRequest&{invoiceRevision:string},settings?:RequestSettings):Promise<CustomerReviewSave>;
+  receiveCustomerReview(input:CustomerReviewRequest&{text:string},settings?:RequestSettings):Promise<CustomerReviewSave>;
+  compareCustomerReview(id:string,returnSha256:string,settings?:RequestSettings):Promise<CustomerReviewComparison>;
+  decideCustomerReview(input:CustomerReviewRequest&{invoiceRevision:string;comparisonSha256:string;returnSha256:string;editionSha256:string;actor:string;disposition:'accepted'|'follow_up'|'declined';note:string;supportCaseId?:string|null},settings?:RequestSettings):Promise<CustomerReviewSave>;
+  downloadCustomerReview(id:string,issueId:string,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
+  downloadCustomerReturn(id:string,returnSha256:string,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
+  downloadCustomerReviewSupport(id:string,destination:string,settings?:RequestSettings):Promise<SavedDownload>;
   intakeContext(settings?:RequestSettings):Promise<IntakeContext>;
   listIntakes(settings?:RequestSettings):Promise<{context:IntakeContext;intakes:Pick<IntakeStatus,'operation'|'createdAt'|'source'|'counts'|'state'|'planSha256'>[]}>;
   inspectIntakeSource(source:IntakeSource,settings?:RequestSettings):Promise<{columns:string[];rowCount:number;bytes:number;sha256:string}>;
@@ -169,3 +177,9 @@ export interface InvoiceDeliveryTicket extends FileIdentity {
  url:string;fileName:string;source:{storeId:string;tenantId:string;revision:string};
  selection:{invoiceId:string;revision:string};invoiceCount:1;offerCount:number;expiresInSeconds:number;
 }
+
+export interface CustomerReviewRequest{invoiceId:string;requestId:string;expectedReviewVersion:string}
+export interface CustomerReviewSave{invoiceId:string;reviewVersion:string;issueId?:string;issueSha256?:string;invoiceRevision?:string;returnSha256?:string;reviewId?:string;editionSha256?:string;decision?:CustomerReviewDecision}
+export interface CustomerReviewDecision{id:string;requestId:string;returnSha256:string;editionSha256:string;invoiceRevision:string;at:string;actor:string;disposition:'accepted'|'follow_up'|'declined';note:string;supportCaseId:string|null}
+export interface CustomerReviewHistory{invoiceId:string;owner:{storeId:string;tenantId:string};reviewVersion:string;readOnly:boolean;issues:{id:string;sha256:string;invoiceRevision:string;issuedAt:string}[];returns:{sha256:string;receivedAt:string;reviewId:string;issueId:string;editions:{sequence:number;sha256:string;at:string;reviewer:{name:string;organization:string;contact:string;role:string};overall:string}[]}[];decisions:CustomerReviewDecision[]}
+export interface CustomerReviewComparison{issueId:string;invoiceId:string;issuedRevision:string;currentRevision:string;invoiceChanged:boolean;returnSha256:string;reviewId:string;editions:CustomerReviewHistory['returns'][number]['editions'];unfinishedReturnedDraft:boolean;issued:JSONObject;current:JSONObject;returned:JSONObject;attribution:string;reviewVersion:string;comparisonSha256:string}

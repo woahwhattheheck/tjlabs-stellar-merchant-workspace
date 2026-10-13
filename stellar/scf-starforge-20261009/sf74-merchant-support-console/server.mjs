@@ -33,6 +33,8 @@ import {openCommercialReceivingController} from './commercial/operator.mjs';
 import {openCommercialTariffController} from './commercial/tariff-controller.mjs';
 
 const ASSETS = Object.freeze({
+  '/customer-review-desk.mjs':['customer-review-desk.mjs','text/javascript; charset=utf-8'],
+  '/products/x402api-merchant-workspace/customer-review-core.mjs': ['../../../products/x402api-merchant-workspace/customer-review-core.mjs', 'text/javascript; charset=utf-8'],
   '/implementation-portfolio': ['implementation-portfolio.html', 'text/html; charset=utf-8'],
   '/implementation-portfolio/app.mjs': ['implementation-portfolio.mjs', 'text/javascript; charset=utf-8'],
   '/implementation-portfolio/model.mjs': ['implementation-portfolio-model.mjs', 'text/javascript; charset=utf-8'],

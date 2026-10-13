@@ -1,3 +1,4 @@
+import {mergeCapsules} from '../../../products/x402api-merchant-workspace/customer-review-core.mjs';
 import {mergeServiceHistory} from './service-commitments.mjs';
 import { CASE_STATUSES } from './case-statuses.mjs';
 export { CASE_STATUSES } from './case-statuses.mjs';
@@ -361,7 +362,7 @@ export async function openCaseStore(path) {
     if (input.expectedRevision !== null) revision(input.expectedRevision);
     const metadata = caseMetadata(input.metadata);
     let workspace = await parseWorkspace(input.workspaceText), workspaceText=input.workspaceText;
-    let workspaceBytes = encoder.encode(workspaceText), workspaceSha256 = digest(workspaceBytes), commissioningChanged=false, serviceChanged=false;
+    let workspaceBytes = encoder.encode(workspaceText), workspaceSha256 = digest(workspaceBytes), commissioningChanged=false, serviceChanged=false, customerReviewChanged=false;
     // Omitted preserves a support attachment for existing API clients; explicit
     // null removes it from this new version without erasing retained history.
     const hasSupport=Object.hasOwn(input,'supportText');
@@ -375,14 +376,16 @@ export async function openCaseStore(path) {
       try { currentRevision = await head(id); current = await version(id,currentRevision); }
       catch (error) { if (error.code !== 'ENOENT') throw error; }
       const runtimeSupport=hasSupport?suppliedSupport:current?.runtimeSupport??null;
-      if(current&&(current.sources?.commissioning||workspace.commissioning||current.sources?.service||workspace.service)) {
+      if(current&&(current.sources?.commissioning||workspace.commissioning||current.sources?.service||workspace.service||current.sources?.customerReview||workspace.customerReview)) {
         const retainedRecord=await read(id,currentRevision),retained=await parseWorkspace(retainedRecord.workspaceText);
         const commissioning=await mergeCommissioningHistory(workspace.commissioning,retained.commissioning);
         const service=await mergeServiceHistory(workspace.service,retained.service);
         commissioningChanged=JSON.stringify(commissioning)!==JSON.stringify(workspace.commissioning??null);
         serviceChanged=JSON.stringify(service)!==JSON.stringify(workspace.service);
-        if(commissioningChanged||serviceChanged) {
-          workspaceText=await serializeWorkspace(workspaceDraft(workspace,{commissioning,service}),{now:workspace.savedAt});
+        const customerReview=await mergeCapsules(workspace.customerReview,retained.customerReview);
+        customerReviewChanged=JSON.stringify(customerReview)!==JSON.stringify(workspace.customerReview??null);
+        if(commissioningChanged||serviceChanged||customerReviewChanged) {
+          workspaceText=await serializeWorkspace(workspaceDraft(workspace,{commissioning,service,customerReview}),{now:workspace.savedAt});
           workspace=await parseWorkspace(workspaceText);workspaceBytes=encoder.encode(workspaceText);
           workspaceSha256=digest(workspaceBytes);
         }
@@ -393,7 +396,8 @@ export async function openCaseStore(path) {
           [currentRevision,current.previousRevision].includes(input.expectedRevision))
         return {case:summary(current,currentRevision), unchanged:true,
           ...(commissioningChanged?{commissioning:workspace.commissioning??null}:{}),
-          ...(serviceChanged?{service:workspace.service??null}:{})};
+          ...(serviceChanged?{service:workspace.service??null}:{}),
+          ...(customerReviewChanged?{customerReview:workspace.customerReview??null}:{})};
       if (input.expectedRevision !== currentRevision)
         throw Object.assign(fail('CASE_CONFLICT', 'A newer case version exists. Open it or save your draft as a separate case.', 409), {currentRevision});
       if (!current && (await readdir(root)).filter(name=>ID.test(name)).length >= CASE_LIMIT)
@@ -420,7 +424,8 @@ export async function openCaseStore(path) {
       await syncDirectory(folder); await syncDirectory(root);
       return {case:summary(value,newRevision), unchanged:false,
         ...(commissioningChanged?{commissioning:workspace.commissioning??null}:{}),
-          ...(serviceChanged?{service:workspace.service??null}:{})};
+          ...(serviceChanged?{service:workspace.service??null}:{}),
+          ...(customerReviewChanged?{customerReview:workspace.customerReview??null}:{})};
     } finally {
       if (temp) await unlink(temp).catch(()=>{});
       await releaseWriter(lock);
