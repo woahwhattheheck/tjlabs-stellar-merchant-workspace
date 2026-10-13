@@ -243,6 +243,33 @@ def complete_stage(name, command, result, root, lock, state, environment):
         return
     run_stage(name, command, root, lock, state, environment, result_path=result)
 
+RETURN_STAGE_RUNNER = r"""import { readFile, open, link, unlink, lstat } from 'node:fs/promises';
+import { resolve, dirname } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { randomUUID } from 'node:crypto';
+const [moduleFile, inputFile, outputFile] = process.argv.slice(1);
+const input = JSON.parse(await readFile(inputFile, 'utf8'));
+const { runResearchReturnCourse } = await import(pathToFileURL(resolve(moduleFile)).href);
+const result = await runResearchReturnCourse(input);
+const bytes = Buffer.from(JSON.stringify(result, null, 2) + '\n');
+const temporary = outputFile + '.' + randomUUID() + '.partial';
+let descriptor;
+try {
+  descriptor = await open(temporary, 'wx', 0o600);
+  await descriptor.writeFile(bytes); await descriptor.sync(); await descriptor.close(); descriptor = null;
+  try { await link(temporary, outputFile); }
+  catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    const stat = await lstat(outputFile);
+    if (!stat.isFile() || stat.isSymbolicLink() || !(await readFile(outputFile)).equals(bytes))
+      throw Error('The original complete return phase result changed.');
+  }
+  const parent = await open(dirname(outputFile), 'r'); try { await parent.sync(); } finally { await parent.close(); }
+} finally { await descriptor?.close().catch(() => {}); await unlink(temporary).catch(e => { if (e.code !== 'ENOENT') throw e; }); }
+process.stdout.write(JSON.stringify({schema:result.schema,operation:result.operation,phase:result.phase,outputFile})+'\n');
+"""
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--packet", required=True)
@@ -260,6 +287,8 @@ def main():
     parser.add_argument("--mtc-originals", help="Complete original MTC forecast and FAQ directory for this same research project")
     parser.add_argument("--research-commerce-selection",
                         help="Continue this actual issued Research product through editable customer and optional paid receiving")
+    parser.add_argument("--research-return-course", action="store_true",
+                        help="Continue the actual received customer edition through return, explicit adoption and complete v9 receiving")
     parser.add_argument("--pdftoppm", default="pdftoppm")
     parser.add_argument("--node", default="node")
     parser.add_argument("--chromium", required=True)
@@ -268,6 +297,8 @@ def main():
     parser.add_argument("--weasyprint-python", help="Explicit permitted WeasyPrint renderer Python; retain its true renderer identity")
     parser.add_argument("--archive-directory")
     options = parser.parse_args()
+    check(not options.research_return_course or options.research_commerce_selection,
+          "Continue the original Research commerce selection before its customer return course.")
     packet, packet_bytes = read_packet(options.packet, options.packet_sha256)
     check(bool(options.source_edition_packet) == bool(options.source_edition_sha256),
           "Select both the complete source edition packet and its published SHA256.")
@@ -389,6 +420,10 @@ def main():
             stage.get("name") == "complete-research-commerce-receiving" for stage in state["stages"])
         check(not commerce_started or options.research_commerce_selection,
               "Continue the original Research product receiving with its retained selection.")
+        return_started = state.get("researchReturns") or any(
+            stage.get("name", "").startswith("research-return-") for stage in state["stages"])
+        check(not return_started or options.research_return_course,
+              "Continue the original customer-return course with --research-return-course.")
         state.update({"lastStartedAt": now(), "status": "running", "sourceEdition": source_edition,
                       "runtime": {"node": versions, "python": sys.version, "chromium": str(browser),
                                   "playwright": str(playwright), "temporaryDirectory": environment["TMPDIR"],
@@ -632,6 +667,90 @@ def main():
                                "sha256": sha(commerce_result_bytes)},
                     "projectId": selection["projectId"], "customer": commerce_result["customer"],
                     "restored": commerce_result["restored"], "financial": commerce_result["financial"]}
+            if options.research_return_course:
+                return_directory = private_directory(root / "research-return")
+                customer_directory = pathlib.Path(commerce_result["customer"]["projectDirectory"]).resolve(strict=True)
+                check(under(customer_directory, commerce_directory) and customer_directory != source_project,
+                      "Continue the actual independent customer created by the original commerce course.")
+                package_descriptor = commerce_result["package"]
+                original_package = read_regular(pathlib.Path(package_descriptor["path"]))
+                check(len(original_package) == package_descriptor["bytes"] and
+                      sha(original_package) == package_descriptor["sha256"],
+                      "Retain the complete issued package selected by the original customer receiving.")
+                return_selection = {
+                    "schema": "commons.econsult-research-return-selection.v1",
+                    "producerDirectory": str(source_project), "customerDirectory": str(customer_directory),
+                    "productId": selection["productId"], "packageSha256": package_descriptor["sha256"],
+                    "originalCommerceResult": {"path": str(commerce_result_path),
+                        "bytes": len(commerce_result_bytes), "sha256": sha(commerce_result_bytes)}}
+                retain_exact(return_directory / "original-selection.json",
+                             (json.dumps(return_selection, ensure_ascii=False, indent=2) + "\n").encode())
+                native_return_module = product / "fred/research/return-journey.mjs"
+                browser_return_module = product / "fred/research/return-browser.mjs"
+                check(native_return_module.is_file() and browser_return_module.is_file(),
+                      "Use the complete selected customer-return native and browser source edition.")
+                def native_return_phase(phase):
+                    path = return_directory / ("controller-" + phase + ".json")
+                    payload = {"phase": phase, "directory": str(return_directory)}
+                    if phase == "prepare":
+                        payload.update({key: return_selection[key] for key in
+                                        ("producerDirectory", "customerDirectory", "productId", "packageSha256")})
+                    retain_exact(path, (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode())
+                    result_path = return_directory / ("controller-" + phase + "-result.json")
+                    command = [node, "--input-type=module", "-e", RETURN_STAGE_RUNNER,
+                               str(native_return_module), str(path), str(result_path)]
+                    complete_stage("research-return-" + phase, command, result_path,
+                                   root, lock, state, environment)
+                    phase_result = json.loads(read_regular(result_path))
+                    check(phase_result.get("schema") == "stellar-forge.research-return-course.v1" and
+                          phase_result.get("productId") == return_selection["productId"] and
+                          phase_result.get("packageSha256") == return_selection["packageSha256"] and
+                          phase_result.get("selection") == {key: return_selection[key] for key in
+                              ("producerDirectory", "customerDirectory", "productId", "packageSha256")},
+                          "Reopen the exact original customer-return course selection.")
+                    return phase_result
+                def browser_return_phase(phase):
+                    path = return_directory / ("controller-browser-" + phase + ".json")
+                    payload = {"directory": str(return_directory), "phase": phase,
+                               "browserConfig": browser_config}
+                    retain_exact(path, (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode())
+                    result_path = return_directory / ("return-browser.json" if phase == "operate"
+                                                       else "return-browser-received.json")
+                    complete_stage("research-return-browser-" + phase,
+                                   [node, str(browser_return_module), str(path)], result_path,
+                                   root, lock, state, environment)
+                    report = json.loads(read_regular(result_path))
+                    check(report.get("schema") == "stellar-forge.research-return-browser.v1" and
+                          report.get("operation") == return_manifest["operation"] and
+                          report.get("phase") == ("OPERATED" if phase == "operate" else "RECEIVED"),
+                          "Complete the actual original return browser and independent receiving chapter.")
+                    for entry in report["downloads"] + report["screenshots"]:
+                        path = pathlib.Path(entry["path"]).resolve(strict=True)
+                        check(under(path, return_directory), "Keep the return course outputs in their original directory.")
+                        raw = read_regular(path)
+                        check(len(raw) == entry["bytes"] and sha(raw) == entry["sha256"],
+                              "Preserve every original returned file and actual screenshot.")
+                return_manifest = native_return_phase("prepare")
+                browser_return_phase("operate")
+                return_manifest = native_return_phase("finish")
+                browser_return_phase("receive")
+                return_manifest = native_return_phase("seal")
+                check(return_manifest.get("phase") == "COMPLETE",
+                      "Finish complete customer return, independent receiving and browser reopening.")
+                return_files = []
+                for entry in return_manifest["files"]:
+                    path = return_directory / entry["filename"]
+                    raw = read_regular(path)
+                    check(len(raw) == entry["bytes"] and sha(raw) == entry["sha256"],
+                          "The complete returned project archive changed.")
+                    return_files.append({"path": str(path), "bytes": len(raw), "sha256": sha(raw)})
+                state["researchReturns"] = {"selection": return_selection,
+                    "operation": return_manifest["operation"], "returnId": return_manifest["returnId"],
+                    "phase": "COMPLETE", "directory": str(return_directory),
+                    "files": return_files, "producerReceivedDirectory": return_manifest["producerReceivedDirectory"],
+                    "customerReceivedDirectory": return_manifest["customerReceivedDirectory"],
+                    "sourceEdition": source_edition,
+                    "ownerReview": "Open and VIEW every actual desktop/narrow screenshot, complete original attachment and reopened project before presenting the result."}
             final_bytes = read_regular(final_project)
             state["completeCustomerProject"] = {"path": str(final_project),
                 "bytes": len(final_bytes), "sha256": sha(final_bytes)}
@@ -651,6 +770,8 @@ def main():
             result["mtcSources"] = state["mtcSources"]
         if state.get("researchCommerce"):
             result["researchCommerce"] = state["researchCommerce"]
+        if state.get("researchReturns"):
+            result["researchReturns"] = state["researchReturns"]
         if state.get("completeCustomerProject"):
             result["completeCustomerProject"] = state["completeCustomerProject"]
         if failed:
