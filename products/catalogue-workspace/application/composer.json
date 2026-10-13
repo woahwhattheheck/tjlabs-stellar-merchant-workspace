@@ -1,0 +1,22 @@
+{
+  "name": "tjl/catalogue-workspace",
+  "description": "Source-bound native Sylius catalogue review and original Akeneo import continuation",
+  "type": "symfony-bundle",
+  "license": "MIT",
+  "require": {
+    "php": "^8.2",
+    "ext-json": "*",
+    "ext-zip": "*",
+    "webgriffe/sylius-akeneo-plugin": "3.1.0",
+    "doctrine/dbal": "^3.8 || ^4.0",
+    "symfony/security-bundle": "^6.4 || ^7.4",
+    "symfony/security-csrf": "^6.4 || ^7.4",
+    "symfony/twig-bundle": "^6.4 || ^7.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "Tjl\\CatalogueWorkspace\\": "src/"
+    }
+  },
+  "minimum-stability": "stable"
+}
