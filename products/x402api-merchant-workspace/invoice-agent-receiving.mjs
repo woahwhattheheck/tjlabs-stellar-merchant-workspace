@@ -26,8 +26,16 @@ async function completeArtifacts(owner,root,artifacts) {
 /** Caller retains Applications/browser ownership. The original browser and agent
  * select the SAME complete project operation and its whole source snapshot. */
 export async function receiveMerchantInvoiceAgent({url,operatorToken,tokenEnvironment,directory:root,
- expectedInvoices,operation,projectOperation,exportProject}) {
+ expectedInvoices,originalAuthorizations,operation,projectOperation,exportProject}) {
  assert.equal(new Set(expectedInvoices).size,5);assert.equal(expectedInvoices.length,5);
+ assert(originalAuthorizations&&typeof originalAuthorizations==='object');
+ assert.deepEqual(Object.keys(originalAuthorizations).sort(),[...expectedInvoices].sort());
+ for(const invoiceId of expectedInvoices) {
+  const original=originalAuthorizations[invoiceId];
+  assert.equal(typeof original.paymentSignature,'string');
+  assert(/^[\x21-\x7e]{1,65536}$/.test(original.paymentSignature));
+  assert.equal(hash(Buffer.from(original.paymentSignature)),original.sha256);
+ }
  assert(/^[A-Z][A-Z0-9_]{0,127}$/.test(tokenEnvironment));assert.equal(typeof exportProject,'function');
  await directory(root);await directory(join(root,'artifacts'));await directory(join(root,'received'));
  const inspected=await inspectMerchantOperator({url,operatorToken});
@@ -49,10 +57,15 @@ export async function receiveMerchantInvoiceAgent({url,operatorToken,tokenEnviro
    const v=await owner.call('merchant_invoice_'+kind,{merchant:'original',...args});calls.push(kind);
    if(v.native.artifact)artifacts.push(v.native.artifact);
    if(v.native.requestArtifact)artifacts.push(v.native.requestArtifact);
+   if(v.native.envelopeArtifact)artifacts.push(v.native.envelopeArtifact);
    return v.native;
   }
   const catalogue=merchantInvoiceTools((name,description,properties,required,annotations)=>({name,description,properties,required,annotations}));
-  assert.equal(catalogue.length,22);
+  assert.equal(catalogue.length,27);
+  for(const action of ['charge','authorize','reconcile','resume_payment']) {
+   const tool=catalogue.find(v=>v.name==='merchant_invoice_'+action);
+   assert.equal(tool.annotations.readOnly,false);assert.equal(tool.annotations.openWorld,true);
+  }
   const merchants=await owner.call('merchant_invoice_merchants',{});assert.equal(merchants.merchants.length,1);
   const context=await call('context'),register=await call('register',{limit:200});
   assert.equal(register.orders.length,5);
@@ -91,8 +104,33 @@ export async function receiveMerchantInvoiceAgent({url,operatorToken,tokenEnviro
   assert.equal(run.counts.pending,0);assert.equal(run.counts.conflicts,0);
   assert.equal((await call('run',{operation,expectedPlanSha256:plan.planSha256})).planSha256,plan.planSha256);
   const list=await call('intakes',{limit:50});assert(list.intakes.some(v=>v.operation===operation));
+  const payments=[];
   for(const invoiceId of expectedInvoices) {
    assert.equal((await call('invoice',{invoiceId})).invoice.state,'COMPLETE');
+   const before=await call('payment',{invoiceId});
+   assert.equal(before.state,'COMPLETE');assert(before.chargeId);
+   assert.equal(before.envelopeSha256,before.envelopeArtifact.payload.sha256);
+   const actions=[];
+   for(const action of ['charge','authorize','reconcile']) {
+    const result=await call(action,{invoiceId,...(action==='authorize'?{
+     expectedEnvelopeSha256:before.envelopeSha256,
+     paymentSignature:originalAuthorizations[invoiceId].paymentSignature}:{})});
+    assert.equal(result.state,'COMPLETE');assert.equal(result.chargeId,before.chargeId);
+    assert.equal(result.paymentId,before.paymentId);assert.deepEqual(result.result,before.result);
+    const replay=await call('resume_payment',{invoiceId,action,
+     expectedRequestSha256:result.requestArtifact.payload.sha256});
+    assert.equal(replay.requestArtifact.artifactId,result.requestArtifact.artifactId);
+    assert.equal(replay.state,'COMPLETE');assert.equal(replay.chargeId,before.chargeId);
+    assert.equal(replay.paymentId,before.paymentId);assert.deepEqual(replay.result,before.result);
+    actions.push({action,requestArtifact:result.requestArtifact.artifactId,
+     requestSha256:result.requestArtifact.payload.sha256,outcomeArtifact:result.artifact.artifactId});
+   }
+   const after=await call('payment',{invoiceId});
+   assert.equal(after.envelopeSha256,before.envelopeSha256);
+   assert.equal(after.chargeId,before.chargeId);assert.deepEqual(after.result,before.result);
+   payments.push({invoiceId,state:after.state,chargeId:after.chargeId,paymentId:after.paymentId,
+    originalAuthorizationSha256:originalAuthorizations[invoiceId].sha256,
+    envelopeSha256:after.envelopeSha256,actions});
    await call('envelope',{invoiceId});await call('result',{invoiceId});
   }
   const reviewed=await call('register',{limit:200});
@@ -119,7 +157,7 @@ export async function receiveMerchantInvoiceAgent({url,operatorToken,tokenEnviro
    operation,projectOperation,storeId:connection.storeId,tenantId:connection.tenantId,
    originalInvoices:[...expectedInvoices].sort(),planSha256:plan.planSha256,
    sourceSha256:source.source.sha256,configuration,connectionSha256:savedConnection.sha256,
-   artifacts:full,tools:catalogue.map(v=>v.name),calls};
+   artifacts:full,payments,tools:catalogue.map(v=>v.name),calls};
   await save(join(root,'complete-'+savedConnection.sha256+'.json'),result);
   return {browser,receiving:result};
  } finally {try{if(owner)await owner.close();}finally{
@@ -131,6 +169,19 @@ export async function verifyMerchantInvoiceAgent(result,{expectedInvoices,operat
  assert.equal(result.schema,'stellar-forge.merchant-invoice-agent-receiving.v1');assert.equal(result.state,'COMPLETE');
  assert.equal(result.operation,operation);assert.equal(result.projectOperation,projectOperation);
  assert.deepEqual(result.originalInvoices,[...expectedInvoices].sort());
+ // Older completed source courses retain their exact result. New payment
+ // courses must carry every original invoice and three retained action pairs.
+ if(result.payments) {
+  assert.deepEqual(result.payments.map(v=>v.invoiceId).sort(),[...expectedInvoices].sort());
+  assert.equal(result.tools.length,27);
+  for(const invoice of result.payments) {
+   assert.equal(invoice.state,'COMPLETE');
+   assert.deepEqual(invoice.actions.map(v=>v.action),['charge','authorize','reconcile']);
+   assert(/^[a-f0-9]{64}$/.test(invoice.originalAuthorizationSha256));
+   for(const action of invoice.actions)assert(result.artifacts.some(v=>
+    v.artifact.artifactId===action.requestArtifact&&v.artifact.payload.sha256===action.requestSha256));
+  }
+ }
  for(const item of result.artifacts)await verifyMerchantArtifact(item.file.path,item.artifact.payload);
  const owner=await ownerAt(result.configuration);
  try {

@@ -24,6 +24,19 @@ const defs={
  plan:[{merchant:alias,operation:id},['merchant','operation'],'Retain the complete original plan, full CSV/JSON source, configuration and current status as one artifact for review.'],
  run:[{merchant:alias,operation:id,expectedPlanSha256:sha},['merchant','operation','expectedPlanSha256'],
  'Create or recover the reviewed plan’s original local invoice drafts using the maintained owner. The original engine never charges or authorizes payment.'],
+ payment:[{merchant:alias,invoiceId:id},['merchant','invoiceId'],
+ 'Review the original invoice/history and exact wallet envelope as full private artifacts. Returns current payment/delivery state, nextActionAt and the envelope SHA used by authorize.'],
+ charge:[{merchant:alias,invoiceId:id},['merchant','invoiceId'],
+ 'Retain the request and create or recover the original invoice charge through the existing owner. This can contact the configured payment provider; inspect payment after an uncertain response.'],
+ authorize:[{merchant:alias,invoiceId:id,expectedEnvelopeSha256:sha,
+  paymentSignature:{type:'string',pattern:'^[\\x21-\\x7e]{1,65536}$'}},
+ ['merchant','invoiceId','expectedEnvelopeSha256','paymentSignature'],
+ 'Retain the buyer-provided authorization privately, verify its selected original wallet envelope, and submit it once through the existing payment engine. This can authorize a real payment. Never generate or replace a buyer signature.'],
+ reconcile:[{merchant:alias,invoiceId:id},['merchant','invoiceId'],
+ 'Continue the original invoice payment/fulfillment under the engine’s retained authorization, terminal responses and nextActionAt. This may contact its configured provider; COMPLETE verifies the original result.'],
+ resume_payment:[{merchant:alias,invoiceId:id,action:{type:'string',enum:['charge','authorize','reconcile']},expectedRequestSha256:sha},
+ ['merchant','invoiceId','action','expectedRequestSha256'],
+ 'After inspecting the same invoice, explicitly resend the exact selected retained charge, authorization or reconciliation request. Preserves its original invoice, envelope and buyer authorization.'],
  register:[{merchant:alias,selection,limit:{type:'integer',minimum:1,maximum:200},cursor:text,revision:text},['merchant'],
  'Read an original revision-pinned invoice page. Preserve its source revision and cursor across pages.'],
  invoice:[{merchant:alias,invoiceId:id},['merchant','invoiceId'],'Retain the original complete invoice and history; returns its concise state.'],
@@ -43,10 +56,11 @@ const defs={
  'Read exact artifact bytes using original descriptor ownership, SHA and offset. Continue until nextOffset is null.'],
  file_release:[{merchant:alias,readId:text},['merchant','readId'],'Release one temporary artifact descriptor while preserving its complete retained bytes.'],
 };
-const mutation=new Set(['prepare','resume_prepare','run','project_begin']);
+const mutation=new Set(['prepare','resume_prepare','run','project_begin','charge','authorize','reconcile','resume_payment']);
+const external=new Set(['charge','authorize','reconcile','resume_payment']);
 export function merchantInvoiceTools(tool) {
  return Object.entries(defs).map(([k,[properties,required,description]])=>
-  tool(MERCHANT_INVOICE_PREFIX+k,description,properties,required,{readOnly:!mutation.has(k),idempotent:true,openWorld:false}));
+  tool(MERCHANT_INVOICE_PREFIX+k,description,properties,required,{readOnly:!mutation.has(k),idempotent:true,openWorld:external.has(k)}));
 }
 function valid(v,s) {
  if(s.type==='string')return typeof v==='string'&&(!s.pattern||new RegExp(s.pattern).test(v))&&

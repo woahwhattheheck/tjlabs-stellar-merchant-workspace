@@ -48,6 +48,54 @@ export class MerchantInvoices {
    throw error;
   }
  }
+ #invoice(value,invoiceId) {
+  need(value?.order?.id===invoiceId&&typeof value.order.state==='string',
+   'MERCHANT_INVOICE_ORIGINAL_RESPONSE_CHANGED');return value;
+ }
+ #invoiceSummary(value) {
+  const order=value.order;
+  return {invoiceId:order.id,state:order.state,reference:order.reference,title:order.title,
+   chargeId:order.chargeId??null,paymentId:order.paymentId??null,
+   nextActionAt:order.nextActionAt??null,lastError:order.lastError??null,result:order.result??null};
+ }
+ async #paymentView(client,files,invoiceId) {
+  const inspection=this.#invoice(await client.inspectInvoice(invoiceId),invoiceId);
+  let envelope=null,envelopeArtifact=null;
+  if(inspection.order.chargeId) {
+   envelope=await client.paymentEnvelope(invoiceId);
+   envelopeArtifact=await files.document('envelope',envelope,{invoiceId});
+  }
+  const artifact=await files.document('payment-review',{...inspection,envelope},{invoiceId});
+  return {...this.#invoiceSummary(inspection),artifact,
+   ...(envelopeArtifact?{envelopeArtifact,envelopeSha256:envelopeArtifact.payload.sha256}:{})};
+ }
+ async #paymentMutation(client,files,action,body,request) {
+  const invoiceId=body.invoiceId,recovery={tool:'merchant_invoice_payment',invoiceId};
+  // This read-only binding check precedes dispatch to the original writer.
+  if(action==='authorize') {
+   const envelope=await client.paymentEnvelope(invoiceId);
+   need(invoiceHash(Buffer.from(JSON.stringify(envelope)+'\n'))===body.envelopeSha256,
+    'MERCHANT_INVOICE_PAYMENT_ENVELOPE_CHANGED');
+  }
+  let value;
+  try {
+   value=action==='charge'?await client.createCharge(invoiceId):
+    action==='authorize'?await client.submitPaymentAuthorization(invoiceId,body.paymentSignature):
+    await client.reconcileInvoice(invoiceId);
+   this.#invoice(value,invoiceId);
+  } catch(error) {
+   if(error.status===undefined||error.status===null||error.outcome==='UNKNOWN')
+    Object.assign(error,{outcome:'UNKNOWN',recovery,requestArtifact:request});
+   throw error;
+  }
+  const received=this.#invoiceSummary(value);
+  try {
+   return {...received,requestArtifact:request,
+    artifact:await files.document('invoice-'+action+'-outcome',value,{invoiceId})};
+  } catch(error) {
+   Object.assign(error,{outcome:'RECEIVED',recovery,requestArtifact:request,received});throw error;
+  }
+ }
  async #execute(kind,args) {
   if(kind==='merchants')return this.summary;
   const d=this.#owners.get(args.merchant),files=this.#files.get(args.merchant);
@@ -96,6 +144,23 @@ export class MerchantInvoices {
     const offset=a.offset??0,limit=a.limit??20;
     native={intakes:v.intakes.slice(offset,offset+limit),total:v.intakes.length,
      nextOffset:offset+limit<v.intakes.length?offset+limit:null,artifact:await files.document('intake-list',v)};
+   } else if(kind==='payment')native=await this.#paymentView(client,files,a.invoiceId);
+   else if(['charge','authorize','reconcile','resume_payment'].includes(kind)) {
+    const action=kind==='resume_payment'?a.action:kind;
+    const requestKind=action==='authorize'?'invoice-authorization':'invoice-'+action;
+    let body,request;
+    if(kind==='resume_payment') {
+     const original=await files.originalRequest(requestKind,a.invoiceId,a.expectedRequestSha256);
+     body=original.body;request=original.artifact;
+     need(body.invoiceId===a.invoiceId,'MERCHANT_INVOICE_ORIGINAL_REQUEST_CHANGED');
+     merchantInvoiceArguments(action,{merchant,invoiceId:body.invoiceId,
+      ...(action==='authorize'?{expectedEnvelopeSha256:body.envelopeSha256,paymentSignature:body.paymentSignature}:{})});
+    } else {
+     body={invoiceId:a.invoiceId,...(action==='authorize'?
+      {envelopeSha256:a.expectedEnvelopeSha256,paymentSignature:a.paymentSignature}:{})};
+     request=await files.request(requestKind,a.invoiceId,body);
+    }
+    native=await this.#paymentMutation(client,files,action,body,request);
    } else if(kind==='register')native=await client.readRegister(a);
    else if(kind==='invoice') {
     const v=await client.inspectInvoice(a.invoiceId);

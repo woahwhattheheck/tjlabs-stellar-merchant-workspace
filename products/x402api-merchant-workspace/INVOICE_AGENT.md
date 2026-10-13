@@ -1,6 +1,6 @@
-# Merchant invoice sources and complete project delivery
+# Merchant invoice sources, payment and complete customer delivery
 
-The Merchant invoice agent connects to the existing live Merchant application through its maintained typed operator client. It takes original CSV or JSON bytes through source inspection, a saved import plan, review, creation of the original local invoice drafts, complete invoice/result exports, and the original project handover. The received project then opens in the existing Applications intake and review desk.
+The Merchant invoice agent connects to the existing live Merchant application through its maintained typed operator client. It takes original CSV or JSON bytes through source inspection, a saved import plan, review, creation of the original local invoice drafts, the original charge and buyer authorization, payment reconciliation, complete invoice/result exports, and the original project handover. The received project then opens in the existing Applications intake and review desk.
 
 The maintained server owns the invoice database, import plan, fulfillment and project export. The agent retains complete input requests and delivery files in private host storage. The existing browser, operator CLI and agent therefore operate the same original records.
 
@@ -50,7 +50,7 @@ The connection is selected by its exact file SHA and original store/tenant UUID.
 5. Call merchant_invoice_plan and receive the entire artifact. It contains the exact original source, mapping, frozen configuration, every normalized invoice and offered rail, and current status.
 6. Review those complete normalized invoices. Call merchant_invoice_run with the original operation and expectedPlanSha256 from that saved plan.
 7. Read merchant_invoice_status. COMPLETE means every original invoice is retained with compatible frozen terms. A PARTIAL or CONFLICT status and its complete artifact identify the affected original records.
-8. Use the existing payment workflow for subsequent payment and fulfillment. Inspect each original invoice and receive its completed result when available.
+8. Continue each selected invoice through the payment operation below. Receive the original completed result and complete project handover when available.
 
 The mapping retains original source column names:
 
@@ -88,6 +88,85 @@ The request artifact ID identifies its metadata record; the payload SHA identifi
 
 Configuration changes, source changes, incompatible existing invoices and changed review digests keep the original engine's own errors. The complete response is retained as an artifact, while tool summaries preserve the original state, counts, configurationCurrent and any per-invoice interruption.
 
+## Operate the original invoice through payment
+
+The provider exposes 27 tools across source intake, invoice/payment operations, complete retained files and project handover. Payment actions call the original maintained server and its typed client. Each selected invoice keeps its original UUID, frozen resource, prices, charge, authorization and fulfillment identity.
+
+| Tool | Selected original operation |
+| --- | --- |
+| merchant_invoice_payment | Read the original invoice, history, current payment state and complete payment envelope. Return full review and envelope artifacts. |
+| merchant_invoice_charge | Create or receive the invoice's original charge through its existing idempotency key. Save the complete request before dispatch. |
+| merchant_invoice_authorize | Submit the buyer's complete original authorization after checking the exact reviewed envelope SHA. |
+| merchant_invoice_reconcile | Continue the original invoice according to its current nextActionAt, retained provider responses and delivery state. |
+| merchant_invoice_resume_payment | Read and explicitly replay the exact retained charge, authorize or reconcile request for that same invoice. |
+
+### Review and obtain the original charge
+
+Choose an invoice from the reviewed import plan or revision-pinned register. Call merchant_invoice_payment with its invoiceId. Read the entire returned artifact through merchant_invoice_file. The summary includes state, chargeId, paymentId, nextActionAt, lastError and the retained result description where available.
+
+A draft without a charge has no envelope artifact yet. Call merchant_invoice_charge once. The request is stored privately before the POST. The server uses the invoice's original charge idempotency key and original frozen request bytes. If that invoice already has a charge, it returns the same charge.
+
+Read merchant_invoice_payment again. Its envelopeArtifact contains the complete original payment envelope, and envelopeSha256 identifies the exact UTF-8 JSON bytes including the final newline. Receive and verify that entire file before using it. It contains the original request method, URL, content type, body bytes, provider payment requirement, challenge digest and merchant reference.
+
+### Submit the buyer's actual authorization
+
+Use the buyer's existing authorized wallet/payment route to review the original selected payment option and produce its authorization for this exact envelope. The provider accepts the complete original printable-ASCII authorization string; it does not generate a signature, select another account or alter the payment requirement.
+
+Call merchant_invoice_authorize with:
+
+~~~json
+{
+  "merchant": "delivery",
+  "invoiceId": "THE_ORIGINAL_INVOICE_UUID",
+  "expectedEnvelopeSha256": "THE_RECEIVED_COMPLETE_ENVELOPE_SHA256",
+  "paymentSignature": "THE_BUYER_PROVIDED_ORIGINAL_AUTHORIZATION"
+}
+~~~
+
+The agent first retains that complete request privately. It then rereads the original server envelope and compares its complete SHA with expectedEnvelopeSha256 before sending the authorization. A changed envelope fails before the payment POST. Keep the same invoice and investigate the actual change; a saved authorization request remains bound to its selected original envelope.
+
+This call can authorize a real payment. Use only the buyer's actual authorization for the reviewed invoice. The original server retains its exact bytes before contacting the payment provider. The server accepts an identical replay and rejects another signature for the same invoice.
+
+The complete authorization request is private operating data. Its artifact payload contains the original signature so that the same authorized request can be recovered after interruption. Keep the artifact directory and any whole private workspace handover in the original operator's custody. General call summaries, error messages and the receiving summary expose its artifact identity and SHA, without repeating its signature. The existing operator token remains an environment reference and is absent from those saved requests.
+
+### Continue payment and fulfillment
+
+Read merchant_invoice_payment after every received or uncertain mutation. Respect nextActionAt. Call merchant_invoice_reconcile when the original invoice is due. The server processes its original retained response and payment identifiers, reads the provider's current state as needed, and continues its original fulfillment. A pending provider response can require later reconciliation; the call does not replace the payment or original invoice.
+
+| Original state or condition | Operating continuation |
+| --- | --- |
+| No charge yet | Review the draft and call charge for that same invoice. |
+| CHARGE_UNCERTAIN | Read payment and explicitly continue reconciliation using the original charge request. |
+| A charge is retained and authorization is needed | Receive the full original envelope and obtain the buyer's authorization for it. |
+| PAYMENT_PENDING or PAYMENT_UNCERTAIN | Retain the current payment record and nextActionAt, then reconcile that same invoice when due. |
+| SETTLEMENT_CONFIRMED or FULFILLMENT_PENDING | Continue the original reconciliation/fulfillment workflow and retain its resulting state. |
+| FULFILLMENT_INTERRUPTED | Inspect the complete review artifact and original fulfillment condition before continuing the existing workflow. |
+| PAYMENT_FAILED or CHARGE_REJECTED | Inspect the complete original provider outcome. Preserve that invoice and its history; do not substitute an authorization or treat it as a paid result. |
+| COMPLETE | Receive merchant_invoice_result. It returns the original verified delivery bytes. Reconciliation verifies that retained result. |
+
+The complete review artifact carries the original engine's actual fields and history. Use it if the summarized lastError needs context. The original server owns its due-time logic, webhook processing and terminal-response handling; the agent adds no independent payment scheduler.
+
+### Recover an uncertain payment call
+
+Every payment mutation is explicit. A lost response or a successful response whose original invoice identity cannot be validated returns outcome UNKNOWN with recovery pointing to merchant_invoice_payment for the same merchant and invoiceId. Read that selected status before deciding whether an explicit replay is needed.
+
+If a response was received but publishing its local artifact failed, outcome RECEIVED includes the original received state and the same recovery selection. Reading payment again retains the current complete state; it does not require another payment submission.
+
+For an explicit replay, keep the original requestArtifact.payload.sha256:
+
+~~~json
+{
+  "merchant": "delivery",
+  "invoiceId": "THE_ORIGINAL_INVOICE_UUID",
+  "action": "authorize",
+  "expectedRequestSha256": "THE_ORIGINAL_SAVED_REQUEST_PAYLOAD_SHA256"
+}
+~~~
+
+Pass this to merchant_invoice_resume_payment. action is charge, authorize or reconcile. The provider reads the original retained request, verifies its exact SHA and invoice identity, and invokes the same maintained action. An authorization replay also repeats the envelope binding check. It never accepts replacement authorization bytes through the resume tool.
+
+Each action has one original private request per selected invoice and pinned connection. Repeating reconcile deliberately uses that same original invoice request while observing the engine's current state. The original server controls whether any provider call is due. Idempotent tool metadata means the original identities and actions are retained; it does not mean the call is read-only. The four payment mutation tools declare openWorld:true because the maintained server may contact the original payment provider.
+
 ## Receive complete invoice and project files
 
 | Tools | Original output |
@@ -113,7 +192,7 @@ merchant_invoice_artifacts pages immutable artifacts by artifact ID. These reads
 
 ## Typed integration
 
-The underlying supported client is still createMerchantOperatorClient from operator-client.mjs and operator-client.d.mts. It exposes intakeContext, inspectIntakeSource, prepareIntake, readIntake, exportIntake and runIntake alongside the complete original invoice, result and project methods.
+The underlying supported client is still createMerchantOperatorClient from operator-client.mjs and operator-client.d.mts. It exposes intakeContext, inspectIntakeSource, prepareIntake, readIntake, exportIntake and runIntake alongside inspectInvoice, createCharge, paymentEnvelope, submitPaymentAuthorization, reconcileInvoice, and the complete original result and project methods.
 
 For a configured local host, the same complete consumer can be used directly:
 
@@ -139,8 +218,12 @@ close drains admitted calls and retained descriptors. The shared Merchant provid
 
 The existing installed-receiving.mjs --portable course now calls invoice-agent-receiving.mjs during its original live Applications opening. It derives a receiving source from the actual five completed invoice records and their original IDs and offers, freezes that exact source, prepares and explicitly replays the original import, reviews it and runs it through the original engine. The five compatible original invoices stay the same records.
 
-The same browser creates the original complete project export. The agent reopens that very project operation and receives its identical manifest and whole ZIP. Its complete source, plan, request, invoice, envelope, result, register and project artifacts are downloaded with original SHA checks. A deliberate descriptor release exercises the original resumed-file offset without changing the file identity.
+The payment course reads the exact retained authorizations from the original private database snapshot. It reviews each original envelope, calls charge, authorize and reconcile, and explicitly replays each action through its retained request SHA. These already completed invoices keep their original charge, payment, result and signature identities. The existing provider sentinel must observe zero upstream requests, and the original before/after business-table fingerprints must match. The programme generates no new authorization and adds no invoice to this completed customer case.
+
+The same browser creates the original complete project export. The agent reopens that very project operation and receives its identical manifest and whole ZIP. Its complete source, plan, request, invoice, payment review, authorization request, envelope, result, register and project artifacts are downloaded with original SHA checks. A deliberate descriptor release exercises the original resumed-file offset without changing the file identity.
 
 After the actual Applications stop, the programme reopens the retained files through a new provider owner using the same configuration, without contacting the stopped server. The original installed programme then continues its native portable receiving, read-only browser, activation and cold reopening. The existing received-review-receiving.mjs course carries that exact ZIP through managed intake and the separate received-project agent.
+
+Previously completed browser/agent result files remain their original editions. The new payment course is recorded when that original live opening executes the current programme; reopening an older completed result validates its existing files without rewriting its history.
 
 The original receiving input remains the existing five-invoice commissioned archive. Its business-table snapshots, original payments and result bytes are preserved by that same programme. Native completion is recorded only by the original operated result and its complete delivery; source publication and a syntax parse are recorded separately.
