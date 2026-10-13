@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const operation = 'SCF-RECEIVABLES-NATIVE-2A51-20261012';
-const selection = 'merchant-receivables';
+const defaultSelection = 'merchant-receivables';
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -69,7 +69,7 @@ function argumentsFor(args) {
     if (key === '--held-lock') { options.held = true; continue; }
     if (key === '--help') { options.help = true; continue; }
     need(['--archive', '--sha256', '--source-ref', '--out', '--sdk-profile',
-      '--sdk-node-modules', '--mcp-node-modules', '--python'].includes(key) &&
+      '--sdk-node-modules', '--mcp-node-modules', '--python', '--mode', '--selection'].includes(key) &&
       !Object.hasOwn(options, key) && args[i + 1] && !args[i + 1].startsWith('--'),
       'RECEIVING_ARGUMENT_INVALID', 'Unknown, repeated or missing argument: ' + key);
     options[key] = args[++i];
@@ -84,7 +84,7 @@ async function archiveIdentity(path, expected) {
   need(sha(bytes) === expected, 'RECEIVING_ARCHIVE_CHANGED', 'Original archive SHA256 differs');
   return {bytes: bytes.length, sha256: expected};
 }
-async function verifyPackage(directory, expectedSource, allowRuntime) {
+async function verifyPackage(directory, expectedSource, allowRuntime, selection) {
   const manifestBytes = await readFile(join(directory, 'manifest.json'));
   const manifest = JSON.parse(manifestBytes);
   need(manifest.schema === 'stellar-forge.merchant-distribution-manifest.v1' &&
@@ -134,8 +134,13 @@ async function verifyPackage(directory, expectedSource, allowRuntime) {
 }
 async function run() {
   const options = argumentsFor(process.argv.slice(2));
+  const mode = options['--mode'] ?? 'original-programmes';
+  const selection = options['--selection'] ?? defaultSelection;
+  need(['original-programmes', 'admission'].includes(mode), 'RECEIVING_MODE_INVALID', 'Choose original-programmes or admission.');
+  need(['merchant-receivables', 'merchant-commissioning-collections'].includes(selection) &&
+    (mode === 'admission' || selection === defaultSelection), 'RECEIVING_SELECTION_INVALID', 'Use an original maintained selected product.');
   if (options.help) {
-    console.log('node continue-installed.mjs --archive ORIGINAL.tgz --sha256 SHA256 --source-ref COMMIT --out SAME_PRIVATE_CONTINUATION --sdk-profile EXISTING/package.json --mcp-node-modules EXISTING/node_modules [--sdk-node-modules EXISTING/node_modules] [--python python3]\nBuild the original merchant-receivables selection first. This command reuses installed dependencies and never dispatches hosted compute or a payment.');
+    console.log('node continue-installed.mjs --archive ORIGINAL.tgz --sha256 SHA256 --source-ref COMMIT --out SAME_PRIVATE_CONTINUATION --sdk-profile EXISTING/package.json --mcp-node-modules EXISTING/node_modules [--sdk-node-modules EXISTING/node_modules] [--python python3] [--mode admission] [--selection merchant-receivables|merchant-commissioning-collections]\nBuild the original selected product first. Admission retains the exact installed release without launching an accounting programme. This command reuses installed dependencies and never dispatches hosted compute or a payment.');
     return;
   }
   for (const key of ['--archive', '--sha256', '--source-ref', '--out', '--sdk-profile', '--mcp-node-modules'])
@@ -164,7 +169,7 @@ async function run() {
   need(provenance.operation === operation && provenance.programs.length === 2,
     'RECEIVING_PROGRAM_INVALID', 'Original two-programme inventory required');
   const programmes = [];
-  for (const item of provenance.programs) {
+  for (const item of mode === 'original-programmes' ? provenance.programs : []) {
     need(['PAYMENT_CHECK.mjs', 'MCP_RECEIVABLES_CHECK.mjs'].includes(item.path) &&
       !programmes.some(value => value.path === item.path), 'RECEIVING_PROGRAM_INVALID', 'Invalid original programme');
     const bytes = await readFile(join(here, 'programs', item.path));
@@ -176,6 +181,7 @@ async function run() {
   const identity = {
     schema: 'commons.receivables-installed-continuation.v1', operation,
     predecessor: provenance.predecessor, sourceCommit: options['--source-ref'], selection,
+    ...(mode === 'admission' ? {mode} : {}),
     archive, archiveIdentity: await archiveIdentity(archive, options['--sha256']),
     sdkProfile, sdkProfileSha256: sha(sdkProfileBytes), sdkNodeModules: sdk, mcpNodeModules: mcp,
     programmes: programmes.map(({bytesValue, ...item}) => item)
@@ -202,10 +208,10 @@ async function run() {
       '--sha256', options['--sha256'], '--out', staging], {cwd: output});
     await immutable(join(output, 'unpack.json'), result);
     need(result.exitCode === 0, 'RECEIVING_UNPACK_FAILED', 'Original unpack failed; retained unpack.json has the complete output');
-    await verifyPackage(staging, identity.sourceCommit, false);
+    await verifyPackage(staging, identity.sourceCommit, false, selection);
     await rename(staging, installed);
   }
-  const checked = await verifyPackage(installed, identity.sourceCommit, true);
+  const checked = await verifyPackage(installed, identity.sourceCommit, true, selection);
   const sourceRoot = join(installed, 'source');
   for (const item of programmes) {
     const target = join(sourceRoot, item.path), info = await exists(target);
@@ -229,7 +235,8 @@ async function run() {
     SCF_MCP_RECEIVABLES_TMP: temporary, SCF_INVOICE_SDK_PACKAGE: sdkProfile});
   const phaseRoot = join(output, 'phases'); await mkdir(phaseRoot, {recursive: true, mode: 0o700});
   const phases = [{name: 'installed-provider-admission', entry: join(here, 'inspect-installed.mjs'),
-    args: ['--source', sourceRoot, '--ref', identity.sourceCommit]}, ...programmes.map(item =>
+    args: ['--source', sourceRoot, '--ref', identity.sourceCommit,
+      ...(mode === 'admission' ? ['--selection', selection, '--customer-handover'] : [])]}, ...programmes.map(item =>
     ({name: item.path, entry: join(sourceRoot, item.path), args: []}))];
   const results = [];
   for (const phase of phases) {
@@ -276,10 +283,21 @@ async function run() {
     console.log(json({event: 'ORIGINAL_PHASE_RECEIVED', ...results.at(-1)}).trimEnd());
     if (result.exitCode !== 0) break;
   }
+  const release = mode === 'admission' ? {
+    schema: 'stellar-forge.retained-customer-installed-release.v1', operation,
+    sourceCommit: identity.sourceCommit, sourceSelection: selection,
+    archive: {path: archive, ...identity.archiveIdentity}, packageDirectory: installed, sourceRoot,
+    manifestFile: join(installed, 'manifest.json'), manifestSha256: checked.manifestSha256,
+    packageName: checked.manifest.packageName, originalSourceFiles: checked.files,
+    dependencies: {sdkProfile, sdkProfileSha256: identity.sdkProfileSha256,
+      sdkNodeModules: sdk, mcpNodeModules: mcp},
+    admission: {complete: results.length === phases.length && results.every(item => item.exitCode === 0), results},
+  } : null;
+  if (release) await immutable(join(output, 'installed-release.json'), release);
   const report = {schema: 'commons.receivables-installed-result.v1', operation,
     sourceCommit: identity.sourceCommit, sourceSelection: selection, manifestSha256: checked.manifestSha256,
     originalSourceFiles: checked.files, predecessor: provenance.predecessor,
-    archive: identity.archiveIdentity, results, complete: results.length === phases.length && results.every(item => item.exitCode === 0)};
+    archive: identity.archiveIdentity, ...(release ? {mode, sourceRoot, installedRelease: join(output, 'installed-release.json')} : {}), results, complete: results.length === phases.length && results.every(item => item.exitCode === 0)};
   await immutable(join(output, 'receiving-result.json'), report);
   console.log(json(report).trimEnd());
   process.exitCode = report.complete ? 0 : 1;
