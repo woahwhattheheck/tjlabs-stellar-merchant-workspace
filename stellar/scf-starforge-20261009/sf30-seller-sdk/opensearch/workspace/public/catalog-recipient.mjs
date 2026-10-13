@@ -1,13 +1,14 @@
 // MIT. Receive complete named material reviews through the original catalogue Journal.
 import {openRecipientReview,exportRecipientReview,selectRecipientAdoption} from '/recipient/review.mjs';
 import {sha256File} from '/file-sha256.mjs';
+import {createAuthorWorklistPanel} from '/catalog-author-worklist.mjs';
 const MAX_RETURN=4*1024*1024,MAX_REQUEST=8*1024*1024,MAX_WORKING=32*1024*1024;
 const pretty=value=>JSON.stringify(value,null,2)+'\n';
 const bytes=value=>new TextEncoder().encode(value).length;
 export function createCatalogRecipientController({container,api,perform,host,notice,element,attempt,read,getCatalog,isBusy}){
  const $=id=>container.querySelector('#'+id);
  let original=null,comparison=null,choices={},prepared=null,epoch=0,working=false,dirty=false,selected=null,sourceEpoch=0,comparisonEpoch=-1;
- const files=new WeakMap();
+ const files=new WeakMap();let worklist=null;
  container.innerHTML='<h3>Receive a named customer review</h3><p class="help">Open the complete return from the existing offline recipient. Compare its original proposal and current author decision, choose every context, then save the exact request before applying it through this workspace.</p>'+
  '<label>Complete recipient return<input id="recipient-return-file" type="file" accept=".json,application/json"></label>'+
  '<div class="actions"><button id="recipient-compare" type="button">Compare with current catalogue</button><button id="recipient-save-review" type="button">Save author review choices</button></div>'+
@@ -21,6 +22,18 @@ export function createCatalogRecipientController({container,api,perform,host,not
  '<button id="recipient-resume" type="button">Resume original saved request</button>'+
  '<p class="help">The original request ID and file identity stay in the workspace recovery banner. After reopening, choose the same saved request file and use Retry original request. Read saved outcome first when the result is uncertain.</p>'+
  '<details><summary>Complete original comparison or receiving outcome</summary><pre id="recipient-details"></pre></details>';
+ worklist=createAuthorWorklistPanel({container,element,getWorkspaceId:()=>host.workspaceId,getCatalog,
+  isHeld:()=>working||isBusy()||host.busy||Boolean(host.pending),download:saveFile,report:notice,onReady:buttons,
+  getDraft:()=>original&&comparison?{returnText:original.sourceText??original.text,draft:{comparison,choices,actor:$('recipient-actor').value,reason:$('recipient-reason').value}}:null,
+  loadDraft(item,draft){
+   epoch++;sourceEpoch++;prepared=null;
+   const review=openRecipientReview(item.returnText),text=exportRecipientReview(review);
+   original={review,text,sourceText:item.returnText,file:new File([text],'Material_Review_'+review.id+'.json',{type:'application/json'})};
+   comparison=draft.comparison;comparisonEpoch=-1;choices=JSON.parse(JSON.stringify(draft.choices));
+   $('recipient-return-file').value='';$('recipient-working-file').value='';
+   $('recipient-actor').value=draft.actor;$('recipient-reason').value=draft.reason;
+   dirty=false;render();status('Retained choices reopened without changing the catalogue. Compare with current catalogue before preparing a request; changed comparisons keep this draft in worklist history.');
+  }});
  const binding=()=>JSON.stringify({workspace:host.workspaceId,id:getCatalog()?.id,revision:getCatalog()?.revision,edition:getCatalog()?.activeEditionId});
  const still=(generation,bound)=>generation===epoch&&bound===binding();
  const validComparison=()=>comparison&&sourceEpoch===comparisonEpoch&&comparison.catalog.id===getCatalog()?.id&&comparison.catalog.revision===getCatalog()?.revision&&comparison.catalog.activeEditionId===getCatalog()?.activeEditionId;
@@ -28,15 +41,16 @@ export function createCatalogRecipientController({container,api,perform,host,not
   const file=new File([text],name,{type}),url=URL.createObjectURL(file),a=element('a',undefined,{href:url,download:name});
   document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);return file;
  }
- function invalidate(){epoch++;prepared=null;dirty=true;buttons();}
+ function invalidate(){epoch++;prepared=null;dirty=true;worklist?.schedule();buttons();}
  function status(text){$('recipient-status').textContent=text;}
  function setCatalog(value){
+  worklist?.capture();worklist?.bind();
   const next=value?{id:value.id,revision:value.revision,edition:value.activeEditionId}:null;
   if(JSON.stringify(next)===JSON.stringify(selected))return;
   const other=selected?.id!==next?.id;selected=next;epoch++;prepared=null;
   if(other){original=null;comparison=null;choices={};dirty=false;$('recipient-return-file').value='';$('recipient-working-file').value='';$('recipient-actor').value='';$('recipient-reason').value='';$('recipient-rows').replaceChildren();$('recipient-details').textContent='';status('Choose a complete named review for this catalogue.');}
   else if(comparison)status('The selected catalogue changed. Saved choices remain visible; compare the original return again before preparing a new request.');
-  buttons();
+  worklist?.refresh();buttons();
  }
  async function fileText(file,limit){
   if(!file||file.size<1||file.size>limit)throw new Error('Choose a complete nonempty file within '+limit+' bytes.');
@@ -67,6 +81,8 @@ export function createCatalogRecipientController({container,api,perform,host,not
   $('recipient-details').textContent=pretty(comparison);buttons();
  }
  async function compare(raw,restored=null){
+  worklist.capture({archivePrevious:true});
+  const retained=original&&comparison&&raw===(original.sourceText??original.text)?{comparison,choices:JSON.parse(JSON.stringify(choices)),actor:$('recipient-actor').value,reason:$('recipient-reason').value}:null;
   const catalogue=getCatalog();if(!catalogue)throw new Error('Select the original catalogue first.');
   const review=openRecipientReview(raw);
   if(review.base.catalog.id!==catalogue.id)throw new Error('This return belongs to a different original catalogue. Select that catalogue first.');
@@ -78,11 +94,13 @@ export function createCatalogRecipientController({container,api,perform,host,not
    const actual=await api('/api/catalog/recipient-preview',{name:file.name,bytes:file.size,sha256},false,file);
    if(!still(generation,bound))throw new Error('The original comparison completed after the selected source changed. Compare again.');
    if(actual.catalog.id!==catalogue.id||actual.returnSha256!==review.sha256)throw new Error('The returned comparison identifies a different source.');
-   if(restored&&actual.sha256!==restored.comparison.sha256)throw new Error('The current catalogue or decisions differ from this saved review. The original saved file is intact; open its named return and choose against a fresh comparison.');
-   original={review,text:normalized,file};comparison=actual;comparisonEpoch=sourceEpoch;prepared=null;choices=restored?.choices??{};
-   if(restored){$('recipient-actor').value=restored.actor;$('recipient-reason').value=restored.reason;}
-   dirty=Boolean(restored)||Object.keys(choices).length>0;render();
-   status('Review '+review.id+' by '+review.reviewer+' · '+actual.rows.length+' contexts · current catalogue revision '+actual.catalog.revision+'. Choose explicitly for every context.');
+   const prior=restored??retained;
+   const sameComparison=prior&&actual.sha256===prior.comparison.sha256;
+   if(restored){worklist.retainDraft(raw,{comparison:restored.comparison,choices:restored.choices,actor:restored.actor,reason:restored.reason});}
+   original={review,text:normalized,sourceText:raw,file};comparison=actual;comparisonEpoch=sourceEpoch;prepared=null;choices=sameComparison?prior.choices:{};
+   if(prior){$('recipient-actor').value=prior.actor;$('recipient-reason').value=prior.reason;}
+   dirty=Boolean(prior)||Object.keys(choices).length>0;worklist.refresh();render();
+   status('Review '+review.id+' by '+review.reviewer+' · '+actual.rows.length+' contexts · current catalogue revision '+actual.catalog.revision+'. '+(prior&&!sameComparison?'The comparison changed. Earlier choices remain in worklist history; choose explicitly against every new row.':'Choose explicitly for every context.'));
   }finally{working=false;buttons();}
  }
  async function prepare(){
@@ -95,8 +113,10 @@ export function createCatalogRecipientController({container,api,perform,host,not
   working=true;buttons();
   try{
    const sha256=await sha256File(file);if(!still(generation,bound))throw new Error('The original selection changed before request publication.');
-   prepared={request,raw,file,metadata:{requestId:request.requestId,name:file.name,bytes:file.size,sha256},binding:bound};
-   files.set(file,sha256);saveFile(file.name,raw);dirty=false;
+   const candidate={request,raw,file,metadata:{requestId:request.requestId,name:file.name,bytes:file.size,sha256},binding:bound};
+   files.set(file,sha256);await worklist.request(request,raw);
+   if(!still(generation,bound))throw new Error('The catalogue changed while retaining this request. Its exact bytes remain in the worklist.');
+   saveFile(file.name,raw);prepared=candidate;dirty=false;
    $('recipient-request-state').textContent='Saved request '+request.requestId+' · '+file.size+' bytes · SHA-256 '+sha256+'. Keep this exact file for recovery.';
   }finally{working=false;buttons();}
  }
@@ -127,10 +147,12 @@ export function createCatalogRecipientController({container,api,perform,host,not
  }
  function saveWorking(){
   if(!original||!comparison)throw new Error('Compare the original return first.');
-  const value={schema:'stellar-forge.material-author-review.v1',workspaceId:host.workspaceId,catalogId:getCatalog().id,
+  const value={schema:'stellar-forge.material-author-review.v1',workspaceId:host.workspaceId,catalogId:comparison.catalog.id,
    reviewText:original.text,comparison,choices,actor:$('recipient-actor').value,reason:$('recipient-reason').value};
   const raw=pretty(value);if(bytes(raw)>MAX_WORKING)throw new Error('This complete author review exceeds 32 MiB. Save the original return and reviewed request separately.');
-  saveFile('Material_Author_Review_'+original.review.id+'.json',raw);dirty=false;buttons();
+  saveFile('Material_Author_Review_'+original.review.id+'.json',raw);dirty=false;
+  try{worklist.capture();void worklist.save();}catch(error){notice('The complete current author review was downloaded separately. Worklist retention: '+error.message,true);}
+  buttons();
  }
  async function restoreWorking(file){
   const generation=++epoch,bound=binding(),raw=await fileText(file,MAX_WORKING);
@@ -144,7 +166,7 @@ export function createCatalogRecipientController({container,api,perform,host,not
   await compare(value.reviewText,value);
  }
  function buttons(){
-  const held=working||isBusy()||host.busy||Boolean(host.pending),canCompare=Boolean(getCatalog()&&($('recipient-return-file').files[0]||original));
+  const held=working||isBusy()||host.busy||Boolean(host.pending)||worklist?.isLoading(),canCompare=Boolean(getCatalog()&&($('recipient-return-file').files[0]||original));
   for(const control of container.querySelectorAll('button,input,select,textarea'))control.disabled=held;
   $('recipient-compare').disabled=held||!canCompare;
   $('recipient-save-review').disabled=held||!comparison;
@@ -152,21 +174,22 @@ export function createCatalogRecipientController({container,api,perform,host,not
   $('recipient-apply').disabled=held||!prepared||prepared.binding!==binding();
   $('recipient-request-file').disabled=working||isBusy()||host.busy||Boolean(host.pending&&host.pending.kind!=='catalog-recipient-receive');
   $('recipient-resume').disabled=held||!getCatalog()||!$('recipient-request-file').files[0];
+  worklist?.buttons();
  }
  for(const id of ['recipient-actor','recipient-reason'])$(id).addEventListener('input',invalidate);
  $('recipient-return-file').addEventListener('change',()=>{sourceEpoch++;invalidate();status('Selected '+($('recipient-return-file').files[0]?.name??'no return')+'. Compare before receiving.');});
  $('recipient-request-file').addEventListener('change',buttons);
  $('recipient-resume').addEventListener('click',()=>attempt(()=>read(resumeOriginal)));
  $('recipient-compare').addEventListener('click',()=>attempt(()=>read(async()=>{
-  if(dirty&&comparison&&!window.confirm('Replace this unfinished comparison? Save author review choices first to keep it.'))return;
+  worklist.capture({archivePrevious:true});
   const file=$('recipient-return-file').files[0],generation=++epoch,bound=binding();
-  const raw=file?await fileText(file,MAX_RETURN):original?.text;
+  const raw=file?await fileText(file,MAX_RETURN):(original?.sourceText??original?.text);
   if(!still(generation,bound)||file&&$('recipient-return-file').files[0]!==file)throw new Error('The original return selection changed.');
   await compare(raw);
  })));
  $('recipient-working-file').addEventListener('change',()=>attempt(()=>read(async()=>{
   const file=$('recipient-working-file').files[0];if(!file)return;
-  if(dirty&&!window.confirm('Replace this unfinished comparison? Save it first to preserve the current choices.'))return;
+  worklist.capture({archivePrevious:true});
   await restoreWorking(file);
  })));
  $('recipient-save-review').addEventListener('click',()=>attempt(async()=>saveWorking()));
@@ -176,11 +199,11 @@ export function createCatalogRecipientController({container,api,perform,host,not
   await perform('catalog-recipient-receive',prepared.metadata);
  }));
  buttons();
- return {setCatalog,buttons,transmitFile,hasUnsaved:()=>dirty,
+ return {setCatalog,buttons,transmitFile,hasUnsaved:()=>dirty||worklist.hasUnsaved(),
   restorePending(pending){if(pending?.kind==='catalog-recipient-receive')$('recipient-request-state').textContent='Original request '+pending.payload.requestId+' is retained. Read its saved outcome, or select '+pending.payload.name+' to retry.';buttons();},
   acceptOperation(operation){
    if(operation.kind!=='catalog-recipient-review')return false;
-   $('recipient-details').textContent=pretty(operation);prepared=null;epoch++;dirty=false;
+   worklist.outcome(operation);$('recipient-details').textContent=pretty(operation);prepared=null;epoch++;dirty=false;
    status('Original request '+operation.id+' · '+operation.state+'. Full result and return remain in its Journal; adopted history travels in the complete catalogue bundle.');buttons();return true;
   }};
 }

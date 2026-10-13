@@ -182,7 +182,9 @@
     "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/style.css",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/commercial-workshare-core.mjs",
-    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/supplier-catalogues.json"
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/supplier-catalogues.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/catalog-recipient.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/catalog-author-worklist.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
