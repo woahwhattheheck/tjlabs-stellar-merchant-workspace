@@ -184,7 +184,7 @@ export async function mountReviewReturnDesk(root, { request, identity, reconnect
       });
     renderButtons();
   }
-  const beforeUnload=event=>{if(dirty||busy||local?.pending){event.preventDefault();event.returnValue="";}};
+  const beforeUnload=event=>{if(dirty||storageFault||busy||local?.pending){event.preventDefault();event.returnValue="";}};
   window.addEventListener("beforeunload",beforeUnload);
   try {
     if(!origin.workspaceId||!origin.instanceId)throw Error("Open the original authenticated workspace connection first.");
@@ -197,7 +197,7 @@ export async function mountReviewReturnDesk(root, { request, identity, reconnect
     closing=true;renderButtons();
     const operation=(async()=>{
       while(busy)await new Promise(resolve=>idleWaiters.push(resolve));
-      if(dirty)await persist();
+      if(dirty||storageFault)await persist();
       closed=true;root.inert=true;window.removeEventListener("beforeunload",beforeUnload);
       return {state:"CLOSED",workspaceId:origin.workspaceId,pendingOperationId:local?.pending?.args?.operationId??null};
     })();
