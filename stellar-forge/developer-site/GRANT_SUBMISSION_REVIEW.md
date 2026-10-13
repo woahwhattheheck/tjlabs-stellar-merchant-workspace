@@ -69,11 +69,11 @@ The Required content carrier contains ten complete product/guide postimages, sev
 
 The original cumulative publisher retains the current canonical manuscript, four reviewer outputs and source package. Select that current complete edition, including every newer unrelated contribution, before receiving this subsection.
 
-The registration interface already accepts this H2 anywhere in the complete manuscript. Whole text receiving must also include the H2 from §11. On projector `d6b5e6b0c22685443d3a8bf2bd427091756a7a4e`, the general customer-section receiver only discovers arbitrary H2s inside **# 9A. Current demonstration and operator journey**. A normal run can therefore record the five sources while silently omitting this §11 chapter. The actual source execution exposed that gap; source registration alone is not complete acceptance.
+The existing selected-H2 list in `receiveGrantCustomerSections` now includes this exact section. The original `section`, `installSection` and `projectGrantMarkdown` functions receive its complete §11 body into the companion without moving its canonical home or changing general heading scope. The change is composed on the original owner's current source-preservation correction, Git `9acb69d99e4db7f8769dab87ec58e107625d543a`; that full correction remains unchanged. The complete joined receiver is Git `612cb47df5083fb5622173a279705c9587bc65d9`, 70,011 UTF-8 bytes / SHA-256 `882068b6e0312f569fe72488cd0d63612773f4ebd544be16269a7a0b3a20545c`.
 
-The existing projector owner is coordinating the complete §11 intake in the original publication thread at [1791879176.365489](https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791879176365489?thread_ts=1791733597.745419&cid=C0BTB4SUCP9). Use that owner's completed receiver or its agreed additive hook. Preserve the original canonical home and receive the full same H2 into the companion; do not create a second canonical chapter or silently treat a source-only result as complete.
+The exact source and complementary join remain in the original publication thread at [1791879606.018449](https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791879606018449?thread_ts=1791733597.745419&cid=C0BTB4SUCP9). Canonical insertion was read back under §11 with all 2,329 preceding sections unchanged. The full H2 retains the authored 6,287-byte body plus its original submitted-interest/issuer footer, 6,561 bytes in total. Source registration and full text receiving are both required for cumulative acceptance.
 
-Once whole-chapter intake is available, use the existing command with the complete selected declaration directory:
+Use the existing command with the complete selected declaration directory:
 
 ```sh
 node stellar-forge/developer-site/grant-compose.mjs \
@@ -93,7 +93,18 @@ Read back the complete result and require all of the following before claiming c
 - Existing current declarations, reader routes and complete installed source closure retained.
 - Exact same-input source receiving/replay, then the original create/export/open source-package path and original saved application/review receiving.
 
-The isolated registration execution on the complete 523-source main `522a0620476e3ed536890b68b984f2ee56705810` input produced 528 sources, preserving every existing source record exactly, and replayed exactly. The unchanged pure composer also confirmed the missing chapter and the four pre-existing registered-source regressions already owned by the projector author. These observations are receiving evidence, not a claimed completed cumulative publication.
+The first isolated registration execution on the complete 523-source main `522a0620476e3ed536890b68b984f2ee56705810` input produced 528 sources with every existing source record exact and exact replay. The original pure composer exposed the missing chapter and four registered-source regressions, which remained with the projector author.
+
+The completed receiving then used current main `d4c44bd3a2ef1e4d552e9f9eed02d2f91371d1bb`, the owner's corrected projector plus the single selected-H2 addition, current composer `23609702f40b016c3d4f14b9e7ca19133668e1d6` and its complete module closure, and the actual current four reader inputs. It received the complete canonical §11 subsection, produced exactly one full projected chapter and all five new sources, and preserved all 523 prior source records, every unrelated companion chapter and all nine answer bytes. All four complete outputs replayed exactly.
+
+| Actual complete receiving output | UTF-8 bytes | Git blob |
+| --- | ---: | --- |
+| `grant.html` | 96,860 | `d21484b2309b3b6681d847e84a221913c42db5c8` |
+| `grant-data/application.md` | 47,684 | `15c2a09c49fc72e63179e17211ff7395c756955d` |
+| `grant-data/product-and-finance.md` | 1,004,278 | `8220f0ef5f6f480478afde08c0f3b0f496804d07` |
+| `grant-data/source-index.json` | 657,143 | `24f81bc5dc24369809660815ff11b9981cc75023` |
+
+These identities describe the completed original source-function composition. The cumulative publisher receives these same inputs and the complete current union of peer contributions; later authorized additions naturally produce a later cumulative tuple. Saved browser/native receiving remains with its original owner.
 
 ## Existing ownership and completion
 
