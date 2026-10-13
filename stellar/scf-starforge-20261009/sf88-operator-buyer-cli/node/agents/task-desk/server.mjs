@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { openTaskDeskDelivery } from './customer-delivery.mjs';
 import { createHash, randomUUID, randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFile, readdir, realpath, stat } from 'node:fs/promises';
 import { join, resolve, relative, isAbsolute, sep } from 'node:path';
@@ -160,7 +161,7 @@ async function packetMetadataBytes(packet, name) {
 }
 
 export async function startTaskDesk({ inbox, tasksDirectory, outputsDirectory,
-  workspaceDirectory, commerceDirectory, existingTaskDirectory, existingOutputDirectory,
+  workspaceDirectory, commerceDirectory, customerDeliveryDirectory, existingTaskDirectory, existingOutputDirectory,
   port = 0, hostname = '127.0.0.1' } = {}) {
   need(inbox && typeof inbox.list === 'function' && typeof inbox.directory === 'string',
     'DESK_INBOX_REQUIRED', 'Select the existing native Inbox.');
@@ -211,6 +212,17 @@ export async function startTaskDesk({ inbox, tasksDirectory, outputsDirectory,
   const operationPath = id => join(operationRoot, sha(requestId(id)) + '.json');
   const openTask = id => openInboxTask({ inbox, directory: taskPath(id),
     ...(id === retainedId ? { expectedTaskSha256: retained.taskSha256 } : {}) });
+  const delivery = customerDeliveryDirectory === undefined ? null : await openTaskDeskDelivery({
+    directory: customerDeliveryDirectory, privateRoots: [tasksRoot, outputsRoot, inboxRoot,
+      workspaceDirectory, commerceDirectory, retained?.taskDirectory, retained?.outputDirectory],
+    openTask, outputPath,
+  });
+  function customerDelivery() {
+    need(delivery, 'DESK_CUSTOMER_DELIVERY_REQUIRED',
+      'Open this desk with --delivery and a separate private customer-delivery directory.', 409);
+    need(!closing, 'DESK_CLOSING', 'Reopen the same task desk to continue.', 503);
+    return delivery;
+  }
   function forgetPacket(id) {
     const previous = packetCache.get(id);
     if (previous) { cachedBytes -= previous.bytes; packetCache.delete(id); }
@@ -409,6 +421,7 @@ export async function startTaskDesk({ inbox, tasksDirectory, outputsDirectory,
   }
   const assets = new Map([
     ['/', { path: join(publicRoot, 'index.html'), type: 'text/html; charset=utf-8' }],
+    ['/assets/customer-delivery.mjs', { path: join(publicRoot, 'customer-delivery.mjs'), type: 'text/javascript; charset=utf-8' }],
     ['/assets/app.mjs', { path: join(publicRoot, 'app.mjs'), type: 'text/javascript; charset=utf-8' }],
     ['/assets/style.css', { path: join(publicRoot, 'style.css'), type: 'text/css; charset=utf-8' }],
     ['/assets/client.mjs', { path: fileURLToPath(new URL('./client.mjs', import.meta.url)), type: 'text/javascript; charset=utf-8' }],
@@ -437,8 +450,11 @@ export async function startTaskDesk({ inbox, tasksDirectory, outputsDirectory,
         return json(response, 200, { schema: SCHEMA, title: 'Task desk', instanceId, csrfToken: token,
           roots: { tasks: tasksRoot, outputs: outputsRoot, inbox: inbox.directory,
             ...(commerceDirectory === undefined ? {} : { commerce: commerceDirectory }),
+            ...(delivery ? { customerDelivery: delivery.directory } : {}),
             ...(retained ? { existingTask: retained.taskDirectory, existingOutput: retained.outputDirectory } : {}) },
           runningOperations: running.size });
+      if (request.method === 'POST' && url.pathname === '/api/customer-delivery/source-manifest')
+        return json(response, 200, await customerDelivery().source(await body(request)));
       if (request.method === 'GET' && url.pathname === '/api/jobs') {
         const result = await inbox.list();
         return json(response, 200, { jobs: result.native?.jobs ?? [], process: result.process });
@@ -514,6 +530,20 @@ export async function startTaskDesk({ inbox, tasksDirectory, outputsDirectory,
       if (!route) throw new DeskError('DESK_NOT_FOUND', 'This task desk route does not exist.', 404);
       const [, id, action = ''] = route;
       if (request.method === 'GET' && !action) return json(response, 200, await detail(id));
+      if (action === 'customer-deliveries' && request.method === 'GET')
+        return json(response, 200, await customerDelivery().list(id));
+      if (action === 'customer-deliveries/inspect-task' && request.method === 'GET')
+        return json(response, 200, await customerDelivery().inspectTask(id));
+      if (action === 'customer-deliveries/preview' && request.method === 'POST')
+        return json(response, 200, await customerDelivery().preview(id, await body(request)));
+      if (action === 'customer-deliveries/prepare' && request.method === 'POST')
+        return json(response, 200, await customerDelivery().prepare(id, await body(request)));
+      const deliveryRoute = /^customer-deliveries\/named\/([^/]+)(\/download)?$/.exec(action);
+      if (deliveryRoute && request.method === 'GET') {
+        const selected = customerDelivery(), deliveryId = decodeURIComponent(deliveryRoute[1]);
+        if (deliveryRoute[2]) return selected.download(id, deliveryId, response);
+        return json(response, 200, await selected.inspect(id, deliveryId));
+      }
       if (request.method === 'GET' && action === 'compare') {
         const previous = await openTask(url.searchParams.get('previousId')), next = await openTask(id);
         return json(response, 200, compareInboxTasks(previous.record, next.record));
@@ -557,6 +587,7 @@ export async function startTaskDesk({ inbox, tasksDirectory, outputsDirectory,
     async close() {
       closing = true;
       await Promise.allSettled([...running]);
+      if (delivery) await delivery.close();
       try { await new Promise((done, reject) => server.close(error => error ? reject(error) : done())); }
       finally { activeInstances.delete(instanceId); }
     } };
