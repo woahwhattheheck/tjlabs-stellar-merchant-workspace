@@ -153,15 +153,17 @@ export async function runDcatCorrectionCustomer({
     presentation: { ready: false, reason: 'The producing operator must actually inspect the recorded desktop/narrow images and every delivered attachment before client-ready presentation.' } };
   const owners = { producer: { model: null, listener: null }, recipient: { model: null, listener: null } };
   async function closeOwner(name) {
-    const owned = owners[name];
-    if (owned.listener) {
-      try { await owned.listener.close(); owned.listener = null; result.cleanup.push({ owner: name + '-listener', closed: true }); }
-      catch (error) { result.cleanup.push({ owner: name + '-listener', closed: false, error: safeError(error) }); throw error; }
+    const owned = owners[name]; let failure;
+    // Each owned lifetime must be received even when an earlier close fails.
+    for (const [key, suffix] of [['listener', 'listener'], ['model', 'workspace']]) {
+      if (!owned[key]) continue;
+      try { await owned[key].close(); owned[key] = null; result.cleanup.push({ owner: name + '-' + suffix, closed: true }); }
+      catch (error) {
+        result.cleanup.push({ owner: name + '-' + suffix, closed: false, error: safeError(error) });
+        failure ??= error;
+      }
     }
-    if (owned.model) {
-      try { await owned.model.close(); owned.model = null; result.cleanup.push({ owner: name + '-workspace', closed: true }); }
-      catch (error) { result.cleanup.push({ owner: name + '-workspace', closed: false, error: safeError(error) }); throw error; }
-    }
+    if (failure) throw failure;
   }
   async function openOwner(name, withListener = false) {
     need(!owners[name].model && !owners[name].listener, 'CORRECTION_CUSTOMER_OWNER_ALREADY_OPEN');
@@ -217,9 +219,10 @@ export async function runDcatCorrectionCustomer({
     need(checked.hash === descriptor.sha256 && checked.bytes === descriptor.bytes, 'CORRECTION_CUSTOMER_SOURCE_FILE_CHANGED');
     const target = join(out, 'downloads', scope, name);
     await mkdir(dirname(target), { recursive: true, mode: 0o700 });
-    const source = await open(descriptor.file, constants.O_RDONLY | constants.O_NOFOLLOW);
-    const output = await open(target, constants.O_RDWR | constants.O_CREAT | constants.O_NOFOLLOW, 0o600);
+    let source, output, failure;
     try {
+      source = await open(descriptor.file, constants.O_RDONLY | constants.O_NOFOLLOW);
+      output = await open(target, constants.O_RDWR | constants.O_CREAT | constants.O_NOFOLLOW, 0o600);
       const before = await source.stat(), prior = await output.stat();
       need(before.isFile() && before.nlink === 1 && !(before.mode & 0o077) && before.size === descriptor.bytes &&
         prior.isFile() && prior.nlink === 1 && !(prior.mode & 0o077) && prior.size <= descriptor.bytes, 'CORRECTION_CUSTOMER_DOWNLOAD_FILE_CHANGED');
@@ -244,7 +247,19 @@ export async function runDcatCorrectionCustomer({
       const after = await source.stat();
       need(before.size === after.size && before.mtimeMs === after.mtimeMs && before.ctimeMs === after.ctimeMs,
         'CORRECTION_CUSTOMER_DOWNLOAD_SOURCE_CHANGED');
-    } finally { await source.close(); await output.close(); }
+    } catch (error) { failure = error; }
+    finally {
+      for (const [owner, handle] of [['download-source', source], ['download-output', output]]) {
+        if (!handle) continue;
+        try { await handle.close(); }
+        catch (error) {
+          result.cleanup.push({ owner, file: owner === 'download-source' ? descriptor.file : target,
+            closed: false, error: safeError(error) });
+          failure ??= error;
+        }
+      }
+    }
+    if (failure) throw failure;
     const actual = await files.hashPrivate(target, 8589934592);
     need(actual.hash === descriptor.sha256 && actual.bytes === descriptor.bytes, 'CORRECTION_CUSTOMER_DOWNLOAD_COPY_CHANGED');
     const receipt = { scope, name, file: target, bytes: actual.bytes, sha256: actual.hash, kind: descriptor.kind ?? null, id: descriptor.id ?? null };
