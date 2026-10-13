@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Receive complete customer Workshares through the original SF47 Operations CLI. */
 import {readFileSync, writeFileSync, openSync, closeSync, fsyncSync, linkSync, unlinkSync,
-  existsSync, mkdirSync, lstatSync, fstatSync, realpathSync, constants} from "node:fs";
+  existsSync, readdirSync, mkdirSync, lstatSync, fstatSync, realpathSync, constants} from "node:fs";
 import {dirname, join, resolve} from "node:path";
 import {createHash, randomUUID} from "node:crypto";
 import {spawnSync} from "node:child_process";
@@ -41,10 +41,15 @@ function parse(argv) {
   return result;
 }
 function regular(path, maximum = 8 * 1024 * 1024) {
-  const stat = lstatSync(path);
-  if (!stat.isFile() || stat.isSymbolicLink() || stat.size > maximum)
-    fail("Use the complete regular source file: " + path);
-  return readFileSync(path);
+  const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  try {
+    const stat = fstatSync(fd);
+    if (!stat.isFile() || stat.size > maximum) fail("Use the complete regular source file: " + path);
+    const raw = readFileSync(fd), after = fstatSync(fd);
+    if (raw.length > maximum || ["dev", "ino", "size", "mtimeMs", "ctimeMs"].some(key => stat[key] !== after[key]))
+      fail("The original source changed while being read: " + path);
+    return raw;
+  } finally { closeSync(fd); }
 }
 function syncDirectory(path) {
   const fd = openSync(path, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
@@ -136,7 +141,9 @@ function operationId(kind, value) {
   return input.requestPrefix + "-" + kind + "-" + hash(Buffer.from(canonical(value))).slice(0, 24);
 }
 function readInputs() {
-  const bytes = regular(resolve(options.inputs));
+  const retainedInput = join(options.out, "receiving-source-input.json");
+  const bytes = regular(existsSync(resolve(options.inputs)) ? resolve(options.inputs) : retainedInput);
+  if (existsSync(retainedInput)) retain(retainedInput, bytes);
   const value = JSON.parse(bytes.toString("utf8"));
   if (value.schema !== schema || !/^[A-Za-z0-9_-]{1,70}$/.test(value.requestPrefix || "") ||
       !Array.isArray(value.customers) || !value.customers.length || value.customers.length > 20)
@@ -166,17 +173,18 @@ function readInputs() {
       commissioning += file.role === "commissioning" ? 1 : 0;
       packets += file.role === "packet" ? 1 : 0;
       const path = join(options["source-root"], file.filename);
-      const raw = regular(path);
+      const retainedDirectory = join(options.out, "original-inputs", file.sha256);
+      const raw = regular(existsSync(path) ? path : join(retainedDirectory, file.filename));
       if (hash(raw) !== file.sha256 || (file.bytes !== undefined &&
           (!Number.isSafeInteger(file.bytes) || file.bytes < 0 || file.bytes !== raw.length)))
         fail("Original customer source differs: " + file.filename);
-      const retainedDirectory = join(options.out, "original-inputs", file.sha256);
       privateDirectory(retainedDirectory);
       file.path = retain(join(retainedDirectory, file.filename), raw).path;
     }
     if (commissioning !== 1 || packets > 1) fail("Select one commissioning source and at most one complete matching packet.");
     if (customer.bindings !== undefined && !record(customer.bindings)) fail("Customer bindings must be a complete JSON object.");
   }
+  retain(retainedInput, bytes);
   return {value, bytes};
 }
 function receiveFile(file) {
@@ -368,8 +376,222 @@ function acceptedProgrammeSave(customer, before, seed, programme) {
   return accepted;
 }
 
+
+const attemptSchema = "stellar-forge.installation-receiving-attempt.v1";
+function customerIdentity(customer) {
+  return {workspace: options.workspace, caseId: options.case, planId: options.plan,
+    requestPrefix: input.requestPrefix, actor: options.actor, profile: customer.profile,
+    workshareCaseId: customer.workshareCaseId, planSha256: customer.planSha256,
+    customerSha256: hash(Buffer.from(canonical(customer)))};
+}
+function saveArguments(customer, document, preview) {
+  const version = preview.source.version;
+  const requestId = operationId("installation", {caseId: options.case, version,
+    installationId: preview.installationId, expectedRevision: preview.expectedRevision,
+    previewSha256: preview.previewSha256});
+  const args = ["installation-save", "--case", options.case, "--expected-version", String(version),
+    "--document", document.path, "--expected-revision", String(preview.expectedRevision),
+    "--expected-preview-sha256", preview.previewSha256, "--actor", options.actor,
+    "--request-id", requestId, "--note",
+    "Receive the complete original customer Workshare and operating preparation: " + customer.workshareCaseId];
+  if (preview.installationId) args.push("--installation", preview.installationId);
+  return {requestId, args};
+}
+function attemptDirectory(customer) {
+  const directory = join(options.out, "installation-attempts",
+    hash(Buffer.from(canonical(customerIdentity(customer)))));
+  privateDirectory(directory);
+  return directory;
+}
+function selectedFile(file) {
+  if (!record(file) || typeof file.path !== "string" || dirname(file.path) !== options.out)
+    fail("Keep the original receiver document and workorder in its private output directory.");
+  const raw = regular(file.path);
+  if (raw.length !== file.bytes || hash(raw) !== file.sha256)
+    fail("The retained original Installation input changed: " + file.path);
+  return raw;
+}
+function checkAttempt(customer, attempt) {
+  if (attempt?.schema !== attemptSchema || !same(attempt.identity, customerIdentity(customer)) ||
+      !record(attempt.preview) || !record(attempt.preview.document) ||
+      !Array.isArray(attempt.pendingSelections))
+    fail("Keep the original customer save request and complete retained preview.");
+  const preview = attempt.preview;
+  if (preview.source?.caseId !== options.case || preview.source?.planId !== options.plan ||
+      preview.document.workshare?.caseId !== customer.workshareCaseId ||
+      preview.document.workshare?.planSha256 !== customer.planSha256 ||
+      !Number.isSafeInteger(preview.source.version) || preview.source.version < 1 ||
+      !Number.isSafeInteger(preview.expectedRevision) || preview.expectedRevision < 0 ||
+      !/^[a-f0-9]{64}$/.test(preview.previewSha256 || ""))
+    fail("The saved attempt belongs to another original Installation or source.");
+  selectedFile(attempt.document); selectedFile(attempt.workorder);
+  const selected = saveArguments(customer, attempt.document, preview);
+  if (attempt.requestId !== selected.requestId || !same(attempt.args, selected.args))
+    fail("The retained Installation request arguments changed.");
+}
+function retainedResult(customer, attached, programme, selection) {
+  const opened = native(["installation-show", "--case", options.case,
+    "--installation", selection.installation.id, "--revision", String(selection.installation.revision)]);
+  if (opened.sha256 !== selection.installation.sha256 ||
+      opened.preview?.previewSha256 !== selection.previewSha256 ||
+      opened.preview.document.workshare?.caseId !== customer.workshareCaseId ||
+      opened.preview.document.workshare?.planSha256 !== customer.planSha256)
+    fail("The retained original Installation edition differs from the accepted selection.");
+  selectedFile(selection.document); selectedFile(selection.workorder);
+  return {profile: customer.profile, workshareCaseId: customer.workshareCaseId,
+    installation: selection.installation, document: selection.document, workorder: selection.workorder,
+    original: opened, pendingSelections: selection.pendingSelections,
+    programme: programmeResult(programme, attached, opened, selection.acceptedSave)};
+}
+function acceptAttempt(customer, attached, programme, directory, path, attempt) {
+  checkAttempt(customer, attempt);
+  const receiptPath = path.replace(/\.json$/, ".receipt.json");
+  let saved;
+  if (existsSync(receiptPath)) saved = JSON.parse(regular(receiptPath).toString("utf8"));
+  else {
+    if (attempt.legacyEvent) {
+      const event = attempt.legacyEvent;
+      if (event.requestId !== attempt.requestId || event.version !== attempt.preview.source.version + 1 ||
+          current().program.version < event.version)
+        fail("Keep the original committed history before recovering an older receiver request.");
+    }
+    saved = native(attempt.args);
+    retain(receiptPath, json(saved));
+  }
+  if (saved.id !== options.case || saved.action !== "installation.save" || saved.kind !== "installation" ||
+      typeof saved.recordId !== "string" || saved.revision !== attempt.preview.expectedRevision + 1 ||
+      saved.version !== attempt.preview.source.version + 1 ||
+      !/^[a-f0-9]{64}$/.test(saved.sha256 || "") ||
+      (attempt.preview.installationId !== null && saved.recordId !== attempt.preview.installationId) ||
+      (attempt.legacyEvent && (saved.recordId !== attempt.legacyEvent.recordId ||
+        saved.sha256 !== attempt.legacyEvent.after?.sha256)))
+    fail("The native original request returned a different Installation receipt.");
+  const selection = {schema: attemptSchema + ".selected", identity: attempt.identity,
+    installation: {id: saved.recordId, revision: saved.revision, sha256: saved.sha256},
+    previewSha256: attempt.preview.previewSha256, document: attempt.document,
+    workorder: attempt.workorder, pendingSelections: attempt.pendingSelections,
+    requestId: attempt.requestId,
+    ...(attempt.acceptedSave === undefined ? {} : {acceptedSave: attempt.acceptedSave})};
+  const result = retainedResult(customer, attached, programme, selection);
+  if (!same(result.original.preview.document, attempt.preview.document))
+    fail("The saved native Installation differs from its complete reviewed document.");
+  nativeMutations.push(saved);
+  retain(join(directory, "selected.json"), json(selection));
+  return result;
+}
+function replayAttempt(customer, attached, programme, directory, path, attempt) {
+  const rejected = path.replace(/\.json$/, ".rejected.json");
+  if (existsSync(rejected)) {
+    const old = JSON.parse(regular(rejected).toString("utf8"));
+    if (old.requestId !== attempt.requestId || old.attemptSha256 !== hash(json(attempt)))
+      fail("Keep the original definitive Installation conflict record.");
+    return null;
+  }
+  try { return acceptAttempt(customer, attached, programme, directory, path, attempt); }
+  catch (error) {
+    // Only the original native compare-and-save refusal permits a fresh merge.
+    // Unknown responses and request fingerprint conflicts retain this same attempt.
+    if (!error.nativeConflict || attempt.legacyEvent) throw error;
+    retain(rejected, json({requestId: attempt.requestId, attemptSha256: hash(json(attempt)),
+      code: "NATIVE_COMPARISON_CONFLICT", message: error.message}));
+    return null;
+  }
+}
+function pendingSelections(prepared, preview) {
+  const pending = new Map(prepared.selections.map(item => [item.field, item]));
+  for (const finding of preview.report?.findings || [])
+    if (finding.kind !== "ACCEPTANCE") pending.set(finding.field, {field: finding.field, purpose: finding.message});
+  return [...pending.values()];
+}
+function legacyAttempt(customer, profile) {
+  const candidates = [];
+  for (const name of readdirSync(options.out)) {
+    if (!name.startsWith(customer.profile + "-v") || !name.endsWith("-seed.json")) continue;
+    const seed = JSON.parse(regular(join(options.out, name)).toString("utf8"));
+    if (seed.source?.caseId !== options.case || seed.source?.planId !== options.plan ||
+        seed.workshare?.caseId !== customer.workshareCaseId || seed.workshare?.planSha256 !== customer.planSha256) continue;
+    const tag = name.slice(0, -"-seed.json".length);
+    const documentPath = join(options.out, tag + "-installation.json");
+    const workorderPath = join(options.out, tag + "-WORKORDER.md");
+    if (!existsSync(documentPath) || !existsSync(workorderPath)) continue;
+    const raw = regular(documentPath), work = regular(workorderPath);
+    if (tag !== customer.profile + "-v" + seed.source.version + "-" + hash(raw).slice(0, 16))
+      fail("The earlier receiver's original document tag changed.");
+    candidates.push({seed, document: {path: documentPath, bytes: raw.length, sha256: hash(raw)},
+      workorder: {path: workorderPath, bytes: work.length, sha256: hash(work)},
+      bindings: JSON.parse(regular(join(options.out, tag + "-bindings.json")).toString("utf8"))});
+  }
+  if (!candidates.length) return null;
+  const matches = [];
+  let after = Math.min(...candidates.map(row => row.seed.source.version)), ceiling = null;
+  while (true) {
+    const page = native(["history", "--case", options.case, "--after", String(after), "--limit", "200"]);
+    if (!Array.isArray(page.events) || !Number.isSafeInteger(page.currentVersion))
+      fail("Read the complete original Operations history before receiver recovery.");
+    ceiling ??= page.currentVersion;
+    for (const event of page.events) {
+      if (event.version > ceiling || event.action !== "installation.save" || event.kind !== "installation" ||
+          event.actor !== options.actor ||
+          event.note !== "Receive the complete original customer Workshare and operating preparation: " + customer.workshareCaseId) continue;
+      for (const candidate of candidates.filter(row => row.seed.source.version + 1 === event.version)) {
+        const {seed, document, workorder, bindings} = candidate;
+        const opened = native(["installation-show", "--case", options.case,
+          "--installation", event.recordId, "--revision", String(event.after?.revision)]);
+        const preview = opened.preview;
+        if (!same(preview?.source, seed.source) || preview.installationId !== seed.installationId ||
+            preview.expectedRevision !== seed.expectedRevision || opened.sha256 !== event.after?.sha256 ||
+            opened.id !== event.recordId || opened.version !== event.version ||
+            preview.document.workshare?.caseId !== customer.workshareCaseId ||
+            preview.document.workshare?.planSha256 !== customer.planSha256) continue;
+        const request = saveArguments(customer, document, preview);
+        if (request.requestId !== event.requestId) continue;
+        const prepared = seed.installationId ? {selections: []} : prepareInstallation(seed, profile, bindings);
+        matches.push({schema: attemptSchema, identity: customerIdentity(customer), ...request,
+          preview, document, workorder, pendingSelections: pendingSelections(prepared, preview), legacyEvent: event});
+      }
+    }
+    if (page.nextAfter === null || page.nextAfter >= ceiling) break;
+    if (!Number.isSafeInteger(page.nextAfter) || page.nextAfter <= after)
+      fail("The original history cursor did not advance.");
+    after = page.nextAfter;
+  }
+  if (matches.length > 1) fail("Multiple earlier receiver saves match this original customer; keep their selected receipts and resolve the original output before continuing.");
+  return matches[0] || null;
+}
+function recoverCustomer(customer, attached, programme, profile, directory) {
+  const selectedPath = join(directory, "selected.json");
+  if (existsSync(selectedPath)) {
+    const selected = JSON.parse(regular(selectedPath).toString("utf8"));
+    if (selected.schema !== attemptSchema + ".selected" ||
+        !same(selected.identity, customerIdentity(customer)))
+      fail("Keep the selected original receiving customer and input identity.");
+    return retainedResult(customer, attached, programme, selected);
+  }
+  const paths = readdirSync(directory).filter(name => /^[a-f0-9]{64}\.json$/.test(name))
+    .map(name => join(directory, name));
+  const attempts = paths.map(path => ({path, attempt: JSON.parse(regular(path).toString("utf8"))}))
+    .sort((a, b) => a.attempt.preview.source.version - b.attempt.preview.source.version);
+  for (const {path, attempt} of attempts) {
+    checkAttempt(customer, attempt);
+    const result = replayAttempt(customer, attached, programme, directory, path, attempt);
+    if (result) return result;
+  }
+  if (!attempts.length) {
+    const attempt = legacyAttempt(customer, profile);
+    if (attempt) {
+      const path = join(directory, hash(Buffer.from(attempt.requestId)) + ".json");
+      retain(path, json(attempt));
+      return acceptAttempt(customer, attached, programme, directory, path, attempt);
+    }
+  }
+  return null;
+}
+
 function receiveCustomer(customer, attached, programme) {
   const profile = readProfile(customer.profile).value;
+  const directory = attemptDirectory(customer);
+  const recovered = recoverCustomer(customer, attached, programme, profile, directory);
+  if (recovered) return recovered;
   return retryCurrent(state => {
     const before = existingInstallation(state, customer.workshareCaseId);
     const version = state.program.version;
@@ -398,35 +620,28 @@ function receiveCustomer(customer, attached, programme) {
     if (before) previewArgs.push("--installation", before.id);
     const preview = native(previewArgs);
     prepared.document = preview.document;
-    const pending = new Map(prepared.selections.map(item => [item.field, item]));
-    for (const finding of preview.report?.findings || [])
-      if (finding.kind !== "ACCEPTANCE") pending.set(finding.field, {field: finding.field, purpose: finding.message});
-    prepared.selections = [...pending.values()];
+    prepared.selections = pendingSelections(prepared, preview);
     const workorder = retain(join(options.out, tag + "-WORKORDER.md"), Buffer.from(renderWorkorder(prepared)));
     if (before && same(before.preview.document, preview.document)) {
-      return {profile: customer.profile, workshareCaseId: customer.workshareCaseId,
+      const selection = {schema: attemptSchema + ".selected", identity: customerIdentity(customer),
         installation: {id: before.id, revision: before.revision, sha256: before.sha256},
-        document, workorder, original: before, pendingSelections: prepared.selections,
-        programme: programmeResult(programme, attached, before, acceptedSave)};
+        previewSha256: before.preview.previewSha256, document, workorder,
+        pendingSelections: prepared.selections, requestId: null,
+        ...(acceptedSave === undefined ? {} : {acceptedSave})};
+      retain(join(directory, "selected.json"), json(selection));
+      return retainedResult(customer, attached, programme, selection);
     }
     if (typeof preview.previewSha256 !== "string") fail("Retain the complete native Installation preview.");
-    const requestId = operationId("installation", {caseId: options.case, version,
-      installationId: before?.id || null, expectedRevision: before?.revision || 0, previewSha256: preview.previewSha256});
-    const saveArgs = ["installation-save", "--case", options.case, "--expected-version", String(version),
-      "--document", document.path, "--expected-revision", String(before?.revision || 0),
-      "--expected-preview-sha256", preview.previewSha256, "--actor", options.actor,
-      "--request-id", requestId, "--note", "Receive the complete original customer Workshare and operating preparation: " + customer.workshareCaseId];
-    if (before) saveArgs.push("--installation", before.id);
-    const saved = native(saveArgs);
-    nativeMutations.push(saved);
-    const opened = native(["installation-show", "--case", options.case, "--installation", saved.recordId,
-      "--revision", String(saved.revision)]);
-    if (opened.preview.document.workshare.caseId !== customer.workshareCaseId || !same(opened.preview.document, preview.document))
-      fail("The saved native Installation differs from its complete reviewed document.");
-    return {profile: customer.profile, workshareCaseId: customer.workshareCaseId,
-      installation: {id: opened.id, revision: opened.revision, sha256: opened.sha256},
-      document, workorder, original: opened, pendingSelections: prepared.selections,
-      programme: programmeResult(programme, attached, opened, acceptedSave)};
+    const attempt = {schema: attemptSchema, identity: customerIdentity(customer),
+      ...saveArguments(customer, document, preview), preview, document, workorder,
+      pendingSelections: prepared.selections,
+      ...(acceptedSave === undefined ? {} : {acceptedSave})};
+    const path = join(directory, hash(Buffer.from(attempt.requestId)) + ".json");
+    retain(path, json(attempt));
+    // This exact request is durable before the original native writer can accept it.
+    const result = replayAttempt(customer, attached, programme, directory, path, attempt);
+    if (!result) throw Object.assign(new Error("The original Installation comparison changed; reopen the current case."), {nativeConflict: true});
+    return result;
   });
 }
 let options, input;
