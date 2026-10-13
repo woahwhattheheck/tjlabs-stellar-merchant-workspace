@@ -164,7 +164,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan-cli.mjs",
-      "commit": "710507fb46d1a401026254bad259a6f4deb88f88",
+      "commit": "255f85043ba5d01eff07436b11db5e82dab8af9b",
       "required": false,
       "editions": [
         {
@@ -172,6 +172,12 @@
           "git_blob": "7c8c8a749f636e14260f63984742aac52a755e23",
           "bytes": 12455,
           "sha256": "fb07fe03af4022dbac0caff1986ee60540fa4b78af296d5bb4bff3ed9ae48fdb"
+        },
+        {
+          "commit": "255f85043ba5d01eff07436b11db5e82dab8af9b",
+          "git_blob": "9a006498311553f02402fb2ccdc03fd3880109ef",
+          "bytes": 12681,
+          "sha256": "735c3b828445f41e730d2c2425467e11c2873a0efb38932d89e7fc4ee5cf13f6"
         }
       ]
     },
