@@ -11,7 +11,7 @@ import {makeDocumentSet} from './source.mjs';
 
 function options(args){
   const out={};for(let i=0;i<args.length;i++){
-    const arg=args[i];need(/^--[a-z][a-z-]*$/.test(arg)&&!Object.hasOwn(out,arg.slice(2)),'ZOTERO_ARGUMENT_INVALID');
+    const arg=args[i];need(/^--[a-z][a-z0-9-]*$/.test(arg)&&!Object.hasOwn(out,arg.slice(2)),'ZOTERO_ARGUMENT_INVALID');
     const value=args[++i];need(typeof value==='string'&&!value.startsWith('--'),'ZOTERO_ARGUMENT_VALUE_REQUIRED');out[arg.slice(2)]=value;
   }return out;
 }
