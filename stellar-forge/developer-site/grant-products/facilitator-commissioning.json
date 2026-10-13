@@ -1,0 +1,160 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "facilitator-commissioning",
+  "heading": "## Retained services, facilitator choice and complete receiving",
+  "sources": [
+    {
+      "id": "facilitator-commissioning-guide",
+      "label": "Complete two-provider installation and customer operating course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/OPERATING.md",
+      "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+      "required": true,
+      "editions": [
+        {
+          "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+          "git_blob": "43ec3e8f7b295793f0abb11f9298268e41a1fba9",
+          "bytes": 38697,
+          "sha256": "c2fdc7ca16994319800f1349407920725ce0c2cc27a4bed1077c841329af05c7"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-engine",
+      "label": "Original same-service commissioning command and receiving engine",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/commissioning.mjs",
+      "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+      "required": true,
+      "editions": [
+        {
+          "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+          "git_blob": "6823335f1e7b90098054db1d56e01b8f2b386d0c",
+          "bytes": 46283,
+          "sha256": "5a1e8b059e2aa534e823b8f24421d0deb87cd583c19bebb95e1eb03cd8540305"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-operator",
+      "label": "Complete source-bound host, uploads, buyer plans and portable handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/operator.mjs",
+      "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+      "required": true,
+      "editions": [
+        {
+          "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+          "git_blob": "1f24928250959805bb4bff94b0afe9a4186702eb",
+          "bytes": 37291,
+          "sha256": "168407a1a12ada1ad3fde4ea17c9988b7963e69db8da4eb63903242df4f23d24"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-server",
+      "label": "Authenticated local operating API and complete downloads",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/operator-server.mjs",
+      "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+      "required": true,
+      "editions": [
+        {
+          "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+          "git_blob": "67287aa9246fbc7ba9f994caf4d5b25381aec7be",
+          "bytes": 8299,
+          "sha256": "15d19ca9aa0c8dd46271295f4425468e02d0666e2534ec4ff7306f0baf34d17e"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-browser",
+      "label": "Complete eight-screen operating application",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/operator-public/app.mjs",
+      "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+      "required": true,
+      "editions": [
+        {
+          "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+          "git_blob": "74b9a70439da90aeb24ad41d92b54c65550ff929",
+          "bytes": 33908,
+          "sha256": "5b3c209f2fc0802ea6a2a70fbe5aaf7976f6524bf52859f0bd1cc5a45040c910"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-browser-recovery",
+      "label": "Original browser drafts, full pending commands and cross-tab ownership",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/operator-public/recovery.mjs",
+      "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+      "required": true,
+      "editions": [
+        {
+          "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+          "git_blob": "986b5326e5383aa9b98799042d2c87176a8b263f",
+          "bytes": 2926,
+          "sha256": "224aab5c7e7c55ad2dba48d02b53332f4bfb6e6aa7bcb8084fba2c2184569187"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-portable-receiver",
+      "label": "Complete original TAR validation, recovery and independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/receive-operator.mjs",
+      "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+      "required": true,
+      "editions": [
+        {
+          "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+          "git_blob": "cee1f22db16e60d51158b6f4b85a96df050b2112",
+          "bytes": 18174,
+          "sha256": "b90de57a7b3324177b785b3f179a2887f2f4110d6aca18061135bbc70c1e7bea"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-command",
+      "label": "Installed foreground owner and complete receiving command",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/cli.mjs",
+      "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+      "required": true,
+      "editions": [
+        {
+          "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+          "git_blob": "b0f97c376c75cbd10bd8665bc1e30c9e92208d65",
+          "bytes": 8362,
+          "sha256": "8236e1dc8dd05a8f2f7d24a4f80017ff99d33e26f727b25e949c727db1bdea30"
+        }
+      ]
+    },
+    {
+      "id": "facilitator-commissioning-report",
+      "label": "Readable full commissioning and customer outcome report",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/facilitator-commissioning/report.mjs",
+      "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+      "required": true,
+      "editions": [
+        {
+          "commit": "82d45d7cd48a94619a0c384a415138f33620ff4c",
+          "git_blob": "0a7abb1cd77cced1b5ffff069a9ba48fcbdc2a58",
+          "bytes": 4940,
+          "sha256": "6e25c2baa4a2566cd439aee250b48b2e88245d7eb78dda8920ca916eba5e91bc"
+        }
+      ]
+    }
+  ]
+}
