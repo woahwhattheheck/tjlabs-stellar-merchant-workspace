@@ -451,3 +451,10 @@ The [Loaded Bikes catalogue workshare](adaptations/loaded-bikes/README.md) adds 
 The complete [Airtable / NetSuite application](adaptations/airtable-netsuite/README.md) adds read-only provider collection, full selected populations, explicit exact type and relationship mapping, independent SuiteQL expectations and an editable review desk. Its [operator guide](adaptations/airtable-netsuite/OPERATING.md) connects the approved mapping to this original Workspace, dlt/DuckDB comparison, business acceptance and independent complete receiving.
 
 Serve the full product root and open `adaptations/airtable-netsuite/`. Saved projects retain complete provider source and every mapping edition; unfinished working files retain raw edits. The adapter's `receive.mjs` uses the original native writer and request history. Its `browser-receive.mjs` operates the same installed source on the existing authorized Page. Keep the original workbench manifest together with the full additive source manifest in every receiving package.
+
+
+## Twenty source and destination comparison
+
+The complete [Twenty adapter](adaptations/twenty/README.md) adds read-only selected-object capture, independently retained destination pages, composite field and relationship mapping, full population review and attributed mapping history. Its [capture guide](adaptations/twenty/CAPTURE_OPERATING.md) and [operating guide](adaptations/twenty/OPERATING.md) connect that source to the existing local dlt/DuckDB comparison, business acceptance and complete receiving operation.
+
+Open the self-contained `adaptations/twenty/dist/twenty-review.html` or serve the full product root and open `adaptations/twenty/`. Saved working files retain unfinished forms and raw mappings; reviewed projects retain the original capture and mapping editions. The adapter's native receiving command uses this product's original Workspace and request journals. Keep the full adapter source manifest and original Workbench dependencies together when copying or receiving the application.
