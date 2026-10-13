@@ -1,6 +1,6 @@
 # Datasette source and customer workspace
 
-Capture a complete Datasette table or read-only query, review the original values, publish an immutable dataset and deliver the source with its customer workspace. The browser, CLI, merchant agent and maintained publisher use the same original workspace.
+Capture a complete Datasette table, read-only query or selected original CSV source family, review the original values, prepare customer reports and deliver the complete editable project. The source publisher, customer Analysis and source workflow each retain their original workspace and share the selected source editions through maintained native interfaces.
 
 ## The complete workflow
 
@@ -12,6 +12,7 @@ Capture a complete Datasette table or read-only query, review the original value
 | Publication | Save the original plan, extract, inspect the candidate and review its current target | Original publisher plan, candidate CSV, dataset configuration, review and versioned publication |
 | Merchant delivery | Prepare and stage the full release; read the original buyer offer | Source edition, original pages, source-bound plan, dataset snapshot, native release and buyer configuration |
 | Customer analysis | Receive the same edition in the installed Datasette Analysis application | Original customer database, editable saved queries, reports, workbook and complete receiving archive |
+| Source workflow | Retain an original business request, select complete named sources and run the saved SQL/report configuration | Request and correlation IDs, source editions, complete query outputs, report, supplier review and delivery history |
 | Portable receiving | Export original files or the entire workspace; receive and reopen independently | Complete source, publisher and customer history with original archive and file identities |
 
 The interface uses a neutral industrial layout. Captures, editions, source rows, publisher history, differences and retained files have their own navigation. Downloading a file reads the identified original bytes; an interrupted operation keeps its original input and native operation identifier.
@@ -26,7 +27,7 @@ node stellar/scf-starforge-20261009/distribution/build.mjs \
   --selection datasette --out /absolute/datasette-release
 ~~~
 
-The existing Runtime workspace **Build a product** view runs that same maintained builder. The selection includes Datasette capture/publisher/receiving, the original customer Analysis product, both application providers, the merchant agent, dataset seller/buyer and native runtime installation.
+The existing Runtime workspace **Build a product** view runs that same maintained builder. The selection includes Datasette capture/publisher/receiving, the original customer Analysis product, the source publisher, customer Analysis and source workflow Applications entries, the merchant agent, dataset seller/buyer and native runtime installation.
 
 Follow [Installation and receiving](RECEIVING.md) for the exact archive, profile, installer and independent workspace reopening. The emitted source manifest retains the actual commit and complete selected files.
 
@@ -44,6 +45,54 @@ Open the local URL printed by the original command. It also writes a private con
 After initial creation, choose **Applications → Datasette source and dataset publisher** in an installed READY runtime. Select that original directory and use the existing Review, Save, Start and Open controls. The managed application records the immutable workspace declaration, its identity and installed source. Captures and publisher history remain operational.
 
 [Operating instructions](OPERATING.md) describe the complete browser workflow, source formats, publication, release and agent connection.
+
+## Open the source and report workbench
+
+Use **Applications → Datasette source workflow** when the task begins with a
+business request and finishes with an editable report and complete delivery.
+Select the same installed Python environment used by customer Analysis, the
+private workflow directory and the complete configuration produced by the
+installed `workflow configure` command. Review, Save, Start and Open use the
+existing Applications lifecycle.
+
+The configured original Analysis application owns the database and must be
+running when a request prepares or continues its native reports. The source
+workflow opens independently: its authenticated health response reports the
+selected Analysis owner and readiness. Open a received workflow without a new
+configuration to inspect and re-export its retained result.
+
+The workbench shows the named sources, all configured SQL sections, report
+definition and required business parameters before accepting a request. Each
+request retains its correlation, source selection, native results, supplier
+revision, delivery files and complete project export. A new report change uses
+a successor request linked to the earlier delivery.
+
+| Applications entry | Operator purpose | Original directory |
+| --- | --- | --- |
+| Datasette source and dataset publisher | Capture, review, compare, publish and release a source edition | Source/publisher workspace |
+| Datasette customer Analysis | Native queries, reports, workbooks and customer archive receiving | Analysis database and operation |
+| Datasette source workflow | Original requests, paired sources, supplier reports, delivery and successor work | Request/project workspace |
+
+[Operate a complete source workflow](OPERATING.md#operate-a-complete-source-workflow)
+provides the installed launch and configuration sequence.
+[Receive a complete report project](RECEIVING.md#receive-a-complete-report-project)
+reopens its original source, native Analysis and supplier files on another host.
+
+## Original paired supplier example
+
+The selected source contains the complete public pricing and catalogue files
+published by Elite Digital AI Solutions Ltd, together with its original
+datapackage metadata and attribution. The retained August 12 edition was acquired
+on October 12, 2026. Its 23 price records and 29 catalogue entries keep original
+GBP fields, billing periods, from-price wording, blank charity rates and actual
+zero amounts.
+
+The maintained [supplier profile](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/WORKFLOW_SUPPLIER_EXAMPLE.json)
+runs six native SQL sections and the source-owned supplier review/coverage
+component. The [complete original files](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/sources/elite-digital-20261012/README.md)
+are part of the installation. Select the matching original reviewed supplier
+workspace and the actual built application archive, then follow the
+[full native receiving programme](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/WORKFLOW_RECEIVING.md).
 
 ## Original source example
 

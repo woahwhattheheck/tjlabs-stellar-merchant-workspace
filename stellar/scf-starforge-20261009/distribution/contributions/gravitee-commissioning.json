@@ -1,0 +1,54 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "gravitee-commissioning",
+  "description": "Complete native Gravitee source migration, operator commissioning and portable receiving",
+  "components": [
+    "products/gravitee-merchant"
+  ],
+  "commands": {
+    "gravitee-workspace": "products/gravitee-merchant/cli.mjs"
+  },
+  "commandDescriptions": {
+    "gravitee-workspace": "Operate and receive a complete Gravitee API commissioning workspace."
+  },
+  "exports": {
+    "./merchant/gravitee/native": "./source/products/gravitee-merchant/native.mjs",
+    "./merchant/gravitee/workspace": "./source/products/gravitee-merchant/workspace.mjs",
+    "./merchant/gravitee/client": {
+      "types": "./source/products/gravitee-merchant/client.d.ts",
+      "import": "./source/products/gravitee-merchant/client.mjs"
+    },
+    "./merchant/gravitee/actions": "./source/products/gravitee-merchant/actions.mjs",
+    "./merchant/mcp/gravitee": "./source/stellar-forge/mcp-merchant-operator/gravitee-workspace.mjs"
+  },
+  "featurePeers": {
+    "gravitee-commissioning": {
+      "yaml": {
+        "version": "2.9.1",
+        "probe": "yaml"
+      }
+    }
+  },
+  "runtimePackageManifests": {
+    "gravitee-commissioning": "products/gravitee-merchant/package.json"
+  },
+  "applicationProviders": {
+    "gravitee-workspace": "products/gravitee-merchant/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "gravitee-workspaces": "stellar-forge/mcp-merchant-operator/providers/gravitee-workspaces.mjs"
+  },
+  "supportFiles": [
+    "products/gravitee-merchant/README.md",
+    "products/gravitee-merchant/OPERATING.md",
+    "products/gravitee-merchant/RECEIVING.md",
+    "products/gravitee-merchant/source-files.json",
+    "products/gravitee-merchant/contracts/apim-4.12.21.json"
+  ],
+  "browserAssets": [
+    {
+      "server": "products/gravitee-merchant/server.mjs",
+      "manifest": "products/gravitee-merchant/browser-assets.json"
+    }
+  ]
+}

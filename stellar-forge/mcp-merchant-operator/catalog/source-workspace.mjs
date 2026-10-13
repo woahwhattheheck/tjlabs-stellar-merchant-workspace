@@ -1,6 +1,9 @@
+import { organisationReconciliationTools } from '../organisation_reconciliation_mcp.mjs';
 // MIT. Original tool metadata; provider runtimes load only when selected.
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
+import { iatiAmpTools } from './source-iati-amp.mjs';
 import { iatiOrganisationTools } from './source-iati-organisation.mjs';
+import { iatiDocumentEvidenceTools } from './source-iati-document-evidence.mjs';
 
 const SHA = /^[0-9a-f]{64}$/;
 
@@ -20,6 +23,7 @@ const read = { readOnly: true, idempotent: true };
 
 function sourceWorkspaceTools(tool) {
   return [
+    ...organisationReconciliationTools(tool),
     tool('merchant_source_workspaces', 'List configured original XML/NDJSON/IATI consoles, source-file handles and retained download sessions.', {}, [], read),
     tool('merchant_source_status', 'Read original saved source, mapping, build and comparison counts. Recover completed work here and through inventory after an interrupted reply.', selection, ['workspace'], read),
     tool('merchant_source_inventory', 'Page saved sources, plans, builds or comparisons from the original workspace. Continue its snapshot with expectedSnapshot.', { ...selection, kind: { type: 'string', enum: ['sources', 'plans', 'builds', 'comparisons', 'portfolios'] }, ...page }, ['workspace', 'kind'], read),
@@ -37,7 +41,7 @@ function sourceWorkspaceTools(tool) {
     tool('merchant_source_exports', 'Page retained complete exports, including results whose initial reply was interrupted. Files remain available after MCP or console restart.', { ...selection, ...page }, ['workspace'], read),
     tool('merchant_source_file_read', 'Read the exact retained export in verified base64 byte chunks. Repeat exportId and readId with nextOffset; completed reads release their temporary snapshot.', { ...selection, exportId: digest, readId: { type: 'string', pattern: UUID.source }, offset: page.offset, limit: { type: 'integer', minimum: 1, maximum: MAX_RETAINED_CHUNK_BYTES } }, ['workspace', 'exportId'], read),
     tool('merchant_source_file_release', 'Release an original temporary download snapshot while preserving its complete retained export.', { ...selection, readId: { type: 'string', pattern: UUID.source } }, ['workspace', 'readId'], { idempotent: true }),
-    tool('merchant_source_import', 'Import a complete source project, IATI portfolio, DQA customer packet or participant release through the original receiving console. Select a configured packet file or retained complete export from a declared workspace.', { ...selection, file: alias, exportId: digest, fromWorkspace: alias }, ['workspace'], { idempotent: true }),
+    tool('merchant_source_import', 'Import a complete source project, IATI portfolio, DQA customer packet, participant release or editable results project through the original receiving console. Select a configured packet file or retained complete export from a declared workspace.', { ...selection, file: alias, exportId: digest, fromWorkspace: alias }, ['workspace'], { idempotent: true }),
     tool('merchant_source_iati_presets', 'Read the original IATI 2.03 mapping presets, exact field names and financial category labels.', selection, ['workspace'], read),
     tool('merchant_source_iati_profile', 'Inspect the original publisher XML, complete association-preserving inventory and financial review findings.', { ...selection, source: digest }, ['workspace', 'source'], read),
     tool('merchant_source_iati_portfolios', 'Page the original latest saved portfolio revisions. Continue the returned exact inventory snapshot.', { ...selection, ...page }, ['workspace'], read),
@@ -90,6 +94,21 @@ function sourceWorkspaceTools(tool) {
     tool('merchant_source_iati_refresh_resume', 'Continue the exact saved native portfolio request, or return its retained completed/abandoned outcome, without changing source, selection or operation identity.', { ...selection, requestId:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$'} }, ['workspace','requestId'], {idempotent:true}),
     tool('merchant_source_iati_refresh_export', 'Retain the entire refresh journal, every original publisher XML, complete original portfolio/native packets, readable reports and guide. expectedSnapshot selects the WHOLE journal from refresh_status. Read via merchant_source_file_read or receive via merchant_source_import.', { ...selection, plan:digest, expectedSnapshot:digest }, ['workspace','plan'], {}),
     ...iatiOrganisationTools(tool, { selection, digest, page, read }),
+    ...iatiDocumentEvidenceTools(tool, { selection, digest, page, read }),
+
+    tool('merchant_source_iati_results_inventory', 'Page original results projects, source projections or receiving receipts. Preserve the returned snapshot when paging; no publisher request or native financial operation is started.', { ...selection, kind: { type:'string', enum:['projects','projections','receipts'] }, ...page }, ['workspace','kind'], read),
+    tool('merchant_source_iati_results_source', 'Inspect one complete retained publisher XML with the original IATI reader and retain its exact result/indicator/period projection. A source with no result elements remains a genuine empty-coverage source.', { ...selection, source:digest }, ['workspace','source'], {idempotent:true}),
+    tool('merchant_source_iati_results_indicators', 'Page indicators from one immutable original projection, retaining activity/result, measure, direction and exact source locator. Original indicator keys bind the complete publisher bytes.', { ...selection, projection:digest, offset:page.offset, limit:{type:'integer',minimum:1,maximum:100}, search:{type:'string',maxLength:256}, measure:{type:'string',maxLength:64} }, ['workspace','projection'], read),
+    tool('merchant_source_iati_results_indicator', 'Read the complete original indicator, multilingual source meaning, all baselines and periods, repeated target/actual records and dimension/location context. Values remain source strings.', { ...selection, projection:digest, indicator:digest }, ['workspace','projection','indicator'], read),
+    tool('merchant_source_iati_results_project', 'Read one complete saved results review revision and its exact source-bound report. Omit revision only to select the explicit current local head.', { ...selection, project:digest, revision:{type:'integer',minimum:1} }, ['workspace','project'], read),
+    tool('merchant_source_iati_results_report', 'Read the exact report for a saved results edition, including original activity/result context, separate selected target/actual pairs, interpretation and complete findings. No indicator performance total is inferred.', { ...selection, project:digest, revision:{type:'integer',minimum:1} }, ['workspace','project'], read),
+    tool('merchant_source_iati_results_history', 'Page every original immutable results edition while retaining the current local head and inventory snapshot. An older approved review remains its historical basis.', { ...selection, project:digest, ...page }, ['workspace','project'], read),
+    tool('merchant_source_iati_results_comparisons', 'Page saved source-versus-selection comparisons. Following publisher indicators require explicit original correspondence; date-filter changes stay distinct from changes in original source values.', { ...selection, project:digest, ...page }, ['workspace','project'], read),
+    tool('merchant_source_iati_results_request', 'Read the original COMPLETE or CANCELLED request and full retained input/result after an interrupted reply. Uncommitted work remains NOT FOUND; do not choose a replacement identity before reconciliation.', { ...selection, requestId:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$'} }, ['workspace','requestId'], read),
+    tool('merchant_source_iati_results_preview', 'Preview the complete original results definition, source coverage, selected explicit period pairs and exact decimal calculations before saving a new review revision.', { ...selection, definition:{type:'object'} }, ['workspace','definition'], read),
+    tool('merchant_source_iati_results_action', 'Save, compare or explicitly select a results revision with the original requestId and revision basis. Cancel only an exact uncommitted original input under that same journal; completed reviews and observations are never withdrawn by this action.', { ...selection, action:{type:'string',enum:['save','compare','adopt','cancel']}, definition:{type:'object'} }, ['workspace','action','definition'], {idempotent:true}),
+    tool('merchant_source_iati_results_export', 'Retain a complete editable results project or report-only ZIP through the original full-file reader. Project packets include all original XML, report revisions, named reviews, source comparisons and prior receiving closure; receive editable packets with merchant_source_import.', { ...selection, project:digest, revision:{type:'integer',minimum:1}, kind:{type:'string',enum:['project','report']} }, ['workspace','project','kind'], {}),
+    ...iatiAmpTools(tool, { selection, digest, page, read }),
   ];
 }
 

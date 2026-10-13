@@ -9,8 +9,10 @@ import { imageOperationFields } from './image-workspace.mjs';
 import { managedOperationFields } from './managed-workspace.mjs';
 import { pythonOperationFields } from '../python-runtime/workspace.mjs';
 import { sourceBuildOperationFields } from './source-build-workspace.mjs';
+import { PRODUCT_PLAN_MAX_BYTES } from './source-product-plans.mjs';
 import { openRuntimeWorkspace } from './model.mjs';
 import { OPENAPI_SETUP_ROUTES, openApiSetupBodyLimit } from './openapi-connection-setup.mjs';
+import { GRANT_HANDOFF_BROWSER_ACTIONS, grantHandoffBodyLimit, grantHandoffBrowserAction } from './grant-application-handoff.mjs';
 import { plain, need, fail } from './storage.mjs';
 
 const HOST = '127.0.0.1';
@@ -51,6 +53,7 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/application-setup.mjs', 'application-setup.mjs', 'text/javascript; charset=utf-8'],
     ['/application-setup-library.mjs', 'application-setup-library.mjs', 'text/javascript; charset=utf-8'],
     ['/application-setup-codec.mjs', 'application-setup-codec.mjs', 'text/javascript; charset=utf-8'],
+    ['/grant-application-handoff.mjs', 'grant-application-handoff.mjs', 'text/javascript; charset=utf-8'],
     ['/application-review.mjs', 'application-review.mjs', 'text/javascript; charset=utf-8'],
     ['/openapi-application.mjs', 'openapi-application.mjs', 'text/javascript; charset=utf-8'],
     ['/accounting-application.mjs', 'accounting-application.mjs', 'text/javascript; charset=utf-8'],
@@ -60,7 +63,20 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/image.mjs', 'image.mjs', 'text/javascript; charset=utf-8'],
     ['/python.mjs', 'python.mjs', 'text/javascript; charset=utf-8'],
     ['/source-build.mjs', 'source-build.mjs', 'text/javascript; charset=utf-8'],
+    ['/product-plan-briefing.css', 'product-plan-briefing.css', 'text/css; charset=utf-8'],
   ].map(async ([path, name, type]) => [path, { bytes: await readFile(new URL('./public/' + name, import.meta.url)), type }])));
+  assets.set('/product-catalog/catalog.mjs', {
+    bytes: await readFile(new URL('../product-catalog/catalog.mjs', import.meta.url)),
+    type: 'text/javascript; charset=utf-8',
+  });
+  assets.set('/product-requirements.mjs', {
+    bytes: await readFile(new URL('../discovery/product-requirements.mjs', import.meta.url)),
+    type: 'text/javascript; charset=utf-8',
+  });
+  assets.set('/source-catalog.css', {
+    bytes: await readFile(new URL('./public/source-catalog.css', import.meta.url)),
+    type: 'text/css; charset=utf-8',
+  });
   let origin, host, closing = false;
   const sockets = new Set(), imageDownloads = new Map(), transferDownloads = new Map(), pythonDownloads = new Map(), sourceBuildDownloads = new Map();
   const server = createServer(async (req, res) => {
@@ -131,6 +147,22 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
       const supplied = Buffer.from(typeof req.headers['x-runtime-workspace-token'] === 'string' ? req.headers['x-runtime-workspace-token'] : '');
       need(supplied.length === tokenBytes.length && timingSafeEqual(supplied, tokenBytes),
         'RUNTIME_WORKSPACE_CAPABILITY_REQUIRED', 'Open the current private URL printed by the workspace command', 401);
+      if (req.method === 'GET' && url.pathname === '/api/source-builds/plans') {
+        const value = params(url, ['query', 'limit', 'cursor', 'receivingQuery', 'receivingStatus', 'receivingLimit', 'receivingCursor']);
+        for (const field of ['limit', 'receivingLimit']) if (value[field] !== undefined) {
+          need(/^(?:[1-9][0-9]?|100)$/.test(value[field]), 'PRODUCT_PLANS_LIMIT_INVALID');
+          value[field] = Number(value[field]);
+        }
+        return send(200, await model.sourcePlansState(value));
+      }
+      if (req.method === 'GET' && url.pathname === '/api/source-builds/plan')
+        return send(200, await model.sourcePlanRead(params(url, ['planId', 'bindingId'])));
+      if (req.method === 'GET' && url.pathname === '/api/source-builds/plan-briefing')
+        return send(200, await model.sourcePlanBriefing(params(url, ['planId', 'bindingId', 'format'])));
+      if (req.method === 'GET' && url.pathname === '/api/source-builds/plan-export')
+        return send(200, await model.sourcePlanExport(params(url, ['planId'])));
+      if (req.method === 'GET' && url.pathname === '/api/source-builds/plan-receiving')
+        return send(200, await model.sourcePlanReceiving(params(url, ['receiptId'])));
       if (req.method === 'GET' && url.pathname === '/api/source-builds/state') {
         params(url, []); return send(200, await model.sourceBuildsState());
       }
@@ -187,8 +219,20 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
       if (req.method === 'GET' && url.pathname === '/api/managed/config')
         return send(200, await model.managedConfig(params(url, ['homeId', 'path'])));
       need(req.method === 'POST' && req.headers.origin === origin, 'RUNTIME_WORKSPACE_ORIGIN_REQUIRED', undefined, 403);
+      if (url.pathname === '/api/source-builds/plan-save')
+        return send(201, await model.sourcePlanSave(await body(req,
+          ['repository', 'ref', 'selection', 'offline', 'python', 'requirements', 'label', 'purpose'], 262144)));
+      if (url.pathname === '/api/source-builds/plan-refresh')
+        return send(200, await model.sourcePlanRefresh(await body(req, ['planId', 'bindingId'])));
+      if (url.pathname === '/api/source-builds/plan-receive')
+        return send(201, await model.sourcePlanReceive(await body(req,
+          ['bundle', 'repository', 'offline', 'python'], PRODUCT_PLAN_MAX_BYTES + 8192)));
+      if (url.pathname === '/api/source-builds/plan-receive-continue')
+        return send(200, await model.sourcePlanContinue(await body(req, ['receiptId'])));
       if (url.pathname === '/api/source-builds/catalog')
         return send(200, await model.sourceBuildsCatalog(await body(req, ['repository', 'ref', 'offline'])));
+      if (url.pathname === '/api/source-builds/product')
+        return send(200, await model.sourceBuildsProduct(await body(req, ['repository', 'ref', 'selection', 'offline', 'python'])));
       if (url.pathname === '/api/source-builds/review')
         return send(201, await model.sourceBuildsReview(await body(req, ['repository', 'ref', 'selection', 'offline', 'python'])));
       if (url.pathname === '/api/source-builds/recover') {
@@ -282,6 +326,12 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
           'load', 'source', 'install', 'archive', 'sha256', 'label', 'nodeHeaders', ...Object.values(managedOperationFields).flat(), ...new Set(Object.values(imageOperationFields).flat()), ...new Set(Object.values(transferOperationFields).flat()), ...new Set(Object.values(pythonOperationFields).flat()), ...new Set(Object.values(sourceBuildOperationFields).flat())])));
       if (url.pathname === '/api/resume-queued') {
         const value = await body(req, ['operationId']); return send(202, await model.resumeQueued(value.operationId));
+      }
+      if (url.pathname.startsWith('/api/applications/grant-handoff/')) {
+        const action = url.pathname.slice('/api/applications/grant-handoff/'.length);
+        need(!url.search && Object.hasOwn(GRANT_HANDOFF_BROWSER_ACTIONS, action), 'GRANT_HANDOFF_INPUT_INVALID');
+        const value = await body(req, GRANT_HANDOFF_BROWSER_ACTIONS[action], grantHandoffBodyLimit(action));
+        return send(200, await grantHandoffBrowserAction(model, action, value));
       }
       if (url.pathname.startsWith('/api/applications/openapi-setup/')) {
         const action = url.pathname.slice('/api/applications/openapi-setup/'.length);

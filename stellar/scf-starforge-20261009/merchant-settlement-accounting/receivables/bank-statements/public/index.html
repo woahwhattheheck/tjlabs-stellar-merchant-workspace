@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Bank reconciliation · Merchant workspace</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to workspace</a>
+  <header class="masthead">
+    <div><p class="eyebrow">Merchant workspace</p><h1>Bank reconciliation</h1></div>
+    <div class="header-actions"><a id="receivables-link" href="/receivables/">Receivables</a><button type="button" data-action="refresh">Refresh</button></div>
+  </header>
+  <div class="workspace-bar">
+    <label>Bank account<select id="account-picker"><option value="">All accounts</option></select></label>
+    <label>Recorded by<input id="actor" type="text" maxlength="100" autocomplete="off" value="operator"></label>
+    <p id="connection" role="status">Opening workspace…</p>
+  </div>
+  <nav class="tabs" aria-label="Bank workspace">
+    <button type="button" data-tab="overview" aria-current="page">Overview</button>
+    <button type="button" data-tab="import">Import statement</button>
+    <button type="button" data-tab="transactions">Transactions</button>
+    <button type="button" data-tab="close">Close statement</button>
+  </nav>
+  <section id="pending" class="pending" hidden aria-label="Retained operation"></section>
+  <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+  <main id="main" tabindex="-1">
+    <section id="view-overview" class="view"></section>
+    <section id="view-import" class="view" hidden></section>
+    <section id="view-transactions" class="view" hidden></section>
+    <section id="view-close" class="view" hidden></section>
+  </main>
+  <dialog id="detail-dialog" aria-labelledby="detail-title"><div class="dialog-header"><h2 id="detail-title">Transaction</h2><button type="button" data-action="close-dialog" aria-label="Close details">Close</button></div><div id="detail-body"></div></dialog>
+  <dialog id="record-dialog" aria-labelledby="record-title"><div class="dialog-header"><h2 id="record-title">Retained record</h2><button type="button" data-action="close-record" aria-label="Close retained record">Close</button></div><div id="record-body"></div></dialog>
+  <footer><span id="workspace-identity">Original merchant accounting workspace</span><a href="./SOURCE_FORMATS.md" target="_blank" rel="noopener">Bank file formats</a></footer>
+  <noscript>This operating workspace requires JavaScript to review and record bank transactions.</noscript>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

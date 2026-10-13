@@ -6,9 +6,18 @@ import { createHash, randomUUID } from 'node:crypto';
 import { encode, digest, fault, privateDir, syncDir, utf8, readPrivate, writeOnce, checkedFile, MAX_DOCUMENT } from './common.mjs';
 export const MAX_BUNDLE=512*1024*1024;
 const MAX_FILES=100000,MAX_MEMBER=64*1024*1024,block=512;
+// Native Python source paths allow 4096 characters. Retain their complete
+// names beneath the fixed decision/source-package prefixes as well.
+const MAX_PATH=4096+128,MAX_PAX_BYTES=4*MAX_PATH+64;
+function pathText(bytes){
+  try{return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);}
+  catch{throw fault('UTF8_REQUIRED','Package paths must contain complete UTF-8.');}
+}
 function safeName(name){
-  if(typeof name!=='string'||name.length>240||!/^[A-Za-z0-9_.\/-]+$/.test(name)||
-      name.startsWith('/')||name.split('/').some(x=>!x||x==='.'||x==='..'))
+  if(typeof name!=='string'||!name||name.length>MAX_PATH||
+      /[\\\u0000-\u001f\u007f]/.test(name)||name.startsWith('/')||
+      name.split('/').some(x=>!x||x==='.'||x==='..')||
+      pathText(Buffer.from(name,'utf8'))!==name)
     throw fault('BUNDLE_PATH_INVALID','Package contains an unsupported relative file path.');
   return name;
 }
@@ -16,15 +25,40 @@ function field(bytes,offset,length,value){const source=Buffer.from(value,'ascii'
   if(source.length>length)throw fault('BUNDLE_HEADER_INVALID','Package header field is too long.');source.copy(bytes,offset);}
 function octal(n,length){const value=n.toString(8);if(value.length>length-1)throw fault('BUNDLE_TOO_LARGE','Package size exceeds the supported TAR field.');
   return value.padStart(length-1,'0')+'\0';}
-function header(name,size){
-  safeName(name);let short=name,prefix='';
-  if(Buffer.byteLength(name)>100){let at=name.lastIndexOf('/');for(;at>0;at=name.lastIndexOf('/',at-1)){
-    if(Buffer.byteLength(name.slice(0,at))<=155&&Buffer.byteLength(name.slice(at+1))<=100){prefix=name.slice(0,at);short=name.slice(at+1);break;}}
-    if(!prefix)throw fault('BUNDLE_PATH_INVALID','Package filename exceeds the USTAR path limit.');}
-  const h=Buffer.alloc(block);field(h,0,100,short);field(h,100,8,octal(0o600,8));
+function ustarName(name){
+  // PAX carries Unicode rather than storing nonportable bytes in USTAR fields.
+  if(!/^[\x20-\x7e]+$/.test(name))return null;
+  if(Buffer.byteLength(name)<=100)return {short:name,prefix:''};
+  for(let at=name.lastIndexOf('/');at>0;at=name.lastIndexOf('/',at-1)){
+    if(Buffer.byteLength(name.slice(0,at))<=155&&Buffer.byteLength(name.slice(at+1))<=100)
+      return {short:name.slice(at+1),prefix:name.slice(0,at)};
+  }
+  return null;
+}
+function header(name,size,type=48){
+  safeName(name);const parts=ustarName(name);
+  if(!parts)throw fault('BUNDLE_PATH_INVALID','Package filename requires its PAX path header.');
+  const h=Buffer.alloc(block);field(h,0,100,parts.short);field(h,100,8,octal(0o600,8));
   field(h,108,8,octal(0,8));field(h,116,8,octal(0,8));field(h,124,12,octal(size,12));field(h,136,12,octal(0,12));
-  h.fill(32,148,156);h[156]=48;field(h,257,6,'ustar\0');field(h,263,2,'00');field(h,345,155,prefix);
+  h.fill(32,148,156);h[156]=type;field(h,257,6,'ustar\0');field(h,263,2,'00');field(h,345,155,parts.prefix);
   let checksum=0;for(const byte of h)checksum+=byte;field(h,148,8,checksum.toString(8).padStart(6,'0')+'\0 ');return h;
+}
+function paxPath(name){
+  const record=Buffer.from('path='+safeName(name)+'\n','utf8');
+  let length=record.length+2;
+  for(;;){const next=record.length+String(length).length+1;if(next===length)break;length=next;}
+  return Buffer.concat([Buffer.from(String(length)+' ','ascii'),record]);
+}
+function readPaxPath(bytes){
+  // The original bundle writer needs only one local path record. Never accept
+  // global defaults, link targets, size overrides or an ambiguous second path.
+  const separator=bytes.indexOf(32);
+  if(separator<1||separator>8||
+      bytes[0]===48||bytes.subarray(0,separator).some(byte=>byte<48||byte>57)||
+      Number(bytes.subarray(0,separator).toString('ascii'))!==bytes.length||
+      bytes[bytes.length-1]!==10||!bytes.subarray(separator+1,separator+6).equals(Buffer.from('path=','ascii')))
+    throw fault('BUNDLE_PAX_INVALID','A package PAX header must contain one complete UTF-8 path record.');
+  return safeName(pathText(bytes.subarray(separator+6,bytes.length-1)));
 }
 async function exactRead(handle,length,position){
   const buffer=Buffer.alloc(length);let used=0;
@@ -33,32 +67,47 @@ async function exactRead(handle,length,position){
   return buffer;
 }
 function cstring(buffer){const end=buffer.indexOf(0);return utf8(end<0?buffer:buffer.subarray(0,end),'Package header');}
+function pathCString(buffer){const end=buffer.indexOf(0);return pathText(end<0?buffer:buffer.subarray(0,end));}
 function number(buffer){const text=cstring(buffer).trim();if(!/^[0-7]+$/.test(text))throw fault('BUNDLE_HEADER_INVALID','Invalid TAR numeric header.');
   const n=parseInt(text,8);if(!Number.isSafeInteger(n))throw fault('BUNDLE_HEADER_INVALID','Invalid TAR size.');return n;}
 function decodedHeader(buffer){
   const copy=Buffer.from(buffer),expected=number(copy.subarray(148,156));copy.fill(32,148,156);
   if(copy.reduce((n,x)=>n+x,0)!==expected)throw fault('BUNDLE_HEADER_INVALID','TAR header checksum does not match.');
-  if(![0,48].includes(buffer[156])||cstring(buffer.subarray(257,263))!=='ustar')
-    throw fault('BUNDLE_MEMBER_INVALID','Only original USTAR regular files are accepted.');
-  const prefix=cstring(buffer.subarray(345,500)),name=safeName((prefix?prefix+'/':'')+cstring(buffer.subarray(0,100)));
-  const size=number(buffer.subarray(124,136));if(size>MAX_MEMBER)throw fault('BUNDLE_MEMBER_TOO_LARGE','A package member exceeds 64 MiB.');
-  return {name,size};
+  const type=buffer[156];
+  if(![0,48,120].includes(type)||cstring(buffer.subarray(257,263))!=='ustar')
+    throw fault('BUNDLE_MEMBER_INVALID','Only original regular files and their local PAX path headers are accepted.');
+  const prefix=pathCString(buffer.subarray(345,500)),name=safeName((prefix?prefix+'/':'')+pathCString(buffer.subarray(0,100)));
+  const size=number(buffer.subarray(124,136));
+  if(type===120&&(!size||size>MAX_PAX_BYTES))throw fault('BUNDLE_PAX_INVALID','A package PAX path header exceeds its native path limit.');
+  if(size>MAX_MEMBER)throw fault('BUNDLE_MEMBER_TOO_LARGE','A package member exceeds 64 MiB.');
+  return {name,size,type};
 }
 export async function inspectBundle(path,{onFile,onStart,expectedRequestSha256}={}) {
   if(resolve(path)!==path||await realpath(path)!==path)throw fault('BUNDLE_FILE_INVALID','Use an original regular package file.');
   const handle=await open(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0));
-  const observed=[],names=new Set(),archiveHash=createHash('sha256');let offset=0,total=0,descriptor=null,manifest=null;
+  const observed=[],names=new Set(),archiveHash=createHash('sha256');let offset=0,total=0,descriptor=null,manifest=null,pendingPath=null;
   try{
     const stat=await handle.stat();if(!stat.isFile()||stat.size>MAX_BUNDLE)throw fault('BUNDLE_FILE_INVALID','Cost packages are limited to 512 MiB.');
     async function read(n){const result=await exactRead(handle,n,offset);offset+=n;archiveHash.update(result);return result;}
+    async function padding(size){const count=(block-size%block)%block;if(count){
+      const pad=await read(count);if(!pad.every(x=>x===0))throw fault('BUNDLE_PADDING_INVALID','Package contains nonzero TAR padding.');}}
     for(;;){
       const h=await read(block);
       if(h.every(x=>x===0)){
+        if(pendingPath!==null)throw fault('BUNDLE_PAX_INVALID','A PAX path header is missing its original regular file.');
         const end=await read(block);if(!end.every(x=>x===0)||offset!==stat.size)throw fault('BUNDLE_TRAILING_DATA','Package has missing or unexpected trailing data.');
         break;
       }
-      const entry=decodedHeader(h);if(names.has(entry.name)||names.size>=MAX_FILES)throw fault('BUNDLE_MEMBER_INVALID','Package has duplicate files or too many members.');
-      names.add(entry.name);if(manifest)throw fault('BUNDLE_MANIFEST_ORDER','Manifest must be the final file.');
+      const {type,...entry}=decodedHeader(h);
+      if(manifest)throw fault('BUNDLE_MANIFEST_ORDER','Manifest must be the final file.');
+      if(type===120){
+        if(!descriptor)throw fault('BUNDLE_DESCRIPTOR_REQUIRED','Package must begin with its original descriptor.');
+        if(pendingPath!==null)throw fault('BUNDLE_PAX_INVALID','A regular file can have only one original PAX path header.');
+        pendingPath=readPaxPath(await read(entry.size));await padding(entry.size);continue;
+      }
+      if(pendingPath!==null){entry.name=pendingPath;pendingPath=null;}
+      if(names.has(entry.name)||names.size>=MAX_FILES)throw fault('BUNDLE_MEMBER_INVALID','Package has duplicate files or too many members.');
+      names.add(entry.name);
       if(!descriptor&&entry.name!=='bundle.json')throw fault('BUNDLE_DESCRIPTOR_REQUIRED','Package must begin with its original descriptor.');
       const chunks=[],hash=createHash('sha256');
       const retain=entry.name==='bundle.json'||entry.name==='manifest.json';
@@ -67,8 +116,7 @@ export async function inspectBundle(path,{onFile,onStart,expectedRequestSha256}=
         if(retain)chunks.push(chunk);else if(sink)await sink.write(chunk);}
         if(sink)await sink.close();
       }catch(e){await sink?.abort?.();throw e;}
-      const padding=(block-entry.size%block)%block;if(padding){const pad=await read(padding);
-        if(!pad.every(x=>x===0))throw fault('BUNDLE_PADDING_INVALID','Package contains nonzero TAR padding.');}
+      await padding(entry.size);
       const actual={name:entry.name,bytes:entry.size,sha256:hash.digest('hex')};total+=entry.size;
       if(entry.name==='bundle.json'){descriptor=JSON.parse(utf8(Buffer.concat(chunks)));
         if(expectedRequestSha256&&descriptor.requestSha256!==expectedRequestSha256)throw fault('REQUEST_CHANGED','The existing package belongs to different requested inputs.',409);
@@ -91,7 +139,15 @@ export async function writeBundle({path,descriptor,items}) {
     hash.update(buffer);await handle.writeFile(buffer);}
   async function member(name,data){safeName(name);if(names.has(name)||names.size>=MAX_FILES)throw fault('BUNDLE_MEMBER_INVALID','Duplicate or excessive package file.');
     if(!Buffer.isBuffer(data)||data.length>MAX_MEMBER)throw fault('BUNDLE_MEMBER_INVALID','Invalid package file size.');
-    names.add(name);await write(header(name,data.length));await write(data);const pad=(block-data.length%block)%block;if(pad)await write(Buffer.alloc(pad));
+    names.add(name);
+    if(ustarName(name))await write(header(name,data.length));
+    else{
+      const record=paxPath(name),key=digest(Buffer.from(name,'utf8'));
+      await write(header('PaxHeaders/'+key,record.length,120));await write(record);
+      const padding=(block-record.length%block)%block;if(padding)await write(Buffer.alloc(padding));
+      await write(header('PaxFiles/'+key,data.length));
+    }
+    await write(data);const pad=(block-data.length%block)%block;if(pad)await write(Buffer.alloc(pad));
     return {name,bytes:data.length,sha256:digest(data)};}
   try{
     const descriptorBytes=encode(descriptor);await member('bundle.json',descriptorBytes);
@@ -107,7 +163,8 @@ export async function writeBundle({path,descriptor,items}) {
 }
 function restorable(name){
   safeName(name);const uuid='[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}',hash='(?:root|[a-f0-9]{64})';
-  return new RegExp('^(?:versions|decisions)/'+uuid+'/[A-Za-z0-9_./-]+$').test(name)||
+  return new RegExp('^decisions/'+uuid+'/[\\s\\S]+$').test(name)||
+    new RegExp('^versions/'+uuid+'/[A-Za-z0-9_./-]+$').test(name)||
     new RegExp('^(?:successors|decision-successors)/'+hash+'\\.json$').test(name)||
     new RegExp('^staged-releases/'+uuid+'\\.json$').test(name)||
     new RegExp('^scenario-plans/'+uuid+'\\.json$').test(name)||

@@ -367,6 +367,14 @@ The optional `implementationReviewIds` field composes with the cohort selection 
 
 Preparation retains the exact `receiptId`, calendar date, summary, preview SHA and selected frozen evidence. Submission uses the preparation's business SHA and the actual issuer form reference, submission date and source records. Read the new case version after every committed action, and recover a lost result with the unchanged request. The [Completion contract](../../stellar/scf_2026/sf47_budget_model/workspace/COMPLETION.md) and [typed-client guide](../../stellar/scf_2026/sf47_budget_model/workspace/AGENT.md) provide the exact field names and calendar behavior.
 
+## Read and export the grant delivery calendar
+
+Use `merchant_grant_delivery_calendar` with the original `workspace`, `caseId`, and optional `asOfDate`. The calendar combines the native payment-derived completion deadlines, confirmed extensions, saved deliverable assignments, planned submissions, and recorded form submissions. Entries with one known date retain the other bound as null; undated work remains in the returned `undated` array.
+
+Use `merchant_grant_export` with `kind: "delivery-calendar"` and `format: "ics"`, `"csv"`, or `"json"`. Include the calendar's `asOfDate` and `case.version` as `expectedVersion` to export the reviewed case version. ICS contains dated all-day events; CSV and JSON also retain undated work. The existing snapshot, row paging, file download and transfer tools carry these complete exports.
+
+The typed client exposes `read('delivery-calendar', selection)` and `download('delivery-calendar', {...selection, format})`. See [Calendar operation and date meanings](../../stellar/scf_2026/sf47_budget_model/workspace/CALENDAR.md).
+
 ## Export, transfer and receive the complete work
 
 merchant_grant_export supports original plan ZIP, operating-case ZIP, forecast ZIP, portfolio ZIP, customer installation ZIP, implementation-evidence ZIP or exact original member, cohort ZIP, completion-preparation ZIP, source file, scenario JSON and original daily/cost CSVs. It preserves the complete native response. A case ZIP includes the original source attachments, buyer/support associations, reviews, forecasts, portfolios, all immutable customer installation editions, implementation reviews and cohort/completion history.
@@ -458,3 +466,13 @@ try {
 ~~~
 
 The client exposes original plan operations, case creation/commands, preview/save, complete downloads, bundle/scenario import, source attachment and intake. Its methods return complete native responses: value is the parsed native JSON; bytes, sha256 and source retain the exact response and launch. Local file destinations and application-specific decisions belong to the calling host; Merchant tools expose aliases and verified transfer IDs instead of filesystem paths.
+
+## Amend the original operating-case baseline
+
+The installed Grant Operations page and native CLI select an exact saved planner revision, retain a complete comparison and explicit operator review, and apply the same amendment to the existing case. Use `merchant_grant_amendments` to inspect saved revisions and amendment heads, `merchant_grant_amendment` to open an exact edition, and `merchant_grant_amendment_preview` with the selected case version and complete inputs or original verified input reference. The existing `merchant_grant_case_command` carries `amendment.save`, `amendment.review` and `amendment.apply` with the original request ID.
+
+Recorded package, invoice and cash identities stay attached to their original work. The comparison displays remaining and exceeded planning amounts and hours. The original full case export includes every amendment edition, source, historical planning snapshot and decision. See [the complete amendment receiving guide](../../stellar/scf_2026/sf47_budget_model/workspace/AMENDMENTS.md) for UI, source-basis, concurrency, replay and cold-import behavior.
+
+## Amendment delivery calendars
+
+The original amendment preview and saved-edition read include a complete native `calendarImpact` companion. `merchant_grant_amendment_calendar_export` accepts the exact draft or saved-edition selection through `inputs` or a verified input reference and returns both ICS/CSV/JSON calendars, offline comparison, original preview and complete operating case through the existing snapshot/byte-download route. Full selections and operating steps are in [AMENDMENT_CALENDAR.md](../../stellar/scf_2026/sf47_budget_model/workspace/AMENDMENT_CALENDAR.md).

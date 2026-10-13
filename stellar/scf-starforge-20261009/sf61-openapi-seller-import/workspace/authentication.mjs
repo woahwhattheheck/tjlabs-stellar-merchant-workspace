@@ -1,6 +1,7 @@
 // MIT. Source-bound OpenAPI authentication choices for the original providers.
 import { createOpenApiResolver } from '../importer.mjs';
 import { compileOAuthClientCredentials } from '../../sf30-seller-sdk/oauth-client-credentials.mjs';
+import { compileQueryEnvironment } from '../../sf30-seller-sdk/upstream-query-credentials.mjs';
 import { normalizeOAuthProfile, oauthProfileIdentity, compileOAuthConnection } from '../../sf30-seller-sdk/oauth-connections/profile.mjs';
 
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -17,9 +18,14 @@ function describeScheme(spec, name) {
     if (typeof scheme.name !== 'string' || !scheme.name) fail('Header API key needs a header name');
     return {name, type:'apiKey', header:scheme.name.toLowerCase()};
   }
+  if (scheme.type === 'apiKey' && scheme.in === 'query') {
+    if (typeof scheme.name !== 'string' || !scheme.name) fail('Query API key needs a parameter name');
+    compileQueryEnvironment({[scheme.name]:'UPSTREAM_API_KEY'});
+    return {name, type:'apiKey', in:'query', query:scheme.name};
+  }
   if (scheme.type === 'http' && ['bearer','basic'].includes(String(scheme.scheme).toLowerCase()))
     return {name, type:'http', scheme:String(scheme.scheme).toLowerCase(), header:'authorization'};
-  if (scheme.type !== 'oauth2') fail('Use header API keys, HTTP bearer/basic, OAuth client credentials or authorization code for ' + name);
+  if (scheme.type !== 'oauth2') fail('Use header or query API keys, HTTP bearer/basic, OAuth client credentials or authorization code for ' + name);
   const flows=[], flowIssues=[];
   for (const kind of ['clientCredentials','authorizationCode']) {
     if (scheme.flows?.[kind] === undefined) continue;
@@ -67,12 +73,13 @@ export function inspectAuthenticationRequirements(spec, operation, definitions=i
         if (!definition.supported) fail(definition.error);
         if (!Array.isArray(requiredScopes) || requiredScopes.some(scope=>typeof scope!=='string') || new Set(requiredScopes).size!==requiredScopes.length)
           fail('Security requirements need distinct scope names');
-        if (definition.type !== 'oauth2' && requiredScopes.length) fail('Header authentication schemes require an empty scope list');
+        if (definition.type !== 'oauth2' && requiredScopes.length) fail('API key and HTTP authentication schemes require an empty scope list');
         const flows=definition.type==='oauth2'?definition.flows.filter(flow=>requiredScopes.every(scope=>flow.scopes.some(available=>available.name===scope))):[];
         if (definition.type === 'oauth2' && !flows.length)
           fail('No supported declared OAuth flow includes every required scope: ' + name);
-        if (headers.has(definition.header)) fail('This alternative needs multiple credentials in ' + definition.header + '; choose another declared alternative');
-        headers.add(definition.header);
+        const target = definition.in === 'query' ? 'query:' + definition.query : 'header:' + definition.header;
+        if (headers.has(target)) fail('This alternative needs multiple credentials in ' + target + '; choose another declared alternative');
+        headers.add(target);
         schemes.push({name, requiredScopes:[...requiredScopes],...(definition.type==='oauth2'?{flows:flows.map(value=>value.flow)}:{})});
       }
       return {index, names, schemes, supported:true};
@@ -107,12 +114,18 @@ export function prepareBackendAuthentication(spec, operation, row, backend, {all
   const headers = row.headerEnv ?? {};
   if (!plain(headers)) fail('headerEnv maps header names to environment-variable names');
   const mapped = new Map(Object.entries(headers).map(([name,value])=>[name.toLowerCase(),value]));
-  const authentication = [], environment = new Set(Object.values(headers));
+  const queryEnv = compileQueryEnvironment(row.queryEnv);
+  const authentication = [], environment = new Set([...Object.values(headers),...Object.values(queryEnv)]);
   let oauth2,oauthConnection;
   const usesConnection=['oauthConnection','oauthProfile','oauthAlias'].some(key=>row[key]!==undefined);
   if (usesConnection && row.oauth2!==undefined) fail('Choose client credentials or an authorization grant for this operation');
   for (const selection of alternative.schemes) {
     const definition = byName.get(selection.name);
+    if (definition.type === 'apiKey' && definition.in === 'query') {
+      if (!own(queryEnv,definition.query)) fail('Map the ' + definition.query + ' query parameter to an environment variable for security scheme ' + definition.name);
+      authentication.push({scheme:definition.name,type:'apiKey',in:'query',query:definition.query,environment:queryEnv[definition.query]});
+      continue;
+    }
     if (definition.type !== 'oauth2') {
       if (!mapped.has(definition.header)) fail('Map the ' + definition.header + ' header to an environment variable for security scheme ' + definition.name);
       authentication.push({scheme:definition.name, type:definition.type, header:definition.header, environment:mapped.get(definition.header)});
@@ -170,5 +183,5 @@ export function prepareBackendAuthentication(spec, operation, row, backend, {all
   }
   if (row.oauth2 !== undefined && !oauth2) fail('The selected security alternative does not use OAuth client credentials');
   if (usesConnection&&!oauthConnection) fail('The selected security alternative does not use an authorization grant');
-  return {authentication,environment:[...environment].sort(),...(oauth2?{oauth2}:{}),...(oauthConnection?{oauthConnection}:{})};
+  return {authentication,environment:[...environment].sort(),...(Object.keys(queryEnv).length?{queryEnv}:{}),...(oauth2?{oauth2}:{}),...(oauthConnection?{oauthConnection}:{})};
 }

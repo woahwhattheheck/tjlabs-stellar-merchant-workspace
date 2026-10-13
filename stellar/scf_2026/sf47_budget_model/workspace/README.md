@@ -214,6 +214,10 @@ Python callers can import `Workspace` from `model.py` or use `create_server(work
 
 Use the saved plan's source digest, revision number, change note and complete exported source when coordinating the next staffing, milestone or application decision.
 
+## Calendar for grant delivery
+
+**Delivery calendar** provides an agenda and month view across the original case's completion deadlines, saved assignments, grant receipts and form submissions. Source links reopen the payment or tranche; filters select owners, tranches and dates. Full ICS, CSV and JSON downloads remain available through the browser, native CLI and typed/MCP client. See [Calendar operation](CALENDAR.md) for date meanings, complete exports and commands.
+
 ## Budget performance and period management
 
 **Delivery operations → Budget performance** connects a selected reporting period to the pinned package budget, original contributor work, issued invoices, payment/refund allocations and native asset quantities. Review opening/period/closing positions, package and contributor performance, invoice aging and full source rows. The complete handover includes JSON/CSV/offline HTML and the original operating case; importing it reopens the selected dates. Use [PERFORMANCE.md](PERFORMANCE.md) for the browser, CLI, HTTP, typed client and Merchant workflow.
@@ -247,6 +251,18 @@ The matching Python and Node managed launch readers identify the full installed 
 ## Original implementation evidence
 
 The [Implementation evidence desk](IMPLEMENTATION_EVIDENCE.md) receives complete SF74 commissioning source into the existing operating case. Operators select exact task, measurement and separate technical/customer receiving observations, link the original work/purchases/deployments and saved Installation editions, and freeze a source-verified review. The original Completion, typed client/MCP, CLI and full case export/reopen retain the same evidence and request identities. The [original receiving journey](BUYER_RECEIVING_JOURNEY.md) can include this phase on its explicitly selected original case.
+
+## Reconcile an original account and save its dated close
+
+**Delivery operations → Account reconciliation** compares a retained original account statement with the complete native cash account and period. Review source rows, original and corrected cash movements, whole-record matching groups and explicitly outstanding items. Retain an unresolved draft or close the reviewed period when the complete source and cash comparison balances.
+
+Every saved edition reopens its original decisions and comparison alongside the current account. The exact original Statements and Cash writers open from the reconciliation desk while complete drafts and pending requests remain retained. **Download complete account** carries the original native case, source files, saved editions, readable HTML and CSV reports; importing it reopens the same reconciliation selection. The [Account reconciliation guide](ACCOUNT_RECONCILIATION.md) covers the complete browser, command line, typed client, Merchant MCP, original request recovery and receiving workflow.
+
+## Operate complete cash accounts and corrections
+
+**Delivery operations → Cash / issuer** now joins exact dated cash accounts, full original payment/refund allocations, native quantities, source documents and complete correction history. Review an observation's financial effect before recording its original void and replacement in one native case transaction. Current forecast inputs follow the recorded successor chain; original completion receipts and submitted reviews remain attached.
+
+**Download complete account** exports the full report, CSVs, offline HTML, correction sources and original operating case. Import that whole ZIP to reopen the same dates and exact account. The [Cash accounts guide](CASH_ACCOUNTS.md) covers the full browser, original source/recovery, Statements/Completion/Forecast, CLI, typed client, Merchant MCP and receiving workflow.
 
 ## Operate a complete supplier account
 

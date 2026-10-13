@@ -211,7 +211,7 @@ def packet_write(output, sources, schema, metadata):
         return {"file": str(output), "bytes": output.stat().st_size,
                 "sha256": file_digest(output, MAX_PACKET), "reused": False}
 
-def packet_read(path, temp, expected_schema):
+def packet_read(path, temp, expected_schema, *, member_capacity=None):
     """Verify the full declared archive before importing any source or portfolio."""
     regular(path, MAX_PACKET)
     with zipfile.ZipFile(path) as archive:
@@ -221,12 +221,19 @@ def packet_read(path, temp, expected_schema):
             raise InputError("Packet has duplicate, missing or excessive members")
         total = 0
         for info in infos:
-            if (not re.fullmatch(r"(?:manifest|portfolio-history|requests|comparisons)\.json|reports/[A-Za-z0-9._-]+|packets/[0-9a-f]{64}\.zip", info.filename)
+            if member_capacity is None:
+                allowed = re.fullmatch(r"(?:manifest|portfolio-history|requests|comparisons)\.json|reports/[A-Za-z0-9._-]+|packets/[0-9a-f]{64}\.zip", info.filename)
+                limit = MAX_METADATA if info.filename.endswith(".json") else MAX_PACKET
+            else:
+                # Trusted installed modules may declare their own exact packet
+                # members while sharing this original complete archive reader.
+                limit = member_capacity(info.filename)
+                allowed = type(limit) is int and 0 <= limit <= MAX_PACKET
+            if (not allowed or any(part in {"", ".", ".."} for part in info.filename.split("/"))
                 or info.is_dir() or info.flag_bits & 1
                 or info.compress_type not in {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}
                 or stat.S_ISLNK(info.external_attr >> 16)):
                 raise InputError("Packet member path, type or compression is invalid")
-            limit = MAX_METADATA if info.filename.endswith(".json") else MAX_PACKET
             if info.file_size > limit:
                 raise InputError("Packet member exceeds its declared capacity")
             total += info.file_size
@@ -282,6 +289,20 @@ class IatiWorkspace(Workspace):
         self.organisation = OrganisationPlanner(self)
         from refresh import IatiRefresh
         self.refresh = IatiRefresh(self)
+        from organisation_reconciliation import OrganisationReconciliation
+        self.reconciliation = OrganisationReconciliation(self)
+        from results.workspace import IatiResults
+        self.results = IatiResults(self)
+        from amp import AmpWorkspace
+        self.amp = AmpWorkspace(self)
+        from document_evidence import DocumentEvidence
+        self.document_evidence = DocumentEvidence(self)
+
+    def close(self):
+        evidence = getattr(self, "document_evidence", None)
+        if evidence is not None:
+            evidence.close()
+        super().close()
 
     def presets(self):
         return source_presets()
@@ -298,6 +319,8 @@ class IatiWorkspace(Workspace):
             result["portfolios"] = self.portfolios()
             result["publishing"] = {"projects":len(self.publishing.list())}
             result["refresh"] = {"plans": len(self.refresh.plans())}
+            result["results"] = {"projects": len(self.results.inventory()["projects"])}
+            result["amp"] = {"captures": len(self.amp.captures()), "plans": len(self.amp.plans()), "runs": len(self.amp.runs())}
             result["dqa"] = {"providers": len(self.dqa.providers()), "assessments": len(self.dqa.assessments()),
                              "cases": len(self.dqa.cases())}
             return result
@@ -810,4 +833,16 @@ class IatiWorkspace(Workspace):
         from organisation.portable import PACKET as ORGANISATION_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == ORGANISATION_PACKET:
             return self.organisation.receive({"path": path})
+        from results.transfer import PACKET as RESULTS_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == RESULTS_PACKET:
+            return self.results.receive(path)
+        from organisation_reconciliation import PACKET as RECONCILIATION_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == RECONCILIATION_PACKET:
+            return self.reconciliation.receive({"path": path})
+        from amp.portable import SCHEMA as AMP_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == AMP_PACKET:
+            return self.amp.receive(path)
+        from document_evidence.portable import PACKET as DOCUMENT_EVIDENCE_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == DOCUMENT_EVIDENCE_PACKET:
+            return self.document_evidence.receive({"path": path})
         return super().import_packet(path)
