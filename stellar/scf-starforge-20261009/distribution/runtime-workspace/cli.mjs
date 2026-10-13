@@ -75,6 +75,10 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace application-stop --workspace DIRECTORY --application-id ID --operation-id UUID
   runtime-workspace application-recover --workspace DIRECTORY --application-id ID --operation-id UUID
   runtime-workspace application-output --workspace DIRECTORY --application-id ID --operation-id UUID
+  runtime-workspace output-sources --workspace DIRECTORY --operation-id UUID
+  runtime-workspace output-sources --workspace DIRECTORY --runtime-id ID [--cursor FILENAME] [--limit 50]
+  runtime-workspace output-page --workspace DIRECTORY (--operation-id UUID | --runtime-id ID --log-file FILENAME) [--selection TOKEN] [--offset BYTES] [--limit BYTES]
+  runtime-workspace output-export --workspace DIRECTORY (--operation-id UUID | --runtime-id ID --log-file FILENAME) [--selection TOKEN] --output NEW_FILE
   runtime-workspace application-output-page --workspace DIRECTORY --application-id ID --operation-id UUID [--selection TOKEN] [--offset BYTES] [--limit BYTES]
   runtime-workspace application-output-export --workspace DIRECTORY --application-id ID --operation-id UUID [--selection TOKEN] --output NEW_FILE
   runtime-workspace application-groups --workspace DIRECTORY [--group-id ID] [--run-id UUID] [--limit 20] [--cursor UUID]
@@ -138,6 +142,9 @@ const allowed = {
   'application-stop': ['--workspace', '--application-id', '--operation-id'],
   'application-recover': ['--workspace', '--application-id', '--operation-id'],
   'application-output': ['--workspace', '--application-id', '--operation-id'],
+  'output-sources': ['--workspace', '--operation-id', '--runtime-id', '--cursor', '--limit'],
+  'output-page': ['--workspace', '--operation-id', '--runtime-id', '--log-file', '--selection', '--offset', '--limit'],
+  'output-export': ['--workspace', '--operation-id', '--runtime-id', '--log-file', '--selection', '--output'],
   'application-output-page': ['--workspace', '--application-id', '--operation-id', '--selection', '--offset', '--limit'],
   'application-output-export': ['--workspace', '--application-id', '--operation-id', '--selection', '--output'],
   'python-status': ['--workspace', '--runtime-id'],
@@ -318,6 +325,23 @@ export async function main(argv = process.argv.slice(2)) {
     result = await model[method](await readJSON(resolve(options['--request'])));
   }
   else if (command === 'applications') result = await model.applicationsState({ historyLimit: options['--history-limit'] === undefined ? 1 : Number(options['--history-limit']) });
+  else if (['output-sources', 'output-page', 'output-export'].includes(command)) {
+    const input = {};
+    for (const [flag, name] of [['operation-id', 'operationId'], ['runtime-id', 'runtimeId'],
+      ['log-file', 'logFile'], ['selection', 'selection'], ['cursor', 'cursor']])
+      if (options['--' + flag] !== undefined) input[name] = options['--' + flag];
+    for (const name of ['offset', 'limit']) if (options['--' + name] !== undefined) {
+      if (!/^(?:0|[1-9][0-9]*)$/.test(options['--' + name]) ||
+          !Number.isSafeInteger(Number(options['--' + name]))) fail('RUNTIME_OUTPUT_PAGE_INVALID');
+      input[name] = Number(options['--' + name]);
+    }
+    if (command === 'output-sources') result = await model.runtimeOutputSources(input);
+    else if (command === 'output-page') result = await model.runtimeOutputPage(input);
+    else {
+      if (!options['--output']) fail('RUNTIME_OUTPUT_DESTINATION_REQUIRED');
+      result = await writeApplicationOutputDownload(await model.runtimeOutputDownload(input), resolve(options['--output']));
+    }
+  }
   else if (['application-output-page', 'application-output-export'].includes(command)) {
     if (!options['--application-id'] || !options['--operation-id']) fail('APPLICATION_OUTPUT_OPERATION_REQUIRED');
     const input = { applicationId: options['--application-id'], operationId: options['--operation-id'],
