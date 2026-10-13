@@ -444,3 +444,10 @@ The detailed unchanged engine/operator contract remains [workbench/OPERATOR.md](
 ## Complete catalogue migration adaptation
 
 The [Loaded Bikes catalogue workshare](adaptations/loaded-bikes/README.md) adds a full public-source product review, controlled corrections, destination mapping, original relationship evidence, complete CSV/project/source handover, and the original native dlt/DuckDB receiving course. Its [operating guide](adaptations/loaded-bikes/OPERATING.md) and [browser receiving guide](adaptations/loaded-bikes/BROWSER_RECEIVING.md) keep one reviewed project through the catalogue application, native loading/comparison/acceptance and the copied original workbench UI. The edition includes complete source; current private capture packets and commercial terms remain in their original authorized case.
+
+
+## Airtable and NetSuite provider review
+
+The complete [Airtable / NetSuite application](adaptations/airtable-netsuite/README.md) adds read-only provider collection, full selected populations, explicit exact type and relationship mapping, independent SuiteQL expectations and an editable review desk. Its [operator guide](adaptations/airtable-netsuite/OPERATING.md) connects the approved mapping to this original Workspace, dlt/DuckDB comparison, business acceptance and independent complete receiving.
+
+Serve the full product root and open `adaptations/airtable-netsuite/`. Saved projects retain complete provider source and every mapping edition; unfinished working files retain raw edits. The adapter's `receive.mjs` uses the original native writer and request history. Its `browser-receive.mjs` operates the same installed source on the existing authorized Page. Keep the original workbench manifest together with the full additive source manifest in every receiving package.

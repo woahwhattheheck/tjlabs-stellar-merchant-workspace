@@ -169,8 +169,8 @@
     },
     {
       "path": "OPERATING.md",
-      "bytes": 9244,
-      "sha256": "fc03f99d84246260908f50cefae006cdad40c5d353af1cd0e14f3a75bcc5cf33"
+      "bytes": 9278,
+      "sha256": "3f99731b9e13b8e7702a2aeaa14a2e5c5d947484819649c7ed0642ae736b7720"
     },
     {
       "path": "browser-receive.mjs",
