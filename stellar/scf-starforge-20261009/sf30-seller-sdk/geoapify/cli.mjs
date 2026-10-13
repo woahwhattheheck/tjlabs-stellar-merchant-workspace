@@ -8,7 +8,7 @@ const usage='Address quality workspace\n\n'+
  'node cli.mjs status --dir /private/address-workspace\n'+
  'node cli.mjs act ACTION --dir /private/address-workspace --payload /private/action.json\n\n'+
  'Actions: '+[...GEOAPIFY_ACTIONS].join(', ')+'\n\n'+
- 'Keep the original source in intake.import. Provider responses retain original generic-batch input IDs and full candidates. '+
+ 'Keep the first original source in intake.import; source.stage/history/compare/activate retain following editions and explicit decision reuse. Source selection is independent from the selected frozen customer edition. Provider responses retain original generic-batch input IDs and full candidates. '+
  'provider.prepare records the explicit job options and input limit; provider.run uses its original ID and SHA-256 once. provider.poll continues the returned job after its saved poll time; provider.import joins an actual original acknowledgment or result. '+
  'Mutations require expectedRevision from status. The optional API key is read from the selected environment variable and stays outside saved state.\n';
 function parse(args){

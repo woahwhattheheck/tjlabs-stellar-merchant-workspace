@@ -120,15 +120,47 @@ A decision uses `action:"decide"` and a payload with `expectedRevision`, `queryI
 
 To reconcile an actual downloaded provider result, declare it as a response import and use provider action `import` with `sourceImport`, original job ID, request SHA and current revision. The native parser binds returned input IDs and job ID to the saved request. To stop pursuing an original job, action `abandon` requires a reviewer and reason and retains its request, attempts and provider ID.
 
+## Recurring customer files and preserved source editions
+
+`merchant_geoapify_sources` operates the same retained source history used by the browser. A successor file is staged against a selected frozen dataset edition. Staging and comparison preserve the active intake, selected dataset and published seller. Activating a source selects the working source; selecting a frozen edition remains a separate explicit operation.
+
+Two hashes have different meanings. `sourceSha256` and `expectedIntakeSha256` identify the complete normalized intake, including its original source and mapping. The raw CSV/JSON file has its own `source.sha256`. Use the intake hash returned by history, source inspection or the saved comparison; do not substitute the raw-file hash.
+
+1. Declare the complete successor CSV/JSON as another `kind:"intake"` alias in the private connection configuration. Read current status and retain its revision. Call sources action `history` with `{offset,limit}` to inspect the original source editions.
+2. Call sources action `stage` with the declared `sourceImport`, selected `baselineEditionId` and `expectedRevision`. An optional `mapping` overrides that alias's mapping for this retained intake. The native workspace saves the original file and a complete comparison against the frozen baseline.
+3. Call sources action `compare` with the returned `sourceSha256`. Inspect row additions, changes, removals and ambiguous identities, plus the separate eligible-query list. Row and eligible-query lists have independent `offset/limit` and `reuseOffset/reuseLimit`. Each eligible query also has `sourceOrdinalsPage`; use `sourceOffset/sourceLimit` to inspect its remaining linked records.
+4. Choose the decisions to reuse. An explicit `reuseQueryIds` list selects individual eligible queries. For a complete large source, `reuseAllEligible:true` selects exactly the whole eligible set in that saved comparison. The two choices are exclusive. Reuse requires the exact `expectedComparisonSha256`, reviewer and note. The first activation of a staged source also requires its comparison identity even when no decisions are carried forward.
+5. Call sources action `activate` with the exact intake hash and current revision. The native operator applies the selected reuse once and restores that source's saved unfinished forms. Historical provider requests and responses retain their original intake, while the already selected frozen dataset remains selected.
+6. Prepare new jobs, review remaining addresses and build the next edition. Include the active `expectedIntakeSha256` as well as `expectedRevision` in provider `prepare`, review `decide`, edition `build` and editor `save`. These checks keep an agent that was reading a historical source from mutating a different current source.
+7. Select the intended frozen edition explicitly, export it, and continue the same original publisher and independent buyer receiving. A historical edition exports its own original source even when a different intake is active. Complete backups retain the full source history and unfinished forms for each source.
+
+Example staging request:
+
+```json
+{
+  "workspace": "addresses",
+  "action": "stage",
+  "payload": {
+    "sourceImport": "next_month",
+    "baselineEditionId": "REPLACE_WITH_RETAINED_EDITION_ID",
+    "expectedRevision": 12
+  }
+}
+```
+
+Use `merchant_geoapify_source` with optional `sourceSha256` to inspect historical original rows. Review actions `list` and `query` accept the same selector; their source identity should remain with the reviewed result. Provider `request` always reads the originally selected job and its saved source, regardless of the currently active intake.
+
+Explicit decision reuse preserves the original provider response and reviewed meaning. A changed address, ambiguous identity or ineligible baseline decision remains available for its own review. The provider retry floor and original uncertain-job recovery apply across source switches. A source switch is not permission to resubmit an earlier uncertain request.
+
 ## Saved forms, pagination and exact downloads
 
-`merchant_geoapify_editor` reads or saves the same unfinished forms used by the browser. Save requires the current revision and retains raw input; it does not execute the form. Complete workspace exports include this working state.
+`merchant_geoapify_editor` reads or saves the same unfinished forms used by the browser. Save uses the current revision and the displayed intake SHA and retains raw input; it does not execute the form. Complete workspace exports include this working state.
 
 Status pages jobs, editions and exports. Each displayed job includes an initial event page; provider action `request` accepts `eventOffset`/`eventLimit` to inspect the rest. Source and review operations accept their explicit offsets. A review list includes initial source-coordinate pages; action `query` accepts `sourceOffset`/`sourceLimit` for the remaining linked records. Full originals remain in the exported package.
 
 For a selected export file, use `merchant_geoapify_file` with kind `source-export`, export ID and the filename returned by the native export. Continue chunks using the returned `readId`, `expectedSha256` and next offset. The maintained retained-file owner snapshots exact bytes and releases the cached read at EOF. Use `merchant_geoapify_file_release` for an unfinished read.
 
-The full `starforge-geoapify.json.gz` package can be exported before a dataset edition exists. It retains original source, requests, response history, candidate decisions, unfinished forms and all retained editions. Restore it into an empty workspace with a declared package alias. Geoapify retains completed provider jobs for 24 hours, so keep actual returned results in the original workspace.
+The full `starforge-geoapify.json.gz` package can be exported before a dataset edition exists. It retains every original source revision, requests, response history, source-bound candidate decisions, each source's unfinished forms and all retained editions. Restore it into an empty workspace with a declared package alias. Geoapify retains completed provider jobs for 24 hours, so keep actual returned results in the original workspace.
 
 ## Publish and deliver through the original merchant
 

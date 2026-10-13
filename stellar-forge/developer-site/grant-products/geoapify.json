@@ -9,13 +9,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/README.md",
-      "commit": "a8af7ba7f8f2c03ff6fac732b867c0b58a07b3f7",
+      "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
       "editions": [
         {
           "commit": "a8af7ba7f8f2c03ff6fac732b867c0b58a07b3f7",
           "bytes": 17042,
           "sha256": "58e643cf057d1d9cf0fb0d20f970302dc5c2a37e66f73c0d10fe9914acab27f6",
           "git_blob": "970dd3e4c13857e3662ebe1f1e76c3d073498158"
+        },
+        {
+          "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
+          "bytes": 24587,
+          "sha256": "ab5d942ee951372b1f23644389a15a0a76f8752706fb9a90b410115bfd2e9d09",
+          "git_blob": "96fe9e90777035a81f0dfaeb3ea9811da2492c99"
         }
       ]
     },
@@ -25,13 +31,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/geoapify/CUSTOMER_ONBOARDING.md",
-      "commit": "a8af7ba7f8f2c03ff6fac732b867c0b58a07b3f7",
+      "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
       "editions": [
         {
           "commit": "a8af7ba7f8f2c03ff6fac732b867c0b58a07b3f7",
           "bytes": 10491,
           "sha256": "40f15d593c7d72b8c57ca2d71a3b8639abcdd94b55e2ab044f0d38d2f197fc68",
           "git_blob": "70e7eebf7dd299bab742d3e0c8edda5a180034eb"
+        },
+        {
+          "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
+          "bytes": 12449,
+          "sha256": "f2fe791c5732646986ab7ef2d2fc2224d25df0c360cce7e7b1cc650c120a25db",
+          "git_blob": "a47a141ea8fc2d1934531f8a310e1814a6fe44f2"
         }
       ]
     },
@@ -41,13 +53,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/GEOAPIFY_WORKSPACES.md",
-      "commit": "a8af7ba7f8f2c03ff6fac732b867c0b58a07b3f7",
+      "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
       "editions": [
         {
           "commit": "a8af7ba7f8f2c03ff6fac732b867c0b58a07b3f7",
           "bytes": 11632,
           "sha256": "0f5dc143b978e9f588e69cf0a8d8b3272f591baeaecc84d3e4d085f14ff4ffad",
           "git_blob": "566805d24cdde605f69fc3b3837c3a06b44a8b6f"
+        },
+        {
+          "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
+          "bytes": 15749,
+          "sha256": "8f347ca8e117da31d297418a686d5b28f34cd41488cb97b6473d5fd9139f99af",
+          "git_blob": "b569ab0f1866f90b1c9ed4b23a44615cf15e672d"
         }
       ]
     },
@@ -74,6 +92,54 @@
       "kind": "tree",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify",
       "commit": "a8af7ba7f8f2c03ff6fac732b867c0b58a07b3f7"
+    },
+    {
+      "id": "geoapify-recurring-workspace",
+      "label": "Complete retained source history, source-bound provider jobs, explicit reuse and full reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/workspace.mjs",
+      "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
+      "editions": [
+        {
+          "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
+          "bytes": 48275,
+          "sha256": "f63613e817128e0641a4ae8fb83a678b616d2c641436d49b3d6122993f4c5321",
+          "git_blob": "12dc4ee0511ca1b71c126544776202a3907a4e41"
+        }
+      ]
+    },
+    {
+      "id": "geoapify-source-comparison",
+      "label": "Exact original business-row comparison and eligible frozen-baseline decisions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/source-history.mjs",
+      "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
+      "editions": [
+        {
+          "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
+          "bytes": 4749,
+          "sha256": "bbf6d02312c8e71dc27dcc41f0079320863a9094b48adc02ba0e74878cfe1df0",
+          "git_blob": "f80a7d8460c38dc90d4acd346290db7ea783a433"
+        }
+      ]
+    },
+    {
+      "id": "geoapify-following-source-browser",
+      "label": "Complete customer source staging, comparison, reuse and source-selection workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/public/source-history.mjs",
+      "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
+      "editions": [
+        {
+          "commit": "9d5bafa921758e6722922cb751b33d91b075bb85",
+          "bytes": 11252,
+          "sha256": "f94e40a72b9810561a3dc1a48c4204658b1cbd84800dd0d8e98d667de6e4203d",
+          "git_blob": "9fbc86a12b3e0d9b110472c1dba0707a24861b35"
+        }
+      ]
     }
   ]
 }

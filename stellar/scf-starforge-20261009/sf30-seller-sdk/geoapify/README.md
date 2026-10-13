@@ -31,7 +31,7 @@ Provide an explicit mapping. Text and structured address modes are separate:
 
 Map both original coordinate fields together or leave both empty. Dot paths address nested JSON objects; a matching literal CSV header takes precedence. Structured address fields may be incomplete: the original input remains visible for review, and records without any usable address become INVALID_SOURCE rather than disappearing.
 
-One workspace retains one original source. Open another workspace for another source edition. All source ordinals remain separate even when business identifiers repeat. Identical mapped address parameters share one query ID and provider lookup; their individual identities, original coordinates and output rows are preserved. Inspect source rows and repeated identities before submitting.
+The workspace retains its first original source and following source editions. Use Following source to stage a complete refresh against a chosen frozen edition before activating it. All source ordinals remain separate even when business identifiers repeat. Identical mapped address parameters share one query ID and provider lookup; their individual identities, original coordinates and output rows are preserved. Inspect source rows and repeated identities before submitting.
 
 ## 2. Prepare an explicit original job
 
@@ -144,3 +144,62 @@ Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within 
 For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
 
 Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+## Recurring customer sources and following editions
+
+A workspace now retains a complete sequence of source intakes. The first source remains its original descriptor; earlier provider jobs, decisions, frozen editions and working forms keep their own source. Source selection and frozen customer-edition selection are independent.
+
+Use **Following source** after building a baseline edition. Choose that exact frozen edition, retain the next complete CSV or JSON, describe its original provenance and either keep the baseline mapping or supply an explicit mapping. Staging saves full bytes and a fixed comparison; it leaves the current editor source, selected customer edition and publisher unchanged.
+
+The comparison pairs records only when a nonempty business identity occurs exactly once in both sources. Added, removed, changed and unchanged records are explicit. Duplicate and missing identities are unpaired original rows, with their original ordinals and complete values available. There is no positional match or invented correspondence. Coordinate and other field changes appear even when an address query is unchanged.
+
+### Review before choosing reuse
+
+Matching address parameters can share a retained baseline candidate response. This is separate from matching business records. Candidate provenance names the frozen baseline edition and review hash; its original provider response remains visible. Original-coordinate distances are calculated for the following intake's records.
+
+No baseline decision automatically approves the following source. Choose the eligible query checkboxes, explicitly choose **reuse every eligible decision**, or activate with no reuse. A chosen reuse records the new reviewer and reason, the original decision and exact comparison SHA-256. It preserves the original coordinate policy: preserve-source uses the following source coordinates; fill-missing uses that source pair when present; use-provider uses the explicitly chosen candidate. Inspect changes to original coordinates before reusing that policy. Address changes receive their own query and review.
+
+Reuse is applied only at first activation. Later switches restore the source's original decisions and saved working forms. Continue individual decisions through Review addresses. Comparison checkboxes, selected comparison and unfinished source/review inputs are included in Save working forms and complete packages. Retain or explicitly clear selected local files before switching or exporting; a file picker alone is not saved source data.
+
+### Continue original jobs and choose a delivery
+
+Batch preparation uses the active intake. Every prepared job records its own intake SHA-256, and its original request, poll/import and response remain bound to that source after another source is selected. The Jobs section displays that identity. The provider retry floor remains workspace-wide, and the existing explicit POST and minimum poll behavior remains in force.
+
+Activating another source does not select a different frozen customer edition. Build the following dataset in Dataset, inspect it, then select the intended edition. Delivery exports that selected edition's own intake, review, CSV, GeoJSON and original snapshot, even while another source is being edited. The complete workspace archive additionally preserves all other source revisions, comparisons, jobs, returned data, decisions, saved forms and frozen editions.
+
+A following edition adds **source-comparison.json** and **source-comparison.html** to its complete delivery. The full report retains every comparison record and both original row values. The eligible baseline-decision list describes commissioning eligibility; the ordinary frozen address review contains the actual accepted decisions.
+
+### Browser, CLI and native operator actions
+
+The existing authenticated action endpoint and CLI expose the same actions. Mutations use the current expectedRevision. Source SHA-256 below means the retained normalized intake descriptor, not the original CSV/JSON file hash.
+
+| Action | Required selection | Result |
+| --- | --- | --- |
+| source.history | Optional offset / limit | Paged retained intakes, original source metadata, baseline and activation status |
+| source.stage | Full text or original path, format/name/provenance, baselineEditionId; optional sourceURL/mapping | Original source and comparison retained, current selections unchanged |
+| source.compare | sourceSha256; optional offset/limit/status/search and reuseOffset/reuseLimit | Fixed comparison identity/summary, paged full row pairs and eligible baseline decisions |
+| source.activate | sourceSha256; first activation requires expectedComparisonSha256 | Select that source and restore its forms; retain frozen customer selection |
+| source.activate with reuse | Exact comparison SHA plus reuseQueryIds OR reuseAllEligible:true, reviewer, note | Explicit one-time baseline decisions copied with original provenance |
+| source.inspect / review.list / review.query | Optional sourceSha256 | Read the original historical source without selecting it |
+| editor.save / provider.prepare / review.decide / edition.build | Optional expectedIntakeSha256, in addition to revision | Reject a change aimed at a different active intake |
+
+The native provider now has eighteen tool families, including merchant_geoapify_sources. It uses declared host-file aliases, independently pages source changes/reusable decisions and preserves the same original operator, writer lease and account. Browser and native reads show the intake identity used for each decision. A historical query read should pass its returned intake SHA when later saving; the active source must match.
+
+Example first activation without reusing a decision:
+
+~~~json
+{
+  "sourceSha256": "NORMALIZED_INTAKE_SHA256",
+  "expectedComparisonSha256": "RETAINED_COMPARISON_SHA256",
+  "reuseQueryIds": [],
+  "expectedRevision": 12
+}
+~~~
+
+Run the existing installed geoapify act source.activate --dir PRIVATE_WORKSPACE --payload ORIGINAL_PAYLOAD.json. Replace example identities and revision with actual returned values. To reuse all eligible decisions, replace reuseQueryIds with reuseAllEligible:true and add the actual reviewer/reason; it is an explicit operator choice over that exact retained comparison.
+
+### Complete same-case receiving continuation
+
+Continue the existing Geoapify customer course. Retain two actual source editions where available; if exercising an authored change to the first source, label it as an operator-authored following source and keep the complete actual original untouched. Choose real original rows that cover changed coordinates/address text, added/removed records and repeated IDs. Do not present authored changes as provider or customer observations.
+
+Operate stage → full comparison → specific/all/no reuse → source switching with unfinished forms → original pending-job continuation → following review and dataset → select each frozen edition → complete exports and independent reopening. Reopen the earlier edition while the following source is active and check that its report/data/source identify the earlier source. Keep the exact original provider response history. Inspect desktop and narrow UI, empty/error/changed-source recovery, each outgoing HTML/JSON/CSV/GeoJSON/archive and reopened original workspace. Return actual rendered frames and files to the same original equipped course for producer inspection.
