@@ -240,3 +240,12 @@ The browser course opens the exact original PDF, extracts and renders every page
 The continuation then downloads every retained financial import file, its complete parsed report and full account transaction set. It closes and reopens the same original account and reads the retained PDF and report again. PDF_RECEIVING_RESULT.json records preparation, completed phases, original bytes, actual workspace binding, financial revisions, browser screenshots/downloads and received imports. FILES.json identifies every retained output. The enclosing original receiver includes this complete directory, source programme, PDF originals and logs in its full case ZIP and summary.
 
 Open the original page PNGs and actual browser screenshots and operate the rendered product. The renderedInspection field PENDING_OPERATOR_VIEW is advanced by the actual receiving operator and producing author seeing and using the completed version, including its downloads and reopened files. Continue any financial reconciliation, selected correction, account close and Accountant export in this same case. Retain the full resulting working files and exports with the original receiver owner.
+
+
+## Ordinary source ZIP for the original equipped receiver
+
+[Download the frozen PR1739 source ZIP](releases/pr1739/bank-originals-pdf-source.zip?raw=true), then extract it into a new directory and open START_HERE.md. This ordinary ZIP contains all 11 published receiver files, all 79 selected product/runtime source bodies and the complete 102-source grant declaration, plus its opening guide, exact member manifest and original owner instructions. All 91 original file bodies retain their paths and bytes.
+
+Archive: 2,840,593 bytes; SHA256 `475b625839356225dd25008450c22f5e703de4b901308e4d2baac65e34dd486a`. Its frozen receiver is merge `7e086f3f25b1bc9e66c644a7cf0f6b6091f94598`; the installed product is `d2094e9e9ff6efb91e4d3f94ae31305fc4e25b2f`. SOURCE_MANIFEST.json records the exact selection. Newer source editions remain separate deliberate selections.
+
+Run the original receive.py from the extracted directory when the same operation has not yet created its native case, or use receive-pdf.mjs with its retained installation/account as described above. The existing receiver retrieves the remaining pinned public installation source and uses the original native dependency installer. The archive makes the complete published source available as ordinary files; the original receiving owner retains native execution, actual rendered inspection and full output return.
