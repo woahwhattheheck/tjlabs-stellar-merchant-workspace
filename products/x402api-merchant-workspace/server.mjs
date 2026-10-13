@@ -179,7 +179,8 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
   const server = createServer({ maxHeaderSize: 98304 }, (request, response) => {
     const promise = handle(request, response).catch(error => {
       if (response.headersSent) response.destroy(error);
-      else respond(response, Number.isInteger(error?.status) && error.status >= 400 && error.status <= 599 ? error.status : 500, safeError(error));
+      else respond(response, Number.isInteger(error?.status) && error.status >= 400 && error.status <= 599 ? error.status : 500,
+        safeError(error), error?.code === 'MERCHANT_PROJECT_SNAPSHOT_IN_PROGRESS' ? { 'Retry-After': '5' } : {});
     }).finally(() => inFlight.delete(promise));
     inFlight.add(promise);
   });
