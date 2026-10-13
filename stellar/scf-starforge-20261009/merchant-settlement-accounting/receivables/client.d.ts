@@ -62,6 +62,9 @@ export type {
   CashPlanComparison, CashPlanFileName, CashPlanOperationResult
 } from './cash-planning-types.d.ts';
 
+import type * as Realization from './cash-realization-types.d.ts';
+export type * from './cash-realization-types.d.ts';
+
 export type Money = string;
 export type DateOnly = string;
 export type Revision = number;
@@ -166,7 +169,7 @@ export interface Operation {
     bankAccountId?: string; bankImportId?: string; bankPostingId?: string; receiptIds?: string[];
     bankStatementAccountId?: string; bankStatementImportId?: string;
     invoiceIds?: string[]; allocationIds?: string[]; sourceRefundId?: string; sourceRefundReturnId?: string; resolvedRefundId?: string; settings?: boolean;
-    creditPolicyId?:string;creditPolicyVersion?:number;creditDecisionId?:string;creditRelease?:CreditRelease};
+    cashRealizationId?:string;creditPolicyId?:string;creditPolicyVersion?:number;creditDecisionId?:string;creditRelease?:CreditRelease};
 }
 export interface MutationResult { revision: Revision; operation: Operation }
 export interface Preview extends CreditPreviewMetadata { document: InvoiceDocument; previewSha256: string; expectedVersion: number; revision: Revision }
@@ -367,6 +370,12 @@ export class ReceivablesClient {
   withdrawCreditDecision(id:string,value:WithdrawCreditDecisionInput,options?:RequestOptions):Promise<CreditDecisionMutationResult>;
   creditDecisionFile(id:string,name:CreditDecisionFileName,options?:RequestOptions):Promise<Response>;
   creditControlOperation(requestId:string,options?:RequestOptions):Promise<CreditControlOperationResult>;
+  cashRealizations(query?:Realization.CashRealizationListQuery, options?:RequestOptions):Promise<Realization.CashRealizationList>;
+  previewCashRealization(value:Realization.CashRealizationPreviewInput, options?:RequestOptions):Promise<Realization.CashRealizationPreview>;
+  cashRealization(id:string, options?:RequestOptions):Promise<Realization.CashRealizationDetail>;
+  saveCashRealization(value:Realization.SaveCashRealizationInput, options?:RequestOptions):Promise<Realization.CashRealizationMutationResult>;
+  cashRealizationFile(id:string,name:Realization.CashRealizationFileName,options?:RequestOptions):Promise<Response>;
+  cashRealizationOperation(requestId:string,options?:RequestOptions):Promise<Realization.CashRealizationOperationResult>;
   cashPlans(query?:CashPlanListQuery, options?:RequestOptions):Promise<CashPlanList>;
   previewCashPlan(value:CashPlanPreviewInput, options?:RequestOptions):Promise<CashPlanPreview>;
   cashPlan(id:string, query?:{editionId?:string}, options?:RequestOptions):Promise<CashPlanDetail>;

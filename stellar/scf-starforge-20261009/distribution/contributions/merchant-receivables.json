@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-receivables",
-  "description": "Customer invoicing and service quotations; Stellar collection, refunds and credit transfers; installment schedules and account delivery; collections and reminders; cash scenarios and edition comparisons; credit policies and account decisions; original bank statements, source coverage and balanced reconciliation; remittance CSV receiving and invoice allocations; dated customer account packages, offline invoice responses and reviewed original collection activity.",
+  "description": "Customer invoicing and service quotations; Stellar collection, refunds and credit transfers; installment schedules and account delivery; collections and reminders; cash scenarios, edition comparisons and original cash realization; credit policies and account decisions; original bank statements, source coverage and balanced reconciliation; remittance CSV receiving and invoice allocations; dated customer account packages, offline invoice responses and reviewed original collection activity.",
   "commands": {
     "receivables": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cli.mjs",
     "customer-account": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/customer-account-cli.mjs"
@@ -72,7 +72,12 @@
       "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/collection.mjs"
     },
     "./merchant/payment-plans/collection-exercise": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/collection-exercise.mjs",
-    "./merchant/payment-plans/collection-receiving": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/collection-receiving.mjs"
+    "./merchant/payment-plans/collection-receiving": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/collection-receiving.mjs",
+    "./merchant/receivables/cash-realization": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization.mjs",
+    "./merchant/receivables/cash-realization-workspace": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-workspace.mjs",
+    "./merchant/receivables/cash-realization-exercise": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-exercise.mjs",
+    "./merchant/receivables/cash-realization-receiving": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-receiving.mjs",
+    "./merchant/receivables/cash-realization-browser": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-browser.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.d.ts",
@@ -114,7 +119,9 @@
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_CUSTOMER_RESPONSES.md",
     "stellar-forge/developer-site/dist/grant-data/financial-native-result.json",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/collection.d.ts",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/STELLAR_COLLECTION.md"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/STELLAR_COLLECTION.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-types.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/CASH_REALIZATION.md"
   ],
   "browserAssets": [
     {

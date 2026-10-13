@@ -48,6 +48,11 @@ const HELP = 'Merchant receivables\n\n' +
   'starforge receivables credit-control-operation --directory /private/accounting --request ORIGINAL_REQUEST_ID\n' +
   'Issue through the original apply --action issue command with the reviewed invoice and creditDecisionId. Assessments use the current account date.\n\n' +
   'Cash receipt planning:\n' +
+  'starforge receivables cash-realizations --directory /private/accounting [--plan UUID]\n' +
+  'starforge receivables cash-realization-preview|cash-realization-save --directory /private/accounting --input /private/realization.json [--out /private/review.json]\n' +
+  'starforge receivables cash-realization --directory /private/accounting --id UUID\n' +
+  'starforge receivables cash-realization-operation --directory /private/accounting --request ORIGINAL_REQUEST_ID\n' +
+  'starforge receivables cash-realization-file --directory /private/accounting --id UUID --name realization.html --out /private/new-realization.html\n' +
   'starforge receivables cash-plans --directory /private/accounting [--status ACTIVE] [--search TEXT]\n' +
   'starforge receivables cash-plan --directory /private/accounting --id UUID [--edition UUID]\n' +
   'starforge receivables cash-plan-preview --directory /private/accounting --input /private/assumptions.json [--out /private/review.json]\n' +
@@ -198,6 +203,18 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
     else if (command === 'credit-decision-file') {
       const file=await receivables.creditDecisionFile(flags.id,flags.name);
       await newFile(flags.out,file.bytes);
+      result={path:flags.out,name:file.name,bytes:file.bytes.length,type:file.type,sha256:createHash('sha256').update(file.bytes).digest('hex')};
+    }
+    else if (command === 'cash-realizations') result=await receivables.cashRealizations({planId:flags.plan});
+    else if (command === 'cash-realization') result=await receivables.cashRealization(flags.id);
+    else if (command === 'cash-realization-preview') {
+      result=await receivables.previewCashRealization(await input(flags.input));
+      if(flags.out)await newFile(flags.out,Buffer.from(json(result)));
+    }
+    else if (command === 'cash-realization-save') result=await receivables.saveCashRealization(await input(flags.input));
+    else if (command === 'cash-realization-operation') result=await receivables.cashRealizationOperation(flags.request);
+    else if (command === 'cash-realization-file') {
+      const file=await receivables.cashRealizationFile(flags.id,flags.name);await newFile(flags.out,file.bytes);
       result={path:flags.out,name:file.name,bytes:file.bytes.length,type:file.type,sha256:createHash('sha256').update(file.bytes).digest('hex')};
     }
     else if (command === 'cash-plans') result=await receivables.cashPlans({status:flags.status,search:flags.search});

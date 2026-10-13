@@ -95,6 +95,12 @@ export class ReceivablesClient {
   creditControlOperation(requestId, {signal} = {}) {
     return this.request('/credit-control/operations/' + segment(requestId), {signal});
   }
+  cashRealizations(query, {signal} = {}) { return this.request('/cash-realizations' + queryString(query), {signal}); }
+  previewCashRealization(value, {signal} = {}) { return this.request('/cash-realizations/preview', {method:'POST',body:value,signal}); }
+  saveCashRealization(value, {signal} = {}) { return this.request('/cash-realizations', {method:'POST',body:value,signal}); }
+  cashRealization(id, {signal} = {}) { return this.request('/cash-realizations/' + segment(id), {signal}); }
+  cashRealizationFile(id, name, {signal} = {}) { return this.request('/cash-realizations/' + segment(id) + '/files/' + segment(name), {binary:true,signal}); }
+  cashRealizationOperation(requestId, {signal} = {}) { return this.request('/cash-realizations/operations/' + segment(requestId), {signal}); }
   cashPlans(query, {signal} = {}) { return this.request('/cash-plans' + queryString(query), {signal}); }
   previewCashPlan(value, {signal} = {}) { return this.request('/cash-plans/preview', {method:'POST', body:value, signal}); }
   cashPlan(id, query, {signal} = {}) { return this.request('/cash-plans/' + segment(id) + queryString(query), {signal}); }

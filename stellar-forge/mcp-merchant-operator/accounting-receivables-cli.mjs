@@ -14,6 +14,7 @@ import {ACCOUNTING_RECEIVABLES_METHODS, ACCOUNTING_RECEIVABLES_MUTATIONS,
   accountingPaymentRequestPreview, accountingPaymentRequestArguments, accountingRefundPreview, accountingRefundArguments,
   accountingCreditDispositionPreview, accountingCreditDispositionArguments, accountingBankPostingPreview,
   accountingBankPostingArguments, accountingRemittancePreview, accountingRemittanceArguments,
+  accountingCashRealizationPreview, accountingCashRealizationArguments,
   accountingCashPlanPreview, accountingCashPlanArguments, accountingCreditAssessmentPreview,
   accountingCreditDecisionArguments, connectAccountingReceivablesClient}
   from './accounting-receivables-client.mjs';
@@ -123,9 +124,10 @@ function fromPreview(kind, preview, identity) {
   if (kind === 'credit_disposition_apply') return accountingCreditDispositionArguments(preview, identity);
   if (kind === 'bank_receipts_post') return accountingBankPostingArguments(preview, identity);
   if (kind === 'remittance_apply') return accountingRemittanceArguments(preview, identity);
+  if (kind === 'cash_realization_save') return accountingCashRealizationArguments(preview, identity);
   if (kind === 'cash_plan_save') return accountingCashPlanArguments(preview, identity);
   if (kind === 'credit_decision_save') return accountingCreditDecisionArguments(preview, identity);
-  throw fail('ARGUMENTS', 'A reviewed preview prepares invoice-issue, payment-create, refund-commit, credit-disposition-apply, bank-receipts-post, remittance-apply, cash-plan-save, credit-decision-save, customer-account-publish, customer-response-receive or customer-response-review.');
+  throw fail('ARGUMENTS', 'A reviewed preview prepares invoice-issue, payment-create, refund-commit, credit-disposition-apply, bank-receipts-post, remittance-apply, cash-plan-save, cash-realization-save, credit-decision-save, customer-account-publish, customer-response-receive or customer-response-review.');
 }
 function validateRequest(request) {
   exact(request, ['schema', 'preparedAt', 'url', 'workspace', 'tokenEnv', 'kind', 'arguments', 'preview', 'sha256']);
@@ -292,7 +294,7 @@ const HELP = `Starforge merchant receivables and invoice collection
   starforge merchant-accounting-receivables prepare --dir NEW_PRIVATE_OPERATION
       --url MCP_URL --workspace ALIAS --action MUTATION --request PRIVATE_ARGUMENTS_JSON
   starforge merchant-accounting-receivables prepare --dir NEW_PRIVATE_OPERATION ...
-      --action invoice-issue|payment-create|refund-commit|credit-disposition-apply|bank-receipts-post|remittance-apply|cash-plan-save|credit-decision-save|customer-account-publish|customer-response-receive|customer-response-review --preview PRIVATE_PREVIEW_JSON
+      --action invoice-issue|payment-create|refund-commit|credit-disposition-apply|bank-receipts-post|remittance-apply|cash-plan-save|cash-realization-save|credit-decision-save|customer-account-publish|customer-response-receive|customer-response-review --preview PRIVATE_PREVIEW_JSON
       --actor NAME [--request-id STABLE_ID] [--review-options PRIVATE_REVIEW_OPTIONS_JSON]
   starforge merchant-accounting-receivables remittance-preview ...
       --request PRIVATE_SOURCE_OPTIONS_JSON [--source PRIVATE_REMITTANCE_CSV] [--out NEW_PRIVATE_PREVIEW_JSON]
@@ -325,6 +327,7 @@ Commands:
   collection-close, collection-reopen, collection-reminder,
   cash-plan-list, cash-plan-preview, cash-plan-detail, cash-plan-save,
   cash-plan-archive, cash-plan-reopen, cash-plan-compare,
+  cash-realization-list, cash-realization-preview, cash-realization-detail, cash-realization-save,
   credit-control, credit-policy-detail, credit-policy-save,
   credit-assessment-preview, credit-decision-save, credit-decision-detail,
   credit-decision-withdraw, customer-account-list, customer-account-preview,
@@ -441,6 +444,7 @@ These options are private JSON files; their values are retained in request.json.
 Financial downloads use receivables-collection {collectionCaseId,asOf,file},
 receivables-collections {asOf,customerId,owner,status,search,file},
 receivables-cash-plan {cashPlanId,editionId,file},
+receivables-cash-realization {cashRealizationId,file},
 receivables-cash-plan-comparison {leftId,rightId,leftEditionId,rightEditionId,file},
 or receivables-credit-decision {creditDecisionId,file}. Use the complete original
 case/plan/decision JSON, HTML, CSV, reminder and manifest names from the guide.
@@ -464,7 +468,7 @@ export async function main(args = process.argv.slice(2)) {
     result = await prepareAccountingReceivablesOperation({
       directory: required(values, '--dir'), url: required(values, '--url'), workspace: required(values, '--workspace'),
       tokenEnv: values.get('--token-env') ?? 'MCP_ACCESS_TOKEN', kind,
-      ...(previewMode ? {preview: await readJson(resolve(required(values, '--preview')), kind.startsWith('customer_') ? 128_000_000 : 4_000_000),
+      ...(previewMode ? {preview: await readJson(resolve(required(values, '--preview')), kind.startsWith('customer_') ? 128_000_000 : kind === 'cash_realization_save' ? 34_000_000 : 4_000_000),
         actor: required(values, '--actor'), requestId: values.get('--request-id'),
         ...(values.has('--review-options') ? {reviewOptions: await readJson(resolve(values.get('--review-options')), 65536)} : {})} :
         {arguments: await sourceArguments(kind, await readJson(resolve(required(values, '--request')), 4_000_000), values.get('--source'))})
@@ -478,7 +482,7 @@ export async function main(args = process.argv.slice(2)) {
     const extra = command === 'download' ? ['--selection', '--sha256', '--out'] : native ?
       ['--request', ...(PAGED.has(kind) ? ['--all'] : []),
         ...(['bank_source_inspect', 'bank_source_import', 'remittance_preview', 'customer_response_preview'].includes(kind) ? ['--source'] : []),
-        ...(['invoice_preview', 'payment_preview', 'refund_preview', 'credit_disposition_preview', 'bank_posting_preview', 'bank_source_inspect', 'bank_source_import', 'remittance_preview', 'customer_export', 'collection_list', 'collection_detail', 'collection_reminder', 'cash_plan_list', 'cash_plan_preview', 'cash_plan_detail', 'cash_plan_compare', 'credit_control', 'credit_policy_detail', 'credit_assessment_preview', 'credit_decision_detail', 'customer_account_list', 'customer_account_preview', 'customer_response_preview', 'customer_response_detail', 'customer_response_review_preview'].includes(kind) ? ['--out'] : [])] : [];
+        ...(['invoice_preview', 'payment_preview', 'refund_preview', 'credit_disposition_preview', 'bank_posting_preview', 'bank_source_inspect', 'bank_source_import', 'remittance_preview', 'customer_export', 'collection_list', 'collection_detail', 'collection_reminder', 'cash_plan_list', 'cash_plan_preview', 'cash_plan_detail', 'cash_plan_compare', 'cash_realization_list', 'cash_realization_preview', 'cash_realization_detail', 'credit_control', 'credit_policy_detail', 'credit_assessment_preview', 'credit_decision_detail', 'customer_account_list', 'customer_account_preview', 'customer_response_preview', 'customer_response_detail', 'customer_response_review_preview'].includes(kind) ? ['--out'] : [])] : [];
     const values = options(rest, [...connectionFields, ...extra]);
     const all = values.has('--all');
     if (all) need(values.get('--all') === 'true' && !values.has('--out'),
@@ -492,7 +496,7 @@ export async function main(args = process.argv.slice(2)) {
       else {
         result = await client.open();
         if (native) {
-          if (!['status', 'payment_list', 'customer_funds', 'refund_list', 'bank_accounts', 'bank_import_list', 'remittance_list', 'collection_list', 'cash_plan_list', 'credit_control', 'customer_account_list'].includes(kind)) required(values, '--request');
+          if (!['status', 'payment_list', 'customer_funds', 'refund_list', 'bank_accounts', 'bank_import_list', 'remittance_list', 'collection_list', 'cash_plan_list', 'cash_realization_list', 'credit_control', 'customer_account_list'].includes(kind)) required(values, '--request');
           const input = await sourceArguments(kind, values.has('--request') ? await readJson(resolve(values.get('--request')), 4_000_000) : {}, values.get('--source'));
           if (all && kind === 'bank_import_detail') need(['rows', 'history', 'postings'].includes(input.view),
             'Select rows, history or postings for a complete original bank import view.');
@@ -534,6 +538,12 @@ export async function main(args = process.argv.slice(2)) {
             result=values.has('--out')?{output:await savePreview(values.get('--out'),preview),workspaceId:preview.workspaceId,
               revision:preview.revision,reviewSha256:preview.reviewSha256,
               ...(preview.publicationId?{publicationId:preview.publicationId}:{}),...(preview.responseId?{customerResponseId:preview.responseId}:{})}:preview;
+          } else if (kind === 'cash_realization_preview') {
+            const preview = accountingCashRealizationPreview(await client.previewCashRealization(input));
+            result = values.has('--out') ? {output: await savePreview(values.get('--out'), preview),
+              workspaceId: preview.workspaceId, revision: preview.revision,
+              planId: preview.request.planId, editionId: preview.request.editionId,
+              through: preview.request.through, reviewSha256: preview.reviewSha256} : preview;
           } else if (kind === 'cash_plan_preview' || kind === 'credit_assessment_preview') {
             const review = kind === 'cash_plan_preview' ? accountingCashPlanPreview : accountingCreditAssessmentPreview;
             const method = kind === 'cash_plan_preview' ? 'previewCashPlan' : 'previewCreditAssessment';

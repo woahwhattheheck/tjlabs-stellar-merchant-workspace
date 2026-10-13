@@ -1,5 +1,6 @@
 // MIT. Operator cash planning inside the original receivables application.
 import {cashDate,cashCurrency,cashLabel} from './cash-planning-display.mjs';
+import {createCashRealizationUi} from './cash-realization.mjs';
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=cashLabel;
 const button=(text,action,id='',extra='')=>'<button type="button" data-action="cash-plan-'+e(action)+'" data-id="'+e(id)+'" '+extra+'>'+e(text)+'</button>';
@@ -11,6 +12,8 @@ const copy=value=>structuredClone(value);
 function plusDays(date,days){return new Date(Date.parse(date+'T00:00:00Z')+days*86400000).toISOString().slice(0,10);}
 export function createCashPlanningUi(host){
   const {api,openDialog,mutate,saveBlob}=host;
+  const realization=createCashRealizationUi(host);
+  const methods=new Set(['saveCashPlan','archiveCashPlan','reopenCashPlan',...realization.methods]);
   let list={plans:[]},draft=host.readSession('cashPlanningDraft'),review=null,error='',loadVersion=0,comparisonQuery=null;
   function persist(){host.saveSession('cashPlanningDraft',draft);}
   function fresh(){
@@ -22,6 +25,7 @@ export function createCashPlanningUi(host){
     review=null;persist();
   }
   async function loadList(){
+    await realization.loadList();
     const version=++loadVersion;
     try{const result=await api.cashPlans();if(version===loadVersion){list=result;error='';}}
     catch(cause){if(version===loadVersion){error=cause.message;list={plans:[]};}}
@@ -106,7 +110,7 @@ export function createCashPlanningUi(host){
         '<form id="cash-plan-compare-form"><div class="form-grid">'+
         select('Left plan — latest saved edition','leftId',list.plans.map(row=>[row.id,row.title+' · '+cashDate(row.asOf)]),list.plans[0]?.id)+
         select('Right plan — latest saved edition','rightId',list.plans.map(row=>[row.id,row.title+' · '+cashDate(row.asOf)]),list.plans[1]?.id||list.plans[0]?.id)+
-        '</div><div class="dialog-actions"><button type="submit">Compare editions</button></div></form></div></section>':'');
+        '</div><div class="dialog-actions"><button type="submit">Compare editions</button></div></form></div></section>':'')+realization.render();
   }
   function remember(form){
     if(form?.id!=='cash-plan-form'||!draft)return;
@@ -139,6 +143,7 @@ export function createCashPlanningUi(host){
       ' · Source revision '+edition.sourceRevision+'</p><div class="row wrap">'+
       (row.status==='ACTIVE'?button('Revise latest edition','revise',id,'data-write'):button('Reopen plan','status',id,'data-status="ACTIVE" data-write'))+
       button('Copy this edition','copy',id,'data-edition="'+e(edition.id)+'" data-write')+
+      '<button type="button" data-action="cash-realization-new" data-id="'+e(id)+'" data-edition="'+e(edition.id)+'" data-write>Review actual receipts</button>'+
       (row.status==='ACTIVE'?button('Archive plan','status',id,'data-status="ARCHIVED" data-write'):'')+
       ['plan.json','plan.csv','plan.html','manifest.json'].map(name=>button(name,'download',id,'data-name="'+name+'" data-edition="'+e(edition.id)+'"')).join('')+
       '</div><label>Retained edition<select data-cash-edition="'+e(id)+'">'+detail.editions.map(item=>'<option value="'+e(item.id)+'"'+
@@ -185,6 +190,7 @@ export function createCashPlanningUi(host){
           '</td><td class="num">'+e(row.right)+'</td><td class="num">'+e(row.change)+'</td></tr>').join('')+'</tbody></table></div>');
   }
   async function submit(form,values){
+    if(await realization.submit(form,values))return true;
     if(!form.id.startsWith('cash-plan-'))return false;
     if(form.id==='cash-plan-form')await recalculate();
     else if(form.id==='cash-plan-assumption-form'){
@@ -201,6 +207,7 @@ export function createCashPlanningUi(host){
     return true;
   }
   async function click(control){
+    if(await realization.click(control))return true;
     const action=control.dataset.action;if(!action?.startsWith('cash-plan-'))return false;
     const readActions=['cash-plan-open','cash-plan-download','cash-plan-compare-previous','cash-plan-comparison-file'];
     if(host.isLocked()&&!readActions.includes(action))throw new Error('Complete the retained account operation before changing planning assumptions.');
@@ -232,9 +239,10 @@ export function createCashPlanningUi(host){
     return true;
   }
   return {methods,render,loadList,submit,click,
-    input(target){remember(target.closest('#cash-plan-form'));},
+    input(target){realization.input(target);remember(target.closest('#cash-plan-form'));},
     async change(target){if(target.dataset.cashEdition)await openSaved(target.dataset.cashEdition,target.value);else remember(target.closest('#cash-plan-form'));},
     async afterMutation(result,operation){
+      if(realization.methods.has(operation.method)){await realization.afterMutation(result,operation);return;}
       if(!methods.has(operation.method))return;
       if(operation.method==='saveCashPlan'){draft=null;review=null;persist();host.render();}
       if(result.cashPlan?.id)await openSaved(result.cashPlan.id,result.cashPlanEdition?.id);

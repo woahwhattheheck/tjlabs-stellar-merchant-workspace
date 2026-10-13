@@ -18,7 +18,7 @@ const FIELDS = {
 };
 const FILE_FIELDS = [...qboWorksheetFileSelectors, 'kind', 'changeId', 'recoveryId', 'runId', 'exportId', 'collectionId', 'sourceId',
   'reviewId', 'closeId', 'handoffId', 'revisionId', 'adjustmentId', 'jobId', 'planId', 'responseId', 'nativePost', 'attemptId', 'file', 'statementId', 'customerId', 'usageId', 'usageOpeningId', 'replacesId', 'from', 'until', 'profileId', 'captureId', 'returnId', 'rollbackId', 'scope', 'cycleId', 'fileId', 'receivedId', 'clientId', 'documentId', 'invoiceId', 'paymentRequestId', 'refundId', 'bankImportId', 'bankStatementImportId', 'bankStatementCloseId', 'bankSourcePreparationId', 'batchId', 'asOf',
-  'collectionCaseId', 'owner', 'status', 'search', 'cashPlanId', 'editionId', 'leftId', 'rightId',
+  'cashRealizationId', 'collectionCaseId', 'owner', 'status', 'search', 'cashPlanId', 'editionId', 'leftId', 'rightId',
   'leftEditionId', 'rightEditionId', 'creditDecisionId', 'publicationId', 'customerResponseId'];
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const fail = (code, message) => Object.assign(new Error(message), { code: 'ACCOUNTING_MAINTENANCE_CLIENT_' + code });
@@ -154,7 +154,7 @@ export function createAccountingMaintenanceClient({ workspace, call } = {}) {
     async *fileChunks(selection, { expectedSha256, chunkBytes = 65536, signal } = {}) {
       exact(selection, FILE_FIELDS);
       if (!['response', 'report', 'export', 'collection', 'pricing', 'period', 'accountant', 'adjustment', 'qbo', 'xero', 'qbo-source-change', 'xero-source-change', 'qbo-worksheet', 'customer-statement', 'customer-statement-preview', 'customer-usage-period-preview', 'cryptoworth', 'runbooks', 'portfolio', 'buyer-source', 'receivables-document', 'receivables-quote', 'receivables-preview', 'receivables-payment', 'receivables-refund', 'receivables-bank', 'bank-statements-import', 'bank-statements-close', 'bank-sources', 'receivables-remittance', 'receivables-customer', 'commissioning-source', 'commissioning-capture',
-        'receivables-collection', 'receivables-collections', 'receivables-cash-plan', 'receivables-cash-plan-comparison',
+        'receivables-collection', 'receivables-collections', 'receivables-cash-realization', 'receivables-cash-plan', 'receivables-cash-plan-comparison',
         'receivables-credit-decision', 'receivables-customer-account', 'receivables-customer-response'].includes(selection.kind))
         throw fail('ARGUMENTS', 'Choose an original accounting file kind.');
       if (expectedSha256 !== undefined) identifier(expectedSha256, SHA, 'original file SHA256');

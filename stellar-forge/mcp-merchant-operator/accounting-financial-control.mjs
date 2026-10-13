@@ -16,6 +16,10 @@ export const FINANCIAL_CONTROL_METHODS = Object.freeze({
   archiveCashPlan: 'cash_plan_archive',
   reopenCashPlan: 'cash_plan_reopen',
   compareCashPlans: 'cash_plan_compare',
+  cashRealizations: 'cash_realization_list',
+  previewCashRealization: 'cash_realization_preview',
+  cashRealization: 'cash_realization_detail',
+  saveCashRealization: 'cash_realization_save',
   creditControl: 'credit_control',
   creditPolicy: 'credit_policy_detail',
   saveCreditPolicy: 'credit_policy_save',
@@ -33,6 +37,7 @@ export const FINANCIAL_CONTROL_SELECTORS = Object.freeze({
   cash_plan_detail: 'cashPlanId',
   cash_plan_archive: 'cashPlanId',
   cash_plan_reopen: 'cashPlanId',
+  cash_realization_detail: 'cashRealizationId',
   credit_policy_detail: 'creditPolicyId',
   credit_assessment_preview: 'invoiceId',
   credit_decision_save: 'invoiceId',
@@ -47,6 +52,7 @@ export const FINANCIAL_CONTROL_ACTIONS = Object.freeze({
   cash_plan_save: 'cash_plan_saved',
   cash_plan_archive: 'cash_plan_archived',
   cash_plan_reopen: 'cash_plan_reopened',
+  cash_realization_save: 'cash_realization_saved',
   credit_policy_save: 'credit_policy_saved',
   credit_decision_save: 'credit_decision_saved',
   credit_decision_withdraw: 'credit_decision_withdrawn'
@@ -56,6 +62,7 @@ export const FINANCIAL_CONTROL_FILES = Object.freeze({
   'receivables-collections': Object.freeze(['collections.json', 'collections.csv']),
   'receivables-cash-plan': Object.freeze(['plan.json', 'plan.csv', 'plan.html', 'manifest.json']),
   'receivables-cash-plan-comparison': Object.freeze(['comparison.json', 'comparison.csv']),
+  'receivables-cash-realization': Object.freeze(['realization.json', 'realization.html', 'invoices.csv', 'dates.csv', 'events.csv', 'receipts.csv', 'manifest.json']),
   'receivables-credit-decision': Object.freeze(['decision.json', 'decision.html', 'manifest.json'])
 });
 const METHODS_BY_OPERATION = Object.freeze(Object.fromEntries(
@@ -102,5 +109,6 @@ export async function financialControlFile(receivables, input) {
   if (kind === 'receivables-collections') return receivables.collectionsFile(file, query);
   if (kind === 'receivables-cash-plan') return receivables.cashPlanFile(selected('cashPlanId'), file, query);
   if (kind === 'receivables-cash-plan-comparison') return receivables.cashPlanComparisonFile(file, query);
+  if (kind === 'receivables-cash-realization') return receivables.cashRealizationFile(selected('cashRealizationId'), file);
   return receivables.creditDecisionFile(selected('creditDecisionId'), file);
 }
