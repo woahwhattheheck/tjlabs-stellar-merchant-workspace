@@ -1,3 +1,4 @@
+import { mountGristOperatingPlans } from './operating-browser.mjs';
 // MIT. Industrial local operator. No provider token or source rows enter browser storage.
 const $ = id => document.getElementById(id);
 const clone = value => value == null ? value : structuredClone(value);
@@ -13,6 +14,7 @@ let token = new URLSearchParams(location.hash.slice(1)).get('token');
 if (token) { sessionStorage.setItem(tokenKey, token); history.replaceState(null, '', location.pathname + location.search); }
 else token = sessionStorage.getItem(tokenKey);
 let state = null, busy = false, pending = null, retryPayload = null, known = null, recovering = false;
+let operatingBusy = false, operatingRunning = false, operating = null;
 let metadata = null, sourceOrders = [], captureColumns = new Map(), editorColumns = new Map(), captureView = null;
 let draft = null, draftRevision = 0, dirty = false, queryName = null, preview = null, upload = null;
 let revision = 0, renderEpoch = 0, deployment = null, deploymentReview = null;
@@ -26,9 +28,9 @@ function tab(name) {
   document.querySelectorAll('[data-view]').forEach(e => e.setAttribute('aria-current', e.dataset.view === name ? 'page' : 'false'));
 }
 function lock() {
-  $('workspace-controls').disabled = !state || busy || Boolean(pending);
-  for (const id of ['check-operation','resume-operation','retry-operation','dismiss-operation','retry-file']) $(id).disabled = busy || recovering;
-  $('retry-operation').disabled = busy || recovering || (!retryPayload && Boolean(pending?.file));
+  $('workspace-controls').disabled = !state || busy || Boolean(pending) || operatingBusy;
+  for (const id of ['check-operation','resume-operation','retry-operation','dismiss-operation','retry-file']) $(id).disabled = busy || recovering || operatingRunning;
+  $('retry-operation').disabled = busy || recovering || operatingRunning || (!retryPayload && Boolean(pending?.file));
 }
 const markerPrefix = directory => 'stellar.grist.pending.v1:' + directory + ':';
 const activeKey = directory => 'stellar.grist.active.v1:' + directory;
@@ -46,7 +48,7 @@ function showRecovery(message) {
   $('retry-operation').hidden = known !== null;
   $('dismiss-operation').hidden = known?.status !== 'failed';
   $('retry-file-label').hidden = known !== null || !pending.file || Boolean(retryPayload);
-  $('retry-operation').disabled = busy || recovering || !retryPayload && Boolean(pending.file);
+  $('retry-operation').disabled = busy || recovering || operatingRunning || !retryPayload && Boolean(pending.file);
   lock();
 }
 async function sha(content) {
@@ -107,7 +109,7 @@ async function finish(result, marker) {
   notice('Saved. Original request ' + marker.requestId + '.');
 }
 async function checkReceipt() {
-  if (!pending || recovering) return;
+  if (!pending || recovering || operatingRunning) return;
   recovering = true; lock();
   try {
     const reply = await api('/api/operation?id=' + encodeURIComponent(pending.requestId));
@@ -138,7 +140,7 @@ async function mutate(path, body, label, file = null) {
   finally { busy = false; lock(); }
 }
 async function readAction(action) {
-  if (busy || pending) return;
+  if (busy || pending || operatingBusy) return;
   busy = true; lock(); notice('');
   try { await action(); } catch (issue) { notice(errorMessage(issue), true); } finally { busy = false; lock(); }
 }
@@ -155,7 +157,7 @@ function table(parent, headings, rows) {
   const b=node('tbody');for(const cells of rows){const r=node('tr');for(const value of cells){const c=node('td');c.append(value instanceof Node?value:node('span',shown(value)));r.append(c);}b.append(r);}t.append(b);parent.append(t);
 }
 function button(label, action) {
-  const b=node('button',label);b.type='button';b.addEventListener('click',async event=>{event.preventDefault();if(busy||pending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}});return b;
+  const b=node('button',label);b.type='button';b.addEventListener('click',async event=>{event.preventDefault();if(busy||pending||operatingBusy)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}});return b;
 }
 function actions(...buttons){const n=node('div');n.append(...buttons);return n;}
 function description(title, detail){const n=node('div');n.append(node('strong',title),node('small',detail));return n;}
@@ -206,15 +208,15 @@ function defaultSpec(field,index){
   return{alias:alias(field.title,index),enabled:false,source:field.id,providerType:field.type,type:base==='Bool'?'boolean':'string',encoding,nullable:true,empty:'preserve'};
 }
 function selectInput(values,value,changed){
-  const input=node('select');for(const item of values){const [v,label]=Array.isArray(item)?item:[item,item];const o=node('option',label);o.value=v;input.append(o);}input.value=value;input.addEventListener('change',()=>{if(!busy&&!pending)changed(input.value);});return input;
+  const input=node('select');for(const item of values){const [v,label]=Array.isArray(item)?item:[item,item];const o=node('option',label);o.value=v;input.append(o);}input.value=value;input.addEventListener('change',()=>{if(!busy&&!pending&&!operatingBusy)changed(input.value);});return input;
 }
 function fieldTable(parent,fields,map,onChange){
   table(parent,['Use','Native field / observed values','Public alias','Scalar type','Value encoding','Nulls','Empty strings'],fields.map((f,index)=>{
     let spec=map.get(f.id);if(!spec){spec=defaultSpec(f,index);map.set(f.id,spec);}
-    const check=node('input');check.type='checkbox';check.checked=spec.enabled;check.setAttribute('aria-label','Use '+f.title);check.addEventListener('change',()=>{if(!busy&&!pending){spec.enabled=check.checked;onChange();}});
+    const check=node('input');check.type='checkbox';check.checked=spec.enabled;check.setAttribute('aria-label','Use '+f.title);check.addEventListener('change',()=>{if(!busy&&!pending&&!operatingBusy){spec.enabled=check.checked;onChange();}});
     const details=description(f.title,(f.id==='$recordId'?'Native identity':f.type)+' · '+f.id);
     if(f.counts){details.append(node('small',Object.entries(f.counts).filter(([,n])=>n).map(([k,n])=>k+' '+n).join(' · ')));details.append(node('small',(f.samples??[]).map(s=>s.kind+': '+shown(s.value)).join(' | ')));}
-    const name=node('input');name.value=spec.alias;name.maxLength=48;name.setAttribute('aria-label','Public alias for '+f.title);name.addEventListener('input',()=>{if(!busy&&!pending){spec.alias=name.value;onChange();}});
+    const name=node('input');name.value=spec.alias;name.maxLength=48;name.setAttribute('aria-label','Public alias for '+f.title);name.addEventListener('input',()=>{if(!busy&&!pending&&!operatingBusy){spec.alias=name.value;onChange();}});
     const type=selectInput(['string','integer','number','boolean'],spec.type,v=>{spec.type=v;onChange();});type.setAttribute('aria-label','Scalar type for '+f.title);
     const encoding=selectInput(f.id==='$recordId'?['identity-text','native','number-text']:['native','number-text','epoch-seconds-text','reference-id-text','typed-json'],spec.encoding,v=>{spec.encoding=v;onChange();});encoding.setAttribute('aria-label','Encoding for '+f.title);
     const nullable=selectInput([['false','Required'],['true','Allow null']],String(spec.nullable),v=>{spec.nullable=v==='true';onChange();});nullable.setAttribute('aria-label','Null policy for '+f.title);if(f.id==='$recordId')nullable.disabled=true;
@@ -397,11 +399,11 @@ function filterInput(){
   return value;
 }
 for(const id of ['connection','doc-id','table-id','filter'])$(id).addEventListener('input',()=>{
-  if(busy||pending)return;sourceIntent++;metadata=null;$('acquisition').hidden=true;
+  if(busy||pending||operatingBusy)return;sourceIntent++;metadata=null;$('acquisition').hidden=true;
   if(['connection','doc-id'].includes(id))clearDocument();
   else if(documentView)selectedDocumentText();
 });
-function guarded(action){return async event=>{event?.preventDefault();if(busy||pending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}};}
+function guarded(action){return async event=>{event?.preventDefault();if(busy||pending||operatingBusy)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}};}
 for(const b of document.querySelectorAll('[data-view]'))b.addEventListener('click',()=>tab(b.dataset.view));
 $('refresh').addEventListener('click',guarded(()=>readAction(()=>refresh())));
 $('load-current-draft').addEventListener('click',guarded(()=>readAction(async()=>{await refresh();if(state.draft)await loadDraft(state.draft,state.draftRevision);})));
@@ -458,7 +460,7 @@ $('import-form').addEventListener('submit',guarded(async()=>{
   if(!upload)throw new Error('Wait for the complete selected packet to be read.');
   await mutate('/api/import-package',{packet:upload.packet,title:$('import-title').value.trim(),expectedDraftRevision:state.draftRevision},'Import original complete source',upload.file);
 }));
-$('draft-title').addEventListener('input',()=>{if(!busy&&!pending)change();});
+$('draft-title').addEventListener('input',()=>{if(!busy&&!pending&&!operatingBusy)change();});
 $('query-select').addEventListener('change',guarded(()=>{flushQuery();queryName=$('query-select').value;renderQuery();}));
 $('rename-query').addEventListener('click',guarded(()=>{
   flushQuery();const next=$('query-name').value.trim();
@@ -521,13 +523,13 @@ for(const [name,get,set]of [
 })));
 $('check-operation').addEventListener('click',()=>checkReceipt());
 $('resume-operation').addEventListener('click',async()=>{
-  if(!pending||busy||recovering)return;recovering=true;lock();
+  if(!pending||busy||recovering||operatingRunning)return;recovering=true;lock();
   try{const marker=pending,result=await api('/api/resume',{body:{requestId:marker.requestId}});await finish(result,marker);}
   catch(issue){notice(errorMessage(issue),true);const reply=await api('/api/operation?id='+pending.requestId).catch(()=>null);if(reply){known=reply.operation;showRecovery();}}
   finally{recovering=false;lock();}
 });
 $('retry-file').addEventListener('change',async()=>{
-  if(!pending||busy||recovering)return;
+  if(!pending||busy||recovering||operatingRunning)return;
   try{const value=await readUpload($('retry-file').files[0]);if(value.file.bytes!==pending.file.bytes||value.file.sha256!==pending.file.sha256)throw new Error('Reselect the exact original packet bytes.');
     const payload={...pending.small,packet:value.packet,requestId:pending.requestId};
     if(await bodyHash(payload)!==pending.bodySha256)throw new Error('The retained request payload differs. Keep this original request for receipt lookup.');
@@ -535,7 +537,7 @@ $('retry-file').addEventListener('change',async()=>{
   }catch(issue){notice(errorMessage(issue),true);}
 });
 $('retry-operation').addEventListener('click',async()=>{
-  if(!pending||busy||recovering)return;recovering=true;lock();
+  if(!pending||busy||recovering||operatingRunning)return;recovering=true;lock();
   try{const body=retryPayload??pending.small;
     if(!body||await bodyHash(body)!==pending.bodySha256)throw new Error('The identical input is not available. Reselect its original packet or inspect the receipt.');
     const marker=pending,result=await api(marker.path,{body});await finish(result,marker);
@@ -543,9 +545,15 @@ $('retry-operation').addEventListener('click',async()=>{
   finally{recovering=false;lock();}
 });
 $('dismiss-operation').addEventListener('click',async()=>{
-  if(!pending||busy||recovering||known?.status!=='failed')return;
+  if(!pending||busy||recovering||operatingRunning||known?.status!=='failed')return;
   const original=pending.requestId;forget();await refresh().catch(issue=>notice(errorMessage(issue),true));
   notice('Recorded failure acknowledged. Original request '+original+' and its retained files remain in the workspace.');
+});
+operating = mountGristOperatingPlans({
+  api,
+  getContext:()=>({directory:state?.directory,ready:Boolean(state),blocked:busy||Boolean(pending)||recovering,active:busy||recovering}),
+  setBlocked:(value,detail)=>{operatingBusy=Boolean(value);operatingRunning=Boolean(detail?.working);lock();},
+  notice
 });
 try{
   await refresh();
@@ -555,3 +563,5 @@ try{
   else if(state.draft)await loadDraft(state.draft,state.draftRevision);
 }catch(issue){notice(errorMessage(issue),true);lock();}
 
+
+try { await operating.initialize(); } catch (issue) { notice(errorMessage(issue), true); }

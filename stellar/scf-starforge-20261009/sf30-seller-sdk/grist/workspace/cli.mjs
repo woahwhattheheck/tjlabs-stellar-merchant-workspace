@@ -33,6 +33,9 @@ const HELP = [
   '  export --directory PRIVATE_DIR --version N --out NEW_PACKET.json',
   '  export-capture --directory PRIVATE_DIR --capture UUID --out NEW_PACKET.json',
   '  packet --source FROZEN_SOURCE.json --out NEW_PACKET.json',
+  '  operating --directory PRIVATE_DIR --input PRIVATE_METHOD_AND_ARGS.json [--out NEW_RESULT_FILE]',
+  '    Input: {"method":"list|source|read|create|adopt|save|capture|receive|return_preview|return_apply|export|request","args":{...}}.',
+  '    Mutation args retain requestId and expectedVersion. No provider action is dispatched.',
   '  operation --directory PRIVATE_DIR --request UUID',
   '  resume --directory PRIVATE_DIR --request UUID',
   '  publisher --directory PRIVATE_DIR --version N',
@@ -62,7 +65,7 @@ const VALUES = new Set(['--directory','--target','--connections','--port','--con
   '--selection','--title','--expected-revision','--source','--packet','--capture','--draft','--draft-revision','--preview',
   '--reviewer','--note','--expected-selected-version','--version','--left','--right','--out','--request','--input',
   '--catalog','--expected-catalog-sha256','--offset','--limit','--search','--from','--to','--file','--source-directory','--source-sha256','--workspace-identity','--connections-sha256','--filter-file','--seller','--resource']);
-const COMMANDS = new Set(['init','serve','status','document','document-tables','document-export','discover','capture','import-source','import','inspect-capture','attempt',
+const COMMANDS = new Set(['operating','init','serve','status','document','document-tables','document-export','discover','capture','import-source','import','inspect-capture','attempt',
   'draft','preview','save','select','compare','export','export-capture','packet','operation','resume','publisher',
   'deployment-status','deployment-review','deployment-prepare','deployment-stage','deployment-package',
   'deployment-console','deployment-compare','deployment-file','identity','source-identity']);
@@ -161,7 +164,18 @@ export async function main(argv = process.argv.slice(2)) {
       catch (issue) { await service.close(); throw issue; }
       handed = true; await lifetime(service, ready, { compact: o['--startup-json'] === true }); return ready;
     }
-    if (command === 'init' || command === 'status') result = await workspace.status();
+    if (command === 'operating') {
+      if(o['--request']!==undefined)throw fault('GRIST_PROCEDURE_REQUEST','Retain requestId inside the complete operating input.');
+      const envelope=await readJson(required(o,'--input'),32*1024*1024);
+      if(!envelope||typeof envelope!=='object'||Array.isArray(envelope)||Object.keys(envelope).some(k=>!['method','args'].includes(k)))
+        throw fault('GRIST_PROCEDURE_FIELDS','Send method and complete args in one retained JSON input.');
+      result=await workspace.operating(envelope.method,envelope.args);
+      if(o['--out']!==undefined){
+        const content=envelope.method==='export'?Buffer.from(result.content,'utf8'):bytes(result);
+        const file=await saveFile(o['--out'],content);output({...file,method:envelope.method});return result;
+      }
+    }
+    else if (command === 'init' || command === 'status') result = await workspace.status();
     else if (command === 'document') result = await workspace.listDocument({ connectionAlias: required(o, '--connection'),
       docId: required(o, '--document'), requestId: requestId() });
     else if (command === 'document-tables') result = workspace.documentCatalog(required(o, '--catalog'), {
