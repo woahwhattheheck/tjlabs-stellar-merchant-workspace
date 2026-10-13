@@ -18,7 +18,7 @@
     "changePolicy": "Import complete immutable editions, retain all original files when creating a changed edition, and save reviews with original expected entity revisions. Native deployment IDs bind edition, exact binary, environment names and installation. New process attempts require new actual programme/review before endpoint selection. Full workspace archives preserve event-chain ancestry and receive only to fresh directories."
   },
   "receiving": {
-    "application": "TJLabs Hive Routing Workbench,64 complete original source files from Commons b3b6f57d92c8e704e789728576a3bd95caf40fe6 and complete capsule b05be1ed42b57b447178682f584abb4fa0a6b5c9, with the declared maintained server factory and actual stopped/earlier-installation endpoint wording. Installed under products/hive-routing-workbench/workbench. Commands hive-routing-workbench, hive-routing-workbench-prepare, hive-routing-workbench-managed and hive-routing-workbench-receive. The external original-source.json binds every selected source member and both pre/post maintenance identities.",
+    "application": "TJLabs Hive Routing Workbench,64 complete original source files from Commons b3b6f57d92c8e704e789728576a3bd95caf40fe6 and complete capsule b05be1ed42b57b447178682f584abb4fa0a6b5c9, with the declared maintained server factory and actual stopped/earlier-installation endpoint wording and retained displayed-review revision. Installed under products/hive-routing-workbench/workbench. Commands hive-routing-workbench, hive-routing-workbench-prepare, hive-routing-workbench-managed and hive-routing-workbench-receive. The external original-source.json binds every selected source member and both pre/post maintenance identities.",
     "acceptanceRule": "All selected original sources and native runtime files match the full authority; each configured feature and every client operation has a complete reasoned review. Actual native initial/changed/rollback results, complete difference report and current-attempt endpoint decision are retained. Managed browser and customer agent use the same workspace and original effects. Full ZIP/source/runtime independently receive and reopen while preserving all original IDs. The producing peer operates and looks at the exact outgoing desktop/mobile screens, downloads, attachments and reopened exports before presentation. Existing native owner remains sole until its actual course closes.",
     "changeAndWithdraw": "Use original expected entity revision and explicit decision reason for reviews and endpoint changes. Applications Stop joins the original HTTP listener and request handlers; it does not cancel detached accepted native router processes. Use native.stop, observe native.status and native.reconcile under original deployment lease. Preserve incomplete/ambiguous programme rows and original logs; do not resubmit actual side-effecting GraphQL requests just to obtain a cleaner receipt. Receiving never overwrites current history.",
     "recovery": "The adapter persists exact host request, resolved host aliases and before-state, then closes a full response candidate before publication. Hive Controller has no requestId interface. Repeating the same adapter request reopens a confirmed response or checks a matching saved effect. Review/activation retries use the exact unchanged original entity revision; uncertain changed targets remain explicit. Partial changed directories and ambiguous native network rows stay retained for reconciliation. Actual HTTP errors may follow partial effects. Inspect the original state and files before deliberately selecting a new request.",
@@ -31,7 +31,7 @@
     },
     {
       "title": "Prepare the exact source and native runtime",
-      "result": "Verify all64 maintained source members and both declared original source corrections. Independently prepare the published Hive binary and PyYAML6.0.3 Python environment, retain complete portable input and actual runtime receipt."
+      "result": "Verify all64 maintained source members and all declared source maintenance. Independently prepare the published Hive binary and PyYAML6.0.3 Python environment, retain complete portable input and actual runtime receipt."
     },
     {
       "title": "Import the complete original edition",
@@ -119,7 +119,7 @@
     },
     {
       "path": "products/hive-routing-workbench/workbench/web/app.js",
-      "blob": "de88a05f71aacd0112cede1d71b5419b329ff0a2"
+      "blob": "23d20b53913962ddd2c402d42f5d7c5fea91ae59"
     }
   ]
 }
