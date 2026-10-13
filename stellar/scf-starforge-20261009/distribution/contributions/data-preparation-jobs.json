@@ -29,7 +29,6 @@
   ],
   "supportFiles": [
     "products/data-preparation/COMMISSIONING.md",
-    "products/data-preparation/COMMISSIONING_AGENT.md",
-    "products/data-preparation/COMMISSIONING_BROWSER.md"
+    "products/data-preparation/COMMISSIONING_AGENT.md"
   ]
 }

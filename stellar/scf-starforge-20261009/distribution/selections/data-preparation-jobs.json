@@ -226,8 +226,7 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/jobs/native-runtime.example.mjs",
     "stellar/scf-starforge-20261009/distribution/selections/PAID_JOB_FILES.md",
     "products/data-preparation/COMMISSIONING.md",
-    "products/data-preparation/COMMISSIONING_AGENT.md",
-    "products/data-preparation/COMMISSIONING_BROWSER.md"
+    "products/data-preparation/COMMISSIONING_AGENT.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
