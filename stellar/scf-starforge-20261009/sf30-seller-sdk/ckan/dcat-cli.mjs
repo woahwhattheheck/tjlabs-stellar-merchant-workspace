@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { verifyDcatManagedSelection } from '../../distribution/runtime-workspace/application-dcat.mjs';
 import { openCkanWorkbench } from './model.mjs';
+import { semanticCliOptions, semanticCliUsage, executeDcatSemanticCommand } from './dcat-semantic-cli.mjs';
 import { parseCkanJson } from './capture.mjs';
 import { startCkanServer } from './server.mjs';
 import { inspectCkanWorkspaceArchive, receiveCkanWorkspaceArchive } from './archive.mjs';
@@ -32,12 +33,14 @@ const usage = [
   '  dcat archive --workspace DIR --out FILE.ckanw',
   '  dcat inspect-archive --file FILE.ckanw [--sha256 HASH]',
   '  dcat receive --file FILE.ckanw --sha256 HASH --workspace NEW_DIR',
+  ...semanticCliUsage,
   'Set SCF_DCAT_PYTHON to the prepared interpreter; the default profile original requires Python 3.13.',
   'For prepared Python 3.12, explicitly set SCF_DCAT_RUNTIME_PROFILE=portable-python312; see PORTABLE_RUNTIME.md.',
   'Catalog originals, corrected candidates, full reviews and release history remain in the same saved project.',
 ].join('\n');
 const output = value => process.stdout.write(JSON.stringify(value, null, 2) + '\n');
 const optionsByCommand = {
+  ...semanticCliOptions,
   init: ['workspace', 'origin'], serve: ['workspace', 'port', 'managed-selection', 'startup-file'],
   status: ['workspace'], source: ['workspace', 'source'],
   'save-source': ['workspace', 'source', 'expected-source', 'label', 'url', 'profile', 'token-env', 'interval-minutes', 'timeout-ms', 'max-bytes', 'enabled'],
@@ -203,7 +206,8 @@ export async function main(supplied = process.argv.slice(2)) {
       return { project, ...web, shutdown };
     }
     let result;
-    if (command === 'init' || command === 'status') result = project.status();
+    if (Object.hasOwn(semanticCliOptions, command)) result = await executeDcatSemanticCommand(project, command, options);
+    else if (command === 'init' || command === 'status') result = project.status();
     else if (command === 'source') result = await project.dcatSource(required('source'));
     else if (command === 'save-source') {
       if ((options.source === undefined) !== (options['expected-source'] === undefined))
