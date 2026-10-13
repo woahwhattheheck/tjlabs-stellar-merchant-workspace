@@ -1,0 +1,483 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "x402api-customer-review",
+  "heading": "## Merchant invoices, paid fulfillment and portable operating projects",
+  "sources": [
+    {
+      "id": "x402api-review-merchant-customer-review-core.mjs",
+      "label": "Original review model and immutable histories",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/customer-review-core.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "00c7593f0e2b6da61928fca792c6bd990945841d",
+          "sha256": "7ab137a17377d9319773fb805e11bd014ef9c6522cfebacb862ec426425e3af0",
+          "bytes": 16683
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-customer-review.mjs",
+      "label": "Private review store, request journal and original Support export",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/customer-review.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "70a26ab1bf5466d711299571ea9f6f59d79b980a",
+          "sha256": "83c22e9a9be5292c924307002452103883a08e732e3574a673a0f2365463ea51",
+          "bytes": 12830
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-invoice-delivery.mjs",
+      "label": "Original invoice snapshot, shared JSON serializer and complete delivery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/invoice-delivery.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "83c8d6d9fd487d129de56a59bc87a3a761b28e16",
+          "sha256": "ea913d5d63264249b810c5745c159af1df118074fb3b7760eab706dcf30e8574",
+          "bytes": 16438
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-web-customer-review-offline.js",
+      "label": "Independent recipient controller and full print",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/web/customer-review-offline.js",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "a5778f795855568e4bec38eb29ff66af6704103e",
+          "sha256": "0da0067596fb6ef7df584ef1636774e9c567ce7d153aa594c23d0887a4363ef3",
+          "bytes": 14551
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-web-customer-review-offline.css",
+      "label": "Recipient layout and complete narrow wrapping",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/web/customer-review-offline.css",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "0862cadf5845fd4a9ac0d62e45a71a605051d069",
+          "sha256": "99d36a52976b98f44374067c483706f83e49220b254903437f1e412cf264d7ba",
+          "bytes": 2496
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-web-customer-review-offline.html",
+      "label": "Complete recipient HTML shell",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/web/customer-review-offline.html",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "e27f477671154053be0964270d8df27a209b870b",
+          "sha256": "a1c9e5f048be1c3b15a6771a31ee02fb832a1914dd554f4494fd90bf5821cf83",
+          "bytes": 5918
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-support-workspace-file.mjs",
+      "label": "Original Support workspace codec and full capsule",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/workspace-file.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "356b05a2881d5e84758026f3aba34316f790f36e",
+          "sha256": "166380ea5e6f599cde03a08ddc6876c7c3c3003639e1de91dda4891ee030337b",
+          "bytes": 11412
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-support-case-store.mjs",
+      "label": "Original case save, immutable merge and revision handling",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/case-store.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "0fc9bb2d50f0fedc7f0c961e7f6e11fbe7fbef85",
+          "sha256": "c5459c6041f1d26c3c067ea79f4fa839b76652b1b84170bd51ac03d2ed02275e",
+          "bytes": 24980
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-support-server.mjs",
+      "label": "Support server and original review assets",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/server.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "2d09a1f9cc960a5bbaa8283bb33ad152e841949f",
+          "sha256": "505f568395e7c749061cd47dcb981a0893ce727891664df5a83b6d1cf4b4c1b5",
+          "bytes": 63069
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-server.mjs",
+      "label": "Merchant server routes and review lifecycle",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/server.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "818bec417a71287f3c4c05845c33b7de1a2282b8",
+          "sha256": "0fa65500b46cc2d86c285476b0f9370583223e519049cc8490e4db29f6a9e805",
+          "bytes": 32396
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-web-customer-review-desk.mjs",
+      "label": "Merchant comparison, private drafts and original-request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/web/customer-review-desk.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "886f70b77534172acaa590e66425e409bf8eeb6c",
+          "sha256": "3c283ed1f435dc5fa8f64c27b05dc4615a91a8fc238a87462e5b91a6842ec37f",
+          "bytes": 18569
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-web-app.mjs",
+      "label": "Original Merchant browser integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/web/app.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "7d035b8ba8a81cbab1e71086cb84e0e94387eb1b",
+          "sha256": "a6432465c8d7753cf677b013b106296b180a391d129c1575df322925f4ef04fd",
+          "bytes": 26582
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-web-index.html",
+      "label": "Original invoice and review controls",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/web/index.html",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "4ffc5733af88409e3a60f94707f60ea07c2eb014",
+          "sha256": "fe3ccf9e6940676afce011418ac29263499247d6efe6c21ad5a5a96876cb9108",
+          "bytes": 14398
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-support-customer-review-desk.mjs",
+      "label": "Support review intake and explicit case adoption",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/customer-review-desk.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "fc60fe700037a8aa2c120290730b1c6a949cbda8",
+          "sha256": "fe0bdec7e9dc5f29b282bcdd11d9a5a992dcf194ed5df48ad3af7fed417e4b7e",
+          "bytes": 6551
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-support-console.mjs",
+      "label": "Original Support console integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/console.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "7a65ba1dbd283fb4e3104e1d03a8704eeef1c548",
+          "sha256": "3c105edcd926fb6998fc3ad4dd6fe8993ef9e0d2691f9223ec8e82f0ba1c3091",
+          "bytes": 41651
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-support-case-desk.mjs",
+      "label": "Original case desk and saved history adoption",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/case-desk.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "b88e711d83e680975cdc0e58e253df3b74ea87d1",
+          "sha256": "a30fbf951e771d2644c8d6a82a7f25eb5b2461648b3a79e24981738a5f9bdeb8",
+          "bytes": 21014
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-support-workspace-files.mjs",
+      "label": "Complete Support workspace opening and export",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/workspace-files.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "8439c635371f7e035048339dad48ed646065ea45",
+          "sha256": "14417d542c1624fbf82297ea793e16f181eb94c4ec6aa5bc12f5c2ef6c26569e",
+          "bytes": 6722
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-operator-client.mjs",
+      "label": "Typed original Merchant operator client",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/operator-client.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "e0da7c391abe5919c0d1c051ab83127f71f2029a",
+          "sha256": "8fcfa237650bfbfa150a72dab4152ce91846d6ade89eca3f46f5e34d6b91e4ad",
+          "bytes": 25622
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-operator-client.d.mts",
+      "label": "Complete client type declarations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/operator-client.d.mts",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "b809b4875fc07655520ae42fb2b896dbaedd2bfc",
+          "sha256": "b0d831690ffdbd4c7bad7790cb415e2fdfb8e8457ddddcca92dcf0973c424e46",
+          "bytes": 13491
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-operator-cli.mjs",
+      "label": "Original operator CLI and private file receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/operator-cli.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "acedcacf86cc812e2904bbac53ff1083d3446902",
+          "sha256": "c8b7199e3dbb772fd9f7f8209f2b524f2d2dd351bd71cfd61815be4caba71ac3",
+          "bytes": 19356
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-customer-review-receiving.mjs",
+      "label": "Complete original customer-review operating course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/customer-review-receiving.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "f48a245fc209a2f42e7486a1d70dadb7590993e3",
+          "sha256": "dda23ff53de7dabd947ae65a926c724572b1358c4e88ba2cb63923a2348b77e4",
+          "bytes": 24796
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-portable-directory.mjs",
+      "label": "Whole-project source selection and native receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/portable-directory.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "7f19fd89077e3bda5dedcaf89f0da37c32c061fe",
+          "sha256": "392e73d0041a5328982760a66b04d3da6c6ae4523c52b9e16faf045242a5c134",
+          "bytes": 52260
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-receive-portable-native.py",
+      "label": "Independent complete native project receiver",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/receive-portable-native.py",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "7847a734aff8d8ea6a28b4ce687ee701471ccea7",
+          "sha256": "42ba5bfaeba952b620fdebfd01aa7eb3f94c39c6b72f37de770dde6c7943a3f1",
+          "bytes": 21484
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-distribution-x402api-merchant.json",
+      "label": "Existing installed Merchant contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/x402api-merchant.json",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "76d1c5ea6b1661e1565b046a01901986d42fe5f2",
+          "sha256": "f33e40ec6491ff4a4c14f22959a481a688eb951a9c780e2a1282830c07aca0b0",
+          "bytes": 6799
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-portable-native.py",
+      "label": "Original SQLite capture and whole-project fingerprints",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/portable_native.py",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "d4d5ce94a2c1c842da166429560519b17dea2c76",
+          "sha256": "8fb162f3d6615f6aac24240210e7b9536d6589fc7b925177af4cde85d1ab3836",
+          "bytes": 133741
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-installed-receiving.mjs",
+      "label": "Same five-invoice installed and portable continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/installed-receiving.mjs",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "9e711f853f48496d86f2ac14ca902aaaf4e39cb3",
+          "sha256": "2c4d311daa228295d5e6bc01be718b2c14fb3d0630b0d461219e77694b4b61a8",
+          "bytes": 64322
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-customer-reviews.md",
+      "label": "Complete customer and operator guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/CUSTOMER_REVIEWS.md",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "37ad698049e1a2e2c16e6d3c4953c9cbc0473ab9",
+          "sha256": "e2f7cc4f3509ea542a859f0bffabcb701418e2dc5b32a2186f0eb5d01f257eab",
+          "bytes": 14009
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-merchant-web-style.css",
+      "label": "Original Merchant stylesheet with scoped review layout",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/web/style.css",
+      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+          "git_blob": "03d485fa432b6d33ab5eaecff63e98d29eac02f6",
+          "sha256": "ddac57331eefc7d00f8c4092ae0925c190f384277dfef6dc45c3230d732e7dc5",
+          "bytes": 10996
+        }
+      ]
+    }
+  ]
+}

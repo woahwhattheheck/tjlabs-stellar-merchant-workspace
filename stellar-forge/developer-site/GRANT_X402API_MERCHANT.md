@@ -1,6 +1,6 @@
 # Merchant invoices in the existing SCF application
 
-This is the complete source contribution for the existing canonical §9A chapter and maintained four-reader composition. The canonical manuscript owns its current funding, customer targets and publisher; the original merchant operations own their source and returned native outcomes. Insert the chapter below once within §9A, preserving every other section. The fifteen immutable product guides carry the original commissioning and complete current customer workflow through the chapter's existing source register.
+This is the complete source contribution for the existing canonical §9A chapter and maintained four-reader composition. The canonical manuscript owns its current funding, customer targets and publisher; the original merchant operations own their source and returned native outcomes. Insert the chapter below once within §9A, preserving every other section. The sixteen immutable product guides carry the original commissioning and complete current customer workflow through the chapter's existing source register.
 
 ## Merchant invoices, paid fulfillment and portable operating projects
 
@@ -112,6 +112,99 @@ The same merchant screen now keeps named unfinished invoice working copies. Each
 Before creating the invoice, the browser commits the complete immutable original request to the working copy. The existing writer checks the reviewed template and payment origin for a new invoice and the original frozen terms on replay. An interrupted response leaves that same request available for explicit status receiving or replay. Once received, the original invoice continues through the payment desk and complete customer delivery. The operator’s token is excluded from the working copy.
 
 The complete source and original five-invoice browser continuation are merged in [PR1609](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1609), maintained source bae1d28d1b3916f9715a7e0d14566f9434dfe9f5. The full programme joins unfinished preparation, browser reload, two-tab conflict, complete JSON opening and original invoice response-loss recovery to the existing case. Its actual rendered course continues with that original retained input and the required producer review of every outgoing attachment.
+
+### Customer review, retained return and original Support continuation
+
+The same merchant now carries the customer's response to a completed delivery through an explicit review and disposition. An operator issues an independent editable review desk for one exact invoice edition; the customer inspects the original invoice and result, records attributed findings with supporting files, and returns the complete review. The merchant compares the issued invoice, current invoice and selected returned edition before recording a reasoned disposition. The existing Support case then retains that complete history with its original diagnostic and service work.
+
+The implemented source is [PR1979](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1979), merged at 6d48c6988791f349348ca35eba8e2d3af23f6be1. The [complete customer and operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/CUSTOMER_REVIEWS.md) describes the actual controls, private working copies, original request recovery and independent receiving. Customer review records feedback about an existing business outcome. It does not authorize a payment, change settlement, fulfill a new invoice or authenticate a customer's identity. The named reviewer supplies their own attribution.
+
+#### Issue and operate the complete customer review
+
+In the selected invoice's **Customer delivery review** section, the operator reads its review history and chooses **Issue review of current invoice**. The issued desk retains the exact original customer ZIP's invoice JSON, including its complete revision, and descriptors for the original delivered files. Invoice capture and publication use the same current invoice revision. If another writer changes that invoice before publication, the operator receives a conflict and reviews the current edition.
+
+The customer opens the downloaded HTML without a server connection. Reviewer fields begin empty. They open the accompanying original invoice and delivered result in their ordinary readers and use **Check an original file** to compare the selected bytes with the issued length and SHA-256. The result file remains in the original customer delivery; it is not silently copied into the review. The desk supports a check up to 32 MiB and visibly leaves a larger file unverified there.
+
+The customer enters their actual reviewer details, overall outcome, separate invoice and result observations, and each finding's selected original artifact, observation and requested follow-up. Supporting attachments retain their complete original bytes. **Record this exact review edition** freezes that attributed edition. Later editing creates unfinished work alongside it. The full copy retains all editions, file checks, attachments and unfinished fields within the complete 48 MiB record limit.
+
+**Save complete copy locally** uses the original opened digest to detect a competing tab. A conflict preserves the entered alternative for complete download. **Download complete working JSON** and **Download editable HTML** independently reopen the same review. **Download complete customer return** includes recorded editions and the unfinished later draft. Sharing remains with the existing relationship owner; the offline desk transmits nothing. **Print the complete review** presents every finding and recorded edition as wrapped text, including reviewer details, file checks and attachment references. Original binary attachments remain available as downloads.
+
+#### Compare the selected return and retain the disposition
+
+The merchant receives the complete returned JSON against its original issued source. An identical return reuses its retained identity. The operator selects an exact recorded edition, enters the reviewer, disposition and **Disposition reason**, then chooses **Compare selected return**. The comparison retains the issued invoice, current invoice and complete returned review, including whether the invoice changed or the customer has unfinished later work.
+
+**Record this exact disposition** binds the selected return and edition, comparison, current invoice revision and review history. The available dispositions are follow up, accepted and declined. An optional existing Support case UUID records the intended case join. A changed invoice or concurrent review history requires a fresh comparison; it cannot silently attach the prior acceptance to a different edition.
+
+Before dispatch, the browser retains the complete original mutation UUID and body. **Receive original pending save** continues that exact request after a lost response. A definite rejection may be closed while retaining its complete history; an unknown response keeps its original request pending. **Save complete private draft** retains unfinished disposition fields without dispatching a business operation. Full private-work download and same-owner reopening preserve requests, received results and entered work; the operator credential is excluded. The complete private work reserves response capacity before dispatch and remains within its 100 MiB, 256-request contract.
+
+The maintained typed client and CLI expose the same issue, receive, compare, disposition and complete download operations. They keep the original store, tenant and invoice identities, full request files, received-versus-unknown outcome and create-only private output paths. These operations join the existing interface rather than introducing a second payment or invoice writer.
+
+#### Continue the original Support case and portable project
+
+**Download full Support workspace** produces the complete invoice-bound review history. In the original SF74 console, the operator opens the intended case, receives that workspace and chooses **Merge reviewed customer history into this case** after reviewing its identity and counts. The original **Save case** action persists the merged draft.
+
+This joins the full review history to the existing case's diagnostic captures, original raw terms and source files, runtime support, commissioning, service commitments and metadata. Retained issues, returns and decisions merge as immutable history before the existing case revision check. A saved response returns the actual merged history, and a competing case edit preserves the original conflict. The case can download exact returned JSON and supporting files. Full workspace export, complete case-source package and independent case receiving preserve the same capsule.
+
+A different merchant or invoice is not adopted into that capsule. A complete Merchant project also retains the two private review tables and original request journal through its original consistent SQLite snapshot. The original portable receiver fingerprints those tables and carries the complete application source needed to reopen the project. Earlier complete project archives remain historical editions; the project exported after review is a distinct current archive, with its own retained identity.
+
+#### Demonstration using the original five-invoice case
+
+The existing installed programme now contains the complete recipient-to-merchant-to-Support course. It uses the retained original five COMPLETE invoices, original customer ZIP and commissioned result, with their original payment and delivery histories.
+
+| Stage | Operation in the existing application | Retained result |
+| --- | --- | --- |
+| Select the original delivery | Read one original invoice and issue its exact review desk | Original invoice JSON and revision, issued review identity and original result descriptor |
+| Review as the recipient | Inspect original invoice/result, record two findings and a supporting file, record an edition, then begin a later draft | Complete attributed edition, original attachment and unfinished fields |
+| Reopen independently | Save JSON and editable HTML, exercise a competing local save and print the full review | Complete alternative, all recorded/current content and independently reopened files |
+| Receive and decide | Receive the original return, compare the selected edition and record a disposition | Exact returned text, comparison, original request and retained decision |
+| Recover interruption | Lose an actual original replay response, download pending work and receive that same request; save/reopen an unfinished disposition | Received original outcome, complete private history and unfinished work |
+| Continue Support | Merge into the existing case, save, export the complete case and independently receive it | Original case sources and service/diagnostic history plus every review, return and disposition |
+| Receive the current Merchant project | Export the follow-on whole project, receive it, activate it through its original lifecycle, replay receiving and export it again | Same original business rows, complete review/request tables and full result files through cold reopening |
+
+The original source-level and paired integration reviews are complete. The new native/browser course and producer inspection remain pending in the same receiving operation; this contribution does not turn the earlier five-invoice commissioning into a claimed completed run of these later screens. The unchanged provider sentinel must remain zero and the original financial/business rows must remain identical. The receiver separately checks the newly retained review and request tables in the received and onward-exported project.
+
+The producer must open, use and LOOK at the actual outgoing desktop and narrow views, every printed review PDF page, original invoice and result, all outgoing attachments and usable ZIP contents. Captured images alone do not establish that inspection. The course retains actual failures and artifacts and records AWAITING_PRODUCER_LOOK until the producing operator has inspected the rendered outputs. It remains under SCF-X402API-MERCHANT-COMMISSIONING-7DE2-20261012 and the existing SCF-RECEIVED-MERCHANT-APPLICATION-CEDAR-8047-20261013 continuation; no second runtime or sender is introduced.
+
+#### Use within the funded customer programme
+
+This capability makes a prospective customer's delivery review and partner support handover explicit: choose the real delivered resource, receive an attributed complete response, distinguish acceptance from an unresolved question, assign the original Support case and reopen the whole operating history. Customer-specific commissioning and acceptance use the existing funded packages and named receiving responsibilities.
+
+The original Stellar purchase requirements and independent merchant/buyer targets remain authoritative. A local x402api fixture, a self-entered review name or a merchant acceptance note is not an additional Stellar purchase or independent paying customer. All prior commissioning facts, the 18-purchase/0.0411 XLM baseline, USD 38,000, 400 prospective hours, 150 days and six package allocations remain unchanged.
+
+#### Measured customer-review source selection
+
+The following complete files are selected at the immutable merged product edition 6d48c6988791f349348ca35eba8e2d3af23f6be1. The independent x402api-customer-review declaration measures each complete file's byte length, SHA-256 and Git blob. It adds these source IDs to this existing H2 while preserving every preceding Merchant source and other product chapter. Its optional new sources also allow receiving an earlier Merchant chapter unchanged.
+
+| Complete source | Maintained role |
+| --- | --- |
+| [customer-review-core.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/customer-review-core.mjs) | Original review model and immutable histories |
+| [customer-review.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/customer-review.mjs) | Private review store, request journal and original Support export |
+| [invoice-delivery.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/invoice-delivery.mjs) | Original invoice snapshot, shared JSON serializer and complete delivery |
+| [web/customer-review-offline.js](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/web/customer-review-offline.js) | Independent recipient controller and full print |
+| [web/customer-review-offline.css](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/web/customer-review-offline.css) | Recipient layout and complete narrow wrapping |
+| [web/customer-review-offline.html](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/web/customer-review-offline.html) | Complete recipient HTML shell |
+| [workspace-file.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/stellar/scf-starforge-20261009/sf74-merchant-support-console/workspace-file.mjs) | Original Support workspace codec and full capsule |
+| [case-store.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/stellar/scf-starforge-20261009/sf74-merchant-support-console/case-store.mjs) | Original case save, immutable merge and revision handling |
+| [server.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/stellar/scf-starforge-20261009/sf74-merchant-support-console/server.mjs) | Support server and original review assets |
+| [server.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/server.mjs) | Merchant server routes and review lifecycle |
+| [web/customer-review-desk.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/web/customer-review-desk.mjs) | Merchant comparison, private drafts and original-request recovery |
+| [web/app.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/web/app.mjs) | Original Merchant browser integration |
+| [web/index.html](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/web/index.html) | Original invoice and review controls |
+| [customer-review-desk.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/stellar/scf-starforge-20261009/sf74-merchant-support-console/customer-review-desk.mjs) | Support review intake and explicit case adoption |
+| [console.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/stellar/scf-starforge-20261009/sf74-merchant-support-console/console.mjs) | Original Support console integration |
+| [case-desk.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/stellar/scf-starforge-20261009/sf74-merchant-support-console/case-desk.mjs) | Original case desk and saved history adoption |
+| [workspace-files.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/stellar/scf-starforge-20261009/sf74-merchant-support-console/workspace-files.mjs) | Complete Support workspace opening and export |
+| [operator-client.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/operator-client.mjs) | Typed original Merchant operator client |
+| [operator-client.d.mts](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/operator-client.d.mts) | Complete client type declarations |
+| [operator-cli.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/operator-cli.mjs) | Original operator CLI and private file receiving |
+| [customer-review-receiving.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/customer-review-receiving.mjs) | Complete original customer-review operating course |
+| [portable-directory.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/portable-directory.mjs) | Whole-project source selection and native receiving |
+| [receive-portable-native.py](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/receive-portable-native.py) | Independent complete native project receiver |
+| [x402api-merchant.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/stellar/scf-starforge-20261009/distribution/contributions/x402api-merchant.json) | Existing installed Merchant contribution |
+| [portable_native.py](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/portable_native.py) | Original SQLite capture and whole-project fingerprints |
+| [installed-receiving.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/installed-receiving.mjs) | Same five-invoice installed and portable continuation |
+| [CUSTOMER_REVIEWS.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/CUSTOMER_REVIEWS.md) | Complete customer and operator guide |
+| [web/style.css](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/web/style.css) | Original Merchant stylesheet with scoped review layout |
 
 ### Complete operating sources
 
