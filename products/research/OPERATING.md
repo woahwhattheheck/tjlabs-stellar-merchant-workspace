@@ -1391,6 +1391,26 @@ A report selected only by review ID is immutable and never includes a later adop
 
 The [Merchant return family](../../stellar-forge/mcp-merchant-operator/DOSSIER_RETURNS.md) exposes the same ten source/review/draft operations and five complete export kinds through the original attachment and retained file reader. The [receiving chapter](RECEIVING.md#21-receive-a-reviewed-dossier-return) covers the complete editable handover.
 
+## Continue customer handovers through reviewed returns
+
+Use the installed research-customer-handover-returns command when the baseline is an original customer-updates handover. It receives the published delivery, prepares each actual collaborator return, retains the full native comparison and explicit reviewed request, applies that same request through dossierReturns, and delivers a complete archive with an independently reopened editable workspace.
+
+The [complete operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-updates/HANDOVER_RETURNS.md) defines the actual handover/current-head/source selection, original native request, cumulative inherited-plus-new item and return-round limits, recovery and full receiving. Select one stable operation directory and the current installed complete engine manifest.
+
+~~~sh
+starforge registrations --command research-customer-handover-returns
+starforge research-customer-handover-returns help
+starforge research-client customer-handover-returns help
+~~~
+
+The course uses the original customer delivery directory from createCustomerHandover or runResearchCustomerDelivery. It preserves that handover at its published delivery revision and separately exports the accepted later dossier revision. Future return files arrive one round at a time under the frozen selected scope. Every native comparison item receives an explicit allowed choice from an authorized reviewer; typed returned history remains a source-bound proposal.
+
+After a lost reply, repeat apply with the exact original reviewed file and SHA, or omit both review flags to recover the already retained request. Native request lookup precedes a new write. The original ordered decisions, current/base/returned pins and accepted historical revision remain selected even if later edits exist.
+
+Complete includes the original baseline reports/work/source, full return source and all item values, requests/receipts, accepted portable/HTML/Markdown/history, complete original engine and licence, OPEN.mjs and readable START_HERE.html. Its final COMPLETE result follows archive verification and original native cold receiving. Use the [receiving chapter](RECEIVING.md#22-receive-a-customer-handover-and-accepted-returns) for continued editing.
+
+The separate research-customer-programme --returns entry continues a genuine complete scientific customer-programme ZIP. Its PROGRAMME/schema and input authority remain those of that original producer.
+
 ## Operating source
 
 - [Citation update review, complete browser drafts and selected reports](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION-REVIEW-OPERATOR.md)
