@@ -668,16 +668,82 @@ async function receiveArchiveThroughApplications(inspection, credentialName, cre
   return final;
 }
 
+async function verifyAgentOpening(value,inspected,label,expectedInvoices,consumer) {
+  assert.equal(value.selectionSha256,inspected.selectionSha256);
+  const saved=await readJSON(join(ROOT,'opening-'+label+'.json'));
+  const attempt=saved?.attempts?.find(row=>row.operationId===value.operationId);
+  assert(attempt?.completed,'Keep the original completed agent opening.');
+  const run=await originalRun(value.operationId,saved.applicationId);
+  assert.equal(run.held,false);assert.deepEqual(run.result,value.native);
+  assert.equal(run.result?.state,'STOPPED');assert.equal(run.result?.stopped,true);
+  assert.deepEqual(attempt.completed.result,value.receiving);
+  await consumer.verifyMerchantProjectAgent(value.receiving,{selectionSha256:inspected.selectionSha256,expectedInvoices});
+}
+async function receiveArchiveAgent(inspection,archiveIntake,credentialName,credential) {
+  const inspected=await inspectMerchantIntake({archive:values.archive,archiveSha256:values['archive-sha256'],
+    destination:values.project,python:values.python});
+  assert.equal(inspected.selectionSha256,archiveIntake.selectionSha256);
+  selectedProject=inspected;WORKSPACE=inspected.selection.workspaceDirectory;DATABASE=join(WORKSPACE,'merchant.sqlite3');
+  const before=databaseSnapshot(),expectedInvoices=before.orders.map(row=>row.id);
+  const consumer=await import(pathToFileURL(join(SOURCE,'products/x402api-merchant-workspace/project-agent-receiving.mjs')));
+  const old=await readJSON(join(ROOT,'archive-agent.json'));
+  if(old) {
+    assert.equal(old.applicationId,archiveIntake.applicationId);
+    assert.equal(old.selectionSha256,inspected.selectionSha256);
+    assert.equal(old.openings.length,2);
+    for(const [index,phase] of old.openings.entries())
+      await verifyAgentOpening(phase,inspected,['archive-agent','archive-agent-cold'][index],expectedInvoices,consumer);
+    assert.equal(databaseSnapshot().allUserRowsSha256,before.allUserRowsSha256);
+    return old;
+  }
+  const runtimeModel=await import(pathToFileURL(join(SOURCE,
+    'stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs')));
+  model=await runtimeModel.openRuntimeWorkspace({directory:APPLICATIONS});
+  const openings=[];
+  for(const label of ['archive-agent','archive-agent-cold']) {
+    const path=join(ROOT,label+'.json');
+    let completed=await readJSON(path);
+    if(!completed) {
+      const opening=await beginOpening(label,archiveIntake.applicationId);
+      let received,ended;
+      if(opening.completed) {
+        received=opening.completed.result;ended={result:opening.completed.native};
+      } else {
+        received=await consumer.receiveMerchantProjectAgent({url:opening.url,
+          selectionSha256:inspected.selectionSha256,operatorToken:credential,tokenEnvironment:credentialName,
+          directory:join(ROOT,'agent',label),expectedInvoices});
+        ended=await finishOpening(opening,received);
+      }
+      completed={selectionSha256:inspected.selectionSha256,operationId:opening.operationId,
+        receiving:received,native:ended.result};
+      await save(path,completed,{original:true});
+    }
+    await verifyAgentOpening(completed,inspected,label,expectedInvoices,consumer);
+    assert.equal(databaseSnapshot().allUserRowsSha256,before.allUserRowsSha256);
+    openings.push(completed);
+    if(label==='archive-agent') {
+      await model.close();model=await runtimeModel.openRuntimeWorkspace({directory:APPLICATIONS});
+    }
+  }
+  const result={selectionSha256:inspected.selectionSha256,applicationId:archiveIntake.applicationId,
+    sourceCommit:inspection.sourceCommit,beforeAllRowsSha256:before.allUserRowsSha256,
+    afterAllRowsSha256:databaseSnapshot().allUserRowsSha256,openings};
+  await save(join(ROOT,'archive-agent.json'),result,{original:true});
+  await model.close();model=null;
+  return result;
+}
+
 async function receive() {
   const installedRuntime = await import(pathToFileURL(join(RUNTIME,
     'package/source/stellar/scf-starforge-20261009/distribution/runtime-install.mjs')));
   const inspection = await installedRuntime.inspectRuntimeInstall({ directory: RUNTIME, load: true, source: true });
   assert.equal(inspection.status, 'READY'); assert.equal(inspection.ready, true); SOURCE = inspection.sourceRoot;
-  let archiveIntake = null;
+  let archiveIntake = null, archiveAgent = null;
   if (values.archive) {
     const { environment } = await applicationEnvironment(values['environment-file']);
     const name = reviewEnvironmentName(values['operator-token-env'] ?? 'MERCHANT_REVIEW_OPERATOR_TOKEN');
     archiveIntake = await receiveArchiveThroughApplications(inspection, name, reviewEnvironmentValue(environment, name));
+    archiveAgent = await receiveArchiveAgent(inspection, archiveIntake, name, reviewEnvironmentValue(environment, name));
   }
   selectedProject = await inspectReceivedMerchant(values.project, { python: values.python, allowLoopback: values['allow-loopback'] });
   WORKSPACE = selectedProject.selection.workspaceDirectory; DATABASE = join(WORKSPACE, 'merchant.sqlite3');
@@ -702,7 +768,7 @@ async function receive() {
     assert.equal(prior.openings.length, 2);
     for (const [index, phase] of prior.openings.entries())
       await verifyOpening(phase, ['desktop-phone', 'cold-reopen'][index]);
-    return { ...prior, reopened: true };
+    return { ...prior, ...(archiveAgent ? {archiveAgent} : {}), reopened: true };
   }
   const runtimeModel = await import(pathToFileURL(join(SOURCE, 'stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs')));
   // The operator selects the existing Applications workspace. It is never replaced on resume.
@@ -772,7 +838,7 @@ async function receive() {
     project: selectedProject.selection, projectSha256: selectedProject.selectionSha256, runtimeSourceCommit: inspection.sourceCommit,
     application: { directory: APPLICATIONS, applicationId, reviewId: review.id, revision: saved.revision },
     beforeAllRowsSha256: before.allUserRowsSha256, afterAllRowsSha256: after.allUserRowsSha256,
-    ...(archiveIntake ? { archiveIntake } : {}),
+    ...(archiveIntake ? { archiveIntake } : {}), ...(archiveAgent ? { archiveAgent } : {}),
     openings, history, completedAt: new Date().toISOString() };
   await save(join(ROOT, 'complete.json'), result, { original: true });
   return result;
