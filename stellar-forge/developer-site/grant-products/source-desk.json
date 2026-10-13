@@ -9,13 +9,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/SOURCE_DESK_INSTALLATION.md",
-      "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
+      "commit": "c9ceb6435eb3c05a1c24944d7acb91e589388260",
       "required": true,
       "editions": [
         {
           "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
           "bytes": 11285,
           "sha256": "4c47325ae2c463edf06113e5ae399c1139193999967588963ac3ad804f3cedd1"
+        },
+        {
+          "commit": "c9ceb6435eb3c05a1c24944d7acb91e589388260",
+          "git_blob": "0eac7cb278ec12a9762b343808104ca862844939",
+          "bytes": 13216,
+          "sha256": "6c420b5e531f4a2582708b618859301b31e2b9c16b6bf17b853c6e1e927fb51f"
         }
       ]
     },
@@ -25,13 +31,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/managed_launch.py",
-      "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
+      "commit": "c9ceb6435eb3c05a1c24944d7acb91e589388260",
       "required": true,
       "editions": [
         {
           "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
           "bytes": 22320,
           "sha256": "9efee26409d9039239e9a8140e6ee0579669430033f617b6752371f10c7feded"
+        },
+        {
+          "commit": "c9ceb6435eb3c05a1c24944d7acb91e589388260",
+          "git_blob": "0de47225a391b07216d328c0d526c943089fcd30",
+          "bytes": 22596,
+          "sha256": "941e12b0e00b1db1d7fe3420f2cf67e19c117e30ed16367e9bb72fb95b789a19"
         }
       ]
     },
@@ -41,13 +53,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/launch.mjs",
-      "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
+      "commit": "c9ceb6435eb3c05a1c24944d7acb91e589388260",
       "required": true,
       "editions": [
         {
           "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
           "bytes": 25029,
           "sha256": "f484dfe12a747cbe45a1001911dbf077e54c04b90ecc591559ed41c7ff45c6b5"
+        },
+        {
+          "commit": "c9ceb6435eb3c05a1c24944d7acb91e589388260",
+          "git_blob": "d7bf38440fa54496f6a2d9cbbc3f5393e960ac0d",
+          "bytes": 25291,
+          "sha256": "d392fbf9d97b9f7bb6034bdbebdf6fd87b1b5171678c1991981002ccc0110651"
         }
       ]
     },
@@ -212,6 +230,125 @@
       "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders",
       "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
       "required": true
+    },
+    {
+      "id": "installation-desk-agent-operation",
+      "label": "Complete typed client and eighteen merchant Source Desk tools",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK_AGENT.md",
+      "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+      "required": true,
+      "editions": [
+        {
+          "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+          "git_blob": "b05917a7d73a31dce35d79cf123acdceb509566f",
+          "bytes": 13778,
+          "sha256": "9b1d0497db43f95fde8018441684e4a8514628155eef3877f28375bc730b84d1"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-agent-preparation",
+      "label": "Immutable native preparation, exact upload, execution and reconciliation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.mjs",
+      "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+      "required": true,
+      "editions": [
+        {
+          "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+          "git_blob": "29bc67695f1d8233044d5966888a3caf878f18b6",
+          "bytes": 18740,
+          "sha256": "ce49cbc8e927022408d1f7efc6ba1035443a0c33a772eb6b69b41a2be2ce15b2"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-agent-types",
+      "label": "Complete typed Source Desk routes, native inputs and returned originals",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.d.mts",
+      "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+      "required": true,
+      "editions": [
+        {
+          "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+          "git_blob": "56b29850e39826fde965341629f392686f17df14",
+          "bytes": 11052,
+          "sha256": "95c55dc4cc91a2043291c9018f6bd0e3096b703a5d056fdfcc5f2312da5c7d65"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-node-client",
+      "label": "Existing Grant workspace client with Source Desk lifecycle",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/agent-client.mjs",
+      "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+      "required": true,
+      "editions": [
+        {
+          "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+          "git_blob": "f21a78123ef1d5201e0c73c55286850bc8d91c78",
+          "bytes": 122339,
+          "sha256": "da124f54a62f4c9213c528be4e1e48a1845c26dbc4e0c5c324d0ae0e2b8972ea"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-node-client-types",
+      "label": "Existing Grant client types and complete Source Desk entrypoint",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/agent-client.d.mts",
+      "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+      "required": true,
+      "editions": [
+        {
+          "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+          "git_blob": "77c8380aea9a467bd338a73ba6d2c507e77f9d99",
+          "bytes": 178374,
+          "sha256": "d4d37db7c7b2d1f069ee7b646ed125eac59c9e9b7eacd17035ec340e370961c5"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-agent-catalogue",
+      "label": "Eighteen installed merchant tools on the original Grant provider",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/catalog/grant-installation-sources.mjs",
+      "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+      "required": true,
+      "editions": [
+        {
+          "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+          "git_blob": "098ce71908324a14c6b687fb51fc50215b7c468b",
+          "bytes": 7524,
+          "sha256": "1975fc278782900fad685426dcdef7ef8de002bfa8ac9ab80c66c3b78090c1a8"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-agent-provider",
+      "label": "Original merchant provider dispatch and complete snapshot/file receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/grant-installation-sources.mjs",
+      "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+      "required": true,
+      "editions": [
+        {
+          "commit": "b9748e3fecedfb2b9b6092d683fbcde864c6afc8",
+          "git_blob": "3acf8869cffd7f24f57e72b649cf3ebce1b6eb6f",
+          "bytes": 6847,
+          "sha256": "e692cae22b6e4c5a30f05b6e2277d0b6a4e3c68e1d20d6e4fe774ee84c23de6b"
+        }
+      ]
     }
   ]
 }
