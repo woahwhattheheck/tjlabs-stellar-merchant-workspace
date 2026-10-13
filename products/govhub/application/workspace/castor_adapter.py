@@ -317,7 +317,15 @@ def _command(s, label, argv, *, mutating=False):
     previous = s.read_private_json(path) if path.exists() else None
     if previous and previous.get("phase") == "complete":
         argv = previous["argv"]
-    result = s.command(label, argv, mutating=mutating)
+    try:
+        result = s.command(label, argv, mutating=mutating)
+    except _api().NativeWaiting:
+        if path.exists():
+            retained = s.read_private_json(path)
+            if retained.get("phase") not in {"complete", "not_started"}:
+                s.state.update(phase="native_interrupted", pending_command=label, command_record=str(path))
+                s.save_state()
+        raise
     for role in ("stdout", "stderr"):
         _retain(s, result[role]["path"], "native_" + role)
     _retain(s, path, "native_command")
@@ -628,12 +636,12 @@ def _recover_receipt(s, operation):
     incoming = operation.get("castor_command_receipt")
     if not incoming:
         return
-    if incoming.get("request_sha256") != s.state.get("request_sha256"):
-        raise ValueError("The selected command receipt belongs to another original request.")
     accepted = s.state.setdefault("received_command_receipts", {})
     for item in accepted.values():
         if item.get("selection") == incoming:
             return
+    if incoming.get("request_sha256") != s.state.get("request_sha256"):
+        raise ValueError("The selected command receipt belongs to another original request.")
     source = Path(incoming["path"])
     raw = source.read_bytes()
     receipt_hash = hashlib.sha256(raw).hexdigest()
@@ -761,6 +769,7 @@ def capture(config, context, checkpoint=None, cancelled=None):
         completed = s.out / "castor-completed-operation.json"
         if completed.exists():
             return _completed(s, s.read_private_json(completed))
+        _recover_receipt(s, context)
         inventory = s.state.get("capture_inventory")
         if inventory is None:
             inventory = _inventory(s, "capture")
@@ -814,15 +823,6 @@ def execute(operation, config, source_paths, checkpoint=None, cancelled=None):
                 raise ValueError("The current source differs from the reviewed commit.")
             s.state.update(before=original, backup_inputs=_inputs(s), before_outputs=_outputs(s, required=False))
             s.save_state()
-        task_record = s.out / "application-task.command.json"
-        dispatched = task_record.exists() and s.read_private_json(task_record).get("phase") not in {"not_started", "prepared"}
-        if not dispatched and not s.state.get("task_completed"):
-            if not s.state.get("before_source"):
-                s.state["before_source"] = _source(s, original, "before")
-                s.save_state()
-            fresh = _inventory(s, "dispatch-" + str(time.time_ns()))
-            if _binding(fresh) != _binding(original) or _inputs(s) != s.state["backup_inputs"]:
-                raise ValueError("The original source/configuration/engine/recovery inputs changed before dispatch.")
         argv = _castor(p, p["task_name"], _array(p, "task_args_json"))
         request = {"task": p["task_name"], "args": _array(p, "task_args_json"),
                    "context": provider_context(p), "source": _binding(original),
@@ -834,6 +834,15 @@ def execute(operation, config, source_paths, checkpoint=None, cancelled=None):
             raise ValueError("The retained original native request changed.")
         s.state.update(request=request, request_sha256=request_sha)
         s.save_state()
+        task_record = s.out / "application-task.command.json"
+        dispatched = task_record.exists() and s.read_private_json(task_record).get("phase") not in {"not_started", "prepared"}
+        if not dispatched and not s.state.get("task_completed"):
+            if not s.state.get("before_source"):
+                s.state["before_source"] = _source(s, original, "before")
+                s.save_state()
+            fresh = _inventory(s, "dispatch-" + str(time.time_ns()))
+            if _binding(fresh) != _binding(original) or _inputs(s) != s.state["backup_inputs"]:
+                raise ValueError("The original source/configuration/engine/recovery inputs changed before dispatch.")
         native = _command(s, "application-task", argv, mutating=True)
         s.state["task_completed"] = {"returncode": native["returncode"], "completed_at": native["completed_at"]}
         s.save_state()

@@ -57,6 +57,8 @@ One original GovHub environment owns:
 - the task and its exact arguments;
 - the full backup/release/input/output selection and native verification.
 
+Use the existing POSIX/Linux or WSL GovHub native Session host with its real Docker context. This provider preserves its process-group, filesystem and native lock behavior; a Windows Castor release asset alone does not establish Windows support for the surrounding GovHub runner.
+
 Only the actual host executable paths and source directory are runtime
 bindings. They cannot change the original deployment, Docker context,
 Compose project, task selection, arguments, expected results, source commit,
