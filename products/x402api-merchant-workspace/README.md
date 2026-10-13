@@ -262,3 +262,7 @@ integration guide and the live hosted API documentation:
 protocol.mjs attributes the retained canonical JSON implementation to its
 original wallet source. The original SF31 writer, SF88 reader and runtime
 lease remain in their existing repository paths.
+
+## Complete portable merchant
+
+Use the same CLI to export the whole business workspace, inspect every retained file, open its offline invoice viewer, or restore a fresh working directory. [The complete handover guide](./PORTABLE.md) covers the original database, all fulfillment editions, local file relocation and the full original five-invoice receiving programme.

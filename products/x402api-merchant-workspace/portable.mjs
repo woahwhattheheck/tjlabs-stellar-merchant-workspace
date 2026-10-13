@@ -10,6 +10,7 @@ import { pipeline } from 'node:stream/promises';
 import { operationLease } from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs';
 import { validateConfig } from './workspace.mjs';
 import { fileBinding } from './fulfillment/file-delivery.mjs';
+import { inspectMerchantReservations, restoreMerchantReservations } from './portable-reservations.mjs';
 
 const PRODUCT = 'products/x402api-merchant-workspace';
 const SOURCE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -42,7 +43,8 @@ const SOURCE_FILES = [
   "products/x402api-merchant-workspace/web/portable.css",
   "products/x402api-merchant-workspace/PORTABLE.md",
   "products/x402api-merchant-workspace/portable-receiving.mjs",
-  "products/x402api-merchant-workspace/receive-portable-native.py"
+  "products/x402api-merchant-workspace/receive-portable-native.py",
+  "products/x402api-merchant-workspace/portable-reservations.mjs"
 ];
 const SCHEMA = 'stellar-forge.x402api-merchant-handover.v1';
 const RESTORE_SCHEMA = 'stellar-forge.x402api-merchant-restoration.v1';
@@ -85,7 +87,7 @@ async function fileIdentity(path, maximum = MAXIMUM_FILE) {
   const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const before = await handle.stat();
-    need(before.isFile() && before.nlink === 1 && before.size <= maximum, 'MERCHANT_REGULAR_FILE_REQUIRED');
+    need(before.isFile() && before.size <= maximum, 'MERCHANT_REGULAR_FILE_REQUIRED');
     const hash = createHash('sha256'), block = Buffer.allocUnsafe(256 * 1024);
     let position = 0;
     for (;;) {
@@ -111,7 +113,7 @@ async function copyOriginal(source, destination, expected = null) {
   let output;
   try {
     const before = await input.stat();
-    need(before.isFile() && before.nlink === 1 && before.size <= MAXIMUM_FILE, 'MERCHANT_REGULAR_FILE_REQUIRED');
+    need(before.isFile() && before.size <= MAXIMUM_FILE, 'MERCHANT_REGULAR_FILE_REQUIRED');
     await mkdir(dirname(destination), { recursive: true, mode: 0o700 });
     output = await open(destination, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
     const hash = createHash('sha256'), block = Buffer.allocUnsafe(256 * 1024); let position = 0;
@@ -290,14 +292,44 @@ export async function exportMerchant({ directory, configPath, output, allowLoopb
       own(databaseFile) && !(databaseFile.mode & 0o077), 'MERCHANT_PRIVATE_DATABASE_REQUIRED');
     database = openDatabase(originalDatabase);
     const identity = databaseIdentity(database);
+    const reservations = await inspectMerchantReservations({database,directory,recordedDirectory});
     if (await exists(output)) {
       const old = await inspectMerchantArchive({ bundle: output });
       need(old.manifest.original.logicalSha256 === identity.logicalSha256 &&
-        old.manifest.original.configSha256 === digest(originalConfig), 'MERCHANT_EXPORT_DESTINATION_IN_USE');
+        old.manifest.original.configSha256 === digest(originalConfig) &&
+        JSON.stringify(old.manifest.reservationMappings) === JSON.stringify(reservations), 'MERCHANT_EXPORT_DESTINATION_IN_USE');
       for (const path of SOURCE_FILES) {
         const actual = await fileIdentity(join(SOURCE_ROOT,path));
         const previous = old.manifest.files.find(item => item.path === 'source/' + path);
         need(previous && previous.bytes === actual.bytes && previous.sha256 === actual.sha256, 'MERCHANT_EXPORT_SOURCE_CHANGED');
+      }
+      const skip = new Set(['merchant-owner.lock','merchant.sqlite3','merchant.sqlite3-wal','merchant.sqlite3-shm','merchant.sqlite3-journal']);
+      const currentFiles = (await filesIn(directory)).filter(path => !skip.has(path));
+      const retainedFiles = old.manifest.files.filter(file => file.path.startsWith('workspace/') &&
+        file.path !== 'workspace/merchant.sqlite3');
+      need(currentFiles.length === retainedFiles.length, 'MERCHANT_EXPORT_WORKSPACE_CHANGED');
+      for (const path of currentFiles) {
+        const actual = await fileIdentity(join(directory,path));
+        const previous = retainedFiles.find(file => file.path === 'workspace/' + path);
+        need(previous && actual.bytes === previous.bytes && actual.sha256 === previous.sha256,
+          'MERCHANT_EXPORT_WORKSPACE_CHANGED');
+      }
+      const moduleFile = await fileIdentity(translate(resolve(dirname(configPath),config.fulfillmentModule)));
+      const adapter = old.manifest.files.find(file => file.path === 'source/' + PRODUCT + '/fulfillment/file-delivery.mjs');
+      need(adapter && moduleFile.bytes === adapter.bytes && moduleFile.sha256 === adapter.sha256,
+        'MERCHANT_EXPORT_FULFILLMENT_CHANGED');
+      const manifestPath = translate(resolve(dirname(configPath),config.fulfillmentOptions?.manifest ?? ''));
+      const manifestBytes = await readFile(manifestPath);
+      const previousManifest = old.manifest.files.find(file => file.path === 'original/delivery-manifest.json');
+      need(previousManifest && manifestBytes.length === previousManifest.bytes &&
+        digest(manifestBytes) === previousManifest.sha256, 'MERCHANT_EXPORT_DELIVERY_EDITION_CHANGED');
+      const delivery = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(manifestBytes));
+      for (const [binding,selected] of Object.entries(delivery.files)) {
+        need(binding === fileBinding(selected), 'MERCHANT_DELIVERY_BINDING_CHANGED');
+        const actual = await fileIdentity(translate(resolve(dirname(manifestPath),selected.path)));
+        const previous = old.manifest.files.find(file => file.path === 'fulfillment/files/' + binding.slice(7) + '/' + selected.fileName);
+        need(previous && actual.bytes === selected.bytes && actual.sha256 === selected.sha256 &&
+          actual.bytes === previous.bytes && actual.sha256 === previous.sha256, 'MERCHANT_EXPORT_DELIVERY_EDITION_CHANGED');
       }
       return { ...old.summary, directory: output, alreadyExported: true };
     }
@@ -346,18 +378,22 @@ export async function exportMerchant({ directory, configPath, output, allowLoopb
       const fulfillment = database.prepare('SELECT payment_id,state,result_file_json FROM merchant_fulfillments WHERE order_id=?').get(row.id);
       const returned = fulfillment?.result_file_json ? JSON.parse(fulfillment.result_file_json) : null;
       if (!selected && !returned) continue;
-      need(selected && returned && selected.path === returned.path && selected.bytes === returned.bytes &&
-        selected.sha256 === returned.sha256, 'MERCHANT_RESULT_BINDING_CHANGED');
-      const path = 'workspace/' + below(recordedDirectory,selected.path);
+      // A retained fulfillment commits before the invoice's COMPLETE update.
+      // Preserve that valid interrupted state and relocate only existing fields.
+      need(returned && (!selected || selected.path === returned.path && selected.bytes === returned.bytes &&
+        selected.sha256 === returned.sha256), 'MERCHANT_RESULT_BINDING_CHANGED');
+      const retained = selected ?? returned;
+      const path = 'workspace/' + below(recordedDirectory,retained.path);
       const actual = await fileIdentity(join(stage,path));
-      need(actual.bytes === selected.bytes && actual.sha256 === selected.sha256, 'MERCHANT_PAID_RESULT_CHANGED');
-      mappings.push({ orderId:row.id, paymentId:fulfillment.payment_id, originalPath:selected.path, relativePath:path,
-        bytes:selected.bytes,sha256:selected.sha256,contentType:selected.contentType,fileName:selected.fileName });
+      need(actual.bytes === retained.bytes && actual.sha256 === retained.sha256, 'MERCHANT_PAID_RESULT_CHANGED');
+      mappings.push({ orderId:row.id, paymentId:fulfillment.payment_id, originalPath:retained.path, relativePath:path,
+        orderResultPresent:Boolean(selected),fulfillmentResultPresent:true,
+        bytes:retained.bytes,sha256:retained.sha256,contentType:retained.contentType,fileName:retained.fileName });
     }
     const orders = await projectRecords(database,stage,mappings);
     await copyOriginal(join(SOURCE_ROOT,PRODUCT,'web/portable.js'),join(stage,'operator/portable.js'));
     await copyOriginal(join(SOURCE_ROOT,PRODUCT,'web/portable.css'),join(stage,'operator/portable.css'));
-    const createdAt = new Date().toISOString(), data = { schema:SCHEMA,createdAt,...identity,orders };
+    const createdAt = new Date().toISOString(), data = { ...identity,schema:SCHEMA,createdAt,storeCreatedAt:identity.createdAt,orders };
     await writeNew(join(stage,'operator/data.js'),'globalThis.MerchantHandover = ' + JSON.stringify(data) + ';\n');
     await writeNew(join(stage,'index.html'),operatorHTML());
     const files = [];
@@ -366,7 +402,7 @@ export async function exportMerchant({ directory, configPath, output, allowLoopb
     const manifest = { schema:SCHEMA,createdAt,application:'x402api-merchant-workspace',
       original:{...identity,directory:recordedDirectory,receivedDirectory:directory,configPath,configSha256:digest(originalConfig)},
       entrypoint:'index.html',configuration:'configuration/merchant.json',database:'workspace/merchant.sqlite3',
-      sourceEntrypoint:'source/' + PRODUCT + '/server.mjs',resultMappings:mappings,files };
+      sourceEntrypoint:'source/' + PRODUCT + '/server.mjs',resultMappings:mappings,reservationMappings:reservations,files };
     await writeNew(join(stage,'MANIFEST.json'),json(manifest)); await syncDirectory(stage);
     need(!(await exists(output)), 'MERCHANT_EXPORT_DESTINATION_IN_USE');
     await rename(stage,output); await syncDirectory(reserved.parent);
@@ -389,7 +425,7 @@ export async function inspectMerchantArchive({ bundle, expectedSha256 = null }) 
   need(manifest.schema === SCHEMA && Array.isArray(manifest.files) &&
     manifest.database === 'workspace/merchant.sqlite3' && manifest.configuration === 'configuration/merchant.json' &&
     manifest.sourceEntrypoint === 'source/' + PRODUCT + '/server.mjs' &&
-    Array.isArray(manifest.resultMappings), 'MERCHANT_ARCHIVE_MANIFEST_INVALID');
+    Array.isArray(manifest.resultMappings) && Array.isArray(manifest.reservationMappings), 'MERCHANT_ARCHIVE_MANIFEST_INVALID');
   const unique = new Set();
   for (const selected of manifest.files) {
     archivePath(selected.path);
@@ -409,6 +445,10 @@ export async function inspectMerchantArchive({ bundle, expectedSha256 = null }) 
     identity = databaseIdentity(database);
     need(identity.storeId === manifest.original.storeId && identity.logicalSha256 === manifest.original.logicalSha256,
       'MERCHANT_ARCHIVE_ORIGINAL_STORE_CHANGED');
+    const reservations = await inspectMerchantReservations({database,directory:join(bundle,'workspace'),
+      recordedDirectory:manifest.original.directory});
+    need(JSON.stringify(reservations) === JSON.stringify(manifest.reservationMappings),
+      'MERCHANT_ARCHIVE_RESERVATION_MAPPING_CHANGED');
     for (const mapping of manifest.resultMappings) {
       archivePath(mapping.relativePath);
       need(mapping.relativePath === 'workspace/' + below(manifest.original.directory,mapping.originalPath), 'MERCHANT_ARCHIVE_RESULT_PATH_CHANGED');
@@ -418,7 +458,8 @@ export async function inspectMerchantArchive({ bundle, expectedSha256 = null }) 
   } finally { database.close(); }
   return { manifest, summary:{schema:SCHEMA,manifestSha256,storeId:identity.storeId,
     logicalSha256:identity.logicalSha256,files:manifest.files.length,bytes:manifest.files.reduce((sum,file)=>sum+file.bytes,0),
-    invoices:identity.counts.merchant_orders,results:manifest.resultMappings.length,counts:identity.counts} };
+    invoices:identity.counts.merchant_orders,results:manifest.resultMappings.length,
+    reservations:manifest.reservationMappings.length,counts:identity.counts} };
 }
 export async function restoreMerchant({ bundle, directory, expectedSha256 = null }) {
   need(directory !== bundle && !directory.startsWith(bundle + sep), 'MERCHANT_RESTORE_OUTSIDE_ARCHIVE_REQUIRED');
@@ -429,7 +470,20 @@ export async function restoreMerchant({ bundle, directory, expectedSha256 = null
       await realDirectory(directory,{private:true});
       const previous = JSON.parse(await readFile(join(directory,'RESTORE.json'),'utf8'));
       need(previous.schema === RESTORE_SCHEMA && previous.sourceManifestSha256 === inspected.summary.manifestSha256 &&
-        previous.directory === directory && previous.storeId === manifest.original.storeId, 'MERCHANT_RESTORE_DESTINATION_IN_USE');
+        previous.directory === directory && previous.storeId === manifest.original.storeId &&
+        previous.workspace === join(directory,'workspace') &&
+        previous.configPath === join(directory,manifest.configuration) &&
+        previous.server === join(directory,manifest.sourceEntrypoint), 'MERCHANT_RESTORE_DESTINATION_IN_USE');
+      await realDirectory(previous.workspace,{private:true});
+      await fileIdentity(previous.configPath); await fileIdentity(previous.server);
+      const currentFile = await lstat(join(previous.workspace,'merchant.sqlite3'));
+      need(currentFile.isFile() && !currentFile.isSymbolicLink() && currentFile.nlink === 1 &&
+        own(currentFile) && !(currentFile.mode & 0o077), 'MERCHANT_RESTORED_DATABASE_CHANGED');
+      const current = openDatabase(join(previous.workspace,'merchant.sqlite3'));
+      try {
+        need(current.prepare('SELECT store_id FROM merchant_meta WHERE singleton=1').get()?.store_id === previous.storeId,
+          'MERCHANT_RESTORED_STORE_CHANGED');
+      } finally { current.close(); }
       return {...previous,alreadyRestored:true};
     }
     const stage = join(reserved.parent,'.' + basename(directory) + '.receiving-' + randomUUID());
@@ -445,11 +499,15 @@ export async function restoreMerchant({ bundle, directory, expectedSha256 = null
         const fulfillment = database.prepare('SELECT result_file_json FROM merchant_fulfillments WHERE payment_id=? AND order_id=?').get(mapping.paymentId,mapping.orderId);
         need(row && fulfillment, 'MERCHANT_RESTORE_RESULT_IDENTITY_CHANGED');
         const orderData = JSON.parse(row.data_json), resultData=JSON.parse(fulfillment.result_file_json);
-        need(orderData.result?.path === mapping.originalPath && resultData?.path === mapping.originalPath,
-          'MERCHANT_RESTORE_ORIGINAL_PATH_CHANGED');
+        need(Boolean(orderData.result) === (mapping.orderResultPresent ?? true) &&
+          (!orderData.result || orderData.result.path === mapping.originalPath) && resultData?.path === mapping.originalPath &&
+          (mapping.fulfillmentResultPresent ?? true) === true, 'MERCHANT_RESTORE_ORIGINAL_PATH_CHANGED');
         const path = join(directory,mapping.relativePath);
-        orderData.result.path = path; resultData.path = path;
-        database.prepare('UPDATE merchant_orders SET data_json=? WHERE id=?').run(JSON.stringify(orderData),mapping.orderId);
+        if (orderData.result) {
+          orderData.result.path = path;
+          database.prepare('UPDATE merchant_orders SET data_json=? WHERE id=?').run(JSON.stringify(orderData),mapping.orderId);
+        }
+        resultData.path = path;
         database.prepare('UPDATE merchant_fulfillments SET result_file_json=? WHERE payment_id=?').run(JSON.stringify(resultData),mapping.paymentId);
         relocations.push({orderId:mapping.orderId,paymentId:mapping.paymentId,from:mapping.originalPath,to:path,
           bytes:mapping.bytes,sha256:mapping.sha256});
@@ -457,9 +515,10 @@ export async function restoreMerchant({ bundle, directory, expectedSha256 = null
       database.exec('COMMIT');
       need(database.prepare('PRAGMA foreign_key_check').all().length===0,'MERCHANT_RESTORED_DATABASE_DAMAGED');
     } catch(error) {try{database.exec('ROLLBACK');}catch{}throw error;} finally {database.close();}
+    const reservationRelocations = await restoreMerchantReservations({stage,directory,reservations:manifest.reservationMappings});
     const restoration={schema:RESTORE_SCHEMA,sourceManifestSha256:inspected.summary.manifestSha256,storeId:manifest.original.storeId,
       directory,restoredAt:new Date().toISOString(),workspace:join(directory,'workspace'),
-      configPath:join(directory,manifest.configuration),server:join(directory,manifest.sourceEntrypoint),relocations};
+      configPath:join(directory,manifest.configuration),server:join(directory,manifest.sourceEntrypoint),relocations,reservationRelocations};
     await writeNew(join(stage,'RESTORE.json'),json(restoration)); await syncDirectory(stage);
     need(!(await exists(directory)), 'MERCHANT_RESTORE_DESTINATION_IN_USE');
     await rename(stage,directory); await syncDirectory(reserved.parent);
@@ -468,24 +527,54 @@ export async function restoreMerchant({ bundle, directory, expectedSha256 = null
 }
 export async function startMerchantArchiveServer({bundle,host='127.0.0.1',port=8764,expectedSha256=null}) {
   need(['127.0.0.1','::1','localhost'].includes(host),'MERCHANT_ARCHIVE_LOOPBACK_REQUIRED');
+  need(Number.isInteger(port) && port >= 0 && port <= 65535,'MERCHANT_ARCHIVE_PORT_INVALID');
   const inspected=await inspectMerchantArchive({bundle,expectedSha256});
   const allowed=new Map(inspected.manifest.files.map(file=>[file.path,file]));
   allowed.set('MANIFEST.json',await fileIdentity(join(bundle,'MANIFEST.json')));
   const types={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8',
     '.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.md':'text/plain; charset=utf-8'};
   const server=createServer((request,response)=>{
+    // data.js contains private invoice/history records. Restrict both authority
+    // and cross-origin embedding before any inventoried member is read.
+    response.setHeader('Cross-Origin-Resource-Policy','same-origin');
+    response.setHeader('X-Content-Type-Options','nosniff');
+    response.setHeader('Referrer-Policy','no-referrer');
+    response.setHeader('Cache-Control','no-store');
+    response.setHeader('X-Frame-Options','DENY');
+    const deny=(status,code)=>{
+      response.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});
+      response.end(request.method==='HEAD'?undefined:JSON.stringify({error:code}));
+    };
     (async()=>{
-      if(request.method!=='GET'&&request.method!=='HEAD'){response.writeHead(405);response.end();return;}
+      const hostHeaders=[];
+      for(let index=0;index<request.rawHeaders.length;index+=2)
+        if(request.rawHeaders[index].toLowerCase()==='host')hostHeaders.push(request.rawHeaders[index+1]);
+      if(hostHeaders.length!==1){deny(400,'MERCHANT_ARCHIVE_AUTHORITY_REQUIRED');return;}
+      const address=server.address();
+      if(!address||typeof address==='string'||!['127.0.0.1','::1'].includes(address.address)){
+        deny(503,'MERCHANT_ARCHIVE_NOT_LISTENING');return;
+      }
+      const literal=address.address.includes(':')?'['+address.address+']':address.address;
+      const authorities=new Set([literal+':'+address.port,'localhost:'+address.port]);
+      if(address.port===80){authorities.add(literal);authorities.add('localhost');}
+      if(!authorities.has(hostHeaders[0].toLowerCase())){
+        deny(421,'MERCHANT_ARCHIVE_AUTHORITY_NOT_ALLOWED');return;
+      }
+      if(typeof request.url!=='string'||!request.url.startsWith('/')||request.url.startsWith('//')){
+        deny(400,'MERCHANT_ARCHIVE_REQUEST_TARGET_INVALID');return;
+      }
+      if(request.method!=='GET'&&request.method!=='HEAD'){
+        response.setHeader('Allow','GET, HEAD');deny(405,'MERCHANT_ARCHIVE_METHOD_NOT_ALLOWED');return;
+      }
       const url=new URL(request.url,'http://archive.local');
       const path=url.pathname==='/'?'index.html':archivePath(decodeURIComponent(url.pathname.slice(1)));
       const selected=allowed.get(path);
       if(!selected||url.search){response.writeHead(404);response.end();return;}
       const actual=await fileIdentity(join(bundle,path));
       need(actual.bytes===selected.bytes&&actual.sha256===selected.sha256,'MERCHANT_ARCHIVE_MEMBER_CHANGED');
-      const extension=/\.[^.\/]+$/.exec(path)?.[0]??'';
+      const extension=/\.[^./]+$/.exec(path)?.[0]??'';
       response.writeHead(200,{'Content-Type':types[extension]??'application/octet-stream',
-        'Content-Length':String(selected.bytes),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
-        'X-Content-SHA256':selected.sha256,'Referrer-Policy':'no-referrer',
+        'Content-Length':String(selected.bytes),'X-Content-SHA256':selected.sha256,
         ...(path.startsWith('workspace/')||path.endsWith('.bin')?{'Content-Disposition':'attachment; filename="'+basename(path)+'"'}:{})});
       if(request.method==='HEAD'){response.end();return;}
       const file=await open(join(bundle,path),constants.O_RDONLY|constants.O_NOFOLLOW);
@@ -493,7 +582,12 @@ export async function startMerchantArchiveServer({bundle,host='127.0.0.1',port=8
     })().catch(error=>{if(response.headersSent)response.destroy(error);else{response.writeHead(409,{'Content-Type':'application/json'});response.end(JSON.stringify({error:error.code??'MERCHANT_ARCHIVE_READ_FAILED'}));}});
   });
   await new Promise((accept,reject)=>{server.once('error',reject);server.listen(port,host,()=>{server.off('error',reject);accept();});});
-  const address=server.address(),url='http://'+(address.address.includes(':')?'['+address.address+']':address.address)+':'+address.port;
+  const address=server.address();
+  if(!address||typeof address==='string'||!['127.0.0.1','::1'].includes(address.address)){
+    await new Promise((accept,reject)=>server.close(error=>error?reject(error):accept()));
+    fail('MERCHANT_ARCHIVE_LOOPBACK_REQUIRED');
+  }
+  const url='http://'+(address.address.includes(':')?'['+address.address+']':address.address)+':'+address.port;
   return {server,url,summary:inspected.summary,async close(){server.closeIdleConnections();await new Promise((accept,reject)=>server.close(error=>error?reject(error):accept()));}};
 }
 export async function portableCommand(command,values) {
