@@ -236,3 +236,34 @@ Open the full `.weather.json` delivery through any independent Weather review
 workspace to continue its decisions and reports. The ZIP includes the frozen
 report, original source JSON and complete series CSV for ordinary file-based
 review.
+
+
+## Continue with the next complete source edition
+
+The browser caller also operates the report-renewal workflow described in [REPORT_RENEWAL.md](REPORT_RENEWAL.md). Keep the first retained report and prepare a complete next source package with the same provider-case caller. Use a separate private source-case directory and explicitly select the next forecast dates and the historical period you intend to review. The resulting package retains its own actual provider requests, responses, retrieval times, decisions and archive identity.
+
+Pass that full editable package with the original browser command:
+
+~~~sh
+node examples/browser-receiving.mjs \
+  --runtime /private/original-runtime/stellar/scf-starforge-20261009 \
+  --archive /private/source-case/delivery/provider-weather-report.zip \
+  --archive-sha256 ACTUAL_SELECTED_ZIP_SHA256 \
+  --archive-bytes ACTUAL_SELECTED_ZIP_BYTES \
+  --next-package /private/next-source-case/delivery/provider-weather-editable.weather.json \
+  --output /private/weather-browser-operation \
+  --chrome /private/chrome/chrome-headless-shell \
+  --playwright /private/node_modules/playwright
+~~~
+
+The caller first completes the original receiving, decision revision, report export and independent onward receiving. It then opens that same original review workspace, receives the next complete provider package and prepares a renewal from the report it just saved. Each decision selects the compatible next capture by its source family and variable. Its explicit UTC window comes from the selected next decision. The current working rule supplies the exact unit, threshold, aggregation and coverage requirement.
+
+The actual browser fills and submits the complete next-edition form, displays its prior/current outcomes and creates the reviewed edition. The saved review binds the full selection before the commit. Repeating that exact accepted commit reopens the same report. The operation then:
+
+- Downloads the complete renewed editable package, ZIP, HTML and JSON.
+- Reopens the renewed ZIP through the original converter and retains every source and decision revision carried by its embedded editable history.
+- Receives that whole ZIP-derived package in a third independent private workspace and compares its actual receiving map with the native map.
+- Reopens the first original package and preserves the later renewed working decisions.
+- Closes both active workspaces and opens their saved settings through the original CLI.
+
+The operation saves the complete renewal review, accepted report, source receiving, independent customer receiving and output identities in its existing result file. Its private progress records retain the exact next-package selection. A continuation uses the retained package copy if the original input location is no longer available. Existing source files and accepted decisions remain the inputs for the same saved operation.
