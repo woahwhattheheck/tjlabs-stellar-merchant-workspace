@@ -14,6 +14,10 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/cohort_delivery_comparison.mjs": ("cohort_delivery_comparison.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_cohort_delivery.mjs": ("operations_cohort_delivery.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_cohort_delivery.css": ("operations_cohort_delivery.css", "text/css; charset=utf-8"),
+                   "/COHORT-DELIVERY.md": ("COHORT-DELIVERY.md", "text/markdown; charset=utf-8")})
     static.update({"/operations_funding.mjs": ("operations_funding.mjs", "text/javascript; charset=utf-8"),
                    "/operations_funding.css": ("operations_funding.css", "text/css; charset=utf-8"),
                    "/COST_FUNDING.md": ("COST_FUNDING.md", "text/markdown; charset=utf-8")})
