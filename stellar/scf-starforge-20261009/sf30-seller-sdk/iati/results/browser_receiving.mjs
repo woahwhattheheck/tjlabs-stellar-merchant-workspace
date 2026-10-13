@@ -124,10 +124,10 @@ try{
  await p.screenshot({path:join(config.output,'results-original-records.png'),fullPage:true});
  await checkpoint('source-browser',{rows:page.rows.length,total:page.total,originalRecordsVisible:page.rows.length>0});
 
- await click('Following edition');await ui.getByLabel('Saved project',{exact:true}).selectOption(original.project);await click('Read existing comparisons');
+ await click('Following edition');await ui.getByLabel('Saved programme',{exact:true}).selectOption(original.project);await click('Read saved comparisons');
  if((await client.resultsComparisons(original.project)).comparisons.length){
-  await ui.getByRole('button',{name:/^r[0-9]+ → r[0-9]+ · /}).first().click();
-  await ui.getByRole('heading',{name:'Retained source / selection changes',exact:true}).waitFor();
+  await ui.getByRole('button',{name:/^Open r[0-9]+ → r[0-9]+$/}).first().click();
+  await ui.getByRole('heading',{name:'Saved programme edition comparison',exact:true}).waitFor();
  }
  await click('Receive / export');await ui.getByLabel('Saved project',{exact:true}).selectOption(original.project);
  await ui.getByLabel('Exact revision (blank = current head)',{exact:true}).fill(String(reviewed.revision));
