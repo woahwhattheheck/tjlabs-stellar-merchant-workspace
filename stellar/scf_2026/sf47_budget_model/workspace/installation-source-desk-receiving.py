@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import base64
 from copy import deepcopy
+from decimal import Decimal
 import ctypes
 import errno
 import fcntl
@@ -930,7 +931,7 @@ class Receiving:
              "The complete native preparation differs from the original selected cohort.")
         for expected, received in zip(self.selected["cases"], value["report"]["nativeWorkshares"]):
             need(received["planSha256"] == expected["planSha256"] and
-                 str(received["hours"]) == str(expected["effortTotal"]["hours"]) and
+                 Decimal(received["hours"]) == Decimal(expected["effortTotal"]["hours"]) and
                  received["packetPresent"] == (self.selected["schema"] != "stellar-forge.installation-handover-selection.v1"),
                  "The original complete effort or packet changed.")
         self.freeze("native-preparation.json", value)
