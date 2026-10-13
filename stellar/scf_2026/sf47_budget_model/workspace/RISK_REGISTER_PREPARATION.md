@@ -67,3 +67,9 @@ If the child is interrupted, keep its exact output directory, original request I
 ## Actual result
 
 PREPARED confirms complete materialization and runtime identities. It is not a native or browser completion. The original execution's immutable final closure and successful complete save receipt establish the actual finished course. The complete programme includes two native editions, independent case imports, role checks, one explicit browser third edition, native validation of all three browser ZIPs, actual host cold reopen and full closed private receiving archive.
+
+## Runtime verification and already-prepared cases
+
+Preparation uses the selected execution module's bounded `checked_fingerprint` and `fingerprint` helpers for interpreters and browser runtime identities. Include the matching complete execution source in the same receiving packet; an older execution module without these helpers is not a compatible preparation selection. All original source bytes, Git identities, modes and captured BOOT_FILES checks remain unchanged.
+
+A newly prepared application may select the corrected complete receiving modules directly. An existing accepted case keeps its original source manifest and preparation input. Use the explicit execution-continuation procedure in RISK_REGISTER_EXECUTION.md to run separately selected corrected Python and Node modules against that same case. This path does not rebuild or replace the original 326-member source, accepted domain records or browser SELECTION. Preserve the original closed archive, successful save receipt and actual returned saved-file version before resuming.

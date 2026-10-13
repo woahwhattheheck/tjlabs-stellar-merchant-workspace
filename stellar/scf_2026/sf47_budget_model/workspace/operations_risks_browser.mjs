@@ -42,15 +42,23 @@ async function mkdir(directory){
   await absolute(path.dirname(directory),{directory:true});try{await fs.mkdir(directory,{mode:0o700});}catch(e){if(e.code!=='EEXIST')throw e;}
   await absolute(directory,{directory:true,privateMode:true});await sync(path.dirname(directory));return directory;
 }
-async function file(filename,{maximum=512*1024*1024,privateMode=false}={}){
+async function file(filename,{maximum=512*1024*1024,privateMode=false,capture=true}={}){
   await absolute(filename,{privateMode});let f,first,result;
   try{
     f=await fs.open(filename,C.O_RDONLY|C.O_NOFOLLOW);const before=await f.stat({bigint:true});
     need(before.isFile()&&before.size<=BigInt(maximum),'Use a bounded complete regular file.');
-    const raw=await f.readFile();const after=await f.stat({bigint:true}),current=await fs.lstat(filename,{bigint:true});
+    const digest=createHash('sha256'),parts=capture?[]:null,buffer=Buffer.allocUnsafe(128*1024);let length=0;
+    while(true){
+      const {bytesRead}=await f.read(buffer,0,buffer.length,null);if(!bytesRead)break;
+      length+=bytesRead;
+      need(length<=maximum&&BigInt(length)<=before.size,'The selected complete file grew: '+filename);
+      const chunk=buffer.subarray(0,bytesRead);digest.update(chunk);
+      if(parts)parts.push(Buffer.from(chunk));
+    }
+    const after=await f.stat({bigint:true}),current=await fs.lstat(filename,{bigint:true});
     const identity=s=>[s.dev,s.ino,s.size,s.mtimeNs,s.ctimeNs,s.mode].map(String).join(':');
-    need(identity(before)===identity(after)&&identity(after)===identity(current)&&BigInt(raw.length)===after.size,'The selected complete file changed: '+filename);
-    result={raw,path:filename,bytes:raw.length,sha256:hash(raw),mode:Number(after.mode&0o777n)};
+    need(identity(before)===identity(after)&&identity(after)===identity(current)&&BigInt(length)===after.size,'The selected complete file changed: '+filename);
+    result={...(capture?{raw:Buffer.concat(parts,length)}:{}),path:filename,bytes:length,sha256:digest.digest('hex'),mode:Number(after.mode&0o777n)};
   }catch(e){first=e;}finally{if(f)try{await f.close();}catch(e){first??=e;}}
   if(first)throw first;return result;
 }
@@ -58,6 +66,58 @@ function short(row){return {path:row.path,bytes:row.bytes,sha256:row.sha256};}
 async function selected(row,options={}){
   need(row&&Number.isSafeInteger(row.bytes)&&row.bytes>=0&&SHA.test(row.sha256),'Select a complete original descriptor.');
   const actual=await file(row.path,options);need(actual.bytes===row.bytes&&actual.sha256===row.sha256,'The selected full input changed: '+row.path);return actual;
+}
+async function executionContinuation(input,native,manifest,sourceFile){
+  if(!input.executionContinuation)return null;
+  const selectedFile=await selected(input.executionContinuation,{privateMode:true,maximum:1024*1024});
+  const document=JSON.parse(selectedFile.raw),reference=short(selectedFile),record={reference,document};
+  need(document.schema==='stellar-forge.sf47-risk-execution-continuation.v1'&&
+    typeof document.reason==='string'&&document.reason.trim(),'Select the original explicit execution continuation.');
+  need(document.original&&document.corrections&&same(document.original.sourceManifest,short(sourceFile)),
+    'The continuation must bind the unchanged original complete source manifest.');
+  const parent=path.dirname(input.outputDirectory),directory=path.join(parent,'execution-continuations',reference.sha256);
+  await absolute(directory,{directory:true,privateMode:true});
+  const retained=await selected({...reference,path:path.join(directory,'execution-continuation.json')},{privateMode:true,maximum:1024*1024});
+  need(retained.raw.equals(selectedFile.raw),'Keep the exact parent-adopted continuation bytes.');
+  const adopted=JSON.parse((await file(path.join(directory,'ADOPTED.json'),{privateMode:true,maximum:2*1024*1024})).raw);
+  need(same(adopted,{schema:'stellar-forge.sf47-risk-execution-continuation-adopted.v1',executionContinuation:record}),
+    'The original parent has not completed this exact continuation admission.');
+  const executionInput=JSON.parse((await selected(document.original.executionInput,{privateMode:true,maximum:32*1024*1024})).raw);
+  const executionSelection=JSON.parse((await selected(document.original.executionSelection,{privateMode:true,maximum:32*1024*1024})).raw);
+  need(executionInput.schema==='stellar-forge.sf47-risk-execution.v1'&&
+    document.operationId===executionInput.operationId&&
+    same(executionSelection,{schema:'stellar-forge.sf47-risk-execution.v1',config:executionInput}),
+    'Bind the original execution operation to its exact retained configuration and selection.');
+  need(document.original.browserSelection.path===path.join(input.outputDirectory,'SELECTION.json')&&
+    document.original.browserJournal.path===path.join(input.outputDirectory,'risk-browser-journal.json'),
+    'Keep this same original browser selection and journal placement.');
+  await selected(document.original.browserSelection,{privateMode:true,capture:false});
+  for(const [name,snapshot] of [['browserJournal','prior-browser-journal.json'],['executionJournal','prior-execution-journal.json']]){
+    const original=document.original[name];
+    need(original&&path.isAbsolute(original.path),'Retain the original journal path and full descriptor.');
+    await selected({...original,path:path.join(directory,snapshot)},{privateMode:true,capture:false});
+  }
+  for(const name of ['node','python']){
+    const correction=document.corrections[name];
+    need(correction&&relative(correction.repositoryPath)&&correction.original&&correction.current,
+      'Keep both complete original and corrected execution source identities.');
+    const row=manifest.files.find(row=>row.path===correction.repositoryPath);
+    need(row&&correction.original.path===path.join(input.repositoryRoot,row.path)&&
+      correction.original.bytes===row.bytes&&correction.original.sha256===row.sha256&&
+      correction.current.path!==correction.original.path,'The corrected execution module must preserve its original selected repository source.');
+    if(name==='node')need(correction.repositoryPath===PREFIX+'operations_risks_browser.mjs','Select only the original browser execution module.');
+    for(const version of ['original','current']){
+      const descriptor=correction[version],actual=await selected(descriptor,{capture:false});
+      const mode=typeof descriptor.mode==='string'&&/^[0-7]{3,6}$/.test(descriptor.mode)?parseInt(descriptor.mode,8):descriptor.mode;
+      need(Number.isInteger(mode)&&(mode&0o777)===actual.mode,'Keep the full exact execution-source mode.');
+    }
+  }
+  return record;
+}
+function continuationFields(value){return value.executionContinuation?{executionContinuation:value.executionContinuation}:{};}
+function sameContinuation(record,value){
+  need(same(record.executionContinuation??null,value.executionContinuation??null),
+    'Reopen the same explicit original execution continuation.');
 }
 async function exists(filename){try{await fs.lstat(filename);return true;}catch(e){if(e.code==='ENOENT')return false;throw e;}}
 async function publish(filename,raw,{replace=false}={}){
@@ -103,17 +163,20 @@ async function inputs(input){
   const actual=[],names=new Set();
   for(const row of manifest.files){
     const name=relative(row.path);need(!names.has(name),'Duplicate source member.');names.add(name);
-    const got=await selected({...row,path:path.join(input.repositoryRoot,name)});
+    const got=await selected({...row,path:path.join(input.repositoryRoot,name)},{capture:false});
     const mode=typeof row.mode==='string'&&/^[0-7]{3,6}$/.test(row.mode)?parseInt(row.mode,8):row.mode;
     need(mode===undefined||(Number.isInteger(mode)&&(mode&0o777)===got.mode),'The original selected source mode changed.');
     actual.push({path:name,bytes:got.bytes,sha256:got.sha256});
   }
   need(same([...actual].sort((a,b)=>a.path.localeCompare(b.path)),[...native.installedSource].sort((a,b)=>a.path.localeCompare(b.path))),'Keep the whole same installed native/browser source.');
   need(names.has(PREFIX+'operations_risks_browser.mjs')&&names.has(PREFIX+'operations_risks_walkthrough.py')&&names.has(PREFIX+'operations_walkthrough.py'),'The complete original receiving source closure is missing.');
-  const self=actual.find(row=>row.path===PREFIX+'operations_risks_browser.mjs'),selfFile=await file(new URL(import.meta.url).pathname);
-  need(selfFile.bytes===self.bytes&&selfFile.sha256===self.sha256,'Run the selected complete browser source.');
-  const node=await selected(input.node);need(await fs.realpath(process.execPath)===node.path,'Run the selected original Node.');
-  const playwright=await file(input.browser.playwrightModule),executable=await file(input.browser.executablePath);
+  const continuation=await executionContinuation(input,native,manifest,sourceFile);
+  const self=actual.find(row=>row.path===PREFIX+'operations_risks_browser.mjs'),selfFile=await file(new URL(import.meta.url).pathname,{capture:false});
+  const executing=continuation?continuation.document.corrections.node.current:self;
+  need(selfFile.bytes===executing.bytes&&selfFile.sha256===executing.sha256&&
+    (!continuation||selfFile.path===executing.path),'Run the exact selected or explicitly adopted complete browser source.');
+  const node=await selected(input.node,{capture:false});need(await fs.realpath(process.execPath)===node.path,'Run the selected original Node.');
+  const playwright=await file(input.browser.playwrightModule,{capture:false}),executable=await file(input.browser.executablePath,{capture:false});
   need(playwright.sha256===input.browser.playwrightSha256&&executable.sha256===input.browser.executableSha256,'The original browser runtime selection changed.');
   need(executable.mode&0o111,'Select an executable original Chromium.');
   const codesPath=path.join(path.dirname(input.native.path),relative(native.privateStaffCodes));
@@ -133,7 +196,13 @@ async function inputs(input){
     staffCodes:{path:codesPath,sha256:codesFile.sha256},
     parentGuard:{path:input.parentGuard.path,device:input.parentGuard.device,inode:input.parentGuard.inode},
     origin:native.origin,installationId:native.installationId};
-  return {input,native,stable,selectionSha256:hash(bytes(stable)),codes,ownerKey:keyFile.raw.toString('utf8').trim()};
+  if(continuation){
+    const original=continuation.document.original.browserSelection;
+    need(original.bytes===bytes(stable).length&&original.sha256===hash(bytes(stable)),
+      'The explicit execution continuation must preserve every original browser selection field.');
+  }
+  return {input,native,stable,selectionSha256:hash(bytes(stable)),codes,ownerKey:keyFile.raw.toString('utf8').trim(),
+    ...(continuation?{executionContinuation:continuation}:{})};
 }
 let namespacePromise;
 function callerNamespace(){
@@ -307,6 +376,12 @@ class Course{
     const j=path.join(this.root,'risk-browser-journal.json');
     this.journal=await exists(j)?JSON.parse((await file(j,{privateMode:true})).raw):{schema:SCHEMA+'.journal',selectionSha256:this.value.selectionSha256,steps:{},third:null,files:[]};
     need(this.journal.schema===SCHEMA+'.journal'&&this.journal.selectionSha256===this.value.selectionSha256,'Reopen the same complete browser selection.');
+    if(this.value.executionContinuation&&!this.journal.executionContinuation){
+      const original=this.value.executionContinuation.document.original.browserJournal,current=await file(j,{privateMode:true,capture:false});
+      need(current.bytes===original.bytes&&current.sha256===original.sha256,'Adopt the continuation only from its exact retained original browser journal.');
+      this.journal.executionContinuation=this.value.executionContinuation;
+    }
+    sameContinuation(this.journal,this.value);
     for(const row of this.journal.files||[]){await selected({...row,path:path.join(this.root,relative(row.path))});this.publicFiles.set(row.path,row);}
     await this.reconcileThird();
     this.attemptId=randomUUID();this.attempt=await mkdir(path.join(this.root,'attempts',this.attemptId));await this.saveJournal();
@@ -622,7 +697,7 @@ class Course{
     need(['finance','reviewer','contributor','lead','received'].every(name=>steps[name]),'Finish every selected original browser role.');
     for(const row of this.publicFiles.values())await selected({...row,path:path.join(this.root,row.path)});
     const exports=[steps.lead.archive,...steps.received.cases.map(row=>row.archive)].map(row=>({...row,path:path.join(this.root,row.path)}));
-    const value={schema:SCHEMA+'.result',status:'COMPLETED',selectionSha256:this.value.selectionSha256,operationId:native.operationId,
+    const value={schema:SCHEMA+'.result',status:'COMPLETED',...continuationFields(this.value),selectionSha256:this.value.selectionSha256,operationId:native.operationId,
       originalCaseId:native.originalCaseId,receivedCaseId:native.receivedCaseId,reorderedReceivedCaseId:native.reorderedReceivedCaseId,
       firstReviewId:native.firstReviewId,secondReviewId:native.secondReviewId,thirdReviewId:steps.lead.reviewId,
       thirdRequestId:steps.lead.requestId,installationId:native.installationId,
@@ -656,6 +731,7 @@ async function inspect(value,{repair=false}={}){
       if(closure.schema!==SCHEMA+'.closed'||closure.status!=='CLOSED'||closure.outcome!=='COMPLETED'||
         closure.selectionSha256!==value.selectionSha256||!same(closure.candidate,short(candidate))||!closedOwners(closure.owners))continue;
       need(valueCandidate.selectionSha256===value.selectionSha256,'The original closed candidate selection changed.');
+      sameContinuation(valueCandidate,value);sameContinuation(closure,value);
       for(const row of valueCandidate.files)await selected({...row,path:path.join(root,relative(row.path))});
       const completed={...valueCandidate,closure:{path:path.relative(root,closurePath),bytes:closureFile.bytes,sha256:closureFile.sha256},attemptId:closure.attemptId};
       await publish(filename,bytes(completed));break;
@@ -664,10 +740,12 @@ async function inspect(value,{repair=false}={}){
   }
   const raw=await file(filename),result=JSON.parse(raw.raw);
   need(result.schema===SCHEMA+'.result'&&result.status==='COMPLETED'&&result.selectionSha256===value.selectionSha256,'The original completed browser result belongs to another selection.');
+  sameContinuation(result,value);
   const seen=new Set();
   for(const row of result.files){relative(row.path);need(!seen.has(row.path),'Duplicate result member.');seen.add(row.path);await selected({...row,path:path.join(root,row.path)});}
   const closure=await selected({...result.closure,path:path.join(root,relative(result.closure.path))}),closed=JSON.parse(closure.raw);
   need(closed.schema===SCHEMA+'.closed'&&closed.status==='CLOSED'&&closed.selectionSha256===value.selectionSha256&&closed.outcome==='COMPLETED'&&closedOwners(closed.owners),'The accepted browser invocation did not close its original owners.');
+  sameContinuation(closed,value);
   const candidate=await selected(closed.candidate),saved=JSON.parse(candidate.raw),{closure:ignored,attemptId:ignoredAttempt,...resultBody}=result;
   need(same(saved,resultBody)&&same(result.source,value.stable.sourceManifest)&&same(result.native,value.stable.native),'The final result differs from its complete original closed candidate.');
   for(const row of result.exports){
@@ -701,13 +779,13 @@ export async function receiveRiskBrowser(input){
     // This is written after this child's actual inherited descriptor closes.
     if(course)try{
       closed=await publish(path.join(course.attempt,'BROWSER_CLOSED.json'),bytes({
-        schema:SCHEMA+'.closed',status:guard.closed?'CLOSED':'CLOSE_UNCERTAIN',selectionSha256:value.selectionSha256,attemptId:course.attemptId,
+        schema:SCHEMA+'.closed',status:guard.closed?'CLOSED':'CLOSE_UNCERTAIN',...continuationFields(value),selectionSha256:value.selectionSha256,attemptId:course.attemptId,
         outcome:first?'INTERRUPTED':'COMPLETED',owners:{browser:true,contexts:true,downloads:true,tasks:true,files:true,guard:guard.closed},
         guardCloseError:guard.closeError?errorValue(guard.closeError):null,process:course.owner.exit||null,candidate:course.candidateFile||null,error:first?errorValue(first):null}));
     }catch(e){first??=e;}
     if(local&&value)try{
       const directory=await mkdir(path.join(value.input.outputDirectory,'attempts',randomUUID()));
-      await publish(path.join(directory,'BROWSER_CLOSED.json'),bytes({schema:SCHEMA+'.closed',status:guard.closed?'CLOSED':'CLOSE_UNCERTAIN',localOnly:true,
+      await publish(path.join(directory,'BROWSER_CLOSED.json'),bytes({schema:SCHEMA+'.closed',status:guard.closed?'CLOSED':'CLOSE_UNCERTAIN',...continuationFields(value),localOnly:true,
         selectionSha256:value.selectionSha256,reusedResult:short(await file(path.join(value.input.outputDirectory,'risk-browser-result.json'))),
         owners:{browser:true,contexts:true,downloads:true,tasks:true,files:true,guard:guard.closed},
         guardCloseError:guard.closeError?errorValue(guard.closeError):null}));
