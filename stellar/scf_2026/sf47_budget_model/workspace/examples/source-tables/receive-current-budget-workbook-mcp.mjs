@@ -8,7 +8,8 @@ import {createHash,randomUUID} from 'node:crypto';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {inflateRawSync} from 'node:zlib';
-import {inspectGrantAgentBinding,GRANT_TRANSFER_CHUNK_BYTES} from '../../agent-client.mjs';
+import {inspectGrantAgentBinding} from '../../agent-client.mjs';
+import {GRANT_TRANSFER_CHUNK_BYTES} from '../../agent-contracts.mjs';
 import {importPlanningBook,preparePlanningImport,rebasePlanningBook} from '../../source-tables-core.mjs';
 import {receivePlanningFile} from '../../../../../../stellar-forge/developer-site/dist/grant-plan-source.mjs';
 import {MerchantGrantWorkspaces,GRANT_WORKSPACE_CONNECTION_SCHEMA}
