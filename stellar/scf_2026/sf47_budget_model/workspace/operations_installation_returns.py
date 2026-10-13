@@ -19,6 +19,7 @@ import uuid
 from model import Problem, canonical, digest, now, text, inspect_planning_history
 import operations_domain as domain
 import operations_installations as installations
+import operations_installation_effort as installation_effort
 
 SCHEMA = "stellar-forge.sf47-installation-return.v1"
 PURPOSE = "INSTALLATION_RETURN"
@@ -118,6 +119,9 @@ def selected_baseline(ops, context, selection):
 def acceptance_basis(context, document):
     # Observation links and named results do not redefine the work being checked.
     selected = deepcopy(document)
+    # Internal delivery effort and its source attachments do not redefine the
+    # customer's acceptance criteria. The complete returned document retains it.
+    selected.pop("effort", None)
     selected["checks"] = [{**{key: item[key] for key in DEFINITION_KEYS},
         "state": "OPEN", "operator": "", "observedAt": None, "note": "",
         "sourceIds": [], "workIds": [], "purchaseIds": [], "outcomeIds": []}
@@ -177,7 +181,12 @@ def seed(ops, context, body):
 def evaluate_return(context, baseline, supplied):
     context, baseline = context_view(context), checked_installation(deepcopy(baseline))
     inputs, document = normalized_return(context, baseline, supplied)
-    selected = installations.capture(context, document)
+    # Receiving changes the observations of this exact saved edition. Carry its
+    # original effort source and peer allocation snapshot for deterministic
+    # replay. The owner's eventual native Installation save captures current
+    # Work and current peer heads after the explicit receiving choices.
+    frozen_effort = baseline["preview"]["snapshot"].get(installation_effort.SNAPSHOT_KEY)
+    selected = installations.capture(context, document, frozen_effort)
     original_basis = acceptance_basis(baseline["preview"]["snapshot"], baseline["preview"]["document"])
     receiving_basis = acceptance_basis(context, document)
     changes = installations.differences(original_basis, receiving_basis)

@@ -674,6 +674,253 @@ export interface GrantInstallationCheck {
   purchaseIds: string[];
   outcomeIds: string[];
 }
+export type GrantInstallationSupportAnchor = 'ACCEPTANCE' | 'HANDOFF';
+export interface GrantInstallationEffortAllocation {
+  workId: string;
+  phaseId: string;
+  /** Selected hours from this original Work record, retained as a decimal string. */
+  hours: string;
+  workContentSha256: string;
+  note: string;
+}
+export interface GrantInstallationEffortReview {
+  phaseId: string;
+  /** Null retains an unentered remaining estimate. */
+  remainingHours: string | null;
+  reviewedBy: string;
+  reviewedAt: string | null;
+  basisSha256: string;
+  note: string;
+  sourceIds: string[];
+}
+export interface GrantInstallationSupportWindow {
+  id: string;
+  phaseIds: string[];
+  includedHours: string;
+  anchorPhaseId: string;
+  anchorKind: GrantInstallationSupportAnchor;
+  calendarDays: number;
+  /** RFC6901-style pointers into the complete original Workshare plan. */
+  sourcePaths: string[];
+  /** Exact reviewed Workshare plan; remains pinned until its terms are reviewed again. */
+  sourcePlanSha256: string;
+  reviewedBy: string;
+  reviewedAt: string;
+  note: string;
+}
+export interface GrantInstallationEffortDocument {
+  schema: 'stellar-forge.sf47-installation-effort.v1';
+  asOfDate: GrantCivilDate;
+  allocations: GrantInstallationEffortAllocation[];
+  reviews: GrantInstallationEffortReview[];
+  supportWindows: GrantInstallationSupportWindow[];
+  note: string;
+}
+export type GrantInstallationEffortStatus = 'READY' | 'REVIEW_REQUIRED';
+export type GrantInstallationEffortWorkState = 'LOGGED' | 'SUBMITTED' | 'ACCEPTED' | 'VOID';
+export type GrantInstallationEffortFundingBasis = 'PREAWARD' | 'GRANT' | 'CUSTOMER' | 'INTERNAL';
+export type GrantInstallationSupportStatus =
+  | 'AWAITING_ORIGINAL_ACCEPTANCE' | 'NOT_STARTED' | 'ACTIVE' | 'EXPIRED';
+export type GrantInstallationSupportWorkClassification =
+  | 'VOID' | 'AWAITING_ANCHOR' | 'BEFORE_WINDOW' | 'AFTER_WINDOW'
+  | 'WITHIN_WINDOW' | 'SPANS_WINDOW_BOUNDARY';
+export interface GrantInstallationEffortOriginalPhase {
+  phaseId: string;
+  title: string;
+  quotedHours: string;
+  owner: unknown;
+  dependsOn: string[];
+  businessDays: number | null;
+  terms: GrantObject;
+  checkId: string;
+  checkState: GrantCheckState;
+  checkOperator: string;
+  checkObservedAt: string | null;
+}
+export interface GrantInstallationEffortPhaseSource {
+  caseId: string;
+  planSha256: string;
+  title: string;
+  customer: unknown;
+  quotedHours: string;
+  sourceId: string;
+  sourceSha256: string;
+  plan: GrantObject;
+  phases: GrantInstallationEffortOriginalPhase[];
+}
+export interface GrantInstallationEffortWork extends GrantObject {
+  id: string;
+  contributorId: string;
+  costId: string | null;
+  description: string;
+  startDate: GrantCivilDate;
+  endDate: GrantCivilDate;
+  hours: string;
+  fundingBasis: GrantInstallationEffortFundingBasis;
+  state: GrantInstallationEffortWorkState;
+  sourceIds: string[];
+  sourceNote: string;
+}
+export interface GrantInstallationEffortWorkAmounts extends GrantInstallationEffortWork {
+  workId: string;
+  workContentSha256: string;
+  contributorName: string;
+  selectedAllocatedHours: string;
+  otherAllocatedHours: string;
+  totalAllocatedHours: string;
+  unallocatedHours: string;
+  overallocatedHours: string;
+}
+export interface GrantInstallationEffortWorkBalance extends GrantInstallationEffortWorkAmounts {
+  sourceChangedAllocationCount: number;
+}
+export interface GrantInstallationEffortOtherAllocation extends GrantInstallationEffortAllocation {
+  installationId: string;
+  installationRevision: number;
+  installationSha256: string;
+  name: string;
+}
+export interface GrantInstallationEffortWorkInventory extends GrantInstallationEffortWorkAmounts {
+  /** Attributions in the other current saved Installation heads in this case. */
+  allocations: GrantInstallationEffortOtherAllocation[];
+}
+export interface GrantInstallationEffortAllocationResult extends GrantInstallationEffortAllocation {
+  currentWorkContentSha256: string;
+  sourceChanged: boolean;
+  workState: GrantInstallationEffortWorkState;
+  startDate: GrantCivilDate;
+  endDate: GrantCivilDate;
+  description: string;
+  contributorId: string;
+  fundingBasis: GrantInstallationEffortFundingBasis;
+  costId: string | null;
+}
+export interface GrantInstallationEffortPhaseResult extends GrantInstallationEffortOriginalPhase {
+  /** Present for a retained phase from an earlier original plan. */
+  retired?: true;
+  originalPlanSha256?: string;
+  allocatedHours: string;
+  recordedHours: string;
+  acceptedHours: string;
+  voidHours: string;
+  sourceChangedHours: string;
+  afterAsOfHours: string;
+  spansAsOfHours: string;
+  quoteBalanceHours: string;
+  recordedOverrunHours: string;
+  remainingHours: string | null;
+  remainingReviewCurrent: boolean;
+  reviewBasisSha256: string;
+  review: GrantInstallationEffortReview;
+  projectedTotalHours: string | null;
+  projectedOverrunHours: string | null;
+  allocations: GrantInstallationEffortAllocationResult[];
+}
+export interface GrantInstallationSupportAttribution {
+  workId: string;
+  phaseId: string;
+  hours: string;
+  state: GrantInstallationEffortWorkState;
+  startDate: GrantCivilDate;
+  endDate: GrantCivilDate;
+  classification: GrantInstallationSupportWorkClassification;
+  sourceChanged: boolean;
+}
+export interface GrantInstallationSupportResult extends GrantInstallationSupportWindow {
+  status: GrantInstallationSupportStatus;
+  sourceCurrent: boolean;
+  sourceTerms: {path: string; value: unknown}[];
+  anchor: {
+    phaseId: string;
+    checkId: string;
+    kind: GrantInstallationSupportAnchor;
+    checkState: GrantCheckState;
+    operator: string;
+    /** Present only for the original ACCEPTED phase observation. */
+    observedAt: string | null;
+    startDate: GrantCivilDate | null;
+    dateBasis: 'ORIGINAL_OBSERVATION_CIVIL_DATE';
+  };
+  windowEndDate: GrantCivilDate | null;
+  daysRemaining: number | null;
+  recordedHours: string;
+  acceptedHours: string;
+  includedHoursBalance: string;
+  recordedOverrunHours: string;
+  reviewedRemainingHours: string | null;
+  projectedOverrunHours: string | null;
+  withinWindowAttributedHours: string;
+  beforeWindowAttributedHours: string;
+  afterWindowAttributedHours: string;
+  boundarySpanningAttributedHours: string;
+  unanchoredAttributedHours: string;
+  attributions: GrantInstallationSupportAttribution[];
+}
+export interface GrantInstallationEffortSummary {
+  quotedHours: string;
+  allocatedHours: string;
+  recordedHours: string;
+  acceptedHours: string;
+  voidHours: string;
+  sourceChangedHours: string;
+  afterAsOfHours: string;
+  spansAsOfHours: string;
+  unallocatedSelectedWorkHours: string;
+  overallocatedWorkHours: string;
+  reviewedPhases: number;
+  totalPhases: number;
+  retiredPhases: number;
+  reviewedRemainingHours: string | null;
+  projectedTotalHours: string | null;
+  projectedOverrunHours: string | null;
+}
+export interface GrantInstallationEffortFinding {
+  code: string;
+  field: string;
+  message: string;
+  preventsPlanning: boolean;
+}
+export interface GrantInstallationEffortReport {
+  schema: 'stellar-forge.sf47-installation-effort.v1';
+  asOfDate: GrantCivilDate;
+  status: GrantInstallationEffortStatus;
+  readyForPlanning: boolean;
+  summary: GrantInstallationEffortSummary;
+  phases: GrantInstallationEffortPhaseResult[];
+  work: GrantInstallationEffortWorkBalance[];
+  supportWindows: GrantInstallationSupportResult[];
+  findings: GrantInstallationEffortFinding[];
+  /** Native digest of the complete effort report before this field is added. */
+  reportSha256: string;
+}
+export interface GrantInstallationReport extends GrantObject {
+  effort?: GrantInstallationEffortReport;
+}
+export interface GrantInstallationEffortSelectedPhase {
+  phaseId: string;
+  remainingHours: string;
+  reviewBasisSha256: string;
+  review: GrantInstallationEffortReview & {remainingHours: string};
+}
+export interface GrantInstallationEffortSelectedEdition extends GrantPortfolioInstallationSelection {
+  caseId: string;
+  planSha256: string;
+  effortReportSha256: string;
+  asOfDate: GrantCivilDate;
+  originalRemainingHours: string | null;
+  remainingHours: string;
+  phases: GrantInstallationEffortSelectedPhase[];
+}
+export interface GrantInstallationEffortPlanningSelection {
+  schema: 'stellar-forge.sf47-installation-effort.v1.selection';
+  forecastId: string;
+  forecastSha256: string;
+  installationSelections: GrantPortfolioInstallationSelection[];
+  effort: GrantInstallationEffortSelectedEdition[];
+  /** Native digest of this retained selection before its sha256 is added. */
+  sha256: string;
+}
+
 /** Start from a native seed or saved edition and retain its entire document. */
 /** A dated useful request is separate from its original direct/prepaid settlement. */
 export type GrantCustomerUseMode = 'PURCHASE' | 'ALLOWANCE_USE' | 'REOPEN' | 'FREE_USE';
@@ -894,6 +1141,7 @@ export interface GrantInstallationDocument {
   workflowPeriods?: unknown;
   coordination?: GrantDeliveryCoordinationInput;
   useCalendar?: GrantCustomerUseDocument | null;
+  effort?: GrantInstallationEffortDocument;
 }
 export interface GrantInstallationRef {
   id: string;
@@ -1470,6 +1718,33 @@ export interface GrantInstallationSelection {
   expectedRevision: number;
 }
 export interface GrantInstallationReviewRef { id: string; sha256: string; }
+export interface GrantInstallationEffortSeedInput extends GrantInstallationSelection {
+  installationId: string;
+  asOfDate: GrantCivilDate;
+  document?: GrantInstallationDocument;
+}
+export interface GrantInstallationEffortSelectionInput {
+  expectedVersion: number;
+  forecastId: string;
+  installationSelections: GrantPortfolioInstallationSelection[];
+  name?: string;
+  note?: string;
+}
+export interface GrantInstallationEffortSelection extends GrantObject {
+  source: GrantObject;
+  inputs: GrantObject;
+  selection: GrantInstallationEffortPlanningSelection;
+}
+export interface GrantInstallationEffortSeed extends GrantInstallationSeed {
+  schema: 'stellar-forge.sf47-installation-effort.v1';
+  installationId: string;
+  expectedRevision: number;
+  document: GrantInstallationDocument & { effort: GrantInstallationEffortDocument };
+  phaseSource: GrantInstallationEffortPhaseSource;
+  workInventory: GrantInstallationEffortWorkInventory[];
+  report: GrantInstallationReport & {effort: GrantInstallationEffortReport};
+  previewSha256: string;
+}
 export interface GrantInstallationPreviewInput extends GrantInstallationSelection {
   document: GrantInstallationDocument;
   returnReview?: GrantInstallationReviewRef;
@@ -1492,7 +1767,7 @@ export interface GrantInstallationPreview {
   source: GrantObject;
   document: GrantInstallationDocument;
   snapshot: GrantObject;
-  report: GrantObject;
+  report: GrantInstallationReport;
   previous: GrantInstallationRef | null;
   changes: GrantObject[];
   previewSha256: string;
@@ -3092,6 +3367,8 @@ export class GrantWorkspaceClient {
   installationWorkshareSeed(caseId: string, body: GrantWorkshareSourceSelection & GrantInstallationSelection & { workshareCaseId: string; document?: GrantInstallationDocument }): Promise<GrantJsonResponse<GrantInstallationSeed>>;
   installationWorkflows<T = GrantObject>(caseId: string, body: GrantWorkflowSourceSelection): Promise<GrantJsonResponse<T>>;
   installationWorkflowSeed(caseId: string, body: GrantWorkflowSourceSelection & GrantInstallationSelection & { cycleIds: string[]; document?: GrantInstallationDocument }): Promise<GrantJsonResponse<GrantInstallationSeed>>;
+  installationEffortSeed(caseId: string, body: GrantInstallationEffortSeedInput): Promise<GrantJsonResponse<GrantInstallationEffortSeed>>;
+  installationEffortSelection(caseId: string, body: GrantInstallationEffortSelectionInput): Promise<GrantJsonResponse<GrantInstallationEffortSelection>>;
   installationPreview(caseId: string, body: GrantInstallationPreviewInput): Promise<GrantJsonResponse<GrantInstallationPreview>>;
   installationSave(caseId: string, body: GrantInstallationSaveInput): Promise<GrantJsonResponse<GrantInstallationSaveReceipt>>;
   commercialConnections(): Promise<GrantJsonResponse<GrantCommercialConnections>>;

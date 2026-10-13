@@ -16,6 +16,7 @@ from model import Problem, canonical, digest, csv_bytes, text
 import operations_domain as domain
 import operations_installations as installations
 import operations_workshare_installations as workshares
+import operations_installation_effort as installation_effort
 import portfolio_schedule as allocation
 from workshare_intake import load_workshares
 
@@ -173,6 +174,27 @@ def capture(operations, context, raw=None, selections=None, *, inventory=False, 
                            "unavailable": {"code": getattr(exc, "code", "INSTALLATION_SOURCE"), "message": str(exc)}})
     result = {**context, CONTEXT: {"schema": SCHEMA, "entries": entries}}
     if inventory:
+        effort_seeds = {}
+        for entry in entries:
+            row = entry["installation"]
+            document = row["preview"]["document"]
+            if "effort" not in document or row_ref(heads[row["id"]]) != row_ref(row):
+                continue
+            try:
+                original = {"workshare": entry["workshare"]}
+                frozen = installation_effort.capture_context(operations, context, document, row["id"], original,
+                    heads=list(heads.values()), previous=row)
+                snapshot = installations.capture(context, document, frozen)
+                current_effort = installation_effort.report(snapshot, document)
+                if current_effort["readyForPlanning"] and current_effort == row["preview"]["report"].get("effort"):
+                    effort_seeds[canonical(row_ref(row))] = {"asOfDate": current_effort["asOfDate"],
+                        "reportSha256": current_effort["reportSha256"],
+                        "phases": {phase["phaseId"]: deepcopy(phase) for phase in current_effort["phases"] if not phase.get("retired")}}
+            except Problem:
+                # An explicit planning draft remains available while its original
+                # Work or support source is being reviewed. No estimate is inferred.
+                pass
+        result["portfolioEffortSeeds"] = effort_seeds
         result["portfolioInstallationInventory"] = {
             "heads": [row_ref(row) for row in heads.values()], "unavailable": issues}
     return result
@@ -307,17 +329,24 @@ def normalize(context, sources, resources, raw):
     return result
 
 
-def seed_group(context, source, selected):
+def seed_group(context, source, selected, as_of=None):
     entry = frozen_entry(context, selected)
     original = entry["workshare"]
-    exact = Decimal(source["remainingHours"]) == Decimal(original["hours"])
+    reviewed = context.get("portfolioEffortSeeds", {}).get(canonical(ref(selected)))
+    if (reviewed is not None and (reviewed["asOfDate"] != as_of
+            or sum((Decimal(row["remainingHours"]) for row in reviewed["phases"].values()), ZERO) != Decimal(source["remainingHours"]))):
+        reviewed = None
+    exact = "effort" not in entry["installation"]["preview"]["document"] and Decimal(source["remainingHours"]) == Decimal(original["hours"])
     phases = []
     for phase in original["plan"]["phases"]:
         duration = phase.get("business_days")
         duration = duration if exact and isinstance(duration, int) and not isinstance(duration, bool) and duration >= 0 else 0
-        phases.append({"phaseId": phase["id"], "remainingHours": original["effort"][phase["id"]] if exact else None,
+        remaining = reviewed["phases"][phase["id"]]["remainingHours"] if reviewed else original["effort"][phase["id"]] if exact else None
+        note = ("Reviewed remaining effort from saved Installation edition " + str(selected["installationRevision"]) + ". "
+                + reviewed["phases"][phase["id"]]["review"]["note"]) if reviewed else ""
+        phases.append({"phaseId": phase["id"], "remainingHours": remaining,
             "effortHours": {}, "dependsOn": list(phase["depends_on"]), "releaseDate": None, "dueDate": None,
-            "minBusinessDays": duration, "priority": None, "note": ""})
+            "minBusinessDays": duration, "priority": None, "note": note})
     return {"taskId": source["id"], **ref(selected), "deliveryPhaseIds": [], "deliveryBoundaryNote": "",
             "phases": phases, "note": ""}
 
@@ -337,7 +366,7 @@ def seed(context, saved, source_rows, inputs, selections):
             entry = frozen_entry(context, selected)
             if task_id not in index or not matches(context, index[task_id], entry):
                 fail("Select an Installation matching the commercial task's original case and source.")
-            chosen[task_id] = seed_group(context, index[task_id], selected)
+            chosen[task_id] = seed_group(context, index[task_id], selected, saved["inputs"]["asOfDate"])
         def update(fields, inherited=False):
             if inherited and FIELD not in fields:
                 return
