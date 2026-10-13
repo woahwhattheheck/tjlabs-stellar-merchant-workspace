@@ -1,0 +1,330 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "economic-research-customer-programme",
+  "heading": "## Recurring economic-report installation",
+  "sources": [
+    {
+      "id": "economic-research-operator-guide",
+      "label": "Research source catalogue and complete customer-agent operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/FRED_RESEARCH_WORKSPACE.md",
+      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+          "git_blob": "03833869de737d00678f690a4c5bb6861fa9fe73",
+          "bytes": 16281,
+          "sha256": "577d1223b430218ceabd548d5ad7071331ac5bc04e7a902334188fbe2b307433"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-agent-actions",
+      "label": "Configured native Research source, review and product actions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/fred-research.mjs",
+      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+          "git_blob": "379a81d87e62c4c352dc742eccfb1a931b6e2ab1",
+          "bytes": 11910,
+          "sha256": "175d9760f2150adf4cc06b67616b86d20a114a835595b23759e82982c4478e47"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-agent-catalogue",
+      "label": "Complete Research tool definitions and continuation arguments",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/catalog/fred-research.mjs",
+      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+          "git_blob": "4b08de78a75c91e795ec1314110908d3ff3caf71",
+          "bytes": 6984,
+          "sha256": "01db4dac1dec01f82077e48b5fb3505a7b0fb606c7b6270e3997684c363cbc5c"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-client",
+      "label": "Original workspace client and full retained-file receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/fred-workspace-client.mjs",
+      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+          "git_blob": "27053f4e30a9fabc701c87bef9cba0198244ba1c",
+          "bytes": 121689,
+          "sha256": "e8a65623d32ad343df5d4d5c22ce1669f3240df4d2cfd8d5c781347901ef97a7"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-provider",
+      "label": "Existing economic workspace provider and Research composition",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/providers/fred-workspaces.mjs",
+      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+          "git_blob": "e4b5f401e69185d542bbf8aeac98ac65f0292826",
+          "bytes": 10363,
+          "sha256": "b8640a5857829be9c43c7050563325e109cad78132ee72d6405d707110689383"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-native-workspace",
+      "label": "Original economic workspace with revision and coverage-time selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/workspace.mjs",
+      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+          "git_blob": "0f5c7e44477b3824c43fa187c1fbaf41099f3903",
+          "bytes": 34469,
+          "sha256": "49b08f6906318c8329c874305c1aa616fae4c13447eb65f283dc4fde0b898f82"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-agent-course",
+      "label": "Complete customer-agent course and independent project receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/fred-research-journey.mjs",
+      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+          "git_blob": "2627f7416e94851e1d96152e7cff06c2bb14d659",
+          "bytes": 33042,
+          "sha256": "cae0b481824491d564ac1446938a4f447ba8ef309a475db5c7eb8a329d7352d8"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-source-course",
+      "label": "Original source catalogue, retained sources and issued editions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/native-journey.mjs",
+      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+          "git_blob": "e751842ce5c0f4171d7394c7931db065166a0a1b",
+          "bytes": 14558,
+          "sha256": "2b544812b3b0930991dbbc19611425bf5f905079a9b2ad43b7f3a927888fb7b2"
+        }
+      ]
+    },
+    {
+      "id": "economic-research-installed-contribution",
+      "label": "Installed Research command and complete runtime source registration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/fred-workspace-agent.json",
+      "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1fe679720d7a8a53e8159e7bc58af0a6c51f6ad1",
+          "git_blob": "7c2d4825564028a805a3732fb064d351f9507ad6",
+          "bytes": 12300,
+          "sha256": "fe62dab743f2c9a701468d21cfa9dec9b6b6cfc5155018e834a28dbd04cc6736"
+        }
+      ]
+    },
+    {
+      "id": "economic-regional-customer-guide",
+      "label": "Complete regional production and customer receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/econsult-regional-production-20261013/README.md",
+      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "required": true,
+      "editions": [
+        {
+          "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+          "git_blob": "f1a8644a462bb6c3f44c70528169e7d2eeb8f1bb",
+          "bytes": 15963,
+          "sha256": "413fc230d933705609a341f6e722682ce739113b5c772158ed9dd043cdf9b6b7"
+        }
+      ]
+    },
+    {
+      "id": "economic-regional-customer-controller",
+      "label": "Original regional programme and whole-project continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/econsult-regional-production-20261013/run-econsult-native.py",
+      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "required": true,
+      "editions": [
+        {
+          "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+          "git_blob": "ce81c66384f9d3b86de03452a79edb0823677c72",
+          "bytes": 35328,
+          "sha256": "00051683e017485054ca10307154707c0284ea6fac31c62e52786babeba993c8"
+        }
+      ]
+    },
+    {
+      "id": "economic-regional-complete-source-kit",
+      "label": "Whole regional application, inputs and receiving source kit",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/econsult-regional-production-20261013/execution-kit.json",
+      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "required": true,
+      "editions": [
+        {
+          "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+          "git_blob": "6c207c70ae2f8ba83997137efbff619e14c7c3c1",
+          "bytes": 3979484,
+          "sha256": "5746b53177655242317793f868c2212bf94bd4fe246e63179a31edf5e823e5d5"
+        }
+      ]
+    },
+    {
+      "id": "economic-mtc-original-import",
+      "label": "Original regional forecast import and independent project restore",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/econsult-regional-production-20261013/mtc-source-catalogue/import-mtc-sources.mjs",
+      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "required": true,
+      "editions": [
+        {
+          "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+          "git_blob": "d5130ee5e135a54a84edcbfb3501cb9e7f60a783",
+          "bytes": 20947,
+          "sha256": "a7213a77a6de2631dc0e1aa32440978df92602c6c1909032a0f5c4063625950b"
+        }
+      ]
+    },
+    {
+      "id": "economic-mtc-original-receiver",
+      "label": "Complete original forecast PDF receiving and retained pages",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/econsult-regional-production-20261013/mtc-source-catalogue/receive-mtc-originals.py",
+      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "required": true,
+      "editions": [
+        {
+          "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+          "git_blob": "91159fc469feba68257a85a738ff778d4c518ffe",
+          "bytes": 21220,
+          "sha256": "37383731b57f40a6cd66169b301faec0c393bed151a45850ea7aab8e3bc203a4"
+        }
+      ]
+    },
+    {
+      "id": "economic-mtc-receiving-guide",
+      "label": "Original two-PDF receiving and complete source-review procedure",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/econsult-regional-production-20261013/mtc-source-catalogue/ORIGINAL_RECEIVING.md",
+      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "required": true,
+      "editions": [
+        {
+          "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+          "git_blob": "8f28bce0c5fa0d21914ffb909b60c13ecda05fcd",
+          "bytes": 7811,
+          "sha256": "c7de7b214324d6a5d49db64827af5e07bb8c7b938b9ebbb451d9dad1b1fe8d68"
+        }
+      ]
+    },
+    {
+      "id": "economic-mtc-source-definition",
+      "label": "Complete original source and research-product definitions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/econsult-regional-production-20261013/mtc-source-catalogue/catalogue-input.json",
+      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "required": true,
+      "editions": [
+        {
+          "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+          "git_blob": "77dace7ca373cc5d8850dce2c193d0e460b536db",
+          "bytes": 9083,
+          "sha256": "2b664aa05fd5ecb51919dbc5781a0bc7aee2c9db08cbda575e7071e1ecb255f6"
+        }
+      ]
+    },
+    {
+      "id": "economic-mtc-published-table",
+      "label": "Full source-labelled published regional-growth table",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/econsult-regional-production-20261013/mtc-source-catalogue/MTC_PBA2050Plus_Full_Published_Growth_Table_2024_12_17.json",
+      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "required": true,
+      "editions": [
+        {
+          "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+          "git_blob": "6932950f0ec5d9eccfd854b6e4365ac827251602",
+          "bytes": 3946,
+          "sha256": "6fce41e3b42febfc38eedb96f79400f7a1745c635d963571349eb50855e81e7c"
+        }
+      ]
+    },
+    {
+      "id": "economic-mtc-published-table-csv",
+      "label": "Complete long-form original regional-growth values",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/econsult-regional-production-20261013/mtc-source-catalogue/MTC_PBA2050Plus_Table1_All28Values.csv",
+      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "required": true,
+      "editions": [
+        {
+          "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+          "git_blob": "9abaea7e669bb0eec636eeb7a816d51f5fcd98c9",
+          "bytes": 10332,
+          "sha256": "838d5f91452350fa5fd518d6723cbb3da4c33b0e650c4c32b84912f442d24160"
+        }
+      ]
+    },
+    {
+      "id": "economic-mtc-operating-guide",
+      "label": "Regional source roles, full import and customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/econsult-regional-production-20261013/mtc-source-catalogue/README.md",
+      "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+      "required": true,
+      "editions": [
+        {
+          "commit": "f841884ab0c93714918ca295844fe4ee0890b04a",
+          "git_blob": "cca2806d14b75a788a28b4fdb999990c247ab176",
+          "bytes": 10339,
+          "sha256": "daf26940177f051102c69064c21b534d20487d4d4889c179fc77f93fe1202fed"
+        }
+      ]
+    }
+  ]
+}
