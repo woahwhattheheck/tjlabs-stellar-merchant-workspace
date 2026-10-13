@@ -8,6 +8,62 @@ The chapter is `products/flowable-merchant/GRANT.md`. Its exact heading is:
 
 The declaration is `stellar-forge/developer-site/grant-products/flowable-operations.json`. It preserves all 25 preceding public source selections and their measured edition histories, and adds 29 complete current source selections. These additions cover source authoring, decision programmes, event/document intake, selected document comparison, history/XES, customer Installation and the Source Desk. The new source selections use merged public revision `05d9276b93a1887ce1fd499572d6dfc8f45f7214`. Each declaration binds the complete actual file bytes; earlier source selections retain their original pins.
 
+## Current native job recovery author edition
+
+Operation `SCF-FLOWABLE-NATIVE-JOBS-B43A-20261013` adds the complete merged native job recovery application to this existing author contribution. The matched chapter and declaration now select **92 source IDs**: all earlier 67 source objects and measured editions are retained. Eighteen Merchant source IDs bind the initial job-capable application at `46a6670324d28ab4ed9cfab80e89bc3bfbbed0a2`; seven additional IDs bind the complete installed receiving course, distribution and original helper at `79a88659b13e9da69946c738bb7a89999ed974e7`. The managed entry and operating guide retain both measured editions and select that following merge. The earlier 25-, 54- and 67-source receiving descriptions later in this guide describe their preserved editions.
+
+Receive the entire chapter, updated declaration and this guide together. Preserve the cumulative publisher's current source union, other author contributions, four output files and saved-v7 application. This author successor leaves the requested USD 38,000, 400 prospective hours, 150 days, six funded packages and two selected installation targets unchanged.
+
+### Operate and receive the job-capable installation
+
+Start with the actual complete installed Flowable application, the retained engine connection and the customer's approved corrective operation. Use [JOBS.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79a88659b13e9da69946c738bb7a89999ed974e7/products/flowable-merchant/JOBS.md) to capture all five native queues, inspect the original job and available complete exception, retain a full unfinished working copy, prepare the exact action, review the current-state comparison, and dispatch through the original operation. The guide covers the ordinary CLI and typed client as well as the industrial browser.
+
+Keep native acknowledgment, observed job movement, process completion and customer acceptance as their respective actual results. On an interrupted dispatch, use the original pending request and saved operation. Full current-state comparisons and the original response determine whether an action can be reconciled; an unknown result must not silently produce another mutation.
+
+Receive and reopen the complete workspace through the original export and adoption path. Review the original job capture, all recovery revisions, exact request and response resources, retained exceptions, working-copy downloads and final native observations. Open all applicable source/download/archive members and the actual installed desktop and narrow views under the owner instruction retained below. A private credential reference follows its existing receiving process; the workspace contains the operating record, not a replacement authentication system.
+
+The isolated native Flowable 8 demonstration and browser course remain within the same original job operation `FLOWABLE-NATIVE-JOB-RECOVERY-B43A-20261013`, Sales parent `1791821323.519669`. Its accepting operator must carry the exact complete source, genuine engine settings, original preceding workspace, actual native failures and recovery, desktop at 1440px and narrow at 390px, interrupted original dispatch and independent cold receiving through that existing operation. Preserve the actual execution and observed outcome when incorporating it into the grant.
+
+### Installed native receiving source
+
+The complete native course and installation joins are merged in PR2050 at `79a88659b13e9da69946c738bb7a89999ed974e7`. Select that complete installed source when invoking [job-native-host.py](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79a88659b13e9da69946c738bb7a89999ed974e7/stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/job-native-host.py) through [JOB_NATIVE_RECEIVING.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79a88659b13e9da69946c738bb7a89999ed974e7/stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/JOB_NATIVE_RECEIVING.md). The declared selection includes the actual original `flowable-native-host.py` helper as well as the full course, distribution and managed entry; its original artifact/process ownership is reused.
+
+Keep the actual previously received workspace, installed source commit, retained publisher WAR and selected runtime paths. The course freezes those inputs, operates the isolated genuine engine, retains native failures and corrective operations, and uses the actual installed browser before exporting and reopening the complete workspace with a second receiver. Preserve the same output directory and original request identities across interruption. Read the guide's complete command, phase settings, source inventory, original-process closure and all-attachments opening instructions.
+
+The application implementation is PR2044; the complete receiving and package integration is PR2050. Their merge identities describe delivered source. Record an accepting operator, actual execution results and observed browser output in the original Flowable receiving operation when it runs. The original cumulative grant publisher incorporates those resulting facts into the same manuscript and saved submission programme.
+
+### Complete additional source selection
+
+| Stable source ID | Complete original file |
+| --- | --- |
+| `flowable-job-recovery-model` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/model.mjs` |
+| `flowable-job-recovery-actions` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/actions.mjs` |
+| `flowable-job-recovery-review` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/review.mjs` |
+| `flowable-job-recovery-browser` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/job-browser.mjs` |
+| `flowable-job-recovery-workspace-browser` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/browser.mjs` |
+| `flowable-job-recovery-workspace-layout` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/index.html` |
+| `flowable-job-recovery-browser-assets` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/browser-assets.json` |
+| `flowable-job-recovery-server` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/workspace/server.mjs` |
+| `flowable-job-recovery-client` | `products/flowable-merchant/client.mjs` |
+| `flowable-job-recovery-managed` | `products/flowable-merchant/managed.mjs` |
+| `flowable-job-recovery-types` | `products/flowable-merchant/client.d.mts` |
+| `flowable-job-recovery-cli` | `products/flowable-merchant/cli.mjs` |
+| `flowable-job-recovery-operating` | `products/flowable-merchant/JOBS.md` |
+| `flowable-job-recovery-tool-catalog` | `stellar-forge/mcp-merchant-operator/catalog/flowable-workspace.mjs` |
+| `flowable-job-recovery-tool-provider` | `stellar-forge/mcp-merchant-operator/providers/flowable-workspaces.mjs` |
+| `flowable-job-recovery-merchant-guide` | `products/flowable-merchant/README.md` |
+| `flowable-job-recovery-native` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/job-native.mjs` |
+| `flowable-job-recovery-native-contract` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/JOB_NATIVE_CONTRACT.md` |
+| `flowable-job-recovery-producer` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/job-native-host.py` |
+| `flowable-job-recovery-native-course` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/job-native-journey.mjs` |
+| `flowable-job-recovery-browser-course` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/job-native-browser.mjs` |
+| `flowable-job-recovery-demonstration-source` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/examples/job-recovery-demo.bpmn20.xml` |
+| `flowable-job-recovery-receiving-guide` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/JOB_NATIVE_RECEIVING.md` |
+| `flowable-job-recovery-distribution` | `stellar/scf-starforge-20261009/distribution/contributions/flowable-workspaces.json` |
+| `flowable-job-recovery-original-host` | `stellar/scf-starforge-20261009/sf30-seller-sdk/flowable/flowable-native-host.py` |
+
+Each new declaration binds the immutable commit, full Git blob, byte length and SHA-256 from the actual merged file. New entries are optional for historical chapters, so an earlier full chapter continues to select its own original sources. The current chapter includes all 25 current Merchant links and selects all 92 IDs together. Run the existing `grant-product-sources-core.mjs` receiver against the cumulative publisher's actual current complete source index; retain every unrelated row and author registration. The measured original baseline used for this author's receiving exercise is identified in its full source packet and must not be presented as the later cumulative count.
+
 ## Receive the customer operation
 
 Start from the customer's actual intended result. Retain the approved workorder, business identity, source edition, permitted input and receiving owner. Choose whether the work requires an ordered BPMN process, DMN evaluation, adaptive CMMN case, or their explicitly joined application. The authored grant, vendor and onboarding examples provide implementation source for commissioning; the customer supplies its actual policy and operating decisions.
