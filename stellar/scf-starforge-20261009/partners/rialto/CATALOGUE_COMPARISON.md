@@ -61,6 +61,39 @@ Importing a replacement or starting a new comparison first retains the old compl
 
 Start a new comparison with this catalogue clears the active comparison and leaves the customer request editor intact. The earlier review stays available in the saved-comparison list.
 
+## Carry the customer decision into the original request and Installation
+
+After reviewing the catalogue changes, download both the exact customer request selection from the original editor and Download complete comparison from the review. Receive them together when creating the original request:
+
+```sh
+starforge rialto-customer select \
+  --source /absolute/private/catalogue-002 \
+  --selection /absolute/downloads/rialto-selected-request.json \
+  --catalogue-review /absolute/downloads/rialto-complete-comparison.json \
+  --directory /absolute/private/customer-001
+```
+
+The optional review must use the exact selected catalogue as its after edition. Its source hash, full after-source text, original row index and resource key must match. All original before/after rows, review notes, filters and carried drafts remain intact. Validation completes before the request's receiving stage is created.
+
+The original atomic request stage retains these files:
+
+| Relative file | Complete retained content |
+|---|---|
+| catalogue-review/received.json | Byte-exact downloaded comparison and customer review |
+| catalogue-review/before.catalogue.json | Complete exact before catalogue source |
+| catalogue-review/after.catalogue.json | Complete exact after catalogue source |
+| catalogue-review/report.html | Self-contained original report with the complete comparison and carried drafts |
+
+The request's selection.json binds every retained file's path, byte count and SHA-256 to the exact selected catalogue and original row. The usual request verifier checks the binding and all four files when the original customer operation or Installation reopens them.
+
+The original request URL, method, cap, selected payment option, body and headers come from the actual downloaded request selection and explicit original CLI options. Review notes and carried drafts supply context; attaching them does not replace those request fields. Continue the original challenge and buyer preparation for that selected request.
+
+Use the existing pack and receive commands for the complete request directory. On the receiving machine, open catalogue-review/report.html to review the same customer decision, or receive catalogue-review/received.json in the original report. The existing buyer-operation import still reconstructs its own machine-local paths.
+
+The original installation command snapshots this complete request with its retained review. RIALTO_REQUEST.md links the full comparison and its original JSON; RIALTO_REQUEST.json retains the exact review binding with relative receiving paths. installation-open verifies the complete edition and returns catalogueReviewReport when present. In a received Installation directory, the report lives at request/catalogue-review/report.html.
+
+Attach the complete review when making the request selection. Previously retained requests and native history continue through their original directories. Requests made without this optional flag retain their established receiving and Installation behavior.
+
 ## Print the complete selected view
 
 The screen shows 50 comparison identities per page. Printing includes every identity matching the current change/type/search/repeated-identity filters. It includes the complete source descriptions and coverage findings, the overall handover note, each matching identity's review note, and the complete before/after original row lists.
