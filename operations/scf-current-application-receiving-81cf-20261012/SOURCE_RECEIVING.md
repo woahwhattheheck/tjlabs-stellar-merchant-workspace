@@ -266,12 +266,23 @@ The original archive writer saves the complete case once, after these stages.
 when the requested browser continuation also completes.
 
 The browser directory retains its original local origin and complete IndexedDB
-storage snapshot. Checkpoints surround the original working save and completed
-stages; the next retained attempt reopens the same saved records and revision
-checks. The original receipt comparison preserves any later or different local
-work. Browser process IDs, host/boot/namespace/start identity and cleanup remain
-with the maintained controller. The continuation closes its own Chromium and
-listener, and keeps prior process observations in the same case's attempt history.
+storage snapshot. Checkpoints surround the original working save, the original
+review save and completed stages. A review-save intent records the prior local
+IDs; a resumed run reopens the accepted exact review record or reconciles its
+single complete saved effect before it can issue another save-copy. Older
+retained saved-review records are adopted only when the actual local binding
+still matches. The browser snapshot is saved before either acceptance receipt.
+The original receipt comparison preserves any later or different local work.
+
+Browser process IDs, host/boot/namespace/start identity and cleanup remain with
+the maintained controller. The continuation closes its own Chromium and listener,
+and keeps prior process observations in the same case's attempt history.
+Before assembling either a complete or partial archive, the caller requires
+the original controller to confirm cleanup of every launched native and browser
+phase. If any writer's exit is unconfirmed, it returns incomplete with
+`archiveState: WAITING_FOR_OWNED_PROCESS_EXIT`, the retained operation directory
+and the exact pending phase identities. The equipped owner resumes that
+original operation; the command leaves the current saved case intact.
 
 Use the resulting case's actual current version for a continuation. Its
 `browser/RESULT.json`, complete downloads, saved records, browser storage and

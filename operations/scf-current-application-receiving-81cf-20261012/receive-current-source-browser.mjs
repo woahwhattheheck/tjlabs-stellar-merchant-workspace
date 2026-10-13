@@ -402,10 +402,94 @@ export async function receiveCurrentSourceBrowser(page,{
 
     await page.goto(new URL(input.routes.review,origin).href,{waitUntil:'domcontentloaded'});
     await settle(page,'review');
-    await choose(page,page.locator('#review-open-round'),roundText,'Current_Complete_Review.json');
-    await settle(page,'review');await page.locator('#review-save-copy').click();await settle(page,'review');
-    const reviewRecord=await record(page,'review');
-    need(same(reviewRecord.input,currentRound),'Keep every original event and selected review edition.');
+    const reviewSelection={...saveSelection,originalReviewId:currentRound.id,
+      reviewSHA256:sha(roundText)};
+    const reviewIntentPath=join(output,'review-save-intent.json');
+    const reviewReceiptPath=join(output,'review-save-accepted.json');
+    const reviewRecordPath=join(output,'saved-review-record.json');
+    let reviewIntent=await retainedJSON(reviewIntentPath);
+    const reviewReceipt=await retainedJSON(reviewReceiptPath);
+    const retainedReview=await retainedJSON(reviewRecordPath);
+    const localReviews=async()=>page.evaluate(async reviewId=>{
+      const store=await import('./drafts.mjs'),metadata=await store.listDrafts(),records=[];
+      for(const row of metadata){
+        const value=await store.loadDraft(row.id);
+        if(value?.input?.id===reviewId)records.push(value);
+      }
+      return {ids:metadata.map(row=>row.id),records};
+    },currentRound.id);
+    const validReviewRecord=value=>value&&typeof value.id==='string'&&value.id&&
+      Number.isSafeInteger(value.revision)&&value.revision>=1&&
+      typeof value.updatedAt==='string'&&Number.isFinite(Date.parse(value.updatedAt))&&
+      same(value.input,currentRound);
+    const observed=await localReviews();
+    if(!reviewIntent){
+      need(!reviewReceipt,'Retain the intent belonging to the accepted review save.');
+      let selected=retainedReview;
+      if(selected){
+        need(validReviewRecord(selected)&&
+          same(observed.records.find(row=>row.id===selected.id),selected),
+          'Reopen the exact saved review binding; preserve its later local edits.');
+      }else{
+        const matching=observed.records.filter(row=>same(row.input,currentRound));
+        need(matching.length<=1,'Keep the multiple current review bindings and select the original saved record.');
+        selected=matching[0]||null;
+      }
+      reviewIntent={schema:'stellar-forge.current-source-review-save.v1',
+        selection:reviewSelection,beforeIds:observed.ids,existingRecord:selected};
+      await retainJSON(reviewIntentPath,reviewIntent);
+      // Persist the complete original store before the original save-copy action.
+      if(checkpoint)await checkpoint();
+    }
+    need(reviewIntent.schema==='stellar-forge.current-source-review-save.v1'&&
+      same(reviewIntent.selection,reviewSelection)&&Array.isArray(reviewIntent.beforeIds)&&
+      reviewIntent.beforeIds.every(id=>typeof id==='string'&&id)&&
+      new Set(reviewIntent.beforeIds).size===reviewIntent.beforeIds.length&&
+      (!reviewIntent.existingRecord||validReviewRecord(reviewIntent.existingRecord)),
+      'Retain this exact review-save intent and the original local preimage.');
+    if(reviewReceipt)need(
+      reviewReceipt.schema==='stellar-forge.current-source-review-save-accepted.v1'&&
+      same(reviewReceipt.selection,reviewSelection)&&validReviewRecord(reviewReceipt.record),
+      'Retain the accepted native record for this exact current review.');
+    let reviewRecord=reviewReceipt?.record||retainedReview||reviewIntent.existingRecord;
+    if(reviewRecord){
+      need(validReviewRecord(reviewRecord)&&
+        same(observed.records.find(row=>row.id===reviewRecord.id),reviewRecord)&&
+        (!retainedReview||same(retainedReview,reviewRecord))&&
+        (!reviewIntent.existingRecord||same(reviewIntent.existingRecord,reviewRecord)),
+        'The saved review has changed or disappeared. Preserve its actual local binding and later edits.');
+    }else{
+      const following=observed.records.filter(row=>!reviewIntent.beforeIds.includes(row.id));
+      need(following.length<=1,
+        'Multiple review saves followed this intent. Preserve each record before selecting the original effect.');
+      if(following.length){
+        reviewRecord=following[0];
+        need(validReviewRecord(reviewRecord)&&reviewRecord.revision===1,
+          'The review save has later or different work. Preserve its actual local record.');
+      }else{
+        await choose(page,page.locator('#review-open-round'),roundText,'Current_Complete_Review.json');
+        await settle(page,'review');
+        if(checkpoint)await checkpoint();
+        await page.locator('#review-save-copy').click();await settle(page,'review');
+        reviewRecord=await record(page,'review');
+        need(validReviewRecord(reviewRecord)&&reviewRecord.revision===1&&
+          !reviewIntent.beforeIds.includes(reviewRecord.id),
+          'Accept the actual new record from the original review save-copy action.');
+      }
+    }
+    const openedReview=await reopenReview(page,reviewRecord);
+    need(same(openedReview,reviewRecord),'Open the entire selected original review record before accepting its save.');
+    // A portable receipt must never precede the browser snapshot containing it.
+    if(checkpoint)await checkpoint();
+    await retainJSON(reviewReceiptPath,{
+      schema:'stellar-forge.current-source-review-save-accepted.v1',
+      selection:reviewSelection,record:reviewRecord
+    });
+    await retainJSON(reviewRecordPath,reviewRecord);
+    for(const name of ['review-save-intent.json','review-save-accepted.json','saved-review-record.json']){
+      const body=await readFile(join(output,name));
+      files.push({path:name,bytes:body.length,sha256:sha(body)});
+    }
     const reviewExport=await download(page,page.locator('#review-export'),'Current_Browser_Review.json');
     const reviewReport=await download(page,page.locator('#review-report'),'Current_Review_Report.md');
     const reviewedDraft=await download(page,page.locator('#review-draft-export'),'Current_Reviewed_Submission.json');
@@ -416,7 +500,7 @@ export async function receiveCurrentSourceBrowser(page,{
       'Download the complete current review report.');
     const reopenedReview=await reopenReview(page,reviewRecord);
     need(same(reopenedReview,reviewRecord),'Reopen the saved complete original review record.');
-    await write('saved-review-record.json',json(reopenedReview));
+    await retainJSON(reviewRecordPath,reopenedReview);
     await stage('current-source-review-saved-exported-and-reopened',{
       reviewId:currentRound.id,reviewActions:currentRound.events.length,
       recordId:reviewRecord.id,revision:reviewRecord.revision,status:currentView.status

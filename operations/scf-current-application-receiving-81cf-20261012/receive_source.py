@@ -46,6 +46,27 @@ def copy_source(source, destination):
         shutil.copyfile(source, destination)
     return str(destination)
 
+
+def pending_writer_phases(record, label):
+    """Only the original controller can confirm its complete writer cleanup."""
+    phases = record.get("phases")
+    if not isinstance(phases, dict):
+        return [{"controller": label, "reason": "Original phase record is unavailable."}]
+    pending = []
+    for name, phase in phases.items():
+        if (phase.get("state") in ("NOT_STARTED", "LAUNCH_FAILED") and
+                phase.get("pid") is None and not phase.get("process_identity") and
+                not phase.get("process_group")):
+            continue
+        if (phase.get("group_cleanup_complete") is not True or
+                phase.get("stdout_identity", {}).get("writer_exit_pending") or
+                phase.get("stderr_identity", {}).get("writer_exit_pending")):
+            pending.append({"controller": label, "phase": name,
+                            "pid": phase.get("pid"), "state": phase.get("state"),
+                            "process_identity": phase.get("process_identity"),
+                            "termination": phase.get("termination")})
+    return pending
+
 def receive_source(args, original):
     selected = args.source_input.read_bytes()
     if digest(selected) != args.expected_source_input_sha256:
@@ -268,6 +289,7 @@ def receive_source(args, original):
         "reviewStatus": result.get("reviewStatus") if result else None,
     })
     native["nativeSourceState"] = native["state"]
+    native_pending = pending_writer_phases(native, "native-source")
     if getattr(args, "source_browser", False):
         browser_output = output / "browser"
         browser_output.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -289,7 +311,7 @@ def receive_source(args, original):
         browser_config_path = browser_output / "config.json"
         original.write_json(browser_config_path, browser_config)
         remaining = args.timeout_seconds - (time.monotonic() - programme_started)
-        if native["state"] == "COMPLETE" and remaining > 0:
+        if native["state"] == "COMPLETE" and not native_pending and remaining > 0:
             try:
                 browser_native, browser_result = run_receiving_program(
                     OPERATION, root, browser_output, context, args.node, args.chromium,
@@ -301,8 +323,15 @@ def receive_source(args, original):
                 native["state"] = ("COMPLETE" if browser_native["state"] == "COMPLETE"
                                    else "INCOMPLETE")
             except Exception as error:
+                # Retain the actual controller's phase identities even if its
+                # outer return failed. An absent record cannot establish exit.
+                try:
+                    browser_record = json.loads((browser_output / "native-process.json").read_text())
+                except (OSError, ValueError):
+                    browser_record = {}
                 native["browserContinuation"] = {
-                    "state": "INCOMPLETE", "error": str(error), "errorType": type(error).__name__,
+                    **browser_record, "state": "INCOMPLETE",
+                    "error": str(error), "errorType": type(error).__name__,
                 }
                 native["state"] = "INCOMPLETE"
         else:
@@ -313,6 +342,18 @@ def receive_source(args, original):
                            else "The shared source-receiving deadline elapsed."),
             }
             native["state"] = "INCOMPLETE"
+    pending = list(native_pending)
+    browser_observed = native.get("browserContinuation")
+    if browser_observed and browser_observed.get("state") != "NOT_STARTED":
+        pending.extend(pending_writer_phases(browser_observed, "source-browser"))
+    if pending:
+        # Keep the live operation intact for its original controller. Archiving
+        # or replacing the Library file while any writer may survive is unsafe.
+        native.update(state="INCOMPLETE", archiveState="WAITING_FOR_OWNED_PROCESS_EXIT",
+                      pendingWriterPhases=pending, retainedOperationDirectory=str(root))
+        original.write_json(output / "native-result.json", native)
+        print("SCF_REVIEW_RESUME_RESULT " + json.dumps(native), flush=True)
+        return 1
     state = native["state"]
     original.write_json(output / "native-result.json", native)
     archive = root / ("SCF-Current-Application-and-Review" +
