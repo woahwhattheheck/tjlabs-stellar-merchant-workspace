@@ -397,6 +397,9 @@
     "forecast-workbook-desk.mjs",
     "forecast-workbook-host.mjs",
     "forecast-workbook.css",
-    "FORECAST_WORKBOOK.md"
+    "FORECAST_WORKBOOK.md",
+    "portfolio-working-copies.mjs",
+    "portfolio-working-copy-store.mjs",
+    "PORTFOLIO_WORKING_COPIES.md"
   ]
 }
