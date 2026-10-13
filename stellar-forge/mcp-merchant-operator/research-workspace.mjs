@@ -10,6 +10,7 @@ import {callResearchDocuments,exportResearchDocuments,RESEARCH_DOCUMENT_PREFIXES
 import {callResearchCitationUpdates,RESEARCH_CITATION_REVIEW_PREFIX} from './research-citation-updates.mjs';
 import {callResearchRiskOfBias,exportResearchRiskOfBias,RESEARCH_RISK_PREFIX} from './research-risk-of-bias.mjs';
 import {callResearchExtraction,exportResearchExtraction,RESEARCH_EXTRACTION_PREFIX} from './research-extraction.mjs';
+import {callResearchStudyFlow,exportResearchStudyFlow,RESEARCH_STUDY_FLOW_PREFIX} from './research-study-flow.mjs';
 import {callResearchEligibility,exportResearchEligibility,RESEARCH_ELIGIBILITY_PREFIX} from './research-eligibility.mjs';
 import {callResearchCustomerUpdates,exportResearchCustomerUpdates,RESEARCH_CUSTOMER_UPDATE_PREFIX} from './research-customer-updates.mjs';
 import {callResearchRis,exportResearchRis,RESEARCH_RIS_PREFIX} from './research-ris.mjs';
@@ -291,6 +292,8 @@ export class MerchantResearchWorkspaces{
         ({result,selection}=await exportResearchCustomerUpdates(entry.client,args,{file:temporary,download}));
       }else if(args.kind.startsWith('eligibility-')){
         ({result,selection}=await exportResearchEligibility(entry.client,args,{file:temporary,download}));
+      }else if(args.kind.startsWith('study-flow-')){
+        ({result,selection}=await exportResearchStudyFlow(entry.client,args,{file:temporary,download}));
       }else if(args.kind.startsWith('extraction-')){
         ({result,selection}=await exportResearchExtraction(entry.client,args,{file:temporary,download}));
       }else if(spec.format){
@@ -398,6 +401,7 @@ export class MerchantResearchWorkspaces{
       if(name.startsWith(RESEARCH_RISK_PREFIX))return callResearchRiskOfBias(c,name,args);
       if(name.startsWith(RESEARCH_CITATION_REVIEW_PREFIX))return callResearchCitationUpdates(c,name,args);
       if(name.startsWith(RESEARCH_EXTRACTION_PREFIX))return callResearchExtraction(c,name,args);
+      if(name.startsWith(RESEARCH_STUDY_FLOW_PREFIX))return callResearchStudyFlow(c,name,args);
       if(name.startsWith(RESEARCH_EUROPE_PMC_PREFIX))return callResearchEuropePmc(c,name,args,{
         source:(name,accepted)=>this.#source(entry,name,accepted)});
       if(RESEARCH_DOCUMENT_PREFIXES.some(prefix=>name.startsWith(prefix))){
