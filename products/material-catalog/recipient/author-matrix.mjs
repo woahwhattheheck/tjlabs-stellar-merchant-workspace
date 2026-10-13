@@ -43,7 +43,9 @@ export function buildAuthorDecisionMatrix(worklist,{catalog,observedAt,inputSha2
    let group=groups.get(proposal.id);
    if(!group){group={id:proposal.id,customerId:proposal.customerId,description:proposal.description,current:null,currentObserved:false,
     proposals:[],absentReturnIds:[],disagreement:false,staleBasis:false,blocked:false};groups.set(proposal.id,group);}
-   need(group.customerId===proposal.customerId&&group.description===proposal.description,'The original customer context identity differs.');
+   need(group.customerId===proposal.customerId,'The original customer identity differs.');
+   // The unchanged review validator already binds this ID to its normalized customer context.
+   // Keep every literal description in its complete attributed proposal; spelling is not a new context.
    const row=comparison?.rows[rowIndex]??null;
    if(row){if(group.currentObserved)need(same(group.current,row.current),'Current decisions changed across observations. Refresh the one original snapshot.');else{group.current=copy(row.current);group.currentObserved=true;}}
    const sourceStale=Boolean(row&&(!row.eligible||row.conflict));

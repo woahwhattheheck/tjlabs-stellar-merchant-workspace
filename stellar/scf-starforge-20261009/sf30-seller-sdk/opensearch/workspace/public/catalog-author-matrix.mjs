@@ -35,19 +35,21 @@ export function createAuthorMatrixPanel({container,element,getValue,getCatalog,g
   const byId=new Map(matrix.returns.map(x=>[x.returnId,x]));
   const rows=matrix.rows.filter(row=>(!chosen||row.proposals.some(x=>x.returnId===chosen))&&
    (filter==='all'||filter==='disagreement'&&row.disagreement||filter==='stale'&&row.staleBasis||filter==='missing'&&row.absentReturnIds.length||filter==='blocked'&&row.blocked)&&
-   (!query||JSON.stringify([row.customerId,row.description,row.proposals.map(x=>[byId.get(x.returnId).reviewer,x.proposal.material.materialId,x.proposal.material.description,x.proposal.note])]).toLowerCase().includes(query)));
+   (!query||JSON.stringify([row.customerId,row.description,row.proposals.map(x=>[byId.get(x.returnId).reviewer,x.proposal.description,x.proposal.material.materialId,x.proposal.material.description,x.proposal.note])]).toLowerCase().includes(query)));
   page=Math.min(page,Math.max(0,Math.ceil(rows.length/20)-1));$('author-matrix-count').textContent=rows.length+' contexts · page '+(page+1)+' of '+Math.max(1,Math.ceil(rows.length/20));
   $('author-matrix-previous').disabled=held||page===0;$('author-matrix-next').disabled=held||(page+1)*20>=rows.length;
   for(const row of rows.slice(page*20,page*20+20)){
    const article=element('article',undefined,{'data-author-matrix-context':row.id});
    article.append(element('h4',row.customerId+' · '+row.description),
     element('p',(row.disagreement?'Different reviewer proposals. ':'')+(row.staleBasis?'An original material or decision basis changed. ':'')+(row.blocked?'An original source cannot be verified. ':'')));
+   if(new Set(row.proposals.map(cell=>cell.proposal.description)).size>1)article.append(element('p','These literal descriptions identify the same original customer context after the catalogue’s unchanged Unicode, case and spacing normalization. Each returned description remains shown below.'));
    const now=element('section',undefined,{class:'author-matrix-current'});
    now.append(element('h5','Author decision at this observation'),element('p',row.currentObserved?(row.current?row.current.status+' · '+row.current.materialId+' · '+row.current.note:'No author decision recorded.'):'Not observed: all original returns for this context are blocked.'),details('Complete observed author decision',row.current));article.append(now);
    const cards=element('div',undefined,{class:'author-matrix-proposals'});
    for(const cell of row.proposals){
     const returned=byId.get(cell.returnId),card=element('section',undefined,{'data-author-matrix-return':cell.returnId});
     card.append(element('h5',returned.reviewer+' · '+returned.reviewId),labelIdentity(cell.returnId),
+     element('p','Original customer description: '+cell.proposal.description),
      element('p','Proposed '+cell.proposal.status+' · '+cell.proposal.material.materialId),
      element('p',cell.proposal.note||'No proposal note.'),
      element('p','Original catalogue revision '+returned.base.catalog.revision+' / edition '+returned.base.edition.id),
