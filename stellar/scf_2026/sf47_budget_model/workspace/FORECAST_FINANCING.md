@@ -47,6 +47,45 @@ A delta compares exact USD cents with the selected reference option. Missing or 
 
 **Inspect report and assumptions** shows every changed input, complete source issues and all dated cash rows in pages of 30. The full original result and source identity remain visible and included in JSON. **Download comparison CSV** produces one complete row per option; blank numeric cells mean unresolved or not applicable, not zero. Text that could be interpreted as a spreadsheet formula is guarded in this derived CSV; the exact original values remain in JSON.
 
+
+## Complete financing decision handover
+
+The comparison and Planning limits screens now produce a complete readable handover from a **retained native comparison**. Select the intended comparison edition and reference option. Choose **Download complete handover ZIP** for the full delivery, or **Download readable report** for one standalone HTML file. From a retained assessment, **Download assessed handover ZIP** and **Download assessed readable report** use that assessment's original comparison even when another comparison is currently selected. The selected assessment is marked explicitly; every other assessment of the same original comparison remains included.
+
+The export checks the complete study and original preview/request/result digests, obtains and verifies all original source attachments, and checks that neither the study nor the current case changed during preparation. A stale selection, missing source or failed download leaves the current editor, original study, saved comparisons and native records intact. The report states whether the comparison **matches the supplied case context at export** or is historical relative to that supplied context, against its exact case version and active option selection. A downloaded study may contain an earlier native case version. Opening a later copy does not check a newer live case or recalculate that label.
+
+### Read the complete decision
+
+Open `report.html` in an ordinary browser. It contains every option in the selected comparison, its original normalized inputs, input differences from the selected reference, complete calculation basis, scenarios, source issues and original dates. Read the grant-only and combined pooled cash columns separately. When customer-fund protection is enabled, its pooled balance, reserved amount, unreserved amount, unknown reservations and each remaining customer obligation have complete dated tables.
+
+The capacity section retains the native calendar-day distribution, available weekly hours, peak seven-day-equivalent hours and overloaded days. A seven-day equivalent does not establish a staff roster. Missing dates, unvalued or undated obligations, missing opening cash and other original uncertainties remain visible; zero is retained as an entered value. A numeric dated result does not resolve an undated or unvalued obligation. Planning limits retains each exact criterion, MEETS / EXCEEDS / UNRESOLVED result, explanation, scope group and finite shortlist. Read the original included invoices and customer scope before comparing options.
+
+Use the option selector, **Find within complete tables**, **Show all rows** and **Open all sections** to inspect the complete output. Filtering changes only this view. **Print complete report** opens all sections and includes every option and original row, then restores the screen's prior section state. Wide tables scroll horizontally on a narrow display. Long identifiers, source titles and notes wrap without hiding their original values.
+
+### Package contents and exact values
+
+The ZIP uses the original application ZIP writer. It contains:
+
+- `report.html`, the standalone complete readable report;
+- `study.json`, the full editable study with all comparisons, earlier option names/notes/captures, raw unfinished controls, criteria, adoptions, source receipts, exact pending requests and original attached bytes;
+- `selection.json`, binding the actual study revision/hash, selected comparison/hash, selected assessment, reference option, common source version and export time;
+- `comparison.json` and `assessments.json`, the complete original native selection and all associated assessment records;
+- `option-summary.csv` and `planning-limits.csv`;
+- one `options/NN/` directory per original option, with its complete native preview, every typed input and report field, every assumption difference and separate complete CSVs for dated cash, cash events, work, packages, invoices, grant receipts, customers and original issues; event-dependent work and customer-fund reservation tables are included when present in the original report;
+- exact original source files under `sources/<SHA-256>.bin`, with their original filenames, media types, source IDs and comparison membership in `source-index.json`;
+- a `manifest.json` listing each other member's exact byte count and SHA-256.
+
+All modeled dollar measures are USD unless an original field explicitly gives another currency; underlying native currency and exchange evidence remain in the exact report. CSV quoting retains commas and multiline text. Finite numeric values and strict signed-decimal USD, hour and criterion fields remain numeric for spreadsheet sums. Formula-like ordinary text is guarded in derived CSV. Blank CSV cells represent a null or absent field; `complete-inputs.csv`, `complete-report-fields.csv`, assumption difference kinds and the complete JSON retain the exact distinction among absent, null, empty, false and explicit zero. No table is truncated. A handover exceeding the supported 512 MiB complete output limit is rejected with the original study still available.
+
+### Reopen and continue the same work
+
+Use **Download complete editable study** inside the standalone report, or take `study.json` from the ZIP. In the original Forecast application, choose **Reopen study**. The existing receiver validates all original identities, history, digests and complete source bytes before replacing the current study. It preserves the prior local study through the original recovery download. A verified direct native-case descendant is supported by the existing receiving contract; the original full case export carries native records and their history.
+
+Read a historical comparison freely. Before adopting a calculated option, restore the intended option selection and calculate against the actual current case. Use the existing before/after adoption review and original Forecast Preview/Save. A report export does not introduce another financial writer or save a new forecast.
+
+The producing peer must open the **exact outgoing HTML and ZIP**, LOOK at the rendered desktop and narrow views, and operate option selection, table filtering, expansion, complete printing and editable-study download. Open the actual CSV/JSON/source members, then receive the exact study into the same original application and inspect its reopened controls and retained values. Include populated, empty, loading and error states and a historical comparison with no active options. Screenshots, source execution and a peer's source review do not substitute for looking at and operating the actual outgoing version. Use F47A's existing receiving continuation and original native case; preserve its accepted runtime and pending request identities.
+
+
 ## Adopt a reviewed option
 
 **Review in editor** restores a captured option, including unfinished raw values. **Review calculated adoption** uses the selected comparison's normalized native inputs and requires the comparison to match the current original source and active options.
@@ -202,7 +241,7 @@ The release producer uses the existing builder against the deliberately selected
 node /absolute/maintained/source/stellar/scf-starforge-20261009/distribution/build.mjs --repo /absolute/original-git-cache/repository.git --ref FULL_IMMUTABLE_COMMIT --selection grant-operations --out /absolute/new-grant-release --offline
 ```
 
-Use `--offline` when the original Git objects are already retained. A resumed build uses the same output, selected commit and `--resume`; a following source edition uses a new output. Keep the resulting TGZ, archive hash, manifest and original build receipt. Inspect the selected archive's `sourceSelection.id`, `sourceCommit` and complete source entries. The original manifest must contain `forecast_financing.py`, `forecast-financing.mjs`, `forecast-financing-desk.mjs`, `forecast-financing-decision.mjs`, `forecast-financing.css`, and their complete original host/client/CLI/calculator dependencies at that same release.
+Use `--offline` when the original Git objects are already retained. A resumed build uses the same output, selected commit and `--resume`; a following source edition uses a new output. Keep the resulting TGZ, archive hash, manifest and original build receipt. Inspect the selected archive's `sourceSelection.id`, `sourceCommit` and complete source entries. The original manifest must contain `forecast_financing.py`, `forecast-financing.mjs`, `forecast-financing-desk.mjs`, `forecast-financing-decision.mjs`, `forecast-financing-handover.mjs`, `forecast-financing.css`, and their complete original host/client/CLI/calculator dependencies at that same release.
 
 Follow [Grant Operations installation and operation](../../../../products/grant-operations/OPERATING.md) and its original runtime installer to prepare, install and inspect that complete release. An upgrade prepares a separate runtime, preserves the earlier installation and does not change the source of an accepted running application. In Applications, select the reviewed runtime with the **same original private grant workspace**, review the actual source/path/selection hash, save the setup, and use the original lifecycle to start it at the selected explicit origin/port. Preserve the original scenario, actual case and all stored financial events; do not initialize a replacement case to demonstrate this feature. The managed launcher verifies the full installed source selection before serving it. Only the original service owner stops or changes an active application.
 

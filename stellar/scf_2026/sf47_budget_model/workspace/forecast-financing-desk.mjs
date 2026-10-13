@@ -2,6 +2,7 @@
 import {signature} from './forecast-workbook.mjs';
 import {newFinancingState,validateFinancingState,verifyFinancingState,captureFinancingOption,financingRequest,retainFinancingComparison,financingComparisonCurrent,financingChanges,financingMetrics,financingMoneyDelta,financingCsv,completeFinancingSources,financingFile,receiveFinancingFile,financingSource,financingSha} from './forecast-financing.mjs';
 import {newFinancingDecision,retainFinancingDecision,restoreFinancingCriteria,financingDecisionCsv} from './forecast-financing-decision.mjs';
+import {buildFinancingHandover} from './forecast-financing-handover.mjs';
 const clone=v=>JSON.parse(JSON.stringify(v));
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=v=>v===null||v===undefined?'Unresolved':'USD '+v;
@@ -57,7 +58,7 @@ export function mountForecastFinancing({container,getCurrent,getEditor,api,avail
         esc(money(m.combinedGap))+'<br><small>End cash: '+esc(money(m.endBalance))+'</small>',
         m.protectedEnabled?'Starting need '+esc(money(m.protectedNeed))+'<br>Extra gap '+esc(money(m.protectedGap)):'Protection not enabled for this option',
         esc(m.peakWeekly)+' h/week equivalent<br>Available '+esc(m.weeklyHours??'not entered')+'<br>'+m.overloadedDays+' overloaded days · '+m.issueCount+' issues'+(!m.currencyComplete?'<br>Incomplete currency valuation':'')
-      ];}))+'<div class="financing-toolbar">'+btn('Download comparison CSV','download-csv')+btn('Inspect full comparison JSON','comparison-json')+'</div>';
+      ];}))+'<div class="financing-toolbar">'+btn('Download complete handover ZIP','handover-zip')+btn('Download readable report','handover-html')+btn('Download comparison CSV','download-csv')+btn('Inspect full comparison JSON','comparison-json')+'</div>';
   }
   const decisionState=()=>s.decision||newFinancingDecision();
   const selectedAssessment=()=>decisionState().assessments.find(x=>x.id===decisionState().selectedId)||null;
@@ -77,7 +78,7 @@ export function mountForecastFinancing({container,getCurrent,getEditor,api,avail
       '<p>The weekly measure is the original calendar-day planning equivalent, not an actual staff roster. Overloaded days use each option’s original native weekly capacity; entering a new peak-hours limit does not recalculate that count. Unknown valuation, opening cash or protected funds remain unresolved.</p>'+
       '<div class="financing-toolbar">'+btn('Assess selected comparison','decision-evaluate',c?'':'data-fixed="true"')+
       '<label>Retained assessment<select data-financing-select="decision"><option value="">No assessment selected</option>'+v.assessments.map(x=>'<option value="'+esc(x.id)+'"'+(x.id===v.selectedId?' selected':'')+'>'+esc(x.criteria.name)+' · '+esc(x.createdAt)+'</option>').join('')+'</select></label>'+
-      btn('Reuse retained criteria','decision-reuse',a?'':'data-fixed="true"')+btn('Download assessment CSV','decision-csv',a?'':'data-fixed="true"')+btn('Download assessment JSON','decision-json',a?'':'data-fixed="true"')+'</div>'+
+      btn('Reuse retained criteria','decision-reuse',a?'':'data-fixed="true"')+btn('Download assessment CSV','decision-csv',a?'':'data-fixed="true"')+btn('Download assessment JSON','decision-json',a?'':'data-fixed="true"')+btn('Download assessed handover ZIP','decision-handover-zip',a?'':'data-fixed="true"')+btn('Download assessed readable report','decision-handover-html',a?'':'data-fixed="true"')+'</div>'+
       (a?'<h5>'+esc(a.criteria.name)+' — '+(fresh?'current assessment':'retained historical assessment')+'</h5><p>'+esc(a.criteria.note)+'</p><p>Original case v'+r.source.version+' · comparison '+esc(r.comparisonSha256)+' · '+esc(a.createdAt)+'. Changing the current limits or source leaves this result unchanged; assess again to retain another edition.</p>'+
         table(['Original option','Entered-limit result','Each checked measure','Finite shortlist','Inspect or adopt'],r.rows.map(row=>[
           '<strong>'+esc(row.name)+'</strong><br><small>'+esc(row.scopeGroup||'Scope unresolved')+' · '+esc(row.scope?.firstForecastDate||'unknown')+' through '+esc(row.scope?.lastForecastDate||'unknown')+'</small>',
@@ -178,6 +179,17 @@ export function mountForecastFinancing({container,getCurrent,getEditor,api,avail
     if(action==='download-csv'){try{download(financingCsv(s),s.id+'-comparison.csv','text/csv;charset=utf-8');}catch(error){status(error.message,true);}return;}
     if(action==='comparison-json'){const c=currentComparison();if(c)download(JSON.stringify(c,null,2)+'\n',c.id+'.json');return;}
     void run(async()=>{
+      if(['handover-zip','handover-html','decision-handover-zip','decision-handover-html'].includes(action)){
+        const assessment=action.startsWith('decision-')?selectedAssessment():null;
+        if(action.startsWith('decision-')&&!assessment)throw Error('Select a retained assessment.');
+        const comparisonId=assessment?assessment.comparisonId:s.selectedComparisonId;
+        if(!comparisonId)throw Error('Select a complete original comparison.');
+        const check=stateGuard(),current=clone(getCurrent()),next=await completeFinancingSources(s,current,bytes);check();
+        const handover=await buildFinancingHandover(next,current,{comparisonId,assessmentId:assessment?.id||null,baselineId:s.baselineId});check();
+        const html=action.endsWith('-html');
+        download(html?handover.html:handover.bytes,html?handover.filename.replace(/\.zip$/,'.html'):handover.filename,html?'text/html;charset=utf-8':'application/zip');
+        status('Downloaded the complete '+(html?'readable report':'handover ZIP')+' with every original option, dated cash and capacity row, retained criteria and exact source bytes. Its complete study reopens through Reopen study. Current inputs and native records remain intact.');return;
+      }
       if(action==='decision-evaluate'){s.decision=retainFinancingDecision(decisionState(),s.comparisons,s.selectedComparisonId);changed();render();await persist();status('Retained exact entered limits and every original native option result. No financial assumption or record changed.');return;}
       if(action==='decision-reuse'){s.decision=restoreFinancingCriteria(decisionState(),s.comparisons);changed();render();await persist();status('Reused retained criteria; the displaced unfinished criteria remain in complete study history.');return;}
       if(action==='decision-csv'||action==='decision-json'){const a=selectedAssessment();if(!a)throw Error('Select a retained assessment.');download(action==='decision-csv'?financingDecisionCsv(a):JSON.stringify(a,null,2)+'\n',a.id+(action==='decision-csv'?'.csv':'.json'),action==='decision-csv'?'text/csv;charset=utf-8':'application/json');return;}

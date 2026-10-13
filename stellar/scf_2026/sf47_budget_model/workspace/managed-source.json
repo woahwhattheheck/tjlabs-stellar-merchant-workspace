@@ -1245,6 +1245,7 @@
     "../../../scf-starforge-20261009/sf98-merchant-delivery/delivery-recovery.mjs",
     "../../../scf-starforge-20261009/sf98-merchant-delivery/destinations/exchange.mjs",
     "../../../scf-starforge-20261009/sf98-merchant-delivery/destinations/model.mjs",
-    "../../../scf-starforge-20261009/sf98-merchant-delivery/destinations/storage.mjs"
+    "../../../scf-starforge-20261009/sf98-merchant-delivery/destinations/storage.mjs",
+    "forecast-financing-handover.mjs"
   ]
 }
