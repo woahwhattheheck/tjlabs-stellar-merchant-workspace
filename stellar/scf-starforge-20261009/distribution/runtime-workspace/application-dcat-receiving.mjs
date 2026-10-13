@@ -167,7 +167,8 @@ async function readSelection(root) {
   for (const [name, selected] of Object.entries(record.inputs ?? {})) {
     need(['request','setup','environment','semanticReceipt','archiveManifest'].includes(name) &&
       plain(selected) && ({request:'request.json',setup:'source-setup.json',environment:'source-environment.json',semanticReceipt:'semantic-runtime.json',archiveManifest:'archive-manifest.json'})[name] === selected.file &&
-      Number.isSafeInteger(selected.bytes) && selected.bytes >= 0 && SHA.test(selected.sha256 ?? ''),
+      Number.isSafeInteger(selected.bytes) && selected.bytes >= 0 &&
+      selected.bytes <= ({request:MAX,setup:MAX,environment:65536,semanticReceipt:16*1024*1024,archiveManifest:MAX_RECORD})[name] && SHA.test(selected.sha256 ?? ''),
       'DCAT_RECEIVING_SOURCE_INVALID');
     const raw = await privateBytes(join(dir, selected.file), Math.max(MAX, selected.bytes));
     need(raw.length === selected.bytes && digest(raw) === selected.sha256, 'DCAT_RECEIVING_SOURCE_CHANGED');
@@ -327,7 +328,7 @@ export async function prepareDcatApplicationReceiving(model,{operation,request:r
         record.phase='CATALOGUE_RECEIVED'; await persist(root,record);
       }
       await assertCkanWorkspaceReceived(request.catalogueDirectory);
-      const current=await readJSON(join(request.catalogueDirectory,'workbench.json'));
+      const current=JSON.parse(decode(await privateBytes(join(request.catalogueDirectory,'workbench.json'),16*1024*1024)));
       need(current.createdAt===record.archive.source.projectCreatedAt && current.catalogOrigin===record.archive.source.catalogOrigin &&
         current.sourceKind==='dcat-us','DCAT_RECEIVING_CATALOGUE_CHANGED');
       abort(signal);
