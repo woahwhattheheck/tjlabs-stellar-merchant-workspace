@@ -274,6 +274,40 @@
                 <button id="download-plan" type="button">Download publication plan</button>
               </div>
             </section>
+
+            <section class="review-section" aria-labelledby="colleague-title">
+              <p class="eyebrow">4. Colleague review</p>
+              <h3 id="colleague-title">Complete review handover and returned feedback</h3>
+              <p>Give a colleague the saved comparison, original form files and review history. Their working HTML opens independently and returns complete decisions and notes to this same review.</p>
+              <p id="colleague-pending" class="muted"></p>
+              <div class="button-row">
+                <button id="export-colleague" type="button">Download colleague working HTML</button>
+                <button id="colleague-resume" type="button" hidden>Resume the same request</button>
+                <button id="colleague-new-file" type="button" hidden>Select a corrected return file</button>
+              </div>
+              <label for="colleague-file">Complete returned review JSON</label>
+              <input id="colleague-file" type="file" accept=".json,application/json">
+              <button id="receive-colleague" type="button">Receive and compare feedback</button>
+              <details><summary>Saved packages and original returns</summary><ul id="colleague-history" class="source-list"></ul></details>
+              <div id="colleague-preview" hidden>
+                <h4>Returned feedback beside current staff work</h4>
+                <p id="colleague-message" class="notice"></p>
+                <button id="refresh-colleague" type="button">Refresh returned comparison</button>
+                <div id="colleague-author"></div>
+                <div id="colleague-differences" class="change-list"></div>
+                <details><summary>Colleague saved editions</summary><div id="colleague-editions"></div></details>
+                <form id="colleague-apply-form">
+                  <label for="colleague-reviewer">Accepting staff reviewer</label>
+                  <input id="colleague-reviewer" maxlength="200" autocomplete="name" required>
+                  <label for="colleague-note">Staff decision note</label>
+                  <textarea id="colleague-note" rows="3" maxlength="30000" required></textarea>
+                  <label for="colleague-overall">Save as</label>
+                  <select id="colleague-overall"><option value="review">Staff review</option><option value="revise">Request candidate revision</option></select>
+                  <p id="colleague-apply-guidance" class="muted"></p>
+                  <button id="apply-colleague" type="submit">Apply explicit feedback selection</button>
+                </form>
+              </div>
+            </section>
           </div>
         </article>
       </section>
