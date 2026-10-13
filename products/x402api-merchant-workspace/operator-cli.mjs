@@ -12,7 +12,7 @@ import {inspectMerchantOperator,createMerchantOperatorClient,MerchantOperatorErr
 const fail=code=>{throw new MerchantOperatorError(code);};
 const need=(value,code)=>{if(!value)fail(code);};
 const digest=raw=>createHash('sha256').update(raw).digest('hex');
-async function inputJSON(path,maximum=8*1024*1024) {
+async function inputJSON(path,maximum=8*1024*1024,{rawText=false}={}) {
   need(typeof path==='string'&&isAbsolute(path)&&resolve(path)===path,'MERCHANT_OPERATOR_ABSOLUTE_INPUT_REQUIRED');
   need(await realpath(dirname(path))===dirname(path),'MERCHANT_OPERATOR_INPUT_PATH_CHANGED');
   const fd=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW);
@@ -29,7 +29,7 @@ async function inputJSON(path,maximum=8*1024*1024) {
       first.ctimeMs===last.ctimeMs&&entry.dev===first.dev&&entry.ino===first.ino&&length===first.size,
       'MERCHANT_OPERATOR_INPUT_CHANGED');
     const raw=Buffer.concat(parts);let value;
-    try{value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));}catch{fail('MERCHANT_OPERATOR_INPUT_JSON_INVALID');}
+    try{const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw);value=rawText?text:JSON.parse(text.replace(/^\ufeff/,''));}catch{fail('MERCHANT_OPERATOR_INPUT_JSON_INVALID');}
     return {value,sha256:digest(raw)};
   }finally{await fd.close();}
 }
@@ -78,6 +78,11 @@ observation|observation-summary --connection FILE [--history-sequence INTEGER] [
 project|project-status|project-manifest --connection FILE [--operation ORIGINAL_UUID] [--out FILE]
 project-begin --connection FILE --operation ORIGINAL_UUID [--out FILE]
 project-download --connection FILE --operation ORIGINAL_UUID --out /private/project.zip
+intake-context|intakes --connection FILE [--out FILE]
+intake-prepare --connection FILE --source ORIGINAL_FILE --mapping MAPPING_JSON
+               --format csv|json --operation ORIGINAL_UUID [--out REVIEW_JSON]
+intake-status|intake-export --connection FILE --operation ORIGINAL_UUID [--out FILE]
+intake-run --connection FILE --request REVIEW_JSON [--out RESULT_JSON]
 
 The connection keeps URL/store/tenant and an environment VARIABLE NAME, never
 the operator credential. Set that variable privately before running commands.
@@ -91,7 +96,7 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
   const {values,positionals}=parseArgs({args:argv,allowPositionals:true,strict:true,options:{
     connection:{type:'string'},url:{type:'string'},'token-env':{type:'string'},out:{type:'string'},
     selection:{type:'string'},register:{type:'string'},request:{type:'string'},id:{type:'string'},
-    operation:{type:'string'},limit:{type:'string'},cursor:{type:'string'},revision:{type:'string'},
+    source:{type:'string'},mapping:{type:'string'},operation:{type:'string'},limit:{type:'string'},cursor:{type:'string'},revision:{type:'string'},
     format:{type:'string'},'history-sequence':{type:'string'},'connection-sha256':{type:'string'},
     'timeout-ms':{type:'string'},'maximum-download-bytes':{type:'string'},help:{type:'boolean'}
   }});
@@ -105,6 +110,9 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
     invoice:[...common,'id'],create:[...common,'request'],charge:[...common,'id'],
     envelope:[...common,'id'],authorize:[...common,'id','request'],reconcile:[...common,'id'],
     result:[...common,'id'],observation:common,'observation-summary':[...common,'history-sequence'],
+    'intake-context':common,intakes:common,
+    'intake-prepare':[...common,'source','mapping','format','operation'],
+    'intake-status':[...common,'operation'],'intake-export':[...common,'operation'],'intake-run':[...common,'request'],
     project:common,'project-status':[...common,'operation'],'project-manifest':[...common,'operation'],
     'project-begin':[...common,'operation'],'project-download':[...common,'operation']
   };
@@ -135,7 +143,7 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
       Object.keys(connection).every(k=>['schema','url','storeId','tenantId','tokenEnvironment','timeoutMs','maxDownloadBytes','maxJSONBytes'].includes(k))&&
       typeof connection.tokenEnvironment==='string'&&/^[A-Z][A-Z0-9_]{0,127}$/.test(connection.tokenEnvironment),
       'MERCHANT_OPERATOR_CONNECTION_INVALID');
-    const mutation=['create','charge','authorize','reconcile','project-begin'].includes(action);
+    const mutation=['create','charge','authorize','reconcile','project-begin','intake-prepare','intake-run'].includes(action);
     if(mutation&&values.out)await admitMutationOutput(values.out);
     const client=await createMerchantOperatorClient({...connection,operatorToken:environment[connection.tokenEnvironment],
       timeoutMs:numeric('timeout-ms')??connection.timeoutMs,
@@ -164,6 +172,23 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
     }
     else if(action==='reconcile')result=await client.reconcileInvoice(values.id,settings);
     else if(action==='result'){result=await client.downloadInvoiceResult(values.id,values.out,settings);download=true;}
+    else if(action==='intake-context')result=await client.intakeContext(settings);
+    else if(action==='intakes')result=await client.listIntakes(settings);
+    else if(action==='intake-prepare'){
+      need(values.source&&values.mapping&&values.operation&&['csv','json'].includes(values.format),'INTAKE_INPUT_REQUIRED');
+      const source=await inputJSON(values.source,1048576,{rawText:true}),mapping=await input('mapping',65536);
+      const context=await client.intakeContext(settings);
+      result=await client.prepareIntake({operation:values.operation,storeId:connection.storeId,tenantId:connection.tenantId,
+        configurationSha256:context.configurationSha256,source:{name:values.source.split('/').at(-1),format:values.format,text:source.value},mapping},settings);
+    }
+    else if(action==='intake-status')result=await client.readIntake(values.operation,settings);
+    else if(action==='intake-export')result=await client.exportIntake(values.operation,settings);
+    else if(action==='intake-run'){
+      const review=await input('request');
+      need(review?.schema==='stellar-forge.merchant-intake-status.v1'&&review.storeId===connection.storeId&&review.tenantId===connection.tenantId,
+        'INTAKE_OWNER_CHANGED');
+      result=await client.runIntake(review.operation,review.planSha256,settings);
+    }
     else if(action==='observation')result=await client.observation(settings);
     else if(action==='observation-summary')result=await client.observationSummary({historySequence:values['history-sequence'],...settings});
     else if(action==='project')result=await client.project(settings);
@@ -174,7 +199,8 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,s
     if(values.out&&!download){
       try{stdout.write(JSON.stringify(await saveJSON(values.out,result))+'\n');}
       catch(error){
-        const recovery=action==='project-begin'?{kind:'project',operation:values.operation,action:'status'}:
+        const recovery=action.startsWith('intake-')?{kind:'intake',operation:result.operation??values.operation,action:'status'}:
+          action==='project-begin'?{kind:'project',operation:values.operation,action:'status'}:
           mutation?{kind:'invoice',id:result.order?.id??values.id,action:'inspect'}:null;
         const saveError={code:typeof error?.code==='string'?error.code:'MERCHANT_OPERATOR_OUTPUT_WRITE_FAILED'};
         try{stdout.write(JSON.stringify({outcome:'RECEIVED',result,saveError,destination:values.out,...(recovery?{recovery}:{})})+'\n');}

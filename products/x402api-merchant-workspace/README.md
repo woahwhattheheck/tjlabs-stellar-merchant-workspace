@@ -316,3 +316,7 @@ See [Merchant payment and delivery support](../../stellar/scf-starforge-20261009
 ## HTTP operator client and installed CLI
 
 The [operator client and CLI](OPERATOR_CLIENT.md) connect to the existing application with pinned store and tenant identity. They cover invoice creation and reconciliation, payment envelopes and buyer authorization, revision-bound complete register exports, retained-result downloads, observations and complete project delivery. The Node client includes TypeScript declarations; the installed `x402api-merchant-operator` command keeps the credential in its existing environment variable. Portable exports include the complete client source and guide.
+
+## Complete invoice intake
+
+Use **Import invoices** to retain an original CSV/JSON accounting export, map and review all rows, then create or resume the same original draft invoices. The existing operator client and CLI support the whole workflow. See [INVOICE_INTAKE.md](./INVOICE_INTAKE.md) for exact amounts, source mapping, conflict handling, original-operation recovery and portable handover.

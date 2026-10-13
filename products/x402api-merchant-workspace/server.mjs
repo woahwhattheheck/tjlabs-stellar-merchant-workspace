@@ -14,11 +14,13 @@ import {readMerchantObservationSummary, merchantSummaryHistorySequence, merchant
 import {readInvoiceRegister,invoiceRegisterQuery,createInvoiceRegisterExport} from './invoice-register.mjs';
 import { merchantInputFiles, reviewMerchantInputs, verifyMerchantInputFingerprint, readMerchantInput } from './application-inputs.mjs';
 import { createMerchantProject, resolveMerchantProjectSource } from './portable.mjs';
+import {inspectMerchantIntakeSource,merchantIntakeContext,prepareMerchantIntake,readMerchantIntake,exportMerchantIntake,listMerchantIntakes,runMerchantIntake} from './invoice-intake.mjs';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const ASSETS = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
+  ['/invoice-intake.mjs', ['invoice-intake.mjs', 'text/javascript; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']]
 ]);
 function fail(code, status = 400) { throw new MerchantError(code, status); }
@@ -172,6 +174,24 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
       return respond(response,200,retainInvoiceDownload(exported));
     }
     if (parsed.search) fail('QUERY_NOT_SUPPORTED');
+    if(path==='/api/invoice-intake/context'&&request.method==='GET')return respond(response,200,merchantIntakeContext(workspace));
+    if(path==='/api/invoice-intake/inspect'&&request.method==='POST'){
+      const input=await jsonBody(request,8*1024*1024),parsed=inspectMerchantIntakeSource(input.source);
+      return respond(response,200,{columns:parsed.columns,rowCount:parsed.rows.length,
+        bytes:parsed.source.bytes,sha256:parsed.source.sha256});
+    }
+    if(path==='/api/invoice-intake'&&request.method==='GET')
+      return respond(response,200,{context:merchantIntakeContext(workspace),...await listMerchantIntakes(workspace)});
+    if(path==='/api/invoice-intake'&&request.method==='POST')
+      return respond(response,201,await prepareMerchantIntake(workspace,await jsonBody(request,8*1024*1024)));
+    const intake=/^\/api\/invoice-intake\/([0-9a-f-]{36})(?:\/(run|export))?$/.exec(path);
+    if(intake){
+      if(!intake[2]&&request.method==='GET')return respond(response,200,await readMerchantIntake(workspace,intake[1]));
+      if(intake[2]==='export'&&request.method==='GET')return respond(response,200,await exportMerchantIntake(workspace,intake[1]),
+        {'Content-Disposition':'attachment; filename="merchant-intake-'+intake[1]+'.json"'});
+      if(intake[2]==='run'&&request.method==='POST')return respond(response,200,await runMerchantIntake(workspace,intake[1],await jsonBody(request,4096)));
+      fail('METHOD_NOT_ALLOWED',405);
+    }
     if (path === '/api/observation' && request.method === 'GET') return respond(response, 200, readMerchantObservation(workspace));
     if (path === '/api/observation/summary' && request.method === 'GET') {
       const historySequence = merchantSummaryHistorySequence(header(request, 'x-merchant-history-sequence'));

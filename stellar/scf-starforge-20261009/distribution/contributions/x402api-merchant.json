@@ -32,7 +32,8 @@
     "./merchant/x402api/invoice-register": "./source/products/x402api-merchant-workspace/invoice-register.mjs",
     "./merchant/x402api/intake": "./source/products/x402api-merchant-workspace/project-intake.mjs",
     "./merchant/x402api/operator": "./source/products/x402api-merchant-workspace/operator-client.mjs",
-    "./merchant/x402api/intake-client": "./source/products/x402api-merchant-workspace/project-intake-client.mjs"
+    "./merchant/x402api/intake-client": "./source/products/x402api-merchant-workspace/project-intake-client.mjs",
+    "./merchant/x402api/invoice-intake": "./source/products/x402api-merchant-workspace/invoice-intake.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf31-buyer-client/response-file.mjs",

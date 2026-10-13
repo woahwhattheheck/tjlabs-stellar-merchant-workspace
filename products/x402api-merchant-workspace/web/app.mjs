@@ -1,3 +1,4 @@
+import {mountMerchantIntake} from './invoice-intake.mjs';
 const $ = id => document.getElementById(id);
 let token = '', state = null, projectState = null, selectedId = null, busy = false, poll = null;
 let registerSelection = {}, registerRequest = 0, detailRequest = 0, detailOrder = null;
@@ -60,6 +61,7 @@ async function action(work) {
   }
 }
 function disconnect() {
+  intake.reset();
   token = ''; selectedId = null; state = null; projectState = null; detailOrder = null;
   registerRequest++; detailRequest++; registerSelection = {}; $('register-filter-form').reset();
   $('detail-content').hidden = true; $('detail-empty').hidden = false;
@@ -168,6 +170,7 @@ async function refresh({cursor = null, selection = registerSelection} = {}) {
   state = received; registerSelection = received.selection; renderList();
   $('review-banner').hidden = state.mode !== 'review';
   $('show-create').hidden = state.mode === 'review';
+  $('show-intake').textContent = state.mode === 'review' ? 'Review intakes' : 'Import invoices';
   if (state.mode === 'review') $('create-panel').hidden = true;
   $('template-line').textContent = state.config.template.rails.length + ' configured payment options · Resource version ' + state.config.template.resourceVersion;
   $('tenant-label').textContent = 'Tenant ' + state.config.tenantId;
@@ -274,6 +277,7 @@ function applyCaptureControls() {
   const order = detailOrder?.id === selectedId ? detailOrder : state?.orders?.find(item => item.id === selectedId);
   $('create-charge').disabled = paused || order?.state === 'CHARGE_REJECTED';
   renderRegisterControls();
+  intake.controls();
 }
 function renderProject() {
   const rows = $('project-export-rows'); rows.replaceChildren();
@@ -410,3 +414,5 @@ $('signature-form').addEventListener('submit', event => {
     $('signature').value = ''; await refresh();
   });
 });
+
+const intake=mountMerchantIntake({api,action,notice,state:()=>state,busy:()=>busy,capturing:()=>projectState?.capturing===true,changed:refresh});
