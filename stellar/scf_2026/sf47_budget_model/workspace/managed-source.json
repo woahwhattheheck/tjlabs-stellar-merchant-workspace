@@ -626,6 +626,8 @@
     "forecast-cash-reconciliation.css",
     "FORECAST_CASH_RECONCILIATION.md",
     "operations_statement_review_worklist.mjs",
-    "STATEMENT_REVIEW_WORKLIST.md"
+    "STATEMENT_REVIEW_WORKLIST.md",
+    "commercial_effort_example.py",
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-example.mjs"
   ]
 }

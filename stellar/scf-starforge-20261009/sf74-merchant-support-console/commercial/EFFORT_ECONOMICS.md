@@ -2,6 +2,43 @@
 
 Use the existing SF47 Customer Installation and the original SF74 **Private economics** tab together. This handoff carries a selected saved commercial Installation, its complete operating case and source history, and the exact selected private planning assessment. It previews a new assessment through the original economics engine. Customer quotation prices and accepted scope remain their original records.
 
+## Open the complete internal example
+
+The internal example opens the original Merchant application and SF47 Delivery operations together. Its separate **WALKTHROUGH** case carries an explicitly authored quotation, acceptance, work records and remaining-work estimates, so operators can use the complete workflow without preparing a live customer's records.
+
+From this complete repository checkout:
+
+```sh
+node stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-example.mjs \
+  --out /ABS/private/commercial-effort-example \
+  --merchant-port 18776 \
+  --operations-port 18777 \
+  --python python3
+```
+
+The launcher prints the Merchant opening URL and the private Operations access-file path. Open that file to enter the original authenticated SF47 application. The original access token stays inside its private access file. In SF47, choose the example plan and Delivery operations case, then **Customer installations**. Open the saved internal Installation, choose **Use this edition as a draft**, and read current work and accepted tasks. The normal allocations, remaining-hour reviews, full preview, history and saved-edition export controls are available.
+
+The original economics example supplies a USD 7,200 implementation quote and USD 600 monthly care line, with a private planning assessment of 60 implementation hours and a separate USD 95/hour contributor-time valuation. The delivery example records 18 and 24 hours of authored Work and an explicit 30-hour remaining estimate. The original effort engine therefore projects 72 implementation hours. Quoted task effort remains unknown; the 60-hour private plan and the original quotation's billing line retain their separate meanings.
+
+At 72 projected hours, the existing planning-valuation scenario uses USD 6,840 for contributor time plus the original USD 360 referral assumption against the USD 7,200 implementation fee. Its planned contribution is zero. Cash labor cost remains unknown in the original private assessment. All of these values are editable example inputs, with their source notes retained.
+
+To operate the browser workflow and the complete independent receiving path automatically using installed local browser binaries:
+
+```sh
+node stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-example.mjs \
+  --out /ABS/private/commercial-effort-example \
+  --python python3 \
+  --receive \
+  --playwright /ABS/installed/playwright/index.mjs \
+  --chromium /ABS/installed/chromium
+```
+
+This uses the actual SF47 browser controls to read Work, apply the explicit remaining estimates, preview and save a new Installation edition, download its complete ZIP, and reopen the saved edition. That exact browser-produced ZIP becomes the source for the original private economics receiving course. The course saves one new private assessment, exports the complete merchant case/source, receives it independently, and verifies it in a fresh process. It then uses the original and received Merchant screens, downloads and reimports the actual assessment, opens the unchanged exported Installation HTML, and captures desktop and narrow views.
+
+The example retains its original operation, quotation, planning-assessment, authored-acceptance, browser-save and receiving request IDs. Reopen it with the same directory and selected ports after interruption. Existing user edits and historical editions remain in their original application stores. The launcher closes only its owned listeners and browser; the complete private example remains available.
+
+The complete output directory includes both application workspaces, the complete Merchant source handoff, the saved Installation ZIPs, the original and observed economics, the independent receiving stores, editable inputs, readable exports and actual screenshots. Open and inspect the actual screenshots and use the retained applications before presenting this version. The programme records browser operation separately from that human inspection.
+
 ## Select and save the real delivery work
 
 Open the original Delivery operations case and its commercial Customer Installation. Select the actual accepted quotation/source through the existing commercial source reader. Attribute actual Work records to accepted task/check identities, enter reviewed remaining implementation effort with its original source and as-of date, preview, then save through the existing Installation writer. Keep the original request ID, expected case version, Installation revision and preview digest when recovering an interrupted reply.
