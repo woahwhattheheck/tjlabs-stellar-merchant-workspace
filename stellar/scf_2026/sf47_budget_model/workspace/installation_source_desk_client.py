@@ -385,6 +385,14 @@ class EcondbSourceDeskClient:
         from operations_econdb_sources import perform
         return perform(self.desk.ops, self.case_id, action, deepcopy(body))
 
+    def compare_following(self, body: dict) -> dict:
+        """Capture actual native head/history and compare both complete original source editions."""
+        return self.perform("following-compare", body)
+
+    def prepare_following(self, body: dict) -> dict:
+        """Prepare the same Installation after complete explicit review and fresh native capture."""
+        return self.perform("following-prepare", body)
+
     def request(self, request_id: str) -> dict:
         from operations_econdb_sources import lookup
         return lookup(self.desk.ops, self.case_id, request_id)

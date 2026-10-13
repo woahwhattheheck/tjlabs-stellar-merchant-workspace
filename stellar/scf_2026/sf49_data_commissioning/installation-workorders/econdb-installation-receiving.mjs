@@ -196,6 +196,10 @@ async function nativeCommand({python,args,outputDirectory,name,signal,leaseFds=[
 
 /** Full original receiving; optional save uses the existing native writer once. */
 export async function runEcondbInstallationReceiving(input,{signal}={}){
+ if(input?.schema==='stellar-forge.econdb-installation-following.v1.receiving.input'){
+  const {runEcondbFollowingReceiving}=await import('./econdb-following-receiving.mjs');
+  return runEcondbFollowingReceiving(input,{signal});
+ }
  const options=selectedOptions(input),out=await ownDirectory(options.outputDirectory);
  const lease=await operationLease(join(out,'econdb-installation-receiving.lock'));
  let primaryError,result;
@@ -371,3 +375,8 @@ if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.u
 
 // Shared with the original Source Desk family for complete owned-file recovery.
 export {settlePublished as settleEcondbInstallationFile,retain as retainEcondbInstallationFile};
+
+// Additive following receiver reuses these exact original receiving primitives.
+export {nativeCommand as econdbReceivingNativeCommand,ownDirectory as ownEcondbReceivingDirectory,
+ copyOriginal as copyEcondbReceivingOriginal,readRetained as readEcondbReceivingRetained,
+ originalIdentity as econdbReceivingIdentity,sourceIdentity as econdbReceivingSourceIdentity};

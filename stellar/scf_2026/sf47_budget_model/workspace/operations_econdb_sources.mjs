@@ -1,5 +1,6 @@
 // MIT. Econdb whole-source commissioning in the original SF47 Source Desk.
 import {Sha256,sha256File} from './operations_installation_source_hash.mjs';
+import {createEcondbFollowingDesk,validateEcondbFollowingWork} from './operations_econdb_following.mjs';
 import {staffRequest,assertStaffRequestActor,currentStaffContext} from './staff-session.mjs';
 import {parseExactMappingJSON,nativeJSONCanonical} from './operations_installation_mapping_reconciliation.mjs';
 
@@ -11,7 +12,7 @@ const clone=x=>structuredClone(x);
 const pretty=x=>JSON.stringify(x,null,2)+'\n';
 const same=(a,b)=>nativeJSONCanonical(a)===nativeJSONCanonical(b);
 const hash=x=>new Sha256().update(typeof x==='string'?new TextEncoder().encode(x):x).hex();
-const LIMITS={archive:Number.MAX_SAFE_INTEGER,seed:2*1024*1024,bindings:2*1024*1024,commissioning:8*1024*1024,attachment:Number.MAX_SAFE_INTEGER};
+const LIMITS={archive:Number.MAX_SAFE_INTEGER,seed:2*1024*1024,bindings:2*1024*1024,commissioning:8*1024*1024,attachment:Number.MAX_SAFE_INTEGER,review:8*1024*1024};
 const TEXT_KEYS=['seedText','commissioningText','bindingsText','projectChoice','openRequestId','workshareId','attachmentName','attachmentPurpose'];
 const blank=()=>({schema:ECONDB_SOURCE_WORKING,seedText:'',commissioningText:'',bindingsText:'',
  projectChoice:'',openRequestId:'',workshareId:'',attachmentName:'',attachmentPurpose:'',
@@ -27,7 +28,7 @@ function object(text,label){
  if(!record(value))throw new Error(label+' must be a complete JSON object.');return value;
 }
 function checkRequest(x){
- if(!record(x)||!UUID.test(x.requestId??'')||!['import','catalogue','inspect','template','prepare'].includes(x.method)||
+ if(!record(x)||!UUID.test(x.requestId??'')||!['import','catalogue','inspect','template','prepare','following-compare','following-prepare'].includes(x.method)||
   !record(x.args)||x.args.requestId!==x.requestId||x.sha256!==hash(nativeJSONCanonical({method:x.method,args:x.args})))
   throw new Error('Keep the complete original Econdb request and its unchanged identity.');
  return x;
@@ -44,6 +45,7 @@ export function validateEcondbSourceWork(value){
  for(const x of value.requests)checkRequest(x);
  if(value.pending)checkRequest(value.pending);
  for(const key of ['catalogue','inspection','template','prepared','preview','nativeWorkshares','nativeSelection'])if(value[key]!==null&&!record(value[key]))throw new Error('Keep the complete '+key+' source view.');
+ validateEcondbFollowingWork(value.following);
  return value;
 }
 
@@ -70,6 +72,7 @@ export function createEcondbSourceDesk(ctx){
  function touch(){w().dirty=true;ctx.changed();}
  function invalidate(){w().prepared=null;w().preview=null;w().previewBasis=null;w().receivedDraftKey=null;touch();}
  function clearFrom(kind){
+  if(kind==='archive'||kind==='inspection')following.sourceChanged();
   if(kind==='archive'){w().catalogue=null;w().projectChoice='';w().inspection=null;}
   if(kind==='archive'||kind==='inspection'||kind==='seed'||kind==='commissioning')w().template=null;
   invalidate();
@@ -131,7 +134,8 @@ export function createEcondbSourceDesk(ctx){
   if(original.method==='import'){
    const f=result.files.find(x=>x.kind===original.args.kind&&x.sha256===original.args.sha256&&x.bytes===original.args.bytes);
    if(!f)throw new Error('The complete uploaded file differs from its retained result.');
-   if(f.kind==='attachment'){
+   if(f.kind==='review'){following.state().review=clone(f);touch();}
+   else if(f.kind==='attachment'){
     if(!state.attachments.some(x=>x.file.fileId===f.fileId&&x.name===original.args.name)){
      state.attachments.push({file:clone(f),name:original.args.name,purpose:original.purpose??''});invalidate();
     }
@@ -148,6 +152,7 @@ export function createEcondbSourceDesk(ctx){
    state.projectChoice=result.source.project.record.id+'@'+result.source.project.record.revision;
    state.template=clone(result);state.bindingsText=pretty(result.bindings);state.bindings=null;state.bindingRaw={};invalidate();
   }else if(original.method==='prepare'){await hydratePrepared(result,original,owner);state.prepared=clone(result);state.preview=null;state.previewBasis=null;state.dirty=false;}
+  else if(['following-compare','following-prepare'].includes(original.method))await following.adopt(original,result,owner);
   state.openRequestId=current.requestId;ctx.changed();await ctx.persistNow();
   ctx.notice('Retained the complete original '+original.method+' result and all source identities.');return result;
  }
@@ -189,11 +194,12 @@ export function createEcondbSourceDesk(ctx){
  }
  async function importText(kind,text){
   object(text,'Complete '+kind+' input');const file=new File([new TextEncoder().encode(text)],kind+'.json',{type:'application/json'});
-  if(w()[kind]?.sha256===hash(text)&&w()[kind].bytes===file.size)return w()[kind];
-  await importFile(kind,file);return w()[kind];
+  const chosen=kind==='review'?following.state().review:w()[kind];
+  if(chosen?.sha256===hash(text)&&chosen.bytes===file.size)return chosen;
+  await importFile(kind,file);return kind==='review'?following.state().review:w()[kind];
  }
  function basis(){
-  const state=w();return hash(nativeJSONCanonical({requestId:state.prepared?.requestId,bindingsText:state.bindingsText,
+  const state=w();return hash(nativeJSONCanonical({requestId:state.prepared?.requestId,followingReview:state.following?.reviewText??null,followingComparison:state.following?.comparison?.requestId??null,bindingsText:state.bindingsText,
    seedText:state.seedText,commissioningText:state.commissioningText,archive:state.archive,inspectionId:state.inspection?.requestId,
    attachments:state.attachments.map(x=>({fileId:x.file.fileId,name:x.name,purpose:x.purpose}))}));
  }
@@ -251,7 +257,7 @@ export function createEcondbSourceDesk(ctx){
   if(!installation?.document||!installation.preview)throw new Error('Prepare the complete original Installation first.');
   await ctx.refreshCase();assertLive(state);
   if(installation.source?.caseId!==ctx.caseId||installation.source.version!==ctx.context().version)
-   throw new Error('The original case advanced. Keep this complete preparation and obtain a fresh Workshare seed before preparing the next one.');
+   throw new Error(state.prepared?.type==='following-prepare'?'The case advanced. Keep this review and compare the current saved Installation again.':'The original case advanced. Keep this complete preparation and obtain a fresh Workshare seed before preparing the next one.');
   const frozen=basis(),value=await ctx.api('/api/operations/'+ctx.caseId+'/installation-preview',clone(installation.preview));
   if(state!==w()||frozen!==basis()||!same(value.document,installation.document)||!same(value.source,installation.source))
    throw new Error('The native preview differs from the complete selected source or current bindings.');
@@ -284,6 +290,7 @@ export function createEcondbSourceDesk(ctx){
   objectValue[parts.at(-1)]=value;delete state.bindingRaw[path];state.bindingsText=pretty(bindings);state.bindings=null;invalidate();
  }
  function edit(target){
+  if(following.edit(target))return true;
   const key=target.dataset.econdbField,binding=target.dataset.econdbBinding,buyer=target.dataset.econdbBuyer;
   if(!key&&!binding&&!buyer)return false;needEdit();
   if(buyer){const b=object(w().bindingsText,'Complete bindings'),ids=new Set(b.buyerDeploymentIds??[]);target.checked?ids.add(buyer):ids.delete(buyer);b.buyerDeploymentIds=[...ids];w().bindingsText=pretty(b);w().bindings=null;invalidate();return true;}
@@ -297,6 +304,7 @@ export function createEcondbSourceDesk(ctx){
   return true;
  }
  async function chooseFile(target){
+  if(await following.chooseFile(target))return true;
   const owner=w(),kind=target.dataset.econdbUpload;if(!kind)return false;
   const file=target.files?.[0];if(!file)return true;
   if(w().pending){
@@ -312,6 +320,7 @@ export function createEcondbSourceDesk(ctx){
  }
  async function action(action,target){
   const key=action.slice('econdb-'.length),state=w();
+  if(await following.action(key))return;
   if(key==='working-download'){download(pretty(state),'ECONDB_SOURCE_WORKING.json');return;}
   if(key==='request-download'){download(pretty(state.requests),'ECONDB_SOURCE_REQUESTS.json');return;}
   if(key==='status')return loadSaved(state.pending?.requestId??state.openRequestId);
@@ -442,6 +451,7 @@ export function createEcondbSourceDesk(ctx){
     (state.preview?detail('Actual original case preview',state.preview):'')+
     hint('Opening a draft does not save, accept or fund it. Review and use the existing Installation editor Save. Carry every listed file and the full original workspace transfer sidecar through complete independent receiving.'):
     empty('Prepare all selected original source, commercial terms and bindings before native preview.'))+
+   following.render()+
    '<h4>Saved requests and reopening</h4>'+
    '<div class="source-desk-fields">'+field('Original request UUID','openRequestId',state.openRequestId,{wide:true})+'</div>'+
    '<div class="source-desk-actions">'+button('Open saved result','open')+button('Refresh saved requests','list')+
@@ -449,7 +459,9 @@ export function createEcondbSourceDesk(ctx){
    (state.history.length?table(['Original saved request','Type / state','Open'],state.history.map(x=>['<code>'+esc(x.requestId)+'</code>',esc(x.type)+' · '+esc(x.status??''),button('Open complete saved result','show-request','data-id="'+esc(x.requestId)+'"')])):'')+
    '</section>';
  }
+ const following=createEcondbFollowingDesk({ctx,w,needEdit,assertLive,command,importText,retainedText,
+  esc,header,table,hint,empty,button,detail,download,touch});
  return {render,edit,chooseFile,action,validate:validateEcondbSourceWork,pending:()=>!!w().pending,dirty:()=>!!w().dirty,
-  async dispose(){disposed=true;for(const controller of controllers)controller.abort();},
+  async dispose(){disposed=true;following.dispose();for(const controller of controllers)controller.abort();},
   controls(){return {pending:!!w().pending,editable:editable(),disposed};}};
 }

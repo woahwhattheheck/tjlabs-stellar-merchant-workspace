@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "econdb-installation",
-  "description": "Complete original Econdb maritime workspaces joined to native customer Workshares, Installation preparation, authenticated Source Desk and independent whole-case receiving",
+  "description": "Complete original Econdb maritime workspaces joined to native customer Workshares, first and following Installation preparation, explicit source review, authenticated Source Desk and independent whole-case receiving",
   "components": [
     "stellar/scf_2026/sf49_data_commissioning/econdb",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders",
@@ -9,11 +9,13 @@
   ],
   "commands": {
     "econdb-installation": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-installation.mjs",
-    "econdb-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-installation-receiving.mjs"
+    "econdb-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-installation-receiving.mjs",
+    "econdb-following-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-following-receiving.mjs"
   },
   "commandDescriptions": {
     "econdb-installation": "Pack, inspect and retain a whole original maritime workspace; compose and reopen its complete original commercial Installation",
-    "econdb-installation-receive": "Receive both the original customer Installation case and its mandatory complete Econdb workspace, retaining exact native requests and independent cold reopen"
+    "econdb-installation-receive": "Receive both the original customer Installation case and its mandatory complete Econdb workspace, retaining exact native requests and independent cold reopen",
+    "econdb-following-receive": "Receive the reviewed following edition through the same native Installation writer, preserve earlier source and history, and independently reopen the complete case and Econdb workspace"
   },
   "exports": {
     "./seller/econdb/installation": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-installation-core.mjs",
@@ -23,7 +25,10 @@
     "./grant/econdb-source-desk/agent": {
       "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/econdb-source-desk-agent.d.mts",
       "default": "./source/stellar/scf_2026/sf47_budget_model/workspace/econdb-source-desk-agent.mjs"
-    }
+    },
+    "./seller/econdb/installation/following": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-installation-following.mjs",
+    "./seller/econdb/installation/following/native": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-following-native.mjs",
+    "./seller/econdb/installation/following/receiving": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-following-receiving.mjs"
   },
   "supportFiles": [
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-installation/io.mjs",
@@ -59,6 +64,11 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installations.py",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/publisher/files.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/initialization.mjs"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/initialization.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-installation-following.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-installation/following-service.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-following-native.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/econdb-following-receiving.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_econdb_following.mjs"
   ]
 }
