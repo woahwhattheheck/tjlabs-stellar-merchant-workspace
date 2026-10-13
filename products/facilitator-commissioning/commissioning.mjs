@@ -4,7 +4,7 @@ import { constants } from 'node:fs';
 import { open, mkdir, lstat, readdir, realpath, link, unlink } from 'node:fs/promises';
 import { resolve, join, dirname, isAbsolute } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
-import { normalizeFacilitatorProfiles, reviewReleaseFacilitator, stageReleaseFacilitator }
+import { normalizeFacilitatorProfiles, reviewReleaseFacilitator, stageReleaseFacilitator, readFacilitatorReview }
   from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/release-facilitator.mjs';
 import { inspectRelease, readReleaseState, activateRelease, runActiveRelease, releaseStatus }
   from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs';
@@ -269,11 +269,18 @@ export async function openCommissioningJob({directory, store} = {}) {
       await foundation(job,selectedStore);
       let value;
       if(action === 'review') {
-        exact(command.payload,['provider'],['provider']);
+        exact(command.payload,['provider','reviewFile'],['provider']);
         const p=providerOf(job,command.payload.provider), path=join(root,'reviews',command.operationId+'.json');
         value=await json(path,true);
         if(!value) {
-          value=await reviewReleaseFacilitator(selectedStore,{profiles:job.profiles,provider:p.alias,
+          if(command.payload.reviewFile) {
+            const ref=await attach(root,command.payload.reviewFile,process.cwd());
+            value=await readFacilitatorReview(join(root,'blobs',ref.sha256));
+            need(value.source.releaseId===job.release.id && value.source.releaseDigest===job.release.digest &&
+              value.proposed.id===p.releaseId && stable(value.source.source)===stable(job.release.source) &&
+              stable(value.proposed.provider)===stable({alias:p.alias,...p.config}),
+              'RETAINED_REVIEW_MISMATCH','Receive this original service’s exact retained review and configured provider.');
+          } else value=await reviewReleaseFacilitator(selectedStore,{profiles:job.profiles,provider:p.alias,
             releaseId:job.release.id,id:p.releaseId,label:(job.title+' / '+p.alias).slice(0,240),
             ...(p.supportedResponse?{response:JSON.parse(utf8(await blobValue(root,p.supportedResponse)))}:{})});
           await publish(path,encode(value));
@@ -360,7 +367,9 @@ export async function openCommissioningJob({directory, store} = {}) {
           let session;
           try {
             session=await runActiveRelease(selectedStore,{expectedGeneration,handleSignals:true});
-            const started={...intent,startedAt:new Date().toISOString(),nativeObservation:session.observation,url:session.url,mode:session.mode};
+            need(session.observation?.readyAt && session.observation?.startedAt,
+              'NATIVE_READINESS_REQUIRED','The original seller must retain its actual startup and readiness times.');
+            const started={...intent,startedAt:session.observation.readyAt,nativeObservation:session.observation,url:session.url,mode:session.mode};
             await publish(join(root,'runs',operationId+'.started.json'),encode(started));
             active={operationId,session};
             const completion=session.completion.then(async result=>{
@@ -412,15 +421,26 @@ async function prepareBuyerPlan(root,job,store,command) {
     need(request && !seen.has(request.id),'REQUEST_SELECTION_INVALID','Select each agreed request once.');seen.add(request.id);
     need(typeof choice.intentId==='string' && /^[A-Za-z0-9._:-]{1,128}$/.test(choice.intentId) &&
       !intents.has(choice.intentId),'BUYER_INTENT_INVALID','Use a distinct stable original buyer intent for each request.');intents.add(choice.intentId);
-    const payment=release.facilitatorReview.nativePayments.find(r=>r.routeId===request.routeId)?.nativePayment?.[choice.paymentOption];
+    const alternatives=release.facilitatorReview.nativePayments.find(r=>r.routeId===request.routeId)?.nativePayment??[];
+    const payment=alternatives[choice.paymentOption];
     need(Number.isSafeInteger(choice.paymentOption) && choice.paymentOption>=0 && payment,
       'NATIVE_PAYMENT_OPTION_REQUIRED','Select an exact displayed native payment alternative.');
     const allowed=template.operation.expect;
     need(['scheme','network','asset','payTo'].every(k=>allowed[k]===payment[k]) &&
       BigInt(allowed.maxAtomic)>=BigInt(payment.amount) &&
       (!allowed.maxTimeoutSeconds || payment.maxTimeoutSeconds<=allowed.maxTimeoutSeconds) &&
-      (!allowed.paymentFlow || allowed.paymentFlow===(payment.extra?.paymentFlow??'authorization')),
+      (allowed.paymentFlow??'authorization')===(payment.extra?.paymentFlow??'authorization'),
       'BUYER_TEMPLATE_TERMS_MISMATCH','The selected native alternative must fit the original buyer template’s explicit terms and cap.');
+    // SF31 defaults to authorization and requires one unique matching offered
+    // requirement. Narrow the existing authority to this displayed native choice.
+    const expect={scheme:payment.scheme,network:payment.network,asset:payment.asset,payTo:payment.payTo,
+      maxAtomic:payment.amount,maxTimeoutSeconds:payment.maxTimeoutSeconds,
+      paymentFlow:payment.extra?.paymentFlow??'authorization'};
+    const matches=alternatives.filter(t=>t.scheme===expect.scheme && t.network===expect.network &&
+      t.asset===expect.asset && t.payTo===expect.payTo && BigInt(t.amount)<=BigInt(expect.maxAtomic) &&
+      t.maxTimeoutSeconds<=expect.maxTimeoutSeconds && (t.extra?.paymentFlow??'authorization')===expect.paymentFlow);
+    need(matches.length===1 && stable(matches[0])===stable(payment),'NATIVE_PAYMENT_CHOICE_AMBIGUOUS',
+      'The original buyer must select exactly this native alternative under its existing amount, timeout and timing predicates.');
     const ownName=command.operationId+'-'+request.id+'.json';
     for(const name of await readdir(join(root,'buyers'))) {
       if(!name.endsWith('.json') || name===ownName)continue;
@@ -428,20 +448,20 @@ async function prepareBuyerPlan(root,job,store,command) {
       need(previous.operation?.intentId!==choice.intentId,'BUYER_INTENT_ALREADY_PREPARED',
         'A previous provider/request already owns that original buyer intent.');
     }
-    selected.push({request,choice,payment});
+    selected.push({request,choice,payment,expect});
   }
   const bindingPath=join(root,'reviews',command.operationId+'.buyer.json');
   const binding={template:await attach(root,templatePath,process.cwd()),provider:provider.alias,
     releaseDigest:release.digest,outputDirectory:destination,requests:p.requests};
   await publish(bindingPath,encode(binding));
   const files=[], totals=new Map();
-  for(const {request,choice,payment} of selected) {
+  for(const {request,choice,payment,expect} of selected) {
     const prefix=command.operationId+'-'+request.id;
     const bodyFile=request.body?join(root,'buyers',prefix+'.body'):null;
     if(bodyFile)await publish(bodyFile,await blobValue(root,request.body));
     const output=join(destination,prefix+'.response');
     const config={...template,operation:{intentId:choice.intentId,url:request.url,method:request.method,
-      expect:{...template.operation.expect},
+      expect,
       ...(bodyFile?{bodyFile,bodyBytes:request.body.bytes,bodySha256:request.body.sha256}:{})},
       captureBody:false,responseFile:{destination:output,maxBytes:Math.max(1,request.output.bytes),
         expectedBytes:request.output.bytes,expectedSha256:request.output.sha256,expectedContentType:request.mediaType,
@@ -477,6 +497,8 @@ async function receiveResult(root,job,store,command,results) {
   const originalRequest=evidence.reconciliation?.status==='AVAILABLE'
     ? evidence.reconciliation.record?.operatorReservation?.approved_request : null;
   const requestBound=Boolean(originalRequest && originalRequest.request_id===evidence.intentId &&
+    (!terms || originalRequest.scheme===terms.scheme && originalRequest.network===terms.network &&
+      originalRequest.asset===terms.asset && originalRequest.pay_to===terms.payTo && originalRequest.max_amount===terms.amount) &&
     originalRequest.resource===request.url && originalRequest.method===request.method &&
     originalRequest.body_present===Boolean(request.body) &&
     originalRequest.body_bytes===(request.body?.bytes??0) &&
@@ -503,7 +525,7 @@ async function receiveResult(root,job,store,command,results) {
     const latest=old.find(x=>!old.some(y=>y.supersedesOperationId===x.operationId));
     need(p.supersedesOperationId===latest.operationId && latest.provider===p.provider &&
       latest.requestId===p.requestId && latest.runOperationId===p.runOperationId &&
-      stable(latest.originalRequest)===stable(originalRequest),'ORIGINAL_ATTEMPT_CONFLICT',
+      (!latest.originalRequest || stable(latest.originalRequest)===stable(originalRequest)),'ORIGINAL_ATTEMPT_CONFLICT',
       'A later observation must explicitly continue the same latest original buyer attempt and request.');
   } else need(!p.supersedesOperationId,'ORIGINAL_ATTEMPT_NOT_FOUND','A first observation has no superseded receiving operation.');
   const output=p.outputFile?await attach(root,p.outputFile,process.cwd()):null;
@@ -517,7 +539,8 @@ async function receiveResult(root,job,store,command,results) {
     'RECEIVING_DECISION_INVALID','Record the actual receiving time and decision.');
   need(p.receiving.decision!=='ACCEPTED' || outputMatches,'OUTPUT_NOT_COMPLETE','Accept only the complete original useful output.');
   const result={operationId:command.operationId,intentId:evidence.intentId,provider:p.provider,requestId:p.requestId,
-    runOperationId:p.runOperationId,summary:summaryRef,evidenceFile:evidenceRef,originalRequest,requestBound,
+    runOperationId:p.runOperationId,attemptObservedAt:evidence.observedAt,
+    recoveredAt:evidence.recovery?.recoveredAt??null,summary:summaryRef,evidenceFile:evidenceRef,originalRequest,requestBound,
     evidence,payment,output,outputMatches,outputState:outputMatches?'EXACT_USEFUL_OUTPUT':output?'DIFFERENT_OUTPUT':'OUTPUT_INCOMPLETE',
     receiving:{operator:line(p.receiving.operator,'Receiving operator',240),decision:p.receiving.decision,
       note:line(p.receiving.note,'Receiving decision',4000),receivedAt:p.receiving.receivedAt},

@@ -68,6 +68,8 @@ export async function main(args=process.argv.slice(2)) {
         if(o['action-name']==='receive')
           for(const field of ['summaryFile','evidenceFile','outputFile'])
             if(payload[field])payload[field]=resolve(dirname(resolve(o.payload)),payload[field]);
+        if(o['action-name']==='review' && payload.reviewFile)
+          payload.reviewFile=resolve(dirname(resolve(o.payload)),payload.reviewFile);
         if(o['action-name']==='buyer-plan')
           for(const field of ['templateFile','outputDirectory'])
             if(payload[field])payload[field]=resolve(dirname(resolve(o.payload)),payload[field]);

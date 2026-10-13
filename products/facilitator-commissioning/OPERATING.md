@@ -19,6 +19,20 @@ From a complete source checkout, replace the command prefix with:
 node products/facilitator-commissioning/cli.mjs
 ~~~
 
+For a new installation, build the standard complete distribution from the exact committed source that includes this contribution:
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/build.mjs \
+  --repo /absolute/source-checkout \
+  --ref ACTUAL_IMMUTABLE_SOURCE_COMMIT \
+  --selection all \
+  --out /absolute/new-distribution-output
+~~~
+
+Continue that archive through the original distribution's runtime installation and native dependency profile. The standard source declaration includes the complete SF30 seller, SF31 buyer, SF36 spending, SF43 observation, SF52 outcomes, SF54/SF62/SF81 approval bridge, SF82 releases/evidence/reconciliation and SF88 operator components. The maintained builder also follows actual static ESM imports recursively. Complete component selection carries the original spawned seller modules and Python helpers that static imports alone cannot discover. The native profile retains the original x402 2.28.0 and Stellar SDK dependencies.
+
+A previously installed selected product has its own exact contribution inventory. To add this command, rebuild a source selection that explicitly includes facilitator-commissioning and that same native operating closure, or use the standard complete distribution above. Keep the resulting archive's original source commit, manifest and installed profile with the commissioned workspace.
+
 The component provides a private command-line operating workflow and a readable HTML report. All file inputs and outputs are on the operator's host. The HTML report uses the actual saved job and remains useful at desktop and phone widths. It is a static customer review; changing an operating selection uses the original command.
 
 ## 1. Choose the original useful task
@@ -161,7 +175,9 @@ One process owns the job directory. Run, status, mutation and export use that sa
 
 ## 3. Review and stage each selected provider
 
-Repeat the review workflow with the second provider's alias and its own command file. Each result contains the complete original SF82 review: source digest, selection generation, provider definition, observed supported metadata, all ordered native payment alternatives and any compatibility error.
+Repeat the review workflow with the second provider's alias and its own command file.
+
+For the already operated HPD or another existing service, consume its original completed native review instead of creating a second observation. Set the selected provider releaseId to that actual staged ID, then use a review payload with provider and reviewFile pointing to the complete original review JSON. The original readFacilitatorReview validates it; the job compares the source release/digest, full source identity, provider configuration and proposed release ID. Stage then receives that exact original already committed release through its native derived-from binding, including when the current selection generation has advanced. Each result contains the complete original SF82 review: source digest, selection generation, provider definition, observed supported metadata, all ordered native payment alternatives and any compatibility error.
 
 Review every retained route and alternative. The provider's native SDK-generated terms may contain extensions that differ from the stored draft. Network, asset, recipient, atomic amount and timing remain separate fields.
 
@@ -195,7 +211,7 @@ Select one native payment alternative for every agreed page/request:
 }
 ~~~
 
-The paymentOption is the zero-based alternative in that route's complete native review. Each choice must fit the existing buyer template's network, asset, recipient, cap, timeout and timing. Every original request must be listed once. Buyer intents are distinct across both providers and all pages.
+The paymentOption is the zero-based alternative in that route's complete native review. Each choice must fit the existing buyer template's network, asset, recipient, cap, timeout and timing. An omitted timing choice means authorization in the original buyer. The generated configuration narrows the amount, timeout and timing to the displayed native alternative while preserving the original operator authority. It also checks that the original buyer's predicates match exactly that one alternative; indistinguishable or still ambiguous alternatives require an explicit source-offer review. Every original request must be listed once. Buyer intents are distinct across both providers and all pages.
 
 Prepare/apply this payload with --action buyer-plan. The completed result returns complete private SF88 configuration files, exact body files when present, expected output identities and the quoted aggregate atomic amount grouped by network/asset.
 
@@ -227,7 +243,7 @@ starforge facilitator-commissioning run \
   --expect ACTUAL_SELECTED_GENERATION
 ~~~
 
-The command starts runActiveRelease from the original SF82 engine. It retains the actual source, provider, selected generation, native observation, readiness URL and startup time. Keep this foreground owner alive while the customer executes the prepared requests through the configured merchant ingress.
+The command starts runActiveRelease from the original SF82 engine. It retains the actual source, provider, selected generation, native observation, readiness URL and the native readyAt timestamp. The original native startedAt remains in that complete observation. Keep this foreground owner alive while the customer executes the prepared requests through the configured merchant ingress.
 
 On the customer's existing host, review and execute each returned config with the original buyer:
 
@@ -273,13 +289,13 @@ Prepare/apply --action receive. The commissioner:
 2. Uses the original SF52 interpretation of its approved network and observed transfer.
 3. Binds a qualifying paid result to the exact SF81-approved URL, method and request-body bytes.
 4. Matches the observed native alternative to the selected provider release.
-5. Places the original observation within that actual recorded provider run.
+5. Places the original attempt time within that actual recorded provider run.
 6. Verifies the complete saved response against the original buyer's file identity and the agreed useful output.
 7. Retains the actual customer decision and source files.
 
 An accepted page retains its exact destination; a different output remains available with its CHANGES_REQUIRED decision. All failed, pending and incomplete payment/output states remain visible.
 
-A later reconciliation of the same original intent uses supersedesOperationId equal to its latest receiving command UUID, while preserving provider, page and run. Earlier native observations stay in history. A reused transaction cannot count as two separate transfers.
+A later reconciliation of the same original intent uses supersedesOperationId equal to its latest receiving command UUID, while preserving provider, page and run. Earlier native observations stay in history. The original SF82 observedAt is fixed before the buyer call; recoverCheckoutEvidence preserves that timestamp and records its later recovery.recoveredAt separately. A result can therefore be received after the seller has stopped while still belonging to its original run. The commissioning result retains both the original attempt time and the later recovery time. A reused transaction cannot count as two separate transfers.
 
 Repeat the existing selection/start/buyer/receive workflow for the second provider. Its requests use distinct original buyer intents. The source, page set, schema and useful output remain the same.
 
