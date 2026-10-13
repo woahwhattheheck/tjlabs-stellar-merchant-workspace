@@ -1,7 +1,7 @@
 // MIT. Operating-plan files use the same model as the Command finder browser.
 import { randomUUID } from 'node:crypto';
-import { readFile, stat, realpath, open, unlink } from 'node:fs/promises';
-import { resolve, basename } from 'node:path';
+import { readFile, stat, realpath, open, mkdtemp, link, rm } from 'node:fs/promises';
+import { resolve, basename, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadCommandCatalog } from './load.mjs';
 import { saveExport, saveTextExport } from './write-json.mjs';
@@ -162,9 +162,14 @@ export async function mainOperatingPlan(args = process.argv.slice(2), { log = co
       const file = selectedSteps[0].files?.find(item => item.id === options['attachment-id']);
       if (!file) throw new TypeError('The selected output file is unavailable in this saved revision.');
       const target = resolve(options.out), content = operatingFileBytes(file);
-      const output = await open(target, 'wx', 0o600);
-      try { await output.writeFile(content); await output.close(); }
-      catch (error) { await output.close().catch(() => {}); await unlink(target).catch(() => {}); throw error; }
+      const temporary = await mkdtemp(join(dirname(target), '.operating-file-'));
+      const prepared = join(temporary, 'complete-output');
+      try {
+        const output = await open(prepared, 'wx', 0o600);
+        try { await output.writeFile(content); await output.sync(); }
+        finally { await output.close(); }
+        await link(prepared, target);
+      } finally { await rm(temporary, { recursive: true, force: true }); }
       const result = { file: target, action, planId: original.id, revision: selected.revision, attachment: operatingFileSummary(file) };
       log(JSON.stringify(result)); return result;
     }
