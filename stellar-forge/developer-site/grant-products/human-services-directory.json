@@ -237,9 +237,9 @@
       "editions": [
         {
           "commit": "e963db6a3cc2c29f4593c60e4084e670105bb7fb",
-          "bytes": 10845,
-          "sha256": "15b18413d3d6edcc68c54560338ef3ab93d881a792fe4def030098d6eb3a2671",
-          "git_blob": "a15d3eb184f6bf618323f4321c78af1b3c94d943"
+          "bytes": 10583,
+          "sha256": "8542e457a97b0f7a70bcc494fa9daebaee1774698896765f94aba967c185a129",
+          "git_blob": "445ab5ac6dd5184600b02ac9f78d894d1e789e6f"
         }
       ]
     },
@@ -313,13 +313,13 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/human-services-directory/GRANT_EVIDENCE.json",
-      "commit": "3a9e1d5519b1ab0686b3476cb70edbb42ecf1a6c",
+      "commit": "24f73d4a454fca6f6f8e5498a5b5a6c7c8022aec",
       "editions": [
         {
-          "commit": "3a9e1d5519b1ab0686b3476cb70edbb42ecf1a6c",
+          "commit": "24f73d4a454fca6f6f8e5498a5b5a6c7c8022aec",
           "bytes": 13846,
-          "sha256": "d18ea52da28c6b12f96c37d711c2c9aaa68f1c0029c83d898192e2aadc67eefb",
-          "git_blob": "10c0907a62c4a29ca7c276c5d41c946b983a0fc4"
+          "sha256": "badfaf5ac822c5963444bdacb8a76c805d9790ef0457906d5f1f8adb28f15a15",
+          "git_blob": "4759d9d05df988723b5cda6906b5121e32b7e421"
         }
       ]
     }
