@@ -204,3 +204,13 @@ accounting and delivered-data identities only after execution completes.
 - [MCP publisher operations](../../../../stellar-forge/mcp-merchant-operator/PUBLISHERS.md)
 
 Read the actual selected source alongside these guides when applying a later compatible product version. Runtime source hashes, rather than a guessed release label, identify the operation that executed.
+
+## Complete editable workspace handover
+
+The existing Workspace handover view and `nocodb-workspace workspace-*` commands export a complete private `.ncwh` archive. It includes the saved draft, original capture/version/review/request identities, full captured pages, original publisher, dataset and SF82 history. Source packets remain useful for moving a reviewed source into new local authoring identities; the whole-workspace format independently reopens the retained original history. It does not merge concurrent branches or repeat provider, publication or payment actions.
+
+Review and save the current draft before preparing an export. The original owner drains its owned publisher/release consoles and freezes their durable stores. Keep the original request UUID after an interruption. A completed export is immutable; replay verifies its saved archive and does not stop a service opened afterward. The private archive admits up to 32 GiB of member content plus a 32 MiB manifest and 13-byte header. Uploads use bounded 1 MiB chunks with exact retained-range comparison; downloads stream through original authenticated tickets or retained file readers.
+
+Receive into a named independent child of the existing private authoring workspace. The receiver checks all original file identities, retains original host settings in workspace-history and records explicit local placement for the source, publisher and dataset. Unchanged release/package bytes use the existing SF82 dataset-installation contract for this host, including packages staged after receiving. Credentials, installed runtime and project wrapper remain this host's configuration. Whole-project reopen retains both the author's current work and the separately progressed child.
+
+The full operator contract is [HANDOVER.md](./HANDOVER.md); the practical source-to-customer course, actual original NocoDB acquisition, acceptance and recovery are in [COMMISSIONING.md](../../../../products/nocodb-merchant/COMMISSIONING.md).

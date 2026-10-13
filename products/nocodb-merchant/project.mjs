@@ -6,6 +6,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { inspectMerchantRuntime } from '../../stellar/scf-starforge-20261009/sf46-release/runtime-package.mjs';
 import { absolute, privateDirectory, readPrivate, readJson, hashPrivate, bytes, digest, identity,
   acquireWorkspace, atomicJson, syncDirectory, fault, object } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/publisher/files.mjs';
+import { MAX_WORKSPACE_BYTES } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/workspace/handover.mjs';
 import { createOrVerify, MAX_PACKET_BYTES } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/nocodb/workspace/packet.mjs';
 
 export const PROJECT_SCHEMA = 'stellar-forge.nocodb-merchant-project.v1';
@@ -61,7 +62,7 @@ export async function installedSource(runtimeDirectory) {
   const manifestFile = join(runtimeDirectory, 'package', 'manifest.json'), content = await publicFile(manifestFile);
   const manifest = decode(content), files = new Map((manifest.files ?? []).map(row => [row.path, row]));
   const required = [
-    ...['model.mjs','server.mjs','cli.mjs','launch.mjs','packet.mjs','provider.mjs','browser.mjs','index.html','style.css']
+    ...['model.mjs','server.mjs','cli.mjs','launch.mjs','packet.mjs','provider.mjs','handover.mjs','uploads.mjs','placement.mjs','browser.mjs','index.html','style.css']
       .map(name => AUTHORING_PATH + '/' + name),
     ...['config.mjs','operator.mjs','serve.mjs','nocodb-workspace.mjs','catalog/nocodb-workspace.mjs',
       'providers/nocodb-workspaces.mjs','providers/publishers.mjs','retained-download.mjs'].map(name => MCP_PATH + '/' + name),
@@ -102,7 +103,7 @@ function normalizeRequest(raw) {
     for (const [alias, entry] of Object.entries(raw.inputs)) {
       if (!ALIAS.test(alias) || ['constructor','prototype','__proto__'].includes(alias)) throw fault('NOCODB_PROJECT_INPUT_ALIAS_INVALID');
       exact(entry, ['kind','file','sha256','label'], ['kind','file','sha256']);
-      if (!['source','packet'].includes(entry.kind)) throw fault('NOCODB_PROJECT_INPUT_KIND_INVALID');
+      if (!['source','packet','workspace'].includes(entry.kind)) throw fault('NOCODB_PROJECT_INPUT_KIND_INVALID');
       inputs[alias] = { kind: entry.kind, file: absolute(entry.file, 'host input file'), sha256: sha(entry.sha256),
         label: text(entry.label ?? alias, 'input label') };
     }
@@ -199,7 +200,8 @@ export async function prepareProject(raw) {
   const connection = await verifyConnectionFile(installation, input.connectionsFile);
   await privateDirectory(input.directory, true);
   const release = await acquireWorkspace(input.directory);
-  let workspace;
+  let workspace, primary, released=false, closing=null;
+  const close=()=>{if(!closing){const attempt=(async()=>{if(workspace){await workspace.close();workspace=null;}if(!released){await release();released=true;}})();closing=attempt;attempt.catch(()=>{if(closing===attempt)closing=null;});}return closing;};
   try {
     const preparationFile = join(input.directory, 'PREPARATION.json');
     let intent;
@@ -214,7 +216,7 @@ export async function prepareProject(raw) {
       if (names.some(name => name !== 'publisher.lock')) throw fault('NOCODB_PROJECT_DIRECTORY_NOT_EMPTY');
       // Hash declared inputs without allocating or decoding the whole capture in setup.
       for (const entry of Object.values(input.inputs)) {
-        const checked = await hashPrivate(entry.file, entry.kind === 'packet' ? MAX_PACKET_BYTES : 1024 * 1024);
+        const checked = await hashPrivate(entry.file, entry.kind === 'workspace' ? MAX_WORKSPACE_BYTES + 32 * 1024 * 1024 + 13 : entry.kind === 'packet' ? MAX_PACKET_BYTES : 1024 * 1024);
         if (checked.hash !== entry.sha256) throw fault('NOCODB_PROJECT_INPUT_CHANGED');
       }
       intent = { schema: PROJECT_SCHEMA, id: randomUUID(), createdAt: new Date().toISOString(), input,
@@ -223,8 +225,9 @@ export async function prepareProject(raw) {
     }
     const native = await original(installation, AUTHORING_PATH + '/model.mjs');
     if (input.adopt) await privateDirectory(input.workspaceDirectory);
-    workspace = await native.openNocoDBAuthoring({ directory: input.workspaceDirectory, create: !input.adopt,
-      connections: connection.connections, seller: input.seller, resource: input.resource });
+    try {workspace = await native.openNocoDBAuthoring({ directory: input.workspaceDirectory, create: !input.adopt,
+      connections: connection.connections, seller: input.seller, resource: input.resource });}
+    catch(error){workspace=error.nocoDBCleanup??null;throw error;}
     // This is the original workspace; setup neither imports nor selects a source.
     await workspace.close(); workspace = null;
     const launch = await original(installation, AUTHORING_PATH + '/launch.mjs');
@@ -262,7 +265,9 @@ export async function prepareProject(raw) {
     }));
     await createOrVerify(join(input.directory, 'project.json'), bytes(state), 2 * 1024 * 1024);
     return state;
-  } finally { try { await workspace?.close(); } finally { await release(); } }
+  } catch(error){primary=error;throw error;}
+  finally {try{await close();}catch(cleanup){const issue=primary??cleanup;
+    Object.defineProperty(issue,'nocoDBCleanup',{value:{close},enumerable:false,configurable:true});issue.close=close;issue.cleanupCode=cleanup.code??'NOCODB_PROJECT_CLOSE_FAILED';if(!primary)throw issue;}}
 }
 
 export async function readProject(directory) {
@@ -301,17 +306,35 @@ export async function readProject(directory) {
 
 async function withStoppedProject(directory, work) {
   const state = await readProject(directory), release = await acquireWorkspace(directory);
-  let workspace;
+  let workspace, released=false, closed=false, closing=null, primary;
+  const close=()=>{
+    if(closed)return Promise.resolve();
+    if(!closing){const attempt=(async()=>{
+      if(workspace){await workspace.close();workspace=null;}
+      if(!released){await release();released=true;}
+      closed=true;
+    })();closing=attempt;attempt.catch(()=>{if(closing===attempt)closing=null;});}
+    return closing;
+  };
   try {
     const current = await readProject(directory);
     if (identity(current) !== identity(state)) throw fault('NOCODB_PROJECT_CHANGED');
     const connections = await verifyConnectionFile(state.installation, state.providerFile);
     const native = await original(state.installation, AUTHORING_PATH + '/model.mjs');
-    workspace = await native.openNocoDBAuthoring({ directory: state.workspaceDirectory,
+    try {workspace = await native.openNocoDBAuthoring({ directory: state.workspaceDirectory,
       connections: connections.connections, seller: state.buyer?.seller ?? null, resource: state.buyer?.resource ?? null,
-      expectedIdentity: state.workspaceIdentity });
+      expectedIdentity: state.workspaceIdentity });}
+    catch(error){workspace=error.nocoDBCleanup??null;throw error;}
     return await work(workspace, state);
-  } finally { try { await workspace?.close(); } finally { await release(); } }
+  } catch(error) { primary=error;throw error; }
+  finally {
+    try{await close();}catch(cleanup){
+      const issue=primary??cleanup;
+      Object.defineProperty(issue,'nocoDBCleanup',{value:{close},enumerable:false,configurable:true});
+      issue.close=close;issue.cleanupCode=cleanup.code??'NOCODB_PROJECT_CLOSE_FAILED';
+      if(!primary)throw issue;
+    }
+  }
 }
 
 export async function inspectProject(directory) {
@@ -333,6 +356,7 @@ export async function importDeclaredInput(directory, { input: alias, title, expe
   return withStoppedProject(directory, async (workspace, state) => {
     const input = state.inputs[alias];
     if (!input) throw fault('NOCODB_PROJECT_INPUT_NOT_DECLARED');
+    if(input.kind==='workspace')throw fault('NOCODB_PROJECT_INPUT_KIND_INVALID','Receive complete workspace inputs as independent children.');
     const request = { schema: PROJECT_SCHEMA, kind: 'IMPORT', requestId, workspaceIdentity: state.workspaceIdentity,
       input: alias, inputSha256: input.sha256, title, expectedDraftRevision };
     const requestFile = join(directory, 'requests', requestId + '.json');
@@ -412,6 +436,7 @@ export async function openProject(directory, { port = 0, signal } = {}) {
   signal?.addEventListener('abort', abort);
   if (signal?.aborted) admissionClosed = true;
   const call = async (name, args = {}) => {
+    args=structuredClone(args);
     if (admissionClosed) throw fault('NOCODB_PROJECT_CLOSING');
     if (!host) throw fault('NOCODB_PROJECT_NOT_OPEN');
     const promise = Promise.resolve().then(() => host.operator.call(name, args));
@@ -454,4 +479,40 @@ export async function openProject(directory, { port = 0, signal } = {}) {
     }
     throw error;
   }
+}
+
+/** Complete saved native workspace; host configuration remains with its project. */
+export async function exportWholeWorkspace(directory, input) {
+  input=structuredClone(input);
+  exact(input,['requestId','expectedDraftRevision','expectedSelectedVersion'],['requestId','expectedDraftRevision','expectedSelectedVersion']);
+  uuid(input.requestId);integer(input.expectedDraftRevision);
+  if(input.expectedSelectedVersion!==null&&(!Number.isSafeInteger(input.expectedSelectedVersion)||input.expectedSelectedVersion<1))
+    throw fault('NOCODB_PROJECT_VERSION_REQUIRED');
+  return withStoppedProject(directory,workspace=>workspace.exportWorkspace(input));
+}
+export async function listWholeWorkspaces(directory) {
+  return withStoppedProject(directory,async workspace=>({exports:await workspace.workspaceExports(),received:await workspace.receivedWorkspaces()}));
+}
+export async function inspectWholeWorkspaceTransfer(directory,{kind,requestId}) {
+  uuid(requestId);if(!['export','receive'].includes(kind))throw fault('NOCODB_PROJECT_TRANSFER_KIND_REQUIRED');
+  return withStoppedProject(directory,async workspace=>({kind,requestId,receipt:kind==='export'?
+    await workspace.workspaceExportStatus(requestId):await workspace.workspaceReceiveStatus(requestId)}));
+}
+export async function receiveWholeWorkspace(directory, input) {
+  input=structuredClone(input);exact(input,['input','name','requestId'],['input','name','requestId']);
+  uuid(input.requestId);if(!ALIAS.test(input.input??''))throw fault('NOCODB_PROJECT_INPUT_ALIAS_INVALID');
+  return withStoppedProject(directory,async(workspace,state)=>{
+    const source=state.inputs[input.input];
+    if(!source||source.kind!=='workspace')throw fault('NOCODB_PROJECT_INPUT_KIND_INVALID','Select one declared complete workspace input.');
+    // Original receiver first reconciles its saved exact request and completed child.
+    return workspace.receiveWorkspaceFile({archiveFile:source.file,expectedSha256:source.sha256,
+      name:input.name,requestId:input.requestId});
+  });
+}
+export async function downloadWholeWorkspace(directory,{requestId,file}) {
+  uuid(requestId);absolute(file,'private whole-workspace destination');
+  return withStoppedProject(directory,async(workspace,state)=>{
+    const native=await original(state.installation,AUTHORING_PATH+'/handover.mjs');
+    return native.saveNocoDBWorkspaceArchive(file,await workspace.exportWorkspaceFile(requestId));
+  });
 }

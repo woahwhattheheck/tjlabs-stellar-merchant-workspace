@@ -115,7 +115,7 @@ export function restOptions(config, { allowUnordered = false } = {}) {
 export function sourceSelection(config, queries = compileQueries(config.queries)) {
   return { ...binding(config), fields: selectedFields(queries) };
 }
-export async function readNocoDBSourceFile(filename, { allowUnprojected = false } = {}) {
+export async function readNocoDBSourceFile(filename, { allowUnprojected = false, resolveCaptureFile = value => value } = {}) {
   const original = await readPrivate(filename);
   let config;
   try { config = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(original)); }
@@ -131,5 +131,5 @@ export async function readNocoDBSourceFile(filename, { allowUnprojected = false 
   } else restOptions(config, { allowUnordered: allowUnprojected });
   return { config, binding: selected, queries, original, hash: digest(original),
     selectionHash: Object.keys(queries).length ? identity(sourceSelection(config, queries)) : null,
-    captureFile: config.connection.kind === 'capture' ? resolve(dirname(filename), config.connection.file) : null };
+    captureFile: config.connection.kind === 'capture' ? resolveCaptureFile(resolve(dirname(filename), config.connection.file)) : null };
 }

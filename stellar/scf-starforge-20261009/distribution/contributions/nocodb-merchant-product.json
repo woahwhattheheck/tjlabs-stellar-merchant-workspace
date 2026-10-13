@@ -7,7 +7,7 @@
     "nocodb-receive": "products/nocodb-merchant/receive.mjs"
   },
   "commandDescriptions": {
-    "nocodb-project": "Prepare and open one original NocoDB browser/MCP owner; review, publish, deploy and receive complete private source packets.",
+    "nocodb-project": "Open the original browser/MCP owner; publish and deploy reviewed NocoDB sources, then export and independently receive complete editable workspace histories.",
     "nocodb-receive": "Continue a completed original NocoDB operation through exact saved versions, published editions, browser/MCP and same-workspace reopen."
   },
   "exports": {
