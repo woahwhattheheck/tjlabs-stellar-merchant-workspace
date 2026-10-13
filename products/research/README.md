@@ -52,3 +52,7 @@ Use `research-customer-handover-intake` when continuing an original published cu
 ## Model, platform and architecture comparisons
 
 Open **Comparisons** in the original Research dossier to define source-bound criterion protocols and candidate editions, receive complete measured runs and attachments, and record named judgments and decisions. Saved working copies preserve exact requests across interrupted replies and concurrent tabs. Current and previous protocol reports remain readable and downloadable, while the full dossier transfer carries every original run, member and revision into an editable receiving workspace. Follow the [complete comparison operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/OPERATING.md) and [original-store receiving programme](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RECEIVING.md).
+
+## Comparison staff-review handover
+
+Create a [complete frozen comparison handover](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/HANDOVER.md) from an explicit dossier revision and case/protocol version. The package includes the original editable dossier, exact reports, complete raw runs/artifacts and the fixed inspection source. The maintained LDA Research handover can receive it for separately attributed subject review, Search, ordered Brief and explicit colleague-return; producer measurements and decisions remain in the original Research dossier.
