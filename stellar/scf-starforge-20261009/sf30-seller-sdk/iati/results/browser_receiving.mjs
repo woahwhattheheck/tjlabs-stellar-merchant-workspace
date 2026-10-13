@@ -30,8 +30,8 @@ const merchantExportRoot=join(config.output,'merchant');await mkdir(merchantExpo
 const merchant=new MerchantSourceWorkspaces({exportsDirectory:merchantExportRoot,sourceWorkspaces:{workspaces:{
  receiving:{label:'Original Results receiving',format:'iati',consoleUrlFile:config.connectionFile,files:{}}
 }}});
-let browser,currentPage;
-const errors=[];
+let browser,currentPage,navigationIdentity;
+const errors=[],network=[];
 try{
  try{
   const complete=JSON.parse(await readFile(resultFile,'utf8'));
@@ -59,15 +59,28 @@ try{
  assert.equal(typeof chromium?.launchPersistentContext,'function','Selected Playwright module has no Chromium API');
  const profile=join(config.output,'browser-profile');
  browser=await chromium.launchPersistentContext(profile,{executablePath:config.chromium,headless:true,viewport:{width:1440,height:1000},
-  acceptDownloads:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--single-process','--no-zygote']});
+  acceptDownloads:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
  browser.on('page',p=>p.on('pageerror',error=>errors.push(error.message)));
  const p=await browser.newPage();currentPage=p;p.on('pageerror',error=>errors.push(error.message));
+ const selectedOrigin=new URL(privateUrl).origin;
+ p.on('response',response=>{const url=new URL(response.url());if(url.origin===selectedOrigin&&network.length<100)
+  network.push({path:url.pathname,status:response.status(),resourceType:response.request().resourceType()});});
+ p.on('requestfailed',request=>{const url=new URL(request.url());if(url.origin===selectedOrigin&&network.length<100)
+  network.push({path:url.pathname,error:request.failure()?.errorText,resourceType:request.resourceType()});});
  const ui=p.locator('[data-panel="results"]');
  async function idle(){await p.locator('#main').waitFor();await p.waitForFunction(()=>document.getElementById('main')?.getAttribute('aria-busy')==='false');}
  async function click(name){await ui.getByRole('button',{name,exact:true}).click();await idle();}
  async function openProject(){await p.getByRole('button',{name:'Results',exact:true}).click();await idle();await click('Review project');
   await ui.getByLabel('Results project',{exact:true}).selectOption(original.project);await click('Open current head');}
- await p.goto(privateUrl,{waitUntil:'domcontentloaded'});await idle();await openProject();
+ const navigationResponse=await p.goto(privateUrl,{waitUntil:'domcontentloaded'});
+ assert.ok(navigationResponse,'The original console returned no navigation response');
+ navigationIdentity={status:navigationResponse.status(),path:new URL(navigationResponse.url()).pathname};
+ assert.equal(navigationIdentity.status,200,'The original console document did not load');
+ const navigationBytes=await navigationResponse.body();
+ navigationIdentity={...navigationIdentity,bytes:navigationBytes.length,sha256:digest(navigationBytes)};
+ assert.equal(navigationIdentity.sha256,digest(await readFile(join(config.sourceRoot,'iati','public','index.html'))),'The browser did not receive the selected original console document');
+ await checkpoint('browser-original-navigation',navigationIdentity);
+ await idle();await openProject();
  await ui.getByRole('heading',{name:'Project selection and named review',exact:true}).waitFor();
 
  // Retain the browser's original request before forwarding it. A interrupted
@@ -176,14 +189,14 @@ try{
   project:original.project,originalReceivingRevision:original.receivingRevision,reviewRevision:reviewed.revision,
   editionSha256:reviewed.sha256,reportSha256:reviewed.report.reportSha256,source:original.sources[0].sha256,
   sourceBytes:rawBytes,sourceIndicators:page.total,publisherRequests:0,providerRequests:0,financialDatasetBuilds:0,
-  browserErrors:errors,completedAt:new Date().toISOString(),artifacts,merchantExport:me,
+  browserErrors:errors,navigation:navigationIdentity,completedAt:new Date().toISOString(),artifacts,merchantExport:me,
   screenshots:['results-reviewed-desktop.png','results-original-records.png','results-receiving-mobile.png']};
  await writeFile(resultFile,JSON.stringify(result,null,2)+'\n',{mode:0o600});process.stdout.write(JSON.stringify(result)+'\n');
 }catch(error){
  const clean=value=>String(value??'').split(privateUrl).join('[original private console]');
  const failure={schema:'stellar-forge.iati-results-browser-failure.v1',operationId:config.operationId,
   project:original.project,state:'INCOMPLETE',error:clean(error.message),browserErrors:[...new Set(errors.map(clean))],
-  completedStages:Object.keys(progress.stages),recordedAt:new Date().toISOString()};
+  completedStages:Object.keys(progress.stages),recordedAt:new Date().toISOString(),navigation:navigationIdentity,network};
  if(currentPage&&!currentPage.isClosed()){
   failure.status=await currentPage.locator('#status').textContent({timeout:1000}).catch(()=>null);
   failure.busy=await currentPage.locator('#main').getAttribute('aria-busy',{timeout:1000}).catch(()=>null);
