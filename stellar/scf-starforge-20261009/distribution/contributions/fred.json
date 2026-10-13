@@ -86,6 +86,18 @@
     "./seller/fred/ddp/receiving-report": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving-report.d.mts",
       "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving-report.mjs"
+    },
+    "./seller/fred/alfred/model": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.mjs"
+    },
+    "./seller/fred/alfred/source": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/source.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/source.mjs"
+    },
+    "./seller/fred/alfred/cli": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/cli.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/cli.mjs"
     }
   },
   "applicationProviders": {
@@ -184,6 +196,14 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/merchant.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/purchase.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/MERCHANT.md",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/merchant-journey.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/merchant-journey.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/customer-work.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/source.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/model.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/source.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/cli.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/README.md"
   ]
 }

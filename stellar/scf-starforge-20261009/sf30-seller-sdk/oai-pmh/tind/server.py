@@ -10,13 +10,14 @@ import secrets
 import shutil
 import tempfile
 import threading
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import parse_qs, urlsplit, quote
 from bridge import InputError
 from harvest import jbytes, decode, sha, stamp
 from managed import require_binding, startup
 from migration import Migration, MAX_JSON
 from native import native_tables, search_export, send_exact
 from source_cases import list_collections, view_collection, plan_many, reviews, review_document, collection
+from source_files import run as acquire_files, acquisition, view as acquisition_view, list_acquisitions, full_document, original_path
 
 HERE = Path(__file__).resolve().parent
 ASSETS = {"index.html": "text/html; charset=utf-8", "browser.mjs": "text/javascript; charset=utf-8", "style.css": "text/css; charset=utf-8"}
@@ -32,6 +33,8 @@ class Server(ThreadingHTTPServer):
         self.announcement = startup(self, binding, token)
         self.native_jobs = {}
         self.job_lock = threading.Lock()
+        self.source_threads = []
+        self.closing = False
 
     def job(self, request):
         if not isinstance(request, dict) or set(request) != {"operationId", "projectId", "expectedRevision", "task", "input"}:
@@ -41,20 +44,23 @@ class Server(ThreadingHTTPServer):
             raise InputError("Supply a stable native operation ID")
         digest = sha(jbytes(request))
         with self.job_lock:
+            if self.closing:
+                raise InputError("The original workspace is closing; continue this saved request after reopening")
             old = self.native_jobs.get(identity)
             if old:
                 if old["requestSha256"] != digest:
                     raise InputError("This native operation ID has different inputs")
-                resumable = request["task"] == "search" and old["status"] != "running" and old.get("result", {}).get("status") == "ready"
+                resumable = old["status"] != "running" and (request["task"] == "source-download" or request["task"] == "search" and old.get("result", {}).get("status") == "ready")
                 if not resumable:
                     return old
             if any(item["status"] == "running" for item in self.native_jobs.values()):
                 raise InputError("Continue the current native transfer before starting another")
-            if request["task"] not in {"search", "send"} or not isinstance(request["input"], dict):
-                raise InputError("Choose native search or the exact native send contract")
+            if request["task"] not in {"search", "send", "source-download"} or not isinstance(request["input"], dict):
+                raise InputError("Choose native search, the exact native send contract or original source acquisition")
             with self.workspace.mutex:
-                table = "tind_native_searches" if request["task"] == "search" else "tind_native_transfers"
-                previous = self.workspace.db.execute("SELECT body FROM " + table + " WHERE id=?", (identity,)).fetchone()
+                table = {"search": "tind_native_searches", "send": "tind_native_transfers", "source-download": "tind_source_acquisitions"}[request["task"]]
+                lookup = request["input"].get("acquisitionId") if request["task"] == "source-download" else identity
+                previous = self.workspace.db.execute("SELECT body FROM " + table + " WHERE id=?", (lookup,)).fetchone()
                 project = self.workspace.project(request["projectId"])
                 if previous is None and request["expectedRevision"] != project["revision"]:
                     raise InputError("Reload the current migration revision before native transfer")
@@ -69,6 +75,8 @@ class Server(ThreadingHTTPServer):
                                                authorization_env=data.get("authorizationEnvironment"),
                                                interval=data.get("interval", 2.1), page_size=data.get("pageSize", 100),
                                                export_context=data.get("exportContext"))
+                    elif request["task"] == "source-download":
+                        output = acquire_files(self.workspace, project["id"], data["acquisitionId"], only=data.get("only"))
                     else:
                         output = send_exact(self.workspace, project["id"], identity, data["request"],
                                             authorization_env=data.get("authorizationEnvironment"))
@@ -77,7 +85,11 @@ class Server(ThreadingHTTPServer):
                 except Exception as error:
                     with self.job_lock:
                         value["status"] = "error"; value["error"] = str(error); value["finishedAt"] = stamp()
-            threading.Thread(target=work, name="tind-native-" + identity[:32], daemon=True).start()
+            worker = threading.Thread(target=work, name="tind-native-" + identity[:32], daemon=True)
+            if request["task"] == "source-download":
+                self.workspace.source_download_stop.clear()
+                self.source_threads.append(worker)
+            worker.start()
             return dict(value)
 
 class Handler(BaseHTTPRequestHandler):
@@ -167,6 +179,53 @@ class Handler(BaseHTTPRequestHandler):
                 with owner.mutex:
                     result = owner.records(query["project"], int(query.get("offset", "0")), int(query.get("limit", "50")), query.get("query", ""))
                 self.respond(200, result)
+            elif path == "/api/production-collections":
+                from production_waves import collection_inventory
+                with owner.mutex:
+                    result = collection_inventory(owner, query["project"])
+                self.respond(200, result)
+            elif path == "/api/production-plans":
+                from production_waves import list_plans, plan_view
+                with owner.mutex:
+                    result = plan_view(owner, query["project"], query["id"], int(query.get("offset", "0")), int(query.get("limit", "50"))) if query.get("id") else list_plans(owner, query["project"], int(query.get("offset", "0")), int(query.get("limit", "50")))
+                self.respond(200, result)
+            elif path == "/api/production-wave":
+                from production_waves import wave_view
+                with owner.mutex:
+                    result = wave_view(owner, query["project"], query["id"], int(query.get("offset", "0")), int(query.get("limit", "50")))
+                self.respond(200, result)
+            elif path == "/download/production-plan":
+                from production_waves import write_export
+                self.download(lambda file: write_export(owner, query["project"], query["id"], file),
+                              "tind-production-plan.jsonl", "application/x-ndjson; charset=utf-8")
+            elif path == "/api/source-downloads":
+                with owner.mutex:
+                    result = acquisition_view(owner, query["project"], query["id"], int(query.get("offset", "0")), int(query.get("limit", "50"))) if query.get("id") else list_acquisitions(owner, query["project"], int(query.get("offset", "0")), int(query.get("limit", "50")))
+                self.respond(200, result)
+            elif path == "/download/source-acquisition":
+                with owner.mutex:
+                    result = full_document(owner, query["project"], query["id"])
+                self.respond(200, result, download="tind-original-document-acquisition.json")
+            elif path == "/download/source-document":
+                with owner.mutex:
+                    acquisition(owner, query["project"], query["id"])
+                    row = owner.db.execute("SELECT body FROM tind_source_downloads WHERE acquisition_id=? AND id=?", (query["id"], query["file"])).fetchone()
+                    if not row:
+                        raise InputError("Choose a retained original document")
+                    item = decode(row[0])
+                    if item["status"] != "complete":
+                        raise InputError("Finish the original document before opening its complete bytes")
+                    source = original_path(owner, item)
+                    from migration import file_digest
+                    if file_digest(source) != {"sha256": item["sha256"], "bytes": item["bytes"]}:
+                        raise InputError("The complete original document changed")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/octet-stream")
+                    self.send_header("Content-Length", str(item["bytes"]))
+                    self.send_header("Content-Disposition", 'attachment; filename="original-' + item["id"][:16] + '.bin"; filename*=UTF-8\'\'' + quote(Path(item["filename"].replace("\\", "/")).name, safe=""))
+                    self.common_headers(); self.end_headers()
+                    with source.open("rb") as stream:
+                        shutil.copyfileobj(stream, self.wfile, 1024 * 1024)
             elif path == "/api/files":
                 with owner.mutex:
                     result = owner.files(query["project"], int(query.get("offset", "0")), int(query.get("limit", "50")), query.get("query", ""))
@@ -232,13 +291,13 @@ class Handler(BaseHTTPRequestHandler):
         except (InputError, OSError, ValueError, KeyError) as error:
             self.respond(400, {"error": str(error)})
 
-    def download(self, create, filename):
+    def download(self, create, filename, content_type="application/zip"):
         owner = self.server.workspace
         with tempfile.TemporaryDirectory(dir=owner.area / "tmp") as directory:
             path = Path(directory) / "download.zip"
             result = create(path)
             self.send_response(200)
-            self.send_header("Content-Type", "application/zip")
+            self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(result["bytes"]))
             self.send_header("Content-Disposition", 'attachment; filename="' + filename + '"')
             self.common_headers()
@@ -274,6 +333,16 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/native":
                 result = self.server.job(request)
                 self.respond(202, result)
+            elif path == "/api/source-download/stop":
+                if not isinstance(request, dict) or set(request) != {"projectId", "acquisitionId"}:
+                    raise InputError("Choose the current source acquisition")
+                with self.server.workspace.mutex:
+                    acquisition(self.server.workspace, request["projectId"], request["acquisitionId"])
+                    active = self.server.workspace.source_download_active_id
+                    if active is not None and active != (request["projectId"], request["acquisitionId"]):
+                        raise InputError("Pause the actual running acquisition from its original project")
+                    self.server.workspace.source_download_stop.set()
+                self.respond(200, {"pauseRequested": True})
             elif path == "/api/session":
                 self.respond(200, {"ready": True})
             else:
@@ -297,5 +366,10 @@ def serve(directory, port=0, expected_binding=None, startup_format=None):
     except KeyboardInterrupt:
         pass
     finally:
+        with server.job_lock:
+            server.closing = True
+            owner.source_download_stop.set()
         server.server_close()
+        for worker in server.source_threads:
+            worker.join()
         owner.close()

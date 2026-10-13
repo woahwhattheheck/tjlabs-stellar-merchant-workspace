@@ -194,6 +194,91 @@ export class CanadaBuysBidderDesk {
    return {value:{record},audit:{kind,id,noticeId:record.noticeId,revision:record.revision}};
   });
  }
+ /**
+  * Save a complete document intake in one original SQLite transaction.
+  * Every document remains a native evidence record and native replay command.
+  */
+ intakeEvidence(input){
+  if(!plain(input)||!Array.isArray(input.documents)||!input.documents.length||input.documents.length>100)
+   throw failure('INVALID_EVIDENCE_INTAKE','Choose between 1 and 100 complete documents');
+  const commandId=text(input.commandId,'intake commandId',180);
+  if(!commandId.trim()||/[\x00-\x1f\x7f]/.test(commandId))
+   throw failure('INVALID_COMMAND_ID','Use a stable nonempty intake command id');
+  const metadata=this.workspace.metadata();
+  requireThat(input.workspaceId===metadata.id,'INTAKE_WORKSPACE_CHANGED','Open this intake in its original workspace');
+  revision(input.expectedRevision,input.expectedRevision);
+  const noticeId=text(input.noticeId,'intake noticeId',256);
+  const notice=this.workspace.getNotice(noticeId);
+  const {applyRevision,...originalInput}=input;
+  const saveRevision=applyRevision===undefined?input.expectedRevision:applyRevision;
+  revision(saveRevision,saveRevision);
+  const intakeSha256=sha256(canonical(originalInput));
+  const commands=input.documents.map((document,index)=>{
+   if(!plain(document)||typeof document.bodyBase64!=='string')
+    throw failure('INVALID_EVIDENCE_BODY','Each intake document needs its complete original bytes');
+   for(const key of ['id','noticeId','revision','createdAt','updatedAt','operator','editionSha256','commandId','expectedRevision','intakeSha256'])
+    if(Object.hasOwn(document,key))throw failure('INVALID_INTAKE_FIELD','Document '+(index+1)+' must not set '+key);
+   if(document.bodyBase64.length>Math.ceil(this.maximumEvidenceBytes/3)*4)
+    throw failure('EVIDENCE_CAPACITY','Select files within the configured evidence capacity',413);
+   const body=Buffer.from(document.bodyBase64,'base64'),hash=sha256(body);
+   if(body.toString('base64')!==document.bodyBase64||body.length>this.maximumEvidenceBytes)
+    throw failure('INVALID_EVIDENCE_BODY','Evidence must contain complete canonical Base64 bytes');
+   if(document.sha256!==undefined&&document.sha256!==hash)
+    throw failure('EVIDENCE_HASH_MISMATCH','Intake document '+(index+1)+' differs from its supplied SHA256',409);
+   if(document.bytes!==undefined&&document.bytes!==body.length)
+    throw failure('EVIDENCE_LENGTH_MISMATCH','Intake document '+(index+1)+' differs from its supplied byte length',409);
+   if(document.review&&document.review.state!=='UNREVIEWED')
+    throw failure('INTAKE_REVIEW_REQUIRED','Open the saved document to record its completed review');
+   if(typeof document.capturedAt!=='string'||!document.capturedAt.trim())
+    throw failure('INVALID_TIMESTAMP','Each intake document needs its saved capture timestamp');
+   const {bodyBase64,...fields}=document;
+   const value=normalizeEvidenceDocument({...fields,sha256:hash,bytes:body.length,accessState:'CAPTURED',
+    capturedAt:timestamp(document.capturedAt,'document capturedAt'),
+    review:{state:'UNREVIEWED',reviewedBy:'',reviewedAt:null,note:document.review?.note||''}});
+   if(value.supersedes){
+    const earlier=this._record('evidence',value.supersedes);
+    requireThat(earlier.noticeId===notice.id,'INTAKE_DOCUMENT_NOTICE_CHANGED','An earlier document must belong to this notice');
+   }
+   const original={...value,bodyBase64,noticeId,expectedRevision:input.expectedRevision,
+    commandId:commandId+':document:'+index,intakeSha256};
+   return {input:original,fingerprint:sha256(canonical({type:'evidence.created',input:original}))};
+  });
+  const replay=()=>this.workspace._snapshot(()=>{
+   const records=[];
+   for(const command of commands){
+    const prior=this.db.prepare('SELECT fingerprint,result FROM bidder_commands WHERE id=?').get(command.input.commandId);
+    if(!prior)continue;
+    requireThat(prior.fingerprint===command.fingerprint,'COMMAND_ID_REUSED','This intake identity already belongs to different original input');
+    const saved=JSON.parse(prior.result).record,edition=this._record('evidence',saved.id,saved.revision);
+    requireThat(saved.editionSha256===edition.editionSha256,'INTAKE_RECORD_CHANGED','The original intake edition differs');
+    records.push(edition);
+   }
+   if(!records.length)return null;
+   requireThat(records.length===commands.length,'INTAKE_INCOMPLETE_HISTORY','Receive the complete original intake before replaying it');
+   return {schema:'starforge.canadabuys.evidence-intake.v1',commandId,intakeSha256,noticeId,
+    records,workspace:this.workspace.metadata(),alreadyApplied:true};
+  });
+  const previous=replay();if(previous)return previous;
+  try{
+   return this.workspace._change('bidder.evidence.intake',saveRevision,()=>{
+    if(replay())throw failure('BIDDER_COMMAND_REPLAY','The original intake already completed',409);
+    const records=commands.map(command=>{
+     const at=new Date().toISOString(),value={...this._prepare('evidence',command.input),id:'evidence-'+randomUUID(),
+      noticeId,revision:1,createdAt:at,updatedAt:at,operator:this.workspace.operator};
+     const record={...value,editionSha256:digest(value)};
+     this._save('evidence',record);
+     this.db.prepare('INSERT INTO bidder_commands(id,fingerprint,result) VALUES(?,?,?)')
+      .run(command.input.commandId,command.fingerprint,JSON.stringify({record}));
+     return record;
+    });
+    return {value:{schema:'starforge.canadabuys.evidence-intake.v1',commandId,intakeSha256,noticeId,records,alreadyApplied:false},
+     audit:{commandId,intakeSha256,noticeId,recordIds:records.map(record=>record.id),documents:records.length}};
+   });
+  }catch(error){
+   if(['BIDDER_COMMAND_REPLAY','REVISION_CONFLICT'].includes(error.code)){const done=replay();if(done)return done;}
+   throw error;
+  }
+ }
  evidenceFile(id,{revision:selectedRevision}={}){
   return this.workspace._snapshot(()=>{
    const record=this._record('evidence',id,selectedRevision);

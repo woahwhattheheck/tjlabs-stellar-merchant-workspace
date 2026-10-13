@@ -54,7 +54,10 @@ export async function runFredDdpAction({ request, directory, environment = proce
       capture: request.capture, packageId: request.packageId });
     case 'ddp-migration-save': return saveFredDdpMigration({ ...common, ...selection(request), previewId: request.previewId });
     case 'ddp-migration-acquire': return acquireFredDdpMigration({ ...common,
-      migrationId: request.migrationId, environment, signal });
+      migrationId: request.migrationId, environment, signal,
+      ...(Object.hasOwn(request, 'sourceMode') ? { sourceMode: request.sourceMode } : {}),
+      ...(Object.hasOwn(request, 'metadata') ? { metadata: request.metadata } : {}),
+      ...(Object.hasOwn(request, 'metadataSha256') ? { metadataSha256: request.metadataSha256 } : {}) });
     default: need(false, 'Choose a declared DDP project action.');
   }
 }

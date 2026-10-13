@@ -747,3 +747,32 @@ Completed operations expose exact file names, complete sizes and SHA256. `publis
 Page `published_report` for source meaning and series context, then `published_rows` with the exact comparison ID and original source-series/status selection. Its `nextOffset` is an original-row cursor. The sparse native JSONL index avoids loading complete multi-hundred-megabyte observations into each operator response.
 
 Existing completed native source programmes attach through the local `starforge fred ddp-publication attach` command using their original project and directory. The browser and remote methods use saved project IDs and allowlisted original files.
+
+## Historical ALFRED source through the installed operator
+
+The saved DDP acquisition can explicitly select `sourceMode: "ALFRED_VINTAGE"`. Its original official download preserves the requested vintage column, exact CSV text, observation dates, missing markers and retrieval receipt. These captures use `stellar-forge.alfred-vintage-capture.v1` and `ALFRED_VINTAGE_DATE`. The requested information date and the later retrieval time remain separate. The ordinary API request is unchanged when the new fields are omitted.
+
+Declare complete historical metadata editions as a host input, so the MCP request carries its alias instead of the full source bodies:
+
+~~~json
+{
+  "historical_metadata": {
+    "kind": "alfred-metadata",
+    "path": "/PRIVATE/alfred-metadata.json",
+    "label": "Original historical series metadata"
+  }
+}
+~~~
+
+The file is the original array of `FredAlfredMetadataEdition` values from the [ALFRED source guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/README.md). Each edition retains its full source and exact text spans. Use `input-inspect --input historical_metadata` to read the complete file byte identity and edition count. A completed metadata edition establishes the actual historical frequency, units and seasonal adjustment; absent editions remain explicit and can affect reconciliation meaning compatibility.
+
+~~~sh
+starforge fred-workspace ddp-migration-acquire --connection /PRIVATE/fred-client.json \\
+  --workspace macro --id ORIGINAL_ACQUISITION --revision ORIGINAL_REVISION \\
+  --migration SAVED_MIGRATION_ID --source-mode ALFRED_VINTAGE \\
+  --metadata-input historical_metadata --metadata-file-sha256 ORIGINAL_FILE_SHA256
+~~~
+
+`metadataFileSha256` hashes the exact input file bytes. The native `metadataSha256` hashes the canonical full edition array sorted by series ID; the successful result and pending project operation retain this identity. Continue the same original ID, revision and migration after interruption, with `--source-mode ALFRED_VINTAGE --metadata-sha256 RETAINED_EDITION_SHA256`. The native operation recovers its staged complete metadata when the alias is omitted. Default API acquisitions continue to use only their original migration payload and original API response metadata.
+
+The direct `FredWorkspaceClient.acquireDdpMigration` accepts complete `metadata` arrays and the optional digest. MCP `merchant_fred_ddp_migration_acquire` accepts `metadataInput`, `metadataFileSha256` and `metadataSha256`. Its complete capture can also be configured with `kind: "capture"` and imported through the existing observation import. Complete source and report downloads retain the original identities; portable v5/v6 receiving uses the same native source-dispatch and DDP graph validators.

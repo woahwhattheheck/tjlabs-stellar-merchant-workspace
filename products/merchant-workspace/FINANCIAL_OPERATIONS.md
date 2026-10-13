@@ -2,6 +2,8 @@
 
 Run the financial side of a Stellar merchant from the existing settlement accounting, customer, receivables, payment-plan and Xero workspaces. This chapter connects their original operating procedures, so an accounts operator and receiving engineer can follow the same customer from an agreed charge through the correct payment record, dated balance and accountant handover.
 
+For a complete presentation and receiving procedure, use the [merchant financial reviewer walkthrough](REVIEWER_WALKTHROUGH.md). It includes the delivered customer billing account, exact installed application selections and the original setup → invoice → payment → refund → bank reconciliation → customer close workflow.
+
 The installed **Merchant receivables and Xero handovers** selection includes the existing accounting, service quotation and customer operations. Its Xero server composes the original receivables handler, which also serves payment plans and customer statements. One accounting workspace and writer retain the shared customer IDs, invoices, receipts, credits, schedule editions and Xero packages.
 
 ## Choose the commercial record

@@ -1,3 +1,4 @@
+import {CUSTOMER_ACCOUNT_METHODS, CUSTOMER_ACCOUNT_FILE_KINDS, callCustomerAccount, customerAccountFile} from './accounting-customer-responses.mjs';
 import {FINANCIAL_CONTROL_METHODS, FINANCIAL_CONTROL_FILES, callFinancialControl, financialControlFile} from './accounting-financial-control.mjs';
 // MIT. Original receivables and invoice collection under the existing accounting owner.
 import {ReceivablesWorkspace, RECEIVABLE_REQUEST_BYTES} from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/store.mjs';
@@ -303,6 +304,8 @@ export class MerchantReceivables {
     const selected = operation.slice(PREFIX.length), input = payload(args);
     if (Object.values(FINANCIAL_CONTROL_METHODS).includes(selected))
       return callFinancialControl(this.controller, selected, args);
+    if(Object.values(CUSTOMER_ACCOUNT_METHODS).includes(selected))
+      return callCustomerAccount(this.controller,selected,args,this.readSource);
     // Keep original exceptions, including commit uncertainty and reopen fields, intact.
     switch (selected) {
       case 'status': return this.status(args);
@@ -364,6 +367,7 @@ export class MerchantReceivables {
   }
 
   async file(args) {
+    if(CUSTOMER_ACCOUNT_FILE_KINDS.includes(args.kind))return customerAccountFile(this.controller,args);
     if (Object.hasOwn(FINANCIAL_CONTROL_FILES, args.kind)) return financialControlFile(this.controller, args);
     if (args.kind === 'receivables-document')
       return this.controller.file(args.documentId, args.file);

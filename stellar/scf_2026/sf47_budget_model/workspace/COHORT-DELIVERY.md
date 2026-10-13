@@ -244,3 +244,121 @@ const html = exportGrantCohortDelivery(opened, 'HTML');
 `retainPrepared` and `retainOriginalNativeResponse` are the caller's durable original-file retention callbacks. The Merchant MCP supplies that ownership automatically. A direct-client retry passes the same prepared object and, when retained, `acceptedResponse` to `saveGrantCohortDelivery`. The module also exports `inspectGrantCohortDeliveryRequest` and `refreshGrantCohortDelivery` for that same saved operation and subsequent source review.
 
 JSON retains the complete selected wrapper, including the full original plan and frozen review and any retained predecessor. CSV and HTML use the original comparison engine's complete exports.
+
+
+## Reconcile the original commercial result
+
+Open **Commercial reconciliation** in the same Cohort delivery desk and choose **Start commercial reconciliation**. This joins the frozen review's complete canonical transactions to the existing plan and its purchased funding groups. It compares original atomic quantities, selected-currency payment values, actual service costs, refunds and contribution without changing the underlying financial records.
+
+The saved comparison contains the whole selected plan, frozen review, original transaction proof and every entered valuation, cost, adjustment and allocation. Existing delivery-only editions retain their original output and reopen unchanged. Starting this section creates an explicit optional commercial selection in the same comparison input.
+
+### Select the reporting basis
+
+Choose one reporting currency and one original transaction population:
+
+| Population | Exact native meaning |
+| --- | --- |
+| Settled inside the original review window | Transactions whose original `settlesInWindow` classification is true |
+| Original intent first attempted inside the window | Transactions whose original `firstAttemptInWindow` classification is true, including a later observed settlement retained by that review |
+
+The complete source keeps both native flags, the exact settlement timestamp, all original purchase and intent-group IDs, and source metadata. Transactions outside the selected population remain in the report. The plan remains its original whole-window prospective baseline; a still-open recorded window and its actual cutoff stay visible.
+
+Keep network fees **separate** unless the operator actually bears them and intends to include them in this service-cost analysis. **Include as cost** adds the valued original network fee once per canonical transaction. Record other payment or supplier fees as their own cost rows, keeping a fee already included through the native transaction out of those rows.
+
+### Enter dated asset values
+
+The payment-amount table compares exact atomic strings by original network and asset. A planned unpriced group stays unknown, and an unresolved native transaction stays unknown. Known subtotals remain available beside incomplete totals.
+
+For currency analysis, enter one selected valuation for each exact network/asset: original decimal places, reporting-currency value per whole asset unit, actual valuation timestamp and its source reference. Values do not cross networks, asset identities or reporting currencies. Native XLM fees retain their original seven-decimal stroop unit, separately from the asset used for the payment. The calculation uses exact decimal and integer arithmetic; it does not round transaction quantities through JavaScript floating-point numbers.
+
+A zero atomic quantity has a known zero currency value. A positive quantity without its selected valuation remains unvalued. Original amounts, fees, dates and quote sources remain present in complete JSON, CSV and HTML.
+
+### Retain shared transactions and purchased groups
+
+The native frozen review already deduplicates canonical transactions by network and transaction hash. Commercial reconciliation consumes those canonical records directly, including each record's original observations and any amount or fee conflicts.
+
+One transaction can support several original intent groups. If all of those groups already point to one opportunity, that opportunity receives the transaction's amount once. If the transaction spans several opportunities, use **Allocate one original transaction** and select the complete original parts. Every selected target must be one of the transaction's placed original opportunities, with matching network and asset. The atomic parts must equal the complete original known amount exactly.
+
+For example, the editable shape is:
+
+```json
+{
+  "network": "the-original-network",
+  "transactionHash": "the-original-transaction-hash",
+  "parts": [
+    {"targetId": "funding:original-group-a", "amountAtomic": "40000000"},
+    {"targetId": "funding:original-group-b", "amountAtomic": "20000000"}
+  ],
+  "note": "Original invoice or funding source showing the whole allocation."
+}
+```
+
+Use the actual transaction's `candidateTargetIds` and original atomic amount. A quantity conflict must be corrected in the original recorded source and frozen review. An unmatched transaction remains visible and unallocated. Allocating payment value does not create another intent, purchase or useful task, and does not change the original delivery or independence classifications.
+
+### Record complete service costs
+
+Record supplier, active-labor, other payment-fee and other service-cost rows with their actual timestamps and original source references. Select the original service component when the cost belongs to that complete service; leave the component blank for whole-case shared overhead.
+
+The planner's service component retains all linked funding groups and shared useful results. One actual cost row enters the whole reconciliation once, even when that component supports many purchased groups. The service table retains its original planned currency and each original cost-row ID.
+
+A non-labor row uses its explicitly entered amount. A labor row uses actual active hours multiplied by its selected hourly cost; its direct amount stays blank. Missing amounts or labor terms remain unknown. Enter `0` when the source establishes a zero.
+
+Keep **Costs still being recorded** while the register is incomplete. The report shows known subtotals and leaves complete total cost and contribution unspecified. Choose **Complete selected-window cost coverage** only with an explicit source note describing the complete coverage. An unresolved cost or an included but unknown/unvalued network fee still keeps the total incomplete. Whole-case coverage does not assert that each individual service component has a separately complete cost allocation.
+
+Existing cost or adjustment rows can be corrected by entering their original ID. Valuations replace only the selected exact network/asset. Commercial form drafts survive recalculation, validation errors and browser-session reopening. A saved comparison edition preserves the original prior source in the case history.
+
+### Reconcile refunds and adjustments
+
+A refund adjustment deducts its source-backed reporting-currency amount; another revenue adjustment adds its amount. Keep the actual timestamp inside the original recorded window and cutoff.
+
+Select an original refund cash row where available. A selected row must be current in that original review window, cannot be void, and can be used once. A same-currency refund must retain the exact original cash amount. If its original currency differs, enter the explicitly sourced reporting-currency value and retain the conversion basis in the source reference.
+
+Associate each relevant original refunded intent with its actual refund adjustment. An adjustment can cover several retained refunded intents, but each intent is associated once. Original refund cash rows and refunded intents without their corresponding reviewed values remain visible, and adjusted revenue and contribution remain incomplete. The native cash rows and transaction observations are preserved in the comparison.
+
+The resulting comparison is:
+
+```text
+adjusted revenue = selected valued settlements − reviewed refund values + other revenue
+complete cost = complete recorded service costs + included valued network fees
+contribution = adjusted revenue − complete cost
+variance = recorded/valued result − original planned value in the same reporting currency
+```
+
+These values belong to this explicit analytical selection. The existing accounting and Buyer Expenses applications retain their original books, source records and allocation histories.
+
+### Operate the same complete selection through CLI and MCP
+
+The installed command can produce the full editable commercial selection from an existing comparison:
+
+```sh
+starforge grant-cohort-delivery commercial-seed \
+  --input cohort-delivery.json \
+  --output commercial-choices.json
+
+starforge grant-cohort-delivery commercial \
+  --input cohort-delivery.json \
+  --choices commercial-choices.json \
+  --output commercial-comparison.json
+
+starforge grant-cohort-delivery html \
+  --input commercial-comparison.json \
+  --output commercial-comparison.html
+
+starforge grant-cohort-delivery csv \
+  --input commercial-comparison.json \
+  --output commercial-comparison.csv
+```
+
+Edit the complete choices object from `commercial-seed`; its schema is `stellar-forge.sf47-cohort-commercial.v1`. The same `commercial` field can be supplied in complete editable comparison input to `compare`. `reopen` recomputes the full commercial report from its retained original sources and explicit choices.
+
+The existing `merchant_grant_cohort_delivery_edit` tool adds three actions:
+
+| Action | Complete operation |
+| --- | --- |
+| `START_COMMERCIAL` | Seed the optional selection on an original comparison |
+| `SET_COMMERCIAL` with `commercial` | Apply the whole reviewed selection, retaining the full predecessor |
+| `REMOVE_COMMERCIAL` | Return this successor to a delivery-only comparison while retaining its full predecessor |
+
+The existing source refresh carries all commercial choices with the original associations and placements. If a retained transaction, cost component, refund or actual-date constraint no longer fits the new source, it returns complete editable input and the exact finding. Correct the whole selection through the existing edit operation. It never silently discards a now-invalid transaction allocation or cost source.
+
+Continue through the original **review → prepare → save → request recovery → open → export** operation documented above. Preparation still binds the complete original saved plan and frozen review. The same source attachment and request journal save the full successor; the same desk and command reopen it. JSON, CSV and readable HTML include all transactions, allocations, valuations, costs, adjustments, original refund rows, shared-service sources, coverage and actionable findings.

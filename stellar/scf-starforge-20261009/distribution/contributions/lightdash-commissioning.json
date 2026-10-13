@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "lightdash-commissioning",
-  "description": "Complete original Lightdash commissioning application with installed project setup, one shared browser/MCP owner, managed Applications and complete customer handover receiving.",
+  "description": "Complete original Lightdash commissioning application with installed project setup, one shared browser/MCP owner, managed Applications and complete customer handover receiving. Includes editable customer operating procedures, original native outcome observations and complete returned-plan review.",
   "components": [
     "business/lightdash-commissioning-workspace-20261012",
     "products/lightdash-commissioning"
@@ -9,19 +9,26 @@
   "commands": {
     "lightdash-project": "products/lightdash-commissioning/cli.mjs",
     "lightdash-receive": "products/lightdash-commissioning/receive.mjs",
-    "lightdash-installed-receive": "products/lightdash-commissioning/installed-receiving.mjs"
+    "lightdash-installed-receive": "products/lightdash-commissioning/installed-receiving.mjs",
+    "lightdash-operating-plan": "products/lightdash-commissioning/operating-cli.mjs"
   },
   "commandDescriptions": {
     "lightdash-project": "Prepare, open and operate an original Lightdash commissioning project through shared browser and authenticated MCP.",
     "lightdash-receive": "Receive and reopen a complete original Lightdash handover with its included application and detached workspace.",
-    "lightdash-installed-receive": "Continue the same completed Lightdash operation through installed MCP, managed Applications and customer receiving."
+    "lightdash-installed-receive": "Continue the same completed Lightdash operation through installed MCP, managed Applications and customer receiving.",
+    "lightdash-operating-plan": "Author customer operating procedures from original Lightdash source and native outcomes; receive complete history and review returned changes without dispatching commissioning work"
   },
   "exports": {
     "./products/lightdash": "./source/products/lightdash-commissioning/project.mjs",
     "./products/lightdash/client": "./source/products/lightdash-commissioning/client.mjs",
     "./products/lightdash/receiving": "./source/products/lightdash-commissioning/receive.mjs",
     "./products/lightdash/native": "./source/business/lightdash-commissioning-workspace-20261012/native/index.mjs",
-    "./products/lightdash/workspace": "./source/business/lightdash-commissioning-workspace-20261012/workspace.mjs"
+    "./products/lightdash/workspace": "./source/business/lightdash-commissioning-workspace-20261012/workspace.mjs",
+    "./products/lightdash/operating-plans": {
+      "types": "./source/products/lightdash-commissioning/operating-plan.d.mts",
+      "import": "./source/products/lightdash-commissioning/operating-plan.mjs"
+    },
+    "./products/lightdash/operating-server": "./source/products/lightdash-commissioning/operating-server.mjs"
   },
   "applicationProviders": {
     "lightdash-commissioning": "products/lightdash-commissioning/application-provider.mjs"
@@ -33,6 +40,10 @@
     {
       "server": "business/lightdash-commissioning-workspace-20261012/server.mjs",
       "manifest": "products/lightdash-commissioning/browser-assets.json"
+    },
+    {
+      "server": "products/lightdash-commissioning/operating-server.mjs",
+      "manifest": "products/lightdash-commissioning/operating-browser-assets.json"
     }
   ]
 }

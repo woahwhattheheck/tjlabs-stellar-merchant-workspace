@@ -1,0 +1,67 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "rialto-customer",
+  "heading": "## Rialto discovery and complete customer receiving",
+  "sources": [
+    {
+      "id": "rialto-customer-operating",
+      "label": "Complete Rialto customer receiving and independent reopening",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/OPERATING.md",
+      "commit": "7b2c8e94a9dc08124c75e372c802839db18ebb15",
+      "editions": [
+        {
+          "commit": "7b2c8e94a9dc08124c75e372c802839db18ebb15",
+          "bytes": 12443,
+          "sha256": "91d7ca9dbc0dc1699f80c891949384c5a789d95ea78a366fa82a6360105ae5cb"
+        }
+      ]
+    },
+    {
+      "id": "rialto-customer-runtime",
+      "label": "Complete Rialto original-source and native buyer CLI",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/customer.mjs",
+      "commit": "7b2c8e94a9dc08124c75e372c802839db18ebb15",
+      "editions": [
+        {
+          "commit": "7b2c8e94a9dc08124c75e372c802839db18ebb15",
+          "bytes": 18110,
+          "sha256": "c24b73a37cdd0448653872231952e53e2b4ce6a3da474a466d576ac5c7f65743"
+        }
+      ]
+    },
+    {
+      "id": "rialto-customer-interfaces",
+      "label": "Rialto and original buyer source contracts",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/SOURCE_CONTRACT.md",
+      "commit": "7b2c8e94a9dc08124c75e372c802839db18ebb15",
+      "editions": [
+        {
+          "commit": "7b2c8e94a9dc08124c75e372c802839db18ebb15",
+          "bytes": 6977,
+          "sha256": "ee7c506450703f09afb77b8887e3795d4d7443c61497274a465c712662dad5d6"
+        }
+      ]
+    },
+    {
+      "id": "rialto-customer-workshare",
+      "label": "Merchant onboarding workshare and acceptance",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rialto/WORKSHARE.md",
+      "commit": "7b2c8e94a9dc08124c75e372c802839db18ebb15",
+      "editions": [
+        {
+          "commit": "7b2c8e94a9dc08124c75e372c802839db18ebb15",
+          "bytes": 7172,
+          "sha256": "c5b749700fbe10e316b405820cb63659074c385eaf3ec7ff9d4175a64cd49a7c"
+        }
+      ]
+    }
+  ]
+}

@@ -24,11 +24,13 @@ const sectionDetails = {
   portfolio:['planning','Allocate original delivery resources across saved forecast alternatives.','resource staffing capacity allocation alternative'],
   contributors:['people','Find the people, teams and suppliers attached to recorded work and invoices.','person organization supplier contact'],
   engagements:['people','Retain contributor agreements, acceptance and availability with their original sources.','agreement contract engagement availability acceptance'],
+  risks:['delivery','Review dated delivery risks, current issues, owners, mitigation actions and their original source evidence.','risk issue mitigation action assessment likelihood impact priority overdue resolution register'],
   work:['people','Record and review completed contributor work against the original work packages.','timesheet time hours task effort'],
   invoices:['people','Record supplier invoices, original lines and links to completed work.','bill invoice expense liability'],
   'supplier-account':['people','Inspect supplier balances, invoice payments and the original account history.','accounts payable supplier balance dispute payment'],
   'work-intake':['people','Receive complete original timesheet and supplier invoice files with reviewed mappings.','timesheet invoice csv tsv import intake'],
   'ledger-intake':['people','Inspect and receive complete source tables through the original ledger writers.','bulk ledger csv tsv json import source'],
+  expenses:['cash','Attribute original issued buyer expenses and credits to retained work packages with their accountant sources.','buyer expense credit accountant issued allocation valuation cost'],
   settlements:['cash','Open the original merchant settlement receiving desk.','merchant settlement receipt cash payment'],
   'award-terms':['cash','Open the retained issuer terms and their original operating context.','issuer grant award terms tranche'],
   cash:['cash','Inspect observed cash movements, original corrections and issuer events.','bank cash payment receipt refund award issuer'],
@@ -155,6 +157,7 @@ function subtitle(row,keys) {
 }
 function reviewSection(row) {
   const purpose=text(row.purpose);
+  if(purpose==='DELIVERY_RISK_REGISTER')return 'risks';
   if(purpose==='TRANCHE_COMPLETION')return 'completion';
   if(purpose==='COHORT_EVALUATION')return 'cohort';
   if(purpose.includes('IMPLEMENTATION'))return 'implementation';

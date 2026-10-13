@@ -1,9 +1,10 @@
 // MIT. Browser authoring over the same original-source model and native generator as the CLI.
 import {
-  TYPES, EMPTY_POLICIES, LIMITS, createProject, addDocument, addEdition, initialMapping,
+  TYPES, EMPTY_POLICIES, LIMITS, createProject, addDocument, addEdition, addDocumentTable, initialMapping,
   freezeReview, importProject, inspectSource, parseTable, decodeSource, selectedEdition, selectedReview,
   reviewIsCurrent, compareReviews, comparisonCsv, createTableArchive, SourceTableError,
 } from './source-table-workspace.mjs';
+import { createDocumentTableSource, validateDocumentTableSource, inspectDocumentTables, projectDocumentTable, validateDocumentTableProjection } from './source-document-tables.mjs';
 import { importWorkspaceDraft } from './onboarding.mjs';
 
 const $ = id => document.getElementById(id);
@@ -53,7 +54,7 @@ function touch() {
 async function perform(action) {
   if (busy) return;
   busy = true; clearError();
-  for (const control of document.querySelectorAll('button,input,select')) control.disabled = true;
+  for (const control of document.querySelectorAll('button,input,select,textarea')) control.disabled = true;
   try { await action(); }
   catch (error) { showError(error); message('Your current project remains available.'); }
   finally { busy = false; render(); }
@@ -200,11 +201,11 @@ function renderReviews(doc) {
   renderComparison(doc);
 }
 function render() {
-  for (const control of document.querySelectorAll('button,input,select')) control.disabled = busy;
+  for (const control of document.querySelectorAll('button,input,select,textarea')) control.disabled = busy;
   const shared = { 'project-name': project.name, 'merchant-folder': project.starter.folder, 'merchant-network': project.starter.network,
     'merchant-asset': project.starter.asset, 'merchant-recipient': project.starter.payTo, 'merchant-amount': project.starter.amount, 'merchant-timeout': project.starter.maxTimeoutSeconds };
   for (const [field, value] of Object.entries(shared)) $(field).value = value ?? '';
-  renderSources();
+  renderSources(); renderDocumentIntake();
   const doc = currentDocument(); $('empty-state').hidden = Boolean(doc); $('document-workspace').hidden = !doc;
   $('export-workspace').disabled = busy || !project.documents.length || project.documents.some(d => !reviewIsCurrent(d));
   if (!doc) return;
@@ -399,6 +400,199 @@ $('saved-projects').addEventListener('click', () => {
   if (!$('saved-list').hidden) { $('saved-list').hidden = true; $('saved-projects').setAttribute('aria-expanded', 'false'); return; }
   perform(showSaved);
 });
+
+// Document extraction stays data throughout: all source content enters textContent.
+let documentIntake = {source:null,inspection:null,tableIndex:1,rowPage:0,columnPage:0,projection:null};
+const documentPageRows = 20, documentPageColumns = 12;
+const intakeTable = () => documentIntake.inspection?.tables.find(t => t.tableIndex === documentIntake.tableIndex);
+function selectedDocumentSource(edition) {
+  const sources = project.documentTableSources || [];
+  return Array.isArray(sources) ? sources.find(s => s.id === edition?.documentTable?.sourceId) : sources[edition?.documentTable?.sourceId];
+}
+function integerRanges(value, maximum, label, empty = false) {
+  if (!value.trim()) { if (empty) return []; throw new Error('Choose ' + label + '.'); }
+  const result = [], seen = new Set();
+  for (const part of value.split(',')) {
+    const match = /^\s*(\d+)(?:\s*-\s*(\d+))?\s*$/.exec(part);
+    if (!match) throw new Error('Use comma-separated whole numbers or ranges for ' + label + '.');
+    const first = Number(match[1]), last = Number(match[2] || match[1]);
+    if (!Number.isSafeInteger(first) || !Number.isSafeInteger(last) || first < 1 || last < first || last > maximum)
+      throw new Error(label + ' must stay within 1–' + maximum + '.');
+    for (let n = first; n <= last; n++) { if (seen.has(n)) throw new Error(label + ' repeats ' + n + '.'); seen.add(n); result.push(n); }
+  }
+  return result;
+}
+function rangeText(values) {
+  const chunks = [];
+  for (let i = 0; i < values.length; i++) { let last = values[i], end = i; while (end + 1 < values.length && values[end + 1] === last + 1) last = values[++end]; chunks.push(end === i ? String(values[i]) : values[i] + '-' + last); i = end; }
+  return chunks.join(', ');
+}
+function readDocumentSelection() {
+  const t = intakeTable(); if (!t) throw new Error('Open a source table first.');
+  const excludedRows = [];
+  for (const line of $('document-exclusions').value.split(/\r?\n/).filter(s => s.trim())) {
+    const match = /^\s*(\d+)\s*:\s*(.+)$/.exec(line);
+    if (!match) throw new Error('Each optional exclusion note needs an original row number followed by a colon and note.');
+    excludedRows.push({row:Number(match[1]),reason:match[2].trim()});
+  }
+  return {tableIndex:t.tableIndex,headerRows:integerRanges($('document-header-rows').value,t.rowCount,'header rows',true),
+    dataRows:integerRanges($('document-data-rows').value,t.rowCount,'data rows'),columns:integerRanges($('document-columns').value,t.columnCount,'columns'),
+    mergedCells:$('document-merge').value,whitespace:$('document-whitespace').value,excludedRows};
+}
+function writeDocumentSelection(selection) {
+  $('document-header-rows').value = rangeText(selection.headerRows);
+  $('document-data-rows').value = rangeText(selection.dataRows);
+  $('document-columns').value = rangeText(selection.columns);
+  $('document-merge').value = selection.mergedCells;
+  $('document-whitespace').value = selection.whitespace;
+  $('document-exclusions').value = (selection.excludedRows || []).map(x => x.row + ': ' + x.reason).join('\n');
+}
+function resetDocumentSelection() {
+  const t = intakeTable(); if (!t) return;
+  writeDocumentSelection({headerRows:t.rowCount > 1 ? [1] : [],dataRows:Array.from({length:t.rowCount > 1 ? t.rowCount-1 : t.rowCount},(_,i)=>i+(t.rowCount > 1 ? 2 : 1)),
+    columns:Array.from({length:t.columnCount},(_,i)=>i+1),mergedCells:'anchor',whitespace:'preserve',excludedRows:[]});
+  documentIntake.rowPage = 0; documentIntake.columnPage = 0; invalidateDocumentProjection();
+  $('document-csv-name').value = (documentIntake.source.filename.replace(/\.[^.]*$/, '') || 'document') + '-table-' + t.tableIndex + '.csv';
+  $('document-cell-origin').textContent = ''; $('document-cell-detail').open = false;
+  $('document-original-markup').hidden = true; $('document-original-markup').textContent = '';
+}
+function invalidateDocumentProjection() {
+  documentIntake.projection = null;
+  $('document-projection-panel').hidden = true;
+  $('document-intake-status').textContent = 'Selection is editable. Prepare the CSV preview to review its exact output.';
+}
+async function loadDocumentSource(source, projection = null) {
+  const verified = await validateDocumentTableSource(source), inspection = await inspectDocumentTables(verified);
+  if (!inspection.tables.length) throw new Error('This extraction contains no HTML tables. Choose extracted HTML or Markdown with table elements.');
+  if (projection) await validateDocumentTableProjection({source:verified,projection});
+  documentIntake = {source:verified,inspection,tableIndex:projection?.selection.tableIndex || inspection.tables[0].tableIndex,rowPage:0,columnPage:0,projection:null};
+  $('document-source-url').value = verified.sourceUrl || verified.document?.url || '';
+  $('document-original-name').value = verified.document?.filename || '';
+  $('document-provider').value = verified.extraction?.provider || verified.extraction?.method || '';
+  resetDocumentSelection();
+  if (projection) { writeDocumentSelection(projection.selection); documentIntake.projection = projection; }
+  $('document-intake-status').textContent = verified.filename + ' · ' + inspection.tables.length + ' tables · complete extraction retained (' + verified.bytes + ' bytes).';
+}
+function showDocumentCell(t, row, column) {
+  const index = t.grid[row-1]?.[column-1], cell = index == null ? null : t.cells[index];
+  const lines = [
+    'Extraction: ' + documentIntake.source.filename,
+    'Original document: ' + (documentIntake.source.document?.filename || '(not supplied)'),
+    'Source URL: ' + (documentIntake.source.sourceUrl || documentIntake.source.document?.url || '(not supplied)'),
+    'Table ' + t.tableIndex + (t.location?.page ? ' · original page ' + t.location.page : '') + (t.location?.label ? ' · ' + t.location.label : ''),
+    'Selected grid coordinate: row ' + row + ', column ' + column
+  ];
+  if (cell) lines.push('Anchor: row ' + cell.row + ', column ' + cell.column + ' · spans ' + cell.rowspan + ' row(s) × ' + cell.colspan + ' column(s)',
+    'Original extraction offsets: ' + cell.htmlStart + '–' + cell.htmlEnd + ' (UTF-16 characters)',
+    '', 'Complete original text:', cell.text, '', 'Complete original cell markup:', cell.html);
+  else lines.push('This grid coordinate has no source cell.');
+  $('document-cell-origin').textContent = lines.join('\n'); $('document-cell-detail').open = true;
+}
+function renderDocumentGrid() {
+  const t = intakeTable(), area = $('document-cell-grid'); area.replaceChildren(); if (!t) return;
+  const rowStart = documentIntake.rowPage * documentPageRows, colStart = documentIntake.columnPage * documentPageColumns;
+  const rowEnd = Math.min(t.rowCount,rowStart+documentPageRows), colEnd = Math.min(t.columnCount,colStart+documentPageColumns);
+  const grid = element('table',undefined,'preview-table document-grid'), head = element('thead'), hr = element('tr'), body = element('tbody');
+  hr.append(element('th','Original row'));
+  for(let c=colStart+1;c<=colEnd;c++) {const th=element('th','Column '+c);th.scope='col';hr.append(th);}head.append(hr);
+  for(let r=rowStart+1;r<=rowEnd;r++) {
+    const tr=element('tr'), th=element('th',String(r));th.scope='row';tr.append(th);
+    for(let c=colStart+1;c<=colEnd;c++) {
+      const index=t.grid[r-1]?.[c-1],cell=index==null?null:t.cells[index],td=element('td'),button=element('button');
+      button.type='button';button.disabled=busy;button.className='document-cell';
+      const covered=cell&&(cell.row!==r||cell.column!==c);
+      button.textContent=cell?previewValue(cell.text):'(no source cell)';
+      button.setAttribute('aria-label','Inspect original row '+r+', column '+c+(covered?', covered by row '+cell.row+', column '+cell.column:''));
+      if(covered)button.append(element('small','Covered → '+cell.row+':'+cell.column));
+      button.addEventListener('click',()=>showDocumentCell(t,r,c));td.append(button);tr.append(td);
+    }body.append(tr);
+  }grid.append(head,body);area.append(grid);
+  $('document-preview-range').textContent='Rows '+(rowStart+1)+'–'+rowEnd+' of '+t.rowCount+' · columns '+(colStart+1)+'–'+colEnd+' of '+t.columnCount;
+  $('document-rows-prev').disabled=busy||rowStart===0;$('document-rows-next').disabled=busy||rowEnd===t.rowCount;
+  $('document-cols-prev').disabled=busy||colStart===0;$('document-cols-next').disabled=busy||colEnd===t.columnCount;
+}
+function renderDocumentIntake() {
+  const source=documentIntake.source, t=intakeTable(), projection=documentIntake.projection;
+  $('document-intake-editor').hidden=!source;
+  const activeDoc=currentDocument();
+  $('reopen-document-selection').hidden=!activeDoc||!selectedEdition(activeDoc).documentTable;
+  if(!source||!t)return;
+  $('document-table-choice').replaceChildren(...documentIntake.inspection.tables.map(x=>option(String(x.tableIndex),
+    'Table '+x.tableIndex+' · '+x.rowCount+' rows × '+x.columnCount+' columns'+(x.location?.page?' · page '+x.location.page:'')+(x.location?.label?' · '+x.location.label:''),x.tableIndex===t.tableIndex)));
+  const target=$('document-target'), chosen=target.value;target.replaceChildren(option('','New merchant resource',chosen===''));
+  for(const resource of project.starter.resources)if(!project.documents.some(d=>d.resourceId===resource.id))target.append(option('resource:'+resource.id,'Existing unbound resource · '+resource.id,chosen==='resource:'+resource.id));
+  for(const doc of project.documents)target.append(option('document:'+doc.id,'Next edition · '+doc.label,chosen==='document:'+doc.id));
+  if(![...target.options].some(x=>x.value===chosen))target.value='';
+  renderDocumentGrid();
+  $('document-projection-panel').hidden=!projection;
+  if(projection) {
+    const s=projection.summary;
+    $('document-projection-summary').textContent=s.dataRows+' data rows · '+s.columns+' columns · '+s.omittedRows+' original rows omitted · '+projection.bytes+' CSV bytes. Preview below shows the first 20 projected rows; downloads retain every row.';
+    $('document-projection-preview').replaceChildren(table(projection.headings,projection.rows.slice(0,20).map(r=>r.cells.map(c=>c.value)),projection.rows.slice(0,20).map(r=>r.row)));
+    $('document-omitted-rows').textContent=projection.omittedRows.length?projection.omittedRows.map(r=>'Original row '+r.row+' · '+r.kind+(r.reason?' · '+r.reason:'')).join('\n'):'Every original row is selected as a header or data row.';
+  }
+}
+$('open-document-text').addEventListener('click',()=>chooseFile('document-extraction-file'));
+$('document-extraction-file').addEventListener('change',()=>{
+  const file=$('document-extraction-file').files[0];if(!file)return;
+  perform(async()=>{
+    const text=await fileText(file,LIMITS.projectBytes);
+    let source, projection=null;
+    if(/\.json$/i.test(file.name)||/^\s*\{/.test(text)) {
+      const value=JSON.parse(text);
+      source=value.schema==='stellar-forge.document-table-source.v1'?value:value.source;
+      projection=value.projection||null;
+      if(!source)throw new Error('Choose retained document-table source JSON or a saved source and selection. Complete projects open through Open project JSON.');
+    } else {
+      const document={},extraction={};
+      if($('document-source-url').value.trim())document.url=$('document-source-url').value.trim();
+      if($('document-original-name').value.trim())document.filename=$('document-original-name').value.trim();
+      if($('document-provider').value.trim())extraction.provider=$('document-provider').value.trim();
+      source=await createDocumentTableSource({filename:file.name,sourceText:text,sourceUrl:document.url||'',document,extraction});
+    }
+    await loadDocumentSource(source,projection);
+    message('Opened the complete extracted source. Review original cells and choose the rows and columns to receive.');
+  });
+});
+$('document-table-choice').addEventListener('change',()=>{
+  documentIntake.tableIndex=Number($('document-table-choice').value);resetDocumentSelection();renderDocumentIntake();
+});
+for(const id of ['document-header-rows','document-data-rows','document-columns','document-exclusions','document-merge','document-whitespace'])
+  $(id).addEventListener(id==='document-merge'||id==='document-whitespace'?'change':'input',invalidateDocumentProjection);
+for(const [id,field,delta] of [['document-rows-prev','rowPage',-1],['document-rows-next','rowPage',1],['document-cols-prev','columnPage',-1],['document-cols-next','columnPage',1]])
+  $(id).addEventListener('click',()=>{documentIntake[field]+=delta;renderDocumentGrid();});
+$('document-show-markup').addEventListener('click',()=>{
+  const pre=$('document-original-markup');pre.hidden=!pre.hidden;
+  pre.textContent=pre.hidden?'':intakeTable().html;
+  $('document-show-markup').textContent=pre.hidden?'Show original table markup':'Hide original table markup';
+});
+$('document-download-source').addEventListener('click',()=>download('Document_Table_Source.json',json(documentIntake.source)));
+$('document-preview').addEventListener('click',()=>perform(async()=>{
+  documentIntake.projection=await projectDocumentTable(documentIntake.source,readDocumentSelection());
+  message('Prepared the complete selected CSV. Review it, then use it in field mapping.');
+}));
+$('document-download-csv').addEventListener('click',()=>download($('document-csv-name').value||'document-table.csv',documentIntake.projection.csv,'text/csv;charset=utf-8'));
+$('document-download-selection').addEventListener('click',()=>download('Document_Table_Selection.json',json({source:documentIntake.source,projection:documentIntake.projection})));
+$('document-receive').addEventListener('click',()=>perform(async()=>{
+  if(!documentIntake.projection)throw new Error('Prepare the current selection first.');
+  const target=$('document-target').value;
+  const result=await addDocumentTable(project,{source:documentIntake.source,projection:documentIntake.projection,
+    filename:$('document-csv-name').value.trim()||undefined,
+    ...(target.startsWith('document:')?{documentId:target.slice(9)}:target.startsWith('resource:')?{resourceId:target.slice(9)}:{})});
+  replaceProject(result.project,result.documentId);
+  renderDocumentIntake(); $('document-target').value='document:'+result.documentId;
+  message(result.reused?'Reopened the retained identical document projection. Continue with its field mapping.':'Received the projected CSV, complete original extraction and cell origins. Review the field mapping below.');
+  $('document-workspace').scrollIntoView({block:'start',behavior:'smooth'});
+}));
+$('reopen-document-selection').addEventListener('click',()=>perform(async()=>{
+  const edition=selectedEdition(currentDocument()),source=selectedDocumentSource(edition);
+  if(!source||!edition.documentTable?.projection)throw new Error('This edition has no retained document-table source.');
+  await loadDocumentSource(source,edition.documentTable.projection);
+  $('document-target').value='document:'+documentId;$('document-csv-name').value=edition.filename;
+  message('Reopened the exact original extraction and selection. Change the selection to prepare another edition.');
+  $('document-intake').scrollIntoView({block:'start',behavior:'smooth'});
+}));
+
 window.addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
 render();
 message('Add the original source files or reopen a complete project.');

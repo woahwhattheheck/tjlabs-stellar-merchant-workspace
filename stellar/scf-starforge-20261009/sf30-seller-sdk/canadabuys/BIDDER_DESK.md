@@ -242,3 +242,8 @@ The implementation extends the original 27-file CanadaBuys application at commit
 The source-backed domain review uses retained complete 67-column tender and 80-column award rows from the original October 12, 2026 captures. A small row projection used by an operating/receiving exercise is identified as a projection; the full-feed capture sizes and hashes remain separate original provenance.
 
 The complete receiving programme exercises migration, saved records, evidence changes, reviewed context, retry continuity, reports and cold receiving through the native application. Its result is recorded only after the actual run. Browser review uses the operator page served by that same application.
+
+
+## Complete original document intake
+
+Use [Import and review an original document set](EVIDENCE_INTAKE.md) to bring the solicitation, financial workbook and amendments into the existing desk together. The browser preview and Node command save one transaction of ordinary evidence records, retain the unchanged request for recovery, and carry the originals through complete receiving packages.

@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path, PurePosixPath
+from reviewer_source_paths import read_path_selection, reviewer_paths, verify_reviewer_paths
 
 OPERATION = "SCF-GRANT-CURRENT-REVIEW-81CF-20261012"
 PHASE = "SCF-SUBMISSION-SOURCE-PACKAGE-A8CE-20261012"
@@ -18,6 +19,20 @@ def sha(body):
 
 def blob(body):
     return hashlib.sha1(b"blob " + str(len(body)).encode() + b"\0" + body).hexdigest()
+
+def source_bytes(row):
+    content = row["content"]
+    if not isinstance(content, str):
+        raise ValueError("Retain a complete encoded source string: " + row["path"])
+    encoding = row.get("encoding", "utf-8")
+    if encoding in (None, "utf-8"):
+        return content.encode("utf-8")
+    if encoding == "base64":
+        body = base64.b64decode(content, validate=True)
+        if base64.b64encode(body).decode("ascii") != content:
+            raise ValueError("Retain canonical complete base64 source: " + row["path"])
+        return body
+    raise ValueError("Select UTF-8 or base64 source encoding: " + row["path"])
 
 def encoded(value):
     return (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
@@ -58,6 +73,8 @@ def main():
     parser.add_argument("--runtime-source-commit", required=True)
     parser.add_argument("--application-source-commit", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--reviewer-paths", type=Path,
+                        help="Explicit complete role-to-carrier-path selection; logical package names stay unchanged.")
     args = parser.parse_args()
     os.umask(0o077)
     for name in ("original_source_commit", "runtime_source_commit", "application_source_commit"):
@@ -73,13 +90,20 @@ def main():
     selected = {}
     for row in source["files"]:
         name = str(exact_path(row["path"]))
-        if name in selected or row.get("encoding") not in (None, "utf-8"):
-            raise ValueError("Retain each complete UTF-8 source member once: " + name)
-        body = row["content"].encode("utf-8")
+        if name in selected:
+            raise ValueError("Retain each complete source member once: " + name)
+        body = source_bytes(row)
         metadata = {"path": name, "bytes": len(body), "sha256": sha(body), "git_blob": blob(body)}
-        if any(row.get(key) != metadata[key] for key in ("bytes", "sha256", "git_blob")):
+        if (any(row.get(key) != metadata[key] for key in ("bytes", "sha256", "git_blob")) or
+                row.get("gitBlob", metadata["git_blob"]) != metadata["git_blob"]):
             raise ValueError("The complete publisher source body differs: " + name)
         selected[name] = (metadata, body)
+    paths = reviewer_paths()
+    if args.reviewer_paths:
+        if not args.reviewer_paths.is_absolute() or not args.reviewer_paths.is_file():
+            raise ValueError("Select the existing absolute reviewer path-selection document.")
+        paths = read_path_selection(json.loads(args.reviewer_paths.read_bytes()))
+    verify_reviewer_paths(packet, {name: pair[1] for name, pair in selected.items()}, paths)
     received = packet.get("received", {})
     bundle = received.get("bundle", {}).get("body", {})
     files = bundle.get("files", [])
@@ -98,7 +122,7 @@ def main():
         body = base64.b64decode(stored["base64"], validate=True)
         if len(body) != row["bytes"] or len(body) != stored["bytes"] or sha(body) != row["sha256"]:
             raise ValueError("The complete selected reviewer object differs: " + row["name"])
-        name = DIST + "grant-data/" + row["name"]
+        name = paths[row["role"]]
         if name not in selected or selected[name][1] != body:
             raise ValueError("The publisher source and selected reviewer package differ: " + name)
         if row["role"] == "source-index":
@@ -129,6 +153,8 @@ def main():
         "sourceCarrier": {"bytes": len(source_body), "sha256": sha(source_body),
                           "sourceCommit": source.get("sourceCommit")},
     }
+    if args.reviewer_paths:
+        manifest["reviewerPaths"] = paths
     args.output.mkdir(mode=0o700)
     for name, (_, body) in selected.items():
         write(args.output / "source" / name, body)

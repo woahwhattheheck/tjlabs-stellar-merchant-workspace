@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "grant-operations",
   "title": "Grant Operations",
-  "description": "Original case-linked workbook planning, retained save recovery and exact-revision amendment receiving with grant planning and delivery calendars with complete XLSX and source-table authoring with editable saved-plan workbook handover and returned-workbook receiving through browser, CLI and retained Merchant MCP, reviewed native baseline amendments with full historical receiving, contributor delivery and cash, complete timesheet and supplier invoice source intake, original CSV, OFX / QFX and MT940 statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, original merchant settlement and period-close cash attribution with reviewed corrections, customer installation commissioning and complete receiver-to-owner return review, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases. Sourced contributor agreement editions retain actual acceptance and availability, complete native Forecast/Portfolio allocations, and original case receiving. Named financial desks retain complete original inputs and actions through sign-in recovery, earlier-copy receiving and restored installations.",
+  "description": "Original case-linked workbook planning, retained save recovery and exact-revision amendment receiving with grant planning and delivery calendars with complete XLSX and source-table authoring with editable saved-plan workbook handover and returned-workbook receiving through browser, CLI and retained Merchant MCP, reviewed native baseline amendments with full historical receiving, contributor delivery and cash, complete timesheet and supplier invoice source intake, original CSV, OFX / QFX and MT940 statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, original merchant settlement and period-close cash attribution with reviewed corrections, customer installation commissioning and complete receiver-to-owner return review, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases. Sourced contributor agreement editions retain actual acceptance and availability, complete native Forecast/Portfolio allocations, and original case receiving. Named financial desks retain complete original inputs and actions through sign-in recovery, earlier-copy receiving and restored installations. Issued buyer expenses and credits retain complete accountant sources, native-unit allocation, reviewed valuation and original case receiving.",
   "base": {
     "commands": [
       "installation",
@@ -262,7 +262,18 @@
     "stellar/scf_2026/sf47_budget_model/workspace/staff-recovery.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/staff-desk-recovery.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/staff-recovery.css",
-    "stellar/scf_2026/sf47_budget_model/workspace/FINANCIAL_DESK_RECOVERY.md"
+    "stellar/scf_2026/sf47_budget_model/workspace/FINANCIAL_DESK_RECOVERY.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_expenses.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/expense_handoff.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_expenses.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_expenses.css",
+    "stellar/scf_2026/sf47_budget_model/workspace/EXPENSE_ATTRIBUTION.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations/expense-attribution-receiving.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations/expense-attribution-browser.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/accountant/buyer-source.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/accountant/buyer-return.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/accountant/engine.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/accountant/adjustments.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

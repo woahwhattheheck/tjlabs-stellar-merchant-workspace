@@ -9,7 +9,8 @@ import {validateCustomerEuropePmcSelection} from './europe-pmc.mjs';
 import {absolute,key,member,need,object,read,checked,parseJson,digest,same,exists} from './retention.mjs';
 export const CUSTOMER_PROGRAMME_SCHEMA='sf88.research-customer-programme.v1';
 export const IMPLEMENTATION_FILES=Object.freeze(['retention.mjs','selection.mjs','citation.mjs','programme.mjs',
-  'europe-pmc.mjs','EUROPE_PMC.md','chronology.mjs','receiving.mjs','receive-customer.py','README.md']);
+  'europe-pmc.mjs','EUROPE_PMC.md','chronology.mjs','receiving.mjs','receive-customer.py','README.md',
+  'returns.mjs','RETURNING.md']);
 const nonempty=(value,maximum,code)=>need(typeof value==='string'&&value.trim()&&value.length<=maximum,code);
 function unique(rows,field,code){
   need(Array.isArray(rows)&&rows.every(object),'CUSTOMER_SELECTION_ROWS_REQUIRED');

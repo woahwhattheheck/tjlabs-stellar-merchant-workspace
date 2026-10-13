@@ -136,6 +136,13 @@ function validateValues(value) {
       throw new TypeError('The preparation needs a complete text path for ' + key + '.');
     result.paths[key] = value.paths[key];
   }
+  for (const key of ['sourceRoot', 'sourceSelection']) {
+    if (value[key] === undefined) continue;
+    if (value[key] !== null && (typeof value[key] !== 'string' || value[key].includes('\u0000') ||
+        value[key].length > (key === 'sourceRoot' ? 4096 : 128)))
+      throw new TypeError('Retain the original source context for ' + key + '.');
+    result[key] = value[key];
+  }
   return result;
 }
 
@@ -383,8 +390,10 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
     if (!isObject(catalog)) throw new Error('Refresh the selected toolkit source in Command finder before preparing a reporting procedure.');
     const file = await sourceRecord('command-catalog.json', json(catalog), 'catalog');
     const previous = preparation.files.catalog?.sha256;
+    const retainedSourceContext = preparation.values.sourceRoot != null || preparation.values.sourceSelection != null;
     preparation.files.catalog = rememberFile(file);
-    if (previous !== file.sha256) changed();
+    delete preparation.values.sourceRoot; delete preparation.values.sourceSelection;
+    if (previous !== file.sha256 || retainedSourceContext) changed();
     await showSources();
     return catalog;
   }
@@ -402,6 +411,8 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
       period: preparation.values.period, owner: preparation.values.owner,
       receiving: preparation.values.receiving, startDate: preparation.values.startDate || undefined,
       asOfDate: preparation.values.asOfDate,
+      ...(preparation.values.sourceRoot !== undefined ? {sourceRoot: preparation.values.sourceRoot} : {}),
+      ...(preparation.values.sourceSelection !== undefined ? {sourceSelection: preparation.values.sourceSelection} : {}),
       savedAt,
     };
   }
@@ -474,6 +485,8 @@ export function installGrantReportingEditor({ trigger, getCatalog, receive, onSt
         id: incomingPlan.id, title: values.title, customer: values.customer, period: values.period,
         owner: values.owner, receiving: values.receiving, startDate: values.startDate || undefined, asOfDate: values.asOfDate,
         savedAt: incomingPlan.createdAt,
+        ...(values.sourceRoot !== undefined ? {sourceRoot: values.sourceRoot} : {}),
+        ...(values.sourceSelection !== undefined ? {sourceSelection: values.sourceSelection} : {}),
       });
       if (canonical(generated) !== canonical(incomingPlan))
         throw new Error('The preview differs from these saved preparation inputs. Import an edited complete plan through Operating plans, or open a preparation with its original preview.');

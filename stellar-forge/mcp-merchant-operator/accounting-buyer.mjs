@@ -6,7 +6,7 @@ import {accountingSourceMode,inspectBuyerStartupFile,readBuyerStartup,buyerStart
 const fail=(code,message)=>Object.assign(new Error(message),{code});
 const need=(ok,code,message)=>{if(!ok)throw fail(code,message);};
 const copy=value=>structuredClone(value);
-const merchantMaps=['recoveredSources','recoveryRequests','proofFiles','termsFiles','pricingReports','collectionInputs','statementUsageInputs','cryptoworthInputs','runbookInputs','portfolioInputs','portfolioClients'];
+const merchantMaps=['recoveredSources','recoveryRequests','proofFiles','termsFiles','pricingReports','collectionInputs','statementUsageInputs','cryptoworthInputs','runbookInputs','portfolioInputs','portfolioClients','rozoSources'];
 export function configuredAccountingMode(definition){
  const mode=definition.sourceMode??'merchant';
  need(mode==='merchant'||mode==='buyer','ACCOUNTING_CONFIGURATION_ERROR','Choose sourceMode merchant or buyer.');

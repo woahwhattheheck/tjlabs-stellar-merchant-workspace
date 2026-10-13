@@ -470,6 +470,73 @@ Import the selected handover through the original case receiver. Its response in
 
 The current complete catalogue adds `merchant_grant_implementation_source`, `merchant_grant_implementation_preview` and `merchant_grant_implementation_prepare`. These methods use the original case version and command journal. Preview/prepare accept the existing whole-file hash-verified input and optional JSON-pointer transport. `merchant_grant_export` supports `implementation` (case/review) and `implementation-original` (case/source/SHA-256). Completion preview/prepare accept optional ordered `implementationReviewIds` (up to 20 distinct original reviews). See [the complete operator, typed-client and source-provenance contract](IMPLEMENTATION_EVIDENCE.md). The selected complete catalogue has 67 tools; previous receipt records retain their original catalogue identities.
 
+## Delivery risks and mitigation
+
+Delivery risks belongs to the original grant operating case. It records named risks and issues, accountable contributors, affected delivery packages, mitigation actions, attached sources, dated reviews and resolutions. Operators set likelihood, impact and priority explicitly. The register's due findings use its recorded `asOfDate`; `ISSUE` entries use `NOT_APPLICABLE` likelihood. An unassigned owner is the explicit value `null`.
+
+| Client operation | Result |
+| --- | --- |
+| `read('risks', {caseId})` | Current source identity, latest register and every saved edition, newest first. |
+| `riskSeed(caseId, {expectedVersion, reviewId?})` | Editable complete document and actual case contributors, packages and source metadata. |
+| `riskPreview(caseId, {expectedVersion, document})` | Normalized document, complete report and exact preview SHA256. |
+| `riskSave(caseId, body)` | Immutable `risk-register.save` review with its native request identity. |
+| `riskRequest(caseId, {command})` | Original request lookup using the whole retained save command and fingerprint. |
+| `read('risk-register', {caseId, reviewId})` | Complete immutable review, report and current source comparison. |
+| `read('risk-history', {caseId, riskId})` | The same stable risk and its actions across saved register editions. |
+| `download('risk-register', {caseId, reviewId})` | Original complete case and all history, selected register JSON, action/risk CSVs and offline HTML. |
+
+Start from `riskSeed` and edit the returned complete document. Keep stable risk and action IDs across successor editions. A successor refers to the exact previous `reviewId` and `reviewSha256`; keep resolved and closed records in the register so their history remains available. Record each actual review in `review.on`, `review.by` and `review.note`. Resolution records carry the date and explanatory note. Select original contributor, package and source IDs from the seed. The native preview preserves previously linked retired packages and reports their current state.
+
+The native engine validates real civil dates, case ownership, source links, edition lineage and field bounds. Documents allow up to 200 risks and 100 actions per risk within 2 MiB of normalized JSON. Review owners can assign finance and reviewer read access through the existing staff desk. The existing case permissions govern save access.
+
+Retain the exact complete command before its first save. This example uses an already opened original `GrantWorkspaceClient`, the reviewed case version, and an operator-edited complete seed document:
+
+```js
+import {open, readFile} from 'node:fs/promises';
+import {dirname} from 'node:path';
+
+export async function prepareRiskReview(client, caseId, selection, requestFile) {
+  const {expectedVersion, document, requestId, actor, note} = selection;
+  const preview = (await client.riskPreview(caseId, {expectedVersion, document})).value;
+  const command = {
+    expectedVersion, requestId, actor, note, action:'risk-register.save',
+    data:{document:preview.document, expectedPreviewSha256:preview.previewSha256}
+  };
+  const retained = {caseId, command};
+  const file = await open(requestFile, 'wx', 0o600);
+  try {
+    await file.writeFile(JSON.stringify(retained) + '\n', 'utf8');
+    await file.sync();
+  } finally {
+    await file.close();
+  }
+  const parent = await open(dirname(requestFile), 'r');
+  try {
+    await parent.sync();
+  } finally {
+    await parent.close();
+  }
+  return retained;
+}
+
+export async function continueRiskReview(client, requestFile) {
+  const retained = JSON.parse(await readFile(requestFile, 'utf8'));
+  const {caseId, command} = retained;
+  const inspected = (await client.riskRequest(caseId, {command})).value;
+  if (inspected.found) return inspected.result;
+  // The native transaction validates the original version and full command.
+  return (await client.command(caseId, command)).value;
+}
+```
+
+A lost connection resumes through the same retained file. The native lookup checks the complete original command fingerprint and recovers the original saved result. If the original request is absent and its reviewed case version has changed, the native save reports that conflict; review the new case source and prepare a separately identified successor with the operator's updated input. Keep the original request record intact.
+
+Reopen the saved `recordId`, inspect the current source comparison, and download its complete export. The existing case importer receives that archive with all risk editions, source attachments and original review identities. The report keeps the historical source context alongside the receiving case identity.
+
+Merchant MCP exposes `merchant_grant_risks`, `merchant_grant_risk_register`, `merchant_grant_risk_history`, `merchant_grant_risk_seed`, `merchant_grant_risk_preview`, `merchant_grant_risk_save` and `merchant_grant_risk_request`. Preview and save accept the full document as `inputs`, or one verified host input, snapshot or transfer reference. Use `inputPointer: '/document'` for a native seed or preview snapshot. Request recovery takes the whole original command as `inputs`; for the example's retained file, use `inputPointer: '/command'`. It includes the original reviewed version, actor, note, request ID, action, document and preview digest. Native results remain complete retained snapshots, with the original byte paging and file download operations.
+
+Use `merchant_grant_export` with `kind: 'risk-register'`, `caseId` and `reviewId` to receive the full selected handover. Existing staff accounts, service connection ownership, source transfers and client shutdown rules apply unchanged.
+
 ## Contributor Engagements
 
 The complete typed client, eight Merchant tools and original Forecast/Portfolio receiving course are documented in [Contributor Engagements](ENGAGEMENTS.md#typed-client-and-merchant-mcp). They retain the original source attachments, immutable agreement reviews, decimal amounts, command identities and complete case exports. Both `engagement.prepare` and `engagement.receiving` require a nonempty recorded note; current Work/Invoice and Installation operations remain on their original implementations.

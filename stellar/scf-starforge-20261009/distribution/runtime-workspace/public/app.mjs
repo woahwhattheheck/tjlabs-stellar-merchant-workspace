@@ -1,5 +1,6 @@
 import { initImageWorkspace, imageOperationRecovery } from './image.mjs';
 import { createRuntimeTransferView } from './transfer.mjs';
+import { createWorkspaceReceivingView } from './workspace-receiving.mjs';
 import { createManagedWorkspaceView } from './managed.mjs';
 import { createApplicationsWorkspaceView } from './applications.mjs';
 import { createApplicationGroupsView } from './application-groups.mjs';
@@ -39,6 +40,7 @@ function switchView(name) {
   if (name === 'applications') applications.refresh().catch(error);
   if (name === 'application-groups') applicationGroups.refresh().catch(error);
   if (name === 'transfers') transfers.refresh().catch(error);
+  if (name === 'workspace-backups') workspaceReceiving.refresh().catch(error);
   if (name === 'python') python.refresh().catch(error);
   if (name === 'source-builds') sourceBuilds.refresh().catch(error);
 }
@@ -245,7 +247,7 @@ async function refresh({ quiet = false } = {}) {
         if (saved?.selectedId && value.runtimes.some(item => item.id === saved.selectedId)) {
           selectedId = saved.selectedId; value = await api(query('/api/state', { runtimeId: selectedId }));
         }
-        if (['runtime', 'profile', 'operations', 'deployment', 'managed', 'images', 'applications', 'application-groups', 'transfers', 'python', 'source-builds'].includes(saved?.view) && view === requestedView) view = saved.view;
+        if (['runtime', 'profile', 'operations', 'deployment', 'managed', 'images', 'applications', 'application-groups', 'transfers', 'python', 'source-builds', 'workspace-backups'].includes(saved?.view) && view === requestedView) view = saved.view;
         logSelection = saved?.logSelection ?? null;
       } catch {}
     }
@@ -288,6 +290,10 @@ async function refresh({ quiet = false } = {}) {
   } catch (value) {
     if (token !== requestedToken) { refreshAgain = true; return; }
     $('connection').textContent = 'Connection unavailable'; if (!quiet) error(value);
+    if (!state) {
+      if (view !== 'workspace-backups') switchView('workspace-backups');
+      else workspaceReceiving.refresh().catch(error);
+    }
   }
   finally { loading = false; if (refreshAgain) { refreshAgain = false; await refresh({ quiet }); } }
 }
@@ -496,6 +502,8 @@ const sourceBuilds = createSourceBuildWorkspaceView({ root: $('source-build-work
 });
 const transfers = createRuntimeTransferView({ root: $('transfer-workspace'), api, getState: () => state,
   getToken: () => token, getView: () => view, operation, refreshWorkspace: refresh, openLog, switchView, message, error });
+const workspaceReceiving = createWorkspaceReceivingView({ root: $('workspace-receiving'), api,
+  getState: () => state, getToken: () => token, getView: () => view, message, error });
 const managed = createManagedWorkspaceView({ api, getState: () => state, operation, refreshWorkspace: refresh,
   refreshOperation, openLog, switchView, message, error });
 const applications = createApplicationsWorkspaceView({ root: $('applications-workspace'), api, getState: () => state,
@@ -523,6 +531,7 @@ window.addEventListener('hashchange', () => {
   applications.reset();
   applicationGroups.reset();
   transfers.reset();
+  workspaceReceiving.reset();
   python.reset();
   sourceBuilds.reset();
   archiveSelectionGeneration++; logRequestGeneration++;

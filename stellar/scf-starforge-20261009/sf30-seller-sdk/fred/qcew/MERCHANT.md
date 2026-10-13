@@ -251,3 +251,45 @@ The installed **./seller/fred/qcew** entry exports publication, purchase and rep
 - receiveQcewReportDelivery, readQcewReportReceiving and exportQcewReportReceiving open a downloaded complete package independently.
 
 See **index.d.mts** for complete argument and result types, **WORKSPACE.md** for source production and browser recovery, and **README.md** for original QCEW calculations and intake.
+
+## Keep the complete customer working state
+
+The **Customer work and original requests** panel in the Customer desk retains the complete merchant and customer form. It keeps the selected source review or county edition, unfinished public payment JSON, publication, original resource and query, intent, payment alternative, receiving directory, selected predecessor and the currently opened result. The current form reopens in the same browser tab after reload.
+
+Each complete form edition remains available under **Complete form editions**. Open an earlier edition to continue it or download its full JSON. Reopening a saved form first retains the current form, so later edits remain available. Long histories show twenty-five entries at a time and expose the remaining entries through **Show earlier complete forms**.
+
+**Original customer requests** retains the entire submitted JSON body, original action ID and native intent before Prepare, Buy, Recover or Receive is sent. Each record also identifies the economic project and native customer directory. It includes every returned result and later status or transport error. A successful action remains in this history even when a subsequent catalog refresh fails or another source is selected before the response returns.
+
+Use **Open original request** to reopen its exact saved form and complete result. **Continue original action** resends its retained body and ID when the response was uncertain. The maintained preparer and SF88 Buyer reconcile that original intent and its existing result. The normal **Reopen original result** control continues through the same Buyer's recovery operation. A returned pending native state keeps that actual state and requires its normal continuation.
+
+The browser reads the actual private prepared-request file before enabling Buy or Recover. Its native request, original resource and payment alternative must match the visible selected form. **Select saved request** restores those exact terms. If you edit a prepared resource or payment alternative, use its saved request to reopen the original selection or prepare the deliberately selected later request.
+
+### Receive the full browser companion
+
+Choose **Export complete customer work** to download all retained form editions, complete original action bodies, returned results and error observations for this economic project. The file includes its project identity, original customer-directory identities and a SHA256 over the complete contents. It contains the working text of unfinished fields as well as completed native results.
+
+Carry this JSON alongside the original complete economic-project handover and the received report package. Use **Receive retained work** in the original project or its independently received copy. Receiving verifies the complete file and original project identity, merges identical original records and preserves the current form before adding incoming history. Open the intended full form or request explicitly from that history.
+
+The companion retains the original directory of each submitted host request. Its history can be read in the received project, while **Continue original action** resends that saved host body from its original directory. The complete economic-project handover restores the original prepared requests and receiving selections. In a relocated project, use **Select saved request** and the normal recovery controls with the same configured Buyer store to continue that native intent. The Buyer's own receiving procedures carry its original operations to another host. The independently received report package supports offline reading and file export, and the companion carries the complete browser work.
+
+Browser storage errors preserve the current unsaved form and any accepted result in the active tab. Each visible original record can be downloaded completely. Once this tab has read the full project history, **Export complete customer work** also carries that retained history and all later in-memory work if storage becomes temporarily unavailable. Keep the tab open until its original work has been exported or browser storage has accepted it.
+
+### Selected source and complete downloads
+
+Publication reads, original-request reads and receiving reads carry the selected project, source and form context. An older response cannot overwrite a newer publication, intent, payment alternative or receiving-directory edit. A completed action still appears in its original request history when the operator has moved to another selection.
+
+Downloads remain bound to the original project and selected publication/intent. Advertised file and received-member downloads compare the full byte length and SHA256 before saving. The original native reader verifies the complete report package and its predecessor members.
+
+The private host exposes its existing workspace identity in `GET /api/state` and the `X-Fred-Project-ID` response header. Updated browser requests send that project header; original clients can continue without it. `GET /api/customer-request?publication=ID&intent=ID` returns the complete original prepared request through the same authenticated listener. Purchase, recovery and receiving requests may include `expectedPurchaseSha256` to retain the selected preparation. Original caller bodies and native operation IDs remain compatible.
+
+The installed contribution includes `fred/ui/customer-work.mjs`. The original merchant receiving programme can operate the same Prepare, Buy, Recover, report receiving and download controls; the added history performs no automatic purchase or new source acquisition.
+
+### Continuing an interrupted project receive
+
+A receiving directory retains the complete original project bundle identity before its first source or customer write. Resume that directory with the same complete bundle, including every publication's prepared requests and receiving selections. A different bundle uses another receiving directory. Each publication also retains its complete customer inventory before the first request write, including an empty inventory. These receiving checkpoints remain private to the receiving directory and do not change the exported project or its original customer request identities. Completed earlier receiving receipts keep their original replay path.
+
+### Retained forms and browser storage recovery
+
+Open or continue one retained form at a time. The customer and publication forms stay fixed while the selected complete draft is reopened, and the original request's returned result stays bound to that selected context. Later edits during an ordinary running customer request remain available as their own draft.
+
+Download the current complete form directly when browser storage cannot open. This file retains the same original draft schema, project, fields and working context without requiring IndexedDB. Receive that same file through **Receive retained work**, then open its complete form from the preserved history once browser storage is available. The complete customer-work export continues to include the full acquired history; native actions still retain their exact original request durably before dispatch.

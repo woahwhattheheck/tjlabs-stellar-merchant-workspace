@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "buyer-collection-composer",
-  "description": "Compose reusable customer request plans and later-period original buyer collections",
+  "description": "Compose reusable customer request plans, share complete inputs and adopt them into independent buyer workspaces",
   "components": [
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer"
   ],
@@ -17,7 +17,7 @@
     "buyer-customer-use": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-cli.mjs"
   },
   "commandDescriptions": {
-    "buyer-collection-plans": "Save reusable request plans, prepare explicit periods and create their original buyer collections",
+    "buyer-collection-plans": "Author, share and adopt complete request plans, prepare explicit periods and create original buyer collections",
     "buyer-customer-use": "Commission saved customer-use calendars through original request periods and retain their buyer results"
   },
   "exports": {
@@ -35,6 +35,7 @@
       "default": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-client.mjs"
     },
     "./buyer/customer-use/return": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-return.mjs",
-    "./buyer/customer-use/cli": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-cli.mjs"
+    "./buyer/customer-use/cli": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/customer-use-cli.mjs",
+    "./buyer/collection-plans/package-format": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collection-composer/package-format.mjs"
   }
 }

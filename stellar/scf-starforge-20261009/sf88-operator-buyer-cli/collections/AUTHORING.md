@@ -69,9 +69,53 @@ Choose **Save plan revision** after completing the request definitions. Every sa
 
 The library preserves previous revisions. Choose the intended saved revision before preparing a new period. Unsaved edits remain in the current form until saved or discarded.
 
-**Import plan JSON** opens a plan exported from another workspace. Review its actual source paths and operator bindings, then save it as a revision in the current workspace.
+**Import plan JSON** opens an exported plan definition in the editor. Review its actual source paths and operator bindings, then save it as a revision in the current workspace. To carry the actual source inputs into an independent buyer's workspace, use the shared-plan workflow below.
 
 **Download saved plan** exports the selected saved definition. It includes the parameter declarations and complete request configuration for every member.
+
+## Share a prepared plan with another buyer
+
+A prepared period can become a portable `.request-plan.jsonl` file. It carries the complete saved plan, the actual retained catalog and request-body inputs, and the original source and period references. Each independent buyer selects its own operator workspaces, access inputs and delivery destination for the adopted revision.
+
+### Export the selected source edition
+
+Open the original **Saved periods** record and choose **Share plan and inputs**. The export uses the selected period's exact prepared edition.
+
+Review the included request list and header choices. Representation headers such as content type and accepted language travel with the request. Select any other noncredential custom header values that the recipient should use. Access tickets and credential headers are represented as local-input requirements.
+
+Choose **Create and download shared plan**. Retain the resulting file with its package identity. The download contains the catalog and body bytes used by that source edition, so choose the prepared period that represents the work being shared.
+
+### Receive and adopt
+
+In the recipient's existing Collections workspace:
+
+1. Open **Request plans**, then **Shared plans**.
+2. Choose **Receive shared plan** and select the complete downloaded file.
+3. Inspect its original plan, source period, requests, input sizes and operator groups.
+4. Choose **Adopt plan** and enter the recipient's plan reference, name and description.
+5. For every original operator group, select an existing local operator workspace or local operator configuration file. One group binding applies to all requests in that group.
+6. Choose the absolute output directory, delivery parameter name and initial delivery value.
+7. Supply each required local access-ticket file. For a header marked as local, enter the recipient's value or explicitly choose to omit that header.
+8. Choose **Review local plan**. Inspect the complete request list, local operator configuration, selected payment terms, access-ticket metadata and response destinations.
+9. Choose **Save adopted revision**. The original editor opens the newly saved plan.
+
+The review reads the recipient's real local inputs and existing operator settings. Saving checks that the reviewed inputs still match. The adoption record retains the original package and source mapping alongside the new immutable plan revision.
+
+Continue with **New period** and **Prepare and review period**. Give the recipient's period its own collection reference, inspect the original spending preview, and use **Create reviewed collection**. The original collection controls handle queueing, payment approval, running, delivery and recovery.
+
+### Resume and use another period
+
+If receiving is interrupted, choose the same package file again. The workspace resumes its retained object chunks and verifies the complete input objects before marking the package ready. The shared plan remains listed with its original package identity.
+
+The adopted plan retains the sender's URL query parameters and uses the source edition's values as their initial defaults. Catalog and request-body paths resolve to the complete retained package inputs. The delivery parameter produces distinct destinations of the form:
+
+```text
+/srv/recipient/results/{{delivery}}--request-key.response
+```
+
+Use a new delivery value for another set of outputs. Select the actual query values required for the next business period. If the business request requires a different body or catalog edition, select those real source files in the original editor and save a new plan revision before preparing that period.
+
+Open an existing adopted period to resume its original collection. Use the saved adoption's source references to trace a request back to the sender's source collection and request key.
 
 ## Prepare and review a period
 
@@ -129,7 +173,7 @@ A prepared period retains its materialized request configurations and the discov
 
 Use the original complete encrypted backup and receiving workflow for prepared periods and created collections. **Backup and receiving** includes the authoring subtree together with the collection store. Recovery discovers completed authoring captures and feeds their verified request configurations into the existing operator and dependency capture. This includes the original operator workspaces needed by a prepared period before its collection is created, alongside the dependencies of created collections and queued requests.
 
-Use the [complete recovery guide](RECOVERY.md) to capture, transfer and reopen the customer operation, including its operator state and saved deliveries. A plan or period JSON download is useful for inspecting and exchanging the definition; use the native encrypted backup when transferring the complete operating workspace.
+Use the [complete recovery guide](RECOVERY.md) to capture, transfer and reopen the customer operation, including its operator state and saved deliveries. Use a shared-plan package when an independent buyer will adopt the source inputs with its own operator. Use the native encrypted backup when transferring the complete existing operating workspace.
 
 After receiving an existing collection store through the original recovery screen, reconnect to the same private server and open **Request plans**. The authoring view binds to the recovered collection directory.
 
@@ -153,6 +197,27 @@ A plan uses schema `stellar-forge.sf88.collection-plan.v1`. Its top-level fields
 Every request contains `key`, `name`, `discoveryFile`, `rowIndex`, `acceptIndex`, `url`, `method`, and exactly one of `operatorWorkspace` or `operatorConfigFile`. Optional fields are `bodyFile`, `headers`, `ticketFile`, `ticketHeader` and `responseOut`.
 
 Each period identifies its exact `planId`, `planSha256`, `collectionId`, `values`, `editionSha256` and current `phase`. Its request list supplies the retained configuration and source paths; `workspaceByIntent` carries original operator workspace mappings. The original collection preview and created collection remain available as their native objects.
+
+### Shared-plan API
+
+These routes use the same private session and original authoring store. Package references are lowercase SHA-256 values.
+
+| Method and route | Input | Result |
+| --- | --- | --- |
+| `GET /api/composer/sharing/packages` | — | Received/exported package summaries and progress |
+| `POST /api/composer/sharing/export` | `collectionId`, `expectedEditionSha256`, optional `headerSelections` | Complete source package file descriptor and manifest |
+| `POST /api/composer/sharing/packages` | `{manifest}` | Retained manifest and resumable object status |
+| `GET /api/composer/sharing/packages/:sha` | — | Full original manifest and current object status |
+| `POST /api/composer/sharing/packages/:sha/chunks` | `objectSha256`, `offset`, `base64` | Compact receipt for that object's saved bytes |
+| `POST /api/composer/sharing/packages/:sha/complete` | `{}` | Verified complete package and original manifest |
+| `POST /api/composer/sharing/packages/:sha/file` | `{}` | Prepare/reopen a complete portable file from a received package |
+| `GET /api/composer/sharing/packages/:sha/file` | — | Authenticated download of the prepared portable file |
+| `POST /api/composer/sharing/packages/:sha/review` | Recipient plan, operator/request bindings and output selection | Complete local review and `reviewSha256` |
+| `POST /api/composer/sharing/packages/:sha/adopt` | Same selection plus `expectedReviewSha256` | Original saved plan revision and full adoption record |
+
+The package contains one manifest record, ordered object chunk records, and a completion record. Each raw chunk is at most 64 KiB; the final chunk of an object can be smaller. A package allows up to 128 MiB of unique source objects and a 16 MiB manifest. The shared `parsePlanPackage` function in `collection-composer/package-format.mjs` checks framing, identities and chunk order. Exhaust the parser before calling completion. The receiver verifies the original object hashes before the package becomes ready.
+
+The typed client exposes these operations through `client.sharing`. Its `downloadPackage` method returns the authenticated fetch response for streaming. `packageFile` returns the descriptor needed to prepare a downloaded copy of a previously received package.
 
 ## Command-line authoring
 
@@ -216,6 +281,88 @@ starforge buyer-collection-plans edition \
 
 Commands return JSON. Keep the exact collection reference, saved revision and values when repeating an interrupted preparation or creation. Continue the resulting collection with the original `buyer-collections` commands.
 
+### Transfer and adopt from the command line
+
+Export the sender's exact prepared period:
+
+```sh
+starforge buyer-collection-plans share-export \
+  --directory /srv/sender/request-collections \
+  --collection monthly-source-review-2026-10 \
+  --edition-sha256 RETURNED_EDITION_SHA
+```
+
+The JSON result includes the actual portable file's `path`, `name`, `bytes`, `sha256`, `packageSha256` and complete manifest. Transfer that file to the recipient's chosen input directory. To include selected noncredential custom headers, add `--headers /absolute/path/header-selections.json`; that file contains an array such as `[{"key":"report","names":["x-report-language"]}]`, using actual request keys and header names from the selected plan.
+
+Receive and inspect the same package in the recipient's existing collection store:
+
+```sh
+starforge buyer-collection-plans share-receive \
+  --directory /srv/recipient/request-collections \
+  --file /srv/recipient/transfers/monthly-source-review.request-plan.jsonl
+
+starforge buyer-collection-plans share-list \
+  --directory /srv/recipient/request-collections
+
+starforge buyer-collection-plans share-show \
+  --directory /srv/recipient/request-collections \
+  --package RETURNED_PACKAGE_SHA
+```
+
+Receiving streams the complete source file. Repeating `share-receive` with that file reuses already retained chunks. To recreate a transferable copy later, use `share-file --directory /srv/recipient/request-collections --package RETURNED_PACKAGE_SHA`; its result gives the actual retained file path.
+
+Create a local adoption-input JSON file. The following is an example for one original operator group; copy the actual group IDs returned by `share-show`:
+
+```json
+{
+  "planId": "partner-source-review",
+  "name": "Partner source review",
+  "description": "Source review through our existing buyer operator",
+  "operatorBindings": [
+    {
+      "groupId": "operator-1",
+      "operatorWorkspace": "/srv/recipient/operators/report-buyer"
+    }
+  ],
+  "requestBindings": [],
+  "outputDirectory": "/srv/recipient/results",
+  "deliveryParameter": "delivery",
+  "deliveryValue": "received-october"
+}
+```
+
+A group can instead bind `operatorConfigFile`. Supply exactly one local binding for every returned operator group. Use `requestBindings` entries when a request needs local access inputs. Each entry identifies the original request `key` and can supply `ticketFile`, a `headers` object, or an `omitHeaders` array. Header choices apply to the package's actual local-header requirements.
+
+Review those bindings, then save the exact reviewed result:
+
+```sh
+starforge buyer-collection-plans adopt-review \
+  --directory /srv/recipient/request-collections \
+  --package RETURNED_PACKAGE_SHA \
+  --file /srv/recipient/plans/adoption-input.json
+
+starforge buyer-collection-plans adopt \
+  --directory /srv/recipient/request-collections \
+  --package RETURNED_PACKAGE_SHA \
+  --file /srv/recipient/plans/adoption-input.json \
+  --review-sha256 RETURNED_REVIEW_SHA
+```
+
+Use the result's `saved.id` and `saved.planSha256` with the original `prepare` command. For the example monthly plan, provide its actual query period and a distinct delivery value:
+
+```sh
+starforge buyer-collection-plans prepare \
+  --directory /srv/recipient/request-collections \
+  --id partner-source-review \
+  --revision RETURNED_ADOPTED_PLAN_SHA \
+  --collection partner-source-review-received-october \
+  --name "Received October source review" \
+  --value month=2026-10 \
+  --value delivery=received-october
+```
+
+Supply the parameter names actually declared by your adopted plan. Continue with the original `create`, collection queue, payment approval and run commands after inspecting the returned preview.
+
 ## Resolve input issues
 
 | Issue | Resolution |
@@ -227,6 +374,9 @@ Commands return JSON. Keep the exact collection reference, saved revision and va
 | A new period's response file already exists | Open the original period that owns it or choose a fresh destination for the new period. |
 | The plan or values conflict with an existing collection reference | Open that saved period, or use a new reference for the new work. |
 | The prepared source or spending review changed | Inspect the original saved period and its actual inputs before creating the collection. |
+| A shared package is still receiving | Select the same complete package file again; retained object chunks resume. |
+| A local access ticket or header choice is required | Complete that request's local binding in the adoption form, then review again. |
+| An adoption review changed | Reopen the same local selection, inspect the changed input, and save its fresh reviewed revision. |
 | The private session ended | Reopen the current workspace URL and select the same saved plan or period. |
 | Another collection or recovery action is active | Let that original operation finish, then refresh the same record. |
 

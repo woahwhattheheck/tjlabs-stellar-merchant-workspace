@@ -326,7 +326,8 @@ export async function runDuckDBTimescaleReceiving({input,playwright,chromium}={}
    need(launch.workspace_id===binding.workspace_id&&launch.directory===binding.workspace,'ORIGINAL_BROWSER_CHANGED');
    state.browser=await runReconciliationBrowserReceiving({url:launch.url,
     input:{operation_id:input.operation_id,source_commit:input.source_commit,workspace_id:binding.workspace_id,
-     definition:state.intake.definition,actor:binding.actor,reason:binding.reason},
+     definition:state.intake.definition,actor:binding.actor,reason:binding.reason,
+     ...(binding.pair.saved?{saved_pair:binding.pair.saved}:{})},
     outputDirectory:join(root,'paired-browser'),playwright,chromium});
    need(state.browser.complete===true&&state.browser.pair_id===state.pair_id&&
     state.browser.request_ids.pair===state.intake.request_ids.pair,'ORIGINAL_PAIR_REQUEST_NOT_REUSED');

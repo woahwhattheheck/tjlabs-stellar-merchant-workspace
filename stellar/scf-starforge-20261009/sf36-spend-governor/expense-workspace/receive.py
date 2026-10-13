@@ -16,6 +16,8 @@ from credit_store import CREDIT_TABLES
 from accountant_store import ACCOUNTANT_TABLES
 from portable import CREDIT_READER_FILES, ACCOUNTANT_READER_FILES
 from native_node import READER_FILES as NODE_READER_FILES, FEATURE as NODE_FEATURE
+from native_rozo import READER_FILES as ROZO_READER_FILES, FEATURE as ROZO_FEATURE
+from rozo_receiving import inspect_rozo_sources
 from domain import SCHEMA
 
 FORMAT = "stellar-forge.buyer-expense-private-project.v1"
@@ -42,6 +44,9 @@ GOVERNED_FEATURE = "original-spending-readonly-v1"
 NODE_REQUIRED = {APP_PREFIX + "expense-workspace/" + n for n in ("native_node.py", "node_store.py", "NODE_OPERATIONS.md")}
 NODE_REQUIRED.update("app/" + n for n in NODE_READER_FILES)
 
+ROZO_REQUIRED = {APP_PREFIX + "expense-workspace/" + n for n in ("native_rozo.py", "rozo_store.py", "rozo_receiving.py", "ROZO.md")}
+ROZO_REQUIRED.update("app/" + n for n in ROZO_READER_FILES)
+
 CREDIT_REQUIRED = {APP_PREFIX + "expense-workspace/" + n for n in
     ("native_woo.py", "credits.py", "credit_store.py", "credit-reader-files.json")}
 ADJUSTMENT_READER_FILES = {
@@ -63,7 +68,11 @@ ADJUSTMENT_REQUIRED = {APP_PREFIX + "expense-workspace/native_adjustments.py"}
 ADJUSTMENT_REQUIRED.update("app/" + n for n in ADJUSTMENT_READER_FILES)
 CREDIT_VERSIONS = ("original-woo-refund-v1", "original-native-refund-v2")
 ACCOUNTANT_REQUIRED = {APP_PREFIX + "expense-workspace/" + n for n in ("native_accountant.py", "accountant_store.py", "accountant-reader-files.json")}
-ACCOUNTANT_REQUIRED.update("app/" + n for n in ACCOUNTANT_READER_FILES)
+# Older issued-accountant archives retain their original five-module engine.
+# Current engines add the typed ROZO source, without changing those old archives.
+ACCOUNTANT_ROZO_FILES = {n for n in ACCOUNTANT_READER_FILES if "/rozo-payments/" in n or n.endswith("/accountant/rozo-source.mjs")}
+ACCOUNTANT_REQUIRED.update("app/" + n for n in ACCOUNTANT_READER_FILES if n not in ACCOUNTANT_ROZO_FILES)
+ACCOUNTANT_ROZO_REQUIRED = {"app/" + n for n in ACCOUNTANT_ROZO_FILES}
 ACCOUNTANT_FEATURE = "issued-accountant-return-v1"
 
 
@@ -170,7 +179,7 @@ def inspect_node_sources(database, manifest):
     return counts
 
 
-def inspect_database(path, manifest):
+def inspect_database(path, manifest, node=None):
     database = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)
     try:
         database.execute("PRAGMA trusted_schema=OFF")
@@ -207,8 +216,12 @@ def inspect_database(path, manifest):
             raise ValueError("The project manifest does not match its original native workspace revision.")
         source_kinds = sorted({json.loads(row[0]).get("kind", "sf36_ledger") for row in
                                database.execute("SELECT body FROM sources")})
-        if any(kind not in ("sf36_ledger", "mcp_quote", "governed_mcp", "woo_refund", "merchant_adjustments", "node_operation") for kind in source_kinds):
+        if any(kind not in ("sf36_ledger", "mcp_quote", "governed_mcp", "woo_refund", "merchant_adjustments", "node_operation", "rozo_report") for kind in source_kinds):
             raise ValueError("The retained source kind is not supported by this original receiver.")
+        rozo_feature = manifest.get("rozo_report_capture")
+        if rozo_feature not in (None, ROZO_FEATURE) or "rozo_report" in source_kinds and rozo_feature != ROZO_FEATURE:
+            raise ValueError("The original ROZO source requires its complete source, purchase selection and trusted reader.")
+        rozo_counts = inspect_rozo_sources(database, manifest, node) if rozo_feature else {"rozo_report_count": 0, "rozo_capture_count": 0}
         node_feature = manifest.get("node_operation_capture")
         if node_feature not in (None, NODE_FEATURE) or "node_operation" in source_kinds and node_feature != NODE_FEATURE:
             raise ValueError("The original Node source requires its complete supported reader and intake history.")
@@ -251,13 +264,13 @@ def inspect_database(path, manifest):
         return {"workspace": meta["id"], "revision": revision, "successful_requests": count,
                 "accountant_return_count": accountant_count,
                 "credit_count": credit_count, "refund_packet_count": packet_count, "data_context": context,
-                "source_kinds": source_kinds, **node_counts,
+                "source_kinds": source_kinds, **node_counts, **rozo_counts,
                 "legacy_request_history": legacy, "tables": len(tables)}
     finally:
         database.close()
 
 
-def receive(archive, directory, expected_sha256):
+def receive(archive, directory, expected_sha256, node=None):
     archive = Path(archive).expanduser().resolve(strict=True)
     st = archive.stat()
     if not stat.S_ISREG(st.st_mode) or st.st_size > MAX_BYTES:
@@ -321,11 +334,16 @@ def receive(archive, directory, expected_sha256):
                 raise ValueError("The Node source feature requires its original native application closure.")
             if node_feature:
                 extra = extra | NODE_REQUIRED
+            rozo_feature = manifest.get("rozo_report_capture")
+            if rozo_feature not in (None, ROZO_FEATURE):
+                raise ValueError("The ROZO source feature requires its original supported reader.")
+            if rozo_feature:
+                extra = extra | ROZO_REQUIRED | (ACCOUNTANT_ROZO_REQUIRED if bookkeeping else set())
             required = REQUIRED | (MCP_REQUIRED if feature else set()) | (CREDIT_REQUIRED if credit_feature else set()) | extra
             allowed = ALLOWED | (MCP_REQUIRED if feature else set()) | (CREDIT_REQUIRED if credit_feature else set()) | extra
             # Earlier accountant-enabled editions omitted this guide; current complete exports include it.
             if bookkeeping:
-                allowed = allowed | {APP_PREFIX + "expense-workspace/BOOKKEEPING.md"}
+                allowed = allowed | {APP_PREFIX + "expense-workspace/BOOKKEEPING.md"} | ACCOUNTANT_ROZO_REQUIRED
             if credit_feature:
                 allowed = allowed | {"app/" + path for path in OPTIONAL_CREDIT_READER_FILES}
             if len(entries) != len(descriptions) or not required <= set(entries) <= allowed or set(names) != set(entries) | {"manifest.json"}:
@@ -369,7 +387,7 @@ def receive(archive, directory, expected_sha256):
                 os.replace(pending, target)
                 sync_directory(target.parent)
             atomic_bytes(root / "manifest.json", z.read("manifest.json"))
-        result = inspect_database(root / "project/workspace.sqlite", manifest)
+        result = inspect_database(root / "project/workspace.sqlite", manifest, node)
         result.update(state="RECEIVED", directory=str(root), archive_sha256=expected_sha256,
                       files=len(entries), source_captures_replayed=0, original_ledger_copied=False,
                       original_quote_store_copied=False, purchased_result_bodies_copied=False,
@@ -388,8 +406,9 @@ def main():
     parser.add_argument("--archive", required=True)
     parser.add_argument("--directory", required=True)
     parser.add_argument("--expected-sha256", required=True)
+    parser.add_argument("--node", help="Trusted host Node executable for original ROZO source verification")
     args = parser.parse_args()
-    print(json.dumps(receive(args.archive, args.directory, args.expected_sha256)))
+    print(json.dumps(receive(args.archive, args.directory, args.expected_sha256, node=args.node)))
 
 
 if __name__ == "__main__":

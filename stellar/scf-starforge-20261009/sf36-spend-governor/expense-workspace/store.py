@@ -16,6 +16,7 @@ from native import capture_source, parse_labels
 from credit_store import CreditStore, CREDIT_DDL
 from accountant_store import AccountantStore, ACCOUNTANT_DDL
 from node_store import NodeStore
+from rozo_store import RozoStore
 
 DDL = """
 CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -55,7 +56,7 @@ def page(values, offset=0, limit=50):
             "next": offset + limit if offset + limit < len(values) else None}
 
 
-class Store(CreditStore, AccountantStore, NodeStore):
+class Store(CreditStore, AccountantStore, NodeStore, RozoStore):
     def __init__(self, directory, node_executable=None):
         self.root = Path(directory).expanduser().resolve()
         self.root.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -252,7 +253,7 @@ class Store(CreditStore, AccountantStore, NodeStore):
             nonexpense = {"reserved":"RESERVED", "unresolved":"PAYMENT_UNRESOLVED",
                           "failed":"FAILED_TRANSACTION", "not_dispatched":"NO_SIGNED_DISPATCH",
                           "observation_review":"OBSERVATION_REVIEW", "spending_review":"SPENDING_SOURCE_REVIEW",
-                          "unpaid":"NO_PAYMENT_REQUIRED", "accounting_unresolved":"ACCOUNTING_UNRESOLVED"}
+                          "unpaid":"NO_PAYMENT_REQUIRED", "accounting_unresolved":"ACCOUNTING_UNRESOLVED", "rozo_unresolved":"ROZO_UNRESOLVED"}
             item["status"] = ("ABSENT" if item["missing"] else nonexpense[row["state"]] if row["state"] in nonexpense else
                               "UNCODED" if not item["coding"] else "STALE" if item["coding"]["basis"] != item["basis"] else "CODED")
             items.append(item)
@@ -291,6 +292,8 @@ class Store(CreditStore, AccountantStore, NodeStore):
                     "snapshot": native["snapshot"], "report": native["report"]}
         if source.get("kind") == "node_operation":
             captured["node_intake"] = native["node_intake"]
+        if source.get("kind") == "rozo_report":
+            captured["rozo_intake"] = native["rozo_intake"]
         if reattachment is not None:
             captured["reattachment"] = reattachment | {"to_capture": captured["id"]}
         previous = self._get("captures", source["current_capture"])["report"] if source.get("current_capture") else None
@@ -321,7 +324,7 @@ class Store(CreditStore, AccountantStore, NodeStore):
         with self.lock:
             source = self._get("sources", ident)
             if source.get("immutable_intake"):
-                raise Problem("IMMUTABLE_SOURCE_INTAKE_REQUIRED", "Import the original successor file in Sources for Node operations or Credits for customer adjustments; retained packets are immutable", 409)
+                raise Problem("IMMUTABLE_SOURCE_INTAKE_REQUIRED", "Import the original successor file in Sources for ROZO reports or Node operations, or Credits for customer adjustments; retained packets are immutable", 409)
         native = capture_source(source["path"], source.get("kind", "sf36_ledger"), self.node_executable)
         return self._change(expected, "source.capture", lambda: self._new_capture(self._get("sources", ident), native))
 
@@ -332,7 +335,7 @@ class Store(CreditStore, AccountantStore, NodeStore):
         with self.lock:
             source = self._get("sources", ident)
             if source.get("immutable_intake"):
-                raise Problem("IMMUTABLE_SOURCE_INTAKE_REQUIRED", "Import an original successor file; retained Node operations and customer packets keep their original identity", 409)
+                raise Problem("IMMUTABLE_SOURCE_INTAKE_REQUIRED", "Import an original successor file; retained ROZO reports, Node operations and customer packets keep their original identity", 409)
             kind = source.get("kind", "sf36_ledger")
         native = capture_source(path, kind, self.node_executable)
         def operation():
@@ -359,7 +362,7 @@ class Store(CreditStore, AccountantStore, NodeStore):
         return {k: captured.get(k) for k in ("id", "source_id", "parent_id", "status", "created_at", "reviewed_at", "operator", "reason")} | {
             "source": captured["report"]["source"], "captured_at": captured["report"]["captured_at"], "change_count": len(captured["changes"]),
             "change_counts": {kind: sum(c["kind"] == kind for c in captured["changes"]) for kind in ("ADDED", "CHANGED", "ABSENT")},
-            "node_intake": captured.get("node_intake")}
+            "node_intake": captured.get("node_intake"), "rozo_intake": captured.get("rozo_intake")}
 
     def captures(self, source_id, offset=0, limit=20):
         with self.lock:
@@ -423,7 +426,7 @@ class Store(CreditStore, AccountantStore, NodeStore):
 
     def save_labels(self, payload, expected):
         try:
-            values = list(parse_labels({"assets": payload.get("assets")}).values())
+            values = self._expense_labels(payload)
         except (ValueError, TypeError) as exc:
             raise Problem("INVALID_LABELS", str(exc)) from exc
         return self._change(expected, "labels.save", lambda: self._set_labels(values))

@@ -841,6 +841,27 @@
         "grant-data/reviewer-working-source.json",
         "application/json; charset=utf-8"
       ]
+    ],
+    [
+      "/grant-data/financial-walkthrough.md",
+      [
+        "grant-data/financial-walkthrough.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-financial-walkthrough.html",
+      [
+        "grant-financial-walkthrough.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/source-document-tables.mjs",
+      [
+        "source-document-tables.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

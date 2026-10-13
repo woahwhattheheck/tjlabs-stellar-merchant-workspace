@@ -16,6 +16,7 @@ import operations_ledger_intake as ledger_intake
 import operations_funding_cli as funding_cli
 import award_terms_cli
 import operations_agenda_cli as agenda_cli
+import operations_risks_cli as risks_cli
 
 
 def register(subparsers, common):
@@ -43,6 +44,7 @@ def register(subparsers, common):
         target.add_argument("--calendar-start", help="Explicit operational YYYY-MM-DD anchor; does not record an award")
 
     funding_cli.register(command, mutation)
+    risks_cli.register(command, mutation)
     agenda_cli.register(command)
     target = command("list", "List delivery operations cases", output=True)
     target.add_argument("--plan")
@@ -235,6 +237,28 @@ def register(subparsers, common):
             target.add_argument("--expected-preview-sha256", required=True)
         else:
             target.add_argument("--expected-version", type=int, required=True)
+    command("expenses", "Read issued expenses, accountant references and reviewed cost attribution", case=True, output=True)
+    target = command("expense-preview", "Review an original issued buyer source or accountant-delivery ZIP", case=True, output=True)
+    target.add_argument("--file", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target = command("expense-receive", "Retain the exact reviewed issued source and original bookkeeping history", case=True, output=True)
+    mutation(target, version=True)
+    target.add_argument("--file", required=True)
+    target.add_argument("--expected-preview-sha256", required=True)
+    target = command("expense-save", "Record explicit native cost splits and their original valuation", case=True, output=True)
+    mutation(target, version=True)
+    target.add_argument("--data", required=True, help="JSON allocation inputs including original intake and row SHA")
+    for verb in ("expense-review", "expense-reopen", "expense-void"):
+        target = command(verb, "Apply the selected attribution's recorded review transition", case=True, output=True)
+        mutation(target, version=True)
+        target.add_argument("--attribution", required=True)
+        target.add_argument("--expected-content-sha256", required=True)
+    target = command("expense-request", "Read the original receipt for an exact retained expense request", case=True, output=True)
+    target.add_argument("--request", required=True, help="Complete original request JSON, including its stable requestId")
+    target = command("expense-export", "Export the retained expense register, sources or readable review", case=True)
+    target.add_argument("--format", choices=("attributions", "sources", "html"), required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--output", required=True)
     target = command("buyer-preview", "Review original SF88 Inbox or Node accounting source for this case", case=True, output=True)
     target.add_argument("--file", required=True, help="Original private SF88 Inbox handoff or Node Operation_Accounting.json")
     target.add_argument("--expected-version", type=int, required=True)
@@ -350,6 +374,17 @@ def register(subparsers, common):
             target.add_argument("--installation", help="Original Installation ID; omit for a new Installation")
             target.add_argument("--expected-revision", type=int, required=True)
             target.add_argument("--document", help="Optional complete current editable Installation JSON")
+    for verb in ("installation-commissioning-seed", "installation-commissioning-review"):
+        target = command(verb, "Prepare exact customer cycle, priced-unit and output decisions in the original Installation draft", case=True, output=True)
+        target.add_argument("--document", required=True, help="Complete original editable Installation JSON")
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--installation", help="Original Installation ID; omit for a new Installation")
+        target.add_argument("--expected-revision", type=int, required=True)
+        target.add_argument("--document-only", action="store_true", help="Return the full document for original preview/save")
+        if verb == "installation-commissioning-review":
+            target.add_argument("--reviews", required=True, help="Explicit review rows with kind, id, state, expectedBasisSha256 and note")
+            target.add_argument("--actor", required=True)
+            target.add_argument("--observed-at", required=True, help="Original recorded review timestamp with timezone")
     target = command("installation-show", "Reopen one whole saved installation and its selected original records", case=True, output=True)
     target.add_argument("--installation", required=True)
     target.add_argument("--revision", type=int, help="Exact saved edition; omission opens the latest")
@@ -656,6 +691,8 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if risks_cli.operates(action):
+        return risks_cli.operate(ops, args, read_bytes, publish)
     if agenda_cli.operates(action):
         return agenda_cli.operate(ops, args, publish)
     if action == "cost-funding" or action.startswith("funding-"):
@@ -889,6 +926,43 @@ def operate(workspace, args):
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
                 "requestId": args.request_id, "note": args.note, "action": "settlement.correct",
                 "data": {**correction, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action == "expenses":
+        result = ops.expense_attribution(args.case)
+    elif action in ("expense-preview", "expense-receive"):
+        original = {"filename": Path(args.file).name,
+                    "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")}
+        if action == "expense-preview":
+            result = ops.preview_expense(args.case, {"expectedVersion": args.expected_version, **original})
+        else:
+            result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+                "requestId": args.request_id, "note": args.note, "action": "expense.receive",
+                "data": {**original, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action == "expense-save":
+        try:
+            data = json.loads(read_bytes(args.data, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Use complete UTF-8 allocation input JSON.", 422, "INVALID_JSON") from exc
+        result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+            "requestId": args.request_id, "note": args.note, "action": "expense.save", "data": data})
+    elif action in ("expense-review", "expense-reopen", "expense-void"):
+        result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+            "requestId": args.request_id, "note": args.note, "action": action.replace("-", "."),
+            "data": {"id": args.attribution, "expectedContentSha256": args.expected_content_sha256}})
+    elif action == "expense-request":
+        try:
+            request = json.loads(read_bytes(args.request, 12 * 1024 * 1024))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Use the complete original request JSON.", 422, "INVALID_JSON") from exc
+        result = ops.expense_request(args.case, request)
+    elif action == "expense-export":
+        names = {"attributions": "expense-attributions.csv", "sources": "expense-sources.csv",
+                 "html": "expense-attribution.html"}
+        with workspace.mutex:
+            current = ops.read(args.case)
+            if current["program"]["version"] != args.expected_version:
+                raise Problem("The Operations case changed; read its current expense attribution.", 409, "OPERATIONS_CONFLICT")
+            raw = ops.expense_file(args.case, names[args.format])
+        return {"caseId": args.case, "version": args.expected_version, "output": publish(args.output, raw)}
     elif action in ("buyer-preview", "buyer-receive"):
         original = {"filename": Path(args.file).name,
                     "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")}
@@ -1040,6 +1114,22 @@ def operate(workspace, args):
                 except (UnicodeError, ValueError) as exc:
                     raise Problem("Use the complete UTF-8 Installation document.", 422, "INVALID_JSON") from exc
             result = ops.seed_workflow_installation(args.case, selected)
+    elif action in ("installation-commissioning-seed", "installation-commissioning-review"):
+        from operations_installations import MAX_DOCUMENT_BYTES
+        try:
+            document = json.loads(read_bytes(args.document, MAX_DOCUMENT_BYTES).decode("utf-8"))
+            reviews = json.loads(read_bytes(args.reviews, MAX_DOCUMENT_BYTES).decode("utf-8")) if action == "installation-commissioning-review" else None
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Supply the complete UTF-8 Installation document and explicit review rows.", 422, "INVALID_JSON") from exc
+        selected = {"expectedVersion": args.expected_version, "installationId": args.installation,
+                    "expectedRevision": args.expected_revision, "document": document}
+        if action == "installation-commissioning-review":
+            selected.update({"reviews": reviews, "actor": args.actor, "observedAt": args.observed_at})
+            result = ops.review_installation_commissioning(args.case, selected)
+        else:
+            result = ops.seed_installation_commissioning(args.case, selected)
+        if args.document_only:
+            result = result["document"]
     elif action == "installation-show":
         result = ops.installation(args.case, args.installation, args.revision)
     elif action == "installation-history":

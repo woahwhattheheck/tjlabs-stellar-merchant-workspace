@@ -12,10 +12,13 @@ import tempfile
 import time
 import uuid
 import zipfile
+from reviewer_source_paths import reviewer_members, reviewer_paths, verify_reviewer_paths
 
 from scf_native_process import (
     preserve_console, record_runtime_selection, retain_runtime_edition, run_receiving_program,
 )
+
+from receive_current import pending_writer_phases
 
 OPERATION = "SCF-GRANT-CURRENT-REVIEW-81CF-20261012"
 PHASE = "SCF-SUBMISSION-SOURCE-PACKAGE-A8CE-20261012"
@@ -26,8 +29,22 @@ def digest(body):
 def git_blob(body):
     return hashlib.sha1(b"blob " + str(len(body)).encode() + b"\0" + body).hexdigest()
 
+def source_bytes(row):
+    content = row["content"]
+    if not isinstance(content, str):
+        raise ValueError("Retain a complete encoded source string: " + row["path"])
+    encoding = row.get("encoding", "utf-8")
+    if encoding in (None, "utf-8"):
+        return content.encode("utf-8")
+    if encoding == "base64":
+        body = base64.b64decode(content, validate=True)
+        if base64.b64encode(body).decode("ascii") != content:
+            raise ValueError("Retain canonical complete base64 source: " + row["path"])
+        return body
+    raise ValueError("Select UTF-8 or base64 source encoding: " + row["path"])
+
 def checked_body(row):
-    body = row["content"].encode("utf-8")
+    body = source_bytes(row)
     if len(body) != row["bytes"] or digest(body) != row["sha256"] or git_blob(body) != row["git_blob"]:
         raise ValueError("Complete selected source differs: " + row["path"])
     return body
@@ -46,6 +63,7 @@ def copy_source(source, destination):
         shutil.copyfile(source, destination)
     return str(destination)
 
+
 def receive_source(args, original):
     selected = args.source_input.read_bytes()
     if digest(selected) != args.expected_source_input_sha256:
@@ -59,6 +77,12 @@ def receive_source(args, original):
     package_body = source_package["content"].encode("utf-8")
     if len(package_body) != source_package["bytes"] or digest(package_body) != source_package["sha256"]:
         raise ValueError("The complete selected reviewer package differs.")
+    selected_reviewer_paths = None
+    if "reviewerPaths" in packet["sourceSelection"]:
+        selected_reviewer_paths = reviewer_paths(packet["sourceSelection"]["reviewerPaths"])
+        verify_reviewer_paths(json.loads(package_body),
+                              {row["path"]: checked_body(row) for row in packet["assets"]},
+                              selected_reviewer_paths)
     original_case = packet["originalCase"]
     if args.replace_library_file_id and args.replace_library_file_id != original_case["libraryId"]:
         raise ValueError("Continue the same saved customer case.")
@@ -164,23 +188,11 @@ def receive_source(args, original):
     package_path = output / "source-package-input.json"
     replace_bytes(package_path, package_body)
     envelope = json.loads(package_body)
-    received = envelope["received"]
-    objects = {row["sha256"]: row for row in received["objects"]}
-    expected_roles = {
-        "application": "application.md", "source-index": "source-index.json",
-        "budget": "budget.csv", "product-and-finance": "product-and-finance.md",
-    }
-    files = received["bundle"]["body"]["files"]
-    if len(files) != 4 or {row["role"] for row in files} != set(expected_roles):
-        raise ValueError("Receive all four complete original reviewer files.")
-    for row in files:
-        if row["name"] != expected_roles[row["role"]]:
-            raise ValueError("Retain the selected original reviewer file names.")
-        stored = objects[row["sha256"]]
-        body = base64.b64decode(stored["base64"], validate=True)
-        if len(body) != row["bytes"] or len(body) != stored["bytes"] or digest(body) != row["sha256"]:
-            raise ValueError("The complete reviewer object differs: " + row["name"])
-        relative = "stellar-forge/developer-site/dist/grant-data/" + row["name"]
+    paths = reviewer_paths() if selected_reviewer_paths is None else selected_reviewer_paths
+    for row, body in reviewer_members(envelope):
+        relative = paths[row["role"]]
+        # Explicit selections were checked against every original carrier byte
+        # before materialization. Keep canonical publisher files at their own paths.
         replace_bytes(source_root / relative, body)
         rows[relative] = {"path": relative, "bytes": len(body),
                           "sha256": digest(body), "git_blob": git_blob(body)}
@@ -249,6 +261,7 @@ def receive_source(args, original):
         "originalReviewActions": baseline["reviewEvents"],
         "nativeRecord": str(output / "native-process.json"),
     }), flush=True)
+    programme_started = time.monotonic()
     native, result = run_receiving_program(
         OPERATION, root, output, context, args.node, None,
         runtime / "receive-source-package.mjs", phase_config, case, environment,
@@ -266,6 +279,72 @@ def receive_source(args, original):
         "reviewActions": result.get("reviewActions") if result else None,
         "reviewStatus": result.get("reviewStatus") if result else None,
     })
+    native["nativeSourceState"] = native["state"]
+    native_pending = pending_writer_phases(native, "native-source")
+    if getattr(args, "source_browser", False):
+        browser_output = output / "browser"
+        browser_output.mkdir(parents=True, exist_ok=True, mode=0o700)
+        # Keep source/save receipts and the actual IndexedDB snapshot in place.
+        # Only prior process observations move into this same retained attempt.
+        for name in ("native-process.json", "native-process.log", "javascript-parse.log",
+                     "node-version.log", "browser-version.log", "progress.json",
+                     "BROWSER_RECEIVER_INCOMPLETE.json", "config.json"):
+            selected = browser_output / name
+            if selected.is_file():
+                target = attempt / "browser" / name
+                target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+                retired[selected.relative_to(case).as_posix()] = target.relative_to(case).as_posix()
+                selected.replace(target)
+        browser_config = {
+            **current, "outputDirectory": str(browser_output),
+            "browserInputPath": str(output / "browser-receiving-input.json"),
+        }
+        browser_config_path = browser_output / "config.json"
+        original.write_json(browser_config_path, browser_config)
+        remaining = args.timeout_seconds - (time.monotonic() - programme_started)
+        if native["state"] == "COMPLETE" and not native_pending and remaining > 0:
+            try:
+                browser_native, browser_result = run_receiving_program(
+                    OPERATION, root, browser_output, context, args.node, args.chromium,
+                    runtime / "receive-source-browser.cjs", browser_config_path, case, environment,
+                    remaining, "current-source-browser-receiving", engine="browser",
+                )
+                native["browserContinuation"] = browser_native
+                native["browserResult"] = browser_result
+                native["state"] = ("COMPLETE" if browser_native["state"] == "COMPLETE"
+                                   else "INCOMPLETE")
+            except Exception as error:
+                # Retain the actual controller's phase identities even if its
+                # outer return failed. An absent record cannot establish exit.
+                try:
+                    browser_record = json.loads((browser_output / "native-process.json").read_text())
+                except (OSError, ValueError):
+                    browser_record = {}
+                native["browserContinuation"] = {
+                    **browser_record, "state": "INCOMPLETE",
+                    "error": str(error), "errorType": type(error).__name__,
+                }
+                native["state"] = "INCOMPLETE"
+        else:
+            native["browserContinuation"] = {
+                "state": "NOT_STARTED",
+                "reason": ("Complete the original native source phases first."
+                           if native["state"] != "COMPLETE"
+                           else "The shared source-receiving deadline elapsed."),
+            }
+            native["state"] = "INCOMPLETE"
+    pending = list(native_pending)
+    browser_observed = native.get("browserContinuation")
+    if browser_observed and browser_observed.get("state") != "NOT_STARTED":
+        pending.extend(pending_writer_phases(browser_observed, "source-browser"))
+    if pending:
+        # Keep the live operation intact for its original controller. Archiving
+        # or replacing the Library file while any writer may survive is unsafe.
+        native.update(state="INCOMPLETE", archiveState="WAITING_FOR_OWNED_PROCESS_EXIT",
+                      pendingWriterPhases=pending, retainedOperationDirectory=str(root))
+        original.write_json(output / "native-result.json", native)
+        print("SCF_REVIEW_RESUME_RESULT " + json.dumps(native), flush=True)
+        return 1
     state = native["state"]
     original.write_json(output / "native-result.json", native)
     archive = root / ("SCF-Current-Application-and-Review" +

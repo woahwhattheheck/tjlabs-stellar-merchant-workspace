@@ -17,6 +17,7 @@ const help=String.raw`ROZO merchant payments and original Checkout workspace (No
   serve --workspace DIR --config FILE [--host 127.0.0.1 --port 0]
         [--source-root ROOT --source-manifest FILE --source-sha256 SHA]
         [--expected-workspace-id ID --expected-origin-id ID --startup-file FILE]
+        [--merchant-config FILE --accounting ALIAS --buyer ALIAS]
   state --workspace DIR [--profile ID --offset 0 --limit 100]
   run --workspace DIR --config FILE --input ORIGINAL-REQUEST.json
   run --workspace DIR --config FILE --command COMMAND --payload PAYLOAD.json
@@ -34,6 +35,18 @@ const help=String.raw`ROZO merchant payments and original Checkout workspace (No
   receive --archive ZIP --directory DIR --sha256 SHA
           [--activate --request-id ID --actor ACTOR]
   publisher --publisher checkout|intent-common|contracts --directory DIR
+  finance-plan --workspace DIR --merchant-config FILE --accounting ALIAS [--buyer ALIAS]
+         --directory DRAFT-DIR --report-id ID --report-sha256 SHA --actor ACTOR
+         --source-details SOURCE-METADATA.json [--operation-id ID]
+  finance-amendment-plan --workspace DIR --merchant-config FILE --accounting ALIAS [--buyer ALIAS]
+         --previous-finance-directory ORIGINAL-COMPLETED-DIR --directory DRAFT-DIR
+         --report-id ID --report-sha256 SHA --actor ACTOR --source-details FILE
+         [--purchase-selection FILE --operation-id ID]
+  native-finance --workspace DIR --config FILE --merchant-config FILE --accounting ALIAS
+         [--buyer ALIAS] --plan REVIEWED-PLAN.json --directory ORIGINAL-FINANCE-DIR
+         --chromium FILE --playwright-module FILE [--python FILE --maintenance-continuation FILE --previous-finance-directory DIR]
+  receive-finance --archive ZIP --sha256 SHA --directory PACKAGE-DIR --receiver NEW-DIR
+         [--merchant-config FILE --accounting ALIAS --python FILE]
   native --directory DIR [--chromium FILE --playwright-module FILE]
          [--source-root ROOT --source-manifest FILE --source-sha256 SHA]
   native-applications --directory ORIGINAL-NATIVE-DIR --repository CHECKOUT --ref COMMIT
@@ -54,12 +67,12 @@ export function argumentsOf(args){
 function need(flags,key){assert(typeof flags[key]==='string'&&flags[key].length,'CLI_ARGUMENT','Supply '+key);return flags[key];}
 const jsonFile=path=>JSON.parse(path==='-'?readFileSync(0,'utf8'):readFileSync(path,'utf8'));
 const result=value=>process.stdout.write(JSON.stringify(value)+'\n');
-function serviceFor(w,flags){
+function serviceFor(w,flags,finance={}){
   let configuration={config:{schema:'stellar-forge.rozo-connections.v1',connections:{}},connections:{},publisherSelections:{}};
   if(flags['--config'])configuration=loadRozoConfiguration(resolve(flags['--config']));
   const sourceRoot=resolve(flags['--source-root']??ROOT),selected=selectRozoSource(sourceRoot,{sourceManifest:flags['--source-manifest'],expectedSha256:flags['--source-sha256'],optional:!flags['--source-manifest']&&!flags['--source-sha256']});
   const sourceManifest=selected?.sourceManifest??null,sourceIdentity=selected?.sourceIdentity??null;
-  return new RozoService({workspace:w,connections:configuration.connections,publisherSelections:configuration.publisherSelections,sourceIdentity,delivery:{sourceRoot,sourceManifest,configuration,python:flags['--python']??process.env.ROZO_PYTHON}});
+  return new RozoService({...finance,workspace:w,connections:configuration.connections,publisherSelections:configuration.publisherSelections,sourceIdentity,delivery:{sourceRoot,sourceManifest,configuration,python:flags['--python']??process.env.ROZO_PYTHON}});
 }
 function inputEnvelope(w,flags,command,payload){
   if(flags['--input'])return jsonFile(flags['--input']);
@@ -89,6 +102,7 @@ async function exportObject(w,hash,out){
 }
 export async function main(args=process.argv.slice(2)){
   const {command,flags}=argumentsOf(args);if(!command||command==='help'||flags['--help']){process.stdout.write(help);return;}
+  if(command==='receive-finance'){const {receiveFinanceCommand}=await import('./finance-cli.mjs');result(await receiveFinanceCommand(flags));return;}
   if(command==='publisher'){
     const ids={checkout:'RozoAI/rozo-checkout-skill','intent-common':'RozoAI/intent-pay',contracts:'RozoAI/rozo-intents-contracts'},publisher=ids[need(flags,'--publisher')];assert(publisher,'PUBLISHER','Select checkout, intent-common or contracts.');
     const catalogue=jsonFile(join(HERE,'publishers.json')),row=catalogue.publishers.find(p=>p.repository===publisher);
@@ -99,16 +113,19 @@ export async function main(args=process.argv.slice(2)){
   if(command==='native-applications'){const {runRozoApplications}=await import('./native-applications.mjs');result(await runRozoApplications({directory:resolve(need(flags,'--directory')),repository:resolve(need(flags,'--repository')),ref:need(flags,'--ref'),chromium:flags['--chromium'],playwrightModule:flags['--playwright-module'],python:flags['--python'],npm:flags['--npm']}));return;}
   const directory=resolve(need(flags,'--workspace'));
   if(command==='inspect'){result(inspectRozoWorkspace(directory));return;}
-  const reading=['state','request','history','report','object'].includes(command),w=new RozoWorkspace(directory,{create:command==='init',readOnly:reading});let service,owner,server;
+  const reading=['state','request','history','report','object','finance-plan','finance-amendment-plan'].includes(command),w=new RozoWorkspace(directory,{create:command==='init',readOnly:reading});let service,owner,server;
   try{
     if(command==='init'){result(inspectRozoWorkspace(directory));return;}
     if(command==='request'){result({workspaceId:w.meta().workspaceId,request:w.request(need(flags,'--request-id'))});return;}
     if(command==='history'){result(w.history(need(flags,'--kind'),need(flags,'--id')));return;}
     if(command==='report'){const value=w.get('report',need(flags,'--id'));assert(value,'REPORT_MISSING','The original report is absent.',404);result(value);return;}
     if(command==='object'){result(await exportObject(w,need(flags,'--sha256'),need(flags,'--out')));return;}
-    service=serviceFor(w,flags);
+    const operate=async(finance={})=>{
+    service=serviceFor(w,flags,finance);
     if(command==='state'){result(service.state({profileId:flags['--profile']??null,offset:Number(flags['--offset']??0),limit:Number(flags['--limit']??100)}));return;}
+    if(command==='finance-plan'||command==='finance-amendment-plan'){const {financeCommand}=await import('./finance-cli.mjs');result(await financeCommand(command,service,flags));return;}
     need(flags,'--config');owner=acquireLease(w,'operator');
+    if(command==='native-finance'){const {financeCommand}=await import('./finance-cli.mjs');result(await financeCommand(command,service,flags));return;}
     if(command==='serve'){
       const m=w.meta();if(flags['--expected-workspace-id'])assert(m.workspaceId===flags['--expected-workspace-id'],'WORKSPACE_IDENTITY','The reviewed original workspace ID differs.',409);
       if(flags['--expected-origin-id'])assert(m.originId===flags['--expected-origin-id'],'WORKSPACE_IDENTITY','The reviewed original origin ID differs.',409);
@@ -125,6 +142,21 @@ export async function main(args=process.argv.slice(2)){
     else if(command==='export'||command==='handover')envelope=inputEnvelope(w,flags,command==='handover'?'workspace.handover':'workspace.export',{id:need(flags,'--id'),title:need(flags,'--title')});
     else throw Error('Unknown command. Use rozo-payments help.');
     retainInput(w,envelope);result(await service.execute(envelope,{retry:flags['--retry']===true}));
+    };
+    if(flags['--merchant-config']||flags['--accounting']||flags['--buyer']){
+      need(flags,'--merchant-config');
+      assert(flags['--accounting']||flags['--buyer'],'ROZO_FINANCE_CONFIGURATION','Select a configured Accounting or Buyer alias.');
+      const {openMerchantOperator}=await import('../../../../stellar-forge/mcp-merchant-operator/operator.mjs');
+      const operator=await openMerchantOperator(resolve(flags['--merchant-config']));
+      try{
+        return await operator.withRozoFinanceOwners({accountingId:flags['--accounting']??null,buyerId:flags['--buyer']??null},
+          async finance=>{
+            try{return await operate(finance);}
+            finally{if(server){await server.close();server=null;service=null;}else if(service){await service.close();service=null;}}
+          });
+      }finally{await operator.close();}
+    }
+    return await operate();
   }finally{if(server)await server.close();else await service?.close();owner?.release();w.close();}
 }
 if(process.argv[1]&&realpathSync(process.argv[1])===fileURLToPath(import.meta.url))main().catch(error=>{process.stderr.write(JSON.stringify({error:{code:error.code??'ROZO_ERROR',message:error.message,details:error.details??{}}})+'\n');process.exitCode=1;});

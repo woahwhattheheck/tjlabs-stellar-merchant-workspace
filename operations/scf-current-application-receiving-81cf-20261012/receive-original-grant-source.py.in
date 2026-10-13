@@ -20,12 +20,21 @@ payload=json.loads(raw);del raw,ENVELOPE
 parser=argparse.ArgumentParser(description="Continue the complete saved SCF review with its selected current source package.")
 parser.add_argument("--parent",type=Path,required=True)
 parser.add_argument("--node",type=Path)
+parser.add_argument("--source-browser",action="store_true")
+parser.add_argument("--node-modules",type=Path)
+parser.add_argument("--chromium",type=Path)
 parser.add_argument("--timeout-seconds",type=int,default=900)
 args=parser.parse_args()
 if not args.parent.is_absolute() or not args.parent.is_dir():
     raise ValueError("Select the equipped owner's existing absolute receiving parent.")
 if not 60<=args.timeout_seconds<=3600:
     raise ValueError("Select the original controller timeout from 60 to 3600 seconds.")
+if args.source_browser:
+    for selected in (args.node_modules,args.chromium):
+        if selected is None or not selected.is_absolute() or not selected.exists():
+            raise ValueError("--source-browser requires the existing absolute --node-modules and --chromium paths.")
+    if not args.node_modules.is_dir() or not args.chromium.is_file():
+        raise ValueError("Select the installed Playwright directory and Chromium executable.")
 transfer_input=json.load(sys.stdin)
 if isinstance(transfer_input,dict) and "transfers" in transfer_input:
     if len(transfer_input["transfers"])!=1:raise ValueError("Select only the original case transfer")
@@ -149,6 +158,8 @@ try:
     version=subprocess.run([node,"--version"],capture_output=True,text=True,timeout=30,env=environment)
     if version.returncode:raise RuntimeError("The selected native Node did not start")
     command=[sys.executable,"-B",str(runtime/"receive_review.py"),"--engine","native","--case",str(original),"--expected-case-sha256",payload["caseSha256"],"--source-input",str(runtime/payload["sourceInputName"]),"--expected-source-input-sha256",payload["sourceInputSha256"],"--node",node,"--parent",str(runs),"--replace-library-file-id",payload["libraryId"],"--expected-library-version",str(payload["expectedVersion"]),"--timeout-seconds",str(args.timeout_seconds)]
+    if args.source_browser:
+        command.extend(["--source-browser","--node-modules",str(args.node_modules),"--chromium",str(args.chromium)])
     log_path=logs/"complete-native-review.log"
     del transfer_input,helper_body,config,original_review_body,original_review,original_round,original_result
     with log_path.open("wb") as log:
@@ -176,32 +187,53 @@ try:
         elif line.startswith("SCF_LIBRARY_RESULT "):library_result=json.loads(line.split(" ",1)[1])
     if native_result:
         result_summary["native"]=native_result
-        final=Path(native_result["archive"]["path"])
-        digest=hashlib.sha256()
-        with final.open("rb") as inp:
-            for block in iter(lambda:inp.read(1024*1024),b""):digest.update(block)
-        assert final.stat().st_size==native_result["archive"]["bytes"] and digest.hexdigest()==native_result["archive"]["sha256"]
-        with zipfile.ZipFile(final) as archive:
-            complete_names=archive.namelist()
-            retired=native_result.get("source",{}).get("retired_members",{})
-            expected_names={retired.get(name,name) for name in names}
-            assert expected_names.issubset(complete_names) and len(set(complete_names))==len(complete_names)
-            assert hashlib.sha256(archive.read(baseline["draftPath"])).hexdigest()==original_submission_sha
-            assert hashlib.sha256(archive.read(baseline["reviewPath"])).hexdigest()==original_review_sha
-            if native_result["state"]=="COMPLETE":
-                native_reopen=json.loads(archive.read(payload.get("receivingDirectory", "receiving/source-package-continuation") + "/RESULT.json"))
-                assert native_reopen["state"]=="COMPLETE"
-                assert native_reopen["retainedOriginalActions"]==baseline["reviewEvents"]
-                assert native_reopen["independentNativeReceiving"]["originalActionsRetained"]==baseline["reviewEvents"]
-                assert native_reopen["sourceRecords"]==payload["sourceRecords"]
-                assert native_reopen["sourcePackageSha256"]==payload["sourcePackageSha256"]
-                assert native_reopen["originalDraftId"]=="scf-technical-buyer-draft-7108-20261012"
-                assert native_reopen["originalReviewId"]=="SCF-TECHNICAL-BUYER-REVIEW-7108-20261012"
-                result_summary["completedSourceReceiving"]={key:native_reopen[key] for key in ("reviewActions","reviewStatus","retainedOriginalActions","currentApplication","sourceRecords","sourcePackageSha256","selectedBundle","preparedEdition","independentNativeReceiving")}
-            result_summary["reopenedArchive"]={"path":str(final),"bytes":final.stat().st_size,"sha256":digest.hexdigest(),"originalMembersRetained":len(names),"completeMembers":len(complete_names),"unchangedSubmissionSha256":original_submission_sha}
+        if native_result.get("archive") is None:
+            if (native_result.get("state") != "INCOMPLETE" or
+                    native_result.get("archiveState") != "WAITING_FOR_OWNED_PROCESS_EXIT" or
+                    not native_result.get("pendingWriterPhases") or
+                    not native_result.get("retainedOperationDirectory")):
+                raise ValueError("The receiver returned no archive or retained live-operation result.")
+            result_summary.update(
+                archiveState=native_result["archiveState"],
+                retainedOperationDirectory=native_result["retainedOperationDirectory"],
+                pendingWriterPhases=native_result["pendingWriterPhases"],
+                error="Original writer exit remains unconfirmed; continue its retained operation.")
+            emit("ORIGINAL_OPERATION_RETAINED",
+                 root=native_result["retainedOperationDirectory"],
+                 phases=native_result["pendingWriterPhases"])
+        else:
+            final=Path(native_result["archive"]["path"])
+            digest=hashlib.sha256()
+            with final.open("rb") as inp:
+                for block in iter(lambda:inp.read(1024*1024),b""):digest.update(block)
+            assert final.stat().st_size==native_result["archive"]["bytes"] and digest.hexdigest()==native_result["archive"]["sha256"]
+            with zipfile.ZipFile(final) as archive:
+                complete_names=archive.namelist()
+                retired=native_result.get("source",{}).get("retired_members",{})
+                expected_names={retired.get(name,name) for name in names}
+                assert expected_names.issubset(complete_names) and len(set(complete_names))==len(complete_names)
+                assert hashlib.sha256(archive.read(baseline["draftPath"])).hexdigest()==original_submission_sha
+                assert hashlib.sha256(archive.read(baseline["reviewPath"])).hexdigest()==original_review_sha
+                if native_result["state"]=="COMPLETE":
+                    native_reopen=json.loads(archive.read(payload.get("receivingDirectory", "receiving/source-package-continuation") + "/RESULT.json"))
+                    assert native_reopen["state"]=="COMPLETE"
+                    assert native_reopen["retainedOriginalActions"]==baseline["reviewEvents"]
+                    assert native_reopen["independentNativeReceiving"]["originalActionsRetained"]==baseline["reviewEvents"]
+                    assert native_reopen["sourceRecords"]==payload["sourceRecords"]
+                    assert native_reopen["sourcePackageSha256"]==payload["sourcePackageSha256"]
+                    assert native_reopen["originalDraftId"]=="scf-technical-buyer-draft-7108-20261012"
+                    assert native_reopen["originalReviewId"]=="SCF-TECHNICAL-BUYER-REVIEW-7108-20261012"
+                    result_summary["completedSourceReceiving"]={key:native_reopen[key] for key in ("reviewActions","reviewStatus","retainedOriginalActions","currentApplication","sourceRecords","sourcePackageSha256","selectedBundle","preparedEdition","independentNativeReceiving")}
+                    if args.source_browser:
+                        browser_reopen=json.loads(archive.read(payload.get("receivingDirectory","receiving/source-package-continuation")+"/browser/RESULT.json"))
+                        assert browser_reopen["state"]=="COMPLETE" and browser_reopen["sourcePackageSha256"]==payload["sourcePackageSha256"]
+                        assert browser_reopen["originalDraftId"]==native_reopen["originalDraftId"] and browser_reopen["originalReviewId"]==native_reopen["originalReviewId"]
+                        assert browser_reopen["retainedReviewActions"]==native_reopen["reviewActions"]
+                        result_summary["completedBrowserReceiving"]={key:browser_reopen[key] for key in ("sourceRecords","originalDraftId","originalReviewId","retainedReviewActions","localBrowserBinding","unchangedReviewedTargets")}
+                result_summary["reopenedArchive"]={"path":str(final),"bytes":final.stat().st_size,"sha256":digest.hexdigest(),"originalMembersRetained":len(names),"completeMembers":len(complete_names),"unchangedSubmissionSha256":original_submission_sha}
     if library_result:result_summary["library"]=library_result
     if returncode==0 and native_result and native_result["state"]=="COMPLETE" and library_result and library_result["all_saved"]:result_summary["state"]="COMPLETE"
-    elif returncode:result_summary["error"]="The original receiver returned exit "+str(returncode)
+    elif returncode and not result_summary.get("error"):result_summary["error"]="The original receiver returned exit "+str(returncode)
 except BaseException as error:
     result_summary["error"]=str(error)
     (logs/"producer-error.log").write_text(traceback.format_exc(),encoding="utf-8")

@@ -1,4 +1,5 @@
 // MIT. Complete commissioning tools over the original workspace and native operation IDs.
+import {operatingTools} from './operating-catalog.mjs';
 import {MAX_RETAINED_CHUNK_BYTES} from '../../stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs';
 const alias={type:'string',pattern:'^[a-z][a-z0-9_-]{0,63}$'},id={type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'};
 const uuid={type:'string',pattern:'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$'};
@@ -16,6 +17,7 @@ const operationInput={type:'object',additionalProperties:false,properties:{
  pageSize:{type:'integer',minimum:1,maximum:5000}
 }};
 export function lightdashTools(tool){return [
+ ...operatingTools(tool),
  tool('merchant_lightdash_workspaces','List configured commissioning workspaces, host input aliases, stable workspace IDs and current browser ownership. No provider or workspace is opened.',{},[],read),
  tool('merchant_lightdash_open','Open the existing original commissioning workspace and its browser once. MCP and browser share the same SQLite, source editions, native operation map and shutdown lifetime.',selected,['workspace'],write),
  tool('merchant_lightdash_close','Drain this exact owned browser, MCP calls, native operations, packaging and retained reads before closing SQLite and releasing its workspace lease.',{...selected,instanceId:uuid},['workspace','instanceId'],{destructive:true,idempotent:true}),

@@ -127,7 +127,7 @@ export function seedCohortDeliveryComparison(planDocument, review, options = {})
 function normalizeInput(raw) {
   object(raw, 'input');
   if (raw.schema !== COHORT_DELIVERY_INPUT_SCHEMA) fail('INVALID_COMPARISON_SCHEMA', 'Use ' + COHORT_DELIVERY_INPUT_SCHEMA + '.', 'schema');
-  const allowed = ['schema','planDocument','review','links','assignments','title','note','recording'];
+  const allowed = ['schema','planDocument','review','links','assignments','title','note','recording','commercial'];
   for (const key of Object.keys(raw)) if (!allowed.includes(key)) fail('UNKNOWN_COMPARISON_FIELD', 'Unknown comparison input: ' + key, key);
   const input = {
     schema:COHORT_DELIVERY_INPUT_SCHEMA,
@@ -145,6 +145,7 @@ function normalizeInput(raw) {
   };
   for (const [key,value] of Object.entries(input.recording)) text(value,'recording.'+key,key === 'actor' ? 500 : 200);
   if (input.recording.createdAt) timestamp(input.recording.createdAt,'recording.createdAt');
+  if(raw.commercial!==undefined)input.commercial=cmNormalize(raw.commercial);
   return input;
 }
 function buildJoins(plan, c, links) {
@@ -349,7 +350,7 @@ export function compareCohortDelivery(raw) {
     teamOperatedIntents:count(records,'teamOperated'),nativeReady:c.ready,
     completionDelta:count(records,'completeInWindow')-sum(rows,'plannedCompletePurchases')
   };
-  return {
+  const report = {
     schema:COHORT_DELIVERY_COMPARISON_SCHEMA,engineVersion:1,title:input.title,input,summary,
     source:{programId:plan.source.programId,plan:copy(plan.source),reviewId:input.review.id,reviewVersion:input.review.version,
       measurementSha256:c.source.measurementSha256,previewSha256:c.previewSha256,observed:copy(c.source),
@@ -358,6 +359,8 @@ export function compareCohortDelivery(raw) {
     operators:[...operatorMap.values()].sort((a,b)=>(a.operatorId||'').localeCompare(b.operatorId||'')),targets,issues,
     nativeMetrics:copy(c.metrics),nativeIssues:copy(c.issues),amounts:copy(c.amounts),outcomes:copy(c.outcomes),products:copy(c.products)
   };
+  if(input.commercial!==undefined)report.commercial=cmReconcile(report,input.commercial);
+  return report;
 }
 export function reopenCohortDeliveryComparison(document) {
   if(!document||document.schema!==COHORT_DELIVERY_COMPARISON_SCHEMA||document.engineVersion!==1)
@@ -385,6 +388,17 @@ export function exportCohortDeliveryCsv(document) {
   for(const row of report.outcomes)add('native_outcome',row.id,dayOf(row.completedAt),'qualifies',null,row.qualifies,null,row);
   for(const row of report.products)add('native_product',row.id,dayOf(row.completedAt),'completeInWindow',null,row.completeInWindow,null,row);
   for(const row of [...report.issues,...report.nativeIssues])add('finding',row.id||row.code,'',row.code,null,null,null,row);
+  if(report.commercial){const c=report.commercial;
+    for(const key of ['revenue','totalCost','contribution'])add('commercial',c.currency,'',key,c.planned?.[key]??null,c.actual[key==='revenue'?'adjustedRevenue':key],c.differences[key],{currency:c.currency,transactionScope:c.transactionScope,feeTreatment:c.feeTreatment,coverage:c.coverage});
+    for(const row of c.assets)add('commercial_asset',row.network+':'+row.asset,'','atomic amount',row.plannedAtomic,row.observedAtomic,row.differenceAtomic,row);
+    for(const row of c.opportunities)add('commercial_opportunity',row.id,'','atomic amount',row.plannedAtomic,row.observedAtomic,row.differenceAtomic,row);
+    for(const row of c.transactions)add('commercial_transaction',row.id,dayOf(row.settledAt),'valued settlement',null,row.valuedAmount,null,row);
+    for(const row of c.costs)add('commercial_cost',row.id,dayOf(row.occurredAt),'recorded cost',null,row.calculatedAmount,null,row);
+    for(const row of c.adjustments)add('commercial_adjustment',row.id,dayOf(row.occurredAt),row.kind,null,row.amount,null,row);
+    for(const row of c.choices.valuations)add('commercial_valuation',row.network+':'+row.asset,dayOf(row.asOfAt),'whole-unit value',null,row.unitValue,null,row);
+    for(const row of c.services)add('commercial_service',row.id,'','known recorded cost',row.plannedCost,row.knownRecordedCost,null,row);
+    for(const row of c.issues)add('commercial_finding',row.id||row.code,'',row.code,null,null,null,row);
+  }
   return rows.map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n';
 }
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -398,7 +412,7 @@ export function exportCohortDeliveryHtml(document) {
     '<p>Case '+esc(s.programId)+' · '+esc(s.nativeMode)+' · tranche '+esc(s.plannedWindow.tranche)+' · frozen review '+esc(s.reviewId)+'.</p>'+
     '<p>'+esc(r.input.note)+'</p><h2>Delivery overview</h2>'+table(['Measure','Count'],Object.entries(r.summary).map(([k,v])=>[label(k),v]))+
     '<p>Useful tasks and payment opportunities retain their original units. The recorded completion and independence columns use the frozen cohort’s classifications. Each original intent appears once. Current completion dates include later delivered work; cohort completion columns retain the original window. Remaining due is calculated only for matched planned opportunities due by the recorded cutoff.</p>'+
-    '<h2>Original proposed targets</h2>'+table(['Target','Plan requirement','Review requirement','Planned','Recorded','Difference','Review met'],r.targets.map(x=>[label(x.key),x.plannedRequirement,x.observedRequirement,x.planned,x.observed,x.delta,x.observedMet]))+
+    cmHtml(r)+'<h2>Original proposed targets</h2>'+table(['Target','Plan requirement','Review requirement','Planned','Recorded','Difference','Review met'],r.targets.map(x=>[label(x.key),x.plannedRequirement,x.observedRequirement,x.planned,x.observed,x.delta,x.observedMet]))+
     '<h2>Planned payment opportunities</h2>'+table(['Opportunity / identity','UTC date','Planned completions','Recorded completions','Independent','Due remaining','Late','State','Original intents'],r.rows.map(x=>[x.label+'\n'+x.id,x.date,x.plannedCompletePurchases,x.observedComplete,x.observedIndependentComplete,x.remainingDue,x.lateAfterPlan,label(x.state),x.intentIds]))+
     '<h2>Daily delivery</h2><p>First-attempt columns group the original intent cohort. Delivered-on-date counts current completed outputs on their actual UTC completion date.</p>'+table(['UTC date','Planned purchases','Recorded first attempts','Completed from those attempts','Delivered on date','Independent on date','Unmatched'],r.days.map(x=>[x.date,x.plannedCompletePurchases,x.observedIntents,x.completedFromAttempts,x.completedOnDate,x.independentCompletedOnDate,x.unmatchedIntents]))+
     '<h2>Accountable buyer operators</h2>'+table(['Operator','Names','Planned paid','Planned independent','Recorded intents','Complete','Independent','Unmatched'],r.operators.map(x=>[x.operatorId,x.labels.join('; '),x.plannedPaidPurchases,x.plannedIndependentOpportunities,x.observedIntents,x.observedComplete,x.observedIndependentComplete,x.unmatchedIntents]))+
@@ -409,4 +423,258 @@ export function exportCohortDeliveryHtml(document) {
     '<h2>Source differences and original review findings</h2>'+table(['Finding','Identity','Description'],[...r.issues,...r.nativeIssues].map(x=>[x.code,x.id||'',x.message]))+
     '<details><summary>Complete comparison JSON and original source documents</summary><pre>'+esc(JSON.stringify(r,null,2))+'</pre></details>'+
     '<small>Plan content '+esc(s.plan.planContentSha256)+' · cohort measurement '+esc(s.measurementSha256)+' · original review '+esc(s.previewSha256)+'</small></body></html>\n';
+}
+
+
+// Commercial reconciliation shares the complete original comparison document.
+export const COHORT_COMMERCIAL_SCHEMA='stellar-forge.sf47-cohort-commercial.v1';
+const cmZero={n:0n,s:0};
+function cmDecimal(value,path,signed=false){
+  if(typeof value!=='string'||value.length>300||!new RegExp(signed?'^-?(?:0|[1-9]\\d*)(?:\\.\\d{1,30})?$':'^(?:0|[1-9]\\d*)(?:\\.\\d{1,30})?$').test(value))
+    fail('COMMERCIAL_DECIMAL_REQUIRED',path+' needs exact ordinary decimal text (up to 30 fractional digits).',path);
+  const negative=value[0]==='-',parts=(negative?value.slice(1):value).split('.');
+  return {n:BigInt(parts[0]+(parts[1]||''))*(negative?-1n:1n),s:(parts[1]||'').length};
+}
+
+function cmExact(value,path,signed=false){
+  if(typeof value!=='string'||value.length>2000||!/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(value)||(!signed&&value.startsWith('-')))
+    fail('COMMERCIAL_SOURCE_DECIMAL','Retain the complete exact calculated decimal at '+path+'.',path);
+  const negative=value[0]==='-',parts=(negative?value.slice(1):value).split('.');
+  return {n:BigInt(parts[0]+(parts[1]||''))*(negative?-1n:1n),s:(parts[1]||'').length};
+}
+
+function cmText(value){
+  if(!value.n)return '0';
+  const sign=value.n<0n?'-':'',digits=(value.n<0n?-value.n:value.n).toString().padStart(value.s+1,'0');
+  return sign+(value.s?(digits.slice(0,-value.s)+'.'+digits.slice(-value.s)).replace(/0+$/,'').replace(/\.$/,''):digits);
+}
+const cmAdd=(a,b)=>{const s=Math.max(a.s,b.s);return {n:a.n*10n**BigInt(s-a.s)+b.n*10n**BigInt(s-b.s),s};};
+const cmSub=(a,b)=>cmAdd(a,{n:-b.n,s:b.s});
+const cmMul=(a,b)=>({n:a.n*b.n,s:a.s+b.s});
+const cmSum=rows=>rows.reduce((a,b)=>cmAdd(a,b),cmZero);
+function cmAtomic(value,path,nullable=false){
+  if(value===null&&nullable)return null;
+  if(typeof value!=='string'||!/^(?:0|[1-9]\d{0,299})$/.test(value))fail('COMMERCIAL_ATOMIC_REQUIRED',path+' must retain canonical atomic integer text.',path);
+  return value;
+}
+function cmFields(value,allowed,path){
+  object(value,path);
+  for(const key of Object.keys(value))if(!allowed.includes(key))fail('UNKNOWN_COMMERCIAL_FIELD','Unknown '+path+' field '+key+'.',path+'.'+key);
+  return value;
+}
+function cmRequired(value,path,max=2000){
+  text(value,path,max);if(!value.trim())fail('COMMERCIAL_SOURCE_REQUIRED',path+' requires its original identity or source basis.',path);return value;
+}
+function cmNullable(value,path){return value===null||value===undefined||value===''?null:cmText(cmDecimal(value,path));}
+function cmKey(network,asset){return JSON.stringify([network,asset]);}
+function cmTxKey(network,hash){return JSON.stringify([network,hash.toLowerCase()]);}
+function cmNormalize(raw){
+  cmFields(raw,['schema','currency','transactionScope','feeTreatment','costCoverage','coverageNote','valuations','costs','adjustments','transactionAllocations','note'],'commercial');
+  if(raw.schema!==COHORT_COMMERCIAL_SCHEMA)fail('COMMERCIAL_SCHEMA_REQUIRED','Use '+COHORT_COMMERCIAL_SCHEMA+'.','commercial.schema');
+  const currency=cmRequired(raw.currency,'commercial.currency',16);
+  if(!/^[A-Z][A-Z0-9._-]{0,15}$/.test(currency))fail('COMMERCIAL_CURRENCY_REQUIRED','Select one explicit reporting currency.','commercial.currency');
+  const choose=(value,allowed,path)=>{if(!allowed.includes(value))fail('COMMERCIAL_CHOICE_REQUIRED',path+' must be '+allowed.join(' or ')+'.',path);return value;};
+  const valuations=list(raw.valuations||[],'commercial.valuations',1000).map((row,i)=>{
+    const path='commercial.valuations.'+i;cmFields(row,['network','asset','atomicDecimals','unitValue','asOfAt','sourceReference'],path);
+    if(!Number.isSafeInteger(row.atomicDecimals)||row.atomicDecimals<0||row.atomicDecimals>30)fail('COMMERCIAL_UNIT_REQUIRED','Enter the original asset decimal places (0–30).',path+'.atomicDecimals');
+    if(row.asset==='native:XLM'&&row.atomicDecimals!==7)fail('COMMERCIAL_FEE_UNIT','Native XLM retains its seven-decimal stroop unit.',path+'.atomicDecimals');
+    const asOfAt=cmRequired(row.asOfAt,path+'.asOfAt',100);timestamp(asOfAt,path+'.asOfAt');
+    return {network:cmRequired(row.network,path+'.network',500),asset:cmRequired(row.asset,path+'.asset',500),
+      atomicDecimals:row.atomicDecimals,unitValue:cmText(cmDecimal(row.unitValue,path+'.unitValue')),asOfAt,
+      sourceReference:cmRequired(row.sourceReference,path+'.sourceReference')};
+  });
+  if(new Set(valuations.map(row=>cmKey(row.network,row.asset))).size!==valuations.length)fail('DUPLICATE_COMMERCIAL_VALUATION','Keep one selected dated valuation per exact network and asset.','commercial.valuations');
+  const costs=unique(list(raw.costs||[],'commercial.costs',10000).map((row,i)=>{
+    const path='commercial.costs.'+i;cmFields(row,['id','label','serviceId','costType','amount','activeHours','hourlyCost','occurredAt','sourceReference'],path);
+    const costType=choose(row.costType,['SUPPLIER','LABOR','PAYMENT_FEE','OTHER'],path+'.costType');
+    const occurredAt=cmRequired(row.occurredAt,path+'.occurredAt',100);timestamp(occurredAt,path+'.occurredAt');
+    const amount=cmNullable(row.amount,path+'.amount'),activeHours=cmNullable(row.activeHours,path+'.activeHours'),hourlyCost=cmNullable(row.hourlyCost,path+'.hourlyCost');
+    if(costType==='LABOR'&&amount!==null)fail('COMMERCIAL_LABOR_BASIS','Labor is calculated from original active hours and hourly cost; leave amount blank.',path);
+    if(costType!=='LABOR'&&(activeHours!==null||hourlyCost!==null))fail('COMMERCIAL_COST_BASIS','Active hours and hourly cost belong to a labor row.',path);
+    return {id:cmRequired(row.id,path+'.id',200),label:cmRequired(row.label,path+'.label',500),serviceId:text(row.serviceId||'',path+'.serviceId',700),
+      costType,amount,activeHours,hourlyCost,occurredAt,sourceReference:cmRequired(row.sourceReference,path+'.sourceReference')};
+  }),'id','commercial.costs');
+  const adjustments=unique(list(raw.adjustments||[],'commercial.adjustments',10000).map((row,i)=>{
+    const path='commercial.adjustments.'+i;cmFields(row,['id','label','kind','amount','occurredAt','sourceReference','refundCashId','intentIds'],path);
+    const kind=choose(row.kind,['REFUND','OTHER_REVENUE'],path+'.kind'),occurredAt=cmRequired(row.occurredAt,path+'.occurredAt',100);timestamp(occurredAt,path+'.occurredAt');
+    const refundCashId=text(row.refundCashId||'',path+'.refundCashId',500);
+    if(refundCashId&&kind!=='REFUND')fail('COMMERCIAL_REFUND_BASIS','An original refund cash row belongs to a refund adjustment.',path);
+    return {id:cmRequired(row.id,path+'.id',200),label:cmRequired(row.label,path+'.label',500),kind,
+      amount:cmText(cmDecimal(row.amount,path+'.amount')),occurredAt,sourceReference:cmRequired(row.sourceReference,path+'.sourceReference'),refundCashId,
+      intentIds:[...new Set(list(row.intentIds||[],path+'.intentIds',10000).map(id=>cmRequired(id,path+'.intentIds',500)))]};
+  }),'id','commercial.adjustments');
+  const allocations=list(raw.transactionAllocations||[],'commercial.transactionAllocations',10000).map((row,i)=>{
+    const path='commercial.transactionAllocations.'+i;cmFields(row,['network','transactionHash','parts','note'],path);
+    const parts=unique(list(row.parts,path+'.parts',10000).map(part=>{
+      cmFields(part,['targetId','amountAtomic'],path+'.parts');
+      return {targetId:cmRequired(part.targetId,path+'.parts.targetId',700),amountAtomic:cmAtomic(part.amountAtomic,path+'.parts.amountAtomic')};
+    }),'targetId',path+'.parts');
+    if(!parts.length)fail('COMMERCIAL_ALLOCATION_CONFLICT','Choose the original opportunities funded by this transaction.',path);
+    return {network:cmRequired(row.network,path+'.network',500),transactionHash:cmRequired(row.transactionHash,path+'.transactionHash',500),parts,note:cmRequired(row.note,path+'.note')};
+  });
+  if(new Set(allocations.map(row=>cmTxKey(row.network,row.transactionHash))).size!==allocations.length)fail('COMMERCIAL_ALLOCATION_CONFLICT','Retain one whole allocation per original network/transaction.','commercial.transactionAllocations');
+  const costCoverage=choose(raw.costCoverage,['PARTIAL','COMPLETE'],'commercial.costCoverage');
+  const coverageNote=text(raw.coverageNote||'','commercial.coverageNote',20000);
+  if(costCoverage==='COMPLETE'&&!coverageNote.trim())fail('COMMERCIAL_COVERAGE_NOTE','Describe the source confirming complete selected-window cost coverage.','commercial.coverageNote');
+  return {schema:COHORT_COMMERCIAL_SCHEMA,currency,
+    transactionScope:choose(raw.transactionScope,['SETTLED_IN_WINDOW','FIRST_ATTEMPT_IN_WINDOW'],'commercial.transactionScope'),
+    feeTreatment:choose(raw.feeTreatment,['SEPARATE','INCLUDE_AS_COST'],'commercial.feeTreatment'),costCoverage,coverageNote,
+    valuations,costs,adjustments,transactionAllocations:allocations,note:text(raw.note||'','commercial.note',20000)};
+}
+export function seedCohortCommercialChoices(document,options={}){
+  const report=document?.schema===COHORT_DELIVERY_COMPARISON_SCHEMA?reopenCohortDeliveryComparison(document):compareCohortDelivery(document);
+  return cmNormalize({schema:COHORT_COMMERCIAL_SCHEMA,currency:options.currency||report.planReport.currencies[0]?.currency||'USD',
+    transactionScope:'SETTLED_IN_WINDOW',feeTreatment:'SEPARATE',costCoverage:'PARTIAL',coverageNote:'',
+    valuations:[],costs:[],adjustments:[],transactionAllocations:[],note:''});
+}
+function cmReconcile(report,choices){
+  const c=report.input.review.cohort,plan=report.planReport,cutoff=timestamp(c.window.asOfAt,'review.cohort.window.asOfAt'),issues=[];
+  const finding=(code,message,id='')=>issues.push({code,message,id});
+  const sourceTxs=list(c.transactions,'review.cohort.transactions',10000),byId=new Map(report.records.map(row=>[row.id,row])),targetMap=new Map(report.rows.map(row=>[row.id,row]));
+  const priceMap=new Map(choices.valuations.map(row=>[cmKey(row.network,row.asset),row])),allocationMap=new Map(choices.transactionAllocations.map(row=>[cmTxKey(row.network,row.transactionHash),row]));
+  const knownTxs=new Set(),usedAllocations=new Set();
+  const value=(atomic,network,asset,fee=false)=>{
+    if(atomic===null)return null;const quote=priceMap.get(cmKey(network,asset));
+    if(atomic==='0')return cmZero;if(!quote)return null;
+    if(fee&&quote.atomicDecimals!==7)fail('COMMERCIAL_FEE_UNIT','Native XLM network fees retain their original seven-decimal stroop unit.','commercial.valuations');
+    return cmMul({n:BigInt(atomic),s:quote.atomicDecimals},cmExact(quote.unitValue,'valuation.unitValue'));
+  };
+  const transactionRows=sourceTxs.map((original,index)=>{
+    object(original,'review.cohort.transactions.'+index);
+    const key=cmTxKey(cmRequired(original.network,'transaction.network',500),cmRequired(original.transactionHash,'transaction.hash',500));
+    if(knownTxs.has(key))fail('COMMERCIAL_SOURCE_CONFLICT','The frozen review repeats a canonical network/transaction. Reopen its original native review.','review.cohort.transactions');
+    knownTxs.add(key);
+    const asset=cmRequired(original.asset,'transaction.asset',500),amount=cmAtomic(original.amountAtomic,'transaction.amountAtomic',true),fees=cmAtomic(original.feesAtomic,'transaction.feesAtomic',true);
+    const groupIds=list(original.groupIds,'transaction.groupIds',10000);
+    const candidateIds=[...new Set(groupIds.map(id=>byId.get(id)?.targetId).filter(Boolean))].filter(id=>{const row=targetMap.get(id);return row.network===original.network&&row.asset===asset;});
+    let parts=[],allocationBasis='UNASSIGNED',allocationNote='',selected=allocationMap.get(key);
+    if(selected){
+      usedAllocations.add(key);
+      if(amount===null||selected.parts.some(row=>!candidateIds.includes(row.targetId))||selected.parts.reduce((n,row)=>n+BigInt(row.amountAtomic),0n)!==BigInt(amount))
+        fail('COMMERCIAL_ALLOCATION_CONFLICT','Allocate the complete original known amount across its placed matching opportunities. The parts must equal that transaction exactly.','commercial.transactionAllocations.'+index);
+      parts=copy(selected.parts);allocationBasis='OPERATOR_ALLOCATION';allocationNote=selected.note;
+    }else if(candidateIds.length===1&&groupIds.every(id=>byId.get(id)?.targetId===candidateIds[0])){
+      parts=[{targetId:candidateIds[0],amountAtomic:amount}];allocationBasis='ORIGINAL_INTENT_PLACEMENT';
+    }
+    const included=choices.transactionScope==='SETTLED_IN_WINDOW'?original.settlesInWindow===true:original.firstAttemptInWindow===true;
+    const observedValue=value(amount,original.network,asset),feeValue=value(fees,original.network,'native:XLM',true);
+    if(included&&amount===null)finding('SETTLEMENT_AMOUNT_UNRESOLVED','The original transaction has an unresolved quantity; known subtotals remain separate.',key);
+    if(included&&amount!=='0'&&observedValue===null&&amount!==null)finding('ASSET_VALUATION_REQUIRED','Enter a dated '+choices.currency+' value and original decimal unit for '+original.network+' / '+asset+'.',key);
+    if(included&&(!parts.length||parts.some(row=>row.amountAtomic===null)))finding('PAYMENT_ALLOCATION_REQUIRED','Place the original intent or allocate its shared transaction across the retained original opportunities.',key);
+    return {id:key,network:original.network,asset,transactionHash:original.transactionHash,amountAtomic:amount,feesAtomic:fees,
+      settledAt:original.settledAt,settlesInWindow:original.settlesInWindow,firstAttemptInWindow:original.firstAttemptInWindow,
+      included,purchaseIds:copy(original.purchaseIds),groupIds:copy(groupIds),sourceIds:copy(original.sourceIds||[]),
+      candidateTargetIds:candidateIds,parts,allocationBasis,allocationNote,
+      valuedAmount:observedValue===null?null:cmText(observedValue),valuedNetworkFee:feeValue===null?null:cmText(feeValue),
+      valuation:copy(priceMap.get(cmKey(original.network,asset))||null),networkFeeValuation:copy(priceMap.get(cmKey(original.network,'native:XLM'))||null),
+      original:copy(original)};
+  });
+  for(const [key]of allocationMap)if(!usedAllocations.has(key))fail('COMMERCIAL_ALLOCATION_CONFLICT','The selected transaction is absent from this original frozen review.',key);
+  const selected=transactionRows.filter(row=>row.included),plannedAssets=new Map(plan.assets.map(row=>[cmKey(row.network,row.asset),row])),assetGroups=new Map();
+  for(const row of selected){const key=cmKey(row.network,row.asset);if(!assetGroups.has(key))assetGroups.set(key,[]);assetGroups.get(key).push(row);}
+  const assets=[...new Set([...plannedAssets.keys(),...assetGroups.keys()])].sort().map(key=>{
+    const p=plannedAssets.get(key),rows=assetGroups.get(key)||[],basis=p||rows[0],unresolved=rows.filter(x=>x.amountAtomic===null).length;
+    const known=rows.reduce((n,x)=>n+BigInt(x.amountAtomic||'0'),0n).toString(),actual=unresolved?null:known,planned=p?.atomicAmount??(p?null:'0');
+    return {network:basis.network,asset:basis.asset,plannedAtomic:planned,knownPlannedAtomic:p?.knownAtomicAmount??planned,
+      observedAtomic:actual,knownObservedAtomic:known,differenceAtomic:planned===null||actual===null?null:(BigInt(actual)-BigInt(planned)).toString(),
+      transactions:rows.length,unresolvedTransactions:unresolved,unpricedPaymentRequests:p?.unpricedPaymentRequests||0,
+      selectedValue:rows.some(row=>row.valuedAmount===null)?null:cmText(cmSum(rows.map(row=>cmExact(row.valuedAmount,'valuedAmount')))),
+      valuation:copy(priceMap.get(key)||null)};
+  });
+  const opportunities=report.rows.map(row=>{
+    const allocations=selected.flatMap(tx=>tx.parts.filter(part=>part.targetId===row.id).map(part=>({transactionId:tx.id,amountAtomic:part.amountAtomic})));
+    const pending=selected.filter(tx=>!tx.parts.length&&tx.candidateTargetIds.includes(row.id));
+    const unresolved=allocations.some(part=>part.amountAtomic===null)||pending.length>0;
+    const observed=unresolved?null:allocations.reduce((n,part)=>n+BigInt(part.amountAtomic),0n).toString();
+    return {id:row.id,label:row.label,network:row.network,asset:row.asset,fundingGroupId:row.kind==='FUNDING_GROUP'?row.sourceId:null,
+      sourceOccurrenceIds:copy(row.sourceOccurrenceIds),plannedAtomic:row.atomicAmount,observedAtomic:observed,
+      differenceAtomic:row.atomicAmount===null||observed===null?null:(BigInt(observed)-BigInt(row.atomicAmount)).toString(),
+      allocations,unresolvedTransactionIds:pending.map(tx=>tx.id),intentIds:copy(row.intentIds)};
+  });
+  const serviceMap=new Map((plan.servicePricing||[]).map(row=>[row.id,row]));
+  const inPeriod=(at,path)=>{
+    const start=c.window.start,end=c.window.end;
+    if(typeof start!=='string'||typeof end!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(start)||!/^\d{4}-\d{2}-\d{2}$/.test(end)||start>end)
+      fail('COMMERCIAL_CLOCK_CONFLICT','Select an original frozen cohort review with its complete recorded window before entering actual costs or adjustments.',path);
+    timestamp(start+'T00:00:00Z','review.cohort.window.start');
+    timestamp(end+'T00:00:00Z','review.cohort.window.end');
+    const clock=timestamp(at,path);if(clock.ticks>cutoff.ticks||clock.day<start||clock.day>end)
+      fail('COMMERCIAL_CLOCK_CONFLICT','Use an actual cost or adjustment inside the original recorded window and cutoff.',path);
+  };
+  const costs=choices.costs.map(row=>{
+    inPeriod(row.occurredAt,'commercial.costs.'+row.id+'.occurredAt');
+    if(row.serviceId&&!serviceMap.has(row.serviceId))fail('COMMERCIAL_COST_SOURCE_CHANGED','Select the original complete service-cost component from this plan.','commercial.costs.'+row.id+'.serviceId');
+    const amount=row.costType==='LABOR'?(row.activeHours===null||row.hourlyCost===null?null:cmText(cmMul(cmExact(row.activeHours,'activeHours'),cmExact(row.hourlyCost,'hourlyCost')))):row.amount;
+    return {...copy(row),calculatedAmount:amount,service:row.serviceId?copy(serviceMap.get(row.serviceId)):null};
+  });
+  const refundCash=list(c.refundCash||[],'review.cohort.refundCash',10000),refundMap=new Map(refundCash.map(row=>[row.id,row])),joinedRefunds=new Set();
+  const joinedRefundIntents=new Set(),selectedGroupIds=new Set(selected.flatMap(row=>row.groupIds));
+  const adjustments=choices.adjustments.map(row=>{
+    for(const id of row.intentIds){if(row.kind!=='REFUND'||!byId.get(id)?.refundedAfterSettlement||!selectedGroupIds.has(id)||joinedRefundIntents.has(id))fail('COMMERCIAL_REFUND_SOURCE_CHANGED','Associate each selected original refunded intent with one actual refund amount.',id);joinedRefundIntents.add(id);}
+    inPeriod(row.occurredAt,'commercial.adjustments.'+row.id+'.occurredAt');let originalRefund=null;
+    if(row.refundCashId){
+      originalRefund=refundMap.get(row.refundCashId);
+      if(!originalRefund||originalRefund.state==='VOID'||joinedRefunds.has(row.refundCashId))fail('COMMERCIAL_REFUND_SOURCE_CHANGED','Select each retained original refund cash row at most once.','commercial.adjustments.'+row.id);
+      joinedRefunds.add(row.refundCashId);
+      if(originalRefund.inWindow!==true||originalRefund.atCutoff!==true)fail('COMMERCIAL_CLOCK_CONFLICT','The selected original refund is outside this recorded window or cutoff.','commercial.adjustments.'+row.id);
+      if(originalRefund.currency===choices.currency&&originalRefund.amount!==null&&originalRefund.amount!==undefined&&cmText(cmExact(String(originalRefund.amount),'originalRefund.amount'))!==row.amount)
+        fail('COMMERCIAL_REFUND_SOURCE_CHANGED','The entered refund value differs from its original same-currency cash amount.','commercial.adjustments.'+row.id);
+    }
+    return {...copy(row),originalRefund:copy(originalRefund)};
+  });
+  const unreviewedRefundIntents=report.records.filter(row=>row.refundedAfterSettlement&&selectedGroupIds.has(row.id)&&!joinedRefundIntents.has(row.id));
+  const unreviewedRefunds=refundCash.filter(row=>row.inWindow&&row.atCutoff&&row.state!=='VOID'&&!joinedRefunds.has(row.id));
+  if(unreviewedRefundIntents.length)finding('REFUNDED_INTENT_VALUE_REQUIRED','Associate '+unreviewedRefundIntents.length+' original refunded intents with their source-backed refund values. Adjusted contribution remains incomplete.');
+  if(unreviewedRefunds.length)finding('REFUND_RECONCILIATION_REQUIRED','Review '+unreviewedRefunds.length+' original refund cash rows and record their selected-currency values. Adjusted contribution remains incomplete.');
+  const paymentUnknown=selected.filter(row=>row.valuedAmount===null).length,feeUnknown=selected.filter(row=>row.valuedNetworkFee===null).length,costUnknown=costs.filter(row=>row.calculatedAmount===null).length;
+  const knownPayments=cmSum(selected.filter(row=>row.valuedAmount!==null).map(row=>cmExact(row.valuedAmount,'valuedAmount')));
+  const knownFees=cmSum(selected.filter(row=>row.valuedNetworkFee!==null).map(row=>cmExact(row.valuedNetworkFee,'valuedNetworkFee')));
+  const knownCosts=cmSum(costs.filter(row=>row.calculatedAmount!==null).map(row=>cmExact(row.calculatedAmount,'cost')));
+  const refunds=cmSum(adjustments.filter(row=>row.kind==='REFUND').map(row=>cmExact(row.amount,'refund')));
+  const otherRevenue=cmSum(adjustments.filter(row=>row.kind==='OTHER_REVENUE').map(row=>cmExact(row.amount,'otherRevenue')));
+  const costComplete=choices.costCoverage==='COMPLETE'&&!costUnknown&&(choices.feeTreatment==='SEPARATE'||!feeUnknown);
+  const costTotal=cmAdd(knownCosts,choices.feeTreatment==='INCLUDE_AS_COST'?knownFees:cmZero),net=cmAdd(cmSub(knownPayments,refunds),otherRevenue);
+  const baseline=plan.currencies.find(row=>row.currency===choices.currency)||null;
+  const actual={grossSettlementValue:paymentUnknown?null:cmText(knownPayments),refunds:cmText(refunds),otherRevenue:cmText(otherRevenue),
+    adjustedRevenue:paymentUnknown||unreviewedRefunds.length||unreviewedRefundIntents.length?null:cmText(net),
+    networkFeeValue:feeUnknown?null:cmText(knownFees),recordedCost:costUnknown?null:cmText(knownCosts),
+    totalCost:costComplete?cmText(costTotal):null,
+    contribution:paymentUnknown||unreviewedRefunds.length||unreviewedRefundIntents.length||!costComplete?null:cmText(cmSub(net,costTotal))};
+  const differences={};for(const [key,actualKey]of [['revenue','adjustedRevenue'],['totalCost','totalCost'],['contribution','contribution']])
+    differences[key]=baseline?.[key]===null||baseline?.[key]===undefined||actual[actualKey]===null?null:cmText(cmSub(cmExact(actual[actualKey],'actual',true),cmExact(baseline[key],'planned',true)));
+  if(choices.costCoverage==='PARTIAL')finding('COST_COVERAGE_PARTIAL','Record the remaining costs and source basis for complete coverage to calculate the full contribution.');
+  if(costUnknown)finding('RECORDED_COST_UNRESOLVED','Complete '+costUnknown+' original cost amounts or labor terms.');
+  if(choices.feeTreatment==='INCLUDE_AS_COST'&&feeUnknown)finding('NETWORK_FEE_VALUE_UNRESOLVED','Retain original unknown fees and add exact native:XLM valuations before treating network fees as a complete cost.');
+  if(!baseline)finding('PLANNED_CURRENCY_UNAVAILABLE','The selected plan has no '+choices.currency+' commercial baseline. Complete planned values remain in its original currency rows.');
+  const services=(plan.servicePricing||[]).map(service=>{
+    const rows=costs.filter(row=>row.serviceId===service.id);
+    return {id:service.id,label:service.label,scheduleIds:copy(service.scheduleIds),fundingGroupIds:copy(service.fundingGroupIds||[]),
+      currency:service.currency,plannedCost:service.totalCost,plannedRevenue:service.revenue,
+      recordedCostIds:rows.map(row=>row.id),knownRecordedCost:cmText(cmSum(rows.filter(row=>row.calculatedAmount!==null).map(row=>cmExact(row.calculatedAmount,'cost')))),
+      unresolvedCosts:rows.filter(row=>row.calculatedAmount===null).length,
+      note:'Original complete service component; each recorded cost enters the whole reconciliation once. Individual component coverage is not inferred from a whole-case declaration.'};
+  });
+  return {schema:'stellar-forge.sf47-cohort-commercial-report.v1',currency:choices.currency,transactionScope:choices.transactionScope,feeTreatment:choices.feeTreatment,
+    window:copy(c.window),choices:copy(choices),planned:copy(baseline),plannedCurrencies:copy(plan.currencies),actual,differences,
+    knownSubtotals:{grossSettlementValue:cmText(knownPayments),networkFeeValue:cmText(knownFees),recordedCost:cmText(knownCosts),totalCost:cmText(costTotal)},
+    coverage:{costCoverage:choices.costCoverage,costCoverageNote:choices.coverageNote,unvaluedTransactions:paymentUnknown,
+      unvaluedFeeTransactions:feeUnknown,unresolvedCosts:costUnknown,unreviewedRefundCashIds:unreviewedRefunds.map(row=>row.id),unreviewedRefundIntentIds:unreviewedRefundIntents.map(row=>row.id),
+      unallocatedTransactionIds:selected.filter(row=>!row.parts.length).map(row=>row.id)},
+    assets,opportunities,transactions:transactionRows,costs,adjustments,originalRefundCash:copy(refundCash),services,issues,note:choices.note};
+}
+function cmHtml(report){
+  const r=report.commercial;if(!r)return '';
+  const t=htmlTable;
+  return '<h2>Commercial reconciliation</h2><p>'+esc(r.currency)+' · '+esc(r.transactionScope)+' · network fees '+esc(r.feeTreatment)+'. Values use the explicitly selected dated asset valuations. The complete plan remains its original prospective baseline; the recorded cutoff and source windows remain visible.</p>'+
+    t(['Measure','Planned','Recorded / valued','Difference'],[['Revenue',r.planned?.revenue,r.actual.adjustedRevenue,r.differences.revenue],['Total cost',r.planned?.totalCost,r.actual.totalCost,r.differences.totalCost],['Contribution',r.planned?.contribution,r.actual.contribution,r.differences.contribution]])+
+    t(['Recorded measure','Value'],Object.entries(r.actual))+
+    '<h3>Payment amounts by exact network and asset</h3>'+t(['Network','Asset','Planned atomic','Recorded atomic','Difference','Known recorded subtotal'],r.assets.map(row=>[row.network,row.asset,row.plannedAtomic,row.observedAtomic,row.differenceAtomic,row.knownObservedAtomic]))+
+    '<h3>Original payment opportunities</h3>'+t(['Opportunity','Funding group','Planned atomic','Allocated atomic','Difference','Unresolved transactions'],r.opportunities.map(row=>[row.label+' / '+row.id,row.fundingGroupId,row.plannedAtomic,row.observedAtomic,row.differenceAtomic,row.unresolvedTransactionIds]))+
+    '<h3>Dated valuation sources</h3>'+t(['Network','Asset','Decimal places','Value per whole unit','As of','Original source'],r.choices.valuations.map(row=>[row.network,row.asset,row.atomicDecimals,row.unitValue,row.asOfAt,row.sourceReference]))+
+    '<h3>Original transactions and allocation</h3>'+t(['Network / transaction','Amount atomic','Fee stroops','Included','Valued amount','Original intents','Allocations','Basis'],r.transactions.map(row=>[row.network+' / '+row.transactionHash,row.amountAtomic,row.feesAtomic,row.included,row.valuedAmount,row.groupIds,row.parts,row.allocationBasis+' '+row.allocationNote]))+
+    '<h3>Recorded service costs</h3>'+t(['Original cost','Service component','Kind','Occurred','Amount','Active hours','Hourly cost','Original source'],r.costs.map(row=>[row.label+' / '+row.id,row.serviceId,row.costType,row.occurredAt,row.calculatedAmount,row.activeHours,row.hourlyCost,row.sourceReference]))+
+    '<h3>Original shared service components</h3>'+t(['Service','Funding groups','Planned currency / cost','Recorded currency / known cost','Original cost rows'],r.services.map(row=>[row.label,row.fundingGroupIds,row.currency+' / '+row.plannedCost,r.currency+' / '+row.knownRecordedCost,row.recordedCostIds]))+
+    '<h3>Refunds and revenue adjustments</h3>'+t(['Original adjustment','Kind','Value','Occurred','Original refund cash','Source'],r.adjustments.map(row=>[row.label,row.kind,row.amount,row.occurredAt,row.refundCashId,row.sourceReference]))+
+    '<h3>Commercial coverage and findings</h3><p>'+esc(r.choices.coverageNote)+'</p>'+t(['Finding','Source','Action'],r.issues.map(row=>[row.code,row.id,row.message]))+
+    '<details><summary>Complete commercial sources, known subtotals and original refund cash</summary><pre>'+esc(JSON.stringify(r,null,2))+'</pre></details>';
 }

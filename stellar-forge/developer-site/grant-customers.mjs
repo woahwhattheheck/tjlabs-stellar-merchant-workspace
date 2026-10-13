@@ -78,6 +78,17 @@ function privateGitSource(reference) {
   const match = reference.match(/^https:\/\/github\.com\/([^/?#]+\/[^/?#]+)(?:[/?#]|$)/i);
   return Boolean(match && PRIVATE_SOURCE_REPOSITORIES.has(match[1].toLowerCase()));
 }
+function authenticatedGrantSource(reference) {
+  return typeof reference === 'string' && (privateGitSource(reference)
+    || /^https:\/\/(?:tokenjunkielabs\.slack\.com\/|mail\.google\.com\/mail\/|chatgpt\.com\/api\/library\/files\/)/i.test(reference));
+}
+
+/** Retain useful artifact labels without publishing owner-authenticated destinations. */
+export function projectGrantHtml(html) {
+  return html.replace(/<a\b([^>]*?)\bhref=(["'])(.*?)\2([^>]*)>([\s\S]*?)<\/a>/gi,
+    (whole, before, quote, url, after, label) => authenticatedGrantSource(url) ? label : whole);
+}
+
 function workflowForPrivateSource(reference) {
   if (!privateGitSource(reference)) return null;
   const pathname = reference.slice('https://github.com'.length).split(/[?#]/, 1)[0];
@@ -103,7 +114,10 @@ export function projectGrantMarkdown(markdown, { application = false } = {}) {
     .replace(/\s*·?\s*\[(Original commercial delivery|Original offer and contact operation|Complete commercial and engineering brief|Completed operation)\]\(https:\/\/tokenjunkielabs\.slack\.com\/[^)\s]+\)\.?/g, '')
     .replace(/\[([^\]]+)\]\(https:\/\/(?:tokenjunkielabs\.slack\.com\/|mail\.google\.com\/mail\/)[^)\s]+\)/g, '$1')
     .replace(/ \. /g, '. ').replace(/\.\s*·\s*\[/g, '. [')
-    .replaceAll('enterprise@openfn.org', 'OpenFn’s published enterprise mailbox');
+    .replaceAll('enterprise@openfn.org', 'OpenFn’s published enterprise mailbox')
+    .replaceAll('info@freeform.ca', 'Freeform’s published contact mailbox')
+    .replaceAll('tokenjunkielabs@gmail.com', 'TokenJunkieLabs’ delivery mailbox')
+    .replace(/\[([^\]]+)\]\((https:\/\/chatgpt\.com\/api\/library\/files\/[^)\s]+)\)/gi, '$1');
   if (application) {
   // Canvas retains the chapter label when it removes a relative Markdown link.
   // Give both historical and current authoring text the same installed chapter link.
@@ -230,7 +244,7 @@ export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscri
 export function projectGrantSourceIndex(value) {
   if (Array.isArray(value)) return value.map(projectGrantSourceIndex).filter(item => item !== undefined);
   if (value && typeof value === 'object') {
-    const restrictedReference = privateGitSource(value.url) ? value.url : null;
+    const restrictedReference = authenticatedGrantSource(value.url) ? value.url : null;
     const projected = Object.fromEntries(Object.entries(value).flatMap(([key, item]) => {
       if (key === 'canonical_manuscript') return [];
       const publicItem = projectGrantSourceIndex(item);
@@ -238,12 +252,12 @@ export function projectGrantSourceIndex(value) {
     }));
     if (restrictedReference) {
       projected.access = 'authenticated-source';
-      projected.reader_url = workflowForPrivateSource(restrictedReference);
+      const reader = workflowForPrivateSource(restrictedReference);
+      if (reader) projected.reader_url = reader;
     }
     return projected;
   }
-  if (typeof value === 'string' && (privateGitSource(value)
-      || /^https:\/\/(?:tokenjunkielabs\.slack\.com\/|mail\.google\.com\/mail\/)/.test(value))) return undefined;
+  if (authenticatedGrantSource(value)) return undefined;
   return value;
 }
 
@@ -414,6 +428,16 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/open311\/gis\/INSTALL\.md)/, municipal);
   receive('municipal-native-format-interchange', 'Municipal GIS original format interchange result',
     /https:\/\/github\.com\/woahwhattheheck\/public-commons-sprint-2026\/blob\/([a-f0-9]{40})\/(operations\/open311-gis-8e5f-\d{8}\/format-interchange-result\.json)/, municipal);
+  receive('municipal-suite-operating', 'Municipal six-application operation and saved Applications',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/open311\/OPERATING\.md)/, municipal);
+  receive('municipal-suite-receiving', 'Municipal complete editable workspace receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/open311\/RECEIVING\.md)/, municipal);
+  receive('municipal-suite-workflows', 'Municipal cross-application source and returned-file workflows',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/open311\/WORKFLOWS\.md)/, municipal);
+  receive('municipal-service-configuration-installation', 'Municipal six-application installation and service configuration',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/open311\/service-configuration\/INSTALL\.md)/, municipal);
+  receive('municipal-suite-distribution-selection', 'Municipal complete six-application distribution selection',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/selections\/open311-service-configuration\.json)/, municipal);
   const iati = section(receiveIatiOperatingCompanion(companion), IATI)?.text || '';
   receive("iati-document-operating-procedures", "IATI customer operating procedure and complete analyst handover",
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/document_evidence\/OPERATING_PROCEDURES\.md)/, iati);

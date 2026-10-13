@@ -65,7 +65,7 @@ function queryString(value) {
 
 /** Renders retained state and submits original actions. It owns no dataset engine. */
 export function createPublisherPanel({getState, perform, download, handle, notice, selectSection}) {
-  let current = null, locked = true, reviewedDraft = null, buyerReview = null;
+  let current = null, locked = true, reviewedDraft = null, buyerReview = null, scopeIdentity = null;
   let preview = null, previewSelection = null, buyerFormDirty = false, sessionSelection = '';
   const pub = () => current?.publisher;
   const drafts = () => pub()?.drafts?.candidates || [];
@@ -322,6 +322,10 @@ export function createPublisherPanel({getState, perform, download, handle, notic
     });
   }
   function render(value) {
+    const identity=value?.propertyPublisherResourceId??'original-socrata';
+    if(scopeIdentity!==identity){facilitatorPanel.reset();scopeIdentity=identity;reviewedDraft=null;buyerReview=null;preview=null;previewSelection=null;buyerFormDirty=false;sessionSelection='';
+      for(const id of ['pub-buyer-workspace','pub-max-pages','pub-max-total','pub-max-rows','pub-max-page-bytes'])$(id).value='';
+    }
     current = value;
     const model = pub(), target = model?.target;
     $('pub-open').textContent = model ? 'Reconcile publisher' : 'Open publisher';
@@ -459,7 +463,7 @@ export function createPublisherPanel({getState, perform, download, handle, notic
  * The panel is in this existing asset because other source workspaces reuse it. */
 function createPublisherFacilitatorPanel({call, download, handle, notice, getPublisher}) {
   const host = document.querySelector('[data-publisher-panel="release"]');
-  if (!host) return {render(){}, controls(){}};
+  if (!host) return {render(){}, controls(){}, reset(){}};
   const section = node('section', undefined, 'panel');
   section.hidden = true;
   const heading = node('div', undefined, 'panel-heading'), stateLabel = node('span', '', 'badge');
@@ -741,5 +745,10 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
   };
   firstPage.addEventListener('click', () => handle(() => readPage(null)));
   nextPage.addEventListener('click', () => handle(() => readPage(page.nextCursor)));
-  return {render,controls};
+  function reset() {
+    selected = null; page = null; after = null; receivedResponse = null;
+    provider.value = ''; release.value = ''; proposed.value = ''; label.value = '';
+    reviewSource.value = 'live'; responseFile.value = '';
+  }
+  return {render,controls,reset};
 }

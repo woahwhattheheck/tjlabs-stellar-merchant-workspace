@@ -33,6 +33,7 @@ const ASSETS = Object.freeze({
   '/': ['index.html', 'text/html; charset=utf-8'],
   '/adjustments': ['adjustments.html', 'text/html; charset=utf-8'],
   '/adjustments.mjs': ['adjustments.mjs', 'text/javascript; charset=utf-8'],
+  '/service-buyer-workbench.mjs': ['service-buyer-workbench.mjs', 'text/javascript; charset=utf-8'],
   '/adjustments.css': ['adjustments.css', 'text/css; charset=utf-8'],
   '/commercial': ['commercial.html', 'text/html; charset=utf-8'],
   '/commercial/receiving-desk.mjs': ['commercial/receiving-desk.mjs', 'text/javascript; charset=utf-8'],
@@ -155,7 +156,7 @@ function compareUploadedSources(input) {
 export {workorderFromSources} from './workorder-source.mjs';
 
 // Injection is only for the focused loopback HTTP-contract check, not for deployed usage.
-export function createConsoleServer({runCapture = capture, allowLoopback = false, caseStore = null, handoffDesk = null, incidentDesk = null, commercialDesk = null, renewalDesk = null, commercialReceivingDesk = null, commercialTariffDesk = null, adjustmentDesk = null, sourceDelivery = null, casePackages = null, launchRecord = () => null} = {}) {
+export function createConsoleServer({runCapture = capture, allowLoopback = false, caseStore = null, handoffDesk = null, incidentDesk = null, commercialDesk = null, renewalDesk = null, commercialReceivingDesk = null, commercialTariffDesk = null, adjustmentDesk = null, sourceDelivery = null, casePackages = null, providerExtension = null, launchRecord = () => null} = {}) {
   let active = false;
   const sourceRoutes=sourceDelivery?createSourceEditionDeliveryRoutes({service:sourceDelivery.service}):null;
   const packageRoutes=createCasePackageHttp(casePackages);
@@ -191,6 +192,7 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
       } catch { json(res, 500, {error: 'STATIC_ASSET_UNAVAILABLE'}); }
       return;
     }
+    if (providerExtension && await providerExtension.handle(req,res,{origin:ownOrigin}))return;
     if (await packageRoutes(req,res,{origin:ownOrigin}))return;
     if (route === '/api/services/renewals') {
       if(req.method!=='GET'){json(res,405,{error:'METHOD_NOT_ALLOWED'});return;}
@@ -650,12 +652,12 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
   server.closeCasePackages=()=>casePackages?.close()??Promise.resolve();
   server.closeCommercialReceiving=()=>commercialReceivingDesk?.close()??Promise.resolve();
   server.closeCommercialTariffs=()=>commercialTariffDesk?.close()??Promise.resolve();
-  server.once('close',()=>{void Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()]).then(()=>server.closeSourceDelivery()).catch(()=>{});});
+  server.once('close',()=>{void Promise.allSettled([providerExtension?.close()]).then(()=>Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()])).then(()=>server.closeSourceDelivery()).catch(()=>{});});
   return server;
 }
 
 export async function start({port = 0, allowLoopback = false, runCapture = capture, casesDir = null, handoffSources = null,
-  incidentSources = null, sourceDir = null, packageDir = null, accountingConfig = null, buyerExpenseConnection = null, environment = process.env, startupFormat = 'text', expectedSelectionSha256 = null} = {}) {
+  incidentSources = null, sourceDir = null, packageDir = null, accountingConfig = null, buyerExpenseConnection = null, environment = process.env, startupFormat = 'text', expectedSelectionSha256 = null, providerExtensionFactory = null} = {}) {
   if (!Number.isSafeInteger(port) || port < 0 || port > 65535) throw new TypeError('Invalid port');
   if (!['text','json'].includes(startupFormat)) throw new TypeError('Startup format must be text or json');
   if (expectedSelectionSha256 !== null &&
@@ -665,13 +667,15 @@ export async function start({port = 0, allowLoopback = false, runCapture = captu
     throw new TypeError('Managed startup requires private cases and incident source profiles');
   if((sourceDir!==null||packageDir!==null)&&casesDir===null)throw new TypeError('Source and package delivery require the original saved-case directory.');
   if((accountingConfig!==null||buyerExpenseConnection!==null)&&casesDir===null)throw new TypeError('Service connections require the original saved-case directory.');
+  if(providerExtensionFactory!==null&&(typeof providerExtensionFactory!=='function'||casesDir===null))
+    throw new TypeError('A provider extension requires the original private case workspace and a host factory.');
   const caseStore = casesDir === null ? null : await openCaseStore(casesDir);
   const commercialDesk=caseStore?openCaseCommercial({store:caseStore,workspaceId:commercialWorkspaceId(resolve(casesDir))}):null;
   const renewalDesk=caseStore?openCaseServiceRenewals({caseStore,commercialDesk,workspaceId:commercialWorkspaceId(resolve(casesDir))}):null;
   const commercialReceivingDesk=caseStore?openCommercialReceivingController({store:caseStore,casesDirectory:resolve(casesDir),environment}):null;
   const commercialTariffDesk=caseStore?openCommercialTariffController({store:caseStore,casesDirectory:resolve(casesDir)}):null;
   const handoffDesk = handoffSources === null ? null : await (await import('./handoff-store.mjs')).openHandoffDesk({configPath:handoffSources,casesDir,environment});
-  let incidentDesk,sourceDelivery,casePackages,serviceConnections,adjustmentDesk,selection=null,launch=null;
+  let incidentDesk,sourceDelivery,casePackages,serviceConnections,adjustmentDesk,providerExtension,selection=null,launch=null;
   const closeAdjustments=async()=>{
     const errors=[];try{await adjustmentDesk?.close();}catch(error){errors.push(error);}
     try{await serviceConnections?.close();}catch(error){errors.push(error);}
@@ -689,6 +693,11 @@ export async function start({port = 0, allowLoopback = false, runCapture = captu
       ...(packageDir===null?{}:{directory:resolve(packageDir)}),sourceDelivery,handoffDesk,
       python:environment.SCF_PYTHON??'python3',environment}):null;
     incidentDesk = incidentSources === null ? null : await openIncidentSources({configPath:incidentSources,environment});
+    if(providerExtensionFactory){
+      providerExtension=await providerExtensionFactory({store:caseStore,casesDirectory:resolve(casesDir),sourceDelivery,incidentDesk,environment});
+      if(!providerExtension||typeof providerExtension.handle!=='function'||typeof providerExtension.close!=='function')
+        throw new TypeError('The selected provider extension must return its request handler and complete close lifecycle.');
+    }
     if(startupFormat==='json') {
       selection=await inspectSupportSelection({casesDir,incidentSources,allowLoopback,
         sourceDir:sourceDelivery.directory,packageDir:casePackages.directory,incidentSelection:incidentDesk.configuration(),
@@ -698,25 +707,26 @@ export async function start({port = 0, allowLoopback = false, runCapture = captu
         throw Object.assign(new Error('The selected support configuration changed; review the current application before starting.'),
           {code:'SUPPORT_APPLICATION_SELECTION_CHANGED'});
     }
-  } catch(error) {await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
+  } catch(error) {await Promise.allSettled([providerExtension?.close()]);await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
   let server;
-  try{server=createConsoleServer({allowLoopback,runCapture,caseStore,handoffDesk,incidentDesk,commercialDesk,renewalDesk,commercialReceivingDesk,commercialTariffDesk,adjustmentDesk,sourceDelivery,casePackages,launchRecord:()=>launch});}
-  catch(error){await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
+  try{server=createConsoleServer({allowLoopback,runCapture,caseStore,handoffDesk,incidentDesk,commercialDesk,renewalDesk,commercialReceivingDesk,commercialTariffDesk,adjustmentDesk,sourceDelivery,casePackages,providerExtension,launchRecord:()=>launch});}
+  catch(error){await Promise.allSettled([providerExtension?.close()]);await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
   try {await new Promise((resolveListen, reject) => {
     server.once('error', reject);server.listen(port, '127.0.0.1', resolveListen);
-  });}catch(error){await Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()]);throw error;}
+  });}catch(error){await Promise.allSettled([providerExtension?.close()]);await Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()]);throw error;}
   const url='http://127.0.0.1:'+server.address().port+'/';
   if(selection)launch=createSupportLaunch(selection,url);
   let closing;
   const close=()=>closing??=(async()=>{
     if(launch)launch.state='STOPPING';
+    const providerResults=await Promise.allSettled([providerExtension?.close()]);
     const packageResults=await Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()]);
-    const results=packageResults.concat(await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()]));
+    const results=providerResults.concat(packageResults,await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()]));
     await new Promise((done,reject)=>{server.close(error=>error?reject(error):done());server.closeAllConnections();});
     const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;
   })();
-  server.once('close',()=>{if(launch)launch.state='STOPPED';void Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()]).then(()=>Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()])).catch(()=>{});});
-  return {server,url,close,launch,adjustmentDesk};
+  server.once('close',()=>{if(launch)launch.state='STOPPED';void Promise.allSettled([providerExtension?.close()]).then(()=>Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()])).then(()=>Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()])).catch(()=>{});});
+  return {server,url,close,launch,adjustmentDesk,providerExtension};
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

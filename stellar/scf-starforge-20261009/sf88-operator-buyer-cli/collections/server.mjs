@@ -8,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readBrowserAssets } from '../../distribution/browser-assets.mjs';
 import { openCollections } from './model.mjs';
 import { openCollectionComposer } from '../collection-composer/model.mjs';
+import { PLAN_PACKAGE_MANIFEST_BYTES } from '../collection-composer/package-format.mjs';
 import { openCustomerUseCommissioning } from '../collection-composer/customer-use-model.mjs';
 import { routeCustomerUse } from '../collection-composer/customer-use-http.mjs';
 import { openCollectionRecovery } from './recovery-jobs.mjs';
@@ -220,6 +221,47 @@ export async function serveCollections(collections, {
       if (await routeCustomerUse({request,response,url,controller:customerUseController,mutate,send})) return;
       if (url.pathname.startsWith('/api/composer/')) {
         const authoring = collectionComposer();
+        if (url.pathname.startsWith('/api/composer/sharing/')) {
+          const exchange = authoring.sharing, base = '/api/composer/sharing/packages';
+          const downloadable = value => ({ ...value, downloadUrl: base + '/' + value.packageSha256 + '/file' });
+          if (url.pathname === '/api/composer/sharing/export') {
+            need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
+            const input = fields(await jsonBody(request), ['collectionId','expectedEditionSha256','headerSelections']);
+            return send(downloadable(await mutate(() => exchange.exportPackage(input))), 201);
+          }
+          if (url.pathname === base) {
+            if (request.method === 'GET') return send(await exchange.listPackages());
+            need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
+            const input = fields(await jsonBody(request, PLAN_PACKAGE_MANIFEST_BYTES + 1024), ['manifest']);
+            return send(await mutate(() => exchange.receiveManifest(input)), 201);
+          }
+          const route = /^\/api\/composer\/sharing\/packages\/([a-f0-9]{64})(?:\/(chunks|complete|review|adopt|file))?$/.exec(url.pathname);
+          need(route, 'ROUTE_NOT_FOUND', 404);
+          const packageSha256 = route[1], action = route[2];
+          if (!action) {
+            need(request.method === 'GET', 'METHOD_NOT_ALLOWED', 405);
+            return send(await exchange.inspectPackage({ packageSha256 }));
+          }
+          if (action === 'file' && request.method === 'GET')
+            return downloadFile(response, await exchange.downloadPackage({ packageSha256 }));
+          need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
+          if (action === 'chunks') {
+            const input = fields(await jsonBody(request), ['objectSha256','offset','base64']);
+            return send(await mutate(() => exchange.receiveChunk({ ...input, packageSha256 })));
+          }
+          if (action === 'complete' || action === 'file') {
+            fields(await jsonBody(request), []);
+            const result = await mutate(() => action === 'complete'
+              ? exchange.finishReceiving({ packageSha256 }) : exchange.packageFile({ packageSha256 }));
+            return send(action === 'file' ? downloadable(result) : result);
+          }
+          const input = fields(await jsonBody(request, 2 * 1024 * 1024),
+            ['planId','name','description','operatorBindings','outputDirectory','deliveryParameter','deliveryValue',
+              'requestBindings', ...(action === 'adopt' ? ['expectedReviewSha256'] : [])]);
+          return send(await mutate(() => action === 'adopt'
+            ? exchange.adoptPlan({ ...input, packageSha256 })
+            : exchange.reviewAdoption({ ...input, packageSha256 })), action === 'adopt' ? 201 : 200);
+        }
         if (url.pathname === '/api/composer/catalog') {
           need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
           const input = fields(await jsonBody(request), ['path']);

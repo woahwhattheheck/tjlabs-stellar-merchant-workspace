@@ -1,3 +1,5 @@
+import {customerAccountDefinitions} from './accounting-customer-responses.mjs';
+import {CUSTOMER_ACCOUNT_FILE_NAMES} from '../accounting-customer-responses.mjs';
 import {financialControlDefinitions} from './accounting-financial-control.mjs';
 import {FINANCIAL_CONTROL_FILES} from '../accounting-financial-control.mjs';
 // MIT. Native invoice and payment-request operations on the existing accounting owner.
@@ -135,6 +137,7 @@ const remittanceSource = object({sourceId: text(160, 1), filename: text(240, 1),
 const remittanceApplySource = {...remittanceSource, required: ['sourceId', 'filename', 'csv']};
 
 export const receivablesFileNames = Object.freeze([
+  ...CUSTOMER_ACCOUNT_FILE_NAMES,
   ...new Set(Object.values(FINANCIAL_CONTROL_FILES).flat()),
   'invoice.json', 'invoice.csv', 'invoice.html', 'credit.json', 'credit.csv', 'credit.html',
   'manifest.json', 'status.json', 'quote.json', 'response.json', 'source.json', 'review.json',
@@ -146,10 +149,12 @@ export const receivablesFileNames = Object.freeze([
   'source.csv', 'source.ofx', 'source.mt940', 'import.json', 'rows.json', 'rows.csv', 'reconciliation.json', 'parser-report.json',
 ]);
 export const receivablesFileSelectors = Object.freeze([
+  'publicationId', 'customerResponseId',
   'collectionCaseId', 'cashPlanId', 'editionId', 'leftId', 'rightId', 'leftEditionId', 'rightEditionId', 'creditDecisionId', 'owner', 'status', 'search',
   'documentId', 'invoiceId', 'paymentRequestId', 'refundId', 'bankImportId', 'batchId', 'returnId', 'customerId', 'asOf',
 ]);
 export const receivablesDefinitions = [
+  ...customerAccountDefinitions({read,mutate,uuid,hash,date,revision,text,object}),
   ...financialControlDefinitions({read, mutate, uuid, hash, date, revision, text, money, currency, object}),
   read('status', 'Read original invoice, receipt, credit, allocation, aging or operation-journal rows. Summary returns issuer, scoped counts and the current accounting revision.',
     {view: {type: 'string', enum: ['summary', 'invoices', 'receipts', 'credits', 'allocations', 'aging', 'history']},

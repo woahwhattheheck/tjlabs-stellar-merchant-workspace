@@ -24,7 +24,7 @@ export function createCollectionComposerClient({ url, fetch: send = globalThis.f
   const token = parsed.hash.slice(1);
   need(/^[a-f0-9]{64}$/.test(token), 'COLLECTION_AUTHORING_SESSION_REQUIRED');
   const origin = parsed.origin;
-  async function request(path, input, { signal } = {}) {
+  async function request(path, input, { signal } = {}, responseType = 'json') {
     const response = await send(origin + path, {
       method: input === undefined ? 'GET' : 'POST',
       headers: { Authorization: 'Bearer ' + token,
@@ -33,6 +33,10 @@ export function createCollectionComposerClient({ url, fetch: send = globalThis.f
       cache: 'no-store', credentials: 'omit', redirect: 'error', signal,
     });
     need(response && typeof response.json === 'function', 'COLLECTION_AUTHORING_RESPONSE_INVALID');
+    if (response.ok && responseType === 'file') {
+      need(typeof response.arrayBuffer === 'function', 'COLLECTION_PACKAGE_FILE_RESPONSE_INVALID');
+      return response;
+    }
     let payload;
     try { payload = await response.json(); } catch {
       throw Object.assign(new Error('COLLECTION_AUTHORING_RESPONSE_INVALID'),
@@ -45,8 +49,35 @@ export function createCollectionComposerClient({ url, fetch: send = globalThis.f
     need(plain(payload), 'COLLECTION_AUTHORING_RESPONSE_INVALID');
     return payload;
   }
+  const packagePath = packageSha256 => '/api/composer/sharing/packages/' + revision(packageSha256);
+  const adoption = (action, input, options) => {
+    const { packageSha256, ...bindings } = input;
+    return request(packagePath(packageSha256) + '/' + action, bindings, options);
+  };
   return Object.freeze({
     origin,
+    sharing: Object.freeze({
+      listPackages: options => request('/api/composer/sharing/packages', undefined, options),
+      exportPackage: ({ collectionId, expectedEditionSha256, headerSelections }, options) =>
+        request('/api/composer/sharing/export', { collectionId,
+          expectedEditionSha256: revision(expectedEditionSha256),
+          ...(headerSelections === undefined ? {} : { headerSelections }) }, options),
+      receiveManifest: ({ manifest }, options) =>
+        request('/api/composer/sharing/packages', { manifest }, options),
+      inspectPackage: ({ packageSha256 }, options) =>
+        request(packagePath(packageSha256), undefined, options),
+      receiveChunk: ({ packageSha256, objectSha256, offset, base64 }, options) =>
+        request(packagePath(packageSha256) + '/chunks',
+          { objectSha256: revision(objectSha256), offset, base64 }, options),
+      finishReceiving: ({ packageSha256 }, options) =>
+        request(packagePath(packageSha256) + '/complete', {}, options),
+      packageFile: ({ packageSha256 }, options) =>
+        request(packagePath(packageSha256) + '/file', {}, options),
+      downloadPackage: ({ packageSha256 }, options) =>
+        request(packagePath(packageSha256) + '/file', undefined, options, 'file'),
+      reviewAdoption: (input, options) => adoption('review', input, options),
+      adoptPlan: (input, options) => adoption('adopt', input, options),
+    }),
     listPlans: options => request('/api/composer/plans', undefined, options),
     inspectPlan: ({ id: planId, planSha256 }, options) =>
       request('/api/composer/plans/' + id(planId) + '/' + revision(planSha256), undefined, options),

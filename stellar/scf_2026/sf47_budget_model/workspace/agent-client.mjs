@@ -729,6 +729,7 @@ export class GrantWorkspaceClient {
       'funding-edition':() => '/api/operations/' + cid() + '/cost-funding/edition' +
         (args.revision===undefined?'':'?revision='+integer(args.revision,'Funding edition',1,1000000)),
       'funding-request':() => '/api/operations/' + cid() + '/cost-funding/request?requestId=' + encodeURIComponent(requestId(args.requestId)),
+      expenses:() => '/api/operations/' + cid() + '/expense-attribution',
       'task-outcomes':() => '/api/operations/' + cid() + '/task-outcomes',
       'task-outcome':() => '/api/operations/' + cid() + '/task-outcomes/' + id(args.comparisonId,'task-outcomes') +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Task comparison revision',1,1000000)),
@@ -751,6 +752,13 @@ export class GrantWorkspaceClient {
       forecast:() => '/api/operations/' + cid() + '/forecasts/' + id(args.forecastId, 'forecast'),
       portfolios:() => '/api/operations/' + cid() + '/portfolios',
       portfolio:() => '/api/operations/' + cid() + '/portfolios/' + id(args.portfolioId, 'portfolio'),
+      risks:() => '/api/operations/' + cid() + '/risk-register',
+      'risk-register':() => '/api/operations/' + cid() + '/risk-register/' + id(args.reviewId,'review'),
+      'risk-history':() => {
+        need(typeof args.riskId === 'string' && /^[a-z][a-z0-9-]{1,99}$/.test(args.riskId),
+          'GRANT_INVALID_INPUT','Use the original stable risk ID.');
+        return '/api/operations/' + cid() + '/risk-register-history/' + args.riskId;
+      },
       engagements:() => '/api/operations/' + cid() + '/engagements',
       engagement:() => '/api/operations/' + cid() + '/engagements/' + id(args.reviewId, 'review'),
       review:() => '/api/operations/' + cid() + '/reviews/' + id(args.reviewId, 'review'),
@@ -1049,6 +1057,38 @@ export class GrantWorkspaceClient {
     // The unchanged native command recovers its original result before its case CAS.
     return this.command(caseId,command);
   }
+  riskSeed(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','reviewId'],['expectedVersion']);
+    integer(body.expectedVersion,'Current case version');
+    if(body.reviewId!==undefined)id(body.reviewId,'review');
+    return this.#request('/api/operations/'+caseId+'/risk-register-seed',{body,mutation:false});
+  }
+  riskPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','document'],['expectedVersion','document']);
+    integer(body.expectedVersion,'Current case version'); object(body.document,'Complete delivery risk register');
+    return this.#request('/api/operations/'+caseId+'/risk-register-preview',{body,mutation:false});
+  }
+  riskSave(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','requestId','actor','note','document','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','note','document','expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.document,'Complete delivery risk register');
+    text(body.note,'Delivery risk review note',12000);
+    const {document,expectedPreviewSha256,...original}=body;
+    return this.command(caseId,{...original,action:'risk-register.save',data:{document,expectedPreviewSha256}});
+  }
+  riskRequest(caseId, body) {
+    id(caseId,'operation'); exact(body,['command'],['command']);
+    const command=body.command;
+    exact(command,['expectedVersion','requestId','actor','note','action','data'],
+      ['expectedVersion','requestId','actor','note','action','data']);
+    need(command.action==='risk-register.save','GRANT_INVALID_INPUT','Use the complete original risk-register.save command.');
+    integer(command.expectedVersion,'Original reviewed case version'); requestId(command.requestId);
+    text(command.actor,'Original recorded operator',300); text(command.note,'Original delivery risk review note',12000);
+    exact(command.data,['document','expectedPreviewSha256'],['document','expectedPreviewSha256']);
+    object(command.data.document,'Complete original delivery risk register'); sha(command.data.expectedPreviewSha256);
+    return this.#request('/api/operations/'+caseId+'/risk-register-request',{body,mutation:false});
+  }
   taskOutcomesSeed(caseId, expectedVersion) {
     id(caseId,'operation'); integer(expectedVersion,'Current case version');
     return this.#request('/api/operations/'+caseId+'/task-outcomes-seed',{body:{expectedVersion},mutation:false});
@@ -1201,6 +1241,37 @@ export class GrantWorkspaceClient {
       'GRANT_INVALID_INPUT','Select each original customer cycle once.');
     if(Object.hasOwn(body,'document'))object(body.document,'Complete editable installation document');
     return this.#request('/api/operations/'+caseId+'/installation-workflow-seed',{body,mutation:false});
+  }
+  installationCommissioningSeed(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','installationId','expectedRevision','document'],
+      ['expectedVersion','installationId','expectedRevision','document']);
+    integer(body.expectedVersion,'Current case version');integer(body.expectedRevision,'Current Installation edition',0,500);
+    if(body.installationId!==null)id(body.installationId,'installation');
+    need(body.installationId===null?body.expectedRevision===0:body.expectedRevision>=1,
+      'GRANT_INVALID_INPUT','Select the current Installation edition, or zero for a new Installation.');
+    object(body.document,'Complete original Installation draft');
+    return this.#request('/api/operations/'+caseId+'/installation-commissioning-seed',{body,mutation:false});
+  }
+  installationCommissioningReview(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','installationId','expectedRevision','document','reviews','actor','observedAt'],
+      ['expectedVersion','installationId','expectedRevision','document','reviews','actor','observedAt']);
+    integer(body.expectedVersion,'Current case version');integer(body.expectedRevision,'Current Installation edition',0,500);
+    if(body.installationId!==null)id(body.installationId,'installation');
+    need(body.installationId===null?body.expectedRevision===0:body.expectedRevision>=1,
+      'GRANT_INVALID_INPUT','Select the current Installation edition, or zero for a new Installation.');
+    object(body.document,'Complete original Installation draft');text(body.actor,'Recorded reviewing operator',500);
+    text(body.observedAt,'Original review timestamp with timezone',100);
+    need(Array.isArray(body.reviews)&&body.reviews.length>0&&body.reviews.length<=1001,
+      'GRANT_INVALID_INPUT','Select one through 1001 explicit source-bound review rows.');
+    for(const row of body.reviews){
+      exact(row,['kind','id','state','expectedBasisSha256','note'],['kind','id','state','expectedBasisSha256','note']);
+      need(['FUNDING','BUDGET','PLAN','OUTPUT'].includes(row.kind)&&['APPROVED','CHANGES_REQUIRED'].includes(row.state),
+        'GRANT_INVALID_INPUT','Select the original commissioning review kind and decision.');
+      sha(row.expectedBasisSha256);text(row.note,'Recorded decision reason',8000);
+    }
+    return this.#request('/api/operations/'+caseId+'/installation-commissioning-review',{body,mutation:false});
   }
   installationPreview(caseId, body) {
     id(caseId,'operation');
@@ -1405,6 +1476,51 @@ export class GrantWorkspaceClient {
       body:{...original, action:'support.receive', data:{...supportHandoff(bytes, filename),
         expectedPreviewSha256, deploymentId, ...(deployment === undefined ? {} : {deployment})}}});
   }
+  expensePreview(caseId, expectedVersion, bytes, filename) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    need(Buffer.isBuffer(bytes) && bytes.length > 0 && bytes.length <= GRANT_MAX_SOURCE_BYTES,
+      'GRANT_INPUT_TOO_LARGE', 'Choose the complete original issued source or accountant ZIP within 8 MiB.');
+    text(filename, 'Original expense filename', 240);
+    return this.#request('/api/operations/' + caseId + '/expense-preview',
+      {body:{expectedVersion,filename,contentBase64:bytes.toString('base64')},mutation:false});
+  }
+  expenseReceive(caseId, bytes, body) {
+    id(caseId, 'operation');
+    exact(body, ['expectedVersion','requestId','actor','note','filename','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','filename','expectedPreviewSha256']);
+    integer(body.expectedVersion, 'Current case version'); requestId(body.requestId);
+    sha(body.expectedPreviewSha256); text(body.actor, 'Receiving operator', 300);
+    text(body.filename, 'Original expense filename', 240);
+    need(Buffer.isBuffer(bytes) && bytes.length > 0 && bytes.length <= GRANT_MAX_SOURCE_BYTES,
+      'GRANT_INPUT_TOO_LARGE', 'Use the exact reviewed original expense file within 8 MiB.');
+    const {filename,expectedPreviewSha256,...original}=body;
+    return this.command(caseId,{...original,action:'expense.receive',
+      data:{filename,expectedPreviewSha256,contentBase64:bytes.toString('base64')}});
+  }
+  expenseSave(caseId, body) {
+    exact(body,['expectedVersion','requestId','actor','note','data'],['expectedVersion','requestId','actor','data']);
+    object(body.data,'Original expense attribution inputs');
+    return this.command(caseId,{...body,action:'expense.save'});
+  }
+  expenseTransition(caseId, action, body) {
+    need(['review','reopen','void'].includes(action),'GRANT_INVALID_ACTION','Choose the original expense review transition.');
+    exact(body,['expectedVersion','requestId','actor','note','id','expectedContentSha256'],
+      ['expectedVersion','requestId','actor','note','id','expectedContentSha256']);
+    need(typeof body.id==='string' && /^expense-attribution-[a-f0-9]{32}$/.test(body.id),
+      'GRANT_INVALID_INPUT','Select the retained expense attribution.');
+    sha(body.expectedContentSha256);text(body.note,'Expense review note',12000);
+    const {id:attributionId,expectedContentSha256,...original}=body;
+    return this.command(caseId,{...original,action:'expense.'+action,data:{id:attributionId,expectedContentSha256}});
+  }
+  expenseRequest(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','requestId','actor','note','action','data'],
+      ['expectedVersion','requestId','actor','action','data']);
+    need(['expense.receive','expense.save','expense.review','expense.reopen','expense.void'].includes(body.action),
+      'GRANT_INVALID_ACTION','Select a complete original expense request.');
+    requestId(body.requestId);object(body.data);
+    return this.#request('/api/operations/'+caseId+'/expense-request',{body,mutation:false});
+  }
   buyerPreview(caseId, expectedVersion, bytes, filename) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
     return this.#request('/api/operations/' + caseId + '/buyer-preview',
@@ -1451,6 +1567,9 @@ export class GrantWorkspaceClient {
       'cost-funding':() => '/api/operations/' + id(args.caseId,'operation') + '/cost-funding/export.zip?revision=' +
         integer(args.revision,'Funding edition',1,1000000) + '&expectedVersion=' +
         integer(args.expectedVersion,'Reviewed case version') + '&expectedReportSha256=' + sha(args.expectedReportSha256),
+      'expense-attributions':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-attributions.csv',
+      'expense-sources':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-sources.csv',
+      'expense-html':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-attribution.html',
       'task-outcomes':() => '/api/operations/' + id(args.caseId,'operation') + '/task-outcomes/' +
         id(args.comparisonId,'task-outcomes') + '/export.zip?revision=' + integer(args.revision,'Task comparison revision',1,1000000) +
         '&expectedVersion=' + integer(args.expectedVersion,'Reviewed export case version'),
@@ -1458,6 +1577,7 @@ export class GrantWorkspaceClient {
       performance:() => '/api/operations/' + id(args.caseId,'operation') + '/performance/export.zip' + performanceQuery(args,true),
       'cash-account':() => '/api/operations/' + id(args.caseId,'operation') + '/cash-account/export.zip' + cashAccountQuery(args,true),
       'account-reconciliation':() => '/api/operations/' + id(args.caseId,'operation') + '/account-reconciliation/export.zip' + accountReconciliationQuery(args,true),
+      'risk-register':() => '/api/operations/' + id(args.caseId,'operation') + '/risk-register/' + id(args.reviewId,'review') + '/export.zip',
       engagement:() => '/api/operations/' + id(args.caseId, 'operation') + '/engagements/' + id(args.reviewId, 'review') + '/export.zip',
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',

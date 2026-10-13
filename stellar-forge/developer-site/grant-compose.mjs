@@ -10,7 +10,7 @@ import { attachGrantReviewRounds } from './grant-review-round.mjs';
 import { attachGrantCompanion } from './grant-companion.mjs';
 import { attachCustomerClosingSources, attachCustomerClosingOpening } from './grant-customer-closing.mjs';
 import { receiveFinancialApplication, attachFinancialSources } from './grant-financial-operations.mjs';
-import { projectGrantMarkdown, receiveGrantCustomerSections, projectGrantSourceIndex, receiveGrantCustomerSources } from './grant-customers.mjs';
+import { projectGrantHtml, projectGrantMarkdown, receiveGrantCustomerSections, projectGrantSourceIndex, receiveGrantCustomerSources } from './grant-customers.mjs';
 import { receiveDatasetteApplication, datasetteSourceSelection, addDatasetteGrantSources, receiveDatasetteExistingWork } from './grant-datasette.mjs';
 import { validateGrantProductRegistrations, receiveGrantProductSources } from './grant-product-sources.mjs';
 
@@ -78,6 +78,22 @@ export function renderGrantMarkdown(markdown) {
   for (let i = 0; i < lines.length;) {
     const line = lines[i];
     if (!line.trim()) { i++; continue; }
+    const fence = line.match(/^(`{3,}|~{3,})([a-zA-Z0-9_-]*)\s*$/);
+    if (fence) {
+      const marker = fence[1][0], minimum = fence[1].length, body = [];
+      let closed = false;
+      for (i++; i < lines.length; i++) {
+        const candidate = lines[i].trim();
+        if (candidate.length >= minimum && [...candidate].every(value => value === marker)) {
+          closed = true; i++; break;
+        }
+        body.push(lines[i]);
+      }
+      need(closed, 'Close the complete fenced source example before publishing the operator guide.');
+      const language = fence[2] ? ' class="language-' + escape(fence[2]) + '"' : '';
+      output.push('<pre><code' + language + '>' + escape(body.join('\n') + '\n') + '</code></pre>');
+      continue;
+    }
     if (/^(?:-{3,}|\*{3,}|_{3,})$/.test(line.trim())) { output.push('<hr>'); i++; continue; }
     const heading = line.match(/^(#{1,6})\s+(.+)$/);
     if (heading) {
@@ -211,9 +227,9 @@ export function composeGrantApplication({
   need(articleAt >= 0 && existingAt > articleAt, 'Use the complete existing grant.html shell and existing-work section.');
   const answer = application.slice(application.indexOf('## '));
   const renderedAnswer = renderGrantMarkdown(answer).replace(
-    /href="\.\/(product-and-finance\.md|source-index\.json)(?=["#?])/g,
+    /href="\.\/(product-and-finance\.md|source-index\.json|financial-walkthrough\.md)(?=["#?])/g,
     'href="./grant-data/$1'
-  );
+  ).replace(/href="\.\/grant-data\/financial-walkthrough\.md(?=["#?])/g, 'href="./grant-financial-walkthrough.html');
   let html = receiveDatasetteExistingWork(templateHtml.slice(0, articleAt) + ARTICLE + renderedAnswer + templateHtml.slice(existingAt), datasetteSelection || {});
   html = receiveApplicationNavigation(html, headings);
   let index = JSON.parse(JSON.stringify(sourceIndex));
@@ -283,7 +299,7 @@ export function composeGrantApplication({
   const submission = attachGrantSubmission(customerOpening);
   const reviewRound = attachGrantReviewRounds(submission);
   const companionReader = attachGrantCompanion(reviewRound);
-  html = companionReader.templateHtml;
+  html = projectGrantHtml(companionReader.templateHtml);
   index = companionReader.sourceIndex;
   const indexText = JSON.stringify(index, null, 2) + '\n';
   const files = {

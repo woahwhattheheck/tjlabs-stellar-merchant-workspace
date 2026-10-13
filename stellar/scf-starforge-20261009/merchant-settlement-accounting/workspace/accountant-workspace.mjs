@@ -9,6 +9,7 @@ import {renderAdjustmentCsv,renderAdjustmentHtml} from '../adjustments.mjs';
 import {freezeAccountantAdjustments} from '../accountant/adjustments.mjs';
 import {inspectBuyerSource,isBuyerHandoff} from '../accountant/buyer-source.mjs';
 import {createBuyerReturnPacket} from '../accountant/buyer-return.mjs';
+import {inspectRozoAccountantSource} from '../accountant/rozo-source.mjs';
 import {accountingSourceMode,readBuyerStartup,buyerStartupView} from './buyer-startup.mjs';
 
 export const ACCOUNTANT_CSV_BYTES=64*1024*1024;
@@ -137,7 +138,7 @@ export class AccountantWorkspace{
   async readHandoff(handoffId){
     const record=this.row(handoffId),file=record.files.find(item=>item.name==='handoff.json');
     const handoff=JSON.parse((await readExact(join(this.directory(handoffId),'handoff.json'),file)).toString('utf8'));
-    validateHandoff(handoff,{allowBuyer:true});check(handoff.id===record.id,'ACCOUNTANT_HANDOFF_CHANGED','The retained handoff identity changed.',409);return handoff;
+    validateHandoff(handoff,{allowBuyer:true,allowRozo:true});check(handoff.id===record.id,'ACCOUNTANT_HANDOFF_CHANGED','The retained handoff identity changed.',409);return handoff;
   }
   async readRevision(record,handoff,revisionId){
     const revision=this.revisionRow(record,revisionId);if(!revision)return null;
@@ -168,7 +169,24 @@ export class AccountantWorkspace{
     const source=await readBuyerStartup(this.workspace.directory,this.workspace.state);
     return {bytes:source.bytes,name:'original-issued-buyer-source.json',type:'application/json; charset=utf-8'};
   }
-  async source({runId,closeId=null,buyerSource,buyerStartup}){
+  rozoSource(value){
+    check(value&&typeof value==='object'&&!Array.isArray(value),'ROZO_SOURCE_REQUIRED','Choose the original issued ROZO close source.');
+    const raw=bytesFromBase64(value.contentBase64);
+    check(typeof value.sha256==='string'&&hash(raw)===value.sha256,'ROZO_SOURCE_CHANGED','The original ROZO close source differs from its reviewed SHA-256.',409);
+    const inspected=inspectRozoAccountantSource(raw);
+    return {rozoSourceBytes:raw,source:inspected.source,inspected};
+  }
+  async prepareRozo(value){
+    const selected=this.rozoSource(value.rozoSource),v=selected.inspected;
+    return {source:v.source,period:v.document.close.period,totals:v.document.close.totals,
+      options:[],rowCount:v.rows.length,workspaceRevision:this.workspace.state.revision,
+      sourceKind:'rozo-settlement-period',rozoSourceSha256:v.sha256,rows:v.rows.slice(0,25),retainedRows:v.rows.length};
+  }
+  async source({runId,closeId=null,buyerSource,buyerStartup,rozoSource}){
+    if(rozoSource!==undefined){
+      check(!runId&&!closeId&&buyerSource===undefined&&buyerStartup===undefined,'ACCOUNTANT_SOURCE_AMBIGUOUS','Choose one original ROZO, buyer or merchant source.');
+      return this.rozoSource(rozoSource);
+    }
     if(buyerStartup!==undefined){
       check(buyerSource===undefined&&!runId&&!closeId&&buyerStartup&&typeof buyerStartup==='object'&&!Array.isArray(buyerStartup)&&
         Object.keys(buyerStartup).length===1&&buyerStartup.sha256===this.workspace.state.buyerStartup?.sha256,
@@ -219,7 +237,7 @@ export class AccountantWorkspace{
       const startup=value.buyerStartup!==undefined;
       const handoffId=id(value.id??(startup?workspace.state.buyerStartup?.handoffId:randomUUID())),name=label(value.name,'handoff name'),actor=label(value.actor,'operator',1000);
       if(startup)check(handoffId===workspace.state.buyerStartup?.handoffId,'BUYER_STARTUP_HANDOFF_ID','Use the retained startup handoff ID to recover this same source review.',409);
-      const request={runId:value.runId??null,closeId:value.closeId??null,name,actor,labels:value.labels??[],...(value.buyerSource!==undefined?{buyerSource:copy(value.buyerSource)}:{}),...(value.buyerStartup!==undefined?{buyerStartup:copy(value.buyerStartup)}:{})},requestSha256=hash(json(request));
+      const request={runId:value.runId??null,closeId:value.closeId??null,name,actor,labels:value.labels??[],...(value.rozoSource!==undefined?{rozoSource:copy(value.rozoSource)}:{}),...(value.buyerSource!==undefined?{buyerSource:copy(value.buyerSource)}:{}),...(value.buyerStartup!==undefined?{buyerStartup:copy(value.buyerStartup)}:{})},requestSha256=hash(json(request));
       const prior=records(workspace).find(item=>item.id===handoffId);
       if(prior){check(prior.requestSha256===requestSha256,'HANDOFF_REQUEST_CONFLICT','This request ID already belongs to another handoff.',409);return {record:copy(prior),duplicate:true,state:workspace.view()};}
       workspace.expected(value.revision);check(records(workspace).length<2000,'ACCOUNTANT_HANDOFF_LIMIT','This workspace already retains 2,000 accountant handoffs.');
@@ -232,7 +250,8 @@ export class AccountantWorkspace{
       await privateDirectory(join(directory,'returns'),{create:true});
       {
         const files={'handoff.json':json(handoff),'accountant.csv':renderCsv(handoff),'review.html':renderHtml(handoff)};
-        if(selected.buyerSourceBytes)files['original-buyer-source.json']=selected.buyerSourceBytes;
+        if(selected.rozoSourceBytes)files['original-rozo-source.json']=selected.rozoSourceBytes;
+        else if(selected.buyerSourceBytes)files['original-buyer-source.json']=selected.buyerSourceBytes;
         else Object.assign(files,{'original-report.json':selected.reportBytes,'original-manifest.json':selected.manifestBytes,'input-manifest.json':selected.inputManifestBytes});
         const archiveNames=Object.keys(files);
         if(selected.periodCloseBytes){files['period-close.json']=selected.periodCloseBytes;files['review-notes.json']=selected.reviewNotesBytes;archiveNames.push('period-close.json','review-notes.json');}
@@ -280,7 +299,7 @@ export class AccountantWorkspace{
       const handoff=await this.readHandoff(handoffId);
       {
         const files={'return.json':json(result),'returned.csv':csvBytes,'accountant.csv':renderCsv(handoff,result),'review.html':renderHtml(handoff,result),'handoff.json':json(handoff)};
-        for(const filename of ['original-buyer-source.json','original-report.json','original-manifest.json','input-manifest.json','period-close.json','review-notes.json','adjustments.json','adjustments.csv','adjustments.html']){
+        for(const filename of ['original-rozo-source.json','original-buyer-source.json','original-report.json','original-manifest.json','input-manifest.json','period-close.json','review-notes.json','adjustments.json','adjustments.csv','adjustments.html']){
           const original=record.files.find(file=>file.name===filename);if(original)files[filename]=await readExact(join(this.directory(handoffId),filename),original);
         }
         if(isBuyerHandoff(handoff)){
@@ -300,7 +319,7 @@ export class AccountantWorkspace{
     const revision=this.revisionRow(record,revisionId),files=revision?.files??record.files;
     const file=files.find(item=>item.name===name);check(file,'ACCOUNTANT_FILE_NOT_FOUND','Choose a retained accountant handoff file.',404);
     const directory=revision?join(this.directory(handoffId),'returns',revision.id):this.directory(handoffId);
-    return {bytes:await readExact(join(directory,file.name),file),name:(record.source.kind==='buyer-expense-period'?'buyer-accountant-':'merchant-accountant-')+(revision?.id??handoffId)+'-'+file.name,type:({csv:'text/csv; charset=utf-8',json:'application/json; charset=utf-8',html:'text/html; charset=utf-8',tar:'application/x-tar'})[file.name.split('.').at(-1)]??'application/octet-stream'};
+    return {bytes:await readExact(join(directory,file.name),file),name:(record.source.kind==='rozo-settlement-period'?'rozo-accountant-':record.source.kind==='buyer-expense-period'?'buyer-accountant-':'merchant-accountant-')+(revision?.id??handoffId)+'-'+file.name,type:({csv:'text/csv; charset=utf-8',json:'application/json; charset=utf-8',html:'text/html; charset=utf-8',tar:'application/x-tar'})[file.name.split('.').at(-1)]??'application/octet-stream'};
   }
 }
 
@@ -310,6 +329,7 @@ export async function handleAccountantRequest(accountant,{method,path,query={},v
   if(path==='/api/accountant/startup'&&method==='GET')return {value:await accountant.startup()};
   if(path==='/api/accountant/startup/source'&&method==='GET')return {file:await accountant.startupFile()};
   if(path==='/api/accountant/source'&&method==='GET')return {value:await accountant.prepare(query)};
+  if(path==='/api/accountant/rozo-source/preview'&&method==='POST')return {value:await accountant.prepareRozo(value)};
   if(path==='/api/accountant/buyer-source/preview'&&method==='POST')return {value:await accountant.prepareBuyer(value)};
   if(path==='/api/accountant/handoffs'&&method==='POST')return {value:await accountant.create(value)};
   if(parts[2]==='handoffs'&&parts[3]){
