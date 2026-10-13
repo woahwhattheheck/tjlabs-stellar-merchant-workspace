@@ -1,0 +1,41 @@
+{
+  "schema": "stellar-forge.humanitarian-portable-receiving.v1",
+  "operation": "HUMANITARIAN-COMPLETE-RECEIVING-7108-20261013",
+  "installedOperation": "HUMANITARIAN-INSTALLED-RECEIVING-7108-20261013",
+  "source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "946a6b15157ee4ad772fe74338085093c8e04221",
+    "tree": "8a2da4459e93645ce5d93554e20970408556e691"
+  },
+  "files": {
+    "runner": {
+      "path": "run-received.py",
+      "bytes": 16096,
+      "sha256": "17c7b9cee8018ea79a5106dc03a67bee891f0a0e03793e5b38f7647cc17f313b"
+    },
+    "frame": {
+      "path": "complete-source-and-inputs.json.gz.b64",
+      "bytes": 4658093,
+      "sha256": "6578123b1bf8ea3ae99db9f5bd8d532169190ffee67438fbd6c917c631eaf2ad"
+    },
+    "authority": {
+      "path": "source-authority.json",
+      "bytes": 3881624,
+      "sha256": "c51939c2e8ac09147e031cac22f1fefa4e59668b0763b0fc6316841504706369"
+    }
+  },
+  "decoded": {
+    "bytes": 15194753,
+    "sha256": "bbd02a601deb23c244027916a1935c6161aad62886328b4a5988d300ad915028"
+  },
+  "gzip": {
+    "bytes": 3493568,
+    "sha256": "58efbe434001a139d96e7cd90c48a03cb2bef9cabfbbe858fb4b9737f0f6a5c5"
+  },
+  "counts": {
+    "all": 592,
+    "repository": 542,
+    "reference": 49,
+    "authority": 1
+  }
+}
