@@ -81,6 +81,70 @@
           "git_blob": "785f938a95db75899d611d6a7128da5ffe0d5945"
         }
       ]
+    },
+    {
+      "id": "canadabuys-complete-source-workshare",
+      "label": "Complete original federal sources, qualification, workshare and operator receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/operator/README.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "73fdc6a4f8ea3829c77306ef34ac8b58dd9fdeea",
+          "git_blob": "ca3420f2c5f945413b1493ab72b3bfebb73fc28f",
+          "sha256": "82c2b38811268d9e214d90929335da5348e6aad5cef6e931a2cdd22627e7f44f",
+          "bytes": 27970
+        }
+      ]
+    },
+    {
+      "id": "canadabuys-original-apm2-customer",
+      "label": "Original full-feed APM2 customer, merchant tools and rendered delivery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/examples/apm2/README.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "73fdc6a4f8ea3829c77306ef34ac8b58dd9fdeea",
+          "git_blob": "646d2d922e2b16141af3321e327c10f382cb4778",
+          "sha256": "e7b08dffcf6c9ba25bd7e2ffde3b08e661037beb461527c76e4c22c4ec8266a2",
+          "bytes": 10060
+        }
+      ]
+    },
+    {
+      "id": "canadabuys-apm2-response-production",
+      "label": "Complete APM2 response production and saved bidder receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/examples/apm2/bidder-response/README.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "73fdc6a4f8ea3829c77306ef34ac8b58dd9fdeea",
+          "git_blob": "43ece4c2c6c25bc88eb073d1135b746460e04d64",
+          "sha256": "9f5e0bb6b7238fe44c4d635756fc7c50e2e565b1dcab5f5a03cb1013a31f8256",
+          "bytes": 13996
+        }
+      ]
+    },
+    {
+      "id": "canadabuys-apm2-capacity-economics",
+      "label": "Editable APM2 capacity, cost scenarios and complete planner receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/examples/apm2/capacity/GUIDE.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "5e7feae6aff18b03fafe037ae63c218158d15873",
+          "git_blob": "3106f8b4dce86e62c70e05c50cbf0ade6e2d0c2f",
+          "sha256": "28dc221a0bea9ffadeac06909e18714a7dae69078da93758230172f6b2d34e67",
+          "bytes": 8795
+        }
+      ]
     }
   ]
 }
