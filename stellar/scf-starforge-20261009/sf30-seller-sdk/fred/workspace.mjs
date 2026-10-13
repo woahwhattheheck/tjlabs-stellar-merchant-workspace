@@ -1,4 +1,6 @@
 import { RESEARCH_ACTIONS, runResearchAction, researchView, researchEntry, researchCsv, researchSourceDownload } from './research/project.mjs';
+import { RESEARCH_RETURN_ACTIONS, runResearchReturnAction, researchReturnsView, researchReturnDetail,
+  researchReturnCompare, researchReturnPreview, researchReturnWork, researchReturnDownload } from './research/returns.mjs';
 // MIT. Private industrial operator UI over the maintained FRED project and native engines.
 import { createServer } from 'node:http';
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
@@ -152,6 +154,9 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     ['/ddp-published.js', ['ddp-published.js', 'text/javascript; charset=utf-8']],
     ['/ddp-published-guide', ['../ddp/PUBLISHED-WORKSPACE.md', 'text/plain; charset=utf-8']],
     ['/research.js', ['research.js', 'text/javascript; charset=utf-8']],
+    ['/research-returns.js', ['research-returns.js', 'text/javascript; charset=utf-8']],
+    ['/research-returns.css', ['research-returns.css', 'text/css; charset=utf-8']],
+    ['/research-return-work.mjs', ['research-return-work.mjs', 'text/javascript; charset=utf-8']],
     ['/research-merchant-guide', ['../research/COMMERCE.md', 'text/plain; charset=utf-8']],
     ['/qcew.js', ['qcew.js', 'text/javascript; charset=utf-8']],
     ['/customer-work.mjs', ['customer-work.mjs', 'text/javascript; charset=utf-8']],
@@ -182,6 +187,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
   };
   const run = async request => {
     const id = request.id, expectedRevision = request.expectedRevision, common = { directory, id, expectedRevision };
+    if (RESEARCH_RETURN_ACTIONS.includes(request.action)) return runResearchReturnAction({directory,request});
     if (RESEARCH_COMMERCE_ACTIONS.includes(request.action)) {
       if (request.resume === true) return resumeResearchCommerceAction(common);
       if (request.action === 'research-publish') return publishResearchEdition({ ...common,
@@ -307,6 +313,24 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
           'The original project directory changed.', 'FRED_WORKSPACE_BINDING_CHANGED', 409);
         return send(res, 200, launchView());
       }
+      if (req.method === 'GET' && url.pathname === '/api/research/returns') {
+        const value=await researchReturnsView(directory,{section:url.searchParams.get('section')??'received',
+          offset:pageNumber(url.searchParams.get('offset')),limit:url.searchParams.has('limit')?pageNumber(url.searchParams.get('limit'),100):100});
+        return url.searchParams.get('download')==='1'?sendJsonFile(res,200,value,'research-returns.json'):send(res,200,value);
+      }
+      if (req.method === 'GET' && ['/api/research/return','/api/research/return-compare','/api/research/return-work'].includes(url.pathname)) {
+        const value=url.pathname==='/api/research/return'?await researchReturnDetail(directory,url.searchParams.get('id')):
+          url.pathname==='/api/research/return-compare'?await researchReturnCompare(directory,url.searchParams.get('id')):
+          await researchReturnWork(directory,{returnId:url.searchParams.get('returnId'),revision:pageNumber(url.searchParams.get('revision'),1000)});
+        return url.searchParams.get('download')==='1'?sendJsonFile(res,200,value,url.pathname.slice('/api/research/'.length)+'.json'):send(res,200,value);
+      }
+      if (req.method === 'GET' && url.pathname === '/api/research/return-file') {
+        const value=await researchReturnDownload(directory,{id:url.searchParams.get('id'),
+          file:url.searchParams.get('file')??'packet',sourceId:url.searchParams.get('sourceId')});
+        return send(res,200,value.bytes,value.contentType,value.filename.replace(/[^\x20-\x7e]|["\\]/g,'_'));
+      }
+      if (req.method === 'POST' && url.pathname === '/api/research/return-preview')
+        return send(res,200,await researchReturnPreview(directory,await body(req,2*1024*1024)));
       if (req.method === 'GET' && url.pathname === '/api/research/commerce') return send(res, 200,
         await researchCommerceView(directory, { section: url.searchParams.get('section') ?? 'publications',
           offset: pageNumber(url.searchParams.get('offset')), limit: url.searchParams.has('limit') ? pageNumber(url.searchParams.get('limit'), 500) : 100,
@@ -491,7 +515,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       if (req.method === 'POST' && ['/api/action', '/api/qcew/action'].includes(url.pathname)) {
         const countyAction = url.pathname === '/api/qcew/action';
         const request = await body(req, countyAction ? QCEW_WORKSPACE_REQUEST_BYTES : Math.max(RESEARCH_HTTP_BYTES, MAX_DDP_CAPTURE_BYTES, MAX_CAPTURE_BYTES * 2));
-        need(countyAction || FRED_DDP_ACTIONS.has(request?.action) || request?.action === 'research-receive' || jsonBytes(request).length <= MAX_CAPTURE_BYTES * 2,
+        need(countyAction || FRED_DDP_ACTIONS.has(request?.action) || ['research-receive','research-return-import'].includes(request?.action) || jsonBytes(request).length <= MAX_CAPTURE_BYTES * 2,
           'Request exceeds its original source capacity.', 'FRED_REQUEST_TOO_LARGE', 413);
         need(!countyAction || QCEW_WORKSPACE_ACTIONS.includes(request?.action), 'Choose a county report action.');
         return send(res, 200, await execute(request));

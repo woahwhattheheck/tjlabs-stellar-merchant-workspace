@@ -99,7 +99,7 @@ export interface FredQcewProjectState {
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type JsonObject = { [key: string]: Json };
 export type NativeRecord = JsonObject & { id: string };
-export interface FredSourceInput { path: string; kind: 'public-table' | 'capture' | 'release-capture' | 'ddp-crosswalk' | 'ddp-package' | 'alfred-metadata' | 'operating-archive' | 'operating-plan' | 'research-source' | 'research-catalogue' | 'research-package'; label?: string; sha256?: string }
+export interface FredSourceInput { path: string; kind: 'public-table' | 'capture' | 'release-capture' | 'ddp-crosswalk' | 'ddp-package' | 'alfred-metadata' | 'operating-archive' | 'operating-plan' | 'research-source' | 'research-catalogue' | 'research-package' | 'research-return'; label?: string; sha256?: string }
 export interface FredMerchantProfile { label?: string; origin: string; path?: string; payment: JsonObject }
 export interface FredWorkspaceOptions {
   label?: string; projectId?: string; expectedBindingSha256?: string;
@@ -134,6 +134,7 @@ export interface FredProject extends FredReleaseProjectState {
   qcew?: FredQcewProjectState;
   research?: FredResearchCatalogue;
   researchCommerce?: FredResearchCommerceState;
+  researchExchange?: JsonObject;
   ddpCrosswalks?: FredDdpCrosswalkSummary[]; ddpPackages?: FredDdpPackageSummary[];
   ddpMigrations?: FredDdpMigrationSummary[]; ddpReceivings?: FredDdpReceivingSummary[];
 }
@@ -310,6 +311,8 @@ export interface FredDdpReceivingInput extends FredDdpPageInput {
 export interface FredRequestOptions { signal?: AbortSignal }
 export interface FredFileOptions extends FredRequestOptions { expectedSha256?: string }
 export type FredFileSelection =
+  { kind:'research-return';returnId:string;file?:'packet'|'original-package'|'source';sourceId?:string } |
+  { kind:'research-return-view';returnId:string;view:'detail'|'compare'|'work';revision?:number } |
   { kind: 'research-publication'; publicationId: string; file?: string } |
   { kind: 'research-received'; publicationId: string; intentId: string; file?: string; editionId?: string } |
   { kind: 'research-source'; snapshotId: string; expectedRevision?: number } |
@@ -329,13 +332,14 @@ export type FredFileSelection =
   { kind: 'briefing-successor'; successorId: string; format: 'html' | 'csv' | 'json' } |
   { kind: 'customer'; publicationId: string; intentId: string };
 export interface FredBundleIdentity {
-  schema: 'stellar-forge.fred-project-bundle.v1' | 'stellar-forge.fred-project-bundle.v2' | 'stellar-forge.fred-project-bundle.v3' | 'stellar-forge.fred-project-bundle.v4' | 'stellar-forge.fred-project-bundle.v5' | 'stellar-forge.fred-project-bundle.v6' | 'stellar-forge.fred-project-bundle.v7' | 'stellar-forge.fred-project-bundle.v8'; projectId: string; revision: number;
+  schema: 'stellar-forge.fred-project-bundle.v1' | 'stellar-forge.fred-project-bundle.v2' | 'stellar-forge.fred-project-bundle.v3' | 'stellar-forge.fred-project-bundle.v4' | 'stellar-forge.fred-project-bundle.v5' | 'stellar-forge.fred-project-bundle.v6' | 'stellar-forge.fred-project-bundle.v7' | 'stellar-forge.fred-project-bundle.v8' | 'stellar-forge.fred-project-bundle.v9'; projectId: string; revision: number;
   bundleSha256: string; captures: number; publications: number; briefings?: number; templates?: number; successors?: number;
   releaseCaptures?: number; releaseWatches?: number; releasePlans?: number; releaseCatchUps?: number;
   ddpCrosswalks?: number; ddpPackages?: number; ddpMigrations?: number; ddpReceivings?: number;
   qcew?: { captures: number; profiles: number; editions: number };
   research?: { entries: number; sources: number; reviews: number; products: number };
   researchCommerce?: { publications: number; receivings: number };
+  researchReturns?: Record<string,number>;
 }
 export interface FredDownloadedFile {
   name: string; type: string; bytes: Buffer; sha256: string; status: number; projectId: string; bundle?: FredBundleIdentity;
@@ -538,10 +542,55 @@ export interface FredResearchPreparedPurchase {
   configSha256: string; config: JsonObject; purchaseSha256: string;
 }
 
+
+export type FredResearchReturnAction='research-return-create'|'research-return-import'|'research-return-draft-save'|'research-return-apply';
+export type FredResearchReturnChoice='issued'|'current'|'returned';
+export interface FredResearchReturnSelection {returnId:string;expectedRevision?:number}
+export interface FredResearchReturnChoices extends FredResearchReturnSelection {
+ comparisonSha256:string;choices:Record<string,FredResearchReturnChoice>;order:string[];
+}
+export interface FredResearchReturnDraftInput extends FredJournalInput,FredResearchReturnChoices {
+ expectedDraftRevision:number;note?:string;label?:string;
+}
+export interface FredResearchReturnCreateInput extends FredJournalInput {packageSha256:string;author:string;note?:string}
+export interface FredResearchReturnImportInput extends FredJournalInput {filename:string;bodyBase64:string}
+export interface FredResearchReturnResult extends FredRevisionResult {
+ returnId:string;record?:JsonObject;draftRevision?:number;workId?:string;comparisonSha256?:string;
+ definitionId?:string;coverage?:FredResearchCoverage[];applied?:boolean;
+}
+export interface FredResearchReturnFile {
+ file:'packet'|'original-package'|'source';sourceId?:string;filename:string;bytes:number;sha256:string;contentType:string;
+}
+export interface FredResearchReturnView {projectId:string;revision:number;returnId:string;[key:string]:unknown}
+export interface FredResearchReturnDetail extends FredResearchReturnView {files:FredResearchReturnFile[]}
+export interface FredResearchReturnComparisonItem {
+ field:string;label:string;kind:'product'|'requirement'|'source';issued:Json;current:Json;returned:Json;
+}
+export interface FredResearchReturnComparison extends FredResearchReturnView {
+ comparisonSha256:string;items:FredResearchReturnComparisonItem[];
+}
+export interface FredResearchReturnPreview extends FredResearchReturnView {
+ comparisonSha256:string;document:FredResearchProductDefinition;coverage:FredResearchCoverage[];sources:Json;
+}
+export interface FredResearchReturnPage {
+ projectId:string;revision:number;section:'received'|'sent'|'drafts'|'adoptions';offset:number;limit:number;
+ total:number;nextOffset:number|null;rows:JsonObject[];
+}
+
 export declare class FredWorkspaceClient {
   constructor(definition: FredWorkspaceDefinition, runtime?: FredClientRuntime);
   readonly metadata: FredClientMetadata;
   timeoutMs: number; maxResponseBytes: number; maxDdpResponseBytes: number;
+  researchReturns(input?:{section?:'received'|'sent'|'drafts'|'adoptions';offset?:number;limit?:number;expectedRevision?:number},options?:FredRequestOptions):Promise<FredResearchReturnPage>;
+  researchReturn(input:FredResearchReturnSelection,options?:FredRequestOptions):Promise<FredResearchReturnDetail>;
+  researchReturnCompare(input:FredResearchReturnSelection,options?:FredRequestOptions):Promise<FredResearchReturnComparison>;
+  researchReturnPreview(input:FredResearchReturnChoices,options?:FredRequestOptions):Promise<FredResearchReturnPreview>;
+  researchReturnWork(input:FredResearchReturnSelection & {revision:number},options?:FredRequestOptions):Promise<FredResearchReturnView>;
+  createResearchReturn(input:FredResearchReturnCreateInput,options?:FredRequestOptions):Promise<FredResearchReturnResult>;
+  importResearchReturn(input:FredResearchReturnImportInput,options?:FredRequestOptions):Promise<FredResearchReturnResult>;
+  saveResearchReturnDraft(input:FredResearchReturnDraftInput,options?:FredRequestOptions):Promise<FredResearchReturnResult>;
+  applyResearchReturn(input:FredResearchReturnDraftInput,options?:FredRequestOptions):Promise<FredResearchReturnResult>;
+  resumeResearchReturn(input:FredJournalInput & {action:FredResearchReturnAction},options?:FredRequestOptions):Promise<FredResearchReturnResult>;
   researchCatalogue(input?: FredResearchCatalogueInput, options?: FredRequestOptions): Promise<FredResearchCataloguePage>;
   researchTaxonomy(input: FredResearchPageInput & { section: 'topics' | 'geographies' }, options?: FredRequestOptions):
     Promise<FredResearchPage<string> & { section: 'topics' | 'geographies' }>;
