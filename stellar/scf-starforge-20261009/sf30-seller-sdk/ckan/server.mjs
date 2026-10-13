@@ -471,6 +471,9 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
         else if (parts[0] === 'cancel' && parts.length === 1) return json(response, workbench.cancel());
         else throw fault('CKAN_ROUTE_NOT_FOUND', 'The requested project action does not exist.', 404);
         return json(response, { operationId: result.id,
+          ...(result.correctionId ? { correctionId: result.correctionId } : {}),
+          ...(result.revisionId ? { revisionId: result.revisionId } : {}),
+          ...(result.catalogId ? { catalogId: result.catalogId } : {}),
           ...(result.profileId ? { profileId: result.profileId } : {}),
           ...(result.runId ? { runId: result.runId } : {}),
           ...(result.semanticReviewId ? { semanticReviewId: result.semanticReviewId } : {}),
