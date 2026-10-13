@@ -13,7 +13,7 @@ export async function startCommissioningOperator({directory,store,setupFile,expo
   if(!Number.isInteger(port)||port<0||port>65535)throw new TypeError('Choose a port from 0 through 65535.');
   const owned=!supplied,operator=supplied??await openCommissioningOperator({directory,store,setupFile,exportDirectory});
   let assets;
-  try{assets=new Map(await Promise.all(['index.html','app.mjs','style.css','client.mjs','recovery.mjs'].map(async name=>[name,await readFile(new URL(name==='client.mjs'?'./client.mjs':'./operator-public/'+name,import.meta.url))])));}
+  try{assets=new Map(await Promise.all(['index.html','app.mjs','style.css','client.mjs','recovery.mjs','installation.mjs'].map(async name=>[name,await readFile(new URL(name==='client.mjs'?'./client.mjs':'./operator-public/'+name,import.meta.url))])));}
   catch(e){if(owned)try{await operator.close();}catch(c){throw new AggregateError([e,c],'Application assets and owner close both failed.');}throw e;}
   const token=randomBytes(32).toString('base64url'),cookie='commissioning_session='+token;
   let origin,closing=false,closePromise;
@@ -22,7 +22,7 @@ export async function startCommissioningOperator({directory,store,setupFile,expo
     try{
       if(req.headers.host!==new URL(origin).host||req.headers.origin&&req.headers.origin!==origin||req.headers['sec-fetch-site']==='cross-site')return reply(403,{error:'LOCAL_ORIGIN',message:'Use this original local operator address.'});
       const url=new URL(req.url,origin);
-      if(req.method==='GET'&&['/','/app.mjs','/style.css','/client.mjs','/recovery.mjs'].includes(url.pathname)){
+      if(req.method==='GET'&&['/','/app.mjs','/style.css','/client.mjs','/recovery.mjs','/installation.mjs'].includes(url.pathname)){
         const name=url.pathname==='/'?'index.html':url.pathname.slice(1);return reply(200,assets.get(name),name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8');
       }
       if(req.method==='GET'&&url.pathname==='/favicon.ico')return reply(204,'','text/plain');
@@ -35,6 +35,13 @@ export async function startCommissioningOperator({directory,store,setupFile,expo
       if(!equal(req.headers.authorization,'Bearer '+token)&&!cookies.some(v=>equal(v,cookie)))return reply(401,{error:'SESSION_REQUIRED',message:'Open the original private session address printed by the command.'});
       if(req.method==='GET'&&url.pathname==='/api/state')return reply(200,await operator.state());
       if(req.method==='GET'&&url.pathname==='/api/history')return reply(200,await operator.history({kind:url.searchParams.get('kind')??'results',offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??50),...(url.searchParams.has('revision')?{revision:Number(url.searchParams.get('revision'))}:{})}));
+      if(req.method==='GET'&&url.pathname==='/api/installations')return reply(200,await operator.installations());
+      if(req.method==='GET'&&url.pathname==='/api/installation')return reply(200,await operator.installation({id:url.searchParams.get('id'),kind:url.searchParams.get('kind')??'summary',offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??50)}));
+      if(req.method==='GET'&&url.pathname==='/api/installation/archive'){
+        const file=await operator.installationArchive(url.searchParams.get('operationId'));
+        res.writeHead(200,{...headers,'content-type':file.contentType,'content-length':file.bytes,'x-content-sha256':file.sha256,'content-disposition':"attachment; filename*=UTF-8''"+encodeURIComponent(file.filename)});
+        await pipeline(createReadStream(file.path),res);return;
+      }
       if(req.method==='GET'&&url.pathname==='/api/release')return reply(200,await operator.originalRelease(url.searchParams.get('id')));
       if(req.method==='GET'&&url.pathname==='/api/receive')return reply(200,await operator.receive(url.searchParams.get('operationId')));
       const upload=/^\/api\/uploads\/([a-f0-9-]{36})(\/complete)?$/.exec(url.pathname);

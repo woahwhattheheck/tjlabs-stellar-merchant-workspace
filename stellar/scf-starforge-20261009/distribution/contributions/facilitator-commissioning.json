@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "facilitator-commissioning",
-  "description": "Complete same-service two-provider commissioning, authenticated operator and portable customer receiving",
+  "description": "Complete paired-service commissioning, Customer Installation desk and portable authenticated customer receiving",
   "components": [
     "products/facilitator-commissioning"
   ],
@@ -42,6 +42,7 @@
     "products/facilitator-commissioning/agent-customer.d.mts",
     "products/facilitator-commissioning/INSTALLATION.md",
     "products/facilitator-commissioning/installation.d.mts",
-    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/facilitator-commissioning.json"
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/facilitator-commissioning.json",
+    "products/facilitator-commissioning/INSTALLATION_DESK.md"
   ]
 }

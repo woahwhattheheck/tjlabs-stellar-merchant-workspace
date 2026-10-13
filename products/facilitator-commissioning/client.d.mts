@@ -15,6 +15,8 @@ export interface ActionPayloads {
   'receive-run':{runOperationId:string;nativeInstanceId:string};
   'buyer-plan':{provider:string;template:string;requests:Array<{requestId:string;intentId:string;paymentOption:number}>};
   receive:{provider:string;requestId:string;runOperationId:string;summary:FileRef;evidence:FileRef;output?:FileRef;receiving:{operator:string;decision:'ACCEPTED'|'CHANGES_REQUIRED'|'INCOMPLETE';note:string;receivedAt:string};supersedesOperationId?:string};
+  'installation-template':{sourceTransferId:string;seed:FileRef;caseSnapshot:FileRef};
+  'installation-prepare':{templateOperationId:string;bindings:FileRef};
   export:Record<string,never>;
 }
 export type Action=keyof ActionPayloads;
@@ -23,11 +25,17 @@ export interface Receipt {schema:string;operationId:string;action:Action;complet
 export interface Receiving {state:'COMPLETE'|'NOT_FOUND'|'PENDING'|'RECONCILIATION_REQUIRED';operationId?:string;request?:Command;receipt?:Receipt;nativeResultPresent?:boolean;message?:string;runs?:Json[]}
 export interface HistoryPage {items:Json[];offset:number;limit:number;total:number;next_offset:number|null;revision:number;jobId:string}
 export interface OperatorState {schema:string;instanceId:string;job:null|({id:string;title:string;revision:number;providers:Json[];requests:Json[];service:Json;originalSelection:Json}&Record<string,unknown>);report:Json;counts:null|{results:number;runs:number;pending:number};activeRun:null|{operationId:string;provider:string;started:Json};nativeRuntime:Json;setup:{configured:boolean;profiles:Array<{alias:string;label:string;url:string}>;buyerTemplates:Array<{alias:string;title:string}>;sourceSha256?:string};uploads:Upload[];pendingRequests:Array<{operationId:string;action:Action;expectedRevision:number}>;transfers:Array<{id:string;jobId:string;files:number;originalManifestSha256:string}>}
+export interface InstallationSummary {operationId:string;mode:'template'|'prepare';jobId:string;selectionSha256:string;sourceTransferId:string;basis:Json;nativeReceipt:FileRef;missingSourceCount:number;completedAt:string}
+export interface InstallationCatalog {schema:string;jobId:string;selectionSha256:string;revision:number;preparations:InstallationSummary[];sources:Array<{operationId:string;completedAt:string;sourceMembers:number;manifestSha256:string}>}
+export interface InstallationView {schema:string;preparation:InstallationSummary;bindings?:Json;defaults?:Json;workshare?:Json;workorder?:Json;assignments?:Json;checks?:Json;continuation?:Json;prepared?:Json;items?:Json[];offset?:number;limit?:number;total?:number;next_offset?:number|null}
 export class CommissioningClient {
   constructor(options?:{origin?:string;token?:string;fetch?:typeof globalThis.fetch});
   request(path:string,options?:{method?:string;body?:unknown;raw?:boolean}):Promise<unknown>;
   authenticate(token:string):Promise<{authenticated:true}>;
   state():Promise<OperatorState>;
+  installations():Promise<InstallationCatalog>;
+  installation(options:{id:string;kind?:'summary'|'files'|'sources';offset?:number;limit?:number}):Promise<InstallationView>;
+  installationArchiveURL(operationId:string):string;
   release(id:string):Promise<Json>;
   history(options?:{kind?:'results'|'runs'|'pending';offset?:number;limit?:number;revision?:number}):Promise<HistoryPage>;
   prepare(command:Command):Promise<{request:Command;replayed:boolean}>;
@@ -37,6 +45,6 @@ export class CommissioningClient {
   uploadState(id:string):Promise<Upload>;
   uploadChunk(id:string,offset:number,body:ArrayBuffer|Uint8Array):Promise<Upload>;
   completeUpload(id:string):Promise<Upload>;
-  fileURL(options:{kind:'input'|'blob'|'buyer'|'buyer-execution'|'command'|'report'|'transfer';id?:string;name?:string}):string;
+  fileURL(options:{kind:'input'|'blob'|'buyer'|'buyer-execution'|'command'|'report'|'transfer'|'installation';id?:string;name?:string}):string;
   archiveURL(operationId:string):string;
 }

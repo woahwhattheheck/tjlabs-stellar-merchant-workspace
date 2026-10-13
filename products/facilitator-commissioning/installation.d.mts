@@ -11,5 +11,6 @@ export interface InstallationPreparation{
 export function prepareCommissioningInstallationFiles(options:{
   mode:'inputs'|'template'|'prepare';transfer:string;expectedTransferSha256:string;out:string;
   seed?:string;caseSnapshot?:string;bindings?:string;
+  profileFile?:string;expectedProfileSha256?:string;
 }):Promise<InstallationPreparation>;
 export function inspectCommissioningInstallation(directory:string):Promise<InstallationPreparation>;

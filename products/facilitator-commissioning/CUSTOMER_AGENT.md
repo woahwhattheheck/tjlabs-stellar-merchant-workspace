@@ -231,3 +231,8 @@ The producing worker must literally open, view, play or use every final attachme
 ## Original Customer Installation
 
 Use [the complete paired-service Installation course](INSTALLATION.md) to bind a full original commissioning transfer to its actual Workshare/Grant case and unchanged native Installation seed. The installable facilitator-installation command retains every original source file, maps exact case source identities, preserves both provider selections and prepares the original preview/save input. The original Installation writer retains funding, work assignments, actual acceptance and full case receiving.
+
+
+## Customer Installation through the same operator
+
+The customer now exposes 20 operations. `merchant_commissioning_installations` reads the original source cuts and saved preparations; `merchant_commissioning_installation` reads the selected summary or all paged original sources/files. The existing typed `prepare`/`apply` protocol accepts `installation-template` with `{sourceTransferId,seed,caseSnapshot}` and `installation-prepare` with `{templateOperationId,bindings}`. Each file reference is the original `{sha256,bytes}`. Capture uses `{kind:'installation',id:operationId,name:originalMemberPath}` or `{kind:'installation-archive',id:operationId}`. The complete operator archive retains all preparations and pending source bindings for the existing receiver. Follow [the complete Installation desk course](INSTALLATION_DESK.md) through the actual native preview, every attachment and received working project.
