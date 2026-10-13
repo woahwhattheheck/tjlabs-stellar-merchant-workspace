@@ -11,21 +11,22 @@ const ALIAS=/^[A-Za-z][A-Za-z0-9_-]{0,63}$/,HASH=/^[a-f0-9]{64}$/;
 const stamp=v=>['dev','ino','size','mtimeNs','ctimeNs'].map(k=>String(v[k])).join(':');
 const sha=v=>createHash('sha256').update(v).digest('hex');
 export async function openNativeCollectionDeliveryClient(options={}){
- need(options.deliveryWorkspace===undefined||ALIAS.test(options.deliveryWorkspace),'MCP_DELIVERY_CLIENT_ALIAS');
+ const deliveryWorkspace=options.deliveryWorkspace;
+ need(deliveryWorkspace===undefined||ALIAS.test(deliveryWorkspace),'MCP_DELIVERY_CLIENT_ALIAS');
  const native=await openMerchantFileClient({...options,errorPrefix:'MCP_DELIVERY',clientName:'starforge-customer-delivery'});
  async function call(operation,body={},context){
   need(Object.hasOwn(nativeCollectionDeliveryOperations,operation),'MCP_DELIVERY_CLIENT_OPERATION');
   const spec=nativeCollectionDeliveryOperations[operation];
   need(body&&typeof body==='object'&&!Array.isArray(body)&&Object.keys(body).every(k=>Object.hasOwn(spec.properties,k))&&spec.required.every(k=>Object.hasOwn(body,k)),'MCP_DELIVERY_CLIENT_FIELDS');
-  need(operation==='workspaces'||ALIAS.test(options.deliveryWorkspace??''),'MCP_DELIVERY_CLIENT_ALIAS');
+  need(operation==='workspaces'||ALIAS.test(deliveryWorkspace??''),'MCP_DELIVERY_CLIENT_ALIAS');
   const value=await native.call('sf43_discover_review_and_pay',{action:'collection-delivery',deliveryOperation:operation,
-   ...(options.deliveryWorkspace?{deliveryWorkspace:options.deliveryWorkspace}:{}),deliveryRequest:body},context);
+   ...(deliveryWorkspace?{deliveryWorkspace}:{}),deliveryRequest:body},context);
   need(value?.schema===DELIVERY_NATIVE_SCHEMA&&value.operation===operation,'MCP_DELIVERY_CLIENT_ORIGINAL_RESPONSE');
   if(operation==='workspaces')return value;
-  need(value.workspace===options.deliveryWorkspace&&value.value&&typeof value.value==='object','MCP_DELIVERY_CLIENT_ORIGINAL_RESPONSE');
+  need(value.workspace===deliveryWorkspace&&value.value&&typeof value.value==='object','MCP_DELIVERY_CLIENT_ORIGINAL_RESPONSE');
   return value.value;
  }
- return Object.freeze({endpoint:native.endpoint,deliveryWorkspace:options.deliveryWorkspace,call,
+ return Object.freeze({endpoint:native.endpoint,deliveryWorkspace,call,
   preview:(request,context)=>call('preview',request,context),
   prepare:(request,context)=>call('prepare',request,context),
   inspect:(id,context)=>call('inspect',{id},context),
@@ -89,16 +90,21 @@ export async function uploadNativeCustomerPackage({client,file,directory,expecte
 export async function retainNativeCustomerRequest({client,directory,operation,body,signal}){
  need(client&&typeof client.call==='function'&&typeof client.endpoint==='string'&&
   ['preview','prepare','receive'].includes(operation),'MCP_DELIVERY_REQUEST_SELECTION');
- absolute(directory);await initializationDirectory(directory,{create:true});
+ absolute(directory);
+ const selected={schema:'stellar-forge.customer-package-request.v1',endpoint:client.endpoint,
+  workspace:client.deliveryWorkspace,operation,body};
+ // Capture the complete original JSON before any asynchronous boundary.
+ // The native canonical encoder still rejects undefined and unsupported values.
+ identity(selected);const intentBytes=bytes(selected),intent=JSON.parse(intentBytes);
+ const dispatch=client.call.bind(client);
+ await initializationDirectory(directory,{create:true});
  const release=await acquireCollectionLease(directory);
  try{
-  const intent={schema:'stellar-forge.customer-package-request.v1',endpoint:client.endpoint,
-   workspace:client.deliveryWorkspace,operation,body};
-  // Canonicalization rejects undefined before a request is selected.
-  identity(intent);await retainInitializationFile(join(directory,'intent.json'),bytes(intent),{resume:true});
+  await retainInitializationFile(join(directory,'intent.json'),intentBytes,{resume:true});
   const prior=await optionalInitializationBytes(join(directory,'result.json'),32*1024*1024);
   if(prior){const saved=JSON.parse(prior);need(identity(saved.intent)===identity(intent),'MCP_DELIVERY_REQUEST_CHANGED');return saved;}
-  const value=await client.call(operation,body,{requestSignal:signal});
+  // The transport receives its own copy, separate from the retained result intent.
+  const value=await dispatch(intent.operation,JSON.parse(intentBytes).body,{requestSignal:signal});
   const result={schema:intent.schema+'.result',intent,value};
   await retainInitializationFile(join(directory,'result.json'),bytes(result),{resume:true});
   return result;

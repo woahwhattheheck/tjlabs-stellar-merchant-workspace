@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { WORKSPACE_SCHEMA, PACKAGE_SCHEMA, LEGACY_WORKSPACE_SCHEMA, LEGACY_PACKAGE_SCHEMA, sha256, canonical, failure, plain, text, revision, timestamp,
   selection, compareRows, emptyReview } from './core.mjs';
 import { decodeCsv, parseCsv } from './csv.mjs';
+import { sourceProvenance, DERIVED_SOURCE_KIND, SOURCE_WORKSPACE_SCHEMA, SOURCE_PACKAGE_SCHEMA } from './source-provenance.mjs';
 import { prepareEntries, entryOrder, closingTime, matchProfile, joinKey, SOSA_COLUMNS, sourceSupplierNames, sourceCommodityCodes } from './domain.mjs';
 import { renderReport } from './reports.mjs';
 import { CanadaBuysBidderDesk, validateDeskEnvelope } from './bidder-desk-workspace.mjs';
@@ -27,10 +28,10 @@ function preparedCsv(input, meta = {}) {
     throw failure('AWARD_COLUMNS_REQUIRED', 'Select the complete current CanadaBuys award CSV', 422, { columns: parsed.columns });
   if (stream === 'supply-arrangements' && !SOSA_COLUMNS.every(has))
     throw failure('ARRANGEMENT_COLUMNS_REQUIRED', 'Select the complete standing offers and supply arrangements CSV', 422, { columns: parsed.columns });
-  const id = 'source-' + sha256(stream + '\n' + digest);
+  const provenance = sourceProvenance(meta, parsed, stream, digest), id = provenance.id;
   const metadata = { id, stream, sha256: digest, bytes: bytes.length, columns: parsed.columns, rowCount: parsed.rows.length,
     label: text(meta.label || stream, 'label', 2048), url: text(meta.url || '', 'url', 8192),
-    retrievedAt: timestamp(meta.retrievedAt), coverage: 'federal', bodyKind: 'original-utf8-csv',
+    retrievedAt: timestamp(meta.retrievedAt), ...provenance.metadata,
     response: plain(meta.response) ? meta.response : null };
   return { id, bytes, rawText, metadata, entries: prepareEntries(parsed, metadata) };
 }
@@ -119,7 +120,7 @@ export class CanadaBuysWorkspace {
       const exists = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='metadata'").get();
       if (exists) {
         const existing = this.db.prepare('SELECT value FROM metadata WHERE id=1').get();
-        if (existing && ![WORKSPACE_SCHEMA, LEGACY_WORKSPACE_SCHEMA].includes(JSON.parse(existing.value).schema))
+        if (existing && ![WORKSPACE_SCHEMA, SOURCE_WORKSPACE_SCHEMA, LEGACY_WORKSPACE_SCHEMA].includes(JSON.parse(existing.value).schema))
           throw failure('WORKSPACE_VERSION', 'Choose a CanadaBuys workspace directory');
       }
       this.db.exec('PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL;');
@@ -172,7 +173,7 @@ export class CanadaBuysWorkspace {
             at: updated.updatedAt, operator: this.operator, from: LEGACY_WORKSPACE_SCHEMA, to: WORKSPACE_SCHEMA
           }));
         }
-        this.db.exec('PRAGMA user_version=2; COMMIT');
+        this.db.exec('PRAGMA user_version=' + (this.metadata().schema === SOURCE_WORKSPACE_SCHEMA ? 3 : 2) + '; COMMIT');
       } catch (error) { this.db.exec('ROLLBACK'); throw error; }
       chmodSync(this.databasePath, 0o600);
     } catch (error) { this.db.close(); throw error; }
@@ -192,10 +193,11 @@ export class CanadaBuysWorkspace {
       const metadata = this.metadata();
       if (expectedRevision !== null) revision(expectedRevision, metadata.revision);
       const result = callback(metadata);
-      const updated = { ...metadata, revision: metadata.revision + 1, updatedAt: new Date().toISOString() };
+      const updated = { ...metadata, schema: this.metadata().schema, revision: metadata.revision + 1, updatedAt: new Date().toISOString() };
       this.db.prepare('UPDATE metadata SET value=? WHERE id=1').run(JSON.stringify(updated));
       this.db.prepare('INSERT INTO audit(data) VALUES(?)').run(JSON.stringify({
-        id: randomUUID(), type, revision: updated.revision, at: updated.updatedAt, operator: this.operator, ...result.audit
+        id: randomUUID(), type, revision: updated.revision, at: updated.updatedAt, operator: this.operator, ...result.audit,
+        ...(updated.schema !== metadata.schema ? { sourceSchemaUpgrade: { from: metadata.schema, to: updated.schema } } : {})
       }));
       this.db.exec('COMMIT'); return { ...result.value, workspace: updated };
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
@@ -229,10 +231,19 @@ export class CanadaBuysWorkspace {
     return observation;
   }
   _ingest(prepared, allowedIds = null, { observe = true } = {}) {
+    if (prepared.metadata.bodyKind === DERIVED_SOURCE_KIND) {
+      if (!this.depth) throw failure('TRANSACTION_REQUIRED', 'Derived source adoption requires the original workspace transaction', 409);
+      const metadata = this.metadata();
+      if (metadata.schema !== SOURCE_WORKSPACE_SCHEMA) {
+        this.db.prepare('UPDATE metadata SET value=? WHERE id=1').run(JSON.stringify({ ...metadata, schema: SOURCE_WORKSPACE_SCHEMA }));
+        this.db.exec('PRAGMA user_version=3');
+      }
+    }
     const old = this.db.prepare('SELECT metadata FROM sources WHERE id=?').get(prepared.id);
     if (old) {
       const retained = JSON.parse(old.metadata);
-      if (retained.sha256 !== prepared.metadata.sha256 || retained.bytes !== prepared.bytes.length)
+      if (retained.sha256 !== prepared.metadata.sha256 || retained.bytes !== prepared.bytes.length ||
+          ['bodyKind','coverage','derivationSha256','derivation'].some(key => canonical(retained[key]) !== canonical(prepared.metadata[key])))
         throw failure('SOURCE_IDENTITY_CHANGED', 'Source identity differs from retained bytes', 409);
     } else this.db.prepare('INSERT INTO sources(id,body,metadata) VALUES(?,?,?)')
       .run(prepared.id, prepared.bytes, JSON.stringify(prepared.metadata));
@@ -274,6 +285,11 @@ export class CanadaBuysWorkspace {
       const metadata = JSON.parse(stored.metadata), body = Buffer.from(stored.body);
       if (body.length !== metadata.bytes || sha256(body) !== metadata.sha256)
         throw failure('SOURCE_CHANGED', 'Retained original source bytes changed', 409);
+      if (metadata.bodyKind === DERIVED_SOURCE_KIND || metadata.derivation !== undefined) {
+        const checked = preparedCsv(body, { ...metadata, expectedSha256: metadata.sha256 });
+        if (checked.id !== id || canonical(checked.metadata) !== canonical(metadata))
+          throw failure('SOURCE_CHANGED', 'Retained derived source provenance differs from its original complete evidence', 409);
+      }
       const entryIds = this.db.prepare('SELECT id FROM entries WHERE source_id=? ORDER BY rowid').all(id).map(row => row.id);
       return { ...metadata, entryIds, observations: this.db.prepare('SELECT data FROM source_observations WHERE source_id=? ORDER BY sequence').all(id).map(row => JSON.parse(row.data)), ...(includeBody ? { rawText: decodeCsv(body).rawText } : {}) };
     });
@@ -305,7 +321,7 @@ export class CanadaBuysWorkspace {
       }
       const notices = [...groups].map(([id, history]) => this._notice(id, history, latestOpen));
       const list = table => this.db.prepare('SELECT data FROM ' + table + ' ORDER BY rowid').all().map(row => JSON.parse(row.data));
-      return { schema: WORKSPACE_SCHEMA, workspace: metadata, revision: metadata.revision, sources, sourceObservations: this._observations(), latestOpenObservation: latestOpen, notices,
+      return { schema: metadata.schema, workspace: metadata, revision: metadata.revision, sources, sourceObservations: this._observations(), latestOpenObservation: latestOpen, notices,
         workshares: list('workshares'), captures: list('captures').map(capture => { const { rawText, rawBase64, ...summary } = this.getCapture(capture.id); return { ...summary, retainedBodyBytes: rawBase64 ? Buffer.from(rawBase64, 'base64').length : rawText === undefined ? 0 : Buffer.byteLength(rawText) }; }), receivings: list('receiving'), publications: list('publications'),
         counts: { notices: notices.length, awards: Number(this.db.prepare("SELECT COUNT(*) AS n FROM entries WHERE kind='award'").get().n),
           supplyArrangements: Number(this.db.prepare("SELECT COUNT(*) AS n FROM entries WHERE kind='arrangement'").get().n), sources: sources.length } };
@@ -467,7 +483,7 @@ export class CanadaBuysWorkspace {
           sourceWorkspaceId: receiving.sourceWorkspace?.id || receiving.sourceWorkspaceId || null,
           ingestion: receiving.ingestion.filter(item => sourceIds.has(item.sourceId)), projection: 'selected-source-provenance'
         }));
-      const body = { schema: PACKAGE_SCHEMA, exportedAt: new Date().toISOString(), workspace: view.workspace,
+      const body = { schema: view.workspace.schema === SOURCE_WORKSPACE_SCHEMA ? SOURCE_PACKAGE_SCHEMA : PACKAGE_SCHEMA, exportedAt: new Date().toISOString(), workspace: view.workspace,
         selection: { scope: options.scope || 'all', noticeIds: [...ids] },
         sources: [...sourceIds].map(id => { const { observations, ...source } = this.getSource(id);
           return { ...source, entryIds: source.entryIds.filter(entryId => entryIds.has(entryId)) }; }),
@@ -501,19 +517,24 @@ export class CanadaBuysWorkspace {
     return record;
   }
   receivePackage(packet, { expectedRevision } = {}) {
-    if (!plain(packet) || ![PACKAGE_SCHEMA, LEGACY_PACKAGE_SCHEMA].includes(packet.schema) || !Array.isArray(packet.sources) ||
+    if (!plain(packet) || ![PACKAGE_SCHEMA, SOURCE_PACKAGE_SCHEMA, LEGACY_PACKAGE_SCHEMA].includes(packet.schema) || !Array.isArray(packet.sources) ||
         !Array.isArray(packet.reviews) || !Array.isArray(packet.workshares))
       throw failure('INVALID_PACKAGE', 'Select a complete CanadaBuys workspace package', 422);
     const { packageId, ...body } = packet;
     if (typeof packageId !== 'string' || sha256(canonical(body)) !== packageId) throw failure('PACKAGE_HASH_MISMATCH', 'Package identity does not match its complete contents', 409);
     const prior = this.db.prepare('SELECT data FROM receiving WHERE id=?').get(packageId);
     if (prior) return { receiving: JSON.parse(prior.data), workspace: this.metadata(), alreadyReceived: true };
-    if (packet.schema === PACKAGE_SCHEMA) validateDeskEnvelope(packet.bidderDesk);
+    if ([PACKAGE_SCHEMA, SOURCE_PACKAGE_SCHEMA].includes(packet.schema)) validateDeskEnvelope(packet.bidderDesk);
     else if (packet.bidderDesk !== undefined) throw failure('PACKAGE_VERSION_MISMATCH', 'Bidder records require a v2 CanadaBuys package', 422);
     const prepared = packet.sources.map(source => {
       if (!plain(source) || !Array.isArray(source.entryIds)) throw failure('INVALID_SOURCE_PACKAGE', 'Every source needs original bytes and selected entry identities', 422);
+      if (packet.schema !== SOURCE_PACKAGE_SCHEMA &&
+          (source.bodyKind === DERIVED_SOURCE_KIND || source.derivation !== undefined || source.derivationSha256 !== undefined))
+        throw failure('PACKAGE_VERSION_MISMATCH', 'Separately derived notice evidence requires a v3 CanadaBuys package', 422);
       const result = preparedCsv(source.rawText, { ...source, expectedSha256: source.sha256 });
-      if (result.id !== source.id || result.bytes.length !== source.bytes || result.metadata.rowCount !== source.rowCount)
+      if (result.id !== source.id || result.bytes.length !== source.bytes || result.metadata.rowCount !== source.rowCount ||
+          result.metadata.bodyKind === DERIVED_SOURCE_KIND &&
+          ['columns','bodyKind','coverage','derivation','derivationSha256','url','retrievedAt','label','response'].some(key => canonical(result.metadata[key]) !== canonical(source[key])))
         throw failure('SOURCE_PACKAGE_MISMATCH', 'Packaged source metadata differs from its original CSV', 409);
       const ids = new Set(result.entries.map(entry => entry.id));
       if (new Set(source.entryIds).size !== source.entryIds.length || source.entryIds.some(id => !ids.has(id)))
@@ -607,7 +628,7 @@ export class CanadaBuysWorkspace {
           captureConflicts.push({ captureId: incoming.id, retained: JSON.parse(old.data), incoming });
         else if (!old) this.db.prepare('INSERT INTO captures(id,data) VALUES(?,?)').run(incoming.id, JSON.stringify(incoming));
       }
-      const bidderDesk = packet.schema === PACKAGE_SCHEMA
+      const bidderDesk = [PACKAGE_SCHEMA, SOURCE_PACKAGE_SCHEMA].includes(packet.schema)
         ? this.bidderDesk.receiveData(packet.bidderDesk, { selectedNoticeIds })
         : { status: 'LEGACY_SOURCE_PACKAGE', importedRecords: 0, conflicts: [] };
       const receiving = { packageId, receivedAt: new Date().toISOString(), operator: this.operator, bidderDesk,

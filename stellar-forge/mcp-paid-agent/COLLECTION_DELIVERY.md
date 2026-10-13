@@ -170,6 +170,8 @@ After the original HTTP listener closes, the MCP host can still inspect its prev
 
 The adjacent .d.mts declarations cover request/response mappings. The client calls the existing MCP tool and validates its native envelope.
 
+The typed delivery client captures its registered workspace alias when the connection opens. The retained-request helper snapshots the complete canonical intent before its first asynchronous operation, writes those exact original bytes, and dispatches a separate copy of the retained body. Later edits to the caller’s options or request object cannot select another workspace or replace the saved original request. Retried requests retain the same original canonical identity.
+
 ~~~js
 import {
   openNativeCollectionDeliveryClient,

@@ -43,7 +43,9 @@ export class CanadaBuysClient {
         throw new CanadaBuysClientError('Response exceeds the configured client limit.', { code: 'RESPONSE_TOO_LARGE', status: response.status });
       }
       const reader = response.body?.getReader();
-      const chunks = [];
+      const binaryResponse = binary && response.ok;
+      const decoder = binaryResponse ? null : new TextDecoder('utf-8', { fatal: true });
+      const chunks = [], textParts = [];
       let bytes = 0;
       if (reader) {
         try {
@@ -52,22 +54,34 @@ export class CanadaBuysClient {
             if (done) break;
             bytes += value.byteLength;
             if (bytes > this.maxResponseBytes) {
-              await reader.cancel();
               throw new CanadaBuysClientError('Response exceeds the configured client limit.', { code: 'RESPONSE_TOO_LARGE', status: response.status });
             }
-            chunks.push(value);
+            if (binaryResponse) chunks.push(value);
+            else textParts.push(decoder.decode(value, { stream: true }));
           }
+        } catch (error) {
+          await reader.cancel().catch(() => {});
+          throw error;
         } finally { reader.releaseLock(); }
       }
-      const joined = new Uint8Array(bytes);
-      let position = 0;
-      for (const chunk of chunks) { joined.set(chunk, position); position += chunk.byteLength; }
-      if (binary && response.ok) return {
-        mime: response.headers.get('content-type') ?? 'application/octet-stream',
-        filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null,
-        body: joined, bytes
-      };
-      const bodyText = new TextDecoder('utf-8', { fatal: true }).decode(joined);
+      if (binaryResponse) {
+        const joined = new Uint8Array(bytes);
+        let position = 0;
+        for (const chunk of chunks) { joined.set(chunk, position); position += chunk.byteLength; }
+        chunks.length = 0;
+        return {
+          mime: response.headers.get('content-type') ?? 'application/octet-stream',
+          filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null,
+          body: joined, bytes
+        };
+      }
+      textParts.push(decoder.decode());
+      const bodyText = textParts.join('');
+      textParts.length = 0;
+      // A successful raw download is retained as text. Parsing its JSON media
+      // type would allocate a second complete report that the caller never uses.
+      if (raw && response.ok) return { mime: response.headers.get('content-type') ?? 'application/octet-stream',
+        filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null, body: bodyText, bytes };
       let value;
       const json = response.headers.get('content-type')?.includes('json');
       if (json && bodyText) {
@@ -81,8 +95,6 @@ export class CanadaBuysClient {
           status: response.status, details: error?.details ?? null,
         });
       }
-      if (raw) return { mime: response.headers.get('content-type') ?? 'application/octet-stream',
-        filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null, body: bodyText, bytes };
       if (!json || !bodyText) throw new CanadaBuysClientError('Expected an operator JSON response.', { code: 'INVALID_RESPONSE', status: response.status });
       return value;
     } finally {
@@ -134,8 +146,8 @@ export class CanadaBuysClient {
   compare(before, after, options) {
     return this.request('/api/compare?' + new URLSearchParams({ before, after }), options);
   }
-  importCsv(rawText, { stream, label, url, retrievedAt, expectedRevision, expectedSha256, ...options } = {}) {
-    return this.request('/api/import', { ...options, method: 'POST', body: { rawText, stream, label, url, retrievedAt, expectedRevision, expectedSha256 } });
+  importCsv(rawText, { stream, label, url, retrievedAt, expectedRevision, expectedSha256, response, coverage, bodyKind, derivation, derivationSha256, ...options } = {}) {
+    return this.request('/api/import', { ...options, method: 'POST', body: { rawText, stream, label, url, retrievedAt, expectedRevision, expectedSha256, response, coverage, bodyKind, derivation, derivationSha256 } });
   }
   createWorkshare(workshare, expectedRevision, options = {}) {
     return this.request('/api/workshares', { ...options, method: 'POST', body: { ...workshare, expectedRevision } });
