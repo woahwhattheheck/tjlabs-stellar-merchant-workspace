@@ -4896,46 +4896,46 @@
     },
     {
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "a2015e81184b90493c3a51e36626397fdc2ba623",
+      "commit": "1f780e16279face21447e775e495b28c32313427",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/OPERATOR.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a2015e81184b90493c3a51e36626397fdc2ba623/stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/OPERATOR.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1f780e16279face21447e775e495b28c32313427/stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/OPERATOR.md",
       "source_kind": "source-file",
       "id": "audit-exchange-operator",
       "kind": "published-source",
       "label": "Complete audit import, correction, review, energy selection and turnover operation",
       "source_registration": "audit-exchange",
-      "git_blob": "614de2bbafe53edcba65ab700f5e553f361f19d3",
-      "sha256": "f2c66f333e7cc9599a3957906b672369726fab46ae58170b9d41e6c50663ea44",
-      "bytes": 35831,
+      "git_blob": "7d7f5d26b8bc145e2ba351ace0cb091e898ef7eb",
+      "sha256": "cae86ab8d30066d1bc0973ffbc22c4d3231336a585e0138a141d9188e58b8d64",
+      "bytes": 36557,
       "product_byte_identity": {
         "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "a2015e81184b90493c3a51e36626397fdc2ba623",
+        "commit": "1f780e16279face21447e775e495b28c32313427",
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/OPERATOR.md",
-        "git_blob": "614de2bbafe53edcba65ab700f5e553f361f19d3",
-        "sha256": "f2c66f333e7cc9599a3957906b672369726fab46ae58170b9d41e6c50663ea44",
-        "bytes": 35831
+        "git_blob": "7d7f5d26b8bc145e2ba351ace0cb091e898ef7eb",
+        "sha256": "cae86ab8d30066d1bc0973ffbc22c4d3231336a585e0138a141d9188e58b8d64",
+        "bytes": 36557
       }
     },
     {
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+      "commit": "1f780e16279face21447e775e495b28c32313427",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/README.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ca93854e582d954bb66077da596b0e5cbee59f3d/stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/README.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1f780e16279face21447e775e495b28c32313427/stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/README.md",
       "source_kind": "source-file",
       "id": "audit-exchange-native-application",
       "kind": "published-source",
       "label": "Native project, editions, review history and editable receiving contracts",
       "source_registration": "audit-exchange",
-      "git_blob": "08b617b6f29eecdeb61fd10a600bef578bdc3073",
-      "sha256": "bfa8658c125b2a96028c340aad6ab02c3634d7caab228b019c5e843a2c0d2a67",
-      "bytes": 8063,
+      "git_blob": "0b6a8c14d69c53f477a5ba66a0d63f2755fc69e2",
+      "sha256": "55ae5b1facc645e40ba5ea0d7afc9caee0c41992e8c7cb8441fd63dcbbbeecca",
+      "bytes": 8323,
       "product_byte_identity": {
         "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "ca93854e582d954bb66077da596b0e5cbee59f3d",
+        "commit": "1f780e16279face21447e775e495b28c32313427",
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/README.md",
-        "git_blob": "08b617b6f29eecdeb61fd10a600bef578bdc3073",
-        "sha256": "bfa8658c125b2a96028c340aad6ab02c3634d7caab228b019c5e843a2c0d2a67",
-        "bytes": 8063
+        "git_blob": "0b6a8c14d69c53f477a5ba66a0d63f2755fc69e2",
+        "sha256": "55ae5b1facc645e40ba5ea0d7afc9caee0c41992e8c7cb8441fd63dcbbbeecca",
+        "bytes": 8323
       }
     },
     {
@@ -15796,46 +15796,46 @@
     },
     {
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "a2015e81184b90493c3a51e36626397fdc2ba623",
+      "commit": "5cb3a3e544701b86a6db3c7640684fd6920ca128",
       "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/AUDIT_EXCHANGE.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a2015e81184b90493c3a51e36626397fdc2ba623/stellar/scf_2026/sf49_data_commissioning/installation-workorders/AUDIT_EXCHANGE.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5cb3a3e544701b86a6db3c7640684fd6920ca128/stellar/scf_2026/sf49_data_commissioning/installation-workorders/AUDIT_EXCHANGE.md",
       "source_kind": "source-file",
       "id": "audit-exchange-customer-installation",
       "kind": "published-source",
       "label": "Complete customer Installation, rendered receiving and engineering handover",
       "source_registration": "audit-exchange",
-      "git_blob": "549dd888d0aa987924762f05cbd6be38ecf6e5c0",
-      "sha256": "02b4af42c60fc9cb6fdffd3106d8e3d8649d990e3f7ad2ba1185c33f5cb851eb",
-      "bytes": 19236,
+      "git_blob": "fac620389bc70028fd789da3419f468d8375fc07",
+      "sha256": "97e69e16db9ef5471dad4b295bddda7544f3e19c501c96716372ded09734003c",
+      "bytes": 23113,
       "product_byte_identity": {
         "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "a2015e81184b90493c3a51e36626397fdc2ba623",
+        "commit": "5cb3a3e544701b86a6db3c7640684fd6920ca128",
         "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/AUDIT_EXCHANGE.md",
-        "git_blob": "549dd888d0aa987924762f05cbd6be38ecf6e5c0",
-        "sha256": "02b4af42c60fc9cb6fdffd3106d8e3d8649d990e3f7ad2ba1185c33f5cb851eb",
-        "bytes": 19236
+        "git_blob": "fac620389bc70028fd789da3419f468d8375fc07",
+        "sha256": "97e69e16db9ef5471dad4b295bddda7544f3e19c501c96716372ded09734003c",
+        "bytes": 23113
       }
     },
     {
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-      "commit": "a2015e81184b90493c3a51e36626397fdc2ba623",
+      "commit": "5cb3a3e544701b86a6db3c7640684fd6920ca128",
       "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/audit-exchange.json",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a2015e81184b90493c3a51e36626397fdc2ba623/stellar/scf_2026/sf49_data_commissioning/installation-workorders/audit-exchange.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5cb3a3e544701b86a6db3c7640684fd6920ca128/stellar/scf_2026/sf49_data_commissioning/installation-workorders/audit-exchange.json",
       "source_kind": "source-file",
       "id": "audit-exchange-installation-profile",
       "kind": "published-source",
       "label": "Selected Installation workorder and complete operating source identities",
       "source_registration": "audit-exchange",
-      "git_blob": "14ecbcab63bc7a8159a04c8fd7e7a7ea6ef794df",
-      "sha256": "e93c7c16ecd12096f3c1b249bebd343512baf7281a1d2f04c4fe6bf6ceec7fed",
-      "bytes": 16165,
+      "git_blob": "03f747392c8a94fdfe2eb8a6965ce5be32b7f85a",
+      "sha256": "01120dc206bec95370728050619232d7de279e5f68d0c0d50bd7c2398b8b2180",
+      "bytes": 18257,
       "product_byte_identity": {
         "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-        "commit": "a2015e81184b90493c3a51e36626397fdc2ba623",
+        "commit": "5cb3a3e544701b86a6db3c7640684fd6920ca128",
         "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/audit-exchange.json",
-        "git_blob": "14ecbcab63bc7a8159a04c8fd7e7a7ea6ef794df",
-        "sha256": "e93c7c16ecd12096f3c1b249bebd343512baf7281a1d2f04c4fe6bf6ceec7fed",
-        "bytes": 16165
+        "git_blob": "03f747392c8a94fdfe2eb8a6965ce5be32b7f85a",
+        "sha256": "01120dc206bec95370728050619232d7de279e5f68d0c0d50bd7c2398b8b2180",
+        "bytes": 18257
       }
     },
     {
@@ -15892,15 +15892,37 @@
       "kind": "published-source",
       "label": "Dated Forecast commercial templates with required cash inputs",
       "source_registration": "commercial-unit-economics"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "1f780e16279face21447e775e495b28c32313427",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/CORRECTIONS.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1f780e16279face21447e775e495b28c32313427/stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/CORRECTIONS.md",
+      "source_kind": "source-file",
+      "id": "audit-exchange-colleague-corrections",
+      "kind": "published-source",
+      "label": "Complete colleague project return, explicit conflict decisions and corrected onward receiving",
+      "source_registration": "audit-exchange",
+      "git_blob": "29df16c55ac88b90232ecd745d55d55f735083e7",
+      "sha256": "539b81cce9b19e3a1eaa21cfdc0ed6d9f8105342835a37f388ba59516a55a8d8",
+      "bytes": 16569,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "1f780e16279face21447e775e495b28c32313427",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/CORRECTIONS.md",
+        "git_blob": "29df16c55ac88b90232ecd745d55d55f735083e7",
+        "sha256": "539b81cce9b19e3a1eaa21cfdc0ed6d9f8105342835a37f388ba59516a55a8d8",
+        "bytes": 16569
+      }
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "b1731368a179aa62a05da53d1f501ac87d3968a5",
-    "bytes": 1265937,
-    "sha256": "bd7446f6ead57a77ac37caca6776778be66594eabc3de473dcf5f05b599bf543",
+    "git_blob": "4be27e90a5673a6f666f2a6ca9e8e8f110bcc1f0",
+    "bytes": 1268108,
+    "sha256": "fbf6bb55a2085f43eacd70ca4c60aa9300b50a1fefec6b2483ebac2aa3450626",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
-    "prior_git_blob": "e01fcb0b8bf26b293c02c1c20ffb4abe49c92d74"
+    "prior_git_blob": "b1731368a179aa62a05da53d1f501ac87d3968a5"
   },
   "narrative_source": {
     "basis": "Original manuscript author's complete October 12 reviewer answer",
@@ -16375,13 +16397,14 @@
             "audit-exchange-merchant",
             "audit-exchange-source-contract",
             "audit-exchange-customer-installation",
-            "audit-exchange-installation-profile"
+            "audit-exchange-installation-profile",
+            "audit-exchange-colleague-corrections"
           ],
           "definition": {
             "path": "grant-products/audit-exchange.json",
-            "bytes": 6345,
-            "sha256": "1e009a10cf01f42a00a37543f289a436b907fe583b7cecbdd7f9fea7f116ce9a",
-            "git_blob": "183004dbb0523a36e81a732c871d22ed56419674"
+            "bytes": 8067,
+            "sha256": "b62a311486743c859205cd2ee0d3b5a8cada9066e2e083e698889c638bb3b405",
+            "git_blob": "6d4afbc0267deac59b24fd0052b562c810bba107"
           }
         },
         {
@@ -18047,8 +18070,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "43abcf021eb98abf2b08b8c00107b69f145e60fb29b1b772ae60b8a695461924",
-    "source_bytes": 1260127,
+    "source_sha256": "fbf6bb55a2085f43eacd70ca4c60aa9300b50a1fefec6b2483ebac2aa3450626",
+    "source_bytes": 1268108,
     "assets": [
       "/grant-companion-editions.mjs",
       "/grant-companion-reading.mjs",
