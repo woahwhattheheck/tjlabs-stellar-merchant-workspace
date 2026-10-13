@@ -66,7 +66,7 @@ The default request contains eleven exact BLS area codes:
 
 The collector first retains the complete current 2025 Q4 San Francisco API slice as a separate diagnostic source. It then retrieves the original quarterly NAICS by-area ZIP for every selected year. It preserves each selected CSV member in full, the original central-directory inventory, member CRC and length, response headers, returned byte ranges and file hashes. HTTP ranges reduce transfer when supported; a server returning the full archive is handled explicitly. Only this operation's temporary archive is removed after its members are retained.
 
-The collector resumes the same directory after interruption. It validates retained complete members, saves a newly returned member before parsing and requires the original archive representation to remain unchanged during continuation. When a publisher revises an unfinished archive, retain that intake and start a new dated source directory for the revised edition. Do not combine different revisions inside one original archive.
+The collector resumes the same directory after interruption. It validates retained complete members and the diagnostic source, saves a newly returned member before parsing and requires the original archive representation to remain unchanged during continuation. Reopening a completed intake validates its whole requested year/area inventory and returns the original manifest byte-for-byte, preserving its completion time and capture SHA without another source request. When a publisher revises an unfinished archive, retain that intake and start a new dated source directory for the revised edition. Do not combine different revisions inside one original archive.
 
 The current API uses `qtrly_estabs`; titled historical archives use `qtrly_estabs_count`. The reader maps that one field to the calculation name. The actual 1990 archive repeats an unused taxable-wage-change heading; the complete original header is preserved and calculation keys must remain unambiguous.
 
@@ -114,6 +114,8 @@ Saving normalizes the complete definition and returns its immutable profile SHA.
 | Industry charts | Five highest current weekly wages | Up to five explicit retained industry codes |
 | Price adjustment | CPIAUCSL, quarter end, report-quarter dollars | Nominal or constant dollars; quarter end or mean; report-quarter or fixed base |
 | Publisher and sponsor | Operator profile | Publisher, methods owner, contact, sponsor name/line and public URL |
+
+The report’s changes are calculated from retained unadjusted QCEW levels. Establishment reclassification, location or ownership updates and publisher revisions can affect those changes. They differ from the administratively adjusted over-the-year changes in the County Employment and Wages news release; see [BLS QCEW questions and answers, question 17](https://www.bls.gov/cew/questions-and-answers.htm). New report models retain this qualification in methodology version 2, which flows into their complete HTML/PDF and Methods Markdown. Existing saved report models without a version retain their original version 1 calculation and rendered bytes when reopened. Numeric aggregation, disclosure and price conventions are unchanged.
 
 These choices are material. A report using third-month employment differs from one using quarterly mean employment. A county/Bay ratio differs from a county/California ratio. A 2019 comparison differs from a 2007 comparison. The saved definition and generated methods make those decisions visible in every edition.
 
@@ -257,10 +259,11 @@ Collect the selected original annual by-area members:
 python3 stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/source_fetch.py \
   --directory /absolute/owned/philadelphia-original-intake \
   --years 2025:2026 \
-  --areas 42017,42029,42045,42091,42101,42000,US000
+  --areas 42017,42029,42045,42091,42101,42000,US000 \
+  --programme stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/examples/philadelphia-programme.json
 ```
 
-Use the collector's complete original intake. Its retained manifest distinguishes the diagnostic API slice from the annual original members used for reports. Continue the same unfinished intake only while its original archive representations are unchanged.
+Use the collector's complete original intake. With `--programme`, its manifest retains the exact programme-file SHA, original operation and selected report periods; the unrelated legacy San Francisco diagnostic is omitted. The selected years must include both report years, plus every history/baseline year required by the profile. Without this option, the collector preserves the existing NEED request and diagnostic behavior. A programme cannot relabel an existing intake; continue that directory with its original selection. Continue the same unfinished intake only while its original archive representations are unchanged.
 
 Run both report editions and the complete receiving journey:
 
