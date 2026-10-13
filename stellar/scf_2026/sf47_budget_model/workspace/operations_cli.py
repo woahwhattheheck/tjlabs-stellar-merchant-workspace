@@ -235,6 +235,28 @@ def register(subparsers, common):
             target.add_argument("--expected-preview-sha256", required=True)
         else:
             target.add_argument("--expected-version", type=int, required=True)
+    command("expenses", "Read issued expenses, accountant references and reviewed cost attribution", case=True, output=True)
+    target = command("expense-preview", "Review an original issued buyer source or accountant-delivery ZIP", case=True, output=True)
+    target.add_argument("--file", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target = command("expense-receive", "Retain the exact reviewed issued source and original bookkeeping history", case=True, output=True)
+    mutation(target, version=True)
+    target.add_argument("--file", required=True)
+    target.add_argument("--expected-preview-sha256", required=True)
+    target = command("expense-save", "Record explicit native cost splits and their original valuation", case=True, output=True)
+    mutation(target, version=True)
+    target.add_argument("--data", required=True, help="JSON allocation inputs including original intake and row SHA")
+    for verb in ("expense-review", "expense-reopen", "expense-void"):
+        target = command(verb, "Apply the selected attribution's recorded review transition", case=True, output=True)
+        mutation(target, version=True)
+        target.add_argument("--attribution", required=True)
+        target.add_argument("--expected-content-sha256", required=True)
+    target = command("expense-request", "Read the original receipt for an exact retained expense request", case=True, output=True)
+    target.add_argument("--request", required=True, help="Complete original request JSON, including its stable requestId")
+    target = command("expense-export", "Export the retained expense register, sources or readable review", case=True)
+    target.add_argument("--format", choices=("attributions", "sources", "html"), required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--output", required=True)
     target = command("buyer-preview", "Review original SF88 Inbox or Node accounting source for this case", case=True, output=True)
     target.add_argument("--file", required=True, help="Original private SF88 Inbox handoff or Node Operation_Accounting.json")
     target.add_argument("--expected-version", type=int, required=True)
@@ -900,6 +922,43 @@ def operate(workspace, args):
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
                 "requestId": args.request_id, "note": args.note, "action": "settlement.correct",
                 "data": {**correction, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action == "expenses":
+        result = ops.expense_attribution(args.case)
+    elif action in ("expense-preview", "expense-receive"):
+        original = {"filename": Path(args.file).name,
+                    "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")}
+        if action == "expense-preview":
+            result = ops.preview_expense(args.case, {"expectedVersion": args.expected_version, **original})
+        else:
+            result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+                "requestId": args.request_id, "note": args.note, "action": "expense.receive",
+                "data": {**original, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action == "expense-save":
+        try:
+            data = json.loads(read_bytes(args.data, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Use complete UTF-8 allocation input JSON.", 422, "INVALID_JSON") from exc
+        result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+            "requestId": args.request_id, "note": args.note, "action": "expense.save", "data": data})
+    elif action in ("expense-review", "expense-reopen", "expense-void"):
+        result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+            "requestId": args.request_id, "note": args.note, "action": action.replace("-", "."),
+            "data": {"id": args.attribution, "expectedContentSha256": args.expected_content_sha256}})
+    elif action == "expense-request":
+        try:
+            request = json.loads(read_bytes(args.request, 12 * 1024 * 1024))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Use the complete original request JSON.", 422, "INVALID_JSON") from exc
+        result = ops.expense_request(args.case, request)
+    elif action == "expense-export":
+        names = {"attributions": "expense-attributions.csv", "sources": "expense-sources.csv",
+                 "html": "expense-attribution.html"}
+        with workspace.mutex:
+            current = ops.read(args.case)
+            if current["program"]["version"] != args.expected_version:
+                raise Problem("The Operations case changed; read its current expense attribution.", 409, "OPERATIONS_CONFLICT")
+            raw = ops.expense_file(args.case, names[args.format])
+        return {"caseId": args.case, "version": args.expected_version, "output": publish(args.output, raw)}
     elif action in ("buyer-preview", "buyer-receive"):
         original = {"filename": Path(args.file).name,
                     "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")}

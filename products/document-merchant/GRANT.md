@@ -62,6 +62,15 @@ Supplier consumption and the merchant's customer price have their own recorded b
 
 Receive the completed immutable document-product distribution into the existing Runtime Workspace and reopen Applications to load its current catalogue. For customer commissioning, operate the actual merchant factory and customer workspace: start the managed service, fulfill the selected original HTML or Markdown through the existing batch, receive all four files, attach the output to its original task, and reopen the same completed job after stopping and restarting the application.
 
+### Continue an existing merchant installation
+
+An existing HTTP commerce installation can commission the document service from its retained original setup. The [complete commissioning workflow](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/58653a479f4a87f58f4fef26cfab3dc387ffcd08/products/document-merchant/COMMISSIONING.md) selects one actual native offer, preserves its asset, recipient, amount and payment flow, and reuses the original payer, operator budget and native facilitator. The selected original commerce intent supplies the service configuration; each new customer document has its own original Request, Checkout and Jobs identity under the actual business task.
+
+The same preparation creates the complete document application and private customer options, including the existing nested operator configuration and allowed source roots. It also supplies the direct settings for the installed customer browser and the existing Case Desk PDF receiving flow. A saved customer HTML edition can therefore proceed through its actual merchant quote, native payment, complete PDF/source receipt and attachment to the original case item while retaining its source link. Closing the service drains the original Jobs owner before releasing the native facilitator's signer ownership. Subsequent service starts reuse that merchant state and customer history.
+
+This commissioning arm connects the delivered document product to an existing merchant's operating setup within the same funded service-adaptation work. Completed customer operations retain the original parent-task, native-purchase, supplier-unit and PDF-page distinctions.
+
+
 ### Commissioning within the existing funded work
 
 The workorder specifies the paying organization, allowed input formats, required document output, actual supplier account, native merchant resource and price, receiving application, delivery destination and support responsibility. Initial implementation configures that useful service and hands it to a second operator. A subsequent customer document or explicitly selected batch creates the next billable task under its advertised terms.

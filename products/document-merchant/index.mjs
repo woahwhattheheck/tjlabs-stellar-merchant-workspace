@@ -49,3 +49,7 @@ export {
   DOCUMENT_ASSEMBLY_MAX_FILES,documentAssemblySettingsSchema,normalizeDocumentAssemblyInput,
   documentAssemblyInputSchema,normalizeDocumentPdfSource,buildDocumentAssemblyRequest
 } from './contracts.mjs';
+
+export {DOCUMENT_COMMISSIONING_SCHEMA,DOCUMENT_COMMISSIONING_REVIEW_SCHEMA,
+  reviewDocumentCommissioning,prepareDocumentCommissioning,inspectDocumentCommissioning,
+  openCommissionedDocumentService} from './commissioning.mjs';

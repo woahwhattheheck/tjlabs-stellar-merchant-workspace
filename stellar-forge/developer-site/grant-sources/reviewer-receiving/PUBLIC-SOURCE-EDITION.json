@@ -1,0 +1,154 @@
+{
+  "schema": "stellar-forge.grant-reviewer-public-source-edition.v1",
+  "scope": "Complete public evidence edition of six original source files; not a runnable source/runtime closure.",
+  "original_input": {
+    "repository": "woahwhattheheck/Commons",
+    "git_blob": "18c535ae2636737ecd33a540cf180755bf8c9802",
+    "bytes": 1551592,
+    "sha256": "abe95ef70b7c7fe91f83884dc3f1a4d6f274e4e715c468b31fcbd0c1dd178699"
+  },
+  "distribution": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "directory": "stellar-forge/developer-site/grant-sources/reviewer-receiving",
+    "component": "stellar-forge/developer-site",
+    "consumer": "Existing grant-reviewer product; original grant-compose and source registration."
+  },
+  "files": [
+    {
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/REQUIRED-SOURCE-SELECTION.json",
+      "bytes": 1316825,
+      "sha256": "0df0a2ac352d1875a1a8c9586cc72e1434117aced00c7ae79f47e73f91ebc85c",
+      "git_blob": "46d08c4395ba753c72e0e1f79742366b8527c290",
+      "source_id": "reviewer-restored-source-selection",
+      "byte_identical_to_origin": false,
+      "origin": {
+        "repository": "woahwhattheheck/commons",
+        "commit": "b9d4636efe76311666d308dd4323210d4185bd7c",
+        "path": "tools/scf_review_native_resume_20261012/REQUIRED-SOURCE-SELECTION.json",
+        "bytes": 1317065,
+        "sha256": "59d188a39026a5deb68379022b3600af0a8d35085cfdc8d876a1731392a8dc73",
+        "git_blob": "b28e08e6ae0a7f30f1e1b77e0b17c63bd6e0e119"
+      },
+      "public_edition_omissions": [
+        "/source_root",
+        "/source_controller"
+      ]
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/RUN_RECOVERED_REVIEWER.py",
+      "bytes": 24074,
+      "sha256": "2356bcebd2ab91e76d001d80fa908822a924b3e10a82f8bc8b729004f322ad7b",
+      "git_blob": "d986078e3d65e5a98b36f4f65d895ca78f2cd158",
+      "source_id": "reviewer-restored-native-runner",
+      "byte_identical_to_origin": true,
+      "origin": {
+        "repository": "woahwhattheheck/commons",
+        "commit": "b9d4636efe76311666d308dd4323210d4185bd7c",
+        "path": "tools/scf_review_native_resume_20261012/RUN_RECOVERED_REVIEWER.py",
+        "bytes": 24074,
+        "sha256": "2356bcebd2ab91e76d001d80fa908822a924b3e10a82f8bc8b729004f322ad7b",
+        "git_blob": "d986078e3d65e5a98b36f4f65d895ca78f2cd158"
+      },
+      "public_edition_omissions": []
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/CUSTOMER_RECEIVING.md",
+      "bytes": 21912,
+      "sha256": "9964f7f45c007d027131a3e37137769dada4913c7bbe757488ca5791dbf6e13f",
+      "git_blob": "82d6bef32a276921e45775cbd6c47186f3499486",
+      "source_id": "reviewer-customer-receiving",
+      "byte_identical_to_origin": false,
+      "origin": {
+        "repository": "woahwhattheheck/commons",
+        "commit": "61ad7c23bffb0627f9013f04efc8a48914e687fb",
+        "path": "tools/scf_review_native_resume_20261012/CUSTOMER_RECEIVING.md",
+        "bytes": 21363,
+        "sha256": "fa4611d37f75320e3fd209bc6f77d73504f874680f8c9abcd8ab07aed5a1b8f7",
+        "git_blob": "d5222f99deec4e0bf749c465c25bb9e67eaf6566"
+      },
+      "public_edition_omissions": [
+        "Two authenticated checkpoint download URLs"
+      ]
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/RECEIVING-RELEASE.json",
+      "bytes": 4487,
+      "sha256": "b34c8b4b44b0a72908f336e3f810a056af4982c92334c4d6d7fc2544642e3cd7",
+      "git_blob": "332057b4a74ea556ffe9ff3245eacd9d19c2825c",
+      "source_id": "reviewer-receiving-release",
+      "byte_identical_to_origin": false,
+      "origin": {
+        "repository": "woahwhattheheck/commons",
+        "commit": "61ad7c23bffb0627f9013f04efc8a48914e687fb",
+        "path": "tools/scf_review_native_resume_20261012/RECEIVING-RELEASE.json",
+        "bytes": 4850,
+        "sha256": "28bbf1dea9469b12be851f8660f064f190d7d058ec8e5284e1b77d7facedeb0c",
+        "git_blob": "3d18d38117c76c33ffad76b96fb71e4c3c373342"
+      },
+      "public_edition_omissions": [
+        "/receiving/operation",
+        "/receiving/stages/workbench/checkpoint/library_file_id",
+        "/receiving/stages/workbench/checkpoint/file_id",
+        "/receiving/stages/merchant/checkpoint/library_file_id",
+        "/receiving/stages/merchant/checkpoint/file_id"
+      ]
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.mjs",
+      "bytes": 22239,
+      "sha256": "9e5f23538326540ee83281f7484d856796c5f28fa04efe99e23209666bad086e",
+      "git_blob": "ba1f9b0c3a88962fa7a7e9955daa50bc2c9398a6",
+      "source_id": "reviewer-applications-receiving",
+      "byte_identical_to_origin": true,
+      "origin": {
+        "repository": "woahwhattheheck/commons",
+        "commit": "ca4a20ccdd1394677d6c75ce9f367f7e0b90af74",
+        "path": "tools/scf_review_native_resume_20261012/APPLICATIONS_RECEIVING.mjs",
+        "bytes": 22239,
+        "sha256": "9e5f23538326540ee83281f7484d856796c5f28fa04efe99e23209666bad086e",
+        "git_blob": "ba1f9b0c3a88962fa7a7e9955daa50bc2c9398a6"
+      },
+      "public_edition_omissions": []
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-sources/reviewer-receiving/APPLICATIONS_RECEIVING.md",
+      "bytes": 15276,
+      "sha256": "d810b3b3917d15392723f769c94e2f3088f16eb49ee559f1c4b27f46a525cd7a",
+      "git_blob": "f55c2186f07b81e21c8834603441bb12ca41167f",
+      "source_id": "reviewer-applications-operating",
+      "byte_identical_to_origin": true,
+      "origin": {
+        "repository": "woahwhattheheck/commons",
+        "commit": "ca4a20ccdd1394677d6c75ce9f367f7e0b90af74",
+        "path": "tools/scf_review_native_resume_20261012/APPLICATIONS_RECEIVING.md",
+        "bytes": 15276,
+        "sha256": "d810b3b3917d15392723f769c94e2f3088f16eb49ee559f1c4b27f46a525cd7a",
+        "git_blob": "f55c2186f07b81e21c8834603441bb12ca41167f"
+      },
+      "public_edition_omissions": []
+    }
+  ],
+  "retained_operating_state": {
+    "workbench_phases_complete": 14,
+    "merchant_phases_complete": 12,
+    "console_phases_complete": 2,
+    "console_final_complete": false,
+    "additive_applications_native_complete": false,
+    "new_payment_transactions": 0
+  },
+  "financial_basis": {
+    "requested_usd": 38000,
+    "prospective_hours": 400,
+    "delivery_days_from_actual_award_acceptance": 150,
+    "packages": 6,
+    "baseline_testnet_purchases": 18,
+    "baseline_stroops": 411000
+  },
+  "identity_rules": [
+    "Original SHA/Git values describe the exact private origin; public values describe these projected bytes.",
+    "RECEIVING-RELEASE.source.selection_sha256 remains the original operated selection. It is not the SHA of this public index.",
+    "No purchase packet, customer result, native database, checkpoint body, connection token or credential is embedded in these six files.",
+    "The selected source index describes 2377 paths and 29180576 source bytes; it does not contain those file bodies.",
+    "No source file in the published input is silently replaced by its public projection in an original native operation."
+  ]
+}

@@ -136,7 +136,8 @@
     "stellar/scf-starforge-20261009/native-facilitator",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
-    "stellar/scf-starforge-20261009/distribution/python-runtime"
+    "stellar/scf-starforge-20261009/distribution/python-runtime",
+    "stellar/scf-starforge-20261009/sf66-demo-launcher"
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/distribution/browser-assets.mjs",
@@ -210,7 +211,9 @@
     "products/document-merchant/GRANT.md",
     "products/document-merchant/ASSEMBLY.md",
     "products/document-merchant/assembly.d.mts",
-    "products/document-merchant/examples/ordered-pdfs.json"
+    "products/document-merchant/examples/ordered-pdfs.json",
+    "products/document-merchant/COMMISSIONING.md",
+    "products/document-merchant/commissioning.d.mts"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

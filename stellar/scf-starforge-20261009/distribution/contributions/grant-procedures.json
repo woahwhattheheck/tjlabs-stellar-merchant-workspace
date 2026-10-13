@@ -19,9 +19,15 @@
       "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/grant_procedures_native.d.mts",
       "import": "./source/stellar/scf_2026/sf47_budget_model/workspace/grant_procedures_native.mjs"
     },
-    "./grant/procedures/receiving": "./source/stellar/scf_2026/sf47_budget_model/workspace/grant_procedures_receiving.mjs"
+    "./grant/procedures/receiving": "./source/stellar/scf_2026/sf47_budget_model/workspace/grant_procedures_receiving.mjs",
+    "./operator/grant-reporting/native": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-native.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-native.mjs"
+    }
   },
   "supportFiles": [
+    "stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-native.mjs",
+    "stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-native.d.mts",
     "stellar/scf_2026/sf47_budget_model/workspace/grant_procedures.d.mts",
     "stellar/scf_2026/sf47_budget_model/workspace/grant_procedures_native.d.mts",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_procedures.mjs",
