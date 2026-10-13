@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "geoapify",
   "title": "Geoapify batch review and customer delivery",
-  "description": "Original CSV/JSON source, retained asynchronous jobs, complete candidate decisions, frozen SF30 editions, original merchant publishing and customer reopening.",
+  "description": "Original CSV/JSON source, retained asynchronous jobs, complete candidate decisions, frozen SF30 editions, original merchant publishing and customer reopening. Complete retained customer editions prepare and reopen the original Workshare/Customer Installation.",
   "base": {
     "commands": [
       "installation",
@@ -111,14 +111,24 @@
     "stellar/scf-starforge-20261009/sf66-demo-launcher/commerce-jsonrpc-recovery.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/README.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/server.d.mts",
-    "products/geoapify/CUSTOMER_ONBOARDING.md"
+    "products/geoapify/CUSTOMER_ONBOARDING.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/geoapify-customer.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/GEOAPIFY_CUSTOMER.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/geoapify-installation.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/geoapify-installation-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/geoapify-installation-source.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/profiles.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/README.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/package.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Original CSV/JSON source, retained asynchronous jobs, complete candidate decisions, frozen SF30 editions, original merchant publishing and customer reopening.",
+    "description": "Original CSV/JSON source, retained asynchronous jobs, complete candidate decisions, frozen SF30 editions, original merchant publishing and customer reopening. Complete retained customer editions prepare and reopen the original Workshare/Customer Installation.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

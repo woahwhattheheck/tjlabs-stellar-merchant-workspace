@@ -72,18 +72,18 @@ export async function readGeoapifyWorkspaceConfiguration(path) {
   if (raw.schema !== GEOAPIFY_WORKSPACE_CONNECTION_SCHEMA || !plain(raw.workspaces) ||
       !Object.keys(raw.workspaces).length || Object.keys(raw.workspaces).length > 32)
     throw failure('CONFIGURATION_ERROR', 'Declare 1–32 original Geoapify workspaces.');
-  const base = dirname(path), workspaces = Object.create(null), seen = new Set();
+  const base = dirname(path), workspaces = Object.create(null), seen = new Set(), seenPreparations = new Set();
   for (const [name, input] of Object.entries(raw.workspaces)) {
     identifier(name, 'Geoapify workspace alias');
-    exact(input, ['label', 'directory', 'apiKeyEnv', 'timeoutMs', 'imports', 'merchants', 'buyerWorkspaces', 'runtime', 'facilitators'], ['directory']);
+    exact(input, ['label', 'directory', 'apiKeyEnv', 'timeoutMs', 'imports', 'merchants', 'buyerWorkspaces', 'runtime', 'facilitators', 'installations'], ['directory']);
     const directory = await realpath(hostPath(input.directory, base));
     await privateSupportDirectory(directory);
-    if (seen.has(directory)) throw failure('CONFIGURATION_ERROR', 'Give each original address workspace one alias.');
+    if (seen.has(directory)||seenPreparations.has(directory)) throw failure('CONFIGURATION_ERROR', 'Give each original address workspace one alias.');
     seen.add(directory);
     if (input.apiKeyEnv !== undefined && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(input.apiKeyEnv))
       throw failure('CONFIGURATION_ERROR', 'Use an existing environment-variable name for the provider key.');
     const timeoutMs = count(input.timeoutMs ?? 120000, 'Provider timeout', 1000, 900000);
-    const imports = Object.create(null), merchants = Object.create(null), buyers = Object.create(null);
+    const imports = Object.create(null), merchants = Object.create(null), buyers = Object.create(null), installations = Object.create(null);
     for (const [key, item] of entries(input.imports, 'retained imports')) {
       if (!plain(item) || !['intake','response','package'].includes(item.kind))
         throw failure('CONFIGURATION_ERROR', 'An import is an original CSV/JSON intake, generic-batch response, or complete package.');
@@ -119,8 +119,21 @@ export async function readGeoapifyWorkspaceConfiguration(path) {
     }
     const facilitators=input.facilitators===undefined?undefined:
       (await import('../../stellar/scf-starforge-20261009/sf82-seller-pilot/release-facilitator.mjs')).normalizeFacilitatorProfiles(input.facilitators);
+    for (const [key, item] of entries(input.installations, 'customer installations')) {
+      exact(item, ['label','directory','seed','bindings','attachments'], ['directory']);
+      const selectedDirectory=hostPath(item.directory,base);
+      if(await realpath(selectedDirectory)!==selectedDirectory)
+        throw failure('CONFIGURATION_ERROR','Use a canonical owned private Installation directory.');
+      await privateSupportDirectory(selectedDirectory);
+      if(seen.has(selectedDirectory)||seenPreparations.has(selectedDirectory))
+        throw failure('CONFIGURATION_ERROR','Give each Installation preparation its own private directory.');
+      const selected={label:line(item.label??key),directory:selectedDirectory};
+      for(const field of ['seed','bindings','attachments'])
+        if(item[field]!==undefined)selected[field]=await declaredFile(item[field],base);
+      installations[key]=selected;seenPreparations.add(selectedDirectory);
+    }
     workspaces[name] = { label: line(input.label ?? name), directory, apiKeyEnv: input.apiKeyEnv ?? 'GEOAPIFY_API_KEY',
-      timeoutMs, imports, merchants, buyerWorkspaces: buyers, runtime: runtime(input.runtime),facilitators };
+      timeoutMs, imports, merchants, buyerWorkspaces: buyers, runtime: runtime(input.runtime),facilitators,installations };
   }
   return { workspaces };
 }
@@ -197,7 +210,8 @@ export class MerchantGeoapifyWorkspaces {
         workspace, label: entry.label, state: this.#handles.has(workspace) ? 'OPEN' : 'CLOSED',
         imports: Object.entries(entry.imports).map(([sourceImport, item]) => ({ sourceImport, label: item.label, kind: item.kind })),
         merchants: Object.entries(entry.merchants).map(([profile, item]) => ({ profile, label: item.label, origin: item.origin, path: item.path, payment: item.payment })),
-        buyerWorkspaces: Object.entries(entry.buyerWorkspaces).map(([buyerWorkspace, item]) => ({ buyerWorkspace, label: item.label }))
+        buyerWorkspaces: Object.entries(entry.buyerWorkspaces).map(([buyerWorkspace, item]) => ({ buyerWorkspace, label: item.label })),
+        installations: Object.entries(entry.installations??{}).map(([preparation,item])=>({preparation,label:item.label,seedConfigured:Boolean(item.seed),bindingsConfigured:Boolean(item.bindings),attachmentsConfigured:Boolean(item.attachments)}))
       })) };
     const configuration = this.#declared(name), pending = this.#handles.get(name);
     if (!pending) return { workspace: name, label: configuration.label, state: 'CLOSED' };
@@ -227,6 +241,29 @@ export class MerchantGeoapifyWorkspaces {
           const file = await handle.operator.readExport(args.id, args.filename);
           return { bytes: await exactRetainedBytes(file.path, file), name: args.filename, type: file.contentType };
         }
+        if (args.kind === 'installation-template') {
+          const selected=handle.configuration.installations?.[identifier(args.id,'Installation preparation')];
+          if(!selected)throw failure('GEOAPIFY_INSTALLATION_NOT_CONFIGURED','Choose a declared original Installation preparation.');
+          if(!args.expectedSha256||args.filename!==undefined&&args.filename!=='bindings.json')
+            throw failure('INVALID_PARAMS','Choose bindings.json with the exact template SHA-256 returned by template.');
+          const path=join(selected.directory,'bindings.json');
+          if(await realpath(path)!==path)throw failure('GEOAPIFY_RETAINED_CHANGED','The retained bindings template moved from its original path.');
+          return {bytes:await fileBytes(path,2*1024*1024),name:'bindings.json',type:'application/json; charset=utf-8'};
+        }
+        if (args.kind === 'installation') {
+          const selected=handle.configuration.installations?.[identifier(args.id,'Installation preparation')];
+          if(!selected)throw failure('GEOAPIFY_INSTALLATION_NOT_CONFIGURED','Choose a declared original Installation preparation.');
+          if(typeof args.filename!=='string')throw failure('INVALID_PARAMS','Choose a complete original filename from the reopened preparation.');
+          const {reopenGeoapifyInstallation}=await import('../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/geoapify-installation.mjs');
+          const complete=await reopenGeoapifyInstallation({directory:selected.directory});
+          const descriptor=[...(complete.inputs??[]),...(complete.outputs??[])].find(f=>f.name===args.filename);
+          if(!descriptor)throw failure('GEOAPIFY_INSTALLATION_FILE_NOT_FOUND','Select an exact original input or output returned by reopening.');
+          const path=join(selected.directory,descriptor.name);
+          if(await realpath(path)!==path)throw failure('GEOAPIFY_RETAINED_CHANGED','The retained Installation member is no longer at its canonical original path.');
+          return {bytes:await exactRetainedBytes(path,descriptor),name:descriptor.name,
+            type:descriptor.name.endsWith('.gz')?'application/gzip':descriptor.name.endsWith('.html')?'text/html; charset=utf-8':
+              descriptor.name.endsWith('.csv')?'text/csv; charset=utf-8':descriptor.name.endsWith('.json')||descriptor.name.endsWith('.geojson')?'application/json; charset=utf-8':'text/plain; charset=utf-8'};
+        }
         if (args.kind === 'provider-request') {
           const {result}=await handle.operator.act('provider.request',{id:args.id});
           const bytes=Buffer.from(JSON.stringify(result.request,null,2)+'\n');
@@ -247,6 +284,63 @@ export class MerchantGeoapifyWorkspaces {
       return { ...result, state: sourceView(result.state) };
     };
     switch (name) {
+      case 'merchant_geoapify_installation': {
+        const payload=args.payload??{};
+        if(!plain(payload))throw failure('INVALID_PARAMS','Use the complete Installation action selection.');
+        const actions=['template','inspect','prepare','resume','reopen'];
+        if(!actions.includes(args.action))throw failure('INVALID_PARAMS','Choose template, inspect, prepare, resume or reopen.');
+        const sourceFields=['sourceImport','exportId','editionId','expectedArchiveSha256'];
+        only(payload,args.action==='inspect'?[...sourceFields,'offset','limit']:
+          args.action==='prepare'?['preparation',...sourceFields,'offset','limit']:
+          ['preparation','offset','limit']);
+        const offset=count(payload.offset??0,'Installation file offset',0,10000),limit=count(payload.limit??25,'Installation file page size',1,100);
+        let selected;
+        if(args.action!=='inspect'){
+          selected=entry.installations?.[identifier(payload.preparation,'Installation preparation')];
+          if(!selected)throw failure('GEOAPIFY_INSTALLATION_NOT_CONFIGURED','Choose a host-declared original Installation preparation.');
+        }
+        let archivePath;
+        if(args.action==='inspect'||args.action==='prepare'){
+          if(Boolean(payload.sourceImport)===Boolean(payload.exportId))
+            throw failure('INVALID_PARAMS','Select exactly one original workspace export or declared full-package import.');
+          originalId(payload.editionId);
+          if(typeof payload.expectedArchiveSha256!=='string'||!/^[a-f0-9]{64}$/.test(payload.expectedArchiveSha256))
+            throw failure('INVALID_PARAMS','Select the complete original archive SHA-256.');
+          if(payload.sourceImport){
+            const imported=entry.imports[identifier(payload.sourceImport,'Original package import')];
+            if(!imported||imported.kind!=='package')throw failure('GEOAPIFY_IMPORT_NOT_CONFIGURED','Choose a declared complete original Geoapify package.');
+            archivePath=imported.file;
+          }else{
+            const exported=await original.readExport(originalId(payload.exportId),'starforge-geoapify.json.gz');
+            if(exported.sha256!==payload.expectedArchiveSha256)throw failure('GEOAPIFY_RETAINED_CHANGED','The chosen source export has a different archive SHA-256.');
+            archivePath=exported.path;
+          }
+        }
+        if(args.action==='inspect'){
+          const {inspectGeoapifyInstallationSource}=await import('../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/geoapify-installation-source.mjs');
+          const {source}=await inspectGeoapifyInstallationSource(await fileBytes(archivePath,256*1024*1024),
+            {editionId:payload.editionId,expectedArchiveSha256:payload.expectedArchiveSha256});
+          const {files=[],...summary}=source,listed=pageRows(files,offset,limit);
+          return {source:{...summary,files:listed.values,filesPage:listed.page}};
+        }
+        const native=await import('../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/geoapify-installation.mjs');
+        let result;
+        if(args.action==='template'){
+          if(!selected.seed)throw failure('GEOAPIFY_INSTALLATION_INPUT_NOT_CONFIGURED','Declare the original complete Workshare seed for this preparation.');
+          result=await native.templateGeoapifyInstallation({directory:selected.directory,seedPath:selected.seed});
+        }else if(args.action==='prepare'){
+          if(!selected.seed)throw failure('GEOAPIFY_INSTALLATION_INPUT_NOT_CONFIGURED','Declare the original complete Workshare seed for this preparation.');
+          result=await native.prepareGeoapifyInstallation({directory:selected.directory,archivePath,editionId:payload.editionId,
+            expectedArchiveSha256:payload.expectedArchiveSha256,seedPath:selected.seed,bindingsPath:selected.bindings??join(selected.directory,'bindings.json'),
+            ...(selected.attachments?{attachmentsPath:selected.attachments}:{})});
+        }else if(args.action==='resume')result=await native.prepareGeoapifyInstallation({directory:selected.directory});
+        else result=await native.reopenGeoapifyInstallation({directory:selected.directory});
+        const {directory:privateDirectory,...summary}=result;
+        for(const key of ['inputs','outputs']){
+          if(Array.isArray(summary[key])){const listed=pageRows(summary[key],offset,limit);summary[key]=listed.values;summary[key+'Page']=listed.page;}
+        }
+        return {preparation:payload.preparation,...summary};
+      }
       case 'merchant_geoapify_source':
         return call('source.inspect',{...(args.sourceSha256===undefined?{}:{sourceSha256:args.sourceSha256}),
           offset:count(args.offset??0,'Source offset',0,1000000),limit:count(args.limit??25,'Source page size',1,250)});

@@ -3,12 +3,13 @@ import {mkdir,open,rename,unlink,lstat,realpath} from 'node:fs/promises';
 import {resolve,join,dirname,basename,relative,isAbsolute,sep} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
-import {gzipSync,gunzipSync} from 'node:zlib';
+import {gzipSync} from 'node:zlib';
 import {loadDatasetConfig} from '../dataset-handler.mjs';
 import {buildDatasetSellerConfig,datasetQueryParameters} from '../dataset-cli.mjs';
 import {hash,canonical,json,object,own,fail,parseJSON,text,integer,readCsvRecords,readJSONSourceRecords,
   createIntake,inspectIntake,prepareBatch,inspectRequest,sanitizeReply,inspectReply,reviewIntake,validateDecision,buildRows,csvBytes} from './source.mjs';
 import {reviewHtml,sourceComparisonHtml} from './report.mjs';
+import {inspectGeoapifyPackage} from './package.mjs';
 import {compareSources,inheritedMatches,reusableDecisions,validateComparison} from './source-history.mjs';
 const SCHEMA='stellar-forge.geoapify-workspace.v1',PACKAGE='stellar-forge.geoapify-package.v1';
 const MAX=256*1024*1024,HASH=/^[a-f0-9]{64}$/,now=()=>new Date().toISOString();
@@ -364,6 +365,9 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
       geojson:await immutable(prefix+'/dataset.geojson',json(output.geojson)),
       report:await immutable(prefix+'/review.html',Buffer.from(reviewHtml({intake,review:reviewed,edition:{id,name,...description,scope:basis.scope},rows:output.rows}))),
       sourceColumns:basis.sourceColumns,reviewSummary:reviewed.summary,queryParameters:datasetQueryParameters(description)};
+    const source=sourceEntry(state.intake.sha256);
+    if(source.comparison){const compared=await comparisonData(source);
+      record.comparisonReport=await immutable(prefix+'/source-comparison.html',Buffer.from(sourceComparisonHtml({...compared,edition:record})));}
     await commit(s=>{s.editions.push(record);s.activeEditionId=id;});
     return {edition:record,dataset:description,preview:model.handle({query:{limit:'50'}})};
   }
@@ -371,10 +375,21 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     const entries=new Map(),add=async d=>{if(d&&!entries.has(d.file))entries.set(d.file,await read(d));};
     for(const source of sourceEntries()){await add(source.intake);await add(source.intake.original);await add(source.comparison);}
     for(const job of state.jobs){await add(job.request);for(const e of job.events)await add(e.response);}
-    for(const e of state.editions)for(const key of ['csv','config','basis','review','geojson','report'])await add(e[key]);
+    for(const e of state.editions)for(const key of ['csv','config','basis','review','geojson','report','comparisonReport'])await add(e[key]);
     return entries;
   }
   async function exportPackage(input={}){
+    // Preserve complete derived comparison reports inside the workspace archive as well.
+    // Earlier frozen IDs/files remain unchanged; this only retains their additional report.
+    const reports=[];
+    for(const edition of state.editions){
+      const selectedSource=sourceEntry(boundSource(edition));
+      if(!selectedSource.comparison||edition.comparisonReport)continue;
+      const compared=await comparisonData(selectedSource),report=await immutable('editions/'+edition.id+'/source-comparison.html',
+        Buffer.from(sourceComparisonHtml({...compared,edition})));
+      reports.push({id:edition.id,report});
+    }
+    if(reports.length)await commit(s=>{for(const item of reports)s.editions.find(e=>e.id===item.id).comparisonReport=item.report;});
     const entries=await retainedFiles(),snapshot={...state,exports:[]},portable={schema:PACKAGE,exportedAt:now(),state:snapshot,
       files:[...entries].map(([file,b])=>({...descriptor(file,b),base64:b.toString('base64')}))};
     const portableBytes=json(portable);
@@ -395,9 +410,8 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
       values['query.json']=json({schema:'stellar-forge.dataset-query.v1',snapshot:edition.snapshot,query:state.queries[edition.id]?.initialQuery??{limit:'50'},queryParameters:datasetQueryParameters(model.describe())});
       if(state.merchant)values['seller.json']=json(await buildDatasetSellerConfig(model,state.merchant));
       if(editionSource.comparison){
-        const c=await comparisonData(editionSource);
         values['source-comparison.json']=await read(editionSource.comparison);
-        values['source-comparison.html']=Buffer.from(sourceComparisonHtml({...c,edition}));
+        values['source-comparison.html']=await read(edition.comparisonReport);
       }
       for(const [name,b] of entries)values['raw/'+name]=b;
       values['README.md']=Buffer.from('# Geoapify address review delivery\n\nOpen review.html for the complete frozen edition. Dataset and GeoJSON keep every selected original record, original and proposed coordinates, confidence, match type, source attribution and retained reviewer decision. Review state is explicit; no score automatically approves an address.\n\nImport starforge-geoapify.json.gz into an empty Geoapify workspace to restore original source, requests, provider jobs, complete candidates, review history and dataset editions. Continue original pending job IDs; never repeat an uncertain POST. The provider retains completed jobs for24hours, so retain returned results locally.\n\nThe original merchant publisher reads dataset.csv/dataset.json/source.json and optional seller.json from this directory. Publish only source and provider data you are permitted to distribute and preserve the original attribution fields.\n');
@@ -411,76 +425,13 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
   }
   async function restore(input){
     if(state.intake||state.jobs.length||state.editions.length)throw fail('RESTORE','Restore into an empty Geoapify workspace.',409);
-    const raw=await fileBytes(resolve(text(input.path,'Complete workspace package path'))),packet=parseJSON(gunzipSync(raw,{maxOutputLength:512*1024*1024}));
-    if(packet.schema!==PACKAGE||!Array.isArray(packet.files)||packet.files.length>10000)throw fail('PACKAGE','Read the original full Geoapify package.');
-    const saved=packet.state;shape(saved);const entries=new Map();let total=0;
-    for(const item of packet.files){
-      safeFile(item.file);if(!/^(source|requests|provider|editions)\//.test(item.file)||entries.has(item.file)||typeof item.base64!=='string')throw fail('PACKAGE','Invalid or duplicate retained file path.');
-      const b=Buffer.from(item.base64,'base64');total+=b.length;
-      if(total>512*1024*1024||b.toString('base64')!==item.base64||b.length!==item.bytes||hash(b)!==item.sha256)throw fail('PACKAGE','A retained source differs from its hash or byte count.');
-      entries.set(item.file,b);
-    }
-    const check=d=>{const b=entries.get(safeFile(d?.file));if(!b||b.length!==d.bytes||hash(b)!==d.sha256)throw fail('PACKAGE','A required original file is missing.');return b;};
-    const sources=saved.sources??(saved.intake?[{intake:saved.intake,createdAt:saved.createdAt,activatedAt:saved.createdAt,baselineEditionId:null}]:[]);
-    if(!Array.isArray(sources)||sources.length>10000||new Set(sources.map(e=>e.intake?.sha256)).size!==sources.length)
-      throw fail('PACKAGE','Retained intake history must have distinct original identities.');
-    const sourceMap=new Map();
-    for(const entry of sources){
-      const source=parseJSON(check(entry.intake)),original=check(entry.intake.original);inspectIntake(source);
-      if(hash(original)!==source.source.sha256||original.length!==source.source.bytes)throw fail('PACKAGE','Original source bytes differ.');
-      const records=source.source.format==='csv'?readCsvRecords(original).rows:source.source.format==='json'?readJSONSourceRecords(original):null;
-      if(!records||canonical(createIntake({records,source:source.source,mapping:source.mapping}))!==canonical(source))
-        throw fail('PACKAGE','The intake mapping differs from its complete original source bytes.');
-      sourceMap.set(entry.intake.sha256,source);
-    }
-    const originalSha=sources[0]?.intake.sha256,savedBinding=record=>record.intakeSha256??originalSha;
-    const source=saved.intake?sourceMap.get(saved.intake.sha256):null;
-    if(saved.intake&&(!source||canonical(saved.intake)!==canonical(sources.find(e=>e.intake.sha256===saved.intake.sha256).intake)))
-      throw fail('PACKAGE','The active source must be an exact retained intake.');
-    if(!source&&(saved.jobs.length||saved.editions.length||saved.decisions.length||sources.length))
-      throw fail('PACKAGE','A populated workspace needs its original source.');
-    for(const d of saved.decisions){
-      const intake=sourceMap.get(savedBinding(d));
-      if(!object(d)||!own(intake?.queries??{},d.queryId)||!['accept','keep-source'].includes(d.action)||!['preserve-source','use-provider','fill-missing'].includes(d.coordinateChoice)||
-        d.action==='accept'&&(!HASH.test(d.candidateId??'')||!HASH.test(d.responseSha256??'')))throw fail('PACKAGE','A retained decision has a different source or candidate binding.');
-      text(d.reviewer,'Retained reviewer',200);text(d.note,'Retained decision reason');
-    }
-    for(const job of saved.jobs){
-      const intake=sourceMap.get(savedBinding(job));if(!intake)throw fail('PACKAGE','The original job source is missing.');
-      const req=parseJSON(check(job.request));inspectRequest(intake,req);
-      if(canonical(req.body.inputs.map(i=>i.id))!==canonical(job.queryIds)||!Array.isArray(job.events))throw fail('PACKAGE','A retained job has changed source IDs.');
-      for(const event of job.events){
-        const b=check(event.response);
-        if(responseTypes.includes(event.outcome))inspectReply({body:parseJSON(b),request:req,expectedJobId:job.jobId,status:event.status});
-      }
-    }
-    for(const e of saved.editions){
-      const intake=sourceMap.get(savedBinding(e));if(!intake)throw fail('PACKAGE','A frozen edition source is missing.');
-      for(const key of ['csv','config','basis','review','geojson','report'])check(e[key]);
-      const config=parseJSON(check(e.config)),basis=parseJSON(check(e.basis)),reviewed=parseJSON(check(e.review));
-      if(basis.intake!==savedBinding(e)||canonical(reviewed.source)!==canonical(intake.source)||canonical(reviewed.mapping)!==canonical(intake.mapping))
-        throw fail('PACKAGE','The frozen edition is bound to another original source.');
-      if(config.file!=='dataset.csv'||basename(e.csv.file)!=='dataset.csv'||dirname(e.csv.file)!==dirname(e.config.file))
-        throw fail('PACKAGE','An edition must bind its adjacent original CSV.');
-    }
-    for(const entry of sources){
-      if(entry.baselineEditionId){
-        const edition=saved.editions.find(e=>e.id===entry.baselineEditionId);
-        if(!edition)throw fail('PACKAGE','The original comparison baseline edition is missing.');
-        validateComparison(parseJSON(check(entry.comparison)),{before:sourceMap.get(savedBinding(edition)),
-          after:sourceMap.get(entry.intake.sha256),beforeSha256:savedBinding(edition),afterSha256:entry.intake.sha256,edition});
-      }else if(entry.comparison)throw fail('PACKAGE','A retained comparison needs its original frozen edition.');
-    }
-    if(saved.editors!==undefined&&(!object(saved.editors)||Object.keys(saved.editors).some(k=>!sourceMap.has(k))||
-      Object.values(saved.editors).some(e=>!object(e)||json(e).length>262144)))throw fail('PACKAGE','Retained working forms must stay bound to original intake identities.');
-    if(saved.activeEditionId&&!saved.editions.some(e=>e.id===saved.activeEditionId))throw fail('PACKAGE','The selected edition is missing.');
+    const raw=await fileBytes(resolve(text(input.path,'Complete workspace package path')));
+    const inspected=await inspectGeoapifyPackage(raw),saved=inspected.state,entries=inspected.files;
     for(const [file,b] of entries)await immutable(file,b);
-    for(const e of saved.editions){const model=await loadDatasetConfig(join(directory,e.config.file));
-      if(model.describe().snapshot!==e.snapshot||model.describe().rowCount!==e.rowCount)throw fail('PACKAGE','Restored native dataset identity differs.');}
-    const previous=state,next={...saved,exports:[],restoredAt:now(),revision:saved.revision+1};
+    const next={...saved,exports:[],restoredAt:now(),revision:saved.revision+1};
     await atomic(statePath,json(next));state=next;cache=null;comparisonCache=null;
-    try{for(const entry of sources)await review(entry.intake.sha256);}catch(error){await atomic(statePath,json(previous));state=previous;cache=null;comparisonCache=null;throw error;}
-    return {restored:true,id:state.id,rows:source?.rows.length??0,jobs:state.jobs.length,editions:state.editions.length};
+    return {restored:true,id:state.id,rows:state.intake?inspected.sourceIntakes.get(state.intake.sha256).rows.length:0,
+      jobs:state.jobs.length,editions:state.editions.length};
   }
   const reads=new Set(['status','review.list','review.query','provider.request','source.inspect','source.history','source.compare']);
   async function dispatch(action,input){
