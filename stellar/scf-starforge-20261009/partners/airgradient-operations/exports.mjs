@@ -30,11 +30,12 @@ function selectedSeries(report,handover){
  need(rows.length===report.seriesRows&&digest(rows)===report.seriesSha256,'EXPORT_SERIES_CHANGED');return rows;
 }
 export function seriesCsv(report,handover){
- const rows=[csvRow(['source_type','location_id','location_key','location','measure','unit','provider_timestamp_utc','local_display','iana_timezone','reporting_bucket','value','original_value','returned_datapoints','capture_id','source_sha256','source_url','retrieved_at'])];
+ const retained=report.sources.some(c=>c.origin==='retained-source'),extra=retained?['source_origin','source_collection_id','source_path','retrieval_window_start','retrieval_window_end']:[];
+ const rows=[csvRow(['source_type','location_id','location_key','location','measure','unit','provider_timestamp_utc','local_display','iana_timezone','reporting_bucket','value','original_value','returned_datapoints','capture_id','source_sha256','source_url','retrieved_at',...extra])];
  const byLocation=new Map(report.rows.map(r=>[r.locationKey,r])),captures=new Map(report.sources.map(c=>[c.id,c])),formatters=new Map();
  for(const row of selectedSeries(report,handover)){const location=byLocation.get(row.locationKey),capture=captures.get(row.captureId);
   if(!formatters.has(location.timezone))formatters.set(location.timezone,new Intl.DateTimeFormat('en-CA',{timeZone:location.timezone,dateStyle:'short',timeStyle:'long'}));
-  rows.push(csvRow([row.sourceType,row.locationId,row.locationKey,location.label,row.measure,row.unit,row.utc,formatters.get(location.timezone).format(new Date(row.utc)),location.timezone,report.period.bucket,row.value,row.originalValue,row.sourceDatapoints,row.captureId,capture.rawSha256,capture.sourceUrl,capture.retrievedAt]));
+  rows.push(csvRow([row.sourceType,row.locationId,row.locationKey,location.label,row.measure,row.unit,row.utc,formatters.get(location.timezone).format(new Date(row.utc)),location.timezone,report.period.bucket,row.value,row.originalValue,row.sourceDatapoints,row.captureId,capture.rawSha256,capture.sourceUrl,capture.retrievedAt,...(retained?[capture.origin??'http',capture.sourceSetId,capture.sourcePath,capture.retrievalWindow?.not_before,capture.retrievalWindow?.not_after]:[])]));
  }return Buffer.from(rows.join(''));
 }
 export function reportHtml(report){
@@ -49,17 +50,53 @@ export function reportHtml(report){
   '<header><p class="sub">AIRGRADIENT CUSTOMER OPERATIONS</p><h1>'+escape(report.title)+'</h1><p>'+escape(report.organisation)+' · '+escape(report.owner)+'</p><p>'+escape(report.period.start)+' → '+escape(report.period.end)+'<br>'+escape(report.period.bucket)+' buckets · '+escape(report.period.convention)+'</p><p>'+escape(report.notes)+'</p><p class="digest">'+escape(report.id)+'<br>SHA-256 '+escape(report.sha256)+'</p></header>'+
   '<section><h2>Location report</h2><table><thead><tr><th>Location</th><th>Measure</th><th>Mean</th><th>Minimum / maximum</th><th>Populated reporting bins</th><th>Readiness</th><th>Operating criterion</th></tr></thead><tbody>'+rows+'</tbody></table><p>'+escape(report.interpretation)+'</p></section>'+
   (comparisons?'<section><h2>Changes from the prior edition</h2><p>Prior report: <span class="digest">'+escape(report.baselineReportId)+'</span></p><table><thead><tr><th>Location / measure</th><th>Prior mean</th><th>Current mean</th><th>Change</th><th>Coverage</th><th>Comparison context</th></tr></thead><tbody>'+comparisons+'</tbody></table></section>':'')+issues+
-  '<section><h2>Source meaning and attribution</h2><p>'+escape(report.provenance.provider)+'<br>'+escape(report.provenance.sourceUrl)+'</p>'+
+  '<section><h2>Source meaning and attribution</h2><p>'+escape(report.provenance.provider)+'<br>'+escape(report.provenance.sourceUrl)+'</p>'+(report.provenance.sourceSetId?'<p>'+escape(report.provenance.acquisition)+'</p><p class="digest">Source collection '+escape(report.provenance.sourceSetId)+'</p>':'')+
   '<ul>'+[...new Set(report.rows.map(r=>r.sourceMeaning))].map(v=>'<li>'+escape(v)+'</li>').join('')+'</ul>'+
   (metadata?'<table><thead><tr><th>Location</th><th>Contributor</th><th>Provider / source / sensor</th><th>Returned licences</th><th>Timezone / coordinates</th></tr></thead><tbody>'+metadata+'</tbody></table>':'')+
-  '<p>Each original response, request URL, acquisition time and content digest is retained in the editable package. The series CSV preserves original values, original provider timestamps and a labelled local display. Zero remains zero; missing observations remain blank.</p></section>'+
+  '<p>'+escape(report.provenance.sourceSetId?'Each original source document, request URL, retained retrieval window and content digest travels in the complete original source collection.':'Each original response, request URL, acquisition time and content digest is retained in the editable package.')+' The series CSV preserves original values, original provider timestamps and a labelled local display. Zero remains zero; missing observations remain blank.</p></section>'+
   '<section><h2>Continue this installation</h2><p>Open editable.airgradient.json in AirGradient Customer Operations, receive the complete study, and select its saved project. Create the next period with this report as its baseline. Review the resulting source and coverage before committing the next edition.</p><p class="sub">Created '+escape(report.createdAt)+'</p></section></main></body></html>';
+}
+function operatingGuide(report,handover){
+ const plan=handover.plans.find(v=>v.id===report.planId);need(plan,'OPERATING_PLAN_MISSING');
+ const lines=['# AirGradient customer study','','Open report.html for this committed edition. summary.csv contains every selected location and measurement; series.csv contains every returned selected provider observation with its original value and source identity. Original selected response files are in sources/.','',
+  '## Receive this complete installation','','Open the complete ZIP or editable.airgradient.json in AirGradient Customer Operations, review it, and receive it into the selected private workspace. The receiver retains the exact report, baseline editions, source definitions and bytes, project revisions and acquisition history. Use the received project to continue its committed prior edition.','',
+  'Committed report: '+report.id,'Received project revision: '+plan.projectId,'',
+  '    starforge airgradient-operations receive --workspace /absolute/private/receiver --input /absolute/private/editable.airgradient.json',
+  '    starforge airgradient-operations project-select --workspace /absolute/private/receiver --project '+plan.projectId,''];
+ if(plan.sourceSetId){
+  const source=handover.sourceSets?.find(v=>v.id===plan.sourceSetId&&v.sha256===plan.sourceSetSha256);need(source,'OPERATING_SOURCE_COLLECTION_MISSING');
+  const histories=plan.tasks.filter(v=>v.kind==='history'),windows=histories.map(v=>v.sourceWindow);need(windows.length&&windows.every(Boolean),'OPERATING_SOURCE_WINDOW_MISSING');
+  const start=new Date(Math.max(...windows.map(v=>Date.parse(v.start)))).toISOString(),end=new Date(Math.min(...windows.map(v=>Date.parse(v.end)))).toISOString();
+  const packet=JSON.parse(Buffer.from(source.rawBase64,'base64').toString('utf8')),scopeFile=packet.files.find(v=>v.path==='source-scope.json');need(scopeFile,'OPERATING_SOURCE_SCOPE_MISSING');
+  const scope=JSON.parse(scopeFile.content),periods=scope.report_windows??[],later=periods.filter(v=>Date.parse(v.start)>Date.parse(report.period.start)&&Date.parse(v.end)>Date.parse(report.period.end)).sort((a,b)=>Date.parse(a.start)-Date.parse(b.start))[0];
+  lines.push('## Continue from the received original collection','','Source collection: '+source.id,'Complete original packet: original-source-'+source.packetSha256+'.json','Original source SHA-256: '+source.packetSha256,
+   'Retained request overlap for the selected locations: '+start+' to '+end+'; '+plan.period.bucket+' buckets. Each request keeps its complete original response. Report periods select their own half-open UTC interval inside this range.','',
+   'In Reporting period and source, select this received collection. Choose one of its retained reporting periods or enter another aligned contained period. Use the received committed report as the prior edition. Saving the plan selects its original source documents immediately; review the complete report, commit the edition and deliver or export the full package.',
+   'The retained plan already owns its source documents, so its next operation is Review complete report. The Acquire / resume control is for a new provider acquisition.','');
+  if(periods.length)lines.push('Original report selections:',...periods.map(v=>'- '+v.id+': '+v.start+' to '+v.end),'');
+  if(later){
+   const next={projectId:plan.projectId,expectedProjectId:plan.projectId,sourceSetId:source.id,title:report.title,period:{start:later.start,end:later.end},baselineReportId:report.id};
+   lines.push('### Next original reporting period','','Save this complete next-plan input as /absolute/private/next-plan.json. It selects the next original period and this committed report as baseline.','',...JSON.stringify(next,null,2).split('\n').map(v=>'    '+v),'',
+    '    starforge airgradient-operations plan --workspace /absolute/private/receiver --input /absolute/private/next-plan.json',
+    '    starforge airgradient-operations review --workspace /absolute/private/receiver --plan PLAN_ID',
+    '    starforge airgradient-operations commit --workspace /absolute/private/receiver --plan PLAN_ID --expected-review REVIEW_SHA',
+    '    starforge airgradient-operations deliver --workspace /absolute/private/receiver --report REPORT_ID --destination /absolute/private/next-edition','',
+    'Use the actual plan ID, review SHA and report ID returned by the preceding commands. The complete original collection continues with that next edition.','');
+  }
+  lines.push('### A period requiring new provider data','','Choose New provider acquisition in the browser when the desired period or measurement is outside this received collection. In a CLI plan, omit sourceSetId while keeping the intended project revision and prior report. Run acquire for that new plan, then review, commit and deliver its actual responses. The received collection and earlier editions remain available.','');
+ }else{
+  lines.push('## Next provider edition','','Select the received project, choose the intended aligned UTC period and this report as baseline, then save its plan. Acquire or resume that plan, review its actual source and coverage, commit the next edition and deliver the complete package.',
+   'For the CLI, the plan input names projectId and expectedProjectId as '+plan.projectId+', its explicit start/end period and baselineReportId as '+report.id+'. Use the actual IDs and review SHA returned by plan, acquire, review and commit.','');
+ }
+ lines.push('## Reopen and deliver','','Use the same selected workspace for later reporting and delivery. Reopening an accepted destination reads its original saved file identities. A newly selected destination receives the complete current editable package. Host API tokens stay in the receiving machine environment.','');
+ return lines.join('\n');
 }
 export function deliveryFiles(report,handover){
  need(handover.rootReportId===report.id,'HANDOVER_REPORT_CHANGED');
  const files=[{name:'report.json',bytes:encoded(report)},{name:'report.html',bytes:Buffer.from(reportHtml(report))},{name:'summary.csv',bytes:summaryCsv(report)},{name:'series.csv',bytes:seriesCsv(report,handover)},{name:'editable.airgradient.json',bytes:encoded(handover)}];
- for(const capture of handover.captures)files.push({name:'sources/'+capture.metadata.id+(/\bapplication\/(?:[\w.-]+\+)?json\b/i.test(capture.metadata.contentType)?'.json':'.response'),bytes:Buffer.from(capture.rawBase64,'base64')});
- files.push({name:'OPERATE.md',bytes:Buffer.from('# AirGradient customer study\n\nOpen report.html for the selected edition. summary.csv contains the complete location comparison; series.csv contains every returned selected provider observation. Original response files are in sources/.\n\nReceive editable.airgradient.json in the installed AirGradient Customer Operations application. The receiver retains the frozen report, its baseline reports, original source definitions and bytes, project revisions and acquisition history. Select the received project, choose a later explicit UTC period, and use the current report as the next edition baseline. Host API tokens remain environment values on the receiving machine.\n\nCLI: airgradient-operations receive --workspace /absolute/private/workspace --input /absolute/private/editable.airgradient.json\n\nUse the same workspace for the later plan, acquire, review, commit and deliver operations. Reopening the exact accepted report or package reuses its retained identity.\n')});
+ for(const capture of handover.captures)files.push({name:'sources/'+capture.metadata.id+(capture.metadata.origin==='retained-source'||/\bapplication\/(?:[\w.-]+\+)?json\b/i.test(capture.metadata.contentType)?'.json':'.response'),bytes:Buffer.from(capture.rawBase64,'base64')});
+ for(const source of handover.sourceSets??[])files.push({name:'original-source-'+source.packetSha256+'.json',bytes:Buffer.from(source.rawBase64,'base64')});
+ files.push({name:'OPERATE.md',bytes:Buffer.from(operatingGuide(report,handover))});
  need(files.reduce((n,f)=>n+f.bytes.length,0)<=MAX_PACKAGE,'DELIVERY_TOO_LARGE');
  const manifest={schema:'stellar-forge.airgradient-delivery.v1',reportId:report.id,reportSha256:report.sha256,packageId:handover.id,packageSha256:handover.sha256,files:files.map(f=>({name:f.name,bytes:f.bytes.length,sha256:sha(f.bytes)}))};
  files.push({name:'manifest.json',bytes:encoded(manifest)});return files;
@@ -120,5 +157,7 @@ export function readDeliveryZip(input){
  const named=new Set();for(const entry of manifest.files){const bytes=files.get(entry.name);need(entry.name!=='manifest.json'&&!named.has(entry.name)&&bytes&&bytes.length===entry.bytes&&sha(bytes)===entry.sha256,'ZIP_MANIFEST_FILE_CHANGED');named.add(entry.name);}
  const report=JSON.parse(files.get('report.json').toString('utf8')),handover=JSON.parse(files.get('editable.airgradient.json').toString('utf8'));
  need(report.id===manifest.reportId&&report.sha256===manifest.reportSha256&&handover.rootReportId===report.id&&handover.id===manifest.packageId&&handover.sha256===manifest.packageSha256&&handover.reports.some(x=>x.id===report.id&&x.sha256===report.sha256),'ZIP_REPORT_SELECTION_CHANGED');
+ need(encoded(report).equals(encoded(handover.reports.find(x=>x.id===report.id))),'ZIP_FROZEN_REPORT_CHANGED');
+ for(const source of handover.sourceSets??[]){const bytes=files.get('original-source-'+source.packetSha256+'.json');need(bytes&&bytes.length===source.packetBytes&&sha(bytes)===source.packetSha256&&bytes.equals(Buffer.from(source.rawBase64,'base64')),'ZIP_ORIGINAL_SOURCE_COLLECTION_CHANGED');}
  return files.get('editable.airgradient.json');
 }

@@ -110,7 +110,7 @@ export async function staffRequest(path, body, options={}) {
       if (context?.staffId) headers.set('X-Grant-Staff',context.staffId);
       if (context?.installationId) headers.set('X-Grant-Installation',context.installationId);
       const response=await fetch(path,{method:body===undefined?'GET':'POST',
-        credentials:'same-origin',cache:'no-store',headers,body:retained.value});
+        credentials:'same-origin',cache:'no-store',headers,signal:options.signal,body:retained.value});
       if (options.download && response.ok) return response;
       try {return await decoded(response);}
       catch(error) {

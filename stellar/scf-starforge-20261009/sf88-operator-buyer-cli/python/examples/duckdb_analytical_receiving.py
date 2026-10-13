@@ -270,7 +270,7 @@ def run(args):
         exported = request("/api/analytics/exports", export_body)
         require(request("/api/analytics/exports", export_body) == exported, "Original complete export did not resume identically")
         inspected = inspect_package(exported["directory"], expected_manifest_sha256=exported["manifest_sha256"])
-        received_files = root / "downloaded-package"
+        received_files = root / ("downloaded-original-package" if args.node_helper else "downloaded-package")
         received_files.mkdir(exist_ok=True)
         for item in exported["files"]:
             if item["name"] not in {"analytical-workbook.zip", "report.html", "manifest.json"}: continue
@@ -283,7 +283,7 @@ def run(args):
             {"name": p.name, "bytes": p.stat().st_size, "sha256": digest(p.read_bytes())} for p in sorted(received_files.iterdir())]})
         if args.node_helper:
             node_input = root / "node-input.json"
-            node_input.write_text(json.dumps({"source_root": args.source_root, "workspace": str(working),
+            node_input.write_text(json.dumps({"operation_id": OPERATION, "source_root": args.source_root, "workspace": str(working),
                 "native_root": str(root / "native-agent"), "workspace_id": workspace_id, "launch": launch,
                 "original_edition": original_edition["edition_id"], "analysis": saved["id"], "result": result["result_id"],
                 "workbook": workbook2["id"], "report": report["report_id"], "export": exported,
@@ -294,7 +294,49 @@ def run(args):
             (root / "node-receiving.stdout").write_text(completed.stdout)
             (root / "node-receiving.stderr").write_text(completed.stderr)
             require(completed.returncode == 0, "Original browser/MCP receiving needs its retained native error")
-            keep("browser_and_agent", json.loads((root / "node-receiving.json").read_text()))
+            browser_and_agent = json.loads((root / "node-receiving.json").read_text())
+            keep("browser_and_agent", browser_and_agent)
+            browser_receiving = browser_and_agent["steps"]["browser_workspace"]
+            require(browser_receiving["state"] == "COMPLETE"
+                    and browser_receiving["input"]["workspace_id"] == workspace_id
+                    and browser_receiving["input"]["report_id"] == report["report_id"],
+                    "Continue the original browser workspace and pinned report")
+            browser_export = browser_receiving["export"]
+            selected_export = request("/api/exports/" + quote(browser_export["export_id"], safe=""))
+            require(selected_export["workspace_id"] == workspace_id
+                    and selected_export["report_id"] == report["report_id"]
+                    and selected_export["state"] == "COMPLETE"
+                    and selected_export["manifest_sha256"] == browser_export["manifest_sha256"]
+                    and selected_export["archive"]["sha256"] == browser_export["archive"]["sha256"]
+                    and selected_export["archive"]["bytes"] == browser_export["archive"]["bytes"]
+                    and all(selected_export["browser_workspace"].get(key) == browser_receiving["browser"].get(key)
+                            for key in ("id", "revision", "state_sha256")),
+                    "The selected complete edited-workbook export changed")
+            browser_archive = root / "browser-workspace-receiving" / browser_receiving["files"]["portable_export"]["name"]
+            browser_bytes = browser_archive.read_bytes()
+            require(len(browser_bytes) == selected_export["archive"]["bytes"]
+                    and digest(browser_bytes) == selected_export["archive"]["sha256"],
+                    "The original complete edited-workbook download changed")
+            received_files = root / "downloaded-package"
+            received_files.mkdir(exist_ok=True)
+            for item in selected_export["files"]:
+                if item["name"] not in {"analytical-workbook.zip", "report.html", "manifest.json"}:
+                    continue
+                body = browser_bytes if item["name"] == "analytical-workbook.zip" else request(
+                    "/api/exports/" + selected_export["export_id"] + "/file?name=" + quote(item["name"], safe=""),
+                    binary=True)
+                require(len(body) == item["bytes"] and digest(body) == item["sha256"],
+                        "The complete received edited-workbook file changed")
+                destination = received_files / item["name"]
+                destination.write_bytes(body)
+                destination.chmod(0o600)
+            inspected = inspect_package(selected_export["directory"],
+                                        expected_manifest_sha256=selected_export["manifest_sha256"])
+            exported = selected_export
+            keep("complete_edited_export", {"export": exported, "files": len(inspected["files"]),
+                "browser_workspace": exported["browser_workspace"], "downloaded": [
+                    {"name": path.name, "bytes": path.stat().st_size, "sha256": digest(path.read_bytes())}
+                    for path in sorted(received_files.iterdir())]})
     finally:
         server.shutdown(); server.server_close(); thread.join(); workspace.close()
     if not closed.exists(): working.rename(closed)
@@ -311,6 +353,9 @@ def run(args):
     repeated = receive_package(extracted, cold, expected_manifest_sha256=exported["manifest_sha256"],
                                expected_workspace_id=workspace_id)
     require(repeated["reused"] and receipt["reopened"] == repeated["reopened"], "Original receiving did not reopen identically")
+    if exported.get("browser_workspace") is not None:
+        require(receipt["reopened"].get("browser_workspace") == exported["browser_workspace"],
+                "The independent received browser revision changed")
     cli_env = {**os.environ, "PYTHONPATH": str(extracted / "application") + os.pathsep + os.pathsep.join(sys.path)}
     completed = subprocess.run([sys.executable, "-B", "-m", "stellar_forge_buyer.duckdb_cli", "--workspace", str(cold),
                                "analytics", "record", "reports", report["report_id"]],
@@ -327,7 +372,8 @@ def run(args):
         require(all(row["matched"] for row in checked), "Independent full-result fingerprint changed")
         dictionaries = {identity: digest(independent.semantics_bytes(identity)) for identity in original_report["source_editions"]}
         keep("independent_receiving", {"receipt": receipt, "reused": repeated["reused"],
-            "full_results": checked, "original_dictionaries": dictionaries, "packaged_cli": "passed"})
+            "full_results": checked, "original_dictionaries": dictionaries, "packaged_cli": "passed",
+            "browser_workspace": receipt["reopened"].get("browser_workspace")})
     record["state"] = "COMPLETE"
     record["completed_at"] = datetime.now(timezone.utc).isoformat()
     dump(record_path, record)
