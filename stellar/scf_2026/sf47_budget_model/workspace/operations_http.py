@@ -21,6 +21,7 @@ from operations_expense_billing_http import handle as expense_billing_http
 from operations_work_billing_http import handle as work_billing_http
 from operations_billing_evidence_http import handle as billing_evidence_http
 import operations_installation_sources as installation_sources
+import operations_flowable_sources as flowable_sources
 import operations_gravitee as gravitee_source
 import operations_airflow as airflow_source
 import operations_airflow_sources as airflow_sources
@@ -92,6 +93,7 @@ def register_static(static):
                    "/operations_navigation_ui.mjs": ("operations_navigation_ui.mjs", "text/javascript; charset=utf-8"),
                    "/operations_navigation.css": ("operations_navigation.css", "text/css; charset=utf-8")})
     installation_sources.register_static(static)
+    flowable_sources.register_static(static)
     gravitee_source.register_static(static)
     airflow_source.register_static(static)
     static.update({
@@ -236,6 +238,8 @@ def read(handler, parsed):
     if expense_billing_http(handler, parsed, ops, "GET"):
         return True
     if commercial_http(handler, parsed, ops, "GET"):
+        return True
+    if flowable_sources.handle(handler, parsed, ops, "GET"):
         return True
     if installation_sources.handle(handler, parsed, ops, "GET"):
         return True
@@ -543,6 +547,8 @@ def write(handler, parsed):
     if expense_billing_http(handler, parsed, ops, "POST"):
         return True
     if commercial_http(handler, parsed, ops, "POST"):
+        return True
+    if flowable_sources.handle(handler, parsed, ops, "POST"):
         return True
     if installation_sources.handle(handler, parsed, ops, "POST"):
         return True
