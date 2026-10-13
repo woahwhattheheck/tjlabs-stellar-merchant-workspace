@@ -95,6 +95,7 @@
     "postgres",
     "python",
     "release-delivery-console",
+    "runtime-output-procedures",
     "s3",
     "sf98-managed-delivery",
     "sqlite"
