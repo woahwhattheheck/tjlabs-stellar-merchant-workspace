@@ -35,7 +35,7 @@ bind('close-detail',()=>$('detail-dialog').close());
 async function request(path,{method='GET',body}={}){
   let response;
   try{response=await fetch(path,{method,headers:{Authorization:'Bearer '+token,...(body===undefined?{}:{'Content-Type':'application/json'})},
-    ...(body===undefined?{}:{body:JSON.stringify(body)}),cache:'no-store',credentials:'omit'});}
+    ...(body===undefined?{}:{body:JSON.stringify(body)}),cache:'no-store',credentials:'same-origin'});}
   catch(cause){const error=new Error('The host response was lost. Reopen the retained operation before retrying.');error.code='CENTRAL_CONNECTION_LOST';error.uncertain=true;error.cause=cause;throw error;}
   let value;try{value=await response.json();}catch{const error=new Error('The host returned an unreadable response. Reopen the retained operation.');error.code='CENTRAL_RESPONSE';error.uncertain=true;throw error;}
   if(!response.ok||value.ok===false){const original=value.error??value,error=new Error(original.message||response.statusText);Object.assign(error,original,{status:response.status});
