@@ -109,6 +109,17 @@ export function mountPerformance({container,current,api,session,onOpen}){
       rows.map(row=>[esc(row.date),usd(row.inUsd),usd(row.outUsd),usd(row.netUsd),usd(row.recordedNetCashUsd),
         usd(row.invoicedUsd),usd(row.invoicePaidUsd),esc(row.recordedHours),esc(row.acceptedHours)]));
   }
+  function commercialBasis(){
+    if(report?.plan.fundingMode!=='COMMERCIAL_WORKSHARE')return '';
+    const p=report.plan,projection=report.planned;
+    return '<section class="performance-basis"><h4>Commercial planning basis</h4>'+
+      '<p><strong>Known supplier-cost subtotal:</strong> '+esc(usd(p.knownBudgetUsd))+
+      '. <strong>Complete supplier budget:</strong> '+esc(p.costEstimatesComplete?usd(p.budgetUsd):'Unknown')+'.</p>'+
+      '<p>'+esc(p.unknownCostIds.length?'Unestimated phases: '+p.unknownCostIds.join(', ')+'.':'All phase estimates have been explicitly entered.')+
+      ' Known costs remain a partial subtotal until every estimate is entered. Proposed payment milestones establish no agreement or observed cash.</p>'+
+      '<p>'+esc(projection.unavailableReason?'Dated planned projection unavailable: '+projection.unavailableReason:
+        'Dated planned projection uses the pinned business calendar starting '+(projection.calendarStart||'Unselected')+'.')+'</p></section>';
+  }
   function render(){
     if(!available())return;
     const rows=matched(),pages=Math.max(1,Math.ceil(rows.length/50));
@@ -125,6 +136,7 @@ export function mountPerformance({container,current,api,session,onOpen}){
       (report?'<p class="performance-basis"><strong>'+esc(selected.startDate||'All recorded dates')+' through '+esc(selected.endDate)+
         '</strong> · case version '+report.case.version+' · pinned plan revision '+report.plan.revision+'. '+esc(report.case.mode)+
         (report.case.version!==current.program.version?' · current saved case advanced since this section opened.':'')+'</p>'+
+        commercialBasis()+
         '<div class="performance-stats">'+[
           ['Period invoices',usd(f.period.invoicedUsd)],['Net period invoice payments',usd(f.period.paidUsd)],
           ['Closing open invoices',usd(f.closing.openUsd)],['Closing supplier credits',usd(f.closing.creditUsd)],
@@ -160,12 +172,12 @@ export function mountPerformance({container,current,api,session,onOpen}){
         ].map(([label,count])=>'<li>'+esc(label)+': '+count+'</li>').join('')+'</ul>'+
         '<div class="performance-actions">'+button('Open invoices','invoices')+button('Open work','work')+button('Open cash','cash')+'</div></details>'+
         '<details><summary>Pinned planning amounts and original asset quantities</summary>'+
-        (report.planned.calendarStart?'<p>Operating calendar starts '+esc(report.planned.calendarStart)+'.</p>'+
+        (report.planned.calendarStart&&report.planned.opening&&report.planned.period&&report.planned.closing&&!report.planned.unavailableReason?'<p>'+(report.plan.fundingMode==='COMMERCIAL_WORKSHARE'?'Pinned planning':'Operating')+' calendar starts '+esc(report.planned.calendarStart)+'.</p>'+
           cells(['Planner measure','Opening','Period change','Closing'],[
             ['Accrued budget',usd(report.planned.opening.accruedUsd),usd(report.planned.period.accruedUsd),usd(report.planned.closing.accruedUsd)],
             ['Planned cash outflow',usd(report.planned.opening.plannedOutflowUsd),usd(report.planned.period.plannedOutflowUsd),usd(report.planned.closing.plannedOutflowUsd)],
             ['Conditional planned funding',usd(report.planned.opening.conditionalInflowUsd),usd(report.planned.period.conditionalInflowUsd),usd(report.planned.closing.conditionalInflowUsd)]
-          ]):'<p>Add the operating case calendar when creating a dated plan comparison. Package budgets remain available.</p>')+
+          ]):report.planned.unavailableReason?'<p>'+esc(report.planned.unavailableReason)+(report.planned.calendarStart?' Pinned planner calendar: '+esc(report.planned.calendarStart)+'.':'')+'</p>':'<p>Add the operating case calendar when creating a dated plan comparison. Package budgets remain available.</p>')+
         cells(['Currency / network / asset','Opening quantity','Period in','Period out','Closing quantity'],
           report.assets.map(row=>[esc([row.currency,row.network,row.asset].filter(Boolean).join(' · ')),esc(row.openingNet),
             esc(row.periodIn),esc(row.periodOut),esc(row.closingNet)]))+'</details>'+

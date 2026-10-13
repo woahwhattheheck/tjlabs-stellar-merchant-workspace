@@ -97,7 +97,10 @@ def merge_scenario(base, patch):
     """A normal edit preserves source metadata, acceptance targets and row identity."""
     if not isinstance(patch, dict):
         raise Problem("Scenario edits must be an object.")
+    commercial = budget.commercial_mode(base)
     allowed = {"scenario_name", "award_request_usd", "project_end_day", "milestones", "future_costs"}
+    if commercial:
+        allowed = {"scenario_name", "future_costs", "commercial_receipt_schedule"}
     unknown = set(patch) - allowed
     if unknown:
         raise Problem("Use the source import workflow for metadata changes: " + ", ".join(sorted(unknown)))
@@ -105,6 +108,8 @@ def merge_scenario(base, patch):
     for key in ("scenario_name", "award_request_usd", "project_end_day"):
         if key in patch:
             scenario[key] = patch[key]
+    if commercial and "commercial_receipt_schedule" in patch:
+        scenario["commercial"]["receipt_schedule"] = deepcopy(patch["commercial_receipt_schedule"])
     if "milestones" in patch:
         prior = {row["tranche"]: row for row in base.get("milestones", [])}
         merged = []
@@ -121,6 +126,8 @@ def merge_scenario(base, patch):
         merged = []
         editable = {"id", "tranche", "start_day", "end_day", "estimated_hours", "assumed_hourly_rate_usd",
                     "amount_usd", "category", "remaining_work", "measurable_proof"}
+        if commercial:
+            editable.update({"phase_id", "cost_basis"})
         for item in rows(patch["future_costs"], "Work packages"):
             cid = short_id(item.get("id"), "Work package ID")
             if set(item) - editable:
@@ -140,11 +147,14 @@ def prepare(scenario, raw_planning=None):
     costs = rows(scenario.get("future_costs"), "Work packages")
     if not costs:
         raise Problem("Add at least one work package.")
+    commercial = budget.commercial_mode(scenario)
     planning = deepcopy(raw_planning or {})
     if not isinstance(planning, dict):
         raise Problem("Planning settings must be an object.")
     allowed = {"calendarStart", "capitalUsd", "capitalNote", "contributors", "assignments",
                "pricing", "payments", "deliveryNotes", "notes", "sourceTables"}
+    if commercial:
+        allowed.add("commercialCalendar")
     if set(planning) - allowed:
         raise Problem("Unknown planning setting: " + ", ".join(sorted(set(planning) - allowed)))
     if "sourceTables" in planning:
@@ -159,8 +169,11 @@ def prepare(scenario, raw_planning=None):
     rates = set()
     for item in costs:
         cid = short_id(item.get("id"), "Work package ID")
+        if commercial:
+            item.setdefault("tranche", None)
         ids.append(cid)
-        mode = pricing.get(cid, "hours" if "estimated_hours" in item and "assumed_hourly_rate_usd" in item else "fixed")
+        mode = pricing.get(cid, "fixed" if commercial and item.get("amount_usd") is None else
+                           ("hours" if "estimated_hours" in item and item.get("assumed_hourly_rate_usd") is not None else "fixed"))
         if mode not in ("hours", "fixed"):
             raise Problem(f"{cid}: choose hours or fixed pricing.")
         pricing[cid] = mode
@@ -168,14 +181,24 @@ def prepare(scenario, raw_planning=None):
         item["estimated_hours"] = str(hours)
         total_hours += hours
         if mode == "hours":
-            rate = number(item.get("assumed_hourly_rate_usd"), f"{cid}: hourly rate", 100000)
-            if hours <= 0 or rate <= 0:
-                raise Problem(f"{cid}: enter positive hours and hourly rate.")
-            item["assumed_hourly_rate_usd"] = str(rate)
-            item["amount_usd"] = budget.cents(hours * rate)
-            rates.add(str(rate))
+            if commercial and item.get("assumed_hourly_rate_usd") is None:
+                if hours <= 0:
+                    raise Problem(f"{cid}: retain the original positive phase effort.")
+                item["assumed_hourly_rate_usd"] = None
+                item["amount_usd"] = None
+            else:
+                rate = number(item.get("assumed_hourly_rate_usd"), f"{cid}: hourly rate", 100000)
+                if hours <= 0 or rate <= 0:
+                    raise Problem(f"{cid}: enter positive hours and hourly rate.")
+                item["assumed_hourly_rate_usd"] = str(rate)
+                item["amount_usd"] = budget.cents(hours * rate)
+                rates.add(str(rate))
         else:
-            item["amount_usd"] = budget.cents(number(item.get("amount_usd"), f"{cid}: amount"))
+            if commercial and item.get("amount_usd") is None:
+                item["amount_usd"] = None
+                item["assumed_hourly_rate_usd"] = None
+            else:
+                item["amount_usd"] = budget.cents(number(item.get("amount_usd"), f"{cid}: amount"))
         for field in ("remaining_work", "measurable_proof"):
             text(item.get(field, ""), f"{cid}: {field.replace('_', ' ')}", required=field == "measurable_proof")
     if len(ids) != len(set(ids)):
@@ -192,6 +215,29 @@ def prepare(scenario, raw_planning=None):
         except (TypeError, ValueError) as exc:
             raise Problem("Day-zero calendar date must be YYYY-MM-DD.") from exc
     planning["calendarStart"] = calendar_start
+    if commercial:
+        calendar = planning.get("commercialCalendar")
+        if calendar is not None:
+            if not isinstance(calendar, dict) or set(calendar) != {"weekdays", "holidays", "extraWorkingDates"}:
+                raise Problem("Select the complete actual or explicitly proposed commercial business calendar.")
+            weekdays = calendar["weekdays"]
+            if (not isinstance(weekdays, list) or not weekdays or len(set(weekdays)) != len(weekdays)
+                    or any(isinstance(v, bool) or not isinstance(v, int) or not 0 <= v <= 6 for v in weekdays)):
+                raise Problem("Use distinct selected working weekdays, Monday zero through Sunday six.")
+            for key in ("holidays", "extraWorkingDates"):
+                values = calendar[key]
+                if not isinstance(values, list) or len(values) > 2000 or len(set(values)) != len(values):
+                    raise Problem("Keep unique selected commercial calendar dates.")
+                for value in values:
+                    try:
+                        valid = isinstance(value, str) and date.fromisoformat(value).isoformat() == value
+                    except (ValueError, TypeError):
+                        valid = False
+                    if not valid:
+                        raise Problem("Use exact commercial calendar dates in YYYY-MM-DD form.")
+            planning["commercialCalendar"] = deepcopy(calendar)
+        elif calendar_start is not None:
+            raise Problem("Select the explicit working calendar before assigning a commercial kickoff date.")
     capital = planning.get("capitalUsd")
     planning["capitalUsd"] = None if capital in (None, "") else budget.cents(number(capital, "Working-capital input", 100000000))
     planning["capitalNote"] = text(planning.get("capitalNote", ""), "Working-capital note", 4000)
@@ -225,11 +271,14 @@ def prepare(scenario, raw_planning=None):
     planning["assignments"] = assignments
     normalized_payments = {}
     for item in costs:
-        cid, amount = item["id"], number(item["amount_usd"], "Work package amount")
+        cid = item["id"]
+        amount = None if commercial and item["amount_usd"] is None else number(item["amount_usd"], "Work package amount")
         payment = deepcopy(payments.get(cid, {"mode": "accrual"}))
         if not isinstance(payment, dict):
             raise Problem(f"{cid}: payment schedule must be an object.")
         mode = payment.get("mode", "accrual")
+        if amount is None and mode != "accrual":
+            raise Problem(f"{cid}: enter the supplier cost before scheduling its payment.")
         payment["mode"] = mode
         payment["note"] = text(payment.get("note", ""), f"{cid}: payment timing source", 4000)
         if mode == "completion":
@@ -261,15 +310,19 @@ def prepare(scenario, raw_planning=None):
         normalized_payments[cid] = payment
     planning["payments"] = normalized_payments
     notes = planning.get("deliveryNotes", {})
-    if not isinstance(notes, dict) or set(notes) - {"1", "2", "3"}:
-        raise Problem("Delivery notes use tranche keys 1, 2 and 3.")
+    note_keys = set(ids) if commercial else {"1", "2", "3"}
+    if not isinstance(notes, dict) or set(notes) - note_keys:
+        raise Problem("Delivery notes use the original commercial phase IDs." if commercial else
+                      "Delivery notes use tranche keys 1, 2 and 3.")
     planning["deliveryNotes"] = {key: text(value, "Delivery owner / notes", 12000) for key, value in notes.items()}
     return scenario, planning, original_report
 
 
 def timeline(scenario, planning, original_report):
     """Daily presentation of native accrual plus a separately entered cash schedule."""
+    commercial = budget.commercial_mode(scenario)
     costs = scenario["future_costs"]
+    unknown = [item["id"] for item in costs if commercial and item["amount_usd"] is None]
     payouts = original_report["payouts"]
     cutoff = max(scenario["project_end_day"], max(row["hypothetical_paid_day"] for row in payouts))
     for item in costs:
@@ -283,9 +336,24 @@ def timeline(scenario, planning, original_report):
     total_accrued = Decimal(0)
     capital = None if planning["capitalUsd"] is None else Decimal(planning["capitalUsd"])
     start = date.fromisoformat(planning["calendarStart"]) if planning["calendarStart"] else None
+    dates = []
+    if commercial and start is not None:
+        calendar = planning["commercialCalendar"]
+        current = start
+        for _ in range(10000):
+            if current.isoformat() not in calendar["holidays"] and (
+                    current.weekday() in calendar["weekdays"] or current.isoformat() in calendar["extraWorkingDates"]):
+                dates.append(current.isoformat())
+                if len(dates) > cutoff:
+                    break
+            current += timedelta(days=1)
+        if len(dates) <= cutoff:
+            raise Problem("The selected working calendar does not cover the full commercial projection.")
     for offset in range(cutoff + 1):
         accrued, due = Decimal(0), Decimal(0)
         for item in costs:
+            if commercial and item["amount_usd"] is None:
+                continue
             amount = Decimal(item["amount_usd"])
             span = item["end_day"] - item["start_day"] + 1
             elapsed = max(0, min(offset, item["end_day"]) - item["start_day"] + 1)
@@ -298,8 +366,10 @@ def timeline(scenario, planning, original_report):
                 due += amount if offset >= item["end_day"] + p["lagDays"] else 0
             else:
                 due += sum((Decimal(row["usd"]) for row in p["installments"] if row["day"] <= offset), Decimal(0))
-        received = sum((Decimal(str(scenario["award_request_usd"])) * budget.SHARES[row["tranche"]]
-                        for row in payouts if row["hypothetical_paid_day"] <= offset), Decimal(0))
+        received = (sum((Decimal(row["usd"]) for row in payouts if row["hypothetical_paid_day"] <= offset), Decimal(0))
+                    if commercial else
+                    sum((Decimal(str(scenario["award_request_usd"])) * budget.SHARES[row["tranche"]]
+                         for row in payouts if row["hypothetical_paid_day"] <= offset), Decimal(0)))
         gap = max(Decimal(0), due - received)
         if gap > peak:
             peak, worst = gap, offset
@@ -308,7 +378,24 @@ def timeline(scenario, planning, original_report):
                       "conditionalInflowUsd": budget.cents(received), "cashGapUsd": budget.cents(gap),
                       "gapAfterCapitalInputUsd": None if capital is None else budget.cents(max(Decimal(0), gap-capital)),
                       "accruedUnpaidUsd": budget.cents(max(Decimal(0), accrued-due))})
+        if commercial:
+            row = daily[-1]
+            row["date"] = dates[offset] if dates else ""
+            row.update({"knownAccruedUsd": row["accruedUsd"], "knownPlannedOutflowUsd": row["plannedOutflowUsd"],
+                        "knownCashGapUsd": row["cashGapUsd"], "knownAccruedUnpaidUsd": row["accruedUnpaidUsd"]})
+            if unknown:
+                for key in ("accruedUsd", "plannedOutflowUsd", "cashGapUsd", "gapAfterCapitalInputUsd", "accruedUnpaidUsd"):
+                    row[key] = None
         total_accrued = accrued
+    if commercial:
+        return {"days": daily, "axis": "ACTIVE_BUSINESS_DAY", "complete": not unknown,
+                "unknownCostIds": unknown, "knownTotalCostUsd": budget.cents(total_accrued),
+                "knownPeakCashGapUsd": budget.cents(peak),
+                "peakCashGapUsd": None if unknown else budget.cents(peak),
+                "peakCashGapDay": None if unknown else worst, "capitalInputUsd": planning["capitalUsd"],
+                "gapAfterCapitalInputUsd": None if unknown or capital is None else budget.cents(max(Decimal(0), peak-capital)),
+                "lastModeledDay": cutoff, "totalCostUsd": None if unknown else budget.cents(total_accrued),
+                "conditionalFeeInflowOnly": True}
     return {"days": daily, "peakCashGapUsd": budget.cents(peak), "peakCashGapDay": worst,
             "capitalInputUsd": planning["capitalUsd"],
             "gapAfterCapitalInputUsd": None if capital is None else budget.cents(max(Decimal(0), peak-capital)),
@@ -317,6 +404,8 @@ def timeline(scenario, planning, original_report):
 
 def capacity(scenario, planning):
     costs = {item["id"]: item for item in scenario["future_costs"]}
+    commercial = budget.commercial_mode(scenario)
+    divisor = len(planning["commercialCalendar"]["weekdays"]) if commercial and planning.get("commercialCalendar") else (None if commercial else 7)
     people = []
     assigned = {cid: Decimal(0) for cid in costs}
     for person in planning["contributors"]:
@@ -332,17 +421,21 @@ def capacity(scenario, planning):
             for offset in range(row["start_day"], row["end_day"] + 1):
                 daily[offset] += per_day
         weekly = Decimal(person["weeklyHours"])
-        overload = [i for i, hours in enumerate(daily) if hours * 7 > weekly]
+        overload = [] if divisor is None else [i for i, hours in enumerate(daily) if hours * divisor > weekly]
         people.append({"id": person["id"], "name": person["name"], "totalHours": str(total),
-                       "weeklyCapacityHours": str(weekly), "peakWeeklyRequiredHours": budget.cents(max(daily) * 7),
-                       "overloadedDays": len(overload), "firstOverloadedDay": min(overload) if overload else None,
+                       "weeklyCapacityHours": str(weekly), "peakWeeklyRequiredHours": None if divisor is None else budget.cents(max(daily) * divisor),
+                       "overloadedDays": None if divisor is None else len(overload), "firstOverloadedDay": min(overload) if overload else None,
                        "lastOverloadedDay": max(overload) if overload else None})
     unassigned = [{"costId": cid, "hours": str(Decimal(row["estimated_hours"]) - assigned[cid])}
                   for cid, row in costs.items()]
     return {"contributors": people, "unassigned": unassigned,
             "unassignedHours": str(sum((Decimal(row["hours"]) for row in unassigned), Decimal(0))),
             "totalHours": str(sum((Decimal(row["estimated_hours"]) for row in costs.values()), Decimal(0))),
-            "allocationBasis": "Package hours are distributed evenly across its inclusive calendar-day span; weekly equivalent is seven days."}
+            "allocationBasis": ("Package hours are distributed evenly across active business days; weekly equivalent uses the selected working-day count." if divisor is not None else
+                                "Package hours are distributed over active business days; no weekly conversion is inferred without an explicit working calendar.") if commercial else
+                                "Package hours are distributed evenly across its inclusive calendar-day span; weekly equivalent is seven days.",
+            **({"axis": "ACTIVE_BUSINESS_DAY", "weeklyDayDivisor": divisor,
+                "weeklyCapacityAssessed": divisor is not None} if commercial else {})}
 
 
 def report(scenario, planning):
@@ -350,8 +443,12 @@ def report(scenario, planning):
     comparisons = []
     for lag in (14, 30, 60):
         variation = deepcopy(scenario)
-        for milestone in variation["milestones"]:
-            milestone["review_and_payment_lag_days"] = lag
+        if budget.commercial_mode(variation):
+            for milestone in variation["commercial"]["receipt_schedule"]:
+                milestone["lag_days"] = lag
+        else:
+            for milestone in variation["milestones"]:
+                milestone["review_and_payment_lag_days"] = lag
         try:
             computed = checked_model(variation)
             cash = timeline(variation, planning, computed)
@@ -367,7 +464,8 @@ def report(scenario, planning):
               "cash": timeline(scenario, planning, native), "capacity": capacity(scenario, planning),
               "lagComparisons": comparisons,
               "deliveryPlan": deepcopy(scenario.get("deployment_acceptance_plan")),
-              "sourceUrl": SOURCE_URL}
+              "sourceUrl": scenario["commercial"]["workshare"]["source_url"] if budget.commercial_mode(scenario) else SOURCE_URL,
+              **({"fundingMode": "COMMERCIAL_WORKSHARE"} if budget.commercial_mode(scenario) else {})}
     return scenario, planning, result
 
 
@@ -428,6 +526,14 @@ def inspect_planning_history(document, raw_source):
             "sourceSha256": source_sha, "prepared": prepared}
 
 
+
+def daily_csv_bytes(current):
+    headers = ["day", "date", "accruedUsd", "plannedOutflowUsd", "conditionalInflowUsd",
+               "cashGapUsd", "gapAfterCapitalInputUsd", "accruedUnpaidUsd"]
+    if budget.commercial_mode(current["scenario"]):
+        headers += ["knownAccruedUsd", "knownPlannedOutflowUsd", "knownCashGapUsd", "knownAccruedUnpaidUsd"]
+    return csv_bytes(headers, current["report"]["cash"]["days"])
+
 class Workspace:
     def __init__(self, root, source_path, *, on_created=None):
         self.root = Path(root).expanduser().resolve()
@@ -471,9 +577,12 @@ class Workspace:
                 path = Path(source_path).resolve()
                 raw = path.read_bytes()
                 scenario = json.loads(raw)
-                self.create("Current SCF delivery plan", scenario, {}, "Imported current source scenario",
-                            "initial-current-scenario", source_name=path.name,
-                            source_sha=hashlib.sha256(raw).hexdigest(), source_url=SOURCE_URL, source_bytes=raw)
+                commercial = budget.commercial_mode(scenario)
+                self.create(scenario.get("scenario_name", "Current commercial Workshare proposal") if commercial else "Current SCF delivery plan",
+                            scenario, {}, "Imported current source scenario", "initial-current-scenario", source_name=path.name,
+                            source_sha=hashlib.sha256(raw).hexdigest(),
+                            source_url=scenario["commercial"]["workshare"]["source_url"] if commercial else SOURCE_URL,
+                            source_bytes=raw)
             for path in self.root.glob("planning.sqlite3*"):
                 os.chmod(path, 0o600)
         except BaseException:
@@ -651,9 +760,8 @@ class Workspace:
             "planning.json": (json.dumps(current["planning"], ensure_ascii=False, indent=2) + "\n").encode(),
             "original-model.json": (json.dumps(current["report"]["originalModel"], ensure_ascii=False, indent=2) + "\n").encode(),
             "delivery-plan.json": (json.dumps(current["report"]["deliveryPlan"], ensure_ascii=False, indent=2) + "\n").encode(),
-            "daily-cash-flow.csv": csv_bytes(["day", "date", "accruedUsd", "plannedOutflowUsd", "conditionalInflowUsd",
-                                            "cashGapUsd", "gapAfterCapitalInputUsd", "accruedUnpaidUsd"], current["report"]["cash"]["days"]),
-            "work-packages.csv": csv_bytes(["id", "tranche", "start_day", "end_day", "estimated_hours",
+            "daily-cash-flow.csv": daily_csv_bytes(current),
+            "work-packages.csv": csv_bytes((["id", "phase_id", "tranche", "cost_basis"] if budget.commercial_mode(current["scenario"]) else ["id", "tranche"]) + ["start_day", "end_day", "estimated_hours",
                                            "assumed_hourly_rate_usd", "amount_usd", "category", "remaining_work",
                                            "measurable_proof"], current["scenario"]["future_costs"]),
             "contributors.csv": csv_bytes(["id", "name", "weeklyCapacityHours", "totalHours",
@@ -662,8 +770,8 @@ class Workspace:
             "README.txt": ("SF47 planning workspace\n\nOpen this complete ZIP in the SF47 workspace import control to retain its revision history.\n"
                            "original-source.json retains the exact imported source bytes and their advertised source digest.\n"
                            "scenario.json remains directly usable by the original budget.py calculator.\n"
-                           "The current original model, private payment timing, contributor allocation, daily calculations and full deployment plan are included.\n"
-                           "Amounts and day offsets are planning inputs. Conditional grant inflows follow the selected original model; contributor payment dates retain each complete package amount.\n"
+                           "The current original model, private payment timing, contributor allocation, daily calculations and full deployment plan are included.\n" +
+                           ("Commercial amounts retain original proposed fee conditions; active-business-day timing is conditional and unknown supplier costs remain unknown. No agreement, grant or payment is recorded.\n" if budget.commercial_mode(current["scenario"]) else "Amounts and day offsets are planning inputs. Conditional grant inflows follow the selected original model; contributor payment dates retain each complete package amount.\n") +
                            f"Source: {current['source']['url']}\nSource SHA-256: {current['source']['sha256']}\n"
                            f"Saved revision: {current['revision']}\n").encode()
         }

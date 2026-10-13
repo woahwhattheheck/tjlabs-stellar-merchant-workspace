@@ -40,7 +40,187 @@ def whole_day(obj, field, lo=0, hi=500):
     return v
 
 
+
+def commercial_mode(data):
+    return isinstance(data, dict) and data.get("funding_mode") == "COMMERCIAL_WORKSHARE"
+
+
+def commercial_model(data):
+    """Fee-funded proposed Workshare, using the same retained native calculator."""
+    import hashlib
+    if data.get("status") != "PROPOSED_UNSIGNED":
+        raise ValueError("A commercial Workshare scenario remains PROPOSED_UNSIGNED.")
+    if data.get("award_request_usd") is not None or data.get("milestones") not in (None, []):
+        raise ValueError("A commercial proposal does not create grant requests or tranches.")
+    selected = data.get("commercial")
+    if not isinstance(selected, dict) or set(selected) != {"workshare", "receipt_schedule"}:
+        raise ValueError("Retain the complete Workshare and explicit conditional receipt schedule.")
+    source = selected["workshare"]
+    if not isinstance(source, dict) or set(source) != {"case_id", "source_url", "document_sha256", "plan_sha256", "plan"}:
+        raise ValueError("Retain the complete original commercial Workshare source.")
+    import re
+    for key in ("document_sha256", "plan_sha256"):
+        if not isinstance(source[key], str) or re.fullmatch("[a-f0-9]{64}", source[key]) is None:
+            raise ValueError("Retain the original Workshare SHA-256: " + key)
+    for key in ("case_id", "source_url"):
+        if not isinstance(source[key], str) or not source[key].strip() or len(source[key]) > 4000:
+            raise ValueError("Retain the original Workshare " + key)
+    plan = source["plan"]
+    raw_plan = json.dumps(plan, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    if not isinstance(plan, dict) or plan.get("version") != "dealscout.workshare-plan.v1" or hashlib.sha256(raw_plan).hexdigest() != source["plan_sha256"]:
+        raise ValueError("The complete original Workshare plan differs from its retained hash.")
+    for key in ("title", "customer", "supplier", "outcome", "rights", "change_process"):
+        if not isinstance(plan.get(key), str) or not plan[key].strip():
+            raise ValueError("Retain the complete original Workshare " + key)
+    quote = plan["commercial"]
+    if quote.get("currency") != "USD" or quote.get("price_status") != "PROPOSED":
+        raise ValueError("This native commercial mode preserves the original proposed USD Workshare.")
+    fee = value(quote["amount"], "Proposed original fee")
+    if fee <= 0 or fee != fee.quantize(Decimal("0.01")):
+        raise ValueError("Retain the positive original fee in whole cents.")
+    days = plan["schedule"]["business_days"]
+    if isinstance(days, bool) or not isinstance(days, int) or not 1 <= days <= 501:
+        raise ValueError("Retain the original one-to-501 active-business-day delivery duration.")
+    project_end = whole_day(data, "project_end_day", 0, 500)
+    if project_end != days - 1:
+        raise ValueError("Keep the original quoted business-day duration; revise original source to change scope.")
+    phases = plan["phases"]
+    if not isinstance(phases, list) or not 1 <= len(phases) <= 200:
+        raise ValueError("Retain every original Workshare phase.")
+    phase_map = {}
+    for phase in phases:
+        ident = phase["id"]
+        if not isinstance(ident, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}", ident) is None or ident in phase_map:
+            raise ValueError("Retain unique original phase identities.")
+        for key in ("title", "description", "acceptance", "owner"):
+            if not isinstance(phase.get(key), str) or not phase[key].strip():
+                raise ValueError("Retain each phase's original " + key)
+        duration = phase["business_days"]
+        if isinstance(duration, bool) or not isinstance(duration, int) or not 1 <= duration <= days:
+            raise ValueError("Retain each original phase's active business-day duration.")
+        hours = value(phase["production_hours"], "Original phase production hours")
+        if hours <= 0:
+            raise ValueError("Retain positive original phase production effort.")
+        phase_map[ident] = phase
+    for phase in phases:
+        parents = phase.get("depends_on")
+        if not isinstance(parents, list) or len(set(parents)) != len(parents) or any(p not in phase_map or p == phase["id"] for p in parents):
+            raise ValueError("Retain the original distinct phase predecessors.")
+    visiting, complete = set(), set()
+    def visit(ident):
+        if ident in visiting:
+            raise ValueError("The original phase graph contains a cycle.")
+        if ident in complete:
+            return
+        visiting.add(ident)
+        for parent in phase_map[ident]["depends_on"]:
+            visit(parent)
+        visiting.remove(ident)
+        complete.add(ident)
+    for ident in phase_map:
+        visit(ident)
+    costs = data["future_costs"]
+    if not isinstance(costs, list) or len(costs) != len(phases):
+        raise ValueError("Retain one complete delivery-cost assumption row for every original phase.")
+    normalized, selected_costs, unknown = [], {}, []
+    total, total_hours = Decimal(0), Decimal(0)
+    for item in costs:
+        ident = item["id"]
+        if ident not in phase_map or item.get("phase_id") != ident or ident in selected_costs or item.get("tranche") is not None:
+            raise ValueError("Bind each commercial row to its original phase without grant tranches.")
+        phase = phase_map[ident]
+        start = whole_day(item, "start_day", 0, project_end)
+        end = whole_day(item, "end_day", start, project_end)
+        if end - start + 1 < phase["business_days"]:
+            raise ValueError(ident + ": allow the original phase's full active business-day duration.")
+        hours = value(item["estimated_hours"], ident + ".estimated_hours")
+        if hours != value(phase["production_hours"], "Original effort"):
+            raise ValueError("Keep original quoted phase effort; change its source to change scope.")
+        total_hours += hours
+        if not isinstance(item.get("cost_basis", ""), str) or len(item.get("cost_basis", "")) > 12000:
+            raise ValueError("Retain a readable supplier-cost assumption basis.")
+        raw = item.get("amount_usd")
+        amount = None if raw is None else value(raw, ident + ".amount_usd")
+        if amount is not None and (amount != amount.quantize(Decimal("0.01")) or not item.get("cost_basis", "").strip()):
+            raise ValueError("An entered supplier cost needs whole cents and its explicit source/assumption basis.")
+        if amount is None:
+            unknown.append(ident)
+        else:
+            total += amount
+        selected_costs[ident] = item
+        normalized.append({"id": ident, "phase_id": ident, "amount": amount, "start": start, "end": end})
+    for ident, item in selected_costs.items():
+        if any(item["start_day"] <= selected_costs[p]["end_day"] for p in phase_map[ident]["depends_on"]):
+            raise ValueError(ident + ": begin after all original predecessor phases complete.")
+    milestones = quote["milestones"]
+    schedule = selected["receipt_schedule"]
+    if not isinstance(milestones, list) or not milestones or not isinstance(schedule, list) or len(schedule) != len(milestones):
+        raise ValueError("Map every original proposed payment milestone once.")
+    if sum((value(m["amount"], "Original milestone") for m in milestones), Decimal(0)) != fee:
+        raise ValueError("The original payment milestones must sum to the original proposed fee.")
+    payouts = []
+    for index, (milestone, row) in enumerate(zip(milestones, schedule)):
+        if not isinstance(row, dict) or set(row) != {"milestone_index", "anchor", "lag_days"} or isinstance(row["milestone_index"], bool) or row["milestone_index"] != index:
+            raise ValueError("Retain one ordered original conditional-payment selection.")
+        if row["anchor"] not in ("START", "FINISH"):
+            raise ValueError("Select START or FINISH for the original payment condition.")
+        lag = row["lag_days"]
+        if isinstance(lag, bool) or not isinstance(lag, int) or not 0 <= lag <= 365:
+            raise ValueError("Use an explicit payment-delay assumption from zero to365 active business days.")
+        for key in ("label", "trigger"):
+            if not isinstance(milestone.get(key), str) or not milestone[key].strip():
+                raise ValueError("Retain each original proposed payment label and condition.")
+        amount = value(milestone["amount"], "Original proposed milestone")
+        if amount <= 0 or amount != amount.quantize(Decimal("0.01")):
+            raise ValueError("Retain original positive whole-cent proposed milestones.")
+        payouts.append({"milestone_id": "commercial-payment-" + str(index + 1), "milestone_index": index,
+                        "label": milestone["label"], "usd": cents(amount),
+                        "hypothetical_paid_day": (0 if row["anchor"] == "START" else project_end) + lag,
+                        "release_condition": milestone["trigger"], "conditional": True})
+    peak, worst, events = Decimal(0), 0, []
+    cutoff = max(project_end, max(p["hypothetical_paid_day"] for p in payouts))
+    event_days = {0, project_end, *[p["hypothetical_paid_day"] for p in payouts]}
+    for offset in range(cutoff + 1):
+        accrued = sum((c["amount"] * Decimal(max(0, min(offset, c["end"]) - c["start"] + 1)) /
+                       Decimal(c["end"] - c["start"] + 1) for c in normalized if c["amount"] is not None), Decimal(0))
+        receipts = sum((Decimal(p["usd"]) for p in payouts if p["hypothetical_paid_day"] <= offset), Decimal(0))
+        gap = max(Decimal(0), accrued - receipts)
+        if gap > peak:
+            peak, worst = gap, offset
+        if offset in event_days:
+            events.append({"day": offset, "known_speculative_cost_usd": cents(accrued),
+                           "cumulative_speculative_cost_usd": None if unknown else cents(accrued),
+                           "conditional_fee_inflow_usd": cents(receipts),
+                           "cash_gap_if_costs_incurred_usd": None if unknown else cents(gap)})
+    return {"funding_mode": "COMMERCIAL_WORKSHARE", "status": "PROPOSED_UNSIGNED",
+            "application_state": "NOT_APPLICABLE_COMMERCIAL_PROPOSAL",
+            "award_request_usd": None, "proposed_fee_usd": cents(fee),
+            "planned_future_costs_usd": None if unknown else cents(total),
+            "known_future_costs_usd": cents(total), "cost_estimates_complete": not unknown,
+            "unknown_cost_ids": unknown, "production_hours": str(total_hours), "project_end_day": project_end,
+            "day_basis": "ACTIVE_BUSINESS_DAY", "workshare_case_id": source["case_id"],
+            "workshare_plan_sha256": source["plan_sha256"],
+            "model_assumptions": {"day_zero": "first active business day after actual agreed kickoff; no date selected by this model",
+                 "accrual": "only explicitly entered supplier-cost estimates spread over each phase's active business days",
+                 "release": "original proposed fee milestones conditional on their original trigger; not invoices, receipts or approval",
+                 "no_assumed_award_or_team": "no grant, agreement, payment, staffing or unknown supplier costs are inferred"},
+            "milestones": [{"phase_id": p["id"], "title": p["title"], "owner": p["owner"],
+                            "submit_day": selected_costs[p["id"]]["end_day"], "deliverable": p["description"],
+                            "proof": p["acceptance"]} for p in phases],
+            "payouts": payouts, "cashflow_events": events,
+            "peak_prefunding_gap_usd": None if unknown else cents(peak),
+            "known_peak_prefunding_gap_usd": cents(peak), "peak_gap_day": None if unknown else worst,
+            "xlm_price_scenarios_not_live_quotes": [],
+            "critical_unknowns": ["Customer agreement and actual kickoff", "Actual receiving operator and host authorization",
+                                 "Supplier-cost estimates for: " + (", ".join(unknown) if unknown else "all phases explicitly entered"),
+                                 "Actual payment and acceptance observations"],
+            "source_urls": [source["source_url"]]}
+
 def model(data):
+    if commercial_mode(data):
+        return commercial_model(data)
+    if data.get("funding_mode") not in (None, "SCF_GRANT"):
+        raise ValueError("Use a supported explicit planning funding mode.")
     if data.get("status") != "ILLUSTRATIVE_UNSENT":
         raise ValueError("status must be ILLUSTRATIVE_UNSENT (not an award/application)")
     award = value(data["award_request_usd"], "award_request_usd")

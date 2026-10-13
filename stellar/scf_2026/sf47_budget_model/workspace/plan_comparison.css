@@ -39,3 +39,7 @@
 .plan-comparison pre { max-width: 38rem; max-height: 30rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; margin: .7rem 0 0; padding: .7rem; font-size: .78rem; background: #f4f5f6; border: 1px solid #d2d7db; }
 .plan-comparison .cmp-pagination { justify-content: space-between; padding: 1rem 0; font-size: .85rem; }
 @media (max-width: 700px) { .plan-comparison .cmp-selectors, .plan-comparison .cmp-identities { grid-template-columns: 1fr; } .plan-comparison .cmp-downloads button { width: 100%; } }
+
+.plan-comparison .cmp-funding { margin: 1rem 0; padding: 1rem 0; border-bottom: 1px solid #b8b8b8; }
+.plan-comparison .cmp-funding td { overflow-wrap: anywhere; }
+@media (max-width: 700px) { .plan-comparison button, .plan-comparison input:not([type=checkbox]), .plan-comparison select { min-height: 44px; } }

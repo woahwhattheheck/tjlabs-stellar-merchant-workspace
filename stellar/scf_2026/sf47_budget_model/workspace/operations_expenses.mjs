@@ -32,6 +32,8 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
   }
   const root=document.createElement('section');root.className='expense-desk';root.setAttribute('aria-label','Issued expense attribution');container.replaceChildren(root);
   const pinnedContext=staffContext?{...staffContext}:null;
+  const commercial=current.plan.scenario.funding_mode==='COMMERCIAL_WORKSHARE';
+  const initialFundingBasis=()=>commercial?'':'GRANT';
   const legacyKey='sf47.issued-expense.'+current.program.id;
   const key=staffDeskStorageKey(legacyKey,pinnedContext);
   const databaseName=staffDeskStorageKey('sf47-issued-expense-desks-v1',pinnedContext);
@@ -280,7 +282,7 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
     const val=record?.valuation,rate=val?.rate;
     return {intakeId:line.intakeId,sourceLineId:line.sourceLineId,expectedSourceRowSha256:line.sourceRowSha256,
       ...(record?{id:record.id}:{}),allocations:record?record.allocations.map(({line,...row})=>({...copy(row),usdValue:row.usdValue??''})):
-        [{costId:'',fundingBasis:'GRANT',nativeAmount:line.original.amount,usdValue:'',memo:''}],
+        [{costId:'',fundingBasis:initialFundingBasis(),nativeAmount:line.original.amount,usdValue:'',memo:''}],
       unattributedReason:record?.unattributedReason??'',
       valuationMode:val?.mode??'NONE',valuationDate:val?.date??new Date().toISOString().slice(0,10),
       valuationSources:val?.sourceIds??[],valuationNote:val?.note??'',
@@ -335,10 +337,13 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
       linkedInvoiceIds:d.linkedInvoiceIds,linkedPurchaseIds:d.linkedPurchaseIds,linkedWorkIds:d.linkedWorkIds};
   }
   function splitForm(part,index){
-    const costs=[['','Choose the original work package'],...view().costs.map(row=>[row.id,row.id+' · T'+row.tranche])];
+    const costs=[['','Choose the original work package'],...view().costs.map(row=>[row.id,row.id+
+      (commercial?(row.plannedUsd===null?' · Planned amount not entered':' · Planned USD '+row.plannedUsd):' · T'+row.tranche)])];
     return '<fieldset data-expense-split><legend>Cost allocation '+(index+1)+'</legend><div class="expense-fields">'+
       label('Work package',select('costId',costs,part.costId,'required'))+
-      label('Funding basis',select('fundingBasis',['GRANT','CUSTOMER','INTERNAL','PREAWARD'],part.fundingBasis))+
+      label('Funding basis',select('fundingBasis',[
+        ...(commercial?[['','Choose the actual funding basis']]:[]),
+        'GRANT','CUSTOMER','INTERNAL','PREAWARD'],part.fundingBasis,'required'))+
       label('Native-unit amount',input('nativeAmount',part.nativeAmount,'text','inputmode="numeric" pattern="[0-9]+" required'), 'Integer units from this exact issued line.')+
       '<div data-expense-direct>'+label('Explicit USD value',input('usdValue',part.usdValue,'text','inputmode="decimal"'), 'Use the attached original valuation source.')+'</div>'+
       label('Allocation note',input('memo',part.memo,'text','maxlength="2000"'))+
@@ -629,7 +634,7 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
       storeDraft();
       if(choice==='add-split'){
         if(session.draft.allocations.length>=200)return message('This original allocation supports up to 200 cost splits.',true);
-        session.draft.allocations.push({costId:'',fundingBasis:'GRANT',nativeAmount:'',usdValue:'',memo:''});
+        session.draft.allocations.push({costId:'',fundingBasis:initialFundingBasis(),nativeAmount:'',usdValue:'',memo:''});
       }else session.draft.allocations.splice(Number(target.dataset.index),1);
       persist();render();return;
     }

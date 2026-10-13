@@ -441,12 +441,127 @@ export class ResearchInstallationBrowser extends BrowserReceiving{
   if(this.borrowedViewport&&!this.page.isClosed())await this.page.setViewportSize(this.borrowedViewport);
   await this.tail;
  }
+
+ async planningRead(suffix=''){
+  const path='/api/plans/'+encodeURIComponent(this.input.planId)+suffix;
+  return this.page.evaluate(async path=>{const {staffRequest}=await import('/staff-session.mjs');return staffRequest(path);},path);
+ }
+ async planningIdle(){
+  await boundedWait(this.page,()=>document.getElementById('workbench')?.getAttribute('aria-busy')==='false',null,1800000);
+  if(this.networkFailure)throw this.networkFailure;
+ }
+ async planningTab(name){
+  await this.page.locator('#sections [data-tab="'+name+'"]').click();await this.planningIdle();
+  await this.page.locator('#main-panel').scrollIntoViewIfNeeded();
+ }
+ async commercialPlanning(){
+  const current=await this.planningRead();
+  if(current.scenario?.funding_mode!=='COMMERCIAL_WORKSHARE')return {applicable:false,mode:current.scenario?.funding_mode??'SCF_GRANT'};
+  need(current.scenario.status==='PROPOSED_UNSIGNED','Retain the actual proposed unsigned commercial planning source.');
+  const prior=this.report.commercialPlanningSelection;
+  const caseValue=await this.api(this.prefix);
+  const binding={planId:current.id,planRevision:current.revision,contentSha256:current.contentSha256,
+   caseId:this.input.caseId,casePlanId:caseValue.program.planId,casePlanRevision:caseValue.program.planRevision,
+   worksharePlanSha256:current.scenario.commercial.workshare.plan_sha256,
+   feeUsd:current.report.originalModel.proposed_fee_usd,status:current.scenario.status};
+  need(!prior||same(prior,binding),'Retain the same actual commercial plan and original case-selected revision; review a later change as its own explicit amendment.');
+  this.report.commercialPlanningSelection=binding;await this.save();
+  const sourcePath=resolve(this.networkRoot,'complete-commercial-planning-'+current.revision+'.json');
+  await retain(sourcePath,pretty(current));await this.remember(sourcePath);
+  const history=await this.planningRead('/history'),revisions=history.revisions.map(row=>row.revision);
+  need(revisions.includes(current.revision),'Open an actual retained planning revision.');
+  await this.page.locator('#workbench').waitFor({state:'visible'});
+  const select=this.page.locator('#plan-select');
+  if(await select.inputValue()!==this.input.planId){await select.selectOption(this.input.planId);await this.planningIdle();}
+  need(await select.inputValue()===this.input.planId,'Keep the actual copied or received plan selected.');
+  const exports=[];
+  for(const tab of ['overview','work','milestones','staffing','payments','delivery','history']){
+   await this.planningTab(tab);
+   need(await this.page.locator('#workbench').getAttribute('data-funding-mode')==='COMMERCIAL_WORKSHARE','The original app lost the commercial planning mode.');
+   if(tab==='overview'){
+    need((await this.page.locator('#main-panel').innerText()).includes('Proposed')&&
+     (await this.page.locator('#main-panel').innerText()).includes('Known delivery-cost subtotal'),'Open actual proposed fee and unknown-cost review.');
+   }
+   if(tab==='work'){
+    const costs=current.scenario.future_costs;
+    need(await this.page.locator('.work-package').count()===costs.length,'View every original immutable commercial phase.');
+    for(const row of costs)need((await this.page.locator('#main-panel').innerText()).includes(row.phase_id),'The actual phase editor omitted an original phase identity.');
+    need(await this.page.locator('[data-action="add-cost"],[data-action="remove-cost"],[data-action="match-total"]').count()===0,
+     'Commercial scope and fees must remain bound to the original Workshare.');
+   }
+   if(tab==='history'){await this.page.locator('[data-action="history-view"][data-revision="'+current.revision+'"]').click();await this.planningIdle();}
+   await this.capture('commercial-'+this.phase+'-'+tab);
+   const end=this.page.locator('#main-panel > :last-child');if(await end.count()){await end.scrollIntoViewIfNeeded();await this.capture('commercial-'+this.phase+'-'+tab+'-end');}
+  }
+  await this.planningTab('overview');
+  for(const action of ['daily','scenario','commercial-report','commercial-workshare','export']){
+   const [file]=await this.downloads(()=>this.page.locator('[data-action="'+action+'"]').click(),[null],'commercial-'+this.phase+'-'+action);
+   exports.push({action,file});
+   if(action==='scenario'){
+    const scenario=await object(file.path,32*1024*1024);need(same(scenario,current.scenario),'The actual saved scenario download changed the complete commercial source or assumptions.');
+   }else if(action==='commercial-workshare'){
+    need(same(await object(file.path,32*1024*1024),current.scenario.commercial.workshare),'The original Workshare download changed the bound source.');
+   }else if(action==='commercial-report'){
+    const html=(await regular(file.path,64*1024*1024)).toString('utf8');
+    need(html.includes(current.scenario.commercial.workshare.plan_sha256)&&html.includes('Complete saved scenario'),'The complete readable proposal omitted the actual source or saved native calculation.');
+   }
+   await this.viewFile(file,'commercial-'+this.phase+'-'+action);
+  }
+  await this.planningTab('comparison');
+  const root=this.page.locator('.plan-comparison');
+  await boundedWait(this.page,()=>{const root=document.querySelector('.plan-comparison');return root&&root.getAttribute('aria-busy')==='false'&&root.querySelector('[data-cmp-view]');},null,1800000);
+  const before=revisions.filter(revision=>revision<current.revision).sort((a,b)=>b-a)[0]??current.revision;
+  await root.locator('[data-cmp-field="toPlanId"]').selectOption(current.id);
+  await boundedWait(this.page,()=>document.querySelector('.plan-comparison')?.getAttribute('aria-busy')==='false',null,1800000);
+  await root.locator('[data-cmp-field="fromRevision"]').selectOption(String(before));
+  await root.locator('[data-cmp-field="toRevision"]').selectOption(String(current.revision));
+  await root.locator('[data-cmp="compare"]').click();
+  await boundedWait(this.page,()=>{const root=document.querySelector('.plan-comparison');return root?.getAttribute('aria-busy')==='false'&&root.querySelector('[data-cmp-view="fundingTerms"]');},null,1800000);
+  const comparison=await this.planningRead('/comparison?fromRevision='+before+'&toRevision='+current.revision+'&toPlanId='+encodeURIComponent(current.id));
+  need(comparison.before.revision===before&&comparison.after.revision===current.revision&&
+   comparison.funding.before.mode==='COMMERCIAL_WORKSHARE'&&comparison.funding.after.mode==='COMMERCIAL_WORKSHARE',
+   'Compare the complete actual saved commercial revisions.');
+  const compared=resolve(this.networkRoot,'commercial-comparison-'+comparison.comparisonSha256+'.json');await retain(compared,pretty(comparison));await this.remember(compared);
+  const views=await root.locator('[data-cmp-view]').evaluateAll(nodes=>nodes.map(node=>node.dataset.cmpView));
+  for(const view of views){
+   await root.locator('[data-cmp-view="'+view+'"]').click();
+   let number=0;
+   while(true){
+    await root.locator('[data-cmp-table]').scrollIntoViewIfNeeded();await this.capture('commercial-'+this.phase+'-comparison-'+view+'-'+number);
+    const next=root.locator('[data-cmp="next"]');if(await next.isDisabled())break;
+    const previous=await root.locator('[data-cmp-count]').innerText();await next.click();
+    need(await root.locator('[data-cmp-count]').innerText()!==previous,'The complete saved comparison page did not advance.');
+    number++;need(number<=20000,'Retain the existing comparison pagination bound.');
+   }
+  }
+  for(const kind of ['report.html','export.zip','changes.csv','impact.csv','daily.csv']){
+   const [file]=await this.downloads(()=>root.locator('[data-cmp-export="'+kind+'"]').click(),[null],'commercial-'+this.phase+'-comparison-'+kind);
+   exports.push({action:'comparison/'+kind,file});await this.viewFile(file,'commercial-'+this.phase+'-comparison-'+kind);
+   await boundedWait(this.page,()=>document.querySelector('.plan-comparison')?.getAttribute('aria-busy')==='false',null,1800000);
+  }
+  await this.page.reload({waitUntil:'domcontentloaded'});await this.page.locator('#workbench').waitFor({state:'visible'});
+  if(await this.page.locator('#plan-select').inputValue()!==this.input.planId){await this.page.locator('#plan-select').selectOption(this.input.planId);await this.planningIdle();}
+  await this.planningTab('overview');
+  const reopened=await this.planningRead();
+  need(reopened.revision===current.revision&&reopened.contentSha256===current.contentSha256&&
+   same(reopened.scenario,current.scenario)&&same(reopened.planning,current.planning)&&same(reopened.report,current.report),
+   'The cold-reopened complete commercial proposal changed source, cost assumptions or native result.');
+  const caseAfter=await this.api(this.prefix);
+  need(caseAfter.program.planRevision===binding.casePlanRevision&&caseAfter.program.planId===binding.casePlanId,
+   'Rendered planning review must not silently adopt a case amendment.');
+  await this.capture('commercial-'+this.phase+'-cold-reopened');
+  const result={applicable:true,...binding,comparison:{beforeRevision:before,afterRevision:current.revision,sha256:comparison.comparisonSha256},exports,
+   review:'Actual supplied saved proposal; unknown costs retained. No new costs, acceptance, payments or case amendments invented.'};
+  this.report.commercialPlanning=result;await this.save();return result;
+ }
+
  async run(){
   let failure=null;
   try{
    await this.initialize();
    if(this.report.state==='COMPLETE')return {resultPath:this.path,...this.report};
    this.report.state='RUNNING';await this.save();
+   await this.stage('00-complete-commercial-proposal',()=>this.commercialPlanning());
    if(this.phase==='operate'){
     await this.navigate();
     await this.stage('01-original-source-draft',()=>this.originalCreate());
