@@ -35,7 +35,9 @@ starforge doctor --feature rozo-payments
 
 Build and install the selected immutable commit through the existing [distribution workflow](../../distribution/CONTRIBUTIONS.md). Its collector reads the same `browser-assets.json` used by the ROZO server. All mapped HTML, JavaScript, CSS and their original imports travel with the selected application.
 
-The product's `INSTALLED_SOURCE.json` retains ordinary source paths relative to the repository root, complete byte counts and SHA-256 values. The manifest itself is selected separately by its raw-file hash. Generate it from the full product selection after composing the adapter and contribution; preserve the ordinary source bytes unchanged.
+A selected distribution uses its original `package/manifest.json`, every declared ordinary `package/source` member and the original package.json, README.md and LICENSE. The verifier checks full file lengths and SHA-256 values, the original `packagePath` mapping and all three package hashes. It keeps the complete raw distribution manifest; it does not generate a replacement manifest for the installed package.
+
+A retained standalone checkout can instead select the product's `INSTALLED_SOURCE.json`. That declaration records ordinary repository-relative source paths, byte counts and SHA-256 values while excluding itself. The manifest's raw-file hash is a separate input. Explicit `--source-manifest` and `--source-sha256` selections remain authoritative. Both source forms work with Serve, the native journey and complete workspace export/receiving.
 
 ## What the managed launch binds
 
@@ -52,3 +54,9 @@ Use the native workspace to inspect the original connection aliases, recover sav
 Stopping and continuing use the same saved Applications request and original process lifecycle. Continue reuses the retained argv and workspace identity. Use the existing Applications details and original native logs to inspect the running operation.
 
 For the full shared adapter interface and runtime receiving sequence, see [Applications providers](../../distribution/runtime-workspace/APPLICATION_PROVIDERS.md).
+
+## Complete installed receiving programme
+
+After the original ROZO native operation has completed, run its following installed programme described in [Installed Applications receiving](APPLICATIONS_RECEIVING.md). It builds the selected immutable Git commit, installs the original Node 24 feature without external npm dependencies, operates the same received native workspace through Applications, retains a complete working export and transfers the original runtime. A separate process then installs and receives those same source/workspace bytes.
+
+The fixed programme ID is `ROZO-MERCHANT-SETTLEMENT-COMMISSIONING-20261012:installed-applications`. Its progress, request bodies, accepted replies and complete artifacts remain under the original native directory's `installed-applications` child. Reuse that directory after interruption.

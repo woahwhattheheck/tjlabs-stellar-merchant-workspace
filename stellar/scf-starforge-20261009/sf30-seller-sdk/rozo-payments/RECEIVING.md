@@ -45,7 +45,7 @@ starforge rozo-payments handover \
   --title "Complete merchant operations handover"
 ~~~
 
-When source is run from a retained checkout, supply --source-root, --source-manifest and optionally --source-sha256. Source-root is the repository root, while the manifest is the product's INSTALLED_SOURCE.json. Use --python or ROZO_PYTHON when the host's Python executable is not named python3.
+When source is run from a retained checkout, supply --source-root, --source-manifest and optionally --source-sha256. For a standalone checkout, source-root is the repository root and the manifest is the product's INSTALLED_SOURCE.json. Installed packages automatically select their original distribution manifest beside package/source; an explicit source-manifest remains authoritative. Use --python or ROZO_PYTHON when the host's Python executable is not named python3.
 
 The resulting delivery descriptor includes deliveryId, workspaceId, originId, revision, mode, original requestId, archive bytes/SHA-256, manifest SHA-256, name and local path. The native files are:
 
@@ -82,7 +82,7 @@ starforge rozo-payments receive \
   --directory /private/received/merchant-001
 ~~~
 
-Receiving rejects traversal paths, symlinks, duplicate or unlisted archive members, missing members and changed file hashes. It verifies the complete source declaration and original SQLite workspace/export request. The result returns actual sourceRoot, workspaceDirectory, configuration and cli paths.
+Receiving rejects traversal paths, symlinks, duplicate or unlisted archive members, missing members and changed file hashes. It verifies the complete source declaration and original SQLite workspace/export request. The result returns actual sourceRoot, sourceManifest, workspaceDirectory, configuration and cli paths. The source-manifest path identifies the raw original declaration selected by this archive.
 
 The complete extracted layout is:
 
@@ -90,6 +90,10 @@ The complete extracted layout is:
 DELIVERY.json
 RECEIVED_ARCHIVE.json
 source/<original repository-relative application paths>
+source-package/manifest.json       # installed distributions
+source-package/package.json       # original package metadata
+source-package/README.md
+source-package/LICENSE
 workspace/workspace.json
 workspace/RECEIVING.json
 workspace/rozo.sqlite3
@@ -159,3 +163,9 @@ The operation writes NATIVE_PROGRESS.json, exact browser progress/downloads/scre
 Only NATIVE_COMPLETION.json with all phases and actual separate receiving result is complete. A prepared source packet, grammar pass or pending browser state is a different milestone.
 
 Move a stopped operation as a whole when changing equipped hosts: retain all files and empty directories, original source editions, provider fixture state, SQLite state, native/CLI requests and progress. Preserve original endpoint/case bindings and reconcile the actual old process/lease before continuing. Local and equipped receivers run this same source and operation; do not start a competing job.
+
+## Receive an installed Applications package
+
+[Installed Applications receiving](APPLICATIONS_RECEIVING.md) is the complete following programme for the already completed native case. The original distribution builder and runtime-transfer installer keep their own source/profile/lock identities. A working export from the installed ROZO listener keeps that exact distribution manifest and its three package files, alongside every declared source member and the original workspace. The archive receiver remains manifest-driven; it verifies all declared metadata instead of substituting the standalone source declaration.
+
+The independent `applications-receiving.mjs` process runs from the transferred runtime's own source. It verifies the full original runtime transfer, completes the original installer, receives the exact working archive and compares every native table and raw object with the accepted export inventory. The working copy remains read-only. Permanent custody transfer continues to use the explicit Handover operation above.

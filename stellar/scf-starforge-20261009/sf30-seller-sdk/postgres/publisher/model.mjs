@@ -45,6 +45,11 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
     typeof driver[key] !== 'string' || !/^stellar-forge\.[a-z-]+\.v1$/.test(driver[key])) ||
     ['capturePlan', 'inspectSource', 'openSource', 'checkColumnTypes', 'encodeRow', 'validateExtraction']
       .some(key => typeof driver[key] !== 'function')) throw new TypeError('A trusted dataset source driver is required');
+  // The trusted application driver may retain a larger complete source. This
+  // bound is never read from a request, plan or source declaration.
+  const maxSourceBytes = driver.maxSourceBytes ?? 262144;
+  if (!Number.isSafeInteger(maxSourceBytes) || maxSourceBytes < 1 || maxSourceBytes > 67108864)
+    throw new TypeError('A bounded trusted source byte limit is required');
   const sourceName = driver.sourceName ?? 'PostgreSQL';
   if (typeof sourceName !== 'string' || !/^[A-Za-z][A-Za-z0-9 -]{0,63}$/.test(sourceName))
     throw new TypeError('A plain source display name is required');
@@ -249,8 +254,8 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
     async function validatePlan(saved) {
       const base = join(directory, 'plans', saved.folder);
       const exact = await readJson(join(base, 'plan.json'));
-      if (identity(exact) !== identity(saved.data) || digest(await readPrivate(join(base, 'source.json'))) !== saved.data.runtimeSourceHash ||
-          digest(await readPrivate(join(base, 'original-source.json'))) !== saved.data.sourceHash ||
+      if (identity(exact) !== identity(saved.data) || digest(await readPrivate(join(base, 'source.json'), maxSourceBytes)) !== saved.data.runtimeSourceHash ||
+          digest(await readPrivate(join(base, 'original-source.json'), maxSourceBytes)) !== saved.data.sourceHash ||
           saved.data.caHash && digest(await readPrivate(join(base, 'ca.pem'), 1048576)) !== saved.data.caHash)
         throw fault('RETAINED_PLAN_CHANGED', 'The retained extraction plan no longer matches its saved source.', 409);
       return base;

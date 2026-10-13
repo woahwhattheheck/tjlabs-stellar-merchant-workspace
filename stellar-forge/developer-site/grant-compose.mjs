@@ -8,6 +8,7 @@ import { composeGrantEntry } from './grant-entry.mjs';
 import { attachGrantSubmission } from './grant-submission.mjs';
 import { attachGrantReviewRounds } from './grant-review-round.mjs';
 import { attachGrantCompanion } from './grant-companion.mjs';
+import { attachCustomerClosingSources, attachCustomerClosingOpening } from './grant-customer-closing.mjs';
 import { receiveFinancialApplication, attachFinancialSources } from './grant-financial-operations.mjs';
 import { projectGrantMarkdown, receiveGrantCustomerSections, projectGrantSourceIndex, receiveGrantCustomerSources } from './grant-customers.mjs';
 import { receiveDatasetteApplication, datasetteSourceSelection, addDatasetteGrantSources, receiveDatasetteExistingWork } from './grant-datasette.mjs';
@@ -180,7 +181,7 @@ function receiveApplicationNavigation(templateHtml, headings) {
 /** Pure composition; the caller chooses whether and where the result is written. */
 export function composeGrantApplication({
   applicationMarkdown, productAndFinanceMarkdown, templateHtml, sourceIndex,
-  fredCommit, coopsCommit = null, financeCommit = null, datasetteCommit = null, datasettePublisherCommit = null, canonicalManuscript = CANONICAL_MANUSCRIPT,
+  fredCommit, coopsCommit = null, financeCommit = null, customerClosingCommit = null, datasetteCommit = null, datasettePublisherCommit = null, canonicalManuscript = CANONICAL_MANUSCRIPT,
 }) {
   need(typeof fredCommit === 'string' && /^[a-f0-9]{40}$/.test(fredCommit), 'Select the actual merged economic product commit.');
   need(coopsCommit === null || (typeof coopsCommit === 'string' && /^[a-f0-9]{40}$/.test(coopsCommit)), 'Select the actual merged coastal product commit.');
@@ -249,11 +250,20 @@ export function composeGrantApplication({
     financialSources = attached.financialSources;
     financialOperation = attached.financialOperation;
   }
+  const selectedCustomerClosingCommit = customerClosingCommit || index.narrative_source?.customer_closing_product_commit || null;
+  let customerClosing = null, customerClosingSources = null;
+  if (selectedCustomerClosingCommit) {
+    const attached = attachCustomerClosingSources(index, { customerClosingCommit: selectedCustomerClosingCommit, productAndFinanceMarkdown: companion });
+    index = attached.sourceIndex;
+    customerClosing = attached.customerClosing;
+    customerClosingSources = attached.customerClosingSources;
+  }
   // Register complete canonical source identities before projecting reader links.
   receiveGrantCustomerSources(index, productAndFinanceMarkdown);
   index = projectGrantSourceIndex(index);
   const reviewerEntry = composeGrantEntry(html);
-  const submission = attachGrantSubmission({ templateHtml: reviewerEntry.html, sourceIndex: index });
+  const customerOpening = attachCustomerClosingOpening({ templateHtml: reviewerEntry.html, sourceIndex: index });
+  const submission = attachGrantSubmission(customerOpening);
   const reviewRound = attachGrantReviewRounds(submission);
   const companionReader = attachGrantCompanion(reviewRound);
   html = companionReader.templateHtml;
@@ -266,15 +276,15 @@ export function composeGrantApplication({
     'grant-data/source-index.json': indexText,
   };
   return { files, sourcePins: Object.fromEntries(Object.entries(files).map(([path, body]) => ['/' + path, gitBlob(body)])),
-    application: index.application, productAndFinance: index.product_and_finance, economicSource: source, coastalSource, financialSources, financialOperation, datasetteSources, reviewerEntry: reviewerEntry.entry, submissionWorkspace: index.submission_workspace, submissionReviewRound: index.submission_review_round, companionReader: index.companion_reader };
+    application: index.application, productAndFinance: index.product_and_finance, economicSource: source, coastalSource, financialSources, financialOperation, customerClosing, customerClosingSources, datasetteSources, reviewerEntry: reviewerEntry.entry, submissionWorkspace: index.submission_workspace, submissionReviewRound: index.submission_review_round, companionReader: index.companion_reader };
 }
 
 function argumentsFor(argv) {
   const options = {};
   for (let i = 0; i < argv.length; i++) {
     const name = argv[i];
-    need(['--directory', '--manuscript', '--fred-commit', '--coops-commit', '--finance-commit', '--datasette-commit', '--datasette-publisher-commit', '--source-pins-output'].includes(name) && i + 1 < argv.length,
-      'Use --directory <existing dist>, --manuscript <canonical.md>, --fred-commit <merged sha>, optional --coops-commit <merged sha>, --finance-commit <merged sha>, paired --datasette-commit <customer sha> / --datasette-publisher-commit <publisher sha> and --source-pins-output <file>.');
+    need(['--directory', '--manuscript', '--fred-commit', '--coops-commit', '--finance-commit', '--customer-closing-commit', '--datasette-commit', '--datasette-publisher-commit', '--source-pins-output'].includes(name) && i + 1 < argv.length,
+      'Use --directory <existing dist>, --manuscript <canonical.md>, --fred-commit <merged sha>, optional --coops-commit <merged sha>, --finance-commit <merged sha>, --customer-closing-commit <merged sha>, paired --datasette-commit <customer sha> / --datasette-publisher-commit <publisher sha> and --source-pins-output <file>.');
     need(!Object.hasOwn(options, name), 'Use each composition option once: ' + name);
     options[name] = argv[++i];
   }
@@ -283,7 +293,7 @@ function argumentsFor(argv) {
 
 export async function runGrantComposition(argv = process.argv.slice(2)) {
   const options = argumentsFor(argv), directory = resolve(options['--directory'] || DEFAULT_DIRECTORY);
-  const [applicationMarkdown, productAndFinanceMarkdown, templateHtml, indexText, composerSource, customerSource, a2aSource, deliverySource] = await Promise.all([
+  const [applicationMarkdown, productAndFinanceMarkdown, templateHtml, indexText, composerSource, customerSource, a2aSource, deliverySource, reviewerEntrySource, companionSource] = await Promise.all([
     readFile(join(directory, 'grant-data/application.md'), 'utf8'),
     readFile(join(directory, 'grant-data/product-and-finance.md'), 'utf8'),
     readFile(join(directory, 'grant.html'), 'utf8'),
@@ -292,6 +302,8 @@ export async function runGrantComposition(argv = process.argv.slice(2)) {
     readFile(new URL('./grant-customers.mjs', import.meta.url), 'utf8'),
     readFile(new URL('./grant-a2a.mjs', import.meta.url), 'utf8'),
     readFile(new URL('./grant-delivery-plan.mjs', import.meta.url), 'utf8'),
+    readFile(new URL('./grant-entry.mjs', import.meta.url), 'utf8'),
+    readFile(new URL('./grant-companion.mjs', import.meta.url), 'utf8'),
   ]);
   const index = JSON.parse(indexText);
   const manuscript = options['--manuscript'] ? await readFile(resolve(options['--manuscript']), 'utf8') : null;
@@ -300,6 +312,7 @@ export async function runGrantComposition(argv = process.argv.slice(2)) {
   if (manuscript) receiveGrantCustomerSources(index, manuscript);
   const coopsCommit = options['--coops-commit'] || index.narrative_source?.coastal_product_commit || null;
   const financeCommit = options['--finance-commit'] || index.narrative_source?.financial_product_commit || null;
+  const customerClosingCommit = options['--customer-closing-commit'] || index.narrative_source?.customer_closing_product_commit || null;
   const datasetteCommit = options['--datasette-commit'] || index.narrative_source?.datasette_customer_commit || null;
   const datasettePublisherCommit = options['--datasette-publisher-commit'] || index.narrative_source?.datasette_publisher_commit || null;
   const datasetteSelection = datasetteSourceSelection({ analysisCommit: datasetteCommit, publisherCommit: datasettePublisherCommit });
@@ -312,17 +325,18 @@ export async function runGrantComposition(argv = process.argv.slice(2)) {
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     renderer_git_blob: gitBlob(composerSource), projector_git_blob: gitBlob(customerSource), a2a_projector_git_blob: gitBlob(a2aSource), delivery_plan_git_blob: gitBlob(deliverySource),
+    reviewer_entry_git_blob: gitBlob(reviewerEntrySource), companion_projector_git_blob: gitBlob(companionSource),
     ...(manuscript ? { canonical_front_sha256: digest(selectedApplication), canonical_front_bytes: bytes(selectedApplication) } : {}),
   } };
   const result = composeGrantApplication({
     applicationMarkdown: selectedApplication,
     productAndFinanceMarkdown: companion, templateHtml, sourceIndex: index,
     fredCommit: options['--fred-commit'] || index.narrative_source?.economic_product_commit,
-    coopsCommit, financeCommit, datasetteCommit, datasettePublisherCommit,
+    coopsCommit, financeCommit, customerClosingCommit, datasetteCommit, datasettePublisherCommit,
   });
   for (const [path, body] of Object.entries(result.files)) await writeFile(join(directory, path), body);
   if (options['--source-pins-output']) await writeFile(resolve(options['--source-pins-output']), JSON.stringify(result.sourcePins, null, 2) + '\n');
-  return { sourcePins: result.sourcePins, application: result.application, productAndFinance: result.productAndFinance, economicSource: result.economicSource, coastalSource: result.coastalSource, financialSources: result.financialSources, financialOperation: result.financialOperation, datasetteSources: result.datasetteSources, reviewerEntry: result.reviewerEntry, submissionWorkspace: result.submissionWorkspace, submissionReviewRound: result.submissionReviewRound, companionReader: result.companionReader };
+  return { sourcePins: result.sourcePins, application: result.application, productAndFinance: result.productAndFinance, economicSource: result.economicSource, coastalSource: result.coastalSource, financialSources: result.financialSources, financialOperation: result.financialOperation, customerClosing: result.customerClosing, customerClosingSources: result.customerClosingSources, datasetteSources: result.datasetteSources, reviewerEntry: result.reviewerEntry, submissionWorkspace: result.submissionWorkspace, submissionReviewRound: result.submissionReviewRound, companionReader: result.companionReader };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   runGrantComposition().then(result => process.stdout.write(JSON.stringify(result, null, 2) + '\n')).catch(error => {

@@ -110,6 +110,37 @@ Start the same whole operating selection:
 node installation-return-operate.mjs --input /absolute/owned-state/host-input.json
 ~~~
 
+### Continue an already completed original host
+
+When the original 7108 core and Page have completed, keep their complete-input.json, both workspaces, selected source directory and output intact. Select the merged continuation source in a separate directory. The new tail uses the existing owner case and its Installation identity.
+
+Add the following optional completedBase selection to the same continuation host input. These are the exact byte identities of the original complete host input and its output/result.json:
+
+~~~json
+{
+  "completedBase": {
+    "input": {
+      "path": "/absolute/original-host/complete-input.json",
+      "bytes": 1234,
+      "sha256": "<sha256-of-the-complete-original-input>"
+    },
+    "result": {
+      "path": "/absolute/original-host/receiving/result.json",
+      "bytes": 5678,
+      "sha256": "<sha256-of-the-complete-original-result>"
+    }
+  }
+}
+~~~
+
+The example byte counts are placeholders; record the actual original files. workspaceDirectory must be the completed host's workspaceDirectory, and coreReceivedDirectory must be its original receivedDirectory. The new outputDirectory, receivedDirectory and finalReceivedDirectory remain distinct from those original directories.
+
+Before any amendment, the continuation checks the selected original input/result, complete customer package intent, every retained core/Page output, original source manifest and source bytes, complete customer archive, original core result and its full archive. The original core's completed_only path holds its normal receiving lock and returns the saved result before opening a Workspace or issuing a native action. A missing COMPLETE result cannot start a new core through that path. The existing live owner case must still contain the exact historical Installation.
+
+The tail keeps exact copies of the original host input, result, source selection, core input/result and complete customer archive with its own receiving outputs. Its journal binds that completed-base selection before the first amendment. Original core/Page operation IDs and files stay unchanged; subsequent amendment, return and browser requests keep the continuation's original operation ID.
+
+Resume with the same complete host selection. If an older continuation input already exists, it cannot be silently rewritten to select another base. If the selected original workspace or source is unavailable on the receiving machine, retain that concrete path/result selection for the original host's supported recovery. Importing a customer case is an explicit native receiving operation with its own recorded local identity.
+
 The source, state directories and output are separate. The host selects its actual installed Python, Playwright and Chromium; the application itself remains the original standard-library Python service. A recipient does not need the browser automation dependencies to run normal staff operations.
 
 The continuation journal preserves each native request before its call, immutable original files, completed phases and exact UI-issued request bodies. Resume the same host input. The producer must retain its complete source/case/output package before a transient execution environment exits.

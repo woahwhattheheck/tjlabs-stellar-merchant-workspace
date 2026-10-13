@@ -1,6 +1,6 @@
 // MIT. ROZO's original workspace in the maintained Applications lifecycle.
 import { createHash } from 'node:crypto';
-import { join, relative } from 'node:path';
+import { join, relative, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { inspectMerchantRuntime } from '../../sf46-release/runtime-package.mjs';
 import {
@@ -42,7 +42,7 @@ async function nativeSource(sourceRoot) {
   const store = await import(pathToFileURL(join(sourceRoot, SOURCE, 'store.mjs')).href);
   const source = await import(pathToFileURL(join(sourceRoot, SOURCE, 'source.mjs')).href);
   need(typeof store.inspectRozoWorkspace === 'function' &&
-    typeof source.inspectRozoSource === 'function',
+    typeof source.inspectRozoSource === 'function' && typeof source.selectRozoSource === 'function',
   'APPLICATION_ROZO_NATIVE_READER_REQUIRED', 'The selected ROZO runtime must include its original workspace and source readers.');
   return { ...store, ...source };
 }
@@ -64,17 +64,26 @@ export async function prepareRozoPaymentsApplication(settings, { inputPath, runt
   'APPLICATION_ROZO_WORKSPACE_CHANGED', 'Choose the original initialized ROZO workspace.');
   // The marker is immutable; current orders, observations and revisions remain editable work.
   inputs.push(await inputPath(join(directory, 'workspace.json'), 'file'));
-  const manifestPath = join(sourceRoot, SOURCE, MANIFEST);
+  const selectedSource = await native.selectRozoSource(sourceRoot);
+  const manifestPath = selectedSource.sourceManifest;
   const manifestInput = await inputPath(manifestPath, 'file');
   inputs.push(manifestInput);
   const source = await native.inspectRozoSource(sourceRoot, manifestPath, manifestInput.sha256);
-  need(source?.manifestSha256 === manifestInput.sha256 && HASH.test(source.selectionSha256 ?? '') &&
+  need(manifestInput.bytes > 0 && (manifestInput.sha256 === undefined || manifestInput.sha256 === source.manifestSha256),
+    'APPLICATION_ROZO_SOURCE_CHANGED');
+  need(HASH.test(source?.manifestSha256 ?? '') && HASH.test(source.selectionSha256 ?? '') &&
     Array.isArray(source.files) && source.files.length > 0,
   'APPLICATION_ROZO_SOURCE_CHANGED', 'The original ROZO source selection differs from its installed manifest.');
   for (const row of source.files) {
     const input = await inputPath(join(sourceRoot, row.path), 'file');
     need(input.bytes === row.bytes && (input.sha256 === undefined || input.sha256 === row.sha256),
       'APPLICATION_ROZO_SOURCE_CHANGED', 'A selected ROZO source file changed: ' + row.path);
+    inputs.push(input);
+  }
+  for (const row of source.packageFiles ?? []) {
+    const input = await inputPath(join(selectedSource.sourcePackageDirectory, row.path), 'file');
+    need(input.bytes === row.bytes && (input.sha256 === undefined || input.sha256 === row.sha256),
+      'APPLICATION_ROZO_SOURCE_CHANGED', 'The original package metadata changed: ' + row.path);
     inputs.push(input);
   }
   return {
@@ -110,7 +119,8 @@ function selection(request) {
     'APPLICATION_ROZO_STARTUP_CHANGED');
   const sourceRoot = absolute(options.get('--source-root'));
   const sourceManifest = absolute(options.get('--source-manifest'));
-  need(sourceManifest === join(sourceRoot, SOURCE, MANIFEST),
+  need([join(sourceRoot, SOURCE, MANIFEST), join(dirname(sourceRoot), 'manifest.json'),
+    join(dirname(sourceRoot), 'source-package', 'manifest.json')].includes(sourceManifest),
     'APPLICATION_ROZO_STARTUP_CHANGED', 'The managed ROZO launch must retain its installed original source manifest.');
   return {
     directory: absolute(options.get('--workspace')), configuration: absolute(options.get('--config')),
@@ -173,13 +183,15 @@ export async function rozoPaymentsStartup(request, text) {
   await native.inspectRozoSource(executedSourceRoot, executedManifest, selected.sourceSha256);
   need(value.sourceIdentity?.manifestSha256 === source.manifestSha256 &&
     value.sourceIdentity?.selectionSha256 === source.selectionSha256 &&
-    JSON.stringify(value.sourceIdentity?.files) === JSON.stringify(source.files),
+    JSON.stringify(value.sourceIdentity?.files) === JSON.stringify(source.files) &&
+    JSON.stringify(value.sourceIdentity?.packageFiles) === JSON.stringify(source.packageFiles),
   'APPLICATION_ROZO_SOURCE_CHANGED');
   const state = await liveState(url.origin, value.sessionToken);
   need(state?.schema === STATE && state.workspace?.workspaceId === selected.workspaceId &&
     state.workspace?.originId === selected.originId &&
     state.sourceIdentity?.manifestSha256 === source.manifestSha256 &&
-    state.sourceIdentity?.selectionSha256 === source.selectionSha256,
+    state.sourceIdentity?.selectionSha256 === source.selectionSha256 &&
+    JSON.stringify(state.sourceIdentity?.packageFiles) === JSON.stringify(source.packageFiles),
   'APPLICATION_ROZO_STARTUP_CHANGED', 'The live ROZO workspace differs from the original selected workspace.');
   return {
     url: url.href, workspaceId: selected.workspaceId,
@@ -188,7 +200,7 @@ export async function rozoPaymentsStartup(request, text) {
       workspaceId: selected.workspaceId, originId: selected.originId, workspaceCreatedAt: workspace.createdAt,
       sourceRoot: selected.sourceRoot, executedSourceRoot, sourceManifest: selected.sourceManifest,
       sourceSha256: source.manifestSha256, sourceSelectionSha256: source.selectionSha256,
-      sourceFiles: source.files, pid: value.pid, stateEndpoint: endpoint.href,
+      sourceFiles: source.files, ...(source.packageFiles ? { packageFiles: source.packageFiles, distribution: source.distribution } : {}), pid: value.pid, stateEndpoint: endpoint.href,
     },
   };
 }

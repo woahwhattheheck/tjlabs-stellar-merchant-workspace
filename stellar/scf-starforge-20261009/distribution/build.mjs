@@ -10,7 +10,7 @@ import { runtimeNodeRequirement } from './runtime-profile.mjs';
 import { productPackageMetadata } from './product-package.mjs';
 import { distributionPath, contributionDirectory, contributionPaths, composeDistribution } from './specification.mjs';
 import { sourceSelectionDirectory, sourceSelectionPath, validateSourceSelection,
-  selectedContributionPaths, requireSourceSelectionMatch } from './source-selection.mjs';
+  selectedContributionPaths, requireSourceSelectionMatch, parseOriginalSourceData } from './source-selection.mjs';
 import { readDistributionBuildPin, recoverCompletedDistribution, openDistributionBuild,
   inspectDistributionBuild } from './build-state.mjs';
 
@@ -22,11 +22,11 @@ const supported = /\.(?:mjs|js|cjs|ts|mts|py|pyi|rb|rbs|erb|php|go|rs|java|dmn|d
 const excludedName = /(?:^test[_.-]|[.]test[.]|[.]spec[.]|(?:^|[-_])acceptance(?:[-_.]|$)|(?:^|[-_])focused[-_]?check[.]|_check[.])/i;
 const excludedDirs = new Set(['test', 'tests', 'fixtures', 'snapshots', 'node_modules', '__pycache__']);
 
-function isRuntimeFile(path, explicitRuntime = false) {
+function isRuntimeFile(path, explicitRuntime = false, sourceFormat) {
   const parts = path.split('/');
   // Retained source data can have an original fixtures path. Only explicitly
   // declared data and native XML/DMN models get this exception; executable fixtures stay excluded.
-  const declaredData = explicitRuntime && /\.(?:csv|json|txt|parquet|xml|dmn|dmn11)$/i.test(path);
+  const declaredData = explicitRuntime && (sourceFormat === 'json' || /\.(?:csv|json|txt|parquet|xml|dmn|dmn11)$/i.test(path));
   // An explicit original file is an exact source selection, not a directory
   // expansion hint. Its extension cannot override that declaration. Keep the
   // heuristic format list for automatic component/import discovery; all paths
@@ -129,7 +129,8 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   const moduleTemplates = new Set(spec.moduleTemplates ?? []);
   for (const path of moduleTemplates) if (required.includes(path))
     throw new TypeError('A module template cannot be a packaged entrypoint: ' + path);
-  const explicitRuntime = new Set([...spec.supportFiles, ...moduleTemplates, ...specificationPaths,
+  const sourceFormats = spec.sourceFormats ?? {}, dataSources = new Set(Object.keys(sourceFormats));
+  const explicitRuntime = new Set([...spec.supportFiles, ...moduleTemplates, ...dataSources, ...specificationPaths,
     ...Object.values(spec.applicationProviders ?? {}), ...Object.values(spec.merchantProviders ?? {}),
     ...(recipe ? [...required, ...Object.values(spec.runtimePackageManifests ?? {}),
       ...(spec.browserAssets ?? []).flatMap(entry => [entry.server, entry.manifest])] : [])]);
@@ -147,12 +148,12 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   // test-like filename. Undeclared archives remain outside source selection;
   // directory, explicit exclusion and regular-file checks still apply.
   const selected = tree.filter(item => selectionIncludes(item.path) &&
-    isRuntimeFile(item.path, explicitRuntime.has(item.path)) && !excluded.has(item.path) &&
+    isRuntimeFile(item.path, explicitRuntime.has(item.path), sourceFormats[item.path]) && !excluded.has(item.path) &&
     (spec.components.some(root => item.path.startsWith(root + '/')) || explicitRuntime.has(item.path)));
   for (const root of spec.components)
     if (!selected.some(item => item.path.startsWith(root + '/'))) throw new TypeError('Missing component: ' + root);
   const names = new Set(selected.map(item => item.path));
-  for (const path of [...required, ...spec.supportFiles, ...moduleTemplates, ...specificationPaths, ...Object.values(spec.runtimePackageManifests ?? {})])
+  for (const path of [...required, ...spec.supportFiles, ...moduleTemplates, ...dataSources, ...specificationPaths, ...Object.values(spec.runtimePackageManifests ?? {})])
     if (!names.has(path)) throw new TypeError('Missing packaged entry: ' + path);
   const sources = new Map();
   let totalBytes = 0;
@@ -171,6 +172,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   source.progress('selected', { files: selected.length, components: spec.components.length, contributions: distribution.contributions.length,
     ...(recipe ? { sourceSelection: recipe.id } : {}) });
   loadSources(selected);
+  for (const [path, format] of Object.entries(sourceFormats)) parseOriginalSourceData(path, format, sources.get(path));
   // The same manifests drive the actual servers. Retain every mapped source
   // and resolve browser imports in its served URL context, not by inventing a
   // missing file beside the importer. Ordinary Node imports keep filesystem
@@ -180,9 +182,11 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     return sources.get(path);
   });
   const missingModules = [];
-  const enqueue = (target, importer, discovered) => {
+  const enqueue = (target, importer, discovered, executable = true) => {
     if (moduleTemplates.has(target))
       throw new TypeError('Executable source cannot import a module template: ' + importer + ' -> ' + target);
+    if (executable && dataSources.has(target))
+      throw new TypeError('Executable source cannot import JSON data: ' + importer + ' -> ' + target);
     if (names.has(target)) return;
     const item = byPath.get(target);
     if (!item || excluded.has(target) || !selectionIncludes(target) || !isRuntimeFile(target, explicitRuntime.has(target) || declaredRuntime.has(target))) {
@@ -194,7 +198,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     selected.push(item);
   };
   const mapped = [];
-  for (const target of browserAssets.files) enqueue(target, 'browser asset manifest', mapped);
+  for (const target of browserAssets.files) enqueue(target, 'browser asset manifest', mapped, false);
   if (mapped.length) loadSources(mapped);
   // Parse actual static ESM only, without executing application source. Shared
   // helpers discovered here travel with their importer. Dynamic application
@@ -202,7 +206,8 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   let frontier = sources;
   while (frontier.size) {
     const discovered = [];
-    for (const [path, requests] of staticModuleRequests(frontier)) {
+    const executableSources = new Map([...frontier].filter(([path]) => !dataSources.has(path)));
+    for (const [path, requests] of staticModuleRequests(executableSources)) {
       if (moduleTemplates.has(path)) continue;
       for (const request of requests) {
         const served = browserAssets.resolve(path, request);
@@ -222,8 +227,9 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   const featurePeers = { ...spec.featurePeers };
   for (const [group, path] of Object.entries(spec.runtimePackageManifests ?? {})) {
     const original = JSON.parse(sources.get(path));
-    if (!original.dependencies || typeof original.dependencies !== 'object' || Array.isArray(original.dependencies))
-      throw new TypeError('Runtime dependencies missing: ' + path);
+    if (!original.dependencies || typeof original.dependencies !== 'object' || Array.isArray(original.dependencies) ||
+        !Object.keys(original.dependencies).length && !/^>=\d+(?:\.\d+)?(?:\.\d+)?$/.test(original.engines?.node ?? ''))
+      throw new TypeError('Runtime dependencies or an explicit Node engine are required: ' + path);
     runtimeEngines[group] = original.engines?.node ?? null;
     featurePeers[group] = {};
     for (const [name, version] of Object.entries(original.dependencies)) {
@@ -270,6 +276,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     ...(recipe ? { sourceSelection: { id: recipe.id, title: recipe.title, path: recipePath,
       gitBlob: recipeEntry.blob, sha256: digest(recipeBytes), bytes: recipeBytes.length } } : {}),
     components: spec.components, sourceBytes: totalBytes,
+    ...(dataSources.size ? { sourceFormats } : {}),
     distributionInputs: specificationPaths.map(path => ({ path, gitBlob: byPath.get(path).blob,
       sha256: digest(sources.get(path)), bytes: sources.get(path).length })),
     distributionContributions: distribution.contributions.map(({ id, path }) => ({ id, path })),

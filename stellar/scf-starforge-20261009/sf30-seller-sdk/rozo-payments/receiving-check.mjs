@@ -26,7 +26,7 @@ export async function receiveOriginal({directory,archive,sha256,requestId='nativ
   }finally{w.close();}
   const replay=await receiveDelivery(archive,root,{sha256,activate:true,requestId,actor,python});
   assert(replay.reused===true,'NATIVE_RECEIVE_REPLAY','The original activation did not reuse its actual accepted request.');
-  const result={schema:'stellar-forge.rozo-native-receiving-result.v1',dataContext:'DEVELOPMENT',applicationModule:fileURLToPath(import.meta.url),archiveSha256:sha256,manifestSha256:digest(readFileSync(join(root,'DELIVERY.json'))),...verification,activation,sourceRoot:accepted.sourceRoot,workspaceDirectory:accepted.workspaceDirectory,configuration:accepted.configuration,cli:accepted.cli,replayed:true};
+  const result={schema:'stellar-forge.rozo-native-receiving-result.v1',dataContext:'DEVELOPMENT',applicationModule:fileURLToPath(import.meta.url),archiveSha256:sha256,manifestSha256:digest(readFileSync(join(root,'DELIVERY.json'))),...verification,activation,sourceRoot:accepted.sourceRoot,...(manifest.sourceManifest?{sourceManifest:accepted.sourceManifest}:{}),workspaceDirectory:accepted.workspaceDirectory,configuration:accepted.configuration,cli:accepted.cli,replayed:true};
   putOriginal(join(root,'NATIVE_RECEIVE_RESULT.json'),Buffer.from(canonical(result)+'\n'));return result;
 }
 if(process.argv[1]&&realpathSync(process.argv[1])===fileURLToPath(import.meta.url)){

@@ -24,6 +24,11 @@ export interface NativeWorkspaceDescription {
   workspaceLabel?: string;
   schema: 'stellar-forge.mcp-native-request-workspace.v1';
   available: true;
+  /** Exact immutable catalog base of the original native service. */
+  catalogUrl?: string;
+  /** Registry-assigned source identity; standalone native services retain catalogUrl. */
+  catalogId?: string;
+  catalogLabel?: string;
   route: {
     origin: string;
     pathname: string;

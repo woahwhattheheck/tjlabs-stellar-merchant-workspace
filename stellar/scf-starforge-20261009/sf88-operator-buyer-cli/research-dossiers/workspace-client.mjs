@@ -8,7 +8,7 @@ import {createRisSourceClient} from './ris-source/client.mjs';
 import {createCustomerUpdatesClient} from './customer-updates/client.mjs';
 import {createResearchCommerceClient} from './customer-commerce/client.mjs';
 import {createResearchQuotesClient} from './customer-quotes/client.mjs';
-import {QUOTE_REQUEST_LIMIT} from './customer-quotes/contracts.mjs';
+import {QUOTE_REQUEST_LIMIT,QUOTE_CASE_TRANSFER_LIMIT} from './customer-quotes/contracts.mjs';
 import {createClinicalTrialsClient} from './clinical-trials-client.mjs';
 import {createStudyExtractionClient} from './study-extraction-client.mjs';
 import {createStudyProtocolClient} from './study-protocol-client.mjs';
@@ -139,7 +139,7 @@ export class ResearchWorkspaceClient{
       const bytes=body===undefined?undefined:JSON.stringify(body);
       const templateRoute=/^\/api\/research\/dossiers\/[^/]+\/template-exchange(?:\/|\?|$)/.test(route);
       const returnRoute=/^\/api\/dossiers\/[^/]+\/returns(?:\/|\?|$)/.test(route);
-      const maximum=returnRoute?(/\/returns\/preview(?:\?|$)/.test(route)?1024*1024:16*1024*1024):route.startsWith('/api/customer-quotes/')?QUOTE_REQUEST_LIMIT:route.startsWith('/api/customer-commerce/')?2*1024*1024:templateRoute?48*1024*1024:/^\/api\/dossiers\/[^/]+\/(?:citation-updates|eligibility|extraction(?:\/publications)?|risk-of-bias|customer-updates)\/reviews(?:\?projection=metadata)?$/.test(route)?16*1024*1024:
+      const maximum=returnRoute?(/\/returns\/preview(?:\?|$)/.test(route)?1024*1024:16*1024*1024):route==='/api/customer-quotes/case-transfers/prepare'?QUOTE_CASE_TRANSFER_LIMIT:route.startsWith('/api/customer-quotes/')?QUOTE_REQUEST_LIMIT:route.startsWith('/api/customer-commerce/')?2*1024*1024:templateRoute?48*1024*1024:/^\/api\/dossiers\/[^/]+\/(?:citation-updates|eligibility|extraction(?:\/publications)?|risk-of-bias|customer-updates)\/reviews(?:\?projection=metadata)?$/.test(route)?16*1024*1024:
         /^\/api\/dossiers\/[^/]+\/source-bundles\/(?:preview|receive)(?:\?projection=metadata)?$/.test(route)
         ?128*1024*1024+65536:96*1024*1024+65536;
       need(bytes===undefined||Buffer.byteLength(bytes)<=maximum,'RESEARCH_REQUEST_TOO_LARGE');
@@ -349,6 +349,8 @@ export class ResearchWorkspaceClient{
   #download(route,file,options={}){return this.#run(()=>this.#downloadAccepted(route,file,options));}
   async #downloadAccepted(route,file,{signal,expectedSha256,verifySha256Header=false,request,headers={}}={}){
     const body=request===undefined?undefined:JSON.stringify(request);
+    const fileMaximum=/^\/api\/customer-quotes\/cases\/[a-f0-9-]{36}\/download$/.test(route)&&request?.kind==='CASE_RECORD'
+      ?QUOTE_CASE_TRANSFER_LIMIT:PORTABLE_LIMIT;
     const maximum=route.startsWith('/api/customer-quotes/')?QUOTE_REQUEST_LIMIT:RESEARCH_CONTROL_LIMIT;
     need(body===undefined||Buffer.byteLength(body)<=maximum,'RESEARCH_REQUEST_TOO_LARGE');
     return this.#request(route,{signal,readOnly:true,headers,...(body===undefined?{}:{
@@ -360,10 +362,10 @@ export class ResearchWorkspaceClient{
       const declared=response.headers.get('content-length');let count=0;
       const responseSha256=verifySha256Header?response.headers.get('x-content-sha256'):null;
       if(verifySha256Header)need(/^[a-f0-9]{64}$/.test(responseSha256??''),'RESEARCH_DOWNLOAD_SHA256_REQUIRED');
-      if(declared!==null)need(/^[0-9]+$/.test(declared)&&Number(declared)<=PORTABLE_LIMIT,'RESEARCH_DOWNLOAD_SIZE_INVALID');
+      if(declared!==null)need(/^[0-9]+$/.test(declared)&&Number(declared)<=fileMaximum,'RESEARCH_DOWNLOAD_SIZE_INVALID');
       const body=Readable.from((async function*(){
         for await(const chunk of response.body??[]){
-          count+=chunk.length;need(count<=PORTABLE_LIMIT,'RESEARCH_DOWNLOAD_TOO_LARGE');yield chunk;
+          count+=chunk.length;need(count<=fileMaximum,'RESEARCH_DOWNLOAD_TOO_LARGE');yield chunk;
         }
         need(declared===null||Number(declared)===count,'RESEARCH_DOWNLOAD_INCOMPLETE');
       })());

@@ -13,6 +13,10 @@
     "./grant/cohort-scheduling": {
       "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_scheduling.d.mts",
       "import": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_scheduling.mjs"
+    },
+    "./grant/cohort-agent": {
+      "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_agent.d.mts",
+      "import": "./source/stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_agent.mjs"
     }
   },
   "supportFiles": [
@@ -21,6 +25,7 @@
     "stellar/scf_2026/sf47_budget_model/workspace/COHORT-PLANNING.md",
     "stellar/scf_2026/sf47_budget_model/workspace/cohort_planning.d.mts",
     "stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_scheduling.mjs",
-    "stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_scheduling.d.mts"
+    "stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_scheduling.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_agent.d.mts"
   ]
 }

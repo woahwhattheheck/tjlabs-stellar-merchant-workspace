@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 import { RozoWorkspace } from './store.mjs';
 import { acquireLease, withLease } from './lease.mjs';
-import { sourcePath, inspectPublisher, inspectRozoSource } from './source.mjs';
+import { sourcePath, inspectPublisher, inspectRozoSource, inspectRozoSourcePackage } from './source.mjs';
 import { assert, fields, id, text, canonical, digest, jsonDigest, clone } from './model.mjs';
 
 const ROOT='stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments';
@@ -78,6 +78,20 @@ export function deliveryDescriptor(workspace,deliveryId){
   assert(lstatSync(zip).isFile()&&!lstatSync(zip).isSymbolicLink()&&lstatSync(zip).size===receipt.bytes,'DELIVERY_FILE','The actual retained archive size differs.');
   return {...receipt,path:zip};
 }
+function receivedSource(root,manifest){
+  const legacy='source/'+ROOT+'/INSTALLED_SOURCE.json';
+  const descriptor=manifest.sourceManifest??{path:legacy,sha256:manifest.sourceIdentity.manifestSha256};
+  assert(descriptor.path===legacy||descriptor.path==='source-package/manifest.json',
+    'RECEIVE_SOURCE_MANIFEST','Select the original retained source manifest.',409);
+  const sourceRoot=join(root,'source'),sourceManifest=sourcePath(root,descriptor.path),raw=readFileSync(sourceManifest);
+  assert(descriptor.sha256===manifest.sourceIdentity.manifestSha256&&digest(raw)===descriptor.sha256&&
+    (descriptor.bytes===undefined||descriptor.bytes===raw.length),
+    'RECEIVE_SOURCE_MANIFEST','The complete original source manifest bytes differ.',409);
+  const identity=inspectRozoSource(sourceRoot,sourceManifest,descriptor.sha256);
+  assert(canonical(identity)===canonical(manifest.sourceIdentity),
+    'RECEIVE_SOURCE_IDENTITY','The complete original source and package metadata differ.',409);
+  return {sourceRoot,sourceManifest};
+}
 export async function buildDelivery(workspace,request,{sourceRoot,sourceManifest,sourceIdentity,configuration,publisherSelections,python,signal}){
   const original=request.intent;assert(original?.deliveryId&&original.sourceSha256===sourceIdentity.manifestSha256,'DELIVERY_SOURCE','Resume with the exact original prepared application source.',409);
   const known=deliveryDescriptor(workspace,original.deliveryId);if(known)return known;
@@ -88,7 +102,14 @@ export async function buildDelivery(workspace,request,{sourceRoot,sourceManifest
       const files=[],selection=inspectRozoSource(sourceRoot,sourceManifest,sourceIdentity.manifestSha256),manifest=JSON.parse(readFileSync(sourceManifest));
       const sourceFiles=originalSourceClosure(sourceRoot,manifest);
       for(const row of sourceFiles){const bytes=readFileSync(sourcePath(sourceRoot,row.path));assert(bytes.length===row.bytes&&digest(bytes)===row.sha256,'SOURCE_IDENTITY','The original source changed while exporting.',409);addFile(stage,'source/'+row.path,bytes,files);}
-      addFile(stage,'source/'+ROOT+'/INSTALLED_SOURCE.json',readFileSync(sourceManifest),files);
+      const packageMetadata=inspectRozoSourcePackage(sourceRoot,sourceManifest),sourceManifestPath=packageMetadata?'source-package/manifest.json':'source/'+ROOT+'/INSTALLED_SOURCE.json';
+      if(packageMetadata){
+        assert(sourceFiles.length===selection.files.length,'SOURCE_PACKAGE_CLOSURE','The original distribution manifest must include every source dependency.',409);
+        for(const row of packageMetadata.files)addFile(stage,'source-package/'+row.path,readFileSync(sourcePath(packageMetadata.directory,row.path)),files);
+      }
+      const manifestBytes=readFileSync(sourceManifest);
+      addFile(stage,sourceManifestPath,manifestBytes,files);
+      const retainedSourceManifest={path:sourceManifestPath,bytes:manifestBytes.length,sha256:digest(manifestBytes)};
       addFile(stage,'workspace/workspace.json',readFileSync(join(workspace.directory,'workspace.json')),files);
       addFile(stage,'workspace/RECEIVING.json',Buffer.from(canonical({schema:'stellar-forge.rozo-receiving-marker.v1',mode:original.mode,deliveryId:original.deliveryId,requestId:request.id,workspaceId:workspace.meta().workspaceId,originId:workspace.meta().originId})+'\n'),files);
       for(const name of ordinaryFiles(join(workspace.directory,'cli-requests')))addFile(stage,'workspace/cli-requests/'+name,readFileSync(sourcePath(join(workspace.directory,'cli-requests'),name)),files);
@@ -126,7 +147,7 @@ export async function buildDelivery(workspace,request,{sourceRoot,sourceManifest
       const body=hashOriginalFile(database);files.push({path:'workspace/rozo.sqlite3',...body,mode:'0600'});
       const sourceMarker=JSON.parse(readFileSync(join(stage,'workspace','workspace.json')));
       const nativeMeta=new RozoWorkspace(join(stage,'workspace'),{readOnly:true});let meta;try{meta=nativeMeta.meta();}finally{nativeMeta.close();}
-      const delivery={schema:DELIVERY_SCHEMA,deliveryId:original.deliveryId,mode:original.mode,title:original.title,workspace:{...sourceMarker,revision:meta.revision},operation:{requestId:request.id,fingerprint:request.fingerprint,acceptedRevision:request.result.revision},sourceIdentity:selection,configurationSha256:original.configurationSha256,publisherLocations:paths,files:files.sort((a,b)=>a.path.localeCompare(b.path))};
+      const delivery={schema:DELIVERY_SCHEMA,deliveryId:original.deliveryId,mode:original.mode,title:original.title,workspace:{...sourceMarker,revision:meta.revision},operation:{requestId:request.id,fingerprint:request.fingerprint,acceptedRevision:request.result.revision},sourceIdentity:selection,sourceManifest:retainedSourceManifest,configurationSha256:original.configurationSha256,publisherLocations:paths,files:files.sort((a,b)=>a.path.localeCompare(b.path))};
       putOriginal(existing,Buffer.from(canonical(delivery)+'\n'));
     }
     const packed=await pythonArchive(['pack','--directory',stage,'--out',join(directory,'Rozo_Workspace.zip')],{python,signal});
@@ -147,14 +168,14 @@ export async function receiveDelivery(archive,directory,{sha256,activate=false,a
       const original=check.replay(envelope);if(original?.state==='accepted')accepted=original.result;
     }finally{check.close();}
     if(accepted){
-      const sourceRoot=join(existingRoot,'source');inspectRozoSource(sourceRoot,join(sourceRoot,ROOT,'INSTALLED_SOURCE.json'),m.sourceIdentity.manifestSha256);
+      const {sourceRoot,sourceManifest}=receivedSource(existingRoot,m);
       putOriginal(join(existingRoot,'ACTIVATED.json'),Buffer.from(canonical(accepted)+'\n'));
-      return {schema:'stellar-forge.rozo-received.v1',directory:existingRoot,sha256,original:m.workspace,active:true,reused:true,activation:accepted,sourceRoot,workspaceDirectory:join(existingRoot,'workspace'),configuration:join(existingRoot,'configuration','connections.json'),cli:join(sourceRoot,ROOT,'cli.mjs')};
+      return {schema:'stellar-forge.rozo-received.v1',directory:existingRoot,sha256,original:m.workspace,active:true,reused:true,activation:accepted,sourceRoot,sourceManifest,workspaceDirectory:join(existingRoot,'workspace'),configuration:join(existingRoot,'configuration','connections.json'),cli:join(sourceRoot,ROOT,'cli.mjs')};
     }
   }
   const received=await pythonArchive(['receive','--archive',archive,'--directory',directory,'--sha256',sha256],{python});
-  const root=realpathSync(directory),raw=readFileSync(join(root,'DELIVERY.json')),manifest=JSON.parse(raw),sourceRoot=join(root,'source'),sourceManifest=join(sourceRoot,ROOT,'INSTALLED_SOURCE.json');
-  inspectRozoSource(sourceRoot,sourceManifest,manifest.sourceIdentity.manifestSha256);
+  const root=realpathSync(directory),raw=readFileSync(join(root,'DELIVERY.json')),manifest=JSON.parse(raw);
+  const {sourceRoot,sourceManifest}=receivedSource(root,manifest);
   const workspace=new RozoWorkspace(join(root,'workspace'),{readOnly:true});let original;
   try{original=workspace.meta();assert(original.workspaceId===manifest.workspace.workspaceId&&original.originId===manifest.workspace.originId&&original.revision===manifest.workspace.revision,'RECEIVE_IDENTITY','The complete native checkpoint differs from its original manifest.');const req=workspace.request(manifest.operation.requestId);assert(req?.state==='accepted'&&req.fingerprint===manifest.operation.fingerprint,'RECEIVE_REQUEST','The original export request is not retained.');}finally{workspace.close();}
   const config=JSON.parse(readFileSync(join(root,'configuration','received-template.json')));
@@ -173,5 +194,5 @@ export async function receiveDelivery(archive,directory,{sha256,activate=false,a
       putOriginal(join(root,'ACTIVATED.json'),Buffer.from(canonical(result)+'\n'));
     }finally{w.close();}
   }
-  return {schema:'stellar-forge.rozo-received.v1',...received,original,active:activate,sourceRoot,workspaceDirectory:join(root,'workspace'),configuration:join(root,'configuration','connections.json'),cli:join(sourceRoot,ROOT,'cli.mjs')};
+  return {schema:'stellar-forge.rozo-received.v1',...received,original,active:activate,sourceRoot,sourceManifest,workspaceDirectory:join(root,'workspace'),configuration:join(root,'configuration','connections.json'),cli:join(sourceRoot,ROOT,'cli.mjs')};
 }

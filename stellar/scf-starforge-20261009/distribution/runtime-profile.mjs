@@ -72,11 +72,9 @@ function nativeKind(name, probe, value) {
     throw new TypeError('Unsupported native runtime preparation: ' + name);
   return value;
 }
-function dependencies(definitions, group, sourcePath) {
-  if (!plain(definitions) || group === 'native' && !Object.keys(definitions).length)
+function dependencies(definitions, group, sourcePath, { allowEmpty = false } = {}) {
+  if (!plain(definitions) || !allowEmpty && !Object.keys(definitions).length)
     throw new TypeError('Runtime dependencies missing for ' + group);
-  // An original feature manifest may select only its Node engine. Keep that
-  // feature in the profile so its engine applies without inventing a package.
   return Object.entries(definitions).map(([name, definition]) => {
     if (!packageName.test(name)) throw new TypeError('Invalid dependency name: ' + name);
     const value = typeof definition === 'string' ? { version: definition, probe: name } : definition;
@@ -116,7 +114,11 @@ export async function runtimeCatalog({ sourceRoot = ownRoot } = {}) {
   for (const [group, definitions] of Object.entries(featurePeers)) {
     if (!featureName.test(group) || group === 'native') throw new TypeError('Invalid runtime feature: ' + group);
     groups[group] = dependencies(definitions, group, name => spec.runtimePackageManifests?.[group] ??
-      distribution.origins.featurePeers[group]?.[name]?.[0] ?? specPath);
+      distribution.origins.featurePeers[group]?.[name]?.[0] ?? specPath, {
+        // A declared package may require a host version without npm modules.
+        allowEmpty: Object.hasOwn(spec.runtimePackageManifests ?? {}, group) &&
+          /^>=\d+(?:\.\d+)?(?:\.\d+)?$/.test(engines[group] ?? ''),
+      });
   }
   const manifest = distribution.manifest;
   if (manifest) {

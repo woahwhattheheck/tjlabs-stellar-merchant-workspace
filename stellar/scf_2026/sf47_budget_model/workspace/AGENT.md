@@ -10,6 +10,85 @@ The complete Merchant setup, tools, input references, source-bound pages, downlo
 
 Read `client.read('delivery-queue', {caseId, asOfDate})` and download the complete handover with `client.download('delivery-queue', {caseId, asOfDate})`. The package now includes adjacent TypeScript declarations for the public client, complete queue, installation document and saved-edition workflow. [Installation delivery queue](DELIVERY_QUEUE.md) covers assignment editing, typed consumption, MCP paging, date semantics and complete receiving.
 
+## Complete customer adoption operations
+
+The original Merchant owner now carries native case or Calendar source through whole-plan authoring, pricing, shared capacity scheduling, full comparison, durable source saving and reopening. Use the eleven adoption tools or the typed `grant/cohort-agent` module described in [Complete adoption work through Merchant MCP](COHORT-PLANNING.md#complete-adoption-work-through-merchant-mcp). Full inputs, original funding groups and the native save request remain attached throughout the operation.
+
+### Compare and save competing delivery dates
+
+Use `merchant_grant_adoption_schedule` on the original complete plan, reviewed
+document or saved source. Its optional `method` is `FIRST_FIT` (the default) or
+`RESOLVE_CONFLICTS`. The latter revisits complete service groups sharing possible
+delivery capacity. Enter `maxSearchSteps` only with `RESOLVE_CONFLICTS`; it is a
+whole number from 1 through 1,000,000, defaulting to 100,000. The existing
+`constraints` or verified `constraintsInput` selection carries the actual service
+windows, priorities, spacing and entered daily availability.
+
+Calculate both methods from the same original input and constraints before
+choosing the full successor. The resolved result carries `resolution.method`,
+`maxSearchSteps`, `visitedSteps`, group totals and every component's original
+occurrence identities, outcome and date changes. `RESOLVED` means the whole
+competing set was placed. `SEARCH_LIMIT` retains the prior complete allocation
+after the selected search effort; `NO_COMPLETE_PLACEMENT` retains it after the
+available alternatives were exhausted. The assignment's complete `issues` and
+`rejectedDates` identify the remaining capacity or service constraint. Edit the
+same original plan or choices to calculate another alternative.
+
+The typed operation uses the original public module:
+
+~~~ts
+import {
+  scheduleCohortAdoption,
+  compareCohortAdoption
+} from '@tokenjunkielabs/starforge-merchant/grant/cohort-agent';
+import type {
+  CohortAdoptionSchedulingInput
+} from '@tokenjunkielabs/starforge-merchant/grant/cohort-agent';
+
+const selection: CohortAdoptionSchedulingInput = {
+  document: originalSavedDocument,
+  constraints: enteredServiceChoices,
+  method: 'RESOLVE_CONFLICTS',
+  maxSearchSteps: 100000
+};
+const originalOrder = scheduleCohortAdoption({
+  document: originalSavedDocument,
+  constraints: enteredServiceChoices
+});
+const resolved = scheduleCohortAdoption(selection);
+const completeComparison = compareCohortAdoption({
+  beforeDocument: originalOrder,
+  afterDocument: resolved,
+  options: {
+    title: 'Delivery dates under the same service constraints',
+    note: 'Compare both complete allocations before selecting the successor.'
+  }
+});
+~~~
+
+Through MCP, keep the two complete schedule snapshots and call
+`merchant_grant_adoption_compare` with their original verified input references.
+For the selected allocation, run `adoption_review`, then `adoption_prepare`
+and `adoption_save` with the same case version, original request ID and complete
+prepared source. Preparation keeps the full original allocation and its
+baseline-to-successor comparison in one saved edition. The usual
+`adoption_request` resumes its accepted operation and `adoption_open` opens the
+exact saved source. Reopening recalculates the retained method and effort.
+
+`adoption_export` returns the whole selected JSON, allocation CSV or readable
+HTML. CSV carries the method, effort, component outcome and prior allocation
+date on each occurrence. HTML presents the complete competing-group decisions,
+remaining constraints and original editable document together. Its funding
+groups, source dates and original amounts remain in the retained plan and source.
+The saved source also opens in the existing Customer adoption desk and remains
+available to the recorded Cohort delivery workflow.
+
+## Original merchant settlements
+
+The browser, CLI and typed client now receive original merchant accounting, period-close and accountant sources into the same case. Use settlementPreview for source inspection and a full selected cash preview, settlementReceive for the original atomic save, and settlementCorrectionPreview/settlementCorrect for reviewed corrections. Read saved editions with read('settlements') and read('settlement'); download('settlement') returns their complete source handover. Adjacent TypeScript declarations retain exact decimal strings, settlement IDs, original cash records and both preview shapes.
+
+[Merchant settlements](SETTLEMENTS.md) covers the complete row decisions, original asset units, separate USD valuation, existing-cash links, correction lifecycle, native routes, CLI, MCP and full-case receiving.
+
 ## Direct API
 
 First call inspectGrantAgentBinding with directory and optional scenarioFile, pythonExecutable, allowStart and label. It reads the original host selection without launching a process. Construct a GrantWorkspaceClient from that result.
@@ -395,3 +474,17 @@ The original launch process remains owned through its `close` event and complete
 ## Saved customer-use calendar
 
 The optional `document.useCalendar` records complete useful tasks, dated uses, separate DIRECT/PREPAID funding groups and original buyer receipt associations in the same immutable Installation history. The **Customer use** tab reads exact saved reports alongside current receipt/source changes, expands explicit working dates into an editable draft, exports JSON/CSV/ICS, and stages the original Cohort inputs while preserving an existing edited draft. See [Customer-use calendar](CUSTOMER_USE_CALENDAR.md) for the full document, CLI, typed client, MCP and independent receiving workflow.
+
+
+## Named staff and complete installation receiving
+
+Open **Team workspace** at `/team` from the original private owner link. Enroll lead, finance, reviewer and contributor profiles against the existing case and contributor identities. Named HTTP sessions use individual cookies and a CSRF value; the original case commands record the enrolled actor. The contributor desk records original work and invoices and shows their paid, open and credit balances.
+
+[STAFF_ACCESS.md](STAFF_ACCESS.md) contains the operating workflow and role matrix. [STAFF_INSTALLATION.md](STAFF_INSTALLATION.md) covers whole-database backup, source and attachment transfer, individual SSH access and independent recovery. Both Applications launchers include the same named-staff source inventory.
+
+The full operating receiving entrypoint is `python3 STAFF_WORKFLOW_RECEIVING.py --output /absolute/private/receiving --node /absolute/path/to/node`. It operates the original local server through named staff HTTP and browser sessions, then opens the same complete installation in a separate recovered destination. Existing trusted integrations retain the original owner bearer API.
+
+
+## Recorded cohort delivery agent
+
+The nine `merchant_grant_cohort_delivery_*` tools take the original saved adoption source and frozen review through explicit identity/intent editing, complete comparison, source refresh, reviewed preparation, native save/recovery and JSON/CSV/HTML receiving. They share the existing source request owner with the adoption tools. Source refresh retains invalidated choices in complete editable input with the exact finding, so the same edit operation repairs the association. The public typed module is `@tokenjunkielabs/starforge-merchant/grant/cohort-delivery-agent`. See [the complete source selection, tool, native request and receiving workflow](COHORT-DELIVERY.md#merchant-agent-workflow).

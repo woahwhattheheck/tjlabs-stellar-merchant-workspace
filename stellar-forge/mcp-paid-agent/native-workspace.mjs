@@ -1,3 +1,4 @@
+import { normalizeCatalogDescription, normalizeCatalogUrl } from './catalogs.mjs';
 // SPDX-License-Identifier: MIT
 // Connect the existing MCP agentCommerce hook to the original SF88 buyer inbox.
 import { createHash, randomUUID } from 'node:crypto';
@@ -401,6 +402,7 @@ export async function openNativeWorkspace(directory, {operationCoordinator} = {}
     const ceiling = BigInt(expected.maxAtomic) < BigInt(current.manifest.signer.maxAtomic)
       ? expected.maxAtomic : current.manifest.signer.maxAtomic;
     return {schema:'stellar-forge.mcp-native-request-workspace.v1', available:true,
+      catalogUrl:normalizeCatalogUrl(manifest.catalog.origin),
       route:{origin:manifest.route.origin, pathname:manifest.route.pathname,
         method:manifest.route.method, contentType:contentType(manifest.route.headers),
         ...(manifest.route.routeTemplate === undefined ? {} : {routeTemplate:manifest.route.routeTemplate})},
@@ -499,6 +501,14 @@ export async function openNativeWorkspace(directory, {operationCoordinator} = {}
       const discoveryRequest = normalizeDiscoveryArguments(source.mode, source.request);
       need(discoveryRequestUrl(manifest.catalog.origin, source.mode, discoveryRequest).href === source.url,
         'MCP_NATIVE_CATALOG_MISMATCH');
+      if (source.catalog !== undefined) {
+        let catalog;
+        try { catalog = normalizeCatalogDescription(source.catalog); }
+        catch { fail('MCP_NATIVE_CATALOG_MISMATCH'); }
+        need(catalog.url === normalizeCatalogUrl(manifest.catalog.origin) &&
+          (discoveryRequest.catalogId === undefined || discoveryRequest.catalogId === catalog.id),
+        'MCP_NATIVE_CATALOG_MISMATCH');
+      }
       let catalog;
       try { catalog = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(rawCatalog)); }
       catch { fail('MCP_NATIVE_DISCOVERY_CHANGED'); }

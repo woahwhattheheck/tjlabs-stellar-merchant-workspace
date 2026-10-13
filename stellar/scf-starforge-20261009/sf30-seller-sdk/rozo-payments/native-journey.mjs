@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import { RozoWorkspace } from './store.mjs';
 import { RozoService } from './service.mjs';
 import { acquireLease } from './lease.mjs';
-import { inspectRozoSource, materializePublisher, loadRozoConfiguration } from './source.mjs';
+import { inspectRozoSource, inspectRozoSourcePackage, materializePublisher, loadRozoConfiguration } from './source.mjs';
 import { startRozoServer } from './server.mjs';
 import { receiveDelivery, putOriginal, pythonArchive, hashOriginalFile } from './delivery.mjs';
 import { nativeInventory, compareNativeInventory } from './native-inventory.mjs';
@@ -22,8 +22,16 @@ async function child(command,args,{environment=process.env,onOutput}={}){
 function readJSON(path){return JSON.parse(readFileSync(path));}
 function retainSource(root,manifest,identity,directory){
   const target=join(directory,'source-editions',identity.manifestSha256);mkdirSync(target,{recursive:true,mode:0o700});
-  for(const row of identity.files)putOriginal(join(target,row.path),readFileSync(join(root,row.path)));
-  putOriginal(join(target,PRODUCT,'INSTALLED_SOURCE.json'),readFileSync(manifest));return target;
+  const metadata=inspectRozoSourcePackage(root,manifest),sourceDirectory=metadata?join(target,'source'):target;
+  mkdirSync(sourceDirectory,{recursive:true,mode:0o700});
+  for(const row of identity.files)putOriginal(join(sourceDirectory,row.path),readFileSync(join(root,row.path)));
+  if(metadata){
+    const sourceManifest=join(target,'source-package','manifest.json');
+    putOriginal(sourceManifest,readFileSync(manifest));
+    for(const row of metadata.files)putOriginal(join(target,'source-package',row.path),readFileSync(join(metadata.directory,row.path)));
+    return {sourceDirectory,sourceManifest};
+  }
+  putOriginal(join(target,PRODUCT,'INSTALLED_SOURCE.json'),readFileSync(manifest));return {sourceDirectory};
 }
 export async function runRozoJourney({directory,sourceRoot,sourceManifest,python=process.env.ROZO_PYTHON??'python3',chromium,playwrightModule,onProgress}){
   directory=resolve(directory);sourceRoot=realpathSync(sourceRoot);sourceManifest=realpathSync(sourceManifest);
@@ -32,7 +40,7 @@ export async function runRozoJourney({directory,sourceRoot,sourceManifest,python
   let progress=existsSync(progressFile)?readJSON(progressFile):{schema:'stellar-forge.rozo-native-operation.v1',operationId:NATIVE_OPERATION,createdAt:new Date().toISOString(),steps:{},requests:{},sourceEditions:[],state:'prepared'};
   assert(progress.operationId===NATIVE_OPERATION&&progress.schema==='stellar-forge.rozo-native-operation.v1','NATIVE_OPERATION','Select the original saved receiving operation.',409);
   const sourceEdition=retainSource(sourceRoot,sourceManifest,identity,directory);
-  if(!progress.sourceEditions.some(x=>x.manifestSha256===identity.manifestSha256))progress.sourceEditions.push({...identity,sourceDirectory:sourceEdition});
+  if(!progress.sourceEditions.some(x=>x.manifestSha256===identity.manifestSha256))progress.sourceEditions.push({...identity,...sourceEdition});
   const save=()=>{saveNative(progressFile,progress);onProgress?.({operationId:NATIVE_OPERATION,state:progress.state,phase:progress.phase,steps:Object.keys(progress.steps)});};
   const workspaceDirectory=join(directory,'workspace'),exists=existsSync(join(workspaceDirectory,'workspace.json'));
   const w=new RozoWorkspace(workspaceDirectory,{create:!exists}),lease=acquireLease(w,'native-receiving-operation');
@@ -174,7 +182,7 @@ export async function runRozoJourney({directory,sourceRoot,sourceManifest,python
       const result=readJSON(join(target,'NATIVE_RECEIVE_RESULT.json'));assert(result.workspaceId===w.meta().workspaceId&&result.originId===w.meta().originId,'NATIVE_RECEIVER','The receiving process changed the original identity.');
       return result;
     });
-    const result={schema:'stellar-forge.rozo-native-completion.v1',operationId:NATIVE_OPERATION,dataContext:'DEVELOPMENT',workspaceId:w.meta().workspaceId,originId:w.meta().originId,sourceIdentity:identity,sourceEditions:progress.sourceEditions.map(s=>({manifestSha256:s.manifestSha256,selectionSha256:s.selectionSha256,sourceDirectory:s.sourceDirectory})),completedAt:new Date().toISOString(),phases:Object.keys(progress.steps),requests:progress.requests,checkoutPublisher:{repository:checkout.repository,commit:checkout.commit,sourceSelectionSha256:jsonDigest(checkout.files)},working:progress.steps['complete-working-snapshot'].delivery,handover:handed.delivery,receiving:progress.steps['separate-source-native-receiver'],browser:progress.steps['staff-browser'],providerFixture:join(directory,'fixture'),scope:{executed:['keyed merchant local HTTP contract','original Checkout 0.1.21 source','all seven staff views','signed callback and full raw capture','complete private archive and separate native receiving'],configuredSeparately:['Common SDK 0.1.43 compiled native runtime','Stellar SDK 15+ and original deployed RPC/contract profile'],publicProviderPayments:0,transactionsSignedOrSent:0}};
+    const result={schema:'stellar-forge.rozo-native-completion.v1',operationId:NATIVE_OPERATION,dataContext:'DEVELOPMENT',workspaceId:w.meta().workspaceId,originId:w.meta().originId,sourceIdentity:identity,sourceEditions:progress.sourceEditions.map(s=>({manifestSha256:s.manifestSha256,selectionSha256:s.selectionSha256,sourceDirectory:s.sourceDirectory,...(s.sourceManifest?{sourceManifest:s.sourceManifest}:{})})),completedAt:new Date().toISOString(),phases:Object.keys(progress.steps),requests:progress.requests,checkoutPublisher:{repository:checkout.repository,commit:checkout.commit,sourceSelectionSha256:jsonDigest(checkout.files)},working:progress.steps['complete-working-snapshot'].delivery,handover:handed.delivery,receiving:progress.steps['separate-source-native-receiver'],browser:progress.steps['staff-browser'],providerFixture:join(directory,'fixture'),scope:{executed:['keyed merchant local HTTP contract','original Checkout 0.1.21 source','all seven staff views','signed callback and full raw capture','complete private archive and separate native receiving'],configuredSeparately:['Common SDK 0.1.43 compiled native runtime','Stellar SDK 15+ and original deployed RPC/contract profile'],publicProviderPayments:0,transactionsSignedOrSent:0}};
     progress.state='complete';progress.phase='complete';progress.result=result;delete progress.pending;save();saveNative(join(directory,'NATIVE_COMPLETION.json'),result);return {...result,directory};
   }catch(error){
     progress.state='pending';progress.lastError={code:error.code??'NATIVE_ERROR',message:error.message,details:error.details??{},at:new Date().toISOString()};save();throw error;

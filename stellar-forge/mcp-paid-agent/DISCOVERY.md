@@ -4,8 +4,9 @@ The buyer workspace connects catalog browsing, ranked search, a seller's declare
 inputs and a prepared quote. The browser console, HTTP MCP tools, stdio tools and
 typed Node client use the same broker and cached resource observations.
 
-Start the installed workspace with its existing discovery URL, access token,
-allowed resource origins and saved state:
+Start the installed workspace with its existing discovery URL or
+[trusted catalog list](CATALOGS.md), access token, allowed resource origins and
+saved state:
 
 ```sh
 starforge mcp-buyer
@@ -19,6 +20,7 @@ Use the same state directory and host operator configuration when upgrading.
 
 | Operation | Use |
 | --- | --- |
+| `bazaar_catalogs` | Read the complete trusted catalog list and default source. |
 | `bazaar_resources` | Browse the advertised catalog using its original offset pagination. |
 | `bazaar_search` | Rank resources for a nonempty search expression and follow the source's opaque cursor. |
 | `bazaar_describe` | Inspect a returned handle's complete original declaration, input schema and eligible payment alternatives. |
@@ -52,6 +54,7 @@ real catalog.
 
 | Argument | Meaning |
 | --- | --- |
+| `catalogId` | Select an original configured catalog; omission uses the host default for a new operation. |
 | `type` | HTTP or MCP resource: `http` or `mcp`. |
 | `network`, `scheme`, `asset`, `payTo` | Match those terms together on one original payment alternative. |
 | `extensions` | Select an advertised extension using the catalog's native filter. |
@@ -70,8 +73,9 @@ terms from different alternatives.
 Every successful page includes `resources`, `partialResults`, `pagination`,
 `source`, `page` and `continuation`.
 
-The source records the exact request URL, observation time, mode and normalized
-arguments. The pagination object retains the upstream fields. The normalized
+The source records the original `catalog: {id,label,url}`, exact request URL,
+observation time, mode and normalized arguments. Resource summaries carry
+`catalogId`; descriptions and saved quote status retain the same source. The pagination object retains the upstream fields. The normalized
 continuation has this form:
 
 ```json
@@ -90,7 +94,9 @@ continuation has this form:
 Pass the returned tool and complete arguments unchanged to continue. A browse
 continuation uses `bazaar_resources` and its next `offset`. Continue even when
 a page has no eligible rows but supplies a next step: payment filtering can empty
-a page without exhausting the source catalog.
+a page without exhausting the source catalog. A multi-catalog continuation pins
+the resolved `catalogId`, including when the initial call omitted it. The SDK
+checks that the catalog ID and original URL remain the same across every page.
 
 The page's row counts have one exact relationship:
 
@@ -222,7 +228,9 @@ const discovery = await openBazaarDiscoveryClient({
   tokenEnv: 'MCP_ACCESS_TOKEN',
 });
 try {
+  const configured = await discovery.catalogs();
   for await (const page of discovery.searchPages({
+    catalogId: configured.defaultCatalogId,
     query: 'weather forecast', type: 'http', network: 'stellar:testnet', limit: 25,
   })) {
     console.log(JSON.stringify({
@@ -243,8 +251,9 @@ protocol and preserves structured tool errors and recovery metadata.
 
 | Client method | Behavior |
 | --- | --- |
+| `catalogs()` | Read all configured source IDs, labels and URLs with the default ID. |
 | `browse(request)`, `search(request)` | Return one complete discovery page with original source and row coverage. |
-| `browsePages(request)`, `searchPages(request)` | Yield complete pages on demand and preserve the original filters across continuation. |
+| `browsePages(request)`, `searchPages(request)` | Yield complete pages on demand and preserve the original catalog and filters across continuation. |
 | `describe(handle)` | Read the original cached declaration and full payment alternatives. |
 | `previewHttp({handle, path, query, acceptIndex})` | Bind explicit path values and query fields to the original advertised route. |
 | `previewHttpQuery({handle, query, acceptIndex})` | Prepare the explicit HTTP query using the seller's maintained codec. |

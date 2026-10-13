@@ -49,6 +49,12 @@ Save the plan to inspect the full source constraint result. Each issue retains i
 
 Keys follow the destination representation selected for their fields. The review detects values that collapse to the same native key, including numeric zero representations. Required, non-null and preserved-null choices remain explicit. The source retains exact values independently of its native representation.
 
+### Customer mapping workbooks
+
+Use [Mapping workbooks](MAPPING_WORKBOOK.md) to export an actual saved plan, produce the complete XLSX, review the analyst's returned choices and load the complete proposal into this original editor. The original Save plan and Review actions retain the exact register/workbook, proposed and final plans, and all further native edits. Those five declared input files travel with the full native workspace handover.
+
+The original exporter and renderer are retained unchanged in [mapping_workbook](mapping_workbook/README.md). The installed operator provides workbook-export for a complete editable XLSX/register/original-input ZIP using standard Python, workbook-register for the original JSON, and workbook-propose for the reviewed return; the existing native API and merchant attachment expose the same operations.
+
 ### Reviews and native data
 
 Record an accepted or changes-requested review with the operator's note. Review records identify their original saved plan and exact source document.

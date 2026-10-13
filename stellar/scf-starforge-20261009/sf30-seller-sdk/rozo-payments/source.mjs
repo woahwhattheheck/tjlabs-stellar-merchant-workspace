@@ -12,13 +12,69 @@ export function sourcePath(root,path){
   assert(lstatSync(target).isFile(),'SOURCE_FILE','Retain the complete ordinary source file: '+path);
   return target;
 }
+const DISTRIBUTION_SCHEMA='stellar-forge.merchant-distribution-manifest.v1';
+const PRODUCT_SOURCE='stellar/scf-starforge-20261009/sf30-seller-sdk/rozo-payments';
+function originalPackageMetadata(sourceRoot,manifestPath,manifest){
+  if(manifest.schema!==DISTRIBUTION_SCHEMA)return null;
+  const root=realpathSync(sourceRoot),directory=dirname(realpathSync(manifestPath));
+  assert(directory===dirname(root)||directory===join(dirname(root),'source-package'),
+    'SOURCE_PACKAGE_LOCATION','Retain the original distribution metadata beside its source.',409);
+  assert(typeof manifest.sourceCommit==='string'&&/^[a-f0-9]{40}$/.test(manifest.sourceCommit)&&
+    typeof manifest.packageName==='string'&&typeof manifest.packageVersion==='string'&&
+    manifest.packageFiles&&canonical(Object.keys(manifest.packageFiles).sort())===canonical(['LICENSE','README.md','package.json']),
+    'SOURCE_PACKAGE_MANIFEST','Retain the complete original distribution manifest.',409);
+  const files=[];
+  for(const path of Object.keys(manifest.packageFiles).sort()){
+    const expected=manifest.packageFiles[path];sha(expected);
+    const raw=readFileSync(sourcePath(directory,path));
+    assert(digest(raw)===expected,'SOURCE_PACKAGE_IDENTITY','The original distribution member differs: '+path,409);
+    files.push({path,bytes:raw.length,sha256:expected});
+  }
+  const metadata=JSON.parse(readFileSync(sourcePath(directory,'package.json')));
+  assert(metadata.name===manifest.packageName&&metadata.version===manifest.packageVersion,
+    'SOURCE_PACKAGE_IDENTITY','The package and original distribution manifest differ.',409);
+  return {directory,files};
+}
+export function selectRozoSource(sourceRoot,{sourceManifest,expectedSha256,optional=false}={}){
+  const root=realpathSync(sourceRoot);
+  let selected=sourceManifest?resolve(sourceManifest):null;
+  if(!selected){
+    for(const candidate of [join(dirname(root),'manifest.json'),join(dirname(root),'source-package','manifest.json')]){
+      if(!existsSync(candidate))continue;
+      const raw=readFileSync(sourcePath(dirname(candidate),'manifest.json'));
+      if(JSON.parse(raw).schema===DISTRIBUTION_SCHEMA){selected=candidate;break;}
+    }
+    const standalone=join(root,PRODUCT_SOURCE,'INSTALLED_SOURCE.json');
+    if(!selected&&existsSync(standalone))selected=standalone;
+  }
+  if(!selected&&optional)return null;
+  assert(selected,'SOURCE_MANIFEST','Select the original distribution manifest or complete standalone INSTALLED_SOURCE.json.',409);
+  const identity=inspectRozoSource(root,selected,expectedSha256),manifest=realpathSync(selected);
+  return {sourceRoot:root,sourceManifest:manifest,sourceIdentity:identity,
+    sourcePackageDirectory:identity.packageFiles?dirname(manifest):null};
+}
+export function inspectRozoSourcePackage(sourceRoot,sourceManifest){
+  assert(!lstatSync(sourceManifest).isSymbolicLink(),'SOURCE_SYMLINK','Use the ordinary original source manifest.');
+  const raw=readFileSync(sourceManifest),manifest=JSON.parse(raw);
+  return originalPackageMetadata(sourceRoot,sourceManifest,manifest);
+}
+
 export function inspectRozoSource(sourceRoot,sourceManifest,expectedSha256){
   const root=realpathSync(sourceRoot),manifestPath=realpathSync(sourceManifest);
+  assert(!lstatSync(sourceManifest).isSymbolicLink(),'SOURCE_SYMLINK','Use the ordinary original source manifest.');
   const raw=readFileSync(manifestPath);if(expectedSha256){sha(expectedSha256);assert(digest(raw)===expectedSha256,'SOURCE_MANIFEST','The original installed source manifest differs.',409);}
-  const manifest=JSON.parse(raw);assert(manifest.schema==='stellar-forge.rozo-installed-source.v1'&&Array.isArray(manifest.files)&&manifest.files.length,'SOURCE_MANIFEST','Select the complete installed ROZO source declaration.',409);
-  const names=new Set();let bytes=0;
-  for(const row of manifest.files){assert(!names.has(row.path),'SOURCE_DUPLICATE','The installed source repeats a path.');names.add(row.path);sha(row.sha256);integer(row.bytes,'source bytes');const path=sourcePath(root,row.path);assert(path!==manifestPath,'SOURCE_MANIFEST','The installed manifest must exclude itself.');const body=readFileSync(path);assert(body.length===row.bytes&&digest(body)===row.sha256,'SOURCE_IDENTITY','The selected installed source differs: '+row.path,409);bytes+=body.length;}
-  return {manifestSha256:digest(raw),selectionSha256:jsonDigest(manifest.files),files:manifest.files,fileCount:manifest.files.length,bytes};
+  const manifest=JSON.parse(raw),distribution=manifest.schema===DISTRIBUTION_SCHEMA;
+  assert((distribution||manifest.schema==='stellar-forge.rozo-installed-source.v1')&&Array.isArray(manifest.files)&&manifest.files.length,'SOURCE_MANIFEST','Select the complete original ROZO source declaration.',409);
+  const rows=distribution?manifest.files.map(row=>({path:row.path,bytes:row.bytes,sha256:row.sha256})):manifest.files,names=new Set();let bytes=0;
+  for(let index=0;index<rows.length;index++){
+    const row=rows[index];assert(!names.has(row.path),'SOURCE_DUPLICATE','The installed source repeats a path.');names.add(row.path);sha(row.sha256);integer(row.bytes,'source bytes');
+    if(distribution)assert(manifest.files[index].packagePath==='source/'+row.path,'SOURCE_PACKAGE_MANIFEST','The original distribution source path differs.',409);
+    const path=sourcePath(root,row.path);assert(path!==manifestPath,'SOURCE_MANIFEST','The selected source manifest must exclude itself.');
+    const body=readFileSync(path);assert(body.length===row.bytes&&digest(body)===row.sha256,'SOURCE_IDENTITY','The selected installed source differs: '+row.path,409);bytes+=body.length;
+  }
+  const packageMetadata=originalPackageMetadata(root,manifestPath,manifest);
+  return {manifestSha256:digest(raw),selectionSha256:jsonDigest(rows),files:rows,fileCount:rows.length,bytes,
+    ...(packageMetadata?{packageFiles:packageMetadata.files,distribution:{sourceCommit:manifest.sourceCommit,packageName:manifest.packageName,packageVersion:manifest.packageVersion}}:{})};
 }
 export function inspectPublisher(root,selection){
   assert(Array.isArray(selection)&&selection.length,'PUBLISHER_SELECTION','Select the complete retained publisher source.');

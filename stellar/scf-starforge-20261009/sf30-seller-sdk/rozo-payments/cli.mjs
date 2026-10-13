@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, openSync, closeSync, fsyncSync, existsSync, mkdirSync, createWriteStream, lstatSync, realpathSync, renameSync } from 'node:fs';
+import { readFileSync, writeFileSync, openSync, closeSync, fsyncSync, existsSync, mkdirSync, createWriteStream, lstatSync, realpathSync, linkSync, unlinkSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { RozoWorkspace, inspectRozoWorkspace } from './store.mjs';
 import { RozoService } from './service.mjs';
 import { acquireLease } from './lease.mjs';
-import { inspectRozoSource, loadRozoConfiguration, materializePublisher } from './source.mjs';
+import { inspectRozoSource, selectRozoSource, loadRozoConfiguration, materializePublisher } from './source.mjs';
 import { receiveDelivery, putOriginal, hashOriginalFile } from './delivery.mjs';
 import { assert, canonical, jsonDigest, digest, integer, id } from './model.mjs';
 
@@ -35,6 +35,9 @@ const help=String.raw`ROZO merchant payments and original Checkout workspace (No
           [--activate --request-id ID --actor ACTOR]
   publisher --publisher checkout|intent-common|contracts --directory DIR
   native --directory DIR [--chromium FILE --playwright-module FILE]
+         [--source-root ROOT --source-manifest FILE --source-sha256 SHA]
+  native-applications --directory ORIGINAL-NATIVE-DIR --repository CHECKOUT --ref COMMIT
+         --chromium FILE --playwright-module FILE [--python FILE --npm FILE]
 All original request JSON is retained before dispatch. No command signs or sends funds.
 Working exports are review snapshots. Handover drains and seals the original owner.
 Complete archive operations require Python 3 stdlib (ROZO_PYTHON or --python).
@@ -54,8 +57,8 @@ const result=value=>process.stdout.write(JSON.stringify(value)+'\n');
 function serviceFor(w,flags){
   let configuration={config:{schema:'stellar-forge.rozo-connections.v1',connections:{}},connections:{},publisherSelections:{}};
   if(flags['--config'])configuration=loadRozoConfiguration(resolve(flags['--config']));
-  const sourceRoot=resolve(flags['--source-root']??ROOT),sourceManifest=resolve(flags['--source-manifest']??join(HERE,'INSTALLED_SOURCE.json'));
-  const sourceIdentity=existsSync(sourceManifest)?inspectRozoSource(sourceRoot,sourceManifest,flags['--source-sha256']):null;
+  const sourceRoot=resolve(flags['--source-root']??ROOT),selected=selectRozoSource(sourceRoot,{sourceManifest:flags['--source-manifest'],expectedSha256:flags['--source-sha256'],optional:!flags['--source-manifest']&&!flags['--source-sha256']});
+  const sourceManifest=selected?.sourceManifest??null,sourceIdentity=selected?.sourceIdentity??null;
   return new RozoService({workspace:w,connections:configuration.connections,publisherSelections:configuration.publisherSelections,sourceIdentity,delivery:{sourceRoot,sourceManifest,configuration,python:flags['--python']??process.env.ROZO_PYTHON}});
 }
 function inputEnvelope(w,flags,command,payload){
@@ -72,11 +75,17 @@ function retainInput(w,envelope){
 }
 async function exportObject(w,hash,out){
   const original=w.bytes(hash,{offset:0,length:1}),target=resolve(out);mkdirSync(dirname(target),{recursive:true,mode:0o700});
-  if(existsSync(target)){const identity=hashOriginalFile(target);assert(identity.bytes===original.bytes&&identity.sha256===hash,'FILE_EXISTS','An existing destination contains another file.',409);return {path:target,sha256:hash,bytes:identity.bytes,reused:true};}
-  const temp=target+'.rozo-partial';if(existsSync(temp))throw Error('Retain or remove the previous incomplete exact output before retrying: '+temp);
-  const fd=openSync(temp,'wx',0o600),h=createHash('sha256');let offset=0;
-  try{while(offset<original.bytes){const value=w.bytes(hash,{offset,length:1024*1024});assert(value.sha256===hash&&value.bytes===original.bytes&&value.offset===offset&&value.length>0,'RANGE_IDENTITY','The original range changed.');writeFileSync(fd,value.data);h.update(value.data);offset+=value.length;}assert(offset===original.bytes&&h.digest('hex')===hash,'FILE_IDENTITY','The complete original file hash differs.');fsyncSync(fd);}finally{closeSync(fd);}
-  renameSync(temp,target);return {path:target,sha256:hash,bytes:offset,reused:false};
+  const reuse=()=>{const identity=hashOriginalFile(target);assert(identity.bytes===original.bytes&&identity.sha256===hash,'FILE_EXISTS','An existing destination contains another file.',409);return identity;};
+  if(existsSync(target)){const identity=reuse();return {path:target,sha256:hash,bytes:identity.bytes,reused:true};}
+  const temp=target+'.rozo-partial-'+randomUUID(),fd=openSync(temp,'wx',0o600),h=createHash('sha256');let offset=0,reused=false;
+  try{
+    try{
+      while(offset<original.bytes){const value=w.bytes(hash,{offset,length:1024*1024});assert(value.sha256===hash&&value.bytes===original.bytes&&value.offset===offset&&value.length>0,'RANGE_IDENTITY','The original range changed.');writeFileSync(fd,value.data);h.update(value.data);offset+=value.length;}
+      assert(offset===original.bytes&&h.digest('hex')===hash,'FILE_IDENTITY','The complete original file hash differs.');fsyncSync(fd);
+    }finally{closeSync(fd);}
+    try{linkSync(temp,target);}catch(error){if(error.code!=='EEXIST')throw error;reuse();reused=true;}
+  }finally{unlinkSync(temp);}
+  return {path:target,sha256:hash,bytes:offset,reused};
 }
 export async function main(args=process.argv.slice(2)){
   const {command,flags}=argumentsOf(args);if(!command||command==='help'||flags['--help']){process.stdout.write(help);return;}
@@ -86,7 +95,8 @@ export async function main(args=process.argv.slice(2)){
     result(materializePublisher(join(HERE,row.capsule),resolve(need(flags,'--directory')),{expectedSha256:row.capsuleSha256}));return;
   }
   if(command==='receive'){result(await receiveDelivery(resolve(need(flags,'--archive')),resolve(need(flags,'--directory')),{sha256:need(flags,'--sha256'),activate:flags['--activate']===true,requestId:flags['--request-id'],actor:flags['--actor']??'Receiving operator',python:flags['--python']}));return;}
-  if(command==='native'){const {runRozoJourney}=await import('./native-journey.mjs');result(await runRozoJourney({directory:resolve(need(flags,'--directory')),chromium:flags['--chromium'],playwrightModule:flags['--playwright-module'],sourceRoot:flags['--source-root']??ROOT,sourceManifest:flags['--source-manifest']??join(HERE,'INSTALLED_SOURCE.json'),python:flags['--python']}));return;}
+  if(command==='native'){const selected=selectRozoSource(resolve(flags['--source-root']??ROOT),{sourceManifest:flags['--source-manifest'],expectedSha256:flags['--source-sha256']});const {runRozoJourney}=await import('./native-journey.mjs');result(await runRozoJourney({directory:resolve(need(flags,'--directory')),chromium:flags['--chromium'],playwrightModule:flags['--playwright-module'],sourceRoot:selected.sourceRoot,sourceManifest:selected.sourceManifest,python:flags['--python']}));return;}
+  if(command==='native-applications'){const {runRozoApplications}=await import('./native-applications.mjs');result(await runRozoApplications({directory:resolve(need(flags,'--directory')),repository:resolve(need(flags,'--repository')),ref:need(flags,'--ref'),chromium:flags['--chromium'],playwrightModule:flags['--playwright-module'],python:flags['--python'],npm:flags['--npm']}));return;}
   const directory=resolve(need(flags,'--workspace'));
   if(command==='inspect'){result(inspectRozoWorkspace(directory));return;}
   const reading=['state','request','history','report','object'].includes(command),w=new RozoWorkspace(directory,{create:command==='init',readOnly:reading});let service,owner,server;
@@ -102,7 +112,7 @@ export async function main(args=process.argv.slice(2)){
     if(command==='serve'){
       const m=w.meta();if(flags['--expected-workspace-id'])assert(m.workspaceId===flags['--expected-workspace-id'],'WORKSPACE_IDENTITY','The reviewed original workspace ID differs.',409);
       if(flags['--expected-origin-id'])assert(m.originId===flags['--expected-origin-id'],'WORKSPACE_IDENTITY','The reviewed original origin ID differs.',409);
-      assert(service.sourceIdentity,'SOURCE_MANIFEST','Serve the complete installed source with INSTALLED_SOURCE.json.',409);
+      assert(service.sourceIdentity,'SOURCE_MANIFEST','Serve the complete original distribution manifest or standalone INSTALLED_SOURCE.json.',409);
       const {startRozoServer}=await import('./server.mjs');server=await startRozoServer({service,host:flags['--host']??'127.0.0.1',port:Number(flags['--port']??0)});
       if(flags['--startup-file']){const path=resolve(flags['--startup-file']);mkdirSync(dirname(path),{recursive:true,mode:0o700});if(existsSync(path))assert(lstatSync(path).isFile()&&!lstatSync(path).isSymbolicLink(),'STARTUP_PATH','The startup receipt must be an ordinary file.');const fd=openSync(path,'w',0o600);try{writeFileSync(fd,JSON.stringify(server.startup)+'\n');fsyncSync(fd);}finally{closeSync(fd);}}
       result(server.startup);

@@ -194,6 +194,7 @@ export function createNativeRequestDesk({client, ui, onView}) {
       ]),
       ...(state.workspaceError ? [node('p', {className:'notice error', text:errorText(state.workspaceError)})] : []),
       facts([['Service', value.workspaceLabel], ['Service ID', value.workspaceId],
+        ['Catalog', value.catalogLabel], ['Catalog URL', value.catalogUrl],
         ['Method', value.route.method], ['Resource', value.route.origin + (value.route.routeTemplate ?? value.route.pathname)],
         ['Content-Type', value.route.contentType], ['Network', value.payment.network],
         ['Asset', value.payment.asset], ['Recipient', value.payment.payTo], ['Service ceiling', value.payment.maxAtomic]]),
@@ -204,6 +205,8 @@ export function createNativeRequestDesk({client, ui, onView}) {
     try { selected = new URL(value.resource.url); } catch { return 'The selected resource has no usable HTTP URL.'; }
     if (Number.isSafeInteger(value.source?.pageBytes) && value.source.pageBytes > workspace.limits.sourcePageBytes)
       return 'The complete original provider page exceeds the native source-page limit. Explore with a smaller provider page size, then select the original offer again.';
+    if (workspace.catalogUrl !== undefined && value.source?.catalog?.url !== workspace.catalogUrl)
+      return 'This native service uses catalog ' + workspace.catalogUrl + '. Select its original catalog and inspect an offer there.';
     const route = workspace.route, method = value.preview.method;
     try {
       const compatible = concreteURL === undefined ? canUseHttpRoute(httpRecord(value), route) :
@@ -274,7 +277,7 @@ export function createNativeRequestDesk({client, ui, onView}) {
       node('legend', {text:'Original request inputs'}),
       node('label', {text:'Native service for this request'}, [service]),
       node('p', {className:'field-note', text:compatible.length ?
-        'Services shown match the advertised HTTP route and at least one original payment option.' :
+        'Services shown match the original catalog, advertised HTTP route and at least one payment option.' :
         'No configured service can currently prepare this original offer. The selected service explains the mismatch below.'}),
       node('div', {className:'detail-grid'}, [
         node('label', {text:'Original payment option'}, [options]),
