@@ -417,13 +417,19 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/flowable-workspaces.json",
-      "commit": "273f0f5ab423971a772560781675c7a9f57ef54b",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
       "editions": [
         {
           "commit": "273f0f5ab423971a772560781675c7a9f57ef54b",
           "git_blob": "96aefb959c5ea1b9a5af7a87f6e5aa44f244db0f",
           "bytes": 7430,
           "sha256": "905c3ea575f61bc984e91fb22ed310357b8226e4bcf8703ce83a61922d25df5b"
+        },
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "693d5705c50d6c1848579ed7260536cc4ba3d2dc",
+          "bytes": 17827,
+          "sha256": "a0f74a74098fdd32327f43e90dd2d2f8fd8e30d846d0e3c72fe6df9780475dd6"
         }
       ]
     },
@@ -808,13 +814,19 @@
       "required": false,
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
-      "commit": "05d9276b93a1887ce1fd499572d6dfc8f45f7214",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
       "editions": [
         {
           "commit": "05d9276b93a1887ce1fd499572d6dfc8f45f7214",
           "git_blob": "6abbaeb03f235ea1558c53548c0a926084e1751d",
           "bytes": 29737,
           "sha256": "f15b879c11d456d8bce95be66c14d675c982a0c85764a28db23a5fa30db6233d"
+        },
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "23719da0fba8910d1af35c8a008ed64fecc68b5c",
+          "bytes": 35173,
+          "sha256": "9f459b6a29e9f55d99583e008eae73b9b6d6c36c29a25a44522699949444e021"
         }
       ]
     },
@@ -842,13 +854,19 @@
       "required": false,
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
-      "commit": "05d9276b93a1887ce1fd499572d6dfc8f45f7214",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
       "editions": [
         {
           "commit": "05d9276b93a1887ce1fd499572d6dfc8f45f7214",
           "git_blob": "64753a5b3d41651312a3c4711048c281d1a67670",
           "bytes": 22924,
           "sha256": "061631664b30a72d96b4577a294666e0731da3041a7c82f7b4df2defa3aada4b"
+        },
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "22bf122d5ef644ea513635804ba05b3c3564aef8",
+          "bytes": 29183,
+          "sha256": "1f400f3af237b4e68185e52d2c79498cfb22bf4d6dce99452d200a245eb973c3"
         }
       ]
     },
@@ -859,13 +877,19 @@
       "required": false,
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
-      "commit": "05d9276b93a1887ce1fd499572d6dfc8f45f7214",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
       "editions": [
         {
           "commit": "05d9276b93a1887ce1fd499572d6dfc8f45f7214",
           "git_blob": "3113b8f3ae5858849c90d1f46b08ab971fd373b8",
           "bytes": 41853,
           "sha256": "ffe4bcbc6f6cdc6970f7c314363da5a58d440c9f438c26db52047fb25bde7629"
+        },
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "e360c5d78b359194d4a501d29c07c9657230c7d3",
+          "bytes": 42481,
+          "sha256": "6b8169fab880a3788a99bb9f8697e54ba8af4e47ef17d74c23fb2f20e816afc4"
         }
       ]
     },
@@ -876,13 +900,19 @@
       "required": false,
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
-      "commit": "05d9276b93a1887ce1fd499572d6dfc8f45f7214",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
       "editions": [
         {
           "commit": "05d9276b93a1887ce1fd499572d6dfc8f45f7214",
           "git_blob": "890b6fec7add752c0ad35478bff947e16d0d50fe",
           "bytes": 38749,
           "sha256": "18fa2199cb3663fbd728f7f9011a2d80e3d9cd3c9c43d3afc202c441945358a0"
+        },
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "93cc97dffe20407623654d714a5fa19d22c5428f",
+          "bytes": 45909,
+          "sha256": "2ab7cd1829e31d584448b23456e12bf99302be6e1fceea2fa642a8f6aa3453ad"
         }
       ]
     },
@@ -910,13 +940,19 @@
       "required": false,
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
-      "commit": "05d9276b93a1887ce1fd499572d6dfc8f45f7214",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
       "editions": [
         {
           "commit": "05d9276b93a1887ce1fd499572d6dfc8f45f7214",
           "git_blob": "3ce028f704f5f33f574b8bb250d39a367bdcb204",
           "bytes": 15795,
           "sha256": "d2d6fc07e764b7f9641e5d09329beea688a21460cefa844c60971ad7e3a36efc"
+        },
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "693d5705c50d6c1848579ed7260536cc4ba3d2dc",
+          "bytes": 17827,
+          "sha256": "a0f74a74098fdd32327f43e90dd2d2f8fd8e30d846d0e3c72fe6df9780475dd6"
         }
       ]
     },
@@ -1131,13 +1167,19 @@
       "required": false,
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
-      "commit": "166841a05b4585f3d7923f6f72af1443be1321ed",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
       "editions": [
         {
           "commit": "166841a05b4585f3d7923f6f72af1443be1321ed",
           "git_blob": "28d565c7a43f81fac5d252156d2ad0b3a7c801ee",
           "bytes": 17037,
           "sha256": "e4b29b47449c8612c4543f4767173b1d336929acc4b215a21a0614b1d76c9bbf"
+        },
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "693d5705c50d6c1848579ed7260536cc4ba3d2dc",
+          "bytes": 17827,
+          "sha256": "a0f74a74098fdd32327f43e90dd2d2f8fd8e30d846d0e3c72fe6df9780475dd6"
         }
       ]
     },
@@ -1575,6 +1617,193 @@
           "git_blob": "3c2825798c7762ce80d2242b14f0665e2619ed82",
           "bytes": 42758,
           "sha256": "dc5666f0be284b83cef9e692e9a76eef7f8ebeb5370d381d68812da2c10a66c9"
+        }
+      ]
+    },
+    {
+      "id": "flowable-following-reconciliation",
+      "label": "Complete historical, current and later source comparison and explicit field choices",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation-following-core.mjs",
+      "required": false,
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+      "editions": [
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "f1d2d478fdc5350b291d907841e7ccd90736eb84",
+          "bytes": 11029,
+          "sha256": "87fec40f126d7ddf3e530a33f3d5701b4f10cbd3899bfdcdda74a0e697a8324d"
+        }
+      ]
+    },
+    {
+      "id": "flowable-following-preparation",
+      "label": "Portable full source chain, deliberate following preparation and independent cold reopening",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation-following.mjs",
+      "required": false,
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+      "editions": [
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "130ac87118e98bb2399f39dd336740fb9230e626",
+          "bytes": 15483,
+          "sha256": "006866d998144ca95dd677c51230d633ed838084b5ddda058a04a2cd32016c41"
+        }
+      ]
+    },
+    {
+      "id": "flowable-source-desk-private-cli",
+      "label": "Original workspace-owned source-service command boundary and same-case native input",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation/service-cli.mjs",
+      "required": false,
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+      "editions": [
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "c41808546b4238b019ef64596536a4083e974d9f",
+          "bytes": 5781,
+          "sha256": "869674dd4cc79db2bbd4ae717691e97c1977c5dc743c5badb3f60ba98060a486"
+        }
+      ]
+    },
+    {
+      "id": "flowable-following-source-desk",
+      "label": "Full saved-history selection, source review, choices and retained working-copy controls",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_flowable_following.mjs",
+      "required": false,
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+      "editions": [
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "ee8defdbfb928bbb710b1b24dfba09d2ccfbb09a",
+          "bytes": 16445,
+          "sha256": "041fa1e3fc22454848e8948df8bad91cf74340a3241461b6980d141fb7378d1d"
+        }
+      ]
+    },
+    {
+      "id": "flowable-following-customer-operating",
+      "label": "Complete same-Installation source update, original request recovery and customer receiving course",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/FLOWABLE_FOLLOWING.md",
+      "required": false,
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+      "editions": [
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "93d4c8fbe4070b88c8b5447923dd83193b52b341",
+          "bytes": 16733,
+          "sha256": "2154356ebb5e77c00ddcfe894366f54e0205c1e6b7a29fadedf4204f2da51b0b"
+        }
+      ]
+    },
+    {
+      "id": "flowable-following-typed-client",
+      "label": "Installed original transport and explicit following comparison/preparation requests",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/flowable-source-desk-agent.mjs",
+      "required": false,
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+      "editions": [
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "3e8be5bcbdfa8fb619abad40212b00b468d1c74a",
+          "bytes": 8104,
+          "sha256": "b47900a4e95ee1f15de507745895912bb6fa0414732d111cf26c4da297fbc044"
+        }
+      ]
+    },
+    {
+      "id": "flowable-following-installed-command",
+      "label": "Original installed Source Desk commands including complete following requests",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk.py",
+      "required": false,
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+      "editions": [
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "e49dd3e836131bd25ca25078bca437e914cf5355",
+          "bytes": 18121,
+          "sha256": "b6ae715b3a4e1b142fa6053cef296ec777be4ba6813ff08f8a16adf938c8cedc"
+        }
+      ]
+    },
+    {
+      "id": "flowable-following-staff-access",
+      "label": "Existing authenticated staff roles and complete source-operation request boundary",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/staff_http.py",
+      "required": false,
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+      "editions": [
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "89f88cfaa313ac5c98908d9069308bc68b450d99",
+          "bytes": 20308,
+          "sha256": "cc042604acbacf4e2726a49e605df8c5d5827c10d3ee42c80c1e6b3f7152659e"
+        }
+      ]
+    },
+    {
+      "id": "flowable-following-client-types",
+      "label": "Full typed following-selection, choice, native-source and retained-result interfaces",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/flowable-source-desk-agent.d.mts",
+      "required": false,
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+      "editions": [
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "223cee2a34f866e40bc231025fba04f9ba13ec2b",
+          "bytes": 6869,
+          "sha256": "54791c44ae9b1889222bd912584bae64fe6c6a66fdb97976b769e7fd08ec69b4"
+        }
+      ]
+    },
+    {
+      "id": "flowable-following-native-case-receiving",
+      "label": "Complete original case archive validation with baseline, current and successor revisions",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation-operations.py",
+      "required": false,
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+      "editions": [
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "a8e5f5756d364c8f87d13981ca83bc0c85fcdf24",
+          "bytes": 7627,
+          "sha256": "81cfc67119d1f9b9d065423848a50b91a908a037edc4745ec0f707631f67912c"
+        }
+      ]
+    },
+    {
+      "id": "flowable-following-native-editor",
+      "label": "Existing Installation editor preserving original same-ID preview and expected revision",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_installations.mjs",
+      "required": false,
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+      "editions": [
+        {
+          "commit": "fa8c4876fc20bcfd0e3b123050c44b336d98e54c",
+          "git_blob": "76969601457967bc4b3c8d0971432074de4f23ec",
+          "bytes": 95037,
+          "sha256": "d07affe3c0943521928b971a2d399a25e3ac649abc4a716f2262cbb75fefcd05"
         }
       ]
     }
