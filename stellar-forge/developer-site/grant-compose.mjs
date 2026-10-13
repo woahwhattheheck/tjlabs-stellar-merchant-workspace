@@ -10,7 +10,7 @@ import { attachGrantReviewRounds } from './grant-review-round.mjs';
 import { attachGrantCompanion } from './grant-companion.mjs';
 import { attachCustomerClosingSources, attachCustomerClosingOpening } from './grant-customer-closing.mjs';
 import { receiveFinancialApplication, attachFinancialSources } from './grant-financial-operations.mjs';
-import { projectGrantMarkdown, receiveGrantCustomerSections, projectGrantSourceIndex, receiveGrantCustomerSources } from './grant-customers.mjs';
+import { projectGrantHtml, projectGrantMarkdown, receiveGrantCustomerSections, projectGrantSourceIndex, receiveGrantCustomerSources } from './grant-customers.mjs';
 import { receiveDatasetteApplication, datasetteSourceSelection, addDatasetteGrantSources, receiveDatasetteExistingWork } from './grant-datasette.mjs';
 import { validateGrantProductRegistrations, receiveGrantProductSources } from './grant-product-sources.mjs';
 
@@ -299,7 +299,7 @@ export function composeGrantApplication({
   const submission = attachGrantSubmission(customerOpening);
   const reviewRound = attachGrantReviewRounds(submission);
   const companionReader = attachGrantCompanion(reviewRound);
-  html = companionReader.templateHtml;
+  html = projectGrantHtml(companionReader.templateHtml);
   index = companionReader.sourceIndex;
   const indexText = JSON.stringify(index, null, 2) + '\n';
   const files = {
