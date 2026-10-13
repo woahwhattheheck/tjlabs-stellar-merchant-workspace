@@ -16,7 +16,10 @@
     "products/partner-workspace/native/API.md",
     "products/partner-workspace/SCF.md",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/mobility-source-review.json",
-    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/education-quality-review.json"
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/education-quality-review.json",
+    "products/partner-workspace/receiving/run-installed.py",
+    "products/partner-workspace/receiving/README.md",
+    "products/partner-workspace/receiving/select-original.py"
   ],
   "commands": {
     "partner-workspace": "products/partner-workspace/cli.mjs",

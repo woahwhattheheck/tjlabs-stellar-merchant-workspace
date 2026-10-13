@@ -45,7 +45,7 @@ export class MerchantPartnerWorkspaces{
     if(input.originInstallationId!==undefined)requestId(input.originInstallationId);
     for(const key of ['recordId','sourceId','importId'])if(input[key]!==undefined)identifier(input[key]);
     if(input.kind!==undefined){if(action==='export'){if(!['workspace','report','csv'].includes(input.kind))throw partnerError('INVALID_PARAMS','Choose a complete original export.');}else identifier(input.kind);}
-    if(input.importIds!==undefined){if(!Array.isArray(input.importIds)||!input.importIds.length||input.importIds.length>100||new Set(input.importIds).size!==input.importIds.length)throw partnerError('INVALID_PARAMS','Select distinct original mobility imports.');input.importIds.forEach(identifier);}
+    if(input.importIds!==undefined){if(!Array.isArray(input.importIds)||input.importIds.length<2||input.importIds.length>12||new Set(input.importIds).size!==input.importIds.length)throw partnerError('INVALID_PARAMS','Select distinct original mobility imports.');input.importIds.forEach(identifier);}
     if(input.port!==undefined&&(!Number.isInteger(input.port)||input.port<0||input.port>65535))throw partnerError('INVALID_PARAMS','Select a loopback port.');
     const{selected,client}=this.#select(nameAlias);let reply;
     if(action==='status')reply=await client.inspect();

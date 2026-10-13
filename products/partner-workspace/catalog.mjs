@@ -14,7 +14,7 @@ export function partnerWorkspaceTools(tool){return[
   tool('merchant_partner_record','Read the exact current original record and revision.',{...selected,kind:identifier,recordId:identifier},['workspace','kind','recordId'],read),
   tool('merchant_partner_history','Read every retained original revision and event for a record.',{...selected,kind:identifier,recordId:identifier},['workspace','kind','recordId'],read),
   tool('merchant_partner_evidence','Read one original retained source and its verified complete local file identity.',{...selected,sourceId:identifier},['workspace','sourceId'],read),
-  tool('merchant_partner_compare','Compare selected original mobility imports through the actual product method.',{...selected,importIds:{type:'array',minItems:1,maxItems:100,uniqueItems:true,items:identifier}},['workspace','importIds'],read),
+  tool('merchant_partner_compare','Compare selected original mobility imports through the actual product method.',{...selected,importIds:{type:'array',minItems:2,maxItems:12,uniqueItems:true,items:identifier}},['workspace','importIds'],read),
   tool('merchant_partner_stations','Read the original station-flow analysis for a mobility import.',{...selected,importId:identifier},['workspace','importId'],read),
   tool('merchant_partner_export','Export the complete original workspace, editable review Markdown or native CSV.',{...named,kind:{type:'string',enum:['workspace','report','csv']}},['workspace','requestId','kind'],{idempotent:true}),
   tool('merchant_partner_request','Receive a retained lifecycle request/result, including an originating installation record.',{...selected,requestId:identifier,originInstallationId:uuid},['workspace','requestId'],read),
