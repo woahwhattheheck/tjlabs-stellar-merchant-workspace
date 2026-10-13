@@ -92,3 +92,7 @@ For generated video/audio use high-quality available generative voice/media, the
 
 Owner instruction: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
 All-attachment clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+## Application preparation desk
+
+The same native preparer is available in **Comparisons → Prepare original output** on the original authenticated Research listener. Follow [the full application guide](DESK.md) to select complete original files, map every source row, review exact exclusions, retain candidate/run requests and download or reopen the complete working copy. The original terminal workflow above remains available with the same parser, source identities and comparison writer.

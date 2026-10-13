@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Comparisons in the existing Research dossier, with complete saved requests.
+import {createOriginalOutputDesk} from './original-output.js';
 import {openProtocolDraftStore} from './study-protocol-storage.js';
 const SCHEMA='sf88-comparison-browser-draft/v1';
 const MAX_RUN=64*1024*1024;
@@ -23,6 +24,8 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
   let visible=false,epoch=0,busy=false,overview=null,page=null,selectedCase=null,selectedCaseVersion=null,caseEditions=[],kind='candidates',offset=0,current=null,storageFailure=null;
   let storePromise=null,writer=Promise.resolve(),seenSelection=null;
   const drafts=new Map(),diskRevisions=new Map(),unwritten=new Map();
+  let outputDesk=null;
+  if(!document.querySelector('link[data-original-output-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/original-output.css';link.dataset.originalOutputStyle='';document.head.append(link);}
   const store=()=>storePromise??=openProtocolDraftStore().catch(e=>{storePromise=null;throw e;});
   const selection=()=>({workspaceId:getWorkspace()?.workspaceId,dossierId:getDossier()?.id});
   const same=(a,b)=>a.workspaceId===b.workspaceId&&a.dossierId===b.dossierId;
@@ -280,8 +283,11 @@ export function createComparisonPanel({root,api,task,notify,getDossier,getWorksp
     const saved=node('select');saved.setAttribute('aria-label','Saved comparison working copies');saved.append(option('','Choose a saved working copy'),...[...drafts.values()].filter(d=>same(d,selection())).sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt))).map(d=>option(d.id,(d.form.title??d.form.name??d.action)+' · '+d.updatedAt+(d.request?' · original request saved':''))));saved.value=current?.id??'';
     saved.addEventListener('change',()=>runTask(async()=>{await writer;current=drafts.get(saved.value)??null;render();}));
     const upload=node('input');upload.type='file';upload.accept='.json,application/json';upload.setAttribute('aria-label','Open complete comparison working copy');upload.addEventListener('change',()=>runTask(()=>openDownloaded(upload.files[0])));
-    root.append(section('Saved working copies',saved,upload),draftEditor());updateBusy();
+    root.append(section('Saved working copies',saved,upload),draftEditor());
+    const outputRoot=node('div');root.append(outputRoot);
+    outputDesk??=createOriginalOutputDesk({api,task:runTask,notify,getSelection:selection,getCase:activeCase,getRevision:()=>overview?.revision??getDossier()?.revision,getWorkspace,isBusy:()=>busy||isBusy(),onReceived});
+    outputDesk.mount(outputRoot);updateBusy();
   }
-  function updateBusy(){for(const e of root.querySelectorAll('button,input,select,textarea')){if(e.closest('form')&&current?.request&&e.tagName!=='BUTTON'){e.disabled=true;continue;}if(busy||isBusy()){if(e.dataset.comparisonDisabled===undefined)e.dataset.comparisonDisabled=e.dataset.wasDisabled??(e.disabled?'1':'0');e.disabled=true;}else if(e.dataset.comparisonDisabled!==undefined){e.disabled=e.dataset.comparisonDisabled==='1';delete e.dataset.comparisonDisabled;}}root.setAttribute('aria-busy',String(busy||isBusy()));}
-  return{show(value){visible=value;const sel=selection();if(!same(sel,seenSelection??{})){++epoch;seenSelection=sel;overview=null;page=null;selectedCase=null;selectedCaseVersion=null;caseEditions=[];current=null;offset=0;if(value)render();}if(value)refresh().catch(e=>notify(e.message,'error'));else ++epoch;},updateBusy};
+  function updateBusy(){for(const e of root.querySelectorAll('button,input,select,textarea')){if(e.closest('.output-desk'))continue;if(e.closest('form')&&current?.request&&e.tagName!=='BUTTON'){e.disabled=true;continue;}if(busy||isBusy()){if(e.dataset.comparisonDisabled===undefined)e.dataset.comparisonDisabled=e.dataset.wasDisabled??(e.disabled?'1':'0');e.disabled=true;}else if(e.dataset.comparisonDisabled!==undefined){e.disabled=e.dataset.comparisonDisabled==='1';delete e.dataset.comparisonDisabled;}}root.setAttribute('aria-busy',String(busy||isBusy()));outputDesk?.updateBusy();}
+  return{show(value){visible=value;const sel=selection();if(!same(sel,seenSelection??{})){++epoch;seenSelection=sel;overview=null;page=null;selectedCase=null;selectedCaseVersion=null;caseEditions=[];current=null;offset=0;if(value)render();}if(value)refresh().catch(e=>notify(e.message,'error'));else{++epoch;outputDesk?.hide();}},updateBusy};
 }

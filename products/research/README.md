@@ -70,3 +70,7 @@ Use the [original comparison import guide](../../stellar/scf-starforge-20261009/
 ## Receive the complete comparison application
 
 Run the [foreground comparison receiving course](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/FOREGROUND_RECEIVING.md) with the complete original source selection and installed Node, Python, Playwright and Chromium paths. One owned lifetime operates the native dossier, original authenticated browser, persistent working copies, historical protocol files, response interruption, complete portable export and independent editable reopening. Source selection, requests and first completed downloads remain fixed across restart; desktop and 390-pixel outputs remain available for the receiving operator's literal inspection.
+
+## Prepare original output in the application
+
+The [original-output preparation desk](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/DESK.md) continues the selected comparison case and protocol in the authenticated Research application. Retain whole producer tables, workbooks and reports; inspect every mapped, unavailable, excluded and outside-selection row; then explicitly save the candidate and original run. Complete browser working copies preserve unfinished source, plans and original requests across reload or file handover. Accepted outputs remain in the existing dossier reports and complete editable export.

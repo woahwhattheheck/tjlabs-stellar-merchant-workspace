@@ -29,7 +29,7 @@ export async function original(file,expected,maximum=LIMIT){
   return Buffer.concat(chunks,length);
  }finally{await handle.close();}
 }
-function utf8(body){const result=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(body);need(Buffer.from(result).equals(body),'OUTPUT_UTF8_INVALID');return result;}
+function utf8(body){let result;try{result=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(body);}catch{need(false,'OUTPUT_UTF8_INVALID');}need(Buffer.from(result).equals(body),'OUTPUT_UTF8_INVALID');return result;}
 export function csvRecords(input,{delimiter=',',maximumRows=10000}={}){
  need([',','\t',';'].includes(delimiter),'OUTPUT_DELIMITER_INVALID');
  let at=0,line=1,start=1,cell='',row=[],quoted=false,closed=false,started=false;const rows=[];
@@ -103,15 +103,17 @@ export function mapTable(table,plan){
  const coverage={sourceRows:rows.length,selectedValues:rows.filter(r=>r.disposition==='SELECTED_VALUE').length,selectedUndefined:rows.filter(r=>r.disposition==='SELECTED_UNDEFINED').length,excludedByReview:rows.filter(r=>r.disposition==='EXCLUDED_BY_REVIEW').length,outsideSelection:rows.filter(r=>r.disposition==='OUTSIDE_SELECTION').length,reviewRequired:issues.length};
  return{schema:'sf88-original-output-review/v1',status:issues.length?'REVIEW_REQUIRED':'READY',protocol,candidate,headers:table.headers,coverage,rows,issues,metrics};
 }
-export async function prepareOutput(plan,{baseDirectory='.'}={}){
+export async function prepareOutput(plan,{baseDirectory='.',readOriginal=original}={}){
+ need(typeof readOriginal==='function','OUTPUT_ORIGINAL_READER_REQUIRED');
+ const selectedRead=async(file,expected)=>{const body=await readOriginal(file,expected);need(Buffer.isBuffer(body)&&body.length===expected.bytes&&digest(body)===expected.sha256,'OUTPUT_ORIGINAL_FILE_CHANGED');return body;};
  need(plain(plan.source)&&typeof plan.source.file==='string','OUTPUT_SOURCE_REQUIRED');
- const source=await original(resolve(baseDirectory,plan.source.file),plan.source),table=csvRecords(utf8(source),{delimiter:plan.mapping?.delimiter??','});
+ const source=await selectedRead(resolve(baseDirectory,plan.source.file),plan.source),table=csvRecords(utf8(source),{delimiter:plan.mapping?.delimiter??','});
  const mapped=mapTable(table,plan),artifacts=[{id:'original-table',path:'original/table.csv',role:'original measured output table',mediaType:plan.mapping.delimiter==='\t'?'text/tab-separated-values':'text/csv',...descriptor(source),bodyBase64:source.toString('base64')}];
  need(Array.isArray(plan.originals)&&plan.originals.length<=200,'OUTPUT_ORIGINALS_REQUIRED');let total=source.length;
  for(const spec of plan.originals){
   exact(spec,['id','file','path','role','mediaType','bytes','sha256'],'OUTPUT_ORIGINAL_FIELDS');id(spec.id);safePath(spec.path);
   need(!artifacts.some(a=>a.id===spec.id||a.path===spec.path),'OUTPUT_ORIGINAL_DUPLICATE');
-  const body=await original(resolve(baseDirectory,spec.file),spec);total+=body.length;need(total<=LIMIT-1024*1024,'OUTPUT_ATTACHMENTS_TOO_LARGE');
+  const body=await selectedRead(resolve(baseDirectory,spec.file),spec);total+=body.length;need(total<=LIMIT-1024*1024,'OUTPUT_ATTACHMENTS_TOO_LARGE');
   artifacts.push({id:spec.id,path:spec.path,role:text(spec.role,'OUTPUT_ROLE_REQUIRED'),mediaType:text(spec.mediaType,'OUTPUT_MEDIA_TYPE_REQUIRED'),...descriptor(body),bodyBase64:body.toString('base64')});
  }
  const planBody=bytes(plan);need(!artifacts.some(a=>a.id==='preparation-plan'||a.path==='preparation/plan.json'),'OUTPUT_RESERVED_PLAN_MEMBER');
