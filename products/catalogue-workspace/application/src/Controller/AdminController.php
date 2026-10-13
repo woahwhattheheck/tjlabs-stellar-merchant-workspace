@@ -96,8 +96,8 @@ final class AdminController
         $this->actor();
         $blob = $this->archive->selectedFile(Support::id($project), $sha);
         $response = new BinaryFileResponse($this->store->blobPath($blob));
-        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $sha . '.bin');
-        $response->headers->set('Content-Type', 'application/octet-stream');
+        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $blob['name'] ?? $sha . '.bin');
+        $response->headers->set('Content-Type', $blob['content_type'] ?? 'application/octet-stream');
         $response->headers->set('Cache-Control', 'private, no-store');
         $response->headers->set('X-Content-SHA256', $sha);
         $response->headers->set('X-Content-Type-Options', 'nosniff');

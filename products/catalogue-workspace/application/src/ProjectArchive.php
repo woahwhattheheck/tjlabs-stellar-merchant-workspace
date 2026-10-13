@@ -223,12 +223,18 @@ final class ProjectArchive
     public function files(string $projectId): array
     {
         $this->store->require('project', $projectId, $projectId);
-        $blobs = [];
-        foreach ($this->store->allProject($projectId) as $record) { $this->findBlobs($record, $blobs); }
+        $blobs = []; $metadata = [];
+        foreach ($this->store->allProject($projectId) as $record) {
+            $this->findBlobs($record, $blobs);
+            if (in_array($record['_record']['kind'], ['export', 'received'], true) && isset($record['archive']['sha256'])) {
+                $metadata[$record['archive']['sha256']] = ['name' => 'catalogue-' . $projectId . '-' . $record['archive']['sha256'] . '.zip',
+                    'content_type' => 'application/zip'];
+            }
+        }
         foreach ($this->store->importJournals($projectId) as $row) { $blobs[$row['blob']['sha256']] = $row['blob']; }
         foreach ($this->source->exportProject($projectId) as $row) { $blobs[$row['blob']['sha256']] = $row['blob']; }
         ksort($blobs, SORT_STRING);
-        return ['state' => 'COMPLETE', 'project_id' => $projectId, 'files' => array_values($blobs)];
+        return ['state' => 'COMPLETE', 'project_id' => $projectId, 'files' => array_values(array_map(static fn (array $blob): array => $blob + ($metadata[$blob['sha256']] ?? []), $blobs))];
     }
 
     public function selectedFile(string $projectId, string $sha): array

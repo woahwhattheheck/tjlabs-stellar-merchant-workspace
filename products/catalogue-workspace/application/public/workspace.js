@@ -133,14 +133,19 @@
     const value=await read('projects',{limit:500});$('projects').replaceChildren();
     for(const p of value.result.projects)$('projects').append(make('option',{value:p.id,text:p.label}));
   }
+  function switchProject(next){
+    if(next===projectId)return;
+    retainDraft();projectId=next;project=null;review=null;approval=null;rules={};captureId='';cohort=null;offset=0;query='';fieldOffset=0;
+    const saved=storageRead(keys(projectId).draft);
+    if(saved&&saved.review?.project_id===projectId){review=saved.review;approval=saved.approval;rules=saved.rules||{};query=saved.query||'';fieldOffset=saved.fieldOffset||0;}
+    for(const name of ['cohort-rows','operation-rows','file-rows','capture-select','source-summary','operation-detail','live-pending','export-result'])$(name).replaceChildren();
+    $('project-summary').textContent='Selected original project '+projectId+'. Read its current native state.';
+    $('cohort-page').textContent='';renderReview();renderPending();
+  }
   async function openProject(){
     const next=$('project-id').value.trim();if(!next)throw new Error('Enter an original project ID.');
-    if(projectId&&next!==projectId)retainDraft();
     const value=await read('project',{project_id:next});
-    const changed=next!==projectId;projectId=next;project=value.result;
-    if(changed){review=null;approval=null;rules={};captureId='';cohort=null;offset=0;
-      const saved=storageRead(keys(projectId).draft);
-      if(saved){review=saved.review;approval=saved.approval;rules=saved.rules||{};query=saved.query||'';fieldOffset=saved.fieldOffset||0;}}
+    switchProject(next);project=value.result;
     renderProject();renderReview();renderPending();
     say('Opened '+project.project.label+' with its original selected identifiers.','success');
   }
@@ -249,12 +254,12 @@
         make('td',{},[make('span',{class:'badge',text:row.display_state||row.state})]),make('td',{text:(row.native_result_ids||[]).join(', ')||'Awaiting original result'}),make('td',{},controls)]));
     }
   }
-  const fileUrl=sha=>root.dataset.download.replace('PROJECT',encodeURIComponent(projectId)).replace('HASH',sha);
+  const fileUrl=sha=>root.dataset.download.replace('PROJECT',encodeURIComponent(projectId)).replace('0000000000000000000000000000000000000000000000000000000000000000',sha);
   function renderFiles(result){
     $('file-rows').replaceChildren();
     for(const file of result.files)$('file-rows').append(make('tr',{},[
       make('td',{class:'identity',text:file.sha256}),make('td',{text:file.bytes.toLocaleString()}),
-      make('td',{},[make('a',{href:fileUrl(file.sha256),text:'Download original',download:file.sha256+'.bin'})])]));
+      make('td',{},[make('a',{href:fileUrl(file.sha256),text:'Download original',download:file.name||file.sha256+'.bin'})])]));
   }
   function on(name,fn){$(name).addEventListener('click',()=>task(fn));}
   on('list-projects',listProjects);on('open-project',openProject);
@@ -263,7 +268,7 @@
     if(!$('claim-confirm').checked)throw new Error('Explicitly confirm the selected identifier claims.');
     const next=$('new-id').value.trim()||id('catalogue');
     if(projectId&&pending())throw new Error('Retain the original pending action before changing projects.');
-    projectId=next;$('project-id').value=next;
+    switchProject(next);$('project-id').value=next;
     await mutate('project-create',{project_id:next,label:$('new-label').value,identifiers:lines($('new-identifiers').value),
       locales:lines($('new-locales').value),channels:lines($('new-channels').value)});
     await openProject();await listProjects();
@@ -318,7 +323,7 @@
     const pid=$('project-id').value.trim(),file=$('receive-file').files?.[0];
     if(!pid||!file||!$('receive-confirm').checked)throw new Error('Select the original project ID, complete archive and explicit receiving confirmation.');
     if(projectId&&projectId!==pid&&pending())throw new Error('Retain the original pending action before changing projects.');
-    projectId=pid;
+    switchProject(pid);
     if(!crypto.subtle)throw new Error('This browser needs a secure native origin for complete archive hashing; use the native CLI on this host.');
     const bytes=await file.arrayBuffer(),digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),n=>n.toString(16).padStart(2,'0')).join('');
     let body=pending();
