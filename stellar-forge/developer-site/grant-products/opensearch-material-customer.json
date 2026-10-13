@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/material-catalog/README.md",
-      "commit": "85a7f61db8222faca0be2f097c2c0795b248b4f9",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
       "editions": [
         {
           "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
@@ -22,6 +22,12 @@
           "git_blob": "20c045bff03ee747a1f9e55e12cc722d1a203717",
           "bytes": 9068,
           "sha256": "2bbe24074f9ec1df322468302db38e45898b9377c5c153d0216dd44bf9836b5c"
+        },
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "376d40d45a4b910662b16e98959004b92df0a4a9",
+          "bytes": 10866,
+          "sha256": "66f616e31e3c899be26626c1598293d493fe96c0c1ace18287fa681dbe633d5b"
         }
       ]
     },
@@ -31,7 +37,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/material-catalog/OPERATING.md",
-      "commit": "85a7f61db8222faca0be2f097c2c0795b248b4f9",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
       "editions": [
         {
           "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
@@ -44,6 +50,12 @@
           "git_blob": "8bbf9d563dc903c94c1cddf365d7107393d494ce",
           "bytes": 24743,
           "sha256": "fad76927ac014a9d27d5e00841667ca676415e3f704f8832ce01ecc75565f4f7"
+        },
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "84069c6dca195664a4348b15152662f36454e15a",
+          "bytes": 27242,
+          "sha256": "0c53f1e2cd6e34de92e2b0073cbaf2a26b6ca92f8e661b4190ff753452effc7a"
         }
       ]
     },
@@ -267,13 +279,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/material-catalog/recipient/README.md",
-      "commit": "85a7f61db8222faca0be2f097c2c0795b248b4f9",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
       "editions": [
         {
           "commit": "85a7f61db8222faca0be2f097c2c0795b248b4f9",
           "git_blob": "0ba26b6872abf59700a8f1e3b6c88f2b281a8d5c",
           "bytes": 5860,
           "sha256": "44064b5caaac8450414b56d355d13f7c33d22087fd138e5d1e43f575dfde8b1d"
+        },
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "12411764242f8ec1d0cf16547cbb661700a7a203",
+          "bytes": 7177,
+          "sha256": "a453b382d0cca37348fbe89cb2dfe48334bfc675de024e58d161ce055a2e677a"
         }
       ]
     },
@@ -283,10 +301,16 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/material-catalog/recipient/core.mjs",
-      "commit": "85a7f61db8222faca0be2f097c2c0795b248b4f9",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
       "editions": [
         {
           "commit": "85a7f61db8222faca0be2f097c2c0795b248b4f9",
+          "git_blob": "4479b42fc61fc6e66e3c8d81ccf40048b928cb86",
+          "bytes": 32437,
+          "sha256": "c06fab764143cba3f5af5615afbfcbb1b845fe6fb0ceba16f1aa12e916b107d0"
+        },
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
           "git_blob": "4479b42fc61fc6e66e3c8d81ccf40048b928cb86",
           "bytes": 32437,
           "sha256": "c06fab764143cba3f5af5615afbfcbb1b845fe6fb0ceba16f1aa12e916b107d0"
@@ -299,13 +323,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/material-catalog/recipient/RECEIVING.md",
-      "commit": "85a7f61db8222faca0be2f097c2c0795b248b4f9",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
       "editions": [
         {
           "commit": "85a7f61db8222faca0be2f097c2c0795b248b4f9",
           "git_blob": "b9aaf2a79ebdf81d732516ed5549d6071335152b",
           "bytes": 4071,
           "sha256": "fc93eef251f209a2dee4ef5519ff27ac6b10a75ced2366b8cda12bc8f5679462"
+        },
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "4efc86449d6d2f38101c38103acd9d561ae48785",
+          "bytes": 13883,
+          "sha256": "e4db9fc5b7ee2a3cb8bc3a44f55c1a9eaa37186ef0e764918ed1303bb7dba2ca"
         }
       ]
     },
@@ -315,13 +345,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/material-catalog/recipient/receive.mjs",
-      "commit": "85a7f61db8222faca0be2f097c2c0795b248b4f9",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
       "editions": [
         {
           "commit": "85a7f61db8222faca0be2f097c2c0795b248b4f9",
           "git_blob": "24a0d0993eb0034ec0a43a0cee6cfc335d116b10",
           "bytes": 10513,
           "sha256": "0a6d84f13ab77556732ccb7f2f11c7c72b3e00db50be07497afc081062b19feb"
+        },
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "c31968d87115d6d64bf5d8b819c435654e13acb6",
+          "bytes": 22391,
+          "sha256": "949ddd075248d9680988b5479da26c77511f184d4ee113031967bb3b316da0c4"
         }
       ]
     },
@@ -434,6 +470,675 @@
           "git_blob": "5bf568a990b8c4f87f170f36561b67162fca4b1a",
           "bytes": 99041,
           "sha256": "821e4dbcec9fa32b64df4298531adc5d3cdab68507686317dd08e8266378b005"
+        }
+      ]
+    },
+    {
+      "id": "material-installation-distribution-contribution",
+      "label": "Material catalogue material-catalogue-installation.json complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/material-catalogue-installation.json",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "55a9c83dc0fe6e87228af4877aae3541a61eff69",
+          "bytes": 1838,
+          "sha256": "24993edc86fd8477adac52bdbd9f86f7b3423d129cbdd7fff8d73cae91f24853"
+        }
+      ]
+    },
+    {
+      "id": "material-installation-distribution-selection",
+      "label": "Material catalogue material-catalogue-installation.json complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/material-catalogue-installation.json",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "8f0236e694858296f38da9929aae9c6924e671a5",
+          "bytes": 11529,
+          "sha256": "8b5f1a2155388d8af7e08d0f38b262073d8caf6cea3a3436a8e6e0862832a5e3"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-material-catalogue-operator-md",
+      "label": "Material catalogue MATERIAL_CATALOGUE_OPERATOR.md complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_CATALOGUE_OPERATOR.md",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "8d56cadbba2aae3b99b625aee7221388a39e62b9",
+          "bytes": 12341,
+          "sha256": "b1eb5735c19710c90bf5e895fd0f506a314f939c172db0a829f5415642d6b9b4"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-material-catalogue-source-desk-md",
+      "label": "Material catalogue MATERIAL_CATALOGUE_SOURCE_DESK.md complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_CATALOGUE_SOURCE_DESK.md",
+      "commit": "87f550f86c90ab8a9b958335dbbc7f6cde940b32",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "bb9d68d6ba3159e6a7d31eb358805ca207595d33",
+          "bytes": 12371,
+          "sha256": "d27da8ce3b7a167f7cacd3cf1af7c26997428a2057bf579b3ecd43b06d023c64"
+        },
+        {
+          "commit": "87f550f86c90ab8a9b958335dbbc7f6cde940b32",
+          "git_blob": "5d6b8d655f08aa53e91828a8df446e6ada51c480",
+          "bytes": 15677,
+          "sha256": "b55d2cc16a85a979b54264ad186b15d8c03e4a7fd6cd6c9557e1dca5b20ddd96"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-managed-source-json",
+      "label": "Material catalogue managed-source.json complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "eab17b1c695ff710dac0e25018b78d85be62e04b",
+          "bytes": 55363,
+          "sha256": "aeba62eeb9214fb3092c3df680defaa9f33e2f2e7c4332ff96a48eb5b06e3370"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-material-catalogue-source-desk-browser-mjs",
+      "label": "Material catalogue material-catalogue-source-desk-browser.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/material-catalogue-source-desk-browser.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "a8234a774f7aaed5db098b9470471280b1d04dbc",
+          "bytes": 28665,
+          "sha256": "3bd56d8a01057a64058f7761333e6fc977a864642978b058eea85ac7baab8a9c"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-material-catalogue-source-desk-receiving-py",
+      "label": "Material catalogue material-catalogue-source-desk-receiving.py complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/material-catalogue-source-desk-receiving.py",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "e494c5bce3277fef08227f96109527553be910b5",
+          "bytes": 26280,
+          "sha256": "bc29ea691ba875901b76bd95a7b2e7102dd0b01979e9f8164d24e3961ca85b3e"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-operations-py",
+      "label": "Material catalogue operations.py complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations.py",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "0664cb740f3ec2597c3839824cd2d82d2f8a9e32",
+          "bytes": 150338,
+          "sha256": "d0e3cb3354316adabe015fd6294fcf850c46c7dec3038efc4723f2a27c2bf35d"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-operations-cli-py",
+      "label": "Material catalogue operations_cli.py complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_cli.py",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "db7d22ed43e5e08a673587b58dc7cfb91a28a29c",
+          "bytes": 107653,
+          "sha256": "7f9fd9c339b9569c2cd1fa9f99567c4ae85567a4835ca11f9e02def49f30411d"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-operations-http-py",
+      "label": "Material catalogue operations_http.py complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_http.py",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "a913adfdf5912235d52e241d5baedb50918e2361",
+          "bytes": 49902,
+          "sha256": "17f481c9c45637804d10eeafd0ba0b488c17d9e90f9a94c5f6466c74a00be0be"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-operations-installations-mjs",
+      "label": "Material catalogue operations_installations.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_installations.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "7578b2cfc54d71d0c7303c4a696c12f402ab7d18",
+          "bytes": 101136,
+          "sha256": "600c2b760b42599a622354904dcb15dce573ada7e2b61af6a12a25672554de92"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-operations-material-catalogue-css",
+      "label": "Material catalogue operations_material_catalogue.css complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue.css",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "e1b113f0bd91a4f2c1d0c773b656ed0afdc9c6fe",
+          "bytes": 3740,
+          "sha256": "67dd6f6ccdcecdb976a5b914a3b00288ff98c84940c533a81a27ad14c11debad"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-operations-material-catalogue-mjs",
+      "label": "Material catalogue operations_material_catalogue.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "c9bf4a28ec88b0f72427e5579d956c3fe536096f",
+          "bytes": 36888,
+          "sha256": "0af958d8e3c95f5673d8ec98f5e8d65b0bf22acf9b0f0e34c1e0656d4c324cd5"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-operations-material-catalogue-py",
+      "label": "Material catalogue operations_material_catalogue.py complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue.py",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "9afc47865d9682d29df1e8cd629327a4844227ea",
+          "bytes": 13883,
+          "sha256": "dcca04c19b578a2471fd581f2993e67a6307f2a02d132cb5d12dc0dfe1969404"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-operations-material-catalogue-cli-py",
+      "label": "Material catalogue operations_material_catalogue_cli.py complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue_cli.py",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "45318aacb563008c965f1bd3cdd596acaae91db1",
+          "bytes": 8335,
+          "sha256": "71f303407511d57c0b084f746c355784d346c662b7445ed069fa445fc8c8a071"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-operations-material-catalogue-engine-mjs",
+      "label": "Material catalogue operations_material_catalogue_engine.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue_engine.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "41d502ecb0ea35f7030ac9efb2364f2d013a69fd",
+          "bytes": 9416,
+          "sha256": "7a57e82a9cd5ae855b2901c628ebc09586ed4e422b925fe0a7e00e56cc4469ea"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-operations-material-catalogue-model-mjs",
+      "label": "Material catalogue operations_material_catalogue_model.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue_model.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "164011fff1e87ab1207c10b06cc958a068db2f3a",
+          "bytes": 12921,
+          "sha256": "43655e07819b746958de05c0bb108f3bdbf09d48b8cfbaee36a98cbd51a7534f"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-operations-material-catalogue-sources-py",
+      "label": "Material catalogue operations_material_catalogue_sources.py complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue_sources.py",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "8b8b4bbd2ad908831463a87aa209485ef31b55bd",
+          "bytes": 6509,
+          "sha256": "ec9781456d809362e63943ea5088f0f259577d9ceed87d6bbf56f4d1c2b3c43a"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-server-py",
+      "label": "Material catalogue server.py complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/server.py",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "dba30e63dd963cf814a9e771890c4b59cbecd390",
+          "bytes": 19361,
+          "sha256": "25f8fc79dd847f9242a4b2c4da6a10af63bd2ffed308d51b243338ccabfe383a"
+        }
+      ]
+    },
+    {
+      "id": "material-desk-staff-http-py",
+      "label": "Material catalogue staff_http.py complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/staff_http.py",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "21413d626bd280f717c29f977cfcbd0250cae140",
+          "bytes": 21004,
+          "sha256": "26b04614a0d28bc950882a389d0e70d27e2cc712ddd359fafeaafc0a8883f8b9"
+        }
+      ]
+    },
+    {
+      "id": "material-commissioning-core-mjs",
+      "label": "Material catalogue core.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/commissioning/core.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "1d03c0f6a86c3f67aac82036101cee16e25d4862",
+          "bytes": 11161,
+          "sha256": "d5232df2613d356e4625e47ad58b41e3baa407678a80a1664b396c950214f608"
+        }
+      ]
+    },
+    {
+      "id": "material-commissioning-files-mjs",
+      "label": "Material catalogue files.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/commissioning/files.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "0e4a97a23273be300fa4e5930aa814e313419c47",
+          "bytes": 17269,
+          "sha256": "7e5e2861d9012127a63c6cf3d77d420f0ffd797a7036e31cee5bbf625a106064"
+        }
+      ]
+    },
+    {
+      "id": "material-commissioning-cli-mjs",
+      "label": "Material catalogue cli.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/commissioning/cli.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "246edb62c0f712e27c6749dc4d94e71aa524b12c",
+          "bytes": 2224,
+          "sha256": "bc029f8dbc4e43adfb0bd6ada7597b769754df7b70a7ef7ca3774e9b91e36087"
+        }
+      ]
+    },
+    {
+      "id": "material-commissioning-handover-mjs",
+      "label": "Material catalogue handover.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/commissioning/handover.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "5365b414aecb3ed8359720357e4ca70c781b92d8",
+          "bytes": 7303,
+          "sha256": "04533c898236e5d0c3373e8ea1a1d360f7449034776e098586d35e2beb3a12c8"
+        }
+      ]
+    },
+    {
+      "id": "material-commissioning-receive-mjs",
+      "label": "Material catalogue receive.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/commissioning/receive.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "5ee9caed859c9673f487242530c8452e707e23c2",
+          "bytes": 5353,
+          "sha256": "22cf3afe2751feda03568248ffcd1c960cb913b5194b66725cec928c7eadbae8"
+        }
+      ]
+    },
+    {
+      "id": "material-commissioning-readme-md",
+      "label": "Material catalogue README.md complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/commissioning/README.md",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "a3f2543ad23cbe6c9d603a2ce6e063cb778578b5",
+          "bytes": 16374,
+          "sha256": "9af3d361ed6a89e3feefef4ad6de950ad7b741eaeac51fc8cbd8e005e27efba9"
+        }
+      ]
+    },
+    {
+      "id": "material-commissioning-receiving-md",
+      "label": "Material catalogue RECEIVING.md complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/commissioning/RECEIVING.md",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "3a5512c424fff26c6200907c5759492f5e1d11a4",
+          "bytes": 9355,
+          "sha256": "ecbb2c55d37886514891310bf1a33d0e941dd648cb541784e41e116825123795"
+        }
+      ]
+    },
+    {
+      "id": "material-recipient-sha256-mjs",
+      "label": "Material catalogue sha256.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/recipient/sha256.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "283a859c1c7fcda3919e68f58629b2f98a1b08a4",
+          "bytes": 18731,
+          "sha256": "e143f9eeee13d868ebfccbfd58ed82b62d886bb09b620931c870106b8e6c6e54"
+        }
+      ]
+    },
+    {
+      "id": "material-recipient-assemble-mjs",
+      "label": "Material catalogue assemble.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/recipient/assemble.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "5ea5221735f345486f6ab8d088b13499f0b81ee7",
+          "bytes": 2093,
+          "sha256": "1cca0614f3f48ed9cfba98aa59b63c71fe08d59205f1fbcb58c8553ecd9b6442"
+        }
+      ]
+    },
+    {
+      "id": "material-recipient-review-mjs",
+      "label": "Material catalogue review.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/recipient/review.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "df7b87da6be172177c7e2d9b5a7c4995e09f1df3",
+          "bytes": 16521,
+          "sha256": "ac8ad5138997d87448b78595aa7c36a917469bed0ecf239a88343fa110d9a1ab"
+        }
+      ]
+    },
+    {
+      "id": "material-recipient-review-panel-mjs",
+      "label": "Material catalogue review-panel.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/recipient/review-panel.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "167abb5d90ea1ba2574b1c738a228775eb63c7af",
+          "bytes": 11331,
+          "sha256": "8f11c55994aa961bf413b7bb8fd12fc62f1424904f307af40a3a0a1babcff7ab"
+        }
+      ]
+    },
+    {
+      "id": "material-recipient-workspace-mjs",
+      "label": "Material catalogue workspace.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/recipient/workspace.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "1baf41f2f05457e70ecd79dc770e64701800c706",
+          "bytes": 18988,
+          "sha256": "501c0204a5f7b3ff116432eca719ccb356080a512a4cf0d911a8c79ae397d1f8"
+        }
+      ]
+    },
+    {
+      "id": "material-recipient-reader-html",
+      "label": "Material catalogue reader.html complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/recipient/reader.html",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "b0b97d835d37dc4dc86f03bbd0bc28cf1d8d1c6b",
+          "bytes": 3987,
+          "sha256": "165660332b20137911c4587219e282bd3b4b6909a0f1d9768f5ab4c79be79f03"
+        }
+      ]
+    },
+    {
+      "id": "material-installation-prepare-core-mjs",
+      "label": "Material catalogue prepare-core.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "e23a23ad1a68fc826ca6282a8582434b0ce3ec92",
+          "bytes": 16532,
+          "sha256": "381fcee24a9e1781d874fbc582b3168c4de6e7abe6dae0a6797aea95dae3c159"
+        }
+      ]
+    },
+    {
+      "id": "material-installation-commercial-workshare-core-mjs",
+      "label": "Material catalogue commercial-workshare-core.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/commercial-workshare-core.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "6fb6ca61dd4beaef83135c5561b346443a08676e",
+          "bytes": 13176,
+          "sha256": "54cc69d6733e12a5771dab85305c1c7c0a3b61c4b3156ce43f5c44d8e77e08d0"
+        }
+      ]
+    },
+    {
+      "id": "material-installation-supplier-catalogues-json",
+      "label": "Material catalogue supplier-catalogues.json complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/supplier-catalogues.json",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "519e41fbd0fe6df0f51e29d83da574286d288ce7",
+          "bytes": 10029,
+          "sha256": "89a1ea6892d65fd8b07f64a497a164c4d3f40cdcba44909974113009d62aefd2"
+        }
+      ]
+    },
+    {
+      "id": "material-recipient-review-return-md",
+      "label": "Material catalogue REVIEW_RETURN.md complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/recipient/REVIEW_RETURN.md",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "60ddf8e24c1b9c6f359df1d6fe8eda04647fe11b",
+          "bytes": 15131,
+          "sha256": "a581f7e1206566a489a32f7be7a6bf5a65d848c1efc53e70c6ad7f4e47cc8e36"
+        }
+      ]
+    },
+    {
+      "id": "material-recipient-installed-return-md",
+      "label": "Material catalogue INSTALLED_RETURN.md complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/recipient/INSTALLED_RETURN.md",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "b2b47078ff6e3ecd458a0738079ee0193a5c44b1",
+          "bytes": 14359,
+          "sha256": "8920e3c2e14425e01a4a84717f27379817b7701847326c3304c6cb60fc3eb5b5"
+        }
+      ]
+    },
+    {
+      "id": "material-recipient-receive-installed-mjs",
+      "label": "Material catalogue receive-installed.mjs complete source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/material-catalog/recipient/receive-installed.mjs",
+      "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+      "required": false,
+      "editions": [
+        {
+          "commit": "c8e480a4110056218bcaa566ccf4764f0b79906f",
+          "git_blob": "b1e32c94d14b291d2250f169fe4bb33bb2684b0c",
+          "bytes": 17397,
+          "sha256": "4064694a5be9f57bdc41bb6ad701cd7b24bc17394d3713564ee963921fb0ad6c"
         }
       ]
     }
