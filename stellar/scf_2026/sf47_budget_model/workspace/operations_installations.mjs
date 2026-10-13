@@ -310,6 +310,13 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         pairs(d.workshare,[['caseId','Commercial case'],['planSha256','Complete original plan SHA-256'],
           ['sourceId','Original commissioning file'],['packetSourceId','Original receiving packet']])+
         note(d.workshare.phaseChecks.length+' original commercial phases are linked to their stable installation acceptance steps.'):'')+
+      (d.commercial?'<h4>Original accepted Merchant quotation</h4>'+
+        pairs(d.commercial,[['caseKey','Quotation family'],['quoteId','Selected quote'],
+          ['quoteSha256','Sealed quote SHA-256'],['acceptanceId','Accepted response'],
+          ['acceptanceSha256','Response SHA-256'],['scopeSha256','Accepted scope SHA-256'],
+          ['sourceId','Original handoff file'],['sourceSha256','Complete source SHA-256']])+
+        table(['Accepted task','Original acceptance step'],d.commercial.taskChecks.map(row=>[
+          '<code>'+esc(row.taskId)+'</code>','<code>'+esc(row.checkId)+'</code>'])):'')+
       '<h4>Original commissioning and useful task</h4>'+
       pairs(d.workorder,[['sourceId','Complete original file'],['reference','Workorder reference'],['payer','Commissioning payer'],['scope','Implementation assignment'],['terms','Original commercial terms']])+
       pairs(d.task,[['name','Task name'],['purpose','Customer purpose'],['request','Complete request'],['completeOutput','Whole task completion'],['repeatTrigger','Reason to repeat'],['pricedUnit','Priced unit']])+
@@ -688,7 +695,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   async function readCurrentEffort(){
     capture();const value=draft();
-    if(!value?.installationId||!value.document.workshare)throw new Error('Open a saved commercial installation to read its original phases and work.');
+    if(!value?.installationId||!(value.document.workshare||value.document.commercial))throw new Error('Open a saved accepted-quotation or Workshare installation to read its original delivery scope and work.');
     const original=copy(value),epoch=++generation;
     await reloadCase();if(!own(epoch))return false;
     const asOfDate=original.document.effort?.asOfDate||original.effortAsOfDate||new Date().toISOString().slice(0,10);
@@ -699,6 +706,12 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       result.installationId!==original.installationId||result.expectedRevision!==original.expectedRevision||
       !result.document?.effort||!Array.isArray(result.phaseSource?.phases)||!Array.isArray(result.workInventory))
       throw new Error('Reopen the complete original Installation effort source.');
+    if(original.document.commercial){
+      const binding=result.phaseSource.commercial,expected=original.document.commercial;
+      if(result.phaseSource.sourceKind!=='COMMERCIAL'||!binding||
+        !['caseKey','quoteId','quoteSha256','acceptanceId','acceptanceSha256','scopeSha256','sourceId','sourceSha256'].every(key=>binding[key]===expected[key]))
+        throw new Error('Reopen the complete accepted quotation and its original task effort source.');
+    }
     capture();const live=draft();
     if(live?.token!==original.token||!same(live.document,original.document)){
       session.notice='Read the original work source. Your later edits remain in their draft; read current work again to apply the refreshed inventory.';
@@ -706,12 +719,12 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     }
     live.document=copy(result.document);live.effortContext=copy(result);live.dirty=true;
     preview=null;previewDraft=null;
-    session.notice='Read '+result.phaseSource.phases.length+' original phases and '+result.workInventory.length+' work records through '+asOfDate+'.';
+    session.notice='Read '+result.phaseSource.phases.length+' original '+(original.document.commercial?'accepted tasks':'phases')+' and '+result.workInventory.length+' work records through '+asOfDate+'.';
     persist();return true;
   }
   async function applyRemainingReviews(){
     capture();const value=draft();
-    if(!value?.document.effort)throw new Error('Read current work and phases before reviewing remaining hours.');
+    if(!value?.document.effort)throw new Error('Read current work and the original delivery scope before reviewing remaining hours.');
     const original=copy(value),epoch=++generation;
     await reloadCase();if(!own(epoch))return;
     const result=await api(prefix+'/installation-preview',{expectedVersion:caseValue.program.version,
@@ -724,7 +737,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     const count=applyInstallationEffortReviews(live,result.report,recordingActor());
     if(live.effortContext)live.effortContext.report=copy(result.report);
     preview=null;previewDraft=null;persist();
-    session.notice='Applied reviewed remaining hours for '+count+' original phase'+(count===1?'':'s')+'. Review and save the complete installation edition.';
+    session.notice='Applied reviewed remaining hours for '+count+' original '+(live.document.commercial?'task':'phase')+(count===1?'':'s')+'. Review and save the complete installation edition.';
   }
   async function rebindEffort(action,target){
     capture();const original=draft(),index=Number(target.dataset.index);

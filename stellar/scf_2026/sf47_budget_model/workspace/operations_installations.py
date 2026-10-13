@@ -498,7 +498,8 @@ def preview(operations, context, body):
     commissioning.verify_document(operations, context, document, original=original_workflow)
     effort_context = None
     if "effort" in document:
-        effort_context = effort.capture_context(operations, context, document, ident, original_workshare, previous=previous)
+        effort_context = effort.capture_context(operations, context, document, ident,
+            original_commercial if document.get("commercial") else original_workshare, previous=previous)
         effort.check_quantities(context, document, effort_context, previous)
     snapshot = capture(context, document, effort_context)
     value = {"schema": SCHEMA, "installationId": ident, "expectedRevision": expected_revision,
@@ -541,7 +542,8 @@ def show(operations, context, installation_id, selected_revision=None):
         document = normalized(context, row["preview"]["document"])
         effort_context = None
         if "effort" in document:
-            original = workshares.verify_document(operations, context, document)
+            original = (commercial.verify_document(operations, context, document) if document.get("commercial")
+                        else workshares.verify_document(operations, context, document))
             effort_context = effort.capture_context(operations, context, document, row["id"], original, previous=row)
         current = capture(context, document, effort_context)
         before = row["preview"]["snapshot"]
@@ -634,10 +636,11 @@ def validate_import(context, rows, events, source_version, source_files=None, *,
                 or candidate["source"] != _source(snapshot)):
             fail("The installation must retain its original selected case and funding plan.")
         document = normalized(snapshot, candidate.get("document"))
+        original_commercial = None
         if document.get("commercial"):
             if source_files is None:
                 fail("Receive the complete original commercial source files with this Installation.")
-            commercial.verify_document(None, snapshot, document, lambda source_id: source_files.get("sources/" + source_id))
+            original_commercial = commercial.verify_document(None, snapshot, document, lambda source_id: source_files.get("sources/" + source_id))
         original_workshare = None
         if document.get("workshare"):
             if source_files is None:
@@ -651,7 +654,8 @@ def validate_import(context, rows, events, source_version, source_files=None, *,
         commissioning.verify_document(None, snapshot, document,
             (lambda source_id: source_files.get("sources/" + source_id)) if source_files is not None else None,
             original=original_workflow)
-        effort.validate_frozen(context, row, rows, events, original_workshare)
+        effort.validate_frozen(context, row, rows, events,
+            original_commercial if document.get("commercial") else original_workshare)
         if document != candidate["document"] or capture(snapshot, document) != snapshot:
             fail("The installation's selected records or sources are incomplete.")
         for source_id, metadata in snapshot["sources"].items():

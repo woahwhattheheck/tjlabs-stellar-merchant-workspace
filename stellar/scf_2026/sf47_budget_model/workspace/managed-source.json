@@ -609,6 +609,13 @@
     "portfolio-sequence.mjs",
     "portfolio-sequence-desk.mjs",
     "portfolio-sequence.css",
-    "PORTFOLIO_SEQUENCE.md"
+    "PORTFOLIO_SEQUENCE.md",
+    "operations_commercial_effort.py",
+    "commercial_effort_handoff.py",
+    "INSTALLATION_EFFORT.md",
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics.mjs",
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/EFFORT_ECONOMICS.md",
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-receiving.mjs",
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-cli.mjs"
   ]
 }

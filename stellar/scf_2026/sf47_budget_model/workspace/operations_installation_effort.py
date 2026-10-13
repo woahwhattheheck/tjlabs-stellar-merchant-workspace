@@ -15,6 +15,7 @@ import re
 
 from model import Problem, canonical, digest, text
 import operations_domain as domain
+import operations_commercial_effort as commercial_effort
 
 SCHEMA = "stellar-forge.sf47-installation-effort.v1"
 SNAPSHOT_KEY = "installationEffort"
@@ -59,6 +60,8 @@ def content_identity(work):
 
 
 def phase_ids(document):
+    if commercial_effort.selected(document):
+        return commercial_effort.phase_ids(document)
     binding = document.get("workshare")
     if not binding:
         fail("Select an original Workshare Installation before attributing its work.")
@@ -109,6 +112,8 @@ def normalize(context, raw, document):
     retained_ids = phases + sorted(set(review_index) - set(phases))
     reviews = [review_index.get(ident, {"phaseId": ident, "remainingHours": None, "reviewedBy": "",
         "reviewedAt": None, "basisSha256": "", "note": "", "sourceIds": []}) for ident in retained_ids]
+    if commercial_effort.selected(document) and value.get("supportWindows", []):
+        fail("Keep commercial recurring service terms in their original workflow; accepted implementation tasks do not define support-phase allowances.")
     windows, used_ids, used_phases = [], set(), set()
     for row in rows(value.get("supportWindows", []), "Original support allowances", MAX_WINDOWS):
         obj(row, ("id", "phaseIds", "includedHours", "anchorPhaseId", "anchorKind", "calendarDays",
@@ -161,6 +166,8 @@ def pointer(plan, path):
 
 
 def source_value(original, document):
+    if commercial_effort.selected(document):
+        return commercial_effort.source_value(original, document)
     if not original:
         fail("Retain the original complete Workshare source for delivery effort.")
     row, binding = original["workshare"], document["workshare"]
@@ -171,6 +178,8 @@ def source_value(original, document):
 
 def retained_source_context(source, document, previous):
     """Retain only source meanings still referenced by the current document."""
+    if commercial_effort.is_source(source):
+        return commercial_effort.retained_source_context(source, document, previous, SNAPSHOT_KEY)
     phases = {row["id"]: row for row in source["plan"]["phases"]}
     before = previous["preview"] if previous else None
     frozen = before["snapshot"].get(SNAPSHOT_KEY, {}) if before else {}
@@ -207,6 +216,10 @@ def retained_source_context(source, document, previous):
 
 
 def validate_terms(frozen, document):
+    if commercial_effort.is_source(frozen["source"]):
+        if document["effort"]["supportWindows"] or frozen["supportSources"]:
+            fail("Commercial effort must preserve its native task scope without inferred support allowances.")
+        return
     sources = {row["planSha256"]: row for row in frozen["supportSources"]}
     for window in document["effort"]["supportWindows"]:
         source = sources[window["sourcePlanSha256"]]
@@ -282,7 +295,8 @@ def check_quantities(context, document, frozen, previous):
     """
     records = {row["id"]: row for row in context["records"]["work"]}
     selected, old = sums(document), sums(previous["preview"]["document"]) if previous else {}
-    original_phases = set(frozen["source"]["effort"])
+    original_phases = ({row["id"] for row in frozen["source"]["tasks"]}
+        if commercial_effort.is_source(frozen["source"]) else set(frozen["source"]["effort"]))
     previous_pairs = {(row["workId"], row["phaseId"]): Decimal(row["hours"])
         for row in previous["preview"]["document"].get("effort", {}).get("allocations", [])} if previous else {}
     for row in document["effort"]["allocations"]:
@@ -301,6 +315,8 @@ def check_quantities(context, document, frozen, previous):
 
 
 def phase_source(source, document):
+    if commercial_effort.is_source(source):
+        return commercial_effort.phase_source(source, document)
     checks = {row["id"]: row for row in document["checks"]}
     links = {row["phaseId"]: row["checkId"] for row in document["workshare"]["phaseChecks"]}
     phases = []
@@ -325,6 +341,8 @@ def review_basis(source, document, phase_id, work, quoted_hours=None):
             selected.append({"workId": row["workId"], "hours": row["hours"],
                 "selectedWorkContentSha256": row["workContentSha256"],
                 "currentWorkContentSha256": content_identity(record), "void": record["state"] == "VOID"})
+    if commercial_effort.is_source(source):
+        return commercial_effort.review_basis(source, document, phase_id, sorted(selected, key=lambda item: item["workId"]))
     return digest({"schema": SCHEMA, "caseId": source["caseId"], "planSha256": source["planSha256"],
         "phaseId": phase_id, "quotedHours": source["effort"].get(phase_id, quoted_hours), "asOfDate": document["effort"]["asOfDate"],
         "allocations": sorted(selected, key=lambda item: item["workId"])})
@@ -354,6 +372,8 @@ def allocation_balance(context, document, peers):
 
 
 def support_report(frozen, document, work, phase_rows):
+    if commercial_effort.is_source(frozen["source"]):
+        return []
     source = frozen["source"]
     support_sources = {row["planSha256"]: row for row in frozen["supportSources"]}
     retired = {row["phaseId"]: row for row in frozen["retiredPhases"]}
@@ -422,9 +442,13 @@ def report(snapshot, document):
         return None
     frozen = snapshot[SNAPSHOT_KEY]
     source, effort = frozen["source"], document["effort"]
+    unit = "task" if commercial_effort.is_source(source) else "phase"
     work = {row["id"]: row for row in snapshot["records"]["work"]}
     original = phase_source(source, document)
     for retired in frozen["retiredPhases"]:
+        if commercial_effort.is_source(source):
+            original["phases"].append(commercial_effort.retired_phase(retired))
+            continue
         phase, check = retired["terms"], retired["check"]
         original["phases"].append({"phaseId": retired["phaseId"], "title": retired["title"],
             "quotedHours": retired["quotedHours"], "owner": deepcopy(phase.get("owner", "")),
@@ -482,21 +506,22 @@ def report(snapshot, document):
                     and original_day(review["reviewedAt"]) <= effort["asOfDate"])
         if phase.get("retired"):
             issue("ORIGINAL_PHASE_REPLACED", "phases." + ident,
-                  "This earlier phase remains in source history. Reassign or remove its current attributed quantities and review the new scope.",
+                  "This earlier " + unit + " remains in source history. Reassign or remove its current attributed quantities and review the new scope.",
                   bool(allocations))
         elif not reviewed:
             issue("REMAINING_REVIEW_REQUIRED", "reviews." + ident,
-                  "Enter and review the actual remaining estimate against the current original phase and Work.", True)
-        quoted, recorded = Decimal(phase["quotedHours"]), totals["recordedHours"]
+                  "Enter and review the actual remaining estimate against the current original " + unit + " and Work.", True)
+        quoted = None if phase["quotedHours"] is None else Decimal(phase["quotedHours"])
+        recorded = totals["recordedHours"]
         projected = recorded + Decimal(review["remainingHours"]) if reviewed else None
         phase_rows.append({**phase, **{key: hours(totals[key]) for key in
             ("allocatedHours", "recordedHours", "acceptedHours", "voidHours", "sourceChangedHours", "afterAsOfHours", "spansAsOfHours")},
-            "quoteBalanceHours": hours(max(ZERO, quoted - recorded)),
-            "recordedOverrunHours": hours(max(ZERO, recorded - quoted)),
+            "quoteBalanceHours": None if quoted is None else hours(max(ZERO, quoted - recorded)),
+            "recordedOverrunHours": None if quoted is None else hours(max(ZERO, recorded - quoted)),
             "remainingHours": review["remainingHours"], "remainingReviewCurrent": reviewed,
             "reviewBasisSha256": basis, "review": deepcopy(review),
             "projectedTotalHours": None if projected is None else hours(projected),
-            "projectedOverrunHours": None if projected is None else hours(max(ZERO, projected - quoted)),
+            "projectedOverrunHours": None if projected is None or quoted is None else hours(max(ZERO, projected - quoted)),
             "allocations": allocations})
     supports = support_report(frozen, document, work, phase_rows)
     for window in supports:
@@ -515,9 +540,10 @@ def report(snapshot, document):
         if original_day(window["reviewedAt"]) > effort["asOfDate"]:
             issue("SUPPORT_TERMS_AFTER_AS_OF", "supportWindows." + window["id"],
                   "The support term review follows this as-of date.")
-    summary = {key: hours(sum((Decimal(row[key]) for row in phase_rows), ZERO)) for key in
+    summary = {key: (None if key == "quotedHours" and commercial_effort.is_source(source)
+        else hours(sum((Decimal(row[key]) for row in phase_rows), ZERO))) for key in
         ("quotedHours", "allocatedHours", "recordedHours", "acceptedHours", "voidHours", "sourceChangedHours", "afterAsOfHours", "spansAsOfHours")}
-    summary["quotedHours"] = hours(source["hours"])
+    summary["quotedHours"] = None if commercial_effort.is_source(source) else hours(source["hours"])
     summary["unallocatedSelectedWorkHours"] = hours(sum((Decimal(row["unallocatedHours"]) for row in balances), ZERO))
     summary["overallocatedWorkHours"] = hours(sum((Decimal(row["overallocatedHours"]) for row in balances), ZERO))
     current_phases = [row for row in phase_rows if not row.get("retired")]
@@ -527,11 +553,13 @@ def report(snapshot, document):
     all_reviewed = all(row["remainingReviewCurrent"] for row in current_phases)
     summary["reviewedRemainingHours"] = hours(sum((Decimal(row["remainingHours"]) for row in current_phases), ZERO)) if all_reviewed else None
     summary["projectedTotalHours"] = hours(Decimal(summary["recordedHours"]) + Decimal(summary["reviewedRemainingHours"])) if all_reviewed else None
-    summary["projectedOverrunHours"] = hours(max(ZERO, Decimal(summary["projectedTotalHours"]) - Decimal(summary["quotedHours"]))) if all_reviewed else None
+    summary["projectedOverrunHours"] = hours(max(ZERO, Decimal(summary["projectedTotalHours"]) - Decimal(summary["quotedHours"]))) if all_reviewed and summary["quotedHours"] is not None else None
     ready = not any(row["preventsPlanning"] for row in findings)
     result = {"schema": SCHEMA, "asOfDate": effort["asOfDate"], "status": "READY" if ready else "REVIEW_REQUIRED",
         "readyForPlanning": ready, "summary": summary, "phases": phase_rows, "work": balances,
         "supportWindows": supports, "findings": findings}
+    if commercial_effort.is_source(source):
+        result.update(commercial_effort.report_identity(source))
     result["reportSha256"] = digest(result)
     return result
 
@@ -601,7 +629,7 @@ def validate_frozen(context, row, rows, events, original):
         fail("Retain the complete original Installation effort snapshot.")
     expected_source = source_value(original, document)
     if frozen["schema"] != SCHEMA or frozen["installationId"] != candidate["installationId"] or frozen["source"] != expected_source:
-        fail("The saved effort source differs from its complete original Workshare.")
+        fail("The saved effort source differs from its complete original commissioning source.")
     previous = next((item for item in rows if item["id"] == row["id"] and item["revision"] == row["revision"] - 1), None)
     retired, support_sources = retained_source_context(expected_source, document, previous)
     if frozen["retiredPhases"] != retired or frozen["supportSources"] != support_sources:
@@ -655,6 +683,8 @@ def selection(operations, context, body):
         if observed != old:
             fail("Save a new effort edition for the current original Work and support observations before planning.",
                  "EFFORT_SOURCE_CHANGED", 409)
+        if commercial_effort.selected(document):
+            fail("Use the complete commercial effort handoff to the matching original quotation assessment. This Forecast selection binds an original Workshare commercial row.")
         binding = document["workshare"]
         target = commercial.get(task[len("commercial/"):])
         hashes = {context["sources"][ident]["sha256"] for ident in target.get("sourceIds", [])} if target else set()
@@ -690,10 +720,33 @@ def html_section(snapshot, document):
     e = lambda item: escape(str(item if item is not None else "Unentered"), quote=True)
     def table(headings, rows):
         return "<div class=\"table\"><table><thead><tr>" + "".join("<th>" + e(item) + "</th>" for item in headings) +             "</tr></thead><tbody>" + "".join("<tr>" + "".join("<td>" + e(item) + "</td>" for item in row) +             "</tr>" for row in rows) + "</tbody></table></div>"
-    body = "<h2>Original phase work and remaining effort</h2><p>As of " + e(value["asOfDate"]) +         ". Original recorded Work is attributed once across current Installations. Acceptance of a customer step and internal acceptance of Work retain their own observations.</p>"
-    body += table(["Phase", "Quoted hours", "Recorded", "Internally accepted", "Reviewed remaining", "Projected overrun", "Review"],
-        [[row["title"], row["quotedHours"], row["recordedHours"], row["acceptedHours"], row["remainingHours"],
-          row["projectedOverrunHours"], "Current" if row["remainingReviewCurrent"] else "Review required"] for row in value["phases"]])
+    if value.get("sourceKind") == commercial_effort.SOURCE_KIND:
+        body = "<h2>Original accepted tasks and delivery effort</h2><p>As of " + e(value["asOfDate"]) + ". Quoted task effort is unspecified. Original recorded Work, internal Work acceptance and reviewed remaining estimates retain separate meanings.</p>"
+        body += table(["Original commercial selection", "Retained identity"],
+            [[key, item] for key, item in value["commercial"].items()])
+        body += table(["Task", "Allocated", "Recorded", "Internally accepted", "Reviewed remaining", "Projected total", "Review"],
+            [[row["title"], row["allocatedHours"], row["recordedHours"], row["acceptedHours"],
+              row["remainingHours"], row["projectedTotalHours"],
+              "Retained earlier task" if row.get("retired") else "Current" if row["remainingReviewCurrent"] else "Review required"]
+             for row in value["phases"]])
+        summary = value["summary"]
+        body += table(["Complete Installation effort", "Hours"],
+            [[key, summary[key]] for key in ("allocatedHours", "recordedHours", "acceptedHours",
+                "reviewedRemainingHours", "projectedTotalHours", "unallocatedSelectedWorkHours", "overallocatedWorkHours")])
+        for row in value["phases"]:
+            body += "<details><summary>" + e(row["title"]) + " — original task and check</summary>"
+            body += table(["Original task selection", "Retained value"],
+                [[key, row.get(key)] for key in ("taskId", "definitionSha256", "checkId", "checkState",
+                    "checkOperator", "checkObservedAt")])
+            if row.get("retired"):
+                body += table(["Original earlier source", "Retained identity"],
+                    [[key, item] for key, item in row["originalCommercial"].items()])
+            body += "<pre>" + e(canonical(row["terms"])) + "</pre></details>"
+    else:
+        body = "<h2>Original phase work and remaining effort</h2><p>As of " + e(value["asOfDate"]) +         ". Original recorded Work is attributed once across current Installations. Acceptance of a customer step and internal acceptance of Work retain their own observations.</p>"
+        body += table(["Phase", "Quoted hours", "Recorded", "Internally accepted", "Reviewed remaining", "Projected overrun", "Review"],
+            [[row["title"], row["quotedHours"], row["recordedHours"], row["acceptedHours"], row["remainingHours"],
+              row["projectedOverrunHours"], "Current" if row["remainingReviewCurrent"] else "Review required"] for row in value["phases"]])
     body += table(["Original Work", "Original hours", "This Installation", "Other Installations", "Unassigned", "Overallocated"],
         [[row["description"], row["hours"], row["selectedAllocatedHours"], row["otherAllocatedHours"],
           row["unallocatedHours"], row["overallocatedHours"]] for row in value["work"]])

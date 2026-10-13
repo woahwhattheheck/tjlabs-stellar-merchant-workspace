@@ -12,6 +12,69 @@ Record actual time in Work, or receive the original timesheet through the existi
 
 When the same work appears in another export, use the existing intake's explicit matching and correction choices. Reusing an exact original record preserves one native Work identity. Separate work retains the recording reason and its own original record. The phase review should select those native identities after the original intake has finished.
 
+## Accepted quotations and commercial delivery tasks
+
+A saved Installation received from an accepted SF74 quotation uses the same
+Work allocation, remaining-estimate review and saved-edition workflow. Open
+**Read current work and tasks** on that original commercial Installation. The
+source identifies the original case and quotation family, exact quotation and
+recorded customer response, accepted scope, task definitions and source file.
+Every displayed task retains its original task ID, definition digest and
+Installation check; the report uses these IDs in the existing phaseId fields.
+
+Record or receive time in the original Work desk, then assign its actual
+quantities to those accepted tasks. Review each task's remaining effort, save
+the complete Installation edition, and reopen that exact saved edition. The
+same cross-Installation allocation checks prevent counting one native Work
+record beyond its current recorded hours. Work state, customer check acceptance,
+invoices and cash observations keep their original separate meanings.
+
+An accepted quotation's fee, line quantity or delivery window does not establish
+its task effort. For commercial Installations the native report therefore sets
+quotedHours, quoteBalanceHours, recordedOverrunHours and projectedOverrunHours to
+null. Recorded hours, internally accepted hours, explicitly reviewed remaining
+hours and projected total hours are still reported. The comparison to an
+operator's planning estimate uses an explicitly selected sealed private quote
+assessment; it does not relabel that estimate as a customer-agreed hour budget.
+Blank or unavailable costs remain unknown, and a planning hourly valuation is
+separate from actual contributor cash cost.
+
+The native effort seed's phaseSource has sourceKind COMMERCIAL and the full
+accepted scope under scope. Its commercial identity contains caseId, caseKey,
+quoteId, quoteSha256, acceptanceId, acceptanceSha256, scopeSha256, sourceId and
+sourceSha256. The same identity and sourceKind are inside the saved effort
+report and covered by reportSha256. Existing Workshare source/report fields
+and meanings remain compatible.
+
+A later accepted quotation edition continues through the original commercial
+Installation review. Changed task or source identity invalidates its prior
+remaining-work basis and requires a current review. Original task attributions
+remain attached to the stable task ID. Removed tasks with retained allocations
+or estimates remain visible with their complete earlier task definition,
+check observation and quotation/source identity. Retain or reduce an earlier
+task's allocation; assign new work only to the current accepted task scope.
+An unrecognized task cannot be introduced through an effort input.
+
+Commercial implementation tasks do not define Workshare support phases. Their
+supportWindows array remains empty. Keep recurring care terms, service response
+commitments and renewals in the original Merchant service workflow; do not
+infer a task allowance, support calendar or acceptance anchor from a monthly
+price. The Workshare support controls below continue to use their explicit
+original phase/hour/calendar meanings.
+
+Use the same installation-effort-seed, installation-preview, installation-save,
+installation-show and installation-export commands described below. The exported
+installation-effort.json is regenerated from the selected saved snapshot, and
+the original full-case receiver validates it together with every original Work
+record, quotation attachment and Installation edition. A report JSON alone is
+not a substitute for that complete source and history when continuing the work.
+
+The existing remaining-work Forecast selection binds a Workshare case/source
+to its original commercial planning row. It does not guess a matching Forecast
+row from an accepted quotation title or amount. Use the explicitly selected
+commercial effort handoff to compare a commercial Installation with its exact
+SF74 quotation and private assessment.
+
 ## Prepare the complete effort review
 
 Select **Read current work and phases** for the current saved Installation and an explicit as-of date. The result includes the complete editable Installation document, the source phases, current Work inventory, allocations retained in other saved Installations and the effort report. A same-edition draft keeps its edits while this source and work inventory are refreshed. The client and CLI use the case version and current Installation edition for the same operation.

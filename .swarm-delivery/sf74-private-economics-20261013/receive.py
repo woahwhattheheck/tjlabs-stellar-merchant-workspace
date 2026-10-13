@@ -51,11 +51,25 @@ def main():
     if total!=carrier["source_bytes"]: raise ValueError("Complete source byte count changed.")
     retain(root/"source-carrier.json",raw)
     retain(root/"selected-source.json",encoded({"operation":OPERATION,"carrier_sha256":EXPECTED,"files":456,"source_bytes":total}))
+    done=root/"complete.json"
+    if done.exists():
+        result=json.loads(done.read_bytes())
+        if result.get("operation")!=OPERATION or result.get("source_sha256")!=EXPECTED or result.get("state")!="COMPLETE":
+            raise ValueError("The completed receiving result belongs to another source selection.")
+        for item in result["screenshots"]:
+            path=pathlib.Path(item["path"])
+            if path.is_symlink() or not path.is_file() or path.stat().st_size!=item["bytes"] or digest(path.read_bytes())!=item["sha256"]:
+                raise ValueError("Retained screenshot changed.")
+        print(json.dumps(result),flush=True)
+        return
     node=os.environ.get("CODEX_PRIMARY_RUNTIME_NODE") or shutil.which("node")
     if not node or not pathlib.Path(node).is_file(): raise RuntimeError("Use the installed Node executable.")
     retain(root/"installed-browser.cjs",PROBE.encode())
     probe=subprocess.run([node,str(root/"installed-browser.cjs")],cwd=source,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=30)
-    retain(root/"installed-browser.stdout",probe.stdout);retain(root/"installed-browser.stderr",probe.stderr)
+    probe_attempt=1
+    while (root/("installed-browser-"+str(probe_attempt)+".stdout")).exists(): probe_attempt+=1
+    retain(root/("installed-browser-"+str(probe_attempt)+".stdout"),probe.stdout)
+    retain(root/("installed-browser-"+str(probe_attempt)+".stderr"),probe.stderr)
     if probe.returncode: raise RuntimeError(probe.stderr.decode(errors="replace"))
     runtime=json.loads(probe.stdout);retain(root/"installed-runtime.json",encoded(runtime))
     course=root/"operator-course"
@@ -64,13 +78,6 @@ def main():
           "--playwright",runtime["playwright"],"--chromium",runtime["chromium"],"--python",sys.executable]
     retained_request={"operation":OPERATION,"argv":argv,"cwd":str(source),"source_sha256":EXPECTED}
     retain(root/"native-request.json",encoded(retained_request))
-    done=root/"complete.json"
-    if done.exists():
-        result=json.loads(done.read_bytes())
-        for item in result["screenshots"]:
-            if digest(pathlib.Path(item["path"]).read_bytes())!=item["sha256"]: raise ValueError("Retained screenshot changed.")
-        print(json.dumps(result),flush=True)
-        return
     attempt=1
     while (root/("course-"+str(attempt)+".stdout")).exists(): attempt+=1
     output=root/("course-"+str(attempt)+".stdout");error=root/("course-"+str(attempt)+".stderr")
