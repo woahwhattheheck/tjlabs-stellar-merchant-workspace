@@ -2,7 +2,7 @@ import { stringifyJson } from "./json-codec.mjs";
 import { createHash } from "node:crypto";
 // MIT. Merchant call/summary/close owner over one original native HTTP workspace.
 import { tools as nativeTools } from "./catalog.mjs";
-import { haystackWorkspaceTools, HAYSTACK_MERCHANT_REQUEST_BYTES, HAYSTACK_MERCHANT_RESPONSE_BYTES, HAYSTACK_SEMANTIC_READ_ACTIONS } from "./merchant-tools.mjs";
+import { haystackWorkspaceTools, HAYSTACK_MERCHANT_REQUEST_BYTES, HAYSTACK_MERCHANT_RESPONSE_BYTES, HAYSTACK_SEMANTIC_READ_ACTIONS, HAYSTACK_CONSUMER_READ_ACTIONS, HAYSTACK_CONSUMER_FILE_ROUTES } from "./merchant-tools.mjs";
 import { HaystackHostClient, haystackHostError, readHaystackWorkspaceConfiguration, readHaystackHostInput, haystackInputMetadata } from "./merchant-client.mjs";
 export { haystackWorkspaceTools, readHaystackWorkspaceConfiguration };
 
@@ -66,6 +66,10 @@ function completeResponse(value, name, args) {
       ...(value.proposal?.id ? { proposalId: value.proposal.id } : {}),
       ...(value.intake?.id ? { intakeId: value.intake.id } : {}),
       ...(value.model?.id ? { modelId: value.model.id } : {}),
+      ...(value.project?.id ? { projectId: value.project.id } : {}),
+      ...(value.run?.id ? { runId: value.run.id } : {}),
+      ...(value.file?.id ? { fileId: value.file.id } : {}),
+      ...(value.review?.id ? { reviewId: value.review.id } : {}),
       ...(value.version?.id ? { versionId: value.version.id } : {}),
       ...(value.validation?.id ? { validationId: value.validation.id } : {}),
       ...(value.return?.id ? { returnId: value.return.id } : {}),
@@ -126,6 +130,29 @@ export class MerchantHaystackWorkspaces {
     if (name === "merchant_haystack_semantic_read") {
       need(HAYSTACK_SEMANTIC_READ_ACTIONS.includes(args.action), "Choose a declared original read-only semantic view.");
       return jsonRange(await client.action(args.action, args.args), args, args.action, entry.workspaceId);
+    }
+    if (name === "merchant_haystack_consumer_read") {
+      need(HAYSTACK_CONSUMER_READ_ACTIONS.includes(args.action), "Choose a declared read-only consumer view or original operation outcome.");
+      return jsonRange(await client.action(args.action, args.args), args, args.action, entry.workspaceId);
+    }
+    const consumerRoute = HAYSTACK_CONSUMER_FILE_ROUTES[name];
+    if (consumerRoute) {
+      const found = await readHaystackHostInput(entry, args.input, args.expectedSha256, consumerRoute.kind);
+      const { workspace, input, expectedSha256, offset, length, expectedResponseSha256, ...nativeArgs } = args;
+      let supplied;
+      if (consumerRoute.kind === "consumer-file") supplied = {
+        name: found.input.name, mediaType: found.input.mediaType, base64: found.bytes.toString("base64")
+      };
+      else if (consumerRoute.kind === "consumer-content") {
+        let content;
+        try { content = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(found.bytes)); }
+        catch { throw haystackHostError("The pinned complete consumer content is not valid UTF-8 JSON.", 400, "HAYSTACK_CONSUMER_CONTENT"); }
+        need(plain(content), "Select the complete plan or observation content object.");
+        supplied = { content };
+      } else supplied = { base64: found.bytes.toString("base64") };
+      const result = await client.action(consumerRoute.action, { ...nativeArgs, ...supplied });
+      return consumerRoute.action.endsWith(".preview") && (offset !== undefined || length !== undefined || expectedResponseSha256 !== undefined) ?
+        jsonRange(result, args, consumerRoute.action, entry.workspaceId) : result;
     }
     if (name === "merchant_haystack_semantic_intake_import_file") {
       const found = await readHaystackHostInput(entry, args.input, args.expectedSha256, "point-list");

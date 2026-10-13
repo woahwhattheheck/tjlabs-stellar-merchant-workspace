@@ -1,3 +1,4 @@
+import { applyConsumerAction, validateConsumerState, consumerSummary } from "./consumer-acceptance.mjs";
 import { applyVolttronAction, validateVolttronState, volttronSummary } from "./volttron-registry.mjs";
 import { applyProjectionAction, validateProjectionState, projectionSummary } from "./projection-model.mjs";
 import { parseGrid, validateGrid, isTagName } from "./haystack-types.mjs";
@@ -98,7 +99,7 @@ export function summary(state) {
     selectedSourceIds: [...state.selectedSourceIds], sourceCount: state.sources.length, editionCount: state.editions.length,
     proposalCount: state.proposals.length, pendingProposals: state.proposals.filter(item => item.state === "proposed").length,
     recordCount: current.records.length, counts: current.counts,
-    workCounts: workSummary(state), semanticCounts: semanticSummary(state), projectionCounts: projectionSummary(state), volttron: volttronSummary(state),
+    workCounts: workSummary(state), semanticCounts: semanticSummary(state), projectionCounts: projectionSummary(state), volttron: volttronSummary(state), consumerCounts: consumerSummary(state),
     diagnosticCount: current.diagnostics.length, sourceDiagnostics: current.sources.reduce((total, source) => total + source.diagnostics.length, 0) };
 }
 export function proposedChanges(state, edits) {
@@ -126,6 +127,7 @@ export function proposalView(state, proposal) {
   return { ...clone(proposal), stale: proposal.state === "proposed" && proposal.baseMaterialSha256 !== current.contentSha256 };
 }
 export function applyAction(state, action, args) {
+  if (action.startsWith("consumer.")) return applyConsumerAction(state, action, args);
   if (action.startsWith("volttron.")) return applyVolttronAction(state, action, args);
   if (action.startsWith("projection.")) return applyProjectionAction(state, action, args, { sourceRecord, sourceSummary, sourceMaxCount: SOURCE_MAX_COUNT });
   if (action.startsWith("semantic.model.")) return applySemanticAction(state, action, args, { analyzed, materialize });
@@ -252,5 +254,5 @@ export function validateState(state, { sources = true } = {}) {
     need(edition.id === digest(content) && Array.isArray(edition.sourceIds) && Array.isArray(edition.approvedProposalIds), "The saved edition changed.", "HAYSTACK_EDITION", 409);
     if (sources) need(materialize(state, edition).contentSha256 === edition.materialSha256, "The edition loses its original materialization.", "HAYSTACK_EDITION", 409);
   }
-  materialize(state); validateCorrectiveState(state, { materialize }); validateSemanticState(state); validateProjectionState(state); validateVolttronState(state); return state;
+  materialize(state); validateCorrectiveState(state, { materialize }); validateSemanticState(state); validateProjectionState(state); validateVolttronState(state); validateConsumerState(state); return state;
 }

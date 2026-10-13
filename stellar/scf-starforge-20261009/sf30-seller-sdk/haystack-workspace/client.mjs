@@ -113,6 +113,7 @@ export class HaystackClient {
     check(position === total && await checksum(full) === expected, "The complete original file checksum differs.");
     return full;
   }
+  consumerFileBytes(fileId, options) { return this.completeBytes("consumer.file.read", { fileId }, options); }
   sourceBytes(sourceId, options) { return this.completeBytes("source.read", { sourceId }, options); }
   deliveryBytes(operationId, options) { return this.completeBytes("delivery.read", { operationId }, options); }
 }

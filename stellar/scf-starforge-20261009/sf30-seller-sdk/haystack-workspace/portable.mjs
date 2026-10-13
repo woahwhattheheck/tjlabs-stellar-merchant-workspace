@@ -43,8 +43,11 @@ export const PROJECTION_APPLICATION_FILES = ["projection-model.mjs", "projection
 export const PROJECTION_COMPLETE_APPLICATION_FILES = [...SEMANTIC_COMPLETE_APPLICATION_FILES, ...PROJECTION_APPLICATION_FILES].sort();
 export const VOLTTRON_APPLICATION_FILES = ["volttron-registry.mjs", "volttron-actions.mjs", "volttron-types.d.mts", "volttron.html", "volttron.js", "volttron.css", "VOLTTRON_OPERATING.md", "VOLTTRON_RECEIVING.mjs", "VOLTTRON_BROWSER.mjs"].sort();
 export const VOLTTRON_COMPLETE_APPLICATION_FILES = [...PROJECTION_COMPLETE_APPLICATION_FILES, ...VOLTTRON_APPLICATION_FILES].sort();
-export const APPLICATION_FILES = [...VOLTTRON_COMPLETE_APPLICATION_FILES, "haystack-zinc.mjs", "ZINC_CONTRACT.md", "zinc-sources.json"].sort();
-export const PACKAGE_FORMAT = "commons.haystack.package.v6";
+export const ZINC_COMPLETE_APPLICATION_FILES = [...VOLTTRON_COMPLETE_APPLICATION_FILES, "haystack-zinc.mjs", "ZINC_CONTRACT.md", "zinc-sources.json"].sort();
+export const CONSUMER_APPLICATION_FILES = ["consumer-acceptance.mjs", "consumer-reports.mjs", "consumer-actions.mjs", "consumer-types.d.mts", "consumer-cli.mjs", "CONSUMER_OPERATING.md", "consumer.html", "consumer.js", "consumer.css", "CONSUMER_RECEIVING.mjs", "CONSUMER_BROWSER.mjs"].sort();
+export const APPLICATION_FILES = [...ZINC_COMPLETE_APPLICATION_FILES, ...CONSUMER_APPLICATION_FILES].sort();
+export const PACKAGE_FORMAT = "commons.haystack.package.v7";
+export const ZINC_PACKAGE_FORMAT = "commons.haystack.package.v6";
 export const VOLTTRON_PACKAGE_FORMAT = "commons.haystack.package.v5";
 export const PROJECTION_PACKAGE_FORMAT = "commons.haystack.package.v4";
 export const SEMANTIC_PACKAGE_FORMAT = "commons.haystack.package.v3";
@@ -70,13 +73,14 @@ export async function buildBundle(state, { applicationRoot = ROOT } = {}) {
 export function verifyBundle(bytes) {
   const raw = Buffer.from(bytes), bundle = json(raw, PACKAGE_MAX_BYTES);
   fields(bundle, ["format", "createdAt", "workspace", "application", "payloadSha256"], ["format", "createdAt", "workspace", "application", "payloadSha256"]);
-  need([PACKAGE_FORMAT, VOLTTRON_PACKAGE_FORMAT, PROJECTION_PACKAGE_FORMAT, SEMANTIC_PACKAGE_FORMAT, CORRECTIVE_PACKAGE_FORMAT, LEGACY_PACKAGE_FORMAT].includes(bundle.format), "Choose a complete supported Haystack workspace package.", "HAYSTACK_PACKAGE", 409);
-  const inventory = bundle.format === LEGACY_PACKAGE_FORMAT ? LEGACY_APPLICATION_FILES : bundle.format === CORRECTIVE_PACKAGE_FORMAT ? CORRECTIVE_APPLICATION_FILES : bundle.format === SEMANTIC_PACKAGE_FORMAT ? SEMANTIC_COMPLETE_APPLICATION_FILES : bundle.format === PROJECTION_PACKAGE_FORMAT ? PROJECTION_COMPLETE_APPLICATION_FILES : bundle.format === VOLTTRON_PACKAGE_FORMAT ? VOLTTRON_COMPLETE_APPLICATION_FILES : APPLICATION_FILES;
-  need([PACKAGE_FORMAT, VOLTTRON_PACKAGE_FORMAT, PROJECTION_PACKAGE_FORMAT, SEMANTIC_PACKAGE_FORMAT].includes(bundle.format) || bundle.workspace.semantics === undefined, "Semantic source/model history requires its complete v3 application.", "HAYSTACK_APPLICATION", 409);
-  need([PACKAGE_FORMAT, VOLTTRON_PACKAGE_FORMAT, PROJECTION_PACKAGE_FORMAT].includes(bundle.format) || bundle.workspace.projections === undefined, "Typed projection history requires its complete v4 application.", "HAYSTACK_APPLICATION", 409);
+  need([PACKAGE_FORMAT, ZINC_PACKAGE_FORMAT, VOLTTRON_PACKAGE_FORMAT, PROJECTION_PACKAGE_FORMAT, SEMANTIC_PACKAGE_FORMAT, CORRECTIVE_PACKAGE_FORMAT, LEGACY_PACKAGE_FORMAT].includes(bundle.format), "Choose a complete supported Haystack workspace package.", "HAYSTACK_PACKAGE", 409);
+  const inventory = bundle.format === LEGACY_PACKAGE_FORMAT ? LEGACY_APPLICATION_FILES : bundle.format === CORRECTIVE_PACKAGE_FORMAT ? CORRECTIVE_APPLICATION_FILES : bundle.format === SEMANTIC_PACKAGE_FORMAT ? SEMANTIC_COMPLETE_APPLICATION_FILES : bundle.format === PROJECTION_PACKAGE_FORMAT ? PROJECTION_COMPLETE_APPLICATION_FILES : bundle.format === VOLTTRON_PACKAGE_FORMAT ? VOLTTRON_COMPLETE_APPLICATION_FILES : bundle.format === ZINC_PACKAGE_FORMAT ? ZINC_COMPLETE_APPLICATION_FILES : APPLICATION_FILES;
+  need([PACKAGE_FORMAT, ZINC_PACKAGE_FORMAT, VOLTTRON_PACKAGE_FORMAT, PROJECTION_PACKAGE_FORMAT, SEMANTIC_PACKAGE_FORMAT].includes(bundle.format) || bundle.workspace.semantics === undefined, "Semantic source/model history requires its complete v3 application.", "HAYSTACK_APPLICATION", 409);
+  need([PACKAGE_FORMAT, ZINC_PACKAGE_FORMAT, VOLTTRON_PACKAGE_FORMAT, PROJECTION_PACKAGE_FORMAT].includes(bundle.format) || bundle.workspace.projections === undefined, "Typed projection history requires its complete v4 application.", "HAYSTACK_APPLICATION", 409);
   need(bundle.format !== LEGACY_PACKAGE_FORMAT || bundle.workspace.correctiveWork === undefined, "Corrective-work history requires its complete v2 application.", "HAYSTACK_APPLICATION", 409);
-  need([PACKAGE_FORMAT, VOLTTRON_PACKAGE_FORMAT].includes(bundle.format) || bundle.workspace.volttron === undefined, "VOLTTRON registry history requires its complete v5 application.", "HAYSTACK_APPLICATION", 409);
-  need(bundle.format === PACKAGE_FORMAT || !Array.isArray(bundle.workspace.sources) || !bundle.workspace.sources.some(source => source.format === "zinc"), "Zinc source history requires its complete v6 application.", "HAYSTACK_APPLICATION", 409);
+  need([PACKAGE_FORMAT, ZINC_PACKAGE_FORMAT, VOLTTRON_PACKAGE_FORMAT].includes(bundle.format) || bundle.workspace.volttron === undefined, "VOLTTRON registry history requires its complete v5 application.", "HAYSTACK_APPLICATION", 409);
+  need([PACKAGE_FORMAT, ZINC_PACKAGE_FORMAT].includes(bundle.format) || !Array.isArray(bundle.workspace.sources) || !bundle.workspace.sources.some(source => source.format === "zinc"), "Zinc source history requires its complete v6 application.", "HAYSTACK_APPLICATION", 409);
+  need(bundle.format === PACKAGE_FORMAT || bundle.workspace.consumerAcceptance === undefined, "Consumer acceptance history requires its complete v7 application.", "HAYSTACK_APPLICATION", 409);
   const payload = clone(bundle); delete payload.payloadSha256;
   need(hash(bundle.payloadSha256) === digest(payload), "The complete package payload differs.", "HAYSTACK_PACKAGE", 409);
   need(Buffer.byteLength(stringifyJson(bundle.workspace)) <= STATE_MAX_BYTES, "The complete received workspace exceeds 128 MiB.", "HAYSTACK_SIZE", 413);

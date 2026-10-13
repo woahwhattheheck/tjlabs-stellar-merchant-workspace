@@ -162,6 +162,27 @@
         "ZINC_CONTRACT.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/consumer.html",
+      [
+        "consumer.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/consumer.js",
+      [
+        "consumer.js",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/consumer.css",
+      [
+        "consumer.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

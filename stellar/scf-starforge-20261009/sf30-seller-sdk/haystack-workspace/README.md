@@ -139,3 +139,7 @@ The [complete modelling guide](SEMANTIC_MODELLING.md) covers the interface, orig
 ## Typed Haystack projections
 
 Open **Haystack projections** to map an exact saved model and its original source columns into a reviewed native grid. Explicit conversions retain source-cell lineage, immutable mapping versions, complete reports and original returned-grid keep/adopt decisions. The [projection guide](PROJECTION.md) covers the browser, installed CLI, local publication and portable v4 receiving.
+
+## Consumer receiving and acceptance
+
+The original workspace now includes complete consumer plans, frozen expectations, actual receiving files, full population/value comparison, named review and original opened-run returns. Open **Consumer receiving** or use the `consumer-*` CLI commands. [CONSUMER_OPERATING.md](./CONSUMER_OPERATING.md) covers the complete local, recipient, typed-client and installed merchant workflows.

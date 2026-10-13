@@ -78,19 +78,19 @@ export async function readHaystackWorkspaceConfiguration(path) {
     for (const [name, input] of Object.entries(value.inputs ?? {})) {
       need(ALIAS.test(name), "Use a lowercase input alias.");
       fields(input, ["label", "path", "kind", "sha256", "name", "mediaType", "sourceReference", "format", "delimiter"], "input");
-      need(["source", "point-list", "workspace-return"].includes(input.kind) && HASH.test(input.sha256 ?? ""), "Pin the complete original grid, point list or returned workspace with its SHA-256.");
+      need(["source", "point-list", "workspace-return", "consumer-file", "consumer-content", "consumer-return"].includes(input.kind) && HASH.test(input.sha256 ?? ""), "Pin the complete original grid, point list, consumer file/content or returned package with its SHA-256.");
       if (input.kind === "point-list") {
         need(["csv", "tsv"].includes(input.format), "Declare the original point-list format as csv or tsv.");
         need(input.delimiter === undefined || [",", "\t", ";"].includes(input.delimiter), "Declare the actual comma, tab or semicolon point-list delimiter.");
       } else if (input.kind === "source") {
         need(input.format === undefined || ["json-v4", "zinc"].includes(input.format), "Declare the original grid format as json-v4 or zinc.");
         need(input.delimiter === undefined, "A native grid does not use a point-list delimiter.");
-      } else need(input.format === undefined && input.delimiter === undefined, "A complete returned workspace does not use a source format or delimiter.");
+      } else need(input.format === undefined && input.delimiter === undefined, "Complete evidence, content and return files do not use a source format or delimiter.");
       const selected = resolve(base, text(input.path, "original input file"));
       entry.inputs[name] = {
         label: text(input.label ?? name, "input label", 240), path: selected, kind: input.kind,
         sha256: input.sha256, name: text(input.name ?? basename(selected), "input name", 240),
-        mediaType: text(input.mediaType ?? (input.kind === "point-list" ? input.format === "tsv" ? "text/tab-separated-values" : "text/csv" : input.kind === "source" && input.format === "zinc" ? "text/zinc; charset=utf-8" : "application/json"), "media type", 160),
+        mediaType: text(input.mediaType ?? (input.kind === "point-list" ? input.format === "tsv" ? "text/tab-separated-values" : "text/csv" : input.kind === "source" && input.format === "zinc" ? "text/zinc; charset=utf-8" : input.kind === "consumer-file" ? "application/octet-stream" : "application/json"), "media type", 160),
         ...(input.kind === "point-list" ? { format: input.format, ...(input.delimiter === undefined ? {} : { delimiter: input.delimiter }) } : input.kind === "source" ? { format: input.format ?? "json-v4" } : {}),
         sourceReference: input.sourceReference === undefined ? "" : text(input.sourceReference, "source reference")
       };
@@ -109,7 +109,8 @@ export async function readHaystackHostInput(entry, name, expectedSha256, expecte
   need(input, "Choose a configured original input alias.", 404, "HAYSTACK_INPUT_UNKNOWN");
   if (expectedKind !== undefined) need(input.kind === expectedKind, "This original input alias has a different declared purpose.", 409, "HAYSTACK_INPUT_KIND");
   if (expectedSha256 !== undefined) need(input.sha256 === expectedSha256, "The selected input differs from its host-pinned SHA-256.", 409, "HAYSTACK_INPUT_CHANGED");
-  const bytes = await readRegular(input.path, input.kind === "workspace-return" ? entry.maxReturnBytes : entry.maxInputBytes);
+  const maximum = input.kind === "workspace-return" ? entry.maxReturnBytes : input.kind === "consumer-return" ? Math.min(entry.maxReturnBytes, 96 * 1024 * 1024) : entry.maxInputBytes;
+  const bytes = await readRegular(input.path, maximum);
   need(digest(bytes) === input.sha256, "The original input file changed. Restore the host-pinned source before recovery.", 409, "HAYSTACK_INPUT_CHANGED");
   return { input, bytes, sha256: input.sha256 };
 }

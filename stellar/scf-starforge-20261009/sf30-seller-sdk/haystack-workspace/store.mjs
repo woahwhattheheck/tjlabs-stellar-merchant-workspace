@@ -1,3 +1,5 @@
+import { readConsumerAction, consumerFile } from "./consumer-acceptance.mjs";
+import { makeConsumerDelivery } from "./consumer-reports.mjs";
 import { previewProjection, projectionRead, projectionRows, compareProjections, previewProjectionReturn } from "./projection-model.mjs";
 import { makeProjectionDelivery } from "./projection-reports.mjs";
 import { stringifyJson } from "./json-codec.mjs";
@@ -511,6 +513,9 @@ export class HaystackWorkspace {
   }
   async prepareDelivery(args) {
     const operationId = id(args.operationId), argumentsSha256 = digest({ action: "delivery.prepare", args });
+    const consumerKind = ["consumer-report", "consumer-return"].includes(args.kind);
+    if (consumerKind) need(["modelId", "versionId", "editionId", "sourceId", "role", "validationId", "name", "projectionId", "registryEditionId", "receivingId"].every(key => args[key] === undefined), "Consumer delivery retains only its exact original project or run selector.");
+    else need(args.consumerProjectId === undefined && args.consumerRunId === undefined, "Use consumer selectors only for consumer delivery.");
     const projectionKind = ["projection-grid", "projection-lineage", "projection-report"].includes(args.kind);
     const semanticKind = ["semantic-report", "semantic-dictionary", "semantic-output"].includes(args.kind);
     if (projectionKind) {
@@ -550,7 +555,7 @@ export class HaystackWorkspace {
       }
       const state = await this.read(); assertRevision(state, args.expectedRevision);
       need(!state.operations.some(item => item.id === operationId), "This identity belongs to an original saved mutation.", "HAYSTACK_OPERATION", 409);
-      const result = volttronKind ? volttronDelivery(state, args) :
+      const result = consumerKind ? makeConsumerDelivery(state, args) : volttronKind ? volttronDelivery(state, args) :
         projectionKind ? makeProjectionDelivery(state, args, { stream: true }) : args.kind === "workspace" ? await buildBundle(state) :
         args.kind === "work-register" ? makeWorkReport(state, args) :
         ["semantic-report", "semantic-dictionary"].includes(args.kind) ? makeSemanticReport(state, args) :
@@ -593,6 +598,10 @@ export class HaystackWorkspace {
     }
     const state = await this.read();
     if (action === "workspace.status") return summary(state);
+    if (action === "consumer.file.read") {
+      const value = consumerFile(state, args.fileId);
+      return range(value.bytes, { ...value.metadata, fileId: value.metadata.id }, args);
+    }
     if (action === "semantic.source.read") {
       const value = semanticSource(state, args);
       return range(value.bytes, { ...value.metadata, intakeId: value.intakeId }, args);
@@ -619,6 +628,7 @@ export class HaystackWorkspace {
     assertRevision(state, args.expectedRevision);
     const envelope = { workspaceId: state.workspaceId, revision: state.revision, ...(args.editionId ? { editionId: args.editionId } : {}) };
     const paginate = items => ({ ...envelope, ...page(items, args) });
+    if (action.startsWith("consumer.")) return { ...envelope, ...readConsumerAction(state, action, args) };
     if (action === "projection.list") return paginate(projectionRows(state));
     if (action === "projection.read") return { ...envelope, ...projectionRead(state, args) };
     if (action === "projection.preview") return { ...envelope, ...previewProjection(state, args) };

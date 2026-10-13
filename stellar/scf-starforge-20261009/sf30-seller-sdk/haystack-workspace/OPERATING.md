@@ -541,4 +541,8 @@ Use **Haystack projections** to choose a saved model version, map source columns
 
 ## Zinc native grids
 
-The same native source workflow accepts explicit `zinc` imports and exports Zinc 3.0 from a selected source or saved edition. JSON-v4 remains the default, tag edits retain their typed JSON representation, and the complete original file is always downloadable. See [Zinc contract](ZINC_CONTRACT.md) for commands, normalization, unsupported representations and complete source references. New complete workspace exports use package v6 and carry the Zinc codec, typed-projection application and VOLTTRON registry desk together. Receiving preserves the published v1, v2, v3, v4 and v5 inventories.
+The same native source workflow accepts explicit `zinc` imports and exports Zinc 3.0 from a selected source or saved edition. JSON-v4 remains the default, tag edits retain their typed JSON representation, and the complete original file is always downloadable. See [Zinc contract](ZINC_CONTRACT.md) for commands, normalization, unsupported representations and complete source references. New complete workspace exports use package v7 and carry the Zinc codec, typed-projection application, VOLTTRON registry desk and consumer receiving together. Receiving preserves the published v1, v2, v3, v4, v5 and v6 inventories.
+
+## Consumer plans, native results and acceptance
+
+Use [CONSUMER_OPERATING.md](./CONSUMER_OPERATING.md) to retain a selected consumer and immutable projection/model binding, freeze independent expected populations, receive original execution files, compare every identity/value and record named decisions. The same chapter covers complete customer returns, corrected runs, full file downloads, revision-pinned CLI requests, typed clients and configured-file merchant tools. All consumer operations remain in the original workspace journal and portable application.
