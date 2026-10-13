@@ -62,6 +62,81 @@
           "git_blob": "6a6960dade6d9a08f0c6ae756414e3fc17493f11"
         }
       ]
+    },
+    {
+      "id": "curriculum-managed-operating",
+      "label": "Complete persistent application, managed browser, working branches and original-command recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/curriculum-migration-workbench/OPERATING.md",
+      "editions": [
+        {
+          "commit": "44a3a0f2485b407514091ba8020d8d77208900e1",
+          "bytes": 25270,
+          "sha256": "ae2b96d06d809e36a511d08073ff446f256a8c8a33cb6ac87178b45731bfa386",
+          "git_blob": "3fc13b2197e74730c810ba4512977b686b9bd72e"
+        }
+      ]
+    },
+    {
+      "id": "curriculum-managed-sdk",
+      "label": "Complete typed managed client and merchant-agent operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/curriculum-migration-workbench/SDK.md",
+      "editions": [
+        {
+          "commit": "44a3a0f2485b407514091ba8020d8d77208900e1",
+          "bytes": 16904,
+          "sha256": "226ba9102bcebbec5f47e4c399eab82660cd7a12bc7dadfe23f82b136bf59abf",
+          "git_blob": "21e061d09fb6bac87446ff837d03e8c08497ddd0"
+        }
+      ]
+    },
+    {
+      "id": "curriculum-managed-service",
+      "label": "Original store, HTTP contract, complete outputs and lifecycle",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/curriculum-migration-workbench/STORE_HTTP.md",
+      "editions": [
+        {
+          "commit": "44a3a0f2485b407514091ba8020d8d77208900e1",
+          "bytes": 12798,
+          "sha256": "adcf8b560d0fb6d3fe20c2f0bfb6dc36a5d156be96828645de856511e48da552",
+          "git_blob": "2120d3b414d346d2b9acd2099da748c0d888f090"
+        }
+      ]
+    },
+    {
+      "id": "curriculum-managed-receiving",
+      "label": "Original complete native, browser, portable and cold-store receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "tools/curriculum-migration-workbench/MANAGED_RECEIVING.md",
+      "editions": [
+        {
+          "commit": "44a3a0f2485b407514091ba8020d8d77208900e1",
+          "bytes": 20010,
+          "sha256": "ed2628b7abec39d3fe22393f153214359c3c3134a75539925c93862e786eeec9",
+          "git_blob": "3324a399d4650f0b59c8df027852feaeaf074a88"
+        }
+      ]
+    },
+    {
+      "id": "curriculum-installation-profile",
+      "label": "Existing Installation profile for complete customer migration and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/curriculum-migration-workbench.json",
+      "editions": [
+        {
+          "commit": "44a3a0f2485b407514091ba8020d8d77208900e1",
+          "bytes": 15600,
+          "sha256": "dcf49025af7b4e3925c647e2a93ad1517d43a65cbd79306547be029d62171c31",
+          "git_blob": "29a757ebcda2012ca3d859fd1094f145a4c40036"
+        }
+      ]
     }
   ]
 }
