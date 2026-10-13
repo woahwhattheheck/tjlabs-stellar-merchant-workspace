@@ -1421,13 +1421,19 @@
       "label": "Original PDF page, account, row, balance and retained-operation workspace",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/app.mjs",
-      "commit": "a3a4a817c835d02a909d81913002ea49fe11234c",
+      "commit": "1e7cc8f28556317e15c430bde288d3361ba0e49f",
       "editions": [
         {
           "commit": "a3a4a817c835d02a909d81913002ea49fe11234c",
           "git_blob": "a721941f72831024c55398f0d2641c1ea80c021d",
           "sha256": "8a42789ad17f4f9c46b5d07e6ea2e269811aebf153686cf095a8991d2c5acf6c",
           "bytes": 45347
+        },
+        {
+          "commit": "1e7cc8f28556317e15c430bde288d3361ba0e49f",
+          "git_blob": "8d3ca839dac665d49b6bcb0a5e7a6f20b794c46e",
+          "sha256": "11dafc2ac4b35d54893775af55176188a5cefc53bccc105be746e0d50e2568b5",
+          "bytes": 46220
         }
       ]
     },
@@ -1676,13 +1682,19 @@
       "label": "Actual PDF desktop, narrow, Bank source and independent browser receiving",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/receive-browser.mjs",
-      "commit": "a3a4a817c835d02a909d81913002ea49fe11234c",
+      "commit": "d2094e9e9ff6efb91e4d3f94ae31305fc4e25b2f",
       "editions": [
         {
           "commit": "a3a4a817c835d02a909d81913002ea49fe11234c",
           "git_blob": "b0a09cb031a38fb67242d55fe7ef8bdeb9441013",
           "sha256": "8d71e8603dee9574bb07ae8016d425c055b8c174adbb490cf3b3d9cc0731b4b7",
           "bytes": 10922
+        },
+        {
+          "commit": "d2094e9e9ff6efb91e4d3f94ae31305fc4e25b2f",
+          "git_blob": "367e1a5d82c0666b03b5ddcd61011e54c85213ec",
+          "sha256": "d41c3884cd01102baa155e1760ae2587d8fa8cf0dbac552ac38bd476b5384384",
+          "bytes": 11518
         }
       ]
     },
@@ -1691,13 +1703,19 @@
       "label": "Complete installed PDF receiving and original rendered-product instruction",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/RECEIVING.md",
-      "commit": "a3a4a817c835d02a909d81913002ea49fe11234c",
+      "commit": "d2094e9e9ff6efb91e4d3f94ae31305fc4e25b2f",
       "editions": [
         {
           "commit": "a3a4a817c835d02a909d81913002ea49fe11234c",
           "git_blob": "54e48b0e8eff97faad62333e16ddbe01dfb302a3",
           "sha256": "28ed085e0b11adb438ba682d524ec7335be92e8543516b1f84308190d75581a3",
           "bytes": 5486
+        },
+        {
+          "commit": "d2094e9e9ff6efb91e4d3f94ae31305fc4e25b2f",
+          "git_blob": "72089b083c093a8dbda2a383cb1a494386c9b3cd",
+          "sha256": "a52f9ba71f725b25068422a990783f16788e8af4f02e4501a59fd6d621dff318",
+          "bytes": 6016
         }
       ]
     },

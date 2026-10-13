@@ -1,4 +1,4 @@
-# Receive complete original Nordea, Goldman Sachs and Bundesbank deliveries
+# Receive complete original issuer statements and reviewed PDFs
 
 ## TJLabs owner rule: actual rendered-product inspection
 
@@ -65,7 +65,7 @@ Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com
 
 Operation: `SCF-BANK-CAMT053-SOURCE-DFF77-20261013`  
 Edition: `NORDEA_GS_BUNDESBANK_PROFILES_CONFIGURED_SOURCES_ACCOUNT_MCP_20261013`  
-Application: immutable `80f8a3380a99af55b591d8e254904e4f3cb3ebf3`, including complete source collections, saved interpretations, the original accounting identity correction, authenticated accounting Bank operations and configured-source preparation through the maintained client and CLI.
+Application: immutable `d2094e9e9ff6efb91e4d3f94ae31305fc4e25b2f`, including complete source collections, saved interpretations, the original accounting identity correction, authenticated accounting Bank operations and configured-source preparation through the maintained client and CLI.
 
 The complete case retains thirty-three original XML files: eight Nordea bank-issued examples, three Goldman Sachs published examples and the full twenty-two-file Bundesbank delivery. Thirteen statement source files enter the original interpretation workflow; eleven readable files contain thirteen statements and eighty-four cash entries. Two malformed originals retain their source errors. All twenty accompanying Bundesbank CAMT052 reports remain in the complete collection. The existing application carries the original imports through replay, source-period review, complete-period closes, accountant exports and cold reopen.
 
@@ -186,3 +186,57 @@ For the original equipped invocation, use `--keep-runtime` above. Read the retur
 Follow [the complete rendered Bank operating course](../../products/merchant-bank-statements/HANDOVER.md#open-and-inspect-the-exact-outgoing-bank-product). Open the actual complete profile and collection outputs under `application-result/source-interpretations`, operate source review/history and the original accounts/closes, then download the actual TAR and use Accountant receiving for independent review/export/reopen. Inspect the original malformed source states and the actual 1440/390-pixel views. Return real viewed screenshots, source edition, controls operated and concrete defects to the producing author in the original operation thread.
 
 The automatic application/MCP result retains its native course meaning. `renderedInspection: "PENDING"` records the next real browser task; it is completed by the actual operator and author viewing the product. Keep the complete native archive as its prior edition and retain any later browser exports/history in this same operation.
+
+
+## Continue with the complete original PDF product
+
+This edition selects merchant-bank-pdf and installs its exact bank-pdf runtime feature alongside the original native accounting, schema, OpenAPI and MCP features. PDF.js 6.4.299 and the selected native canvas renderer are installed by the existing runtime installer. The original thirty-three issuer XML sources, complete Bundesbank delivery and profile history, configured source operations, authenticated account-MCP/CLI work, original financial case and accountant archives continue in the same invocation.
+
+The selected complete application is commit d2094e9e9ff6efb91e4d3f94ae31305fc4e25b2f, including the original PDF extraction and native CLI, saved-review compare-and-save, retained pending Bank requests, full-size original-byte decoding and the unsaved-document-switch recovery. The receiver checks 72 complete installed product files and 7 original installation files against their exact bodies. It includes the later Bank navigation and source-collection improvements present at that same commit.
+
+### Start the original receiving operation with an issuer PDF
+
+Use a complete original PDF available in the equipped local runtime. Keep the same retained runtime for the subsequent browser and financial course:
+
+~~~sh
+python3 operations/merchant-bank-camt053-receiving-dff77-20261013/receive.py \
+  --artifacts /absolute/owned/bank-artifacts \
+  --keep-runtime \
+  --pdf /absolute/original/Carson_Bank_Original_Sample_Statement.pdf \
+  --pdf-browser-module /absolute/existing/playwright/index.mjs
+~~~
+
+The original browser module is a file from the receiver's existing Playwright installation. --pdf-browser-executable selects its existing Chromium executable when needed. The program opens the original Bank application on an actual ephemeral loopback port under the same accounting workspace lease, and closes the browser/service when the course finishes.
+
+--pdf-prepare-only performs complete native extraction and every-page rendering without opening a browser. It retains the initial editable working copy, exact original PDF, full text/geometry, every page PNG, HTML review, interpretation history and manifest. The result records prepared:true; the later browser operation remains an explicit continuation in that same saved case.
+
+To receive an already reviewed interpretation, add the exact --pdf-working-copy /absolute/complete-working-copy.json and --pdf-receive. Every account, page classification, selected row, region, original balance and history edition comes from that supplied working file. When the actual printed balances disagree, inspect them and explicitly select --pdf-acknowledge-balance-difference to retain that discrepancy for the original Bank review. It does not change an amount or create a balancing entry.
+
+The Carson public example contains different accounts and inconsistent printed summaries. Keep the checking account and reserve account separate. Inspect all six original pages, including the multi-column checks, wrapped descriptions, fees, interest and reconciliation instructions. Select the original balances deliberately and retain the exact source discrepancy. The public original is [Carson Bank's sample statement](https://www.carsonbank.com/wp-content/uploads/2021/01/Sample-Statement.pdf), linked by its [disclosures page](https://www.carsonbank.com/disclosure/). Full native extraction and actual page inspection determine the mapping; a search-text transcript does not supply PDF geometry.
+
+Use --pdf-scale for the original renderer's 0.1–4 scale and --pdf-password-env ENV_NAME when the original document requires a password. A password is read from that named environment variable and is not retained in the working copy. The complete original input and full reviewed working file are kept with the same operation's private artifacts.
+
+### Continue the retained account without repeating the XML operation
+
+receive-pdf.mjs also operates directly on the existing complete installation and original account. Use the actual sourceRoot from RUNTIME_INSTALLED.json, and the account's workspaceId and sourcesSha256 from application-result/APPLICATION_RESULT.json. Its output directory must be new.
+
+~~~sh
+node operations/merchant-bank-camt053-receiving-dff77-20261013/receive-pdf.mjs \
+  --installed-source /absolute/actual/installed/source \
+  --accounting /absolute/original/application-result/accounting \
+  --workspace-id ORIGINAL_WORKSPACE_ID \
+  --sources-sha256 ORIGINAL_SOURCES_SHA256 \
+  --pdf /absolute/original/statement.pdf \
+  --working-copy /absolute/complete-reviewed-working-copy.json \
+  --out /absolute/owned/pdf-continuation \
+  --browser-module /absolute/existing/playwright/index.mjs \
+  --receive
+~~~
+
+A preparation-only continuation uses --prepare-only and can omit --working-copy, --browser-module and --receive. The original full installation must include the PDF selection and feature. Preserve the earlier native case archive as its accepted edition and retain this continuation with the same operation and account.
+
+The browser course opens the exact original PDF, extracts and renders every page, downloads the complete initial source, receives the full reviewed working copy, operates actual row review and Bank preview, retains the original financial source when requested, uses desktop and 390px views, and receives/edits/reexports the complete working copy in a separate browser context. Preview-only work checks that the financial revision is unchanged. Requested receiving uses the existing Bank account/source writers and preserves their request/recovery/correction behavior.
+
+The continuation then downloads every retained financial import file, its complete parsed report and full account transaction set. It closes and reopens the same original account and reads the retained PDF and report again. PDF_RECEIVING_RESULT.json records preparation, completed phases, original bytes, actual workspace binding, financial revisions, browser screenshots/downloads and received imports. FILES.json identifies every retained output. The enclosing original receiver includes this complete directory, source programme, PDF originals and logs in its full case ZIP and summary.
+
+Open the original page PNGs and actual browser screenshots and operate the rendered product. The renderedInspection field PENDING_OPERATOR_VIEW is advanced by the actual receiving operator and producing author seeing and using the completed version, including its downloads and reopened files. Continue any financial reconciliation, selected correction, account close and Accountant export in this same case. Retain the full resulting working files and exports with the original receiver owner.
