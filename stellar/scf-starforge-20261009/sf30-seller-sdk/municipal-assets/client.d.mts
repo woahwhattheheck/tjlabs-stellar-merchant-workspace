@@ -2,7 +2,7 @@ import type { Buffer } from 'node:buffer';
 export type Json = null | boolean | number | string | Json[] | { [key:string]:Json };
 export type DatasetKind = 'source_assets'|'target_assets'|'locations'|'requests'|'work_orders'|'returns';
 export type InputKind = DatasetKind|'roundtrips';
-export type InputFormat = 'csv'|'json'|'jsonl'|'geojson'|'esri-json'|'belleville-capture'|'maximo-target';
+export type InputFormat = 'csv'|'json'|'jsonl'|'geojson'|'esri-json'|'belleville-capture'|'maximo-target'|'open311-collection';
 export type ProjectMode = 'development'|'vendor-authorized'|'public-reference';
 export interface ManagedRequest { command:'municipal-assets'; args:string[]; releaseDirectory:string; [key:string]:unknown; }
 export interface StartupRecord {
@@ -29,6 +29,7 @@ export interface Settings {
   expected_source_rows:number|null;expected_target_rows:number|null;expected_correlation_ids?:string[];
 }
 export interface Actions {
+  service_asset_review:{request_row:number;binding_sha256:string;decision:'linked'|'unlinked'|'deferred';note:string;asset_id?:string|null;work_order_ids?:string[]};
   mapping:{kind:DatasetKind;mapping:Mapping};
   select_input:{kind:InputKind;input_id:string|null;reason:string};
   settings:{settings:Settings};
@@ -79,6 +80,8 @@ export class MunicipalAssetClient {
   readonly identity:Identity;
   status():Promise<Identity & {projects:Project[]}>;
   project(projectId:string,expectedRevision:number):Promise<ProjectSnapshot>;
+  serviceAssets(input:{projectId:string;expectedRevision:number;query?:string;page?:number;pageSize?:number;rowNumber?:number}):Promise<Record<string,Json>>;
+  reviewServiceAsset(input:Mutation & Actions['service_asset_review']):Promise<MutationResult>;
   records(input:RecordSelection):Promise<RecordPage>;
   createProject(input:{requestId:string;title:string;mode:ProjectMode}):Promise<{id:string;revision:number}>;
   importInput(input:Mutation & {kind:InputKind;format:InputFormat;name:string;bytes:Buffer}):Promise<MutationResult>;

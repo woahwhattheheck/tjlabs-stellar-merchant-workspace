@@ -29,6 +29,8 @@ export class MunicipalAssetMerchantClient {
   status(input={}){return this.call('merchant_municipal_assets_status',input);}
   project(input={}){return this.call('merchant_municipal_assets_project',input);}
   projectSection(input={}){return this.call('merchant_municipal_assets_project_section',input);}
+  serviceAssets(input={}){return this.call('merchant_municipal_assets_service_assets',input);}
+  reviewServiceAsset(input={}){return this.call('merchant_municipal_assets_service_asset_review',input);}
   records(input={}){return this.call('merchant_municipal_assets_records',input);}
   input(input={}){return this.call('merchant_municipal_assets_input',input);}
   createProject(input={}){return this.call('merchant_municipal_assets_create_project',input);}

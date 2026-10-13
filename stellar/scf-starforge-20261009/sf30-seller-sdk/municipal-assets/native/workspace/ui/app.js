@@ -1,7 +1,7 @@
 'use strict';
 
 const labels={source_assets:'Source assets',target_assets:'Target assets',locations:'Locations',requests:'Service requests',work_orders:'Work orders',returns:'Returned updates',roundtrips:'Original round-trip events'};
-const tabs={overview:'Overview',publicRefresh:'Public refresh',maximo:'Maximo target',inputs:'Inputs & mapping',records:'Assets & records',review:'Review & repair',workflow:'Work orders',handoff:'Contract & handoff',history:'History'};
+const tabs={overview:'Overview',publicRefresh:'Public refresh',maximo:'Maximo target',serviceAssets:'Service assets',inputs:'Inputs & mapping',records:'Assets & records',review:'Review & repair',workflow:'Work orders',handoff:'Contract & handoff',history:'History'};
 let session=null,project=null,tab='overview',recordKind='source_assets',mappingKind='source_assets',query='',page=0,busy=false,pending=null,loadSerial=0,mapSerial=0;
 const $=selector=>document.querySelector(selector);
 function el(tag,attributes={},...children){const element=document.createElement(tag);for(const [key,value]of Object.entries(attributes)){if(key==='class')element.className=value;else if(key.startsWith('on'))element.addEventListener(key.slice(2),value);else if(value!==false&&value!==null&&value!==undefined)element.setAttribute(key,value===true?'':String(value));}for(const child of children.flat()){if(child===null||child===undefined)continue;element.append(child instanceof Node?child:document.createTextNode(String(child)));}return element;}
@@ -27,7 +27,7 @@ function table(headers,rows){return el('div',{class:'table-wrap'},el('table',{},
 function panel(title,...children){return el('section',{class:'panel'},el('h2',{},title),...children);}
 function jsonDetails(title,value){return el('details',{},el('summary',{},title),el('pre',{},pretty(value)));}
 function switchTab(next){tab=next;render();}
-function render(){mapSerial++;refreshViewSerial++;clearTimeout(refreshTimer);if(!project)return;const main=$('#main');main.replaceChildren(el('div',{class:'project-header'},el('div',{},el('h1',{},project.title),el('div',{class:'toolbar'},el('span',{class:'badge'},({development:'Development records','public-reference':'Public reference records','vendor-authorized':'Vendor-authorized records'})[project.mode]||project.mode),el('span',{class:'muted small'},`Revision ${project.revision}`))),el('div',{class:'toolbar'},button('Refresh project',()=>safely(()=>loadProject(project.id))),el('a',{href:`/api/projects/${project.id}/export`},'Download current handoff'),el('a',{href:`/api/projects/${project.id}/report`},'Complete report'))),el('nav',{class:'tabs','aria-label':'Project sections'},Object.entries(tabs).map(([key,label])=>button(label,()=>switchTab(key),{role:'tab','aria-selected':tab===key}))),el('div',{id:'content'}));({overview,publicRefresh,maximo,inputs,records,review,workflow,handoff,history})[tab]();setBusy(busy);}
+function render(){mapSerial++;refreshViewSerial++;clearTimeout(refreshTimer);if(!project)return;const main=$('#main');main.replaceChildren(el('div',{class:'project-header'},el('div',{},el('h1',{},project.title),el('div',{class:'toolbar'},el('span',{class:'badge'},({development:'Development records','public-reference':'Public reference records','vendor-authorized':'Vendor-authorized records'})[project.mode]||project.mode),el('span',{class:'muted small'},`Revision ${project.revision}`))),el('div',{class:'toolbar'},button('Refresh project',()=>safely(()=>loadProject(project.id))),el('a',{href:`/api/projects/${project.id}/export`},'Download current handoff'),el('a',{href:`/api/projects/${project.id}/report`},'Complete report'))),el('nav',{class:'tabs','aria-label':'Project sections'},Object.entries(tabs).map(([key,label])=>button(label,()=>switchTab(key),{role:'tab','aria-selected':tab===key}))),el('div',{id:'content'}));({overview,publicRefresh,maximo,serviceAssets,inputs,records,review,workflow,handoff,history})[tab]();setBusy(busy);}
 
 let refreshViewSerial=0,refreshTimer=null,refreshSending=false;
 const refreshKeyPrefix='municipal-public-refresh:';
@@ -124,8 +124,8 @@ async function renderRefreshJobs(projectId,serial){
 
 function overview(){const source=captureOverview();if(source)$('#content').append(source);const state=project.state;const cards=[['Source assets',project.counts.source_assets||0],['Target assets',project.counts.target_assets||0],['Errors to repair',project.errors],['Requested updates',state.changes.filter(x=>x.state==='requested').length]];const current=project.native_runs.find(x=>x.id===state.native_run);$('#content').append(el('div',{class:'cards'},cards.map(([label,count])=>el('div',{class:'card'},el('strong',{},count),el('span',{},label)))),el('div',{class:'grid-two'},panel('Move the project forward',el('p',{},'Import the original exports, confirm each mapping, and inspect asset and work-order relationships.'),el('div',{class:'toolbar'},button('Import or map records',()=>switchTab('inputs')),button('Review current differences',()=>switchTab('review'))),el('hr'),el('p',{},'Request a work-order update, then reconcile the returned record against its identifiers and source revision.'),button('Open work orders',()=>switchTab('workflow'))),panel('Handoff status',el('p',{},current?`Last original acceptance run: ${human(current.result.status)}.`:'The original acceptance checker has not been run on this project.'),el('p',{},state.current_release?'An internal release is retained. Each release downloads its original selected version.':'No internal release is retained yet.'),button('Open contract & handoff',()=>switchTab('handoff')),el('p',{class:'small muted'},'A release records your internal handoff decision. The original checker retains its own acceptance statement.'))),panel('Selected datasets',table(['Dataset','Rows','Selected original'],Object.entries(state.inputs).map(([kind,id])=>{const input=project.inputs.find(x=>x.id===id);return [labels[kind],input?.row_count??0,input?.filename??id];}))));}
 function captureOverview(){const input=project.inputs.find(item=>item.selected&&item.kind==='source_assets'&&['belleville-capture','belleville-geometry-capture'].includes(item.metadata?.format));if(!input)return null;const m=input.metadata;return panel('Original public source',el('p',{},el('a',{href:m.source,target:'_blank',rel:'noopener'},'Belleville Waterfront Trails layer')),el('p',{},`${input.row_count} original records · ${m.original_requests} attribute provider responses · ${m.original_files} attribute files`),el('p',{},m.identity_rule),el('p',{class:'small muted'},m.coordinate_system),m.geometry_included?el('p',{},`${m.geometry_paths} retained paths · ${m.geometry_positions} coordinate positions · ${m.geometry_absent_rows} records without geometry · ${m.geometry_original_requests} geometry responses · ${m.geometry_original_files} geometry files`):null,table(['Original field','Blank / null','Distinct nonblank','Repeated occurrences'],m.field_observations.map(row=>[row.field,row.blank_or_null,row.distinct_nonblank,row.repeated_nonblank_occurrences])),el('p',{class:'small muted'},'Repeated asset and segment labels stay separate. Condition, risk and replacement values are shown as published; their interpretation belongs to the agreed source mapping.'),jsonDetails('Original source fields',m.original_fields),button('Refresh complete public source',()=>switchTab('publicRefresh')));}
-function inputs(){const host=$('#content');const kind=el('select',{name:'kind'},Object.entries(labels).map(([key,label])=>option(key,label,key===mappingKind)));const format=el('select',{name:'format'},['csv','geojson','esri-json','json','jsonl','belleville-capture'].map(value=>option(value,value)));const file=el('input',{name:'file',type:'file',required:true,accept:'.csv,.json,.geojson,.jsonl,.md,.txt'});file.addEventListener('change',()=>{const name=file.files[0]?.name.toLowerCase()??'';format.value=(kind.value==='source_assets'&&(format.value==='belleville-capture'||name.endsWith('.md')||name.endsWith('.txt')))||(name.includes('capture')&&name.endsWith('.json'))?'belleville-capture':name.endsWith('.csv')?'csv':name.endsWith('.geojson')?'geojson':name.endsWith('.jsonl')?'jsonl':'json';if(kind.value==='roundtrips')format.value='jsonl';});kind.addEventListener('change',()=>{if(kind.value==='roundtrips')format.value='jsonl';});const form=el('form',{onsubmit:async event=>{event.preventDefault();if(busy||pending||!file.files[0])return;const selected=file.files[0];mappingKind=kind.value;const params=new URLSearchParams({kind:kind.value,filename:selected.name,format:format.value});await execute({path:`/api/projects/${project.id}/inputs?${params}`,options:{method:'POST',body:selected,headers:{'Content-Type':'application/octet-stream','X-Revision':String(project.revision),'X-Operation-Id':crypto.randomUUID()}},success:'Original input retained. Review and save its explicit field mapping.'});}},el('div',{class:'grid-three'},field('Dataset',kind),field('File format',format),field('Original export',file)),el('button',{type:'submit','data-mutation':''},'Import original input'));
-host.append(panel('Import an original export',form,el('p',{class:'small muted'},'CSV, JSON object arrays, GeoJSON, JSONL, Esri feature sets, or a complete Belleville attribute/geometry capture. For a capture, select Source assets and belleville-capture format. Maximum 32 MiB. Every original provider response and attribute value is retained.')));
+function inputs(){const host=$('#content');const kind=el('select',{name:'kind'},Object.entries(labels).map(([key,label])=>option(key,label,key===mappingKind)));const format=el('select',{name:'format'},['csv','geojson','esri-json','json','jsonl','belleville-capture','open311-collection'].map(value=>option(value,value)));const file=el('input',{name:'file',type:'file',required:true,accept:'.csv,.json,.geojson,.jsonl,.md,.txt'});file.addEventListener('change',()=>{const name=file.files[0]?.name.toLowerCase()??'';format.value=kind.value==='requests'&&(format.value==='open311-collection'||name.startsWith('open311-'))?'open311-collection':(kind.value==='source_assets'&&(format.value==='belleville-capture'||name.endsWith('.md')||name.endsWith('.txt')))||(name.includes('capture')&&name.endsWith('.json'))?'belleville-capture':name.endsWith('.csv')?'csv':name.endsWith('.geojson')?'geojson':name.endsWith('.jsonl')?'jsonl':'json';if(kind.value==='roundtrips')format.value='jsonl';});kind.addEventListener('change',()=>{if(kind.value==='roundtrips')format.value='jsonl';});const form=el('form',{onsubmit:async event=>{event.preventDefault();if(busy||pending||!file.files[0])return;const selected=file.files[0];mappingKind=kind.value;const params=new URLSearchParams({kind:kind.value,filename:selected.name,format:format.value});await execute({path:`/api/projects/${project.id}/inputs?${params}`,options:{method:'POST',body:selected,headers:{'Content-Type':'application/octet-stream','X-Revision':String(project.revision),'X-Operation-Id':crypto.randomUUID()}},success:'Original input retained. Review and save its explicit field mapping.'});}},el('div',{class:'grid-three'},field('Dataset',kind),field('File format',format),field('Original export',file)),el('button',{type:'submit','data-mutation':''},'Import original input'));
+host.append(panel('Import an original export',form,el('p',{class:'small muted'},'CSV, JSON object arrays, GeoJSON, JSONL, Esri feature sets, a complete Open311 collection, or a complete Belleville attribute/geometry capture. For Open311 select Service requests and open311-collection; save the original identity/status mapping, then open Service assets. For a capture, select Source assets and belleville-capture format. Maximum 32 MiB. Every original provider response and attribute value is retained.')));
 const versionRows=Object.entries(labels).map(([key,label])=>{const versions=project.inputs.filter(item=>item.kind===key);if(!versions.length)return [label,'—','No original imported',''];const selected=el('select',{'aria-label':`${label} version`},versions.map(item=>option(item.id,`${item.filename} · ${item.row_count} rows`,item.selected)));return [label,project.state.mappings[key]?.confirmed?'Mapped':key==='roundtrips'?'Original JSONL':'Review mapping',selected,el('div',{class:'toolbar'},mutation('Use version',()=>{const reason=prompt('Reason for selecting this original version:');if(reason)action('select_input',{kind:key,input_id:selected.value,reason},'Original version selected.');}),key==='roundtrips'?null:button('Map fields',()=>{mappingKind=key;render();}),mutation('Remove selection',()=>{const reason=prompt('Reason for removing this dataset from the current selection (the original remains retained):');if(reason)action('select_input',{kind:key,input_id:null,reason},'Dataset removed from the current selection.');}))];});host.append(panel('Retained input versions',table(['Dataset','Mapping','Original version','Actions'],versionRows)));
 if(mappingKind==='roundtrips'||!project.state.inputs[mappingKind])return;const original=project.inputs.find(x=>x.id===project.state.inputs[mappingKind]);const saved=project.state.mappings[mappingKind].value;const controls={};const grid=el('div',{class:'field-map'});for(const name of project.kinds[mappingKind]){controls[name]=el('select',{'aria-label':`${human(name)} source column`},option('','— Leave empty —'),original.columns.map(column=>option(column,column,saved.fields[name]===column)));grid.append(el('label',{},human(name)+(project.required[mappingKind].includes(name)?' *':''),controls[name]));}const aliases=el('textarea',{name:'aliases',rows:3,class:'mono'},pretty(saved.status_aliases));const trim=el('input',{type:'checkbox',checked:saved.trim_ids});host.append(panel(`Field mapping · ${labels[mappingKind]}`,el('p',{class:'small muted'},'Required fields are marked *. Identifiers keep their exact values unless you explicitly select whitespace trimming.'),el('form',{onsubmit:event=>{event.preventDefault();safely(async()=>{const mapping={fields:Object.fromEntries(Object.entries(controls).filter(([,control])=>control.value).map(([name,control])=>[name,control.value])),trim_ids:trim.checked,status_aliases:JSON.parse(aliases.value)};await action('mapping',{kind:mappingKind,mapping},'Explicit input mapping saved.');});}},grid,el('label',{class:'check'},trim,'Trim surrounding identifier whitespace'),field('Exact status aliases',aliases,'For example {"Active":"active"}. No automatic case or identifier normalization is applied.'),el('button',{type:'submit','data-mutation':''},'Save mapping')),jsonDetails('Original format metadata',original.metadata)));}
 async function getRows(kind,search='',number=0,size=50){return request(`/api/projects/${project.id}/records?${new URLSearchParams({kind,query:search,page:String(number),page_size:String(size)})}`);}
@@ -346,3 +346,165 @@ $('#login-form').addEventListener('submit',event=>{event.preventDefault();safely
 $('#project-form').addEventListener('submit',event=>{event.preventDefault();if(busy||pending)return;const form=event.currentTarget;execute({path:'/api/projects',options:{method:'POST',body:JSON.stringify({title:form.elements.title.value,mode:form.elements.mode.value,operation:crypto.randomUUID()})},created:true,success:'Project created. Import its original records.'});});
 window.addEventListener('unhandledrejection',event=>{event.preventDefault();notice(event.reason?.message||'The page action did not complete.',true);});
 (async()=>{try{session=await request('/api/session');showShell();await loadProjects();}catch{showLogin();}})();
+
+
+// Complete source editions and named asset associations use the original writer.
+const servicePrefix='municipal-service-asset-operation:';
+let serviceSerial=0,servicePage=0,serviceQuery='';
+function serviceSaved(projectId,archived=false){
+  const rows=[];
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i);if(!key.startsWith(servicePrefix))continue;
+    let row;try{row=JSON.parse(localStorage.getItem(key));}catch{continue;}
+    if(row.origin===location.origin&&row.projectId===projectId&&row.actor===session.actor&&Boolean(row.archived)===archived)rows.push({key,row});
+  }
+  return rows;
+}
+function downloadService(name,value){
+  const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)+'\n'],{type:'application/json'}));
+  const a=el('a',{href:url,download:name});a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function sendService(row){
+  if(busy||pending)return;
+  const key=servicePrefix+row.body.operation,encoded=JSON.stringify(row),existing=localStorage.getItem(key);
+  if(existing!==null&&existing!==encoded)throw new Error('Preserve the original saved association request.');
+  localStorage.setItem(key,encoded); // Complete original body is durable before its first dispatch.
+  setBusy(true);
+  try{
+    const result=await request('/api/projects/'+row.projectId+'/action',{method:'POST',body:JSON.stringify(row.body)});
+    if(localStorage.getItem(key)===encoded)localStorage.removeItem(key);
+    if(project?.id===row.projectId)await loadProject(row.projectId);
+    notice('Saved named association review at revision '+result.revision+'. Native request status is retained.');
+  }catch(error){
+    notice(error.message+' The complete original request remains available below for retry or download.',true);
+    if(project?.id===row.projectId&&tab==='serviceAssets')serviceAssets();
+  }finally{setBusy(false);}
+}
+function serviceAssets(){
+  const host=$('#content'),id=project.id,revision=project.revision,serial=++serviceSerial;
+  host.replaceChildren();
+  const valid=()=>project?.id===id&&project.revision===revision&&tab==='serviceAssets'&&serial===serviceSerial&&host.isConnected;
+  const saved=serviceSaved(id),archived=serviceSaved(id,true);
+  if(archived.length)host.append(panel('Archived returned requests',...archived.map(({row})=>el('div',{class:'panel'},
+    el('p',{},row.body.operation+' · original revision '+row.body.revision+' · '+row.returnedError.message),
+    button('Download complete archived request',()=>downloadService('Archived-Service-Asset-Request.json',row))))));
+  if(saved.length)host.append(panel('Saved original association requests',
+    ...saved.map(({row})=>el('div',{class:'panel'},el('p',{},row.body.operation+' · original revision '+row.body.revision),
+      button('Retry original request',()=>safely(()=>sendService(row))),
+      button('Download original request',()=>downloadService('Service-Asset-Request.json',row)),
+      button('Archive a returned rejection',()=>safely(async()=>{
+        if(busy||pending)return;
+        setBusy(true);
+        try{
+          // Ask the original writer again first: a committed request must be recovered.
+          const result=await request('/api/projects/'+id+'/action',{method:'POST',body:JSON.stringify(row.body)}).catch(error=>{
+            if(![400,409,422].includes(error.status))throw error;
+            const archiveKey=servicePrefix+'archive:'+row.body.operation;
+            localStorage.setItem(archiveKey,JSON.stringify({...row,archived:true,returnedError:{status:error.status,message:error.message}}));
+            const old=localStorage.getItem(servicePrefix+row.body.operation);
+            if(old===JSON.stringify(row))localStorage.removeItem(servicePrefix+row.body.operation);
+            return null;
+          });
+          if(result){
+            if(localStorage.getItem(servicePrefix+row.body.operation)===JSON.stringify(row))localStorage.removeItem(servicePrefix+row.body.operation);
+            if(project?.id===id)await loadProject(id);
+          }else if(project?.id===id&&tab==='serviceAssets'){
+            serviceAssets();notice('Original returned rejection archived with its complete project/request context and download.');
+          }
+        }finally{setBusy(false);}
+      }))))));
+  host.append(panel('Service request → selected asset',
+    el('p',{},'Receive a complete Open311 collection through Inputs & mapping. Source request status and upstream reviews remain separate from the named asset association. A changed source, inventory or mapping requires a new review.'),
+    el('p',{class:'small'},'Request identities include the original connection. Coordinates and similar names do not create a link. Whole collection originals, observed versions and source operations remain in the complete handoff.')));
+  const sourceHost=el('div'),listHost=el('div'),detailHost=el('div');host.append(sourceHost);
+  const search=el('input',{type:'search',value:serviceQuery,'aria-label':'Find service request',placeholder:'Request ID, status or description'});
+  host.append(el('form',{class:'toolbar',onsubmit:event=>{event.preventDefault();serviceQuery=search.value;servicePage=0;serviceAssets();}},
+    search,el('button',{type:'submit'},'Find requests')),listHost,detailHost);
+  safely(async()=>{
+    const data=await request('/api/projects/'+id+'/service-assets?'+new URLSearchParams({query:serviceQuery,page:String(servicePage),page_size:'50'}));
+    if(!valid())return;
+    if(data.revision!==revision)throw new Error('The project changed; refresh before reviewing a request.');
+    sourceHost.append(panel('Selected source and review coverage',
+      table(['Property','Current selection'],[
+        ['Original file',data.source?.filename??'Import and map service requests'],
+        ['Original input',data.source?.id??'—'],['Original SHA256',data.source?.sha256??'—'],
+        ['Mapped inventory rows',data.mapped_inventory_rows],['Review states',pretty(data.counts)],
+        ['Original collector coverage',pretty(data.source?.metadata?.counts??{})],
+        ['Coverage interpretation',data.source?.metadata?.coverage??'The selected original import and mapping govern these rows.'],
+        ['Collector state',data.source?.metadata?.state??'—']]),
+      data.source?jsonDetails('Complete source context',data.source.metadata):null));
+    listHost.replaceChildren(table(['Request','Description / native status','Association',''],data.rows.map(item=>[
+      item.request.id,el('div',{},short(item.request.summary),el('div',{class:'badge'},item.request.status)),
+      el('div',{},item.association,item.asset?el('div',{},item.asset.id):null),
+      button('Review source and asset',()=>safely(()=>openService(item.request._row)))
+    ])),el('div',{class:'pager'},el('span',{},data.total+' requests · page '+(servicePage+1)),
+      button('Previous',()=>{servicePage--;serviceAssets();},{disabled:servicePage===0}),
+      button('Next',()=>{servicePage++;serviceAssets();},{disabled:(servicePage+1)*50>=data.total})));
+  });
+  async function openService(rowNumber){
+    const data=await request('/api/projects/'+id+'/service-assets?row='+rowNumber);
+    if(!valid())return;
+    if(data.revision!==revision)throw new Error('The selected source changed; refresh this project.');
+    const item=data.rows[0],key='municipal-service-asset-draft:'+location.origin+':'+session.actor+':'+id+':'+item.binding.request_input_id+':'+rowNumber;
+    let draft;try{draft=JSON.parse(localStorage.getItem(key));}catch{}
+    draft??={decision:'linked',asset_id:'',note:'',work_order_ids:[]};
+    const decision=el('select',{},...['linked','unlinked','deferred'].map(value=>option(value,human(value),value===draft.decision)));
+    const selectedAsset=el('input',{value:draft.asset_id??'',readonly:true,'aria-label':'Selected exact asset'});
+    const note=el('textarea',{rows:5,maxlength:4000},draft.note??'');
+    const orderIds=el('textarea',{rows:3},(draft.work_order_ids??[]).join('\n'));
+    const selectedOrders=()=>orderIds.value.split('\n').filter(value=>value.length);
+    const saveDraft=()=>{localStorage.setItem(key,JSON.stringify({decision:decision.value,asset_id:selectedAsset.value,note:note.value,work_order_ids:selectedOrders()}));};
+    decision.addEventListener('change',()=>safely(saveDraft));note.addEventListener('input',()=>safely(saveDraft));orderIds.addEventListener('input',()=>safely(saveDraft));
+    const assetSearch=el('input',{type:'search','aria-label':'Find exact source asset',placeholder:'ID or label'}),assets=el('div');
+    let assetPage=0,assetQuery='',assetSerial=0;
+    const findAssets=async()=>{
+      const current=++assetSerial;
+      const value=await request('/api/projects/'+id+'/records?'+new URLSearchParams({kind:'source_assets',query:assetQuery,page:String(assetPage),page_size:'25'}));
+      if(!valid()||current!==assetSerial||!assets.isConnected)return;
+      if(value.revision!==revision)throw new Error('Inventory changed; reopen the current association review.');
+      assets.replaceChildren(table(['Exact asset ID','Label',''],value.rows.map(row=>[
+        row.id,row.label,button('Select this asset',()=>safely(()=>{selectedAsset.value=row.id;saveDraft();}))
+      ])),el('div',{class:'toolbar'},el('span',{},value.total+' matching assets'),
+        button('Previous assets',()=>{assetPage--;safely(findAssets);},{disabled:assetPage===0}),
+        button('Next assets',()=>{assetPage++;safely(findAssets);},{disabled:(assetPage+1)*25>=value.total})));
+    };
+    const orderPreview=el('div');
+    const submit=mutation('Save named association review',()=>safely(async()=>{
+      saveDraft();
+      if(serviceSaved(id).length)throw new Error('Recover or archive the original returned request before starting another association.');
+      if(!note.value.trim())throw new Error('Explain the association or why this request remains unlinked.');
+      if(decision.value==='linked'&&!selectedAsset.value)throw new Error('Select an exact current asset.');
+      const row={origin:location.origin,projectId:id,actor:session.actor,
+        body:{action:'service_asset_review',revision,operation:crypto.randomUUID(),
+          payload:{request_row:rowNumber,binding_sha256:item.binding_sha256,decision:decision.value,
+                   asset_id:decision.value==='linked'?selectedAsset.value:null,note:note.value,
+                   work_order_ids:decision.value==='linked'?selectedOrders():[]}}};
+      await sendService(row);
+    }));
+    detailHost.replaceChildren(panel('Original request and association review',
+      el('h3',{},item.request.id),el('p',{},item.request.summary),
+      table(['Property','Value'],[['Native status',item.request.status],['Association',item.association],['Reason',item.explanation]]),
+      jsonDetails('Complete original source row',item.original_row),
+      item.source_versions?jsonDetails('Every retained source observation and version',item.source_versions):null,
+      jsonDetails('Previous named association reviews',item.review_history),
+      jsonDetails('Exact selected source / inventory / mapping binding',item.binding),
+      field('Local association decision',decision),field('Selected exact asset',selectedAsset),
+      el('form',{class:'toolbar',onsubmit:event=>{event.preventDefault();assetQuery=assetSearch.value;assetPage=0;safely(findAssets);}},
+         assetSearch,el('button',{type:'submit'},'Find inventory assets')),assets,
+      field('Existing native work-order IDs',orderIds,'Optional exact IDs, one per line. Each must already belong to the selected asset. This records the local request association; native status/revision and original source references remain retained. Inspect their complete current rows in Work orders.'),
+      button('Inspect selected native orders',()=>safely(async()=>{
+        const rows=[];
+        for(const orderId of selectedOrders()){
+          const value=await request('/api/projects/'+id+'/records?'+new URLSearchParams({kind:'work_orders',record_id:orderId,page:'0',page_size:'200'}));
+          if(!valid()||!orderIds.isConnected)return;
+          if(value.revision!==revision)throw new Error('Work orders changed; refresh before saving.');
+          if(value.total!==1)throw new Error('Select exactly one native order for '+orderId);
+          rows.push(value.rows[0]);
+        }
+        orderPreview.replaceChildren(jsonDetails('Complete selected native work orders',rows));
+      })),orderPreview,
+      field('Review reason',note,'Your exact unfinished note and selection are saved in this browser.'),submit,
+      button('Download unfinished review',()=>{saveDraft();downloadService('Service-Asset-Review-Draft.json',{project:id,binding:item.binding,...JSON.parse(localStorage.getItem(key))});})));
+    await findAssets();
+  }
+}

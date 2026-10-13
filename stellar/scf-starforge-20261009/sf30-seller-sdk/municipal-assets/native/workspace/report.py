@@ -89,6 +89,12 @@ small,.muted{color:#555d66}table{border-collapse:collapse;width:100%;font-size:1
                           ("Original SHA256", original["sha256"]), ("Input ID", original["id"])]),
                       "<h3>Saved field mapping</h3>",
                       "<pre>" + cell(state["mappings"].get(original["kind"], {})) + "</pre>"])
+        if metadata.get("format") == "open311-collection":
+            parts.extend(["<h3>Original Open311 collection</h3>",
+                table(["Property", "Value"], [(key.replace("_", " "), metadata.get(key)) for key in
+                    ("name", "connection_id", "endpoint", "jurisdiction_id", "collection_id", "source_revision",
+                     "state", "cap_resolved", "counts", "query", "policy", "coverage", "hash_contract")]),
+                "<p>The original collection file retains all response bytes, observed request versions, window coverage and source operations. Local association reviews do not change the native request status.</p>"])
         if metadata.get("format") in ("belleville-capture", "belleville-geometry-capture"):
             parts.extend(["<h3>Complete public source</h3>",
                 "<p><a href=\"" + escape(metadata["source"], quote=True) + "\">Original Belleville Waterfront Trails layer</a></p>",
@@ -117,6 +123,15 @@ small,.muted{color:#555d66}table{border-collapse:collapse;width:100%;font-size:1
         columns = sorted({key for row in rows for key in row if key != "_row"})
         parts.append(table(columns, [[row.get(key, "") for key in columns] for row in rows]))
         parts.append("</section>")
+    if state.get("service_links"):
+        parts.extend(["<section><h2>Named service-request asset associations</h2>",
+            "<p>Each decision retains its exact original request, inventory, mapping and asset snapshot. Changed selections require a new review. The mapped request table above shows current effective associations; the complete history below includes superseded decisions.</p>",
+            table(["Request", "Decision", "Asset", "Reviewer", "Reason", "Source input", "Inventory input", "Time"],
+                  [(item["binding"]["request_id"], item["decision"], item["asset_id"], item["actor"], item["note"],
+                    item["binding"]["request_input_id"], item["binding"]["inventory_input_id"], item["at"])
+                   for item in state["service_links"]]),
+            *["<details><summary>Complete original review " + cell(item["id"]) + "</summary><pre>" +
+              cell(item) + "</pre></details>" for item in state["service_links"]], "</section>"])
     parts.extend(["<section><h2>Requested changes and returned outcomes</h2>",
                   table(["Change", "Work order", "Requested status", "Expected revision", "Outcome", "Original provider reference"],
                         [(row["id"], row["work_order_id"], row["status"], row["expected_revision"], row["state"],
