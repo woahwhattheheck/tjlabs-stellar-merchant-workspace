@@ -14,7 +14,13 @@ const hash=raw=>createHash('sha256').update(raw).digest('hex');
 const encode=x=>Buffer.from(JSON.stringify(x,null,2)+'\n');
 const need=(ok,message)=>{if(!ok)throw Object.assign(new Error(message),{code:'INSTALLATION_SOURCE_BINDING'});};
 const parse=raw=>JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));
-async function original(path){const bytes=await readWorkflowSeriesPrivateFile(resolve(path),maximum);return{bytes,value:parse(bytes),identity:{bytes:bytes.length,sha256:hash(bytes)}};}
+async function original(path,expected=null){
+  const bytes=await readWorkflowSeriesPrivateFile(resolve(path),maximum);
+  const identity={bytes:bytes.length,sha256:hash(bytes)};
+  if(expected)need(identity.bytes===expected.bytes&&identity.sha256===expected.sha256,
+    'The selected original manifest differs from the exact decision input: '+expected.path+'.');
+  return{bytes,value:parse(bytes),identity};
+}
 async function retain(root,name,bytes,files){
   const path=join(root,name);let parent=root;
   for(const part of name.split('/').slice(0,-1)){parent=join(parent,part);await workflowSeriesPrivateDirectory(parent,true);}
@@ -80,8 +86,11 @@ export async function prepareCommissioningInstallationFiles(options){
   const transfer=await original(join(source,'TRANSFER.json'));
   need(transfer.identity.sha256===options.expectedTransferSha256,'The selected original transfer manifest bytes differ.');
   await inspectCommissioningTransfer(source);
-  const job=await original(join(source,'job.json'));
-  const selection=await original(join(source,'selection.json'));
+  const jobDescriptor=transfer.value.files.find(file=>file.path==='job.json');
+  const selectionDescriptor=transfer.value.files.find(file=>file.path==='selection.json');
+  need(jobDescriptor&&selectionDescriptor,'The selected original manifest must include its job and full selection.');
+  const job=await original(join(source,'job.json'),jobDescriptor);
+  const selection=await original(join(source,'selection.json'),selectionDescriptor);
   // The inspector retains the original file inventory; this also verifies its full original selection hash.
   const ordered=x=>Array.isArray(x)?x.map(ordered):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,ordered(x[k])])):x;
   need(hash(Buffer.from(JSON.stringify(ordered(selection.value))))===job.value.selectionSha256,'The full original selection hash differs.');
