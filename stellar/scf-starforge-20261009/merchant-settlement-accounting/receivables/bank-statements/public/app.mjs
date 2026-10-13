@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-import {sourceInputForItem} from './source-collection-model.mjs';
+import {sourceInputForItem,mappingSignature} from './source-collection-model.mjs';
+import {installSourceProfiles} from './source-profiles.mjs';
 import {installSourceCollections} from './source-collections.mjs';
 import { BankStatementsClient } from './sdk/client.mjs';
 import { ReceivablesClient } from './client.mjs';
@@ -27,6 +28,7 @@ const ctx = {
  closePreview:null,closePage:0,record:null,recordLoad:0,db:null,storageProblem:null,invoiceDetail:null,invoiceLoad:0
 };
 let sourceCollections=null;
+let sourceProfiles=null;
 const MAP_FIELDS = [
  ['postedDate','Posted date'],['amount','Signed amount'],['debit','Debit'],['credit','Credit'],['providerId','Provider transaction ID'],
  ['payee','Payee / description'],['memo','Memo'],['reference','Reference'],['checkNumber','Check number'],['type','Transaction type'],
@@ -54,6 +56,29 @@ function openDb(){
 }
 async function dbRead(key){const db=await openDb();return new Promise((resolve,reject)=>{const request=db.transaction('records','readonly').objectStore('records').get(key);request.onsuccess=()=>resolve(request.result??null);request.onerror=()=>reject(request.error);});}
 async function dbWrite(key,value){const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction('records','readwrite');tx.objectStore('records').put(value,key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Recovery storage write was interrupted.'));});}
+async function dbSaveProfileLibrary(next,expected){
+ const db=await openDb(),key=storageKey('source-profiles');
+ await new Promise((resolve,reject)=>{
+  const tx=db.transaction('records','readwrite'),records=tx.objectStore('records');let problem=null;
+  const request=records.get(key);request.onsuccess=()=>{
+   const current=request.result??null,unchanged=expected===null?current===null:current?.id===expected.id&&current?.revision===expected.revision;
+   if(!unchanged){problem=Object.assign(new Error('Another page saved the profile library. Reload it and keep your working mapping before saving a new revision.'),{code:'SOURCE_PROFILE_STALE'});tx.abort();return;}
+   records.put(next,key);
+  };
+  tx.oncomplete=()=>resolve();tx.onerror=()=>reject(problem||tx.error);tx.onabort=()=>reject(problem||tx.error||new Error('Source profile saving was interrupted.'));
+ });
+}
+function profileWorking({requireFile=true}={}){
+ if(ctx.sourceFileLoading)throw new Error('Wait for the selected original file to finish loading.');
+ if(requireFile&&!ctx.sourceFile)throw new Error('Choose the complete original file before reviewing a saved interpretation.');
+ return {file:ctx.sourceFile?{name:ctx.sourceFile.name,bytes:ctx.sourceFile.bytes,sha256:ctx.sourceFile.sha256}:null,mapping:structuredClone(captureMapping()),edition:ctx.sourceEdit,fileGeneration:ctx.sourceFileLoad};
+}
+async function applyProfileMapping(mapping,expected){
+ const current=profileWorking();
+ if(current.edition!==expected.edition||current.fileGeneration!==expected.fileGeneration||mappingSignature(current.file)!==mappingSignature(expected.file)||mappingSignature(current.mapping)!==mappingSignature(expected.mapping))throw new Error('The original file or mapping changed during review. Review the selected interpretation again.');
+ resetSourcePreview();ctx.sourceMapping=structuredClone(mapping);writeSmall('source-mapping',ctx.sourceMapping);
+ sourceCollections?.mappingChanged(ctx.sourceFile,ctx.sourceMapping);renderImport();await sourceCollections?.flush();
+}
 async function dbDelete(key){const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction('records','readwrite');tx.objectStore('records').delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
 function uuid(){if(globalThis.crypto?.randomUUID)return crypto.randomUUID();const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;return [...bytes].map(x=>x.toString(16).padStart(2,'0')).join('').replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/,'$1-$2-$3-$4-$5');}
 function base64(bytes){let text='';for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(text);}
@@ -236,8 +261,8 @@ function renderImport(){
  '<div class="grid two mt15">'+field('Posted status values — comma separated','postedStatuses',d.postedStatuses,'text','data-source-field')+field('Pending status values — comma separated','pendingStatuses',d.pendingStatuses,'text','data-source-field')+'</div>'+
  '<details><summary>Original opening / closing records and source exclusions</summary><p class="small muted">Select balance records from the file. Keep record numbers and a reason for each excluded footer. These original selections are included in the reviewed import.</p><div class="grid two">'+area('Balance record selections (JSON)','balanceRecords',d.balanceRecords,'data-source-field spellcheck="false"')+area('Excluded record selections (JSON)','skipRecords',d.skipRecords,'data-source-field spellcheck="false"')+'</div><p class="small mono">[{"recordNumber":3,"kind":"OPENING","amountColumn":"Balance","dateColumn":"Date"},{"recordNumber":40,"kind":"CLOSING","amountColumn":"Balance","dateColumn":"Date"}]</p></details>'+
  '<details><summary>Original source text</summary><p class="small muted">The first 100,000 decoded characters are available here for choosing the header and mapping. Download opens the complete original file.</p><pre id="source-text-preview"></pre></details></fieldset>'+
- '<div class="form-footer"><div class="actions"><button type="button" data-action="download-source">Download original</button><button type="button" data-action="download-source-draft">Download file + mapping</button><label class="button-label small">Restore file + mapping<input type="file" id="restore-source-draft" accept=".json" class="file-picker"></label></div><button type="submit" class="primary" id="preview-source-button">Review original source</button></div></form></section><div id="source-preview"></div>';
- $('#native-options').hidden=false;$('#csv-options').disabled=d.format!=='CSV';$('#camt-options').disabled=d.format!=='CAMT053';renderSourceFile();if(ctx.sourcePreview)renderSourcePreview();lockForms();
+ '<div class="form-footer"><div class="actions"><button type="button" data-action="download-source">Download original</button><button type="button" data-action="download-source-draft">Download file + mapping</button><label class="button-label small">Restore file + mapping<input type="file" id="restore-source-draft" accept=".json" class="file-picker"></label></div><button type="submit" class="primary" id="preview-source-button">Review original source</button></div></form></section><div id="source-profile-panel"></div><div id="source-preview"></div>';
+ $('#native-options').hidden=false;$('#csv-options').disabled=d.format!=='CSV';$('#camt-options').disabled=d.format!=='CAMT053';renderSourceFile();if(ctx.sourcePreview)renderSourcePreview();sourceProfiles?.mount($('#source-profile-panel'));lockForms();
 }
 function renderSourceFile(){
  const node=$('#source-file-summary');if(!node)return;
@@ -1131,6 +1156,11 @@ async function boot(){
   });
   try{await sourceCollections.init();}catch(error){notice('Original statement collections need attention. '+errorMessage(error),'error');}
 
+  sourceProfiles=installSourceProfiles({
+   workspaceId:ctx.state.workspaceId,readLibrary:()=>dbRead(storageKey('source-profiles')),saveLibrary:dbSaveProfileLibrary,
+   uuid,getWorking:profileWorking,getActor:()=>$('#actor').value,applyMapping:applyProfileMapping,download:localDownload,notice,run
+  });
+  try{await sourceProfiles.init();}catch(error){notice('Saved source interpretations need attention. '+errorMessage(error),'error');}
   renderPending();renderOverview();renderImport();renderTransactions();renderClose();
   const query=new URLSearchParams(location.search),requested=query.get('view'),transactionId=query.get('transaction');
   await setTab(transactionId?'transactions':requested||readSmall('tab','overview'));

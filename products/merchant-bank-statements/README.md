@@ -213,3 +213,9 @@ Open **Statement collections** to keep several original files and their per-file
 ## Complete issued statement delivery
 
 The [Bundesbank original delivery](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/BUNDESBANK.md) includes both official example ZIPs and all22XMLfiles, explicit original namespace/reference interpretation and one complete receiving command. Its two statements keep all22cash entries and22nested details, including the separate cheque and fee that share a bank reference. Open the resulting whole collection in the existing Bank desk to continue account intake, matching, source correction and closing.
+
+## Reuse reviewed bank source interpretations
+
+The original source editor now retains named, versioned interpretations for recurring bank formats. Save the current mapping with its operator and reason, keep its complete history, review every changed field against the selected original file, then apply that exact version. Each collection row retains the chosen profile identity. File-specific balance/exclusion rows are chosen afresh from the original.
+
+Download and receive complete profile libraries across operators, with every prior version and original receiving lineage. Browser saves use a single existing-storage transaction with the expected library identity and revision. The installed `bank-statements profile` commands create, revise, inspect, receive, review and apply the same whole-source interpretations. The [source profile guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PROFILES.md) covers the complete browser/native workflow and original Bundesbank receiving course.
