@@ -1,15 +1,16 @@
 {
   "schema": "commons.complete-source-selection.v1",
   "operation": "SCF-MUNICIPAL-CUSTOMER-GRANT-RECEIVING-90ED-20261013",
+  "continuation": "SCF-MUNICIPAL-SERVICE-ASSET-RECEIVING-90ED-20261013",
   "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-  "sourceCommit": "97830e774bada555581376c2d2a364a385566e65",
+  "sourceCommit": "0906502007b20295e7a401e3e7cb7c4312f5a5e2",
   "applicationProgramme": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
   "publicationProgramme": "SCF-GRANT-REVIEWER-PUBLICATION-8910-20261012",
   "package": {
     "path": "municipal-reviewer-source.json",
-    "bytes": 4183114,
-    "sha256": "dc96cc15d171423246823eb0274d80c1a34cc21e3a1bd3208f6f8bade5a1dfb2",
-    "bundleId": "0c1f359c425cb91d7cbf826b6bb34583337129a9bfd178c89d7117dce2022588",
+    "bytes": 4653608,
+    "sha256": "98bafc2b55ef330c45179ef22491e8ed6d05edeac1c94c14b21480920b3f83e3",
+    "bundleId": "a52f5f9b34d20bdeaaa7c7dd2ed4c8707ae59070daaf72b474244992ac83ec4c",
     "files": [
       {
         "role": "application",
@@ -18,8 +19,8 @@
       },
       {
         "role": "source-index",
-        "bytes": 1439099,
-        "sha256": "9fd83db2c7086902c782938e258a3b69796f7a8bc0506aa1478a4974c01a8c97"
+        "bytes": 1643005,
+        "sha256": "6758a28cab0e7878a43ed030da87b8c80d793e946c112658102cbbd11f0b363b"
       },
       {
         "role": "budget",
@@ -28,8 +29,8 @@
       },
       {
         "role": "product-and-finance",
-        "bytes": 1601616,
-        "sha256": "9b9630669c87944cf8106f10654402efe6e6a8be81781eb57abbe3e5767a0b6c"
+        "bytes": 1750550,
+        "sha256": "74bc9bfaf04faa9a8a09a4bc984771540e87453d9a5c6604026e730fffab9a28"
       }
     ],
     "sameReopen": true
@@ -43,9 +44,9 @@
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "bytes": 1439099,
-      "sha256": "9fd83db2c7086902c782938e258a3b69796f7a8bc0506aa1478a4974c01a8c97",
-      "git_blob": "7ed044e6f096f73ae3b2fd1537b61de71b1d1c11"
+      "bytes": 1643005,
+      "sha256": "6758a28cab0e7878a43ed030da87b8c80d793e946c112658102cbbd11f0b363b",
+      "git_blob": "9bd0e04495e6796da8c614644d22394759bca7b7"
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/budget.csv",
@@ -55,25 +56,61 @@
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
-      "bytes": 1601616,
-      "sha256": "9b9630669c87944cf8106f10654402efe6e6a8be81781eb57abbe3e5767a0b6c",
-      "git_blob": "cac23d68305d991eab2727af72b1c783c3b84a42"
+      "bytes": 1750550,
+      "sha256": "74bc9bfaf04faa9a8a09a4bc984771540e87453d9a5c6604026e730fffab9a28",
+      "git_blob": "959c64bbd0ca13e4072a7b5b3847bf9c03467f9e"
     },
     {
       "path": "stellar-forge/developer-site/dist/grant.html",
       "bytes": 105199,
-      "sha256": "d2a6258714da0dcff41e2f67f53d27e7f7a005858713a84c06dab1b5936fcbbe",
-      "git_blob": "3c12884da9389c86f77f8662b6074453c678c1d0"
+      "sha256": "d7bb28d2bd360cc66ebf5a974d67361acb8b27049748ccce0fc8ebc78d356a2a",
+      "git_blob": "373e2a8562b69112583e83139eae2d1dc6f7407d"
     }
   ],
   "composition": {
-    "originalChapters": 99,
-    "chapters": 100,
-    "changedPrior": [],
-    "sourceBefore": 1099,
-    "sourceAfter": 1105,
-    "bytes": 1601616,
-    "sha256": "9b9630669c87944cf8106f10654402efe6e6a8be81781eb57abbe3e5767a0b6c"
+    "chapters": 103,
+    "changed": [
+      "## Municipal asset migration and target receiving"
+    ],
+    "originalSources": 1255,
+    "sources": 1259,
+    "changedSources": [
+      "municipal-assets-operating",
+      "municipal-assets-source",
+      "municipal-assets-application",
+      "municipal-assets-handover",
+      "municipal-assets-agent",
+      "municipal-assets-receiving",
+      "municipal-assets-service-guide",
+      "municipal-assets-service-source",
+      "municipal-assets-service-review",
+      "municipal-assets-service-cli"
+    ],
+    "companion": {
+      "bytes": 1750550,
+      "sha256": "74bc9bfaf04faa9a8a09a4bc984771540e87453d9a5c6604026e730fffab9a28",
+      "git_blob": "959c64bbd0ca13e4072a7b5b3847bf9c03467f9e"
+    },
+    "index": {
+      "bytes": 1643005,
+      "sha256": "6758a28cab0e7878a43ed030da87b8c80d793e946c112658102cbbd11f0b363b",
+      "git_blob": "9bd0e04495e6796da8c614644d22394759bca7b7"
+    },
+    "unchangedHtml": true,
+    "changedExistingSources": [
+      "municipal-assets-operating",
+      "municipal-assets-source",
+      "municipal-assets-application",
+      "municipal-assets-handover",
+      "municipal-assets-agent",
+      "municipal-assets-receiving"
+    ],
+    "addedSources": [
+      "municipal-assets-service-guide",
+      "municipal-assets-service-source",
+      "municipal-assets-service-review",
+      "municipal-assets-service-cli"
+    ]
   },
   "registeredProduct": {
     "schema": "stellar-forge.grant-product-registration.v1",
@@ -98,6 +135,12 @@
             "bytes": 12836,
             "sha256": "6e5ab7fc6239895e2b8eced8c4dedde05c46fc14593827d8452dd6aadbe3e306",
             "git_blob": "a901eddce74f5e86a4849a2b3ff715c2cc5b8844"
+          },
+          {
+            "commit": "a0021e74ea7a9b49ff2188b8663818732fc32c4b",
+            "bytes": 13491,
+            "sha256": "3456440b1c9787eedef5aeb9ee7b2ff3951b2c31dd67d19bba5b2d342d04cc75",
+            "git_blob": "fcdb1d9be5b0df2fa048795f9bed6bc8e0cf6d84"
           }
         ]
       },
@@ -119,6 +162,12 @@
             "bytes": 17763,
             "sha256": "55adf258818ac23b6b74543cd1d35cc763c376d5dc44796edd062076ba1ef152",
             "git_blob": "3a2f3c8b587c246e2b7eb17082ed10b51800af07"
+          },
+          {
+            "commit": "a0021e74ea7a9b49ff2188b8663818732fc32c4b",
+            "bytes": 24344,
+            "sha256": "66a69f1bb0527784e2777777d06aee856c0a35ae6d62ecc4780100e15fdecb46",
+            "git_blob": "aef151b3d4ce0517ff982c4a45856b6493b9bc5a"
           }
         ]
       },
@@ -137,6 +186,12 @@
           },
           {
             "commit": "9b11f1aabd2a02438157394815f539963d507004",
+            "bytes": 3567,
+            "sha256": "87851c6245df5011bcf3a082fbdd71dfb4302326ac92f2f026913079915b44f0",
+            "git_blob": "a020a42b55f20b2ff1cf21f546aa3b74673f1d23"
+          },
+          {
+            "commit": "a0021e74ea7a9b49ff2188b8663818732fc32c4b",
             "bytes": 3567,
             "sha256": "87851c6245df5011bcf3a082fbdd71dfb4302326ac92f2f026913079915b44f0",
             "git_blob": "a020a42b55f20b2ff1cf21f546aa3b74673f1d23"
@@ -161,6 +216,12 @@
             "bytes": 10926,
             "sha256": "af88ea8e5199b3f92965a3dae28d888fe70b61b5dcf785355fc7a6c26f1e4e25",
             "git_blob": "efb19509b2433d31ebb4664c1efe71ed0a267ccf"
+          },
+          {
+            "commit": "a0021e74ea7a9b49ff2188b8663818732fc32c4b",
+            "bytes": 10926,
+            "sha256": "af88ea8e5199b3f92965a3dae28d888fe70b61b5dcf785355fc7a6c26f1e4e25",
+            "git_blob": "efb19509b2433d31ebb4664c1efe71ed0a267ccf"
           }
         ]
       },
@@ -182,6 +243,12 @@
             "bytes": 11534,
             "sha256": "1ce535400e86d45340a93b44c4f3843854b052bdceac2169efab36dc168775fe",
             "git_blob": "f1c3e4bc8860406564d3416db3b3e011e7e520c1"
+          },
+          {
+            "commit": "a0021e74ea7a9b49ff2188b8663818732fc32c4b",
+            "bytes": 12541,
+            "sha256": "191f2f8aff221364e3d337d6c6a93a1cfd6afca7de51e1afe09294d8c1fa351a",
+            "git_blob": "d275fdf718af90b0c0b255341d49122a429115e8"
           }
         ]
       },
@@ -203,19 +270,103 @@
             "bytes": 7368,
             "sha256": "3e4d49217214359d3010a46b2fc5193a4131b49509cd876699fdef310891ddf6",
             "git_blob": "28965eda7053f6a2d8fa02583dbce54abef2a7cd"
+          },
+          {
+            "commit": "a0021e74ea7a9b49ff2188b8663818732fc32c4b",
+            "bytes": 8268,
+            "sha256": "eeb01fe48441b70f868b29b5f0493e892240afec8a60cbb570c9b6d760426308",
+            "git_blob": "188768a94a1b1e063a9e0a0b2d867a441fc3acba"
+          }
+        ]
+      },
+      {
+        "id": "municipal-assets-service-guide",
+        "label": "Complete source-to-asset and existing work-order receiving guide",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "kind": "blob",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/SERVICE_ASSETS.md",
+        "editions": [
+          {
+            "commit": "a0021e74ea7a9b49ff2188b8663818732fc32c4b",
+            "bytes": 11533,
+            "sha256": "8f5bd9cb8e8ae4439c0427db375a0b7dfd6a4d4313bfdbf64f168d68d0a51700",
+            "git_blob": "7f9e547ebf5390192f7b8a418fd338fac0fcf63a"
+          }
+        ]
+      },
+      {
+        "id": "municipal-assets-service-source",
+        "label": "Original Open311 collection response, traversal and observed version receiver",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "kind": "blob",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/open311_source.py",
+        "editions": [
+          {
+            "commit": "a0021e74ea7a9b49ff2188b8663818732fc32c4b",
+            "bytes": 23724,
+            "sha256": "c7065d2615cd0ba6525a03ba9b5ed8a5656620c1a391b95192c4f3664739aa83",
+            "git_blob": "2cd306f2648cc099e1aee1503a2158d79e06acea"
+          }
+        ]
+      },
+      {
+        "id": "municipal-assets-service-review",
+        "label": "Named original source and inventory-bound asset/work-order association writer",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "kind": "blob",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/service_assets.py",
+        "editions": [
+          {
+            "commit": "a0021e74ea7a9b49ff2188b8663818732fc32c4b",
+            "bytes": 12900,
+            "sha256": "b6ba66607c9c56f81e9852b1aa2436952644515195ba681e4e3f6f8b5268f412",
+            "git_blob": "5e38e3c9ba7d2d50b6bfc3c35b765e31b6029a13"
+          }
+        ]
+      },
+      {
+        "id": "municipal-assets-service-cli",
+        "label": "Installed original collection and association operating command",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "kind": "blob",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/service_cli.py",
+        "editions": [
+          {
+            "commit": "a0021e74ea7a9b49ff2188b8663818732fc32c4b",
+            "bytes": 5382,
+            "sha256": "2fcd9b0da29227d50fffa04109cd0c43ec3698c182902aff8751fad898a23159",
+            "git_blob": "219870537039e3763f1a6446eda73bc6af57c3d1"
           }
         ]
       }
     ],
     "definition": {
       "path": "grant-products/municipal-assets.json",
-      "bytes": 5408,
-      "sha256": "2f210e5c447afb7e03aee4665baf780b94a2e173ec80a0ee5639709d35359c5f",
-      "git_blob": "87ac4b91a78fb83e0122da85c0e6f852a17ed200"
+      "bytes": 9587,
+      "sha256": "175c606f2434879aec88a2007cb72f669a2f33c3a50cfc5446960d9442211d19",
+      "git_blob": "73df97834990ebdb9770001c0b6200d7cc455f3a"
     }
   },
+  "sourceModules": [
+    {
+      "path": "stellar-forge/developer-site/dist/grant-handover-source.mjs",
+      "git_blob": "3db68884bf975d349d965bd57267c7f3967ccd3a"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-submission-core.mjs",
+      "git_blob": "cd5a149b96842f048cef642474428fdbcd1b563b"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-handover-core.mjs",
+      "git_blob": "180b7560143b6eeaf0074a442750d6db107a94e4"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-issuer-core.mjs",
+      "git_blob": "4b242aebd08210502eac365aa24fe4dfc8e4cea6"
+    }
+  ],
   "receiving": {
-    "sourcePackage": "Created and reopened through the actual maintained source bundle and package functions, preserving all complete original file identities.",
-    "renderedProgramme": "Continue the existing equipped publisher and personally inspect the exact outgoing reader, attachments and saved-file reopen."
+    "sourcePackage": "Created and reopened through the current maintained source bundle and package functions, preserving all four complete original file identities.",
+    "renderedProgramme": "Continue the existing equipped publisher and personally open, inspect and operate the exact outgoing reader, all attachments and saved-file reopen."
   }
 }
