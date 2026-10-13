@@ -1,40 +1,66 @@
 {
   "schema": "stellar-forge.grant-current-customer-composition.v1",
-  "operation": "SCF-CUSTOMER-SOURCE-RECONCILIATION-20261013-BC3D",
-  "composed_at": "2026-10-13T09:37:14Z",
+  "operation": "SCF-CURRENT-CUMULATIVE-PUBLICATION-05C7-20261013",
+  "composed_at": "2026-10-13T11:12:18.000Z",
   "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-  "input_commit": "20b5a434933051be6493dfff457f86f7092391dd",
-  "output_commit": "d7df87046c31eca1a02e6e1bd40acae7a1e78a39",
+  "input_commit": "bd889168029083c4b7cd50a9f900dc64c1f99726",
+  "publication_base_commit": "9c1b19ff4cbb878a7af85ac8cf1c1bc577b9af52",
+  "output_commit": "82b0f63b057a68eb7f979d83ff44ce9d66a578c1",
   "canonical_manuscript": {
     "url": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",
-    "bytes": 1862331,
-    "sha256": "683b80a6a6f96b4f5ac668fe72c839d07abaf2d5bdbd0fee32a2c72c99272d46",
-    "meaning": "Complete selected canonical manuscript read from the original maintained source. The public outputs retain the original public-source projection."
+    "bytes": 2004329,
+    "sha256": "c5e15a3f65b4ec97c165d98f303ddb35b6e9d37debd2786ed418feae5c80f5c4",
+    "meaning": "Complete frozen original canonical manuscript. Eleven exact paragraph source-link repairs were applied to this source and independently received in the live canonical; later whole published Audit chapter was preserved at the fresh-main integration boundary.",
+    "repaired_selected_manuscript": {
+      "bytes": 2007325,
+      "sha256": "5f46b39206e93cc70892676ce93f6ecb0b86176de2b9e32736585ca87921de28"
+    },
+    "composition_manuscript": {
+      "bytes": 2009184,
+      "sha256": "975701c4803fe1338a2fbecea5b42416753c97ac1c994a96d8dbe4b85c3f9ad7"
+    },
+    "canonical_edit_preservation": {
+      "previousSections": 2978,
+      "currentSections": 2992,
+      "everyPriorSectionWithExact11ChangesRetained": true,
+      "priorSectionsInOrder": true,
+      "concurrentSections": 14,
+      "url": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF"
+    },
+    "concurrent_published_chapter": {
+      "heading": "## Audit Exchange: original building audits, energy review and editable turnover",
+      "from_commit": "9c1b19ff4cbb878a7af85ac8cf1c1bc577b9af52",
+      "source_index_blob": "120944a138315efef5ddfb01b080e96346996bce",
+      "companion_blob": "4be27e90a5673a6f666f2a6ca9e8e8f110bcc1f0",
+      "bytes": 12449,
+      "sha256": "74f51f04894c15ea0b05af187229c90bee90cd15f126f51d8b5bf4700c32a2c8",
+      "reason": "Preserve the already-published complete Audit colleague-correction successor received after the canonical snapshot was frozen."
+    }
   },
   "inputs": [
     {
       "path": "stellar-forge/developer-site/dist/grant-data/application.md",
-      "bytes": 51700,
-      "sha256": "38cb6cefc3ce80a41807d5f2fc6368643ea888dea7edb19980f8bf9af0929f56",
-      "git_blob": "da18f44492a618c73242a8eb3e7c12c3d67d10fe"
+      "bytes": 53187,
+      "sha256": "2e02c1d95117069bb1b74be3d0ae902503c1ca9b8a2ffbdefbedd7b640019603",
+      "git_blob": "097932e5c8d43be6022f219f2ba0e4a9b47c87c6"
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
-      "bytes": 1225443,
-      "sha256": "e9e47562f97779faf33c4f22819ba1e5fcbf6bc00e6d9e500aed3cf2cf75f88d",
-      "git_blob": "d639756ffaf6863d0f3ea451c142c599e3803ba7"
+      "bytes": 1268108,
+      "sha256": "fbf6bb55a2085f43eacd70ca4c60aa9300b50a1fefec6b2483ebac2aa3450626",
+      "git_blob": "4be27e90a5673a6f666f2a6ca9e8e8f110bcc1f0"
     },
     {
       "path": "stellar-forge/developer-site/dist/grant.html",
-      "bytes": 102764,
-      "sha256": "c0f51446232ad979f45438fcfd44084e8920d242f619678a60a917318f776357",
-      "git_blob": "4864b82a95a4f3a5cbf0eeff4d7655a7b588d153"
+      "bytes": 105039,
+      "sha256": "0d24cd8cd12759e0e3a2f8c0b20a8149f7ee50b9f1fd12fbd3cf49498ba4369a",
+      "git_blob": "481713b71441d6cf63079a0c3d772fb85e8be6db"
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "bytes": 995293,
-      "sha256": "7d53ebc288ebcaaf4c36c2cbdb5f3874e653fd13f2f330c4740bce0bd609dcd2",
-      "git_blob": "43a2b8e30a85825aac29dbfc673cccb972edc85b"
+      "bytes": 1048246,
+      "sha256": "ce713b6d240b1b832f07104ad6028f1b85f27f4d27942cb85b64e7b80292140d",
+      "git_blob": "120944a138315efef5ddfb01b080e96346996bce"
     }
   ],
   "budget": {
@@ -46,9 +72,9 @@
   "composer_modules": [
     {
       "path": "stellar-forge/developer-site/grant-compose.mjs",
-      "bytes": 30665,
-      "sha256": "7193728fe246f804b79cc16806bce8dd0ef63dfc592f9db00cb509ba27c3f678",
-      "git_blob": "42d7fb96bd68fbef1b310de64c9e637709818371"
+      "bytes": 31089,
+      "sha256": "3dc10303b069e8a5e40c112fc28ee9ff3dce0b6e1e8c1199b15ec1c6f7eac4b2",
+      "git_blob": "08289f58283a48eeeb69e147021b54343cf0d976"
     },
     {
       "path": "stellar-forge/developer-site/grant-delivery-plan.mjs",
@@ -58,15 +84,15 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-entry.mjs",
-      "bytes": 18951,
-      "sha256": "1b0b6e8a3468b61aabe446dad5937ba85765cdc524c1b823d17ecf05796f690a",
-      "git_blob": "b4beccf32d39f0b0205cf83e71f77c8d93a1521f"
+      "bytes": 20249,
+      "sha256": "c68084bddb8231711351e8fba12621517dcd71e1978b0416e4e7d1fcddf3b25c",
+      "git_blob": "a215e20a19f135203f3d6a29dc4727e94ce1299a"
     },
     {
       "path": "stellar-forge/developer-site/grant-submission.mjs",
-      "bytes": 6257,
-      "sha256": "e1765e07e040f74b535a7959d358346e48862efa522482a8087f13517e53aef7",
-      "git_blob": "88c439b16eb37786b3e8d31d0ec0ba9ee9eba6b8"
+      "bytes": 7310,
+      "sha256": "e2ca8d8a9570072b0d38c31c1c92408919621525e5000c31b8a83b74a042bf1e",
+      "git_blob": "c8afed966d9e1b0857f033e068077f88b3fd9bb3"
     },
     {
       "path": "stellar-forge/developer-site/grant-review-round.mjs",
@@ -106,9 +132,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-customers.mjs",
-      "bytes": 72626,
-      "sha256": "1e55231454ed6c62fb441c859b6a58f84888b3585429275d91ca5b45efc41b76",
-      "git_blob": "1cc5c1443e6cbd97799afa2d8c0b8d92469bb952"
+      "bytes": 73918,
+      "sha256": "9b051ad401f31c436490cca45ce07c9d5f6060faa15daeaf20846f585c361e65",
+      "git_blob": "ae778dfcbf9238903ae48ee1791542c70df443e1"
     },
     {
       "path": "stellar-forge/developer-site/grant-datasette.mjs",
@@ -148,15 +174,99 @@
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-product-sources-core.mjs",
-      "bytes": 12530,
-      "sha256": "ea8b11aea5f7aee05a8cdddfe738719f166d4548fc677de1936681b32efade7c",
-      "git_blob": "7c6f23eed846152afdb6e09eba95ef817997407a"
+      "bytes": 13857,
+      "sha256": "c65296b54e7dc7cf199d2622255d19bf704a551ffc6e90d1bf669e28e8375af4",
+      "git_blob": "71ba59bf246ed856d679096f85929aec51ddeead"
     },
     {
       "path": "stellar-forge/developer-site/grant-issuer-context.mjs",
       "bytes": 4169,
       "sha256": "04324a2e38a1aebbebb065495ffdb90c49a25fb85ff3e63c38173cbaa5b31bfc",
       "git_blob": "4d6149b3e71a502164f3dc82decafb2e7e265436"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-issuer-source.mjs",
+      "bytes": 32733,
+      "sha256": "d69a2aa77086e018ab863f9c57c6d8111f351f9372c0267e53794dced9ea94a1",
+      "git_blob": "7205abfac9a078a1e5bc47676cce03b797a1ef12"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-handover-source.mjs",
+      "bytes": 36460,
+      "sha256": "a78bdcfb75d5cf9a4ccb238ee1b811830f1bfe696ffdf2236ee2f02a02cf164d",
+      "git_blob": "bdc05b8811264f9e2bd2cf420549838420edcbc4"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-handover-core.mjs",
+      "bytes": 18875,
+      "sha256": "f80b56d2c9a3663a368c6fc25ebafe06358fb5e93cacd040633a471fe4dda898",
+      "git_blob": "180b7560143b6eeaf0074a442750d6db107a94e4"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-issuer-core.mjs",
+      "bytes": 11873,
+      "sha256": "9f74e8ebcf3a082934ea9298fb5793ff0817ba48273ada98cd5953672d8bec2a",
+      "git_blob": "4b242aebd08210502eac365aa24fe4dfc8e4cea6"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-plan-source.mjs",
+      "bytes": 16082,
+      "sha256": "b3a3b7fd479f4325fb384adbbf0eef68784f59732d9b0353b8379e9d6a394da3",
+      "git_blob": "11e6031949285e4fc1696312c13531db69d12f98"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-submission-core.mjs",
+      "bytes": 26363,
+      "sha256": "4a95ca16d6e4fd710d2ee4ee4a3fe5ea348142c37673ed39337e43578b531509",
+      "git_blob": "073efca52c4cd811b85cbbe3f72e6a1d528e3055"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-requirement-review-core.mjs",
+      "bytes": 12505,
+      "sha256": "a12e2afcda87b535cda70a743eb1771ef11865a84d70a3f77ad531bd1d106f6b",
+      "git_blob": "3bb96a398a44248ac68fd7288e60218e6a08591d"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-product-authoring-core.mjs",
+      "bytes": 17037,
+      "sha256": "7829f5db23bd028fe66e2f45715e90c70cb1155b0e02dda4c38f65b43eb4ac7f",
+      "git_blob": "cb9c401951136dd540c65b49b8f77b8bff52a181"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-plan-core.mjs",
+      "bytes": 16831,
+      "sha256": "7beaa9d586803a130992e34a49b3ea6fc5a2325c3063aa6d760335824efc1381",
+      "git_blob": "fae208fb0628f22731cbe1aa8fe2b9d9191f8ae6"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-operating-plan-core.mjs",
+      "bytes": 25359,
+      "sha256": "97a63121e610b95279b02f0a394bfff1e4d774b77e458bd9011b8a0d0ef7d3a0",
+      "git_blob": "715ac34e87c412d719102cf26b5b7d367872cee0"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-plan-update-core.mjs",
+      "bytes": 23254,
+      "sha256": "cc22e4ede64259442cc1ddbd2f0a338a0881a77a23f388143d846190fca90837",
+      "git_blob": "5854d9d0844d75ee55a13636bd16b7fbef4cc3b0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs",
+      "bytes": 33149,
+      "sha256": "e70525db82f90255559259c81cc05ef998e37a6e38b77994fe01377d1a0de6eb",
+      "git_blob": "1b98f187cec9ead2292a0ec395bf03cca07b9e44"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs",
+      "bytes": 28838,
+      "sha256": "fa41752b3a9a34fe2a8d5a517ae9f4dda76868c0b9f9fbd69117ad57947f98d1",
+      "git_blob": "8dd299083341fedb1eebc1e0303b297953a0c1a7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/catalog.mjs",
+      "bytes": 11267,
+      "sha256": "7d569fd76605074532e777fca763543b42cd021b4509d92010f3dd9ee5156971",
+      "git_blob": "6e768c2c90c4881366e147884c3debb45558f0fa"
     }
   ],
   "selected_declarations": [
@@ -180,9 +290,15 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/audit-exchange.json",
-      "bytes": 4529,
-      "sha256": "64aa7920d5fd6f0e32e886ffca5446b90a3d02ff9f9f7748bac9814e9a1fc667",
-      "git_blob": "5889537bdb12e75143a6fdaf1a638617975857fa"
+      "bytes": 8067,
+      "sha256": "b62a311486743c859205cd2ee0d3b5a8cada9066e2e083e698889c638bb3b405",
+      "git_blob": "6d4afbc0267deac59b24fd0052b562c810bba107"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/bloccpay.json",
+      "bytes": 5635,
+      "sha256": "a77eaf91818a769545c1fcc371bfa805414bcd6918f7867155d18353a95ab0d1",
+      "git_blob": "c7e64bdf7546ee08c37e1333efc6ad322ba776eb"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/bls-labor.json",
@@ -204,9 +320,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/ckan.json",
-      "bytes": 7192,
-      "sha256": "5ae70b37dc60fcebe67f2d1241f1e8c172967b70f785401f53d3b90ecd96edda",
-      "git_blob": "078fd7b6c22a5361d5056ea6a217ca038f3faad0"
+      "bytes": 8461,
+      "sha256": "d4364e50bb3a7fa3d50b53c3232e960fc67edc69fdd94392b7fb06661a7595d0",
+      "git_blob": "d794e4e14cd0af167f7511db4a903989852dbceb"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/cohort-adoption.json",
@@ -215,10 +331,22 @@
       "git_blob": "df48462b8e6471d8f19c103153b6942138a0bcf7"
     },
     {
+      "path": "stellar-forge/developer-site/grant-products/collaborative-documents.json",
+      "bytes": 7068,
+      "sha256": "8f49df95cc027217c650e5099d4665c9b052bc869e1452bcab3420c07f2bc5f2",
+      "git_blob": "b393666c2c9aa6eb1f0d046212984f5780412fd1"
+    },
+    {
       "path": "stellar-forge/developer-site/grant-products/collections-customer-delivery.json",
       "bytes": 12981,
       "sha256": "4efd1e042cb43dd4c24dc3c18d3533d945f580d3405f25d0a491848fbe5b3a59",
       "git_blob": "2206a29b9b349a66d67a0a73b4542333a4717804"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/commercial-unit-economics.json",
+      "bytes": 2121,
+      "sha256": "7c7d72e6f470f837cf957ca1028ba5dc58f25b1b90afe11f3a7ee4904151ffd7",
+      "git_blob": "c9e8cb4484f01228d4dc6d9aa02cd6bc978ac608"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/data-preparation.json",
@@ -234,9 +362,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/directus-content-data.json",
-      "bytes": 924,
-      "sha256": "63309c54b2927cc40f1698c17d5ce20e394521c929524cf30e7b4fea398d0db3",
-      "git_blob": "622b0704940ebfbb93cc6a58761b059ea3664fab"
+      "bytes": 4962,
+      "sha256": "ca16bdf031c885659b3240d4bea9b4f07cc855900957089e8e68165f9db84d74",
+      "git_blob": "bd1bef7a1b75cdd25dbf7aec6a40a7b075162c75"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/document-merchant.json",
@@ -257,6 +385,12 @@
       "git_blob": "3472e5c0a8b5746cf9fc3c257af12815df378bcd"
     },
     {
+      "path": "stellar-forge/developer-site/grant-products/facilitator-commissioning.json",
+      "bytes": 11074,
+      "sha256": "7b087d855011c07231f20feb999d4d3c99f9e99db8ad35883d1237f47b9e0e55",
+      "git_blob": "dc690963e994fc211f134f5d18bff1cc55b3e1b9"
+    },
+    {
       "path": "stellar-forge/developer-site/grant-products/financing-basis.json",
       "bytes": 2009,
       "sha256": "582a70e6e139b98c4bda328b152553318a6e9bb795021ffb86739d4b6ca5471c",
@@ -270,15 +404,15 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/fred-operating-procedures.json",
-      "bytes": 2307,
-      "sha256": "2376d84c668af2ccc75d71ce91d50007acfeed30d05088d1f6428c6c4fbf40e6",
-      "git_blob": "f7fe59c721797069266dc63a7c9ecd2f7e0e9f66"
+      "bytes": 2570,
+      "sha256": "9f0c1f04b1d6817664fba852b0e2e2b19318ae275be8560a52a1d998559fa658",
+      "git_blob": "7d9af57272c22fc57c01046c30c4ef9657feb01d"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/grant-accounts-operating-desk.json",
-      "bytes": 7064,
-      "sha256": "b082a1dfd65b9efe019e31a671caccc8cf294806f200b9314608ed98d0a38c82",
-      "git_blob": "c2b1cfa7b3703c15893eda71cb75952e5dcdc250"
+      "bytes": 10789,
+      "sha256": "46fcbff306195153862b224b36cdeb44b3ae06621fbd3df61eb0ad3bdbb126fc",
+      "git_blob": "475a926ebad3a403ecbb3b8885fe8ef965e294ab"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/grant-case-planning.json",
@@ -312,9 +446,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/grant-submission-review.json",
-      "bytes": 3402,
-      "sha256": "d465e5a690cf117da76746357f993291e7df4879c2677d774e0ee74bea9e8bbb",
-      "git_blob": "56ea837434fb738060bdb1e11bca9fc72f401641"
+      "bytes": 4753,
+      "sha256": "aa308ad130e22694c68638017b6e8717aecd57fe55c5494037d660b7b48831ba",
+      "git_blob": "ef75b50cc244e2c7cc316fa9a1eeafcf963e9f60"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/grant-tracker.json",
@@ -336,9 +470,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/haystack.json",
-      "bytes": 4049,
-      "sha256": "0f65af55e43fde0e19f8da107681da6f32af0d2a9bc906d0ec6fbdffdf780f92",
-      "git_blob": "349140c7304a9df08062a3896ef489025cfbcba3"
+      "bytes": 26532,
+      "sha256": "a60651406bbc8e8516d11ae0b11e61addc18e06d59a507ce906b8dafbbd1a924",
+      "git_blob": "cc0f15f4b8a7eff7c95f7d4a58f3fc6947ae69cc"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/human-services-directory.json",
@@ -354,15 +488,21 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/merchant-bank-statements.json",
-      "bytes": 38360,
-      "sha256": "9c459b1e5cd50b257ba4c5b895c4448bdaa4836e9bb1444ba733d1738f44ce2c",
-      "git_blob": "f2a766c4dd18bcd104fd7c616080fa3b55bdf63b"
+      "bytes": 48680,
+      "sha256": "526e200153bd6bf8f7483478d7e2353752e203b112ece7d0e3d2af9c1d5b8350",
+      "git_blob": "47f5e0fb317dcb1ed152cb2e9bcaf3b087b92523"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/merchant-customer-account-responses.json",
       "bytes": 5487,
       "sha256": "085c5ef135816fb48d33e1114b54e3d9e561f74db1c87959611c1c0254a65822",
       "git_blob": "369a29d5d58fb66699f82ff9ed37ce32bd5af511"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/merchant-economics.json",
+      "bytes": 10474,
+      "sha256": "8b90a9fac4e40e2ff6fda9e04e901144bee0d1f748b80229aef3ea8cfcb5442c",
+      "git_blob": "64476aa348ebe1498f2e6594cae3957882d4fa0b"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/merchant-monitoring.json",
@@ -375,6 +515,12 @@
       "bytes": 1411,
       "sha256": "d6b88773e774d8135e539235588fec010eb60e789da65b5482d208dd90a3dc86",
       "git_blob": "81cb1dc791a5ed6418df8e0f7c42301bc894cec2"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/migration-acceptance.json",
+      "bytes": 6409,
+      "sha256": "86bfe14c04fdc3177b9a5f4c8154203ff5edd468af4e7c9f8c3f0e02b60b34fd",
+      "git_blob": "3ba20786ee79069a309a0b27584287c22e53d45f"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/oauth-support.json",
@@ -401,10 +547,16 @@
       "git_blob": "6164a07ca6e3c633c1e0991761f76c77163b7ed9"
     },
     {
+      "path": "stellar-forge/developer-site/grant-products/openlineage-prepared-package.json",
+      "bytes": 3463,
+      "sha256": "9857c6e27ea6a478ee3068434bad8d515ccbb4fd40d854fd6175f60b51c7b042",
+      "git_blob": "9e34634e495fa15074e3882735cb6414cd6e6b6b"
+    },
+    {
       "path": "stellar-forge/developer-site/grant-products/operating-plans.json",
-      "bytes": 18958,
-      "sha256": "d7f24b54492662ce021c3c929497e16d6bd001839b44938077dd659d2e59f24f",
-      "git_blob": "5a29b28fad4372b312b14f4e0bf1a07e7ac367fa"
+      "bytes": 21692,
+      "sha256": "1b198ffcb33eac418e1ffd12050d001542cb971c2a6f4f70c00d5a239b40db7c",
+      "git_blob": "4afe3acdd87ee7b31e9fb44aa539d560919ff8bc"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/partner-workbenches.json",
@@ -426,9 +578,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/recovery-commissioning.json",
-      "bytes": 9089,
-      "sha256": "d56749d5c5da990c91e293c06be0ac6738c9d2934adf646337f9fe0bf8db04c5",
-      "git_blob": "6fa6a382e1cc15663ea00cc9b43bcd3284335d01"
+      "bytes": 20882,
+      "sha256": "de1b59eb18d18f133a5a22346ea73d1b70119ead377f1bb9a8a4acf0de1b14b6",
+      "git_blob": "b903410adabd2ea27523e2b373b856d036e5a04f"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/research-commercial-programme.json",
@@ -462,9 +614,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/runtime-workspace.json",
-      "bytes": 19393,
-      "sha256": "bee4deed978907fbba3dd34c74c313267c0c1ae6a7ba118d045de952b38e2ee3",
-      "git_blob": "51959b5db80b146418e3d6096d64d5fba668c1cd"
+      "bytes": 31317,
+      "sha256": "d76d5a4320afcd1629de520993fc01b73eb996ae59faee2b80c4b8a9af417b54",
+      "git_blob": "9524ffdcce947f291de07971d12601de69fa481e"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/service-buyer-continuation.json",
@@ -474,9 +626,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/source-desk.json",
-      "bytes": 14380,
-      "sha256": "476dd32bdeef770aec76157a94fd24dac331449a9d4816869a8a8960723c9278",
-      "git_blob": "62ab7e8ab124ba234f182669d432ad9cbd7e1100"
+      "bytes": 26029,
+      "sha256": "a2430263a60454f3e7eec664be15e2a1447900b286a35ac96cdf281ae574f0ae",
+      "git_blob": "fb8433838c6ba4b354852397ed1a57c62793e80a"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/source-tables-document-authoring.json",
@@ -510,63 +662,69 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/webhook-customer-analysis.json",
-      "bytes": 6258,
-      "sha256": "e05ea45629b74725e49e129da5f79b6cbb101fdd0f225edeb020d5eb7ce3e612",
-      "git_blob": "1513818d1ddcec6b62cde1467a127e76d6f1beb7"
+      "bytes": 15743,
+      "sha256": "2eaa1a989157012cf0b90e12f460fd196436a06bfd311c5517557c7140807937",
+      "git_blob": "7a877c55949d244b17b8952c805b44396304053a"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/worldbank-customer-programmes.json",
-      "bytes": 10999,
-      "sha256": "73e44c0a707f4dddaf91a853ca88035061d3ed0d569382088c9cc19b1213da68",
-      "git_blob": "ec0c05b4c526c6e8d4072f74acd9688872cc1150"
+      "bytes": 11789,
+      "sha256": "20a3a27211d6337a8eda2b6bf5614cb72591f5260d0ebd11ea82f3723ec25ab5",
+      "git_blob": "f21caa85bcafecb6beb4e8ea6c5b8ed9f3e49e57"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/zarr-scientific-arrays.json",
       "bytes": 4918,
       "sha256": "974dc67473768d42d11fcd5d0dca0884c7f60ef706bf627a268a43e37d8ad014",
       "git_blob": "7bf7ad8731516ec650dd3dd4f030af3ab6bdee83"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/zotero-library-research.json",
+      "bytes": 3928,
+      "sha256": "ff2d9896e246ba45690ebc475d980748cdb1b8edbca33f8fb78c2ae612308b81",
+      "git_blob": "da27b6c51553c3a80bc51d9a287806f15ee0a7c0"
     }
   ],
   "outputs": [
     {
       "path": "stellar-forge/developer-site/dist/grant.html",
-      "bytes": 103379,
-      "sha256": "9d06ce9dbd4adb157422b5c93f69eca3029f9ce7a8244c515bb70e4861be69d7",
-      "git_blob": "dd8da9788bd29b4c85bf2b8be1014adde5eef270"
+      "bytes": 105199,
+      "sha256": "d2a6258714da0dcff41e2f67f53d27e7f7a005858713a84c06dab1b5936fcbbe",
+      "git_blob": "3c12884da9389c86f77f8662b6074453c678c1d0"
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/application.md",
-      "bytes": 52315,
-      "sha256": "f37983a419112f5a6044f0eb716e09f0f3e7a0582341492f28c334f87b4679d9",
-      "git_blob": "b436fd03e2de61238cf82975ab456a7f511a38c6"
-    },
-    {
-      "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
-      "bytes": 1257433,
-      "sha256": "2ade406bcc6bb2a2d77f533069068df9a01317d705f83c07d4fa0433e69f44ca",
-      "git_blob": "20004dd3d33c68ebfc69f6c338a2ce44f5a3dcc9"
+      "bytes": 53345,
+      "sha256": "39f337bb16c8a9bda3a87036d46ffcbdf687a9feb7ed48bad01d50c212ad558c",
+      "git_blob": "73814fbcf738c4026d9f33228bca6c82d6fbcbd5"
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "bytes": 1038431,
-      "sha256": "8b727a0192c41a3ddad327b72ed099a5aa87f91d0520b2c2039395de089dba6c",
-      "git_blob": "30ad368988edae2d0c2755ba6a1123a40edadb0d"
+      "bytes": 1291797,
+      "sha256": "0f00703c3eacf6a65839540400f45a04296490a6ef14ecd36764639518d98347",
+      "git_blob": "650aeb521de25a4aaf59da1eb51c605d8c278c5b"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+      "bytes": 1454038,
+      "sha256": "d5d5fcccf1c59e3353dd1ba61e341bd43dc71d503e6a6a4d11b2d59ffa2b9861",
+      "git_blob": "7cc07aaa2d555fd217995479717656ebf254abc3"
     }
   ],
   "receiving_package": {
     "path": "operations/scf-current-customer-source-20261013/current-source-package.json",
-    "bytes": 3187564,
-    "sha256": "ecc1ba317c661290246b7f36e2de1dd71f81dc496f26f1ba88e6889770675531",
-    "bundle_id": "a3f80ae007f1af2f199028f4b74bb04b27f12e4abd3e9c123147841999a91601",
+    "bytes": 3789942,
+    "sha256": "bc545b7bec6ba474344083f401eee47575544ff2b47ebc629bca86caaf5d2a55",
+    "bundle_id": "577e7d013aa3680722b4956d256e2013e484fac7f18439ae39255b51effec46b",
     "roles": [
       {
         "role": "application",
         "name": "application.md",
         "originalName": "application.md",
         "mediaType": "text/markdown;charset=utf-8",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d7df87046c31eca1a02e6e1bd40acae7a1e78a39/stellar-forge/developer-site/dist/grant-data/application.md",
-        "bytes": 52315,
-        "sha256": "f37983a419112f5a6044f0eb716e09f0f3e7a0582341492f28c334f87b4679d9",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/82b0f63b057a68eb7f979d83ff44ce9d66a578c1/stellar-forge/developer-site/dist/grant-data/application.md",
+        "bytes": 53345,
+        "sha256": "39f337bb16c8a9bda3a87036d46ffcbdf687a9feb7ed48bad01d50c212ad558c",
         "identityBasis": "Verified against original source-index application SHA-256, byte count and Git blob."
       },
       {
@@ -574,9 +732,9 @@
         "name": "source-index.json",
         "originalName": "source-index.json",
         "mediaType": "application/json",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d7df87046c31eca1a02e6e1bd40acae7a1e78a39/stellar-forge/developer-site/dist/grant-data/source-index.json",
-        "bytes": 1038431,
-        "sha256": "8b727a0192c41a3ddad327b72ed099a5aa87f91d0520b2c2039395de089dba6c",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/82b0f63b057a68eb7f979d83ff44ce9d66a578c1/stellar-forge/developer-site/dist/grant-data/source-index.json",
+        "bytes": 1291797,
+        "sha256": "0f00703c3eacf6a65839540400f45a04296490a6ef14ecd36764639518d98347",
         "identityBasis": "Complete received source-index bytes; its own digest is a receiving identity."
       },
       {
@@ -584,7 +742,7 @@
         "name": "budget.csv",
         "originalName": "budget.csv",
         "mediaType": "text/csv;charset=utf-8",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d7df87046c31eca1a02e6e1bd40acae7a1e78a39/stellar-forge/developer-site/dist/grant-data/budget.csv",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/82b0f63b057a68eb7f979d83ff44ce9d66a578c1/stellar-forge/developer-site/dist/grant-data/budget.csv",
         "bytes": 597,
         "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00",
         "identityBasis": "Complete received budget bytes; this source index declares no independent budget-file digest."
@@ -594,146 +752,504 @@
         "name": "product-and-finance.md",
         "originalName": "product-and-finance.md",
         "mediaType": "text/markdown;charset=utf-8",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d7df87046c31eca1a02e6e1bd40acae7a1e78a39/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
-        "bytes": 1257433,
-        "sha256": "2ade406bcc6bb2a2d77f533069068df9a01317d705f83c07d4fa0433e69f44ca",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/82b0f63b057a68eb7f979d83ff44ce9d66a578c1/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+        "bytes": 1454038,
+        "sha256": "d5d5fcccf1c59e3353dd1ba61e341bd43dc71d503e6a6a4d11b2d59ffa2b9861",
         "identityBasis": "Verified against original source-index product_and_finance SHA-256, byte count and Git blob."
       }
     ]
   },
   "preservation": {
-    "previous_source_count": 775,
-    "current_source_count": 806,
+    "previous_source_count": 814,
+    "current_source_count": 995,
     "previous_ids_retained": true,
-    "complete_companion_chapters": 88,
-    "selected_declarations": 61,
+    "complete_companion_chapters": 93,
+    "selected_declarations": 69,
+    "selected_present_registrations": 67,
+    "absent_registration_chapters": [
+      {
+        "id": "collaborative-documents",
+        "heading": "## Collaborative Document Workbench: native shared editing and independent customer receiving",
+        "present": false
+      },
+      {
+        "id": "migration-acceptance",
+        "heading": "## Migration Acceptance Workbench: complete native migration and independent customer receiving",
+        "present": false
+      }
+    ],
     "added_source_ids": [
-      "economic-fred-operating-browser",
-      "economic-fred-operating-native",
-      "economic-fred-operating-source",
-      "merchant-bank-complete-account-mcp-course",
-      "merchant-bank-installed-receiver-producer",
-      "runtime-procedures-public-browser",
-      "runtime-procedures-carried-file-guide",
-      "runtime-procedures-return-guide",
-      "installation-desk-agent-operation",
-      "installation-desk-agent-preparation",
-      "installation-desk-agent-types",
-      "installation-desk-node-client",
-      "installation-desk-node-client-types",
-      "installation-desk-agent-catalogue",
-      "installation-desk-agent-provider",
-      "worldbank-customer-programmes",
-      "worldbank-analysis-programmes",
-      "worldbank-programme-model",
-      "worldbank-original-analysis",
-      "worldbank-programme-receiving",
-      "worldbank-programme-course",
-      "worldbank-installed-programme",
-      "worldbank-source-workspace",
-      "worldbank-source-merchant",
-      "worldbank-analytical-delivery",
-      "worldbank-complete-product",
-      "worldbank-recurring-customer",
-      "worldbank-intake-operation",
-      "worldbank-merchant-source-agent",
-      "worldbank-merchant-programme-agent",
-      "worldbank-customer-commissioning"
+      "x402api-merchant-payment-desk",
+      "x402api-merchant-customer-delivery",
+      "bloccpay-original-application",
+      "bloccpay-complete-operations",
+      "bloccpay-payroll-semantics",
+      "bloccpay-horizon-review",
+      "bloccpay-invoice-sdp-integration",
+      "bloccpay-sdp-event-inbox",
+      "bloccpay-bridge-intake",
+      "bloccpay-original-receiving",
+      "ckan-fresh-datastore-acquisition",
+      "ckan-fresh-acquisition-engine",
+      "directus-customer-agent-setup",
+      "directus-customer-agent-catalog",
+      "directus-customer-operator-client",
+      "directus-customer-agent-operations",
+      "directus-customer-agent-runtime",
+      "directus-customer-agent-distribution",
+      "document-merchant-corrections",
+      "document-merchant-agent",
+      "document-merchant-agent-client",
+      "document-merchant-agent-catalog",
+      "document-merchant-agent-guide",
+      "facilitator-commissioning-guide",
+      "facilitator-commissioning-engine",
+      "facilitator-commissioning-operator",
+      "facilitator-commissioning-server",
+      "facilitator-commissioning-browser",
+      "facilitator-commissioning-browser-recovery",
+      "facilitator-commissioning-portable-receiver",
+      "facilitator-commissioning-command",
+      "facilitator-commissioning-report",
+      "facilitator-commissioning-customer-guide",
+      "facilitator-commissioning-customer-agent",
+      "facilitator-commissioning-customer-provider",
+      "facilitator-commissioning-customer-contracts",
+      "facilitator-commissioning-customer-client",
+      "facilitator-commissioning-customer-command",
+      "grant-statement-batch-browser",
+      "grant-statement-desk-browser",
+      "grant-statement-allocations-guide",
+      "grant-statement-allocations-browser",
+      "grant-statements-browser-controller",
+      "grant-submission-offline-editor-guide",
+      "grant-issuer-form-workbook-guide",
+      "haystack-consumer-operating",
+      "haystack-consumer-domain",
+      "haystack-consumer-actions",
+      "haystack-consumer-cli",
+      "haystack-consumer-types",
+      "haystack-consumer-reports",
+      "haystack-consumer-browser-document",
+      "haystack-consumer-browser-controller",
+      "haystack-consumer-browser-style",
+      "haystack-consumer-native-receiving",
+      "haystack-consumer-browser-receiving",
+      "haystack-consumer-workspace-model",
+      "haystack-consumer-workspace-store",
+      "haystack-consumer-portable-workspace",
+      "haystack-consumer-projection-evidence",
+      "haystack-consumer-projection-reports",
+      "haystack-consumer-action-catalog",
+      "haystack-consumer-command-entry",
+      "haystack-consumer-typed-client",
+      "haystack-consumer-client-declarations",
+      "haystack-consumer-agent-configuration",
+      "haystack-consumer-agent-client",
+      "haystack-consumer-agent-tools",
+      "haystack-consumer-application-provider",
+      "haystack-consumer-installed-contribution",
+      "haystack-consumer-browser-inventory",
+      "haystack-consumer-navigation",
+      "haystack-consumer-package-export",
+      "haystack-consumer-native-guide",
+      "haystack-consumer-agent-guide",
+      "haystack-consumer-workspace-guide",
+      "haystack-consumer-installation-selection",
+      "merchant-bank-source-agent-request-contract",
+      "merchant-bank-source-agent-transforms",
+      "merchant-bank-source-agent-controller",
+      "merchant-bank-source-agent-catalog",
+      "merchant-bank-source-agent-accounting-owner",
+      "merchant-bank-source-agent-accounting-catalog",
+      "merchant-bank-source-agent-provider",
+      "merchant-bank-source-agent-installed-contribution",
+      "merchant-bank-source-agent-client",
+      "merchant-bank-source-agent-types",
+      "merchant-bank-source-agent-command",
+      "merchant-bank-source-agent-workflow",
+      "merchant-economics-operator-guide",
+      "merchant-economics-commercial-history",
+      "merchant-economics-working-copies",
+      "merchant-economics-scenario-planning",
+      "merchant-economics-pricing-workspace",
+      "merchant-economics-supplier-costs",
+      "merchant-economics-tariffs",
+      "merchant-economics-tariff-studies",
+      "merchant-economics-recorded-performance",
+      "merchant-economics-customer-tariffs",
+      "merchant-economics-customer-performance",
+      "merchant-economics-receivables",
+      "merchant-economics-service-agreements",
+      "merchant-economics-financial-operation",
+      "merchant-economics-original-receiving",
+      "merchant-economics-original-engine",
+      "openlineage-prepared-package-guide",
+      "openlineage-prepared-package-receiving",
+      "openlineage-prepared-package-verifier",
+      "openlineage-prepared-package-composition",
+      "openlineage-prepared-package-manifest",
+      "customer-operating-plan-page",
+      "customer-operating-plan-style",
+      "recovery-comparison-guide",
+      "recovery-comparison-app",
+      "recovery-comparison-browser-assets",
+      "recovery-comparison-workspace-cli",
+      "recovery-comparison-workspace-html",
+      "recovery-comparison-agent-catalog",
+      "recovery-comparison-agent-types",
+      "recovery-comparison-agent-client",
+      "recovery-comparison-workspace-model",
+      "recovery-comparison-browser",
+      "recovery-comparison-adapter",
+      "recovery-comparison-session-browser",
+      "recovery-comparison-server",
+      "recovery-comparison-native-types",
+      "recovery-comparison-native-exports",
+      "recovery-comparison-native-cli",
+      "recovery-comparison-core",
+      "runtime-companion-sets-core",
+      "runtime-companion-sets-cli",
+      "runtime-companion-sets-browser",
+      "runtime-companion-sets-manifest",
+      "runtime-companion-sets-types",
+      "runtime-companion-sets-guide",
+      "runtime-companion-sets-receiving",
+      "runtime-companion-sets-layout",
+      "runtime-companion-edition-sources",
+      "runtime-companion-edition-core",
+      "runtime-companion-edition-cli",
+      "runtime-companion-edition-browser",
+      "runtime-companion-edition-types",
+      "runtime-companion-edition-guide",
+      "runtime-companion-edition-receiving",
+      "installation-collection-agent",
+      "installation-collection-agent-types",
+      "installation-collection-store",
+      "installation-collection-store-types",
+      "installation-collection-session",
+      "installation-collection-session-types",
+      "installation-collection-cli",
+      "installation-collection-cli-types",
+      "installation-collection-operation",
+      "installation-collection-mcp-adapter",
+      "installation-collection-mcp-catalogue",
+      "installation-collection-grant-host",
+      "installation-collection-grant-catalogue",
+      "installation-collection-grant-provider",
+      "installation-collection-workspace-selection",
+      "installation-collection-agent-selection",
+      "installation-collection-provider-selection",
+      "webhook-event-agent-contract",
+      "webhook-event-agent-schema",
+      "webhook-event-agent-provider",
+      "webhook-event-agent-client",
+      "webhook-event-agent-client-types",
+      "webhook-event-agent-delivery",
+      "webhook-event-agent-delivery-types",
+      "webhook-event-agent-operating",
+      "webhook-event-agent-installation",
+      "webhook-event-installation-core",
+      "webhook-event-installation-receiver",
+      "webhook-event-installation-types",
+      "webhook-event-installation-profile",
+      "webhook-event-installation-operating",
+      "zotero-library-complete-product",
+      "zotero-customer-agent-setup",
+      "zotero-customer-agent-requests",
+      "zotero-customer-agent-runtime",
+      "zotero-customer-agent-distribution",
+      "zotero-customer-agent-receiving"
     ],
     "advanced_source_ids": [
       {
-        "id": "x402api-merchant-invoice-agent",
-        "old": "256258c314503fa2f716fe05b9d33f46b0f9e6cf",
-        "next": "2696e533a793ad9d7ef72bcd8f8a4259333be792"
+        "id": "grant-account-statements",
+        "old": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
+        "next": "c9933933db39a487258f0e52b4b21929ed5420b6"
       },
       {
-        "id": "merchant-bank-source-collections",
-        "old": "f912a1ece05abcfeaa83882dfb86db719fd745da",
-        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
-      },
-      {
-        "id": "merchant-bank-source-collection-model",
-        "old": "f912a1ece05abcfeaa83882dfb86db719fd745da",
-        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
-      },
-      {
-        "id": "merchant-bank-source-collection-command",
-        "old": "929ed21c5b8206fa17491ebd7c5da48ed49ca979",
-        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
-      },
-      {
-        "id": "merchant-bank-bundesbank-receiving",
-        "old": "f912a1ece05abcfeaa83882dfb86db719fd745da",
-        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
-      },
-      {
-        "id": "merchant-bank-original-application-course",
-        "old": "1c5a12ecf311ba7d7206905fbdabbe751a08b05e",
-        "next": "6439454c55b3b7aa83f4ff3e920ecc9340e25dfe"
-      },
-      {
-        "id": "merchant-bank-original-delivery-operation",
-        "old": "1c5a12ecf311ba7d7206905fbdabbe751a08b05e",
-        "next": "6439454c55b3b7aa83f4ff3e920ecc9340e25dfe"
-      },
-      {
-        "id": "merchant-bank-source-profile-model",
+        "id": "merchant-bank-statements-operation",
         "old": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
-        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+        "next": "deffacfdcbd8705ccd8b4d32d70214285bbc6035"
       },
       {
-        "id": "merchant-bank-source-profile-command",
+        "id": "merchant-bank-statements-installation",
         "old": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
-        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+        "next": "deffacfdcbd8705ccd8b4d32d70214285bbc6035"
       },
       {
-        "id": "merchant-bank-source-profile-operation",
+        "id": "merchant-bank-statements-handover",
         "old": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
-        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+        "next": "deffacfdcbd8705ccd8b4d32d70214285bbc6035"
       },
       {
-        "id": "merchant-bank-source-profile-receiving",
-        "old": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
-        "next": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77"
+        "id": "document-merchant-composition-guide",
+        "old": "a887ac9d56b1a0933bf1060bf70bd74ee25c6d16",
+        "next": "aa31a69246b62c015fdeb9c4dfcd1a96d86891cb"
       },
       {
-        "id": "runtime-procedures-browser",
-        "old": "74ec0c02b875973ca2371c1704e26eccd16544f0",
-        "next": "2352dffc46f2860ccf52595d2e486b0294b976e8"
+        "id": "document-merchant-composition-service",
+        "old": "a887ac9d56b1a0933bf1060bf70bd74ee25c6d16",
+        "next": "aa31a69246b62c015fdeb9c4dfcd1a96d86891cb"
       },
       {
-        "id": "installation-desk-operation",
-        "old": "93b7335efeb14665d1dce887c21d31258df04a0e",
-        "next": "c9ceb6435eb3c05a1c24944d7acb91e589388260"
+        "id": "document-merchant-composition-workspace",
+        "old": "a887ac9d56b1a0933bf1060bf70bd74ee25c6d16",
+        "next": "857bb0b0773eecebbf2aebda312454887c82f229"
       },
       {
-        "id": "installation-desk-python-launch",
-        "old": "93b7335efeb14665d1dce887c21d31258df04a0e",
-        "next": "c9ceb6435eb3c05a1c24944d7acb91e589388260"
+        "id": "haystack-installed-operations",
+        "old": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
+        "next": "7fec77105fa591f550c10e6407d8d66fa7f7907b"
       },
       {
-        "id": "installation-desk-node-launch",
-        "old": "93b7335efeb14665d1dce887c21d31258df04a0e",
-        "next": "c9ceb6435eb3c05a1c24944d7acb91e589388260"
+        "id": "directus-content-data-complete-product",
+        "old": "6bf48482bcde72e03698df3b6bd63cf584ce64df",
+        "next": "b05029e94bd5a309267ad5c2a52ed44d91aa40af"
+      },
+      {
+        "id": "grant-statements-original-receiving",
+        "old": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+        "next": "c9933933db39a487258f0e52b4b21929ed5420b6"
+      },
+      {
+        "id": "customer-operating-plan-guide",
+        "old": "710507fb46d1a401026254bad259a6f4deb88f88",
+        "next": "4ae8645020da8aaf70bff48b3e13126d86b55aaa"
+      },
+      {
+        "id": "customer-operating-plan-model",
+        "old": "710507fb46d1a401026254bad259a6f4deb88f88",
+        "next": "4ae8645020da8aaf70bff48b3e13126d86b55aaa"
+      },
+      {
+        "id": "customer-operating-plan-cli",
+        "old": "255f85043ba5d01eff07436b11db5e82dab8af9b",
+        "next": "4ae8645020da8aaf70bff48b3e13126d86b55aaa"
+      },
+      {
+        "id": "customer-operating-plan-editor",
+        "old": "710507fb46d1a401026254bad259a6f4deb88f88",
+        "next": "4ae8645020da8aaf70bff48b3e13126d86b55aaa"
+      },
+      {
+        "id": "customer-operating-plan-types",
+        "old": "710507fb46d1a401026254bad259a6f4deb88f88",
+        "next": "4ae8645020da8aaf70bff48b3e13126d86b55aaa"
+      },
+      {
+        "id": "recovery-object-sdk",
+        "old": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+        "next": "134640608b6fe4b53b5a2268b02d26207e320f0d"
+      },
+      {
+        "id": "recovery-object-workspace-guide",
+        "old": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
+        "next": "134640608b6fe4b53b5a2268b02d26207e320f0d"
+      },
+      {
+        "id": "grant-submission-review-complete-source",
+        "old": "02b5fb7b17712fe8acc7079a738d6c356f36d824",
+        "next": "20818fb16490921f31c372442006a52dfacdc89b"
+      },
+      {
+        "id": "merchant-bank-agent-file-reader",
+        "old": "139d5bd5180e075a4734c6d536232e1a937d7ec8",
+        "next": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2"
+      },
+      {
+        "id": "runtime-input-files-distribution",
+        "old": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
+        "next": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0"
+      },
+      {
+        "id": "economic-fred-operating-native",
+        "old": "633b4ca8be7c45de188903284181a1338ee1d0fd",
+        "next": "e23751bac6a047b973ad1aca9c241a99f43e5719"
+      },
+      {
+        "id": "worldbank-customer-programmes",
+        "old": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+        "next": "a6a3c7a8760586ac387d8834af164fbee3f269dd"
+      },
+      {
+        "id": "worldbank-installed-programme",
+        "old": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+        "next": "a6a3c7a8760586ac387d8834af164fbee3f269dd"
+      },
+      {
+        "id": "worldbank-complete-product",
+        "old": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
+        "next": "a6a3c7a8760586ac387d8834af164fbee3f269dd"
       }
     ],
     "original_budget_and_request_unchanged": true,
     "nine_original_answer_ids_retained": true,
     "full_composer_replay_identical": true,
-    "all_selected_declaration_git_blobs_verified": true,
-    "complete_four_role_package_reopen_equal": true
+    "complete_four_role_package_reopen_equal": true,
+    "document_sources_selected": [
+      "document-merchant-applications",
+      "document-merchant-composition-guide",
+      "document-merchant-original-batch",
+      "document-merchant-composition-service",
+      "document-merchant-composition-workspace",
+      "document-merchant-provider-contracts",
+      "document-merchant-assembly-guide",
+      "document-merchant-assembly-core",
+      "document-merchant-commissioning-guide",
+      "document-merchant-corrections",
+      "document-merchant-agent",
+      "document-merchant-agent-client",
+      "document-merchant-agent-catalog",
+      "document-merchant-agent-guide"
+    ]
+  },
+  "source_repairs": {
+    "canonical_paragraph_count": 11,
+    "canonical_paragraphs": [
+      {
+        "before": {
+          "bytes": 685,
+          "sha256": "896aaca37dece9dc987f63b1a234b97c9e4e3293edf8c733a8965f6a2575a84b"
+        },
+        "after": {
+          "bytes": 685,
+          "sha256": "d41a551a38b1521049b05fd1310aa1676cd2edc4df0674f0ab1d426d926a8f17"
+        },
+        "opening": "The [commissioning operator](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/bl"
+      },
+      {
+        "before": {
+          "bytes": 912,
+          "sha256": "5eedb70e8b67307b74f46f9f9e11ad44c580035108d922e3542864601630866a"
+        },
+        "after": {
+          "bytes": 912,
+          "sha256": "44e7f65e975ced542a13b00b90878b6ac86736111b9d9f796bb619da33d9e86f"
+        },
+        "opening": "Handover contains the original native job, source blobs, provider reviews, commands/results, seller "
+      },
+      {
+        "before": {
+          "bytes": 657,
+          "sha256": "e3a070fb7b1b572df512aa710a1ade98223c4f050fc32e563bf80b3ac2e22684"
+        },
+        "after": {
+          "bytes": 657,
+          "sha256": "5ed6665075d335b50d38a237539a64874c3e72b33060d0447092051a9142ea69"
+        },
+        "opening": "The [complete customer operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-w"
+      },
+      {
+        "before": {
+          "bytes": 1312,
+          "sha256": "0b7e7d73467e196e093d56bbbd999ee99fee0ce2e10b08c09ae25ca3bb805eb3"
+        },
+        "after": {
+          "bytes": 1312,
+          "sha256": "76ec63aa5e82d1fd20206f483fc7da62d04f53454bf487d16c201c91b05f9e2b"
+        },
+        "opening": "The [complete programme receiving implementation](https://github.com/woahwhattheheck/tjlabs-stellar-"
+      },
+      {
+        "before": {
+          "bytes": 2136,
+          "sha256": "cf714bf3b06c65ef830a0e1efd6898e1f5b1f381e3d11347008ef34039282aa2"
+        },
+        "after": {
+          "bytes": 2136,
+          "sha256": "c9260c1e3a9357b4872ab1dd2b1234ab1127a30ce4f974a9f5ec7483b378e88c"
+        },
+        "opening": "* [Original World Bank acquisition, source semantics and portable editions](https://github.com/woahw"
+      },
+      {
+        "before": {
+          "bytes": 751,
+          "sha256": "1965b7e5371b665a1e357d8e7019648dcb7c20249d3fc72057a36ab8cda18c28"
+        },
+        "after": {
+          "bytes": 924,
+          "sha256": "53e123332e6242cdb1d2daa3aed845d33bbb4725e17c31a828082219a6fc2213"
+        },
+        "opening": "The [Merchant provider](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d"
+      },
+      {
+        "before": {
+          "bytes": 1129,
+          "sha256": "e9ab2942e0286985c92e3a227b8e9b1b6f8e00b9c7a201234e51e4d38e279ce0"
+        },
+        "after": {
+          "bytes": 1319,
+          "sha256": "ce17beceae28175ad51a0683d38132938b95974ef31ef405fad260f8dadf4de8"
+        },
+        "opening": "**Give the receiving operator an editable procedure.** The delivered FRED Operating Plans workflow c"
+      },
+      {
+        "before": {
+          "bytes": 658,
+          "sha256": "d1b4eef8003c229be19bf4dcd3948ac19c0b217e7754a1120d4589a855d99597"
+        },
+        "after": {
+          "bytes": 1627,
+          "sha256": "92a396631c52e60a842dde730106b4f070e7d1a664c844e61d9946d2c561bf76"
+        },
+        "opening": "A recurring bank delivery often needs the same interpretation across several original files and more"
+      },
+      {
+        "before": {
+          "bytes": 542,
+          "sha256": "f92b643c0605f1380a52d2d4b3af61675c7e0f7eb673eb1b122d08e23c1753bc"
+        },
+        "after": {
+          "bytes": 1290,
+          "sha256": "7685fd280452db409afe4b33972a6d9423b6abbe36c7113bc425dfbca0930dc9"
+        },
+        "opening": "The operator selects the existing configured accounting workspace, reads the complete configured sou"
+      },
+      {
+        "before": {
+          "bytes": 784,
+          "sha256": "56da89a44694f1f7388d7c57bfa87fc2dcf912e34f4200405edc518d7a108819"
+        },
+        "after": {
+          "bytes": 1512,
+          "sha256": "8014ff4e1c064031ad76b9d2f4b8416951092f5b4c94271edbdf7c60b5dd4397"
+        },
+        "opening": "The [typed client](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b133c64"
+      },
+      {
+        "before": {
+          "bytes": 548,
+          "sha256": "784ce460f4daa65989b34d7bf1849d5715a548680dfc24431bb010e9b975ed71"
+        },
+        "after": {
+          "bytes": 736,
+          "sha256": "ae98dc9df53480018aa29f0fc451e678df07aae8257ce250c0277afcd36a5096"
+        },
+        "opening": "Complete report views page all physical rows, statements, pending entries, exclusions and issues. La"
+      }
+    ],
+    "fred_guide_selected_commit": "e23751bac6a047b973ad1aca9c241a99f43e5719",
+    "fred_prior_edition_retained": true,
+    "bank_source_chapter_updated": true,
+    "facilitator_source_chapter_owner": "Original REV103D source author; exact canonical corrections returned in the original publisher thread."
   },
   "execution": {
-    "environment": "V8 execution of the complete original publication path and original source-package path",
-    "publication_modules": 19,
-    "package_modules": 4,
-    "host_adapters": "In-memory original readFile/writeFile/readdir and UTF-8/digest primitives; no network or file operation inside the composer.",
-    "outside_scope": "No issuer receiving mutation, browser DOM, native installation, payment, or external submission was executed. Uncalled issuer/action hooks throw if reached.",
-    "uninvoked_mutation_hooks": []
+    "environment": "Connected V8 execution of complete unchanged original publication and reviewer-source receiving modules",
+    "modules": 33,
+    "original_functions": [
+      "runGrantComposition",
+      "makeSource",
+      "createSourceBundle",
+      "createReviewerSourcePackage",
+      "openReviewerSourcePackage"
+    ],
+    "host_adapters": "Memory filesystem for complete retained readFile/writeFile/readdir; standard UTF-8, SHA-1, SHA-256 and base64 primitives. All original source Git identities matched before execution. No issuer, payment, host installation or browser mutation is invoked by this publication.",
+    "rendered_receiving": "Original Page/Site and 22B7 saved-application owners receive this exact package for the existing outgoing desktop/narrow, controls, attachments and reopen course."
   },
   "ownership": {
-    "canonical_publisher": "DBC61 and original Page/Site/source-package owners",
-    "native_saved_case": "Original22B7 saved-v7/technical-review course",
-    "following_editions": "Later declarations and canonical edits continue through the same composer. This complete selected edition preserves the775-row predecessor and is not a reset to an earlier index."
+    "canonical_publisher": "Following original composer publication 05C7; original DBC61/BC3D and Page/Site/source-package owners retain their continuing work.",
+    "native_saved_case": "Original 22B7 saved-application and current original native receiving programme.",
+    "following_editions": "Later canonical and declaration edits remain in main and the original Canvas. The two absent authored chapters continue with the original authors and work_scanner; no incomplete chapter was invented or removed."
   }
 }
