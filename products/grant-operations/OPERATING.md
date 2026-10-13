@@ -217,6 +217,15 @@ The [Statement receiving guide](../../stellar/scf_2026/sf47_budget_model/workspa
 
 The [maintained reader provenance](../../stellar/scf_2026/sf47_budget_model/workspace/statement_parsers/README.md) identifies the unchanged original OFX and MT940 modules. The **grant-operations** package includes both readers and the grant adapter; both managed launchers bind those files to the selected source edition.
 
+
+## Reporting procedures and complete handover
+
+Use **starforge grant-reporting** to capture a complete native Budget performance report and its exact case archive together with a saved operating procedure. The procedure covers source tables and issuer terms, work/invoices, cash reconciliation, funding and capacity, customer installations and outcomes, the issued reporting edition and its receiver.
+
+Open **Command finder → Operating plans** to edit the work, record findings and save revisions. A new native capture can continue that same procedure while retaining history and custom steps. The complete reporting handover travels with the original native report and case; receiving imports that case and saves its Grant Application through the existing handoff operation, then continues the procedure on the destination host.
+
+The **grant-operations** selection includes Command finder, Operating Plans and the complete reporting command. See the [Grant reporting guide](REPORTING.md) for capture, editable handover, actual receiving, host profiles, command/API use and recovery.
+
 ## Review the operating period against the pinned budget
 
 Open **Delivery operations → Budget performance** for opening, period and closing cash/invoice positions, complete package and category budget comparisons, contributor activity, invoice aging and source-linked work/payment rows. Select the actual reporting dates; the report keeps the current case version and original recognition dates together. **Export complete handover** carries the full report, every CSV row, offline HTML and complete original case. Importing that ZIP reopens the case at its selected dates. The [Budget performance guide](../../stellar/scf_2026/sf47_budget_model/workspace/PERFORMANCE.md) covers the exact business arithmetic, source basis, browser, CLI and Merchant client.
