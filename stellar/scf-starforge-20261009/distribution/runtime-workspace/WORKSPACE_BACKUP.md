@@ -249,6 +249,47 @@ starforge runtime-workspace workspace-backup-open \
 original directory, workspace identity and zero launched workers. The
 subsequent ordinary `serve` command opens the same restored workspace.
 
+## Complete native receiving course
+
+The source includes a manually invoked operating programme at
+`receiving/WORKSPACE_BACKUP_RECEIVE.mjs`. Use the complete current selected
+Runtime workspace source with its distribution dependencies, the maintained
+Node/Python runtime, an existing Chromium executable and an installed Playwright
+module directory.
+
+From that Runtime workspace source directory, run:
+
+```sh
+node receiving/WORKSPACE_BACKUP_RECEIVE.mjs \
+  --source /absolute/selected-source/distribution/runtime-workspace \
+  --operation /absolute/private/runtime-backup-receiving-case \
+  --chromium /absolute/existing/chromium \
+  --playwright-root /absolute/existing/node_modules
+```
+
+The first invocation creates one private operating case. Continue with the same
+`--operation` and `--source` paths after an interruption. The programme retains
+its original request UUIDs and holds the case's native lease, so an existing
+operation is continued without creating a second receiving case.
+`--playwright-root` may be omitted when
+`CODEX_PRIMARY_RUNTIME_NODE_MODULES` already names that installed directory.
+
+This course operates the actual backup, download, archive inspection, original
+path restoration, binding review, explicit reopening, retained upload and CLI
+interfaces. It preserves the original source cohort, SQLite and binary inputs,
+relative link, writer and installation lease observations, and desktop/phone
+browser captures. A qualified interruption applies only to this programme's
+own original restore child; if that restore finishes first, the recorded result
+states that the interruption was not exercised.
+
+Retain the whole private operation directory. `OPERATING_CASE.json` records its
+original identities, completed steps and attempts; `operator-output/` retains
+downloads and command output, and `screens/` retains the browser captures.
+On completion, `operator-output/COMPLETE_RECEIVING_RESULT.json` names the actual
+archive, restore and receiving identities. Publish the complete private case
+through the existing artifact handoff for the operation; the programme does not
+send it to an external service.
+
 ## Model and HTTP integration
 
 The existing `openRuntimeWorkspace()` model exposes the complete backup
