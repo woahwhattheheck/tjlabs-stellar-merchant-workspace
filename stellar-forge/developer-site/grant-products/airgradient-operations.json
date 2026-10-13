@@ -1,0 +1,30 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "airgradient-operations",
+  "heading": "## AirGradient customer reporting, original-source intake and complete receiving",
+  "sources": [
+    {
+      "id": "airgradient-customer-operation",
+      "label": "AirGradient mixed-source reporting, original collection intake and complete customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/airgradient-operations/README.md",
+      "editions": [
+        {
+          "commit": "4224a19629e9565285e6c7ba990254534010774b",
+          "bytes": 27295,
+          "sha256": "51637a58408c79281bf6887678abcfb8bbab5ae354e2f3d179b15843a6f2a92b",
+          "git_blob": "3a826b5d851a0bb1e5a6461f9378a67b37c124d3"
+        }
+      ]
+    },
+    {
+      "id": "airgradient-original-commissioning-collection",
+      "label": "Complete original AirGradient source collection and operated initial and later reports",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "tree",
+      "path": "stellar/scf-starforge-20261009/partners/airgradient-operations/commissioning-source",
+      "commit": "112c98a572ee4ddb0aab29bec83eaecac1a8c0d0"
+    }
+  ]
+}
