@@ -8,6 +8,10 @@ Use this interface to prepare a grant delivery plan on a Linux worker, revise th
 
 Use `operations delivery-queue --case ID --as-of YYYY-MM-DD [--output FILE]` for the complete dated JSON view, and `operations delivery-queue-export --case ID --as-of YYYY-MM-DD --output FILE` for the full handover ZIP. Add `--workspace PATH` to the operations group. [Installation delivery queue](DELIVERY_QUEUE.md) provides complete commands, assignment editing and import/reopen instructions.
 
+## Installation effort and support
+
+Use `operations installation-effort-seed --case ID --installation ID --expected-revision N --expected-version N --as-of YYYY-MM-DD [--document FILE] [--output FILE]` to prepare the complete saved Installation review. Save the edited full document through the existing installation-preview/save commands. `installation-effort-selection --case ID --expected-version N --forecast ID --installation-selections FILE [--name TEXT] [--note TEXT] [--output FILE]` opens its reviewed remaining hours as a complete original Forecast input. [Installation effort and support](INSTALLATION_EFFORT.md) documents the full file-based operation and complete handover.
+
 ## Start from the installed release or original source
 
 Python 3.10 or newer on Linux is required. The model uses the Python standard library, including SQLite and `fcntl`; the installed command uses the existing Node launcher to start Python. Select another Python executable with `SF47_PYTHON=/absolute/path/to/python3`. No shell command is evaluated by the launcher.
