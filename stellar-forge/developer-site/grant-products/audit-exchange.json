@@ -264,6 +264,12 @@
           "bytes": 61230,
           "sha256": "a4b5e9e594a2e81acf710a60615a91ac98e9ceaa6ef8b9da3a05e43b34777ebe",
           "git_blob": "5ace1cb0d697b84e21b38073594e78f4a651ea46"
+        },
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 61566,
+          "sha256": "528d7c138d0118aa6b26c4fb741faf662f7ee9d341f8023297aea337020eda76",
+          "git_blob": "5a6e3fa2cde91585b3444f0d8913c7cf60bf3b6e"
         }
       ]
     },
@@ -279,6 +285,12 @@
           "bytes": 8882,
           "sha256": "195a91cb14c7bb0b58f48bef5994f7d0c7171b07f714edf3b7f676c3d75a6e95",
           "git_blob": "b2f68974a787a56eb1fc553683d195c9747b62bb"
+        },
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 9287,
+          "sha256": "08a0265b2d5bc6f51ff4f2b46c2729140731961b1d9dc9ac33ad23a79d315eb2",
+          "git_blob": "edb37eceae899bde9668d32510b6f3da3854c493"
         }
       ]
     },
@@ -324,6 +336,12 @@
           "bytes": 26052,
           "sha256": "4fd4a073b66186622410f372e5b86492ffcc15b1f5cb55490a613573b8e03a15",
           "git_blob": "a66ff938e43015ec9fe5048f496023275d034fde"
+        },
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 26192,
+          "sha256": "fb7303831dad5bb7c9062163f6ac56193bcee3eb7c15aec70055de1f2aa08509",
+          "git_blob": "7938b1de17b46108f711548b12d8d576f3462b94"
         }
       ]
     },
@@ -339,6 +357,12 @@
           "bytes": 41397,
           "sha256": "e70d7e74e81edcce98c8ec39f6201e86e4bfe74f84b0eb3e522aa97127ecbe92",
           "git_blob": "a5e0e06d006b00c4de5c1b8460e1d9f073c097c1"
+        },
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 45230,
+          "sha256": "38197d0af6933c772c42d0f8ab733dc99fe72d63d9be02dd71190b0cb2189c8b",
+          "git_blob": "c27a46490a285ff16f8f1b268f8c1015f9e9cc49"
         }
       ]
     },
@@ -384,6 +408,12 @@
           "bytes": 2165,
           "sha256": "aefe8ee3b5f56fa1d5775656210ad3f7206758c8eefe6e35c66a71bbf80a10af",
           "git_blob": "255902f3e59c8542c583cef7bdba414cebf19b62"
+        },
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 2339,
+          "sha256": "3929f870acea3be030d4ce75c6a638622d01dcd66726978da1c07160b8776bc1",
+          "git_blob": "88f50f1e706f632368c92a092721d7a0b949093e"
         }
       ]
     },
@@ -429,6 +459,111 @@
           "bytes": 17239,
           "sha256": "0e2c184bf62a65060abafdd7da005ccd65eaf5bde2be9d0aa3b23807ad9c6b3d",
           "git_blob": "143286f57dd038768387c6e539799c6e3f69fae1"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-queue-engine",
+      "label": "Original native ordered recipient review queues and retained history",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/recipient_queue.py",
+      "editions": [
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 23281,
+          "sha256": "f15755236cebef3b5d573e6f8b5a207d02664a5cea359bba4e6c30f9a67119ce",
+          "git_blob": "fa3ac386290de2ea08df8bd94a806f4cf57e1e3d"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-queue-browser",
+      "label": "Installed staff queue and complete unfinished working copies",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/public/recipient-queue.js",
+      "editions": [
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 18557,
+          "sha256": "04a31cf1969acc1d326944fb09614c2a02840690369d235c7df8675919941728",
+          "git_blob": "457d0894ef7cb8ec58abe074a255a2489f2922ed"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-installed-page",
+      "label": "Complete installed author screen and recipient queue controls",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/public/index.html",
+      "editions": [
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 36728,
+          "sha256": "a9ef5b274d75756a9bc43ada52decc5e676612304674d545c90b4c57fec61ea1",
+          "git_blob": "da2c7d6ca20e5157fd068f995dacfcf94607171f"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-browser-assets",
+      "label": "Complete installed browser asset selection",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/browser-assets.json",
+      "editions": [
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 1708,
+          "sha256": "db3a39530cb5041329ac2b97ab029b9f904138fee41041b26c52e60606fd23bd",
+          "git_blob": "f1600e4b051e905fd3fe2c10e86b8fc425b06f02"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-queue-guide",
+      "label": "Whole staff queue operation and following receiving guide",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_QUEUE.md",
+      "editions": [
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 15901,
+          "sha256": "f3e508f1e8281af341327269adf45f3fea06195108913f0e4c82c4b57459a6a4",
+          "git_blob": "00540091f2bb173ad39c8959f76ab88149f98e23"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-queue-browser-course",
+      "label": "Original author queue browser continuation and request recovery",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_QUEUE_BROWSER.mjs",
+      "editions": [
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 12415,
+          "sha256": "4b74df2f5f274eaa19bb3a52ba2d9e2a366b085f48ebc20566443035930f77ac",
+          "git_blob": "b3af3dc8ba758d96a0ca4879d905b61553da6032"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-recipient-queue-native-course",
+      "label": "Whole following queue receiving and independent editable handover",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/AUDIT_RECIPIENT_QUEUE_RECEIVING.py",
+      "editions": [
+        {
+          "commit": "9a3835ac71d51ac70cdfa045eaf7879c07a1f7cf",
+          "bytes": 15383,
+          "sha256": "a1c2a1875af8374fc3dcb1adcfd1ce086e181c1a3754c568f0a8c0f4051287cd",
+          "git_blob": "0174727659e28671640fd09b34d9f42de1ebc8c4"
         }
       ]
     }
