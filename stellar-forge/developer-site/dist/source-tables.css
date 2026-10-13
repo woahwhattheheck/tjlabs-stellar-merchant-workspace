@@ -18,3 +18,12 @@
 .source-literal { max-height: 28rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: .8rem; border: 1px solid #c5c5c5; background: #f7f7f7; font: .82rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; }
 .document-intake [hidden] { display: none !important; }
 @media (max-width: 560px) { .document-intake .section-title { align-items: stretch; flex-direction: column; } .document-pagination button { flex: 1 1 42%; } .document-grid td { min-width: 8rem; } }
+
+/* Explicit source-review colors also apply within embedded merchant shells. */
+#source-corrections{background:#fff;color:#171717}
+#source-corrections h2,#source-corrections h3,#source-corrections p,#source-corrections label,#source-corrections td,#source-corrections th,#source-corrections small,#source-corrections summary,#source-corrections pre,#source-corrections span{color:#171717}
+#source-corrections input,#source-corrections textarea,#source-corrections button{background:#fff;color:#171717;border:1px solid #8a8a8a}
+#source-corrections button:disabled{color:#626262;background:#ededed;opacity:1}
+#source-corrections .source-cell-choice{white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;min-width:7rem;max-width:22rem;width:100%}
+#source-corrections pre{white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:600px){#source-corrections .inline-actions{gap:.35rem}#source-corrections button{padding:.5rem;font-size:.85rem}}
