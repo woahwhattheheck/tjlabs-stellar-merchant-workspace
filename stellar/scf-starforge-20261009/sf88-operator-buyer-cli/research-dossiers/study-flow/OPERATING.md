@@ -14,7 +14,7 @@ Select retained source editions. The work-set helper selects their original edit
 
 The selected editions, work sets, protocols, original queue decisions, explicit study groups and prior reporting edition become one frozen source basis when saved. A preview reads that source without adding a dossier revision.
 
-Choose **Refresh from the current original dossier** when new searches or eligibility decisions belong in the next edition. **Keep the selected saved source basis** permits reporting corrections against the retained source. Editing a historical edition selects its exact basis and preserves the newer editions.
+Choose **Refresh from the current original dossier** when new searches or eligibility decisions belong in the next edition. **Keep the selected saved source basis** permits reporting corrections against the retained source. Editing a historical edition selects its exact basis and preserves the newer editions. Reopening or refreshing the pane retains the explicitly selected saved edition; saving an edit appends a new edition after the current one.
 
 ## Review records, retrieval and study links
 
@@ -39,6 +39,8 @@ Reports group retained candidate occurrences by their original canonical key or 
 
 Original full-text availability can establish retrieval when its source says so. A reviewer’s unavailable-text observation alone does not establish an attempt. Supply the actual retrieval basis for that outcome.
 
+Exclusion labels follow the original protocol of each selected report's work set. When different protocol revisions reuse a reason ID, each report keeps the label from its own protocol. New saved flow editions use reporting version 2. Existing saved editions keep their original recorded rendering and hashes; opening an earlier edition preserves it. To produce a corrected report from those retained sources, save a new edition using the retained basis. The original project, prior editions, review history and complete portable receiving remain available.
+
 Screening and assessment counts consume original resolved eligibility statuses. A provisional agreement stays pending until resolution in that workflow. Open original Eligibility to change eligibility; Study Flow records reporting decisions around those outcomes.
 
 ### Studies
@@ -51,7 +53,7 @@ Each active metric exposes the reported value, original derived value, known mem
 
 To replace a count, record a nonnegative integer, original reference, exact locator and reason. Native edition and occurrence IDs can be part of its attribution. A blank value means unknown; a known zero remains distinct. **Use the native derived count** removes the override and recalculates from the same source. Overrides retain native members.
 
-Import a complete original UTF-8 CSV with `data` and `n` columns. The metric editor and exported count table expose valid metric IDs. The importer retains the whole body, including a BOM, and calculates its byte length and SHA-256. Quoted headers, embedded commas, line breaks and doubled quotes are supported. Duplicate metrics, malformed quoting, invalid integers and unknown nonempty metric IDs are rejected. Empty rows and the published `NA` marker do not become counts.
+Import a complete original UTF-8 **Study Flow metric CSV** with `data` and `n` columns. Use the application's Counts CSV or those same numeric metric IDs; the metric editor and exported count table expose every accepted ID. Each `n` cell is a nonnegative integer or blank, and full-text reason counts use their own structured editor and separate Reasons CSV. The importer retains the whole body, including a BOM, and calculates its byte length and SHA-256. Quoted headers, embedded commas, line breaks and doubled quotes are supported. Duplicate metrics, malformed quoting, invalid integers and unknown nonempty metric IDs are rejected. Empty rows and the published `NA` marker do not become counts.
 
 Enter the source reference and reason before choosing a file. This import remains read-only until save retains both the attributed rows and original file. Each locator binds its original record number, hash and fields. The input limit is 1 MiB, with no silent row truncation.
 
