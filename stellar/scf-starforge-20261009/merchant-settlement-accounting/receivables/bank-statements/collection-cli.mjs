@@ -10,7 +10,7 @@ const help='Original bank statement collections\n\n'+
  'starforge bank-statements collection prepare --manifest /absolute/original-files.json --out /absolute/new-collection.json\n'+
  'starforge bank-statements collection inspect --input /absolute/collection.json --out /absolute/new-review.json\n'+
  'starforge bank-statements collection extract --input /absolute/collection.json --out /absolute/new-originals-directory\n\n'+
- 'Manifest: {workspaceId:"original UUID",name:"collection",files:[{path:"/absolute/original.xml",mapping:{format:"CAMT053",columns:{},camtDetailPolicy:"PRESERVE_ONLY"},included:true,note:""}]}.\n'+
+ 'Manifest: {workspaceId:"original accounting workspace SHA256",name:"collection",files:[{path:"/absolute/original.xml",mapping:{format:"CAMT053",columns:{},camtDetailPolicy:"PRESERVE_ONLY"},included:true,note:""}]}.\n'+
  'Each file retains its complete bytes and own explicit interpretation. Inspect uses the installed original source parser and includes every selected statement section or its actual source error. Complete collection files open in Statement collections in the existing bank browser. Outputs are create-only; extract also retains the complete source collection.\n';
 const problem=(code,message)=>{throw Object.assign(new Error(message),{code});};
 function absolute(value){if(typeof value!=='string'||!isAbsolute(value)||value!==resolve(value)||value==='/')problem('COLLECTION_PATH','Use an absolute normalized file or directory path.');return value;}

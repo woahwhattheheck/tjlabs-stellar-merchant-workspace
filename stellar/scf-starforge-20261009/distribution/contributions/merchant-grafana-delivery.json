@@ -1,0 +1,23 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-grafana-delivery",
+  "description": "Original Grafana handover inspection, implementation task linkage and full Support case receiving",
+  "components": [
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console",
+    "stellar/scf_2026/sf49_data_commissioning"
+  ],
+  "commands": {
+    "merchant-grafana-delivery": "stellar/scf-starforge-20261009/sf74-merchant-support-console/case-grafana-delivery-cli.mjs"
+  },
+  "commandDescriptions": {
+    "merchant-grafana-delivery": "Inspect the complete original Grafana handover, review task linkage and export or receive its full Support case"
+  },
+  "exports": {
+    "./merchant/grafana-delivery": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/case-grafana-delivery.mjs",
+    "./merchant/grafana-delivery-cli": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/case-grafana-delivery-cli.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/GRAFANA_CASE_DELIVERY.md",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/GRAFANA_CASE_DELIVERY_CLI.md"
+  ]
+}

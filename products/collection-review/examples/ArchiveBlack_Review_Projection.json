@@ -1,19 +1,19 @@
 {
   "schema": "stellar-forge.collection-review-report.v1",
   "workspace": {
-    "id": "00000000-0000-4000-8000-000000000001",
-    "name": "ArchiveBlack · Institution source review"
+    "id": "2d72a9c1-1010-4ea4-8cde-14b650617ff9",
+    "name": "ArchiveBlack · Institution source review · credential-redacted publication"
   },
   "revision": {
-    "id": "revision-b2de4cbcc3d9b53b6c6da1a35d6f6d5795ff8db784f00f9c92ae74bea05b9e78",
-    "parentId": "revision-67da9d55127b73a32af9582448c13f04777c026922d94c41bed02e52e0830164",
-    "createdAt": "2026-10-13T07:54:47.000Z",
-    "actor": "TJLabs preparation operator",
-    "note": "Retained 44 published occurrences from the original captured pages. Review remains unreviewed; rights unknown."
+    "id": "revision-ff5d5c2087cd1153f3063f4eb2f4421c4c7613ab1449bd5a940318d01c9084b5",
+    "parentId": "revision-926bb18c924bac6d59323fb726bb1e5a45f22cffd523741d85263b883b411520",
+    "createdAt": "2026-10-13T08:27:27.000Z",
+    "actor": "TJLabs source publication operator",
+    "note": "Credential-redacted publication derived from the retained two ArchiveBlack captures. Only four third-party map-key strings were replaced; all44 ordered catalogue occurrences remain unreviewed and rights unknown. See PUBLICATION_REDACTION.json for original and derivative identities."
   },
   "collections": [
     {
-      "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282",
+      "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b",
       "institution": {
         "title": "Toronto Metropolitan University – (Formerly Ryerson University)",
         "description": "The Archives serves as the institutional memory of the Toronto Metropolitan University community. The Archives appraises, preserves, and makes accessible a broad range of primary source materials which provide administrative, academic, fiscal, legal, social, and cultural record of Toronto Metropolitan University.",
@@ -33,10 +33,10 @@
       },
       "source": {
         "format": "archiveblack-html",
-        "filename": "ArchiveBlack_Original_TMU_Institution_20261013.html",
+        "filename": "ArchiveBlack_Credential_Redacted_TMU_Institution_20261013.html",
         "url": "https://archiveblack.ca/archives/toronto-metropolitan-university-ryerson/",
         "observedAt": "2026-10-13T07:54:47.000Z",
-        "sha256": "876c468733f278e6d720d752dfe6a52e2738f4df967684b7598cde9c1b0c3e88",
+        "sha256": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851",
         "bytes": 127506
       },
       "entries": [
@@ -51,7 +51,7 @@
             "start": 41267,
             "end": 41435
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:1",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:1",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -75,7 +75,7 @@
             "start": 41436,
             "end": 41659
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:2",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:2",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -99,7 +99,7 @@
             "start": 41660,
             "end": 42162
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:3",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:3",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -123,7 +123,7 @@
             "start": 42163,
             "end": 42352
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:4",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:4",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -147,7 +147,7 @@
             "start": 42353,
             "end": 42835
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:5",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:5",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -171,7 +171,7 @@
             "start": 42836,
             "end": 43386
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:6",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:6",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -195,7 +195,7 @@
             "start": 43387,
             "end": 43569
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:7",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:7",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -219,7 +219,7 @@
             "start": 43570,
             "end": 43738
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:8",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:8",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -243,7 +243,7 @@
             "start": 43739,
             "end": 43924
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:9",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:9",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -267,7 +267,7 @@
             "start": 43925,
             "end": 44141
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:10",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:10",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -291,7 +291,7 @@
             "start": 44142,
             "end": 44697
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:11",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:11",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -315,7 +315,7 @@
             "start": 44698,
             "end": 44909
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:12",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:12",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -339,7 +339,7 @@
             "start": 44910,
             "end": 45461
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:13",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:13",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -363,7 +363,7 @@
             "start": 45462,
             "end": 46086
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:14",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:14",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -387,7 +387,7 @@
             "start": 46087,
             "end": 46357
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:15",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:15",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -411,7 +411,7 @@
             "start": 46358,
             "end": 46628
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:16",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:16",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -435,7 +435,7 @@
             "start": 46629,
             "end": 46934
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:17",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:17",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -459,7 +459,7 @@
             "start": 46935,
             "end": 47192
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:18",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:18",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -483,7 +483,7 @@
             "start": 47193,
             "end": 47450
           },
-          "id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282:19",
+          "id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b:19",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -499,7 +499,7 @@
       ]
     },
     {
-      "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168",
+      "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed",
       "institution": {
         "title": "Museum London",
         "description": "The Museum London collection page highlights a large and diverse archive of over 5,500 artworks and nearly 50,000 historical artifacts focused on the history and culture of London and Southwestern Ontario.\n \nThese links were provided by Zahra McDoom (TD Curator of Collections of Museum London)",
@@ -521,10 +521,10 @@
       },
       "source": {
         "format": "archiveblack-html",
-        "filename": "ArchiveBlack_Original_Museum_London_20261013.html",
+        "filename": "ArchiveBlack_Credential_Redacted_Museum_London_20261013.html",
         "url": "https://archiveblack.ca/archives/museum-london/",
         "observedAt": "2026-10-13T07:54:47.000Z",
-        "sha256": "7bf9e050d5786bce5db91fc8668ca28cdec89fe8c2f39c5603aabce776daa623",
+        "sha256": "92196d63685211b567a0f7889459cb2ce15eeaa776eb5a675b48e661de7fefb8",
         "bytes": 127389
       },
       "entries": [
@@ -539,7 +539,7 @@
             "start": 41216,
             "end": 41427
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:1",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:1",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -563,7 +563,7 @@
             "start": 41428,
             "end": 41670
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:2",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:2",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -587,7 +587,7 @@
             "start": 41671,
             "end": 41919
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:3",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:3",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -611,7 +611,7 @@
             "start": 41920,
             "end": 42182
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:4",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:4",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -635,7 +635,7 @@
             "start": 42183,
             "end": 42421
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:5",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:5",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -659,7 +659,7 @@
             "start": 42422,
             "end": 42686
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:6",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:6",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -683,7 +683,7 @@
             "start": 42687,
             "end": 42951
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:7",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:7",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -707,7 +707,7 @@
             "start": 42952,
             "end": 43216
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:8",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:8",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -731,7 +731,7 @@
             "start": 43217,
             "end": 43481
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:9",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:9",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -755,7 +755,7 @@
             "start": 43482,
             "end": 43776
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:10",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:10",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -779,7 +779,7 @@
             "start": 43777,
             "end": 44033
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:11",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:11",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -803,7 +803,7 @@
             "start": 44034,
             "end": 44349
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:12",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:12",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -827,7 +827,7 @@
             "start": 44350,
             "end": 44641
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:13",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:13",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -851,7 +851,7 @@
             "start": 44642,
             "end": 44891
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:14",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:14",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -875,7 +875,7 @@
             "start": 44892,
             "end": 45129
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:15",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:15",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -899,7 +899,7 @@
             "start": 45130,
             "end": 45445
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:16",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:16",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -923,7 +923,7 @@
             "start": 45446,
             "end": 45687
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:17",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:17",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -947,7 +947,7 @@
             "start": 45688,
             "end": 45938
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:18",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:18",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -971,7 +971,7 @@
             "start": 45939,
             "end": 46175
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:19",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:19",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -995,7 +995,7 @@
             "start": 46176,
             "end": 46373
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:20",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:20",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -1019,7 +1019,7 @@
             "start": 46374,
             "end": 46624
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:21",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:21",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -1043,7 +1043,7 @@
             "start": 46625,
             "end": 46879
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:22",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:22",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -1067,7 +1067,7 @@
             "start": 46880,
             "end": 47108
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:23",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:23",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -1091,7 +1091,7 @@
             "start": 47109,
             "end": 47357
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:24",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:24",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",
@@ -1115,7 +1115,7 @@
             "start": 47358,
             "end": 47548
           },
-          "id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168:25",
+          "id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed:25",
           "review": {
             "status": "unreviewed",
             "suggestedTitle": "",

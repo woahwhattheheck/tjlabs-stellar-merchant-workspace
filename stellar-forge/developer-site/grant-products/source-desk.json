@@ -1,0 +1,217 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "installation-source-desk",
+  "heading": "## Customer source preparation and installed delivery",
+  "sources": [
+    {
+      "id": "installation-desk-operation",
+      "label": "Installed operation and source handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/SOURCE_DESK_INSTALLATION.md",
+      "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
+          "bytes": 11285,
+          "sha256": "4c47325ae2c463edf06113e5ae399c1139193999967588963ac3ad804f3cedd1"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-python-launch",
+      "label": "Python managed source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/managed_launch.py",
+      "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
+          "bytes": 22320,
+          "sha256": "9efee26409d9039239e9a8140e6ee0579669430033f617b6752371f10c7feded"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-node-launch",
+      "label": "Node managed source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/launch.mjs",
+      "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
+      "required": true,
+      "editions": [
+        {
+          "commit": "93b7335efeb14665d1dce887c21d31258df04a0e",
+          "bytes": 25029,
+          "sha256": "f484dfe12a747cbe45a1001911dbf077e54c04b90ecc591559ed41c7ff45c6b5"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-workspace",
+      "label": "Original Source Desk and Installation adapter",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_sources.py",
+      "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+          "git_blob": "83052fd53c5d922313558100f84058c7d4f6b17a",
+          "bytes": 59867,
+          "sha256": "97e090a5c1adcb2d1bc3a5e5331e528ab6b09a1cd0a5de936ae3308d72d771a3"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-browser",
+      "label": "Complete operator workspace and saved working copies",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_sources.mjs",
+      "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+          "git_blob": "12178ff041a8efcda57c60499031bd4e9cec8ae6",
+          "bytes": 125534,
+          "sha256": "0814a9c439fdb358d99b1d126804230c2a7fe2468bafedcacd5f98d4eda0e201"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-collection",
+      "label": "Original whole-file collection intake",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_source_collection.mjs",
+      "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+          "git_blob": "280cf8f318e6f200988a2a8bafa53d17ec192a53",
+          "bytes": 30041,
+          "sha256": "426a12240f3118370f984fe190b69302c4f4daafd88b2e3d3c84d91991476090"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-handover",
+      "label": "Complete Delivery handover reader",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/handover-inputs.py",
+      "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+          "git_blob": "cd9e408aac7b271704e2f0b278140a4872b0a466",
+          "bytes": 15963,
+          "sha256": "148822e43a45801d7342dff1f4f7eb8f4e85ceb892920f3d6fa31be110937af9"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-programme",
+      "label": "Customer programme and original Installation change composer",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/customer-programme-core.mjs",
+      "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+          "git_blob": "35803f24cf6578069f66ee3d695e2d8155d7d1ee",
+          "bytes": 13840,
+          "sha256": "d22d9468b0f9b2e5b0e12dbb46f3470db516889102b58022db996c31c6ee69d2"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-commissioning-archive",
+      "label": "Complete merchant commissioning archive receiver",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_commissioning_archive.py",
+      "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+          "git_blob": "992c63a7cabfe396006d8c4c69e20c64c018aa0b",
+          "bytes": 16476,
+          "sha256": "ac8a031ef8d1c8c5fede75ee3314c5b2c3a6add9dae3c2a4488cb1e0653494fe"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-native-client",
+      "label": "Original workspace native operations and reconciliation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation_source_desk_client.py",
+      "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+          "git_blob": "2a784a43461dd7301edd5076a9e0625592cc00fd",
+          "bytes": 15204,
+          "sha256": "06e914088a29cdbde904536eeed574132b3d806eafdee37a19e11140151e0cfa"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-native-receiving",
+      "label": "Whole original source and installed receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-receiving.py",
+      "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+          "git_blob": "8ab990750e5535cac2b9a5cbb645f71817121ce9",
+          "bytes": 79675,
+          "sha256": "178eb21e657e1359cd9a97e2b8b4023ed0c38a887588d63cd5c22984a352ef99"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-browser-receiving",
+      "label": "Complete browser receiving and retained output comparison",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-receiving.mjs",
+      "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+      "required": true,
+      "editions": [
+        {
+          "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+          "git_blob": "c48ce2dae3c658ceb596296237258190ce668b76",
+          "bytes": 58686,
+          "sha256": "082e4a2b32f5c53344b963f6e74083a39fe048d0ad3f0c1e93a34d51cb8e49c6"
+        }
+      ]
+    },
+    {
+      "id": "installation-desk-catalogue",
+      "label": "Complete customer profiles and preparation engines",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "tree",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders",
+      "commit": "1d91db51af1b721ab979907ae3739fcacc965200",
+      "required": true
+    }
+  ]
+}

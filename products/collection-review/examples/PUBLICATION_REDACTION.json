@@ -1,0 +1,123 @@
+{
+  "schema": "stellar-forge.collection-publication-redaction.v1",
+  "operation_id": "COLLECTION-REVIEW-PUBLIC-MAPS-KEY-REDACTION-20261013-2D58",
+  "created_at": "2026-10-13T08:27:27.000Z",
+  "reason": "A third-party Google Maps browser key was retained in captured public HTML. The reusable public example replaces only that value with a nonfunctional marker.",
+  "placeholder": "REDACTED_PUBLIC_GOOGLE_MAPS_BROWSER_KEY",
+  "replacement_utf8_bytes": 39,
+  "occurrences": 4,
+  "detected_value_sha256": "dc8d9803a4f9f6088b0b1379a05819ed513e6b623e1412044e8dadead8c93ffc",
+  "credential_validation_attempted": false,
+  "credential_rotation_claimed": false,
+  "original": {
+    "git_blob": "3cf0e4f1296c993de33372a81601cd00faaf3f3c",
+    "file_sha256": "139a9393b8f53374b794a4f7c4fb60df8ae86cdeb2096d832ce50a2f15420f7a",
+    "workspace_id": "00000000-0000-4000-8000-000000000001",
+    "workspace_sha256": "5117d037c8962f8f99eeb03fb38216a7c66db374e94ec6bfb4908fce43ed49e8",
+    "head_id": "revision-b2de4cbcc3d9b53b6c6da1a35d6f6d5795ff8db784f00f9c92ae74bea05b9e78",
+    "revisions": [
+      {
+        "id": "revision-67da9d55127b73a32af9582448c13f04777c026922d94c41bed02e52e0830164",
+        "parentId": null,
+        "createdAt": "2026-10-13T07:54:47.000Z",
+        "actor": "TJLabs preparation operator",
+        "note": "Created collection review workspace",
+        "request_id": "00000000-0000-4000-8000-000000000002"
+      },
+      {
+        "id": "revision-b2de4cbcc3d9b53b6c6da1a35d6f6d5795ff8db784f00f9c92ae74bea05b9e78",
+        "parentId": "revision-67da9d55127b73a32af9582448c13f04777c026922d94c41bed02e52e0830164",
+        "createdAt": "2026-10-13T07:54:47.000Z",
+        "actor": "TJLabs preparation operator",
+        "note": "Retained 44 published occurrences from the original captured pages. Review remains unreviewed; rights unknown.",
+        "request_id": "00000000-0000-4000-8000-000000000003"
+      }
+    ]
+  },
+  "publication": {
+    "workspace_id": "2d72a9c1-1010-4ea4-8cde-14b650617ff9",
+    "workspace_sha256": "0dee2f6b864978bf8ea9f939495aad46b9d8b67ab5b5534824ae51eb20781257",
+    "head_id": "revision-ff5d5c2087cd1153f3063f4eb2f4421c4c7613ab1449bd5a940318d01c9084b5",
+    "revisions": [
+      {
+        "id": "revision-926bb18c924bac6d59323fb726bb1e5a45f22cffd523741d85263b883b411520",
+        "parent_id": null,
+        "request_id": "27852612-5ced-433b-8ce4-a44ba3711410"
+      },
+      {
+        "id": "revision-ff5d5c2087cd1153f3063f4eb2f4421c4c7613ab1449bd5a940318d01c9084b5",
+        "parent_id": "revision-926bb18c924bac6d59323fb726bb1e5a45f22cffd523741d85263b883b411520",
+        "request_id": "f124cb45-d44c-4119-8c73-3982760a32a2"
+      }
+    ],
+    "source_mappings": [
+      {
+        "original_id": "collection-eda83058271b213aa3a618bce4c96c8d59606ac36cd5514f1c04836c226dc282",
+        "derived_id": "collection-8e74d9a5287992d521493055f7cdbe7e26238187bc2ba32c517e467d55a1208b",
+        "original_sha256": "876c468733f278e6d720d752dfe6a52e2738f4df967684b7598cde9c1b0c3e88",
+        "derived_sha256": "8fb9e88288bb3cc60f9a7abb1c2d17c27baccd5e1e496eda5c4d62dd2f67a851",
+        "original_bytes": 127506,
+        "derived_bytes": 127506,
+        "url": "https://archiveblack.ca/archives/toronto-metropolitan-university-ryerson/",
+        "observed_at": "2026-10-13T07:54:47.000Z",
+        "original_filename": "ArchiveBlack_Original_TMU_Institution_20261013.html",
+        "derived_filename": "ArchiveBlack_Credential_Redacted_TMU_Institution_20261013.html",
+        "replacements": 2,
+        "occurrences": 19,
+        "occurrence_content_and_byte_coordinates_unchanged": true
+      },
+      {
+        "original_id": "collection-dc79ee56cdbe8060a734f9fe4e2411def68770c426acceeae85483ba8fdb3168",
+        "derived_id": "collection-e04f751ce47ca2460ad59a4d448d888770ca117020cd6fcefb4f6d5b8957efed",
+        "original_sha256": "7bf9e050d5786bce5db91fc8668ca28cdec89fe8c2f39c5603aabce776daa623",
+        "derived_sha256": "92196d63685211b567a0f7889459cb2ce15eeaa776eb5a675b48e661de7fefb8",
+        "original_bytes": 127389,
+        "derived_bytes": 127389,
+        "url": "https://archiveblack.ca/archives/museum-london/",
+        "observed_at": "2026-10-13T07:54:47.000Z",
+        "original_filename": "ArchiveBlack_Original_Museum_London_20261013.html",
+        "derived_filename": "ArchiveBlack_Credential_Redacted_Museum_London_20261013.html",
+        "replacements": 2,
+        "occurrences": 25,
+        "occurrence_content_and_byte_coordinates_unchanged": true
+      }
+    ]
+  },
+  "validation": {
+    "original_and_publication_opened_with": "Maintained collection-review-workspace.mjs 47c89c005737bf88b1a4134a45c3ad109ffa4c39 and source af90b39ae39880e5e3bce6403983100dae9072e9",
+    "execution": "Pure JavaScript source exercise with UTF-8/SHA adapters and a retained-original-URL-only adapter; no native/browser/provider execution.",
+    "all_44_occurrence_fields_except_derived_ids_equal": true,
+    "all_institution_metadata_equal": true,
+    "all_byte_coordinates_equal": true,
+    "counts": {
+      "collections": 2,
+      "occurrences": 44,
+      "unreviewed": 44,
+      "include": 0,
+      "exclude": 0,
+      "needs-info": 0,
+      "rightsUnknown": 44
+    },
+    "detected_key_in_publication": false
+  },
+  "files": [
+    {
+      "path": "ArchiveBlack_Institution_Review.json",
+      "bytes": 339714,
+      "sha256": "a83fd8440cdc61adb8845872726c4da92b493425a1c608eb902750ee95a84744",
+      "git_blob": "9896d27981000d995b2c11d71eb31ae6a9b4ccc0"
+    },
+    {
+      "path": "ArchiveBlack_Review_Projection.json",
+      "bytes": 62944,
+      "sha256": "8d055c889f48c5408a7cbd31fe50d85f9463a1b7bd0f8518f46e4878b75dcb1b",
+      "git_blob": "0eb4dd04510df192c2155ab3d042e989ac4fe098"
+    },
+    {
+      "path": "ArchiveBlack_Review.html",
+      "bytes": 55583,
+      "sha256": "ed290b7df7e1e0c6df68f174739c80c5a8356cfcb8d161e3d08c98eba83f7029",
+      "git_blob": "8c823bc8ce2f01441aaef4c6b381ac172bd05dba"
+    }
+  ]
+}

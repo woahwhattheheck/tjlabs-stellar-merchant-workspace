@@ -100,7 +100,8 @@
     "customer-closing",
     "merchant-service-agreements",
     "operator-discovery",
-    "merchant-support-operating"
+    "merchant-support-operating",
+    "merchant-grafana-delivery"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
