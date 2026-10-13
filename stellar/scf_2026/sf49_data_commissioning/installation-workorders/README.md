@@ -14,6 +14,8 @@ The maintained commercial importer remains the entry for an original customer Wo
 | receive.mjs | Complete native source intake, original Installation refresh/save and full-case receiving driver |
 | prepare-core.mjs | Pure preparation functions, selected-source checks and complete workorder rendering |
 | profiles.mjs | Shared installed-profile discovery, schema/identity validation and exact complete-source metadata |
+| audit-exchange.json | Complete building audit review, native energy analysis, eight-table turnover and independent editable customer receiving |
+| AUDIT_EXCHANGE.md | Original commercial scope, source/runtime selection, full review and analysis operation, complete project/LDA handover and Installation acceptance |
 | cocart.json | Whole headless cart → native Woo checkout/order → payment/fulfilment → original receiving task |
 | blockscout.json | Whole selected explorer request → paid exact response → operator/Node/Python → original receiving task |
 | stellarcarbon.json | Whole source edition → customer/project assignments → complete statements → original accounting and editable receiving |
