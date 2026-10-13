@@ -1,0 +1,171 @@
+{
+  "schema": "mpc.recovery-snapshot.v1",
+  "workspace": {
+    "acceptanceChecks": [],
+    "acceptanceRecords": [],
+    "activePlanId": null,
+    "approvals": [],
+    "assumptions": [
+      {
+        "label": "Covered server planning",
+        "source": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf#page=2;Q1/Q4",
+        "status": "planning-assumption",
+        "value": "Up to 25 servers; around 20–22 normally; 41 TB server data"
+      },
+      {
+        "label": "Microsoft 365 planning",
+        "source": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf#page=6;Q28",
+        "status": "planning-assumption",
+        "value": "30–35 users, applicable shared/archive mailboxes and other objects"
+      },
+      {
+        "label": "Existing storage",
+        "source": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf#page=3;Q14",
+        "status": "planning-assumption",
+        "value": "About 30 TB; compatibility to be established"
+      },
+      {
+        "label": "Transfer planning",
+        "source": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf#page=7;Q40",
+        "status": "planning-assumption",
+        "value": "4 Gbps; requires actual measurement"
+      }
+    ],
+    "backups": [],
+    "communications": [],
+    "createdAt": "2026-10-13T04:04:59Z",
+    "hurricanes": [],
+    "id": "mpc-recovery-operations-9b23-20261013",
+    "incidentReports": [],
+    "incidents": [],
+    "operations": [
+      {
+        "command": {
+          "actor": "TJLabs engineering /9B23",
+          "at": "2026-10-13T04:04:59Z",
+          "expectedRevision": 0,
+          "id": "mpc-import-issued-baseline-20261013",
+          "payload": {
+            "bytes": 3062,
+            "content": "{\n  \"project\": \"MPC RFP2026-01\",\n  \"snapshotDate\": \"2026-10-13\",\n  \"sources\": [\n    {\n      \"id\": \"mpc-rfp\",\n      \"title\": \"Server Backup Services RFP2026-01\",\n      \"url\": \"https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP.pdf\",\n      \"pages\": 23\n    },\n    {\n      \"id\": \"mpc-addendum1\",\n      \"title\": \"Addendum1\",\n      \"url\": \"https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum1.pdf\",\n      \"pages\": 1\n    },\n    {\n      \"id\": \"mpc-addendum2\",\n      \"title\": \"Addendum2\",\n      \"url\": \"https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf\",\n      \"pages\": 24\n    },\n    {\n      \"id\": \"mpc-intake\",\n      \"title\": \"Existing proposal and planner source\",\n      \"url\": \"https://app.notion.com/p/3f8dd7723100812cb188d51ee6e4cc92\"\n    }\n  ],\n  \"planning\": {\n    \"serverLimit\": 25,\n    \"expectedServers\": [\n      20,\n      22\n    ],\n    \"serverDataTB\": 41,\n    \"existingStorageTB\": 30,\n    \"m365Users\": [\n      30,\n      35\n    ],\n    \"annualGrowthTB\": 1,\n    \"throughputAssumptionGbps\": 4,\n    \"source\": \"mpc-addendum2\",\n    \"references\": [\n      \"Q1\",\n      \"Q4\",\n      \"Q14\",\n      \"Q21\",\n      \"Q28\",\n      \"Q40\"\n    ]\n  },\n  \"requirements\": [\n    {\n      \"id\": \"dual-copy\",\n      \"label\": \"Local and off-site protection\",\n      \"source\": \"mpc-rfp\",\n      \"reference\": \"pp12–13\"\n    },\n    {\n      \"id\": \"recovery-types\",\n      \"label\": \"Server, file, application, database and Microsoft365 recovery\",\n      \"source\": \"mpc-rfp\",\n      \"reference\": \"p13\"\n    },\n    {\n      \"id\": \"encrypted\",\n      \"label\": \"Encryption and controlled administration\",\n      \"source\": \"mpc-rfp\",\n      \"reference\": \"p13\"\n    },\n    {\n      \"id\": \"notifications\",\n      \"label\": \"Incident notices, continuing updates and resolution report\",\n      \"source\": \"mpc-rfp\",\n      \"reference\": \"Section T,pp8–9\"\n    },\n    {\n      \"id\": \"handover\",\n      \"label\": \"Runbooks, licensing, training and monthly reporting\",\n      \"source\": \"mpc-rfp\",\n      \"reference\": \"pp15–16\"\n    },\n    {\n      \"id\": \"bare-metal\",\n      \"label\": \"Complete recovery cycle, including bare-metal restoration\",\n      \"source\": \"mpc-addendum2\",\n      \"reference\": \"Q32/Q97\"\n    },\n    {\n      \"id\": \"entra\",\n      \"label\": \"Entra configuration protection\",\n      \"source\": \"mpc-addendum2\",\n      \"reference\": \"Q83\"\n    },\n    {\n      \"id\": \"monitoring\",\n      \"label\": \"Automatic job alerts and weekly review\",\n      \"source\": \"mpc-addendum2\",\n      \"reference\": \"Q30\"\n    },\n    {\n      \"id\": \"storm\",\n      \"label\": \"Verified complete recovery point before hurricane impact\",\n      \"source\": \"mpc-addendum2\",\n      \"reference\": \"Q9\"\n    },\n    {\n      \"id\": \"ownership\",\n      \"label\": \"MPC access, portability and transfer\",\n      \"source\": \"mpc-addendum2\",\n      \"reference\": \"Q24/Q100\"\n    }\n  ],\n  \"notes\": \"Published aggregate figures are planning inputs. The workspace starts without customer hostnames, measured jobs or approved recovery tiers. Import the selected plan and actual installation records into their own source editions.\"\n}",
+            "encoding": "utf8",
+            "id": "mpc-issued-planning-baseline-20261013",
+            "mediaType": "application/json",
+            "name": "issued-planning-baseline.json",
+            "observedAt": "2026-10-13T04:04:59Z",
+            "origin": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf",
+            "sha256": "3cfa62857435b2597999e4264c1a3d652d69b79f44682d7b502bbbea8f3ecb95"
+          },
+          "type": "source.import"
+        },
+        "previousSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "requestSha256": "dc1141b218b2609af76ced243bfd07deea4662cd9b60bf493eabae9f77eb2ec7",
+        "result": {
+          "id": "mpc-issued-planning-baseline-20261013",
+          "requestId": "mpc-import-issued-baseline-20261013",
+          "reused": false,
+          "revision": 1,
+          "sha256": "3cfa62857435b2597999e4264c1a3d652d69b79f44682d7b502bbbea8f3ecb95",
+          "type": "source.import",
+          "workspaceId": "mpc-recovery-operations-9b23-20261013"
+        },
+        "sha256": "368566b47c8bbe070af75f871006eeec3cdee379c027e317743c8bea32d71807"
+      },
+      {
+        "command": {
+          "actor": "TJLabs proposal source integration",
+          "at": "2026-10-13T04:26:20.439Z",
+          "expectedRevision": 1,
+          "id": "mpc-issued-proposal-baseline-command",
+          "payload": {
+            "bytes": 2962,
+            "content": "{\n  \"schema\": \"mpc-backup-planning/v1\",\n  \"name\": \"MPC issued baseline — editable planning case\",\n  \"assumptions\": {\n    \"frontEndTB\": 41,\n    \"growthTBPerYear\": 1,\n    \"years\": 0,\n    \"dailyChangedFraction\": 0.02,\n    \"storedFraction\": 1,\n    \"transferFraction\": 1,\n    \"bandwidthGbps\": 4,\n    \"throughputFactor\": 1,\n    \"runEveryHours\": 24,\n    \"dailyWindowHours\": 12,\n    \"fullWindowHours\": 60,\n    \"completeTransferMethod\": \"active\",\n    \"m365TB\": null\n  },\n  \"repositories\": {\n    \"local\": {\n      \"chains\": 4,\n      \"daysPerChain\": 7,\n      \"changeMode\": \"incremental\",\n      \"archiveFullCopies\": 0,\n      \"workspaceFullCopies\": 1,\n      \"freeFraction\": 0.2,\n      \"availableTB\": 30\n    },\n    \"cloud\": {\n      \"chains\": 4,\n      \"daysPerChain\": 7,\n      \"changeMode\": \"incremental\",\n      \"archiveFullCopies\": 0,\n      \"workspaceFullCopies\": 0,\n      \"freeFraction\": 0.1,\n      \"availableTB\": null\n    }\n  },\n  \"quote\": [\n    {\n      \"key\": \"implementation\",\n      \"label\": \"Prime implementation and acceptance\",\n      \"unit\": \"project\",\n      \"quantity\": 1,\n      \"period\": \"once\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"server\",\n      \"label\": \"Server protection licences and support\",\n      \"unit\": \"server/year\",\n      \"quantity\": 25,\n      \"period\": \"annual\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"m365\",\n      \"label\": \"Microsoft 365 and required Entra protection\",\n      \"unit\": \"user/year\",\n      \"quantity\": 35,\n      \"period\": \"annual\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"repository\",\n      \"label\": \"Local repository addition or replacement\",\n      \"unit\": \"system\",\n      \"quantity\": 1,\n      \"period\": \"once\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"cloud\",\n      \"label\": \"Off-site storage and retention\",\n      \"unit\": \"TB/month\",\n      \"quantity\": null,\n      \"period\": \"monthly\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"operations\",\n      \"label\": \"Monitoring, critical support and routine restore service\",\n      \"unit\": \"service/year\",\n      \"quantity\": 1,\n      \"period\": \"annual\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"exercise\",\n      \"label\": \"Priced periodic recovery exercises\",\n      \"unit\": \"exercise/year\",\n      \"quantity\": 1,\n      \"period\": \"annual\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"variable\",\n      \"label\": \"Estimated retrieval, API, egress and export allowance\",\n      \"unit\": \"allowance/year\",\n      \"quantity\": 1,\n      \"period\": \"annual\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    }\n  ],\n  \"responses\": {},\n  \"acceptance\": {},\n  \"notes\": \"\"\n}\n",
+            "encoding": "utf8",
+            "id": "mpc-issued-proposal-baseline",
+            "mediaType": "application/json",
+            "name": "MPC-issued-planning-baseline.json",
+            "observedAt": "2026-10-13T04:26:20.439Z",
+            "origin": "Unmodified original MPC planner createCase() planning assumptions at source34aafb8b181e7e4a8fa21f05cd5c27707abe73ca; core SHA25658493e4e4339ba0bbc662fb75fee62cd7ceb0af4bdc79e0736d1a8aebd6ff7e0",
+            "sha256": "94b1101ce48cb112ffd301da0319c6f18e96f27b4cec6832c4ae0b5a07922c68"
+          },
+          "type": "source.import"
+        },
+        "previousSha256": "368566b47c8bbe070af75f871006eeec3cdee379c027e317743c8bea32d71807",
+        "requestSha256": "df4a6ecf0f0f62b2f207c483c39605e6adf7190ca329f5050ce86debb3c194af",
+        "result": {
+          "id": "mpc-issued-proposal-baseline",
+          "requestId": "mpc-issued-proposal-baseline-command",
+          "reused": false,
+          "revision": 2,
+          "sha256": "94b1101ce48cb112ffd301da0319c6f18e96f27b4cec6832c4ae0b5a07922c68",
+          "type": "source.import",
+          "workspaceId": "mpc-recovery-operations-9b23-20261013"
+        },
+        "sha256": "66ab261a09e7096d73b4da8af2db7f137184d64a8d29b53f46f1a617fccb7d9c"
+      }
+    ],
+    "plans": [],
+    "recoveries": [],
+    "restoreSchedules": [],
+    "revision": 2,
+    "schema": "mpc.recovery-workspace.v1",
+    "seed": {
+      "assumptions": [
+        {
+          "label": "Covered server planning",
+          "source": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf#page=2;Q1/Q4",
+          "status": "planning-assumption",
+          "value": "Up to 25 servers; around 20–22 normally; 41 TB server data"
+        },
+        {
+          "label": "Microsoft 365 planning",
+          "source": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf#page=6;Q28",
+          "status": "planning-assumption",
+          "value": "30–35 users, applicable shared/archive mailboxes and other objects"
+        },
+        {
+          "label": "Existing storage",
+          "source": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf#page=3;Q14",
+          "status": "planning-assumption",
+          "value": "About 30 TB; compatibility to be established"
+        },
+        {
+          "label": "Transfer planning",
+          "source": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf#page=7;Q40",
+          "status": "planning-assumption",
+          "value": "4 Gbps; requires actual measurement"
+        }
+      ],
+      "createdAt": "2026-10-13T04:04:59Z",
+      "id": "mpc-recovery-operations-9b23-20261013",
+      "title": "Savannah MPC — Recovery Operations"
+    },
+    "sources": [
+      {
+        "bytes": 3062,
+        "content": "{\n  \"project\": \"MPC RFP2026-01\",\n  \"snapshotDate\": \"2026-10-13\",\n  \"sources\": [\n    {\n      \"id\": \"mpc-rfp\",\n      \"title\": \"Server Backup Services RFP2026-01\",\n      \"url\": \"https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP.pdf\",\n      \"pages\": 23\n    },\n    {\n      \"id\": \"mpc-addendum1\",\n      \"title\": \"Addendum1\",\n      \"url\": \"https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum1.pdf\",\n      \"pages\": 1\n    },\n    {\n      \"id\": \"mpc-addendum2\",\n      \"title\": \"Addendum2\",\n      \"url\": \"https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf\",\n      \"pages\": 24\n    },\n    {\n      \"id\": \"mpc-intake\",\n      \"title\": \"Existing proposal and planner source\",\n      \"url\": \"https://app.notion.com/p/3f8dd7723100812cb188d51ee6e4cc92\"\n    }\n  ],\n  \"planning\": {\n    \"serverLimit\": 25,\n    \"expectedServers\": [\n      20,\n      22\n    ],\n    \"serverDataTB\": 41,\n    \"existingStorageTB\": 30,\n    \"m365Users\": [\n      30,\n      35\n    ],\n    \"annualGrowthTB\": 1,\n    \"throughputAssumptionGbps\": 4,\n    \"source\": \"mpc-addendum2\",\n    \"references\": [\n      \"Q1\",\n      \"Q4\",\n      \"Q14\",\n      \"Q21\",\n      \"Q28\",\n      \"Q40\"\n    ]\n  },\n  \"requirements\": [\n    {\n      \"id\": \"dual-copy\",\n      \"label\": \"Local and off-site protection\",\n      \"source\": \"mpc-rfp\",\n      \"reference\": \"pp12–13\"\n    },\n    {\n      \"id\": \"recovery-types\",\n      \"label\": \"Server, file, application, database and Microsoft365 recovery\",\n      \"source\": \"mpc-rfp\",\n      \"reference\": \"p13\"\n    },\n    {\n      \"id\": \"encrypted\",\n      \"label\": \"Encryption and controlled administration\",\n      \"source\": \"mpc-rfp\",\n      \"reference\": \"p13\"\n    },\n    {\n      \"id\": \"notifications\",\n      \"label\": \"Incident notices, continuing updates and resolution report\",\n      \"source\": \"mpc-rfp\",\n      \"reference\": \"Section T,pp8–9\"\n    },\n    {\n      \"id\": \"handover\",\n      \"label\": \"Runbooks, licensing, training and monthly reporting\",\n      \"source\": \"mpc-rfp\",\n      \"reference\": \"pp15–16\"\n    },\n    {\n      \"id\": \"bare-metal\",\n      \"label\": \"Complete recovery cycle, including bare-metal restoration\",\n      \"source\": \"mpc-addendum2\",\n      \"reference\": \"Q32/Q97\"\n    },\n    {\n      \"id\": \"entra\",\n      \"label\": \"Entra configuration protection\",\n      \"source\": \"mpc-addendum2\",\n      \"reference\": \"Q83\"\n    },\n    {\n      \"id\": \"monitoring\",\n      \"label\": \"Automatic job alerts and weekly review\",\n      \"source\": \"mpc-addendum2\",\n      \"reference\": \"Q30\"\n    },\n    {\n      \"id\": \"storm\",\n      \"label\": \"Verified complete recovery point before hurricane impact\",\n      \"source\": \"mpc-addendum2\",\n      \"reference\": \"Q9\"\n    },\n    {\n      \"id\": \"ownership\",\n      \"label\": \"MPC access, portability and transfer\",\n      \"source\": \"mpc-addendum2\",\n      \"reference\": \"Q24/Q100\"\n    }\n  ],\n  \"notes\": \"Published aggregate figures are planning inputs. The workspace starts without customer hostnames, measured jobs or approved recovery tiers. Import the selected plan and actual installation records into their own source editions.\"\n}",
+        "encoding": "utf8",
+        "id": "mpc-issued-planning-baseline-20261013",
+        "mediaType": "application/json",
+        "name": "issued-planning-baseline.json",
+        "observedAt": "2026-10-13T04:04:59Z",
+        "origin": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf",
+        "sha256": "3cfa62857435b2597999e4264c1a3d652d69b79f44682d7b502bbbea8f3ecb95"
+      },
+      {
+        "bytes": 2962,
+        "content": "{\n  \"schema\": \"mpc-backup-planning/v1\",\n  \"name\": \"MPC issued baseline — editable planning case\",\n  \"assumptions\": {\n    \"frontEndTB\": 41,\n    \"growthTBPerYear\": 1,\n    \"years\": 0,\n    \"dailyChangedFraction\": 0.02,\n    \"storedFraction\": 1,\n    \"transferFraction\": 1,\n    \"bandwidthGbps\": 4,\n    \"throughputFactor\": 1,\n    \"runEveryHours\": 24,\n    \"dailyWindowHours\": 12,\n    \"fullWindowHours\": 60,\n    \"completeTransferMethod\": \"active\",\n    \"m365TB\": null\n  },\n  \"repositories\": {\n    \"local\": {\n      \"chains\": 4,\n      \"daysPerChain\": 7,\n      \"changeMode\": \"incremental\",\n      \"archiveFullCopies\": 0,\n      \"workspaceFullCopies\": 1,\n      \"freeFraction\": 0.2,\n      \"availableTB\": 30\n    },\n    \"cloud\": {\n      \"chains\": 4,\n      \"daysPerChain\": 7,\n      \"changeMode\": \"incremental\",\n      \"archiveFullCopies\": 0,\n      \"workspaceFullCopies\": 0,\n      \"freeFraction\": 0.1,\n      \"availableTB\": null\n    }\n  },\n  \"quote\": [\n    {\n      \"key\": \"implementation\",\n      \"label\": \"Prime implementation and acceptance\",\n      \"unit\": \"project\",\n      \"quantity\": 1,\n      \"period\": \"once\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"server\",\n      \"label\": \"Server protection licences and support\",\n      \"unit\": \"server/year\",\n      \"quantity\": 25,\n      \"period\": \"annual\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"m365\",\n      \"label\": \"Microsoft 365 and required Entra protection\",\n      \"unit\": \"user/year\",\n      \"quantity\": 35,\n      \"period\": \"annual\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"repository\",\n      \"label\": \"Local repository addition or replacement\",\n      \"unit\": \"system\",\n      \"quantity\": 1,\n      \"period\": \"once\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"cloud\",\n      \"label\": \"Off-site storage and retention\",\n      \"unit\": \"TB/month\",\n      \"quantity\": null,\n      \"period\": \"monthly\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"operations\",\n      \"label\": \"Monitoring, critical support and routine restore service\",\n      \"unit\": \"service/year\",\n      \"quantity\": 1,\n      \"period\": \"annual\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"exercise\",\n      \"label\": \"Priced periodic recovery exercises\",\n      \"unit\": \"exercise/year\",\n      \"quantity\": 1,\n      \"period\": \"annual\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    },\n    {\n      \"key\": \"variable\",\n      \"label\": \"Estimated retrieval, API, egress and export allowance\",\n      \"unit\": \"allowance/year\",\n      \"quantity\": 1,\n      \"period\": \"annual\",\n      \"unitPrice\": null,\n      \"annualEscalation\": 0,\n      \"source\": \"\"\n    }\n  ],\n  \"responses\": {},\n  \"acceptance\": {},\n  \"notes\": \"\"\n}\n",
+        "encoding": "utf8",
+        "id": "mpc-issued-proposal-baseline",
+        "mediaType": "application/json",
+        "name": "MPC-issued-planning-baseline.json",
+        "observedAt": "2026-10-13T04:26:20.439Z",
+        "origin": "Unmodified original MPC planner createCase() planning assumptions at source34aafb8b181e7e4a8fa21f05cd5c27707abe73ca; core SHA25658493e4e4339ba0bbc662fb75fee62cd7ceb0af4bdc79e0736d1a8aebd6ff7e0",
+        "sha256": "94b1101ce48cb112ffd301da0319c6f18e96f27b4cec6832c4ae0b5a07922c68"
+      }
+    ],
+    "title": "Savannah MPC — Recovery Operations",
+    "updatedAt": "2026-10-13T04:26:20.439Z"
+  },
+  "sha256": "ced59629a08ac65af4ba82ad95d1b8e9e53e169ab83dd5d284875356f02bb113"
+}
