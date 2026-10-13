@@ -94,6 +94,57 @@ The Draft view accepts the native stellar-forge.sf47-delivery-risks.v1 JSON docu
 
 Import is a draft selection. It creates no native review. Native preview checks exact predecessor, dates, IDs, roles, packages and sources before any save. Importing a complete archived case continues through the original Operations case importer, preserving its native reviews, sources and history.
 
+## Portable working copies
+
+The **Working copies** view carries an entire editable Risk desk between browser sessions for the same Operations case and signed-in staff scope. It preserves the draft, its original source and predecessor, saved views, save note, retained exact command, receipt observations and complete local checkpoints. It does not import an Operations case or move a request to a different installation or staff member. To share only a proposed risk document with another operator, continue to use **Download complete draft** and the existing complete-document import.
+
+### Save and reopen a copy
+
+1. Choose **Download complete working copy**. Keep the downloaded JSON with the original private project records.
+2. In the same case and staff scope, choose that file and **Review selected working copy**. Legacy complete desk JSON from **Download full desk and receipts** is also accepted.
+3. Review its filename, complete byte identity, draft name and case version, original request ID, receipt observations and checkpoint count. Expand the complete selected desk to inspect every field. This step changes no editable draft or native record.
+4. Choose **Reopen reviewed working copy**. The desk retains both the preceding full desk and the selected original copy as checkpoints before replacing editable state. All native reads must finish and the complete resulting local state must be stored successfully. A failed read or local storage write leaves the preceding desk and selected review available.
+5. A draft without an unfinished request opens in **Draft edition** with its original predecessor and stable entry/action IDs. Choose **Review complete draft** to obtain a fresh native assessment before saving. Stored preview identities cannot authorize a save.
+6. A copy with an unfinished command opens in **Request recovery**. Native read-only lookup determines whether that exact original command was accepted. If accepted, the actual review SHA and original preview identity must match before the known result is adopted. If absent, the same original command remains locked for reconciliation and an explicit same-command retry.
+
+Import never sends a native save. An imported claim of acceptance, absence or rejection is not authority: the original request table is read again. Imported rejection flags never unlock a draft or permit a replacement key. A known accepted command that is absent from the selected native case stays an unresolved source-case problem; it is not converted to an unaccepted request.
+
+If this desk already owns a pending or accepted command, reopening requires an identical complete command. A different request cannot replace it. Native roles and the existing recording-actor checks remain in force. This is particularly relevant when an owner is viewing a staff member's copy: select the original staff scope instead of reassigning the request.
+
+### Complete checkpoints and receipt history
+
+Each successful reopen keeps the preceding full desk and the selected original desk as immutable local checkpoint observations. Earlier checkpoints in the imported copy are carried forward by their complete canonical SHA256 identities. Checkpoints do not nest other checkpoints; the portable copy contains one flat list.
+
+Use **Review checkpoint** to inspect and reopen it through the same native lookup flow, or **Download checkpoint** to retain it independently. **Remove local checkpoint** requires explicit confirmation and removes only that local observation from future copies. It never changes the active draft, unfinished request, native edition or original source. Download a checkpoint before removing it when it is still needed.
+
+Imported historical receipt observations remain verbatim inside the selected full checkpoint. They are not silently merged into the active desk's verified native receipt list. An actual lookup result for the selected unfinished request becomes the active known result and follows the original **Reopen known saved edition** flow. The active desk's existing receipt history remains intact.
+
+The desk permits up to 16 complete checkpoints. File input and complete working-copy output are bounded to 32 MiB. Browser session storage may have a smaller quota. If retaining the whole state fails, the previous desk remains active and the selected copy remains available for download and retry. Download and explicitly remove older checkpoints when space is needed. There is no automatic pruning.
+
+### File format and boundaries
+
+The portable envelope is:
+
+~~~json
+{
+  "schema": "stellar-forge.sf47-delivery-risk-working-copy.v1",
+  "exportedAt": "<actual export time>",
+  "payloadSha256": "<SHA256 of canonical complete payload>",
+  "payload": {
+    "schema": "stellar-forge.sf47-delivery-risk-desk.v1",
+    "programId": "<original case ID>",
+    "staffContext": "<complete original public staff context>",
+    "...": "all original desk fields and the flat copies list"
+  }
+}
+~~~
+
+The checksum is an integrity check, not a signature or permission grant. JSON is decoded as strict UTF-8, parsed as data and rendered with escaped text. The full original installed staff context, including installation and staff identity, must match. No credential or access code is added to the copy.
+
+Legacy desk exports retain their existing shape and are accepted without an envelope checksum. The received file's complete byte SHA256 and byte length are still recorded. An export containing unreadable original storage is retained for manual source recovery; it is not treated as a replacement for that unresolved desk.
+
+Working copies use only existing case, register, seed, saved-review and exact-request read routes. They add no domain writer, background worker, account, case or local database. All reads and file operations remain within the original retained per-staff task owner. Navigating away drains that same operation before later reuse.
+
 ## UI, lifetime and custody
 
 The interface uses the original grayscale Operations styling, semantic headings and fieldsets, labelled controls, native buttons, visible focus, status and error messages, keyboard navigation and responsive tables. Narrow layouts collapse the entry editor and filters to one column. Overdue findings use explicit text, not color alone.
@@ -146,9 +197,9 @@ The native course owner should use the same original host and case. This checkli
 4. Reopen that edition and its source through the UI. Export the original complete case ZIP.
 5. Prepare a native successor, record an actual dated review and complete or cancel the original action. Resolve or close the same stable entry with a dated note. Preview and save the exact current-head successor.
 6. Read its full history and both immutable editions. Verify the old edition remains unchanged and the current source changes are labelled.
-7. Exercise an explicitly stale draft against a later native head. Retain the native rejection and use exact read-only reconciliation before returning that rejected request to its draft.
+7. Reopen an actual retained working copy for the same case and staff scope. Review its full checkpoint and original request, use native read-only reconciliation, and preserve any actual source/predecessor conflict returned by the original course.
 8. Reopen the same retained accepted request and inspect its existing outcome; no new edition should be created.
 9. As an assigned finance or reviewer, inspect and preview while Save remains unavailable and the native writer enforces its original role rules.
 10. Use the original case receiving/import course for the complete exported archive and reopen its original risk reviews and lineage. Retain the complete native result and original source manifest with actual execution receipts.
 
-Source parsing and exact guard reconstruction are the source checks performed for this contribution. Browser layout, native saves and receiving outcomes remain for that assembled original course.
+The working-copy addition was checked by complete source parsing and exact guarded reconstruction against the maintained editor and actual native read interfaces. Its browser interaction has not been executed in this contribution. Continue it within the existing original case and receiving programme when that installed runtime is available.
