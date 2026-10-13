@@ -173,3 +173,8 @@ The Linux kernel serializes each directory's writer through `flock`; the lock re
 Only ordinary request headers enter this path. The original SF88 reserved-field contract keeps authentication, payment headers, HTTP framing and merchant ticket assembly with their original owners. The capture and native preparation retain those responsibilities.
 
 Source contracts and exact reviewed commits are in `SOURCE_CONTRACT.md`. `WORKSHARE.md` turns this implementation into a concrete merchant onboarding offer. Native acceptance should retain one complete original catalogue, one actual selected customer request and challenge, original buyer preparation, a transferred operation, and the reopened original receiving workspace.
+
+
+## Inspect an unfinished acquisition and carry its complete source
+
+`customer.mjs capture-progress --directory ORIGINAL --out NEW_OUTSIDE_REPORT.html` opens the exact original capture plan and every retained attempt, including failed reads and partial pagination. The self-contained report carries a complete original private receiving packet. `customer.mjs capture-progress-open --file PACKET.json --directory NEW_RECEIVING --out NEW_REPORT.html` reopens it through the existing native receiver. See [CAPTURE_PROGRESS.md](CAPTURE_PROGRESS.md) for the whole capture, interpretation, transfer and original-operation resume workflow.
