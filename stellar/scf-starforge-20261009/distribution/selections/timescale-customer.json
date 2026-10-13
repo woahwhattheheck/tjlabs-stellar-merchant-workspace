@@ -126,7 +126,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
     "products/paired-reconciliation/OPERATING.md",
-    "products/timescale-customer/OPERATING.md"
+    "products/timescale-customer/OPERATING.md",
+    "products/timescale-customer/COMMISSIONING.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
