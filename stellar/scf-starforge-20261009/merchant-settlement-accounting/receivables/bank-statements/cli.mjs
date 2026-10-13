@@ -21,6 +21,7 @@ const HELP='Merchant bank statements and cash reconciliation\n\n'+
   'starforge bank-statements prepare-source --file /private/statement.xml --format CAMT053 --out /private/source.json [--account-namespace BANK] [--message-version camt.053.001.08] [--detail-policy PRESERVE_ONLY]\n'+
   'starforge bank-statements prepare-source --file /private/statement.csv --format CSV --csv-mapping /private/mapping.json --out /private/source.json\n'+
   'starforge bank-statements source-preview --directory /private/accounting --input /private/source.json\n'+
+  'starforge bank-statements assembly-preview --directory /private/accounting --input /private/pages.json\n'+
   'starforge bank-statements close-preview --directory /private/accounting --input /private/close.json\n'+
   'starforge bank-statements apply --directory /private/accounting --action ACTION --input /private/request.json [--id UUID]\n'+
   'starforge bank-statements operation --directory /private/accounting --request ORIGINAL_REQUEST_ID\n'+
@@ -34,7 +35,7 @@ const HELP='Merchant bank statements and cash reconciliation\n\n'+
   'Source JSON is {source:{format:OFX|QFX|CSV|CAMT053,file:{name,dataBase64},csv?:explicit mapping,camt?:selected interpretation}}.\n'+
   'Dates and amounts remain explicit source calendar dates and exact decimal strings. Review source and close hashes before apply.\n'+
   'Downloads and output directories are create-only. The complete close export includes originals, editable JSON, postings, HTML and customer accounts.\n';
-const COMMANDS=new Set(['help','--help','prepare-source','serve','state','transactions','detail','source-preview','close-preview','apply','operation','import','close','file','export']);
+const COMMANDS=new Set(['help','--help','prepare-source','serve','state','transactions','detail','source-preview','assembly-preview','close-preview','apply','operation','import','close','file','export']);
 const FLAGS=new Set(['directory','outbox','proof-dir','terms','recovered-dir','port','account','status','search','offset','limit',
   'id','input','action','request','kind','name','out','expected-workspace-id','expected-sources-sha256',
   'file','format','text-encoding','account-namespace','csv-mapping','message-version','detail-policy']);
@@ -130,6 +131,7 @@ export async function runBankStatementsCli(argv=process.argv.slice(2)) {
     else if(command==='transactions')result=await bank.transactions({accountId:flags.account,status:flags.status,search:flags.search,offset:flags.offset,limit:flags.limit});
     else if(command==='detail')result=await bank.detail(flags.id);
     else if(command==='source-preview')result=await bank.previewSource(await inputFile(flags.input));
+    else if(command==='assembly-preview')result=await bank.previewAssembly(await inputFile(flags.input));
     else if(command==='close-preview')result=await bank.previewClose(await inputFile(flags.input));
     else if(command==='operation')result=await bank.getOperation(flags.request);
     else if(command==='import')result=await bank.importDetail(flags.id);
