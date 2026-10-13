@@ -955,16 +955,21 @@ function fpSource(value){
 export function seedCohortRecordedCostPlan(recordedDocument,planDocument){
   const source=fpSource(recordedDocument),plan=checkedPlan(planDocument).input;
   if(!source.commercial)fail('COST_PLAN_COMMERCIAL_REQUIRED','Calculate the complete commercial reconciliation first.','recordedDocument');
-  return {name:plan.name+' · recorded cost basis',note:'',allocations:[]};
+  return {name:plan.name+' · recorded cost basis',note:'',quantityBasis:'COMPLETED_TASKS',allocations:[]};
 }
 export function planCohortFromRecordedCosts(recordedDocument,planDocument,raw){
+  return fpPlanFromRecordedCosts(recordedDocument,planDocument,raw,false);
+}
+// Only complete historical documents can select the preceding calculation for exact reopening.
+function fpPlanFromRecordedCosts(recordedDocument,planDocument,raw,legacyUnits){
   const sourceDocument=fpSource(recordedDocument),baseline=checkedPlan(jsonSource(planDocument,'planDocument')),candidate=copy(baseline.input);
   const commercial=sourceDocument.commercial;
   if(!commercial)fail('COST_PLAN_COMMERCIAL_REQUIRED','Calculate the complete commercial reconciliation first.','recordedDocument');
   if(sourceDocument.source.programId!==candidate.source.programId)fail('COST_PLAN_SOURCE_CASE','Use recorded results and a prospective plan from the same original case.','planDocument');
   if(commercial.originalCostIntake?.unreviewedOverlaps.length)fail('COST_PLAN_COST_OVERLAP','Resolve the invoice-linked Work cost overlap in the original comparison before planning from those costs.','recordedDocument');
-  cmFields(raw,['name','note','allocations'],'choices');
-  const choices={name:cmRequired(raw.name,'choices.name',500),note:text(raw.note??'','choices.note'),allocations:[]};
+  cmFields(raw,['name','note','quantityBasis','allocations'],'choices');
+  if(raw.quantityBasis!==undefined&&raw.quantityBasis!=='COMPLETED_TASKS')fail('COST_PLAN_QUANTITY_BASIS','Measured output quantities count completed useful tasks.','choices.quantityBasis');
+  const choices={name:cmRequired(raw.name,'choices.name',500),note:text(raw.note??'','choices.note'),...(legacyUnits?{}:{quantityBasis:'COMPLETED_TASKS'}),allocations:[]};
   const mappings=unique(list(raw.allocations,'choices.allocations',10000),'id','choices.allocations');
   if(!mappings.length)fail('COST_PLAN_SELECTION_REQUIRED','Choose at least one measured output and future schedule.','choices.allocations');
   const totals=new Map(),targets=new Set(),derivations=[];
@@ -1024,11 +1029,15 @@ export function planCohortFromRecordedCosts(recordedDocument,planDocument,raw){
     }
     const output=cmDecimal(row.outputQuantity,path),completeSupplier=row.supplierCoverage==='COMPLETE'&&!supplierUnknown,
       completeHours=row.laborCoverage==='COMPLETE'&&!hoursUnknown,completeLabor=completeHours&&!laborUnknown;
-    const next={unitCost:completeSupplier?fpDivide(supplier,output,path):null,
+    const requestOutput=cmMul(output,{n:BigInt(schedule.requestsPerTask),s:0});
+    const next={unitCost:completeSupplier?fpDivide(supplier,legacyUnits?output:requestOutput,path):null,
       activeHoursPerTask:completeHours?fpDivide(hours,output,path):null,
       hourlyCost:completeLabor?(hours.n?fpDivide(labor,hours,path):labor.n===0n?'0':null):null};
     derivations.push({id:row.id,targetScheduleId:row.targetScheduleId,sourceServiceId:row.sourceServiceId,
       outputQuantity:row.outputQuantity,outputUnit:row.outputUnit,outputSource:row.outputSource,
+      ...(legacyUnits?{}:{quantityBasis:{kind:'COMPLETED_TASKS',completedTasks:row.outputQuantity,requestsPerTask:schedule.requestsPerTask,
+        correspondingRequests:cmText(requestOutput),supplierCostPerTask:completeSupplier?fpDivide(supplier,output,path):null,
+        interpretation:'One measured useful output corresponds to one complete future task; supplier cost is distributed across that task’s underlying requests.'}}),
       sourceService:copy(service),originalEconomics:copy(schedule.economics),derivedEconomics:copy(next),
       ...(measured?{measurement:{...copy(measured.selected),comparisonId:measured.catalog.comparisonId,revision:measured.catalog.revision,
         sourceId:measured.catalog.sourceId,sourceSha256:measured.catalog.sourceSha256,customer:measured.catalog.customer,task:measured.catalog.task,
@@ -1050,7 +1059,7 @@ export function planCohortFromRecordedCosts(recordedDocument,planDocument,raw){
 }
 export function reopenCohortRecordedCostPlan(document){
   if(document?.schema!==COHORT_RECORDED_COST_PLAN_SCHEMA)fail('COST_PLAN_DOCUMENT_REQUIRED','Open the complete recorded-cost planning document.','document');
-  const result=planCohortFromRecordedCosts(document.sourceDocument,document.planDocument,document.choices);
+  const result=fpPlanFromRecordedCosts(document.sourceDocument,document.planDocument,document.choices,document.choices?.quantityBasis===undefined);
   if(canonical(result)!==canonical(document))fail('COST_PLAN_DOCUMENT_CHANGED','The retained recorded-cost planning document differs from its full source and explicit choices.','document');
   return result;
 }
