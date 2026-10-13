@@ -195,7 +195,11 @@ export async function receiveNativeCustomerDelivery({directory,collections,sourc
    selected.manifestSha256===state.original.package.manifestSha256&&
    selected.collectionId===(packageInspection.manifest.collection?.id??null)&&
    identity(selected.task??null)===identity(packageInspection.manifest.task??null),'MCP_DELIVERY_RECEIVING_HISTORY_SELECTION');
-  await retainedJson('recipient-history.json',history);
+  if(!state.recipientHistory){state.recipientHistory=history;await save();}
+  const originalSelection=state.recipientHistory.items.find(row=>row.sha256===selected.sha256);
+  need(originalSelection&&identity(originalSelection)===identity(selected),'MCP_DELIVERY_RECEIVING_HISTORY_SELECTION');
+  // Preserve the originally observed discovery snapshot if unrelated receipts arrive.
+  await retainedJson('recipient-history.json',state.recipientHistory);
   const receivedManifest=await inspectReceivedCustomerPackage({...coldOptions,deliveryWorkspace:'recipient',receivedSha256:selected.sha256});
   if(!state.receivedDownloadManifest){state.receivedDownloadManifest=receivedManifest;await save();}
   need(identity(receivedManifest)===identity(state.receivedDownloadManifest),'MCP_DELIVERY_RECEIVING_RECIPIENT_SELECTION');
