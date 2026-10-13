@@ -251,3 +251,10 @@ Include this complete instruction in delegated assignments and the active owner-
 
 Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
 Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+
+## Complete offline Learning exchange
+
+The installed receiving course now continues the completed Learning workspace through hosted issue, full self-contained offline draft/HTML save and reopen, complete return comparison, explicit guarded native application, imported saved-request recovery, a real conflict and explicit rebase, whole-cycle review, full native/exchange handover and independent cold reopening. Preserve the original completed donor and every earlier installed receiving result. The same Course owns the browser, Applications requests and source selection; it predeclares a fresh later receiving alias for the complete native archive without overwriting either earlier workspace.
+
+Read [LEARNING_EXCHANGE.md](LEARNING_EXCHANGE.md) for the actual operator workflow and [LEARNING_EXCHANGE_RECEIVING.md](LEARNING_EXCHANGE_RECEIVING.md) for its complete original-owner course and interruption boundaries. The native ZIP, full exchange JSON, selected private source transfer and complete installed distribution are separate retained outputs. A native ZIP alone does not include the browser's complete exchange ledger or external generic wrapper source. Observe the actual outgoing screens, complete files and reopened artifacts before presenting a product as ready.

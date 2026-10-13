@@ -10,6 +10,7 @@ import {inspectGrantAnalystPreparation,exportGrantAnalystRuntime} from './prepar
 import {acquireLease,inspectOriginalSource} from './managed.mjs';
 import {createGrantAnalystReceivingBrowser} from './receiving-browser.mjs';
 import merchantProvider from './merchant-provider.mjs';
+import {receiveLearningExchange} from './learning-exchange-receiving.mjs';
 import {initializeGrantAnalystMerchant} from './setup.mjs';
 import {readMerchantConfig} from '../../stellar-forge/mcp-merchant-operator/config.mjs';
 import {openRuntimeWorkspace} from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs';
@@ -154,10 +155,10 @@ class Course{
         archive:inspected.value.successorHandover,directory:join(this.root,kind+'-primary-receiving'),expectedSnapshot:inspected.value.snapshot}));
       const baseline=await this.phase(kind+'-04-current-source-baseline',()=>this.helper(kind+'-baseline-export','export',{
         workspace:primary.value.workspace,expectedSnapshot:primary.value.snapshot}));
-      for(const role of ['primary','receiving']){
+      for(const role of (kind==='learning'?['primary','receiving','exchange']:['primary','receiving'])){
         const name=kind+'-'+role,container=join(this.root,kind+'-'+role+'-receiving'),directory=join(container,'workspace');
         const port=await this.intent(name+'-loopback-port',selectedPort);
-        this.state.hosts[name]??={name,kind,source:role,container,directory,workspaceId:primary.value.workspaceId,
+        this.state.hosts[name]??={name,kind,source:role==='exchange'?'receiving':role,container,directory,workspaceId:primary.value.workspaceId,
           baselineArchive:baseline.value.archive,port,connectionFile:join(this.root,'private',name+'-connection.json'),
           configurationFile:join(this.root,'private',name+'-launch.json'),starts:[]};
         need(this.state.hosts[name].directory===directory&&this.state.hosts[name].port===port&&this.state.hosts[name].workspaceId===primary.value.workspaceId,'Keep the original host and native identity.');
@@ -509,7 +510,8 @@ class Course{
         workspace:this.state.hosts[alias].directory,expectedSnapshot:expected.audit.value.snapshot},this.state.hosts[alias].source);
       return{opening,reads,files,audit};
     });
-    return{kind,primary,receiving,cold};
+    const exchange=kind==='learning'?await receiveLearningExchange(this,{primary,receiving,cold}):null;
+    return{kind,primary,receiving,cold,...(exchange?{exchange}:{})};
   }
   async run(){
     const candidatePath=join(this.root,'candidate.json'),resultPath=join(this.root,'INSTALLED_RESULT.json');
@@ -581,7 +583,9 @@ export async function main(argv=process.argv.slice(2)){
       merchantSourceManifestSha256:installed.sourceManifestSha256,preparationResult:await identity(o['preparation-result']),preparation:prepared,
       originalRequest:await identity(o['original-request']),donor,
       source:{originalManifestSha256:prepared.source.manifestSha256,merchantManifestSha256:installed.sourceManifestSha256,
-        helper:await identity(HELPER),browser:await identity(join(HERE,'receiving-browser.mjs'))},
+        helper:await identity(HELPER),browser:await identity(join(HERE,'receiving-browser.mjs')),
+        learningExchange:await identity(join(HERE,'learning-exchange-receiving.mjs')),
+        learningExchangeBrowser:await identity(join(HERE,'learning-exchange-browser.mjs'))},
       actor:o.actor,node:{path:process.execPath,version:process.version},playwright:await identity(o.playwright),chromium:await identity(o.chromium)};
     need(!requestedSignal,'Receiving stopped before application ownership; retain the same selected inputs.');
     course=new Course(o,prepared,donor,selection);await course.open();course.checkStopping();return await course.run();

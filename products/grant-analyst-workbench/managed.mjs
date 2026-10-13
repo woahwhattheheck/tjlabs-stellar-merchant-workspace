@@ -94,7 +94,11 @@ export async function startManagedGrantAnalyst(options){
   const request={schema:'stellar-forge.grant-analyst-managed-request.v1',launchId,configurationFile:configuration.path,
     configurationSha256:configuration.sha256,configuration:v,sourceManifestSha256:source.manifestSha256,
     port:options.port??v.port,startedAt:new Date().toISOString(),
-    bridge:{path:BRIDGE,...await(async()=>{const r=await readFile(BRIDGE,1024*1024,{privateOnly:false});return{bytes:r.bytes.length,sha256:r.sha256};})()}};
+    bridge:{path:BRIDGE,...await(async()=>{const r=await readFile(BRIDGE,1024*1024,{privateOnly:false});return{bytes:r.bytes.length,sha256:r.sha256};})(),
+      assets:await Promise.all(["learning-exchange-host.py","learning-exchange-host.mjs","learning-exchange-host.css","learning-exchange.mjs","learning-exchange-offline.mjs","learning-exchange-offline.css","learning-exchange-offline.html","learning-exchange-render.mjs"].map(async name=>{
+        const r=await readFile(join(HERE,name),4*1024*1024,{privateOnly:false});
+        return{name,bytes:r.bytes.length,sha256:r.sha256};
+      }))}};
   const requestFile=join(run,'request.json'),recordFile=join(run,'process.json');
   await writeJson(requestFile,request);await writeJson(recordFile,{schema:'stellar-forge.grant-analyst-managed-process.v1',launchId,state:'prepared',requestFile});
   let out=null,err=null,child=null,exited=null,exitResult=null,spawnError=null,connection=null,closing=null,closed=false,startupStopping=false;

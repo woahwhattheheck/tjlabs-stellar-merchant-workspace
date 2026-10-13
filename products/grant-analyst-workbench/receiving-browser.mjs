@@ -39,7 +39,7 @@ async function verify(row){
 async function privateDirectory(path){await mkdir(path,{recursive:true,mode:0o700});const st=await lstat(path);need(st.isDirectory()&&!st.isSymbolicLink()&&await realpath(path)===path&&!(st.mode&0o077)&&(!process.getuid||st.uid===process.getuid()),'Use the original private browser directory.');}
 
 export function createGrantAnalystReceivingBrowser(options){return new BrowserCourse(options);}
-class BrowserCourse{
+export class BrowserCourse{
   constructor(options){
     this.o=options;this.root=resolve(options.directory);this.path=join(this.root,'browser-operation.json');
     this.context=null;this.contextAcquisition=null;this.lease=null;this.leaseAcquisition=null;this.page=null;
@@ -292,7 +292,7 @@ class BrowserCourse{
     }
     return{studies:output};
   }
-  async downloaded(name,click){
+  async downloaded(name,click,page=this.page){
     const directory=join(this.root,'candidates');await privateDirectory(directory);
     const descriptorPath=join(directory,name+'.download.json'),closedPath=join(directory,name+'.download.closed');
     let candidate;
@@ -301,7 +301,7 @@ class BrowserCourse{
       const partial=join(directory,name+'.downloading');
       if(await exists(partial)){await rename(partial,partial+'.interrupted-'+randomUUID());await syncDirectory(directory);}
       need(!await exists(closedPath),'A closed download must retain its original candidate descriptor.');
-      const waiting=this.page.waitForEvent('download',{timeout:120000});waiting.catch(()=>{});
+      const waiting=page.waitForEvent('download',{timeout:120000});waiting.catch(()=>{});
       await click();const download=await waiting;
       need(!await download.failure(),'The complete original download failed.');
       const stream=await download.createReadStream();need(stream,'The original complete download stream is absent.');
@@ -352,6 +352,26 @@ class BrowserCourse{
       const desktop=await this.screenshot(name+'-opened.png',page);return{file,desktop};
     }finally{await page.close();}
   }
+  async journey(){
+    const initial=await this.phase('original-desktop-and-narrow',async()=>({
+      desktop:await this.screenshot('workspace-desktop.png'),mobile:await this.narrow('workspace-mobile.png')}));
+    const edit=this.o.operation?await this.phase('original-action-request-recovery',()=>this.actionEdit()):null;
+    const grants=await this.phase('complete-original-source-reports',()=>this.grantViews());
+    const learning=await this.phase('complete-learning-history',()=>this.learningViews());
+    const studies=await this.phase('complete-commissioned-study-history',()=>this.studyViews());
+    const textReports=await this.phase('complete-report-reopening',async()=>{
+      const opened=[await this.reopenText(learning.csv,'learning-actions'),await this.reopenText(learning.markdown,'learning-decisions')];
+      for(let i=0;i<grants.length;i++)opened.push(await this.reopenText(grants[i].csv,'reviewed-grants-'+i));
+      for(let i=0;i<studies.studies.length;i++)for(let j=0;j<studies.studies[i].releases.length;j++){
+        const downloads=studies.studies[i].releases[j].downloads;
+        opened.push(await this.reopenText(downloads.markdown,'study-'+i+'-release-'+j+'-markdown'));
+        opened.push(await this.reopenText(downloads.csv,'study-'+i+'-release-'+j+'-csv'));
+      }return opened;});
+    const handover=await this.phase('complete-original-handover-download',async()=>this.downloaded('complete-analyst-handover.zip',()=>this.page.locator('#export').click()));
+    const final={state:await this.api('/api/state'),learning:await this.api('/api/learning'),studies:await this.api('/api/studies')};
+    await this.retain(await save(join(this.root,'final-browser-projection.json'),final));
+    return{initial,edit,grants,learning,studies,textReports,handover};
+  }
   async run(){
     await privateDirectory(this.root);this.checkStopping();
     try{
@@ -362,7 +382,8 @@ class BrowserCourse{
       const selected=JSON.parse(JSON.stringify({actor:this.o.actor,workspaceDirectory:this.o.workspaceDirectory,
         workspaceId:this.o.workspaceId,applicationDirectory:this.o.applicationDirectory,
         sourceManifestSha256:this.o.sourceManifestSha256,baseline:this.o.baseline,operation:this.o.operation??null,
-        browser:this.o.chromium,playwright:this.o.playwright,source:this.o.source}));
+        browser:this.o.chromium,playwright:this.o.playwright,source:this.o.source,
+        ...(this.o.extension===undefined?{}:{extension:this.o.extension})}));
       this.state=await exists(this.path)?await json(this.path):null;
       if(this.state)need(this.state.schema===SCHEMA&&same(this.state.selection,selected),'The original browser selection changed.');
       const candidatePath=join(this.root,'browser-candidate.json'),resultPath=join(this.root,'browser-result.json');
@@ -390,26 +411,11 @@ class BrowserCourse{
       this.page=this.context.pages()[0]??await this.context.newPage();this.page.setDefaultTimeout(60000);
       this.page.on('pageerror',error=>{this.state.errors.push({type:'pageerror',message:error.message,at:now()});void this.save().catch(()=>{});});
       await this.enter();
-      const initial=await this.phase('original-desktop-and-narrow',async()=>({
-        desktop:await this.screenshot('workspace-desktop.png'),mobile:await this.narrow('workspace-mobile.png')}));
-      const edit=this.o.operation?await this.phase('original-action-request-recovery',()=>this.actionEdit()):null;
-      const grants=await this.phase('complete-original-source-reports',()=>this.grantViews());
-      const learning=await this.phase('complete-learning-history',()=>this.learningViews());
-      const studies=await this.phase('complete-commissioned-study-history',()=>this.studyViews());
-      const textReports=await this.phase('complete-report-reopening',async()=>{
-        const opened=[await this.reopenText(learning.csv,'learning-actions'),await this.reopenText(learning.markdown,'learning-decisions')];
-        for(let i=0;i<grants.length;i++)opened.push(await this.reopenText(grants[i].csv,'reviewed-grants-'+i));
-        for(let i=0;i<studies.studies.length;i++)for(let j=0;j<studies.studies[i].releases.length;j++){
-          const downloads=studies.studies[i].releases[j].downloads;
-          opened.push(await this.reopenText(downloads.markdown,'study-'+i+'-release-'+j+'-markdown'));
-          opened.push(await this.reopenText(downloads.csv,'study-'+i+'-release-'+j+'-csv'));
-        }return opened;});
-      const handover=await this.phase('complete-original-handover-download',async()=>this.downloaded('complete-analyst-handover.zip',()=>this.page.locator('#export').click()));
-      const final={state:await this.api('/api/state'),learning:await this.api('/api/learning'),studies:await this.api('/api/studies')};
-      await this.retain(await save(join(this.root,'final-browser-projection.json'),final));
+      const journey=await this.journey();
+      need(journey&&typeof journey==='object'&&!Array.isArray(journey)&&!['schema','state','selection','origins','completedAt','ownersClosedAt','files','pageErrors','resultFile'].some(key=>Object.hasOwn(journey,key)),'A journey must preserve the original completion and owner fields.');
       await this.closeContext();
       const candidate={schema:'stellar-forge.grant-analyst-browser-result.v1',state:'COMPLETE',selection:selected,
-        origins:this.state.origins,initial,edit,grants,learning,studies,textReports,handover,completedAt:now(),ownersClosedAt:this.state.ownersClosedAt,
+        origins:this.state.origins,...journey,completedAt:now(),ownersClosedAt:this.state.ownersClosedAt,
         files:Object.values(this.state.files),pageErrors:this.state.errors};
       need(!candidate.pageErrors.some(e=>e.type==='pageerror'),'Repair actual page errors before completing the receiving course.');
       for(const row of candidate.files)await verify(row);
