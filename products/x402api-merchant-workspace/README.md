@@ -241,6 +241,11 @@ original invoices, payment requests, activity and full result downloads. The
 receiver preserves the original snapshot and prepares a separate runtime with
 relocated result storage. Its source archive supports later onward handover.
 
+Open a completed received project through **Applications → Received merchant review**
+to keep its exact receiving/source selection and managed start, stop and cold reopen.
+[RECEIVED_REVIEW.md](RECEIVED_REVIEW.md) gives the complete private credential setup,
+original invoice/file review and the existing-case receiving programme.
+
 [PORTABLE_PROJECT.md](PORTABLE_PROJECT.md) gives the complete browser, command-line,
 configuration and activation procedure. The existing Node 24 / Python 3.11 Linux
 operator profile supplies both runtimes; the merchant adds no package dependency.
