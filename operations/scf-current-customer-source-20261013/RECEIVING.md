@@ -1,5 +1,83 @@
 # Receive the complete current SCF application
 
+## Current selected edition: sixteen complete author contributions and the reviewed nine answers
+
+This edition joins the whole current author contributions over merged PR1955 and preserves the complete reviewer-answer successor from PR1994. It selects **2,425 source records, 102 product declarations and 116 complete chapters**. Every one of the preceding 2,043 source IDs remains. All **100 unrelated chapters and 1,700 unrelated source rows** remain exact. The original complete 66,962-byte application, 120,006-byte reviewer HTML and 597-byte budget remain byte-identical.
+
+The prospective request remains **USD38,000 / 400 hours / 150 days / six priced packages**. The separate 31,396-byte reviewer answer edition is exactly the complete author source `f702bd06f4fc235e1cb4a31220808092d8964b7b` from merged PR1994. Its nine answers now travel with this same source index, complete companion and budget. The original full application remains separately selectable.
+
+### Whole author contributions
+
+| Original declaration | Declared source IDs | Actually selected IDs | Author PR | Complete chapter Git blob |
+| --- | ---: | ---: | --- | --- |
+| worldbank-customer-programmes | 45 | 45 | 1969 | `ea1ba8d9461bc7d28fcd47b6f74e7bc0c1483335` |
+| recovery-commissioning | 120 | 120 | 1968 | `c44748fbfcd9a29cff91e17058f50232df743aa6` |
+| opensearch-material-customer | 65 | 65 | 1980 | `1a2ef03529e01d8be77802d8440fa4482d0ffda8` |
+| reporting-programmes | 40 | 40 | 1981 | `5454b91957057a0491800319c1861b51b4d56f05` |
+| webhook-customer-analysis | 48 | 47 | 1987 | `2fa105d30bb3ecdba50a9ca0e9e08771b9ea11a4` |
+| tourism-series | 33 | 33 | 1986 | `f87f510a881e09f6272a44b699f248c748ffe2cb` |
+| x402api-customer-review | 28 | 28 | 1989 | `029c27a98562d0910564fcefe20abb64c38e763d` |
+| econdb-maritime | 53 | 53 | 1960 | `d20f1fb0313dab103bbdce704c88cfaf248a4f6c` |
+| flowable-operations | 67 | 67 | 1991 | `9412159eb47c71b6d15525006fcbbd182208a748` |
+| forecast-financing | 41 | 41 | 1988 | `0d5b46344e36b1e768c349a8715a0923358be36d` |
+| geoapify | 19 | 19 | 1953 | `adeeee601e96e5e25d449e3941db14b2df229dd5` |
+| grant-analyst-workbench | 42 | 42 | 2000 | `55306c469f8572b0d9a55b98d6181a6df2f5e136` |
+| merchant-cash-realization | 33 | 33 | 1993 | `41e43370f3e53ed0b203a728a9b2160279a63f4e` |
+| property-continuity | 52 | 52 | 1984 | `ec7570cf254752f1423cde23d18302c23f9b02c6` |
+| source-monitoring | 26 | 26 | 1954 | `4472a9d6b7fcf1217c7de42a1fa467ae79384968` |
+| dataset-query-studies | 14 | 14 | 1996 | `c047021c61d97bf7d44e3e67c1a9ecd12a50051a` |
+
+These are complete author bodies and declarations. Their original customer context, source meanings, receiving state, commercial terms and funded-work distinctions remain in the companion. This edition freezes the coherent set reviewed at `d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42`; later completed author contributions can enter the following source edition through the same maintained composer.
+
+Reporting replaces only its source-owned installed-programme subsection inside the shared Document chapter. Geoapify retains its existing complete-receiving appendix and both required original links. The complete Bank/Installment chapter preserves its cash-realization successor; the explicit current immutable implementation appendix lets the original receiver select all 33 declared cash sources. Dataset Studies includes its complete current merchant-agent chapter and all 14 declared implementation files, with the original eight-source edition retained in author lineage.
+
+The Webhook declaration's analysis-project source had two retained editions without an explicit current choice. This publication adds only `commit: e971839b16b169ef3bbf2ad664331878fc715062` to that source specification, preserving both complete earlier editions. Its 48 declared IDs produce 47 actually selected IDs: the optional unlinked `webhook-event-workbook-agent-types` remains unselected. The source-selection record preserves that distinction.
+
+### Exact outgoing application files
+
+The complete companion and source index are published together at immutable source commit **`1856462a31234ef52ad7c8803487924f46a10d85`**.
+
+| Original role | Bytes | SHA-256 |
+| --- | ---: | --- |
+| application | 66962 | `d426ab4fcdf77bc0802e1d65d845ba373e9e41ac1ea637e21cc0d5174c11ca55` |
+| source-index | 3233778 | `27782cf886be639f3a0ca78b9982d705ce4d5e65ca9c596a53d15c472e3e0aad` |
+| budget | 597 | `4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00` |
+| product-and-finance | 2718378 | `c3239a0f37251812b06c4af9916af7a8cd9de8d98ee3addbeca230e3a540e176` |
+
+The full portable input is `current-source-package.json`: **8096860 bytes**, SHA-256 **`67fd99aeec913b4f8ce366f6bc66acd94aee3ff6162efd66d02a523a8babf53f`**, bundle **`43dfa38b437dbfb0ae2ebe32d3f47414841d6144c08a36f914824455411736a3`**, Git blob **`ea51bd8f8fc2589b323142bb5936c11a4d178c61`**.
+
+The separate reviewer choice is `stellar-forge/developer-site/dist/grant-data/reviewer-working-source.json`: **8116598 bytes**, SHA-256 **`56cacec30d333a3ce6ccb808169be35c0183b9b527c51ccb4aa6a233af069988`**, bundle **`566f3377e8ee7eff6d70434baad2a22f26a2a1be186f085414a741293de86898`**, Git blob **`c3da7ed0149b79c930e95bae4e1a729fd19a56bf`**. Its companion and budget are the same complete original files. Its full index retains the original application body and source selection.
+
+Both complete packages were created and cold-opened through the unchanged maintained `makeSource`, `createSourceBundle`, `createReviewerSourcePackage`, `openReviewerSourcePackage` and `composeReviewerWorkingEdition` functions. Every reopened role matched its original complete bytes. The full 40-module source closure was compared against the current published source before execution; its business implementations remained unchanged.
+
+### Continue the existing saved application and browser course
+
+The receiving operation remains **SCF-GRANT-CURRENT-REVIEW-81CF-20261012**. Continue its original saved-v7 case, source phase, native listener, browser profile, original draft/review records and accepted save lineage. Its complete reviewed following04 caller is **137,916 bytes**, SHA-256 **`f36da0bcdb73f6b918f3ef5fd70ada4c94395bd9c39243324ebb89f3c421f33f`**. The current complete source/browser caller and selected-form successor are retained with the existing equipped owner.
+
+The original source phase saves before the original browser course. The browser course saves its working successor and retains the complete review and working-file outputs. Its presentation extension then opens the actual saved review and draft at desktop and 390-pixel widths. The original business module remains unchanged.
+
+An earlier saved complete browser result without images is immutable. The controller returns `presentation_successor_required` with exit 4 and the actual saved successor identity. The outer caller selects that exact saved input and continues the read-only presentation at its own deterministic root. Completed successor results can be reused even when a later saved version exists; the provider-current guard applies before starting a genuinely new phase.
+
+The presentation manifest binds four actual PNGs to their exact original records, original input, complete source, listener and driver. Capture success is `CAPTURED`; the producing operator still opens and inspects those images. The complete case archive is verified and saved before the four separately viewable images. Interrupted image publication retains its exact request and actual results so the same original files can be reconciled without duplicate creation.
+
+After the original source/browser course completes, the following selected-form programme chooses the **actual accepted browser working export**, verifies its receipt and original save model, and preserves every earlier saved-version prefix. A partial issued browser save is recovered through its original operation. Any already-issued form source choice remains its original exact selection.
+
+At the first **unissued** selected-form source boundary, explicitly select this complete current package and expected SHA-256 `67fd99aeec913b4f8ce366f6bc66acd94aee3ff6162efd66d02a523a8babf53f`. Compare the original source and preserve the selected incoming decision and all prior versions through form application and prepared output. This is a continuation of the same editable application and review case.
+
+The last local whole original source/browser admission ended before process creation. This edition records the completed source composition and original package receiving; the accepted equipped owner continues the actual original source, browser, image inspection, selected-form and outgoing-file course.
+
+### Open and inspect the exact outgoing deliverable
+
+Use the same producing application to open the complete full application and reviewer choice, the source-selection and companion views, and the original editable draft/review. Operate the meaningful navigation and source comparison, retain the selected source at its actual boundary, download the complete original files, close and reopen the working record, and receive it independently through the original programme.
+
+Actually open each outgoing format with its appropriate viewer. Read Markdown and JSON fully; open all CSV rows and columns; render HTML and open the generated images at their real sizes. Open any PDF, spreadsheet, slide deck, map, audio, video, report or editable project in its corresponding viewer. Extract an archive and inspect its contained deliverables and original working files. Exercise the actual controls and downloads at desktop and narrow widths, and repair observed presentation or receiving defects in the same maintained source.
+
+The existing owner directive and full prior receiving lineage follow below.
+
+## Retained prior receiving editions
+
+The following sections preserve the preceding published editions and their historical source/count/operation identities. The current edition and exact package above supersede their prior package selection at an unissued source boundary.
+
 ## Current selected edition: complete customer reporting, accounts and recovery
 
 This following edition receives five completed full author pairs over merged PR1945's fourteen-author union. The same application now selects **2,043 source records, 96 product declarations and 112 complete chapters**. All 1,953 preceding source IDs remain. The original receiver adds 90 current records and advances three selected Recovery source editions, retaining every historical edition. All **107 unrelated chapters and 1,784 unrelated source rows remain exact**.

@@ -113,11 +113,11 @@
     },
     {
       "id": "forecast-financing-managed-source-json",
-      "label": "Complete original 900-file managed execution source selection",
+      "label": "Complete original 902-file managed execution source selection",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json",
-      "commit": "6adf92aedec30f7932940bbc573459d1ed97f4ed",
+      "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
       "required": false,
       "editions": [
         {
@@ -125,6 +125,12 @@
           "git_blob": "2e904bbeef01d0b5ec985430541c6b6130a60ffa",
           "bytes": 55402,
           "sha256": "6f30bc78c27169e85c4fa97c1f0919687a0f01a76596b0d8b9d28983496d7cff"
+        },
+        {
+          "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+          "git_blob": "83594395a1504482e8138b360a295bff1e62dfe7",
+          "bytes": 55481,
+          "sha256": "7a982eb3d8ab4d8f3537d685c348d1482fbe7c4c264bd86ef9b5dfaa5270a854"
         }
       ]
     },
@@ -697,6 +703,91 @@
       "path": "stellar/scf_2026/sf47_budget_model/workspace",
       "commit": "5ed79311d3e378893e95b7e3ff08b018fbba5ed6",
       "required": false
+    },
+    {
+      "id": "forecast-financing-receiving-forecast-financing-receiving-mjs",
+      "label": "Complete original supplied-page financing and Planning limits operating course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/forecast-financing-receiving.mjs",
+      "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+      "required": false,
+      "editions": [
+        {
+          "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+          "git_blob": "6be7b0c6d42aadbf97f801d96a4786c4d0dca39e",
+          "bytes": 60220,
+          "sha256": "e697f18b27362c5fc30554cab35ef3e7f6848ad8a2b0758bf1028d43aa981aae"
+        }
+      ]
+    },
+    {
+      "id": "forecast-financing-receiving-forecast-financing-receiving-md",
+      "label": "Original financing installation, operation, recovery and producer inspection guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/FORECAST_FINANCING_RECEIVING.md",
+      "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+      "required": false,
+      "editions": [
+        {
+          "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+          "git_blob": "bbdf826107bab07b79d412cf6cf4ba00b1168a4e",
+          "bytes": 16758,
+          "sha256": "37192a4bbfe7ef08ebad28a715e8d67201b988d79448038467d5d2a47b26e5b6"
+        }
+      ]
+    },
+    {
+      "id": "forecast-financing-receiving-case-planning-browser-mjs",
+      "label": "Existing full native browser parent with additive financing and cold-receive modes",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/case_planning_browser.mjs",
+      "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+      "required": false,
+      "editions": [
+        {
+          "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+          "git_blob": "9f9f9b87f366beb6c4f7b1e6d7a91b5e7365da7a",
+          "bytes": 46324,
+          "sha256": "4c6bd02b02d3c4a19796c1610e8b1a3986f08b6a47d3cd8a9255df35b0baa5f8"
+        }
+      ]
+    },
+    {
+      "id": "forecast-financing-receiving-customer-funding-browser-receiving-mjs",
+      "label": "Original v32 funding input preparation and per-invocation served-source verification",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/scf-forecast-customer-funding-receiving-20261013/customer-funding-browser-receiving.mjs",
+      "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+      "required": false,
+      "editions": [
+        {
+          "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+          "git_blob": "cbe2004f39efc8e7658caa86d2da8d3d4f46fb4c",
+          "bytes": 46381,
+          "sha256": "50447e4b928c8e1260b060b3b041bdabfc5772d4295ac62a07dfd507f9584b2e"
+        }
+      ]
+    },
+    {
+      "id": "forecast-financing-receiving-customer-funding-receiving-md",
+      "label": "Original protected-customer-funds input and receiving ownership guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/scf-forecast-customer-funding-receiving-20261013/CUSTOMER_FUNDING_RECEIVING.md",
+      "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+      "required": false,
+      "editions": [
+        {
+          "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+          "git_blob": "81b4924cfb951418d5a63d745a7c862e40200087",
+          "bytes": 18108,
+          "sha256": "ca563673799a7aa7cd7b5d038b53e2200b5b860a0629a0879d7c38a62dbafa11"
+        }
+      ]
     }
   ]
 }
