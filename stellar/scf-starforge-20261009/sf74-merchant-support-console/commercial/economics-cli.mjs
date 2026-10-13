@@ -10,12 +10,17 @@ import {jsonBytes,sha256} from '../commercial-pricing.mjs';
 import {emptyCommercialEconomicsInput,normalizeCommercialEconomicsInput} from './economics.mjs';
 import {inspectEconomicsCase,exportEconomicsCase,inspectEconomicsPackage,receiveEconomicsCase,exportEconomicsHandoff} from './economics-receiving.mjs';
 
+import {prepareEffortEconomics,reopenEffortEconomics} from './effort-economics.mjs';
+
 const names=['cases-dir','case','revision','quote','quote-sha','assessment','assessment-sha',
   'input','input-sha','as-of','out','request-id','actor','review-sha','kind','from','sha256',
-  'source-dir','export-id','generated-at','python','acceptance','acceptance-sha'];
+  'source-dir','export-id','generated-at','python','acceptance','acceptance-sha',
+  'archive','archive-sha','installation','installation-revision','installation-sha','report-sha','hours-basis','cost-basis'];
 const common=['cases-dir','case','revision'];
 const selection=['quote','quote-sha','assessment','assessment-sha'];
 const allowed={
+  'effort-preview':[...common,...selection,'archive','archive-sha','installation','installation-revision','installation-sha','report-sha','hours-basis','cost-basis','out','python'],
+  'effort-reopen':['cases-dir','from','sha256','python'],
   seed:[...common,'quote','quote-sha','as-of','out'],
   list:common,preview:[...common,'input','input-sha','out'],
   save:[...common,'input','input-sha','request-id','actor','review-sha'],
@@ -70,6 +75,8 @@ export async function commercialEconomicsCli(argv=process.argv.slice(2),{environ
       'inspect-package':'--from DIR --sha256 CASE_SOURCE_MANIFEST_SHA256 + selection [--python PATH]',
       receive:'--from DIR --sha256 CASE_SOURCE_MANIFEST_SHA256 --out DIR --cases-dir DIR --source-dir DIR --request-id ID --actor NAME + selection [--python PATH]',
       handoff:'Case + selection + --out PRIVATE_DIR [--acceptance UUID --acceptance-sha RESPONSE_MATERIAL_SHA256]',
+      'effort-preview':'Case + quote/assessment selection + --archive COMPLETE_INSTALLATION.zip --archive-sha SHA --installation ID --installation-revision N --installation-sha SHA --report-sha SHA --hours-basis RECORDED|PROJECTED --cost-basis UNKNOWN|REUSE_SELECTED_PLAN --out PRIVATE_DIR [--python PATH]; full native verification, original economics preview, no save.',
+      'effort-reopen':'--cases-dir DIR --from PRIVATE_HANDOFF --sha256 ORIGINAL_HANDOFF_MANIFEST_SHA [--python PATH]; complete native source and original economics replay.',
       privacy:'Assessment files and whole-case handoffs contain private costs/assumptions. Customer quote JSON/Markdown are unchanged. No Forecast row, payment or customer acceptance is generated.',
       guide:'sf74-merchant-support-console/commercial/ECONOMICS_RECEIVING.md'};
   }
@@ -77,6 +84,15 @@ export async function commercialEconomicsCli(argv=process.argv.slice(2),{environ
   const action=positionals[0];
   if(!allowed[action]||Object.keys(v).some(key=>!allowed[action].includes(key)))throw new Error('Unexpected private economics action or option.');
   const native={python:v.python,environment,signal};
+  if(action==='effort-reopen')return reopenEffortEconomics({...native,casesDirectory:absolute(required(v,'cases-dir')),
+    directory:absolute(required(v,'from')),manifestSha256:required(v,'sha256')});
+  if(action==='effort-preview'){
+    if(!/^[1-9]\d*$/.test(required(v,'installation-revision')))throw new Error('Use a positive original Installation revision.');
+    return prepareEffortEconomics({...native,...caseSelection(v),...selected(v),directory:absolute(required(v,'out')),
+      archive:absolute(required(v,'archive')),archiveSha256:required(v,'archive-sha'),installationId:required(v,'installation'),
+      installationRevision:Number(v['installation-revision']),installationSha256:required(v,'installation-sha'),
+      reportSha256:required(v,'report-sha'),hoursBasis:required(v,'hours-basis'),costBasis:required(v,'cost-basis')});
+  }
   if(action==='inspect-package')return inspectEconomicsPackage({...native,directory:absolute(required(v,'from')),
     expectedManifestSha256:required(v,'sha256'),...selected(v)});
   if(action==='receive'){
