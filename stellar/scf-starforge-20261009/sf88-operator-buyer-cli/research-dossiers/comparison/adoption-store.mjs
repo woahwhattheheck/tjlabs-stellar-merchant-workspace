@@ -8,13 +8,13 @@ import {comparisonModel} from './model.mjs';
 import {returnSourceChunks} from '../dossier-returns/source.mjs';
 import {ADOPTION_SCHEMA,ADOPTION_SECTIONS,adoptionRequest,adoptionEvents,findPlan,page,envelope,normalizePlan} from './adoption-contracts.mjs';
 import {buildAdoptionPlan,finalizePlan,adoptionProgress,adoptionResult,adoptionTargets} from './adoption-model.mjs';
+import {exportAdoptionReport} from './adoption-render.mjs';
 const kinds=['cases','candidates','runs','judgments','decisions'];
 const sourceId=value=>{need(typeof value==='string'&&/^drs_[a-f0-9]{64}$/.test(value),'ADOPTION_SOURCE_ID_INVALID');return value;};
 const resultDownload=(state,filename,contentType,body,extra={})=>{
  const bytes=Buffer.isBuffer(body)?body:Buffer.from(body,'utf8');
  return{revision:state.revision,filename,contentType,bytes:bytes.length,sha256:digest(bytes),body:bytes,...extra};
 };
-const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function createComparisonAdoptionStore({dossierDirectory,head,history,commit,metadata,blob,sourceAdapter,comparisonStore,validateCapacity,validateCandidate}){
  for(const f of [dossierDirectory,head,history,commit,metadata,blob,validateCapacity,validateCandidate])need(typeof f==='function','ADOPTION_ORIGINAL_STORE_REQUIRED');
  need(sourceAdapter?.inspectSource&&sourceAdapter?.readSource&&comparisonStore?.reviewComparison,'ADOPTION_ORIGINAL_STORE_REQUIRED');
@@ -178,20 +178,7 @@ export function createComparisonAdoptionStore({dossierDirectory,head,history,com
   const report=adoptionResult(state,plan);
   if(format==='source')return{revision:state.revision,filename:plan.source.filename,contentType:plan.source.contentType,
    bytes:plan.source.bytes,sha256:plan.source.sha256,stream:Readable.from(returnSourceChunks(plan.source,blob))};
-  if(format==='json')return resultDownload(state,plan.id+'.json','application/json; charset=utf-8',jsonBytes(report));
-  const rows=report.progress.mappings.map(m=>'<tr><td>'+escape(m.sourceKind)+'</td><td>'+escape(m.sourceVersionId)+
-   '</td><td>'+escape(m.targetVersionId)+'</td><td>'+escape(m.mode)+'</td></tr>').join('');
-  const html='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
-   '<title>Reviewed comparison adoption</title><style>body{font:16px/1.5 system-ui;margin:2rem auto;max-width:1000px;padding:0 1rem;color:#171717;background:#fff}'+
-   'table{width:100%;border-collapse:collapse}td,th{padding:.5rem;text-align:left;border:1px solid #ccc;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style><body>'+
-   '<h1>'+escape(plan.case.definition.title)+'</h1><h2>Reviewed returned comparison</h2><p>Status: '+escape(report.status)+
-   '. Native author revision '+state.revision+'. Accepted '+report.progress.completed+' of '+report.progress.total+' planned operations.</p>'+
-   '<p>Accepting operator: '+escape(plan.request.actor.name)+' ('+escape(plan.request.actor.id)+'), '+escape(plan.request.reviewedAt)+
-   '.</p><p>'+escape(plan.request.reviewNote)+'</p><p>The returned history, original measurements, reviewers and files remain their original source. This author-side adoption records new native operations; it does not rerun measurements or attribute the original work to the accepting operator.</p>'+
-   '<p>Source '+escape(plan.source.id)+' / '+escape(plan.source.sha256)+' / '+plan.source.bytes+' bytes. Original protocol '+escape(plan.case.versionId)+
-   '.</p><table><thead><tr><th>Record</th><th>Original version</th><th>Author version</th><th>Disposition</th></tr></thead><tbody>'+rows+
-   '</tbody></table><h2>Complete source, plan, mappings and native receipts</h2><pre>'+escape(JSON.stringify(report,null,2))+'</pre></body></html>\n';
-  return resultDownload(state,plan.id+'.html','text/html; charset=utf-8',html);
+  return exportAdoptionReport(report,{format});
  }
  return Object.freeze({comparisonAdoptions,comparisonAdoptionSource,previewComparisonAdoption,reviewComparisonAdoption,
   comparisonAdoption,comparisonAdoptionFile,exportComparisonAdoption});

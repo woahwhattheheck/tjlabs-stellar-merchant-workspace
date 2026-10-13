@@ -8,6 +8,7 @@ import {writePortableFile} from '../portable.mjs';
 import {ResearchWorkspaceClient} from '../workspace-client.mjs';
 import {ADOPTION_REQUEST_LIMIT,adoptionRequest} from './adoption-contracts.mjs';
 const usage='Research comparison adoption\n'+
+ '  handover --store DIR --dossier DOSSIER --revision N --plan PLAN_ID --operation OPERATION_ID --directory DIR [--python EXECUTABLE]\n'+
  '  list --store DIR --id DOSSIER [--revision N --offset N --limit N]\n'+
  '  source --store DIR --id DOSSIER --source-id RETURN_SOURCE [--case-version ID --section cases|candidates|runs|judgments|decisions|sources --revision N --offset N --limit N]\n'+
  '  preview --store DIR --id DOSSIER --file ORIGINAL_REQUEST.json [--out PREPARED_REVIEW.json]\n'+
@@ -17,7 +18,7 @@ const usage='Research comparison adoption\n'+
  '  file --store DIR --id DOSSIER --source-id ID --run ID [--artifact ID] --out FILE [--revision N --sha256 HASH]\n'+
  '  Replace --store with --connection-file FILE [--workspace-directory ORIGINAL_DIR] to use the existing authenticated listener. Receive the complete portable branch through the original dossier-return source intake first. Preview and review never generate another request ID.\n';
 export async function main(argv=process.argv.slice(2)){
- const action=argv[0];if(!action||['help','--help','-h'].includes(action)){process.stdout.write(usage);return;}
+ const action=argv[0];if(action==='handover')return(await import('./adoption-handover-cli.mjs')).main(argv.slice(1));if(!action||['help','--help','-h'].includes(action)){process.stdout.write(usage);return;}
  need(['list','source','preview','review','lookup','export','file'].includes(action),'ADOPTION_COMMAND_INVALID');
  const keys=['store','connection-file','workspace-directory','id','revision','offset','limit','source-id','case-version','section','file','out','plan-id','request-id','format','run','artifact','sha256'];
  const {values:v}=parseArgs({args:argv.slice(1),options:Object.fromEntries(keys.map(k=>[k,{type:'string'}])),strict:true,allowPositionals:false});
