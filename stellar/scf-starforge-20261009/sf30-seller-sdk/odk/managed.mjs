@@ -10,9 +10,9 @@ import {readCentralCommissioningInputs,readCentralWarehouseProfiles} from './hos
 import {createCentralServer} from './server.mjs';
 import {restoreCentralArchive} from './archive.mjs';
 import {ODK_CONNECTION_SCHEMA,ODK_CONNECTION_FILENAME,ODK_STARTUP_SCHEMA,ODK_HASH,
-  odkNeed,odkAbsolute,odkPrivateDirectory,odkWritePrivateJson,odkReadPrivateJson} from './connection.mjs';
+  odkNeed,odkAbsolute,odkExternalOrigin,odkPrivateDirectory,odkWritePrivateJson,odkReadPrivateJson} from './connection.mjs';
 
-const OPTIONS=['workspace','operator','port','restore-archive','restore-sha256','commissioning-connection','commissioning-environment','warehouse-profiles'];
+const OPTIONS=['workspace','operator','port','external-origin','restore-archive','restore-sha256','commissioning-connection','commissioning-environment','warehouse-profiles'];
 export function centralManagedOptions(argv){
   const raw={};
   for(let i=0;i<argv.length;i+=2){
@@ -32,7 +32,11 @@ export function centralManagedOptions(argv){
   'ODK_RESTORE_SELECTION_INVALID','Select the original archive and its exact reviewed SHA-256 together.');
   odkNeed(!raw['commissioning-environment']||raw['commissioning-connection'],
     'ODK_COMMISSIONING_CONNECTION','Choose the original host connection for this private authorization file.');
+  const externalOrigin=raw['external-origin']===undefined?null:odkExternalOrigin(raw['external-origin']);
+  odkNeed(!externalOrigin||Number(raw.port??0)>0,'ODK_EXTERNAL_PORT_REQUIRED',
+    'Select the actual stable loopback --port forwarded by the trusted external proxy.');
   return {directory,operator,port:Number(raw.port??0),
+    ...(externalOrigin?{externalOrigin}:{}),
     ...(raw['warehouse-profiles']?{warehouseProfilesFile:odkAbsolute(raw['warehouse-profiles'])}:{}),
     ...(raw['commissioning-connection']?{commissioningConnectionFile:odkAbsolute(raw['commissioning-connection'])}:{}),
     ...(raw['commissioning-environment']?{commissioningEnvironmentFile:odkAbsolute(raw['commissioning-environment'])}:{}),
@@ -44,6 +48,7 @@ export async function startManagedCentralWorkspace(options){
     'ODK_RESTORE_SELECTION_INVALID','Select the original archive and its exact reviewed SHA-256 together.');
   const selected=centralManagedOptions(['--workspace',options.directory,'--operator',options.operator||'Central field operator',
     '--port',String(options.port??0),
+    ...(options.externalOrigin!==undefined?['--external-origin',options.externalOrigin]:[]),
     ...(options.warehouseProfilesFile?['--warehouse-profiles',options.warehouseProfilesFile]:[]),
     ...(options.restoreArchive?['--restore-archive',options.restoreArchive,'--restore-sha256',options.restoreSha256]:[]),
     ...(options.commissioningConnectionFile?['--commissioning-connection',options.commissioningConnectionFile]:[]),
@@ -72,7 +77,7 @@ export async function startManagedCentralWorkspace(options){
         formReleases=composed.review;formReleaseExtensions.push(composed.extension);
       },extraExtensions:formReleaseExtensions});
     workspace=owner.workspace;
-    server=await createCentralServer({workspace,host:'127.0.0.1',port:selected.port,
+    server=await createCentralServer({workspace,host:'127.0.0.1',port:selected.port,externalOrigin:selected.externalOrigin,
       token:(await import('node:crypto')).randomBytes(32).toString('hex'),extensions:owner.extensions});
     const mounted=await fetch(server.origin+'/api/commissioning/state',{headers:{Authorization:'Bearer '+server.token},
       redirect:'error',signal:AbortSignal.timeout(10000)});
@@ -100,7 +105,8 @@ export async function startManagedCentralWorkspace(options){
     const value={schema:ODK_CONNECTION_SCHEMA,instanceId:randomUUID(),directory:identity.path,
       directoryIdentity:{dev:identity.dev,ino:identity.ino},workspaceId:state.id,
       operator:selected.operator,pid:process.pid,startedAt:new Date().toISOString(),
-      origin:server.origin,url:server.url};
+      origin:server.origin,url:server.url,
+      ...(server.browserOrigin?{browserOrigin:server.browserOrigin,browserUrl:server.browserUrl}:{})};
     const written=await odkWritePrivateJson(join(identity.path,ODK_CONNECTION_FILENAME),value,{replace:true});
     connection={...written,value};
     const close=()=>closePromise||(closePromise=(async()=>{
@@ -116,10 +122,10 @@ export async function startManagedCentralWorkspace(options){
     })());
     return {...server,directory:identity.path,workspace,operator:selected.operator,connection,
       instanceId:value.instanceId,restored,commissioning:owner.commissioning,
-      commissioningUrl:server.origin+'/commissioning/#token='+encodeURIComponent(server.token),
+      commissioningUrl:(server.browserOrigin??server.origin)+'/commissioning/#token='+encodeURIComponent(server.token),
       warehouse:owner.warehouse,warehouseProfilesSha256:warehouseInputs.source?.sha256??null,
-      warehouseUrl:server.origin+'/warehouse/#token='+encodeURIComponent(server.token),
-      formReleases,formReleasesUrl:server.origin+'/form-releases/#token='+encodeURIComponent(server.token),close};
+      warehouseUrl:(server.browserOrigin??server.origin)+'/warehouse/#token='+encodeURIComponent(server.token),
+      formReleases,formReleasesUrl:(server.browserOrigin??server.origin)+'/form-releases/#token='+encodeURIComponent(server.token),close};
   }catch(error){
     await server?.close().catch(()=>{});
     await owner?.close().catch(()=>{});
@@ -130,11 +136,14 @@ export function centralStartup(service){
   return {schema:ODK_STARTUP_SCHEMA,status:'ODK_WORKSPACE_READY',directory:service.directory,
     operator:service.operator,workspaceId:service.connection.value.workspaceId,instanceId:service.instanceId,
     pid:service.connection.value.pid,connectionFile:service.connection.path,
-    connectionSha256:service.connection.sha256,origin:service.origin,url:service.url,commissioningUrl:service.commissioningUrl,
+    connectionSha256:service.connection.sha256,origin:service.origin,url:service.url,
+    ...(service.browserOrigin?{browserOrigin:service.browserOrigin,browserUrl:service.browserUrl}:{}),
+    commissioningUrl:service.commissioningUrl,
     warehouseUrl:service.warehouseUrl,warehouseProfilesSha256:service.warehouseProfilesSha256,formReleasesUrl:service.formReleasesUrl};
 }
 const HELP='ODK Central managed workspace\n\n'+
   'starforge odk-central-workspace --workspace /private/central --operator "Field data operator" [--port 0]\n'+
+  '  --external-origin HTTPS_ORIGIN  Explicit trusted browser proxy; requires the actual --port\n'+
   '  --restore-archive PATH          Original complete Central archive, selected before opening\n'+
   '  --restore-sha256 SHA256         Exact reviewed archive hash; required with --restore-archive\n\n'+
   '  --commissioning-connection PATH  Original private Central host connection or bootstrap JSON\n'+
@@ -146,6 +155,8 @@ const HELP='ODK Central managed workspace\n\n'+
   'Data subcommands include state, capture, report, export, publisher transfers and release controls.\n'+
   'Applications reviews, saves, starts, opens and stops this same leased workspace.\n'+
   'Its private odk.connection.json connects the CLI and typed tools to the existing listener.\n'+
+  'When selected, browserUrl uses the external HTTPS origin; origin/url remain local control URLs.\n'+
+  'The proxy preserves Host, Origin and Authorization; forwarded headers cannot grant trust.\n'+
   'A same-archive restart reopens the original received workspace and preserves later editions.\n'+
   'Provider Authorization stays in the named host environment; only aliases enter saved connections.\n'+
   'SIGINT/SIGTERM closes HTTP, settles original captures and releases the original writer lease.\n';
