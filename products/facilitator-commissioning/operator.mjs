@@ -209,7 +209,12 @@ export async function openCommissioningOperator({directory:where,store,setupFile
         const revision=job?(await job.inspect()).revision:0;
         need(command.expectedRevision===revision,'REVISION_CONFLICT','Refresh the original job before preparing new work.',409);
         if(command.action==='installation-template'||command.action==='installation-prepare')await installation.binding(command,await jobRequired().inspect());
-        if(NATIVE_DESK_ACTIONS.includes(command.action))await nativeInstallation.binding(command,await jobRequired().inspect());
+        if(NATIVE_DESK_ACTIONS.includes(command.action)){
+          // Retain the complete outer UUID/body before a native binding can be published.
+          await publish(path,encode(command));
+          await nativeInstallation.binding(command,await jobRequired().inspect());
+          return{request:command,replayed:false};
+        }
         await publish(path,encode(command));return{request:command,replayed:false};
       }),
       receive:operationId=>run(async()=>{
