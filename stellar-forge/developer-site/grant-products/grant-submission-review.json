@@ -40,7 +40,7 @@
       "label": "Complete selected application review, working-copy, required-content and handover source",
       "kind": "tree",
       "path": "stellar-forge/developer-site",
-      "commit": "02b5fb7b17712fe8acc7079a738d6c356f36d824",
+      "commit": "d95d566b049e7047a560fad74d0a6320e22049dd",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace"
     },
     {
@@ -74,6 +74,22 @@
         }
       ],
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace"
+    },
+    {
+      "id": "grant-submission-offline-editor-guide",
+      "label": "Complete offline application editing, native export and original draft receiving",
+      "kind": "blob",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/GRANT_OFFLINE.md",
+      "commit": "d95d566b049e7047a560fad74d0a6320e22049dd",
+      "editions": [
+        {
+          "commit": "d95d566b049e7047a560fad74d0a6320e22049dd",
+          "git_blob": "135b08bdb8e6f281aff8d8d0ec4054f851db7403",
+          "sha256": "00e14f2e4bf9f775b9759561be9a344ed3acd42e6ebc830ad90a47d2bd974ead",
+          "bytes": 9884
+        }
+      ]
     }
   ]
 }

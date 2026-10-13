@@ -293,6 +293,8 @@ export class MerchantCkanWorkspaces {
       ...(started.profileId ? { profileId: started.profileId } : {}),
       ...(started.runId ? { runId: started.runId } : {}),
       ...(started.semanticReviewId ? { semanticReviewId: started.semanticReviewId } : {}),
+      ...(started.comparisonId ? { comparisonId: started.comparisonId } : {}),
+      ...(started.semanticComparisonReviewId ? { semanticComparisonReviewId: started.semanticComparisonReviewId } : {}),
       native: view({ operation: native.operation, active: native.active }) };
   }
   #input(alias, input) {

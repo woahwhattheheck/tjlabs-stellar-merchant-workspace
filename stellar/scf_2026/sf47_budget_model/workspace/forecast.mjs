@@ -1,5 +1,9 @@
 import { createForecastCurrencyUI, formatNativeMoney, formatCurrencyValuation } from './forecast_currency.mjs';
 import { mountForecastComparison } from './forecast-comparison.mjs';
+import { mountForecastWorkbook, validateForecastWorkbookDeskState } from './forecast-workbook-desk.mjs';
+import { signature } from './forecast-workbook.mjs';
+import { createForecastDraftStore, createForecastWorkbookHost, validateForecastDraftInputs, FORECAST_DRAFT_SCHEMA } from './forecast-workbook-host.mjs';
+import { currentStaffContext, staffDeskStorageKey } from './staff-session.mjs';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const usd = value => value === null || value === undefined ? 'Not entered' : new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(value));
@@ -27,7 +31,7 @@ function download(raw,filename,type='application/json') {
 export function mountForecast({container,current,api:transport,mutationId,recordingActor,onSaved,initialForecastId=null,initialInputs=null,onSelection=()=>{}}) {
   const root=document.createElement('section');root.className='operating-forecast';container.replaceChildren(root);
   let active=true,busy=false,hostBusy=false,selected=null,preview=null,editing=true,inputState=null,request=null,comparison=null;
-  const blocked=()=>busy||hostBusy;
+  const blocked=()=>busy||hostBusy||restoring||Boolean(pendingWorkbook)||Boolean(request);
   const available=()=>active&&root.isConnected;
   function requireActive(){if(!available())throw new Error('This forecast view is closed. Reopen its original case to continue.');}
   async function api(...args){requireActive();const result=await transport(...args);requireActive();return result;}
@@ -41,11 +45,167 @@ export function mountForecast({container,current,api:transport,mutationId,record
   function defaults(){return {name:current.program.name+' — operating forecast',asOfDate:today(),calendarStart:current.program.calendarStart||current.plan.planning.calendarStart||'',
     openingCash:{amountUsd:null,basis:'NOT_ENTERED',sourceIds:[],note:''},packageOverrides:[],invoiceOverrides:[],grantReceipts:[],commercial:[],capacity:{weeklyHours:null,note:''},note:''};}
   function status(message,error=false){if(!available())return;const node=$('[data-forecast-status]');node.textContent=message;node.setAttribute('role',error?'alert':'status');}
-  function applyBusy(){if(!available())return;const state=blocked();root.setAttribute('aria-busy',String(state));root.querySelectorAll('input,select,textarea,button').forEach(node=>node.disabled=state||node.dataset.forecastFixed==='true');comparison?.setHostBusy();}
+  function applyBusy(){if(!available())return;const state=blocked();root.setAttribute('aria-busy',String(busy||hostBusy||restoring));root.querySelectorAll('input,select,textarea,button').forEach(node=>{if(!node.closest('[data-forecast-workbook]'))node.disabled=(recoveryAction(node)?busy||hostBusy||restoring:state)||node.dataset.forecastFixed==='true';});for(const [action,visible] of [['recover-source',!!pendingWorkbook],['recover-save',!!request]]){const control=$('[data-forecast-action='+action+']');if(control)control.hidden=!visible;}comparison?.setHostBusy();workbook?.setHostBusy();}
   function setBusy(state){busy=state;applyBusy();}
   function setHostBusy(state){hostBusy=!!state;applyBusy();}
-  async function run(task){if(blocked()||!available())return;setBusy(true);try{await task();}catch(error){status(error.message,true);}finally{if(available())setBusy(false);}}
-  function invalidate(){preview=null;request=null;const save=$('[data-forecast-action=save]');if(save){save.disabled=true;save.dataset.forecastFixed='true';}const note=$('[data-forecast-preview-state]');if(note)note.textContent='Inputs changed. Preview this source and these inputs before saving.';}
+  async function run(task,{recovery=false}={}){if((recovery?busy||hostBusy||restoring:blocked())||!available())return;setBusy(true);try{await task();}catch(error){status(error.message,true);}finally{if(available()){setBusy(false);persistSoon();}}}
+  function invalidate(){if(pendingWorkbook||request)return;preview=null;const save=$('[data-forecast-action=save]');if(save){save.disabled=true;save.dataset.forecastFixed='true';}const note=$('[data-forecast-preview-state]');if(note)note.textContent='Inputs changed. Preview this source and these inputs before saving.';}
+
+  const clone=value=>structuredClone(value);
+  const pinnedContext=currentStaffContext();
+  const draftStore=createForecastDraftStore(staffDeskStorageKey('sf47.forecast-working.'+current.program.id,pinnedContext));
+  let workbook=null,workbookState=null,pendingWorkbook=null,workbookHistory={},restoring=true,storeError='';
+  let previousWorking=null,restoreNotice='',rawFields={};
+  const recoveryAction=node=>['download-working','recover-source','recover-save'].includes(node.dataset.forecastAction);
+  function workbookOptions(){return {caseId:current.program.id,originCaseId:current.program.origin?.programId,
+    planContentSha256:current.plan.contentSha256};}
+  function currentInputs(){if(request)return clone(request.data.inputs);return editing&&$('[data-forecast-form]')?readEditor():clone(inputState||selected?.inputs||defaults());}
+  function rawKey(node){
+    const form=$('[data-forecast-form]'),parts=[];
+    for(const attr of ['data-forecast-commercial','data-forecast-package','data-forecast-invoice','data-forecast-grant',
+      'data-native-price-credit','data-native-cost-credit']){
+      const scope=node.closest('['+attr+']');if(scope)parts.push(attr,scope.getAttribute(attr));
+    }
+    for(const attr of ['data-forecast-fx','data-forecast-receipt']){
+      const scope=node.closest('['+attr+']');
+      if(scope){const parent=attr==='data-forecast-receipt'?scope.closest('[data-forecast-commercial]'):form;
+        parts.push(attr,[...parent.querySelectorAll('['+attr+']')].indexOf(scope));}
+    }
+    parts.push(node.name);return JSON.stringify(parts);
+  }
+  function captureRaw(){
+    const form=$('[data-forecast-form]');if(!form)return clone(rawFields);
+    for(const node of form.querySelectorAll('input[name],select[name],textarea[name]')){
+      if(node.type==='file')continue;
+      rawFields[rawKey(node)]={value:node.value,checked:!!node.checked,
+        ...(node.multiple?{values:[...node.selectedOptions].map(option=>option.value)}:{})};
+    }
+    return clone(rawFields);
+  }
+  function restoreRaw(){
+    const form=$('[data-forecast-form]');if(!form)return;
+    const apply=()=>{for(const node of form.querySelectorAll('input[name],select[name],textarea[name]')){
+      if(node.type==='file')continue;const row=rawFields[rawKey(node)];if(!row)continue;
+      if(node.multiple){for(const option of node.options)option.selected=(row.values||[]).includes(option.value);}
+      else node.value=row.value;
+      if(node.type==='checkbox'||node.type==='radio')node.checked=row.checked;
+    }};
+    apply();root.querySelectorAll('[data-forecast-commercial]').forEach(syncCommercialTiming);
+    currency.syncRates(form,{busy:blocked()});apply();
+  }
+  function validateRaw(value){
+    if(value===undefined)return {};
+    if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length>20000)
+      throw new Error('Retain the complete original forecast form fields.');
+    for(const [key,row] of Object.entries(value)){
+      let parts;try{parts=JSON.parse(key);}catch{throw new Error('The original forecast field identity is invalid.');}
+      if(!Array.isArray(parts)||parts.length>20||parts.some(part=>typeof part!=='string'&&!Number.isSafeInteger(part))||
+        !row||typeof row.value!=='string'||row.value.length>100000||typeof row.checked!=='boolean'||
+        row.values!==undefined&&(!Array.isArray(row.values)||row.values.length>1000||row.values.some(v=>typeof v!=='string')))
+        throw new Error('Retain the original forecast field text and selections.');
+    }
+    return clone(value);
+  }
+  function retentionInputs(){return request?clone(request.data.inputs):editing&&$('[data-forecast-form]')?readEditor({forRecovery:true}):clone(inputState||selected?.inputs||defaults());}
+  function snapshot(){
+    return {schema:FORECAST_DRAFT_SCHEMA,caseId:current.program.id,originCaseId:current.program.origin?.programId||null,
+      planContentSha256:current.plan.contentSha256,savedAt:new Date().toISOString(),editing,selectedId:selected?.id||null,
+      inputs:retentionInputs(),rawFields:captureRaw(),workbook:workbook?.snapshot()||clone(workbookState),pendingWorkbook:clone(pendingWorkbook),
+      workbookHistory:clone(workbookHistory),saveRequest:clone(request),previousWorking:clone(previousWorking)};
+  }
+  async function persist(){
+    if(editing&&$('[data-forecast-form]'))inputState=retentionInputs();
+    const value=snapshot();
+    try{await draftStore.write(value);storeError='';}
+    catch(error){storeError=error.message;status('The complete working forecast remains open. Download the working file before leaving. '+error.message,true);throw error;}
+  }
+  function persistSoon(){if(restoring||!available())return;void persist().catch(()=>{});}
+  function validateWorking(value){
+    if(!value||value.schema!==FORECAST_DRAFT_SCHEMA||value.caseId!==current.program.id||
+      (value.originCaseId||null)!==(current.program.origin?.programId||null)||
+      value.planContentSha256!==current.plan.contentSha256||typeof value.editing!=='boolean'||
+      !value.inputs||typeof value.inputs!=='object'||Array.isArray(value.inputs)||
+      value.selectedId!==null&&!/^forecast-[a-f0-9]{32}$/.test(value.selectedId))
+      throw new Error('Open the complete working forecast in its original retained case and pinned plan.');
+    validateForecastDraftInputs(value.inputs);
+    if(!value.workbookHistory||typeof value.workbookHistory!=='object'||Array.isArray(value.workbookHistory))throw new Error('Retain the original workbook operation history.');
+    if(value.previousWorking!==null&&value.previousWorking!==undefined){if(value.previousWorking.previousWorking)throw new Error('Retain one complete previous working edition.');validateWorking(value.previousWorking);}
+    if(value.saveRequest){
+      const r=value.saveRequest;
+      if(r.action!=='forecast.save'||!Number.isSafeInteger(r.expectedVersion)||r.expectedVersion<1||
+        typeof r.actor!=='string'||!r.actor.trim()||typeof r.requestId!=='string'||!r.requestId||
+        typeof r.note!=='string'||!/^[a-f0-9]{64}$/.test(r.data?.expectedPreviewSha256)||
+        signature(r.data.inputs)!==signature(value.inputs))
+        throw new Error('Retain the complete original forecast save request and its exact inputs.');
+    }
+    if(value.pendingWorkbook&&value.saveRequest)throw new Error('Recover one original forecast request at a time.');
+    return {...clone(value),rawFields:validateRaw(value.rawFields)};
+  }
+  function updateCase(next){
+    if(next?.program?.id!==current.program.id||next.plan?.contentSha256!==current.plan.contentSha256)
+      throw new Error('The workbook continuation returned another case or pinned plan.');
+    Object.assign(current,next);currency.refreshCurrent();costMap.clear();for(const row of current.report.packages)costMap.set(row.id,row);
+    sourceOptions.splice(0,sourceOptions.length,...current.sources.map(row=>[row.id,row.filename+' · '+row.sha256.slice(0,12)]));
+  }
+  const workbookHost=createForecastWorkbookHost({
+    getCurrent:()=>current,getInputs:currentInputs,api,mutationId,recordingActor,available,
+    getJournal:()=>pendingWorkbook,
+    setJournal:(value,history)=>{pendingWorkbook=value;if(history)Object.assign(workbookHistory,history);},
+    persist,onCase:updateCase,
+    adopt:async result=>{
+      inputState=clone(result.inputs);rawFields={};selected=null;editing=true;preview=result.preview;request=null;onSelection(null);
+      const holder=$('[data-forecast-editor]');if(holder)holder.innerHTML=editor(inputState);
+      root.querySelectorAll('[data-forecast-commercial]').forEach(syncCommercialTiming);
+      const form=$('[data-forecast-form]');if(form)currency.syncRates(form,{busy:blocked()});
+      const report=$('[data-forecast-report]');if(report)report.innerHTML=reportHtml(preview,true);
+    }
+  });
+  async function sendSavedForecast(){
+    if(!request)throw new Error('There is no retained forecast save request.');
+    await persist();applyBusy();
+    const original=request;let result;
+    try{result=await api(path+'/command',clone(original));}
+    catch(error){
+      if(Number.isInteger(error?.status)&&error.status>=400&&error.status<500&&![401,403,408,425,429].includes(error.status)){
+        workbookHistory.failedSave={request:clone(original),status:error.status,code:error.code||'',message:error.message};
+        request=null;preview=null;await persist();
+        const next=await api(path);updateCase(next);render();
+      }
+      throw error;
+    }
+    if(!/^forecast-[a-f0-9]{32}$/.test(result?.recordId))
+      throw new Error('The forecast reply has no original saved identity. Continue the same retained save request.');
+    request=null;selected={id:result.recordId};editing=false;await persist();
+    onSelection(result.recordId);await onSaved(result);
+  }
+  async function applyWorkbook(selection){
+    if(busy||hostBusy||request)throw new Error('Finish the current forecast operation before applying this workbook.');
+    setBusy(true);
+    try{
+      const result=await workbookHost.apply(selection);
+      status(result.adopted?'Retained the original workbook and previewed its reviewed assumptions. Save this forecast to keep the resulting edition.':result.message);
+      return result;
+    }finally{if(available())setBusy(false);}
+  }
+  async function receiveWorking(value,{fromFile=false}={}){
+    const next=validateWorking(value);
+    if(next.pendingWorkbook)next.pendingWorkbook=await workbookHost.validateJournal(next.pendingWorkbook);
+    if(next.workbook)next.workbook=await validateForecastWorkbookDeskState(next.workbook,{...workbookOptions(),currentInputs:next.inputs});
+    requireActive();
+    if(fromFile){previousWorking=snapshot();delete previousWorking.previousWorking;}
+    workbook?.dispose();workbook=null;
+    inputState=clone(next.inputs);rawFields=clone(next.rawFields);selected=null;editing=next.editing;preview=null;request=clone(next.saveRequest);
+    pendingWorkbook=clone(next.pendingWorkbook);workbookState=clone(next.workbook);workbookHistory=clone(next.workbookHistory||{});
+    if(!fromFile)previousWorking=clone(next.previousWorking||null);
+    if(next.selectedId&&!editing)selected=await api(path+'/forecasts/'+next.selectedId);
+    requireActive();onSelection(selected?.id||null);render();restoreRaw();
+    if(workbook)await workbook.ready;
+    requireActive();await persist();
+    status(pendingWorkbook?'Reopened the complete workbook and retained source request. Continue the original source request.':
+      request?'Reopened the exact pending forecast save. Continue the original save request.':
+      'Reopened the complete forecast inputs, returned workbook and original review.');
+  }
+
   function packageEditor(row){
     const prior=costMap.get(row.costId), direct=cashOptions('OUT');
     return '<fieldset data-forecast-package="'+esc(row.costId)+'"><legend>'+esc(row.costId)+'</legend><p class="forecast-muted">Pinned '+usd(prior.plannedUsd)+' · invoices '+usd(prior.invoicedUsd)+' · paid allocations '+usd(prior.paidUsd)+' · accepted '+esc(prior.acceptedHours)+' / '+esc(prior.plannedHours)+' hours.</p><div class="forecast-fields">'
@@ -122,7 +282,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
       +'<details open><summary>Customer delivery scenarios</summary><p>Each project carries the original quote, collection schedule and delivery cost. Add only the customer-specific remaining scope.</p><div data-forecast-commercials>'+inputs.commercial.map(commercialEditor).join('')+'</div>'+button('Add customer project','add-commercial')+'</details>'
       +'<div class="forecast-actions"><button type="submit">Preview current forecast</button>'+button('Load input JSON','load-inputs')+button('Download input JSON','download-inputs')+'</div><input hidden data-forecast-input-file type="file" accept=".json,application/json"></form>';
   }
-  function readEditor(){
+  function readEditor({forRecovery=false}={}){
     const form=$('[data-forecast-form]');if(!form)throw new Error('Choose Reforecast current case to edit assumptions.');
     const explicitGrants=new Set(inputState.grantReceipts.map(row=>Number(row.tranche)));
     const inputs={name:value(form,'name'),asOfDate:value(form,'asOfDate'),calendarStart:value(form,'calendarStart'),
@@ -135,7 +295,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
       grantReceipts:[...form.querySelectorAll('[data-forecast-grant]')].map(row=>({tranche:Number(row.dataset.forecastGrant),date:optional(row,'date'),include:row.querySelector('[name=include]').checked,note:value(row,'note')})).filter(row=>explicitGrants.has(row.tranche)||row.date!==null||row.include===false||row.note!==''),
       commercial:[...form.querySelectorAll('[data-forecast-commercial]')].map(row=>({id:row.dataset.forecastCommercial,title:value(row,'title'),
         caseRef:value(row,'caseRef'),stage:value(row,'stage'),selected:row.querySelector('[name=selected]').checked,
-        ...currency.readPricing(row),remainingHours:value(row,'remainingHours'),
+        ...currency.readPricing(row,{forRecovery}),remainingHours:value(row,'remainingHours'),
         startDate:optional(row,'startDate'),endDate:optional(row,'endDate'),paymentMode:value(row,'paymentMode'),
         ...(value(row,'timingMode')==='EVENT_DEPENDENT'?{timing:{mode:'EVENT_DEPENDENT',
           startCondition:value(row,'timingStartCondition'),reviewedReleaseDate:optional(row,'timingReviewedReleaseDate'),deliveryBusinessDays:Number(value(row,'timingDeliveryBusinessDays')),
@@ -222,15 +382,18 @@ export function mountForecast({container,current,api:transport,mutationId,record
   function render(){
     if(!available())return;
     comparison?.dispose();comparison=null;
+    if(workbook){workbookState=workbook.snapshot();workbook.dispose();workbook=null;}
     root.innerHTML='<div class="forecast-heading"><div><h3>Operating forecast</h3><p>Replan remaining cash and delivery work from this retained case.</p></div><div class="forecast-actions">'+button('New forecast','new')+(selected?button('Reforecast current case','reforecast'):'')+'</div></div>'
       +'<label class="forecast-saved-label">Saved forecasts<select data-forecast-selection><option value="">Current draft</option>'+current.forecasts.map(row=>'<option value="'+esc(row.id)+'"'+(selected?.id===row.id?' selected':'')+'>'+esc(row.name)+' · '+esc(row.asOfDate)+' · original v'+row.source.version+'</option>').join('')+'</select></label>'
       + '<div data-forecast-comparison></div>'
+      +'<div class="forecast-actions">'+button('Download complete working file','download-working')+button('Reopen working file','choose-working')+button('Continue original source request','recover-source')+button('Continue original save request','recover-save')+(previousWorking?button('Download previous working file','download-previous'):'')+'</div><input hidden data-forecast-working-file type="file" accept=".json,application/json">'
       +'<p data-forecast-status role="status" aria-live="polite"></p>'
       +(current.program.state==='CLOSED'?'<p class="forecast-note">This case is closed. You can inspect and preview forecasts; reopen the case in its original controls before saving a new forecast.</p>':'')
-      +(editing?editor(inputState||defaults()):'')+'<div data-forecast-report>'+(selected&&!editing?reportHtml(selected):'')+'</div>';
+      +'<div data-forecast-editor>'+(editing?editor(inputState||defaults()):'')+'</div><div data-forecast-workbook></div><div data-forecast-report>'+(selected&&!editing?reportHtml(selected):'')+'</div>';
     comparison=mountForecastComparison({container:$('[data-forecast-comparison]'),caseId:current.program.id,forecasts:current.forecasts,api,available,isBlocked:blocked});
+    if(editing)workbook=mountForecastWorkbook({container:$('[data-forecast-workbook]'),getCurrent:()=>current,getInputs:currentInputs,getRecoveryInputs:retentionInputs,available,isBlocked:blocked,api,initialState:workbookState,onStateChange:state=>{workbookState=clone(state);persistSoon();},applyReviewedInputs:applyWorkbook});
     root.querySelectorAll('[data-forecast-commercial]').forEach(syncCommercialTiming);
-    const form=$('[data-forecast-form]');if(form)currency.syncRates(form,{busy:blocked()});
+    const form=$('[data-forecast-form]');if(form){currency.syncRates(form,{busy:blocked()});restoreRaw();}applyBusy();
   }
   async function loadSaved(id){selected=await api(path+'/forecasts/'+id);editing=false;preview=null;request=null;onSelection(id);render();status('Reopened the original saved forecast.');}
   async function doPreview(){
@@ -238,45 +401,76 @@ export function mountForecast({container,current,api:transport,mutationId,record
     inputState=preview.inputs;selected=null;request=null;onSelection(null);
     $('[data-forecast-report]').innerHTML=reportHtml(preview,true);status('Current source and dated assumptions are ready to save.');
   }
-  root.addEventListener('input',event=>{const form=event.target.closest('[data-forecast-form]');if(form){invalidate();currency.handleChange(event.target,form,{busy:blocked()});}});
+  root.addEventListener('input',event=>{const form=event.target.closest('[data-forecast-form]');if(form){invalidate();currency.handleChange(event.target,form,{busy:blocked()});captureRaw();persistSoon();workbook?.setHostBusy();}});
   root.addEventListener('change',event=>{
     if(event.target.matches('[data-forecast-selection]')){const id=event.target.value;run(async()=>{if(id)await loadSaved(id);else{selected=null;editing=true;onSelection(null);render();}});return;}
-    if(event.target.closest('[data-forecast-form]'))invalidate();
+    if(event.target.closest('[data-forecast-form]')){invalidate();persistSoon();}
     if(event.target.matches('[name=timingMode]'))syncCommercialTiming(event.target.closest('[data-forecast-commercial]'));
-    const form=event.target.closest('[data-forecast-form]');if(form)currency.handleChange(event.target,form,{busy:blocked()});
+    const form=event.target.closest('[data-forecast-form]');if(form){captureRaw();currency.handleChange(event.target,form,{busy:blocked()});restoreRaw();persistSoon();workbook?.setHostBusy();}
+    if(event.target.matches('[data-forecast-working-file]')){
+      const file=event.target.files?.[0];if(!file)return;
+      run(async()=>{if(file.size>256*1024*1024)throw new Error('Choose the complete working forecast within 256 MiB.');const loaded=JSON.parse(await file.text());requireActive();await receiveWorking(loaded,{fromFile:true});});return;
+    }
     if(event.target.matches('[data-forecast-input-file]')){
       const file=event.target.files[0];if(!file)return;
       run(async()=>{if(file.size>8*1024*1024)throw new Error('Forecast inputs must fit the original 8 MiB input bound.');const loaded=JSON.parse(await file.text());requireActive();if(!loaded||typeof loaded!=='object'||Array.isArray(loaded))throw new Error('Load a forecast input object.');
         // The original service normalizes every imported input before any save.
-        const candidate=await api(path+'/forecast-preview',{expectedVersion:current.program.version,inputs:loaded});inputState=candidate.inputs;selected=null;editing=true;preview=candidate;request=null;onSelection(null);render();$('[data-forecast-report]').innerHTML=reportHtml(candidate,true);status('Loaded and previewed the complete input scenario.');});
+        const candidate=await api(path+'/forecast-preview',{expectedVersion:current.program.version,inputs:loaded});previousWorking=snapshot();delete previousWorking.previousWorking;rawFields={};workbook?.dispose();workbook=null;workbookState=null;inputState=candidate.inputs;selected=null;editing=true;preview=candidate;request=null;onSelection(null);render();$('[data-forecast-report]').innerHTML=reportHtml(candidate,true);status('Loaded and previewed the complete input scenario.');});
     }
   });
   root.addEventListener('submit',event=>{if(!event.target.matches('[data-forecast-form]'))return;event.preventDefault();run(async()=>{await doPreview();});});
   root.addEventListener('click',event=>{
     const target=event.target.closest('[data-forecast-action]');if(!target)return;
     const action=target.dataset.forecastAction;
-    if(!blocked()&&currency.handleAction(action,target,$('[data-forecast-form]'),{busy:blocked()})){invalidate();return;}
-    if(action==='add-commercial'&&!blocked()){invalidate();const row={id:'project-'+crypto.randomUUID(),title:'',caseRef:'',stage:'QUOTED',selected:true,priceUsd:'',totalDeliveryCostUsd:'',remainingHours:'',startDate:'',endDate:'',paymentMode:'accrual',sourceUrl:'',sourceIds:[],cashIds:[],invoiceIds:[],directCashIds:[],scope:'',note:'',receipts:[{id:'kickoff',label:'Kickoff',amountUsd:'',date:null},{id:'acceptance',label:'Acceptance',amountUsd:'',date:null}]};$('[data-forecast-commercials]').insertAdjacentHTML('beforeend',commercialEditor(row));syncCommercialTiming($('[data-forecast-commercials]').lastElementChild);currency.syncRates($('[data-forecast-form]'),{busy:blocked()});return;}
-    if(action==='remove-commercial'&&!blocked()){target.closest('[data-forecast-commercial]').remove();invalidate();return;}
-    if(action==='add-receipt'&&!blocked()){const body=target.closest('[data-forecast-commercial]').querySelector('[data-forecast-receipts]');body.insertAdjacentHTML('beforeend',receiptEditor({id:'receipt-'+crypto.randomUUID(),label:'',amountUsd:'',amountNative:''},body.children.length,value(body.closest('[data-forecast-commercial]'),'pricingMode')==='NATIVE'));syncCommercialTiming(body.closest('[data-forecast-commercial]'));currency.syncPricing(body.closest('[data-forecast-commercial]'),{busy:blocked()});invalidate();return;}
-    if(action==='remove-receipt'&&!blocked()){target.closest('[data-forecast-receipt]').remove();invalidate();return;}
+    if(action==='download-working'&&!busy&&!hostBusy&&!restoring){download(JSON.stringify(snapshot(),null,2)+'\n',current.program.id+'-forecast-working.json');status('Downloaded the complete original inputs, workbook source, review and retained request.');return;}
+    if(action==='choose-working'&&!blocked()){const input=$('[data-forecast-working-file]');input.value='';input.click();return;}
+    if(action==='download-previous'&&!blocked()&&previousWorking){download(JSON.stringify(previousWorking,null,2)+'\n',current.program.id+'-forecast-previous-working.json');return;}
+    if(action==='recover-source'){void run(async()=>{const result=await workbookHost.resume();if(result.adopted){const original=workbookHistory.appliedSource.selection.review;workbookState={...(workbook?.snapshot()||workbookState),received:clone(original.received),choices:{},appliedReview:{...clone(original),sourceReceipt:clone(result.sourceReceipt),appliedInputs:clone(result.inputs)}};workbook?.dispose();workbook=null;}else{const original=workbookHistory.savedSource.selection.review;workbookState={...(workbook?.snapshot()||workbookState),received:clone(original.received),choices:{},sourceReceipt:clone(result.sourceReceipt),appliedReview:null};workbook?.dispose();workbook=null;}render();if(workbook)await workbook.ready;if(result.preview)$('[data-forecast-report]').innerHTML=reportHtml(result.preview,true);status(result.adopted?'Continued the original source request and previewed its reviewed assumptions. Save this forecast to retain the resulting edition.':result.message);},{recovery:true});return;}
+    if(action==='recover-save'){void run(async()=>{await sendSavedForecast();},{recovery:true});return;}
+    if(!blocked()&&currency.handleAction(action,target,$('[data-forecast-form]'),{busy:blocked()})){invalidate();captureRaw();persistSoon();return;}
+    if(action==='add-commercial'&&!blocked()){invalidate();const row={id:'project-'+crypto.randomUUID(),title:'',caseRef:'',stage:'QUOTED',selected:true,priceUsd:'',totalDeliveryCostUsd:'',remainingHours:'',startDate:'',endDate:'',paymentMode:'accrual',sourceUrl:'',sourceIds:[],cashIds:[],invoiceIds:[],directCashIds:[],scope:'',note:'',receipts:[{id:'kickoff',label:'Kickoff',amountUsd:'',date:null},{id:'acceptance',label:'Acceptance',amountUsd:'',date:null}]};$('[data-forecast-commercials]').insertAdjacentHTML('beforeend',commercialEditor(row));syncCommercialTiming($('[data-forecast-commercials]').lastElementChild);currency.syncRates($('[data-forecast-form]'),{busy:blocked()});captureRaw();persistSoon();return;}
+    if(action==='remove-commercial'&&!blocked()){target.closest('[data-forecast-commercial]').remove();invalidate();captureRaw();persistSoon();return;}
+    if(action==='add-receipt'&&!blocked()){const body=target.closest('[data-forecast-commercial]').querySelector('[data-forecast-receipts]');body.insertAdjacentHTML('beforeend',receiptEditor({id:'receipt-'+crypto.randomUUID(),label:'',amountUsd:'',amountNative:''},body.children.length,value(body.closest('[data-forecast-commercial]'),'pricingMode')==='NATIVE'));syncCommercialTiming(body.closest('[data-forecast-commercial]'));currency.syncPricing(body.closest('[data-forecast-commercial]'),{busy:blocked()});invalidate();captureRaw();persistSoon();return;}
+    if(action==='remove-receipt'&&!blocked()){target.closest('[data-forecast-receipt]').remove();invalidate();captureRaw();persistSoon();return;}
     if(action==='load-inputs'&&!blocked()){const input=$('[data-forecast-input-file]');input.value='';input.click();return;}
     if(action==='download-inputs'&&!blocked()){try{download(JSON.stringify(readEditor(),null,2)+'\n','operating-forecast-inputs.json');}catch(error){status(error.message,true);}return;}
     run(async()=>{
-      if(action==='new'){inputState=defaults();selected=null;preview=null;request=null;editing=true;onSelection(null);render();return;}
-      if(action==='reforecast'){inputState=structuredClone(selected.inputs);inputState.name+=' — updated';selected=null;preview=null;request=null;editing=true;onSelection(null);render();return;}
+      if(action==='new'){previousWorking=snapshot();delete previousWorking.previousWorking;workbookState=null;workbook?.dispose();workbook=null;rawFields={};inputState=defaults();selected=null;preview=null;request=null;editing=true;onSelection(null);render();return;}
+      if(action==='reforecast'){previousWorking=snapshot();delete previousWorking.previousWorking;workbookState=null;workbook?.dispose();workbook=null;rawFields={};inputState=structuredClone(selected.inputs);inputState.name+=' — updated';selected=null;preview=null;request=null;editing=true;onSelection(null);render();return;}
       if(action==='save'){
         if(!preview)throw new Error('Preview the current inputs before saving.');
         if(current.program.state==='CLOSED')throw new Error('Reopen the original case before saving this forecast.');
         const payload={expectedVersion:current.program.version,actor:recordingActor(),note:inputState.note,action:'forecast.save',data:{inputs:inputState,expectedPreviewSha256:preview.previewSha256}};
         if(!request){payload.requestId=await mutationId('operations:'+current.program.id,payload);requireActive();request=payload;}
-        const result=await api(path+'/command',request);onSelection(result.recordId);await onSaved(result);return;
+        await sendSavedForecast();return;
       }
       if(action==='export-forecast'){const response=await api(path+'/forecasts/'+selected.id+'/export.zip',undefined,{download:true});const blob=await response.blob();requireActive();download(blob,selected.id+'.zip','application/zip');status('Downloaded the complete saved forecast and dated cash/work exports.');return;}
       if(action==='export-json'){const body=structuredClone(selected);delete body.current;download(JSON.stringify(body,null,2)+'\n',selected.id+'.json');return;}
     });
   });
   inputState=initialInputs?structuredClone(initialInputs):defaults();render();
-  const ready=initialForecastId&&!initialInputs?(async()=>{setBusy(true);try{await loadSaved(initialForecastId);}finally{if(available())setBusy(false);}})():Promise.resolve();
-  return {ready,setHostBusy,draftInputs(){return editing&&available()?structuredClone(readEditor()):null;},dispose(){active=false;comparison?.dispose();},root};
+  const ready=(async()=>{
+    try{
+      const retained=await draftStore.read();requireActive();
+      if(retained){
+        const validated=validateWorking(retained);
+        if(initialForecastId&&!initialInputs){
+          previousWorking=validated;delete previousWorking.previousWorking;
+          await loadSaved(initialForecastId);
+        }else if(initialInputs&&signature(initialInputs)!==signature(validated.inputs)){
+          if(validated.pendingWorkbook||validated.saveRequest){
+            const incoming=clone(initialInputs);await receiveWorking(validated);
+            previousWorking={...snapshot(),editing:true,selectedId:null,inputs:incoming,rawFields:{},pendingWorkbook:null,saveRequest:null,workbook:null,workbookHistory:{},previousWorking:null};
+            restoreNotice='Resumed the original pending request. The separately selected input scenario is retained in Download previous working file.';
+          }else{
+            previousWorking=validated;delete previousWorking.previousWorking;
+            restoreNotice='Opened the selected input scenario; the earlier complete working file remains available for download.';
+          }
+        }else await receiveWorking(validated);
+      }else if(initialForecastId&&!initialInputs)await loadSaved(initialForecastId);
+    }catch(error){storeError=error.message;status(error.message,true);throw error;}
+    finally{restoring=false;if(available()){applyBusy();if(restoreNotice)status(restoreNotice);}}
+  })();
+  return {ready,setHostBusy,draftInputs(){if(!editing||!available())return null;persistSoon();return clone(retentionInputs());},
+    dispose(){if(active&&!restoring){try{void persist().catch(()=>{});}catch{}}active=false;comparison?.dispose();workbook?.dispose();void draftStore.close();},root};
 }

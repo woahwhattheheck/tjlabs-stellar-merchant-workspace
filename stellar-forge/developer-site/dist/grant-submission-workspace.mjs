@@ -519,7 +519,11 @@ $('print').addEventListener('click',()=>{printPacket();window.print();});
 window.addEventListener('beforeprint',printPacket);
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 render();
-const requestedSavedProject=new URL(location.href).searchParams.get('draft');
+const openingSelection=new URL(location.href).searchParams;
+const requestedSavedProject=openingSelection.get('draft');
+// An explicit working-edition opening creates only a fresh unsaved draft.
+// A selected saved project and an offline editor retain their original source.
+const requestedSourceEdition=openingSelection.get('source')==='concise'?'concise':'current';
 if(offlineEdition){
   void work(async()=>{
     draft=await parseEnvelope(offlineEdition.envelope);savedId=null;savedRevision=0;dirty=false;
@@ -537,4 +541,4 @@ if(offlineEdition){
     $('view').value='answers';render();
     status('Opened '+current.name+', revision '+current.revision+'. Its complete source and recorded work remain selected.');
   });
-}else void refreshSource({initial:true});
+}else void refreshSource({initial:true,edition:requestedSourceEdition});

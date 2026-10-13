@@ -830,7 +830,7 @@ export function mountOperations({container,api:baseTransport,plan,inform:notify,
     if(c&&view.tab==='completion'){
       if(!retainedCompletionSessions.has(c.program.id))retainedCompletionSessions.set(c.program.id,{});
       completionView=mountCompletion({isCurrent:()=>available()&&view.current===c,container:$('[data-ops-completion]'),current:c,saveApi:transport,
-        session:retainedCompletionSessions.get(c.program.id),mutationId,recordingActor,
+        session:retainedCompletionSessions.get(c.program.id),mutationId,recordingActor,staffContext:pinnedContext,
         onCase:async(next,result)=>{
           if(!available()||view.current?.program.id!==next.program.id)return;
           view.current=next;view.events=[];view.nextAfter=null;

@@ -3,7 +3,7 @@
 import argparse, contextlib, fcntl, hashlib, json, os, pathlib, stat, subprocess, sys, uuid, zipfile
 
 ORIGINAL_BYTES = 505232
-ORIGINAL_SHA256 = "8275abdb2768178cd10685d3631996ec90f9ec3f41227850921eea54dfea354d"
+ORIGINAL_SHA256 = "8275abdb2768178cd10685d3631996ec90f9ec3f41227850921eea54dfea354d1"
 ORIGINAL_ROOT = "/dev/x402api-merchant-7de2-20261012"
 PRODUCT = "products/x402api-merchant-workspace"
 OPERATION = "X402API-PORTABLE-MERCHANT-48DB-20261012"
@@ -19,6 +19,8 @@ SOURCE_PATHS = [
   "products/x402api-merchant-workspace/web/index.html",
   "products/x402api-merchant-workspace/web/style.css",
   "products/x402api-merchant-workspace/web/app.mjs",
+  "products/x402api-merchant-workspace/web/payment-desk.mjs",
+  "products/x402api-merchant-workspace/PAYMENTS.md",
   "products/x402api-merchant-workspace/fulfillment/file-delivery.mjs",
   "products/x402api-merchant-workspace/config.example.json",
   "products/x402api-merchant-workspace/README.md",

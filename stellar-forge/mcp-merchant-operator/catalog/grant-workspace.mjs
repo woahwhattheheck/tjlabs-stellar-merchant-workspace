@@ -1,3 +1,4 @@
+import {grantSourceCollectionTools} from './grant-source-collection.mjs';
 import {grantInstallationSourceTools} from './grant-installation-sources.mjs';
 // MIT. Original SF47 tool schemas without provider runtime imports.
 import {grantCohortAdoptionTools} from './grant-cohort-adoption.mjs';
@@ -408,6 +409,7 @@ function tool(suffix, description, properties = {}, required = [], readOnly = fa
 }
 export const grantWorkspaceTools = [
   ...grantInstallationSourceTools,
+  ...grantSourceCollectionTools,
   tool('workspaces', 'List host-declared SF47 workspaces and original source selections without opening SQLite or starting a process.', {}, [], true),
   tool('open', 'Attach to the original verified Grant application; if the host allows it and the original service is closed, explicitly launch the same original managed server. Original workspace locking remains authoritative.',
     {...ws, expectedSelectionSha256:digest}, ['workspace']),

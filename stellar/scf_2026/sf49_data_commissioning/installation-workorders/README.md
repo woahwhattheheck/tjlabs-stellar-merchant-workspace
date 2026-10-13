@@ -31,6 +31,8 @@ The maintained commercial importer remains the entry for an original customer Wo
 | INDUSTRIAL_RECONCILIATION.md | Whole source/meaning intake, original Workshare phases and fee, Installation setup, operator/CLI/MCP workflow and independent complete receiving |
 | canadabuys-bidder-desk.json | Complete procurement source → reviewed capability/evidence/decision → original publication → editable independent customer receiving |
 | CANADABUYS_INSTALLATION.md | Original Workshare/source preparation, installed MCP customer, complete download/recovery and native Installation receiving |
+| webhook-event-analysis.json | Complete acquired event window → accepted customer report/workbook → later useful window → all sixteen files and original Installation receiving |
+| WEBHOOK_EVENT_ANALYSIS.md | Whole original Workshare, exact event delivery, installed preparation/reopen, native case and independent customer handover |
 | invoice-settlement.json | Actual invoice programme and complete observations → individually reviewed attribution → reconciliation/report → independent editable customer receiving |
 | INVOICE_SETTLEMENT.md | Complete original Workshare/Installation, authenticated invoice customer, native review and whole-publication receiving |
 | canadabuys-source.mjs / canadabuys-commissioning.mjs | Complete native CanadaBuys package, selected Workshare revision and explicit phase/party/working-day mapping into the original Installation reader |

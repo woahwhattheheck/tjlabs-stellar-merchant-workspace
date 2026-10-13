@@ -60,7 +60,17 @@
             <div class="section-heading"><div><span id="detail-reference" class="eyebrow"></span><h3 id="detail-title"></h3></div><span id="detail-state" class="state"></span></div>
             <dl id="detail-facts" class="facts"></dl>
             <section class="subsection"><h4>Payment and delivery</h4><p id="detail-guidance" class="muted"></p><div class="actions"><button id="create-charge">Create payment request</button><button id="download-envelope" class="secondary">Download payment request</button><button id="reconcile" class="secondary">Refresh payment</button><button id="download-result">Download result</button></div></section>
-            <form id="signature-form" class="subsection"><label for="signature">Buyer payment authorization</label><p class="muted">Paste the complete PAYMENT-SIGNATURE returned by the buyer’s wallet.</p><textarea id="signature" rows="3" spellcheck="false" autocomplete="off"></textarea><div class="form-actions"><span class="muted">The original authorization is retained for retries.</span><button type="submit">Submit authorization</button></div></form>
+            <section id="payment-work" class="subsection" hidden aria-labelledby="payment-work-title">
+              <h4 id="payment-work-title">Original payment work</h4>
+              <p id="payment-work-identity" class="mono muted"></p>
+              <p id="payment-next-action"></p>
+              <p id="payment-pending" class="notice" role="status" aria-live="polite" hidden></p>
+              <div class="actions"><button id="payment-read" class="secondary">Read saved status</button><button id="payment-replay" hidden>Continue original request</button><button id="payment-edit" class="secondary" hidden>Correct rejected draft</button></div>
+              <details id="payment-envelope-review" hidden><summary>Reviewed wallet request</summary><p id="payment-envelope-sha" class="mono muted"></p><pre id="payment-envelope-content"></pre></details>
+              <div class="actions"><button id="payment-save" class="secondary">Save payment work</button><button id="payment-open" class="secondary">Open payment work</button><input id="payment-file" type="file" accept=".json,application/json" hidden></div>
+              <p class="muted">A saved payment work file can contain the buyer’s authorization. Keep it private. Open it with this same invoice and merchant.</p>
+            </section>
+            <form id="signature-form" class="subsection"><label for="signature">Buyer payment authorization</label><p class="muted">Paste the complete PAYMENT-SIGNATURE returned by the buyer’s wallet.</p><textarea id="signature" rows="3" spellcheck="false" autocomplete="off" maxlength="65536" aria-describedby="payment-review-note"></textarea><p id="payment-review-note" class="muted"></p><div class="form-actions"><span class="muted">The original authorization is retained for retries.</span><button type="submit" id="signature-submit">Submit authorization</button></div></form>
             <section class="subsection"><h4>Activity</h4><ol id="history" class="history"></ol></section>
           </div>
         </section>

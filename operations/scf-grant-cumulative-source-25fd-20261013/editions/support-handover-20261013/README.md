@@ -29,7 +29,11 @@ The current maintained `createSourceBundle`, `createReviewerSourcePackage` and `
 
 ## Complete application source and Saved Projects
 
-Use the complete repository checkout at the immutable output commit, or the existing 493D whole-source receiving cohort with this exact four-output overlay. Preserve the original native receiving helpers and binary FRED example. The whole-source carrier at the parent operation's `source-files.json` retains its stated older edition until its owner publishes the matched source union; it must not be relabeled as this 676-record edition.
+This edition now includes its matched complete application source in the adjacent [`source-files.json`](source-files.json): **284 full files / 10,400,084 decoded source bytes**, retaining all 248 original paths, the complete 32-module composer, 142 routes, all 18 native helpers and the original binary FRED example. Its 11,327,821 UTF-8 bytes have SHA-256 `a789f9b9253f82e85818f64a77ca4b62979e6bdd3f72abbcbe83b27c67b696b2` and Git blob `313acc21a90a3829bf94634ec56a9d5fbfa95763`.
+
+Use [`SOURCE_RECEIVING.md`](SOURCE_RECEIVING.md) for the complete opening, source materialization, original saved-case continuation and rendered-product inspection. The equivalent [`source-transfer.json`](source-transfer.json) carries the same whole source as Base64-encoded gzip for readers with smaller transfer limits; its 3,473,195 bytes have SHA-256 `445a2d11b39b3389c82fdb04ffcd3ad218d85e75a1fbe85c241791d3faecf69a`. Decode its `content_base64`, decompress once, and verify the exact complete source identity before receiving it.
+
+The source also includes the merged PR1459 concise reviewer consumer and full buyer course. Its complete working package preserves the canonical 676 source records, original budget and full companion. Keep the original adjacent `source-package.json` and its `2026-10-13T08:56:46.164Z` receiving identity for this canonical edition. The parent operation's source carrier retains its separately stated edition; later cumulative source is not substituted into this frozen edition.
 
 Saved Projects is already composed into this reader. Its actual browser selection is `browser-assets.json` Git blob `542afeb81b97d30a88e950e1b1a0729c126b5c4a`: 22,600 bytes and 142 routes. Receive the full 19-source PR1396 feature, preserving subsequent shared-file changes. The complete original Saved Projects carrier is `f5c366534362b9bfa1285de757c4bd744a10e0be`.
 

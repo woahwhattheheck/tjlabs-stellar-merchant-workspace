@@ -4,11 +4,13 @@
   "description": "Original bank collections, versioned source interpretations, complete CAMT page assembly, cash reconciliation and accountant receiving",
   "commands": {
     "bank-statements": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/cli.mjs",
-    "merchant-accounting-bank-statements": "stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.mjs"
+    "merchant-accounting-bank-statements": "stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.mjs",
+    "merchant-accounting-bank-sources": "stellar-forge/mcp-merchant-operator/accounting-bank-sources-cli.mjs"
   },
   "commandDescriptions": {
     "bank-statements": "Receive original bank collections, save and review recurring source interpretations, reconcile exact cash and retain complete account closes",
-    "merchant-accounting-bank-statements": "Operate the original Bank reconciliation through authenticated Merchant accounting, saved exact requests and full files"
+    "merchant-accounting-bank-statements": "Operate the original Bank reconciliation through authenticated Merchant accounting, saved exact requests and full files",
+    "merchant-accounting-bank-sources": "Retain exact configured bank originals, libraries and collections; review source mappings and receive complete immutable parser outputs through authenticated accounting"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/README.md",
@@ -27,7 +29,9 @@
     "stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.d.mts",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_BANK_STATEMENTS.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PROFILES.md",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PROFILES_RECEIVE.mjs"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_PROFILES_RECEIVE.mjs",
+    "stellar-forge/mcp-merchant-operator/accounting-bank-sources-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_BANK_SOURCES.md"
   ],
   "exports": {
     "./merchant/bank-statements": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/store.mjs",
@@ -49,7 +53,12 @@
       "types": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.d.mts",
       "default": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.mjs"
     },
-    "./merchant/bank-statements/source-profiles": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/public/source-profile-model.mjs"
+    "./merchant/bank-statements/source-profiles": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/public/source-profile-model.mjs",
+    "./merchant/accounting-bank-sources": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-sources-client.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-sources-client.mjs"
+    },
+    "./merchant/accounting-bank-sources/contract": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-sources-contract.mjs"
   },
   "browserAssets": [
     {

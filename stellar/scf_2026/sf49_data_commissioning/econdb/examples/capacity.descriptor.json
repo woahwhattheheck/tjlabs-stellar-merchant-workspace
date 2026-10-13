@@ -1,0 +1,14 @@
+{
+  "id": "issuer-doc-capacity-by-operator",
+  "kind": "capacity-by-operator",
+  "locode": null,
+  "source_role": "issuer_documentation_example",
+  "captured_at": "2026-10-13T09:20Z",
+  "source_sha256": "5c9eba876ecf179a1c65aeddf5ce0159cb63c6a3c62c6a48705e2d307ca57d11",
+  "original_url": "https://api.econdb.com/v1/schema/",
+  "basis": {
+    "original_openapi_sha256": "c271e5e1799a7a47b3f598cdf286d25c7bb68108cd9f3e466231f4f95a82c915",
+    "example": "CapacityByOperator",
+    "representation": "Exact JSON value transcribed from original YAML; numeric lexemes belong to this JSON transcription."
+  }
+}

@@ -8,7 +8,7 @@
       "label": "Original bank statements and shared customer payment coverage",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "products/merchant-bank-statements/README.md",
-      "commit": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
+      "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
       "editions": [
         {
           "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
@@ -33,6 +33,18 @@
           "git_blob": "befdd755eb63a211e4d2c76c8c3467614dc95a71",
           "sha256": "a8895f1a576b3369756f99989e49f893d1ce04e7cfcd3bb4fb48bcc7f4c644fa",
           "bytes": 27112
+        },
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "66b83aade94f20023f698a706d63b782067ebfe6",
+          "sha256": "e2dba7627415bd0379ba3cc1b99906dcce41e95767328e96e925496786cc841a",
+          "bytes": 30508
+        },
+        {
+          "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
+          "git_blob": "5de86ac627dbba92c1f33051c7920f2cba8df6a1",
+          "sha256": "70ecfd7eaf1b8ad2b33ecd277d355bbd96199bcd2c7363e7d7e7abc461ea6164",
+          "bytes": 34336
         }
       ]
     },
@@ -41,7 +53,7 @@
       "label": "Complete bank product installation and original runtime transfer",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "products/merchant-bank-statements/INSTALLATION.md",
-      "commit": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
+      "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
       "editions": [
         {
           "commit": "e57a359966f093f483a1aa5f4c2dac28566b6a5c",
@@ -72,6 +84,18 @@
           "git_blob": "2df1476f7ccaec1f89e42014299983d9dacef59c",
           "sha256": "c2bb4da5c0b4ab22e7037bc3805091f7a2a2bd8fc16f86b4b19e41209eb73c56",
           "bytes": 20381
+        },
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "9b3094285dd83050dd0cdfe663792f871ff863f4",
+          "sha256": "d8a070d4c36a49a09de18771c3f6ea943e1e0cbfd95efa16b418b5958c7fe8fb",
+          "bytes": 23777
+        },
+        {
+          "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
+          "git_blob": "0c11752ef2fa164eb8fc2937658e5a6dee50379d",
+          "sha256": "f88814fd533e175cd83d35e8cd6287b8b8491595c30a639cb9d65257a4a1446e",
+          "bytes": 27605
         }
       ]
     },
@@ -80,7 +104,7 @@
       "label": "Original bank source, remittances and complete accountant handover",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "products/merchant-bank-statements/HANDOVER.md",
-      "commit": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
+      "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
       "editions": [
         {
           "commit": "e57a359966f093f483a1aa5f4c2dac28566b6a5c",
@@ -105,6 +129,18 @@
           "git_blob": "6749fa3d723bdcae4e3126b89eff174a72ec7f9e",
           "sha256": "0369314bfd89d3be6c439090dadf90ab33088a0a9c84a68f691fe0dc2e5089ca",
           "bytes": 22303
+        },
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "a7c740349b4c1e30299587cae0f40c5263b5df28",
+          "sha256": "ef31cdc4c96d964edee2d77498806409fc81ea8b7332bdb7df02046c74ea268b",
+          "bytes": 29724
+        },
+        {
+          "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
+          "git_blob": "143c13a06422c7c6c224738b3622a1d18f9d541a",
+          "sha256": "47ce16ba350f6129ca20aae023175f256aa4b45fe689afd45183766af375acc4",
+          "bytes": 33552
         }
       ]
     },
@@ -704,13 +740,19 @@
       "label": "Original complete accounting reader with Bank selectors and interrupted-read release",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar-forge/mcp-merchant-operator/accounting-maintenance-client.mjs",
-      "commit": "139d5bd5180e075a4734c6d536232e1a937d7ec8",
+      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
       "editions": [
         {
           "commit": "139d5bd5180e075a4734c6d536232e1a937d7ec8",
           "git_blob": "9dfe73344832326aa3fe3a888219b7833f01c614",
           "sha256": "1b276f58596df726d69df9597de15b57653096b7125780b61388745bc3243791",
           "bytes": 14160
+        },
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "1a8e100d39e859dc5a9a9be2cab917ff6f5611e6",
+          "sha256": "adac3619c3631409b307057ae135fb307b61e45738da4bce69c7de6f414d5b3f",
+          "bytes": 14203
         }
       ]
     },
@@ -840,6 +882,198 @@
           "git_blob": "568627c16668c896a44fd5dfc446abc61b153e4d",
           "sha256": "262321992c72fc6be1b0f358a6d2df76387d86345db92e9d2a926b3e04628d15",
           "bytes": 25163
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-request-contract",
+      "label": "Complete configured-source request validation and immutable input contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/accounting-bank-sources-contract.mjs",
+      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "4f3b800864b40120fd9ffdd0034a2e974814ab5d",
+          "sha256": "afa103a791936e768e0eb25a5c22193ebe7feae34871c4a6acc56f8e9cbdbed4",
+          "bytes": 7228
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-transforms",
+      "label": "Original profile and collection transformations with complete parser reports",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/accounting-bank-sources-core.mjs",
+      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "4ffcc5ccb8c4fd85c6ee6d468fcafcd2dc6dce53",
+          "sha256": "cb057b2f3d3886d5c182d549a43deb0539466340509f24d1bb87caa3506dfdd4",
+          "bytes": 12531
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-controller",
+      "label": "Original-owner configured input custody and same-request source execution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/accounting-bank-sources.mjs",
+      "commit": "c2ad667f586ec73e74bc945ff2ab915e59d9d91f",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "d1e8c376f9eb15fa4f326e471aa9827c21229894",
+          "sha256": "096d464b1f3eaaf656fad22a3cc8ffdded6b137ac25b5a80632190550bbbcead",
+          "bytes": 21835
+        },
+        {
+          "commit": "c2ad667f586ec73e74bc945ff2ab915e59d9d91f",
+          "git_blob": "62cac604a2008f555bc29a62f5689473af961f14",
+          "sha256": "22f01c2dbfab19606a2c70d531a8b70c7181a112d5940954cf5e66bc086798da",
+          "bytes": 21897
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-catalog",
+      "label": "Installed configured-source MCP actions and exact file selector",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/catalog/accounting-bank-sources.mjs",
+      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "ff073604096e8ad7dff5c582b956639d98226b29",
+          "sha256": "ca4089ece73660a999ad44852504a24c6f62b5bcfc861dc08a48cfc9db1dac05",
+          "bytes": 4296
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-accounting-owner",
+      "label": "Shared accounting owner and original file-reader integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/accounting.mjs",
+      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "88ebab30b59d53b9c25bbe2309276e0dfce46993",
+          "sha256": "298e87e7a91d727c7c4d12d8426f1ad8540cf183f3e409ab31355e428edd2514",
+          "bytes": 68459
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-accounting-catalog",
+      "label": "Cumulative original accounting tool catalogue with source preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/catalog/accounting.mjs",
+      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "c88ddbd7872ed481d830d63868842efbef1eb696",
+          "sha256": "5518518d2468ad442e0768ac3998c283b4d41c51bf613290e9e03935fefa8619",
+          "bytes": 28200
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-provider",
+      "label": "Authenticated installed accounting dispatch for source preparations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/providers/accounting.mjs",
+      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "e953eb614f5cae17d2af35bd6e5b578557ddd05e",
+          "sha256": "a3d22af5bc2413ba8da3e4734b0f865025ddfe4d7ef5cd7bf838e8dac60ad827",
+          "bytes": 15594
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-installed-contribution",
+      "label": "Complete Bank installed command, exports and support contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/merchant-bank-statements.json",
+      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "1f26f1af40df9b1f16aeae4a2fa7d4d26d98bfaa",
+          "sha256": "f59bb8dcddbda7523fc013829e1f906e07919f91f8dfd9286ebb0f3c4017f463",
+          "bytes": 5912
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-client",
+      "label": "Typed source preparation client and exact reply recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/accounting-bank-sources-client.mjs",
+      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "0fe8e5e5553d57fcedf043aa2ac8518f747a2d92",
+          "sha256": "36624896cfd9a8405b0b811bc05771bac61a0a1f238b6f06e6361da73cbb6608",
+          "bytes": 14186
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-types",
+      "label": "Complete source request, receipt, view and file type contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/accounting-bank-sources-client.d.mts",
+      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "9e313db436faee85b85dd971fd1281ebf6beb06b",
+          "sha256": "0963ddcf367544ef3700957ef75e6caa91ffd068ee2ca1f358c327aadc40d2c8",
+          "bytes": 6996
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-command",
+      "label": "Private retained source authoring, execution recovery and complete download command",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/accounting-bank-sources-cli.mjs",
+      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "e15f7b4f8b38484fa55140136d3b53b91b693e16",
+          "sha256": "160249a67ca689b939d423893b0e7fa1681ef3f15efbd7c05afad7747526bc0c",
+          "bytes": 21897
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-agent-workflow",
+      "label": "Complete configured-source operator and original receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_BANK_SOURCES.md",
+      "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
+      "editions": [
+        {
+          "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+          "git_blob": "8af7d51438069489c59ccee43435e19e5165bb7b",
+          "sha256": "f317035c4d63f84e64a9ef038c2103913bf45735e0e78b1fc91c0624b949b847",
+          "bytes": 18526
+        },
+        {
+          "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
+          "git_blob": "e4f52cb53a2cb58579c86f6c754704d1727c2dbe",
+          "sha256": "a66cba366671e06f58d0b59754340d5f550651d5fc5e571346f5d8fb2a9db9e8",
+          "bytes": 22354
         }
       ]
     }

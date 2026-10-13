@@ -1,0 +1,87 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "openlineage-prepared-package",
+  "heading": "## OpenLineage service operations and complete customer receiving",
+  "sources": [
+    {
+      "id": "openlineage-prepared-package-guide",
+      "label": "Complete prepared OpenLineage source package and customer installation guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/openlineage-complete-selected-package-e496-20261013/OPERATING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6a25487748490364eac649ebd449f0ba7547d62a",
+          "git_blob": "fac73d3c74f350d1ffbac115ace92a8c8f769863",
+          "bytes": 8175,
+          "sha256": "edddb4b224bf198eb5c13de8e2e53442473e3956758d4da49c91f4c67b8f7e70"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-prepared-package-receiving",
+      "label": "Direct original package receiving and maintained runtime preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/openlineage-complete-selected-package-e496-20261013/receive.py",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6a25487748490364eac649ebd449f0ba7547d62a",
+          "git_blob": "7e93c7691bb6859ddec981cf506741265efc2a69",
+          "bytes": 4667,
+          "sha256": "882e2a2370d03699eff09076e6b500828e87ed76ae4a92d59f07d63b6cfdfac0"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-prepared-package-verifier",
+      "label": "Unchanged complete package and installed source verifier",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/openlineage-complete-selected-package-e496-20261013/runtime-unpack.py",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6a25487748490364eac649ebd449f0ba7547d62a",
+          "git_blob": "6981dc29e20a6795c9b656d8956b0976d2434ffc",
+          "bytes": 9595,
+          "sha256": "683c241e74d2ef4c6bbf1502a8aa58af40195bb53e70fb0b7731191c53795d5f"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-prepared-package-composition",
+      "label": "Complete package composition and original source identities",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/openlineage-complete-selected-package-e496-20261013/composition.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6a25487748490364eac649ebd449f0ba7547d62a",
+          "git_blob": "f356b866c665a34164919ea51dd887930d323477",
+          "bytes": 1813,
+          "sha256": "a451bcff56a7cd55035b74754ed0cf21163137f5e02b0e8abe35bbce1a3ddcbc"
+        }
+      ]
+    },
+    {
+      "id": "openlineage-prepared-package-manifest",
+      "label": "Full installed source file and dependency manifest",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/openlineage-complete-selected-package-e496-20261013/manifest.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "6a25487748490364eac649ebd449f0ba7547d62a",
+          "git_blob": "bde02f74101cba91f3059b233aa664c6df4f4828",
+          "bytes": 360495,
+          "sha256": "7cda4b8e47a5f850e2ef923186a89b4ccd4fc0a29cfb52f318f93b3da00e723f"
+        }
+      ]
+    }
+  ]
+}

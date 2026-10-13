@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "ckan",
-  "description": "CKAN and DCAT catalog workspaces with migration review, native semantic validation, release selection and complete customer receiving",
+  "description": "CKAN and DCAT catalog workspaces with migration review, native semantic validation and saved snapshot comparison, release selection and complete customer receiving",
   "commands": {
     "ckan": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/cli.mjs",
     "ckan-publisher": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/publisher/cli.mjs",
@@ -12,7 +12,7 @@
     "ckan": "Capture complete sources, review editions and refresh decisions, publish and receive CKAN workspaces",
     "ckan-publisher": "Review and publish complete DataStore editions and buyer handoffs",
     "ckan-agent": "Operate one saved CKAN project through its browser and authenticated merchant tools",
-    "dcat": "Acquire original DCAT editions, review migration and semantic findings, select releases, roll back and receive whole workspaces"
+    "dcat": "Acquire original DCAT editions, review migration, semantic findings and snapshot impact, select releases, roll back and receive whole workspaces"
   },
   "exports": {
     "./seller/ckan": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/source.mjs",
@@ -30,7 +30,8 @@
     "./seller/ckan/refresh": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/refresh.mjs",
     "./seller/dcat/workspace": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-workspace.mjs",
     "./seller/dcat/acquisition": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-acquisition.mjs",
-    "./seller/dcat/semantic": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic.mjs"
+    "./seller/dcat/semantic": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic.mjs",
+    "./seller/dcat/semantic/comparison": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic-comparison.mjs"
   },
   "applicationProviders": {
     "ckan": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/application-provider.mjs"
@@ -67,6 +68,12 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/vendor/dcat-us-binding/source-manifest.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/semantic-profiles/dcat-us-faithful-current.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/semantic-profiles/dcat-us-observed-current.json",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/semantic-profiles/dcat-us-faithful-legacy.json"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/semantic-profiles/dcat-us-faithful-legacy.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic-comparison.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/public/dcat-semantic-view.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/public/dcat-semantic-comparison.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic-files.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-semantic-comparison-cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_COMPARISONS.md"
   ]
 }

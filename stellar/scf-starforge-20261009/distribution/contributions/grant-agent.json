@@ -11,6 +11,18 @@
     "./grant/installation-source-desk-agent": {
       "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.d.mts",
       "default": "./source/stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.mjs"
+    },
+    "./grant/source-collection/agent": {
+      "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-agent.d.mts",
+      "default": "./source/stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-agent.mjs"
+    },
+    "./grant/source-collection/store": {
+      "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-store.d.mts",
+      "default": "./source/stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-store.mjs"
+    },
+    "./grant/source-collection/session": {
+      "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-session.d.mts",
+      "default": "./source/stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-session.mjs"
     }
   },
   "supportFiles": [
@@ -26,6 +38,16 @@
     "stellar/scf_2026/sf47_budget_model/workspace/engagement-agent-receiving.example.json",
     "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.d.mts",
-    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK_AGENT.md"
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK_AGENT.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-agent.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-agent.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-store.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-store.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-session.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-session.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-cli.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-collection-cli.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_COLLECTION_AGENT.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_source_collection.mjs"
   ]
 }

@@ -410,13 +410,18 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
   browserContext = await browser.newContext({ viewport: { width: 1440, height: 1080 }, acceptDownloads: true, deviceScaleFactor: 1 });
   const page = await browserContext.newPage(), origin = new URL(opening.url).origin;
   const failures = [], consoleErrors = [], requests = [], images = [], downloads = [];
+  let interruptOriginalReconcile = false;
+  const paymentWork = [];
+  let loadingRelease = null, loadingStarted = null;
   page.on('pageerror', error => failures.push({ kind: 'pageerror', message: String(error.message) }));
   page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   await browserContext.route('**/*', async route => {
     const request = route.request(), url = new URL(request.url());
     const projectWrite = exportProject && request.method() === 'POST' &&
       (url.pathname === '/api/project/exports' || /^\/api\/project\/exports\/[0-9a-f-]{36}\/download$/.test(url.pathname));
-    if (url.origin !== origin || request.method() !== 'GET' && !projectWrite) {
+    const paymentWrite = !review && request.method() === 'POST' && reads.invoices.some(invoice =>
+      url.pathname === '/api/orders/' + invoice.merchantOrderId + '/reconcile');
+    if (url.origin !== origin || request.method() !== 'GET' && !projectWrite && !paymentWrite) {
       failures.push({ kind: 'unexpected-browser-request', method: request.method(), origin: url.origin, path: url.pathname });
       return route.abort();
     }
@@ -426,11 +431,23 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
       for (const [name, value] of Object.entries(await request.allHeaders()))
         if (!['host','connection','accept-encoding','content-length'].includes(name)) headers[name] = value;
       const response = await fetch(request.url(), { method: request.method(), headers,
-        ...(projectWrite ? { body: request.postDataBuffer() } : {}), redirect: 'error', signal: AbortSignal.timeout(15000) });
+        ...((projectWrite || paymentWrite) ? { body: request.postDataBuffer() } : {}), redirect: 'error', signal: AbortSignal.timeout(15000) });
       const body = Buffer.from(await response.arrayBuffer()); assert(body.length <= 64 * 1024 * 1024);
       const selected = {};
-      for (const name of ['content-type','cache-control','content-security-policy','x-content-type-options','content-disposition','referrer-policy'])
+      for (const name of ['content-type','cache-control','content-security-policy','x-content-type-options','content-disposition','referrer-policy','x-merchant-store-id','x-merchant-tenant-id'])
         if (response.headers.has(name)) selected[name] = response.headers.get(name);
+      if (loadingStarted && request.method() === 'GET' && /^\/api\/orders\/[0-9a-f-]+$/.test(url.pathname)) {
+        const started=loadingStarted;loadingStarted=null;started();
+        await new Promise(resolve=>{loadingRelease=resolve;});
+      }
+      if (paymentWrite && interruptOriginalReconcile) {
+        interruptOriginalReconcile=false;
+        assert.equal(response.status,200);
+        const originalResponse=JSON.parse(body);assert.equal(originalResponse.order.state,'COMPLETE');
+        // The original server has returned its real completed operation. Drop
+        // its response shape once so the browser must retain/replay that request.
+        return route.fulfill({status:200,headers:selected,body:JSON.stringify({interruptedOriginalResponse:true})});
+      }
       await route.fulfill({ status: response.status, headers: selected, body });
     } catch (error) { failures.push({ kind: 'original-http-read', path: url.pathname, error: errorView(error) }); await route.abort(); }
   });
@@ -480,6 +497,58 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
         downloads.push(await originalFile(envelopePath, { bytes: invoice.envelope.bytes, sha256: invoice.envelope.sha256 }));
       }
     }
+    const firstInvoice=reads.invoices[0],otherInvoice=reads.invoices[1];
+    await page.getByRole('row',{name:firstInvoice.reference+', Delivered',exact:true}).click();
+    await page.locator('#detail-content[data-order-id="'+firstInvoice.merchantOrderId+'"]').waitFor({state:'visible'});
+    await page.locator('#payment-work').waitFor({state:'visible'});
+    assert((await page.locator('#payment-work-identity').innerText()).includes(firstInvoice.merchantOrderId));
+    assert((await page.locator('#payment-next-action').innerText()).startsWith('Delivered.'));
+    if (!review) {
+      interruptOriginalReconcile=true;await page.locator('#reconcile').click();
+      await page.waitForFunction(()=>document.getElementById('payment-pending').textContent.includes('response was interrupted'));
+      await capture('merchant-'+label+'-payment-response-recovery.png');
+    }
+    const workEvent=page.waitForEvent('download');await page.locator('#payment-save').click();
+    const workDownload=await workEvent,workPath=join(ROOT,'downloads','browser-'+label,'original-payment-work.json');
+    await workDownload.saveAs(workPath);assert.equal(await workDownload.failure(),null);
+    const workBytes=await readFile(workPath),savedWork=JSON.parse(workBytes);
+    assert.equal(savedWork.invoiceId,firstInvoice.merchantOrderId);
+    if(!review){assert.equal(savedWork.pending.action,'reconcile');assert.equal(savedWork.pending.state,'UNKNOWN');}
+    const workFile=await originalFile(workPath,{bytes:workBytes.length,sha256:sha(workBytes)});downloads.push(workFile);
+    await page.getByRole('row',{name:otherInvoice.reference+', Delivered',exact:true}).click();
+    await page.locator('#detail-content[data-order-id="'+otherInvoice.merchantOrderId+'"]').waitFor({state:'visible'});
+    assert.equal(await page.locator('#signature').inputValue(),'');
+    await page.locator('#payment-file').setInputFiles(workPath);
+    await page.waitForFunction(()=>document.getElementById('message').textContent.includes('original invoice in its original workspace'));
+    assert((await page.locator('#payment-work-identity').innerText()).includes(otherInvoice.merchantOrderId));
+    await capture('merchant-'+label+'-payment-wrong-invoice.png');
+    const loadingSeen=new Promise(resolve=>{loadingStarted=resolve;});
+    const selecting=page.getByRole('row',{name:firstInvoice.reference+', Delivered',exact:true}).click();
+    let loadingTimer;
+    try {
+      await Promise.race([loadingSeen, selecting.then(()=>new Promise(()=>{})),
+        new Promise((_,reject)=>{loadingTimer=setTimeout(()=>reject(new Error('The original invoice loading view did not return within 15 seconds.')),15000);})]);
+      assert.equal(await page.locator('#detail-empty h3').innerText(),'Loading selected invoice…');
+      await capture('merchant-'+label+'-payment-loading.png');
+    } finally { clearTimeout(loadingTimer); loadingRelease?.(); loadingRelease=null; }
+    // Await the original click too; an actionability failure remains a native failure.
+    await selecting;
+    await page.locator('#detail-content[data-order-id="'+firstInvoice.merchantOrderId+'"]').waitFor({state:'visible'});
+    await page.locator('#payment-file').setInputFiles(workPath);
+    await page.waitForFunction(()=>document.getElementById('message').textContent.startsWith('Original payment work reopened.'));
+    if(!review) {
+      await page.locator('#payment-replay').click();
+      await page.waitForFunction(()=>document.getElementById('payment-pending').textContent.includes('response received.'));
+      const returnedEvent=page.waitForEvent('download');await page.locator('#payment-save').click();
+      const returned=await returnedEvent,returnedPath=join(ROOT,'downloads','browser-'+label,'received-payment-work.json');
+      await returned.saveAs(returnedPath);assert.equal(await returned.failure(),null);
+      const receivedBytes=await readFile(returnedPath),receivedWork=JSON.parse(receivedBytes);
+      assert.equal(receivedWork.pending.sha256,savedWork.pending.sha256);assert.equal(receivedWork.pending.state,'RECEIVED');
+      assert.equal(receivedWork.pending.attempts,savedWork.pending.attempts+1);
+      downloads.push(await originalFile(returnedPath,{bytes:receivedBytes.length,sha256:sha(receivedBytes)}));
+      paymentWork.push({invoiceId:firstInvoice.merchantOrderId,requestSha256:savedWork.pending.sha256,
+        saved:workFile.path,received:returnedPath,state:receivedWork.pending.state});
+    } else paymentWork.push({invoiceId:firstInvoice.merchantOrderId,saved:workFile.path,state:'ORIGINAL_SAVED_PROJECT_REVIEW'});
     const project = exportProject ? await exportProjectFromBrowser({ page, opening, scenario, root: ROOT,
       identity, get, save, directory, originalFile, capture, stopped, retainCompleted }) : null;
     await page.setViewportSize({ width: 390, height: 844 }); await page.evaluate(() => scrollTo(0, 0));
@@ -490,18 +559,26 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
     await page.locator('#detail-panel').evaluate(element => element.scrollIntoView({ block: 'start' }));
     const phone = await dimensions(); assert(phone.document <= phone.viewport + 1, 'The original phone layout overflows.');
     await capture('merchant-' + label + '-phone-detail.png'); await capture('merchant-' + label + '-phone-complete.png', true);
-    await page.locator('#search').fill(reads.invoices.at(-1).reference); assert.equal(await page.locator('#order-rows tr').count(), 1);
-    await page.locator('#search').fill(''); assert.equal(await page.locator('#order-rows tr').count(), 5);
+    await page.locator('#search').fill('CEDAR_PAYMENT_DESK_NO_MATCH'); await page.waitForFunction(()=>document.querySelectorAll('#order-rows tr').length===0);
+    await capture('merchant-'+label+'-phone-empty.png');
+    await page.locator('#search').fill(reads.invoices.at(-1).reference); await page.waitForFunction(()=>document.querySelectorAll('#order-rows tr').length===1);
+    await page.locator('#search').fill(''); await page.waitForFunction(()=>document.querySelectorAll('#order-rows tr').length===5);
     await page.locator('#disconnect').click(); await page.locator('#connect-panel').waitFor({ state: 'visible' });
     await page.locator('#operator-token').fill(scenario.operatorToken); await page.locator('#connect-form button').click();
     await page.locator('#workspace').waitFor({ state: 'visible' }); assert.equal(await page.locator('#count-complete').innerText(), '5');
     assert.deepEqual(failures, []); assert.deepEqual(consoleErrors, []);
     return { browser: await browser.version(), chromium: values.chromium,
       mode: exportProject ? 'ORIGINAL_INSTALLED_PORTABLE_HTTP_BRIDGE' : 'ORIGINAL_INSTALLED_HTTP_GET_BRIDGE',
-      dimensions: { phone }, images, downloads, requests, pageErrors: failures, consoleErrors,
+      dimensions: { phone }, images, downloads, requests, paymentWork,
+      renderedInspection: { state:'AWAITING_PRODUCER_SCREEN_REVIEW',guide:'PAYMENTS.md#required-inspection-before-customer-readiness' },
+      pageErrors: failures, consoleErrors,
       ...(project ? { project } : {}) };
   } finally {
-    await browserContext.close(); browserContext = null; await browser.close(); browser = null;
+    loadingRelease?.();
+    const closing=[];
+    try { if(browserContext){await browserContext.close();browserContext=null;} } catch(error){closing.push(error);}
+    try { if(browser){await browser.close();browser=null;} } catch(error){closing.push(error);}
+    if(closing.length)throw new AggregateError(closing,'The original Merchant browser did not close completely.');
   }
 }
 async function selectedRuntime(built) {

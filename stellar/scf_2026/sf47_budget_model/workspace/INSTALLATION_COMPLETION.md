@@ -61,9 +61,23 @@ Open the existing Completion screen and the selected tranche's assignment editor
 
 The editor retains a complete copy of assignment inputs before add/remove/apply operations. **Download Installation working copy** exports the current assignment, selections and retained working history with schema `stellar-forge.sf47-completion-installation-draft.v1`.
 
-**Restore Installation working copy** accepts a complete JSON file for the same actual case and tranche, up to 128 MiB. It validates structure before replacing the draft, keeps the prior complete draft and imported working copy, clears stale catalogue/preview state and marks the result edited. It does not rewrite its original base version to pretend a stale draft is current. Reconcile changed current assignments through the existing editor before saving.
+**Restore Installation working copy** accepts a complete JSON file for the same actual case and tranche, up to 128 MiB. It validates structure before replacing the draft, keeps the prior complete draft and imported working copy, restores the original versioned catalogue and selectors, clears active preview authority and marks the result edited. A catalogue from an earlier case version remains visibly stale until the operator opens the current checks. It does not rewrite its original base version to pretend a stale draft is current. Reconcile changed current assignments through the existing editor before saving.
 
 A working-copy file is an editing aid. To move between independent cases or operators, receive the complete original case first and use the original importer/current case context. Do not change a working-copy case ID manually to bypass its binding. Very large retained histories stay available in their original downloaded file; the bounded browser reader reports an oversized file rather than truncating it.
+
+## Keep and reopen the complete Completion editor
+
+**Complete working copies** keeps the whole original Completion editor in this browser: every tranche's assignment and form fields, unfinished issuer dialogs, correction drafts and source, Installation selectors and earlier inputs, selected native reviews, and original request/receipt history. Native previews remain retained for reference but must be read again after reopening. An invalid or incomplete business field stays editable; local retention does not assert that its native save is valid.
+
+The selected copy is remembered for the original installation, named operator and case. Use **Save working copy** for an immediate durable local checkpoint. **Saved working copies**, **Refresh saved copies** and **Open selected working copy** reopen other retained copies. Opening a copy creates a separate editable copy and preserves the preceding complete download and saved record. **Keep as separate copy** also resolves a concurrent-window save conflict without overwriting the other window's version. If a duplicated tab starts from the same copy, the atomic revision check detects its first conflicting save; neither version is silently replaced.
+
+**Download complete working copy** is available while a request is pending, after an accepted reply and during a storage failure. It captures the full current editor and exact original request bodies synchronously, without a storage or network read. **Open complete working-copy file** accepts that full JSON envelope for the same actual case, up to 256 MiB. It validates all editable structures, original request identities and any existing request collisions before adopting fields. It retains accepted receipts when an older copy contains only the corresponding pending request. An independently selected operator or installation's copy remains readable/downloadable; its requests must continue under their original scope.
+
+The earlier **Download Installation working copy** / **Restore Installation working copy** controls remain available for the selected tranche's specific assignment and Installation working state. Restoration reopens the original package, Installation, check and paid-result choices and their full earlier-input history. A retained catalogue is displayed with its original version, and a changed current case makes it stale. Unavailable selected options remain visible. Earlier preview/proposal data is retained in the received copy but cannot be applied without a new original preview.
+
+Before a native mutation, the editor commits the exact original requestId, expectedVersion, recording actor and complete payload to its scoped request journal together with the full editor. It records an actual accepted receipt before clearing its pending state. **Retry same save** uses that same original body and ID; it does not create another save from the currently displayed fields. A matching retained receipt is reopened first. **Reopen accepted result** verifies the original result against the native case. Definitively rejected requests remain in the complete history, while authentication and uncertain responses keep their original pending body.
+
+A browser storage failure preserves the current fields and download in memory and prevents a new POST until the complete original request can be retained. **Save working copy** retries storage. A received file can remain open in memory when storage is unavailable, with that limitation displayed separately from native errors. Keep its full download before leaving. The page warns when local writes, an original request or accepted-result recovery remain unfinished. None of these local copies replaces the complete native case export, immutable Installation evidence or original request-journal replay in the owning workspace.
 
 ## Current head and historical evidence
 
@@ -214,9 +228,25 @@ This is the meaningful receiving course. Keep synthetic examples explicitly iden
 |Save response uncertain|Inspect/replay the same original request with the same body in its owning workspace; retain the outcome before another mutation.|
 |Independent import rejects evidence|Restore the complete original edition/source/event closure identified by the importer, then continue the same receiving operation.|
 
+## Inspect the exact installed editor and outgoing files
+
+Continue the original Installation-to-Completion receiving operation with the exact selected source edition. Open the complete installed editor with its original populated case. Retain an unfinished assignment, issuer form and Installation selection; save and download the full working copy, reload the actual page, reopen the retained copy and inspect the restored fields. Operate the original save and same-request recovery, review a recorded receipt, open another retained copy, and independently reopen the full downloaded file. Keep the original native request IDs and case throughout this continuation.
+
+The producing worker and reviewer must look at the actual wide and narrow rendered results, including the full source/history panels, controls, downloaded files and reopened state. Repair visible clipping, overflow, missing styling or broken navigation in this same product before its customer-facing handoff.
+
+The active owner instruction applies in full:
+
+> Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
+>
+> Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk; do not run broad suites or build a verification product.
+>
+> Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Current original-operation source handoff: https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791878750110849?thread_ts=1791730668.369819 .
+
 ## Source delivery and validation record
 
-The extension is additive to the current SF47 Installation, Completion, HTTP, staff permissions, browser and typed-client/CLI paths. The distribution/managed-launch lists must include the new Python module, browser module and this guide exactly once, preserving every current prior entry.
+The extension is additive to the current SF47 Installation, Completion, HTTP, staff permissions, browser and typed-client/CLI paths. The current `managed-source.json` selects the complete managed runtime for both launchers and installed distribution. Keep the Python module, browser modules and this guide in that original inventory exactly once, preserving every current prior member. This working-copy continuation changes existing selected files and requires no additional source member.
 
 Read the released source/status record for actual validation. Source review, local pure checks and a failed process admission are separate from a completed native case/browser/receiving run. A runtime-unavailable attempt establishes no customer state.
 

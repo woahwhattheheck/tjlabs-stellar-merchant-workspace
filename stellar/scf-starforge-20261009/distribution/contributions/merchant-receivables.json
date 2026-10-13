@@ -120,6 +120,10 @@
     {
       "server": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/server.mjs",
       "manifest": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/browser-assets.json"
+    },
+    {
+      "server": "stellar/scf-starforge-20261009/merchant-settlement-accounting/service-agreements/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/merchant-settlement-accounting/service-agreements/browser-assets.json"
     }
   ],
   "applicationProviders": {

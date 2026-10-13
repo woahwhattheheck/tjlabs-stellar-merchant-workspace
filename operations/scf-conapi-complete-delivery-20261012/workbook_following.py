@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import time
 
 from preserve_delivery import atomic_json
 
@@ -65,6 +66,56 @@ def checked_command(command, *, cwd):
         raise RuntimeError("The existing source/runtime read failed: " +
                            result.stderr.decode("utf-8", errors="replace")[-8000:])
     return result.stdout.decode("utf-8", errors="strict").strip()
+
+
+
+# Host executables are separate from the original source, parent and workbooks
+# installation selection. Python and its installationId remain exact.
+HOST_BINDING_KEYS = ("node", "browserExecutable", "playwrightModule", "nodeModules")
+
+
+def semantic_selection(value):
+    result = dict(value)
+    result["runtime"] = {key: item for key, item in value["runtime"].items()
+                         if key not in HOST_BINDING_KEYS}
+    return result
+
+
+def observed_runtime(value):
+    observed = {}
+    for key in HOST_BINDING_KEYS + ("python",):
+        path = Path(value[key])
+        actual = path.resolve(strict=True)
+        stat = actual.stat()
+        expected_directory = key == "nodeModules"
+        if (expected_directory and not actual.is_dir()) or (not expected_directory and not actual.is_file()):
+            raise ValueError("The selected host binding has the wrong file type: " + str(path))
+        if key in ("node", "python", "browserExecutable") and not os.access(actual, os.X_OK):
+            raise ValueError("The selected host executable is not executable: " + str(path))
+        observed[key] = {"path": str(path), "resolved": str(actual),
+                         "bytes": stat.st_size, "mtimeNs": stat.st_mtime_ns}
+    observed["installationId"] = value["installationId"]
+    return observed
+
+
+def retain_execution_binding(root, original, current):
+    if semantic_selection(original) != semantic_selection(current):
+        raise ValueError("Continue the original workbook source, parent, output and installed Python identity.")
+    selected_path = root / "conapi-workbook-execution-bindings.json"
+    history = read(selected_path) if selected_path.exists() else {
+        "schema": "commons.conapi-workbook-execution-bindings.v1",
+        "operation": OPERATION, "originalSelection": original, "attempts": []}
+    if history.get("operation") != OPERATION or history.get("originalSelection") != original:
+        raise ValueError("The retained execution history belongs to another original workbook selection.")
+    observation = observed_runtime(current["runtime"])
+    previous = history["attempts"][-1]["runtime"] if history["attempts"] else original["runtime"]
+    receipt = {"sequence": len(history["attempts"]) + 1, "at": time.time(),
+               "runtime": current["runtime"], "observed": observation,
+               "changed": [key for key in HOST_BINDING_KEYS
+                           if previous.get(key) != current["runtime"].get(key)]}
+    history["attempts"].append(receipt)
+    atomic_json(selected_path, history)
+    return receipt
 
 
 def run_workbook_following(*, root, node, original_input, programme, source_root,
@@ -144,17 +195,16 @@ def run_workbook_following(*, root, node, original_input, programme, source_root
                     "nodeModules": str(node_modules)},
     }
     selected_path = root / "conapi-workbook-selected-input.json"
-    if selected_path.exists():
-        if read(selected_path) != selection:
-            raise ValueError("Continue the already selected workbook source, runtime and original programme.")
-    else:
+    original_selection = read(selected_path) if selected_path.exists() else selection
+    if not selected_path.exists():
         # The surrounding original flock serializes this immutable selection.
         atomic_json(selected_path, selection)
+    execution_binding = retain_execution_binding(root, original_selection, selection)
     if not (root / "conapi-workbook-parent-programme.json").exists():
         atomic_json(root / "conapi-workbook-parent-programme.json", programme)
     emit({"stage": "conapi_workbook_original_joined", "operation": OPERATION,
           "source_ref": source_ref, "original_programme": programme["id"],
-          "output": str(output)})
+          "output": str(output), "execution_binding": execution_binding})
     command = [str(node), str(source_root / DRIVER),
                "--out", str(output), "--source-commit", source_ref,
                "--input", original["path"], "--core-sha256", CORE_SHA256,
@@ -183,7 +233,8 @@ def run_workbook_following(*, root, node, original_input, programme, source_root
     if any(recorded.get(key) != package[key] for key in ("path", "bytes", "sha256")):
         raise ValueError("The complete workbook package differs from its original native receipt.")
     completed = {"state": "COMPLETE", "operation": OPERATION,
-                 "selection": selection, "native": returned, "result": result,
+                 "selection": original_selection, "executionBinding": execution_binding,
+                 "native": returned, "result": result,
                  "report": identity(output / "COMPLETE.json"), "package": package}
     atomic_json(root / "Conapi_Workbook_Following_Result.json", completed)
     emit({"stage": "conapi_workbook_complete", "operation": OPERATION,

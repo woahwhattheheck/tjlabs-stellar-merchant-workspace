@@ -1,0 +1,32 @@
+{
+  "schema": "definian.original-form-intent.v1",
+  "operation": "DEFINIAN-MIGRATION-ACCEPTANCE-0C7A-20261013",
+  "status": "prepared-not-submitted",
+  "company": "Definian",
+  "sourceUrl": "https://www.definian.com/contact",
+  "case": {
+    "channel": "C0BTTA66TK3",
+    "parent": "1791872726.629159"
+  },
+  "contact": {
+    "givenName": "Bryce",
+    "familyName": null,
+    "company": "TokenJunkie Labs",
+    "title": "Implementation delivery",
+    "email": "brycembusiness2@gmail.com",
+    "phone": null
+  },
+  "subject": "Implementation capacity for migration acceptance",
+  "message": "Hello Definian team,\n\nYour migration work includes repeatable conversion and reconciliation to the original data. We can take one implementation slice through native loading, full-population acceptance, correction and editable handover.\n\nWe have prepared an operator around original dlt and DuckDB that retains source and pipeline state, compares every agreed business row, and checks keys, parent/child integrity and exact grouped totals. Findings and reviewer decisions remain separate, with a corrected edition and fresh verification before consumer selection. Complete source/runtime receiving is included.\n\nOur proposed workshare is $9,600 over 15 active business days for up to four agreed CSV/JSON/NDJSON resources and named child-table mappings, Linux setup, acceptance/correction and editable handover. Payment is $4,800 at accepted scope and inputs, then $4,800 at the complete native result and handover. Live connectors and production changes can be scoped from actual intake.\n\nYour team keeps the client relationship and business/production decisions. Who owns implementation capacity for current migration projects?\n\nBryce",
+  "proposal": {
+    "url": "https://to.adobe.com/wH4SCKNURpuIXeyXu15DEO2TYLve",
+    "source": "commercial/PROPOSAL.md"
+  },
+  "preSubmission": {
+    "companyClaim": "Refresh the same original case and both mailbox histories before the sole submission.",
+    "nativeStatus": "Prepared implementation; no Definian native completion claim.",
+    "requiredProfileFields": "Use Bryce's actual existing contact profile for required name/phone fields; never invent missing values.",
+    "unknownOutcome": "Retain exact form state and provider receipt before retry.",
+    "favorableReply": "Hold further relationship sends and hand the actual company thread to Bryce."
+  }
+}

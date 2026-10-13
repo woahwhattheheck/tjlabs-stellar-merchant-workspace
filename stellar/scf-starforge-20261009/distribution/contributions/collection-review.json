@@ -27,7 +27,20 @@
     "products/collection-review/examples/ArchiveBlack_Editorial_Projection.json",
     "products/collection-review/examples/ArchiveBlack_Editorial_Review.html",
     "products/collection-review/examples/ArchiveBlack_Editorial_Edition.json",
-    "products/collection-review/examples/PUBLICATION_REDACTION.json"
+    "products/collection-review/examples/PUBLICATION_REDACTION.json",
+    "stellar-forge/developer-site/dist/collection-review-editions.mjs",
+    "stellar-forge/developer-site/dist/collection-review-edition-ui.mjs",
+    "stellar-forge/developer-site/dist/collection-review-edition-report.mjs",
+    "stellar-forge/developer-site/dist/collection-review-source-editions.md",
+    "products/collection-review/examples/source-editions/TMU_Derived_Metadata.json",
+    "products/collection-review/examples/source-editions/Original_Edition_Request.json",
+    "products/collection-review/examples/source-editions/Edition_Comparison.json",
+    "products/collection-review/examples/source-editions/Collection_Review.json",
+    "products/collection-review/examples/source-editions/Edition_Comparison.html",
+    "products/collection-review/examples/source-editions/Source_Edition_Basis.json",
+    "products/collection-review/examples/source-editions/README.md",
+    "products/collection-review/examples/source-editions/Export_Manifest.json",
+    "products/collection-review/examples/source-editions/Operation_Result.json"
   ],
   "commands": {
     "collection-review": "stellar-forge/developer-site/collection-review-cli.mjs"
@@ -39,7 +52,9 @@
     "./collection-review": "./source/stellar-forge/developer-site/dist/collection-review-workspace.mjs",
     "./collection-review/source": "./source/stellar-forge/developer-site/dist/collection-review-source.mjs",
     "./collection-review/report": "./source/stellar-forge/developer-site/dist/collection-review-report.mjs",
-    "./collection-review/publication": "./source/stellar-forge/developer-site/dist/collection-review-publication.mjs"
+    "./collection-review/publication": "./source/stellar-forge/developer-site/dist/collection-review-publication.mjs",
+    "./collection-review/editions": "./source/stellar-forge/developer-site/dist/collection-review-editions.mjs",
+    "./collection-review/edition-report": "./source/stellar-forge/developer-site/dist/collection-review-edition-report.mjs"
   },
   "browserAssets": [
     {

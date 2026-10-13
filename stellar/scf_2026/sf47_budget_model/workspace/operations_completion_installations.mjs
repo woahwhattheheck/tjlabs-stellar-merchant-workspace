@@ -4,7 +4,7 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 const button=(label,action,attrs='',disabled=false)=>'<button type="button" data-completion-action="installation-'+action+'" '+attrs+(disabled?' disabled data-completion-fixed="true"':'')+'>'+esc(label)+'</button>';
 const table=(heads,rows)=>'<div class="completion-table"><table><thead><tr>'+heads.map(x=>'<th>'+esc(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(x=>'<td>'+x+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
 const key=row=>[row.costId,row.installationId,row.checkId].join('/');
-export function completionInstallations({getCase,getDraft,session,api,clearPreview}){
+export function completionInstallations({getCase,getDraft,session,api,clearPreview,beforeReplace=async()=>{}}){
   session.installationCompletion??={};
   const state=()=>session.installationCompletion[String(session.tranche)]??=( {catalog:null,costId:'',installationId:'',checkIds:[],requirePaidPurchase:false,preview:null,requestInputs:null,retainedInputs:[]} );
   const selected=()=>getDraft()?.inputs.installationSelections||[];
@@ -21,7 +21,7 @@ export function completionInstallations({getCase,getDraft,session,api,clearPrevi
     const packages=current.completion.tranches.find(x=>x.tranche===session.tranche)?.packages||[];
     const source=catalog?.installations.find(x=>x.id===value.installationId);
     const stale=catalog&&catalog.version!==current.program.version;
-    const options=(values,chosen)=>values.map(([id,name])=>'<option value="'+esc(id)+'"'+(id===chosen?' selected':'')+'>'+esc(name)+'</option>').join('');
+    const options=(values,chosen)=>[...values,...(chosen&&!values.some(([id])=>id===chosen)?[[chosen,'Retained original selection · '+chosen]]:[])].map(([id,name])=>'<option value="'+esc(id)+'"'+(id===chosen?' selected':'')+'>'+esc(name)+'</option>').join('');
     let content='<section aria-label="Installation results for completion"><h3>Use original Installation acceptance</h3>'+
       '<p>Choose exact saved checks for each funded package. Review their actual customer observations, work and paid results before adding links to your existing assignment draft.</p>'+
       button('Open current Installation checks','catalog')+
@@ -86,12 +86,17 @@ export function completionInstallations({getCase,getDraft,session,api,clearPrevi
       const file=await new Promise(resolve=>{picker.addEventListener('change',()=>resolve(picker.files?.[0]||null),{once:true});picker.addEventListener('cancel',()=>resolve(null),{once:true});picker.click();});
       if(!file)return true;
       if(file.size>128*1024*1024)throw Error('Retain the complete file; this working-copy reader accepts up to 128 MiB.');
-      const imported=JSON.parse(await file.text());
-      validateWorkingCopy(imported,current.program.id,number);
+      const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await file.arrayBuffer());
+      const imported=JSON.parse(text.replace(/^\uFEFF/,''));
+      validateInstallationWorkingCopy(imported,current.program.id,number);
       if(getCase().program.version!==current.program.version||session.tranche!==number||getDraft()!==draft)throw Error('The selected case or draft changed while the working copy opened.');
-      const before=clone(draft),replacement=clone(imported.assignment);
+      await beforeReplace('Before restoring Installation working copy');
+      if(getCase().program.version!==current.program.version||session.tranche!==number||getDraft()!==draft)throw Error('Reopen the intended original draft before receiving this copy.');
+      const before=clone(draft),replacement=clone(imported.assignment),working=validateInstallationWorkingState(imported.working,current.program.id,number);
       Object.assign(draft,replacement,{dirty:true,retainedDraft:before});
-      value.importedWorkingCopy=clone(imported);value.preview=null;value.requestInputs=null;value.catalog=null;value.checkIds=[];
+      for(const field of Object.keys(value))delete value[field];
+      Object.assign(value,working);
+      value.importedWorkingCopy=clone(imported);value.preview=null;value.requestInputs=null;
       value.retainedInputs.push(clone(before.inputs));clearPreview();return true;
     }
     if(name==='catalog'){
@@ -145,10 +150,28 @@ function reportMarkup(report){
     ]))+'<details><summary>Complete frozen source and observed results</summary><pre>'+esc(JSON.stringify(report,null,2))+'</pre></details>';
 }
 
-function validateWorkingCopy(value,caseId,tranche){
+export function validateInstallationWorkingState(working,caseId,tranche){
+  const obj=x=>!!x&&typeof x==='object'&&!Array.isArray(x),str=x=>typeof x==='string',strings=x=>Array.isArray(x)&&x.length<=10000&&x.every(str);
+  if(!obj(working))throw Error('Retain the complete original Installation working state.');
+  for(const key of ['costId','installationId'])if(working[key]!==undefined&&!str(working[key]))throw Error('Retain the original Installation selector.');
+  if(working.checkIds!==undefined&&!strings(working.checkIds)||working.requirePaidPurchase!==undefined&&typeof working.requirePaidPurchase!=='boolean'||working.retainedInputs!==undefined&&!Array.isArray(working.retainedInputs))throw Error('Retain the complete Installation choices and earlier inputs.');
+  if(working.catalog!=null){
+    const c=working.catalog;
+    if(!obj(c)||c.caseId!==caseId||c.tranche!==tranche||!Number.isSafeInteger(c.version)||!Array.isArray(c.installations))throw Error('Retain the original Installation catalogue identity.');
+    for(const row of c.installations){
+      if(!obj(row)||!['id','name','sha256'].every(k=>str(row[k]))||!Number.isSafeInteger(row.revision)||!strings(row.costIds)||!Array.isArray(row.checks))throw Error('Retain each complete saved Installation.');
+      for(const check of row.checks)if(!obj(check)||!['id','title','criterion','state','note'].every(k=>str(check[k]))||!['workIds','purchaseIds','outcomeIds'].every(k=>strings(check[k]))||![null,'string'].includes(check.observedAt===null?null:typeof check.observedAt)||![null,'string'].includes(check.operator===null?null:typeof check.operator))throw Error('Retain the complete original check observations.');
+    }
+  }
+  return {catalog:null,costId:'',installationId:'',checkIds:[],requirePaidPurchase:false,
+    preview:null,requestInputs:null,retainedInputs:[],...clone(working)};
+}
+
+export function validateInstallationWorkingCopy(value,caseId,tranche){
   const obj=x=>!!x&&typeof x==='object'&&!Array.isArray(x),str=x=>typeof x==='string',strings=x=>Array.isArray(x)&&x.length<=10000&&x.every(str);
   if(!obj(value)||value.schema!=='stellar-forge.sf47-completion-installation-draft.v1'||value.caseId!==caseId||value.tranche!==tranche||!obj(value.assignment)||!obj(value.working))throw Error('Choose a complete working copy for this original case and tranche.');
   const draft=value.assignment,input=draft.inputs;
+  validateInstallationWorkingState(value.working,caseId,tranche);
   if(!Number.isSafeInteger(draft.baseVersion)||draft.baseVersion<1||!obj(input)||input.tranche!==tranche||!str(input.note)||!Array.isArray(input.items)||input.items.length>200)throw Error('The original assignment structure is incomplete.');
   const ids=new Set();
   for(const row of input.items){

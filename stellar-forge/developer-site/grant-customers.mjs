@@ -1,6 +1,7 @@
 import { currentGrantCompanionLinks } from './grant-companion.mjs';
 // MIT. Carry accepted customer sections into the maintained SCF reviewer edition.
 import { receiveGrantA2ASources } from './grant-a2a.mjs';
+import { selectGrantProductChapters } from './grant-product-sources.mjs';
 const FEDERAL = '## Federal awards: complete funding research, workshares and receiving';
 const WEBHOOK = '## Webhook customer adoption: complete event tasks and operator handover';
 const OPENFN = '## OpenFn: paid workflow commissioning and complete receiving';
@@ -216,9 +217,19 @@ export function grantCustomerSourceManuscript(manuscript) {
   return source.slice(0, incoming.start) + received + '\n' + source.slice(incoming.end);
 }
 
-export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscript) {
+export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscript, { productRegistrations = [] } = {}) {
   let companion = clean(productAndFinanceMarkdown);
-  for (const incoming of acceptedCustomerSections(manuscript)) {
+  const accepted = acceptedCustomerSections(manuscript);
+  const selected = selectGrantProductChapters(grantCustomerSourceManuscript(manuscript), productRegistrations);
+  const headings = new Set(accepted.map(incoming => incoming.heading));
+  for (const chapter of selected.chapters) {
+    // Dedicated economic, coastal and Datasette receivers keep their established
+    // source selections. Every other registered H2 owns its complete H3+ body.
+    if (DEDICATED.has(chapter.heading) || headings.has(chapter.heading)) continue;
+    accepted.push({ heading: chapter.heading, text: chapter.markdown });
+    headings.add(chapter.heading);
+  }
+  for (const incoming of accepted) {
     companion = installSection(companion, incoming.heading, projectGrantMarkdown(incoming.text));
   }
   for (const heading of [
@@ -584,6 +595,9 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/PROJECT_AGENT\.md)/, x402apiMerchant);
   receive('x402api-merchant-invoice-agent', 'Live merchant invoice agent, original operation and complete delivery',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INVOICE_AGENT\.md)/, x402apiMerchant);
+
+  receive('x402api-merchant-payment-desk', 'Original invoice payment desk and private work recovery',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/PAYMENTS\.md)/, x402apiMerchant);
 
   const preparation = section(companion, "## SQL preparation, reusable pipelines and complete analyst receiving")?.text || '';
   receive("preparation-workspace-operating", "Complete installed SQL preparation and managed pipeline operation",

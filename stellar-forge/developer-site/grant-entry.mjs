@@ -38,6 +38,9 @@ export function grantEntryLinks(html,{filmUrl=null}={}){
     reviewerGuide:anchor(html,'Grant reviewer operating guide'),
     runtimeGuide:anchor(html,'Runtime installation'),
     application:'./grant-data/application.md',
+    workingApplication:'./grant-submission.html?source=concise',
+    workingText:'./grant-data/application-reviewer.md',
+    workingPackage:'./grant-data/reviewer-working-source.json',
     companion:'./grant-data/product-and-finance.md',
     companionReader:'./grant-companion.html',
     budget:'./grant-data/budget.csv',
@@ -49,8 +52,8 @@ function panel(links,filmHtml){
   const external=' target="_blank" rel="noopener noreferrer"';
   return START+'\n<section class="grant-entry shell" id="review-the-product" aria-labelledby="grant-entry-title" data-grant-entry="'+GRANT_ENTRY_SCHEMA+'">'+
     '<header class="grant-entry-heading"><p class="eyebrow">WORKING PRODUCT</p><h2 id="grant-entry-title">Follow useful work from purchase to handover.</h2>'+
-    '<p>Watch the operated purchase, inspect a complete customer report, or reopen the original purchase in the installed reviewer. The full application and funded delivery plan follow below.</p></header>'+
-    '<nav class="grant-entry-jumps" aria-label="Choose a product review"><a href="#review-watch">Watch the purchase</a><a href="#review-result">Inspect a complete result</a><a href="#review-operate">Operate the reviewer</a><a href="#project-and-requested-outcome">Read the application</a></nav>'+
+    '<p>Start with the concise nine-answer working edition, then inspect the operated purchase, complete customer report and original reviewer. The complete current manuscript and funded delivery plan follow below.</p></header>'+
+    '<nav class="grant-entry-jumps" aria-label="Choose a product review">'+link(links.workingApplication,'Open concise working edition')+'<a href="#review-watch">Watch the purchase</a><a href="#review-result">Inspect a complete result</a><a href="#review-operate">Operate the reviewer</a><a href="#project-and-requested-outcome">Read the application</a></nav>'+
     '<div class="grant-entry-grid"><section class="grant-entry-card" id="review-watch" aria-labelledby="review-watch-title"><h3 id="review-watch-title">Watch the purchase</h3>'+
     '<p>The 3:32 product film follows one 0.005-testnet-XLM query purchase through its approved terms, complete returned result, download and reopening.</p>'+
     filmHtml+
@@ -104,7 +107,8 @@ function panel(links,filmHtml){
     '<details><summary>Use the merchant’s customer-delivery workflow</summary><p>In the installed Merchant operator, open <strong>Customers → Reviewer customer delivery</strong>. Its saved delivery recipe carries fourteen native steps through source review, complete results, closed export and receiving. The six-step receiving recipe starts from the reviewed export. Open the existing recipe editor to review its selected workbench aliases and native contracts before installing that workflow.</p>'+
     '<p>'+link(links.reviewerGuide,'Open the complete customer-delivery instructions',external)+'</p></details></section></section>'+
     '<section class="grant-entry-documents" aria-labelledby="review-documents-title"><h3 id="review-documents-title">Keep the application and delivery plan</h3>'+
-    '<div class="grant-entry-actions">'+link(links.application,'Application answer',' download')+link(links.companionReader,'Read product and financing')+link(links.companion,'Download complete companion',' download')+link(links.budget,'Six-package budget',' download')+link(links.sourceIndex,'Source and measure index',' download')+
+    '<p>The dated concise edition contains all nine answers and retains its original manuscript, budget and companion. Open it in the existing submission workspace; Source editions lets you compare it with another complete edition while keeping edited answers.</p>'+
+    '<div class="grant-entry-actions">'+link(links.workingApplication,'Open concise working edition')+link(links.workingText,'Download concise answers',' download')+link(links.workingPackage,'Download complete working source',' download')+link(links.application,'Download current full manuscript',' download')+link(links.companionReader,'Read product and financing')+link(links.companion,'Download complete companion',' download')+link(links.budget,'Six-package budget',' download')+link(links.sourceIndex,'Source and measure index',' download')+
     '<a href="#three-funded-tranches-and-six-priced-deliverables">Read the funded work</a></div></section></section>\n'+END;
 }
 /** Idempotent page composition. The application prose and all existing-work content remain selected by the original composer. */
@@ -138,6 +142,12 @@ export function composeGrantEntry(templateHtml){
     html=html.replace(opening,opening+primary);
     html=html.replace('<a class="button primary" href="./grant-data/application.md" download>','<a class="button" href="./grant-data/application.md" download>');
   }
+  const concise='<a class="button" data-grant-working-edition="v1" href="'+escape(links.workingApplication)+'">Open concise working edition</a>';
+  if(!html.includes('data-grant-working-edition="v1"')){
+    const opening='<div class="downloads" aria-label="Review this application">';
+    need(html.includes(opening),'Keep the original cover actions for the working edition.');
+    html=html.replace(opening,opening+concise);
+  }
   html=html.replace('<a href="#open-the-existing-work">Open the product</a>','<a href="#review-the-product">Open the product</a>');
   const contents='<nav aria-label="Application sections"><ol>';
   if(!html.includes('<li><a href="#review-the-product">Review the working product</a></li>')){
@@ -152,6 +162,7 @@ export function composeGrantEntry(templateHtml){
     runningWorkbench:'#review-open-running',connectionSchema:'stellar-forge.grant-reviewer-workbench-connection.v1',
     packetSchema:'stellar-forge.grant-reviewer-packet.v1',maximumPacketBytes:8*1024*1024,
     reportDownload:'/example-download.mjs',companionReader:links.companionReader,
+    workingApplication:links.workingApplication,workingText:links.workingText,workingPackage:links.workingPackage,
     catalogReview:{opening:'#review-catalog',browser:'/grant-catalog-browser.mjs',guide:'/grant-catalog-guide.md',
       source:GRANT_CATALOG_SOURCE,selectionSchema:'stellar-forge.sf61.catalog-review.v1',provider:'atlas',command:'atlas-workspace'}}};
 }
