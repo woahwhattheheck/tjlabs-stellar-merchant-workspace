@@ -1,5 +1,5 @@
 // Actual staff form, accepted-response loss/reload recovery and complete finance views.
-import { mkdirSync, existsSync } from 'node:fs';
+import { mkdirSync, existsSync, readFileSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { assert, canonical, jsonDigest, digest } from './model.mjs';
@@ -23,6 +23,7 @@ export async function runFinanceBrowser({service,startup,directory,plan,coding,c
   const profile=service.finance.capture(plan.report).source.report.value.profileId;
   const open=async()=>{
     await page.goto(startup.url,{waitUntil:'networkidle'});await page.waitForSelector('#navigation button');
+    await page.locator('#actor').fill(plan.actor);await page.locator('#actor').dispatchEvent('change');
     await page.selectOption('#profile',profile);await page.locator('#navigation button').filter({hasText:/Finance$/}).click();
     await page.waitForSelector('[data-finance-desk] [data-finance-view]');
   };
@@ -40,7 +41,54 @@ export async function runFinanceBrowser({service,startup,directory,plan,coding,c
   };
   try{
     await open();
-    if(phase==='coding'){
+    if(phase==='amendment'){
+      assert(plan.amendment,'FINANCE_BROWSER_PLAN','Select the complete following-edition source review.');
+      if(!progress.steps.amendment){
+        await view('amendments');
+        await page.locator('[data-action=finance-amendment-review]').click();
+        const form=page.locator('[data-finance-amendment-form]');
+        await form.locator('[name=report]').selectOption(plan.report.reportId);
+        await page.waitForFunction(()=>document.querySelector('[data-finance-amendment-form]')?.textContent.includes('Each Buyer purchase must be selected'));
+        for(const key of ['name','provenance'])await form.locator('[name='+key+']').fill(plan.source[key]);
+        await form.locator('[name=dataContext]').selectOption(plan.source.dataContext);
+        if(plan.buyer){
+          await form.locator('[name=includeBuyer]').check();
+          for(const purchase of plan.buyer.purchaseSelection.purchases){
+            const row=form.locator('[data-amendment-purchase="'+purchase.movementId+'"]');
+            await row.locator('input[type=checkbox]').check();
+            for(const [name,key] of [['owner','purchaseOwner'],['reference','purchaseReference'],['reason','reason']])
+              await row.locator('[name="'+name+'-'+purchase.movementId+'"]').fill(purchase[key]);
+          }
+        }
+        await form.getByRole('button',{name:'Compare original financial editions',exact:true}).click();
+        const panel=form.locator('[data-amendment-preview]');await panel.waitFor();
+        assert(await panel.getAttribute('data-preview-sha')===plan.amendment.preview.previewSha256,
+          'FINANCE_BROWSER_AMENDMENT','The actual staff comparison differs from the reviewed full source impact.');
+        const visible=await panel.innerText();
+        for(const close of plan.amendment.preview.accounting.closes)
+          assert(await panel.locator('[data-amendment-close="'+close.id+'"]').count()===1,'FINANCE_BROWSER_AMENDMENT','An affected merchant close is absent.');
+        for(const close of plan.amendment.preview.buyer?.closedPeriods??[])
+          assert(await panel.locator('[data-amendment-buyer-close="'+close.closeId+'"]').count()===1,'FINANCE_BROWSER_AMENDMENT','An affected Buyer close is absent.');
+        assert(visible.includes('Native-unit difference'),'FINANCE_BROWSER_AMENDMENT','The complete native-unit comparison is absent.');
+        const downloadPromise=page.waitForEvent('download');
+        await panel.locator('[data-action=save-amendment-comparison]').click();
+        const download=await downloadPromise,temp=join(directory,'comparison-download.tmp');
+        await download.saveAs(temp);
+        const raw=readFileSync(temp),observed=JSON.parse(raw);
+        assert(canonical(observed)===canonical(plan.amendment.preview),'FINANCE_BROWSER_AMENDMENT','The staff comparison download differs from the complete reviewed source.');
+        const name='staff-amendment-comparison.json';retainFinance(join(directory,name),raw);unlinkSync(temp);
+        await shot('finance-amendment-desktop.png');
+        await page.setViewportSize({width:390,height:844});await shot('finance-amendment-mobile.png');
+        progress.steps.amendment={previewSha256:observed.previewSha256,predecessorSha256:plan.amendment.predecessor.sha256,
+          download:{name,...hashOriginalFile(join(directory,name))},merchantCloses:observed.accounting.closes.map(c=>c.id),
+          buyerCloses:observed.buyer?.closedPeriods.map(c=>c.closeId)??[],readOnly:true};save();
+      }else{
+        const row=progress.steps.amendment.download,got=hashOriginalFile(join(directory,row.name));
+        assert(got.bytes===row.bytes&&got.sha256===row.sha256&&
+          canonical(originalJSON(join(directory,row.name)))===canonical(plan.amendment.preview),
+          'FINANCE_BROWSER_AMENDMENT','Retain the complete original staff comparison.');
+      }
+    }else if(phase==='coding'){
       assert(coding,'FINANCE_BROWSER_PLAN','Choose the original reviewed coding for this form.');
       if(!progress.request){
         await view('merchant');
@@ -60,7 +108,9 @@ export async function runFinanceBrowser({service,startup,directory,plan,coding,c
           if(body.command!=='finance.accounting.mutate'||body.payload?.command!=='coding.save'||body.payload.payload?.movementId!==coding.movementId)return route.continue();
           try{
             assert(!progress.request,'FINANCE_BROWSER_DUPLICATE','The form attempted a second original request.');
-            const actual=body.payload.payload;for(const key of ['movementId','basisSha256','recognitionDate','reason','providerEvidenceAcknowledged','allocations'])
+            const actual=body.payload.payload;
+            if(plan.amendment)assert(actual.expectedVersion===coding.expectedVersion,'FINANCE_BROWSER_CODING_CHANGED','The actual form must retain the original reviewed coding version.');
+            for(const key of ['movementId','basisSha256','recognitionDate','reason','providerEvidenceAcknowledged','allocations'])
               assert(canonical(actual[key])===canonical(coding[key]),'FINANCE_BROWSER_FORM','The actual form differs from the explicit reviewed '+key+'.');
             progress.request={envelope:body,bodyText:raw,fingerprint:jsonDigest(body),at:new Date().toISOString()};save();
             const response=await route.fetch(),value=await response.json();
@@ -98,9 +148,9 @@ export async function runFinanceBrowser({service,startup,directory,plan,coding,c
       }
       await open();await view('merchant');await shot('merchant-reviewed-desktop.png');
     }else{
-      assert(phase==='delivery','FINANCE_BROWSER_PHASE','Select original coding or following delivery views.');
+      assert(phase==='delivery','FINANCE_BROWSER_PHASE','Select the original amendment comparison, coding or following delivery views.');
       if(!progress.steps.views){
-        const views=['intake','merchant','buyer','accountant','deliveries'];
+        const views=['intake','merchant','buyer','accountant','amendments','deliveries'];
         for(const name of views){await view(name);assert((await page.locator('[data-finance-desk]').innerText()).length>80,'FINANCE_BROWSER_VIEW','The original '+name+' view did not render.');}
         await shot('finance-delivery-desktop.png');
         const links=page.getByRole('button',{name:'Download original file',exact:true});

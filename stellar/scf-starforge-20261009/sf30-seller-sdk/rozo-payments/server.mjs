@@ -90,6 +90,7 @@ export async function startRozoServer({service,host='127.0.0.1',port=0,sessionTo
             const finance=service.finance;
             if(path==='/api/finance/report'){send(response,200,finance.report(value));return;}
             if(path==='/api/finance/preview'){send(response,200,await finance.preview(value));return;}
+            if(path==='/api/finance/amendment-preview'){send(response,200,await finance.amendmentPreview(value));return;}
             if(path==='/api/finance/period-preview'){send(response,200,await finance.periodPreview(value));return;}
             if(path==='/api/finance/accountant-preview'){send(response,200,await finance.accountantPreview(value));return;}
             if(path==='/api/finance/buyer-return-preview'){send(response,200,await finance.buyerReturnPreview(value));return;}
