@@ -375,3 +375,26 @@ Each source keeps the repository, commit and path selected by the current chapte
 The product is merged in PR726 at `c451614467b688b8306adb512fa6105898ac634e`. Its complete reviewed source is `b47099ffa5acf15f2c70d9d12662ee81dca0d3fe`; the receiving manifest selects runtime `68ad5adf250e9f100f84d034881ebabc9fa48117`, 91 full source files and 1,124,639 bytes. The complete receiving correction is merged in PR899 at `25dd8b0aa9b32eb99507cfb95e682248fcbf2922`, with controller/driver/guide source `ca518e3aba84eed4dbc56147fa5ac9090904424e`. Its original transfer contract keeps every portable file and saved run field while reconstructing the native SQLite descriptor. The original 120,012-row customer case supplies the current continuation. Its complete checkpoint receiver transfers the same saved operation, native identities and earlier histories to the receiving host, then uses the existing operation lock. The dated completed customer result joins this original case and chapter.
 
 Run the same complete composer described above and retain all four resulting reader pins. The original saved draft/review, Page and owner-private Site receive that cumulative edition. The chapter maps this reusable starting product into the existing six funded packages and the current independent merchant/buyer acceptance, with the same selected funding, capacity and schedule. The [complete preparation contribution](./GRANT_PREPARATION.md) retains the chapter and source-selection contract.
+
+## Receive regional labor analysis and customer data delivery
+
+The complete regional customer guide is [BLS regional analysis and recurring delivery](../../products/bls-labor/GRANT.md). Its concise accepted chapter belongs within the canonical manuscript's existing current demonstration and operator journey. The ordinary whole-chapter `--manuscript` receiver carries this H2 into the same product and finance companion.
+
+The BLS analyst product keeps LAUS resident measures and QCEW workplace measures in their original projections. Its retained NEK case supplies all original selected observations, six complete county/projection briefings and the full resident-labor change report. Source editions, revisioned analyst notes, publication history and complete editable project receiving remain one working project. Its maintained `bls-labor` selection and Applications entry are the operator opening path.
+
+The owned `grant-products/bls-labor.json` declaration registers these four immutable operating sources through the existing composer:
+
+| Source ID | Original operating content |
+| --- | --- |
+| `bls-regional-analyst-workspace` | Installed application, all-row analysis, reports and full editable handover |
+| `bls-labor-source-contract` | Original LAUS/QCEW observation definitions and source selection contract |
+| `bls-original-case-receiving` | Complete retained NEK input, reports, project export and separate reopening |
+| `bls-native-customer-receiving` | Original publisher plans/runs, dataset versions, SF88 receiving and Vitality import |
+
+Each link selects the full merged product commit and source path. The product registry preserves matching measured identities and clears obsolete file measurements when the selected repository, commit or path changes. Repeated composition updates this same chapter and source records while retaining all other accepted customer work.
+
+Use the original 4BF5/Actions BLS case for its actual native and browser result. The funded implementation contribution is customer-specific source/report configuration, existing merchant and buyer integration, complete receiving and operating handover within the current six packages. The canonical allocation remains USD38,000, 400 prospective hours and 150 days. Continue the same four-file reviewer composition, saved review and Page/Site publication.
+
+## Independent product source contributions
+
+[Product registration and complete receiving](GRANT_PRODUCT_SOURCES.md) describes the default `grant-products/*.json` declarations, optional additional received files, original source-ID continuity and exact measured-edition binding. The existing `grant-compose` command receives these definitions before its current public projection and writes the same four reader outputs. A product author can maintain its own complete source declaration alongside the accepted H2 without adding another block to the shared customer projector.
