@@ -10,6 +10,7 @@ import { parseArgs } from 'node:util';
 import { openMerchantWorkspace, openMerchantReview, validateConfig, MerchantError } from './workspace.mjs';
 import { ProtocolError } from './protocol.mjs';
 import {readMerchantObservation} from './observation.mjs';
+import {readMerchantObservationSummary, merchantSummaryHistorySequence} from './observation-summary.mjs';
 import { merchantInputFiles, reviewMerchantInputs, verifyMerchantInputFingerprint, readMerchantInput } from './application-inputs.mjs';
 import { createMerchantProject, resolveMerchantProjectSource } from './portable.mjs';
 
@@ -132,6 +133,10 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
     if (origin && origin !== workspace.config.publicOrigin && origin !== localOrigin) fail('ORIGIN_NOT_ALLOWED', 403);
     if (parsed.search) fail('QUERY_NOT_SUPPORTED');
     if (path === '/api/observation' && request.method === 'GET') return respond(response, 200, readMerchantObservation(workspace));
+    if (path === '/api/observation/summary' && request.method === 'GET') {
+      const historySequence = merchantSummaryHistorySequence(header(request, 'x-merchant-history-sequence'));
+      return respond(response, 200, readMerchantObservationSummary(workspace, { historySequence }));
+    }
     if (path === '/api/state' && request.method === 'GET') return respond(response, 200, {
       config: workspace.publicConfig(), orders: workspace.listOrders(), mode: workspace.readOnly ? 'review' : 'live' });
     if (path === '/api/project' && request.method === 'GET') return respond(response, 200, project ?
@@ -246,7 +251,12 @@ export async function loadMerchantConfiguration(configPath, { env = process.env,
     configuration: config.fulfillmentOptions ?? {}, baseDirectory: dirname(configPath), expectedManifestSha256,
   }) : module;
   if (typeof fulfillment.fulfill !== 'function' || typeof fulfillment.reconcile !== 'function') fail('FULFILLMENT_MODULE_CONTRACT_REQUIRED');
-  return { config, credential, operatorToken, webhookSecretsByVersion, fulfillment,
+  const observationBinding = Object.freeze({
+    kind: reviewed ? 'reviewed-file-inputs' : 'configuration-file',
+    configSha256: reviewed?.configSha256 ?? createHash('sha256').update(raw).digest('hex'),
+    inputsSha256: reviewed?.inputsSha256 ?? null,
+  });
+  return { config, credential, operatorToken, webhookSecretsByVersion, fulfillment, observationBinding,
     configurationFile: configPath, reviewedInputs: reviewed };
 }
 export async function loadMerchantReviewConfiguration(configPath, {

@@ -18,6 +18,8 @@ const SOURCE_FILES = [
   "products/x402api-merchant-workspace/workspace.mjs",
   "products/x402api-merchant-workspace/server.mjs",
   "products/x402api-merchant-workspace/store.mjs",
+  "products/x402api-merchant-workspace/OBSERVATIONS.md",
+  "products/x402api-merchant-workspace/observation-summary.mjs",
   "products/x402api-merchant-workspace/provider.mjs",
   "products/x402api-merchant-workspace/protocol.mjs",
   "products/x402api-merchant-workspace/web/index.html",
