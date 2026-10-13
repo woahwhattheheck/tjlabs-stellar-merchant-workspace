@@ -601,6 +601,8 @@ export function receiveGrantCustomerSources(index, companion) {
 
   receive('x402api-merchant-customer-delivery', 'Complete original invoice and customer file delivery',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/CUSTOMER_DELIVERY\.md)/, x402apiMerchant);
+  receive('x402api-merchant-invoice-working-copies', 'Retained invoice preparation and original request recovery',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INVOICE_WORKING_COPIES\.md)/, x402apiMerchant);
 
   const preparation = section(companion, "## SQL preparation, reusable pipelines and complete analyst receiving")?.text || '';
   receive("preparation-workspace-operating", "Complete installed SQL preparation and managed pipeline operation",
