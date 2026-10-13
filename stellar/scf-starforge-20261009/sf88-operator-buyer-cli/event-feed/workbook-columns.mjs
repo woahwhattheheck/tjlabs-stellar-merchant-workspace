@@ -150,7 +150,7 @@ export function reviewHTML(value) {
   const additional=Object.keys(extra).length?'<section><h2>Other complete worksheet choices retained from this original action</h2><p>These selected arrays remain attached to the same reviewed operation. Their source and conversion validation stays with the original native workbook.</p><pre>'+e(JSON.stringify(extra,null,2))+'</pre></section>':'';
   return '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Event workbook column review</title><style>:root{color-scheme:light;color:#202020;background:#fff;font:15px/1.5 system-ui}body{margin:0 auto;max-width:1200px;padding:24px}h1{font-size:26px}h2{font-size:20px}table{border-collapse:collapse;width:100%}th,td{padding:10px;border-bottom:1px solid #bbb;text-align:left;vertical-align:top;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere}section{margin:24px 0}p{overflow-wrap:anywhere}@media(max-width:700px){body{padding:16px}table,tbody,tr,td{display:block}thead{display:none}tr{border-bottom:1px solid #888}td{border:0;padding:4px}td::before{content:attr(data-label)": ";font-weight:600;margin-right:8px}}@media print{body{max-width:none;padding:0}details{display:block}details>pre{display:block}tr{break-inside:avoid}}</style><body><h1>Complete Event workbook column review</h1><p>Customer workspace '+e(saved.original.workspace_id)+'<br>Programme '+e(saved.original.programme)+'<br>Original operation '+e(p.operation_id)+'<br>Review SHA-256 '+e(p.review_sha256)+'</p><p>'+e(result.ready?'All selected column references and form values are ready for original native conversion review.':'Unfinished choices: '+result.issues.length+' item(s) need review.')+'</p><ul>'+result.issues.map(row=>'<li>'+e('Worksheet '+row.sheet+(row.column===null?'':' / column '+(row.column+1))+': '+row.message)+'</li>').join('')+'</ul>'+tables+additional+'<p>'+e(result.instruction)+'</p></body></html>\n';
 }
-export function createEventWorkbookColumnReview(root,{onChange=()=>{},onMessage=()=>{}}={}) {
+export function createEventWorkbookColumnReview(root,{onChange=()=>{},onMessage=()=>{},onEditableDownload=null}={}) {
   const doc=root.ownerDocument,el=(tag,text)=>{const node=doc.createElement(tag);if(text!==undefined)node.textContent=String(text);return node;};
   let current=null,locked=false,page=0,activeSheet=null,cached=null;
   const size=20,controls=[];
@@ -161,7 +161,7 @@ export function createEventWorkbookColumnReview(root,{onChange=()=>{},onMessage=
   function snapshot(){need(current,'Open an original workbook-column proposal.');return reopen(current);}
   function persist(){const value=snapshot();try{const raw=JSON.stringify(value);localStorage.setItem(key(),raw);if(localStorage.getItem(key())!==raw)throw Error();}catch{setStatus('Browser choice storage is unavailable. Download the complete choices to retain this exact work.',true);}onChange(clone(value.columns));}
   function download(raw,name,type){const url=URL.createObjectURL(new Blob([raw],{type})),a=el('a');a.href=url;a.download=name;doc.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
-  function perform(fn){try{fn();}catch(error){setStatus(error.message,true);}}
+  function perform(fn){try{const pending=fn();if(pending&&typeof pending.catch==='function')pending.catch(error=>setStatus(error.message,true));}catch(error){setStatus(error.message,true);}}
   function button(label,fn,disabled=false){const node=addControl(el('button',label),disabled);node.type='button';node.addEventListener('click',()=>perform(fn));return node;}
   function input(label,value,fn,{select=null,rows=0}={}) {
     const box=el('label',label),field=el(select?'select':rows?'textarea':'input');
@@ -183,6 +183,7 @@ export function createEventWorkbookColumnReview(root,{onChange=()=>{},onMessage=
       {select:sheets.map(s=>[String(s.sheet),s.name+' · index '+s.sheet])}),
       button('Download complete choices',()=>download(JSON.stringify(snapshot(),null,2)+'\n','event-workbook-columns-'+current.original.proposal.operation_id+'.json','application/json')),
       button('Download complete readable review',()=>download(reviewHTML(snapshot()),'event-workbook-column-review-'+current.original.proposal.operation_id+'.html','text/html;charset=utf-8')));
+    if(onEditableDownload)toolbar.append(button('Download complete editable worksheet',()=>onEditableDownload(snapshot(),{sheet:activeSheet,page})));
     const picker=addControl(el('input'));picker.type='file';picker.accept='.json,application/json';const pickLabel=el('label','Reopen complete choices');pickLabel.append(picker);
     const importButton=button('Open selected choices',()=>{const file=picker.files[0];need(file&&file.size>0&&file.size<=16*1024*1024,'Choose a complete column-choice file up to 16 MiB.');const before=canonical(current.original),workingBefore=canonical(current),selected=current.original;
       file.text().then(raw=>{const next=reopen(JSON.parse(raw),selected);need(!locked,'An original action started while the file was opening. Reopen these saved choices after it finishes.');need(current&&canonical(current.original)===before,'The original proposal changed while the file was opening.');need(canonical(current)===workingBefore,'The displayed choices changed while the file was opening. Select the saved file again to review replacement.');if(!confirm('Replace the displayed choices for this exact original proposal with this complete saved file?'))return;current=next;page=0;persist();render();setStatus('Opened every retained choice for this exact original worksheet source.');}).catch(error=>setStatus(error.message,true));});
@@ -236,6 +237,15 @@ export function createEventWorkbookColumnReview(root,{onChange=()=>{},onMessage=
     clear(){current=null;cached=null;activeSheet=null;page=0;root.replaceChildren();controls.length=0;},
     lock(value){locked=!!value;for(const c of controls)c.node.disabled=locked||c.disabled;},
     selected(){return current?clone(current.original):null;},
+    view(value){
+      need(current,'Open the original worksheet before selecting its view.');
+      if(value!==undefined){
+        need(plain(value)&&Object.keys(value).length===2&&Number.isSafeInteger(value.sheet)&&Number.isSafeInteger(value.page)&&value.page>=0&&
+          current.original.proposal.worksheets.some(sheet=>sheet.sheet===value.sheet),'Retain a valid original worksheet view.');
+        activeSheet=value.sheet;page=value.page;render();
+      }
+      return {sheet:activeSheet,page};
+    },
     snapshot,
     columns(){return nativeColumns(snapshot());},
     useColumns(value){current=replaceColumns(snapshot(),value);cached=null;page=0;persist();render();},
