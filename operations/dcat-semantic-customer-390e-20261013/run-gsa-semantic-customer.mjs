@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 
 const PREFIX = 'stellar/scf-starforge-20261009/sf30-seller-sdk/ckan';
 const OPERATION = 'DCAT-SEMANTIC-VALIDATION-390E-20261013';
+const RECIPIENT_NOTE = "The independent receiving workspace reopened the complete source, profile, run, findings and original artifacts. This local receiving note extends review history without changing the sender or native SHACL result.";
 const PROFILE_SOURCES = {
   "build/dcat-us-3.0.context.jsonld": {
     "sha256": "b08b049c2bbb96598bbc0e0c2fe621b8705865dab278a7310ee7ba67a9ec46f6",
@@ -484,9 +485,22 @@ export async function runDcatSemanticCustomer({ sourceRoot, domainRoot, outputDi
     result.receiving = receiving;
     recipient = await openCkanWorkbench({ directory: recipientDirectory, sourceKind: 'dcat-us', environment });
     const receivedState = recipient.status();
-    const recipientPriorReview = ledger.phases['recipient-review']?.result;
+    const recipientPrior = ledger.phases['recipient-review'];
+    const recipientPriorId = recipientPrior?.result?.id ?? recipientPrior?.selection?.semanticReviewId;
     const comparable = structuredClone(receivedState.dcat.semantic);
-    if (recipientPriorReview) comparable.reviews = comparable.reviews.filter(row => row.id !== recipientPriorReview.id);
+    if (recipientPriorId) {
+      const originalRun = result.cases.at(-1);
+      const verifiedRun = await recipient.dcatSemanticRun(originalRun.runId);
+      const owned = verifiedRun.reviews.find(row => row.id === recipientPriorId);
+      if (owned) {
+        const previous = producerState.dcat.semantic.reviews.filter(row => row.runId === originalRun.runId).at(-1);
+        need(owned.runId === originalRun.runId && owned.runSha256 === originalRun.runSha256 &&
+          owned.decision === 'ACKNOWLEDGE' && owned.note === RECIPIENT_NOTE &&
+          owned.previousReviewId === (previous?.id ?? null) &&
+          owned.previousReviewSha256 === (previous?.reviewSha256 ?? null), 'CUSTOMER_RECIPIENT_REVIEW_CHANGED');
+        comparable.reviews = comparable.reviews.filter(row => row.id !== owned.id);
+      }
+    }
     need(sha(encoded(comparable)) === sha(encoded(producerState.dcat.semantic)),
       'CUSTOMER_RECEIVED_SEMANTIC_HISTORY_CHANGED');
     need(sha(encoded(receivedState.dcat.catalogs)) === sha(encoded(producerState.dcat.catalogs)) &&
@@ -518,8 +532,7 @@ export async function runDcatSemanticCustomer({ sourceRoot, domainRoot, outputDi
     result.recipientReview = await phase('recipient-review',
       () => recipient.reviewDcatSemanticRun({ runId: selectedRun.id, expectedRunSha256: selectedRun.runSha256,
         expectedReviewSha256: selectedRun.reviews.at(-1)?.reviewSha256 ?? null, decision: 'ACKNOWLEDGE',
-        note: 'The independent receiving workspace reopened the complete source, profile, run, findings and original artifacts. ' +
-          'This local receiving note extends review history without changing the sender or native SHACL result.' }),
+        note: RECIPIENT_NOTE }),
       selected => {
         const found = recipient.status().dcat.semantic.reviews.find(value => value.id === selected.semanticReviewId);
         need(found, 'CUSTOMER_RECIPIENT_REVIEW_RECOVERY_REQUIRED'); return found;

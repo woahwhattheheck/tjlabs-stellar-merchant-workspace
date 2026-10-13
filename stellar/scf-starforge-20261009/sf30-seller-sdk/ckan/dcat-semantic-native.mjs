@@ -217,8 +217,6 @@ export function createDcatSemanticNative({root,environment=process.env}) {
   need(typeof root==='string' && isAbsolute(root),'DCAT_SEMANTIC_ROOT_INVALID');
   root=resolve(root);const active=new Map();let closed=false;
   const selectedPython=environment.SCF_DCAT_SEMANTIC_PYTHON || environment.SCF_DCAT_PYTHON || 'python3';
-  if(selectedPython!=='python3')need(isAbsolute(selectedPython),'DCAT_SEMANTIC_PYTHON_INVALID',
-    'Configure an absolute semantic Python executable.');
   const childEnvironment={};
   for(const key of ['PATH','LANG','LC_ALL','SYSTEMROOT'])if(environment[key])childEnvironment[key]=environment[key];
   childEnvironment.PYTHONDONTWRITEBYTECODE='1';childEnvironment.PYTHONUNBUFFERED='1';
@@ -279,6 +277,8 @@ export function createDcatSemanticNative({root,environment=process.env}) {
       error:{code:'DCAT_SEMANTIC_OWNER_INTERRUPTED',message:'The prior owner ended before a complete run receipt was retained.'}});
   }
   async function dispatch(handle,argv,cwd,logName,seconds) {
+    need(selectedPython==='python3' || (typeof selectedPython==='string' && isAbsolute(selectedPython)),
+      'DCAT_SEMANTIC_PYTHON_INVALID','Configure an absolute semantic Python executable.');
     if(handle.stopKind)throw fault('DCAT_SEMANTIC_STOPPED',handle.stopKind);
     const log=await open(join(handle.directory,logName),constants.O_CREAT|constants.O_EXCL|constants.O_WRONLY
       |(constants.O_NOFOLLOW??0),0o600);
