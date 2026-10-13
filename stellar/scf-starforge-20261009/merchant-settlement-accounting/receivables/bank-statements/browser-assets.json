@@ -85,6 +85,62 @@
         "../CAMT053.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/bank-statements/accountant-receiving",
+      [
+        "../accountant-receiving/index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/",
+      [
+        "../accountant-receiving/index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/index.html",
+      [
+        "../accountant-receiving/index.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/core.mjs",
+      [
+        "../accountant-receiving/core.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/storage.mjs",
+      [
+        "../accountant-receiving/storage.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/app.mjs",
+      [
+        "../accountant-receiving/app.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/style.css",
+      [
+        "../accountant-receiving/style.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/ACCOUNTANT_RECEIVING.md",
+      [
+        "../accountant-receiving/ACCOUNTANT_RECEIVING.md",
+        "text/markdown; charset=utf-8"
+      ]
     ]
   ]
 }
