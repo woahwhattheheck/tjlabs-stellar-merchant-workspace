@@ -93,7 +93,7 @@ def exact_read(stream, count):
     return value
 
 
-def inspect(raw):
+def inspect(raw, *, details=False):
     if not isinstance(raw, bytes) or not 0 < len(raw) <= MAX_SOURCE:
         fail("A complete DCAT workspace source must be at most 128 MiB.", status=413)
     try:
@@ -177,11 +177,12 @@ def inspect(raw):
                 fail("Select a complete workspace containing its original DCAT state.")
             if stream.read(1):
                 fail("The workspace archive has trailing unbound expanded bytes.")
-            return {"schema": SCHEMA, "archiveSchema": ARCHIVE_SCHEMA,
+            transport = {"schema": SCHEMA, "archiveSchema": ARCHIVE_SCHEMA,
                     "manifestSha256": hashlib.sha256(manifest_raw).hexdigest(),
                     "workbenchSha256": source["workbenchSha256"], "files": len(files),
                     "unpackedBytes": total,
                     "source": {key: source[key] for key in ("directory", "projectCreatedAt", "catalogOrigin")}}
+            return {"transport": transport, "manifest": manifest, "workbench": state} if details else transport
     except Problem:
         raise
     except (OSError, EOFError, ValueError, TypeError, KeyError, UnicodeError, struct.error, zlib.error) as exc:

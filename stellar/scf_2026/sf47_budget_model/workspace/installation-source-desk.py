@@ -152,6 +152,9 @@ def execute(desk, args):
         if args.command == "execute-prepared":
             return client.execute(operation), None
         return client.reconcile(operation), None
+    if args.command == "following-custody":
+        from operations_installation_dcat_following import export_custody
+        return export_custody(desk, case, draft, args.preparation, args.save_request_id, args.directory, args.scenario), None
     if args.command == "profiles":
         return desk.profiles(), None
     if args.command == "list":
@@ -254,6 +257,11 @@ def main(argv=None):
         if name in ("execute-prepared", "reconcile-prepared"):
             command.add_argument("--operation", required=True, type=Path,
                                  help="Previously saved complete operation, unchanged")
+    custody = sub.add_parser("following-custody", help="Retain and cold-reopen the full original following workspace")
+    custody.add_argument("--draft", required=True)
+    custody.add_argument("--preparation", required=True)
+    custody.add_argument("--save-request-id", required=True)
+    custody.add_argument("--directory", required=True, type=Path)
     args = parser.parse_args(argv)
     if args.command != "profiles" and not args.case:
         parser.error("--case must select the original existing Operations case")

@@ -9,7 +9,7 @@ export const INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES:number;
 export const INSTALLATION_SOURCE_ACTIONS:readonly InstallationSourceAction[];
 export const INSTALLATION_SOURCE_READS:readonly string[];
 export type InstallationSourceAction='create'|'file.add'|'file.remove'|'selection.save'|'prepare'|
-  'native.receive'|'attach'|'commissioning.attach'|'commissioning.archive.receive'|'edition.apply'|'mapping.apply';
+  'native.receive'|'attach'|'commissioning.attach'|'commissioning.archive.receive'|'edition.apply'|'mapping.apply'|'dcat-following.save';
 export interface InstallationSourceSelection {caseId:string;draftId:string}
 export interface InstallationSourceContext {requestId:string;actor:string;note?:string}
 export interface InstallationSourceCommand<Data extends GrantObject=GrantObject> extends InstallationSourceContext {

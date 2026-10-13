@@ -845,6 +845,9 @@
     "../../../scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/receiving_csv_dag.py",
     "../../../scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/report.mjs",
     "../../../scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/runtime_bundle.py",
-    "../../../scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/sources.json"
+    "../../../scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/sources.json",
+    "operations_installation_dcat_following.py",
+    "../../sf49_data_commissioning/installation-workorders/dcat-installation-following.mjs",
+    "../../sf49_data_commissioning/installation-workorders/DCAT_FOLLOWING_INSTALLATION.md"
   ]
 }

@@ -12,6 +12,7 @@ const SCHEMA='stellar-forge.installation-source-desk.v1';
 const SELECTION='stellar-forge.installation-source-selection.v1';
 const NATIVE_SELECTION='stellar-forge.canadabuys-workshare-selection.v1';
 const HANDOVER_SELECTION='stellar-forge.installation-handover-selection.v1';
+const FOLLOWING_SELECTION='stellar-forge.dcat-installation-following.v1.source-selection';
 const MAX_FILE=8*1024*1024, MAX_ARCHIVE=192*1024*1024, MAX_WORKING=512*1024*1024;
 const WORKING_COPY='stellar-forge.installation-source-working-copy.v1';
 const EDITION_MAPPING_FIELDS=['binding:','field:work.','field:selection.','field:caseForm.','field:profileWork.'];
@@ -478,7 +479,7 @@ export function mountInstallationSources(root,bridge){
       };
       node.disabled=(Object.hasOwn(liveDisabled,action)?liveDisabled[action]:node.dataset.sourceFixed==='true')||busy||hostBusy||copyLoading||
         (node.matches('[data-source-edit]')&&!editing())||
-        (!!state.pendingId&&['new','upload','remove','save-selection','prepare','native-receive','attach','case-add','case-remove','case-new','case-edit','profile-seed','profile-apply','commissioning-open','commissioning-inspect','commissioning-preview','commissioning-attach','commissioning-archive-inspect','commissioning-archive-receive'].includes(action));
+        (!!state.pendingId&&['new','upload','remove','save-selection','prepare','native-receive','following-select','attach','case-add','case-remove','case-new','case-edit','profile-seed','profile-apply','commissioning-open','commissioning-inspect','commissioning-preview','commissioning-attach','commissioning-archive-inspect','commissioning-archive-receive'].includes(action));
     }
   }
   function checkContext(){
@@ -588,6 +589,9 @@ export function mountInstallationSources(root,bridge){
     if(value.result?.state==='ATTACHED_SOURCES'){
       state.tab='installation';state.notice='Attached the complete prepared cohort to the original case in one transaction.';
     }
+    if(value.result?.state==='SAVED_DCAT_FOLLOWING'){
+      state.tab='outputs';state.notice='Saved the following scope as the next revision of the same original Installation. Earlier revisions and the complete source preparation remain retained.';
+    }
     commissioning.adoptReceipt(value.result);
     editions.adoptReceipt(value,original);
     editions.adoptNativeDraft(value);
@@ -600,7 +604,7 @@ export function mountInstallationSources(root,bridge){
       if(value.result?.state==='ATTACHED_SOURCES'){
         await bridge.refreshCase();
         if(available())await readPreparation(value.result.preparationId);
-      }else if(value.result?.state==='ATTACHED_COMMISSIONING'){
+      }else if(['ATTACHED_COMMISSIONING','SAVED_DCAT_FOLLOWING'].includes(value.result?.state)){
         await bridge.refreshCase();
       }
     }catch(error){state.error='Saved original request; refresh its current case to finish readback. '+(error.message||String(error));changed();}
@@ -689,9 +693,16 @@ export function mountInstallationSources(root,bridge){
   async function saveSelection(){
     requireEdit();if(state.caseForm?.dirty)throw new Error('Apply the edited customer mapping to the complete selection first.');
     const selection=parseExactMappingJSON(state.work?.selectionText||'').value;
-    if(!record(selection)||![SELECTION,HANDOVER_SELECTION].includes(selection.schema))throw new Error('Use the complete original packet or saved handover source selection.');
+    if(!record(selection)||![SELECTION,HANDOVER_SELECTION,FOLLOWING_SELECTION].includes(selection.schema))throw new Error('Use the complete original packet or saved handover source selection.');
     // The native writer parses the complete original editor text without a JS number round trip.
     return issue('selection.save',{selectionJSON:state.work.selectionText});
+  }
+  async function selectFollowing(fileId){
+    requireEdit();
+    if(workingDirty()||editions.isDirty())throw new Error('Retain or save your complete current mapping before selecting another following edition.');
+    const file=files().find(x=>x.id===fileId);
+    if(!file)throw new Error('Choose the retained complete Dcat_Following_Native_Input.json.');
+    return issue('selection.save',{selection:{schema:FOLLOWING_SELECTION,inputFileId:file.id,inputSha256:file.sha256}});
   }
   async function receiveNative(fileId){
     requireEdit();
@@ -729,6 +740,8 @@ export function mountInstallationSources(root,bridge){
   }
   async function attach(){
     requireEdit();if(!prepared)throw new Error('Open a complete preparation first.');
+    if(prepared.kind==='dcat-following')
+      return issue('dcat-following.save',{preparationId:prepared.id,expectedPreviewSha256:prepared.nativePreview.previewSha256});
     await bridge.refreshCase();
     return issue('attach',{preparationId:prepared.id,expectedSelectionSha256:prepared.selectionSha256,expectedVersion:current().version});
   }
@@ -773,7 +786,7 @@ export function mountInstallationSources(root,bridge){
   }
   function selectionValue(){
     const value=state.work?.selectionText?.trim()?parseObject(state.work.selectionText,'Complete source selection'):blankSelection();
-    if(!(([SELECTION,HANDOVER_SELECTION].includes(value.schema)&&Array.isArray(value.cases))||(value.schema===NATIVE_SELECTION&&Array.isArray(value.workshares))))throw new Error('Keep the complete original source selection and its customer cases or native Workshares.');
+    if(!(([SELECTION,HANDOVER_SELECTION].includes(value.schema)&&Array.isArray(value.cases))||(value.schema===NATIVE_SELECTION&&Array.isArray(value.workshares))||(value.schema===FOLLOWING_SELECTION&&typeof value.inputFileId==='string'&&typeof value.inputSha256==='string')))throw new Error('Keep the complete original source selection and its customer cases or native Workshares.');
     return value;
   }
   function keepSelection(value){
@@ -1062,6 +1075,7 @@ export function mountInstallationSources(root,bridge){
         '<strong>'+esc(f.filename)+'</strong><br>'+esc(f.mediaType)+' · '+f.bytes+' bytes',
         '<code>'+esc(f.sha256)+'</code><br>'+esc(f.sourceUrl)+'<br>'+esc(f.observedAt),
         (f.filename.toLowerCase().endsWith('.zip')?btn('Receive native CanadaBuys source','native-receive','data-id="'+f.id+'"',historic()||workingDirty()||pending()):btn('Inspect JSON','inspect','data-id="'+f.id+'"'))+btn('Download original','file-download','data-id="'+f.id+'"')+
+        (f.filename==='Dcat_Following_Native_Input.json'?btn('Select following Installation','following-select','data-id="'+f.id+'"',historic()||workingDirty()||pending()):'')+
         btn('Remove from next edition','remove','data-id="'+f.id+'"',historic()||pending())
       ])):empty('Retain the complete Workshare packet or saved delivery handover, plus every document supplying original effort or customer programme context.'))+
       hint('For a native CanadaBuys Workshare, retain the complete ZIP produced by the installed canadabuys package command, then choose Receive native CanadaBuys source. Its original package, explicit mapping and all five prepared files stay together.')+inspectionView();
@@ -1180,6 +1194,16 @@ export function mountInstallationSources(root,bridge){
   }
   function mappingView(){
     let selected,error;try{selected=selectionValue();}catch(e){error=e.message;}
+    if(selected?.schema===FOLLOWING_SELECTION){
+      const file=files().find(row=>row.id===selected.inputFileId);
+      return header('Following catalogue Installation','Prepare the exact retained comparison through this original Source Desk. The native writer preserves the same Installation and all earlier observations.')+
+        (file?'<p><strong>'+esc(file.filename)+'</strong> · '+file.bytes+' bytes</p>':hint('The selected complete native input is no longer in this draft. Retain its original file before preparing.'))+
+        '<details><summary>Complete following source selection</summary>'+
+        field('Full native selection JSON','work.selectionText',state.work?.selectionText||'',{area:true,rows:8,wide:true})+'</details>'+
+        '<div class="source-desk-actions">'+btn('Save complete selection','save-selection','',!saved||historic()||!state.work?.dirty)+
+        btn('Prepare following Installation','prepare','',!file||!saved?.selection||!!state.work?.dirty||historic())+'</div>'+
+        hint('A changed case or saved Installation refuses this preparation. Preserve the original request and review the current basis in the catalogue commissioning desk.');
+    }
     if(selected?.schema===NATIVE_SELECTION)return nativeMappingView(selected);
     return header('Source and effort mapping','Prepare one complete receiving cohort from exact original customer documents.',
       btn('Add original customer','case-new','',!saved||historic()))+
@@ -1216,9 +1240,9 @@ export function mountInstallationSources(root,bridge){
          btn('Download complete file','output-download','data-filename="'+esc(f.filename)+'"')
        ]))+
        '<div class="source-desk-actions">'+btn('Download whole source and receiving ZIP','archive-download')+
-       btn('Attach complete cohort to this case','attach','',historic()||readonly()||pending())+
+       btn(prepared.kind==='dcat-following'?'Save next revision of original Installation':'Attach complete cohort to this case','attach','',historic()||readonly()||pending())+
        (latestAttachment()?btn('Open native Installation preparation','installation-open'):'')+'</div>'+
-       hint('Attachment is one native case transaction. If the complete cohort exceeds the original case capacity, no partial source set is recorded.')+
+       hint(prepared.kind==='dcat-following'?'Save verifies the complete earlier and later archives, attached review and original Installation basis again, then writes its next revision in the original case transaction. A stale basis is refused without replacing another revision.':'Attachment is one native case transaction. If the complete cohort exceeds the original case capacity, no partial source set is recorded.')+
        '<details><summary>Complete native preparation report</summary><pre>'+esc(pretty(prepared.report))+'</pre></details>'+
        '<details><summary>Original engine and selected profile sources</summary><pre>'+esc(pretty({engine:prepared.engine,profiles:prepared.report.profiles}))+'</pre></details>':'');
   }
@@ -1511,6 +1535,7 @@ export function mountInstallationSources(root,bridge){
       if(action==='upload')return upload();
       if(action==='inspect')return openInspection(target.dataset.id);
       if(action==='native-receive')return receiveNative(target.dataset.id);
+      if(action==='following-select')return selectFollowing(target.dataset.id);
       if(action==='inspect-close'){inspection=null;state.inspectionFileId=null;state.pointerTarget=null;changed();return;}
       if(action==='remove'){
         requireEdit();const f=files().find(x=>x.id===target.dataset.id);

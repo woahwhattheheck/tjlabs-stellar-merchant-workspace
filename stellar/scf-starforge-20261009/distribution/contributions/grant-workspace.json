@@ -78,7 +78,8 @@
     "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_COLLECTION_AGENT.md",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_source_collection.mjs",
     "stellar-forge/developer-site/dist/source-table-corrections.mjs",
-    "stellar/scf_2026/sf47_budget_model/workspace/operations_dcat_sources.py"
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_dcat_sources.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_dcat_following.py"
   ],
   "managedSourceManifests": [
     "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json"

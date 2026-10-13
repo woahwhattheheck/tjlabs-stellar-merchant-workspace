@@ -7,8 +7,10 @@
 <p id="status" role="status" aria-live="polite">Opening the retained preparation desk…</p>
 <section id="authentication" hidden><h2>Open the private desk</h2><p>Use the complete link returned by this listener, or paste its credential here for this browser session.</p><label>Desk credential<input id="credential" type="password" autocomplete="off"></label><button id="authenticate">Open</button></section>
 <div id="controls">
+<div class="actions" role="group" aria-label="Commissioning workflow"><button id="mode-initial" aria-pressed="true">Initial commissioning</button><button id="mode-following" aria-pressed="false">Following edition</button></div>
+<div class="actions"><button id="save-draft">Download complete editor draft</button><label class="file-button">Open editor draft<input id="open-draft" type="file" accept=".json,application/json"></label></div>
 <section><h2>1. Retain complete inputs</h2><p>Receive the whole stopped catalogue archive and the current case and original Installation seed. Keep the original files together.</p>
-<div class="form-grid"><label>Input kind<select id="input-kind"><option value="archive">Complete catalogue archive (.ckanw)</option><option value="case">Current operating case (JSON)</option><option value="seed">Original Installation seed (JSON)</option><option value="selection">Selected commissioning scope (JSON)</option><option value="bindings">Installation bindings (JSON)</option></select></label><label>Complete original file<input id="input-file" type="file"></label></div>
+<div class="form-grid"><label>Input kind<select id="input-kind"><option value="archive">Complete catalogue archive (.ckanw)</option><option value="case">Current operating case (JSON)</option><option value="seed">Original Installation seed (JSON)</option><option value="selection">Selected commissioning scope (JSON)</option><option value="bindings">Installation bindings (JSON)</option><option value="prior-preparation">Complete original preparation result (JSON)</option><option value="saved-installation">Actual saved Installation (JSON)</option><option value="following-review">Complete following-edition review (JSON)</option></select></label><label>Complete original file<input id="input-file" type="file"></label></div>
 <button id="import">Retain this file</button><div id="inputs"></div>
 <div class="actions"><button id="inspect">Inspect complete catalogue</button><button id="template">Prepare scope and bindings</button></div>
 <label><input id="carry-choices" type="checkbox" checked>Carry current choices into a refreshed template for the same case and catalogue</label><p class="note">Attach the complete archive and the selected scope file in the original case. Download its current case and fresh seed after attaching sources, then retain those current files here. Existing scope decisions and customer bindings can be carried into the refreshed template.</p>
@@ -22,10 +24,31 @@
 <details><summary>Every original archive file</summary><label>Find a file<input id="file-query" type="search"></label><p id="file-count"></p><div id="archive-files"></div><div class="actions"><button id="file-previous">Previous files</button><button id="file-next">Next files</button></div></details><div class="actions"><button id="download-selection">Download complete selected scope</button><button id="download-source">Download complete source report</button></div>
 </section>
 <section id="bindings-section" hidden><h2>3. Complete customer bindings</h2><p>The original Workshare, funding assignments, acceptance steps and plan selection remain in their original seed.</p><div id="binding-selection"></div><div id="bindings"></div>
-<div class="actions"><button id="download-bindings">Download complete bindings</button><button id="save-draft">Download complete editor draft</button><label class="file-button">Open editor draft<input id="open-draft" type="file" accept=".json,application/json"></label></div>
+<div class="actions"><button id="download-bindings">Download complete bindings</button></div>
 <label>Original case source ID for the selected scope file<input id="selection-source-id"></label>
 <button id="prepare">Prepare complete Installation</button>
 </section>
+<section id="following-section" hidden>
+<h2>Follow a later catalog edition</h2>
+<p>Continue the same saved Installation with a later complete archive. Retain the original preparation result, actual saved Installation and current case using the input controls above. Inspect each complete archive, then select its place below.</p>
+<div class="actions"><button id="following-pin-before">Use current inspection as earlier edition</button><button id="following-pin-after">Use current inspection as later edition</button></div>
+<div id="following-pair" class="form-grid"></div>
+<label>Later archive's original case source ID<input id="following-archive-source-id"></label>
+<p class="note">Attach the complete later archive through the original case source workflow before downloading its fresh case JSON. Both editions remain in the original preparation directory; this desk does not upload a partial replacement.</p>
+<button id="following-template">Compare editions and prepare review</button>
+<div id="following-detail" hidden>
+<p id="following-binding" class="metadata"></p><p id="following-totals"></p><p id="following-warning" class="note"></p>
+<div class="form-grid"><label>Source family<select id="following-family"><option value="">All families</option></select></label><label>Change<select id="following-state"><option value="">All changes</option><option value="UNCHANGED">Unchanged</option><option value="CHANGED">Changed</option><option value="NEW">New</option><option value="MISSING">Missing</option></select></label></div>
+<label>Find complete records<input id="following-query" type="search" placeholder="Title, exact identity, state"></label>
+<p id="following-count"></p><div id="following-records"></div><div class="actions"><button id="following-previous">Previous records</button><button id="following-next">Next records</button></div>
+<details id="following-all-files"><summary>Every original archive file</summary><div class="form-grid"><label>Original edition<select id="following-file-edition"><option value="after">Later archive</option><option value="before">Earlier archive</option></select></label><label>Find original files<input id="following-file-query" type="search"></label></div><p id="following-file-count"></p><div id="following-files"></div><div class="actions"><button id="following-file-previous">Previous files</button><button id="following-file-next">Next files</button></div></details>
+<details><summary>Amend source and receiving descriptions</summary><p>Enable only text that needs to change. Unselected fields retain their original saved values. Tasks, checks, observations, commercials and payment instructions remain in the original Installation.</p><div id="following-amendments"></div></details>
+<div class="actions"><button id="following-download-review">Download complete reviewed scope</button><button id="following-download-comparison">Download complete comparison</button><button id="following-download-draft">Download complete editor draft</button><button id="following-load-review">Load retained review JSON</button></div>
+<p>Attach the exact reviewed JSON to the original case. Retain that case's fresh JSON here, then enter the new review source ID. A later case version can be used without rewriting unchanged review decisions.</p>
+<label>Reviewed JSON's original case source ID<input id="following-review-source-id"></label>
+<button id="following-prepare">Prepare next Installation revision</button>
+<details><summary>Earlier retained review drafts</summary><div id="following-archived"></div></details>
+</div></section>
 <section id="pending-section" hidden><h2>Continue the original request</h2><p id="pending-description"></p><div class="actions"><button id="resume">Reconcile and continue</button><button id="new-draft">Retain request and start a new draft</button></div></section>
 <section><h2>Prepared work and complete files</h2><div id="result"><p>Select an existing preparation or prepare the current complete inputs.</p></div></section>
 <section><h2>Retained preparation history</h2><p>Reopen the same request after a lost response. Each changed input set belongs to a new preparation.</p><div id="history"></div><button id="more-history" hidden>More retained requests</button></section>

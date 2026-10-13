@@ -10,7 +10,7 @@ import {RetainedFileReads,MAX_RETAINED_CHUNK_BYTES} from './retained-file-reads.
 const UUID=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const HASH=/^[a-f0-9]{64}$/;
 const PREFIX='merchant_ckan_dcat_installation_';
-const INPUT_KINDS=['archive','case','seed','bindings','selection'];
+const INPUT_KINDS=['archive','case','seed','bindings','selection','prior-preparation','saved-installation','following-review'];
 const MAX_ARCHIVE=128*1024*1024,MAX_JSON=8*1024*1024,MAX_METADATA=128*1024*1024,MAX_REPLY=65536;
 const need=(ok,code,message)=>{if(!ok)throw failure(code,message);};
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -161,6 +161,17 @@ export class MerchantDcatInstallations{
     need(typeof input.selectionSourceId==='string'&&input.selectionSourceId.length>0&&input.selectionSourceId.length<=200,
      'INVALID_PARAMS','Use the selected scope file’s original Operations source ID.');
     return completed(service.prepare(input));
+   }
+   case 'following_template':
+   case 'following_prepare':{
+    id(input.requestId);id(input.beforeInspectionId);id(input.afterInspectionId);
+    for(const key of ['priorPreparationId','installationId','caseId'])sha(input[key]);
+    need(typeof input.afterArchiveSourceId==='string'&&input.afterArchiveSourceId.length>0&&input.afterArchiveSourceId.length<=200,
+     'INVALID_PARAMS','Select the later archive source from the original case.');
+    if(name.endsWith('_following_template'))return completed(service.followingTemplate(input));
+    sha(input.reviewId);need(typeof input.reviewSourceId==='string'&&input.reviewSourceId.length>0&&input.reviewSourceId.length<=200,
+     'INVALID_PARAMS','Select the actual complete reviewed case source.');
+    return completed(service.followingPrepare(input));
    }
    case 'requests':{
     const selection=page(input),result=await service.list(selection);

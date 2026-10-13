@@ -20,10 +20,12 @@ const sha = value => {
 };
 export const dcatInstallationUsage = [
   'dcat-installation serve --directory PRIVATE_ROOT [--port 0]',
-  'dcat-installation import --directory PRIVATE_ROOT --request UUID --kind archive|case|seed|bindings|selection --file ORIGINAL --sha256 HASH',
+  'dcat-installation import --directory PRIVATE_ROOT --request UUID --kind archive|case|seed|bindings|selection|prior-preparation|saved-installation|following-review --file ORIGINAL --sha256 HASH',
   'dcat-installation inspect --directory PRIVATE_ROOT --request UUID --archive FILE_ID',
   'dcat-installation template --directory PRIVATE_ROOT --request UUID --inspection UUID --case FILE_ID --seed FILE_ID',
   'dcat-installation prepare --directory PRIVATE_ROOT --request UUID --inspection UUID --case FILE_ID --seed FILE_ID --bindings FILE_ID --selection FILE_ID --selection-source SOURCE_ID',
+  'dcat-installation following-template --directory PRIVATE_ROOT --request UUID --before-inspection UUID --after-inspection UUID --prior-preparation FILE_ID --installation FILE_ID --case FILE_ID --after-archive-source SOURCE_ID',
+  'dcat-installation following-prepare --directory PRIVATE_ROOT --request UUID --before-inspection UUID --after-inspection UUID --prior-preparation FILE_ID --installation FILE_ID --case FILE_ID --after-archive-source SOURCE_ID --review FILE_ID --review-source SOURCE_ID',
   'dcat-installation list --directory PRIVATE_ROOT [--offset 0] [--limit 50]',
   'dcat-installation get --directory PRIVATE_ROOT --request UUID',
   'dcat-installation files --directory PRIVATE_ROOT --request UUID',
@@ -41,6 +43,8 @@ const definitions = {
   inspect: [['directory','request','archive'], []],
   template: [['directory','request','inspection','case','seed'], []],
   prepare: [['directory','request','inspection','case','seed','bindings','selection','selection-source'], []],
+  'following-template': [['directory','request','before-inspection','after-inspection','prior-preparation','installation','case','after-archive-source'], []],
+  'following-prepare': [['directory','request','before-inspection','after-inspection','prior-preparation','installation','case','after-archive-source','review','review-source'], []],
   list: [['directory'], ['offset','limit']],
   get: [['directory','request'], []],
   files: [['directory','request'], []],
@@ -63,9 +67,9 @@ function argumentsFor(argv) {
   need(definition[0].every(key=>Object.hasOwn(options,key)),
     'DCAT_INSTALLATION_ARGUMENTS', dcatInstallationUsage);
   for (const key of ['directory','file','out']) if (options[key]) options[key]=resolve(options[key]);
-  for (const key of ['request','inspection']) if(options[key])
+  for (const key of ['request','inspection','before-inspection','after-inspection']) if(options[key])
     need(UUID.test(options[key]), 'DCAT_INSTALLATION_REQUEST_ID', 'Use the original request UUID.');
-  for (const key of ['archive','case','seed','bindings','selection','file-id','sha256'])
+  for (const key of ['archive','case','seed','bindings','selection','file-id','sha256','prior-preparation','installation','review'])
     if(options[key]) sha(options[key]);
   for(const [key,max,min] of [['offset',Number.MAX_SAFE_INTEGER,0],['limit',200,1],['port',65535,0]]) {
     if(options[key]!==undefined) {
@@ -75,8 +79,8 @@ function argumentsFor(argv) {
       options[key]=Number(options[key]);
     }
   }
-  if(command==='import') need(['archive','case','seed','bindings','selection'].includes(options.kind),
-    'DCAT_INSTALLATION_INPUT_KIND','Select archive, case, seed, bindings or selection.');
+  if(command==='import') need(['archive','case','seed','bindings','selection','prior-preparation','saved-installation','following-review'].includes(options.kind),
+    'DCAT_INSTALLATION_INPUT_KIND','Select a declared complete archive, case, seed, bindings, selection, prior-preparation, saved-installation or following-review.');
   return {command,options};
 }
 
@@ -186,6 +190,13 @@ export async function runDcatInstallationCommand(argv, {signal, onOwner}={}) {
     if(command==='import') return await service.importFile({requestId:options.request,path:options.file,
       kind:options.kind,expectedSha256:options.sha256});
     if(command==='inspect') return await service.inspect({requestId:options.request,archiveId:options.archive});
+    if(command==='following-template'||command==='following-prepare'){
+      const input={requestId:options.request,beforeInspectionId:options['before-inspection'],
+       afterInspectionId:options['after-inspection'],priorPreparationId:options['prior-preparation'],
+       installationId:options.installation,caseId:options.case,afterArchiveSourceId:options['after-archive-source']};
+      return command==='following-template'?await service.followingTemplate(input):
+       await service.followingPrepare({...input,reviewId:options.review,reviewSourceId:options['review-source']});
+    }
     const input={requestId:options.request,inspectionId:options.inspection,caseId:options.case,seedId:options.seed};
     if(command==='template') return await service.template(input);
     return await service.prepare({...input,bindingsId:options.bindings,selectionId:options.selection,

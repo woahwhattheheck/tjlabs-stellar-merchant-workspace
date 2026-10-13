@@ -9,7 +9,7 @@ const UUID=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const need=(ok,message,status=400)=>{if(!ok)throw Object.assign(new Error(message),{code:'DCAT_INSTALLATION_HTTP',status});};
 const bytes=async(req,maximum=8*1024*1024)=>{const rows=[];let size=0;for await(const row of req){size+=row.length;need(size<=maximum,'The complete request exceeds this control-input capacity.',413);rows.push(row);}return Buffer.concat(rows);};
 const json=async req=>JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await bytes(req)));
-const assets=new Map([['/',['index.html','text/html; charset=utf-8']],['/app.mjs',['app.mjs','text/javascript; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']]]);
+const assets=new Map([['/',['index.html','text/html; charset=utf-8']],['/app.mjs',['app.mjs','text/javascript; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']],['/following.mjs',['following.mjs','text/javascript; charset=utf-8']]]);
 const sameToken=(supplied,expected)=>{const a=Buffer.from(supplied??''),b=Buffer.from(expected);return a.length===b.length&&timingSafeEqual(a,b);};
 export async function createDcatInstallationServer({directory,host='127.0.0.1',port=0,token=randomBytes(32).toString('hex'),instanceId=randomUUID()}={}){
  need(host==='127.0.0.1'||host==='::1','Use the selected private loopback listener.');
@@ -71,9 +71,9 @@ export async function createDcatInstallationServer({directory,host='127.0.0.1',p
    const result=await service.importStream({requestId:url.searchParams.get('requestId'),kind:url.searchParams.get('kind'),name:url.searchParams.get('name'),bytes:Number(url.searchParams.get('bytes')),sha256:url.searchParams.get('sha256'),stream:req});
    return reply(res,200,result);
   }
-  if(req.method==='POST'&&['/api/inspect','/api/template','/api/prepare'].includes(url.pathname)){
+  if(req.method==='POST'&&['/api/inspect','/api/template','/api/prepare','/api/following-template','/api/following-prepare'].includes(url.pathname)){
    need(req.headers['content-type']?.split(';')[0]==='application/json','Send the complete JSON control input.',415);
-   const input=await json(req),action=url.pathname.slice(5);
+   const input=await json(req),action=({'following-template':'followingTemplate','following-prepare':'followingPrepare'})[url.pathname.slice(5)]??url.pathname.slice(5);
    return reply(res,200,await service[action](input));
   }
   need(false,'Unknown preparation route.',404);

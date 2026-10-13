@@ -138,3 +138,7 @@ runDcatInstallationBrowser({
 `expectedPreparation` is the full canonical `service.get(preparationRequestId)` envelope, including `request`, `status` and complete file descriptors. Its downloads and screenshots carry actual absolute output paths, byte counts and SHA-256 values. If it prepares again through the actual UI, `browserPreparation` is the complete canonical receipt for that new preparation; the native programme validates equality of source, scope and original Installation before accepting it.
 
 The installed `dcat-installation` contribution and complete distribution manifest select the programme, original helper, browser companion and this guide alongside the source inspector, original service and UI. Managed Applications startup verifies the complete installed source manifest and its selected executable. Historical catalogue receiving remains usable without selecting the semantic Python runtime, because this course does not dispatch the semantic engine.
+
+## Continue an existing Installation with the next complete catalogue
+
+Use [Following-edition commissioning](DCAT_FOLLOWING_INSTALLATION.md) for the complete before/after comparison, explicit scope review, original Source Desk Preview/Save, same-request recovery and full Source Desk/case/catalogue receiving. This preserves existing commercial terms and observations. The complete standing producer/all-attachments rule in that guide applies to this continuation.
