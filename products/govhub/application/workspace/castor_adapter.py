@@ -701,7 +701,8 @@ def _recover_receipt(s, operation):
     if label in accepted:
         raise ValueError("The already accepted original native receipt cannot be replaced.")
     original_path = s.out / (label + ".command.json")
-    original = s.read_private_json(original_path)
+    preimage = s.out / (label + "-before-receiving.json")
+    original = s.read_private_json(preimage if preimage.exists() else original_path)
     retained = s.out / ("received-command-receipt-" + receipt_hash + ".json")
     if not retained.exists():
         with retained.open("xb") as output:
@@ -722,17 +723,21 @@ def _recover_receipt(s, operation):
     for role in ("stdout", "stderr"):
         item = completed[role]
         path = Path(item["path"])
-        if not path.is_absolute() or path.is_symlink() or not path.is_file():
-            raise ValueError("The native receipt must include complete original output files.")
-        observed = _api()._file(path, role)
-        if observed["sha256"] != item["sha256"] or observed["size"] != item["size"]:
-            raise ValueError("The selected native output does not match its receipt.")
         copied = s.out / (label + ".received-" + receipt_hash + "." + role)
         if copied.exists():
-            if _file_identity(copied)["sha256"] != item["sha256"]:
+            observed = _api()._file(copied, role)
+            if observed["sha256"] != item["sha256"] or observed["size"] != item["size"]:
                 raise ValueError("A retained received output changed.")
         else:
+            if not path.is_absolute() or path.is_symlink() or not path.is_file():
+                raise ValueError("The native receipt must include complete original output files.")
+            observed = _api()._file(path, role)
+            if observed["sha256"] != item["sha256"] or observed["size"] != item["size"]:
+                raise ValueError("The selected native output does not match its receipt.")
             shutil.copyfile(path, copied)
+            received = _api()._file(copied, role)
+            if received["sha256"] != item["sha256"] or received["size"] != item["size"]:
+                raise ValueError("The original native output changed while being received.")
         completed[role] = _api()._file(copied, role)
     _record(s, label + "-before-receiving.json", original, "original_interrupted_command")
     _api()._atomic(original_path, completed)
