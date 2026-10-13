@@ -15,9 +15,9 @@ const sha={type:'string',pattern:'^[a-f0-9]{64}$'};
 const uuid={type:'string',pattern:'^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$'};
 const revision={type:'integer',minimum:1};
 export const FLOWABLE_RECORD_KINDS=Object.freeze(['connection','portfolio','release','process','task','migration',
-  'decisionPortfolio','decisionRelease','decisionEvaluation','casePortfolio','caseRelease','caseInstance','casePlanItem','caseTask','programme','delivery','receiving']);
+  'decisionPortfolio','decisionRelease','decisionEvaluation','casePortfolio','caseRelease','caseInstance','casePlanItem','caseTask','jobPortfolio','jobOperation','programme','delivery','receiving']);
 export const FLOWABLE_OPERATION_KINDS=Object.freeze(['release','process','task','migration','decisionRelease','decisionEvaluation',
-  'caseRelease','caseInstance','casePlanItem','caseTask']);
+  'caseRelease','caseInstance','casePlanItem','caseTask','jobOperation']);
 const kind={enum:FLOWABLE_RECORD_KINDS};
 const operationKind={enum:FLOWABLE_OPERATION_KINDS};
 const reference={type:'object',properties:{sha256:sha,bytes:{type:'integer',minimum:0},mediaType:text(200)},
@@ -51,6 +51,16 @@ export const FLOWABLE_WORKSPACE_ACTIONS=Object.freeze({
     {portfolioId:id,revision,definitionId:text(2000)},['portfolioId','definitionId']),
   readDecisionExecution:action('Decision execution','Read a captured native decision execution and its complete original audit data.',false,
     {portfolioId:id,revision,executionId:text(2000)},['portfolioId','executionId']),
+  readJobPortfolio:action('Native job portfolio','Page one complete captured native job collection with original response references.',false,
+    {id,revision,collection:text(100),...paging},['id','collection']),
+  readJob:action('Job and exception','Read one captured job and its complete retained native exception evidence.',false,
+    {portfolioId:id,revision,collection:text(100),jobId:text(2000)},['portfolioId','collection','jobId']),
+  captureJobPortfolio:action('Refresh native jobs','Capture executable, timer, suspended, dead-letter and history jobs with full original pages, native detail and exception evidence.',true,
+    {connectionId:id,label:text(300)},['connectionId']),
+  prepareJobOperation:action('Prepare job recovery','Freeze an explicit native job recovery action, original job state and exception for review.',true,
+    preparation,['connectionId','selection']),
+  dispatchJobOperation:action('Execute reviewed job recovery','Submit the saved native job action once and retain its actual response and readback.',true,
+    dispatch,['id','expectedRevision','planSha256']),
   readSource:action('Original source','Read a complete saved source or native response by its immutable reference.',false,
     {reference},['reference']),
   readReview:action('Operation review','Read the saved request, native preimage, validation and complete response references.',false,

@@ -34,10 +34,15 @@ export async function receiveMerchantResponseCourse({browser,client,opening,scen
  const connection={schema:MERCHANT_OPERATOR_CONNECTION_SCHEMA,url:opening.url,...owner,tokenEnvironment:'MERCHANT_RESPONSE_RECEIVING_TOKEN',timeoutMs:120000};
  const connectionPath=join(folder,'connection-'+sha(JSON.stringify(connection))+'.json');await save(connectionPath,connection,{original:true});await retain(connectionPath);
  for(const [command,expected,name]of [['customer-review-response',responsePath,'CLI_Merchant_Response.json'],['customer-review-response-document',responseHTML,'CLI_Customer_Response.html']]){
-  const target=join(folder,name);let stdout='';
-  await operate([command,'--connection',connectionPath,'--id',invoiceId,'--operation',decision.id,'--out',target],{environment:{MERCHANT_RESPONSE_RECEIVING_TOKEN:scenario.operatorToken},stdout:{write:text=>{stdout+=text;}}});
-  assert.deepEqual(await readFile(target),await readFile(expected));await retain(target);
-  await save(join(folder,name+'.receipt.json'),JSON.parse(stdout),{original:true});await retain(join(folder,name+'.receipt.json'));
+  const target=join(folder,name),receiptPath=join(folder,name+'.receipt.json'),originalReceipt=await optional(receiptPath);
+  let receipt=originalReceipt;
+  if(!receipt){let stdout='';
+   await operate([command,'--connection',connectionPath,'--id',invoiceId,'--operation',decision.id,'--out',target],{environment:{MERCHANT_RESPONSE_RECEIVING_TOKEN:scenario.operatorToken},stdout:{write:text=>{stdout+=text;}}});
+   receipt=JSON.parse(stdout);
+  }
+  const raw=await readFile(target);assert.deepEqual(raw,await readFile(expected));
+  assert.equal(receipt.path,target);assert.equal(receipt.bytes,raw.length);assert.equal(receipt.sha256,sha(raw));assert.equal(typeof receipt.reused,'boolean');
+  await retain(target);if(!originalReceipt)await save(receiptPath,receipt,{original:true});await retain(receiptPath);
  }
  let recipient=await optional(join(folder,'recipient-complete.json'));
  if(recipient){for(const f of [...recipient.files,...recipient.images])await originalFile(f.path,f);files.push(...recipient.files);images.push(...recipient.images);}

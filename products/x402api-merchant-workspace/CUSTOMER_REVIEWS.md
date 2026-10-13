@@ -81,6 +81,30 @@ Each fresh browser attempt has its own files. A completed recipient phase valida
 
 The producer must open and LOOK at the actual desktop and 390-pixel screens, every page of the response review PDF, the full downloadable response JSON and HTML, original attachments, complete Support case and usable project ZIP contents. Confirm the full historical and following feedback, reasons and unfinished text are readable, and operate the actual rejection/reopen/download controls. Capturing an image or passing source checks does not complete this inspection. Screenshots are internal receiving outputs unless requested as customer attachments.
 
+### Continue an already completed original case
+
+For an installation whose original `complete.json` already exists, select `--customer-response-continuation` and an exact `--response-source-commit`. Keep all original command selections, especially `--source-commit`, `--root`, `--original` and `--portable`, unchanged. Run the current receiving script from the exact response source checkout:
+
+~~~sh
+node products/x402api-merchant-workspace/installed-receiving.mjs \
+  --repo /private/merchant-source \
+  --source-commit ORIGINAL_COMPLETED_SOURCE_COMMIT \
+  --original /private/original-merchant-case \
+  --root /private/original-installed-receiving \
+  --playwright /existing/playwright \
+  --chromium /existing/chromium \
+  --portable --customer-response-continuation \
+  --response-source-commit EXACT_CURRENT_RESPONSE_SOURCE_COMMIT
+~~~
+
+Use the actual original paths and source IDs. The current script and complete current selected source must agree byte-for-byte. The new runtime is built and installed through the existing distribution installer in `customer-response-continuation/`. The original Applications writer reviews and saves a new source/runtime revision of the **same application ID and workspace**, guarding its current revision and retaining the original application revisions and save requests. It does not replace the original runtime directory or the original completion/source-selection records.
+
+The continuation pins the old completion, course, six exact request/result files, recipient checkpoint, original review-table rows and complete current consumer source. The initial issue, return and decision are their original journal replays; the completed recipient phase reuses its verified files. The response and following-review chapter then runs against that actual retained decision. The original Support case receives the later capsule through its normal revision-checked merge. Separate Support export, whole-project receiving, agent course and stopped-process receipts retain this continuation.
+
+Recovery accepts only the original review rows plus the exact following return and its one native request transaction. An unrelated changed review or invoice record is rejected. The new response and agent completion files are separate from the old course and agent completions. Repeating this command verifies the original stopped process results, all files and complete received/onward project tables; it does not issue another customer review or record a new decision.
+
+Keep using this explicit continuation to inspect its later live review state. The old completed record remains the exact earlier edition. The original provider-zero, complete source/file validation and actual producer LOOK requirements apply to both editions.
+
 ## Continue after a lost response
 
 Every mutation has an original UUID and complete retained body. The browser saves that exact request before dispatch. An uncertain response leaves **Receive original pending save** available. This replays the same body and UUID; the original transaction journal returns the prior committed result when it already exists.

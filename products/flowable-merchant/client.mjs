@@ -150,6 +150,11 @@ export class FlowableProductClient {
   dispatchCasePlanItem(input) { return this.call('dispatchCasePlanItem', input); }
   prepareCaseTask(input) { return this.call('prepareCaseTask', input); }
   dispatchCaseTask(input) { return this.call('dispatchCaseTask', input); }
+  readJobPortfolio(input) { return this.call('readJobPortfolio', input); }
+  readJob(input) { return this.call('readJob', input); }
+  captureJobPortfolio(input) { return this.call('captureJobPortfolio', input); }
+  prepareJobOperation(input) { return this.call('prepareJobOperation', input); }
+  dispatchJobOperation(input) { return this.call('dispatchJobOperation', input); }
   reconcileOperation(input) { return this.call('reconcileOperation', input); }
   exportWorkspace(input) { return this.call('exportWorkspace', input); }
   inspectDelivery(input) { return this.call('inspectDelivery', input); }

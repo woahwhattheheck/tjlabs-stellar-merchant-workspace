@@ -40,6 +40,16 @@ The complete study can be retained as a source in the same case. The original so
 
 A received native case may have a new local case ID. The workflow verifies the received case's actual original ancestry and source context before allowing continuation. A following calculation uses the received case's current version before a new adoption. Previous results keep their original case/source identity.
 
+### Complete financing decision handover
+
+The original comparison and Planning limits screens export a complete standalone readable report and an ordinary ZIP. An assessment handover follows that assessment's exact saved comparison; a different current desk selection does not change its evidence. The report includes every compared input, reference-option difference, dated cash and work row, original invoice inclusion, conditional receipt, customer-fund reservation and remaining delivery obligation. All entered criteria, MEETS / EXCEEDS / UNRESOLVED results, reasons and separate scope groups remain visible.
+
+An operator can filter the complete report by option or text, open all sections, print every option and row, and download its full editable study. The ZIP also contains the exact native comparison and assessments, typed input/report CSVs, all cash/capacity/reservation tables, original source bytes and a complete member manifest. Known numeric CSV fields support ordinary spreadsheet sums; formula-like ordinary text is guarded while original JSON remains exact. Missing, null and explicit zero are retained separately.
+
+The handover says whether its comparison matches the **supplied case context at export**, with the exact source version and export time. It does not infer the state of a later live case. Reopen its complete study through the existing Forecast receiver, inspect the original comparisons and unfinished work, and calculate against the actual current case before deliberately adopting an option. Export remains read-only and preserves the existing calculator, original financial records and native save workflow.
+
+The producing peer opens and LOOKS at the exact outgoing desktop and narrow report, operates its controls, inspects the complete CSV/JSON/source package, and reopens the study in the original application through F47A's existing receiving course. The complete original native case remains the financial-record handover; the study preserves its calculation context and continuation.
+
 ### Installed browser, CLI, typed client and Merchant agent
 
 All routes use the existing application and original calculator. The authenticated batch endpoint is `POST /api/operations/<case>/forecast-options-preview`; the existing typed client exposes `forecastOptionsPreview(caseId, expectedVersion, options)`. The original headless `forecast-options-preview` command accepts complete private inputs and writes the full result to a new output file under the normal workspace lock.
@@ -68,11 +78,11 @@ The following complete original sources are selected by the matching `grant-prod
 
 - [Exact finite Planning limits, missing-value and liability-scope decisions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6adf92aedec30f7932940bbc573459d1ed97f4ed/stellar/scf_2026/sf47_budget_model/workspace/forecast-financing-decision.mjs).
 - [Complete named option, comparison, adoption and portable history model](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6adf92aedec30f7932940bbc573459d1ed97f4ed/stellar/scf_2026/sf47_budget_model/workspace/forecast-financing.mjs).
-- [Full industrial options, comparison and Planning limits browser](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6adf92aedec30f7932940bbc573459d1ed97f4ed/stellar/scf_2026/sf47_budget_model/workspace/forecast-financing-desk.mjs).
+- [Full industrial options, comparison and Planning limits browser](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/25f57a035317991f6eb9d9aadfb87af30a0868e2/stellar/scf_2026/sf47_budget_model/workspace/forecast-financing-desk.mjs).
 - [Original grayscale responsive financing stylesheet](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6adf92aedec30f7932940bbc573459d1ed97f4ed/stellar/scf_2026/sf47_budget_model/workspace/forecast-financing.css).
-- [Whole financing operation, installed access and original receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ed79311d3e378893e95b7e3ff08b018fbba5ed6/stellar/scf_2026/sf47_budget_model/workspace/FORECAST_FINANCING.md).
-- [Original authenticated HTTP and static-module routes](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6adf92aedec30f7932940bbc573459d1ed97f4ed/stellar/scf_2026/sf47_budget_model/workspace/operations_http.py).
-- [Complete original 902-file managed execution source selection](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de9ef1a5819bb16999bd83ae7991253ff1ab3189/stellar/scf_2026/sf47_budget_model/workspace/managed-source.json).
+- [Whole financing operation, installed access and original receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/25f57a035317991f6eb9d9aadfb87af30a0868e2/stellar/scf_2026/sf47_budget_model/workspace/FORECAST_FINANCING.md).
+- [Original authenticated HTTP and static-module routes](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/25f57a035317991f6eb9d9aadfb87af30a0868e2/stellar/scf_2026/sf47_budget_model/workspace/operations_http.py).
+- [Complete current 1,245-file managed execution source selection](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/25f57a035317991f6eb9d9aadfb87af30a0868e2/stellar/scf_2026/sf47_budget_model/workspace/managed-source.json).
 - [Original locked operating-case reader and native batch integration](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6adf92aedec30f7932940bbc573459d1ed97f4ed/stellar/scf_2026/sf47_budget_model/workspace/operations.py).
 - [Complete typed-client runtime and native batch method](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6adf92aedec30f7932940bbc573459d1ed97f4ed/stellar/scf_2026/sf47_budget_model/workspace/agent-client.mjs).
 - [Complete client input/result declarations](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6adf92aedec30f7932940bbc573459d1ed97f4ed/stellar/scf_2026/sf47_budget_model/workspace/agent-client.d.mts).
@@ -106,7 +116,7 @@ The following complete original sources are selected by the matching `grant-prod
 - [Original Merchant verified-input dispatch and full result retention](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ed79311d3e378893e95b7e3ff08b018fbba5ed6/stellar-forge/mcp-merchant-operator/grant-workspace.mjs).
 - [Complete buildable Grant Operations source recipe](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ed79311d3e378893e95b7e3ff08b018fbba5ed6/stellar/scf-starforge-20261009/distribution/selections/grant-operations.json).
 - [Whole Grant Operations installed customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/5ed79311d3e378893e95b7e3ff08b018fbba5ed6/products/grant-operations/OPERATING.md).
-- [Complete original SF47 source tree, every existing feature and source dependency](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/5ed79311d3e378893e95b7e3ff08b018fbba5ed6/stellar/scf_2026/sf47_budget_model/workspace).
+- [Complete original SF47 source tree, every existing feature and source dependency](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/25f57a035317991f6eb9d9aadfb87af30a0868e2/stellar/scf_2026/sf47_budget_model/workspace).
 
 - [Complete original supplied-page financing and Planning limits operating course](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de9ef1a5819bb16999bd83ae7991253ff1ab3189/stellar/scf_2026/sf47_budget_model/workspace/forecast-financing-receiving.mjs).
 
@@ -117,3 +127,5 @@ The following complete original sources are selected by the matching `grant-prod
 - [Original v32 funding input preparation and per-invocation served-source verification](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de9ef1a5819bb16999bd83ae7991253ff1ab3189/operations/scf-forecast-customer-funding-receiving-20261013/customer-funding-browser-receiving.mjs).
 
 - [Original protected-customer-funds input and receiving ownership guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/de9ef1a5819bb16999bd83ae7991253ff1ab3189/operations/scf-forecast-customer-funding-receiving-20261013/CUSTOMER_FUNDING_RECEIVING.md).
+
+- [Complete standalone financing decision handover and exact CSV/JSON/source package](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/25f57a035317991f6eb9d9aadfb87af30a0868e2/stellar/scf_2026/sf47_budget_model/workspace/forecast-financing-handover.mjs).

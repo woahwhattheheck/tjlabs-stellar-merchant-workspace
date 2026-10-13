@@ -6,6 +6,7 @@ import {resolve,join,dirname,basename} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
 import {regular,operationLease} from '../../../../scf-starforge-20261009/distribution/runtime-workspace/storage.mjs';
 import {readProfile} from '../profiles.mjs';
+import {createEcondbFollowingService} from './following-service.mjs';
 import {bindingTemplate} from '../prepare-core.mjs';
 import {commercialWorkshare} from '../commercial-workshare-core.mjs';
 import {prepareEcondbInstallation,reopenEcondbInstallation} from './prepare.mjs';
@@ -15,7 +16,7 @@ import {ECONDB_INSTALLATION_SCHEMA as SOURCE_SCHEMA,ECONDB_INSTALLATION_PROFILE 
 
 export const ECONDB_SOURCE_SERVICE_SCHEMA='stellar-forge.econdb-installation-preparation-service.v1';
 const SCHEMA=ECONDB_SOURCE_SERVICE_SCHEMA,UUID=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/,HASH=/^[a-f0-9]{64}$/;
-const INPUTS=new Set(['archive','seed','bindings','commissioning','attachment']);
+const INPUTS=new Set(['archive','seed','bindings','commissioning','attachment','review']);
 const KINDS=new Set([...INPUTS,'source','report','installation','preview','workorder','preparation','profile','request']);
 const MiB=1024*1024,MAX_JSON=8*MiB,MAX_REPORT=64*MiB,MAX_ARCHIVE=Number.MAX_SAFE_INTEGER;
 const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
@@ -93,7 +94,7 @@ export async function createEcondbInstallationService({directory,signal}={}){
   need(plain(result)&&result.schema===SCHEMA+'.result'&&result.type===request.type&&result.requestId===request.requestId&&Array.isArray(result.files),
    'The retained source operation differs from its original request.');
   for(const row of result.files){signal?.throwIfAborted();need(same((await file(row.fileId)).descriptor,row),'A complete retained result file differs.');}
-  for(const key of ['archiveId','seedId','bindingsId','commissioningId'])if(request[key])await file(request[key]);
+  for(const key of ['archiveId','seedId','bindingsId','commissioningId','reviewId'])if(request[key])await file(request[key]);
  }
  async function get(requestId){
   const folder=join(root,'requests',uuid(requestId)),requestRaw=await optional(join(folder,'request.json'),MAX_JSON);
@@ -254,11 +255,13 @@ export async function createEcondbInstallationService({directory,signal}={}){
   const selected=inspected.selectedFiles.find(x=>x.path===path);need(selected,'The selected original member is absent.',404);
   return file(selected.fileId);
  }
+ const following=createEcondbFollowingService({root,signal,schema:SCHEMA,transaction,get,inspection,selected,jsonInput,
+  retainFile,retainPath,result,uuid,id});
  const owned=fn=>(...args)=>{
   need(!closing,'The original Source Desk service is closing.',409);signal?.throwIfAborted();
   const promise=Promise.resolve().then(()=>fn(...args));accepted.add(promise);
   promise.then(()=>accepted.delete(promise),()=>accepted.delete(promise));return promise;
  };
- return Object.freeze({directory:root,...Object.fromEntries(Object.entries({importFile,importStream,catalogue,inspect,template,prepare,get,list,file,sourceFile})
+ return Object.freeze({directory:root,...Object.fromEntries(Object.entries({importFile,importStream,catalogue,inspect,template,prepare,get,list,file,sourceFile,...following})
   .map(([key,fn])=>[key,owned(fn)])),close(){closing=true;return stopped??=Promise.allSettled([...accepted]).then(()=>active);}});
 }

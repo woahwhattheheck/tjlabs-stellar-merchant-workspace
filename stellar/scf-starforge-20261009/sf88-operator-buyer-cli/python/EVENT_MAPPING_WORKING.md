@@ -260,3 +260,16 @@ meeting was over. Preserve current tabs, saved work and every later owner rule.
 TJLabs attribution stays with the product. Every subsequent warm-company
 message or attachment requires Bryce's individual approval; this receiving work
 has no external send.
+
+
+## Review with a colleague
+
+The complete editable HTML now includes an issued-review panel beside the original source, field and reason controls. Use the [complete colleague review guide](EVENT_MAPPING_COLLEAGUE.md) to issue the exact baseline, keep the original engineer's working copy, open the colleague's independent assignment, receive its full return and resolve concurrent changes explicitly.
+
+The ordinary field editor continues to operate on the original working model. A colleague working file adds a flat graph of complete comparison/draft/history copies, immutable assignment and return envelopes, receiving decisions and unfinished forms. The original source pair is retained once. Issuer and reviewer caches are distinct even for the same assignment; restoring a checkpoint remains an explicit source-bound choice. Every displaced complete file remains separately downloadable in the open session. Save those displaced copies before closing; they are not silently inserted into the current file.
+
+For a returned review, the complete mapping, its selected comparison and every reason move together. The UI presents baseline/current/returned values and requires explicit choices for overlaps. Newer original edits and unfinished receiving text remain retained. Carried reviewer assignments and receipts remain downloadable source history; only assignments issued and returns adopted by this working copy authorize local receiving or replay. Reopening recomputes recorded receiving outcomes against the original before/returned copies.
+
+Download the complete working JSON or editable HTML to retain that whole source graph. Use the original native compact review control for the selected mapping; the source-bound [native receiving CLI](EVENT_MAPPING_RECEIVING.md) can instead retain the entire colleague working file alongside the exact saved native action. Both routes keep the existing native recomputation and deliberate Review/Apply sequence.
+
+The producer must operate and inspect this exact outgoing HTML at ordinary and narrow widths, including the reviewer assignment, concurrent changes, full return, explicit conflict decisions, complete download and independent reopened result. A requested browser download keeps the changed-work reminder active until the operator has secured its complete file.

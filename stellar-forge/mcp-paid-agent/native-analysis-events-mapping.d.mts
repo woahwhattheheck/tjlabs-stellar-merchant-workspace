@@ -46,6 +46,10 @@ export interface EventMappingReviewReceipt {
  action_id:string;
  operation_id:string;
  request:Record<string,unknown>;
+ /** Exact full returned working file, including colleague source history when supplied. */
+ workingFile:string;
+ /** Exact original capture used to bind the selected native Review. */
+ captureFile:string;
  record?:EventRecordIdentity;
  action?:Record<string,unknown>;
  offline?:boolean;

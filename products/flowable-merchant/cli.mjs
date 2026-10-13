@@ -16,7 +16,7 @@ const HELP = [
   '  flowable-product review|open --dir PRIVATE_PRODUCT [--port 0] [--expected-binding SHA256]',
   '  flowable-product actions [--name ORIGINAL_METHOD]',
   '  flowable-product status --dir PRIVATE_PRODUCT',
-  '  flowable-product records --dir PRIVATE_PRODUCT [--kind connection|portfolio|release|process|task|migration|decisionPortfolio|decisionRelease|decisionEvaluation|casePortfolio|caseRelease|caseInstance|casePlanItem|caseTask|delivery|receiving]',
+  '  flowable-product records --dir PRIVATE_PRODUCT [--kind connection|portfolio|release|process|task|migration|decisionPortfolio|decisionRelease|decisionEvaluation|casePortfolio|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation|delivery|receiving]',
   '       [--offset 0 --limit 50 --snapshot SHA256]',
   '  flowable-product record --dir PRIVATE_PRODUCT --kind KIND --id RECORD_ID [--revision NUMBER --offset 0 --limit 50]',
   '  flowable-product portfolio --dir PRIVATE_PRODUCT --id PORTFOLIO_ID --collection NATIVE_COLLECTION [--revision NUMBER --offset 0 --limit 50]',
@@ -29,15 +29,18 @@ const HELP = [
   '  flowable-product case-definition --dir PRIVATE_PRODUCT --portfolio PORTFOLIO_ID --definition NATIVE_DEFINITION_ID [--revision NUMBER]',
   '  flowable-product case-instance --dir PRIVATE_PRODUCT --portfolio PORTFOLIO_ID --case NATIVE_CASE_ID [--revision NUMBER]',
   '  flowable-product capture-cases --dir PRIVATE_PRODUCT --request UUID --connection RECORD_ID [--label LABEL]',
-  '  flowable-product review-operation --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask --id RECORD_ID [--revision NUMBER]',
+  '  flowable-product review-operation --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation --id RECORD_ID [--revision NUMBER]',
   '  flowable-product call --dir PRIVATE_PRODUCT --method ORIGINAL_METHOD [--input PRIVATE_ARGUMENTS_JSON] [--out PRIVATE_JSON]',
   '  flowable-product download-source --dir PRIVATE_PRODUCT --reference PRIVATE_REFERENCE_JSON --out PRIVATE_FILE',
+  '  flowable-product job-portfolio --dir PRIVATE_PRODUCT --id CAPTURE_ID --collection jobs|timerJobs|suspendedJobs|deadLetterJobs|historyJobs [--revision NUMBER --offset N --limit N]',
+  '  flowable-product job --dir PRIVATE_PRODUCT --portfolio CAPTURE_ID --collection COLLECTION --job NATIVE_JOB_ID [--revision NUMBER]',
+  '  flowable-product capture-jobs --dir PRIVATE_PRODUCT --request UUID --connection RECORD_ID [--label LABEL]',
   '  flowable-product capture --dir PRIVATE_PRODUCT --request UUID --connection RECORD_ID [--label LABEL]',
-  '  flowable-product prepare --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask --request UUID',
+  '  flowable-product prepare --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation --request UUID',
   '       --connection RECORD_ID --selection PRIVATE_SELECTION_JSON [--label LABEL --note TEXT]',
-  '  flowable-product dispatch --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask --request UUID',
+  '  flowable-product dispatch --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation --request UUID',
   '       --id RECORD_ID --revision NUMBER --plan-sha256 SHA256',
-  '  flowable-product reconcile --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask --request UUID --id RECORD_ID [--revision NUMBER]',
+  '  flowable-product reconcile --dir PRIVATE_PRODUCT --kind release|process|task|migration|decisionRelease|decisionEvaluation|caseRelease|caseInstance|casePlanItem|caseTask|jobOperation --request UUID --id RECORD_ID [--revision NUMBER]',
   '  flowable-product export --dir PRIVATE_PRODUCT --request UUID [--label LABEL]',
   '  flowable-product download --dir PRIVATE_PRODUCT --id ORIGINAL_DELIVERY_ID --out PRIVATE_FILE [--sha256 SHA256]',
   '  flowable-product receive --dir PRIVATE_PRODUCT --request UUID --file ORIGINAL_NDJSON [--label LABEL]',
@@ -125,6 +128,9 @@ export async function main(args = process.argv.slice(2)) {
     'decision-definition':['--dir','--portfolio','--definition','--revision'],
     'capture-decisions':['--dir','--request','--connection','--label'],
     'decision-execution':['--dir','--portfolio','--execution','--revision'],
+    'job-portfolio':['--dir','--id','--collection','--revision','--offset','--limit'],
+    job:['--dir','--portfolio','--collection','--job','--revision'],
+    'capture-jobs':['--dir','--request','--connection','--label'],
     'case-portfolio':['--dir','--id','--collection','--revision','--offset','--limit'],
     'case-definition':['--dir','--portfolio','--definition','--revision'],
     'case-instance':['--dir','--portfolio','--case','--revision'],
@@ -156,6 +162,9 @@ export async function main(args = process.argv.slice(2)) {
     if(command==='decision-definition')result=await client.readDecisionDefinition({portfolioId:required(options,'--portfolio'),definitionId:required(options,'--definition'),...revision()});
     if(command==='decision-execution')result=await client.readDecisionExecution({portfolioId:required(options,'--portfolio'),executionId:required(options,'--execution'),...revision()});
     if(command==='capture-decisions')result=await client.captureDecisionPortfolio({...request(options),connectionId:required(options,'--connection'),...optional(options,'--label')});
+    if(command==='job-portfolio')result=await client.readJobPortfolio({id:required(options,'--id'),collection:required(options,'--collection'),...paging(options),...revision()});
+    if(command==='job')result=await client.readJob({portfolioId:required(options,'--portfolio'),collection:required(options,'--collection'),jobId:required(options,'--job'),...revision()});
+    if(command==='capture-jobs')result=await client.captureJobPortfolio({...request(options),connectionId:required(options,'--connection'),...optional(options,'--label')});
     if(command==='case-portfolio')result=await client.readCasePortfolio({id:required(options,'--id'),collection:required(options,'--collection'),...paging(options),...revision()});
     if(command==='case-definition')result=await client.readCaseDefinition({portfolioId:required(options,'--portfolio'),definitionId:required(options,'--definition'),...revision()});
     if(command==='case-instance')result=await client.readCaseInstance({portfolioId:required(options,'--portfolio'),caseInstanceId:required(options,'--case'),...revision()});

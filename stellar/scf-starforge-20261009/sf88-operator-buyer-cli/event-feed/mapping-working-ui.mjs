@@ -1,9 +1,11 @@
 /* MIT. Complete offline Event mapping editor. Original parser/model own all comparisons. */
-export function mountEventMappingWorking(root,{api,initial,view={},onChange,onMessage}={}){
+export function mountEventMappingWorking(root,{api,initial,view={},onChange,onMessage,reviewApi,mountReview}={}){
  if(!root||!api)throw Error('Provide the original mapping root and source-bound runtime.');
  const doc=root.ownerDocument,win=doc.defaultView,MAX=192*1024*1024;
- let working=api.reopen(initial),draft=clone(working.draft),dirty=false,generation=0,busy=false,opened=null,displaced=[],catalogueCache=new Map();
- const initialWorking=working;
+ if(Boolean(reviewApi)!==Boolean(mountReview))throw Error('Include the complete colleague model and controls together.');
+ let review=reviewApi?reviewApi.wrap(initial):null;
+ let working=api.reopen(review?review.working:initial),draft=clone(working.draft),dirty=false,generation=0,busy=false,opened=null,displaced=[],catalogueCache=new Map(),reviewPanel=null;
+ const initialWorking=review||working;
  let selectedSide=['previous','current','added'].includes(view.side)?view.side:'current';
  let filter=typeof view.filter==='string'?view.filter.slice(0,2000):'',page=Number.isSafeInteger(view.page)&&view.page>=0?view.page:0;
  let selectedPointer=typeof view.pointer==='string'?view.pointer:'',valueOffset=Number.isSafeInteger(view.offset)&&view.offset>=0?view.offset:0;
@@ -17,7 +19,11 @@ export function mountEventMappingWorking(root,{api,initial,view={},onChange,onMe
  function guard(fn){try{const r=fn();if(r&&typeof r.then==='function')r.catch(e=>message(e.message,true));}catch(e){message(e.message,true);}}
  function touch(){dirty=true;generation++;opened=null;importPanel.replaceChildren();changeIndicator.textContent='Changed work is held in this window. Request a complete JSON or editable HTML download before closing.';}
  function current(){return api.updateDraft(working,draft);}
- function changed(next){working=api.reopen(next);draft=clone(working.draft);touch();if(onChange)onChange(working);return working;}
+ function complete(){return reviewApi?reviewApi.replaceWorking(review,current()):current();}
+ function serialize(value){return reviewApi?reviewApi.serialize(reviewApi.wrap(value)):api.serialize(value);}
+ function notify(){if(onChange)onChange(complete());}
+ function changed(next){working=api.reopen(next);draft=clone(working.draft);if(reviewApi)review=reviewApi.replaceWorking(review,working);touch();notify();return working;}
+ function installReview(next){review=reviewApi.reopen(next);working=api.reopen(review.working);draft=clone(working.draft);touch();renderIdentity();renderFields();renderComparison();renderPopulation();renderHistory();renderFiles();renderStatus();notify();}
  function textField(label,value,max,apply,multi=false){const labelNode=el('label',label),input=el(multi?'textarea':'input');if(!multi)input.type='text';input.value=value;input.maxLength=max;if(multi)input.rows=3;input.addEventListener('input',()=>{apply(input.value);touch();status.textContent='Unfinished edits are retained in this window. Compare changed field choices before recording a final review; full working downloads preserve these edits.';status.dataset.error='false';const note=comparisonPanel.querySelector('[data-comparison-note]');if(note)note.textContent='Choices or review text have been edited. Use Compare current choices to refresh the source comparison, or download the complete unfinished working copy.';});labelNode.append(input);return labelNode;}
  function raw(parent,label,value){const d=el('details'),s=el('summary',label);d.append(s);let loaded=false;d.addEventListener('toggle',()=>{if(d.open&&!loaded){d.append(el('pre',typeof value==='string'?value:pretty(value)));loaded=true;}});parent.append(d);return d;}
  function download(name,text,type='application/json;charset=utf-8'){
@@ -25,35 +31,36 @@ export function mountEventMappingWorking(root,{api,initial,view={},onChange,onMe
   const url=win.URL.createObjectURL(new win.Blob([text],{type})),a=el('a');a.href=url;a.download=name;doc.body.append(a);a.click();a.remove();win.setTimeout(()=>win.URL.revokeObjectURL(url),30000);
   message('Requested '+name+'. Verify the saved file before closing; this window retains its changed-work reminder.');
  }
- function saveWorking(){const w=current();download('event-mapping-working.json',api.serialize(w));}
+ function saveWorking(){download(reviewApi?'event-mapping-colleague-working.json':'event-mapping-working.json',serialize(complete()));}
  function getView(){return{side:selectedSide,filter,page,pointer:selectedPointer,offset:valueOffset};}
- function saveHTML(){
-  const w=current(),data=doc.getElementById('event-mapping-working-data');
+ function saveHTML(value=complete(),name='event-mapping-working.html'){
+  const w=reviewApi?reviewApi.wrap(value):api.reopen(value),data=doc.getElementById('event-mapping-working-data');
   if(!data||root.id!=='event-mapping-working-root')throw Error('Use the installed complete HTML composer to save this editor.');
   const tree=doc.documentElement.cloneNode(true),r=tree.querySelector('#event-mapping-working-root');
   r.replaceChildren();tree.querySelector('#event-mapping-working-data').textContent=JSON.stringify({working:w,view:getView()}).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
   const bootError=tree.querySelector('#event-mapping-boot-error');if(bootError)bootError.textContent='';
-  download('event-mapping-working.html','<!doctype html>\n'+tree.outerHTML,'text/html;charset=utf-8');
+  download(name,'<!doctype html>\n'+tree.outerHTML,'text/html;charset=utf-8');
  }
  function binding(w){return stable({comparison:w.original.comparison,files:Object.fromEntries(Object.entries(w.original.files).map(([side,files])=>[side,Object.fromEntries(Object.entries(files).map(([kind,f])=>[kind,{name:f.name,bytes:f.bytes,sha256:f.sha256}]))]))});}
- const originalBinding=binding(working),cacheKey='stellar-forge.mapping-working.v1:'+working.original.comparison.workspace_id+':'+working.original.comparison.programme+':'+working.original.comparison.input_id+':'+working.original.comparison.comparison_sha256;
- function checkIncoming(value){const w=api.reopen(value);if(binding(w)!==originalBinding)throw Error('This file belongs to a different original source pair or native context. Open its own complete editor.');return w;}
+ const originalBinding=binding(working),cacheBase='stellar-forge.mapping-working.v1:'+working.original.comparison.workspace_id+':'+working.original.comparison.programme+':'+working.original.comparison.input_id+':'+working.original.comparison.comparison_sha256;
+ function cacheKey(value=complete()){if(!reviewApi)return cacheBase;const e=value.review_receiving,id=e.active_assignment_id,role=id?(e.local_assignment_ids.includes(id)?'issuer':'reviewer'):'local';return cacheBase+':colleague:'+role+':'+(id||'unassigned');}
+ function checkIncoming(value){const v=reviewApi?(value?.schema==='stellar-forge.event-mapping-colleague-assignment.v1'?reviewApi.openAssignment(value):reviewApi.wrap(value)):api.reopen(value),w=reviewApi?v.working:v;if(binding(w)!==originalBinding)throw Error('This file belongs to a different original source pair or native context. Open its own complete editor.');return v;}
  function offerIncoming(w,label){
   opened={working:w,label,generation};importPanel.replaceChildren(el('h3','Inspected working copy'),el('p',label),el('p','Original source and native context match. Current field choices and review history will be replaced only if you choose Open inspected copy. Download the current working copy first if you want an independent saved edition.'));
-  const facts=el('dl');pair(facts,'Current saved comparisons',working.history.length);pair(facts,'Incoming saved comparisons',w.history.length);pair(facts,'Incoming reviewer',w.draft.reviewer||'Unfinished');importPanel.append(facts);
-  const bar=el('div',undefined,'emw-toolbar');bar.append(button('Download current complete work',saveWorking),button('Download inspected copy',()=>download('inspected-event-mapping-working.json',api.serialize(w))),button('Open inspected copy',()=>{
+  const incomingWorking=reviewApi?w.working:w,facts=el('dl');pair(facts,'Current saved comparisons',working.history.length);pair(facts,'Incoming saved comparisons',incomingWorking.history.length);pair(facts,'Incoming reviewer',incomingWorking.draft.reviewer||'Unfinished');if(reviewApi){const e=w.review_receiving,a=e.active_assignment_id;pair(facts,'Incoming role',a?(e.local_assignment_ids.includes(a)?'Original assignment issuer':'Reviewing colleague'):'Local working copy');pair(facts,'Complete retained copies',e.copies.length);}importPanel.append(facts);
+  const bar=el('div',undefined,'emw-toolbar');bar.append(button('Download current complete work',saveWorking),button('Download inspected copy',()=>download('inspected-event-mapping-working.json',serialize(w))),button('Open inspected copy',()=>{
    if(!opened||opened.working!==w||opened.generation!==generation)throw Error('Current work changed after inspection. Inspect the file again.');
-   displaced.push(current());working=w;draft=clone(w.draft);opened=null;touch();renderAll();message('Opened the inspected copy. Every displaced complete edition remains separately downloadable in this window. Save those files before closing; the current JSON/HTML contains the selected working edition.');if(onChange)onChange(working);
+   displaced.push(complete());if(reviewApi)review=w;working=reviewApi?w.working:w;draft=clone(working.draft);opened=null;touch();renderAll();message('Opened the inspected copy. Every displaced complete edition remains separately downloadable in this window. Save those files before closing; the current JSON/HTML contains the selected complete working edition and colleague history.');notify();
   }));importPanel.append(bar);
  }
  async function inspectFile(file){
   if(!file)return;if(file.size>MAX)throw Error('Select the complete working JSON within 192 MiB.');
   const start=generation,base=working;busy=true;fileInput.disabled=true;
-  try{const text=await file.text();if(start!==generation||base!==working)throw Error('Current work changed while the file was read. Inspect it again.');if(bytes(text)>MAX)throw Error('The complete file exceeds 192 MiB.');const value=JSON.parse(text),w=checkIncoming(value);if(start!==generation||base!==working)throw Error('Current work changed during inspection.');offerIncoming(w,'Selected file: '+file.name);}
+  try{const rawBytes=await file.arrayBuffer(),text=new win.TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(rawBytes);if(bytes(text)!==rawBytes.byteLength)throw Error('Keep the exact original UTF-8 working file.');if(start!==generation||base!==working)throw Error('Current work changed while the file was read. Inspect it again.');if(bytes(text)>MAX)throw Error('The complete file exceeds 192 MiB.');const value=JSON.parse(text),w=checkIncoming(value);if(start!==generation||base!==working)throw Error('Current work changed during inspection.');offerIncoming(w,'Selected file: '+file.name);}
   finally{busy=false;fileInput.disabled=false;fileInput.value='';}
  }
- function cacheSave(){const text=api.serialize(current());try{win.localStorage.setItem(cacheKey,text);}catch(e){throw Error('The browser could not retain the complete copy. Download JSON or HTML now. '+e.message);}message('Saved a complete browser checkpoint for this exact source pair. Restore remains an explicit choice.');}
- function cacheInspect(){let text;try{text=win.localStorage.getItem(cacheKey);}catch(e){throw Error('Browser checkpoint unavailable: '+e.message);}if(text===null)throw Error('No browser checkpoint is retained for this source pair.');if(bytes(text)>MAX)throw Error('Retained checkpoint exceeds the full working allowance.');offerIncoming(checkIncoming(JSON.parse(text)),'Browser checkpoint for the same original pair');}
+ function cacheSave(){const text=serialize(complete());try{win.localStorage.setItem(cacheKey(),text);}catch(e){throw Error('The browser could not retain the complete copy. Download JSON or HTML now. '+e.message);}message('Saved a complete browser checkpoint for this exact source pair. Restore remains an explicit choice.');}
+ function cacheInspect(){let text;try{text=win.localStorage.getItem(cacheKey());}catch(e){throw Error('Browser checkpoint unavailable: '+e.message);}if(text===null)throw Error('No browser checkpoint is retained for this source pair.');if(bytes(text)>MAX)throw Error('Retained checkpoint exceeds the full working allowance.');const incoming=checkIncoming(JSON.parse(text));if(cacheKey(incoming)!==cacheKey())throw Error('This checkpoint belongs to another original assignment or issuing role. Keep it as a separate complete file.');offerIncoming(incoming,'Browser checkpoint for the same original pair and assignment role');}
  function pair(dl,name,value){dl.append(el('dt',name),el('dd',typeof value==='string'?value:pretty(value)));}
  const heading=el('h1','Event mapping working copy'),intro=el('p','Review the accepted and current event windows, edit complete field choices, and return the full review to the original Analysis operator.');
  const status=el('p',undefined,'emw-status');status.setAttribute('role','status');
@@ -61,8 +68,9 @@ export function mountEventMappingWorking(root,{api,initial,view={},onChange,onMe
  const toolbar=el('div',undefined,'emw-toolbar');
  toolbar.append(button('Download complete working JSON',saveWorking),button('Download editable HTML',saveHTML),button('Download native review',()=>{const w=current(),s=api.status(w);download('event-mapping-working-review.json',JSON.stringify(api.nativeReview(w))+'\n');message('Requested the full native review'+(s.ready?'':'; it retains unfinished choices')+'. The original service will recompute against its own current source.');}),button('Save browser checkpoint',cacheSave),button('Inspect browser checkpoint',cacheInspect));
  const importLabel=el('label','Inspect a complete working JSON'),fileInput=el('input');fileInput.type='file';fileInput.accept='.json,application/json';fileInput.addEventListener('change',()=>guard(()=>inspectFile(fileInput.files[0])));importLabel.append(fileInput);
+ const reviewRoot=reviewApi?el('section',undefined,'emw-panel'):null;
  const importPanel=el('section',undefined,'emw-panel'),identityPanel=el('section',undefined,'emw-panel'),fieldsPanel=el('section',undefined,'emw-panel'),comparisonPanel=el('section',undefined,'emw-panel'),populationPanel=el('section',undefined,'emw-panel'),historyPanel=el('section',undefined,'emw-panel'),filesPanel=el('section',undefined,'emw-panel');
- root.replaceChildren(heading,intro,status,changeIndicator,toolbar,importLabel,importPanel,identityPanel,fieldsPanel,comparisonPanel,populationPanel,historyPanel,filesPanel);
+ root.replaceChildren(heading,intro,status,changeIndicator,toolbar,importLabel,importPanel,identityPanel,fieldsPanel,comparisonPanel,...(reviewRoot?[reviewRoot]:[]),populationPanel,historyPanel,filesPanel);
  function renderStatus(){try{const s=api.status(current());status.textContent=s.ready?'Current comparison is complete and all required review reasons are recorded.':s.errors.join(' ');status.dataset.error='false';}catch(e){status.textContent=e.message;status.dataset.error='true';}}
  function renderIdentity(){
   identityPanel.replaceChildren(el('h2','Original source and native destination'));const c=working.original.comparison,dl=el('dl');
@@ -124,10 +132,11 @@ export function mountEventMappingWorking(root,{api,initial,view={},onChange,onMe
  }
  function renderFiles(){filesPanel.replaceChildren(el('h2','Complete original files and retained editions'));
   for(const f of api.files(working)){const box=el('div',undefined,'emw-file');box.append(el('h3',f.side+' / '+f.kind),el('p',f.name+' · '+f.bytes+' bytes'),el('p','SHA-256 '+f.sha256),button('Download exact '+f.side+' '+f.kind,()=>download(f.name,f.text,f.kind==='ndjson'?'application/x-ndjson;charset=utf-8':'application/json;charset=utf-8')));raw(box,'Read complete original '+f.name,f.text);filesPanel.append(box);}
-  filesPanel.append(button('Download embedded starting edition',()=>download('embedded-event-mapping-working.json',api.serialize(initialWorking))));
-  if(displaced.length){filesPanel.append(el('p','Displaced editions are retained separately in this open window. Download each before closing. The current working JSON and HTML contain the selected edition, including its own complete comparison history.'));displaced.forEach((copy,index)=>filesPanel.append(button('Download displaced complete working copy '+(index+1),()=>download('displaced-event-mapping-working-'+(index+1)+'.json',api.serialize(copy)))));}
+  filesPanel.append(button('Download embedded starting edition',()=>download('embedded-event-mapping-working.json',serialize(initialWorking))));
+  if(displaced.length){filesPanel.append(el('p','Displaced editions are retained separately in this open window. Download each before closing. The current working JSON and HTML contain the selected edition, including its own complete comparison history.'));displaced.forEach((copy,index)=>filesPanel.append(button('Download displaced complete working copy '+(index+1),()=>download('displaced-event-mapping-working-'+(index+1)+'.json',serialize(copy)))));}
  }
- function renderAll(){renderIdentity();renderFields();renderComparison();renderPopulation();renderHistory();renderFiles();renderStatus();}
+ function renderAll(){renderIdentity();renderFields();renderComparison();renderPopulation();renderHistory();renderFiles();renderStatus();if(reviewPanel)reviewPanel.refresh();}
  const unload=e=>{if(dirty){e.preventDefault();e.returnValue='';}};win.addEventListener('beforeunload',unload);renderAll();
- return Object.freeze({snapshot:current,view:getView,inspect:checkIncoming,get changed(){return dirty;},destroy(){win.removeEventListener('beforeunload',unload);root.replaceChildren();}});
+ if(reviewRoot)reviewPanel=mountReview(reviewRoot,{api:reviewApi,getCurrent:complete,setCurrent:installReview,download,saveEditable:saveHTML,onMessage:(text,{error=false}={})=>message(text,error)});
+ return Object.freeze({snapshot:complete,view:getView,inspect:checkIncoming,get changed(){return dirty;},destroy(){if(reviewPanel)reviewPanel.destroy();win.removeEventListener('beforeunload',unload);root.replaceChildren();}});
 }

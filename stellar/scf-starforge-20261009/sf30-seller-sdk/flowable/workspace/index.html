@@ -14,6 +14,7 @@
 <button type="button" data-page="migrations">Migrations</button>
 <button type="button" data-page="decisions">Decisions</button>
 <button type="button" data-page="cases">Cases</button>
+<button type="button" data-page="jobs">Native jobs</button>
 <button type="button" data-page="documents">Document intake</button>
 <button type="button" data-page="events">Event intake</button>
 <button type="button" data-page="history-analysis">History analysis</button>
@@ -98,6 +99,28 @@
 <button type="submit">Prepare decision evaluation</button></form>
 <div class="panel"><h2>Saved evaluations</h2><div id="decisionEvaluation-records"></div></div>
 <div class="panel"><h2>Native execution history</h2><div id="historic-decisions-table"></div></div></section>
+<section data-panel="jobs" hidden><h1>Native jobs and recovery</h1>
+<p class="lede">Inspect executable, timer, suspended, dead-letter and history jobs, retain their full exceptions and prepare an explicit recovery request for review.</p>
+<p class="muted">Use the original process REST connection. A capture contains the engine observations from each native page; jobs may advance while capture is in progress.</p>
+<div class="toolbar"><label class="grow">Saved job capture<select id="job-portfolio-select"></select></label><button type="button" id="job-capture">Refresh native jobs</button></div>
+<div class="toolbar"><label>Collection<select id="job-collection-select"><option value="deadLetterJobs">Dead-letter jobs</option><option value="jobs">Executable jobs</option><option value="timerJobs">Timer jobs</option><option value="suspendedJobs">Suspended jobs</option><option value="historyJobs">History jobs</option></select></label>
+<label class="grow">Search native ID, process or exception<input id="job-search" type="search"></label></div>
+<p id="job-count" role="status"></p><div id="jobs-table" class="panel"></div>
+<section class="panel"><h2>Unfinished job recovery</h2><p id="job-editing-label"></p>
+<p id="job-working-status" role="status"></p>
+<div class="toolbar"><button type="button" id="job-working-download">Download complete working file</button><label>Open working file<input id="job-working-file" type="file" accept=".json,application/json"></label></div>
+<div class="toolbar"><label class="grow">Earlier browser copy<select id="job-copy-select"></select></label><button type="button" id="job-copies-refresh">Reload copies</button><button type="button" id="job-copy-open">Open separate copy</button></div>
+<p class="muted">Each browser window retains its own complete drafts. Opening a file or earlier copy first downloads the current copy and keeps original request IDs.</p>
+<form id="jobOperation-form" hidden>
+<div class="form-grid"><label>Operation name<input name="label"></label><label>Native action<select name="action"><option value="">Select a reviewed recovery action</option></select></label></div>
+<label id="job-due-date-field" hidden>Native due date including intended timezone<input name="dueDate" type="text" placeholder="Original native due date text"></label>
+<p id="job-action-help" class="muted">Select the recovery action supported by this actual job collection and original native engine.</p>
+<label>Operator reason and corrective work<textarea name="note" rows="4"></textarea></label>
+<p id="job-request-label"></p><button id="job-prepare" type="submit">Prepare selected job recovery</button>
+<button id="job-new-review" type="button" hidden>Keep original and author another review</button>
+</form></section>
+<div class="panel"><h2>Saved recovery operations</h2><div id="jobOperation-records"></div></div>
+</section>
 <section data-panel="cases" hidden><h1>Adaptive case operations</h1>
 <p class="lede">Release versioned case definitions, manage case work and inspect the stages, milestones, human tasks and history retained by the engine.</p>
 <div class="toolbar"><label class="grow">Saved case portfolio<select id="case-portfolio-select" aria-label="Selected case portfolio"></select></label>
