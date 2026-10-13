@@ -7,6 +7,7 @@ import {randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
 import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {openSupersetWorkspace} from './workspace.mjs';
+import {createSupersetAgentRoutes} from './agent-http.mjs';
 import {startSupersetMerchant,supersetMerchantStatus} from './merchant.mjs';
 import {reviewSupersetBuyer,inspectSupersetDelivery} from './customer.mjs';
 import {object,fault,MiB,absolute,privateDirectory,acquireWorkspace,atomicJson,digest,readJson} from './files.mjs';
@@ -41,7 +42,7 @@ export async function startSupersetWorkspaceServer({directory,workspaceDirectory
   const token=randomBytes(32).toString('base64url'),authorization='Bearer '+token;
   const cookieName='superset_operator_'+digest(directory+'\n'+mountPath).slice(0,24);
   const instanceId=randomUUID(),operatorId='superset-'+digest(directory).slice(0,32);
-  let origin,launch,closing=false,closePromise;
+  let origin,launch,closing=false,closePromise,httpClosed=false,operatorReleased=false;
   const publicLaunch=()=>({...launch,projectKey:workspace.meta('workspace_id'),workspaceId:workspace.meta('workspace_id')});
   const runs=new Map();
   const running=async merchantId=>{
@@ -61,10 +62,13 @@ export async function startSupersetWorkspaceServer({directory,workspaceDirectory
     }
     const selected=await running(merchantId);return runSummary(merchant,group,selected.service);
   };
+  const checkSource=()=>verifySupersetOperatorSourceSelection({directory,workspaceDirectory,sourceDirectory:selectedSource.selection.sourceDirectory,expectedSelectionSha256:selectedSource.selectionSha256});
   const readBody=async req=>{
     if(req.headers['content-type']?.split(';')[0].trim()!=='application/json')throw fault('SUPERSET_JSON_REQUIRED','Use a JSON operation body.',415);
     let size=0;const chunks=[];
     for await(const chunk of req){size+=chunk.length;if(size>MiB)throw fault('SUPERSET_REQUEST_LIMIT','This operation body exceeds 1 MiB.',413);chunks.push(chunk);}
+    if(closing)throw fault('SUPERSET_WORKSPACE_STOPPING','The original workspace is closing.',503);
+    await checkSource();
     try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks,size)));}
     catch{throw fault('SUPERSET_JSON_REQUIRED','The operation body is not valid JSON.');}
   };
@@ -74,7 +78,9 @@ export async function startSupersetWorkspaceServer({directory,workspaceDirectory
     if(res.destroyed||res.headersSent)return;
     const raw=JSON.stringify(value);res.writeHead(status,{...headers('application/json; charset=utf-8'),'content-length':Buffer.byteLength(raw)});res.end(raw);
   };
-  const server=createServer({maxHeaderSize:16384,requestTimeout:30000,headersTimeout:15000,keepAliveTimeout:1000},async(req,res)=>{
+  const agentRoute=createSupersetAgentRoutes({workspace,readBody,reply,checkSource,closing:()=>closing,running});
+  const handlers=new Set();
+  const handleRequest=async(req,res)=>{
     try{
       if(req.headers.host!==new URL(origin).host||(req.headers.origin&&req.headers.origin!==origin)||
           req.headers['sec-fetch-site']==='cross-site')return reply(res,403,{error:'SUPERSET_LOCAL_ORIGIN'});
@@ -88,6 +94,7 @@ export async function startSupersetWorkspaceServer({directory,workspaceDirectory
       const cookie=(req.headers.cookie??'').split(';').map(value=>value.trim()).find(value=>value.startsWith(cookieName+'='))?.slice(cookieName.length+1);
       if(!equal(req.headers.authorization,authorization)&&!equal(cookie,token))return reply(res,401,{error:'SUPERSET_SESSION_REQUIRED'});
       if(closing)return reply(res,503,{error:'SUPERSET_WORKSPACE_STOPPING'});
+      if(await agentRoute(req,res,path,url))return;
       if(req.method==='GET'&&path==='api/launch')return reply(res,200,publicLaunch());
       if(req.method==='GET'&&path==='api/state'){
         const active=[];
@@ -108,7 +115,9 @@ export async function startSupersetWorkspaceServer({directory,workspaceDirectory
       if(operation&&req.method==='POST'){
         const body=await readBody(req);
         if(operation[1]==='prepare-buyer'){
-          const selected=await running(body.merchantId);body.seller=selected.service.url;
+          let prior;try{prior=workspace.operation(body.operationId);}catch(error){if(error.code!=='SUPERSET_OPERATION_MISSING')throw error;}
+          if(body.seller===undefined){const selected=await running(body.merchantId);body.seller=selected.service.url;}
+          else if(!prior){const selected=await running(body.merchantId);if(body.seller!==selected.service.url)throw fault('SUPERSET_BUYER_SOURCE_CHANGED','The reviewed original merchant listener changed; prepare a new original request.',409);}
         }
         const task=workspace.dispatch(operation[1],body);task.catch(()=>{});
         return reply(res,202,workspace.operation(body.operationId));
@@ -163,7 +172,11 @@ export async function startSupersetWorkspaceServer({directory,workspaceDirectory
       reply(res,Number.isInteger(error.status)?error.status:400,{error:typeof error.code==='string'?error.code:'SUPERSET_REQUEST_FAILED',
         message:error.code?error.message:'The operation could not be completed.'});
     }
+  };
+  const server=createServer({maxHeaderSize:16384,requestTimeout:30000,headersTimeout:15000,keepAliveTimeout:1000},(req,res)=>{
+    const task=handleRequest(req,res);handlers.add(task);void task.finally(()=>handlers.delete(task)).catch(()=>{});
   });
+  server.setTimeout(60000);
   try{
     await new Promise((done,reject)=>{server.once('error',reject);server.listen(port,host,done);});
     origin=new URL('http://127.0.0.1:'+server.address().port).origin;
@@ -183,19 +196,25 @@ export async function startSupersetWorkspaceServer({directory,workspaceDirectory
       closePromise=(async()=>{
         const issues=[];
         try{
-          const closeHttp=new Promise((done,reject)=>server.close(error=>error?reject(error):done()));
-          server.closeIdleConnections();
-          for(const entry of runs.values()){
-            try{const service=await entry.promise;await service.close();}catch(error){issues.push(error);}
-          }
-          runs.clear();
-          try{await atomicJson(directory,'operator-launch.json',{...launch,state:'stopped',stoppedAt:new Date().toISOString()});}catch(error){issues.push(error);}
-          try{await workspace.close();}catch(error){issues.push(error);}
+          const closeHttp=httpClosed?Promise.resolve():new Promise((done,reject)=>server.close(error=>{
+            if(error&&error.code!=='ERR_SERVER_NOT_RUNNING')return reject(error);httpClosed=true;done();
+          }));
+          server.closeIdleConnections();workspace.requestClose();
           try{await closeHttp;}catch(error){issues.push(error);}
+          await Promise.allSettled([...handlers]);
+          for(const [group,entry] of runs){
+            try{const service=await entry.promise;await service.close();runs.delete(group);}catch(error){issues.push(error);}
+          }
+          // Keep the original leases while a native service still needs its
+          // same-owner close continuation. A retry resumes this exact instance.
           if(issues.length)throw issues[0];
-        }finally{try{await unlockOperator?.();}finally{clearInterval(keeper);}}
+          await atomicJson(directory,'operator-launch.json',{...launch,state:'stopped',stoppedAt:new Date().toISOString()});
+          await workspace.close();
+          if(!operatorReleased){await unlockOperator?.();operatorReleased=true;}
+        }finally{clearInterval(keeper);}
       })();
-      return closePromise;
+      const attempt=closePromise;void attempt.catch(()=>{if(closePromise===attempt)closePromise=null;});
+      return attempt;
     }};
 }
 
