@@ -24,6 +24,7 @@ const mappingExpected={type:'object',additionalProperties:false,
  properties:{cli_sha256:hash,core_sha256:hash}}}};
 const mappingRequestSource={type:'object',additionalProperties:false,required:['id','bytes','sha256'],
  properties:{id,bytes:{type:'integer',minimum:1,maximum:1046528},sha256:hash}};
+const mappingWorkingSource={type:'object',additionalProperties:false,required:['id','bytes','sha256'],properties:{id:hash,bytes:{type:'integer',minimum:1,maximum:201326592},sha256:hash}};
 const workbookSource={type:'object',additionalProperties:false,required:['id','bytes','sha256'],
  properties:{id,bytes:{type:'integer',minimum:1,maximum:16777216},sha256:hash}};
 const common={programme,id,operation_id:id,resume:{type:'boolean'}};
@@ -49,10 +50,18 @@ export const nativeEventOperations=Object.freeze({
  'event-mapping-source':spec([],
  {programme,input_id:id,mapping,expected:mappingExpected,mapping_request_source:mappingRequestSource},
  'Receive both exact accepted/current NDJSON+manifests and the selected native comparison as one immutable full source record. The same selection reopens its retained original bytes; no native review/apply is dispatched.'),
- 'event-review':spec(['programme','id','operation_id'],{...common,input_id:id,mapping,mapping_review:mappingReview,mapping_request_source:mappingRequestSource},
+ 'event-review':spec(['programme','id','operation_id'],{...common,input_id:id,mapping,mapping_review:mappingReview,mapping_request_source:mappingRequestSource,mapping_working_source:mappingWorkingSource},
  'Review the full received original event window through the existing native programme. The input, mapping and stable action are saved before dispatch.'),
+ 'event-mapping-working-create':spec(['id','programme','input_id','name','bytes','sha256'],{...mappingWorkingSource.properties,programme,input_id:id,name:{type:'string',minLength:1,maxLength:240}},
+ 'Retain the exact complete mapping working file in the original native workspace database. Its bytes and editable HTML remain in the whole workspace archive.'),
+ 'event-mapping-working-status':spec(['id'],{id:hash},
+ 'Read exact source identity and accepted upload offset; completed means full bytes and UTF-8 were checked.'),
+ 'event-mapping-working-chunk':spec(['id','offset','base64','sha256'],{id:hash,offset:natural,base64:{type:'string',minLength:1,maxLength:87384},sha256:hash},
+ 'Receive one exact contiguous64KiB full working-source chunk in the native workspace, preserving identical replay.'),
+ 'event-mapping-working-file':spec(['id','kind','sha256'],{id:hash,kind:{enum:['source','html']},sha256:hash,byteOffset:natural,maxBytes:{type:'integer',minimum:1,maximum:65536}},
+ 'Read complete original working JSON or its frozen editable HTML after native validation, including from a restored workspace. Bind every range to the exact selected digest.'),
  'event-mapping-request-create':spec(['id','bytes','sha256'],mappingRequestSource.properties,
- 'Retain the exact compact source-capture or attributed Review request before receiving its complete bytes. Full offline working history stays in the caller.'),
+ 'Retain the exact compact source-capture or attributed Review request before receiving its complete bytes. The complete working source uses its separate native source descriptor and durable database chunks.'),
  'event-mapping-request-source':spec(['id'],{id},
  'Read the original mapping request identity and contiguous received offset. Complete means the full original digest was checked.'),
  'event-mapping-request-chunk':spec(['id','offset','base64','sha256'],{id,offset:natural,

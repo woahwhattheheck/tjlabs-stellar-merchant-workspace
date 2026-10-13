@@ -13,8 +13,10 @@ def assets():
             "/workbook-returns.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-returns.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
             "/event-workbook-editor.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-editor.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
             "/event-workbook-editor.js": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-editor.js").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
+            "/mapping-native-source-ui.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "mapping-native-source-ui.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
             "/mapping-review.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "mapping-review.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
             "/mapping-review-ui.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "mapping-review-ui.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
+            "/event-mapping-native-source-guide": ((Path(__file__).resolve().parents[1] / "EVENT_MAPPING_NATIVE_SOURCE.md").read_text(encoding="utf-8"), "text/plain;charset=utf-8"),
             "/event-mapping-colleague-guide": ((Path(__file__).resolve().parents[1] / "EVENT_MAPPING_COLLEAGUE.md").read_text(encoding="utf-8"), "text/plain;charset=utf-8"),
             "/mapping-working.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "mapping-working.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
             "/mapping-working-ui.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "mapping-working-ui.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
@@ -38,6 +40,13 @@ def get(handler, workspace, url, query, parts):
         result = api.input_status(parts[3])
     elif len(parts) == 5 and parts[2] == "inputs" and parts[4] == "fields" and not query:
         result = api.inspect_input(parts[3])
+    elif len(parts) == 4 and parts[2] == "mapping-working" and not query:
+        result = api.mapping_sources.status(parts[3])
+    elif len(parts) == 5 and parts[2] == "mapping-working" and parts[4] in {"source", "html"}:
+        if set(query) - {"offset", "limit"}:
+            raise StateError("EVENT_MAPPING_SOURCE_RANGE_INVALID")
+        result = api.mapping_sources.read(parts[3], int(value("offset") or 0),
+                                           int(value("limit") or 65536), kind=parts[4])
     elif len(parts) == 4 and parts[2] == "actions" and not query:
         result = api.action(parts[3])
     elif len(parts) == 4 and parts[2] == "named" and not query:
@@ -58,6 +67,10 @@ def post(handler, workspace, url, parts, body):
     api = workspace.event_programmes
     if len(parts) == 3 and parts[2] == "inputs":
         result = api.create_input(body)
+    elif len(parts) == 3 and parts[2] == "mapping-working":
+        result = api.create_mapping_working_source(body)
+    elif len(parts) == 5 and parts[2] == "mapping-working" and parts[4] == "chunks":
+        result = api.put_mapping_working_source(parts[3], body)
     elif len(parts) == 5 and parts[2] == "inputs" and parts[4] == "inspect":
         if not isinstance(body, dict) or set(body) - {"pointer", "offset", "limit"} or "pointer" not in body:
             raise StateError("EVENT_PROGRAMME_FIELD_PAGE_INVALID")

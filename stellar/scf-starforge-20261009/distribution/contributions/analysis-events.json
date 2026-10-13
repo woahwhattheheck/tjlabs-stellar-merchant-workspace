@@ -15,7 +15,7 @@
     "mcp-analysis-event-installation": "Prepare and independently reopen a complete event customer Installation with every original file",
     "event-workbook-columns": "Prepare, inspect and independently reopen complete customer worksheet choices for the original Event programme",
     "event-mapping-working": "Open, compare, save and return complete offline Event mapping working copies with both original source windows",
-    "event-mapping-receiving": "Capture both complete original mapping windows, reopen the editable working file and receive the original attributed native Review",
+    "event-mapping-receiving": "Capture complete original mapping windows, retain full working and colleague history with native Review, and reopen saved JSON/HTML from a restored workspace",
     "event-mapping-colleague": "Issue complete source-bound mapping reviews, reconcile returned work with current choices and retain independently reopenable colleague history"
   },
   "exports": {
@@ -68,6 +68,9 @@
     "stellar-forge/mcp-paid-agent/native-analysis-events-mapping-request-source.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_RECEIVING.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-review-ui.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_COLLEAGUE.md"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_COLLEAGUE.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-native-check.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-native-source-ui.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_NATIVE_SOURCE.md"
   ]
 }

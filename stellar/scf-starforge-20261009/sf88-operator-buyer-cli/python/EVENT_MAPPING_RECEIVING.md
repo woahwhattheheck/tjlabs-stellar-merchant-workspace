@@ -176,3 +176,12 @@ New captures pin six complete implementation modules: the original parser, worki
 Continue the original capture, action and operation IDs. After an uncertain native response, use the existing read-only `review-receive`, then select the actual immutable record SHA with `review-reopen`. The saved native action contains the ordinary mapping review; the companion retained working file contains the full assignments, returns, before/after copies, local authority, carried source history and unfinished choices. Native Apply and later report/workbook delivery remain the original deliberate Analysis steps.
 
 The full colleague wrapper/envelope keeps the same 192 MiB allowance as the working source. The compact native request keeps the existing 1,046,528-byte limit and contiguous 64 KiB request-source transfer. A complete wrapper is never sent as one tool message. Preserve complete files when a limit is reached and inspect the selected source; history is not dropped to make a request fit.
+
+
+## Complete native source and restored-workspace receiving
+
+Newly prepared reviews now retain the exact whole working JSON in the original native workspace, including the full colleague graph when present. The existing compact Review request carries its full source identity; native validation compares that complete source with the actual original comparison and saves its exact editable HTML atomically. Both files travel in the existing whole database archive.
+
+Use `saved-source` with the original workspace/programme/input/action/operation and a new private directory to receive both full files from the original or restored workspace. `saved-source-reopen` checks the complete local result offline. The original producer capture/review folders are unnecessary for this saved-native course. Existing prepared requests keep their original recovery semantics.
+
+The complete operator, CLI, interruption and archive restoration course is [Complete mapping work in the native Analysis workspace](EVENT_MAPPING_NATIVE_SOURCE.md). It includes the actual producing-operator screen, edit/save/reopen and original receiver requirements.

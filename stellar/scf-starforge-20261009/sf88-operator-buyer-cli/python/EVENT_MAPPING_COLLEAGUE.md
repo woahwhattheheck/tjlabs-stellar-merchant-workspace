@@ -197,3 +197,10 @@ The existing source/native/browser owner carries this whole course in the origin
 The producing operator opens actual producer and reviewer files at normal and narrow widths, looks at the resulting screens, edits field mappings/reasons and pending notes independently, saves/reopens both complete editions, stages the actual return, inspects conflicts, records explicit choices and opens the received file. Exercise pointer-value refresh, original source downloads, assignment/return recovery, same-byte output replay and source-bound native continuation on the original actual input. Open the final saved action and its complete retained working/capture files, then export and reopen the same original Analysis workspace.
 
 Retain the exact artifacts, original/native IDs, actual outcomes and viewed images together in that original receiving operation. Source-level execution and modeled fixtures document their own inputs; the actual operated files and visible results complete the producer's customer-facing receiving course.
+
+
+## Keep the whole colleague result in the native workspace
+
+The received complete colleague working copy can now be selected through **Retain whole work and open** in the original Event operator. Native Review reopens the whole graph, recomputes its receiving receipts and binds the exact selected mapping/reasons/reviewer/note before continuing. The workspace keeps the full raw JSON and the editable HTML generated from the same original source.
+
+Both complete files travel inside the original database snapshot. Open the saved action after a whole-workspace restore to download them, or use the installed `event-mapping-receiving saved-source` and `saved-source-reopen` commands. The [full native source guide](EVENT_MAPPING_NATIVE_SOURCE.md) gives the exact original action selection, interrupted receiving and producing-operator course.

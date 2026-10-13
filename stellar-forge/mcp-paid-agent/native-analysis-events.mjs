@@ -45,7 +45,8 @@ function action(value,record,id){
  ['review','apply','refresh-review','deliver'].includes(value.request.action),'ACTION_CHANGED');
  check(value.request.operation_id,EVENT_ID,'OPERATION_ID_REQUIRED');
  const result=pick(value,['id','programme','workspace_id','created_at','updated_at','status','attempts','error']);
- result.request=pick(value.request,['action','operation_id','input_id','review_sha256']);
+ result.request=pick(value.request,['action','operation_id','input_id','review_sha256','mapping_working_source']);
+ if(value.mapping_working_source)result.mapping_working_source=pick(value.mapping_working_source,['schema','source','html']);
  if(value.mapping_review){const s=value.mapping_review.selection;
  result.mapping_review={schema:value.mapping_review.schema,reviewed_at:value.mapping_review.reviewed_at,
   comparison_sha256:s.comparison_sha256,programme_revision:s.programme_revision,baseline_operation_id:s.baseline_operation_id,
@@ -160,6 +161,36 @@ export function createNativeEventActions({reads,parse}={}){
  typeof getBytes==='function'&&typeof postBytes==='function','ORIGINAL_TRANSPORT_REQUIRED');
  const spec=nativeEventOperations[operation];fields(body,spec.required,Object.keys(spec.properties).filter(k=>!spec.required.includes(k)));
  signal?.throwIfAborted();
+ if(operation.startsWith('event-mapping-working-')){
+  const id=check(body.id,EVENT_HASH,'MAPPING_WORKING_SOURCE_ID_REQUIRED');
+  const projected=value=>{
+   need(object(value)&&value.workspace_id===record.workspaceId&&value.id===id&&value.sha256===id&&
+    Number.isSafeInteger(value.bytes)&&value.bytes>0&&value.bytes<=201326592&&
+    Number.isSafeInteger(value.received)&&value.received>=0&&value.received<=value.bytes&&
+    value.complete===(value.received===value.bytes)&&value.chunk_bytes===65536,'MAPPING_WORKING_SOURCE_CHANGED');
+   return {...pick(value,['schema','id','workspace_id','programme','input_id','name','bytes','sha256','received','complete','chunk_bytes']),
+    derived:value.derived?{html:copy(value.derived.html),evidence:pick(value.derived.evidence,['schema','working_schema','working_bytes','working_sha256','comparison_sha256','programme_revision','baseline_operation_id','original_sha256','local_assignment_ids','local_receipt_ids'])}:null};
+  };
+  if(operation==='event-mapping-working-create'){
+   check(body.programme,EVENT_NAME,'PROGRAMME_REQUIRED');check(body.input_id,EVENT_ID,'INPUT_ID_REQUIRED');label(body.name,240);
+   integer(body.bytes,1,201326592);need(body.sha256===id,'MAPPING_WORKING_SOURCE_DIGEST_REQUIRED');
+   const value=projected(await post(ROOT+'/mapping-working',copy(body)));
+   need(['programme','input_id','name','bytes','sha256'].every(key=>value[key]===body[key]),'MAPPING_WORKING_SOURCE_CHANGED');return value;
+  }
+  if(operation==='event-mapping-working-status')return projected(await get(ROOT+'/mapping-working/'+id));
+  if(operation==='event-mapping-working-chunk'){
+   integer(body.offset);check(body.sha256,EVENT_HASH,'CHUNK_DIGEST_REQUIRED');
+   need(typeof body.base64==='string'&&body.base64.length<=87384,'CHUNK_ENCODING_INVALID');
+   const raw=Buffer.from(body.base64,'base64');need(raw.length>0&&raw.length<=65536&&raw.toString('base64')===body.base64&&sha(raw)===body.sha256,'CHUNK_CHANGED');
+   return projected(await post(ROOT+'/mapping-working/'+id+'/chunks',pick(body,['offset','base64','sha256'])));
+  }
+  need(operation==='event-mapping-working-file'&&['source','html'].includes(body.kind),'MAPPING_WORKING_FILE_KIND_REQUIRED');
+  check(body.sha256,EVENT_HASH,'FILE_DIGEST_REQUIRED');integer(body.byteOffset??0);integer(body.maxBytes??65536,1,65536);
+  const value=await get(ROOT+'/mapping-working/'+id+'/'+body.kind+query({offset:body.byteOffset??0,limit:body.maxBytes??65536}));
+  need(object(value)&&value.source?.workspace_id===record.workspaceId&&value.source?.id===id&&value.sha256===body.sha256&&value.offset===(body.byteOffset??0),'MAPPING_WORKING_FILE_CHANGED');
+  const part=Buffer.from(value.base64,'base64');need(part.toString('base64')===value.base64&&part.length===value.length&&part.length<=(body.maxBytes??65536)&&sha(part)===value.range_sha256,'MAPPING_WORKING_FILE_RANGE_CHANGED');
+  return value;
+ }
  if(operation==='event-mapping-request-create')return createEventMappingRequestSource(record,body);
  if(operation==='event-mapping-request-source')return eventMappingRequestSourceStatus(record,body.id);
  if(operation==='event-mapping-request-chunk')return receiveEventMappingRequestChunk(record,body);
@@ -170,7 +201,7 @@ export function createNativeEventActions({reads,parse}={}){
    body=mappingSourceSelection(request);
   }else{
    fields(body,['programme','id','operation_id','mapping_request_source'],['resume']);
-   fields(request,['programme','id','operation_id','input_id','mapping','mapping_review']);
+   fields(request,['programme','id','operation_id','input_id','mapping','mapping_review'],['mapping_working_source']);
    need(request.programme===body.programme&&request.id===body.id&&request.operation_id===body.operation_id,
     'ORIGINAL_MAPPING_REQUEST_CHANGED');
    body={...request,...(body.resume===undefined?{}:{resume:body.resume})};
@@ -334,6 +365,9 @@ export function createNativeEventActions({reads,parse}={}){
   for(const decision of value.decisions){fields(decision,['name','reason']);check(decision.name,/^[A-Za-z][A-Za-z0-9_]{0,47}$/,'FIELD_NAME_INVALID');
    need(typeof decision.reason==='string'&&decision.reason.trim()&&Buffer.byteLength(decision.reason)<=4000,'MAPPING_REASON_REQUIRED');}
   request.mapping_review=copy(value);
+ }
+ if(body.mapping_working_source!==undefined){
+  const full=body.mapping_working_source;fields(full,['id','bytes','sha256']);check(full.id,EVENT_HASH,'MAPPING_WORKING_SOURCE_ID_REQUIRED');integer(full.bytes,1,201326592);need(full.sha256===full.id&&request.mapping_review,'MAPPING_WORKING_SOURCE_REQUIRED');request.mapping_working_source=copy(full);
  }
  }else if(actionName==='apply'||actionName==='refresh-review'){
  check(body.review_sha256,EVENT_HASH,'REVIEW_REQUIRED');
