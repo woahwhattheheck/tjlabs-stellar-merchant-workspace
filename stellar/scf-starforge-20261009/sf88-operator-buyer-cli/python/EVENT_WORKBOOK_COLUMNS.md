@@ -116,8 +116,7 @@ and carries no Analysis capability. Original JSON inputs keep the existing
 the full escaped source/choices and installed editor without truncation.
 
 The legacy **Download complete choices** control and CLI template use the exact UTF-8 return-file
-allowance, including its final newline. The original-proposal download and CLI
-native-columns output apply the same exact bound before download/publication. They retain readable indented JSON when
+allowance, including its final newline. The original-proposal download applies the same exact bound before download/publication. CLI native-columns output additionally enforces the original 512 KiB canonical-array admission before publishing its complete JSON. They retain readable indented JSON when
 it fits and use complete compact JSON when that is needed to stay within
 16 MiB. If the complete current choices still exceed that allowance, the
 operator sees a return-size error; no rows, proposal fields or unfinished
@@ -202,7 +201,7 @@ open its original assignment file as a distinct reviewer copy.
 Download **Complete working review** to retain the complete handover with all
 assignments, returns, receipts, draft resolutions and unfinished text. Its
 JSON and editable HTML have a 128 MiB allowance. Existing complete native
-choice files and CLI JSON inputs keep the 16 MiB allowance. The original
+choice files and legacy CLI JSON inputs keep the 16 MiB allowance; the review command group below accepts full working files up to 128 MiB. The original
 native action retains at most 512 KiB of canonical column arrays. These
 limits are checked without dropping history, arrays or source fields. Keep a
 complete oversized working download, then deliberately choose a fitting
@@ -358,7 +357,7 @@ that original financial operation.
 The portable module and CLI are shipped alongside the original Event source
 projector under sf88-operator-buyer-cli/event-feed. They need the maintained
 Node.js runtime and no additional package. The maintained distribution exposes
-**starforge event-workbook-columns** with template, inspect, columns, html and editor commands, and exports
+**starforge event-workbook-columns** with template, inspect, columns, html, editor and review commands, and exports
 the portable core as **./buyer/event-workbook-columns**. The direct source
 invocations below run from the installed sf88-operator-buyer-cli directory.
 
@@ -472,3 +471,279 @@ remaining risks and preserve this SCF operation's actual owner schedule.
 An equipped receiver returns exact source, original operation/workspace IDs,
 complete files and actual viewed normal/narrow frames to the producer. Carry
 this full instruction into any delegated operating course.
+
+## Agent and command-line colleague review
+
+The installed **review** command group operates the same complete
+source-bound handover as the browser. It uses the original
+**eventWorkbookReturns** model: each assignment freezes every worksheet
+array and the exact native proposal; each return retains all original
+source, attribution, unfinished text and earlier reviewer history. Worksheet
+indexes and complete arrays are the receiving unit. The command never guesses
+a sheet or column match and never dispatches a native action.
+
+The old template/inspect/columns/html/editor commands continue to accept
+complete inputs up to 16 MiB. The **review** commands accept complete working,
+assignment, return and receipt-source JSON up to 128 MiB. All published JSON
+includes its final newline in that allowance, using full compact JSON if
+indentation would exceed it. **review native** and the original **columns**
+command additionally enforce the original native limit of 512 KiB for the
+canonical complete column arrays. The optional whole **column_review** in a
+native action remains limited to 16 MiB; retaining a larger offline working
+file does not silently lower that native boundary.
+
+Every output is a complete new file in an existing private directory.
+Publication writes and fsyncs a unique temporary, then creates the final
+pathname without replacing earlier work. An identical existing file is
+accepted; a different existing file remains untouched. The two outputs of
+**review assign** are checked before publication, and the complete assigning
+copy is published before its handoff envelope. If interruption occurs between
+them, rerun the exact same command using the same original input, attribution,
+instructions, timestamp and output paths. The retained first output is
+reopened and the missing second output is completed. The command does not
+generate a new timestamp on retry.
+
+### Issue and open a complete assignment
+
+Keep the assigning source file immutable. Use a literal attribution/timestamp
+and a saved instruction file; the model validates those fields. The examples
+below use named paths under an already existing private directory. Replace the
+example author, reviewer and time with the actual original operation values.
+
+~~~sh
+starforge event-workbook-columns review assign \
+  --choices /private/customer/working-before-assignment.json \
+  --actor "Original assigning engineer" \
+  --reviewer "Receiving engineer" \
+  --note-file /private/customer/assignment-instructions.txt \
+  --at 2026-10-13T16:20:00Z \
+  --out /private/customer/working-issued.json \
+  --envelope-out /private/customer/assignment.json
+
+starforge event-workbook-columns review open \
+  --source /private/customer/assignment.json \
+  --out /private/customer/reviewer-working.json
+
+starforge event-workbook-columns review editor \
+  --choices /private/customer/reviewer-working.json \
+  --out /private/customer/reviewer-editor.html
+~~~
+
+The assigning command prints the immutable **assignment_id** and both actual
+saved paths. Retain the whole assigning working copy for later receiving.
+Opening the assignment creates a separate reviewer copy with the original
+baseline and active assignment; it gives the reviewer no authority to receive
+returns against that assignment as if they had issued it.
+
+Open and operate the exact generated HTML. The same browser controls retain
+all worksheet source fields, extra arrays, selected page and unfinished work.
+Save the complete working JSON or editable HTML after changes. For an agent
+that already has an explicitly selected complete column object, the following
+command replaces that whole object while preserving the original proposal and
+all review history:
+
+~~~sh
+starforge event-workbook-columns review update-columns \
+  --choices /private/customer/reviewer-working.json \
+  --input /private/customer/complete-selected-column-arrays.json \
+  --out /private/customer/reviewer-updated.json
+
+starforge event-workbook-columns review pending \
+  --choices /private/customer/reviewer-updated.json \
+  --key return-note \
+  --text-file /private/customer/unfinished-return-note.txt \
+  --out /private/customer/reviewer-with-note.json
+~~~
+
+The replacement includes every unresolved worksheet and any additional
+already-resolved arrays that should remain selected. A missing required sheet
+is rejected. Pending fields use the model's named keys and complete text
+allowances. Both commands preserve the preceding files; they do not interpret
+unfinished text as an approved decision.
+
+### Prepare the full attributed return
+
+Use the exact assignment ID printed when issuing. Keep the explicit reviewer
+attribution, complete note and original timestamp for retries:
+
+~~~sh
+starforge event-workbook-columns review prepare-return \
+  --choices /private/customer/reviewer-with-note.json \
+  --assignment-id ORIGINAL_ASSIGNMENT_ID \
+  --actor "Receiving engineer" \
+  --note-file /private/customer/complete-return-note.txt \
+  --at 2026-10-13T16:21:00Z \
+  --out /private/customer/complete-return.json
+~~~
+
+The result prints the original **return_id** and saved envelope path. The
+envelope contains the full returned selection and source graph, including its
+retained unfinished fields. Keep the reviewer's full working file too.
+**--note** may supply a literal complete note instead of **--note-file**;
+exactly one is required. The same rule applies to assigning and receiving.
+
+### Stage, inspect and explicitly reconcile the returned worksheets
+
+The assigning engineer may have continued their own file while the reviewer
+worked. Start from that exact current assigning copy, not its old baseline:
+
+~~~sh
+starforge event-workbook-columns review stage \
+  --choices /private/customer/current-assigning-working.json \
+  --return /private/customer/complete-return.json \
+  --out /private/customer/working-with-return.json
+
+starforge event-workbook-columns review preview \
+  --choices /private/customer/working-with-return.json \
+  --return-id ORIGINAL_RETURN_ID \
+  --out /private/customer/comparison-before-resolutions.json
+~~~
+
+The saved comparison includes the original **return_id**, **assignment_id**,
+**current_digest**, complete baseline/current/returned arrays, all five
+classifications, required conflicts and local adoption status. Read the entire
+changed arrays, including extra sheets. A carried reviewer-issued assignment
+does not authorize receiving here; complete foreign source remains recoverable.
+
+A complete resolution file uses exact zero-based worksheet-index strings:
+
+~~~json
+{
+  "0": "keep-current",
+  "1": "use-returned"
+}
+~~~
+
+Use **review resolve** to retain these deliberate selections in the working
+copy. Use JSON null to explicitly clear a retained selection, including one
+that became stale. No source history is deleted:
+
+~~~sh
+starforge event-workbook-columns review resolve \
+  --choices /private/customer/working-with-return.json \
+  --return-id ORIGINAL_RETURN_ID \
+  --resolutions /private/customer/worksheet-resolutions.json \
+  --out /private/customer/working-resolved.json
+
+starforge event-workbook-columns review preview \
+  --choices /private/customer/working-resolved.json \
+  --return-id ORIGINAL_RETURN_ID \
+  --out /private/customer/comparison-to-apply.json
+~~~
+
+Review the refreshed comparison. **Every change to the complete working copy,
+including a saved draft resolution or unfinished field, changes its digest.**
+The earlier comparison therefore cannot authorize application after that
+change. The next command requires the saved comparison that was actually
+reviewed; it does not silently recompute a fresh digest to bypass that check:
+
+~~~sh
+starforge event-workbook-columns review apply \
+  --choices /private/customer/working-resolved.json \
+  --return-id ORIGINAL_RETURN_ID \
+  --preview /private/customer/comparison-to-apply.json \
+  --actor "Original assigning engineer" \
+  --note-file /private/customer/receiving-reason.txt \
+  --at 2026-10-13T16:23:00Z \
+  --out /private/customer/working-after-receiving.json
+~~~
+
+Without **--resolutions**, apply uses the complete retained draft selections.
+An explicit **--resolutions** file can instead carry the whole chosen map for
+that same comparison. Every conflict needs keep-current or use-returned.
+Incoming arrays default to the complete returned array unless explicitly
+kept current; local-only changes remain. Stale choices must be cleared and
+reviewed. The operation retains current pending text and all original source,
+adds one locally attributed receipt, and leaves the original native workbook
+unchanged. Repeating an already adopted return against a freshly reviewed
+current copy preserves that copy.
+
+For preview/apply, **--return /path/to/full-envelope.json** can replace
+**--return-id**. Supply exactly one. A retained ID reconstructs the exact
+complete original envelope from the working source graph.
+
+### Reopen the complete receipt and recover original sources
+
+~~~sh
+starforge event-workbook-columns review inspect \
+  --choices /private/customer/working-after-receiving.json \
+  --out /private/customer/complete-review-inspection.json
+
+starforge event-workbook-columns review recover \
+  --choices /private/customer/working-after-receiving.json \
+  --kind return --id ORIGINAL_RETURN_ID \
+  --out /private/customer/original-return-recovered.json
+
+starforge event-workbook-columns review recover \
+  --choices /private/customer/working-after-receiving.json \
+  --kind receipt --id ORIGINAL_RECEIPT_ID \
+  --out /private/customer/complete-receipt-source.json
+
+starforge event-workbook-columns review open \
+  --source /private/customer/complete-receipt-source.json \
+  --out /private/customer/reopened-complete-working.json
+~~~
+
+Inspection shows all actual assignments, returns, receipts, pending text and
+draft resolutions. **issued_here** and **received_here** distinguish this
+operator's authority/adoption from carried source. The inspection is a readable
+companion; the original full working file remains the complete source.
+
+**recover --kind receipt** packages the entire working handover and the exact
+selected receipt ID. Opening it validates every original graph member and
+reopens the full working copy, including current choices and histories.
+**recover --kind assignment --id ...** returns the immutable original
+assignment. **recover --kind return --id ...** reconstructs the exact original
+return with its own retained graph, including carried earlier history.
+**recover --kind working** publishes the complete validated working handover
+without requiring an ID. Originals can be recovered even where their
+assignment is source-only for this operator.
+
+### Continue the original native action
+
+Create the complete editable and readable handoffs, then derive the fitting
+native selection:
+
+~~~sh
+starforge event-workbook-columns review editor \
+  --choices /private/customer/working-after-receiving.json \
+  --out /private/customer/received-working-editor.html
+
+starforge event-workbook-columns review html \
+  --choices /private/customer/working-after-receiving.json \
+  --out /private/customer/received-column-report.html
+
+starforge event-workbook-columns review native \
+  --choices /private/customer/working-after-receiving.json \
+  --out /private/customer/native-complete-columns.json
+~~~
+
+The optional original-source matching flags **--proposal**, **--workspace**
+and **--programme** work together on every review command. They check the
+complete supplied handover against the actual selected native proposal before
+publication. The proposal source keeps its original 16 MiB allowance.
+
+Pass the complete fitting **column_review** and identical normalized
+**columns** through the original agent/provider **event-apply** continuation.
+The installed durable native action validates the same complete context and
+source, retains its request before execution, and keeps the resulting whole
+review with that action. Preserve the same request/action identity after an
+uncertain response. An oversized working file remains a complete offline
+artifact; do not remove source history to disguise native admission failure.
+
+The original native writer still performs complete source-row conversions,
+Unicode heading checks and current-definition validation. Open the resulting
+workbook and full delivery archive, restore that exact workspace, and reopen
+its saved action's complete review. Keep the existing Mercury/Event customer
+operation, original source pair, installation and actual owner schedule.
+
+Before presentation, the producing maintainer must open, run and LOOK at the
+exact outgoing editor/report/workbook and every attachment, operate normal
+and narrow layouts and important controls, download full files and independently
+reopen them. Return actual viewable frames and full saved outputs in the same
+receiving operation. A successful CLI source exercise does not replace the
+actual original native writer or the producing peer's inspection.
+
+### Current local-browser reservation
+
+The original owner handoff at C0BU51F1PL3/1791906463.475599 quotes Bryce’s instruction to leave the local Codex in-app browser to him from noon Eastern /16:00 UTC on13October2026 until he explicitly releases it after the meeting. Do not navigate, reload, click, type, capture, inspect, resize or change tabs in that LOCAL browser. Existing isolated cloud browsers, source engineering, shell work and Slack coordination continue. Carry this boundary to the original equipped receiver; do not infer a meeting end time or stop the project.

@@ -327,7 +327,7 @@ screenshots and control/download/reopen outcomes to the producing maintainer
 in the original receiving operation. The producer opens those images and
 resolves concrete defects there. Continue the same implementation and native
 operation; keep the existing focused-validation policy and owner schedule.
-The current fleet cutoff is October 13, 2026 at 14:00 UTC.
+Preserve this SCF operation's actual owner schedule.
 
 ## Operator and implementation ownership
 
@@ -463,3 +463,194 @@ The original native review SHA and separate event-apply remain authoritative. No
 An event-apply result with WORKBOOK_COLUMN_CHOICES_REQUIRED retains every unresolved worksheet, its complete preceding columns and exact new source. Receive the entire original action record with complete_record before selecting those values. The same Event browser now provides full structured review, source-bound save/reopen and a complete readable export; the portable workbook-columns.mjs and CLI share that exact choice schema.
 
 Follow [Event workbook column continuation](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_WORKBOOK_COLUMNS.md). Its template receives the complete native proposal and actual workspace/programme; its columns command checks the complete original binding and emits all reviewed column arrays for the existing event-apply request. Preserve the original operation_id, review_sha256 and accepted note; retain a new action ID for deliberately changed column input and recover that same action unchanged after an uncertain reply. Original native conversion checks and the full sixteen-file delivery remain authoritative.
+
+## Receive a colleague's complete worksheet review through an agent
+
+Use the same original worksheet handover as the Event browser. The installed
+`event-workbook-columns review` commands and the shared `eventWorkbookReturns`
+model issue an immutable assignment, open the full reviewer copy, prepare its
+complete return, compare original/current/returned sheet arrays and receive
+explicitly selected overlaps. The complete command course is in
+[Event workbook column continuation](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_WORKBOOK_COLUMNS.md).
+
+Keep each whole ordered worksheet array together. The exact source proposal,
+sheet indexes, report ordinals, extra resolved arrays, unfinished choices and
+attributed original histories travel in the working file. Assignments and
+receipts carried from a reviewer remain source history; this working copy's
+local issuance and adoption lists continue to determine its authority.
+
+The agent's original `event-apply` now accepts either an inline
+`column_review` or the exact retained `column_review_source` identity. A large
+review travels in 64 KiB file chunks through the registered private native
+host, so it fits ordinary MCP message limits. The source is at most 16 MiB,
+including its original complete JSON bytes; its normalized native JSON must
+also fit 16 MiB. The selected native column arrays keep their 512 KiB bound.
+
+### Prepare complete original work before sending
+
+The installed typed module is
+`@tokenjunkielabs/starforge-merchant/buyer/mcp/analysis-events-workbook`.
+Use the current configured client and the original actual workspace UUID,
+programme, retained action ID and reviewed whole working file:
+
+~~~js
+import {
+  prepareNativeAnalysisEventWorkbookReview,
+  applyNativeAnalysisEventWorkbookReview,
+  receiveNativeAnalysisEventWorkbookReview,
+  reopenNativeAnalysisEventWorkbookReview
+} from '@tokenjunkielabs/starforge-merchant/buyer/mcp/analysis-events-workbook';
+
+const selected = {
+  directory: privateReceivingDirectory,
+  analysisWorkspace: originalConfiguredAlias,
+  expectedWorkspaceId: originalWorkspaceId,
+  programme: originalProgramme,
+  actionId: retainedApplyActionId
+};
+const prepared = await prepareNativeAnalysisEventWorkbookReview({
+  ...selected,
+  workingPath: completeReviewedWorkingJSON,
+  note: originalCustomerDecision
+});
+~~~
+
+The existing private parent directory must already exist. The helper creates
+only its named receiving directory and retains
+`original-working-review.json` with the exact incoming bytes, followed by
+`workbook-apply-request.json`. Different existing work is preserved. If
+preparation stops after receiving the complete source but before the request,
+repeat the original preparation with the same note and identities; the locally
+received full file is sufficient. A completed preparation independently
+reopens without the producer file.
+
+Preparation runs the original shared model, checks the whole source/history
+and native column selection, and stores the exact source identity and selected
+column digest in the small native request. It preserves the full source even
+though the actual MCP Apply message carries only its immutable reference.
+
+### Apply, inspect an uncertain result and continue that exact action
+
+~~~js
+const first = await applyNativeAnalysisEventWorkbookReview({
+  ...selected, client
+});
+// Receive a later complete native status without dispatching another mutation:
+const current = await receiveNativeAnalysisEventWorkbookReview({
+  ...selected, client
+});
+~~~
+
+The helper first checks the registered native workspace UUID. It creates or
+reopens the same source selection and sends complete 64 KiB chunks at the
+accepted contiguous offset. A replayed chunk must be byte-identical. The
+receiver assembles and hashes the entire original file before marking it
+complete; a changed chunk, source ID or digest leaves the differing work
+unadopted.
+
+The provider derives the full native arrays using the original shared model
+and checks their digest before dispatch. It forwards the complete
+`column_review` and those arrays to the existing native action. Only this
+explicit reviewed Apply uses the internal 17 MiB native-request allowance;
+ordinary transport limits remain in place. The external MCP message stays
+small. No native workbook, archive or customer-source writer is replaced.
+
+The native action retains the full request before execution and runs the
+existing installed Python validator. That validator binds the original
+proposal, operation and review; checks the complete selected arrays through
+the installed original CLI; and records its complete source module identities.
+The original programme then performs conversion, customer-definition and
+native revision checks.
+
+A tool timeout after Apply does not determine whether that action ran. Use
+`receiveNativeAnalysisEventWorkbookReview` with the same saved selection.
+Its full action tells the actual READY, RUNNING, COMPLETE, ERROR or INTERRUPTED
+state. If the retained native action needs explicit continuation, inspect its
+actual error/current work and deliberately call:
+
+~~~js
+const continued = await applyNativeAnalysisEventWorkbookReview({
+  ...selected, client, resume: true
+});
+~~~
+
+The same retained request and source are reused. RUNNING and COMPLETE reopen
+the native action; an unchanged ERROR or INTERRUPTED action continues through
+the native coordinator. A deliberately revised review, note or column input
+needs its own new receiving directory and retained action ID.
+
+Every received action snapshot is read in complete hash-bound ranges and
+saved under `action-records/<sha256>.json`, with its exact descriptor beside
+it. Later status snapshots get their own identities. The helper checks the
+full native request against the retained source and checks any native review
+validation against the original working and column digests. The caller
+selects an exact completed snapshot for independent reopening:
+
+~~~js
+const reopened = await reopenNativeAnalysisEventWorkbookReview({
+  ...selected, recordSha256: current.record.sha256
+});
+~~~
+
+Offline reopening checks the complete source, saved request, selected action
+bytes, full original native request and validation. It does not contact a host
+or choose an arbitrary later record. Opening without `recordSha256` reopens
+the complete prepared source/request only. A missing or differing file is
+reported while every retained original remains in place.
+
+### Native source calls for an existing custom agent
+
+The shared client offers these named operations through the original Analysis
+action. `event-workbook-review-create` takes `{id,bytes,sha256}`;
+`event-workbook-review-source` reads the same `{id}`; and
+`event-workbook-review-chunk` takes `{id,offset,base64,sha256}`.
+Offsets are multiples of 65536 and chunks have that complete size except the
+final original remainder. The status binds schema, original workspace,
+source ID, complete byte count/digest, contiguous received count and complete
+state. Source data stays below the registered host's existing private
+`analysis/event-workbook-reviews` root.
+
+After the full source is received, call the unchanged `event-apply` identity
+with `column_review_source: {id,bytes,sha256}` and
+`columns_sha256`, plus programme/id/operation_id/review_sha256/note.
+The full arrays are derived on the provider. Supplying explicit `columns`
+as well requires exact equality. An inline `column_review` is available for
+a fitting small direct call; do not supply both source forms.
+
+The original saved action is the durable customer authority. Whole workspace
+archive/restore retains its complete review after dispatch. Provider upload
+chunks are a transport working copy; the client retains its complete original
+file independently, and a different received host can re-receive that same
+source before continuing the original action. Read the original saved action
+and prepare a fresh linked sixteen-file delivery in the restored workspace.
+
+### Complete the same original customer receiving course
+
+Use the real unresolved proposal already retained by the Mercury/Event
+operation. Prepare a colleague assignment, reopen its complete editable HTML,
+retain independent original and reviewer edits, and return the actual full
+review. Inspect the full three-way sheet comparison and explicitly resolve
+the real overlap. Reopen the chosen working file through both the installed
+CLI and the typed agent preparation.
+
+Operate the source upload with its same identities, continue a genuinely
+interrupted transfer, invoke the original native Apply and receive its complete
+saved action. Reopen an explicitly selected snapshot independently. Open the
+native browser's Saved actions view, download its complete working review and
+editable HTML, then continue the original whole-workspace delivery, receiving
+and restore. The actual restored action must still expose the same full
+review, selected arrays and original source history.
+
+The producing maintainer must personally open/run/render the exact outgoing
+application, report and files, LOOK at the actual screens or returned real
+images, operate important controls at normal and relevant narrow widths, and
+open every download and reopened file. Capturing screenshots, reading source
+or obtaining peer approval does not replace seeing the product. Inspect
+populated, empty/loading/error and resumed states that this course uses, and
+repair practical defects in the original source. Return the actual original
+operation/workspace/action IDs, full files and real screens to the same
+receiving thread. Preserve that operation's actual owner schedule.
+
+### Preserve the owner's active local demo browser
+
+The owner handoff at https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791906463475599 quotes Bryce's instruction reserving his LOCAL Codex in-app browser from 16:00 UTC on 13 October 2026 until his explicit release. Do not navigate, reload, click, type, capture, inspect, resize or change tabs in that browser. Continue this original receiving course in its already authorized isolated cloud browser and continue source/native shell work. This is the quoted owner handoff; retain its attribution and do not invent a release time or a second browser controller.

@@ -17,6 +17,8 @@ const mappingReview={type:'object',additionalProperties:false,
  reviewer:{type:'string',minLength:1,maxLength:240},note,
  decisions:{type:'array',maxItems:200,items:{type:'object',additionalProperties:false,required:['name','reason'],
  properties:{name:{type:'string',minLength:1,maxLength:48},reason:{type:'string',minLength:1,maxLength:4000}}}}}};
+const workbookSource={type:'object',additionalProperties:false,required:['id','bytes','sha256'],
+ properties:{id,bytes:{type:'integer',minimum:1,maximum:16777216},sha256:hash}};
 const common={programme,id,operation_id:id,resume:{type:'boolean'}};
 const spec=(required,properties,description)=>({required,properties,description});
 export const nativeEventOperations=Object.freeze({
@@ -39,7 +41,17 @@ export const nativeEventOperations=Object.freeze({
  'Compare both exact accepted/current source editions and proposed mapping. The full immutable record retains every pointer, original mappings and new-event coverage; no native review/apply is dispatched.'),
  'event-review':spec(['programme','id','operation_id','input_id','mapping'],{...common,input_id:id,mapping,mapping_review:mappingReview},
  'Review the full received original event window through the existing native programme. The input, mapping and stable action are saved before dispatch.'),
+ 'event-workbook-review-create':spec(['id','bytes','sha256'],workbookSource.properties,
+ 'Retain the complete original worksheet-review file identity in the registered native workspace before receiving its bytes.'),
+ 'event-workbook-review-source':spec(['id'],{id},
+ 'Read accepted complete-file identity and contiguous byte offset for the original worksheet review.'),
+ 'event-workbook-review-chunk':spec(['id','offset','base64','sha256'],{id,offset:natural,
+ base64:{type:'string',minLength:1,maxLength:87384},sha256:hash},
+ 'Receive one exact 64KiB original worksheet-review chunk. Replay requires identical bytes at that same offset.'),
  'event-apply':spec(['programme','id','operation_id','review_sha256','note'],{...common,review_sha256:hash,note,
+ column_review:{type:'object',description:'Complete original worksheet handover, including assigned baselines, returned source and local receipts. Native validation is authoritative; use chunked column_review_source for a large file.'},
+ column_review_source:workbookSource,
+ columns_sha256:{...hash,description:'Digest of complete native column arrays derived from the selected original review; checked before dispatch.'},
  columns:{type:'object',description:'Complete existing workbook replacement-column arrays keyed by original sheet index. Original WorkbookRefresh validates every selected column.'}},
  'Apply the exact reviewed complete window and customer choices. Preserve this action ID and request across an uncertain reply.'),
  'event-refresh-review':spec(['programme','id','operation_id','review_sha256','note'],{...common,review_sha256:hash,note},
