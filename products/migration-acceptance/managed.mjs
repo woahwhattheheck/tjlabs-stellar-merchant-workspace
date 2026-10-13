@@ -10,10 +10,12 @@ import {CONNECTION_SCHEMA,STARTUP_SCHEMA,need,absolute,integer,hash,readFile,rea
   writeJson,privateDirectory,readLaunchConfiguration,MigrationClient,inside} from './connection.mjs';
 
 export const WORKBENCH_ROOT=fileURLToPath(new URL('./workbench/',import.meta.url));
-export const ORIGINAL_MANIFEST_SHA256='38fbf4bab1ec87dfc14c9b3d4bff3b580186bee0b78958410e8be89afa7332fc';
+// The export name is retained for the surrounding original adapter ABI.
+// This selected public derivative has its own exact source manifest.
+export const ORIGINAL_MANIFEST_SHA256='fbabde0b35342409e652fab1514e1892876ad865591067ddd59b4d4eb7bd90a5';
 export async function inspectOriginalSource(){
   const selected=await readJson(join(WORKBENCH_ROOT,'SOURCE_MANIFEST.json'),1024*1024,{privateOnly:false});
-  need(selected.sha256===ORIGINAL_MANIFEST_SHA256&&selected.value.files.length===207,
+  need(selected.sha256===ORIGINAL_MANIFEST_SHA256&&selected.value.files.length===204,
     'MIGRATION_SOURCE_SELECTION','Select the complete published original workbench source.',409);
   const names=new Set(['SOURCE_MANIFEST.json']);
   for(const entry of selected.value.files){
@@ -33,8 +35,8 @@ export async function inspectOriginalSource(){
     }
   }
   await walk(WORKBENCH_ROOT);
-  need(actual.length===208&&actual.every(path=>names.has(path)),'MIGRATION_SOURCE_CHANGED','Use the full unchanged 208-file original application.',409);
-  return{root:WORKBENCH_ROOT,manifestSha256:selected.sha256,files:208,bytes:selected.value.files.reduce((n,f)=>n+f.bytes,selected.bytes.length)};
+  need(actual.length===205&&actual.every(path=>names.has(path)),'MIGRATION_SOURCE_CHANGED','Use the complete 205-file public software edition.',409);
+  return{root:WORKBENCH_ROOT,manifestSha256:selected.sha256,files:205,bytes:selected.value.files.reduce((n,f)=>n+f.bytes,selected.bytes.length)};
 }
 export function managedOptions(argv){
   const raw={};

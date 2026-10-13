@@ -1,12 +1,12 @@
-# Commissioning and handover — Definian Migration Acceptance
+# Commissioning and handover — Migration Acceptance
 
-This is the practical handover for the scope in [WORKSHARE.md](WORKSHARE.md). The full source-level operator contract is [OPERATOR.md](OPERATOR.md); business-rule semantics are in [acceptance/OPERATING.md](acceptance/OPERATING.md). Keep those documents with the exact delivered source manifest.
+This is the practical handover for the [reusable technical scope guidance](WORKSHARE.md). The full source-level operator contract is [OPERATOR.md](OPERATOR.md); business-rule semantics are in [acceptance/OPERATING.md](acceptance/OPERATING.md). Keep those documents with the exact delivered source manifest.
 
 ## 1. Establish one installation and one operation owner
 
 Record the customer project, agreed resource/table inventory, installation owner, business data owner, receiving operator and workshare owner. The primary installation owns the active workspace and original native jobs. The receiving installation adopts the complete retained history and keeps imported native bindings suspended until an explicit authorized continuation.
 
-The proposed workshare uses one primary and one independent receiving installation. Record their installation IDs and platform/interpreter identities after actual installation; do not fill those fields from examples.
+The receiving course uses one primary and one independent receiving installation. Record their installation IDs and platform/interpreter identities after actual installation; do not fill those fields from examples.
 
 The browser, HTTP API and CLI use the same workspace. While its server owns the directory, use its HTTP/UI interface. Close that server before opening the same workspace through the standalone CLI. Keep original request IDs and exact request bodies whenever continuing a lost acknowledgement.
 
@@ -211,14 +211,14 @@ node receiving/receive.mjs --source /absolute/complete-product --directory /abso
 
 Continue an existing accepted operation with those same selected paths and `--resume`. Reconcile any actual native owner first. A source correction must use the supplied guarded source-adoption process and preserve the original selected source/history; do not rewrite an active selection ad hoc.
 
-At this document's preparation, the Definian reference native course is unstarted. After execution, actual completion requires the original operation journal, source-bound `CUSTOMER_RESULT.json`, complete artifact hashes, original native receipts, confirmed owner closure and receiving results. Keep reference and customer result identities separate.
+The original reference native course retains its actual execution state; this public source edition does not assert completion. After execution, actual completion requires the original operation journal, source-bound `CUSTOMER_RESULT.json`, complete artifact hashes, original native receipts, confirmed owner closure and receiving results. Keep reference and customer result identities separate.
 
 ## 11. Calendar, responsibilities and final handback
 
-Use the five phases and payment proposal in WORKSHARE.md. The migration lead reviews input holds each working day and records the next owner action and its effect on dates. The business owner supplies correction decisions within the agreed review slot so the planned 15 active business days remain meaningful.
+Use the technical phases in WORKSHARE.md and the actual customer agreement. The migration lead records input holds and the next owner action. Review slots, dates and dependency changes belong to the original agreed plan.
 
 At handover, the receiving operator signs the exact selected revision and artifact register. The host owner accepts access lifecycle, backups, retention destinations and ordinary runtime operation. The business owner accepts the required/reviewable policy and remaining expressly accepted exceptions. The original opportunity owner records commercial acceptance and the corresponding invoice milestone.
 
-The implementation team supplies the included 10-business-day handover correction window for agreed-deliverable defects. Each report names the original project/request/job and complete retained evidence so it can be corrected through the same history. New datasets, live connectors, production operations and future engine upgrades are scheduled as new agreed work.
+The implementation team follows the actual agreed handover and defect-correction terms. Each report names the original project/request/job and complete retained evidence so it can be corrected through the same history. New datasets, live connectors, production operations and future engine upgrades are scheduled as new agreed work.
 
 The finished handback is the complete editable workspace, matching runtime, full measured and decision history, named receiving packages, actual reopening evidence and named owners able to operate the next agreed migration edition.

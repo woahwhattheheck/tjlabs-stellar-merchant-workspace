@@ -1,7 +1,7 @@
 {
   "schema": "dlthub.complete-source-manifest.v1",
   "operation": "DLTHUB-PIPELINE-MIGRATION-0C7A-20261013",
-  "edition": "integration-7-runtime-archive-source-adoption",
+  "edition": "public-software-technical-guidance-20261013",
   "originalDltCommit": "2360d229c77f7f64692acc31a4555f4cfcd50ed3",
   "files": [
     {
@@ -26,8 +26,8 @@
     },
     {
       "path": "WORKSHARE.md",
-      "bytes": 5253,
-      "sha256": "2dfd7a8da25a49d52f7ab14cec5f32fda8082e8d20d13325457fc8bd71e8a22f"
+      "bytes": 3959,
+      "sha256": "c85183920862c5ee3bd30a0a1e662abf48f5d05cafe0559e506cc0642e022584"
     },
     {
       "path": "cli.mjs",
@@ -809,5 +809,9 @@
       "bytes": 9600,
       "sha256": "416d6d74a3c6e95c0a925de1dc34ef275026f8e986b32026c78729d6a5492189"
     }
-  ]
+  ],
+  "derivation": {
+    "originalManifestSha256": "aabdafdff261b9076c9675dac49c3c1e9a0490f806a7ec59048d6324efc61cf7",
+    "meaning": "Native implementation and runtime are unchanged; private commercial guidance is replaced with reusable technical scope."
+  }
 }
