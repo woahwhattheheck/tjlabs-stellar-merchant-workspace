@@ -35,7 +35,7 @@ export interface GrantReportingFullInput extends GrantReportingValues {
   catalog: CommandCatalog;
   /** Complete native case/show response, including program, plan, records and sources. */
   case: Record<string, unknown> | string;
-  /** Complete original planning source book or its native wrapper. */
+  /** Complete original book, retained book wrapper or Source Tables agent response; original file bytes stay retained. */
   sourceProject: Record<string, unknown> | string;
   sourceRoot?: string | null;
   sourceSelection?: string | null;
