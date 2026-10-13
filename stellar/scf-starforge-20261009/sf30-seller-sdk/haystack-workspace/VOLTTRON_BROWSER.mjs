@@ -17,11 +17,14 @@ export async function receiveVolttronBrowser({url,workspaceId,editionIds,outputD
  const client=new HaystackClient({url,workspaceId,token});
  const module=await import(pathToFileURL(resolve(playwrightModule)).href),browser=await module.chromium.launch({...launchOptions,headless:true,...(chromium?{executablePath:resolve(chromium)}:{})});
  const files=[],views=[],errors=[];
+ let result,primaryError;
  try{
   await client.connect();
   for(const viewport of [{name:"desktop",width:1440,height:1000},{name:"mobile",width:390,height:844}]){
-   const context=await browser.newContext({viewport:{width:viewport.width,height:viewport.height},acceptDownloads:true}),page=await context.newPage();page.on("pageerror",e=>errors.push(e.message));
+   const context=await browser.newContext({viewport:{width:viewport.width,height:viewport.height},acceptDownloads:true});
+   let contextError;
    try{
+    const page=await context.newPage();page.on("pageerror",e=>errors.push(e.message));
     await page.goto(url+"/volttron.html",{waitUntil:"domcontentloaded"});await page.locator("#connect").click();await page.locator("#connect-workspace").fill(workspaceId);if(token)await page.locator("#connect-token").fill(token);await page.locator("#connect-form button[type=submit]").click();
     await page.waitForFunction(id=>document.getElementById("workspace")?.textContent.includes(id)&&document.body.getAttribute("aria-busy")==="false",workspaceId);
     for(const panel of ["sources","profile","review","receiving","handover","history"]){await page.locator('[data-view="'+panel+'"]').click();need(await page.locator('[data-panel="'+panel+'"]').isVisible(),"The whole operator panel did not open: "+panel);}
@@ -35,7 +38,7 @@ export async function receiveVolttronBrowser({url,workspaceId,editionIds,outputD
      const seen=[];for(;;){seen.push(...await page.locator("#rows tr td:first-child .hash").allTextContents());if(await page.locator("#rows-next").isDisabled())break;await page.locator("#rows-next").click();}
      need(seen.length===rows.length&&new Set(seen).size===rows.length&&rows.every(r=>seen.includes(r.rowId)),"All original physical rows must remain accessible through the complete browser pages.");
      await page.locator('[data-view="handover"]').click();for(const format of ["json","csv","html"]){
-      const download=page.waitForEvent("download");await page.locator('[data-report="'+format+'"]').click();const d=await download,temporary=await d.path();need(temporary,"The complete report was not downloaded.");const bytes=await plainRead(temporary,192*1024*1024);
+      const download=page.waitForEvent("download");const [d]=await Promise.all([download,page.locator('[data-report="'+format+'"]').click()]);const temporary=await d.path();need(temporary,"The complete report was not downloaded.");const bytes=await plainRead(temporary,192*1024*1024);
       const retained=await page.evaluate(async()=>{const db=await new Promise((ok,no)=>{const r=indexedDB.open("commons.haystack.operator.v1",1);r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error);});try{return await new Promise((ok,no)=>{const tx=db.transaction("operations","readonly"),r=tx.objectStore("operations").getAll();r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error);});}finally{db.close();}});
       const operation=retained.filter(r=>r.workspaceId===workspaceId&&r.source==="volttron"&&r.action==="delivery.prepare"&&r.args.kind==="volttron-report"&&r.args.registryEditionId===editionId&&r.args.format===format&&r.state==="completed").at(-1);
       need(operation&&operation.receipt.sha256===sha(bytes)&&operation.receipt.bytes===bytes.length,"The downloaded file is not the complete original committed request.");
@@ -49,9 +52,10 @@ export async function receiveVolttronBrowser({url,workspaceId,editionIds,outputD
     // Refresh the same tab: original editor and its operation receipts must reopen.
     const selected=editionIds.at(-1);await page.reload({waitUntil:"domcontentloaded"});await page.locator("#connect").click();await page.locator("#connect-workspace").fill(workspaceId);if(token)await page.locator("#connect-token").fill(token);await page.locator("#connect-form button[type=submit]").click();
     await page.waitForFunction(id=>document.body.getAttribute("aria-busy")==="false"&&document.querySelector("#review-status")?.textContent.includes(id),selected);
-   }finally{await context.close();}
+   }catch(error){contextError=error;throw error;}finally{try{await context.close();}catch(cleanupError){if(contextError)throw new AggregateError([contextError,cleanupError],"Original browser journey and context cleanup both failed.");throw cleanupError;}}
   }
   need(errors.length===0,"The original complete browser reported errors: "+errors.join("; "));
-  const result={schema:"commons.haystack.volttron-browser-receiving.v1",selection,views,files,errors,actualBrowser:true};await save(completedPath,json(result));return result;
- }finally{await browser.close();}
+  result={schema:"commons.haystack.volttron-browser-receiving.v1",selection,views,files,errors,actualBrowser:true};
+ }catch(error){primaryError=error;throw error;}finally{try{await browser.close();}catch(cleanupError){if(primaryError)throw new AggregateError([primaryError,cleanupError],"Original browser journey and browser cleanup both failed.");throw cleanupError;}}
+ await save(completedPath,json(result));return result;
 }

@@ -1,3 +1,4 @@
+import { consumerDefinitions } from "./consumer-actions.mjs";
 import { volttronDefinitions } from "./volttron-actions.mjs";
 import { projectionDefinitions } from "./projection-actions.mjs";
 import { need, plain, own, fields } from "./util.mjs";
@@ -21,6 +22,7 @@ const returnDecisions = list({ type: "object", properties: {
   choices: { type: "object", properties: returnChoices, additionalProperties: false }
 }, required: ["itemId", "decision", "expectedHeadSha256"], additionalProperties: false });
 const definitions = [
+  ...consumerDefinitions,
   ...semanticDefinitions,
   ...projectionDefinitions,
   ...volttronDefinitions,
@@ -56,7 +58,7 @@ const definitions = [
   ["return.apply", "Apply the original operator's per-item return decisions and explicit conflict choices while retaining both work histories.", { ...mutation, ...workAuthor, base64: s, decisions: returnDecisions }, ["operationId", "expectedRevision", "author", "note", "base64", "decisions"], true],
   ["returns.list", "Page all original operator decisions on received corrective-work packages.", { ...revision, ...paging }, ["expectedRevision"], false],
   ["return.read", "Read the complete original operator decision for one received work package.", { ...revision, returnId: s }, ["expectedRevision", "returnId"], false],
-  ["delivery.prepare", "Save a complete editable workspace, corrective-work register, source-linked asset register, diagnostic report or native grid.", { ...mutation, kind: choice(["workspace", "register", "diagnostics", "native-grid", "work-register", "semantic-report", "semantic-dictionary", "semantic-output", "projection-grid", "projection-lineage", "projection-report", "volttron-report", "volttron-output", "volttron-receiving-output"]), format: choice(["json", "csv", "html", "zinc"]), editionId: s, sourceId: s, role: choice(["site", "equip", "point", "all"]), modelId: s, versionId: s, projectionId: s, validationId: s, registryEditionId: s, receivingId: s, name: s }, ["operationId", "expectedRevision", "kind"], true],
+  ["delivery.prepare", "Save a complete editable workspace, corrective-work register, source-linked asset register, diagnostic report or native grid.", { ...mutation, kind: choice(["workspace", "register", "diagnostics", "native-grid", "work-register", "semantic-report", "semantic-dictionary", "semantic-output", "projection-grid", "projection-lineage", "projection-report", "volttron-report", "volttron-output", "volttron-receiving-output", "consumer-report", "consumer-return"]), format: choice(["json", "csv", "html", "zinc"]), editionId: s, sourceId: s, role: choice(["site", "equip", "point", "all"]), modelId: s, versionId: s, projectionId: s, validationId: s, registryEditionId: s, receivingId: s, consumerProjectId: s, consumerRunId: s, name: s }, ["operationId", "expectedRevision", "kind"], true],
   ["delivery.read", "Read the exact bytes of one completed delivery in content-bound ranges.", { operationId: s, offset: n, length: { type: "integer", minimum: 1, maximum: 4194304 } }, ["operationId"], false]
 ];
 export const actions = definitions.map(([action, description, properties, required, writes]) => ({

@@ -13,6 +13,7 @@ import {actions, validateArguments} from "./catalog.mjs";
 import {plainRead, createOnlyFile} from "./files.mjs";
 import {canonical} from "./util.mjs";
 import {projectionHelp,projectionCommandOptions,runProjectionCommand} from "./projection-cli.mjs";
+import {consumerHelp,consumerCommandOptions,runConsumerCommand} from "./consumer-cli.mjs";
 
 const REQUEST_FORMAT="commons.haystack.operator.request.v1";
 const SOURCE_LIMIT=32*1024*1024;
@@ -350,7 +351,7 @@ Existing output files are accepted only when their complete bytes already match.
 `;
 export async function main(argv=process.argv.slice(2)){
   const {command,flags,positionals}=parse([...argv]);
-  if(command==="help"||flags.help){process.stdout.write(HELP+projectionHelp);return;}
+  if(command==="help"||flags.help){process.stdout.write(HELP+projectionHelp+consumerHelp);return;}
   if(command==="request"){
     if(positionals.length!==1)throw new Error("Use request ACTION --args OBJECT.json.");
   }else if(positionals.length)throw new Error("Unexpected positional argument: "+positionals[0]);
@@ -399,7 +400,9 @@ export async function main(argv=process.argv.slice(2)){
     await workspace.read();return serveStdio(workspace);
   }
   const projectionCommands=projectionCommandOptions(mutationFlags,pageFlags);
+  const consumerCommands=consumerCommandOptions(mutationFlags,pageFlags);
   const specific={
+    ...consumerCommands,
     ...projectionCommands,
 "volttron-status":[],
 "volttron-configuration":["configuration-id"],
@@ -446,6 +449,7 @@ export async function main(argv=process.argv.slice(2)){
   if(!specific[command])throw new Error("Unknown command "+command+". Use help for the complete workflow.");
   options(flags,[...sharedFlags,...specific[command]]);
   const target=await targetFor(flags);
+  if(consumerCommands[command])return runConsumerCommand(command,flags,target,{required,one,clean,optionalNote,revisionArgs,allPages,output,performMutation,deliveryToFile,readJson,plainRead,semanticBytes,exactFile});
   if(projectionCommands[command])return runProjectionCommand(command,flags,target,{required,one,clean,optionalNote,semanticInput,revisionArgs,allPages,output,performMutation,deliveryToFile,readJson,plainRead});
 
   // Registry commands share the original complete request journal, CAS and delivery path.

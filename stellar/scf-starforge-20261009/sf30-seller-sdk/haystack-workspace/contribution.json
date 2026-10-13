@@ -1,14 +1,14 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "haystack-workspace",
-  "description": "Native JSON-v4 and Zinc 3.0 building grids, assigned corrective work, complete evidence, explicit review, source editions and recipient returns; original point-list mapping, reviewed semantic models and native Brick validation; explicit typed-grid projections, complete source lineage, reviewed native publication and returned row decisions",
+  "description": "Native JSON-v4 and Zinc 3.0 building grids, assigned corrective work, complete evidence, explicit review, source editions and recipient returns; original point-list mapping, reviewed semantic models and native Brick validation; explicit typed-grid projections, complete source lineage, reviewed native publication and returned row decisions; complete consumer receiving, frozen expected populations, original evidence and named acceptance",
   "commands": {
     "haystack": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/cli.mjs",
     "haystack-mcp": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/mcp.mjs"
   },
   "commandDescriptions": {
-    "haystack": "Operate original building grids, corrective work, point-list mapping, saved semantic models, native Brick validation and complete contractor returns; explicit typed-grid projection, original cell lineage, version review and complete returned-grid keep/adopt",
-    "haystack-mcp": "Serve the complete original native action catalog, including point-list modelling and contractor-return decisions, over local MCP stdio; typed-grid projection and original returned-row decisions"
+    "haystack": "Operate original building grids, corrective work, point-list mapping, saved semantic models, native Brick validation and complete contractor returns; explicit typed-grid projection, original cell lineage, version review and complete returned-grid keep/adopt; complete consumer plan, run, evidence, review and original opened-run return",
+    "haystack-mcp": "Serve the complete original native action catalog, including point-list modelling and contractor-return decisions, over local MCP stdio; typed-grid projection and original returned-row decisions; all consumer evidence, planning, receiving, review and return actions"
   },
   "exports": {
     "./seller/haystack": {
@@ -40,7 +40,10 @@
     "./seller/haystack/projection-model": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/projection-model.mjs",
     "./seller/haystack/projection-receiving": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/PROJECTION_RECEIVING.mjs",
     "./seller/haystack/projection-browser": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/PROJECTION_BROWSER.mjs",
-    "./seller/haystack/volttron": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/volttron-registry.mjs"
+    "./seller/haystack/volttron": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/volttron-registry.mjs",
+    "./seller/haystack/consumer": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-acceptance.mjs",
+    "./seller/haystack/consumer-actions": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-actions.mjs",
+    "./seller/haystack/consumer-reports": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-reports.mjs"
   },
   "applicationProviders": {
     "haystack-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/application-provider.mjs"

@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "haystack-turnover",
   "title": "Haystack building turnover and point modelling",
-  "description": "Original building grids, corrective work, complete point-list mapping, saved semantic models, offline Brick validation and editable contractor returns",
+  "description": "Original building grids, corrective work, complete point-list mapping, saved semantic models, offline Brick validation and editable contractor returns; frozen consumer plans, complete target evidence, named acceptance and original contractor evidence returns",
   "base": {
     "commands": [
       "installation",
@@ -98,7 +98,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Native Haystack turnover and corrective work with source-linked point modelling, exact Brick reports, explicit contractor-return review and complete editable customer receiving",
+    "description": "Native Haystack turnover and corrective work with source-linked point modelling, exact Brick reports, explicit contractor-return review and complete editable customer receiving; selected-consumer review and complete original evidence receiving",
     "readme": "products/haystack/OPERATING.md",
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"

@@ -8,6 +8,32 @@ const jsonRange = { offset: { type: "integer", minimum: 0 }, length: { type: "in
 export const HAYSTACK_SEMANTIC_READ_ACTIONS = nativeTools.filter(value => !value.annotations?.readOnlyHint ? false :
   value.action.startsWith("semantic.") && (value.action.endsWith(".list") || value.action.endsWith(".read") || ["semantic.catalog", "semantic.model.compare"].includes(value.action)) &&
   !["semantic.source.read", "semantic.output.read"].includes(value.action)).map(value => value.action);
+export const HAYSTACK_CONSUMER_READ_ACTIONS = nativeTools.filter(value => value.annotations?.readOnlyHint &&
+  ((value.action.startsWith("consumer.") && (value.action.endsWith(".read") || value.action.endsWith(".list")) &&
+    value.action !== "consumer.file.read") || value.action === "operation.read")).map(value => value.action);
+const consumerFileRoutes = {
+  "consumer.file.retain": { kind: "consumer-file", fields: ["base64", "name", "mediaType"] },
+  "consumer.plan.preview": { kind: "consumer-content", fields: ["content"] },
+  "consumer.project.create": { kind: "consumer-content", fields: ["content"] },
+  "consumer.project.save": { kind: "consumer-content", fields: ["content"] },
+  "consumer.run.preview": { kind: "consumer-content", fields: ["content"] },
+  "consumer.run.receive": { kind: "consumer-content", fields: ["content"] },
+  "consumer.return.preview": { kind: "consumer-return", fields: ["base64"] },
+  "consumer.return.apply": { kind: "consumer-return", fields: ["base64"] }
+};
+export const HAYSTACK_CONSUMER_FILE_ROUTES = Object.fromEntries(Object.entries(consumerFileRoutes).map(([action, value]) =>
+  ["merchant_haystack_" + action.replaceAll(".", "_") + "_file", { action, ...value }]));
+function consumerFileAction(tool, name, route) {
+  const native = nativeTools.find(value => value.action === route.action);
+  if (!native) throw new Error("The original Haystack catalog lacks " + route.action + ".");
+  const properties = Object.fromEntries(Object.entries(native.inputSchema.properties).filter(([key]) => !route.fields.includes(key)));
+  const preview = !native.annotations.readOnlyHint ? {} : jsonRange;
+  return tool(name, native.description + " Read the complete host-pinned " + route.kind +
+    " alias. Read-only previews also support complete JSON byte ranges.",
+    { ...workspace, ...properties, ...file, ...preview },
+    ["workspace", ...native.inputSchema.required.filter(key => !route.fields.includes(key)), "input", "expectedSha256"],
+    { readOnly: native.annotations.readOnlyHint, idempotent: native.annotations.idempotentHint });
+}
 function fileAction(tool, action, description) {
   const native = nativeTools.find(value => value.action === action);
   if (!native) throw new Error("The selected original Haystack catalog lacks " + action + ".");
@@ -34,6 +60,10 @@ export function haystackWorkspaceTools(tool) {
     }, ["workspace", "operationId", "expectedRevision", "input", "expectedSha256"], write),
     tool("merchant_haystack_semantic_read", "Read a complete original semantic JSON view through content-bound byte ranges. Keep the same action, arguments, workspace revision and returned SHA-256 for every range, then decode the complete UTF-8 JSON.",
       { ...workspace, action: { type: "string", enum: HAYSTACK_SEMANTIC_READ_ACTIONS }, args: { type: "object" }, ...jsonRange }, ["workspace", "action", "args"], read),
+    tool("merchant_haystack_consumer_read", "Read a complete consumer project, run, file collection or original operation outcome through SHA-256-bound UTF-8 JSON ranges. Preserve the original arguments, revision and response hash on continuation.",
+      { ...workspace, action: { type: "string", enum: HAYSTACK_CONSUMER_READ_ACTIONS }, args: { type: "object" }, ...jsonRange },
+      ["workspace", "action", "args"], read),
+    ...Object.entries(HAYSTACK_CONSUMER_FILE_ROUTES).map(([name, route]) => consumerFileAction(tool, name, route)),
     fileAction(tool, "semantic.intake.import", "Import the complete pinned CSV/TSV through the original native point-list inspector; its declared format, delimiter, source and request identity remain exact."),
     fileAction(tool, "semantic.return.preview", "Read the complete pinned contractor workspace and compare every returned model against its exact current local heads. Optional offset/length returns the complete original JSON view in SHA-bound ranges for large comparisons."),
     fileAction(tool, "semantic.return.apply", "Apply the complete explicitly reviewed keep/adopt decisions from the same pinned returned workspace, retaining both histories and the original request."),

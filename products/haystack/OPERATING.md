@@ -13,6 +13,8 @@ The operator imports original Haystack JSON v4 or Zinc 3.0, inspects source-loca
 | Native grid API | `./seller/haystack/types` |
 | Durable workspace | `./seller/haystack/workspace` |
 | Corrective work API | `./seller/haystack/corrective-work` |
+| Consumer receiving | `/consumer.html` on the original server |
+| Consumer domain API | `./seller/haystack/consumer` |
 | Complete receiving | `./seller/haystack/portable` |
 | Managed agent | `haystack-workspaces` provider |
 | Selected installation | `--selection haystack-turnover` |
@@ -102,7 +104,7 @@ Read the complete [corrective-work guide](../../stellar/scf-starforge-20261009/s
 
 ## Hand over an editable project
 
-Create a complete workspace delivery through the browser or CLI. It carries the full saved state, every original source, all proposals/reviews and editions, every corrective-work event and evidence file, original mutation outcomes, and all 41 portable application files.
+Create a complete workspace delivery through the browser or CLI. It carries the full saved state, every original source, all proposals/reviews and editions, every corrective-work event and evidence file, original mutation outcomes, and all 96 portable application files in the current v7 package.
 
 The operator guide's receiving command installs it into a new directory. Start its own `application/cli.mjs` against that directory, or select it in the same managed Applications view. The receiving team can continue native source import, tag review, assignments, evidence, corrective-work review and delivery under the original workspace identity.
 
@@ -193,4 +195,29 @@ Retain the original operation directory, request files, browser profile and sele
 
 ## Zinc native formats
 
-The installed source includes the complete Zinc 3.0 codec and [Zinc contract](../../stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/ZINC_CONTRACT.md). Choose `--format zinc` for original grid intake or native-grid export; JSON-v4 remains the default. Host-pinned source aliases accept `format: "zinc"`. New workspace packages include every codec/reference file under v6, while the original v1/v2/v3/v4/v5 packages remain receivable with their exact inventories. Customer consumer selection and commissioning remain explicit.
+The installed source includes the complete Zinc 3.0 codec and [Zinc contract](../../stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/ZINC_CONTRACT.md). Choose `--format zinc` for original grid intake or native-grid export; JSON-v4 remains the default. Host-pinned source aliases accept `format: "zinc"`. Current v7 workspace packages include every codec/reference and consumer file. The published v1/v2/v3/v4/v5/v6 packages remain receivable with their exact inventories. Customer consumer selection and commissioning remain explicit.
+
+
+## Selected consumer receiving and acceptance
+
+Open **Consumer receiving** from the installed application's related links or the original workspace navigation. Read the full [consumer operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CONSUMER_OPERATING.md) for the browser, CLI, SDK, native agent and contractor-return course.
+
+Select an existing typed projection and freeze the actual consumer product, build, dictionary and interface. Retain the complete source, target input, mapping and independent expected-population evidence. Record each question's exact expected IDs and typed values before observing the target result. A named reviewer makes that immutable plan ready; each run binds that exact review and projection version.
+
+Retain the actual command or query, original inputs, stdout/stderr, process outcome and complete observed populations. The desk compares missing, unexpected and repeated identities and typed values. Failed or interrupted outcomes stay visible. A matching technical result is reviewed separately for acceptance, accepted exceptions or changes; a renewed plan review requires a new run and explicit acceptance.
+
+The original request journal and browser draft store preserve operation IDs, reviewed heads, complete payloads and conflicting edits. After a lost response, recover the retained request. Preview receiving capacity before applying a full contractor return; the same exact capacity is checked at application. Original return bytes, customer reviews and complete recipient projection evidence remain traceable. The author records their own review, and adopting customer evidence does not silently change the author's projection head.
+
+Use the installed CLI against the same project:
+
+~~~sh
+starforge haystack consumer-projects --directory /absolute/private/building
+starforge haystack consumer-project --directory /absolute/private/building --project-id ORIGINAL_PROJECT_UUID
+starforge haystack consumer-report --directory /absolute/private/building --project-id ORIGINAL_PROJECT_UUID --format html --out /absolute/consumer-report.html
+~~~
+
+All eighteen consumer commands use the existing request/replay and complete file-delivery mechanisms. The native action catalogue exposes the same sixteen actions. Configured Merchant aliases carry original evidence, complete plan/observation JSON and returned packages by host-pinned filename/hash; the guide documents all eight file routes and SHA-bound range readers.
+
+Export the full v7 workspace or an original opened-run consumer return. The saved project includes complete plans, reviews, run versions, original evidence, retained return records and author acceptance. JSON, CSV and HTML reports link these records to the original projection. The complete selected installation continues to include the original point modelling, Brick, Zinc, VOLTTRON and corrective-work interfaces.
+
+The source-native consumer programme is `CONSUMER_RECEIVING.mjs --input /absolute/original-consumer-input.json`; its browser companion is part of the same source selection. It operates the original 624-row Charlie dataset through the maintained local parser and complete receiving/review/return workflow. Preserve its original operation directory and input. The original programme's actual result records execution; selected partner Haystack/Niagara acceptance still requires that partner's real target evidence and named decision.

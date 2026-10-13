@@ -1,3 +1,4 @@
+import { consumerProjectionLinks } from "./consumer-reports.mjs";
 import { projectionRead } from "./projection-model.mjs";
 import { encodeGrid } from "./haystack-types.mjs";
 import { stringifyJson } from "./json-codec.mjs";
@@ -91,6 +92,8 @@ function* htmlReportFragments(read, report) {
     (cell.issue ? '<p>' + e(cell.issue.message) + '</p>' : '') + '</td></tr>';
   yield '</tbody></table><h2>Native publications and returned corrections</h2><pre>';
   yield* escapedJsonFragments({ publications: report.publications, returns: report.returns });
+  yield '</pre><h2>Selected consumer evidence and named decisions</h2><pre>';
+  yield* escapedJsonFragments(report.consumerRecords);
   yield '</pre></html>';
 }
 
@@ -127,6 +130,7 @@ export function makeProjectionDelivery(state, args, { stream = false } = {}) {
     reviews: read.reviews.filter(r => r.versionId === read.version.id),
     publications: read.publications.filter(r => r.versionId === read.version.id),
     returns: read.returns.map(({ base64, ...row }) => row),
+    consumerRecords: consumerProjectionLinks(state, read.projection.id, read.version.id),
     meaning: "A reviewed typed-grid projection and its original source lineage. Consumer acceptance belongs to the referenced original consumer record." };
   if (format === "html") return rendered({
     name: "haystack-projection-report-" + short + ".html", mediaType: "text/html; charset=utf-8"
