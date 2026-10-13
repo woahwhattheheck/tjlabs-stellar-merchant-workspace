@@ -29,11 +29,31 @@ export async function main(argv=process.argv.slice(2)){
   need(Object.keys(o).every(k=>['project','port','startupJson',...Object.keys(flags)].includes(k)),'LIGHTDASH_PROCEDURE_ARGUMENT','Use documented serve identity flags.');
   if(o.startupJson)need(Object.keys(flags).every(k=>typeof o[k]==='string'),'LIGHTDASH_PROCEDURE_ARGUMENT','Managed startup requires every reviewed identity.');
   const expected=Object.fromEntries(Object.entries(flags).filter(([k])=>o[k]!==undefined).map(([k,v])=>[v,o[k]]));
-  const service=await createOperatingPlanServer({projectDirectory,port:o.port===undefined?0:Number(o.port),expected});
-  process.stdout.write(JSON.stringify(o.startupJson?service.announcement:{state:'OPEN',url:service.url,workspaceId:service.workspaceId,instanceId:service.announcement.instanceId,nativeDispatch:false})+'\n');
-  let closing=false;
-  const close=async()=>{if(closing)return;closing=true;try{await service.close();process.exitCode=0;}catch(e){process.stderr.write(e.message+'\n');process.exitCode=1;}finally{process.off('SIGINT',close);process.off('SIGTERM',close);}};
-  process.on('SIGINT',close);process.on('SIGTERM',close);return;
+  const controller=new AbortController();let service,stopped=false,wake,keepalive,drained=false;
+  const stop=()=>{stopped=true;controller.abort();wake?.();};
+  process.on('SIGINT',stop);process.on('SIGTERM',stop);
+  const drain=async close=>{
+   for(;;){try{await close();return;}catch(error){
+    process.stderr.write(JSON.stringify({state:'CLOSE_INCOMPLETE',code:error.code??'LIGHTDASH_PROCEDURE_CLOSE_FAILED',
+     message:'Editor ownership retained. Inspect its failure, then signal this same process to retry draining.'})+'\n');
+    keepalive??=setInterval(()=>{},60000);
+    await new Promise(resolve=>{wake=resolve;});wake=null;
+   }}
+  };
+  try{
+   try{service=await createOperatingPlanServer({projectDirectory,port:o.port===undefined?0:Number(o.port),expected,startupSignal:controller.signal});}
+   catch(error){if(error.close)await drain(error.close);if(stopped&&error.code==='LIGHTDASH_PROCEDURE_START_CANCELLED')return;throw error;}
+   if(!stopped){
+    process.stdout.write(JSON.stringify(o.startupJson?service.announcement:{state:'OPEN',url:service.url,workspaceId:service.workspaceId,instanceId:service.announcement.instanceId,nativeDispatch:false})+'\n');
+    await new Promise(resolve=>{wake=resolve;if(stopped)resolve();});wake=null;
+   }
+   await drain(service.close);drained=true;
+  }finally{
+   if(service&&!drained)await drain(service.close);
+   if(keepalive)clearInterval(keepalive);
+   process.off('SIGINT',stop);process.off('SIGTERM',stop);
+  }
+  return;
  }
  const client=await connectProject(projectDirectory);
  try{

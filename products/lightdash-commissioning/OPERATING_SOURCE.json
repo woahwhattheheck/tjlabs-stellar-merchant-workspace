@@ -47,7 +47,8 @@
       "completedReturns": 1
     },
     "nativeParser": "not executed",
-    "browserReceiving": "not executed"
+    "browserReceiving": "not executed",
+    "lifecycleSourceReview": "Startup cancellation, acquired-client failure cleanup and retryable HTTP/client/receipt drain reviewed against original foreground ownership."
   },
   "files": [
     {
@@ -80,16 +81,16 @@
     },
     {
       "path": "products/lightdash-commissioning/operating-server.mjs",
-      "bytes": 6957,
-      "sha256": "c490836090a4ed100b0fd0987b51eb95f10f2c806c160f29b369fb0a3494f7eb",
-      "gitBlob": "c3c725a1cdec328e4991cc34a01a312872719e3c",
+      "bytes": 8002,
+      "sha256": "1dc97842940a67df1b000498b3e09655c5483e7039a3cbed125d0955c5be9491",
+      "gitBlob": "6e69775b2ff090544ec43ca709799507dd85ecc1",
       "preimageGitBlob": null
     },
     {
       "path": "products/lightdash-commissioning/operating-cli.mjs",
-      "bytes": 5136,
-      "sha256": "d0e8b8395d4dbdcebb67881e10cea6c95e43e78b98b93e67cfa44cef844425cb",
-      "gitBlob": "3d6c498193350716e6c6eac4a1614a728815c8eb",
+      "bytes": 5968,
+      "sha256": "a3377f74bf911e8f555b57859677cb4e80185dcfe752ec3448304106a5d9b78c",
+      "gitBlob": "92f121ce52c5f208646958464c33cbfe667afa68",
       "preimageGitBlob": null
     },
     {
@@ -150,9 +151,9 @@
     },
     {
       "path": "products/lightdash-commissioning/client.mjs",
-      "bytes": 15537,
-      "sha256": "cc64710ea2bc48d93533a3d0915e7258756a3f75128b6c18ee48198fa3b87a5c",
-      "gitBlob": "bb867d1bf6852107c620f2701f42255f32e8a6c1",
+      "bytes": 15869,
+      "sha256": "18efb56fcb0719f557f6aa713c820e729d64fd931a3e23afdf37806ce883c842",
+      "gitBlob": "a67bbcf068cdf7f87a404165cb3b493a5c51fa45",
       "preimageGitBlob": "fc480bcb0c46b055a930f84d419132404fcb018f"
     },
     {

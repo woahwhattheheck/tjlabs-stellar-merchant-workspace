@@ -8,23 +8,45 @@ import {connectProject} from './client.mjs';
 const assets=new Map([['/',['operating-web/index.html','text/html; charset=utf-8']],['/app.js',['operating-web/app.js','text/javascript; charset=utf-8']],['/style.css',['operating-web/style.css','text/css; charset=utf-8']]]);
 const methods=new Set(['source','list','read','create','adopt','save','capture','receive','return_preview','return_apply','export','request']);
 export const OPERATING_STARTUP_SCHEMA='stellar-forge.lightdash-operating-plan-startup.v1';
-export async function createOperatingPlanServer({projectDirectory,port=0,expected={}}){
+export async function createOperatingPlanServer({projectDirectory,port=0,expected={},startupSignal}){
  if(!Number.isInteger(port)||port<0||port>65535)throw new TypeError('Use a valid loopback port.');
- const client=await connectProject(projectDirectory),token=randomBytes(32).toString('hex'),pending=new Set();
- let closing=false,origin,closePromise,announcement,receiptFile;
- const project=client.project,host=client.session,instanceId=randomUUID();
+ const checkStartup=()=>need(!startupSignal?.aborted,'LIGHTDASH_PROCEDURE_START_CANCELLED','The procedure editor is closing.');
+ checkStartup();
+ // A startup cancellation never becomes the default signal for later accepted MCP work.
+ const token=randomBytes(32).toString('hex'),instanceId=randomUUID(),pending=new Set();
+ const client=await connectProject(projectDirectory);
+ let closing=false,origin,closePromise,announcement,receiptFile,server,httpClosed=false,clientClosed=false,receiptClosed=false,endedAt;
+ const project=client.project,host=client.session;
  const checkHost=async()=>{const current=await json(path.join(projectDirectory,'session.json'));
   need(current.phase==='OPEN'&&current.instanceId===host.instanceId&&current.authoringInstanceId===host.authoringInstanceId&&current.workspaceId===host.workspaceId&&current.workspaceIdentity===host.workspaceIdentity&&current.manifestSha256===host.manifestSha256&&current.mcpUrl===host.mcpUrl,
    'LIGHTDASH_PROCEDURE_HOST_CHANGED','The original project owner changed. Review a new editor Start.');
  };
+ const close=()=>{
+  closing=true;if(httpClosed&&clientClosed&&receiptClosed)return Promise.resolve({state:'CLOSED',instanceId});
+  if(!closePromise)closePromise=(async()=>{
+   if(!httpClosed){
+    if(server){server.closeIdleConnections?.();await new Promise((resolve,reject)=>server.close(error=>{
+     if(error&&error.code!=='ERR_SERVER_NOT_RUNNING')reject(error);else resolve();
+    }));}
+    await Promise.allSettled([...pending]);httpClosed=true;
+   }
+   if(!clientClosed){await client.close();clientClosed=true;}
+   if(!receiptClosed){
+    if(announcement){endedAt??=new Date().toISOString();await saveJson(receiptFile,{...announcement,phase:'CLOSED',endedAt});}
+    receiptClosed=true;
+   }
+   return {state:'CLOSED',instanceId};
+  })().catch(error=>{closePromise=null;throw error;});
+  return closePromise;
+ };
  let installation,projectSha256;
  try{
+  checkStartup();
   installation=await installedSource(project.installation.runtimeDirectory);projectSha256=digest(await readBytes(path.join(projectDirectory,'project.json'),{maximum:8*1024*1024,privateFile:true}));
   const actual={projectSha256,workspaceId:project.workspace.workspaceId,workspaceIdentity:project.workspaceIdentity,manifestSha256:installation.manifestSha256,hostInstanceId:host.instanceId,authoringInstanceId:host.authoringInstanceId};
   need(Object.keys(expected).every(k=>Object.hasOwn(actual,k)&&expected[k]===actual[k]),'LIGHTDASH_PROCEDURE_START_CHANGED','The reviewed project/host/source selection changed.');await checkHost();
- }catch(error){await client.close();throw error;}
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
- const server=http.createServer((req,res)=>{
+ server=http.createServer((req,res)=>{
   const call=(async()=>{
    if(closing)return send(res,503,{error:'Procedure editor is closing.'});
    if(req.headers.host!==new URL(origin).host)return send(res,421,{error:'Use this original loopback listener.'});
@@ -50,9 +72,13 @@ export async function createOperatingPlanServer({projectDirectory,port=0,expecte
    send(res,200,{...result,editor:{workspaceId:client.workspaceId,title:client.project.title,browserUrl:client.session.browserUrl}});
   })();pending.add(call);call.catch(error=>{if(!res.headersSent)send(res,400,{error:error.message,code:error.code??null});else res.destroy(error);}).finally(()=>pending.delete(call));
  });
- const close=()=>closePromise??=(async()=>{closing=true;server.closeIdleConnections?.();await new Promise(resolve=>server.close(resolve));await Promise.allSettled([...pending]);await client.close();if(announcement)await saveJson(receiptFile,{...announcement,phase:'CLOSED',endedAt:new Date().toISOString()});})();
- try{
-  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});
+  checkStartup();
+  await new Promise((resolve,reject)=>{
+   const failed=error=>{server.off('listening',listening);reject(error);};
+   const listening=()=>{server.off('error',failed);resolve();};
+   server.once('error',failed);server.once('listening',listening);server.listen(port,'127.0.0.1');
+  });
+  checkStartup();
   origin='http://127.0.0.1:'+server.address().port;
   await checkHost();
   need(digest(await readBytes(path.join(projectDirectory,'project.json'),{maximum:8*1024*1024,privateFile:true}))===projectSha256,'LIGHTDASH_PROCEDURE_START_CHANGED','The original project changed during startup.');
@@ -60,7 +86,7 @@ export async function createOperatingPlanServer({projectDirectory,port=0,expecte
   announcement={schema:OPERATING_STARTUP_SCHEMA,status:'LIGHTDASH_OPERATING_PLAN_READY',phase:'OPEN',directory:projectDirectory,projectId:project.id,projectSha256,workspaceId:client.workspaceId,workspaceIdentity:project.workspaceIdentity,
    manifestSha256:installation.manifestSha256,applicationManifestSha256:installation.application.manifestSha256,sourceRoot:installation.sourceRoot,executingSourceRoot:installation.executingRoot,
    hostInstanceId:host.instanceId,authoringInstanceId:host.authoringInstanceId,instanceId,browserUrl:origin+'/',mcpUrl:host.mcpUrl,pid:process.pid,nativeDispatch:false,startedAt:new Date().toISOString()};
-  await saveJson(receiptFile,announcement,{createOnly:true});
+  checkStartup();await saveJson(receiptFile,announcement,{createOnly:true});checkStartup();
   return {url:origin+'/',workspaceId:client.workspaceId,announcement,server,close};
- }catch(error){try{await close();}catch(cleanup){error.cleanupError=cleanup;}throw error;}
+ }catch(error){try{await close();}catch(cleanup){error.cleanupError=cleanup;error.close=close;}throw error;}
 }

@@ -20,7 +20,13 @@ export async function connectLightdash({url,tokenEnv='MCP_ACCESS_TOKEN',environm
  alias(workspace);uuid(expectedWorkspaceId);
  const transport=await openMerchantFileClient({url:endpoint(url),tokenEnv,environment,signal,
   errorPrefix:'LIGHTDASH_CLIENT',clientName:'lightdash-commissioning-project',maximumResponseBytes:32*1024*1024});
- let closed=false;const pending=new Set();
+ let closed=false,transportClosed=false,closing;const pending=new Set();
+ const close=()=>{
+  closed=true;if(transportClosed)return Promise.resolve();
+  if(!closing)closing=(async()=>{await Promise.allSettled([...pending]);if(typeof transport.close==='function')await transport.close();transportClosed=true;})()
+   .catch(error=>{closing=null;throw error;});
+  return closing;
+ };
  const call=async(tool,args={},options={})=>{
   need(!closed,'LIGHTDASH_CLIENT_CLOSED','This client is closed.');
   need(typeof tool==='string'&&tool.startsWith('merchant_lightdash_')&&plain(args),'LIGHTDASH_CLIENT_TOOL','Use a commissioning tool.');
@@ -29,13 +35,13 @@ export async function connectLightdash({url,tokenEnv='MCP_ACCESS_TOKEN',environm
   const p=Promise.resolve().then(()=>transport.call(tool,selected,{requestSignal:options.signal??signal,timeoutMs:options.timeoutMs??120000}));
   pending.add(p);try{return await p;}finally{pending.delete(p);}
  };
- const catalog=await call('merchant_lightdash_workspaces');
- const current=catalog.workspaces?.find(x=>x.workspace===workspace);
- need(current?.workspaceId===expectedWorkspaceId&&(!expectedInstanceId||current.instanceId===expectedInstanceId),
-  'LIGHTDASH_CLIENT_IDENTITY','The authenticated endpoint is not this original workspace/instance.');
- const result={url,workspace,workspaceId:expectedWorkspaceId,current,call,
-  async close(){closed=true;await Promise.allSettled([...pending]);if(typeof transport.close==='function')await transport.close();},
- };
+ let current;
+ try{
+  const catalog=await call('merchant_lightdash_workspaces');current=catalog.workspaces?.find(x=>x.workspace===workspace);
+  need(current?.workspaceId===expectedWorkspaceId&&(!expectedInstanceId||current.instanceId===expectedInstanceId),
+   'LIGHTDASH_CLIENT_IDENTITY','The authenticated endpoint is not this original workspace/instance.');
+ }catch(error){try{await close();}catch(cleanup){error.cleanupError=cleanup;error.close=close;}throw error;}
+ const result={url,workspace,workspaceId:expectedWorkspaceId,current,call,close};
  const methods={status:'status',inputs:'inputs',open:'open',closeWorkspace:'close',configure:'configure',intake:'intake',
   manifest:'manifest',select:'select',createDraft:'draft_create',selectDraft:'draft_select',editDraft:'draft_edit',seal:'seal',
   compare:'compare',review:'review',plan:'plan',operation:'operation',execute:'execute',inspect:'inspect',content:'content',
