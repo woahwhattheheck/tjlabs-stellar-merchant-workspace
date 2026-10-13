@@ -275,6 +275,12 @@
           "git_blob": "b009e0ea10eaf60da4226964b1555b72a21c71e8",
           "bytes": 16130,
           "sha256": "cb46d01750b6b6b14f1062c0fcb4bf2171e877155735c1360069d58efe4ba443"
+        },
+        {
+          "commit": "cdaafeb22d7ffdd080a11362822c28ad01ac96ab",
+          "git_blob": "29d37c23a5873428d8aab0f99adb80e7484b901c",
+          "bytes": 16968,
+          "sha256": "40de4438f21d6d6605c9ca62655eb5d6c4247796e3e3bd677a07723703fa33de"
         }
       ]
     },
@@ -291,6 +297,92 @@
           "git_blob": "d0f99177fd10fad04b5155c9f293671ebf1c1a30",
           "bytes": 1445,
           "sha256": "41d3b1aaf1e0f08df07afcef7d9e9b8309d5cdb21b5a9ed211424c405157e6d9"
+        },
+        {
+          "commit": "cdaafeb22d7ffdd080a11362822c28ad01ac96ab",
+          "git_blob": "21160b82c327068fabdcce4d6d2a16ec3e8d6c28",
+          "bytes": 2293,
+          "sha256": "c07452ca609dd66a9f2cef938bcc727ae8d949581bbaa44844a00666c078dad2"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-installation-core",
+      "label": "Original Workshare preparation from the complete received event result",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-installation-core.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cdaafeb22d7ffdd080a11362822c28ad01ac96ab",
+          "git_blob": "4f132fa391471f5b2592790c4e2ba02f605632c2",
+          "bytes": 3650,
+          "sha256": "1d3bd1de74cfe6dc359bfeabf364d2b9fda8bf0edbdf05d6effb72efce5532ed"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-installation-receiver",
+      "label": "Complete original Event to Customer Installation receiving and independent reopen",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-installation.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cdaafeb22d7ffdd080a11362822c28ad01ac96ab",
+          "git_blob": "770bb051e6e73890667b59baeb821fc70d5736ee",
+          "bytes": 14885,
+          "sha256": "9a4009098ba649c4cd2a00ff802b17ccc194f5111caf389ec0ede3a3c6533617"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-installation-types",
+      "label": "Typed full Event Installation preparation and reopen interface",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-installation.d.mts",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cdaafeb22d7ffdd080a11362822c28ad01ac96ab",
+          "git_blob": "d65b77b559b017fafc419626101d3131927346a5",
+          "bytes": 1660,
+          "sha256": "2f01a3c450089994f7f614b5476d3ad1afeec0c304ddce4c793abbb41db9aca4"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-installation-profile",
+      "label": "Complete selected Event Analysis Customer Installation profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/webhook-event-analysis.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cdaafeb22d7ffdd080a11362822c28ad01ac96ab",
+          "git_blob": "aac67fe12e484d8a84b940fc4f86d42eaffb25db",
+          "bytes": 14200,
+          "sha256": "ef735cae2796efec3641a8164d9707d81e3b5589ede3a1f530480a8e8e1d6a59"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-installation-operating",
+      "label": "Whole Event customer Installation, native save and complete receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/WEBHOOK_EVENT_ANALYSIS.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "cdaafeb22d7ffdd080a11362822c28ad01ac96ab",
+          "git_blob": "d8d75c733e8542be31a0589bd56f435ccbfb118b",
+          "bytes": 17416,
+          "sha256": "da5c6813fc060282ce6d913327476fa3079ca57f70ffcb16781d5a468bafb52d"
         }
       ]
     }
