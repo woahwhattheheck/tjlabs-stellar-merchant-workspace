@@ -1,6 +1,6 @@
 # Complete customer installation workorders
 
-This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained customer programme, including CoCart, Blockscout, Query.Farm, ARS air-quality, Lutra QGIS migration, supplier catalogue onboarding, supplier order integration, Stellarcarbon and CFCE/GiveCredit. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
+This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained customer programme, including CoCart, Blockscout, Query.Farm, ARS air-quality, Lutra QGIS migration, supplier catalogue onboarding, supplier order integration, Stellarcarbon, CFCE/GiveCredit and industrial reconciliation. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
 
 The profiles describe the whole useful customer task, the actual source contract, merchant-priced unit, receiving application, maintenance and interruption recovery. Customer selections stay in local bindings: original merchant/buyer IDs, approved source edition and rights, actual receiving host/engineer and original payment terms.
 
@@ -25,6 +25,10 @@ The maintained commercial importer remains the entry for an original customer Wo
 | LUTRA_QGIS.md | Full Lutra source, commercial phases, native operation, correction, complete receiving and handover |
 | georobotix-csapi.json | Complete selected Connected Systems source window → reviewed native editions → useful queries/comparison → independent customer receiving and original Installation |
 | GEOROBOTIX_CSAPI.md | Full GeoRobotix commissioning scope, exact selected archive/reference, operator/runtime setup, recovery and complete source/Installation handover |
+| industrial-reconciliation.json | Native historian or retained local sources → reviewed immutable editions → explicit normalization/tolerances → complete accounting, engineer decisions and editable customer receiving |
+| INDUSTRIAL_RECONCILIATION.md | Whole source/meaning intake, original Workshare phases and fee, Installation setup, operator/CLI/MCP workflow and independent complete receiving |
+| canadabuys-bidder-desk.json | Complete procurement source → reviewed capability/evidence/decision → original publication → editable independent customer receiving |
+| CANADABUYS_INSTALLATION.md | Original Workshare/source preparation, installed MCP customer, complete download/recovery and native Installation receiving |
 | supplier-catalogues.json | Complete supplier editions → selected customer import → full current recipient catalogue → customer receiving |
 | supplier-orders.json | Complete original order/profile/adapter → fulfilment and declared HTTPS → portable editable customer receiving |
 | source-inputs.py | Complete original packets and explicit effort sources → original native commissioning/packet formats |
@@ -37,6 +41,8 @@ Use the repository's maintained Linux/Node runtime. The preparation CLI uses Nod
 
 ## Discover the installed customer programmes
 
+For CanadaBuys procurement commissioning, select **canadabuys-bidder-desk** and follow [CANADABUYS_INSTALLATION.md](CANADABUYS_INSTALLATION.md). It carries the complete retained source, decision and installed customer workflow into the original Workshare/Installation; its actual execution status remains in the original receiving records.
+
 ~~~sh
 starforge grant-installation-workorder profiles
 
@@ -45,7 +51,7 @@ node stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare.mj
 
 The catalogue returns each installed profile's ID, title and complete-file source identity. Both commands use the same profile loader. A complete new customer profile JSON and guide join this directory; matching packaged profiles are discovered by the preparer and receiver. Each profile's schema and ID must match its regular source file. The loader retains the existing 2 MiB source-file limit and reads the selected complete JSON before preparation or native customer receiving.
 
-Choose the actual customer programme from that installed catalogue. [LUTRA_QGIS.md](LUTRA_QGIS.md) gives the full original migration scope and native operating route.
+Choose the actual customer programme from that installed catalogue. [LUTRA_QGIS.md](LUTRA_QGIS.md) gives the full original migration scope and native operating route. [INDUSTRIAL_RECONCILIATION.md](INDUSTRIAL_RECONCILIATION.md) covers reviewed historian and local-data commissioning through complete paired reconciliation and editable customer receiving.
 
 ## 1. Receive the original commercial case
 
@@ -74,7 +80,7 @@ The [original Installation guide](../../sf47_budget_model/workspace/INSTALLATION
 
 ## 2. Prepare customer bindings
 
-Choose the original customer's installed profile, such as cocart, blockscout, queryfarm, ars-air-quality, lutra-qgis, supplier-catalogues, supplier-orders, stellarcarbon or cfce-givecredit for the selected actual product. The [customer programmes guide](CUSTOMER_PROGRAMMES.md) carries the complete Query.Farm and air-quality operating journeys. The [complete carbon reporting guide](CARBON_REPORTING.md) covers both reporting installations and their original commercial/source bindings.
+Choose the original customer's installed profile, such as cocart, blockscout, queryfarm, ars-air-quality, lutra-qgis, supplier-catalogues, supplier-orders, stellarcarbon, cfce-givecredit or industrial-reconciliation for the selected actual product. The [customer programmes guide](CUSTOMER_PROGRAMMES.md) carries the complete Query.Farm and air-quality operating journeys. The [complete carbon reporting guide](CARBON_REPORTING.md) covers both reporting installations and their original commercial/source bindings.
 
 ~~~sh
 node prepare.mjs template --profile cocart \
@@ -241,3 +247,16 @@ The input's optional customer **bindings** object edits only **merchantDeploymen
 Once every customer is saved, one complete Installation ZIP carries the entire original operating case, all sources, records and saved editions. The native receiving importer opens that complete case once, and the driver reopens every selected original Installation identity and edition in that receiving case. The private output includes each original seed, editable bindings/input, complete human workorder, the complete case ZIP and one native receiving result identifying both original and receiving cases.
 
 Interrupted source attachment or save is recovered from the original case's retained source and Installation identities. Reusing the same complete exported ZIP keeps the original importer request identity. The same output directory retains its exact selected invocation. Choose a new output directory for an intentionally changed receiving input. Original case-version conflicts are reconciled from a fresh native case; the original application remains the writer and source authority.
+
+
+## Propply / RentCheck property commissioning
+
+The `property-inspections` profile and [complete property commissioning guide](PROPERTY_COMMISSIONING.md) cover one actual buyer team/environment, the complete roster of at most 50 NYC properties, up to three existing templates, two authentic source editions and one existing report/PMS route.
+
+`starforge grant-installation-workorder property` (or `node prepare.mjs property`) uses the same maintained source. Its `workshare` command receives the full original cohort JSON, authors an explicitly proposed six-phase source, and calls the original Workshare normalizer before publication. The exact original USD 14,400 / 20-active-day proposal retains 84 assigned phase hours plus 16 included unallocated contingency hours. Native plan, cost, cash and customer acceptance records are created only through their existing operations.
+
+The `template`, `revise`, `inspect` and `prepare` commands retain the complete property/identity/rights/host/field/payment selection. The current case catalogue resolves actual source attachments while the selected file keeps its original case/plan identity. The `review-template` and `review` commands cover every property, source outcome, original inspection/report, exception, five customer examples and independent reopen, then produce the existing native Installation Return input.
+
+`property editor --out PRIVATE_DIRECTORY` produces the full offline editor, including the actual maintained compiler and original preparation core. It edits the whole ordered roster, opens all native/source inputs, exports every loaded file with its exact digest and reopens that complete input packet. It performs no service or native case call. The CLI and editor use the original Installation preview/save/return/import flow; 1FB3 retains the Property runtime and original paid HPD operation.
+
+Keep these complete additions with this directory: `property-inspections.json`, `property-commissioning-core.mjs`, `property-commissioning.mjs`, `property-commissioning-view.mjs` and `PROPERTY_COMMISSIONING.md`. The original `grant-operations` distribution selects this complete component and `sf47_budget_model`; its source collector carries these files and the native Workshare parser at their original relative paths.

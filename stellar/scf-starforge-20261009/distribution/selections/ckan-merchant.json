@@ -184,7 +184,8 @@
     "stellar/scf_2026/sf49_data_commissioning/source-edition-archive.py",
     "products/merchant-workspace/OPERATING.md",
     "products/ckan/SUPPORT.md",
-    "products/ckan/support-receiving.mjs"
+    "products/ckan/support-receiving.mjs",
+    "products/ckan/PACKAGE_README.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
@@ -196,7 +197,7 @@
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""
     },
-    "readme": "products/ckan/OPERATING.md",
+    "readme": "products/ckan/PACKAGE_README.md",
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
     }

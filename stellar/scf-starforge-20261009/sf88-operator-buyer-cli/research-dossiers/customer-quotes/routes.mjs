@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {pipeline} from 'node:stream/promises';
 import {Readable} from 'node:stream';
 import {readBrowserAssets} from '../../../distribution/browser-assets.mjs';
-import {QUOTE_REQUEST_LIMIT,id,alias,need} from './contracts.mjs';
+import {QUOTE_REQUEST_LIMIT,QUOTE_CASE_TRANSFER_LIMIT,id,alias,need} from './contracts.mjs';
 const assets=await readBrowserAssets(new URL('./browser-assets.json',import.meta.url));
 export async function readResearchQuoteAsset(path){
  const selected=assets.get(path);return selected?{body:await readFile(selected.url),contentType:selected.type}:null;
@@ -73,6 +73,8 @@ export async function handleResearchQuoteRoute({req,res,url,send,readJson,contro
    parameters(url,[]);
    const actions={
     '/cases/create':body=>controller.createCase(body),
+    '/case-transfers/prepare':body=>controller.prepareCaseTransfer(body),
+    '/case-transfers/apply':body=>controller.applyCaseTransfer(body),
     '/prepare':body=>controller.prepare(body),
     '/responses/prepare':body=>controller.prepareResponse(body),
     '/apply':body=>controller.apply(body),
@@ -86,7 +88,7 @@ export async function handleResearchQuoteRoute({req,res,url,send,readJson,contro
    if(selected){id(selected[1]);action=body=>controller.caseAction(selected[1],selected[2],body);}
    if(pricing){alias(pricing[1]);action=body=>controller.pricing(pricing[1],pricing[2],body);}
    need(action,'RESEARCH_QUOTE_ROUTE_NOT_FOUND',404);
-   const body=await readJson(req,QUOTE_REQUEST_LIMIT);dispatched=true;
+   const body=await readJson(req,relative==='/case-transfers/prepare'?QUOTE_CASE_TRANSFER_LIMIT:QUOTE_REQUEST_LIMIT);dispatched=true;
    send(200,await action(body));return true;
   }
   send(404,{error:'RESEARCH_QUOTE_ROUTE_NOT_FOUND'});return true;

@@ -27,7 +27,25 @@ export const DOCUMENT_SERVICE_SELECTION_SCHEMA = 'stellar-forge.document-service
 export const DOCUMENT_SERVICE_SOURCE = 'products/document-merchant';
 export const DOCUMENT_SERVICE_SOURCE_FILES = Object.freeze([
   'cli.mjs', 'launch.mjs', 'setup.mjs', 'contracts.mjs', 'renderer.mjs',
-  'examples/report.html', 'examples/report.md'
+  'batch.mjs', 'batch-cli.mjs', 'batch-render.mjs', 'composition.mjs', 'composition-cli.mjs',
+  'composition-service.mjs',
+  'composition-workspace.mjs',
+  'composition-server.mjs',
+  'composition-browser-assets.json',
+  'composition-public/index.html',
+  'composition-public/app.mjs',
+  'composition-public/style.css',
+  'examples/report.html',
+  'examples/report.md',
+  'examples/composition/orders.json',
+  'examples/composition/invoice.html',
+  'examples/composition/greeting.html',
+  'examples/composition/order-documents.json',
+  'examples/composition/order-lines.csv',
+  'examples/composition/grouped-order-documents.json',
+  'examples/composition/reports.csv',
+  'examples/composition/report.md',
+  'examples/composition/report-documents.json'
 ]);
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const JOB_FILES = Object.freeze([

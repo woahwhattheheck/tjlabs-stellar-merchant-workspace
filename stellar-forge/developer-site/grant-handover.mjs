@@ -1,6 +1,8 @@
+import {ISSUER_ROUTES,attachGrantIssuerContext} from './grant-issuer-context.mjs';
 // MIT. Add the handover to the original submission/editor asset composition.
 export const HANDOVER_OPERATION='SCF-SUBMISSION-HANDOVER-1B40-20261012';
 export const HANDOVER_ROUTES=[
+  ...ISSUER_ROUTES,
   ['/grant-handover-core.mjs',['grant-handover-core.mjs','text/javascript; charset=utf-8']],
   ['/grant-handover-source.mjs',['grant-handover-source.mjs','text/javascript; charset=utf-8']],
   ['/grant-handover-workspace.mjs',['grant-handover-workspace.mjs','text/javascript; charset=utf-8']],
@@ -22,7 +24,7 @@ export function attachGrantHandover(sourceIndex) {
     guide:'https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/GRANT_HANDOVER.md',
     meaning:'Exact source/evidence, prepared output and operator-recorded issuer observations inside the original editable draft. No automatic issuer action.',
   };
-  return result;
+  return attachGrantIssuerContext(result);
 }
 export function registerGrantHandoverAssets(manifest) {
   if(manifest?.schema!=='stellar-forge.browser-assets.v1'||!Array.isArray(manifest.routes))

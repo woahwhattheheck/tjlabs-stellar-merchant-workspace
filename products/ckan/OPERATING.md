@@ -1,13 +1,13 @@
 # CKAN data merchant
 
-
 The installed product also includes [merchant Support](SUPPORT.md): named CKAN
 workspace review, original incident watching, saved merchant cases and complete
 portable handoff receiving.
+
 Capture a complete CKAN resource, review its fields and source definitions, publish
 a native dataset, and hand the whole working project to another operator.
 The same saved project opens in the browser, through the CLI and through the
-merchant's forty CKAN tools. Later editions can be compared in full and accepted
+merchant's CKAN and DCAT tools. Later editions can be compared in full and accepted
 as a separately reviewed successor.
 
 The `ckan-merchant` source selection includes the original catalogue capture,
@@ -15,6 +15,15 @@ semantic projection, dataset publisher, merchant and buyer, reviewed refresh,
 whole-workspace transfer, Applications adapter, and Python customer source.
 Its [receiving guide](RECEIVING.md) carries a published project through a complete
 following edition and an independently reopened workspace.
+
+The product also opens complete DCAT-US catalogue documents in the same saved
+workbench. Its **dcat** command and **Catalogue migration** browser section retain
+original source bytes, converter and validation results, full dataset/series
+conservation, successive-edition comparisons, corrected candidates, cutover and
+rollback history. The [catalogue migration operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/MIGRATION_OPERATING.md)
+carries this whole workflow through a received and independently reopened
+workspace. Its [engine setup guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/DCAT_ENGINE.md)
+prepares the original pinned GSA converter and Python dependencies.
 
 ## Install the complete product
 
@@ -123,6 +132,38 @@ bundle, original selection and capture companions with the complete delivery.
 The [retained-source guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/RETAINED_PUBLIC_SOURCE.md)
 defines the exact member sequence and interruption behavior.
 
+
+## Open a DCAT-US catalogue project
+
+Initialize the document-migration project with its actual publisher origin and
+open the original application:
+
+~~~sh
+starforge dcat init \
+  --workspace /absolute/private/catalogue-project \
+  --origin https://open.gsa.gov
+
+starforge dcat serve \
+  --workspace /absolute/private/catalogue-project
+~~~
+
+The project declares its source kind as **dcat-us** and opens **Catalogue
+migration**. Receive the original JSON document with its label, declared profile
+and publisher reference. A preceding publisher edition and an operator-corrected
+candidate are separately retained inputs.
+
+Prepare an independent review, inspect the original schema results and complete
+dataset/series field changes, and record the chosen catalogue release. Each
+cutover names the expected current active release; restoration records another
+history entry selecting a prior candidate. The selected candidate can be
+downloaded for the customer's catalogue deployment.
+
+The same original Workspace archive and receiver include the DCAT documents,
+reviews and complete release history. Follow the
+[migration operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/MIGRATION_OPERATING.md)
+for the complete receiving, correction, edition comparison, deployment and
+rollback journey and exact **starforge dcat** commands.
+
 ## Review fields and publish
 
 In Editions, inspect the full captured fields and retained provider definitions.
@@ -182,6 +223,20 @@ Its CLI and seven refresh tools expose this same workflow.
 
 ## Operate through Applications and agents
 
+For a DCAT-US document project, choose **DCAT catalog migration** and select its
+existing private workspace directory and installed runtime. Set the common port
+and private environment file as needed; **SCF_DCAT_PYTHON** selects the prepared
+Python executable. The default **original** profile requires Python 3.13; for an
+actual prepared Python 3.12 interpreter, also set
+**SCF_DCAT_RUNTIME_PROFILE=portable-python312** in that same environment. See
+[the portable runtime guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/PORTABLE_RUNTIME.md).
+The ordinary Review, Save, Start and Open actions retain the
+original project, source, runtime and interpreter selection. The authenticated
+startup check opens that same project with Catalogue migration selected. Use
+Stop before opening a separate standalone writer. The
+[migration operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/MIGRATION_OPERATING.md)
+gives the complete setup, field selections, cutover and receiving flow.
+
 The original CKAN data merchant Applications provider opens one existing
 merchant configuration and project alias. Use its ordinary Review, Save,
 Start, Open and Stop flow with the selected runtime. Its browser and MCP service
@@ -197,9 +252,14 @@ for the actual connection JSON, original host initialization and environment
 fields. Use `starforge ckan-agent inspect` to inspect the retained declaration,
 then `starforge ckan-agent serve` to open its original owner.
 
-Forty CKAN MCP tools cover catalogue/capture, fields, publication, merchant and
-buyer operation, five whole-workspace transfer actions and seven refresh
-actions. Mutations carry the current `expectedOperationId`. Follow that saved
+The original CKAN MCP tools cover catalogue/capture, fields, publication,
+merchant and buyer operation, whole-workspace transfer and reviewed refresh.
+The DCAT tools add same-project catalogue import, exact review and file reads,
+cutover and rollback. Declare catalogue inputs as **dcat-catalog** aliases and
+optional typed mapping files as **dcat-mappings** aliases. The migration guide's
+**Operate through the merchant agent** section gives all eight DCAT tools,
+selected hashes, report pagination and complete receiving continuation.
+Mutations carry the current `expectedOperationId`. Follow that saved
 operation to completion; after interruption, reopen and continue the original
 request and item IDs. Retained file reads use the returned file identity,
 read handle and next offset.
@@ -243,8 +303,8 @@ continuation commands.
 
 ## Installed interfaces
 
-The source-owned `ckan` contribution exposes `ckan`, `ckan-publisher` and
-`ckan-agent`. The selected product also retains the original dataset, merchant,
+The source-owned `ckan` contribution exposes `ckan`, `ckan-publisher`,
+`ckan-agent` and `dcat`. The selected product also retains the original dataset, merchant,
 buyer, runtime and Python commands.
 
 | Package export | Original source |

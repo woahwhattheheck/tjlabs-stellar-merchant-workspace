@@ -45,14 +45,15 @@ export function transactionIdentity(row,accountId) {
 }
 export function financialFingerprint(row) {
   return sha(json({postedDate:row.postedDate,amount:row.amount,currency:row.currency,
-    payee:row.payee,reference:row.reference,checkNumber:row.checkNumber}));
+    payee:row.payee,reference:row.reference,checkNumber:row.checkNumber,
+    ...(row.camt?{camt:{creditDebit:row.camt.creditDebit,reversal:row.camt.reversal}}:{})}));
 }
 export function compactSourceRow(row) {
   const source=clone(row.source); delete source.raw;
   return Object.fromEntries(['id','providerId','providerKey','status','postedDate','postedAtRaw','postedAt',
     'amount','amountRaw','currency','currencyConversion','type','payee','extendedName','memo','reference','checkNumber',
     'serverTransactionId','userDate','availableDate','expiresAt','correction','runningBalance','issues','eligible',
-    'candidateFingerprint'].map(key=>[key,clone(row[key]??null)]).concat([['source',source]]));
+    'candidateFingerprint'].map(key=>[key,clone(row[key]??null)]).concat([['source',source]],row.camt?[['camt',clone(row.camt)]]:[]));
 }
 export function normalizeAccount(value) {
   need(plain(value),'INVALID_BANK_ACCOUNT','Provide an account name, exact source identity and currency.');
@@ -62,17 +63,32 @@ export function normalizeAccount(value) {
   return {name:field(value.name,'account name',160),currency,sourceIdentitySha256:value.sourceIdentitySha256,
     note:field(value.note??'','account note',3000,true)};
 }
+export function camtMessageSummary(value) {
+  if(!value)return undefined;
+  const {sourceTree,...metadata}=value;
+  return clone(metadata);
+}
+export function compactExcludedRow(row) {
+  if(row.row?.camt) {
+    const entry=compactSourceRow(row.row);
+    return {reason:clone(row.reason),source:clone(entry.source),row:entry};
+  }
+  return row.camt?{...compactSourceRow(row),reason:clone(row.reason??null)}:clone(row);
+}
 export function sourcePreview(report) {
   return {schema:report.schema,format:report.format,file:clone(report.file),interpretation:clone(report.interpretation),
+    camt:camtMessageSummary(report.camt),
     issues:clone(report.issues),csv:report.csv?{...clone(report.csv),preamble:report.csv.preamble?.map(row=>({source:row.source,cells:row.cells}))}:undefined,
     statements:report.statements.map(row=>({id:row.id,kind:row.kind,account:clone(row.account),period:clone(row.period),
-      balances:clone(row.balances),issues:clone(row.issues),summary:clone(row.summary),
+      balances:clone(row.balances),issues:clone(row.issues),summary:clone(row.summary),camt:clone(row.camt),
       sample:row.rows.slice(0,20).map(compactSourceRow),pendingCount:row.pendingRows.length,
-      excludedRows:clone(row.excludedRows)}))};
+      excludedRows:row.excludedRows.map(compactExcludedRow)}))};
 }
+
 export function previewIdentity(report,input) {
   return sha(json({fileSha256:report.file.sha256,format:report.format,textEncoding:report.file.textEncoding,
     accountNamespace:input.accountNamespace??null,csv:input.csv??null,
+    ...(report.format==='CAMT053'?{camt:input.camt??null,interpretation:report.interpretation}:{}),
     statements:report.statements.map(row=>({id:row.id,account:row.account.identitySha256,summary:row.summary,period:row.period}))}));
 }
 export function targetUsed(bank,kind,id,exceptMatchId=null) {

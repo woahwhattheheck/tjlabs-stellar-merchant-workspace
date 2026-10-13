@@ -32,6 +32,11 @@ function nextURL(link,current,profile,phase,previousStart) {
   const next=new URL(values[0][1],current),expected=new URL(initialURL(profile,phase,0));
   need(next.origin===expected.origin&&next.pathname===expected.pathname&&!next.username&&!next.password&&!next.hash,
     'ZOTERO_NEXT_LINK_SCOPE_CHANGED');
+  // The official v3 API omits its JSON/data defaults in pagination links.
+  // Reify only those documented defaults before the original exact query
+  // checks; an explicit changed value, duplicate or additional flag still fails.
+  for(const [name,value]of [['format','json'],['include','data']])
+    if(!next.searchParams.has(name))next.searchParams.set(name,value);
   const allowed=new Set(['format','include','limit','start']);
   if(profile.includeTrashed&&phase==='items')allowed.add('includeTrashed');
   need([...next.searchParams.keys()].every(k=>allowed.has(k))&&
@@ -81,6 +86,7 @@ export function createZoteroCapturer(store,{fetchImpl=globalThis.fetch,environme
     return store.put('capture',id,current.revision,{...current,...clone(typeof patch==='function'?patch(current):patch)});
   });
   async function drive(id,controller) {
+    let retainedResponse=null;
     try{
       for(;;){
         let job=store.get('capture',id);
@@ -120,10 +126,16 @@ export function createZoteroCapturer(store,{fetchImpl=globalThis.fetch,environme
         }
         const bytes=await responseBytes(response,p.maxPageBytes,signal);
         const object=await store.putObject(bytes);let rows,version;
+        const responseHeaders={};
+        for(const name of ['zotero-api-version','last-modified-version','total-results','link','backoff','retry-after','content-type'])
+          if(response.headers.has(name))responseHeaders[name]=response.headers.get(name);
+        retainedResponse={name:String(job.attempt).padStart(3,'0')+'-rejected-'+
+          String((job.rejectedDocuments??[]).length+1).padStart(5,'0')+'-'+job.phase+'.json',
+          kind:job.phase,object,sourceReference:url,httpStatus:response.status,responseHeaders,receivedAt:now()};
         try{need(response.headers.get('zotero-api-version')==='3','ZOTERO_API_VERSION_MISMATCH');
           version=integerHeader(response.headers,'last-modified-version');
           saveRate(delayUntil(response.headers,0));rows=parsePage(bytes,{kind:job.phase,library:p.library});}catch(error){update(id,current=>({status:'ERROR',lastError:safeCode(error),
-          rejectedDocuments:[...(current.rejectedDocuments??[]),{name:'rejected-'+Date.now()+'.json',kind:job.phase,object,sourceReference:url,receivedAt:now()}]}));return;}
+          rejectedDocuments:[...(current.rejectedDocuments??[]),{...retainedResponse,reason:safeCode(error)}]}));retainedResponse=null;return;}
         job=store.get('capture',id);
         const sequence=job.documents.length+1;
         need(sequence<=LIMIT.pages&&job.totalBytes+bytes.length<=p.maxCaptureBytes,'ZOTERO_CAPTURE_BYTES_LIMIT');
@@ -166,7 +178,7 @@ export function createZoteroCapturer(store,{fetchImpl=globalThis.fetch,environme
             store.put('capture',id,current.revision,{...current,status:'COMPLETE',documents,totalBytes,
               libraryVersion:selectedVersion,editionId:edition.id,phase:'complete',currentURL:null,nextURL:null,
               notBefore:null,finishedAt:now(),lastError:null});
-          });return;
+          });retainedResponse=null;return;
         }
         const count=rows.length,total=integerHeader(response.headers,'total-results');
         need(total<=p.maxItems,'ZOTERO_ITEM_LIMIT');
@@ -184,12 +196,15 @@ export function createZoteroCapturer(store,{fetchImpl=globalThis.fetch,environme
         update(id,{documents,totalBytes,counts,totals,phase,libraryVersion:selectedVersion,
           nextURL:next??initialURL(p,phase,0,selectedVersion),currentURL:null,failures:0,
           status:wait?'WAITING':'RUNNING',notBefore:wait,httpStatus:200});
+        retainedResponse=null;
         if(wait)return;
       }
     }catch(error){
-      if(controller.signal.aborted||closing)update(id,{status:'CANCELLED',stoppedAt:now(),lastError:null});
-      else update(id,{status:error.code==='ZOTERO_LIBRARY_CHANGED_DURING_CAPTURE'?'SOURCE_CHANGED':'ERROR',
-        lastError:safeCode(error),finishedAt:now()});
+      const retain=current=>retainedResponse?{rejectedDocuments:[...(current.rejectedDocuments??[]),
+        {...retainedResponse,reason:safeCode(error)}]}:{};
+      if(controller.signal.aborted||closing)update(id,current=>({...retain(current),status:'CANCELLED',stoppedAt:now(),lastError:null}));
+      else update(id,current=>({...retain(current),status:error.code==='ZOTERO_LIBRARY_CHANGED_DURING_CAPTURE'?'SOURCE_CHANGED':'ERROR',
+        lastError:safeCode(error),finishedAt:now()}));
     }
   }
   function start(id,{attempt=null}={}) {
@@ -231,6 +246,7 @@ export function newCapture(profileRecord,transport=captureTransport(null)) {
 export function restartCaptureState(job) {
   return {...newCapture(job.profile,job.transport),attempt:job.attempt+1,attempts:[...job.attempts,{
     attempt:job.attempt,status:job.status,documents:job.documents,totalBytes:job.totalBytes,
+    ...(job.rejectedDocuments?.length?{rejectedDocuments:job.rejectedDocuments}:{}),
     libraryVersion:job.libraryVersion,counts:job.counts,lastError:job.lastError,startedAt:job.startedAt,
     finishedAt:job.finishedAt??now()}]};
 }

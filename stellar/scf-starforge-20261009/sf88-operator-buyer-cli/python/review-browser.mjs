@@ -3,7 +3,7 @@ import {access} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {requireValue} from '../resource-library/files.mjs';
 
-const PAGES={resources:'/',comparisons:'/comparisons',returns:'/comparison-returns',collections:'/collections'};
+const PAGES={resources:'/',comparisons:'/comparisons',returns:'/comparison-returns','review-returns':'/review-returns',collections:'/collections'};
 async function present(relative) {
   try {await access(new URL(relative,import.meta.url));return true;}
   catch(error) {if(error.code==='ENOENT')return false;throw error;}
@@ -41,6 +41,7 @@ export function createReviewBrowser(library) {
         const {withComparisons}=await import('../resource-library/comparison-extension.mjs');
         options=await withComparisons(library,options);
         pages.comparisons=PAGES.comparisons;pages.returns=PAGES.returns;
+        if(library.comparisons.reviewReturns)pages['review-returns']=PAGES['review-returns'];
       }
       requireValue(Object.hasOwn(pages,page),'REVIEW_BROWSER_PAGE_UNAVAILABLE',409);
       const host=await serveLibrary(library,options);

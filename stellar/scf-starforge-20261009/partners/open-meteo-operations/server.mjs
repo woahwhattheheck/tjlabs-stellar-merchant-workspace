@@ -51,6 +51,21 @@ export async function startWeatherServer({workspace,port=0}){
    if(url.pathname==='/api/job'){json(response,200,workspace.job());return;}
    if(url.pathname==='/api/events'){json(response,200,await workspace.events({after:Number(url.searchParams.get('after')??0),limit:Number(url.searchParams.get('limit')??100)}));return;}
    if(url.pathname==='/api/compare'){json(response,200,await workspace.compare(url.searchParams.get('left'),url.searchParams.get('right'),{variable:url.searchParams.get('variable'),...(url.searchParams.has('unit')?{unit:url.searchParams.get('unit')}:{})}));return;}
+   const history=url.pathname.match(/^\/api\/requests\/(request-[a-f0-9-]{36})\/source-history$/);
+   if(history){
+    need([...url.searchParams.keys()].every(key=>['before','limit'].includes(key)),'UNEXPECTED_QUERY');
+    json(response,200,await workspace.sourceHistory(history[1],{
+     ...(url.searchParams.has('before')?{before:url.searchParams.get('before')}:{}),
+     limit:Number(url.searchParams.get('limit')??25)}));return;
+   }
+   const providerRead=url.pathname.match(/^\/api\/source-reads\/(read-[a-f0-9-]{36})(?:\/(raw))?$/);
+   if(providerRead){
+    need(!url.search,'UNEXPECTED_QUERY');
+    const result=await workspace.providerRead(providerRead[1]);
+    if(providerRead[2])send(response,200,result.raw,'application/octet-stream',{
+     'content-disposition':'attachment; filename="'+result.id+'.body"','x-content-sha256':result.sha256});
+    else json(response,200,withoutRaw(result));return;
+   }
    let matched=url.pathname.match(/^\/api\/captures\/(capture-[a-f0-9-]{36})(?:\/(raw|csv))?$/);
    if(matched){
     const result=await workspace.serial(()=>{
@@ -100,7 +115,7 @@ export async function startWeatherServer({workspace,port=0}){
     keys(body,['kind','requestId','args']);const args=body.args??{};
     let operation;
     if(body.kind==='source'){keys(args,['expectedRevision']);operation=signal=>workspace.sourceCapture(body.requestId,{...args,signal});}
-    else if(body.kind==='source-reprocess'){keys(args,['expectedRevision']);operation=()=>workspace.reprocessSource(body.requestId,args);}
+    else if(body.kind==='source-reprocess'){keys(args,['expectedRevision','sourceReadId']);operation=()=>workspace.reprocessSource(body.requestId,args);}
     else if(body.kind==='prepare'){keys(args,['expectedRevision','maxAtomic','acceptIndex','directEvaluation']);operation=signal=>workspace.prepare(body.requestId,{...args,signal});}
     else if(body.kind==='execute'){keys(args,[]);operation=signal=>workspace.execute(body.requestId,{signal});}
     else if(body.kind==='recover'){keys(args,[]);operation=()=>workspace.recover(body.requestId);}

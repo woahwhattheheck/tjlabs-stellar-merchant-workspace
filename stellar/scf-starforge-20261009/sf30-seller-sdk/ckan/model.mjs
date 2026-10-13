@@ -11,6 +11,7 @@ import { compileQueries, readCkanSourceFile } from './declaration.mjs';
 import { bindCkanCapture, projectCkanValue } from './source.mjs';
 import { describeCkanSemantics, projectCkanSemantics, checkCkanSemanticReview, compareCkanSemantics } from './semantics.mjs';
 import { createCkanReviewedRefreshes } from './reviewed-refresh.mjs';
+import { createDcatWorkspace, validateDcatState } from './dcat-workspace.mjs';
 import { openCkanPublisher } from './publisher/model.mjs';
 import { exportCkanMerchantPackage, stageCkanMerchantRelease, readCkanMerchantBuyerOffer,
   prepareCkanMerchantBuyer } from './publisher/release.mjs';
@@ -64,7 +65,7 @@ function columnSuggestions(capture) {
       sample: nonnull.slice(0, 3).map(sampleValue) };
   });
 }
-export async function openCkanWorkbench({ directory, create = false, origin, authTokenEnv, environment = process.env } = {}) {
+export async function openCkanWorkbench({ directory, create = false, origin, sourceKind, authTokenEnv, environment = process.env } = {}) {
   directory = resolve(directory);
   if (create && await exists(join(directory, 'workbench.json'))) throw fault('CKAN_PROJECT_EXISTS');
   await privateDirectory(dirname(directory));
@@ -75,8 +76,11 @@ export async function openCkanWorkbench({ directory, create = false, origin, aut
   const persist = () => atomicJson(directory, 'workbench.json', state);
   try {
     if (create) {
-      const checked = captureSelection({ catalogOrigin: origin, packageId: 'initial', resourceId: 'initial', authTokenEnv });
-      state = { schema: 'stellar-forge.ckan-workbench.v1', catalogOrigin: checked.catalogOrigin,
+      const kind = sourceKind ?? 'ckan';
+      if (!['ckan', 'dcat-us'].includes(kind)) throw fault('CATALOG_SOURCE_KIND_INVALID');
+      const checked = kind === 'dcat-us' ? { catalogOrigin: catalogOrigin(origin) } :
+        captureSelection({ catalogOrigin: origin, packageId: 'initial', resourceId: 'initial', authTokenEnv });
+      state = { schema: 'stellar-forge.ckan-workbench.v1', sourceKind: kind, catalogOrigin: checked.catalogOrigin,
         ...(authTokenEnv ? { authTokenEnv } : {}), createdAt: stamp(), updatedAt: stamp(),
         editions: [], sources: [], publications: [], exports: [], buyerRequests: [], refreshes: [], operation: null };
       for (const name of ['editions', 'sources', 'publications', 'datasets', 'merchant-packages', 'buyer-requests'])
@@ -89,12 +93,17 @@ export async function openCkanWorkbench({ directory, create = false, origin, aut
     if (state.refreshes === undefined) state.refreshes = [];
     if (!Array.isArray(state.refreshes)) throw fault('CKAN_PROJECT_INVALID');
     catalogOrigin(state.catalogOrigin);
+    if (state.sourceKind === undefined) state.sourceKind = 'ckan';
+    if (!['ckan', 'dcat-us'].includes(state.sourceKind)) throw fault('CATALOG_SOURCE_KIND_INVALID');
+    if (sourceKind && state.sourceKind !== sourceKind) throw fault('CKAN_PROJECT_BINDING_CHANGED');
+    validateDcatState(state.dcat);
     if (origin && catalogOrigin(origin) !== state.catalogOrigin || authTokenEnv && authTokenEnv !== state.authTokenEnv)
       throw fault('CKAN_PROJECT_BINDING_CHANGED');
     if (state.operation?.state === 'RUNNING') {
       state.operation.state = 'INTERRUPTED'; state.operation.error = 'PROCESS_INTERRUPTED';
       for (const edition of state.editions) if (edition.state === 'CAPTURING') edition.state = 'INTERRUPTED';
       for (const refresh of state.refreshes) if (refresh.state === 'PREPARING') refresh.state = 'INTERRUPTED';
+      for (const review of state.dcat?.reviews ?? []) if (review.status === 'PREPARING') review.status = 'INTERRUPTED';
       await persist();
     }
     const find = (collection, value) => {
@@ -193,8 +202,11 @@ export async function openCkanWorkbench({ directory, create = false, origin, aut
     }
     const reviewedRefreshes = createCkanReviewedRefreshes({ directory, state, find, selectedCapture,
       launch, persist, createSource: createSourceSelection });
+    const dcat = createDcatWorkspace({ directory, state, launch, persist, environment });
+    if (create) await persist();
     const api = {
       ...reviewedRefreshes,
+      ...dcat,
       directory,
       status: () => structuredClone({ ...state, directory, active: active ? active.operation.id : null }),
       async search(input = {}) {

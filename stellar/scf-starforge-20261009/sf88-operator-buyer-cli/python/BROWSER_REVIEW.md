@@ -34,6 +34,72 @@ Without a customer archive, the installed `stellar-forge-review` command and
 before the same commands. The checkout contains `stellar/`. The selected runtime
 requires Node 22.16 or later; Python requires 3.11 or later on POSIX.
 
+## Complete reviewer journals
+
+The customer receiver recognizes a complete journal envelope and delegates it to the
+original returned-journal engine. Bare comparison handovers keep the incoming-review
+workflow. Use --return-format incoming or --return-format returned to choose explicitly.
+
+Receive a complete journal into a new workspace, or stage it against the same comparison
+already in this workspace:
+
+```sh
+python review.py --state "$HOME/customer-review" receive \
+  --input "/absolute/complete-journal.json" --operation-id "journal-receive-1" \
+  --serve --open-browser
+python review.py --state "$HOME/customer-review" receive \
+  --input "/absolute/returned-journal.json" --operation-id "journal-stage-1" \
+  --stage-return --return-format returned --label "Reviewer return" \
+  --serve --open-browser
+
+```
+
+The staged plan opens at /review-returns with its exact plan ID and comparison ID.
+A new receiving result opens that comparison at /comparisons. Receiving without
+--serve saves the same location for the next serve command. The private workspace
+remembers only page/identifier metadata; the original native engine retains decisions,
+operation receipts and every source journal.
+
+```sh
+python review.py --state "$HOME/customer-review" serve --open-browser
+python review.py --state "$HOME/customer-review" serve --plan-id PLAN_ID --open-browser
+python review.py --state "$HOME/customer-review" serve --return-id INCOMING_RETURN_ID --open-browser
+python review.py --state "$HOME/customer-review" serve --comparison-id COMPARISON_ID --open-browser
+
+python review.py --state "$HOME/customer-review" review-returns list --comparison-id COMPARISON_ID
+python review.py --state "$HOME/customer-review" review-returns show PLAN_ID
+python review.py --state "$HOME/customer-review" review-returns targets PLAN_ID --all
+python review.py --state "$HOME/customer-review" review-returns history SOURCE_JOURNAL_ID --all
+python review.py --state "$HOME/customer-review" review-returns apply PLAN_ID \
+  --input "/absolute/saved-resolution.json"
+python review.py --state "$HOME/customer-review" review-returns export COMPARISON_ID \
+  --format json --out "/absolute/complete-reviewed-journal.json"
+
+```
+
+The saved resolution file carries the original operationId, expectedBaseId, actor
+and resolutions. Reuse that exact file after a lost response. Resolutions use the
+original KEEP_LOCAL, TAKE_RETURNED or CUSTOM choices. An explicit review-returns
+restage PLAN_ID --operation-id ID prepares a new plan against the current local
+journal; it preserves the earlier plan and receipt.
+
+Full-journal export supports JSON, CSV and HTML. JSON contains the whole comparison,
+every retained source journal, reconciliation plan and receipt. Its file transfer uses
+the existing resumable byte cursor and checksum. Reopening a saved plan keeps its
+original ID even after it is applied. Selecting another case in the native comparison
+screen takes precedence over an older remembered CLI receipt.
+
+| Command or screen | Identifier |
+| --- | --- |
+| compare, /comparisons | comparison ID |
+| return, /comparison-returns | incoming return ID |
+| review-returns show/targets/apply/restage, /review-returns | full-journal plan ID |
+| review-returns history | source-journal ID |
+| review-returns export | comparison ID, with complete lineage |
+
+The original return namespace and compare export continue to use the incoming-review
+contract. Use review-returns export for the complete journal delivery.
+
 ## Foreground ownership
 
 `serve` and `receive --serve` remain foreground commands. Ctrl-C or SIGTERM closes
@@ -72,9 +138,20 @@ with ResourceLibrary.receiver(checkout=Path('/opt/customer-review/source'),
 ```
 
 `browser.url` is the private connection capability; `repr(browser)`, `metadata()` and
-`library.browser_status()` omit it. `browser.pages` describes the actual available
-native screens. `page_url('returns', return_id=...)` targets a specific saved return;
-only known native page names and a valid native return ID are accepted.
+`library.browser_status()` omit it. browser.pages describes the actual available native screens. Use
+page_url('comparisons', comparison_id=...) for the exact case,
+page_url('returns', return_id=..., comparison_id=...) for its incoming return, and
+page_url('review-returns', plan_id=..., comparison_id=...) for its full-journal plan.
+The page selector validates the original identifier type and keeps the private
+session fragment separate from the case query.
+
+ResourceLibrary.receive_review() returns ReviewReception.format and the unchanged
+native result in .observed. Explicit full-journal methods are receive_journal(),
+stage_journal(), journal_return(), journal_returns(), journal_history(),
+verify_journal() and export_journal(). A JournalReturn keeps its plan ID separate
+from .comparison_id; its apply() accepts the original expected_base_id, actor,
+resolutions and operation_id. Comparison.export_journal() exports the complete
+lineage through that same native descriptor.
 
 The listener's start/stop actions are serialized. Repeating the same start operation
 and options returns the same active session. A different operation cannot silently

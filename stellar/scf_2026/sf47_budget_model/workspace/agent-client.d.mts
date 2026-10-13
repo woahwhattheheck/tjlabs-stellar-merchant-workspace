@@ -19,7 +19,7 @@ export type GrantCaseAction =
   | 'work-intake.upload' | 'work-intake.save' | 'work-intake.apply' | 'task-outcomes.save' | 'funding.save'
   | 'contributor.save' | 'work.save' | 'work.submit' | 'work.accept' | 'work.reopen' | 'work.void'
   | 'invoice.save' | 'invoice.review' | 'invoice.dispute' | 'invoice.reopen' | 'invoice.void'
-  | 'cash.record' | 'cash.void' | 'statement.receive' | 'award.save' | 'deployment.save'
+  | 'cash.record' | 'cash.void' | 'settlement.receive' | 'settlement.correct' | 'statement.receive' | 'award.save' | 'deployment.save'
   | 'purchase.record' | 'purchase.observe' | 'purchase.void' | 'outcome.save'
   | 'engagement.prepare' | 'engagement.receiving'
   | 'review' | 'close' | 'reopen' | 'cohort.prepare' | 'installation.save' | 'installation.return' | 'installation.return-stage' | 'implementation.prepare'
@@ -2176,6 +2176,49 @@ export interface GrantDeliveryCalendarDownloadSelection extends GrantDeliveryCal
   format?: 'ics' | 'csv' | 'json';
 }
 
+/** Explicit case selection in one original workspace snapshot. */
+export interface GrantDeliveryAgendaSelection {
+  caseIds: string[];
+  asOfDate?: GrantCivilDate;
+  /** When supplied, must include exactly one current version for every selected case. */
+  expectedVersions?: Record<string, number>;
+}
+export interface GrantDeliveryAgendaDownloadSelection extends GrantDeliveryAgendaSelection {
+  /** Downloads include all selected case rows, independently of browser filters. */
+  format?: 'ics' | 'csv' | 'json';
+}
+export interface GrantDeliveryAgendaCase {
+  id: string;
+  origin: GrantObject;
+  /** Complete original calendar metadata and digest, before its entry arrays are joined. */
+  calendar: Pick<GrantDeliveryCalendar,
+    'schema' | 'case' | 'asOfDate' | 'generatedAt' | 'source' | 'rule' | 'summary' | 'basis' | 'sha256'>;
+}
+export interface GrantDeliveryAgendaEntry {
+  /** Original case ID followed by ":" and the original calendar entry ID. */
+  id: string;
+  caseId: string;
+  /** Position in this case's original entries or undated array. */
+  position: number;
+  entry: GrantDeliveryCalendarEntry;
+}
+export interface GrantDeliveryAgenda extends GrantObject {
+  schema: 'stellar-forge.sf47-delivery-agenda.v1';
+  generatedAt: string;
+  asOfDate: GrantCivilDate;
+  selection: {
+    caseIds: string[];
+    asOfDate: GrantCivilDate;
+    expectedVersions: Record<string, number>;
+  };
+  cases: GrantDeliveryAgendaCase[];
+  entries: GrantDeliveryAgendaEntry[];
+  undated: GrantDeliveryAgendaEntry[];
+  summary: GrantDeliveryCalendarSummary & {cases: number};
+  basis: string[];
+  sha256: string;
+}
+
 /** Original whole-task comparison inputs. Decimal quantities remain exact strings. */
 export type GrantTaskMeasurementBasis = 'OBSERVED' | 'ESTIMATED' | 'MIXED' | 'UNRECORDED';
 export interface GrantTaskEffort {
@@ -2704,6 +2747,204 @@ export function grantPlanningSourceProfiles(): {
   sourceProjectSchema: string; workbookMappingSchema: string; guides: string[];
 };
 
+/** Exact original atomic quantity; the native reader owns transfer verification. */
+export interface GrantSettlementTransfer extends GrantObject {
+  network: string;
+  asset: string;
+  amountAtomic: string;
+  transaction: string;
+  matchingEventId: string;
+  transferKey: string;
+  ledger: number;
+  recipient: string;
+  payer: string | null;
+}
+export interface GrantSettlementUnits {
+  currency: string;
+  /** Explicit asset precision, 0 through 12. */
+  decimals: number;
+  unitSourceIds: string[];
+  unitNote: string;
+}
+export interface GrantSettlementCashInput extends GrantSettlementUnits {
+  date: GrantCivilDate;
+  usdValue?: string | null;
+  valuationSourceIds?: string[];
+  /** Required by the native reader whenever usdValue is supplied. */
+  valuationNote?: string;
+  category?: 'CUSTOMER' | 'INVOICE' | 'OTHER' | 'REFUND';
+  tranche?: 0 | 1 | 2 | 3 | null;
+  /** Original supplier-invoice allocations are permitted only for cash outflows. */
+  allocations?: { invoiceId: string; amountUsd: string }[];
+}
+export interface GrantSettlementAttribution {
+  rowId: string;
+  reason: string;
+  deploymentIds: string[];
+  workIds: string[];
+}
+export type GrantSettlementSelection = GrantSettlementAttribution & (
+  | { decision: 'RECORD_CASH'; cash: GrantSettlementCashInput; cashId?: null }
+  | { decision: 'LINK_CASH'; cashId: string; cash: GrantSettlementUnits }
+  | { decision: 'OBSERVE' | 'OMIT'; cashId?: null; cash?: never }
+);
+export interface GrantSettlementReviewInput {
+  name: string;
+  selections: GrantSettlementSelection[];
+}
+export interface GrantSettlementCashValue extends GrantObject {
+  id?: string;
+  state?: 'OBSERVED' | 'VOID';
+  direction: 'IN' | 'OUT';
+  category: string;
+  date: GrantCivilDate;
+  currency: string;
+  network: string;
+  asset: string;
+  amount: string;
+  usdValue: string | null;
+  externalRef: string;
+  allocations: { invoiceId: string; amountUsd: string }[];
+}
+export interface GrantSettlementCashRecord extends GrantSettlementCashValue {
+  id: string;
+  state: 'OBSERVED' | 'VOID';
+}
+export interface GrantSettlementSource extends GrantObject {
+  sha256: string;
+  bytes: number;
+  filename: string;
+  kind: string;
+  runId: string;
+  reportSha256: string;
+}
+export interface GrantSettlementRow extends GrantObject {
+  rowId: string;
+  eventId: string;
+  kind: 'PAYMENT' | 'REFUND';
+  original: GrantObject;
+  transfer: GrantSettlementTransfer | null;
+  canRecordCash: boolean;
+  issues: string[];
+  sourceTime: string | null;
+  sourceTimeBasis: string;
+}
+export interface GrantSettlementEffect extends GrantObject {
+  rowId: string;
+  decision: string;
+  cash: GrantSettlementCashValue | null;
+  cashId: string | null;
+  existingCashId: string | null;
+  /** Prior link retained when a reporting edition adopts existing replacement cash. */
+  previousCashId?: string | null;
+  replacedCashId: string | null;
+  voidedCashId: string | null;
+  deploymentIds: string[];
+  workIds: string[];
+  findings: unknown[];
+}
+export interface GrantSettlementReviewedSelection extends GrantSettlementAttribution {
+  decision: 'RECORD_CASH' | 'LINK_CASH' | 'OBSERVE' | 'OMIT';
+  cashId: string | null;
+  cash: GrantSettlementUnits | GrantSettlementCashInput | null;
+}
+export interface GrantSettlementProposal extends GrantObject {
+  name: string;
+  selections: GrantSettlementReviewedSelection[];
+  effects: GrantSettlementEffect[];
+  counts: GrantObject;
+  canApply: boolean;
+}
+export interface GrantSettlementPreview extends GrantObject {
+  schema: string;
+  caseId: string;
+  version: number;
+  source: GrantSettlementSource;
+  reader: GrantObject;
+  counts: GrantObject;
+  rows: GrantSettlementRow[];
+  units: GrantObject[];
+  deployments: GrantObject[];
+  work: GrantObject[];
+  cash: GrantSettlementCashRecord[];
+  retainedReviews: GrantObject[];
+  previewSha256: string;
+  html: string;
+  /** Present only when both the complete name and selections were supplied. */
+  proposed?: GrantSettlementProposal;
+}
+export interface GrantSettlementReceiveInput extends GrantOperationRequest, GrantSettlementReviewInput {
+  filename: string;
+  expectedPreviewSha256: string;
+}
+export interface GrantSettlementReview extends GrantObject {
+  id: string;
+  name: string;
+  version: number;
+  createdAt: string;
+  actor: string;
+  sourceSha256: string;
+  sourceId: string;
+  counts: GrantObject;
+  previousReviewId?: string | null;
+}
+export interface GrantSettlementList extends GrantObject {
+  caseId: string;
+  version: number;
+  items: GrantSettlementReview[];
+}
+export interface GrantSettlementSavedRow extends GrantSettlementRow {
+  decision: 'UNSELECTED' | 'RECORD_CASH' | 'LINK_CASH' | 'OBSERVE' | 'OMIT' | 'CORRECT_CASH' | 'VOID_CASH' | 'RELINK';
+  reason: string;
+  cashId: string | null;
+  /** Exact reviewed unit/valuation input, separate from the current cash record. */
+  cash: GrantSettlementUnits | GrantSettlementCashInput | null;
+  deploymentIds: string[];
+  workIds: string[];
+}
+export interface GrantSettlementSaved extends GrantObject {
+  review: GrantSettlementReview;
+  source: GrantSettlementSource;
+  rows: GrantSettlementSavedRow[];
+  currentCash: GrantSettlementCashRecord[];
+  history: GrantSettlementReview[];
+  downloadSourceId: string;
+  inspectionSourceId: string;
+}
+export type GrantSettlementCorrectionInput = {
+  reviewId: string;
+  rowId: string;
+  expectedCashId: string | null;
+  reason: string;
+  deploymentIds?: string[];
+  workIds?: string[];
+} & (
+  | { decision: 'CORRECT_CASH'; cash: GrantSettlementCashInput; cashId?: never }
+  | { decision: 'LINK_CASH'; cashId: string; cash: GrantSettlementUnits }
+  | { decision: 'VOID_CASH' | 'RELINK'; cash?: never; cashId?: never }
+);
+export type GrantSettlementCorrectionPreviewInput = GrantSettlementCorrectionInput & { expectedVersion: number };
+export type GrantSettlementCorrectInput = GrantSettlementCorrectionInput & GrantOperationRequest & { expectedPreviewSha256: string };
+export interface GrantSettlementCorrectionPreview extends GrantObject {
+  caseId: string;
+  version: number;
+  source: GrantSettlementSource;
+  review: GrantSettlementReview;
+  row: GrantObject & { rowId: string; cashId: string | null; transfer: GrantSettlementTransfer | null };
+  proposed: { selection: GrantObject & { reviewId: string; rowId: string; expectedCashId: string | null; decision: 'CORRECT_CASH' | 'LINK_CASH' | 'VOID_CASH' | 'RELINK'; reason: string; cashId?: string | null; cash: GrantSettlementCashInput | GrantSettlementUnits | null; deploymentIds: string[]; workIds: string[] }; effects: GrantSettlementEffect[]; counts: GrantObject; canApply: boolean };
+  previewSha256: string;
+}
+export interface GrantSettlementSaveReceipt extends GrantObject {
+  id: string;
+  version: number;
+  action: 'settlement.receive' | 'settlement.correct';
+  reviewId: string;
+  sourceId: string;
+  sourceSha256: string;
+  cashIds: string[];
+  unchanged: boolean;
+}
+
 export interface GrantReadSelection {
   intakeId?: string;
   planId?: string;
@@ -2736,6 +2977,7 @@ export interface GrantDownloadSelections {
   portfolio: { caseId: string; portfolioId: string };
   'delivery-queue': GrantDeliveryQueueSelection;
   'delivery-calendar': GrantDeliveryCalendarDownloadSelection;
+  'delivery-agenda': GrantDeliveryAgendaDownloadSelection;
   'customer-use-calendar': GrantCustomerUseDownloadSelection;
   performance: GrantPerformanceDownloadSelection;
   'supplier-account': GrantSupplierAccountDownloadSelection;
@@ -2745,6 +2987,7 @@ export interface GrantDownloadSelections {
   'installation-return': { caseId: string; reviewId: string };
   commercial: { caseId: string; billingId: string };
   source: { caseId: string; sourceId: string };
+  settlement: { caseId: string; reviewId: string };
   completion: { caseId: string; reviewId: string };
   cohort: { caseId: string; reviewId: string };
   engagement: { caseId: string; reviewId: string };
@@ -2779,8 +3022,11 @@ export class GrantWorkspaceClient {
   read(view: 'account-reconciliation', selection: GrantAccountReconciliationSelection): Promise<GrantJsonResponse<GrantAccountReconciliationReport>>;
   read(view: 'account-reconciliation-statement-inputs', selection: {caseId: string; sourceId: string}): Promise<GrantJsonResponse<GrantAccountReconciliationStatementInputs>>;
   read(view: 'delivery-calendar', selection: GrantDeliveryCalendarSelection): Promise<GrantJsonResponse<GrantDeliveryCalendar>>;
+  read(view: 'delivery-agenda', selection: GrantDeliveryAgendaSelection): Promise<GrantJsonResponse<GrantDeliveryAgenda>>;
   read(view: 'delivery-queue', selection: GrantDeliveryQueueSelection): Promise<GrantJsonResponse<GrantDeliveryQueue>>;
   read(view: 'case', selection: { caseId: string }): Promise<GrantJsonResponse<GrantCaseView>>;
+  read(view: 'settlements', selection: { caseId: string }): Promise<GrantJsonResponse<GrantSettlementList>>;
+  read(view: 'settlement', selection: { caseId: string; reviewId: string }): Promise<GrantJsonResponse<GrantSettlementSaved>>;
   read(view: 'installations', selection: { caseId: string }): Promise<GrantJsonResponse<{ installations: GrantObject[] }>>;
   read(view: 'installation', selection: { caseId: string; installationId: string; revision?: number }): Promise<GrantJsonResponse<GrantInstallationEdition>>;
   read(view: 'installation-history', selection: { caseId: string; installationId: string; before?: number; limit?: number }): Promise<GrantJsonResponse<{ editions: GrantObject[]; nextBefore: number | null }>>;
@@ -2874,6 +3120,10 @@ export class GrantWorkspaceClient {
   completionExtension<T = GrantObject>(caseId: string, body: GrantOperationRequest & GrantObject): Promise<GrantJsonResponse<T>>;
   completionSubmit<T = GrantObject>(caseId: string, body: GrantOperationRequest & GrantObject): Promise<GrantJsonResponse<T>>;
   completionDecision<T = GrantObject>(caseId: string, body: GrantOperationRequest & GrantObject): Promise<GrantJsonResponse<T>>;
+  settlementPreview(caseId: string, expectedVersion: number, bytes: Buffer, filename: string, selection?: GrantSettlementReviewInput): Promise<GrantJsonResponse<GrantSettlementPreview>>;
+  settlementReceive(caseId: string, bytes: Buffer, body: GrantSettlementReceiveInput): Promise<GrantJsonResponse<GrantSettlementSaveReceipt>>;
+  settlementCorrectionPreview(caseId: string, body: GrantSettlementCorrectionPreviewInput): Promise<GrantJsonResponse<GrantSettlementCorrectionPreview>>;
+  settlementCorrect(caseId: string, body: GrantSettlementCorrectInput): Promise<GrantJsonResponse<GrantSettlementSaveReceipt>>;
   supportPreview<T = GrantObject>(caseId: string, expectedVersion: number, bytes: Buffer, filename: string): Promise<GrantJsonResponse<T>>;
   supportReceive<T = GrantObject>(caseId: string, bytes: Buffer, body: GrantOperationRequest & GrantObject): Promise<GrantJsonResponse<T>>;
   buyerPreview<T = GrantObject>(caseId: string, expectedVersion: number, bytes: Buffer, filename: string): Promise<GrantJsonResponse<T>>;

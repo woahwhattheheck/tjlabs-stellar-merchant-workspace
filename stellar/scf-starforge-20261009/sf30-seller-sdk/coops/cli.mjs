@@ -17,6 +17,8 @@ const HELP=[
  'collect | backfill --profile-id ID --operation-id ID --begin YYYY-MM-DD --end YYYY-MM-DD --products water_level[,predictions] --units metric|english --time-zone gmt|lst|lst_ldt --datum MLLW [--prediction-interval 6|h|hilo] [--label NAME]',
  'import-source --profile-id ID --operation-id ID --file ORIGINAL_SOURCE_PACKAGE',
  'rows --edition-id ID --table observations|predictions|metadata|coverage [--offset 0] [--limit 100] [--begin YYYY-MM-DD] [--end YYYY-MM-DD]',
+ 'inspect-observations --edition-id ID [--product water_level|hourly_height|predictions] [--begin YYYY-MM-DD] [--end YYYY-MM-DD] [--buckets 240]',
+ 'inspect-point --edition-id ID --file ORIGINAL_POINT_REFERENCE_JSON',
  'study-preview --file STUDY_SELECTION_JSON',
  'study-dataset --study-release-id ORIGINAL_RELEASE --name DATASET_NAME --operation-id ORIGINAL_ID',
  'study-rows --study-id ID --study-revision N [--offset 0] [--limit 100]',
@@ -46,7 +48,7 @@ function argumentsOf(args){
   if(a.startsWith('--')){if(values[a]!==undefined||!args[i+1]||args[i+1].startsWith('--'))throw new TypeError('Use paired unique options.');values[a]=args[++i];}
   else if(command)throw new TypeError('Choose one command.');else command=a;
  }
- const fields=['--workspace','--session','--inbox','--release-runtime','--user-agent','--request','--profile-id','--capture-id','--operation-id','--begin','--end','--products','--units','--time-zone','--datum','--prediction-interval','--label','--file','--edition-id','--table','--offset','--limit','--page','--output','--export-id','--receipt-id','--name','--mapping-id','--mapping-revision','--study-id','--study-revision','--study-release-id','--format','--note'];
+ const fields=['--workspace','--session','--inbox','--release-runtime','--user-agent','--request','--profile-id','--capture-id','--operation-id','--begin','--end','--products','--units','--time-zone','--datum','--prediction-interval','--label','--file','--edition-id','--table','--offset','--limit','--page','--output','--export-id','--receipt-id','--name','--mapping-id','--mapping-revision','--study-id','--study-revision','--study-release-id','--format','--note','--product','--buckets'];
  if(Object.keys(values).some(k=>!fields.includes(k)))throw new TypeError('An option is not supported; see --help.');
  if(Boolean(values['--workspace'])===Boolean(values['--session']))throw new TypeError('Choose one private workspace or original session file.');
  return{values,command};
@@ -66,6 +68,8 @@ async function sessionClient(filename){
   studyPreview:async value=>(await request('/api/study-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value)})).json(),
   studyRows:async(id,revision,options)=>(await request(query('/api/study-rows',{studyId:id,revision,...options}))).json(),
   action:async value=>(await request('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value)})).json(),
+  inspection:async(id,o)=>(await request(query('/api/inspection',{editionId:id,...o}))).json(),
+  inspectionPoint:async(id,reference)=>(await request('/api/inspection-point',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({editionId:id,reference})})).json(),
   rows:async(id,o)=>(await request(query('/api/rows',{editionId:id,...o}))).json(),
   inspectMappingFile:async value=>(await request('/api/mapping-file',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value)})).json(),
   mappingRaw:async(id,revision)=>original(query('/api/mapping-source',{mappingId:id,revision})),
@@ -142,13 +146,15 @@ async function returnStudyFile(app,v){
 export async function main(args=process.argv.slice(2)){
  const parsed=argumentsOf(args);if(parsed.help){console.log(HELP);return;}
  const {values:v,command}=parsed;
- if(!['schema','view','stations','action','analyse','collect','backfill','import-source','rows','source','capture-source','download','receive-file','inspect-mapping','mapping-source','study-preview','study-rows','study-return','study-dataset'].includes(command))throw new TypeError('Choose a listed command; see --help.');
+ if(!['schema','view','stations','action','analyse','collect','backfill','import-source','rows','source','capture-source','download','receive-file','inspect-mapping','mapping-source','study-preview','study-rows','study-return','study-dataset','inspect-observations','inspect-point'].includes(command))throw new TypeError('Choose a listed command; see --help.');
  const app=v['--session']?await sessionClient(v['--session']):await openCoopsWorkspace({directory:resolve(v['--workspace']),inboxDirectory:v['--inbox']?resolve(v['--inbox']):undefined,userAgent:v['--user-agent'],releaseRuntime:v['--release-runtime']?await readReleaseRuntime(v['--release-runtime']):undefined});
  try{
   let result;
   if(command==='schema')result=await app.schema();
   else if(command==='view')result=await app.view();
   else if(command==='stations')result=(await app.view()).stations;
+  else if(command==='inspect-observations')result=await app.inspection(v['--edition-id'],Object.fromEntries(Object.entries({product:v['--product'],beginDate:v['--begin'],endDate:v['--end'],buckets:v['--buckets']===undefined?undefined:Number(v['--buckets'])}).filter(([,value])=>value!==undefined)));
+  else if(command==='inspect-point'){if(!v['--file'])throw new TypeError('--file is required.');result=await app.inspectionPoint(v['--edition-id'],await json(v['--file']));}
   else if(command==='study-preview'){if(!v['--file'])throw new TypeError('--file is required.');result=await app.studyPreview(await json(v['--file']));}
   else if(command==='study-rows'){const revision=Number(v['--study-revision']);if(!v['--study-id']||!Number.isSafeInteger(revision)||revision<1)throw new TypeError('Choose the exact study ID and revision.');result=await app.studyRows(v['--study-id'],revision,{offset:Number(v['--offset']??0),limit:Number(v['--limit']??100)});}
   else if(command==='study-return')result=await returnStudyFile(app,v);

@@ -4,16 +4,22 @@
   "description": "IATI publisher finance, organisation planning, saved refresh and native DQA customer engagements",
   "commands": {
     "dataset-iati": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/cli.mjs",
-    "iati-document-evidence": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence_client_cli.mjs"
+    "iati-document-evidence": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence_client_cli.mjs",
+    "iati-document-procedure": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence_operating_cli.mjs"
   },
   "commandDescriptions": {
     "dataset-iati": "Retain complete IATI activity and organisation XML, review finance portfolios and planning documents, make precise publisher corrections, review saved refreshes, and deliver or receive the full customer history.",
-    "iati-document-evidence": "Use an existing private IATI console to retain public-document evidence, review exact observations, prepare publisher URL corrections and export or receive the complete source/workspace history."
+    "iati-document-evidence": "Use an existing private IATI console to retain public-document evidence, review exact observations, prepare publisher URL corrections and export or receive the complete source/workspace history.",
+    "iati-document-procedure": "Create and receive complete customer operating procedures from an exact saved IATI document case, with original source history, toolkit registrations and editable plan handover."
   },
   "exports": {
     "./seller/iati/client": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/client.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/client.mjs"
+    },
+    "./seller/iati/document-operating-procedure": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_procedure.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/operating_procedure.mjs"
     }
   },
   "applicationProviders": {

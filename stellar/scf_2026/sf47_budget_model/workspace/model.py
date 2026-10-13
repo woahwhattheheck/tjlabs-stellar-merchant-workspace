@@ -429,13 +429,15 @@ def inspect_planning_history(document, raw_source):
 
 
 class Workspace:
-    def __init__(self, root, source_path):
+    def __init__(self, root, source_path, *, on_created=None):
         self.root = Path(root).expanduser().resolve()
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.lock_handle = None
         self.db = None
         self.mutex = threading.RLock()
         try:
+            if on_created is not None:
+                on_created(self)
             self.lock_handle = open(self.root / "workspace.lock", "a+b")
             try:
                 fcntl.flock(self.lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -480,14 +482,12 @@ class Workspace:
 
     def close(self):
         with self.mutex:
-            try:
-                if self.db is not None:
-                    self.db.close()
-                    self.db = None
-            finally:
-                if self.lock_handle is not None:
-                    self.lock_handle.close()
-                    self.lock_handle = None
+            if self.db is not None:
+                self.db.close()
+                self.db = None
+            if self.lock_handle is not None:
+                self.lock_handle.close()
+                self.lock_handle = None
 
     def _transaction(self, request_id, payload, action):
         request_id = short_id(request_id, "Request ID")

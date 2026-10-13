@@ -943,7 +943,7 @@ export async function runGISCommissioning(config) {
       let workspace = api.openWorkspace(cliDirectory, { create: false }), actual;
       try { actual = programme.verifyOperation(action, workspace); } finally { workspace.close(); }
       if (!actual) {
-        const command = [join(product, 'cli.mjs'), 'receive', '--workspace', cliDirectory,
+        const command = [await realpath(join(product, 'cli.mjs')), 'receive', '--workspace', cliDirectory,
           '--file', join(output, browserResult.receivedPackageFile), '--request-id', cliIntent.requestId, '--expected-revision', '0'];
         const execution = await execute(process.execPath, command, { lease, maxBuffer: 2 * 1024 * 1024 });
         const value = JSON.parse(execution.stdout);

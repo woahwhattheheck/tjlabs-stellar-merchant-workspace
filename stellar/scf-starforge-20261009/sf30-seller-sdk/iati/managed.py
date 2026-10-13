@@ -211,6 +211,11 @@ SOURCE_FILES = (
     "iati/document_evidence/FOLLOWING.md",
     "iati/document_evidence/following_observation.py",
     "iati/examples/fcdo-organisation-2026/document-following-input.example.json",
+    "iati/document_evidence/operating_source.py",
+    "iati/document_evidence/operating_procedure.mjs",
+    "iati/document_evidence/operating_procedure.d.mts",
+    "iati/document_evidence/OPERATING_PROCEDURES.md",
+    "iati/document_evidence_operating_cli.mjs",
 )
 
 

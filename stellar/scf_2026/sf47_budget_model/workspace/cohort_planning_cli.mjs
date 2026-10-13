@@ -25,7 +25,7 @@ const HELP = [
   "  node cohort_planning_cli.mjs csv --input report.json [--output report.csv]",
   "  node cohort_planning_cli.mjs compare --baseline earlier.json --candidate later.json [--output comparison.json]",
   "  node cohort_planning_cli.mjs schedule-seed --input plan.json [--output choices.json]",
-  "  node cohort_planning_cli.mjs schedule --input plan.json [--constraints choices.json] [--name TEXT] [--output allocation.json]",
+  "  node cohort_planning_cli.mjs schedule --input plan.json [--constraints choices.json] [--method first-fit|resolve-conflicts] [--name TEXT] [--output allocation.json]",
   "  node cohort_planning_cli.mjs schedule-plan --input allocation.json [--output successor.json]",
   "  node cohort_planning_cli.mjs schedule-compare --input allocation.json [--output comparison.json]",
   "",
@@ -48,6 +48,9 @@ const HELP = [
   "compare also accepts --name TEXT and --note TEXT for the retained comparison review.",
   "Use --input - to read JSON from stdin. A native seed must be a separate file.",
   "schedule uses explicit service flexibility and the original daily capacity, funding and economics.",
+  "schedule --method resolve-conflicts revisits complete competing service groups.",
+  "Use --max-search-steps INTEGER with resolve-conflicts; default 100000, maximum 1000000.",
+  "The complete allocation retains the selected method and search result for exact reopen.",
   "schedule-seed retains existing choices and defaults new services to fixed dates.",
   "schedule-plan and schedule-compare reopen the whole calculation before producing its successor or comparison.",
   "csv also accepts a complete delivery scheduling result, including all unresolved date constraints.",
@@ -72,7 +75,7 @@ function parse(argv) {
     csv: ["input", "output"],
     compare: ["baseline", "candidate", "name", "note", "output"],
     "schedule-seed": ["input", "output"],
-    schedule: ["input", "constraints", "name", "output"],
+    schedule: ["input", "constraints", "method", "max-search-steps", "name", "output"],
     "schedule-plan": ["input", "output"],
     "schedule-compare": ["input", "output"]
   }[command];
@@ -175,8 +178,18 @@ async function main(argv) {
   } else if (command === "schedule-seed") {
     result = seedCohortDeliveryScheduling(await readJson(options.input));
   } else if (command === "schedule") {
-    result = scheduleCohortDelivery(await readJson(options.input), options.constraints ? await readJson(options.constraints) : undefined,
-      options.name === undefined ? {} : {name: options.name});
+    const settings = options.name === undefined ? {} : {name: options.name};
+    if (options.method !== undefined) {
+      const methods = {"first-fit": "FIRST_FIT", "resolve-conflicts": "RESOLVE_CONFLICTS"};
+      if (!Object.hasOwn(methods, options.method)) fail("INVALID_ARGUMENT", "Choose --method first-fit or resolve-conflicts.", "method");
+      settings.method = methods[options.method];
+    }
+    if (options["max-search-steps"] !== undefined) {
+      if (!/^[1-9]\d*$/.test(options["max-search-steps"]))
+        fail("INVALID_ARGUMENT", "Search effort must be a positive whole number.", "max-search-steps");
+      settings.maxSearchSteps = Number(options["max-search-steps"]);
+    }
+    result = scheduleCohortDelivery(await readJson(options.input), options.constraints ? await readJson(options.constraints) : undefined, settings);
   } else if (command === "schedule-plan" || command === "schedule-compare") {
     const original = reopenCohortDeliverySchedule(await readJson(options.input));
     result = command === "schedule-plan" ? original.candidate :

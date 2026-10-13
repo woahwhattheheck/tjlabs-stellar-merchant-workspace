@@ -1,0 +1,215 @@
+import argparse, base64, hashlib, json, os, shutil, signal, subprocess, sys, tempfile, time, traceback, zipfile
+from pathlib import Path
+
+ENVELOPE=__SOURCE_ENVELOPE__
+def unpack(raw):
+    p=0;out=bytearray()
+    while p<len(raw):
+        flags=raw[p];p+=1
+        for bit in range(8):
+            if p>=len(raw):break
+            if flags&(1<<bit):
+                distance=raw[p]|(raw[p+1]<<8);count=raw[p+2]+3;p+=3
+                if not distance or distance>len(out):raise ValueError("Invalid complete source transport")
+                for _ in range(count):out.append(out[-distance])
+            else:out.append(raw[p]);p+=1
+    return bytes(out)
+raw=unpack(base64.b64decode(ENVELOPE["data"],validate=True))
+assert len(raw)==ENVELOPE["bytes"] and hashlib.sha256(raw).hexdigest()==ENVELOPE["sha256"]
+payload=json.loads(raw);del raw,ENVELOPE
+parser=argparse.ArgumentParser(description="Continue the complete saved SCF review with its selected current source package.")
+parser.add_argument("--parent",type=Path,required=True)
+parser.add_argument("--node",type=Path)
+parser.add_argument("--timeout-seconds",type=int,default=900)
+args=parser.parse_args()
+if not args.parent.is_absolute() or not args.parent.is_dir():
+    raise ValueError("Select the equipped owner's existing absolute receiving parent.")
+if not 60<=args.timeout_seconds<=3600:
+    raise ValueError("Select the original controller timeout from 60 to 3600 seconds.")
+transfer_input=json.load(sys.stdin)
+if isinstance(transfer_input,dict) and "transfers" in transfer_input:
+    if len(transfer_input["transfers"])!=1:raise ValueError("Select only the original case transfer")
+    transfer_input=transfer_input["transfers"][0]
+if transfer_input.get("library_file_id")!=payload["libraryId"] or transfer_input.get("file_id")!=payload["caseFileId"] or int(transfer_input.get("current_version_number",-1))!=payload["expectedVersion"]:
+    raise ValueError("Receive the exact original Library case version")
+payload["transfer"]=transfer_input
+del transfer_input
+os.umask(0o077)
+def observation():
+    value={}
+    for name in ("memory.current","memory.max","memory.events","memory.stat"):
+        try:value[name]=(Path("/sys/fs/cgroup")/name).read_text().strip()
+        except OSError:pass
+    if "memory.stat" in value:
+        wanted={"anon","file","shmem","slab","inactive_file","active_file","file_mapped"}
+        value["memory.stat"]={k:int(v) for k,v in (line.split() for line in value["memory.stat"].splitlines()) if k in wanted}
+    return value
+def emit(phase,**fields):
+    print("SCF_CURRENT_SOURCE "+json.dumps({"phase":phase,**fields},ensure_ascii=False),flush=True)
+root=Path(tempfile.mkdtemp(prefix="scf-current-source-",dir=args.parent))
+temporary=root/"tmp";temporary.mkdir(mode=0o700)
+runtime=root/"published-runtime";runtime.mkdir(mode=0o700)
+runs=root/"runs";runs.mkdir(mode=0o700)
+logs=root/"logs";logs.mkdir(mode=0o700)
+environment=dict(os.environ)
+environment.update(TMPDIR=str(temporary),TEMP=str(temporary),TMP=str(temporary),PYTHONDONTWRITEBYTECODE="1")
+os.environ.update({k:environment[k] for k in ("TMPDIR","TEMP","TMP","PYTHONDONTWRITEBYTECODE")})
+owned={}
+child=None
+def proc_identity(pid):
+    try:
+        text=(Path("/proc")/str(pid)/"stat").read_text()
+        tail=text[text.rfind(")")+2:].split()
+        return {"pid":pid,"ppid":int(tail[1]),"start":tail[19]}
+    except (OSError,ValueError,IndexError):return None
+def remember_descendants(parent_pid):
+    rows={}
+    for entry in Path("/proc").iterdir():
+        if entry.name.isdecimal():
+            row=proc_identity(int(entry.name))
+            if row:rows[row["pid"]]=row
+    selected={parent_pid};changed=True
+    while changed:
+        changed=False
+        for pid,row in rows.items():
+            if row["ppid"] in selected and pid not in selected:selected.add(pid);changed=True
+    for pid in selected:
+        if pid in rows:owned[pid]=rows[pid]["start"]
+def cleanup():
+    if child is not None and child.poll() is None:remember_descendants(child.pid)
+    remaining=[]
+    for pid,start in list(owned.items()):
+        now=proc_identity(pid)
+        if now and now["start"]==start:
+            try:os.kill(pid,signal.SIGTERM);remaining.append((pid,start))
+            except ProcessLookupError:pass
+    deadline=time.monotonic()+6
+    while remaining and time.monotonic()<deadline:
+        remaining=[(pid,start) for pid,start in remaining if (proc_identity(pid) or {}).get("start")==start]
+        if remaining:time.sleep(.15)
+    for pid,start in remaining:
+        if (proc_identity(pid) or {}).get("start")==start:
+            try:os.kill(pid,signal.SIGKILL)
+            except ProcessLookupError:pass
+def terminated(signum,frame):
+    cleanup()
+    raise SystemExit(128+signum)
+signal.signal(signal.SIGTERM,terminated)
+signal.signal(signal.SIGINT,terminated)
+result_summary={"operation":payload["operation"],"root":str(root),"state":"INCOMPLETE"}
+try:
+    for row in payload["files"]:
+        body=row["content"].encode("utf-8")
+        assert len(body)==row["bytes"] and hashlib.sha256(body).hexdigest()==row["sha256"], "Published source byte/SHA mismatch: "+row["name"]
+        assert hashlib.sha1(("blob "+str(len(body))+"\0").encode()+body).hexdigest()==row["gitSha"], "Published Git blob mismatch: "+row["name"]
+        if Path(row["name"]).name!=row["name"] or row["name"] in (".",".."):
+            raise ValueError("Select only original runtime sibling files.")
+        (runtime/row["name"]).write_bytes(body)
+    sys.path.insert(0,str(runtime))
+    from scf_native_process import preserve_console
+    preserve_console(logs/"producer-console.log")
+    emit("ADMITTED",pid=os.getpid(),root=str(root),cgroup=observation(),diskFree=shutil.disk_usage(root).free,operation=payload["operation"],sourcePhase=payload["sourcePhase"])
+    helper=root/"library_file_transfer.py"
+    helper_body=payload["helper"].encode("utf-8")
+    assert hashlib.sha256(helper_body).hexdigest()==payload["helperSha256"], "Official materializer source SHA mismatch"
+    helper.write_bytes(helper_body)
+    emit("PUBLISHED_SOURCE_READY",files=len(payload["files"]),sourceCommit=payload["sourceCommit"])
+    original=root/"SCF-Current-Application-and-Review-v6.zip"
+    transfer_input=json.dumps(payload["transfer"])
+    emit("ORIGINAL_TRANSFER_START",libraryId=payload["libraryId"],expectedVersion=payload["expectedVersion"])
+    with (logs/"materialize.log").open("wb") as log:
+        received=subprocess.run([sys.executable,"-B",str(helper),"materialize",str(original)],input=transfer_input.encode(),stdout=log,stderr=subprocess.STDOUT,env=environment,timeout=360)
+    if received.returncode:raise RuntimeError("Original case transfer failed; "+(logs/"materialize.log").read_text(errors="replace")[-2000:])
+    digest=hashlib.sha256()
+    with original.open("rb") as inp:
+        for block in iter(lambda:inp.read(1024*1024),b""):digest.update(block)
+    emit("ORIGINAL_TRANSFER_RECEIVED",bytes=original.stat().st_size,sha256=digest.hexdigest())
+    assert original.stat().st_size==payload["caseBytes"] and digest.hexdigest()==payload["caseSha256"], "Original case bytes/SHA differ from selected immutable version"
+    with zipfile.ZipFile(original) as archive:
+        names=archive.namelist()
+        emit("ORIGINAL_ARCHIVE_INVENTORY",members=len(names),uniqueMembers=len(set(names)))
+        assert len(set(names))==len(names), "Original case contains duplicate archive member paths"
+        config=json.loads(archive.read("config.json"))
+        baseline=payload["baseline"]
+        original_review_body=archive.read(baseline["reviewPath"])
+        original_review=json.loads(original_review_body)
+        original_round=original_review["round"]
+        original_result=json.loads(archive.read(baseline["resultPath"]))
+        assert original_round["id"]==baseline["reviewId"] and len(original_round["events"])==baseline["reviewEvents"]
+        assert original_result["state"]=="COMPLETE" and original_result["reviewActions"]==baseline["reviewEvents"]
+        assert original_result["originalDraftId"]==baseline["draftId"] and original_result["originalReviewId"]==baseline["reviewId"]
+        source_count=len(config["files"])
+        original_submission_sha=hashlib.sha256(archive.read(baseline["draftPath"])).hexdigest()
+        original_review_sha=hashlib.sha256(original_review_body).hexdigest()
+        assert original_submission_sha==payload["originalSubmissionSha256"]
+    emit("ORIGINAL_CASE_RECEIVED",bytes=payload["caseBytes"],sha256=payload["caseSha256"],members=len(names),sourceFiles=source_count,originalReviewActions=baseline["reviewEvents"],submissionSha256=original_submission_sha,reviewSha256=original_review_sha)
+    candidates=[str(args.node) if args.node else None,environment.get("CODEX_PRIMARY_RUNTIME_NODE"),shutil.which("node"),"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node"]
+    node=next((str(Path(p).resolve()) for p in candidates if p and Path(p).is_file() and os.access(p,os.X_OK)),None)
+    if node is None:raise RuntimeError("The current native host has no executable Node")
+    version=subprocess.run([node,"--version"],capture_output=True,text=True,timeout=30,env=environment)
+    if version.returncode:raise RuntimeError("The selected native Node did not start")
+    command=[sys.executable,"-B",str(runtime/"receive_review.py"),"--engine","native","--case",str(original),"--expected-case-sha256",payload["caseSha256"],"--source-input",str(runtime/payload["sourceInputName"]),"--expected-source-input-sha256",payload["sourceInputSha256"],"--node",node,"--parent",str(runs),"--replace-library-file-id",payload["libraryId"],"--expected-library-version",str(payload["expectedVersion"]),"--timeout-seconds",str(args.timeout_seconds)]
+    log_path=logs/"complete-native-review.log"
+    del transfer_input,helper_body,config,original_review_body,original_review,original_round,original_result
+    with log_path.open("wb") as log:
+        child=subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,env=environment,cwd=root,start_new_session=True)
+        remember_descendants(child.pid)
+        emit("NATIVE_RECEIVER_STARTED",pid=child.pid,node=node,nodeVersion=version.stdout.strip(),log=str(log_path),expectedLibraryVersion=payload["expectedVersion"],cgroup=observation())
+        offset=0;started=time.monotonic();last_observation=started
+        while child.poll() is None:
+            remember_descendants(child.pid)
+            with log_path.open("r",errors="replace") as reader:
+                reader.seek(offset);chunk=reader.read();offset=reader.tell()
+            if chunk:print(chunk,end="",flush=True)
+            if time.monotonic()-last_observation>=25:
+                emit("NATIVE_RECEIVER_RUNNING",elapsedSeconds=round(time.monotonic()-started,1),cgroup=observation());last_observation=time.monotonic()
+            if time.monotonic()-started>args.timeout_seconds+480:raise TimeoutError("Original receiving lifetime exceeded its retained native and save intervals")
+            time.sleep(.4)
+        returncode=child.wait()
+    with log_path.open("r",errors="replace") as reader:
+        reader.seek(offset);tail=reader.read()
+    if tail:print(tail,end="",flush=True)
+    result_summary["receiverExit"]=returncode
+    native_result=None;library_result=None
+    for line in log_path.read_text(errors="replace").splitlines():
+        if line.startswith("SCF_REVIEW_RESUME_RESULT "):native_result=json.loads(line.split(" ",1)[1])
+        elif line.startswith("SCF_LIBRARY_RESULT "):library_result=json.loads(line.split(" ",1)[1])
+    if native_result:
+        result_summary["native"]=native_result
+        final=Path(native_result["archive"]["path"])
+        digest=hashlib.sha256()
+        with final.open("rb") as inp:
+            for block in iter(lambda:inp.read(1024*1024),b""):digest.update(block)
+        assert final.stat().st_size==native_result["archive"]["bytes"] and digest.hexdigest()==native_result["archive"]["sha256"]
+        with zipfile.ZipFile(final) as archive:
+            complete_names=archive.namelist()
+            retired=native_result.get("source",{}).get("retired_members",{})
+            expected_names={retired.get(name,name) for name in names}
+            assert expected_names.issubset(complete_names) and len(set(complete_names))==len(complete_names)
+            assert hashlib.sha256(archive.read(baseline["draftPath"])).hexdigest()==original_submission_sha
+            assert hashlib.sha256(archive.read(baseline["reviewPath"])).hexdigest()==original_review_sha
+            if native_result["state"]=="COMPLETE":
+                native_reopen=json.loads(archive.read("receiving/source-package-continuation/RESULT.json"))
+                assert native_reopen["state"]=="COMPLETE"
+                assert native_reopen["retainedOriginalActions"]==baseline["reviewEvents"]
+                assert native_reopen["independentNativeReceiving"]["originalActionsRetained"]==baseline["reviewEvents"]
+                assert native_reopen["sourceRecords"]==payload["sourceRecords"]
+                assert native_reopen["sourcePackageSha256"]==payload["sourcePackageSha256"]
+                assert native_reopen["originalDraftId"]=="scf-technical-buyer-draft-7108-20261012"
+                assert native_reopen["originalReviewId"]=="SCF-TECHNICAL-BUYER-REVIEW-7108-20261012"
+                result_summary["completedSourceReceiving"]={key:native_reopen[key] for key in ("reviewActions","reviewStatus","retainedOriginalActions","currentApplication","sourceRecords","sourcePackageSha256","selectedBundle","preparedEdition","independentNativeReceiving")}
+            result_summary["reopenedArchive"]={"path":str(final),"bytes":final.stat().st_size,"sha256":digest.hexdigest(),"originalMembersRetained":len(names),"completeMembers":len(complete_names),"unchangedSubmissionSha256":original_submission_sha}
+    if library_result:result_summary["library"]=library_result
+    if returncode==0 and native_result and native_result["state"]=="COMPLETE" and library_result and library_result["all_saved"]:result_summary["state"]="COMPLETE"
+    elif returncode:result_summary["error"]="The original receiver returned exit "+str(returncode)
+except BaseException as error:
+    result_summary["error"]=str(error)
+    (logs/"producer-error.log").write_text(traceback.format_exc(),encoding="utf-8")
+    emit("ERROR",errorType=type(error).__name__,error=str(error),traceback=traceback.format_exc()[-6000:],tracebackPath=str(logs/"producer-error.log"))
+finally:
+    cleanup()
+    result_summary["cgroupAfter"]=observation()
+    (root/"receiving-summary.json").write_text(json.dumps(result_summary,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    emit("FINAL",**result_summary)
+
+raise SystemExit(0 if result_summary["state"]=="COMPLETE" else 1)

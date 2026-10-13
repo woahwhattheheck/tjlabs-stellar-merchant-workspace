@@ -35,7 +35,7 @@ and distribution components.
 
 The grant-side saved history retains the preparation exactly as created. Work
 continued in Operating plans has its own ordered revisions. Download that full
-JSON again to transfer the later procedure to another operator.
+JSON again to transfer the later procedure to another operator or receive it into the original grant review as described below.
 
 Prepared customer procedures expose the same complete JSON and standalone HTML
 and Markdown handovers. Downloading a retained preparation reuses its original
@@ -118,12 +118,139 @@ Useful options:
 | `--title`, `--customer`, `--owner`, `--purpose`, `--receiving`, `--notes` | Set the procedure's entered operating fields. |
 | `--format json` | Complete editable Operating plans JSON, the default. |
 | `--format html` or `markdown` | Complete readable procedure for the receiving operator. |
-| `--format preparation` | Native source identities, selected package totals and the complete operating plan. |
+| `--format preparation` | Native source identities, selected package totals, original preparation and current received history. |
+| `--format draft` | Save a newly prepared procedure inside the complete original submission export. |
+| `--plan ID` | Export this retained procedure's current full history, HTML, Markdown or preparation without creating another procedure. |
+| `--receive FILE` | Compare and receive later customer work into the complete original submission. |
+| `--format comparison` with `--receive` | Save the complete package/result comparison for review. |
+| `--return-note TEXT` | Retain the operator's review note with the received revision range. |
+| `--expected-revision N` | Receive only if the currently retained operating revision still matches the comparison. |
 | `--id ID` | Set an explicit new operating-plan identity when a caller owns it. |
 
 Every output uses a new filename and the shared create-only writer. Keep the
 resulting plan and original source file together. Run `starforge
 grant-operating-plan --help` for the installed options.
+
+
+## Receive the customer's work into the original grant review
+
+The customer returns the **complete plan JSON**, including every original
+revision, after saving their work in Operating plans. Reopen the team's original
+submission and the native planning review that created that procedure. Under
+**Customer operating procedure**, choose **Receive customer procedure** and
+open the returned file.
+
+The comparison presents each funded package's unchanged native work and
+completion measure beside the customer's current status, owner, actual due
+date and full recorded result. Expand a package to read every changed
+instruction, input, command argument, selected registration and expected
+result. The comparison also retains additional customer steps and explicitly
+shows an original package step removed from the returned revision.
+
+Enter the receiving review note and choose **Receive later customer work into
+this planning review**. Save the original submission. Its preceding complete
+draft version is retained, and the selected procedure now carries all original
+customer revisions and its receiving history. **Prepared customer procedures**
+downloads the current complete plan or readable HTML/Markdown; **Download
+original prepared plan** gives the original creation edition.
+
+Shared saved revisions must match the procedure the team originally prepared.
+The existing Operating Plans receiver extends that complete history. Reopening
+the same returned file reuses the already received revision, and an older
+matching file keeps the current selection. A copy with a different plan ID
+belongs to its own operating procedure. Divergent shared edits remain in their
+original files for the operator to reconcile through the existing Operating
+plans editor before receiving the continuing original plan.
+
+The native planning file, original preparation, prices, hours, tranche scope
+and payment calculation remain the selected original basis. Customer progress
+is recorded work in the procedure. Use that full returned work while carrying
+out the original Grant Operations completion and payment workflow.
+
+### Complete command-line handover
+
+Prepare the new procedure **inside the original saved draft**, giving it the
+chosen stable operating identity:
+
+~~~sh
+starforge grant-operating-plan \
+  --file /absolute/customer/submission.json \
+  --id merchant-installation \
+  --customer "Receiving merchant" \
+  --format draft \
+  --out /absolute/customer/prepared-submission.json
+~~~
+
+Export that exact prepared procedure for the receiving operator:
+
+~~~sh
+starforge grant-operating-plan \
+  --file /absolute/customer/prepared-submission.json \
+  --plan merchant-installation \
+  --out /absolute/customer/operator-plan.json
+~~~
+
+The operator edits this file through Operating plans and saves its complete
+later history. Read the full package comparison before receiving it:
+
+~~~sh
+starforge grant-operating-plan \
+  --file /absolute/customer/prepared-submission.json \
+  --receive /absolute/customer/returned-operator-plan.json \
+  --format comparison \
+  --out /absolute/customer/return-comparison.json
+~~~
+
+Receive into the same original draft, using the selected operating revision
+from that comparison:
+
+~~~sh
+starforge grant-operating-plan \
+  --file /absolute/customer/prepared-submission.json \
+  --receive /absolute/customer/returned-operator-plan.json \
+  --expected-revision 1 \
+  --return-note "Reviewed the returned package work and operating continuation." \
+  --out /absolute/customer/received-submission.json
+~~~
+
+Open the complete resulting draft in the submission editor, or use
+`--file received-submission.json --plan merchant-installation` with the usual
+JSON/HTML/Markdown formats to hand the continuing procedure to the next
+operator. Each output uses a new filename. Draft preparation and receiving use
+the source and native revision currently selected in that original saved
+draft; the existing planning update review selects another native edition.
+
+### Receive through the typed API
+
+The same pure model serves the UI and CLI:
+
+~~~js
+import {
+  compareGrantOperatingReturn,
+  receiveGrantOperatingReturn,
+  grantOperatingContinuationPlan,
+} from '@tokenjunkielabs/starforge-merchant/grant/operating-plan';
+
+const comparison = compareGrantOperatingReturn(nativeSource, planningReview, returnedPlan);
+const received = receiveGrantOperatingReturn(nativeSource, planningReview, returnedPlan, {
+  expectedRevision: comparison.previousRevision,
+  filename: 'returned-operator-plan.json',
+  note: receivingReviewNote,
+});
+const continuedReview = received.review;
+const prepared = continuedReview.operatingSelection.prepared.find(
+  item => item.plan.id === comparison.planId,
+);
+const currentPlan = grantOperatingContinuationPlan(prepared);
+~~~
+
+The caller retains the preceding submission version and assigns
+`received.review` to that same draft's `planningReview` before its normal save.
+`prepared.plan` stays the original preparation. Its optional
+`prepared.continuation.plan` contains the complete received revision history;
+the ordered receiving entries select ranges in that one history, avoiding a
+second full copy for every return. The existing complete draft exporter and
+receiver carry both the original and continuing work.
 
 ## Keep the native plan and operating work connected
 
@@ -177,3 +304,17 @@ Use `newGrantOperatingSelection` for entered fields and bindings, and
 
 The installed command-line composition is available through
 `@tokenjunkielabs/starforge-merchant/grant/operating-plan/cli`.
+
+## Keep an unfinished customer return and its complete step sequence
+
+The **Receive customer procedure** desk retains the complete opened plan, original filename, review note, native planning source/revision, prepared procedure identity and compared operating revision inside the original saved planning review. Use **Save** to persist the unfinished work in the existing browser draft. **Download whole editable draft** carries the same pending file and note; reopening that draft restores them. Each saved copy keeps its own pending state.
+
+Opening another return, accepting it, refreshing its comparison or explicitly closing it first retains the preceding complete submission version. The returned plan can be downloaded before receiving, including while its current history needs reconciliation. Editing the review note marks the submission dirty through the normal save path.
+
+If the retained procedure advances after comparison, the desk keeps the source and note, displays the current complete comparison and disables adoption until **Use this current comparison for receiving** is selected. That explicit action changes only the compared operating revision. The shared receiving model retains the existing expected-revision check. A successful receive clears the matching pending history; receiving a different procedure leaves unrelated pending work available.
+
+The comparison shows the complete **Originally prepared**, **Previously selected** and **Returned sequence**, with every original step ID, title and position. Reordering existing steps appears as a sequence change even when all step fields and status counts are unchanged. Added and removed IDs remain explicit, and customer additions appear at their actual returned positions. The full comparison JSON and typed API carry this same `stepOrder` projection; the original native package mapping, scope, costs, completion measures and complete Operating Plan history remain intact.
+
+The additive model interfaces are `stageGrantOperatingReturn`, `refreshGrantOperatingReturn` and `closeGrantOperatingReturn`. They return new planning reviews for the original saved-draft writer. The optional `operatingSelection.returnDraft` contains the full source and review state; earlier saved selections without that field remain readable.
+
+When the installed CLI receives the exact pending plan from a saved draft, it uses the retained review note unless `--return-note` explicitly replaces it. Replaying an already retained matching plan saves any pending-desk cleanup in the full output draft, with the preceding complete version preserved. A replay with no review change retains the original draft state.

@@ -126,3 +126,9 @@ export function readDocumentSupplierUsage(configuration: DocumentProviderConfigu
 export * from './batch.mjs';
 export * from './batch-render.mjs';
 export * from './launch.mjs';
+export * from './composition.mjs';
+
+export * from './composition-workspace.mjs';
+export * from './composition-server.mjs';
+
+export * from './composition-service.mjs';

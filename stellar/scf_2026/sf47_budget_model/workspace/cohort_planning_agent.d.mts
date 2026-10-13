@@ -1,11 +1,12 @@
 // MIT. Whole adoption operations over the original Grant workspace client.
 import type {Buffer} from 'node:buffer';
+import type {CohortDeliveryInput,CohortDeliveryComparison} from './cohort_delivery_comparison.mjs';
 import type {GrantWorkspaceClient,GrantJsonResponse,
   GrantCustomerUseCalendar,GrantCustomerUseEditionSelection} from './agent-client.mjs';
 import type {CohortPlan,CohortPlanDocument,CohortPlanReport,CohortPlanComparison,
   NativeCohortPlanningSeed,PlanningDeliveryScheduling,PlanningComparisonOptions,
   TimestampText,DateText} from './cohort_planning.mjs';
-import type {CohortDeliverySchedule} from './cohort_planning_scheduling.mjs';
+import type {CohortDeliverySchedule,DeliveryAllocationOptions} from './cohort_planning_scheduling.mjs';
 
 export const COHORT_PLAN_EDITION_SCHEMA: 'stellar-forge.sf47-cohort-plan-edition.v1';
 export const COHORT_ADOPTION_SEED_SCHEMA: 'stellar-forge.sf47-cohort-adoption-seed.v1';
@@ -35,7 +36,7 @@ export interface CohortAdoptionEdition {
   deliverySchedule?: CohortDeliverySchedule; comparison?: CohortPlanComparison;
 }
 export type CohortAdoptionDocument = CohortPlanDocument|CohortPlanComparison|CohortAdoptionEdition|
-  CohortAdoptionSeed|CohortAdoptionReview|CohortAdoptionPrepared|CohortAdoptionSaved;
+  CohortAdoptionSeed|CohortAdoptionReview|CohortAdoptionPrepared|CohortAdoptionSaved|CohortDeliveryInput|CohortDeliveryComparison;
 export interface CohortAdoptionSeed {
   schema: typeof COHORT_ADOPTION_SEED_SCHEMA; sourceKind: 'CASE'|'CALENDAR';
   case: CohortAdoptionCase; nativeSeed: NativeCohortPlanningSeed;
@@ -44,10 +45,12 @@ export interface CohortAdoptionSeed {
 }
 export interface CohortAdoptionReview {
   schema: typeof COHORT_ADOPTION_REVIEW_SCHEMA;
-  document: CohortPlanDocument|CohortPlanComparison|CohortAdoptionEdition;
+  document: CohortPlanDocument|CohortPlanComparison|CohortAdoptionEdition|CohortDeliveryComparison;
   plan?: CohortPlan; report?: CohortPlanReport; comparison?: CohortPlanComparison;
   deliverySchedule?: CohortDeliverySchedule; case?: CohortAdoptionCase;
   nativeSeed?: NativeCohortPlanningSeed; changes?: CohortAdoptionEdit[];
+  recordedDelivery?:Pick<CohortDeliveryComparison,'summary'|'source'|'issues'>;
+  nativeSources?:import('./cohort_delivery_agent.mjs').CohortDeliveryNativeSources;
 }
 export type CohortAdoptionSeedOptions = {
   expectedVersion: number; name?: string; draftId?: string; asOfAt?: TimestampText;
@@ -86,7 +89,7 @@ export interface CohortAdoptionSourceRequest {
 export interface CohortAdoptionPrepared {
   schema: typeof COHORT_ADOPTION_PREPARED_SCHEMA;
   caseId: string; caseCreatedAt: TimestampText; case: CohortAdoptionCase;
-  document: CohortAdoptionEdition|CohortPlanComparison;
+  document: CohortAdoptionEdition|CohortPlanComparison|CohortDeliveryComparison;
   nativeSeed: NativeCohortPlanningSeed|null; parentSource: CohortAdoptionCaseSource|null;
   sourceFile: CohortAdoptionSourceFile; request: CohortAdoptionSourceRequest; preparedSha256: string;
 }
@@ -118,8 +121,12 @@ export function reviewGrantCohortAdoption(client:CohortAdoptionClient,caseId:str
   document:CohortAdoptionDocument|unknown):Promise<CohortAdoptionReview>;
 export function editCohortAdoption(document:CohortAdoptionDocument|unknown,changes:CohortAdoptionEdit[],
   options?:Pick<PlanningComparisonOptions,'title'|'note'>):CohortAdoptionReview;
-export function scheduleCohortAdoption(input:{document:CohortAdoptionDocument|unknown;
-  constraints?:PlanningDeliveryScheduling;name?:string}):CohortDeliverySchedule;
+export interface CohortAdoptionSchedulingInput extends DeliveryAllocationOptions {
+  document:CohortAdoptionDocument|unknown;
+  constraints?:PlanningDeliveryScheduling;
+}
+/** The selected method and complete competing-group decisions travel with the original allocation. */
+export function scheduleCohortAdoption(input:CohortAdoptionSchedulingInput):CohortDeliverySchedule;
 export function compareCohortAdoption(input:{beforeDocument:CohortAdoptionDocument|unknown;
   afterDocument:CohortAdoptionDocument|unknown;options?:PlanningComparisonOptions}):CohortPlanComparison;
 export function rebaseGrantCohortAdoption(client:CohortAdoptionClient,caseId:string,expectedVersion:number,

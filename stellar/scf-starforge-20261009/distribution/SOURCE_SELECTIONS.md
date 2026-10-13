@@ -32,6 +32,14 @@ without that original HTTP host receive no extra console capability from this
 rule. The recipe's selected commands, exports, providers, dependency groups
 and runtime profile remain its original choices.
 
+The current Research HTTP host's accounting and commerce source graph imports
+SF86's `terms.mjs`, which reads its unchanged public `networks.json` at module
+load. The same common declared host closure carries that catalog as an explicit
+runtime support file. It stays at its original repository path and retains its
+exact Git blob, SHA-256 and byte count. This completes the original installed
+Research constructor before it opens a dossier, Zotero bridge or listener;
+ordinary static ESM discovery alone cannot find this filesystem read.
+
 A source selection that explicitly excludes a required console/runtime input or
 mapped source still fails the existing packaged-entry/import checks. Use a
 separate product selection when omitting the HTTP host; an incomplete declared

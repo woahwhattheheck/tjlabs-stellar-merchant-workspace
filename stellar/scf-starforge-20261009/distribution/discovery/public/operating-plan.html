@@ -6,13 +6,14 @@
   <title>Starforge · Operating plans</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/operating-plan.css">
+  <link rel="stylesheet" href="/grant-reporting-editor.css">
   <script type="module" src="/operating-plan.mjs"></script>
 </head>
 <body class="operating-page">
   <a class="skip" href="#plan-editor">Skip to operating plan</a>
   <header class="topbar">
     <div><p class="eyebrow">STELLAR FORGE</p><h1>Operating plans</h1></div>
-    <nav class="actions" aria-label="Workspace"><a class="button" href="/">Command finder</a><button id="refresh-catalog" type="button">Refresh source</button><button id="export-catalog" type="button">Toolkit catalog JSON</button></nav>
+    <nav class="actions" aria-label="Workspace"><a class="button" href="/">Command finder</a><a class="button" href="/operating-plan-return.html">Returned procedures</a><button id="refresh-catalog" type="button">Refresh source</button><button id="export-catalog" type="button">Toolkit catalog JSON</button></nav>
   </header>
   <main>
     <p class="intro">Prepare a customer procedure, keep its selected commands, and record the work as it progresses.</p>
@@ -28,7 +29,7 @@
           <label for="new-title">New plan</label><input id="new-title" required maxlength="300" placeholder="Customer operating procedure">
           <button id="create-plan" type="submit">Create plan</button>
         </form>
-        <div class="stack-actions"><button id="import-plan" type="button">Import complete plan</button><button id="reload-plans" type="button">Reopen saved plans</button></div>
+        <div class="stack-actions"><button id="create-grant-reporting" type="button">Create Grant reporting plan</button><button id="import-plan" type="button">Import complete plan</button><button id="reload-plans" type="button">Reopen saved plans</button></div>
         <input id="import-file" type="file" accept=".json,application/json" hidden>
         <div id="import-conflict" hidden><p id="import-explanation"></p><button id="import-copy" type="button">Keep incoming as a copy</button><button id="cancel-import" type="button">Cancel import</button></div>
         <p class="hint">Plans and working drafts are saved in this browser. Export the complete JSON to move a plan to another computer, browser or listener address.</p>
@@ -81,5 +82,70 @@
     </div>
   </main>
   <footer>Use a consistent listener address to reopen browser plans. Original command and workflow controls apply when work is performed in the selected toolkit.</footer>
+
+  <dialog id="reporting-dialog" class="reporting-dialog" aria-labelledby="reporting-heading">
+    <header class="reporting-heading">
+      <div><p class="eyebrow">GRANT OPERATIONS</p><h2 id="reporting-heading">Prepare a reporting procedure</h2></div>
+      <button id="reporting-close" type="button" data-reporting-busy aria-label="Close reporting preparation">Close</button>
+    </header>
+    <p class="reporting-intro">Use the complete Grant case and its Source Tables project to prepare ordered reporting work in this workspace.</p>
+    <div id="reporting-error" class="reporting-error" role="alert" hidden></div>
+    <p id="reporting-status" role="status" aria-live="polite">Choose the original inputs, enter the reporting period, and preview the procedure.</p>
+    <section class="reporting-shelf" aria-label="Saved reporting preparations">
+      <div><label for="reporting-saved">Saved preparation</label><select id="reporting-saved" data-reporting-busy></select></div>
+      <div class="actions">
+        <button id="reporting-new" type="button" data-reporting-busy>New preparation</button>
+        <button id="reporting-copy" type="button" data-reporting-busy>Copy preparation</button>
+        <button id="reporting-import-preparation" type="button" data-reporting-busy>Open preparation JSON</button>
+        <button id="reporting-export-preparation" type="button" data-reporting-busy>Download preparation JSON</button>
+      </div>
+      <input id="reporting-preparation-file" type="file" accept=".json,application/json" hidden>
+      <p id="reporting-storage" class="hint" aria-live="polite"></p>
+    </section>
+    <p id="reporting-received-note" class="reporting-note" hidden>The operating plan is saved. Open it to record the work, or copy this preparation for another reporting period.</p>
+    <form id="reporting-form">
+      <fieldset id="reporting-fields" class="reporting-fields">
+        <legend>Report and original inputs</legend>
+        <div class="reporting-grid">
+          <div class="reporting-wide"><label for="reporting-title">Plan title</label><input id="reporting-title" required maxlength="300" placeholder="Grant reporting · October close"></div>
+          <div><label for="reporting-customer">Customer or programme</label><input id="reporting-customer" maxlength="1000"></div>
+          <div><label for="reporting-owner">Operating owner</label><input id="reporting-owner" maxlength="300"></div>
+          <div class="reporting-wide"><label for="reporting-period">Reporting period label</label><input id="reporting-period" maxlength="1000" placeholder="For example: October 2026"></div>
+          <div><label for="reporting-startDate">Start date <span class="hint">(optional)</span></label><input id="reporting-startDate" type="date"><p class="hint">Leave empty for cumulative reporting through the end date.</p></div>
+          <div><label for="reporting-asOfDate">Report end date</label><input id="reporting-asOfDate" type="date" required></div>
+          <div class="reporting-wide"><label for="reporting-receiving">Receiving and continuation</label><textarea id="reporting-receiving" rows="3" maxlength="32000" placeholder="Who receives the completed report, where it belongs, and how the next operator continues"></textarea></div>
+          <div class="reporting-source"><label for="reporting-case-file">Complete Grant case JSON</label><input id="reporting-case-file" type="file" accept=".json,application/json"><p id="reporting-case-summary" class="hint"></p></div>
+          <div class="reporting-source"><label for="reporting-sourceProject-file">Complete Source Tables project JSON</label><input id="reporting-sourceProject-file" type="file" accept=".json,application/json"><p id="reporting-sourceProject-summary" class="hint"></p></div>
+          <p class="hint reporting-wide">Keep the complete native exports, including their saved source editions. A retained Source Tables wrapper or its complete project can be opened here.</p>
+        </div>
+        <h3>Operating paths</h3>
+        <p class="hint">Enter paths as they exist on the computer that will run the work. The selected files above retain the original contents used to prepare the procedure.</p>
+        <div class="reporting-grid">
+          <div class="reporting-wide"><label for="reporting-path-workspace">Original Grant workspace directory</label><input id="reporting-path-workspace" required maxlength="8192" spellcheck="false" autocomplete="off"></div>
+          <div class="reporting-wide"><label for="reporting-path-sourceProject">Original Source Tables JSON path</label><input id="reporting-path-sourceProject" required maxlength="8192" spellcheck="false" autocomplete="off"></div>
+          <div class="reporting-wide"><label for="reporting-path-outputDirectory">Report output directory</label><input id="reporting-path-outputDirectory" required maxlength="8192" spellcheck="false" autocomplete="off"></div>
+          <div class="reporting-wide"><label for="reporting-path-receivingWorkspace">Receiving workspace directory</label><input id="reporting-path-receivingWorkspace" required maxlength="8192" spellcheck="false" autocomplete="off"></div>
+          <div class="reporting-wide"><label for="reporting-path-commandFinderUrl">Command finder address</label><input id="reporting-path-commandFinderUrl" type="url" required maxlength="8192" spellcheck="false" autocomplete="off"></div>
+        </div>
+      </fieldset>
+      <section class="reporting-catalog" aria-label="Selected toolkit catalog">
+        <div><h3>Selected toolkit</h3><p id="reporting-catalog-summary" class="hint"></p></div>
+        <button id="reporting-capture-catalog" type="button" data-reporting-edit>Use current source catalog</button>
+      </section>
+      <div class="actions reporting-build"><button id="reporting-preview-button" type="submit" data-reporting-edit>Preview procedure</button></div>
+    </form>
+    <section id="reporting-preview" class="reporting-preview" aria-labelledby="reporting-preview-heading" hidden>
+      <div class="reporting-heading"><h3 id="reporting-preview-heading">Complete reporting procedure</h3><button id="reporting-receive" type="button" data-reporting-preview>Create plan and open</button></div>
+      <p class="hint">Review the source selections and commands, then record the actual work in the saved operating plan as it progresses.</p>
+      <div class="actions">
+        <button id="reporting-download-json" type="button" data-reporting-preview>Download complete plan JSON</button>
+        <button id="reporting-download-html" type="button" data-reporting-preview>Download readable HTML</button>
+        <button id="reporting-download-markdown" type="button" data-reporting-preview>Download Markdown</button>
+      </div>
+      <div id="reporting-preview-content"></div>
+    </section>
+    <p id="reporting-identity" class="hint reporting-identity"></p>
+  </dialog>
+
 </body>
 </html>

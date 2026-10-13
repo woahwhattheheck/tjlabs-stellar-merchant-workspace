@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import type { NativeRecord } from './discovery-client.mjs';
+import type { CatalogConfiguration, CatalogDescription, NativeRecord } from './discovery-client.mjs';
 
 export interface NativeRegistryWorkspace {
   /** Lowercase letters, digits and hyphens; 1–64 characters. */
@@ -12,6 +12,8 @@ export interface NativeRegistryInput {
   schema?: 'stellar-forge.mcp-native-registry-input.v1';
   defaultWorkspaceId: string;
   workspaces: NativeRegistryWorkspace[];
+  /** Optional labels/IDs for exactly the original catalog URLs used by these services. */
+  catalogs?: CatalogDescription[];
 }
 export interface NativeRegistryManifest {
   schema: 'stellar-forge.mcp-native-registry.v1';
@@ -19,6 +21,8 @@ export interface NativeRegistryManifest {
   createdAt: string;
   defaultWorkspaceId: string;
   catalogUrl: string;
+  /** Absent only on original single-catalog manifests; the host resolves that original default. */
+  discoveryCatalogs?: CatalogConfiguration;
   workspaces: Array<NativeRegistryWorkspace & {nativeSha256:string}>;
 }
 export interface NativeRegistryCreated {
@@ -26,6 +30,7 @@ export interface NativeRegistryCreated {
   status: 'NATIVE_MCP_REGISTRY_CREATED';
   directory: string;
   defaultWorkspaceId: string;
+  discoveryCatalogs: CatalogConfiguration;
   workspaces: Array<{workspaceId:string;workspaceLabel:string}>;
   environment: {
     MCP_OPERATOR_MODULE:string;
@@ -37,6 +42,7 @@ export interface NativeRegistryCreated {
 }
 export interface NativeRegistryHost {
   manifest: NativeRegistryManifest;
+  discoveryCatalogs: CatalogConfiguration;
   environment: {
     MCP_STATE_DIR:string;
     BAZAAR_DISCOVERY_URL:string;

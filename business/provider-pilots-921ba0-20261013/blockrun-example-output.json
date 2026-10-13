@@ -1,0 +1,360 @@
+{
+  "notice": "Authored documentation captures; no provider API request, charge, settlement or customer output occurred.",
+  "complete": {
+    "schema": "tjlabs.blockrun-account-usage-view.v1",
+    "evidence": "CAPTURED_PROVIDER_RESPONSES_WITH_LOCAL_ASSOCIATION",
+    "selection": {
+      "accountReference": "example-platform-account",
+      "keyReference": "example-reviewed-key",
+      "from": "2026-10-10T00:00:00.000Z",
+      "to": "2026-10-11T00:00:00.000Z",
+      "limit": 3
+    },
+    "currency": "USD",
+    "pages": [
+      {
+        "index": 1,
+        "cursor": null,
+        "nextCursor": "example-next-page",
+        "capturedAt": "2026-10-13T01:00:00.000Z",
+        "requestUrl": "https://api.blockrun.ai/v1/usage?from=2026-10-10T00%3A00%3A00.000Z&to=2026-10-11T00%3A00%3A00.000Z&limit=3",
+        "reportedRows": 3
+      },
+      {
+        "index": 2,
+        "cursor": "example-next-page",
+        "nextCursor": null,
+        "capturedAt": "2026-10-13T01:00:01.000Z",
+        "requestUrl": "https://api.blockrun.ai/v1/usage?from=2026-10-10T00%3A00%3A00.000Z&to=2026-10-11T00%3A00%3A00.000Z&limit=3&cursor=example-next-page",
+        "reportedRows": 3
+      }
+    ],
+    "coverage": {
+      "cursorExhausted": true,
+      "nextCursor": null,
+      "nextRequest": null,
+      "unavailableDays": [],
+      "pendingRequestIds": [],
+      "summaryCountedThrough": null,
+      "summaryPresent": true,
+      "issues": []
+    },
+    "observed": {
+      "uniqueRows": 6,
+      "duplicateRows": [],
+      "knownPricedAndFreeUsd": "0.028100000000000001",
+      "mediaJobs": 1,
+      "correctionRows": 1,
+      "callsInWindow": "3",
+      "callCountAuthority": "ORIGINAL_SUMMARY_EXCLUDES_POLLS_AND_CORRECTIONS",
+      "rowsMinusSummaryUsd": "0"
+    },
+    "groups": [
+      {
+        "key": "request:example-chat-1",
+        "kind": "REQUEST",
+        "originalRequestId": "example-chat-1",
+        "jobId": null,
+        "requests": [
+          "example-correction",
+          "example-chat-1"
+        ],
+        "corrections": [
+          "example-correction"
+        ],
+        "pending": [],
+        "knownPricedAndFreeUsd": "0.0041",
+        "observedRowsFinal": true
+      },
+      {
+        "key": "job:example-media-1",
+        "kind": "MEDIA_JOB",
+        "originalRequestId": null,
+        "jobId": "example-media-1",
+        "requests": [
+          "example-media-complete",
+          "example-media-poll",
+          "example-media-create"
+        ],
+        "corrections": [],
+        "pending": [],
+        "knownPricedAndFreeUsd": "0.024",
+        "observedRowsFinal": true
+      },
+      {
+        "key": "request:example-chat-2",
+        "kind": "REQUEST",
+        "originalRequestId": "example-chat-2",
+        "jobId": null,
+        "requests": [
+          "example-chat-2"
+        ],
+        "corrections": [],
+        "pending": [],
+        "knownPricedAndFreeUsd": "0.000000000000000001",
+        "observedRowsFinal": true
+      }
+    ],
+    "rows": [
+      {
+        "requestId": "example-correction",
+        "timestamp": "2026-10-10T23:40:00.000Z",
+        "endpoint": "/v1/chat/completions",
+        "model": "example-selected-model",
+        "jobId": null,
+        "jobStatus": null,
+        "correctionOf": "example-chat-1",
+        "kind": "chat",
+        "status": 200,
+        "costState": "priced",
+        "reportedUsd": "-0.0023",
+        "original": {
+          "request_id": "example-correction",
+          "timestamp": "2026-10-10T23:40:00.000Z",
+          "endpoint": "/v1/chat/completions",
+          "model": "example-selected-model",
+          "job_id": null,
+          "job_status": null,
+          "kind": "chat",
+          "input_tokens": "20",
+          "output_tokens": "10",
+          "cost_usd": "-0.0023",
+          "cost_state": "priced",
+          "status": "200",
+          "correction_of": "example-chat-1"
+        }
+      },
+      {
+        "requestId": "example-media-complete",
+        "timestamp": "2026-10-10T23:30:00.000Z",
+        "endpoint": "/v1/images/generations/example-media-1",
+        "model": "example-selected-model",
+        "jobId": "example-media-1",
+        "jobStatus": "completed",
+        "correctionOf": null,
+        "kind": "service",
+        "status": 200,
+        "costState": "priced",
+        "reportedUsd": "0.024",
+        "original": {
+          "request_id": "example-media-complete",
+          "timestamp": "2026-10-10T23:30:00.000Z",
+          "endpoint": "/v1/images/generations/example-media-1",
+          "model": "example-selected-model",
+          "job_id": "example-media-1",
+          "job_status": "completed",
+          "kind": "service",
+          "input_tokens": "20",
+          "output_tokens": "10",
+          "cost_usd": "0.024",
+          "cost_state": "priced",
+          "status": "200",
+          "correction_of": null
+        }
+      },
+      {
+        "requestId": "example-media-poll",
+        "timestamp": "2026-10-10T23:20:00.000Z",
+        "endpoint": "/v1/images/generations/example-media-1",
+        "model": "example-selected-model",
+        "jobId": "example-media-1",
+        "jobStatus": "in_progress",
+        "correctionOf": null,
+        "kind": "service",
+        "status": 200,
+        "costState": "free",
+        "reportedUsd": "0",
+        "original": {
+          "request_id": "example-media-poll",
+          "timestamp": "2026-10-10T23:20:00.000Z",
+          "endpoint": "/v1/images/generations/example-media-1",
+          "model": "example-selected-model",
+          "job_id": "example-media-1",
+          "job_status": "in_progress",
+          "kind": "service",
+          "input_tokens": "20",
+          "output_tokens": "10",
+          "cost_usd": "0",
+          "cost_state": "free",
+          "status": "200",
+          "correction_of": null
+        }
+      },
+      {
+        "requestId": "example-chat-2",
+        "timestamp": "2026-10-10T23:00:00.000Z",
+        "endpoint": "/v1/chat/completions",
+        "model": "example-selected-model",
+        "jobId": null,
+        "jobStatus": null,
+        "correctionOf": null,
+        "kind": "chat",
+        "status": 200,
+        "costState": "priced",
+        "reportedUsd": "0.000000000000000001",
+        "original": {
+          "request_id": "example-chat-2",
+          "timestamp": "2026-10-10T23:00:00.000Z",
+          "endpoint": "/v1/chat/completions",
+          "model": "example-selected-model",
+          "job_id": null,
+          "job_status": null,
+          "kind": "chat",
+          "input_tokens": "20",
+          "output_tokens": "10",
+          "cost_usd": "0.000000000000000001",
+          "cost_state": "priced",
+          "status": "200",
+          "correction_of": null
+        }
+      },
+      {
+        "requestId": "example-media-create",
+        "timestamp": "2026-10-10T22:40:00.000Z",
+        "endpoint": "/v1/images/generations",
+        "model": "example-selected-model",
+        "jobId": "example-media-1",
+        "jobStatus": "queued",
+        "correctionOf": null,
+        "kind": "service",
+        "status": 202,
+        "costState": "free",
+        "reportedUsd": "0",
+        "original": {
+          "request_id": "example-media-create",
+          "timestamp": "2026-10-10T22:40:00.000Z",
+          "endpoint": "/v1/images/generations",
+          "model": "example-selected-model",
+          "job_id": "example-media-1",
+          "job_status": "queued",
+          "kind": "service",
+          "input_tokens": "20",
+          "output_tokens": "10",
+          "cost_usd": "0",
+          "cost_state": "free",
+          "status": "202",
+          "correction_of": null
+        }
+      },
+      {
+        "requestId": "example-chat-1",
+        "timestamp": "2026-10-10T22:30:00.000Z",
+        "endpoint": "/v1/chat/completions",
+        "model": "example-selected-model",
+        "jobId": null,
+        "jobStatus": null,
+        "correctionOf": null,
+        "kind": "chat",
+        "status": 200,
+        "costState": "priced",
+        "reportedUsd": "0.0064",
+        "original": {
+          "request_id": "example-chat-1",
+          "timestamp": "2026-10-10T22:30:00.000Z",
+          "endpoint": "/v1/chat/completions",
+          "model": "example-selected-model",
+          "job_id": null,
+          "job_status": null,
+          "kind": "chat",
+          "input_tokens": "20",
+          "output_tokens": "10",
+          "cost_usd": "0.0064",
+          "cost_state": "priced",
+          "status": "200",
+          "correction_of": null
+        }
+      }
+    ],
+    "providerSummary": {
+      "capturedAt": "2026-10-13T01:00:02.000Z",
+      "usd": "0.028100000000000001",
+      "calls": "3",
+      "tokens": "90",
+      "unpricedCalls": "0",
+      "unavailableDays": [],
+      "countedThrough": null,
+      "authority": "ORIGINAL_PROVIDER_WINDOW_TOTALS"
+    },
+    "providerCredits": {
+      "accountId": "example-native-account",
+      "capturedAt": "2026-10-13T01:00:03.000Z",
+      "billingMode": "ungated",
+      "blocked": false,
+      "blockedReason": null,
+      "grantedUsd": "0",
+      "spentUsd": "0.028100000000000001",
+      "remainingUsd": null,
+      "remainingInterpretation": "UNLIMITED",
+      "admissionAuthority": "ORIGINAL_PROVIDER_BLOCKED_FIELD"
+    },
+    "fulfillment": "NOT_ASSESSED",
+    "interpretation": "Rows retain the original reported costs. Media polls share one job group; corrections remain signed rows. Calls come from the original summary, because a page may contain polls for a job created outside this window. Raw captures remain necessary for receiving and review."
+  },
+  "partial": {
+    "coverage": {
+      "cursorExhausted": false,
+      "nextCursor": "example-next-page",
+      "nextRequest": {
+        "selection": {
+          "accountReference": "example-platform-account",
+          "keyReference": "example-reviewed-key",
+          "from": "2026-10-10T00:00:00.000Z",
+          "to": "2026-10-11T00:00:00.000Z",
+          "limit": 3
+        },
+        "method": "GET",
+        "url": "https://api.blockrun.ai/v1/usage?from=2026-10-10T00%3A00%3A00.000Z&to=2026-10-11T00%3A00%3A00.000Z&limit=3&cursor=example-next-page",
+        "cursor": "example-next-page"
+      },
+      "unavailableDays": [
+        "2026-10-10"
+      ],
+      "pendingRequestIds": [],
+      "summaryCountedThrough": "2026-10-10T23:00:00.000Z",
+      "summaryPresent": true,
+      "issues": [
+        "MORE_LEDGER_PAGES",
+        "PROVIDER_UNAVAILABLE_DAYS",
+        "PARTIAL_SUMMARY_CUTOFF",
+        "OBSERVED_ROWS_AND_SUMMARY_DIFFER"
+      ]
+    },
+    "observed": {
+      "uniqueRows": 3,
+      "duplicateRows": [],
+      "knownPricedAndFreeUsd": "0.0217",
+      "mediaJobs": 1,
+      "correctionRows": 1,
+      "callsInWindow": "3",
+      "callCountAuthority": "ORIGINAL_SUMMARY_EXCLUDES_POLLS_AND_CORRECTIONS",
+      "rowsMinusSummaryUsd": "-0.006400000000000001"
+    }
+  },
+  "pending": {
+    "coverage": {
+      "cursorExhausted": true,
+      "nextCursor": null,
+      "nextRequest": null,
+      "unavailableDays": [],
+      "pendingRequestIds": [
+        "example-chat-2"
+      ],
+      "summaryCountedThrough": null,
+      "summaryPresent": true,
+      "issues": [
+        "UNSETTLED_COSTS"
+      ]
+    },
+    "observed": {
+      "uniqueRows": 6,
+      "duplicateRows": [],
+      "knownPricedAndFreeUsd": "0.0281",
+      "mediaJobs": 1,
+      "correctionRows": 1,
+      "callsInWindow": "3",
+      "callCountAuthority": "ORIGINAL_SUMMARY_EXCLUDES_POLLS_AND_CORRECTIONS",
+      "rowsMinusSummaryUsd": "0"
+    }
+  },
+  "invalidCursorCode": "CURSOR_CHAIN_MISMATCH"
+}

@@ -14,6 +14,16 @@ The maintained source selection is **grant-operations**. Open **Applications →
 
 This guide is also retained at `package/source/products/grant-operations/OPERATING.md` in the selected archive. The relative source links below resolve from that file.
 
+## Find case work and resume the original desk
+
+Open **Delivery and cash operations**, choose a retained case, and use the grouped navigation for Planning and resources, People and work, Cash and accounts, Customers and delivery, or Review and results. **Browse sections** opens the same navigation on narrow screens. Pin frequently used sections; the browser session remembers each case's pins, recent sections and active section.
+
+Use **Find in case**, or **Ctrl+K / Command+K** while focus is inside Operations, to locate a section, native record, retained source or saved workflow summary. Search by an original identifier, reference, filename or saved text. Result filters and pagination cover every matching entry from the complete current case response for the sections available to your role; **Search coverage** shows which populations are available. Original source metadata includes filenames and SHA-256 identities, and the existing download action opens the retained bytes.
+
+Select a record to inspect its original fields and linked case references. **Open original editor** returns eligible records to their existing editing flow using the current role permissions; cash records use the retained correction flow. Saved forecast and portfolio results open in their original desks. A forecast handoff first preserves any open forecast inputs in a complete downloadable file. Moving between sections preserves each child desk's own drafts and request recovery. Escape closes the finder and restores focus to the control that opened it.
+
+For the full navigation, search, source coverage and keyboard workflow, see [Grant Operations operating desk](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATING_DESK.md).
+
 ## 1. What the operator retains
 
 | Work | Retained source and decisions |
@@ -217,6 +227,15 @@ The [Statement receiving guide](../../stellar/scf_2026/sf47_budget_model/workspa
 
 The [maintained reader provenance](../../stellar/scf_2026/sf47_budget_model/workspace/statement_parsers/README.md) identifies the unchanged original OFX and MT940 modules. The **grant-operations** package includes both readers and the grant adapter; both managed launchers bind those files to the selected source edition.
 
+
+## Reporting procedures and complete handover
+
+Use **starforge grant-reporting** to capture a complete native Budget performance report and its exact case archive together with a saved operating procedure. The procedure covers source tables and issuer terms, work/invoices, cash reconciliation, funding and capacity, customer installations and outcomes, the issued reporting edition and its receiver.
+
+Open **Command finder → Operating plans** to edit the work, record findings and save revisions. A new native capture can continue that same procedure while retaining history and custom steps. The complete reporting handover travels with the original native report and case; receiving imports that case and saves its Grant Application through the existing handoff operation, then continues the procedure on the destination host.
+
+The **grant-operations** selection includes Command finder, Operating Plans and the complete reporting command. See the [Grant reporting guide](REPORTING.md) for capture, editable handover, actual receiving, host profiles, command/API use and recovery.
+
 ## Review the operating period against the pinned budget
 
 Open **Delivery operations → Budget performance** for opening, period and closing cash/invoice positions, complete package and category budget comparisons, contributor activity, invoice aging and source-linked work/payment rows. Select the actual reporting dates; the report keeps the current case version and original recognition dates together. **Export complete handover** carries the full report, every CSV row, offline HTML and complete original case. Importing that ZIP reopens the case at its selected dates. The [Budget performance guide](../../stellar/scf_2026/sf47_budget_model/workspace/PERFORMANCE.md) covers the exact business arithmetic, source basis, browser, CLI and Merchant client.
@@ -346,6 +365,14 @@ adapter only with an actual report and its own explicitly authorized buyer
 selection. Its source/control-archive validation has completed; the existing
 scientific report and portal receiving remain in their original correction
 journey. No report sale or customer acceptance is asserted by this guide.
+
+### Receive original merchant settlement cash
+
+Open **Merchant settlements** next to Cash to receive the original merchant accounting run, source-inclusive period close or accountant TAR. The original reconciliation, verification, accountant and refund readers retain the complete source and its original transfer identities.
+
+Select the row's cash treatment, explicit native unit/precision/date, any separately sourced USD value and the existing deployment/work associations. The full native preview shows the exact cash effects before receiving. Existing-cash links retain their original monetary fields. Saved reviews support attribution changes, void-and-replace corrections, complete source download and original review history.
+
+The seven settlement CLI commands and the corresponding Merchant MCP tools operate these same case records. Complete operating-case export/import preserves the source, native inspection, every settlement review and the associated cash/event history. [The complete settlement operating guide](../../stellar/scf_2026/sf47_budget_model/workspace/SETTLEMENTS.md) provides the row decision table, exact commands, input bodies, typed client, routes and receiving workflow.
 
 ### Merchant Support
 
@@ -701,6 +728,18 @@ A reviewed correction shows complete original and replacement observations, invo
 The full account ZIP contains offline HTML, complete JSON/CSVs, original correction history and the entire Operations case. Receiving validates the source and rebuilds the account before opening the same dates and dimensions. Browser drafts retain exact pending requests across navigation and use stored-revision comparisons between tabs. CLI, typed client and Merchant tools expose the same account, preview, apply, export and original request recovery.
 
 Use the [Cash accounts operating guide](../../stellar/scf_2026/sf47_budget_model/workspace/CASH_ACCOUNTS.md) for the complete workflow and original native receiving continuation.
+
+## Customer reporting procedures and returned operating history
+
+Open the installed **Command finder → Operating plans → Create Grant reporting plan** to prepare ordered reporting work from the original complete Grant case and Source Tables project. Enter the customer, period, responsible operator, original workspace paths and receiving workspace. Keep the browser's explicit loopback address and port, including when reopening saved preparation inputs.
+
+The creator retains the complete original case/project/catalog inputs, selected file editions, mappings, reviews, workbook lineage and native command/runtime registrations. A preview contains planned work. Record actual native results and save revisions in the existing Operating plans editor as the reporting work proceeds.
+
+Download the complete preparation JSON to reopen its entered fields and exact original sources. Download the ordinary Operating plan JSON to carry its full revision history; readable HTML and Markdown accompany the same plan. The installed starforge grant-reporting-plan command creates that same procedure from a complete preparation, native input object or selected compact references.
+
+Return to the original Grant case's **Operating procedures** pane to attach the full plan and its explicit source/table/Installation/task-outcome selections. Save and export through the original case transaction, then receive the complete directory with starforge grant-procedures or the existing receiving pane. The delivery includes the whole source case. Each receiving workspace records its actual native IDs; procedure revisions retain the full original parent history.
+
+Use the [reporting creator guide](../../stellar/scf-starforge-20261009/distribution/discovery/GRANT_REPORTING.md), [Operating plans guide](../../stellar/scf-starforge-20261009/distribution/discovery/OPERATING_PLANS.md), [native case procedure guide](../../stellar/scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES.md) and [complete receiving command](../../stellar/scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES_RECEIVING.md) for the complete browser/CLI workflow.
 
 ## Original source references
 
