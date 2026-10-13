@@ -62,6 +62,70 @@
           "git_blob": "06020c64f8a89b9de8eb8ba0749850ddfa892fe6"
         }
       ]
+    },
+    {
+      "id": "grant-named-staff-effort-guide",
+      "label": "Complete Work allocation, remaining effort, support and saved planning handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_EFFORT.md",
+      "commit": "226b40e26e01bdeb0e4ac997bfe9522589594055",
+      "editions": [
+        {
+          "commit": "226b40e26e01bdeb0e4ac997bfe9522589594055",
+          "git_blob": "d2dadeb43e0944b6e40230725fdd5cc6c7693739",
+          "bytes": 27892,
+          "sha256": "f027b5c1329a16c94fabb4292f81167617719ef0fe3500bc2919c98bce69eec7"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-installation-editions",
+      "label": "Original customer Installation, delivery assignments and full receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md",
+      "commit": "226b40e26e01bdeb0e4ac997bfe9522589594055",
+      "editions": [
+        {
+          "commit": "226b40e26e01bdeb0e4ac997bfe9522589594055",
+          "git_blob": "ba21b5817c5272170102181ac2e6dc8e9298eba1",
+          "bytes": 29519,
+          "sha256": "a15019f34d0e69420a00633a41a6313a9fb5414507beb3b7b9a6b435e7882a93"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-phase-planning",
+      "label": "Saved customer phase allocation and original dated Forecast continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/PORTFOLIO.md",
+      "commit": "226b40e26e01bdeb0e4ac997bfe9522589594055",
+      "editions": [
+        {
+          "commit": "226b40e26e01bdeb0e4ac997bfe9522589594055",
+          "git_blob": "fcd506bd3c6fc9f891dc2e266fab4e03fda2a683",
+          "bytes": 35765,
+          "sha256": "2db9cc1b93a75650d1c607a03279a412a44b1ff60317cedb45ccb29ee6381f56"
+        }
+      ]
+    },
+    {
+      "id": "grant-named-staff-installation-returns",
+      "label": "Independent selected-edition receiving and reviewed customer return",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_RETURNS.md",
+      "commit": "226b40e26e01bdeb0e4ac997bfe9522589594055",
+      "editions": [
+        {
+          "commit": "226b40e26e01bdeb0e4ac997bfe9522589594055",
+          "git_blob": "1486c4408e94de706a7662ba4f060f201f73f572",
+          "bytes": 25917,
+          "sha256": "c4fd7210cff3adc6c3acbf63aef19f0027abd48b28cf9a8cf09fa83d39fba39c"
+        }
+      ]
     }
   ]
 }
