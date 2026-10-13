@@ -1,0 +1,8 @@
+services:
+  tjl_tome_capture.context:
+    class: Drupal\tjl_tome_capture\BuildContext
+  tjl_tome_capture.responses:
+    class: Drupal\tjl_tome_capture\ResponseSubscriber
+    arguments: ['@tjl_tome_capture.context']
+    tags:
+      - { name: event_subscriber }

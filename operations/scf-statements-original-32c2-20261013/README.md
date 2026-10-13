@@ -153,3 +153,16 @@ The full resulting working-copy archive then opens in an empty private BrowserCo
 | `captures/00-recipient-*` | Actual offline, comparison, phone, native-preview and reopened-recipient views for the producing operator to inspect |
 
 The original `original-statement-recipient-review-operated` continuation stage retains the actual case and invoice IDs and complete issued, returned, applied, archive and native-preview identities. A previously completed original CSV phase continues through its saved request receipt. The existing original four-bank-file operation, cash correction, account export, independent installed case receiving and 390E navigation handoff remain the receiving course. Return the actual complete files and viewed screens to its producing account/recipient engineers for direct repairs and continued delivery.
+
+
+## Several original colleague returns in the same account course
+
+The maintained recipient phase now operates the **Returned review worklist** within the same private browser context, original October CSV, retained supplier invoice and case. It receives two complete attributed reviews, saves independent notes and field choices, switches between them, reopens the actual desk, changes a current row to make earlier choices stale, re-compares explicitly, re-receives an identical return and exercises empty search. It then continues the original selected finance recommendations and native preview.
+
+The complete archive is received again into empty browser storage. That handover retains both original return documents, the finance application and note, and the other accounting colleague's unfinished choices. The original main-context statement inputs are restored before the original cash receiving continues.
+
+The adjacent `statement-recipient-model-course.mjs` receives the actual original case, source, invoice and preview from this programme. Its single composed course additionally covers migration, exact duplicate receiving, unchanged-choice resumption, changed allocation/case invalidation and complete archive/nonrecursive issued-edition handover.
+
+Actual outputs include `recipient-worklist-first-progress.json`, `recipient-worklist-two-independent-returns.json`, `recipient-worklist-duplicate-received.json`, `recipient-second-complete-attributed-return.json`, the existing full recipient archive and its independent cold receiver. The existing capture phase records the desktop worklist, narrow stale choices and empty search. Open those rendered captures and the current browser pages to inspect text, controls, table overflow, focus and legibility at both widths, then fix any observed defect in the maintained source.
+
+The full customer guide is `stellar/scf_2026/sf47_budget_model/workspace/STATEMENT_REVIEW_WORKLIST.md`. Preserve the original A0D5/390E/0C75 account and navigation ownership when composing this source into the existing receiving installation.

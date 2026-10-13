@@ -1,0 +1,23 @@
+{
+  "schema": "govhub.federal-register.native-run.v1",
+  "directory": "/private/govhub-receiving",
+  "runtime_manifest": "/private/govhub-drupal/NATIVE_RUNTIME.json",
+  "site_root": "/private/govhub-drupal/web",
+  "input_archive": "/private/inputs/Federal_Register_Receiving_Inputs_20261012.zip",
+  "input_sha256": "2caa3cc4a7e0449403e939c59ecc57cfade705d377ae039a09583d9b218c4f21",
+  "name": "Federal Register content consolidation",
+  "site_name": "Federal Register native receiving",
+  "site_mail": "selected-operator@example.invalid",
+  "environment_id": "govhub-federal-register-local",
+  "owner": "Selected receiving operator",
+  "authorization_reference": "Dedicated local target selected for this content receiving operation.",
+  "review_reason": "Review the complete retained sources, native fields, references and selected receiving routes.",
+  "native_reason": "Execute and continue this original reviewed source case on the selected dedicated target.",
+  "recipient_note": "The receiving operator retains both source observations and the selected next editorial instruction.",
+  "case_id": "govhub-federal-register-20261012",
+  "migration_prefix": "govhub_fr_govhub",
+  "row_limit": 100,
+  "route_count": 250,
+  "timeout_seconds": 600,
+  "visual": true
+}
