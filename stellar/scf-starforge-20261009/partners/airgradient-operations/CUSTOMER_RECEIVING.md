@@ -6,7 +6,7 @@ Open the complete customer handover with Python 3.12 or later and Node 22.16 or 
 python3 customer-start.py --directory /absolute/private/airgradient-customer --serve
 ```
 
-Use `--node /absolute/path/to/node` when Node is outside PATH. The launcher verifies the full included source SDK and both editable packages, receives them through the original command, selects the retained indoor project and opens the private customer URL printed by the operator. Keep the same receiving directory to continue work. A repeated opening reuses the original receiving records. Allow at least 1 GiB of free memory for the full retained report operation; the launcher selects a 384 MiB Node heap.
+Use `--node /absolute/path/to/node` when Node is outside PATH. The launcher verifies the full included source SDK and both editable packages, receives them through the original command and opens the private customer URL printed by the operator. The first opening selects the retained indoor project. Keep the same receiving directory to continue work; later openings preserve its current saved project, later report editions and other verified source collections. The required original collection is checked by its exact packet identity. A repeated opening reuses the original receiving records. Allow at least 1 GiB of free memory for the full retained report operation; the launcher selects a 384 MiB Node heap.
 
 ## The complete retained installation
 
@@ -34,7 +34,7 @@ The handover includes both complete editable packages, all four report deliverie
 
 ## Installed Applications
 
-The `airgradient-customer` source selection includes the maintained runtime controls and the source-owned AirGradient Applications provider. With that selected SDK's READY runtime attached in the existing runtime workspace, open **Applications**, choose **AirGradient customer operations**, select the continuing private customer directory, and use **Review → Save → Review Start → Start → Open**. **Stop** drains the original customer process. The provider verifies the actual listener, workspace ID, configuration digest and retained startup record before Open.
+The `airgradient-customer` source selection includes the maintained runtime controls and the source-owned AirGradient Applications provider. `APPLICATIONS.md` in the generated customer handover gives the complete first installation, READY inspection and operator opening commands. With that selected SDK's READY runtime attached, open **Applications**, choose **AirGradient customer operations**, select the continuing private workspace directory, and use **Review → Save → Review Start → Start → Open**. **Stop** drains the original customer process. The provider verifies the actual listener, workspace ID, configuration digest and retained startup record before Open.
 
 ## Build and run the full original programme
 
@@ -63,7 +63,8 @@ Build the portable complete handover from that completed operation and exact sel
 python3 stellar/scf-starforge-20261009/partners/airgradient-operations/receiving/build-customer.py \
   --operation /absolute/private/airgradient-original-customer \
   --sdk /absolute/private/airgradient-sdk/EXACT_SOURCE_SDK.tgz \
-  --output /absolute/private/airgradient-handover
+  --output /absolute/private/airgradient-handover \
+  --public-archive /absolute/private/airgradient-public-source-and-reports.zip
 ```
 
-This includes the complete selected source and existing editable packages. The customer opening command uses the same original CLI and provider.
+This includes the complete selected source and existing editable packages. The customer opening command uses the same original CLI and provider. The optional public archive contains the exact forty-one original public source files, all four current report folders and their complete index; it is generated from the selected frozen reports. Earlier accepted destinations retain their original bytes.
