@@ -29,6 +29,7 @@ const sectionDetails = {
   'supplier-account':['people','Inspect supplier balances, invoice payments and the original account history.','accounts payable supplier balance dispute payment'],
   'work-intake':['people','Receive complete original timesheet and supplier invoice files with reviewed mappings.','timesheet invoice csv tsv import intake'],
   'ledger-intake':['people','Inspect and receive complete source tables through the original ledger writers.','bulk ledger csv tsv json import source'],
+  expenses:['cash','Attribute original issued buyer expenses and credits to retained work packages with their accountant sources.','buyer expense credit accountant issued allocation valuation cost'],
   settlements:['cash','Open the original merchant settlement receiving desk.','merchant settlement receipt cash payment'],
   'award-terms':['cash','Open the retained issuer terms and their original operating context.','issuer grant award terms tranche'],
   cash:['cash','Inspect observed cash movements, original corrections and issuer events.','bank cash payment receipt refund award issuer'],
