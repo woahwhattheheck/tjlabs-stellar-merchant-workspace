@@ -136,9 +136,11 @@ try {
     const profile=readProfile(PROFILE);
     const prepare=file(join(here,"prepare-core.mjs")),core=file(join(here,"property-commissioning-core.mjs"));
     const view=file(join(here,"property-commissioning-view.mjs"));
+    const coordinator=file(join(here,"property-coordinator.mjs")),coordinatorUi=file(join(here,"property-coordinator-ui.mjs"));
     const out=privateDirectory(args.out);
     const html=renderPropertyEditor({profile:profile.value,prepareSource:prepare.raw.toString("utf8"),
-      coreSource:core.raw.toString("utf8"),viewSource:view.raw.toString("utf8")});
+      coreSource:core.raw.toString("utf8"),viewSource:view.raw.toString("utf8"),
+      coordinatorSource:coordinator.raw.toString("utf8"),coordinatorUiSource:coordinatorUi.raw.toString("utf8")});
     console.log(JSON.stringify(publish(join(out,"Property_Commissioning_Editor.html"),Buffer.from(html)),null,2));
   } else {
     const sources={},remember=(key,path)=>sources[key]=read(path);

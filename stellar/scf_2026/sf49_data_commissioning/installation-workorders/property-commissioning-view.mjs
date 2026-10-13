@@ -72,7 +72,7 @@ function editorMain() {
   const fail=message=>{throw Error(message);},need=(ok,message)=>{if(!ok)fail(message);};
   const notice=message=>{$("notice").textContent=message;$("notice").hidden=!message;};
   const escape=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  let core,view,profile;
+  let core,view,profile,coordinator;
   const changing=()=>{state.generation++;state.result=null;$("result").hidden=true;$("download-native").disabled=true;$("download-report").disabled=true;};
   const description=row=>row?row.name+" · "+row.raw.length+" bytes · "+row.sha256:"No file selected";
   function refresh() {
@@ -82,6 +82,7 @@ function editorMain() {
     document.querySelectorAll("button,input,select,textarea").forEach(node=>{node.disabled=state.busy;});
     $("download-native").disabled=state.busy||!state.result;
     $("download-report").disabled=state.busy||!state.result;
+    coordinator?.availability();
   }
   async function work(action) {
     if(state.busy)return;state.busy=true;refresh();
@@ -99,15 +100,16 @@ function editorMain() {
     json(row.raw);
     // An explicit reload rebinds even an equal saved file after unsaved textarea edits.
     state.inputs.set(kind,row);changing();
-    if(kind==="selection"){$("selection-json").value=text(row.raw);renderProperties(json(row.raw));}
+    if(kind==="selection"){$("selection-json").value=text(row.raw);renderProperties(json(row.raw));coordinator?.refresh();}
     if(kind==="review")$("review-json").value=text(row.raw);
+    if(kind==="coordinator")coordinator?.restore(json(row.raw));
     refresh();
   }
   async function fromText(kind,value) {
     const old=state.inputs.get(kind);
     if(old&&text(old.raw)===value)return old;
     const raw=bytes(value);json(raw);need(raw.length<=8*1024*1024,"The complete input exceeds 8 MiB.");
-    const row={name:kind==="selection"?"PROPERTY_SELECTION.json":"PROPERTY_REVIEW.json",raw,sha256:await hash(raw)};
+    const row={name:kind==="selection"?"PROPERTY_SELECTION.json":kind==="coordinator"?"PROPERTY_COORDINATOR_DRAFT.json":"PROPERTY_REVIEW.json",raw,sha256:await hash(raw)};
     await storeInput(kind,row);return row;
   }
   const requireInput=kind=>{const row=state.inputs.get(kind);need(row,"Load the complete "+kind+" file.");return {...row,bytes:row.raw.length,value:json(row.raw)};};
@@ -161,6 +163,8 @@ function editorMain() {
   const fromBase64=value=>{const text=atob(value);return Uint8Array.from(text,c=>c.charCodeAt(0));};
   async function packet() {
     await selectedInput();if($("review-json").value.trim())await fromText("review",$("review-json").value);
+    coordinator?.requireSources();
+    if(coordinator){const raw=bytes(JSON.stringify(coordinator.snapshot(),null,2)+"\n");need(raw.length<=8*1024*1024,"The complete coordinator draft exceeds 8 MiB.");state.inputs.set("coordinator",{name:"PROPERTY_COORDINATOR_DRAFT.json",raw,sha256:await hash(raw)});}
     const sourceTotal=[...state.sources.values()].reduce((total,row)=>total+row.raw.length,0);
     need(sourceTotal<=24*1024*1024,"The complete source roster is "+sourceTotal+" bytes; reopening permits at most 25165824 bytes. Preserve all originals through the CLI or deliberately select the complete sources for this stage.");
     const members=[...state.inputs].map(([kind,row])=>({kind,row}));
@@ -184,9 +188,30 @@ function editorMain() {
     need(data.coreSource.split(clause).length===2,"The complete maintained compiler import changed.");
     const coreUrl=URL.createObjectURL(new Blob([data.coreSource.replace(clause,'from '+JSON.stringify(prepareUrl))],{type:"text/javascript"}));
     const viewUrl=URL.createObjectURL(new Blob([data.viewSource],{type:"text/javascript"}));
-    try{[core,view]=await Promise.all([import(coreUrl),import(viewUrl)]);}
-    finally{[prepareUrl,coreUrl,viewUrl].forEach(url=>URL.revokeObjectURL(url));}
-    $("loading").hidden=true;$("editor").hidden=false;refresh();
+    need(typeof data.coordinatorSource==="string"&&typeof data.coordinatorUiSource==="string","Keep the complete guided coordinator source.");
+    const rosterUrl=URL.createObjectURL(new Blob([data.coordinatorSource],{type:"text/javascript"}));
+    const rosterClause='from "./property-coordinator.mjs"';
+    need(data.coordinatorUiSource.split(rosterClause).length===2,"The complete coordinator import changed.");
+    const coordinatorUrl=URL.createObjectURL(new Blob([data.coordinatorUiSource.replace(rosterClause,"from "+JSON.stringify(rosterUrl))],{type:"text/javascript"}));
+    let guided;
+    try{[core,view,guided]=await Promise.all([import(coreUrl),import(viewUrl),import(coordinatorUrl)]);}
+    finally{[prepareUrl,coreUrl,viewUrl,rosterUrl,coordinatorUrl].forEach(url=>URL.revokeObjectURL(url));}
+    coordinator=guided.mountPropertyCoordinator({
+      target:$("property-coordinator"),work,download,getSelectionText:()=>$("selection-json").value,
+      getSources:()=>[...state.sources.values()],touch:changing,
+      setSelection:(value,expected)=>{need(expected===$("selection-json").value,"The selected draft changed.");editSelection(value);},
+      addEvidence:async value=>{
+        const raw=bytes(JSON.stringify(value,null,2)+"\n");need(raw.length<=8*1024*1024,"The full mapping record exceeds 8 MiB.");
+        const digest=await hash(raw),name="Property_Roster_Mapping_"+digest.slice(0,24)+".json",old=state.sources.get(name);
+        need(!old||old.sha256===digest&&old.raw.length===raw.length,"Another original source uses the mapping filename.");
+        const total=[...state.sources.values()].reduce((n,r)=>n+r.raw.length,0)+(old?0:raw.length);
+        need(total<=24*1024*1024,"The full original sources and mapping record exceed 24 MiB.");
+        state.sources.set(name,old||{name,raw,sha256:digest});
+        return {id:"mapping-"+digest.slice(0,24),filename:name,bytes:raw.length,sha256:digest,mediaType:"application/json",sourceUrl:"",
+          observedAt:new Date().toISOString(),nativeSourceId:null};
+      }
+    });
+    $("loading").hidden=true;$("editor").hidden=false;coordinator.refresh();refresh();
     document.querySelectorAll("[data-input]").forEach(node=>node.addEventListener("change",()=>work(async()=>{
       const row=await incoming(node.files[0]);await storeInput(node.dataset.input,row);notice("Loaded "+row.name+".");
     })));
@@ -197,11 +222,12 @@ function editorMain() {
         need(!old||old.sha256===row.sha256,"Another complete original has this filename. Remove its selected copy before changing it.");
         if(!old){total+=row.raw.length;need(total<=24*1024*1024,"Selected source files exceed 24 MiB.");next.set(row.name,row);}
       }
-      state.sources=next;changing();refresh();notice("Complete original source files retained in this view. Download the complete input packet to reopen them.");
+      state.sources=next;changing();coordinator.refresh();refresh();notice("Complete original source files retained in this view. Download the complete input packet to reopen them.");
     }));
     $("source-roster").addEventListener("click",event=>{
       const button=event.target.closest("[data-remove]");if(!button||state.busy)return;
-      state.sources.delete(button.dataset.remove);changing();refresh();
+      if(!coordinator.canRemoveSource(button.dataset.remove)){notice("A retained mapping still needs this complete original. Preserve it in this input packet.");return;}
+      state.sources.delete(button.dataset.remove);changing();coordinator.refresh();refresh();
     });
     $("properties").addEventListener("change",event=>{
       const node=event.target;if(node.dataset.row===undefined||state.busy)return;
@@ -218,7 +244,7 @@ function editorMain() {
       value.properties.push({key:"",address:"",city:"",state:"",zip:"",bbl:"",bin:"",buyerPropertyId:"",templateId:null,
         inspection:"UNSELECTED",identityNote:"",sourceIds:[]});editSelection(value);
     }));
-    $("selection-json").addEventListener("input",()=>{changing();clearProperties();});$("review-json").addEventListener("input",changing);
+    $("selection-json").addEventListener("input",()=>{changing();clearProperties();coordinator.invalidate();});$("review-json").addEventListener("input",changing);
     $("apply-selection").addEventListener("click",()=>work(async()=>{await selectedInput();notice("The complete draft selection is retained in this view.");}));
     $("template").addEventListener("click",()=>work(async()=>{
       const seed=requireInput("seed"),corpus=requireInput("cohort");
@@ -271,17 +297,20 @@ function editorMain() {
       for(const member of value.files) {
         need(typeof member.name==="string"&&typeof member.base64==="string"&&member.base64.length<=12*1024*1024,"Keep the complete bounded file inventory.");
         const raw=fromBase64(member.base64);need(raw.length===member.bytes&&raw.length<=8*1024*1024&&await hash(raw)===member.sha256,"An original packet member differs.");
-        need(["cohort","seed","selection","previous","return-seed","installation","review","case-state","source"].includes(member.kind),"Unknown complete input kind.");
+        need(["cohort","seed","selection","previous","return-seed","installation","review","case-state","coordinator","source"].includes(member.kind),"Unknown complete input kind.");
         const target=member.kind==="source"?sources:inputs,key=member.kind==="source"?member.name:member.kind;
         need(!target.has(key),"A packet repeats an original selection.");
         if(member.kind==="source"){total+=raw.length;need(total<=24*1024*1024,"The full original source exceeds 24 MiB.");}else json(raw);
         target.set(key,{name:member.name,raw,sha256:member.sha256});
       }
+      const coordinatorDraft=coordinator.validateDraft(inputs.has("coordinator")?json(inputs.get("coordinator").raw):{schema:"stellar-forge.property-coordinator-draft.v1",mapping:null,history:[],selectedSource:"",page:0,sourcePage:0},[...sources.values()]);
+      if(inputs.has("selection"))need(Array.isArray(json(inputs.get("selection").raw).properties)&&json(inputs.get("selection").raw).properties.length<=50,"Keep the complete ordered property roster within 50 rows.");
       state.inputs=inputs;state.sources=sources;changing();
       $("selection-json").value=inputs.has("selection")?text(inputs.get("selection").raw):"";
       $("review-json").value=inputs.has("review")?text(inputs.get("review").raw):"";
       if(inputs.has("selection"))renderProperties(json(inputs.get("selection").raw));
       else clearProperties("No selection loaded");
+      coordinator.restore(coordinatorDraft);
       refresh();notice("Complete inputs reopened and every member hash verified. Prepare again against the retained native seed; this packet carries no native save acknowledgment.");
     }));
   })().catch(error=>{$("loading").textContent=error.message;});
@@ -292,19 +321,19 @@ export function renderPropertyEditor(program) {
     '<p>Prepare the complete Propply / RentCheck customer selection, carry it into the original Installation, and return actual receiving observations against its saved edition.</p>'+
     '<p class="muted">Files stay in this browser view. Download the complete input packet before closing. This editor makes no vendor, inspection, payment or native case call.</p></header>'+
     '<main><p id="loading">Loading the complete maintained compiler…</p><div id="editor" hidden>'+
-    '<p id="notice" role="status" aria-live="polite" class="notice" hidden></p><nav><a href="#originals">Original source</a><a href="#roster">Property roster</a><a href="#selection">Source and rights</a><a href="#return">Customer return</a><a href="#result">Prepared output</a></nav>'+
+    '<p id="notice" role="status" aria-live="polite" class="notice" hidden></p><nav><a href="#originals">Original source</a><a href="#property-coordinator">Guided selection</a><a href="#roster">Property roster</a><a href="#selection">Source and rights</a><a href="#return">Customer return</a><a href="#result">Prepared output</a></nav>'+
     '<section id="originals" class="card"><h2>1. Original customer and Installation</h2><div class="grid"><div>'+
     file("cohort","Full original cohort.json")+file("seed","Original native Workshare seed")+file("case-state","Current complete native case")+'</div><div>'+
     file("selection","Existing property selection")+file("previous","Prior selection edition")+'</div></div>'+
     '<div class="actions"><button id="template" type="button">Start from original native seed</button><label class="file">Reopen complete input packet<input id="load-packet" type="file" accept=".json"></label></div>'+
     '<p>Keep the original buyer case, six phases and 20 active business days. The native seed owns commercial, cost assignment, history and current plan bindings. A new selection edition requires its exact prior file and reason; use the maintained revise command.</p></section>'+
-    '<section id="roster" class="card"><h2>2. Complete property roster</h2><div class="actions"><strong id="property-count">No selection loaded</strong><button id="add-property">Add actual property</button></div>'+
+    '<section id="property-coordinator" class="card"></section><section id="roster" class="card"><h2>2. Complete property roster</h2><div class="actions"><strong id="property-count">No selection loaded</strong><button id="add-property">Add actual property</button></div>'+
     '<p>Use original keys and opaque buyer/template IDs. Rows keep their original order. Address similarity, a BBL or a BIN does not by itself establish an inspection match.</p>'+
     '<div class="table"><table><thead><tr>'+["Key","Address","City","State","ZIP","BBL","BIN","Buyer property","Template","Inspection",""].map(v=>"<th>"+v+"</th>").join("")+
     '</tr></thead><tbody id="properties"></tbody></table></div></section>'+
     '<section id="selection" class="card"><h2>3. Source, rights, hosts and acceptance examples</h2>'+
     '<p>The complete editable selection contains both source editions, permitted field pointers, actual source/host decisions, one report/PMS route, payment selection and five customer examples. Empty fields remain unselected. Approved statements require their actual named decision and complete source.</p>'+
-    '<label for="selection-json">Complete property selection JSON</label><textarea id="selection-json" spellcheck="false"></textarea>'+
+    '<label for="selection-json">Advanced complete property selection JSON</label><textarea id="selection-json" spellcheck="false"></textarea>'+
     '<div class="actions"><button id="apply-selection">Apply draft edits</button><button id="download-selection">Download selection</button>'+
     '<label class="file">Add complete original source files<input id="source-files" type="file" multiple></label></div>'+
     '<div class="table"><table><thead><tr><th>Original filename</th><th>Bytes</th><th>SHA-256</th><th>Selection</th></tr></thead><tbody id="source-roster"></tbody></table></div>'+
