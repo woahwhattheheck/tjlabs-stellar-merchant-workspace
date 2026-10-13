@@ -703,44 +703,155 @@ class OperationRunner:
         self.command_count += 1
         base = self.attempt_root / ("%02d-%s" % (self.command_count, label))
         out, err = Path(str(base) + ".stdout.log"), Path(str(base) + ".stderr.log")
-        with out.open("w") as stdout, err.open("w") as stderr:
+        p, code, command = None, None, None
+        primary_error, cleanup_errors, drain_errors = None, [], []
+        drains, started = [], []
+        started_at = now()
+        @contextmanager
+        def logs():
+            opened = []
+            try:
+                stdout = out.open("w"); opened.append(stdout)
+                stderr = err.open("w"); opened.append(stderr)
+                yield stdout, stderr
+            finally:
+                for sink in reversed(opened):
+                    try:
+                        sink.close()
+                    except BaseException as exc:
+                        cleanup_errors.append(exc)
+
+        with logs() as (stdout, stderr):
             os.chmod(out, 0o600); os.chmod(err, 0o600)
-            p = subprocess.Popen([str(x) for x in args], cwd=str(HERE), stdin=subprocess.DEVNULL,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, close_fds=True)
-            drain_errors = []
+
             def drain(source, sink):
+                writable = True
                 try:
                     for line in iter(source.readline, b""):
-                        sink.write(self.clean(line.decode("utf-8", errors="replace")))
-                        sink.flush()
-                    os.fsync(sink.fileno())
+                        if not writable:
+                            continue
+                        try:
+                            sink.write(self.clean(line.decode("utf-8", errors="replace")))
+                            sink.flush()
+                        except BaseException as exc:
+                            drain_errors.append(exc)
+                            writable = False
+                    if writable:
+                        os.fsync(sink.fileno())
                 except BaseException as exc:
                     drain_errors.append(exc)
                 finally:
-                    source.close()
-            drains = [threading.Thread(target=drain, args=(p.stdout, stdout)),
-                      threading.Thread(target=drain, args=(p.stderr, stderr))]
-            for thread in drains:
-                thread.start()
-            ident = process_identity(p.pid)
-            self.record["command"] = ident
-            self.attempt["command"] = ident
-            self.attempt.setdefault("commands", []).append({"label": label, "command": ident, "startedAt": now()})
+                    try:
+                        source.close()
+                    except BaseException as exc:
+                        drain_errors.append(exc)
+
+            try:
+                p = subprocess.Popen([str(x) for x in args], cwd=str(HERE), stdin=subprocess.DEVNULL,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, close_fds=True)
+                ident = process_identity(p.pid)
+                self.record["command"] = ident
+                self.attempt["command"] = ident
+                command = {"label": label, "command": ident, "startedAt": started_at}
+                self.attempt.setdefault("commands", []).append(command)
+                drains = [(p.stdout, threading.Thread(target=drain, args=(p.stdout, stdout))),
+                          (p.stderr, threading.Thread(target=drain, args=(p.stderr, stderr)))]
+                for source, thread in drains:
+                    thread.start()
+                    started.append(thread)
+                self.save()
+                code = p.wait()
+            except BaseException as exc:
+                primary_error = exc
+            finally:
+                if p is not None:
+                    # A failed journal write or interrupted waiter still owns
+                    # this exact child. Receive it before releasing either log.
+                    if primary_error is not None and p.poll() is None:
+                        try:
+                            p.terminate()
+                        except ProcessLookupError:
+                            pass
+                        except BaseException as exc:
+                            cleanup_errors.append(exc)
+                    killed = False
+                    while p.returncode is None:
+                        try:
+                            code = p.wait(timeout=5 if not killed and
+                                          (primary_error is not None or cleanup_errors) else None)
+                        except subprocess.TimeoutExpired:
+                            try:
+                                p.kill()
+                                killed = True
+                            except ProcessLookupError:
+                                killed = True
+                            except BaseException as exc:
+                                cleanup_errors.append(exc)
+                        except BaseException as exc:
+                            cleanup_errors.append(exc)
+                            if not killed:
+                                try:
+                                    p.kill()
+                                    killed = True
+                                except ProcessLookupError:
+                                    killed = True
+                                except BaseException as stop_error:
+                                    cleanup_errors.append(stop_error)
+                    code = p.returncode
+                    # Pipes belong to this child immediately after Popen,
+                    # including failures before identities or threads exist.
+                    # Started readers retain their pipes until the original EOF.
+                    owned = {source for source, thread in drains if thread in started}
+                    for source in (p.stdout, p.stderr):
+                        if source is not None and source not in owned:
+                            try:
+                                source.close()
+                            except BaseException as exc:
+                                cleanup_errors.append(exc)
+                    for thread in started:
+                        while thread.is_alive():
+                            try:
+                                thread.join()
+                            except BaseException as exc:
+                                cleanup_errors.append(exc)
+        # All started readers have finished before the sink contexts close.
+        # Preserve actual process outcomes even when the earlier save failed.
+        if command is None and p is not None:
+            command = {"label": label, "command": process_identity(p.pid), "startedAt": started_at}
+            self.attempt.setdefault("commands", []).append(command)
+        if command is not None:
+            command["finishedAt"] = now()
+            if code is not None:
+                command["exitCode"] = code
+            if primary_error is not None:
+                command["error"] = {"code": getattr(primary_error, "code", type(primary_error).__name__),
+                                    "message": self.clean(str(primary_error))}
+            failures = [*cleanup_errors, *drain_errors]
+            if failures:
+                command["cleanupErrors"] = [
+                    {"code": getattr(exc, "code", type(exc).__name__), "message": self.clean(str(exc))}
+                    for exc in failures]
+        if p is not None and p.returncode is not None:
+            self.record["command"] = None
+        if code is not None and code:
+            self.attempt["exitCode"] = code
+        try:
             self.save()
-            code = p.wait()
-            for thread in drains:
-                thread.join()
-            need(not drain_errors, "PROVIDER_LOG_WRITE", "Retain the complete original command diagnostics.")
+        except BaseException as exc:
+            if primary_error is None:
+                primary_error = exc
+            else:
+                primary_error.add_note("Provider command final receipt could not be saved: " + self.clean(str(exc)))
+        if primary_error is not None:
+            raise primary_error
+        need(not cleanup_errors, "PROVIDER_COMMAND_CLOSE", "Receive the original command's complete process and output closure.")
+        need(not drain_errors, "PROVIDER_LOG_WRITE", "Retain the complete original command diagnostics.")
+        need(code is not None, "PROVIDER_COMMAND_CLOSE", "Receive the original command's actual exit before continuing.")
         # Original source bytes stay untouched. Process diagnostics are redacted
         # before writing; tokens never appear in argv or a persisted config.
         result = last_json(out)
-        command = self.attempt["commands"][-1]
-        command.update(finishedAt=now(), exitCode=code)
-        self.record["command"] = None
-        self.save()
         if code:
             error = last_json(err) or {"error": "PROVIDER_CLI_EXIT", "detail": "Original CLI exited " + str(code)}
-            self.attempt["exitCode"] = code
             raise ProviderWorkflowError(str(error.get("error", "PROVIDER_CLI_EXIT")),
                                         self.clean(canonical(error)))
         need(result is not None, "PROVIDER_CLI_RESULT", "The original CLI did not return its complete JSON result.")
