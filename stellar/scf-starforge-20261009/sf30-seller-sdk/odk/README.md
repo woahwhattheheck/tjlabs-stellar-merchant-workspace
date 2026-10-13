@@ -235,3 +235,13 @@ The desk uses the existing private listener and Store at `/form-releases/`.
 Its [complete operating and integration guide](release-review/README.md) covers
 current-draft source receiving, original file downloads, revision recovery,
 native compatibility, trusted authoring composition and publication receiving.
+
+## Customer programme
+
+The main operator's **Customer programme** view brings the original commissioning agreement, selected forms, both period plans, current edition reviews, frozen handover selections, customer files, warehouse operations and form-release reviews into one view. It uses the existing authenticated state endpoints and original download tickets. Each continuation opens the original commissioning, edition, warehouse or release desk; the programme view creates no records and runs no capture or publication automatically.
+
+Choose a retained programme or reopen the last selection for this workspace. **Refresh programme** reads all mounted desks again. The view labels the commissioning revision and observation time and rejects a response from another workspace. A missing optional desk leaves the programme available with that desk's actual error. Current review decisions are shown with their editions, while each handover displays the reviews frozen into its original delivery selection. Portable receiving uses the original commissioning workspace/revision condition; an archive from another workspace cannot mark a handover received.
+
+Customer report and dataset buttons download each exact retained original file. The original handover documents, complete portable archive when present, and warehouse period-report ZIP remain directly accessible. The commissioning deep link selects the requested existing programme without dispatching an operation.
+
+For the existing native receiver, `native/customer-programme-browser.mjs` opens the already-running application and an explicitly selected original commission. It checks the two saved period labels, desktop/mobile layout, original document download hash, exact commissioning deep link, reopen selection and original edition navigation. It closes its browser and retains screenshots plus a JSON receipt in the chosen private output directory. Run with `--url ORIGINAL_OPERATOR_URL --token-file PRIVATE_TOKEN_FILE --output PRIVATE_REVIEW_DIRECTORY --commission ORIGINAL_COMMISSION_ID`; `--playwright MODULE_PATH` and `--chrome EXECUTABLE_PATH` reuse the receiver's installed browser. The script starts no server, capture or data writer. Use the saved receiver's commission ID after its original two-period progression.

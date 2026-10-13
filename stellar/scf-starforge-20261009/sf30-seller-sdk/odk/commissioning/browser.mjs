@@ -4,6 +4,7 @@ const copy=x=>JSON.parse(JSON.stringify(x)),format=x=>JSON.stringify(x,null,2);
 const uid=()=>crypto.randomUUID(),plain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const canonical=x=>Array.isArray(x)?x.map(canonical):plain(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,canonical(x[k])])):x;
 const authKey='central-commissioning-token:'+location.origin;
+let requestedCommission=new URLSearchParams(location.search).get('commission');
 let token=new URLSearchParams(location.hash.slice(1)).get('token')??sessionStorage.getItem(authKey);
 if(token){sessionStorage.setItem(authKey,token);history.replaceState(null,'',location.pathname);}
 let state=null,busy=false,agreement=null,draftRevision=0,loadedDraftId=null,renderedInspection=null,hostInput=null,requestKey=null,pending={};
@@ -114,7 +115,9 @@ async function refresh(){
   if(state&&value.workspaceId!==state.workspaceId)throw localError('This listener now serves another workspace. Reopen its original private link.');
   state=value;
   if(!requestKey){requestKey='central-commissioning-requests:'+state.workspaceId;try{pending=JSON.parse(sessionStorage.getItem(requestKey)||'{}');}catch{pending={};}}
-  render();return value;
+  render();
+  if(requestedCommission){const selected=state.commissions.find(x=>x.id===requestedCommission);if(selected){$('commission-select').value=selected.id;renderCommission();}else tell('The requested original programme is not present in this workspace. Select a retained version.');requestedCommission=null;}
+  return value;
 }
 async function work(fn){
   if(busy)return null;setBusy(true);let result=null;
