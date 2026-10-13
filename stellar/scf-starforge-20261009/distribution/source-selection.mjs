@@ -12,7 +12,8 @@ const merchantHostComponents = [merchantConsoleDirectory, merchantDeveloperDirec
 const merchantHostRuntimeSources = [merchantConsoleServer,
   ...['client-runtime.mjs', 'request.mjs', 'index.html', 'browser.mjs', 'style.css']
     .map(name => merchantDeveloperDirectory + '/' + name),
-  'stellar/scf-starforge-20261009/sf30-seller-sdk/query-parameters.mjs'];
+  'stellar/scf-starforge-20261009/sf30-seller-sdk/query-parameters.mjs',
+  'stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json'];
 const idPattern = /^[a-z][a-z0-9-]{0,63}$/;
 const baseFields = ['commands', 'exports', 'features', 'applicationProviders', 'merchantProviders', 'browserAssets'];
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -177,7 +178,9 @@ export function selectDistributionSources({ base, contributions, selection }) {
         component === root || component.startsWith(root + '/')))) selected.components.push(component);
     // The original developer client generator reads these source bodies with
     // readFileSync; the original seller portal also reads its HTML/browser/CSS
-    // at module load. They are runtime inputs, not ESM imports.
+    // at module load. The original Research HTTP host's accounting/commerce
+    // dependencies also read SF86's public network catalog from terms.mjs.
+    // These are runtime inputs, not ESM imports.
     for (const path of merchantHostRuntimeSources)
       if (!selected.supportFiles.includes(path)) selected.supportFiles.push(path);
   }
