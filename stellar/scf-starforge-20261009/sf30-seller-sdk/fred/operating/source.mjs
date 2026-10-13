@@ -399,12 +399,16 @@ async function receivePlan(root, incoming, source, signal) {
   const plan = value?.plan ?? value;
   inspectOperatingPlan(plan);
   if (old) {
-    if (canonicalJSONDigest(old) === canonicalJSONDigest(plan)) return old;
-    const temporary = 'OPERATING-PLAN-' + canonicalJSONDigest(plan) + '.json';
-    await writeJson(root, temporary, plan, MAX_FRED_OPERATING_DESCRIPTOR_BYTES, signal);
-    const { rename } = await import('node:fs/promises');
-    await rename(join(root, temporary), join(root, 'OPERATING-PLAN.json'));
+    if (canonicalJSONDigest(old) !== canonicalJSONDigest(plan)) {
+      const temporary = 'OPERATING-PLAN-' + canonicalJSONDigest(plan) + '.json';
+      await writeJson(root, temporary, plan, MAX_FRED_OPERATING_DESCRIPTOR_BYTES, signal);
+      const { rename } = await import('node:fs/promises');
+      await rename(join(root, temporary), join(root, 'OPERATING-PLAN.json'));
+    }
   } else await writeJson(root, 'OPERATING-PLAN.json', plan, MAX_FRED_OPERATING_DESCRIPTOR_BYTES, signal);
+  // Also sync an identical retry after a rename whose directory sync failed.
+  const directory = await open(root, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+  try { await directory.sync(); } finally { await directory.close(); }
   return plan;
 }
 /** Restore the complete original project and reopen retained publication editions without acquisition. */
