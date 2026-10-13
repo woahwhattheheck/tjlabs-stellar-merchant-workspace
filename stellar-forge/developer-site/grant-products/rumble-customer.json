@@ -102,6 +102,582 @@
       "kind": "tree",
       "path": "opportunities/rumble_fish_prices_workshare_2026/workbench",
       "commit": "1d200771562dd0a39475290b6c0b1a2a0e0c2b3e"
+    },
+    {
+      "id": "rumble-lda-rumble-handover-transport-py",
+      "label": "Complete original review export, receiving and replay",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_transport.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 19836,
+          "sha256": "4fe39bdb05ebcd4dc637a92110c51592bdd5851f6344fb8701cd17baab432fb5",
+          "git_blob": "71cf994b6b71f3513ce3d9799696e2515c0223ff"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-returns-py",
+      "label": "Common-ancestor comparison and explicit returned-review acceptance",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_returns.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 17351,
+          "sha256": "70cbb6f5a836b4fff74716632241114e3f0f99aa8154eb9375a3a9b568b441a7",
+          "git_blob": "195bc60d287b7d3ffb65a45d83a70e18637533a6"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-cli-py",
+      "label": "Installed original customer handover and offline CLI",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_cli.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 17756,
+          "sha256": "225104c7217ac209edd3267225de0cbb8803d97e8269340283b27097adeae55e",
+          "git_blob": "ae990428fcdf072deecb78e656d1e5109d8b346e"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-js",
+      "label": "Complete installed customer source and return-review interface",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble-handover.js",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 53808,
+          "sha256": "ed20a956368acac5ad7c7b71bda76f6b95d3d2f1aede0a6391691963bf9b8956",
+          "git_blob": "58c487f513a98b856e6f77fa0e00aee8abbd1824"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-html",
+      "label": "Installed Rumble source/review operator page",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble-handover.html",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 3375,
+          "sha256": "4d8b3fa844f260ce923485db35293568b313c7a183e0ff9ba31981c542c24790",
+          "git_blob": "77611b3855061cc4caf949be3651f1b753b974bb"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-css",
+      "label": "Industrial Rumble source/review layout",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble-handover.css",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 3237,
+          "sha256": "0cb791f3d9efd1456999e6430db9e9229631215fa02a4ca618a4d3a7414b7596",
+          "git_blob": "9db60fdf9fd2110b7b60b0fb91f186ef08ca327a"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-search-rumble-handover-py",
+      "label": "Original source-backed Search and frozen Brief binding",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/search_rumble_handover.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 7179,
+          "sha256": "4df8151726c71c4b23133e08fb14209e5d9185b6018d8f131b3c4e10df424005",
+          "git_blob": "e7376407aabb870a2d632f7a89004b1c588439fb"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-receiving-py",
+      "label": "Complete two-Journal source, browser, Brief and cold receiving course",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_receiving.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 24919,
+          "sha256": "cf0d40052fc92a7415f8240a1e559767fea45726360fbe3775559259fa71c286",
+          "git_blob": "d2b932450e37dc106eb15aec7c88ba77e1a2d61a"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-browser-mjs",
+      "label": "Original desktop and phone source/value/review browser course",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_browser.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 16910,
+          "sha256": "e907038c7f6752778c1340098ebed8b92d01ab86ce88733073ad1123ef0936d4",
+          "git_blob": "f6a9e04e92fbb347b67a05d2af025f353ec1a118"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-return-receiving-py",
+      "label": "Whole colleague return and independent reexport course",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_return_receiving.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 23745,
+          "sha256": "82a5cb268a0c5b0aa137a5d695732ea16fc0fe24645e20a0a2fb7f6c7761208f",
+          "git_blob": "009ab3c2d6ae23a8d2f6f9127107df56e034d4c1"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-return-browser-mjs",
+      "label": "Explicit original/current/returned review browser acceptance",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_return_browser.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 18274,
+          "sha256": "e183a486feff49cfe1760ff7ac3fd3e40bc78160c59aef8cb5be41e7180f0e2e",
+          "git_blob": "ab912209716869a1af87d2512a0c3a9f42f78a79"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-py",
+      "label": "LDA original customer source, immutable reviews and native tools",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 35942,
+          "sha256": "9961576011c9e935f6e13f702f405f7ec1286a37c8673f826378928cba6a3bf7",
+          "git_blob": "8412e469500febbfcf9f26bf810c03db63d2194c"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-support-rumble-handover-contract-mjs",
+      "label": "Original fixed customer validator dependency: rumble_handover/contract.mjs",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/support/rumble_handover/contract.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 19167,
+          "sha256": "ced01c40d63068dbe9c554ba83c223a3941e29e4573498723cb82a0d14104ae9",
+          "git_blob": "330923c1c8c9956caa52403d75f250e3987f7f50"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-support-rumble-handover-workspace-mjs",
+      "label": "Original fixed customer validator dependency: rumble_handover/workspace.mjs",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/support/rumble_handover/workspace.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 11120,
+          "sha256": "a6393004f22495516570e8cfb76c5c70badef56251a603432155e4bad45d1ad4",
+          "git_blob": "a539eb07756f0e50cbc11c304b9704331bf5ac65"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-support-rumble-handover-consumer-mjs",
+      "label": "Original fixed customer validator dependency: rumble_handover/consumer.mjs",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/support/rumble_handover/consumer.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 35599,
+          "sha256": "596d3a0114db2bc214a03f03c43a68ede253ee4b31442fb3de0e8fa4cfa64542",
+          "git_blob": "254f3ac696b3f0ff783a21cf293bdfc13c9d9158"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-support-rumble-handover-sources-provider-openapi-json",
+      "label": "Original fixed customer validator dependency: rumble_handover/sources/provider.openapi.json",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/support/rumble_handover/sources/provider.openapi.json",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 58863,
+          "sha256": "d13b6d1296442d92991cf3323b23aa1b432549f0e49f57fcdcf7711fe22f7378",
+          "git_blob": "3467da3ea6e40e97bf14c8a1be1f45ae0c574234"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-support-rumble-handover-sources-provider-capture-json",
+      "label": "Original fixed customer validator dependency: rumble_handover/sources/provider-capture.json",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/support/rumble_handover/sources/provider-capture.json",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 3056,
+          "sha256": "e52034bd81975e44adb78c54df2833adaf97e8d016e53e138b05e33355f623d8",
+          "git_blob": "d54e8dce9ed7745b22d8fd1d253d00923fc8e451"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-source-mjs",
+      "label": "Pinned original customer, provider-response and edition validator",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_source.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 8930,
+          "sha256": "19cb2d86fd616c22ef90c803f668a13a39614eb0e30e87936725e80c93383869",
+          "git_blob": "621cfda09ddf65766140b90213ba72dadb70720b"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-package-py",
+      "label": "Complete customer package reader and portable source paths",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_package.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 14618,
+          "sha256": "fac0b9b3e262613b8195f39bfd5ea234e615616ebf6fee8a72c0d37e5ad24fdd",
+          "git_blob": "fedd1604c8207d8f5187ab9a91fa85d306fef840"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-values-py",
+      "label": "Original customer values and exact decimal comparison",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_values.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 3624,
+          "sha256": "895c8271cba8940e65a76ed6777b6c420ae2a0fbf3b7437cda270c92c7673ac8",
+          "git_blob": "816123d2ff0b8a7b7d3b429039f75aa1484e1852"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-workspace-rumble-handover-json",
+      "label": "Installed Rumble routes, assets and declared native tools",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/workspace.rumble_handover.json",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 7256,
+          "sha256": "350232f0839d96a47b31c62fcb47120faf5a8f435050a514baeb31cfcfa3bfe7",
+          "git_blob": "4b044027cfb0f4708d8a9396e2f605cc60cf59c6"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-work-search-py",
+      "label": "Original complete Work Search with Rumble source joins",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/work_search.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 68389,
+          "sha256": "f08219f6324f9622d026496d457e7becfea069eec1f87a9f38d162eaf281081c",
+          "git_blob": "b4ccba64ad408ef90039a746fc67eb5b76c881b4"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-prepare-py",
+      "label": "Exact saved case v7 source receiving",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_prepare.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 2802,
+          "sha256": "b760664c5259c89a6b0f3672abdb8f1cb1d3a58d4734c2d2351b4e734c95785c",
+          "git_blob": "4444d3d6985983b6f3f96794a3ce4de4462435b9"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-work-briefs-py",
+      "label": "Original complete Work Brief with frozen Rumble source receiving",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/work_briefs.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "28b4130b7171cefe869e89956be87c9c615e2114",
+          "bytes": 51194,
+          "sha256": "77e4f46be4e1690b829844b0a110f0418cbeaebcb3364ee85713e470d5cdcf05",
+          "git_blob": "9db1f1ac139cddb070ddc738b8c1f4d044e23611"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-md",
+      "label": "Complete installed Rumble handover operating guide",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/RUMBLE_HANDOVER.md",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 15192,
+          "sha256": "37d2979d7c93bb3346caea6b480dee3463b6ca00488b9590f79aea75d8048475",
+          "git_blob": "947454d45fc1741c092b2b5de979ae30d5651735"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-review-returns-md",
+      "label": "Complete original colleague-return operating guide",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/RUMBLE_REVIEW_RETURNS.md",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 4729,
+          "sha256": "c1352fd15e07ec46e2be5797a0984c686ab60e906b913fec482a236abf42fb2a",
+          "git_blob": "20f233b16f2447935508eb60453b8516de5edfb1"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-source-json",
+      "label": "Pinned original customer and retained validator provenance",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/RUMBLE_SOURCE.json",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 3624,
+          "sha256": "fa2eab048cd9f44c002689515d655b94f8f2784be19c5525dd8e09279fa807f0",
+          "git_blob": "6820f35c874cc59d5a660a58f6b331c15a957af0"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-offline-py",
+      "label": "Whole-source offline review export, authored history and custody",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_offline.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 21685,
+          "sha256": "904b356b6b3a0a70650b9e7a5b573ac894291dd987a1c763c26101e203073bdf",
+          "git_blob": "b9d5ba344bbf7967719cda5eb7385409ec2f2db3"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-review-offline-js",
+      "label": "Portable working HTML/JSON and complete offline authored review",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble-review-offline.js",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 34847,
+          "sha256": "deffb028ff2e011afc788628b213480a9b42a68168a0e0d2e002ccd3d0737915",
+          "git_blob": "81e1a4b38493c44dedd59f17956e932989ce1b9d"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-review-offline-html",
+      "label": "Standalone original-source recipient editor",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble-review-offline.html",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 4978,
+          "sha256": "bec606f26742888a8505eed0be4e90a1c4ffb706833f984a9298c0df9efc7c81",
+          "git_blob": "af68386809f93b7be205be8b8d2d4e701d4573a0"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-review-offline-css",
+      "label": "Industrial standalone recipient layout",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble-review-offline.css",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 2206,
+          "sha256": "794f43bfd13056340b308c1f268a1898f45683810da38508e99300dc3c94416f",
+          "git_blob": "4736f0e5d0ec3a90013af8ce2c59c788f3069382"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-offline-browser-mjs",
+      "label": "Complete offline browser, working-copy reload and returned-ZIP course",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_offline_browser.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 14351,
+          "sha256": "df274dba1fa84eb3d81585fdd172e37bb6fe9d560a53b2ad48559212acd77202",
+          "git_blob": "a0b330624c15d466b8f363ca0ecaf7e99ab85eda"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-handover-offline-receiving-py",
+      "label": "Original native offline import, history, acceptance and cold receiving",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble_handover_offline_receiving.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 21479,
+          "sha256": "fc5198952116c8ac889071b175e787291ab625ae622d218477d059562d77dc9e",
+          "git_blob": "35b3bfd033524e71233e9c07a7ee108f198fc26f"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-source-explorer-js",
+      "label": "Full original member reader and exact customer edition comparison",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble-source-explorer.js",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 13037,
+          "sha256": "38815b68354b12d550a108caf85299bbd0504b8880941278340f344b7f2291ff",
+          "git_blob": "72142c6bd414a70197478506feeca0586a7e7396"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-source-explorer-css",
+      "label": "Original source and value reader layout",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/rumble-source-explorer.css",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 975,
+          "sha256": "80c622a1ffca4eaa96decc0d24bdcaa8e3f28b74ca68088ff2bd4696917c03d5",
+          "git_blob": "af15b6db1274421cec433155e167d56a66703234"
+        }
+      ]
+    },
+    {
+      "id": "rumble-lda-rumble-offline-review-md",
+      "label": "Complete offline recipient and returned-work operating guide",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/RUMBLE_OFFLINE_REVIEW.md",
+      "required": true,
+      "editions": [
+        {
+          "commit": "2bcb9cc078097eda59f225c015287fa2a6f3f8fa",
+          "bytes": 13925,
+          "sha256": "6ae79b2e8457de62a670d59e486f46129edb837facbb86ada866640927e57d97",
+          "git_blob": "cb070902fa18998d2be3b135e20e957cf43440af"
+        }
+      ]
     }
   ]
 }
