@@ -25,7 +25,7 @@ function uuid(seed){const h=sha(Buffer.from(seed));return h.slice(0,8)+"-"+h.sli
 async function read(path){return JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(await plainRead(path)));}
 async function optional(path){return await exists(path)?read(path):null;}
 async function fileIdentity(path){
- const file=await fs.open(path,FS.O_RDONLY|(FS.O_NOFOLLOW||0));
+ const file=await fs.open(path,FS.O_RDONLY|(FS.O_NOFOLLOW||0)|(FS.O_NONBLOCK||0));
  try{
   const before=await file.stat({bigint:true});need(before.isFile(),"The retained artifact must be an ordinary file.");
   const digest=createHash("sha256"),buffer=Buffer.alloc(262144);let count=0;
@@ -40,6 +40,44 @@ async function publishTemporary(temporary,path,expected){
  try{await fs.link(temporary,path);}catch(error){if(error.code!=="EEXIST")throw error;}
  const actual=await fileIdentity(path);need(actual.bytes===expected.bytes&&actual.sha256===expected.sha256,"A retained original artifact changed.");
  await syncDirectory(dirname(path));return actual;
+}
+
+async function retainFile(source,target,expected){
+ if(!(await exists(target))){
+  try{await fs.link(source,target);}
+  catch(error){
+   if(error.code!=="EEXIST"){
+    if(error.code!=="EXDEV")throw error;
+    const temporary=target+".pending-"+newId();let input,output;
+    try{
+     input=await fs.open(source,FS.O_RDONLY|(FS.O_NOFOLLOW||0)|(FS.O_NONBLOCK||0));
+     const before=await input.stat({bigint:true});need(before.isFile(),"The original delivery must be an ordinary file.");
+     output=await fs.open(temporary,"wx",0o600);
+     const digest=createHash("sha256"),buffer=Buffer.alloc(262144);let count=0;
+     for(;;){
+      const {bytesRead}=await input.read(buffer,0,buffer.length,null);if(!bytesRead)break;
+      const chunk=buffer.subarray(0,bytesRead);count+=bytesRead;
+      need(count<=expected.bytes,"The original delivery grew during its copy.");
+      digest.update(chunk);await output.writeFile(chunk);
+     }
+     const after=await input.stat({bigint:true}),current=await fs.lstat(source,{bigint:true});
+     const signature=v=>[v.dev,v.ino,v.size,v.mtimeNs,v.ctimeNs].join(":");
+     need(current.isFile()&&!current.isSymbolicLink()&&signature(before)===signature(after)&&signature(before)===signature(current)&&
+      BigInt(count)===before.size&&count===expected.bytes&&digest.digest("hex")===expected.sha256,
+      "The original delivery changed during its complete copy.");
+     await output.sync();await output.close();output=null;await input.close();input=null;
+     await publishTemporary(temporary,target,expected);
+    }finally{
+     if(output)await output.close();if(input)await input.close();
+     await fs.unlink(temporary).catch(error=>{if(error.code!=="ENOENT")throw error;});
+    }
+   }
+  }
+  await syncDirectory(dirname(target));
+ }
+ const actual=await fileIdentity(target);
+ need(actual.bytes===expected.bytes&&actual.sha256===expected.sha256,"The retained complete artifact differs from its original native file.");
+ return actual;
 }
 async function retainBytes(path,value){
  const expected={bytes:value.length,sha256:sha(value)};
@@ -112,10 +150,15 @@ export async function runProjectionReceiving(input){
  async function projection(workspace,projectionId,versionId){return query(workspace,"projection.read",{projectionId,...(versionId?{versionId}:{})});}
  async function deliver(workspace,name,fields){
   globalThis.gc?.();
-  const result=await action(workspace,name,"delivery.prepare",fields),received=await workspace.deliveryBytes(result.operationId);
-  need(received.bytes.length===result.bytes&&sha(received.bytes)===result.sha256,"A native delivery differs from its actual original return.");
-  const file=await artifact(name+"-"+result.name.replace(/[^A-Za-z0-9._-]/g,"_"),received.bytes);
-  globalThis.gc?.();return{result,file};
+  const result=await action(workspace,name,"delivery.prepare",fields);
+  const manifest=await workspace.deliveryManifest(result.operationId);
+  need(manifest.bytes===result.bytes&&manifest.sha256===result.sha256&&manifest.name===result.name,
+   "The retained native delivery manifest differs from its original operation return.");
+  const source=join(workspace.deliveryDirectory(result.operationId),"payload"),original=await fileIdentity(source);
+  need(original.bytes===result.bytes&&original.sha256===result.sha256,"A native delivery differs from its actual original return.");
+  const artifactName=name+"-"+result.name.replace(/[^A-Za-z0-9._-]/g,"_");
+  const file=await retainFile(source,join(outputs,artifactName),original);
+  artifacts.push({name:artifactName,...file});globalThis.gc?.();return{result,file};
  }
  async function completeComparison(workspace,name,id,before,after){
   await progress(name,"started");
@@ -141,12 +184,7 @@ export async function runProjectionReceiving(input){
    }finally{if(file)await file.close();await fs.unlink(temporary).catch(error=>{if(error.code!=="ENOENT")throw error;});}
   }
   const original=await fileIdentity(path),target=join(outputs,"return-comparison.json");
-  if(!(await exists(target))){
-   const temporary=target+".pending-"+newId();
-   try{await fs.copyFile(path,temporary,FS.COPYFILE_EXCL);const file=await fs.open(temporary,"r");try{await file.sync();}finally{await file.close();}await publishTemporary(temporary,target,original);}
-   finally{await fs.unlink(temporary).catch(error=>{if(error.code!=="ENOENT")throw error;});}
-  }
-  const actual=await fileIdentity(target);need(actual.bytes===original.bytes&&actual.sha256===original.sha256,"The retained complete comparison changed.");
+  const actual=await retainFile(path,target,original);
   artifacts.push({name:"return-comparison.json",...actual});await progress(name,"completed");return actual;
  }
  async function reports(workspace,name,id,versionId){
@@ -156,8 +194,12 @@ export async function runProjectionReceiving(input){
   }return result;
  }
  async function received(bundle,destination,name){
-  const verified=verifyBundle(bundle);need(JSON.parse(bundle.toString("utf8")).format===PACKAGE_FORMAT,"The complete projection needs its original v4 application.");
-  const receipt=await receiveBundle(bundle,destination);
+  need(JSON.parse(bundle.toString("utf8")).format===PACKAGE_FORMAT,"The complete projection needs its original v4 application.");
+  globalThis.gc?.();
+  // The native receiver verifies the whole package. Release its decoded state before
+  // constructing the independent verification view used for the retained baseline.
+  const receipt=await receiveBundle(bundle,destination);globalThis.gc?.();
+  const verified=verifyBundle(bundle);bundle=null;globalThis.gc?.();
   // Load the received application itself; the authoring checkout is not its runtime.
   const module=await import(pathToFileURL(join(destination,"application","store.mjs")).href);
   const workspace=new module.HaystackWorkspace(destination),state=await workspace.read();
@@ -183,7 +225,7 @@ export async function runProjectionReceiving(input){
  }
  const done=await optional(join(root,"COMPLETE.json"));
  if(done){
-  for(const item of done.artifacts){const raw=await plainRead(item.path);need(raw.length===item.bytes&&sha(raw)===item.sha256,"A complete programme artifact changed.");}
+  for(const item of done.artifacts){const actual=await fileIdentity(item.path);need(actual.bytes===item.bytes&&actual.sha256===item.sha256,"A complete programme artifact changed.");}
   for(const recipient of done.receivers){
    const module=await import(pathToFileURL(join(recipient.directory,"application","store.mjs")).href),workspace=new module.HaystackWorkspace(recipient.directory);
    const state=await workspace.read();need(state.workspaceId===done.workspaceId,"A completed receiving workspace changed identity.");
@@ -268,6 +310,7 @@ export async function runProjectionReceiving(input){
  await action(workspace,"13-corrected-review","projection.review",{projectionId,expectedHeadId:applied.version.id,decision:"ready",author:input.author,note:"Review the source-bound corrected projection, including kept original cells."});
  await reports(workspace,"14-after",projectionId,applied.version.id);
  const first=await deliver(workspace,"15-first-complete-workspace",{kind:"workspace"});
+ workspace.stateCache=null;globalThis.gc?.();
  const receiverOneDirectory=join(root,"receiver-one"),receiverOne=await received(await plainRead(first.file.path),receiverOneDirectory,"16-receiver-one");
  sameSource(await receiverOne.originalSource(expectedSha),sourceIdentity);
  let receiverOneBase=await projection(receiverOne,projectionId,applied.version.id);
@@ -288,6 +331,7 @@ export async function runProjectionReceiving(input){
  }
  await reports(receiverOne,"19-recipient",projectionId,firstRecipientVersion);
  const second=await deliver(receiverOne,"20-second-complete-workspace",{kind:"workspace"});
+ receiverOne.stateCache=null;globalThis.gc?.();
  const receiverTwoDirectory=join(root,"receiver-two"),receiverTwo=await received(await plainRead(second.file.path),receiverTwoDirectory,"21-receiver-two");
  let receiverTwoBase=await projection(receiverTwo,projectionId,firstRecipientVersion);
  const secondProfile=copy(receiverTwoBase.profile);
