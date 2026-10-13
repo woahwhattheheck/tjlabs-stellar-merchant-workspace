@@ -4,6 +4,8 @@ import { mkdir, open, lstat, realpath, readdir, link, unlink } from 'node:fs/pro
 import { join, resolve, isAbsolute } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { createScenarioReview } from './scenarios.mjs';
+import { openScenarioWorkingCopies } from './working-copies.mjs';
+import { renderScenarioDecision } from './decision-report.mjs';
 
 const SCHEMA = 'stellar-forge.merchant-scenario-plan.v1';
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
@@ -42,6 +44,7 @@ export async function openPlanningWorkspace({model, directory}) {
   await privateDirectory(directory);
   const plans = join(directory, 'scenario-plans'), pending = join(plans, 'pending');
   await privateDirectory(plans, true); await privateDirectory(pending, true);
+  await syncDirectory(plans); await syncDirectory(directory);
 
   async function read(planId) {
     if (!UUID.test(planId ?? '')) throw fail('PLAN_NOT_FOUND', 'Choose a saved scenario plan.', 404);
@@ -103,9 +106,10 @@ export async function openPlanningWorkspace({model, directory}) {
     const request = {version:input.version,scenarios:input.scenarios,label:input.label.trim(),
       selectedScenarioId:input.selectedScenarioId ?? null,reviewSha256:input.reviewSha256};
     const requestSha256 = digest(canonical(request)), previous = await existing(input.requestId);
-    function recover(record) {
+    async function recover(record) {
       if (record.requestSha256 !== requestSha256)
         throw fail('PLAN_REQUEST_CHANGED', 'This save request already belongs to different scenario inputs.',409);
+      await syncDirectory(plans);
       return {status:'SCENARIO_PLAN_SAVED',recovered:true,...summary(record),record};
     }
     if (previous) return recover(previous);
@@ -148,6 +152,12 @@ export async function openPlanningWorkspace({model, directory}) {
   async function download(planId, name) {
     const record = await read(planId);
     if (name === 'plan.json') return encode(record);
+    if (name === 'review.html') {
+      const original=await source(record.version);
+      if(canonical(original.provenance)!==canonical(record.source))
+        throw fail('SCENARIO_SOURCE_CHANGED','The original pricing source differs from this saved comparison.',409);
+      return Buffer.from(renderScenarioDecision(record,{label:original.label,savedAt:original.savedAt,observation:original.observation}));
+    }
     if (name === 'comparison.csv') {
       const quote = value => '"'+String(value ?? '').replaceAll('"','""')+'"';
       const rows = [record.review.baseline,...record.review.scenarios];
@@ -163,5 +173,6 @@ export async function openPlanningWorkspace({model, directory}) {
     if (row) return encode(row.terms);
     throw fail('PLAN_FILE_NOT_FOUND', 'Choose a file from this saved comparison.',404);
   }
-  return {source,preview,save,load,selection,list,download};
+  const working=await openScenarioWorkingCopies({directory,source});
+  return {source,preview,save,load,selection,list,download,working};
 }

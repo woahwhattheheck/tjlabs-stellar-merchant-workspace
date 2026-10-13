@@ -10,6 +10,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const HASH = /^[a-f0-9]{64}$/;
 const ID = /^[A-Za-z0-9_.:-]{8,128}$/;
 const OWNED_SOURCE = ['launch.mjs','server.mjs','source.mjs','semantics.mjs','native.mjs','operations.mjs','workspace.mjs','project.mjs','sessions.mjs','merchant.mjs','customer.mjs','cli.mjs',
+  'agent-operations.mjs','agent-http.mjs','operator-client.mjs','operator-client.d.mts','merchant-agent.mjs','merchant-agent.d.mts','catalog.mjs','merchant-setup.mjs','merchant-provider.mjs','MERCHANT_SETUP.md',
   'public/index.html','public/app.js','public/style.css','../dataset-refresh/writer-lease.mjs'];
 const fail = (code,message,status=409) => Object.assign(new Error(message),{code,status});
 const need = (ok,code,message) => {if(!ok)throw fail(code,message);};

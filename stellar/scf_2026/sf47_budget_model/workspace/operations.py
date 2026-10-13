@@ -1055,6 +1055,18 @@ class Operations:
         with self.workspace.mutex:
             return completion.seed(self._completion_context(program_id, body, ("tranche",)), body.get("tranche"))
 
+    def completion_installations(self, program_id, body):
+        from operations_completion_installations import catalog
+        with self._snapshot():
+            context = self._completion_context(program_id, body, ("tranche",))
+            return catalog(self, context, body.get("tranche"))
+
+    def preview_completion_installations(self, program_id, body):
+        from operations_completion_installations import transfer
+        with self._snapshot():
+            context = self._completion_context(program_id, body, ("inputs", "asOfDate"))
+            return transfer(self, context, body)
+
     def _completion_correction_review(self, program_id, review_id):
         selected = self.review(program_id, review_id)
         if selected.get("purpose") != completion_corrections.PURPOSE:
@@ -1832,6 +1844,8 @@ class Operations:
         saved_installations = document.get("installations", [])
         installations.validate_import(context, saved_installations, events, source_program["version"], files,
                                       plan_for_version=selected_plan_at)
+        from operations_completion_installations import validate_import as validate_completion_installations
+        validate_completion_installations(document.get("completionPlans", []), reviews, events, saved_installations)
         buyer.validate_customer_use_import(context, events, reviews, files, saved_installations)
         task_outcomes.validate_import(context, events, files, saved_installations, plan_for_version=selected_plan_at)
         issuer_receiving.validate_import(context, events, files)

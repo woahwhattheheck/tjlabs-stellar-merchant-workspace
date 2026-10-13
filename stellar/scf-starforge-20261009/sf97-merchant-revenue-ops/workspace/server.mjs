@@ -31,6 +31,7 @@ export async function startWorkspace({port = 8457, ...options} = {}) {
     ['/style.css','style.css','text/css; charset=utf-8'],
     ['/planning','../planning/index.html','text/html; charset=utf-8'],
     ['/planning/browser.mjs','../planning/browser.mjs','text/javascript; charset=utf-8'],
+    ['/planning/working-browser.mjs','../planning/working-browser.mjs','text/javascript; charset=utf-8'],
     ['/planning/style.css','../planning/style.css','text/css; charset=utf-8'],
     ['/tariffs/','../tariffs/public/index.html','text/html; charset=utf-8'],
     ['/tariffs/browser.mjs','../tariffs/public/browser.mjs','text/javascript; charset=utf-8'],
@@ -154,7 +155,7 @@ export async function startWorkspace({port = 8457, ...options} = {}) {
         try{metadata=JSON.parse(decodeURIComponent(header));}catch{throw fault('SOURCE_METADATA_INVALID','Source metadata header is invalid.');}
         return json(200,await model.economics.upload({requestId:upload[1],metadata,body:req}));
       }
-      const input = await body(url.pathname.startsWith('/api/economics/') ? 32*1024*1024 : 2*1024*1024);
+      const input = await body(url.pathname.startsWith('/api/economics/') ? 32*1024*1024 : url.pathname.startsWith('/api/planning/working/') ? 8*1024*1024 : 2*1024*1024);
       if (url.pathname === '/api/commercial-history') return json(200,await model.commercialHistory(input));
       const costActions = {
         '/api/economics/list':()=>model.economics.list(input),
@@ -178,6 +179,11 @@ export async function startWorkspace({port = 8457, ...options} = {}) {
         '/api/economics/received-draft':()=>model.economics.receiving.reopenDraft(input.packageId,input.requestId),
       };
       if(Object.hasOwn(costActions,url.pathname))return json(200,await costActions[url.pathname]());
+      if (url.pathname === '/api/planning/working/list') return json(200,await planning.working.list());
+      if (url.pathname === '/api/planning/working/load') return json(200,await planning.working.load(input));
+      if (url.pathname === '/api/planning/working/save') return json(200,await planning.working.save(input));
+      if (url.pathname === '/api/planning/working/export') return json(200,await planning.working.exportCopy(input));
+      if (url.pathname === '/api/planning/working/import') return json(200,await planning.working.importCopy(input));
       if (url.pathname === '/api/planning/source') return json(200,await planning.source(input.version));
       if (url.pathname === '/api/planning/preview') return json(200,await planning.preview(input));
       if (url.pathname === '/api/planning/save') return json(200,await planning.save(input));

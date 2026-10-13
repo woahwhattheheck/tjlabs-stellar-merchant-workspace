@@ -168,6 +168,7 @@ function restorable(name){
     new RegExp('^(?:successors|decision-successors)/'+hash+'\\.json$').test(name)||
     new RegExp('^staged-releases/'+uuid+'\\.json$').test(name)||
     new RegExp('^scenario-plans/'+uuid+'\\.json$').test(name)||
+    new RegExp('^scenario-working/'+uuid+'/successors/'+hash+'\\.json$').test(name)||
     new RegExp('^performance/(?:reviews|review-index|service-requests|proposals|proposal-results|selections|selection-results)/'+uuid+'\\.json$').test(name)||
     new RegExp('^performance/(?:services|service-index)/[a-f0-9]{64}\\.json$').test(name)||
     new RegExp('^economics/sources/records/'+uuid+'/(?:original|source\\.json)$').test(name)||
@@ -220,6 +221,7 @@ export async function inspectCostWorkspaceRestore({archive,directory}) {
       pricingReviews:distinct('versions/'),
       priceChanges:distinct('decisions/'),
       scenarioPlans:distinct('scenario-plans/'),
+      scenarioWorkingCopies:distinct('scenario-working/'),
       pricingLinks:distinct('economics/pricing-links/'),
       receivedCostReviews:distinct('economics/received/records/'),
       performanceReviews:distinct('performance/reviews/'),

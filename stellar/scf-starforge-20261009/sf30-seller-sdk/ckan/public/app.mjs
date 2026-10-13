@@ -1,6 +1,8 @@
 // MIT. Plain local operator interface; all content is inserted as text.
 import { renderDcatMigration } from './migration.mjs';
+import { renderDcatSemantic } from './dcat-semantic.mjs';
 import { renderRemotePublication } from './remote-publication.mjs';
+import { renderCapturePlans } from './capture-plans.mjs';
 import { parseDcatJsonText } from './dcat-json.mjs';
 const $ = selector => document.querySelector(selector);
 let token = location.hash.slice(1);
@@ -175,9 +177,25 @@ async function renderView() {
   if (tab === 'refreshes') await renderRefreshes(generation);
   if (tab === 'merchant') renderMerchant();
   if (tab === 'workspace') await renderWorkspace(generation);
+  if (tab === 'capture-plans') await renderCapturePlans({
+    view, state, token, protect, download,
+    current: () => generation === renderGeneration && tab === 'capture-plans',
+    acceptOperation: result => { lastOperation = result.operationId; },
+    refresh: () => refresh(), render: () => renderView(),
+    openEdition: async id => { selectedEdition = id; tab = 'editions'; await renderView(); },
+    openRefresh: async id => { selectedRefresh = id; refreshOffset = 0; refreshOffsets = []; tab = 'refreshes'; await renderView(); },
+    openWorkspace: async () => { tab = 'workspace'; await renderView(); },
+  });
   if (tab === 'remote') await renderRemotePublication({
     view, state, token, api, protect, download,
     current: () => generation === renderGeneration && tab === 'remote',
+    acceptOperation: result => { lastOperation = result.operationId; },
+    refresh: () => refresh(), render: () => renderView(),
+    openWorkspace: async () => { tab = 'workspace'; await renderView(); },
+  });
+  if (tab === 'semantic') await renderDcatSemantic({
+    view, state, token, api, protect, download,
+    current: () => generation === renderGeneration && tab === 'semantic',
     acceptOperation: result => { lastOperation = result.operationId; },
     refresh: () => refresh(), render: () => renderView(),
     openWorkspace: async () => { tab = 'workspace'; await renderView(); },

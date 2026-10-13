@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "directus",
-  "description": "Directus 12.5 native collections, content versions, reviewed data products and customer receiving",
+  "description": "Directus 12.5 native collections, content versions, reviewed data products and customer receiving, durable customer-agent operation and complete original project transfer",
   "commands": {
     "directus": "stellar/scf-starforge-20261009/sf30-seller-sdk/directus/cli.mjs",
     "directus-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/directus/server.mjs"
@@ -16,7 +16,15 @@
     "./seller/directus/launch": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/directus/launch.mjs",
     "./buyer/directus": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/directus/customer.mjs",
     "./seller/directus/project": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/directus/project.mjs",
-    "./seller/directus/sessions": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/directus/sessions.mjs"
+    "./seller/directus/sessions": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/directus/sessions.mjs",
+    "./seller/directus/operator-client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/directus/operator-client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/directus/operator-client.mjs"
+    },
+    "./seller/directus/agent": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/directus/merchant-agent.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/directus/merchant-agent.mjs"
+    }
   },
   "browserAssets": [
     {
@@ -32,7 +40,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/directus/native-setup.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/directus/NATIVE_SETUP.md",
     "products/directus-content-data/OPERATING.md",
-    "products/directus-content-data/SOURCE.json"
+    "products/directus-content-data/SOURCE.json",
+    "stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs"
   ],
   "commandDescriptions": {
     "directus": "Capture native collections, edit content versions, publish reviewed editions and receive customer data",
@@ -40,5 +49,12 @@
   },
   "applicationProviders": {
     "directus": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/directus.mjs"
-  }
+  },
+  "merchantProviders": {
+    "directus-workspaces": "stellar/scf-starforge-20261009/sf30-seller-sdk/directus/merchant-provider.mjs"
+  },
+  "components": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/directus",
+    "stellar-forge/mcp-merchant-operator"
+  ]
 }

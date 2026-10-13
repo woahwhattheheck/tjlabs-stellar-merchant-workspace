@@ -155,13 +155,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/operating-procedures.mjs",
-      "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
+      "commit": "2352dffc46f2860ccf52595d2e486b0294b976e8",
       "editions": [
         {
           "commit": "74ec0c02b875973ca2371c1704e26eccd16544f0",
           "git_blob": "60ba9ff7c598be113d0db5629aea10c8f7413817",
           "bytes": 39395,
           "sha256": "4ca667a264142bf5410338ae85fee743067052ded0a4d8c4ffb946341fda5763"
+        },
+        {
+          "commit": "2352dffc46f2860ccf52595d2e486b0294b976e8",
+          "git_blob": "efb2e168ab2cebbaee377dfff64f7c22dda539d6",
+          "bytes": 41419,
+          "sha256": "1cace2b0d3f60ec86da84c3a4c5690e23f5488953f15049b31d35437acf46c7e"
         }
       ]
     },
@@ -386,6 +392,54 @@
           "git_blob": "80a4c196e183817c5a1f3f05a030fc2b93127057",
           "bytes": 20441,
           "sha256": "5e69e42489e76ea10b694a28aabbe9a7134662bfa84b3dc23715a92ca3d5cc78"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-public-browser",
+      "label": "Complete public Runtime procedure editor and workspace-bound request continuation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/operating-procedures.mjs",
+      "commit": "b50c67989a8204f2baee2e7b96c9e10ca97cdb79",
+      "editions": [
+        {
+          "commit": "b50c67989a8204f2baee2e7b96c9e10ca97cdb79",
+          "git_blob": "efb2e168ab2cebbaee377dfff64f7c22dda539d6",
+          "bytes": 41419,
+          "sha256": "1cace2b0d3f60ec86da84c3a4c5690e23f5488953f15049b31d35437acf46c7e"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-carried-file-guide",
+      "label": "Complete carried files, saved revisions and original plan handover formats",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/OPERATING_PLAN_FILES.md",
+      "commit": "b50c67989a8204f2baee2e7b96c9e10ca97cdb79",
+      "editions": [
+        {
+          "commit": "b50c67989a8204f2baee2e7b96c9e10ca97cdb79",
+          "git_blob": "f261e9ece562fe3da501b20810d119fdd2fd3150",
+          "bytes": 7707,
+          "sha256": "08ebc9110a3f7d4eee8ce27edcb1dc340b27cac26a2573075e2fd40726d93e51"
+        }
+      ]
+    },
+    {
+      "id": "runtime-procedures-return-guide",
+      "label": "Full returned-work comparison, original files and historical review compatibility",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/OPERATING_PLAN_RETURNS.md",
+      "commit": "b50c67989a8204f2baee2e7b96c9e10ca97cdb79",
+      "editions": [
+        {
+          "commit": "b50c67989a8204f2baee2e7b96c9e10ca97cdb79",
+          "git_blob": "641e3a11494115aeeb01bf35f61556bf621c36ba",
+          "bytes": 30764,
+          "sha256": "17a2af5ba5493980242fc27c0c181074880b443b6f66c25129c11ad96a6cd8d9"
         }
       ]
     }

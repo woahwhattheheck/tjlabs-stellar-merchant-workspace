@@ -150,6 +150,12 @@ const completionDate = value => {
     'GRANT_INVALID_INPUT', 'Use the native calendar date in YYYY-MM-DD form.');
   return value;
 };
+function forecastComparisonQuery(args, exported = false) {
+  const values = new URLSearchParams({beforeId:id(args.beforeId,'forecast'),afterId:id(args.afterId,'forecast')});
+  if(args.expectedComparisonSha256 !== undefined || exported)
+    values.set('expectedComparisonSha256',sha(args.expectedComparisonSha256));
+  return '?' + values.toString();
+}
 function planComparisonQuery(args, exported = false) {
   const values = new URLSearchParams({
     fromRevision:String(integer(args.fromRevision,'Before saved revision',1,1000000)),
@@ -339,6 +345,28 @@ const COMPLETION_FIELDS = Object.freeze({
   decision:{allowed:['outcomeId','state','date','sourceIds','sourceNote'],
     required:['outcomeId','state','date','sourceNote']},
 });
+function completionInstallationSelections(inputs) {
+  object(inputs,'Completion assignments');
+  if (inputs.installationSelections === undefined) return;
+  const rows=inputs.installationSelections, seen=new Set(), editions=new Map();
+  need(Array.isArray(rows) && rows.length<=200,'GRANT_INVALID_INPUT',
+    'Select up to two hundred complete original Installation checks.');
+  for(const row of rows){
+    exact(row,['costId','installationId','revision','sha256','checkId','requirePaidPurchase'],
+      ['costId','installationId','revision','sha256','checkId','requirePaidPurchase']);
+    text(row.costId,'Original completion work package',300); id(row.installationId,'installation');
+    integer(row.revision,'Original Installation edition',1,500); sha(row.sha256);
+    text(row.checkId,'Original Installation check',80);
+    need(typeof row.requirePaidPurchase==='boolean','GRANT_INVALID_INPUT',
+      'State the useful paid-purchase requirement explicitly.');
+    const key=JSON.stringify([row.costId,row.installationId,row.checkId]);
+    const edition=JSON.stringify([row.revision,row.sha256]);
+    need(!seen.has(key) && (!editions.has(row.installationId) || editions.get(row.installationId)===edition),
+      'GRANT_INVALID_INPUT','Keep each package/check once and one exact edition per Installation.');
+    seen.add(key); editions.set(row.installationId,edition);
+  }
+  need(editions.size<=20,'GRANT_INVALID_INPUT','Select at most twenty complete Installation editions.');
+}
 function completionCommandBody(action, body) {
   const selected=COMPLETION_FIELDS[action];
   need(selected, 'GRANT_INVALID_ACTION', 'Choose an original completion lifecycle action.');
@@ -350,7 +378,7 @@ function completionCommandBody(action, body) {
   if (data.reviewId !== undefined) id(data.reviewId,'review');
   if (data.correctionReviewId !== undefined) id(data.correctionReviewId,'review');
   if (data.outcomeId !== undefined) id(data.outcomeId,'outcome');
-  if (data.inputs !== undefined) object(data.inputs,'Completion assignments');
+  if (data.inputs !== undefined) completionInstallationSelections(data.inputs);
   if (data.cohortReviewIds !== undefined) cohortReviewIds(data.cohortReviewIds);
   if (data.implementationReviewIds !== undefined) implementationReviewIds(data.implementationReviewIds);
   for (const key of ['asOfDate','confirmedOn','deadlineOn','submittedOn','date'])
@@ -808,6 +836,7 @@ export class GrantWorkspaceClient {
       'work-intake':() => '/api/operations/' + cid() + '/work-intakes/' + id(args.intakeId, 'intake') +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision, 'Intake edition', 1, 10000000)),
       forecasts:() => '/api/operations/' + cid() + '/forecasts',
+      'forecast-comparison':() => '/api/operations/' + cid() + '/forecast-comparison' + forecastComparisonQuery(args),
       forecast:() => '/api/operations/' + cid() + '/forecasts/' + id(args.forecastId, 'forecast'),
       portfolios:() => '/api/operations/' + cid() + '/portfolios',
       portfolio:() => '/api/operations/' + cid() + '/portfolios/' + id(args.portfolioId, 'portfolio'),
@@ -1585,6 +1614,17 @@ export class GrantWorkspaceClient {
     return this.command(caseId,{...original,action:'completion.corrections.save',
       data:{inputs,asOfDate,expectedPreviewSha256}});
   }
+  completionInstallations(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','tranche'],['expectedVersion','tranche']);
+    integer(body.expectedVersion,'Current case version'); integer(body.tranche,'Completion tranche',1,3);
+    return this.#request('/api/operations/'+caseId+'/completion-installations',{body,mutation:false});
+  }
+  completionInstallationsPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','inputs','asOfDate'],['expectedVersion','inputs']);
+    integer(body.expectedVersion,'Current case version'); completionInstallationSelections(body.inputs);
+    if(body.asOfDate!==undefined)completionDate(body.asOfDate);
+    return this.#request('/api/operations/'+caseId+'/completion-installations-preview',{body,mutation:false});
+  }
   completionSeed(caseId, expectedVersion, tranche) {
     id(caseId,'operation'); integer(expectedVersion,'Current case version'); integer(tranche,'Completion tranche',1,3);
     return this.#request('/api/operations/'+caseId+'/completion-seed',
@@ -1739,6 +1779,13 @@ export class GrantWorkspaceClient {
     const routes = {
       plan:() => '/api/plans/' + id(args.planId, 'plan') + '/export.zip' +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Selected plan revision',1,1000000)),
+      'forecast-comparison':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/export.zip' + forecastComparisonQuery(args,true),
+      'forecast-comparison-report':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/report.html' + forecastComparisonQuery(args,true),
+      'forecast-comparison-json':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/comparison.json' + forecastComparisonQuery(args,true),
+      'forecast-comparison-changes':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/changes.csv' + forecastComparisonQuery(args,true),
+      'forecast-comparison-impact':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/impact.csv' + forecastComparisonQuery(args,true),
+      'forecast-comparison-daily':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/daily.csv' + forecastComparisonQuery(args,true),
+      'forecast-comparison-work':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/work.csv' + forecastComparisonQuery(args,true),
       'plan-comparison':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/export.zip' + planComparisonQuery(args,true),
       'plan-comparison-report':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/report.html' + planComparisonQuery(args,true),
       'plan-comparison-changes':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/changes.csv' + planComparisonQuery(args,true),
