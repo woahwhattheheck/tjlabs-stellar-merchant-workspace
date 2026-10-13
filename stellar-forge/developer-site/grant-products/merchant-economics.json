@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/merchant-economics/OPERATING.md",
-      "commit": "16e05b54f3582bfae1d0ce79bd07bb5b649c26eb",
+      "commit": "0cb46587ccad38da92fe70b434ce57838ecb0caf",
       "editions": [
         {
           "commit": "0c52fb12870b25cd057006f44ac93c0b10736a20",
@@ -21,6 +21,12 @@
           "bytes": 56991,
           "sha256": "e4d97147ff02fb1edbb5a2893963db7b492465d31474204b9f382249d152c685",
           "git_blob": "fe8125f3da15cda5428a1774a001f75596adcd4c"
+        },
+        {
+          "commit": "0cb46587ccad38da92fe70b434ce57838ecb0caf",
+          "bytes": 60149,
+          "sha256": "ca19be7898db83369fed9b9384c1d9c05e5ea51524caf2ed3aef51c1befda64e",
+          "git_blob": "74db0f568471c982216adff8240255652a2429ad"
         }
       ]
     },
@@ -105,7 +111,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/README.md",
-      "commit": "d2270313c56c7bd4ca7fc81187829c842f0028e4",
+      "commit": "5b5c6a1159a8c1701dafc4f2102d40b95b24c500",
       "editions": [
         {
           "commit": "0c52fb12870b25cd057006f44ac93c0b10736a20",
@@ -117,6 +123,12 @@
           "bytes": 21759,
           "sha256": "a464cfee6a7660a31f1cffc1c3dafb0b996ebdc96fc9c76f06e636db50e7b378",
           "git_blob": "9fe0820a6714003545d48dd06001a57ff5bb6ee5"
+        },
+        {
+          "commit": "5b5c6a1159a8c1701dafc4f2102d40b95b24c500",
+          "bytes": 22757,
+          "sha256": "e327aa8129ba0c38980da222ea6d5366fc881694d54c61f2ab7fd7ab3641d735",
+          "git_blob": "9d4c5fa898fb214d449d532b388b19cbfd8805b0"
         }
       ]
     },
@@ -133,6 +145,22 @@
           "bytes": 8613,
           "sha256": "f8b585b6e939a9c80b48a0bcfe98b6d734f8e6a113d2d132e73fef013374527b",
           "git_blob": "2f7e4a5d0c871e7e2d74c78016af9726a9186dd5"
+        }
+      ]
+    },
+    {
+      "id": "merchant-economics-tariff-report",
+      "label": "Complete exact saved-plan reader, offline HTML and original full report receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/REVIEW.md",
+      "commit": "5b5c6a1159a8c1701dafc4f2102d40b95b24c500",
+      "editions": [
+        {
+          "commit": "5b5c6a1159a8c1701dafc4f2102d40b95b24c500",
+          "bytes": 9171,
+          "sha256": "e8847bbd28850946ef6c678f43c25115d158a122df81da31e19e185331f10e90",
+          "git_blob": "a628fe3378668d49c67a5035e408d262b5ba80ae"
         }
       ]
     },
@@ -247,7 +275,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "tree",
       "path": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops",
-      "commit": "d2270313c56c7bd4ca7fc81187829c842f0028e4"
+      "commit": "5b5c6a1159a8c1701dafc4f2102d40b95b24c500"
     }
   ]
 }
