@@ -1037,3 +1037,7 @@ See [MCP.md](MCP.md) for the complete setup, eleven tools, capture → verificat
 off-host transfer → cold restore → publisher preparation workflow, typed exports
 and interrupted-response readback. The native CLI ready JSON also includes
 `connectionFile`, `instanceId`, `workspaceId` and `configurationSha256`.
+
+## Saved recovery evidence in an existing Support case
+
+Profiles can declare an existing private `casesDirectory` and optional original `caseSourceDirectory`. The **Send recovery evidence to Support** panel freezes a selected Object request and all of its native evidence, reviews an existing case revision and before/after slot, saves through the original case writer, and exports through the maintained complete case-source package. The native encrypted backup stays explicitly external unless the actual source inventory carries its bytes. Read [RECOVERY_SUPPORT.md](./RECOVERY_SUPPORT.md) for exact browser, CLI, MCP, interruption and independent receiving procedures.

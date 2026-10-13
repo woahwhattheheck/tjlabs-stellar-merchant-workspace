@@ -114,6 +114,54 @@
           "git_blob": "fb6f46ba71205a294389abd21d63d876788adef6"
         }
       ]
+    },
+    {
+      "id": "recovery-support-guide",
+      "label": "Complete existing-case recovery receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/RECOVERY_SUPPORT.md",
+      "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+      "editions": [
+        {
+          "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+          "bytes": 13079,
+          "sha256": "1502120d8094b6b742ff8f0d0c6f95e317a561ab8952f9c46cdfa679a1c92f9e",
+          "git_blob": "e49f50b6d138a120d96aba1feb09d06fbf6370d0"
+        }
+      ]
+    },
+    {
+      "id": "recovery-support-producer",
+      "label": "Original recovery capture and full Support case export",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/recovery-support.mjs",
+      "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+      "editions": [
+        {
+          "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+          "bytes": 23821,
+          "sha256": "b443c76d4efe8d0b4f2a11687e2f0437062dc89c711bd560c668f42553e4c6a4",
+          "git_blob": "5e2f992f515a77b1b1c496f83e49663722ad74f7"
+        }
+      ]
+    },
+    {
+      "id": "recovery-support-reader",
+      "label": "Complete native recovery observation and history reader",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/recovery-runtime.mjs",
+      "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+      "editions": [
+        {
+          "commit": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+          "bytes": 25371,
+          "sha256": "e9ac09bc61c870342af4e51e5cc5d0768362c50b5b59456a64a220a632079621",
+          "git_blob": "14e698e53f3155ec47b1fdfe121da2f09cee01ca"
+        }
+      ]
     }
   ]
 }

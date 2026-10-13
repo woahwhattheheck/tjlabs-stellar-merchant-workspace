@@ -534,3 +534,7 @@ Open **Work items** to capture findings from the native register or diagnostics,
 The **Point-list modelling** link opens the full source intake, mapping, model editor, standard catalogue, native validation, reporting, returned-work and request-history views in this same workspace. [SEMANTIC_MODELLING.md](SEMANTIC_MODELLING.md) provides the complete workflow and operator commands. It retains every original source row and stable entity identity, complete model versions, exact-version reviews and all native report bytes.
 
 Install the explicitly selected offline standard runtime only when needed, using [SEMANTIC_NATIVE.md](SEMANTIC_NATIVE.md). Physical or live-site observations are recorded with their own author and evidence; successful standard validation does not supply those observations. The complete v3 workspace package receives the original v1 and corrective v2 package inventories as well.
+
+## Reviewed typed-grid projections
+
+Use **Haystack projections** to choose a saved model version, map source columns and typed values, inspect complete lineage, review a version and deliver the native grid. The same workspace retains each corrected return and its explicit row decisions. [PROJECTION.md](PROJECTION.md) provides the full browser and CLI workflow. Complete v4 deliveries retain this projection history and receive the earlier v1, v2 and v3 application inventories.

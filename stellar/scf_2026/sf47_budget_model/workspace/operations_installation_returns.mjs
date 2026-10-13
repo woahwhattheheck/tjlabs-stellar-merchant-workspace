@@ -31,14 +31,14 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
     const companyStyle=document.createElement('link');companyStyle.rel='stylesheet';companyStyle.href='/operations_company_returns.css';document.head.append(companyStyle);
   }
   const caseId=current.program.id,prefix='/api/operations/'+caseId,storageKey='sf47.installation-returns.'+caseId;
-  const savedKeys=['mode','receiver','owner','selectedReview','pending','accepted','rejected','notice','stage','previousDrafts','returnCase','returnOptions'];
+  const savedKeys=['mode','receiver','owner','selectedReview','pending','accepted','rejected','notice','stage','previousDrafts','returnCase','returnOptions','companyNoteDrafts'];
   if(!session.initialized){
     let stored;try{stored=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch{}
     if(stored?.schema===SCHEMA&&stored.caseId===caseId)for(const key of savedKeys)if(Object.hasOwn(stored,key))session[key]=stored[key];
     session.initialized=true;
   }
   for(const [key,value] of Object.entries({mode:'receiver',receiver:null,owner:null,selectedReview:null,
-    pending:null,accepted:null,rejected:[],stage:null,notice:'',inflight:null}))if(!Object.hasOwn(session,key))session[key]=value;
+    pending:null,accepted:null,rejected:[],stage:null,notice:'',inflight:null,companyNoteDrafts:{}}))if(!Object.hasOwn(session,key))session[key]=value;
   let packageDesk=null,packageBusy=false;
   let active=true,busy=false,hostBusy=false,generation=0,caseValue=current,reviewList=[],cases=[],savedRow=null,returnedRow=null,
     draftPreview=null,previewInput=null,installationPreview=null,installationInput=null,stageSeed=null,error='',storageNotice='';
@@ -196,6 +196,16 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
     if(session.mode==='package')packageDesk=mountCompanyReturnIntake({
       container:root.querySelector('[data-company-intake]'),current:caseValue,api,saveApi,mutationId,recordingActor,
       locked:()=>!!session.pending||!!session.accepted,
+      noteDrafts:session.companyNoteDrafts,
+      onNoteDrafts:()=>{persist();if(storageNotice)throw Error('The browser session could not retain the note recovery copy.');},
+      onNoteError:message=>{
+        session.notice=message;persist();
+        if(available()){
+          let alert=root.querySelector('[data-company-note-failure]');
+          if(!alert){alert=document.createElement('p');alert.dataset.companyNoteFailure='true';alert.className='ir-warning';alert.setAttribute('role','alert');root.prepend(alert);}
+          alert.textContent=message;
+        }
+      },
       onBusy:value=>{packageBusy=value;controls();},
       onDraft:async(draft,next)=>{
         if(session.pending||session.accepted)throw new Error('Finish the original receiving request before replacing its draft.');

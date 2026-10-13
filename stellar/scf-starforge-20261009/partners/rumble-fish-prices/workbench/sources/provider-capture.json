@@ -1,0 +1,106 @@
+{
+  "url": "https://prices-api.sorobanscan.rumblefish.dev/api-docs-json",
+  "status": 200,
+  "bytes": 58863,
+  "sha256": "d13b6d1296442d92991cf3323b23aa1b432549f0e49f57fcdcf7711fe22f7378",
+  "retained_path": "/dev/shm/dbc61-rumblefish-source/openapi.original.json",
+  "headers": {
+    "Date": "Sun, 11 Oct 2026 18:47:06 GMT",
+    "Content-Type": "application/json"
+  },
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Stellar Prices API",
+    "description": "Public read API for Stellar asset prices: current prices, OHLCV candles, oracle readings and the progress of the historical backfill. Prices, volumes and rates are decimal strings rather than JSON numbers, so no precision is lost in transport; counts and ledger sequences are plain integers.",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "https://prices-api.sorobanscan.rumblefish.dev"
+    }
+  ],
+  "security": [
+    {
+      "api_key": []
+    }
+  ],
+  "securitySchemes": {
+    "api_key": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "x-api-key"
+    }
+  },
+  "paths": {
+    "/api-docs-json": {
+      "get": {
+        "operationId": "api_docs_json",
+        "summary": "`GET /api-docs-json` \u2014 this OpenAPI document.",
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "`GET /health` \u2014 liveness probe.",
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/v1/assets": {
+      "get": {
+        "operationId": "get_assets",
+        "summary": "`GET /assets` \u2014 paginated, sortable, filterable list of tracked assets.",
+        "security": null
+      }
+    },
+    "/v1/assets/{asset_identifier}": {
+      "get": {
+        "operationId": "get_asset",
+        "summary": "`GET /assets/{asset_identifier}` \u2014 single-asset metadata.",
+        "security": null
+      }
+    },
+    "/v1/assets/{asset_identifier}/ohlcv": {
+      "get": {
+        "operationId": "get_ohlcv",
+        "summary": "`GET /assets/{asset_identifier}/ohlcv` \u2014 candlestick history.",
+        "security": null
+      }
+    },
+    "/v1/assets/{asset_identifier}/price": {
+      "get": {
+        "operationId": "get_price",
+        "summary": "`GET /assets/{asset_identifier}/price` \u2014 current price for one asset.",
+        "security": null
+      }
+    },
+    "/v1/backfill/status": {
+      "get": {
+        "operationId": "get_status",
+        "summary": "`GET /backfill/status` \u2014 progress of the historical backfill streams.",
+        "security": null
+      }
+    },
+    "/v1/oracles/{asset_identifier}": {
+      "get": {
+        "operationId": "get_oracles",
+        "summary": "`GET /oracles/{asset_identifier}` \u2014 latest per-oracle readings for an asset.",
+        "security": null
+      }
+    },
+    "/v1/prices/batch": {
+      "post": {
+        "operationId": "post_batch",
+        "summary": "`POST /prices/batch` \u2014 current prices for many assets in one call.",
+        "security": null
+      }
+    }
+  }
+}
