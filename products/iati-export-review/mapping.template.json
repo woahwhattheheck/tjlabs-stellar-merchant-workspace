@@ -1,0 +1,45 @@
+{
+  "schema": "devresults.export-review-mapping.v1",
+  "operation": "REPLACE-with-actual-operation",
+  "editions": [
+    {
+      "id": "first",
+      "definition": {
+        "name": "REPLACE actual financial review name",
+        "notes": "REPLACE actual source/scope notes",
+        "comparisons": [
+          {
+            "organisationRowId": "REPLACE exact catalog row id",
+            "activityRowIds": [
+              "REPLACE exact catalog row id"
+            ],
+            "coverage": "selected",
+            "scopeStatement": "REPLACE actual selected cohort and financial basis",
+            "valueDatePolicy": "separate"
+          }
+        ],
+        "decisions": []
+      }
+    },
+    {
+      "id": "following",
+      "definition": {
+        "name": "REPLACE actual financial review name",
+        "notes": "REPLACE actual source/scope notes",
+        "comparisons": [
+          {
+            "organisationRowId": "REPLACE exact catalog row id",
+            "activityRowIds": [
+              "REPLACE exact catalog row id"
+            ],
+            "coverage": "selected",
+            "scopeStatement": "REPLACE actual selected cohort and financial basis",
+            "valueDatePolicy": "separate"
+          }
+        ],
+        "decisions": []
+      }
+    }
+  ]
+}
+

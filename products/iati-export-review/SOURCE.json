@@ -1,0 +1,37 @@
+{
+  "schema": "tjlabs.publisher-export-review-source.v1",
+  "nativeSourceDirectory": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati",
+  "reviewedAtCommit": "6627bbee2fa9c2bef1ef0e352b54ec65f3459afb",
+  "files": [
+    {
+      "path": "receive_export_review.py",
+      "bytes": 40114,
+      "sha256": "a07799e587fe050b41b66a11ac4427a6a0731cff4828b174794dd6de01e7116e"
+    },
+    {
+      "path": "open_review_course.mjs",
+      "bytes": 14227,
+      "sha256": "422661aacb0b0bedb77284edea078e1ad5cd574e115543cc232a9d854f80c5bb"
+    },
+    {
+      "path": "intake.template.json",
+      "bytes": 2141,
+      "sha256": "7f86b1a7ffacbe64cda05098c7f349b606e5a3c772679dd221661b39354b1c65"
+    },
+    {
+      "path": "mapping.template.json",
+      "bytes": 1281,
+      "sha256": "8005ad36c961a763b2d71387c102c8f878526641005d67ad45a6765dd6dc240d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 10534,
+      "sha256": "f0cc573dc069f04508019e01856130061b8c96341868e1900f4d9bdbd5b22e6a"
+    },
+    {
+      "path": "BROWSER_RECEIVING.md",
+      "bytes": 4541,
+      "sha256": "043f5b5d9c60911abef7301a125a0135ddb701ea6c06859e88d11b3e5193de05"
+    }
+  ]
+}
