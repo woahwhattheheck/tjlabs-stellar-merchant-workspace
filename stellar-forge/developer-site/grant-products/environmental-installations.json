@@ -168,6 +168,7 @@
       "label": "Complete five-workshare environmental scope, 25 phases and receiving evidence",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
+      "required": false,
       "path": "stellar-forge/developer-site/grant-sources/environmental-evidence.md",
       "commit": "2232525137522fa22848d6b51dd238653b78eedb",
       "editions": [
@@ -184,6 +185,7 @@
       "label": "Exact environmental phase IDs, effort pointers, proposal amounts and funding separation",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
+      "required": false,
       "path": "stellar-forge/developer-site/grant-sources/environmental-evidence.json",
       "commit": "2232525137522fa22848d6b51dd238653b78eedb",
       "editions": [

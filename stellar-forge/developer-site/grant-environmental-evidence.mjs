@@ -62,7 +62,7 @@ export function receiveEnvironmentalEvidence({ companion, registration, evidence
   const nextRegistration = copy(registration);
   for (const id of originalIds) need(nextRegistration.sources.some(s => s.id === id), 'Retain original source ' + id);
   for (const row of ENVIRONMENTAL_EVIDENCE_FILES) {
-    const spec = { id: row.id, label: row.label, repository, kind: 'blob', path: pathFor(row), commit: ENVIRONMENTAL_EVIDENCE_COMMIT, editions: [{ commit: ENVIRONMENTAL_EVIDENCE_COMMIT, bytes: row.bytes, sha256: row.sha256, git_blob: row.git_blob }] };
+    const spec = { id: row.id, label: row.label, repository, kind: 'blob', required: false, path: pathFor(row), commit: ENVIRONMENTAL_EVIDENCE_COMMIT, editions: [{ commit: ENVIRONMENTAL_EVIDENCE_COMMIT, bytes: row.bytes, sha256: row.sha256, git_blob: row.git_blob }] };
     const old = nextRegistration.sources.find(s => s.id === row.id);
     if (old) need(JSON.stringify(old) === JSON.stringify(spec), 'Preserve a different current evidence source edition.');
     else nextRegistration.sources.push(spec);

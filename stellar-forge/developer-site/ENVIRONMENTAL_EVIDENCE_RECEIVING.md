@@ -6,7 +6,7 @@ This is an additive receiving contribution for the original environmental Instal
 
 The two adjacent files in `grant-sources/`, `environmental-evidence.md` and `environmental-evidence.json`, are the exact original reviewed public evidence. Their immutable source commit is `2232525137522fa22848d6b51dd238653b78eedb`. The complete Markdown has all 25 phase rows; the JSON carries the original phase IDs, effort pointers, plan and packet digests, proposal figures and evidence states. The private receiving memorandum, full customer plans, correspondence and source packets are not part of this publication.
 
-The same `grant-products/environmental-installations.json` preserves its ten existing source specifications and adds two measured evidence specifications. No second environmental product or application is created. `GRANT_ENVIRONMENTAL_EVIDENCE_CHAPTER.md` contains the complete environmental H2 received from the actual PR1286 companion, followed by the original evidence at subordinate headings and immutable public source links.
+The same `grant-products/environmental-installations.json` preserves its ten existing source specifications and adds two measured evidence specifications. The two additions are optional until the complete evidence chapter is received, so a concurrent composer can still open the unchanged earlier chapter. Once that chapter contains their exact immutable links, the original registry selects both full identities. No second environmental product or application is created. `GRANT_ENVIRONMENTAL_EVIDENCE_CHAPTER.md` contains the complete environmental H2 received from the actual PR1286 companion, followed by the original evidence at subordinate headings and immutable public source links.
 
 ## Receive into the current cumulative edition
 
