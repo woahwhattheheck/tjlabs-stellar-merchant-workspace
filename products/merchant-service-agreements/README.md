@@ -62,6 +62,14 @@ CLI, typed HTTP and merchant-tool creation/amendment inputs accept optional `ren
 
 Creation defaults to monthly billing, `START` invoice timing, 30 due days and currency scale 2 when those optional fields are omitted. The allowed currency scale is 0–6. Dates use `YYYY-MM-DD`; amounts returned by the controller retain the original currency representation.
 
+## Review actual collections
+
+Choose **Collections review** in the original Service agreements application. Filter the actual agreements and select a ledger date to see their original invoice totals, effective receipt allocations, credit notes, overdue amounts and remaining balances. Drafts, future issue dates, effective voids and accepted-quote calendar amounts remain distinct. Every retained billing relationship and superseded invoice remains available.
+
+**Open this original invoice** carries the account identity, invoice UUID and date into Receivables while preserving unfinished invoice work. Download complete standalone HTML, JSON, invoice/calendar/activity CSV, or the complete six-file TAR. Original accounting revision guards bind each export to the selected review.
+
+The [complete collections guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/service-agreements/COLLECTIONS.md) covers browser operation, exact dated money semantics, all exports, CLI, typed client, native complete-file receiving and same-customer reopening.
+
 ## Typed HTTP client
 
 The product exports the client and its TypeScript declarations under `./merchant/service-agreements/client`. The browser also serves the same module at `/service-agreements/client.mjs`.
@@ -108,6 +116,7 @@ Use a current state or detail response for the workspace revision. Every mutatio
 | --- | --- |
 | `state({asOf})` | Customers, agreement calendar and current workspace revision |
 | `detail(id, {asOf})` | Complete agreement, editions, billing records and periods |
+| `collections` / `exportCollections` | Complete selected dated invoice/collection review and its full reports |
 | `preview(id, {periodId, asOf})` | Exact draft, quotation review and preview hash |
 | `create(body)` | Accepted-source agreement |
 | `amend(id, body)` | Newly accepted quotation and effective monthly boundary |
@@ -144,6 +153,7 @@ Start the existing merchant MCP transport through the packaged `merchant-mcp` or
 | `workspaces` | List configured original accounting aliases |
 | `open` / `close` | Open the agreement controller in its accounting owner; release its files and close the owner |
 | `state` / `agreement` | Dated workspace calendar or complete agreement |
+| `collections` / `collections_export` / `collections_file` | Original dated invoice balances, complete report inventory and retained full-file receiving |
 | `preview` | Exact billing preview and any staged recovery identity |
 | `create` / `amend` | Create an accepted agreement or retain a new accepted quotation edition |
 | `renew` / `cancel` | Extend by whole months or end future billing at a boundary |

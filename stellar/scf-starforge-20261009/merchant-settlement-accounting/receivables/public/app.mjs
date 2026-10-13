@@ -20,7 +20,23 @@ const api = Object.assign(createReceivablesClient({baseUrl:config.apiPath}),crea
 const storageKey = 'merchant-receivables:' + location.origin + config.apiPath + ':';
 function readSession(key, fallback = null) { try { const text = sessionStorage.getItem(storageKey + key); return text ? JSON.parse(text) : fallback; } catch { return fallback; } }
 function saveSession(key, value) { try { value === null ? sessionStorage.removeItem(storageKey + key) : sessionStorage.setItem(storageKey + key, JSON.stringify(value)); } catch { /* The open form remains in memory when browser storage is unavailable. */ } }
-const ui = {state:null, view:'invoices', selected:'', detail:null, editor:readSession('draft'), pending:readSession('pending'), busy:false, customer:'', search:'', status:'', asOf:today(), selectionVersion:0, preview:null, native:null, customerReport:null};
+// A cross-desk link selects one original invoice without replacing unfinished work.
+function invoiceOpeningSelection() {
+  const query = new URLSearchParams(location.search);
+  if (!query.has('invoiceId') && !query.has('workspaceId')) return null;
+  for (const key of ['invoiceId', 'workspaceId', 'asOf'])
+    if (query.getAll(key).length !== 1) return {error: 'The original invoice link needs one workspace, invoice and date.'};
+  const invoiceId = query.get('invoiceId'), workspaceId = query.get('workspaceId'), asOf = query.get('asOf');
+  if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(invoiceId) ||
+      !/^[0-9a-f]{64}$/.test(workspaceId) || !/^\d{4}-\d{2}-\d{2}$/.test(asOf) ||
+      !Number.isFinite(Date.parse(asOf + 'T00:00:00Z')) ||
+      new Date(asOf + 'T00:00:00Z').toISOString().slice(0,10) !== asOf)
+    return {error: 'The selected original invoice link is incomplete or invalid.'};
+  return {invoiceId, workspaceId, asOf};
+}
+const openingInvoice = invoiceOpeningSelection();
+
+const ui = {state:null, view:'invoices', selected:'', detail:null, editor:readSession('draft'), pending:readSession('pending'), busy:false, customer:'', search:'', status:'', asOf:openingInvoice?.asOf || today(), selectionVersion:0, preview:null, native:null, customerReport:null};
 const paymentUi = createPaymentRequestUi({api, openDialog, mutate, getState:()=>ui.state, getInvoice:detailInvoice,
   saveBlob, showError, setBusy, readSession, saveSession, setMessage, isLocked:()=>ui.busy || Boolean(ui.pending)});
 const refundUi = createRefundUi({api, openDialog, mutate, getState:()=>ui.state, getInvoice:detailInvoice,
@@ -838,3 +854,17 @@ document.addEventListener('click',async event=>{
 window.addEventListener('pagehide',()=>{if(ui.editor)persistEditor();if(ui.pending)saveSession('pending',ui.pending);});
 renderPending();
 await refresh({quiet:true});
+if (openingInvoice) {
+  if (openingInvoice.error) setMessage(openingInvoice.error, true);
+  else if (!ui.state || ui.state.workspaceId !== openingInvoice.workspaceId)
+    setMessage('This link belongs to another original accounting workspace. Your current records and unfinished work are retained.', true);
+  else if (!ui.state.invoices.some(row => row.id === openingInvoice.invoiceId))
+    setMessage('The selected original invoice is not present in this accounting workspace.', true);
+  else {
+    if (ui.editor) { ui.parkedEditor = ui.editor; persistEditor(); ui.editor = null; }
+    ui.view = 'invoices';
+    await selectInvoice(openingInvoice.invoiceId);
+    if (ui.detail) setMessage('Opened the original invoice at ' + openingInvoice.asOf +
+      (ui.parkedEditor ? '. Your unfinished invoice remains available through New invoice or Edit draft.' : '.'));
+  }
+}

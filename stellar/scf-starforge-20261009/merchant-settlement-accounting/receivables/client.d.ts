@@ -143,6 +143,7 @@ export interface AgingCurrency {
 }
 export interface AgingReport { asOf: DateOnly; currencies: AgingCurrency[]; invoices: InvoiceSummary[] }
 export interface ReceivablesState {
+  workspaceId: string;
   schema: string; revision: Revision; asOf: DateOnly; issuer: Issuer; customers: Customer[]; runs: SettlementRun[];
   invoices: InvoiceSummary[]; receipts: Receipt[]; credits: CreditSummary[]; allocations: Allocation[];
   aging: AgingReport; history: HistoryEntry[]; paymentRequests: PaymentRequestSummary[];

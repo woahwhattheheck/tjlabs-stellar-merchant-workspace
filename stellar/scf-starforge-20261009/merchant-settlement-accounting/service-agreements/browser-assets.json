@@ -50,6 +50,13 @@
         "config.json",
         "application/json; charset=utf-8"
       ]
+    ],
+    [
+      "/service-agreements/collections.mjs",
+      [
+        "collections.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

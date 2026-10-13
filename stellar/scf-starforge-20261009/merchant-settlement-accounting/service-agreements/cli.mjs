@@ -13,6 +13,8 @@ import {ServiceAgreementWorkspace} from './store.mjs';
 const HELP = 'Merchant service agreements\n\n' +
   'starforge service-agreements serve --directory /private/accounting [--port 8449]\n' +
   'starforge service-agreements state --directory /private/accounting [--as-of YYYY-MM-DD]\n' +
+  'starforge service-agreements collections --directory /private/accounting [--as-of YYYY-MM-DD] [--agreements UUID,UUID] [--expected-revision N]\n' +
+  'starforge service-agreements collections-export --directory /private/accounting --out /private/new-report [--format tar|json|html|invoices|periods|activity] [--as-of YYYY-MM-DD] [--agreements UUID,UUID] [--expected-revision N]\n' +
   'starforge service-agreements detail --directory /private/accounting --id UUID [--as-of YYYY-MM-DD]\n' +
   'starforge service-agreements preview --directory /private/accounting --id UUID --period p-0-3 [--as-of YYYY-MM-DD]\n' +
   'starforge service-agreements apply --directory /private/accounting --action create|amend|renew|cancel|bill --input /private/request.json [--id UUID]\n' +
@@ -25,7 +27,7 @@ const HELP = 'Merchant service agreements\n\n' +
 export function parseServiceAgreementsArguments(argv) {
   const [command = 'help', ...rest] = argv, flags = {};
   const known = new Set(['directory','outbox','proof-dir','terms','recovered-dir','port','as-of','id','period',
-    'action','input','source','name','out','format','expected-workspace-id','expected-sources-sha256']);
+    'action','input','source','name','out','format','expected-workspace-id','expected-sources-sha256','agreements','expected-revision']);
   for (let i = 0; i < rest.length; i += 2) {
     need(/^--[a-z-]+$/.test(rest[i]) && known.has(rest[i].slice(2)) &&
       rest[i + 1] !== undefined && !rest[i + 1].startsWith('--'),
@@ -58,6 +60,8 @@ async function newFile(path, bytes) {
   path = absolute(path, 'output');
   const handle = await open(path, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW ?? 0), 0o600);
   try { await handle.writeFile(bytes); await handle.sync(); } finally { await handle.close(); }
+  const parent = await open(dirname(path), constants.O_RDONLY | (constants.O_DIRECTORY ?? 0) | (constants.O_NOFOLLOW ?? 0));
+  try { await parent.sync(); } finally { await parent.close(); }
 }
 export async function runServiceAgreementsCli(argv = process.argv.slice(2)) {
   const {command, flags} = parseServiceAgreementsArguments(argv);
@@ -88,7 +92,27 @@ export async function runServiceAgreementsCli(argv = process.argv.slice(2)) {
   try {
     const agreements = await new ServiceAgreementWorkspace(workspace).init();
     let result;
-    if (command === 'state') result = await agreements.state({asOf});
+    if (command === 'collections' || command === 'collections-export') {
+      const revision = flags['expected-revision'];
+      need(revision === undefined || /^[1-9][0-9]*$/.test(revision) && Number.isSafeInteger(Number(revision)),
+        'INVALID_COLLECTIONS_REVISION', 'Use the reviewed accounting revision.');
+      const selection = {asOf, agreementIds: flags.agreements === undefined ? undefined :
+        flags.agreements === '' ? [] : flags.agreements.split(','),
+        workspaceId: flags['expected-workspace-id'], expectedRevision: revision === undefined ? undefined : Number(revision)};
+      if (command === 'collections') result = await agreements.collections(selection);
+      else {
+        const format = flags.format ?? 'tar';
+        need(['tar','json','html','invoices','periods','activity'].includes(format),
+          'INVALID_COLLECTIONS_FORMAT', 'Choose tar, json, html, invoices, periods or activity.');
+        const exported = await agreements.exportCollections(selection);
+        const name = ['json','html'].includes(format) ? 'collections.' + format : format + '.csv';
+        const file = format === 'tar' ? {name: 'agreement-collections.tar', type: 'application/x-tar',
+          bytes: renderCustomerTar(exported.files)} : exported.files.find(item => item.name === name);
+        await newFile(flags.out, file.bytes);
+        result = {path: flags.out, bytes: file.bytes.length, type: file.type, workspaceId: exported.workspaceId,
+          revision: exported.revision, asOf: exported.asOf, reportSha256: exported.report.sha256};
+      }
+    } else if (command === 'state') result = await agreements.state({asOf});
     else if (command === 'detail') result = await agreements.detail(flags.id, {asOf});
     else if (command === 'preview') result = await agreements.preview(flags.id, {periodId: flags.period, asOf});
     else if (command === 'apply') {

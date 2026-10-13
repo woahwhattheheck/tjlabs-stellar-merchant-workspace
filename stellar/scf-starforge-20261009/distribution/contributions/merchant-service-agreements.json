@@ -16,12 +16,14 @@
       "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/service-agreements/client.d.ts",
       "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/service-agreements/client.mjs"
     },
-    "./merchant/mcp/service-agreements": "./source/stellar-forge/mcp-merchant-operator/service-agreements.mjs"
+    "./merchant/mcp/service-agreements": "./source/stellar-forge/mcp-merchant-operator/service-agreements.mjs",
+    "./merchant/service-agreements/collections": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/service-agreements/collections.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/service-agreements/client.d.ts",
     "products/merchant-service-agreements/README.md",
-    "stellar-forge/mcp-merchant-operator/accounting.mjs"
+    "stellar-forge/mcp-merchant-operator/accounting.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/service-agreements/COLLECTIONS.md"
   ],
   "browserAssets": [
     {

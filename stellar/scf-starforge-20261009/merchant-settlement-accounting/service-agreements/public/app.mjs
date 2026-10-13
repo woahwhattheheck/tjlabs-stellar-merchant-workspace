@@ -1,4 +1,5 @@
 import {createServiceAgreementClient} from './client.mjs';
+import {collectionsView} from './collections.mjs';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => Array.from(document.querySelectorAll(selector));
@@ -137,6 +138,8 @@ function renderPending() {
     (current ? '' : '<p class="help">Reopen its original accounting workspace to continue.</p>') + '</div>';
 }
 function syncControls() {
+  for (const button of $$('[data-action="collections-export"]')) button.disabled =
+    state.reading || state.collectionsDownloading || !state.collections?.report || state.data?.asOf !== asOf() || state.collections.key !== collectionsKey();
   const blocked = !state.data || state.reading || state.mutationRunning || Boolean(state.pending);
   for (const button of $$('[data-mutation]')) {
     button.disabled = blocked || button.hasAttribute('data-fixed-disabled') ||
@@ -155,7 +158,7 @@ function syncControls() {
   if (retry) retry.disabled = state.mutationRunning || state.reading ||
     state.pending?.workspaceId !== workspaceId();
   $('#revision').textContent = state.data
-    ? 'Revision ' + state.data.revision + ' · as of ' + asOf() + (state.reading ? ' · refreshing…' : '')
+    ? 'Revision ' + state.data.revision + ' · as of ' + state.data.asOf + (state.reading ? ' · refreshing…' : '')
     : 'Opening workspace…';
 }
 function downloadObject(name, value) {
@@ -199,7 +202,10 @@ async function refresh({quiet = false} = {}) {
     if (state.selectedId) await loadDetail(state.selectedId, {focus: false});
     if (!quiet && !state.pending) notice('#message', 'Current agreements and billing periods are loaded.');
   } catch (error) {
-    if (sequence === refreshSequence) showError(error);
+    if (sequence === refreshSequence) {
+      if (state.data?.asOf) $('#as-of').value = state.data.asOf;
+      notice('#message', error.message + (state.data?.asOf ? ' Still showing the last loaded date, ' + state.data.asOf + '.' : ''), error);
+    }
   } finally {
     if (sequence === refreshSequence) { state.reading = false; syncControls(); renderPending(); }
   }
@@ -363,6 +369,56 @@ function historyView(agreements) {
   return '<section class="panel"><div class="panel-head"><h2>Agreement history</h2><span class="meta">Original changes and billing events</span></div>' +
     historyTable(events) + '</section>';
 }
+function collectionsOptions(agreements = filteredAgreements()) {
+  return {workspaceId: workspaceId(), expectedRevision: state.data.revision,
+    asOf: state.data.asOf, agreementIds: agreements.map(row => row.id)};
+}
+function collectionsKey(options = collectionsOptions()) { return JSON.stringify(options); }
+function renderCollections(agreements) {
+  const options = collectionsOptions(agreements), key = collectionsKey(options);
+  if (state.collections?.key !== key) {
+    const selected = {key, options, report: null, error: null};
+    state.collections = selected;
+    client.collections(options).then(report => {
+      if (state.collections !== selected) return;
+      if (report.workspaceId !== options.workspaceId || report.revision !== options.expectedRevision ||
+          report.asOf !== options.asOf || JSON.stringify(report.selection?.agreementIds) !== JSON.stringify(options.agreementIds))
+        throw new Error('The collections response does not match the original selected workspace, date and agreements.');
+      selected.report = report;
+      if (state.view === 'collections') renderMain();
+    }).catch(error => {
+      if (state.collections !== selected) return;
+      selected.error = error;
+      if (state.view === 'collections') renderMain();
+    });
+  }
+  const selected = state.collections;
+  if (selected.error) return '<section class="panel"><div class="panel-body"><h2>Collections review needs refresh</h2><p>' +
+    esc(selected.error.message) + '</p><button type="button" data-action="collections-retry">Refresh original records</button></div></section>';
+  if (!selected.report) return '<section class="panel"><div class="panel-body"><h2>Reading original invoice balances</h2>' +
+    '<p>Loading the selected agreements at the displayed accounting revision.</p></div></section>';
+  return '<section class="panel"><div class="panel-body"><div class="actions"><span>Complete selected review:</span>' +
+    [['tar','All files'],['html','HTML'],['json','JSON'],['invoices','Invoice CSV'],['periods','Calendar CSV'],['activity','Activity CSV']]
+      .map(([format,title]) => '<button type="button" data-action="collections-export" data-format="' + format + '">' + title + '</button>').join('') +
+    '</div><p class="help">Downloads include all invoices, calendar periods and activity for the agreements selected by the filters above.</p>' +
+    collectionsView(selected.report, {receivablesPath, controls: true}) + '</div></section>';
+}
+async function downloadCollections(format) {
+  const selected = state.collections;
+  if (!selected?.report || selected.key !== collectionsKey() || state.data.asOf !== asOf() || state.collectionsDownloading) return;
+  state.collectionsDownloading = true; syncControls();
+  try {
+    const file = await client.exportCollections({...selected.options, format});
+    const blob = new Blob([file.bytes], {type: file.type}), url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a'); anchor.href = url; anchor.download = file.name;
+    document.body.append(anchor); anchor.click(); anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    notice('#message', 'Downloaded the complete selected review for ' + selected.report.asOf +
+      ', accounting revision ' + selected.report.revision + '.');
+  } catch (error) { showError(error); }
+  finally { state.collectionsDownloading = false; syncControls(); }
+}
+
 function renderMain() {
   if (!state.data) return;
   const agreements = filteredAgreements();
@@ -372,6 +428,7 @@ function renderMain() {
     else button.removeAttribute('aria-current');
   }
   $('#content').innerHTML = metrics(agreements) + (state.view === 'calendar' ? calendarTable(agreements) :
+    state.view === 'collections' ? renderCollections(agreements) :
     state.view === 'history' ? historyView(agreements) : agreementsTable(agreements));
   syncControls();
 }
@@ -1204,6 +1261,8 @@ async function reviewCurrentForm() {
 async function handleAction(button) {
   const action = button.dataset.action;
   if (button.disabled) return;
+  if (action === 'collections-export') return downloadCollections(button.dataset.format);
+  if (action === 'collections-retry') { state.collections = null; return refresh({quiet: true}); }
   if (action === 'refresh') return refresh();
   if (action === 'create') return openForm('create');
   if (['amend', 'renew', 'cancel'].includes(action)) return openForm(action, button.dataset.id);
