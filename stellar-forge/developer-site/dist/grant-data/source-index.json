@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 53345,
-    "sha256": "39f337bb16c8a9bda3a87036d46ffcbdf687a9feb7ed48bad01d50c212ad558c",
-    "git_blob": "73814fbcf738c4026d9f33228bca6c82d6fbcbd5"
+    "bytes": 57874,
+    "sha256": "adbcd076075023d677942f95388f2b77a1ef5cae091767d1b580cd6a2e9c5568",
+    "git_blob": "cbc04d49ca6e64cb4525a399e1449311cf43a9e2"
   },
   "request": {
     "basis": "prospective",
@@ -25961,7 +25961,7 @@
         "cash_basis": "The $7,600 first-tranche financing difference is conditional on the existing full-package cash-cost model; actual contributor cash costs remain separate inputs."
       }
     ],
-    "current_application_sha256": "39f337bb16c8a9bda3a87036d46ffcbdf687a9feb7ed48bad01d50c212ad558c",
+    "current_application_sha256": "adbcd076075023d677942f95388f2b77a1ef5cae091767d1b580cd6a2e9c5568",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -28247,17 +28247,78 @@
     "datasette_customer_example_source_commit": "84b0b2415fe9f76a654f12dc23aae07eb1c5ebc4",
     "customer_closing_product_commit": "2dc5ff92b04cd4d9e00e3033f5bd3ac5ce0423b7",
     "customer_closing_application_operation": "SCF-CUSTOMER-CLOSING-APPLICATION-5245-20261012",
-    "customer_service_calendars_product_commit": "222660db233f81028126d6b9a0129b6ead84d27a"
+    "customer_service_calendars_product_commit": "222660db233f81028126d6b9a0129b6ead84d27a",
+    "reconciliation": {
+      "operation": "SCF-CANONICAL-FUNDING-HANDOVER-RECONCILIATION-S1-20261013",
+      "authored_at": "2026-10-13T14:08:30Z",
+      "source_commit": "f34bfea6ef3f3e3b9d7842a69059fe1da1ec18a2",
+      "canonical_manuscript": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",
+      "canonical_front": {
+        "bytes": 58240,
+        "sha256": "bfe916f1a64102b1f5bac2f28f6802a9c94ff29c26e1d181ac73603d4e34e65d",
+        "git_blob": "c86df94d9b4beec1c6809060089b0356323c4fa1"
+      },
+      "original_application": {
+        "bytes": 53345,
+        "sha256": "39f337bb16c8a9bda3a87036d46ffcbdf687a9feb7ed48bad01d50c212ad558c",
+        "git_blob": "73814fbcf738c4026d9f33228bca6c82d6fbcbd5"
+      },
+      "original_source_index": {
+        "bytes": 1643005,
+        "sha256": "6758a28cab0e7878a43ed030da87b8c80d793e946c112658102cbbd11f0b363b",
+        "git_blob": "9bd0e04495e6796da8c614644d22394759bca7b7"
+      },
+      "sections": [
+        {
+          "answer": "Three funded tranches and six priced deliverables",
+          "heading": "Existing components and funded deployment changes",
+          "bytes": 4514,
+          "sha256": "6e187c12569cbeaf80e5b8ddeb3f88b24b420cd81f764180fbbe0284ef5a9de9",
+          "git_blob": "5d862856274e826838af3ec99c86dbc45c51def0"
+        },
+        {
+          "answer": "Threat response and outcome measurement",
+          "heading": "Installed responsibility and response",
+          "bytes": 2222,
+          "sha256": "4c6d62f43bf33227436bb127f3fb294db4b906393bdb79c99ff89412b27bec4b",
+          "git_blob": "21a63154a1ffef7f99f689c503ca500900b5d19d"
+        },
+        {
+          "answer": "Delivery capacity, payment timing and sustainability",
+          "heading": "Maintainable release and support handover",
+          "bytes": 2714,
+          "sha256": "40b8eec62220dc6dd4c7543b2789b0ab7376b0d04b4537c1f7a942bd970fba2a",
+          "git_blob": "aacc7b38c9b941094524bb8ca06b21f5ff9ab938"
+        }
+      ],
+      "basis": "Current canonical nine answers with the three complete maintained funded-component, installed-responsibility and release/support sections; original competition and Charge/Channel distinctions retained.",
+      "field_limits": "Apply the actual invited issuer fields and limits when received.",
+      "complete_finance_companion": "Retained byte-for-byte from the selected current edition.",
+      "funding": {
+        "amount_usd": 38000,
+        "hours": 400,
+        "days": 150,
+        "packages": 6
+      },
+      "concurrent_source": "Preserves all1259source records and the current complete municipal service chapter, including all four added source identities and six advanced source editions."
+    }
   },
   "submission_workspace": {
     "schema": "stellar-forge.grant-submission-workspace.v1",
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application.md",
     "source_index_route": "/grant-data/source-index.json",
-    "application_sha256": "39f337bb16c8a9bda3a87036d46ffcbdf687a9feb7ed48bad01d50c212ad558c",
-    "application_git_blob": "73814fbcf738c4026d9f33228bca6c82d6fbcbd5",
+    "application_sha256": "adbcd076075023d677942f95388f2b77a1ef5cae091767d1b580cd6a2e9c5568",
+    "application_git_blob": "cbc04d49ca6e64cb4525a399e1449311cf43a9e2",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
+    "working_copy": {
+      "schema": "stellar-forge.grant-submission-working-copy.v1",
+      "export_schema": "stellar-forge.grant-submission-working-export.v1",
+      "route": "/grant-submission.html",
+      "query": "working",
+      "guide": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/GRANT_SUBMISSION_WORKING.md"
+    },
     "form_map_schema": "stellar-forge.grant-form-map.v1",
     "operation": "SCF-SUBMISSION-WORKSPACE-22B705-20261012",
     "form_workbook": {
@@ -28561,8 +28622,8 @@
     "schema": "stellar-forge.grant-review-round-integration.v1",
     "route": "/grant-review-round.html",
     "submission_route": "/grant-submission.html",
-    "application_sha256": "39f337bb16c8a9bda3a87036d46ffcbdf687a9feb7ed48bad01d50c212ad558c",
-    "application_git_blob": "73814fbcf738c4026d9f33228bca6c82d6fbcbd5",
+    "application_sha256": "adbcd076075023d677942f95388f2b77a1ef5cae091767d1b580cd6a2e9c5568",
+    "application_git_blob": "cbc04d49ca6e64cb4525a399e1449311cf43a9e2",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "draft_export_schema": "stellar-forge.grant-submission-export.v1",
     "review_schema": "stellar-forge.grant-review-round.v1",
