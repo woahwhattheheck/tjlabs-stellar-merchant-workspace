@@ -158,7 +158,12 @@ function summary(state) {
       reviews: state.dcat.reviews.map(({ id, sourceId, comparisonId, candidateId, status, reportSha256, candidateSha256, reviewSha256 }) =>
         ({ id, sourceId, comparisonId, candidateId, status, reportSha256, candidateSha256, reviewSha256 })),
       releases: state.dcat.releases.map(({ id, reviewId, previousReleaseId, restoredFromReleaseId, sha256, reviewSha256 }) =>
-        ({ id, reviewId, previousReleaseId, restoredFromReleaseId, sha256, reviewSha256 })) } } : {}),
+        ({ id, reviewId, previousReleaseId, restoredFromReleaseId, sha256, reviewSha256 })),
+      sources: (state.dcat.sources ?? []).map(({ id, sourceSha256, enabled, latestCatalogId, latestAcquisitionId, nextCheckAt, retryNotBefore, versions }) =>
+        ({ id, sourceSha256, enabled, latestCatalogId, latestAcquisitionId, nextCheckAt, retryNotBefore,
+          versions: versions.map(({ sourceSha256 }) => sourceSha256) })),
+      acquisitions: (state.dcat.acquisitions ?? []).map(({ id, sourceId, sourceSha256, status, catalogId, receiptSha256, responseSha256 }) =>
+        ({ id, sourceId, sourceSha256, status, catalogId, receiptSha256, responseSha256 })) } } : {}),
     editions: state.editions.map(item => ({ id: item.id, state: item.state, manifestSha256: item.manifestSha256 ?? null })),
     sources: state.sources.map(item => ({ id: item.id, editionId: item.editionId, sha256: item.sha256, semanticReview: item.semanticReview ?? null })),
     publications: state.publications.map(item => ({ id: item.id, sourceId: item.sourceId, planId: item.planId,

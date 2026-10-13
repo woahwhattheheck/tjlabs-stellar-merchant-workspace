@@ -12,7 +12,7 @@
     "ckan": "Capture complete sources, review editions and refresh decisions, publish and receive CKAN workspaces",
     "ckan-publisher": "Review and publish complete DataStore editions and buyer handoffs",
     "ckan-agent": "Operate one saved CKAN project through its browser and authenticated merchant tools",
-    "dcat": "Preserve original DCAT catalogs, review complete migrations and corrections, select releases, roll back and receive whole workspaces"
+    "dcat": "Acquire recurring original DCAT editions, review publisher changes and corrections, select releases, roll back and receive whole workspaces"
   },
   "exports": {
     "./seller/ckan": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/source.mjs",
@@ -28,7 +28,8 @@
     "./seller/ckan/workspace/archive": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/archive.mjs",
     "./seller/ckan/workspace/refresh": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/reviewed-refresh.mjs",
     "./seller/ckan/refresh": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/refresh.mjs",
-    "./seller/dcat/workspace": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-workspace.mjs"
+    "./seller/dcat/workspace": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-workspace.mjs",
+    "./seller/dcat/acquisition": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-acquisition.mjs"
   },
   "applicationProviders": {
     "ckan": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/application-provider.mjs"
@@ -36,6 +37,7 @@
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/vendor/gsa-dcat-us/jsonschema/poetry.lock",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/portable-runtime-requirements.txt",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/PORTABLE_RUNTIME.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/PORTABLE_RUNTIME.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/RECURRING_CATALOGS.md"
   ]
 }

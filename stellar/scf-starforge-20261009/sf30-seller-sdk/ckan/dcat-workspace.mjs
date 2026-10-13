@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { parseCkanJson } from './capture.mjs';
 import { spawn } from 'node:child_process';
+import { createDcatAcquisition, validateDcatAcquisitions, validateDcatAcquisitionFiles } from './dcat-acquisition.mjs';
 import { object, bytes, digest, readPrivate, createFile, privateDirectory, fault, stamp }
   from '../postgres/publisher/files.mjs';
 
@@ -38,7 +39,7 @@ function collectionItem(items, value) {
   return item;
 }
 function emptyState() {
-  return { schema: DCAT_WORKSPACE_SCHEMA, catalogs: [], reviews: [], releases: [], activeReleaseId: null };
+  return { schema: DCAT_WORKSPACE_SCHEMA, catalogs: [], reviews: [], releases: [], sources: [], acquisitions: [], activeReleaseId: null };
 }
 export function validateDcatState(value) {
   if (value === undefined) return;
@@ -82,6 +83,7 @@ export function validateDcatState(value) {
     seen.add(release.id);
   }
   need(value.activeReleaseId === null || seen.has(value.activeReleaseId), 'DCAT_PROJECT_INVALID');
+  validateDcatAcquisitions(value);
 }
 async function externalCatalog(file) {
   need(typeof file === 'string' && file.startsWith('/'), 'DCAT_FILE_REQUIRED', 'Choose an absolute catalog file path.');
@@ -225,6 +227,7 @@ function validateReportBinding(report, selected, catalogs) {
 export async function validateDcatWorkspaceFiles(directory, state) {
   validateDcatState(state);
   if (!state) return;
+  await validateDcatAcquisitionFiles(directory, state);
   for (const item of state.catalogs)
     await retained(directory, 'catalogs/' + item.id + '/catalog.json', item.sha256, item.bytes, DCAT_MAX_CATALOG_BYTES);
   for (const item of state.reviews) {
@@ -282,7 +285,69 @@ export function createDcatWorkspace({ directory, state, launch, persist, environ
     current.releases.push(saved); current.activeReleaseId = saved.id;
     await persist(); return structuredClone(saved);
   }
+  async function saveCatalog(raw,metadata) {
+    need(Buffer.isBuffer(raw)&&raw.length>=2&&raw.length<=DCAT_MAX_CATALOG_BYTES,'DCAT_CATALOG_SIZE');
+    const selected={id:randomUUID(),...metadata,receivedAt:stamp(),sha256:digest(raw),bytes:raw.length};
+    const root=join(directory,'dcat','catalogs',selected.id);
+    await privateDirectory(root,true);await createFile(join(root,'catalog.json'),raw);
+    current.catalogs.push(selected);await persist();return selected;
+  }
+  async function engineInput(input) {
+    const source=item('catalogs',input.sourceId),raw=await catalogBytes(source);
+    const value={source_base64:raw.toString('base64'),source_profile:source.profile,
+      normalize_v3:input.normalizeV3??false,identity_mappings:input.identityMappings??[]};
+    if(input.comparisonId) {
+      const comparison=item('catalogs',input.comparisonId);
+      value.comparison_base64=(await catalogBytes(comparison)).toString('base64');value.comparison_profile=comparison.profile;
+    }
+    if(input.candidateId)value.candidate_base64=(await catalogBytes(item('catalogs',input.candidateId))).toString('base64');
+    return value;
+  }
+  async function runFresh(input,signal,progress) {
+    const runtime=dcatRuntimeSelection(executionEnvironment);
+    const {result}=await runEngine(await engineInput(input),executionEnvironment,signal,progress);
+    return validateReportBinding(result,{sourceId:input.sourceId,comparisonId:null,candidateId:input.candidateId??null,
+      normalizeV3:input.normalizeV3??false,runtimeProfile:runtime.runtimeProfile},current.catalogs);
+  }
+  async function performReview(input,value,binding,signal,progress,prepare=null) {
+    const runtime=dcatRuntimeSelection(executionEnvironment),source=item('catalogs',input.sourceId);
+    const selected={id:value,sourceId:source.id,comparisonId:input.comparisonId??null,candidateId:input.candidateId??null,
+      label:text(input.label??source.label+' review','a review label'),normalizeV3:input.normalizeV3??false,
+      runtimeProfile:runtime.runtimeProfile,status:'PREPARING',createdAt:stamp(),summary:null,...binding};
+    current.reviews.push(selected);await persist();
+    try {
+      if(prepare)input=await prepare();
+      need(input.identityMappings===undefined||Array.isArray(input.identityMappings),'DCAT_MAPPINGS_INVALID');
+      need(input.normalizeV3===undefined||typeof input.normalizeV3==='boolean','DCAT_NORMALIZATION_INVALID');
+      if(input.comparisonId)item('catalogs',input.comparisonId);
+      if(input.candidateId)item('catalogs',input.candidateId);
+      Object.assign(selected,{comparisonId:input.comparisonId??null,candidateId:input.candidateId??null});
+      await persist();
+      const completed=await runEngine(await engineInput(input),executionEnvironment,signal,progress);
+      const result=validateReportBinding(completed.result,selected,current.catalogs);
+      need(result.source?.sha256===source.sha256&&HASH.test(result.review_sha256??'')&&
+        (typeof result.candidate_base64==='string'||result.candidate_base64===null&&result.candidate===null&&!result.can_receive),
+        'DCAT_ENGINE_BINDING_CHANGED');
+      const candidateRaw=result.candidate_base64===null?null:Buffer.from(result.candidate_base64,'base64');
+      if(candidateRaw)need(candidateRaw.length>=2&&candidateRaw.length<=DCAT_MAX_CATALOG_BYTES&&
+        digest(candidateRaw)===result.candidate?.sha256&&result.candidate?.bytes===candidateRaw.length,'DCAT_ENGINE_BINDING_CHANGED');
+      const reportRaw=completed.raw,root=join(directory,'dcat','reviews',value);
+      await privateDirectory(root,true);
+      if(candidateRaw)await createFile(join(root,'candidate.json'),candidateRaw);
+      await createFile(join(root,'report.json'),reportRaw);
+      Object.assign(selected,{status:isReceivable(result)?'READY':'NEEDS_CORRECTION',completedAt:stamp(),
+        reportSha256:digest(reportRaw),reportBytes:reportRaw.length,reviewSha256:result.review_sha256,
+        candidateSha256:candidateRaw?digest(candidateRaw):null,candidateBytes:candidateRaw?.length??null,summary:reportSummary(result)});
+      await persist();return structuredClone(selected);
+    } catch(error) {
+      selected.status=signal.aborted?'INTERRUPTED':'FAILED';
+      selected.error={code:error.code??'DCAT_REVIEW_FAILED',message:error.message};
+      selected.completedAt=stamp();await persist();throw error;
+    }
+  }
   return {
+    ...createDcatAcquisition({ directory, current, launch, persist, environment: executionEnvironment,
+      catalogBytes, saveCatalog, review, runReview: performReview, runFresh, download }),
     dcatRuntime: () => dcatRuntimeSelection(executionEnvironment),
     importDcatCatalog(input) {
       const expectedSha256 = input.expectedSha256 ?? null;
@@ -300,48 +365,14 @@ export function createDcatWorkspace({ directory, state, launch, persist, environ
       }), catalogId: value };
     },
     prepareDcatReview(input) {
-      const runtime = dcatRuntimeSelection(executionEnvironment);
-      const source = item('catalogs', input.sourceId);
-      const comparison = input.comparisonId ? item('catalogs', input.comparisonId) : null;
-      const candidate = input.candidateId ? item('catalogs', input.candidateId) : null;
-      need(input.identityMappings === undefined || Array.isArray(input.identityMappings), 'DCAT_MAPPINGS_INVALID');
-      need(input.normalizeV3 === undefined || typeof input.normalizeV3 === 'boolean', 'DCAT_NORMALIZATION_INVALID');
-      const value = randomUUID(), selected = { id: value, sourceId: source.id, comparisonId: comparison?.id ?? null,
-        candidateId: candidate?.id ?? null, label: text(input.label ?? source.label + ' review', 'a review label'),
-        normalizeV3: input.normalizeV3 ?? false, runtimeProfile: runtime.runtimeProfile,
-        status: 'PREPARING', createdAt: stamp(), summary: null };
-      return { ...launch('review DCAT migration', async (signal, progress) => {
-        current.reviews.push(selected); await persist();
-        try {
-          const raw = await catalogBytes(source), inputBytes = {
-            source_base64: raw.toString('base64'), source_profile: source.profile,
-            normalize_v3: input.normalizeV3 ?? false, identity_mappings: input.identityMappings ?? [],
-          };
-          if (comparison) Object.assign(inputBytes, { comparison_base64: (await catalogBytes(comparison)).toString('base64'),
-            comparison_profile: comparison.profile });
-          if (candidate) inputBytes.candidate_base64 = (await catalogBytes(candidate)).toString('base64');
-          const completed = await runEngine(inputBytes, executionEnvironment, signal, progress);
-          const result = validateReportBinding(completed.result, selected, current.catalogs);
-          need(result.source?.sha256 === source.sha256 && HASH.test(result.review_sha256 ?? '') &&
-            (typeof result.candidate_base64 === 'string' || result.candidate_base64 === null && result.candidate === null && !result.can_receive),
-            'DCAT_ENGINE_BINDING_CHANGED');
-          const candidateRaw = result.candidate_base64 === null ? null : Buffer.from(result.candidate_base64, 'base64');
-          if (candidateRaw) need(candidateRaw.length >= 2 && candidateRaw.length <= DCAT_MAX_CATALOG_BYTES &&
-            digest(candidateRaw) === result.candidate?.sha256 && result.candidate?.bytes === candidateRaw.length, 'DCAT_ENGINE_BINDING_CHANGED');
-          const reportRaw = completed.raw, root = join(directory, 'dcat', 'reviews', value);
-          await privateDirectory(root, true);
-          if (candidateRaw) await createFile(join(root, 'candidate.json'), candidateRaw);
-          await createFile(join(root, 'report.json'), reportRaw);
-          Object.assign(selected, { status: isReceivable(result) ? 'READY' : 'NEEDS_CORRECTION', completedAt: stamp(),
-            reportSha256: digest(reportRaw), reportBytes: reportRaw.length, reviewSha256: result.review_sha256,
-            candidateSha256: candidateRaw ? digest(candidateRaw) : null, candidateBytes: candidateRaw?.length ?? null, summary: reportSummary(result) });
-          await persist(); return structuredClone(selected);
-        } catch (error) {
-          selected.status = signal.aborted ? 'INTERRUPTED' : 'FAILED';
-          selected.error = { code: error.code ?? 'DCAT_REVIEW_FAILED', message: error.message };
-          selected.completedAt = stamp(); await persist(); throw error;
-        }
-      }), reviewId: value };
+      item('catalogs',input.sourceId);
+      if(input.comparisonId)item('catalogs',input.comparisonId);
+      if(input.candidateId)item('catalogs',input.candidateId);
+      need(input.identityMappings===undefined||Array.isArray(input.identityMappings),'DCAT_MAPPINGS_INVALID');
+      need(input.normalizeV3===undefined||typeof input.normalizeV3==='boolean','DCAT_NORMALIZATION_INVALID');
+      const value=randomUUID();
+      return {...launch('review DCAT migration',(signal,progress)=>
+        performReview(input,value,{},signal,progress)),reviewId:value};
     },
     dcatReview: review,
     async dcatCatalogDownload(value) {
