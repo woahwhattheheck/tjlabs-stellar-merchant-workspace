@@ -53,6 +53,10 @@ def post(handler, workspace, url, parts, body):
                                    offset=body.get("offset", 0), limit=body.get("limit", 25))
     elif len(parts) == 5 and parts[2] == "inputs":
         result = api.chunk(parts[3], parts[4], body)
+    elif len(parts) == 5 and parts[2] == "named" and parts[4] == "mapping-comparison":
+        if not isinstance(body, dict) or set(body) != {"input_id", "mapping"}:
+            raise StateError("EVENT_PROGRAMME_MAPPING_COMPARISON_REQUIRED")
+        result = api.compare_mapping(parts[3], body["input_id"], body["mapping"])
     elif len(parts) == 5 and parts[2] == "named" and parts[4] == "actions":
         result = api.start(parts[3], body)
     else:

@@ -167,6 +167,167 @@ async function openRecovery(path){
  const chooser=await waiting;await chooser.setFiles(path);
  await page.locator('.statement-desk [name="accountId"]').waitFor({state:'visible'});
 }
+async function receiveRecipientArchiveInEmptyBrowser(receiving,archive,selectedEdition,returnedDownload,originalInputs){
+ const originalPage=page,cold=await receiving.browser().newContext({viewport:{width:1360,height:1000},acceptDownloads:true});
+ const errors=[];
+ try{
+  await cold.route('**/*',async route=>{
+   const request=route.request(),url=new URL(request.url());
+   if(['http:','https:'].includes(url.protocol)&&(url.origin!==origin||request.method()==='POST'&&url.pathname.endsWith('/command'))){await route.abort();return;}
+   await route.continue();
+  });
+  page=await cold.newPage();page.on('pageerror',error=>errors.push(String(error).replaceAll(token||'\0','[workspace key]')));
+  await openOperations(origin+'/#access='+token,state.caseId);await openStatements();
+  const desk=page.locator('.statement-desk'),original=JSON.parse(archive.raw);
+  await desk.locator('.statement-copies .statement-empty').waitFor();
+  const chooser=page.waitForEvent('filechooser');await desk.locator('[data-statement-action="copies-import"]').click();
+  await(await chooser).setFiles(archive.path);
+  await desk.locator('.statement-notice').filter({hasText:'Received '+original.editions.length+' complete saved editions'}).waitFor();
+  await desk.locator('[name="copyQuery"]').fill(selectedEdition.name);
+  await desk.locator('[data-statement-action="copies-filter"]').click();
+  await desk.locator('[data-statement-action="copies-select"][data-copy-id="'+selectedEdition.id+'"]').click();
+  await desk.locator('[name="copyEdition"]').fill(String(selectedEdition.revision));
+  await desk.locator('[data-statement-action="copies-review"]').click();
+  await desk.locator('.statement-copy-comparison').waitFor();
+  await desk.locator('[data-statement-action="copies-open"]').click();
+  await desk.locator('.statement-notice').filter({hasText:'Opened '+selectedEdition.name}).waitFor();
+  const restored=await download('draft-export','recipient-cold-complete-recovery.json'),draft=JSON.parse(restored.raw),returned=JSON.parse(returnedDownload.raw);
+  need(draft.inputs.source.contentBase64===originalInputs.source.contentBase64&&draft.recipientHistory.some(value=>value.packetId===returned.packetId),'The empty browser receives full original bank bytes and attributed application history.');
+  const returnChooser=page.waitForEvent('filechooser');await desk.locator('[data-statement-action="recipient-import"]').click();
+  await(await returnChooser).setFiles(returnedDownload.path);
+  await desk.locator('.statement-notice').filter({hasText:'Received the complete attributed recommendations'}).waitFor();
+  await desk.locator('[data-statement-action="recipient-compare"]').click();
+  await desk.locator('[data-recipient-choice="2:category"]').waitFor();
+  need((await desk.locator('.statement-recipient').textContent()).includes('Already current'),'Resolve the return through the locally restored trusted edition and retain applied recommendations.');
+  await capture('00-recipient-cold-trusted-edition-desktop');
+  await page.setViewportSize({width:390,height:844});await capture('00-recipient-cold-trusted-edition-phone');
+  const report=await preview('recipient-cold-original-native-preview');
+  need(report.canImport&&report.summary.newCount===3,'The cold received reviewer work re-previews the same original movements.');
+  const returnCopy=await download('recipient-download-return','recipient-cold-original-return.json');
+  need(canonical(JSON.parse(returnCopy.raw))===canonical(returned),'Cold receiving retains the complete attributed original return.');
+  const reopened=await download('copies-export','recipient-cold-complete-copy-archive.json'),received=JSON.parse(reopened.raw);
+  for(const edition of original.editions){
+   const retained=received.editions.find(value=>value.id===edition.id&&value.revision===edition.revision);
+   need(retained&&canonical(retained)===canonical(edition),'Cold receiving preserves every complete immutable original review edition.');
+  }
+  need(errors.length===0,'The cold recipient browser reported: '+errors.join('; '));
+  await stage('original-statement-recipient-archive-cold-received',{caseId:state.caseId,packetId:returned.packetId,
+   originalEditions:original.editions.length,receivedEditions:received.editions.length,archiveSha256:sha(archive.raw),
+   receivedArchiveSha256:sha(reopened.raw),nativePreviewSha256:report.previewSha256});
+ }finally{page=originalPage;await cold.close();}
+}
+
+async function recipientReviewBrowser(receiving,originalInputs){
+ const desk=page.locator('.statement-desk'),act=name=>desk.locator('[data-statement-action="recipient-'+name+'"]');
+ need(await desk.locator('.statement-recipient').count(),'Compose the maintained recipient review desk before its original receiving.');
+ const original=await download('draft-export','recipient-original-complete-before-review.json');
+ const originalDraft=JSON.parse(original.raw),base=structuredClone(originalDraft);
+ base.inputs.decisions=[];base.allocationWorks={};base.allocationRow=null;base.preview=null;base.dirty=true;
+ base.recipientPackets=[];base.recipientReturn=null;base.recipientHistory=[];
+ const basePath=join(work,'recipient-original-source-review-base.json');await atomic(basePath,base);
+ await openRecovery(basePath);
+ const originalPreview=await preview('recipient-original-source-native-preview');
+ need(originalPreview.rows.length===3&&originalPreview.summary.newCount===3,'Review the three original CSV rows in this original case.');
+ const [reviewModel,copyModel,modelCourse]=await Promise.all([
+  import(pathToFileURL(join(grant,'operations_statement_review.mjs')).href),
+  import(pathToFileURL(join(grant,'operations_statement_copies.mjs')).href),
+  import(pathToFileURL(join(dirname(resolve(process.argv[1])),'statement-recipient-model-course.mjs')).href)
+ ]);
+ const modelResult=modelCourse.exerciseStatementRecipientReview({
+  review:reviewModel,copies:copyModel,source:base.inputs.source,caseId:state.caseId,invoiceId:state.invoiceId,
+  current:await api('/api/operations/'+state.caseId),preview:originalPreview,at:new Date().toISOString()
+ });
+ await atomic(join(work,'recipient-complete-model-course.json'),modelResult);
+ await desk.locator('[name="review-recipient-name"]').fill('Original programme finance reviewer');
+ await desk.locator('[name="review-recipient-role"]').fill('Finance');
+ const html=await download('recipient-export','original-statement-recipient-review.html');
+ const operatorPage=page,offline=await receiving.newPage();let returnedDownload,sourceDownload,packetDownload;
+ const errors=[];offline.on('pageerror',error=>errors.push(String(error)));
+ try{
+  page=offline;await page.goto(pathToFileURL(html.path).href,{waitUntil:'domcontentloaded'});
+  await page.locator('[data-review-row="2"]').waitFor({state:'visible'});
+  const get=async(selector,filename)=>{
+   const waiting=page.waitForEvent('download',{timeout:60000});waiting.catch(()=>{});
+   await page.locator(selector).click();const result=await waiting,path=join(work,filename);
+   await result.saveAs(path);await chmod(path,0o600);return {path,raw:await readFile(path)};
+  };
+  await page.locator('#reviewer-note').fill('Reviewed the unchanged original bank rows and the retained supplier invoice.');
+  await capture('00-recipient-original-desktop');
+  sourceDownload=await get('#download-original','recipient-downloaded-original-october.csv');
+  need(sourceDownload.raw.equals(await readFile(join(config.originalsDirectory,'operating-october.csv'))),'The reviewer receives every unchanged original bank byte.');
+  packetDownload=await get('#download-packet','recipient-complete-issued-source.json');
+  const packet=JSON.parse(packetDownload.raw);
+  need(packet.caseId===state.caseId&&packet.edition.draft.inputs.source.contentBase64===originalInputs.source.contentBase64,'The offline reviewer keeps the original case/source.');
+  const row=n=>page.locator('[data-review-row="'+n+'"]');
+  await row(2).locator('[data-review-field="category"]').selectOption('GRANT');
+  await row(2).locator('[data-review-field="tranche"]').selectOption('1');
+  await row(2).locator('[data-review-field="reason"]').fill('Reviewed the original grant receipt for tranche 1.');
+  await row(3).locator('[data-review-field="category"]').selectOption('INVOICE');
+  await row(3).locator('details').first().locator('summary').click();
+  await row(3).locator('[data-review-add]').click();
+  await row(3).locator('[data-review-invoice]').selectOption(state.invoiceId);
+  await row(3).locator('[data-review-amount]').fill('0.00');
+  await page.locator('#export-return').click();
+  await page.locator('#review-status[role="alert"]').waitFor({state:'visible'});
+  await capture('00-recipient-allocation-error-desktop');
+  await row(3).locator('[data-review-amount]').fill('250.00');
+  await row(3).locator('[data-review-field="reason"]').fill('Allocate the original 250 USD movement to its retained supplier invoice.');
+  await row(4).locator('[data-review-field="action"]').selectOption('EXCLUDE');
+  await row(4).locator('[data-review-field="reason"]').fill('Temporary recipient selection under review.');
+  await page.setViewportSize({width:390,height:844});await capture('00-recipient-exclusion-phone');
+  await row(4).locator('[data-review-field="action"]').selectOption('IMPORT');
+  await row(4).locator('[data-review-field="category"]').selectOption('CUSTOMER');
+  await row(4).locator('[data-review-field="reason"]').fill('Reviewed the original customer receipt.');
+  await page.locator('#review-query').fill('no-original-statement-row');await page.locator('#review-find').click();
+  await page.locator('#review-rows .empty').waitFor();await capture('00-recipient-empty-search-phone');
+  await page.locator('#review-query').fill('');await page.locator('#review-find').click();
+  await capture('00-recipient-complete-review-phone');
+  returnedDownload=await get('#export-return','recipient-complete-attributed-return.json');
+  const returned=JSON.parse(returnedDownload.raw);
+  need(returned.recommendations.length===3&&returned.recommendations.find(v=>v.rowNumber===3).allocations[0].invoiceId===state.invoiceId,'The attributed return retains every original row and actual invoice.');
+  const chooser=page.waitForEvent('filechooser');await page.locator('#open-return').click();await(await chooser).setFiles(returnedDownload.path);
+  await page.locator('#review-status').filter({hasText:'Opened the complete returned review'}).waitFor();
+  need(await row(3).locator('[data-review-amount]').inputValue()==='250.00','The recipient reopens the complete original allocation.');
+  await page.setViewportSize({width:1360,height:1000});await capture('00-recipient-reopened-return-desktop');
+  need(errors.length===0,'The offline reviewer reported: '+errors.join('; '));
+ }finally{page=operatorPage;await offline.close();}
+ await desk.locator('[data-row-category="2"]').selectOption('CAPITAL');
+ const chooser=page.waitForEvent('filechooser');await act('import').click();await(await chooser).setFiles(returnedDownload.path);
+ await act('compare').waitFor({state:'visible'});await act('compare').click();
+ await desk.locator('[data-recipient-choice="2:category"]').waitFor({state:'visible'});
+ need((await desk.locator('.statement-recipient').textContent()).includes('Concurrent change'),'Show the actual current CAPITAL / returned GRANT conflict.');
+ await page.setViewportSize({width:1360,height:1000});await capture('00-recipient-three-version-comparison-desktop');
+ await page.setViewportSize({width:390,height:844});await capture('00-recipient-three-version-comparison-phone');
+ const selection=desk.locator('[data-recipient-choice]');
+ for(let i=0;i<await selection.count();i++)await selection.nth(i).selectOption('RETURNED');
+ await act('apply').click();
+ const received=await download('draft-export','recipient-applied-complete-recovery.json'),receivedValue=JSON.parse(received.raw);
+ const decisions=new Map(receivedValue.inputs.decisions.map(value=>[value.rowNumber,value]));
+ need(decisions.get(2).category==='GRANT'&&decisions.get(2).tranche===1&&decisions.get(4).category==='CUSTOMER','Apply the selected original receipt classifications.');
+ need(decisions.get(3).allocations.length===1&&decisions.get(3).allocations[0].invoiceId===state.invoiceId&&decisions.get(3).allocations[0].amountUsd==='250.00','Apply the selected original supplier allocation.');
+ need(receivedValue.inputs.source.contentBase64===originalInputs.source.contentBase64&&receivedValue.dirty===true,'Preserve source and require actual native re-preview.');
+ const reviewed=await preview('recipient-applied-native-preview');
+ need(reviewed.canImport&&reviewed.summary.newCount===3&&reviewed.balance.status==='MATCH','Native-repreview all three original movements after selected reviewer recommendations.');
+ await capture('00-recipient-applied-native-preview-phone');
+ await desk.locator('[name="copyName"]').fill('Original October · received finance review');
+ await desk.locator('[name="copyNote"]').fill('Complete original reviewer source, attributed return and selected native-repreviewed recommendations.');
+ await desk.locator('[data-statement-action="copies-new"]').click();
+ await desk.locator('.statement-notice').filter({hasText:'Saved Original October'}).waitFor();
+ const archive=await download('copies-export','recipient-complete-copy-archive.json');
+ const retained=JSON.parse(archive.raw).editions.find(v=>v.draft.recipientHistory?.some(r=>r.packetId===JSON.parse(returnedDownload.raw).packetId));
+ need(retained&&retained.draft.recipientPackets?.length,'The complete saved-copy archive retains issued source, attributed return and application history.');
+ const completeArchive=JSON.parse(archive.raw),selected=completeArchive.editions.filter(value=>value.name==='Original October · received finance review').sort((a,b)=>b.revision-a.revision)[0];
+ need(selected,'Select the complete saved edition prepared for independent finance receiving.');
+ await receiveRecipientArchiveInEmptyBrowser(receiving,archive,selected,returnedDownload,originalInputs);
+ await openRecovery(original.path);await preview('recipient-restored-original-inputs-preview');
+ const restored=await download('draft-export','recipient-restored-original-complete.json');
+ need(canonical(JSON.parse(restored.raw).inputs)===canonical(originalInputs),'The original main receiving inputs remain unchanged after the independent recipient course.');
+ await stage('original-statement-recipient-review-operated',{caseId:state.caseId,invoiceId:state.invoiceId,
+  issuedHtmlSha256:sha(html.raw),originalDownloadSha256:sha(sourceDownload.raw),issuedPacketSha256:sha(packetDownload.raw),
+  returnedSha256:sha(returnedDownload.raw),appliedRecoverySha256:sha(received.raw),completeArchiveSha256:sha(archive.raw),
+  nativePreviewSha256:reviewed.previewSha256});
+}
+
 async function receiveStatementCopiesInFreshBrowser(archive,csvEdition,originalInputs){
  const browser=context.browser();need(browser,'Use the existing browser to open an independent private receiving context.');
  const originalPage=page;
@@ -197,6 +358,7 @@ async function receiveStatementCopiesInFreshBrowser(archive,csvEdition,originalI
   const reviewed=await preview('csv-independent-working-copy-native-preview');
   need(reviewed.canImport&&reviewed.summary.newCount===3,'The original case accepts the independently reopened working copy for its original reviewed receiving.');
   await capture('00-copies-independent-native-preview-phone');
+  await recipientReviewBrowser(receiving,originalInputs);
   const full=await download('copies-export','statement-working-copies-independent-complete.json'),fullValue=JSON.parse(full.raw);
   const original=JSON.parse(archive.raw);
   for(const edition of original.editions){
@@ -469,7 +631,8 @@ try{
  const identities={};
  for(const file of ['cli.py','server.py','operations.py','operations_statements.py','operations_statement_formats.py',
   'operations_cash_accounts.py','operations_account_reconciliation.py','operations_statements.mjs',
-  'operations_cash_accounts.mjs','operations_account_reconciliation.mjs','operations.mjs']){
+  'operations_cash_accounts.mjs','operations_account_reconciliation.mjs','operations.mjs',
+  'operations_statement_review.mjs','operations_statement_copies.mjs','operations_statement_allocations.mjs']){
   const raw=await readFile(join(grant,file));identities[file]={bytes:raw.length,sha256:sha(raw)};
  }
  for(const file of ['operations_navigation.mjs','operations_navigation_ui.mjs']){

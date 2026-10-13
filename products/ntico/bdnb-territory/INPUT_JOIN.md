@@ -44,6 +44,14 @@ The complete original workbook representation is in each edition's `dictionary-m
 
 The bundled default dictionary describes v0.7.11. Its label cannot establish v0.7.10 semantics. The source owner derives the predecessor mapping from its actual original workbook; the join then runs the original dictionary validator against that edition's structure, fields and keys. The exact index, inventory and profile identities must also match their original complete acquisition saving/retention receipts. Whole XLSX identity, matching full index, normalized file identity and mapping provenance are retained in the resulting source custody.
 
+### Produce the normalized dictionary from the original workbook
+
+Use [DICTIONARY_NORMALIZATION.md](DICTIONARY_NORMALIZATION.md) and the complete `normalize_dictionary.py` in this same checkout. Its `--inspect` action reads the actual saved workbook/index and sheet titles; its normal action consumes the observed worksheet layout, verifies current HTML/workbook coverage or independent historical properties, and publishes the five-table dictionary through the original API. Include the normalizer, its current official mapping JSON and all actual loaded dependencies in the selected source roster.
+
+Dictionary preparation can run immediately after acquisition banks each complete `dictionary-members.json`, before the large archive finishes. Select that edition's original `selection.json`, XLSX and full index with their actual hashes. For 2026 use all 46 fields from the explicitly pinned current HTML mapping; for 2025 derive the fields/types/nullability from its own workbook. Preserve the recorded removal of `lien_valide` and `classe` in the 2025 release.
+
+Copy the full `dictionary` object from `<edition>-dictionary-binding.json` into this join's matching edition entry; it already has exactly the five fields above. Carry the separately selected source CSV semantics unchanged. Keep both original `request_id` and `edition_id`, then run this join and the same complete receiving programme. The normalizer's create-only outputs retain earlier results; the full binding is published after its complete dictionary.
+
 ### Table semantics
 
 `table_semantics` maps each actual selected table name to exactly `{null_values, geometry_encoding, extra_fields, provenance}`.

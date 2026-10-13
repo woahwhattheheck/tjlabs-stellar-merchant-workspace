@@ -1,0 +1,35 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "economic-client",
+  "description": "Complete original economic client briefings, offline customer reviews, editorial receiving and project reopening",
+  "components": [
+    "products/economic-client"
+  ],
+  "commands": {
+    "economic-client": "products/economic-client/application/cli.mjs",
+    "economic-client-review-receive": "products/economic-client/application/receive-review.mjs"
+  },
+  "commandDescriptions": {
+    "economic-client": "Operate original economic sources, client editions and complete offline customer review receiving",
+    "economic-client-review-receive": "Continue a complete original customer review and independently reopen the resulting project"
+  },
+  "exports": {
+    "./products/economic-client": {
+      "types": "./source/products/economic-client/application/client.d.ts",
+      "import": "./source/products/economic-client/application/client.mjs"
+    },
+    "./products/economic-client/workspace": "./source/products/economic-client/application/workspace.mjs",
+    "./products/economic-client/review-model": "./source/products/economic-client/application/review-core.mjs",
+    "./products/economic-client/receiving": "./source/products/economic-client/application/receive-native.mjs",
+    "./products/economic-client/review-receiving": "./source/products/economic-client/application/receive-review.mjs"
+  },
+  "applicationProviders": {
+    "economic-client": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/economic-client.mjs"
+  },
+  "browserAssets": [
+    {
+      "server": "products/economic-client/application/server.mjs",
+      "manifest": "products/economic-client/application/browser-assets.json"
+    }
+  ]
+}

@@ -2,8 +2,8 @@
 
 The complete event product now carries a customer's original acquired window
 through useful application work and independent receiving. This guide connects
-that delivered foundation to the existing SCF application and the selected
-customer installation workorder.
+that delivered foundation to the existing SCF application, the original
+Mercury/Xycloo candidate and the selected future installation workorder.
 
 The complete reviewer chapter is [GRANT_CHAPTER.md](GRANT_CHAPTER.md).
 The customer implementation contract is [COMMISSIONING.md](COMMISSIONING.md).
@@ -22,10 +22,10 @@ window, output destination and completion acknowledgment. Agree when a later
 window is useful. An event count by itself is an acquired-data fact; the customer
 accepts the complete report, reconciled table or application update.
 
-The selected implementation connects one Stellar contract/event family to an
-existing customer database or internal API and provides source, deployment
-instructions and receiving-engineer handover. The commissioning workorder keeps
-the customer's actual commercial relationship and agreed terms.
+The original Mercury/Xycloo implementation proposal connects one selected Stellar
+contract/event family to an existing customer database or internal API and
+provides source, deployment instructions and receiving-engineer handover.
+The existing company relationship retains its original sender and terms.
 The selected installation workorder names the actual commissioning payer and
 accepting operator before prospective implementation begins.
 
@@ -273,9 +273,9 @@ Export and independently import the whole saved operating-case archive.
 Keep the complete Event preparation alongside that archive so every original
 source, report, workbook and native analytical workspace remains available.
 Continue the next useful source window through the same customer programme.
-The selected commercial fee, delivery window and start/acceptance milestones
-stay in the original Workshare; assigned effort and actual customer acceptance
-remain its native records.
+The original proposed Mercury USD 2,400 / five-business-day commercial scope
+and its start/acceptance milestones stay in the original Workshare; assigned
+effort and actual customer acceptance remain its native records.
 
 ## Operate and inspect the outgoing customer result
 

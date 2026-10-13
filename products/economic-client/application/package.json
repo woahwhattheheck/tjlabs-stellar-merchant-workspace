@@ -1,0 +1,23 @@
+{
+  "name": "economic-client-workspace",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "bin": {
+    "economic-client": "./cli.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./client.d.ts",
+      "import": "./client.mjs"
+    },
+    "./workspace": "./workspace.mjs",
+    "./source": "./econdata-client.mjs",
+    "./review-model": "./review-core.mjs",
+    "./review-receiving": "./receive-review.mjs"
+  },
+  "license": "MIT"
+}

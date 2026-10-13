@@ -1,0 +1,33 @@
+{
+  "operation_id": "economic-client-native-20261013",
+  "work_directory": "/absolute/private/economic-client-receiving",
+  "source_project": "/absolute/private/economic-client-source",
+  "customer_project": "/absolute/private/economic-client-customer",
+  "customer_oecd_project": "/absolute/private/customer-oecd-project",
+  "label": "Economic client briefing",
+  "title": "Comparative economic client briefing",
+  "audience": "Selected research client",
+  "countries": [
+    "CAN",
+    "DEU",
+    "FRA",
+    "GBR",
+    "ITA",
+    "JPN",
+    "USA"
+  ],
+  "start_period": "2024-01",
+  "end_period": null,
+  "config": {
+    "credentialEnv": "ECONDATA_CREDENTIALS",
+    "baseUrl": "https://www.econdata.co.za/sdmx-codera/v1",
+    "timeoutMs": 120000,
+    "maxResponseBytes": 67108864,
+    "oecd": {
+      "client_module": "/absolute/installed-oecd/source/stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/client.mjs",
+      "project_directory": "/absolute/private/original-oecd-project",
+      "python": "/absolute/existing/python3",
+      "create": true
+    }
+  }
+}

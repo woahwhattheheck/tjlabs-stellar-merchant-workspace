@@ -75,7 +75,18 @@ async function closeDocument(){
  state.generation++;if(state.render){state.render.cancel();await state.render.promise.catch(()=>{});state.render=null;}
  if(state.document){const original=state.document;state.document=null;await original.destroy();}
 }
+async function preserveBeforeOpen(){
+ if(!state.work)return;
+ if(state.pending)throw new Error('Recover the retained original Bank request before opening another review. The complete current working copy remains available to download.');
+ try{await save();return;}catch(error){
+  const captured=state.work,complete=checkTransferSize(captured);
+  if(!confirm('The current review could not be saved locally. Download its complete original PDF, mappings and history before opening another file? Cancel keeps this review open.'))throw error;
+  download('pdf-statement-'+captured.id+'-revision-'+captured.revision+'.json',complete);
+  if(!confirm('Save the complete working-copy download before continuing. Choose OK only after it is saved; Cancel keeps the current review open.'))throw error;
+ }
+}
 async function openWork(work){
+ await preserveBeforeOpen();
  const bytes=decodeBase64(work.file.dataBase64),opened=await documentFor(bytes);
  let pending;try{
  pending=(await database('pending','readonly',s=>s.get(work.id)))??null;
@@ -88,9 +99,10 @@ async function openWork(work){
  }catch(error){await opened.destroy();throw error;}
  await closeDocument();state.document=opened;
  state.work=work;state.page=1;state.accountId=work.accounts[0]?.id||'';state.selected.clear();state.selection=null;state.rowOffset=0;state.historyOffset=0;state.preview=null;
- state.pending=pending;state.saveConflict=null;$('save-conflict').hidden=true;render();await drawPage();
+ state.pending=pending;state.saveError=null;state.saveConflict=null;$('save-conflict').hidden=true;render();await drawPage();
 }
 async function openPdf(file){
+ await preserveBeforeOpen();
  if(file.size>config.fileBytes)throw new Error('Choose an original PDF no larger than '+config.fileBytes+' bytes.');
  const bytes=new Uint8Array(await file.arrayBuffer()),opened=await documentFor(bytes);let extraction,work;
  try{
