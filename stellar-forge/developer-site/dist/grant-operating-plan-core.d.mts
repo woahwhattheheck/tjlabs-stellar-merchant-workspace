@@ -4,6 +4,7 @@ export const GRANT_OPERATING_SELECTION_SCHEMA: 'stellar-forge.grant-operating-se
 export const GRANT_OPERATING_PREPARATION_SCHEMA: 'stellar-forge.grant-operating-preparation.v1';
 export const GRANT_OPERATING_CONTINUATION_SCHEMA: 'stellar-forge.grant-operating-continuation.v1';
 export const GRANT_OPERATING_RETURN_COMPARISON_SCHEMA: 'stellar-forge.grant-operating-return-comparison.v1';
+export const GRANT_OPERATING_RETURN_DRAFT_SCHEMA: 'stellar-forge.grant-operating-return-draft.v1';
 export interface NativeGrantPlanningSource {
   schema: 'stellar-forge.grant-plan-source.v1'; sha256: string; filename: string;
   receivedAt: string; bytes: number; base64: string; kind: 'json' | 'zip';
@@ -19,6 +20,7 @@ export interface GrantOperatingSelection {
   schema: typeof GRANT_OPERATING_SELECTION_SCHEMA; sourceSha256: string; revision: number;
   title: string; customer: string; purpose: string; owner: string; receiving: string; notes: string;
   bindings: Record<string, OperatingRegistration | null>; prepared: GrantOperatingPreparation[];
+  returnDraft?: GrantOperatingReturnDraft | null;
 }
 export interface GrantOperatingPreparation {
   schema: typeof GRANT_OPERATING_PREPARATION_SCHEMA;
@@ -51,6 +53,10 @@ export interface GrantOperatingReturnComparison {
   totals: GrantOperatingPreparation['totals']; preparedRevision: number; previousRevision: number;
   incomingRevision: number; selectedRevision: number; addedRevisions: number; reused: boolean;
   originalTitle: string; previousTitle: string; incomingTitle: string;
+  stepOrder: {
+    prepared: GrantOperatingStepPosition[]; previous: GrantOperatingStepPosition[]; returned: GrantOperatingStepPosition[];
+    changedFromPrepared: boolean; changedFromPrevious: boolean; addedIds: string[]; removedIds: string[];
+  };
   planChanges: Array<{ field: string; original: string; previous: string; returned: string }>;
   packages: GrantOperatingReturnedPackage[]; additionalSteps: OperatingStep[];
   counts: Record<OperatingStepState | 'missing', number>;
@@ -63,3 +69,16 @@ export function receiveGrantOperatingReturn(source: NativeGrantPlanningSource,
     at?: string; filename?: string; note?: string; expectedRevision?: number;
   }): { review: NativeGrantPlanningReview; comparison: GrantOperatingReturnComparison;
     reused: boolean; addedRevisions: number };
+
+export interface GrantOperatingStepPosition { id: string; title: string; position: number; }
+export interface GrantOperatingReturnDraft {
+  schema: typeof GRANT_OPERATING_RETURN_DRAFT_SCHEMA;
+  sourceSha256: string; nativeRevision: number; planId: string;
+  incoming: OperatingPlan; filename: string; note: string; openedAt: string; comparedRevision: number;
+}
+export function stageGrantOperatingReturn(source: NativeGrantPlanningSource, review: NativeGrantPlanningReview,
+  incoming: OperatingPlan, options?: { filename?: string; note?: string; openedAt?: string }):
+  { review: NativeGrantPlanningReview; comparison: GrantOperatingReturnComparison };
+export function refreshGrantOperatingReturn(source: NativeGrantPlanningSource, review: NativeGrantPlanningReview):
+  { review: NativeGrantPlanningReview; comparison: GrantOperatingReturnComparison };
+export function closeGrantOperatingReturn(source: NativeGrantPlanningSource, review: NativeGrantPlanningReview): NativeGrantPlanningReview;
