@@ -79,7 +79,8 @@ export interface ProjectStatus {
   snapshot?:unknown;source?:unknown;error?:unknown;configuration?:unknown;
 }
 export type Recovery = {kind:'invoice';id:string;action:'inspect'}|
-  {kind:'project';operation:string;action:'status'};
+  {kind:'project';operation:string;action:'status'}|
+  {kind:'intake';operation:string;action:'status'}|{kind:'intake-source';action:'inspect'};
 export class MerchantOperatorError extends Error {
   code:string;status:number|null;outcome?:'UNKNOWN'|'RECEIVED';recovery?:Recovery|null;
   constructor(code:string,options?:{status?:number|null;outcome?:'UNKNOWN'|'RECEIVED'|null;recovery?:Recovery|null});
@@ -94,6 +95,13 @@ export interface MerchantOperatorClient {
   paymentEnvelope(id:string,settings?:RequestSettings):Promise<PaymentEnvelope>;
   submitPaymentAuthorization(id:string,paymentSignature:string,settings?:RequestSettings):Promise<InvoiceOutcome>;
   reconcileInvoice(id:string,settings?:RequestSettings):Promise<InvoiceInspection>;
+  intakeContext(settings?:RequestSettings):Promise<IntakeContext>;
+  listIntakes(settings?:RequestSettings):Promise<{context:IntakeContext;intakes:Pick<IntakeStatus,'operation'|'createdAt'|'source'|'counts'|'state'|'planSha256'>[]}>;
+  inspectIntakeSource(source:IntakeSource,settings?:RequestSettings):Promise<{columns:string[];rowCount:number;bytes:number;sha256:string}>;
+  prepareIntake(input:IntakeInput,settings?:RequestSettings):Promise<IntakeStatus>;
+  readIntake(operation:string,settings?:RequestSettings):Promise<IntakeStatus>;
+  exportIntake(operation:string,settings?:RequestSettings):Promise<IntakeDelivery>;
+  runIntake(operation:string,planSha256:string,settings?:RequestSettings):Promise<IntakeStatus>;
   observation(settings?:RequestSettings):Promise<JSONObject>;
   observationSummary(settings?:RequestSettings&{historySequence?:string|number}):Promise<JSONObject>;
   project(settings?:RequestSettings):Promise<JSONObject>;
@@ -110,3 +118,38 @@ export interface MerchantOperatorClient {
 export const MERCHANT_OPERATOR_CONNECTION_SCHEMA:'stellar-forge.merchant-operator-connection.v1';
 export function inspectMerchantOperator(input:OperatorOptions,settings?:RequestSettings):Promise<InspectedOperator>;
 export function createMerchantOperatorClient(input:ConnectedOperatorOptions,settings?:RequestSettings):Promise<MerchantOperatorClient>;
+
+export interface IntakeSource {name:string;format:'csv'|'json';text:string}
+export interface IntakeMapping {
+  key:string;reference:string;title:string;assetId:string;amount:string;
+  invoiceId?:string;amountMode:'atomic'|'decimal';
+}
+export interface IntakeContext {
+  schema:'stellar-forge.merchant-intake-context.v1';storeId:string;tenantId:string;
+  configuration:JSONObject;configurationSha256:string;mode:'live'|'review';
+  maximumInvoices:number;maximumSourceRows:number;maximumSourceBytes:number;
+}
+export interface IntakeInput {
+  operation:string;storeId:string;tenantId:string;configurationSha256:string;
+  source:IntakeSource;mapping:IntakeMapping;
+}
+export interface IntakeInvoice {
+  key:string;id:string;reference:string;title:string;prices:{assetId:string;amountAtomic:string}[];
+  sourceRows:number[];offers:InvoiceOffer[];state:'RETAINED'|'CONFLICT'|'PENDING';
+  invoiceState:InvoiceState|null;createdAt:string|null;
+}
+export interface IntakeStatus {
+  schema:'stellar-forge.merchant-intake-status.v1';operation:string;storeId:string;tenantId:string;
+  planSha256:string;createdAt:string;source:Omit<IntakeSource,'text'>&FileIdentity;mapping:IntakeMapping;
+  configuration:JSONObject;configurationSha256:string;configurationCurrent:boolean;
+  state:'PREPARED'|'PARTIAL'|'COMPLETE'|'CONFLICT';
+  counts:{invoices:number;offers:number;retained:number;pending:number;conflicts:number};
+  invoices:IntakeInvoice[];interruption?:{code:string;invoiceId:string};
+}
+export interface IntakeDelivery {
+  schema:'stellar-forge.merchant-intake-delivery.v1';
+  plan:{schema:'stellar-forge.merchant-invoice-intake.v1';operation:string;storeId:string;tenantId:string;
+    source:IntakeSource&FileIdentity;mapping:IntakeMapping;configuration:JSONObject;configurationSha256:string;
+    planSha256:string;createdAt:string;invoices:Pick<IntakeInvoice,'key'|'id'|'reference'|'title'|'prices'|'sourceRows'>[]};
+  status:IntakeStatus;
+}

@@ -1,0 +1,82 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "analytical-workbooks",
+  "heading": "## Acquired datasets, editable analytical workbooks and complete customer receiving",
+  "sources": [
+    {
+      "id": "analytical-workbooks-customer-operation",
+      "label": "Complete analytical customer workflow and receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/analytical-workbooks/OPERATING.md",
+      "editions": [
+        {
+          "commit": "c3dfa9b3748a41902f0032c22bf57c25be19fb6b",
+          "git_blob": "25b13c2ba78156eaab423387062fc8f311e37e20",
+          "bytes": 25719,
+          "sha256": "b9cc632e48c06a24d68d2a295b0cd22e648880f2da0366f355327751b1219fd0"
+        }
+      ]
+    },
+    {
+      "id": "analytical-workbooks-native-model",
+      "label": "Original source-bound analysis, comparison, workbook and report model",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/duckdb_analytics/model.py",
+      "editions": [
+        {
+          "commit": "c3dfa9b3748a41902f0032c22bf57c25be19fb6b",
+          "git_blob": "47e9703d2b2734c55e958fcd7033bf43d1d3315b",
+          "bytes": 33641,
+          "sha256": "368ad58146086295348676101e98681cdb6886db1c86814bfbd5c9d8a9a2303d"
+        }
+      ]
+    },
+    {
+      "id": "analytical-workbooks-complete-receiving",
+      "label": "Complete original-source/application/warehouse package and independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/duckdb_analytics/package.py",
+      "editions": [
+        {
+          "commit": "c3dfa9b3748a41902f0032c22bf57c25be19fb6b",
+          "git_blob": "decd7c21a8a1494e6ec05842437c8bc2527b04e7",
+          "bytes": 30530,
+          "sha256": "324c1214fa66028a723f932858ee421d5b7bed1eadba2237452e7efc8c163b76"
+        }
+      ]
+    },
+    {
+      "id": "analytical-workbooks-browser-state",
+      "label": "Complete saved authoring state and exact revision receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/duckdb_analytics/browser_state.py",
+      "editions": [
+        {
+          "commit": "c3dfa9b3748a41902f0032c22bf57c25be19fb6b",
+          "git_blob": "e15e2d5f593357da543724fa61d340667515573b",
+          "bytes": 11271,
+          "sha256": "9dd7cdbf287102de7374a041ff8b5aa1ee7a8fcfa994c9f00bf16b7bd9d704a0"
+        }
+      ]
+    },
+    {
+      "id": "analytical-workbooks-native-agent-schema",
+      "label": "Original registered DuckDB agent action and full analytical operation schema",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-duckdb-analytics-schema.mjs",
+      "editions": [
+        {
+          "commit": "c3dfa9b3748a41902f0032c22bf57c25be19fb6b",
+          "git_blob": "18cffbeeea1a0db274d21104a21c28eb6e2e42a7",
+          "bytes": 9375,
+          "sha256": "12f032a090825910df7ea3014bb9e1ca559c5ffb1738e2adf4120abe66cc9b68"
+        }
+      ]
+    }
+  ]
+}

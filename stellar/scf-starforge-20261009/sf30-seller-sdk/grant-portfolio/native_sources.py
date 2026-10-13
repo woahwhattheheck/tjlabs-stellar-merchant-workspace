@@ -258,8 +258,10 @@ def project(packet, standard, selection, output):
         for name, expected in receipt["files"].items():
             require(file_info(output / name) == expected, "The retained complete native projection changed")
         return receipt
-    runner = project_iati if standard == "iati" else project_giving if standard == "360giving" else None
-    require(runner is not None, "Select IATI or 360Giving")
+    from businesscentral_source import project_businesscentral
+    runner = {"iati": project_iati, "360giving": project_giving,
+              "businesscentral": project_businesscentral}.get(standard)
+    require(runner is not None, "Select IATI, 360Giving or Business Central")
     with (output / "entities.jsonl").open("wb") as entities, (output / "financial.jsonl").open("wb") as financial:
         with redirect_stdout(io.StringIO()):
             native = runner(packet, output / "native", selection, entities, financial)
@@ -296,7 +298,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--packet", required=True)
-    parser.add_argument("--standard", choices=("iati", "360giving"), required=True)
+    parser.add_argument("--standard", choices=("iati", "360giving", "businesscentral"), required=True)
     parser.add_argument("--selection", default="{}")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()

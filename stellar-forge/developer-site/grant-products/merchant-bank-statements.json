@@ -8,7 +8,7 @@
       "label": "Original bank statements and shared customer payment coverage",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "products/merchant-bank-statements/README.md",
-      "commit": "60891dba44cde0830e60df6bdcadac539f620944",
+      "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
       "editions": [
         {
           "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
@@ -21,6 +21,12 @@
           "git_blob": "e139d5bce87ab0889afd890d597631ff95a48a85",
           "sha256": "f894adb35c254562fe46bd44d3b1f69966edcca4b742f319cbdc61aa7b42c9a0",
           "bytes": 24696
+        },
+        {
+          "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+          "git_blob": "669dda9a4cd4c1e1d0a40e84a7da79b0ab99295a",
+          "sha256": "a19cb321738df72f4a5fa4505456d1bb67f158dd8732d742c6fc58fefa9391d9",
+          "bytes": 26060
         }
       ]
     },
@@ -29,7 +35,7 @@
       "label": "Complete bank product installation and original runtime transfer",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "products/merchant-bank-statements/INSTALLATION.md",
-      "commit": "60891dba44cde0830e60df6bdcadac539f620944",
+      "commit": "929ed21c5b8206fa17491ebd7c5da48ed49ca979",
       "editions": [
         {
           "commit": "e57a359966f093f483a1aa5f4c2dac28566b6a5c",
@@ -42,6 +48,12 @@
           "git_blob": "f68648631190e013ee39e426527b8d034c383802",
           "sha256": "dcc22e09e8383a2d41d78262bc3aa5f1f2b632458815cd576171b38bf52002dd",
           "bytes": 17067
+        },
+        {
+          "commit": "929ed21c5b8206fa17491ebd7c5da48ed49ca979",
+          "git_blob": "fd45d5b1ce611463935b12a8b1b6903b8e1af8a9",
+          "sha256": "52de3ddd9175383d9e0de632349580a1cd005add0e47182836f39470f60e3ec9",
+          "bytes": 18108
         }
       ]
     },
@@ -50,7 +62,7 @@
       "label": "Original bank source, remittances and complete accountant handover",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "products/merchant-bank-statements/HANDOVER.md",
-      "commit": "60891dba44cde0830e60df6bdcadac539f620944",
+      "commit": "929ed21c5b8206fa17491ebd7c5da48ed49ca979",
       "editions": [
         {
           "commit": "e57a359966f093f483a1aa5f4c2dac28566b6a5c",
@@ -63,6 +75,12 @@
           "git_blob": "3d2ab71d87f678566899cec0c9db8231eda2d17a",
           "sha256": "dce20f97f428a4152f81fdf429ff8c35b2c8168691336c6aeb6a0eae276c6152",
           "bytes": 20598
+        },
+        {
+          "commit": "929ed21c5b8206fa17491ebd7c5da48ed49ca979",
+          "git_blob": "0db3a9745a31196b8a3902c3672a0c403c88192a",
+          "sha256": "a9ae69abd060e8303e53f43b83780cb8c229d23b47e81e7c4e1086eb7d74831e",
+          "bytes": 21424
         }
       ]
     },
@@ -107,7 +125,7 @@
       "label": "Complete CAMT.053 original statement and operator workflow",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/CAMT053.md",
-      "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+      "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
       "editions": [
         {
           "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
@@ -120,6 +138,12 @@
           "git_blob": "8dca9caa0fd70e7d934a0027ada650035f3593a2",
           "sha256": "4e772ef864faaa4f5b2aa414fa53ae0fc33a114e581901f4f0a23173721c6b52",
           "bytes": 16406
+        },
+        {
+          "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+          "git_blob": "4c20b746483ded8d13a8db90928b7e404976f467",
+          "sha256": "46847ca44cce8cf053114a146be760a8c7c1beb6b602cfc88dbdf91702f8c681",
+          "bytes": 18225
         }
       ]
     },
@@ -128,13 +152,19 @@
       "label": "Original versioned CAMT.053 cash-entry source engine",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source-camt053.mjs",
-      "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
+      "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
       "editions": [
         {
           "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
           "git_blob": "7ca4b247f73058b723e7a6536b3d9f397f1dcf74",
           "sha256": "3dae05727a3fd1af4bf119fa06341d6da65b97888d9a1a640aa8e4a487e38bd9",
           "bytes": 78085
+        },
+        {
+          "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+          "git_blob": "3a087db1426c2997613b29d9111a880fb8471d32",
+          "sha256": "72c303926855df056986cec65bb63e5f8eabb48f1425cff513da59118651c09b",
+          "bytes": 80471
         }
       ]
     },
@@ -143,13 +173,19 @@
       "label": "Versioned bank source, entry-detail and original report type contract",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source.d.ts",
-      "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
+      "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
       "editions": [
         {
           "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
           "git_blob": "8b38f4eeb67f71524a535cdc5c9a2ec2728c1a41",
           "sha256": "a5b8cec062925f00eb3adb8e32da79c0890a76ccffe66011762e7b676bdceda1",
           "bytes": 21245
+        },
+        {
+          "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+          "git_blob": "99844933819e99d72e8cc958769e70bb1efbe1e5",
+          "sha256": "1fc137feaa0209466214ff1ce44efc1ad44b10fb388bfad36a7bc4e99aaf41e6",
+          "bytes": 21974
         }
       ]
     },
@@ -158,7 +194,7 @@
       "label": "Installed original-file preparation, complete-page assembly and accountant receiving command",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/cli.mjs",
-      "commit": "c15e2ea80154078886011d792e0aa7be6a5a94b2",
+      "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
       "editions": [
         {
           "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
@@ -171,6 +207,12 @@
           "git_blob": "5f224e4f54fe6aa66fbc804378c44fe3d737aba1",
           "sha256": "5d47c73acdd80d12074a670f2e5c61e86ca6f5ee1a99693cf36ba79233260c5c",
           "bytes": 13874
+        },
+        {
+          "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+          "git_blob": "4e94c1ff1da67d5a4f9a705e612d91f186f4519b",
+          "sha256": "181161e9c2ef591505d887c449a2acd11f03b347f0816f9777f8cb86801bb250",
+          "bytes": 14485
         }
       ]
     },
@@ -372,6 +414,111 @@
           "git_blob": "303f3ae398db5515cf382dce415cdef1c3a4d054",
           "sha256": "10a316d88886324934c3fc5a20e9a2985e7f89310bc579ac16d31828f0e1b96a",
           "bytes": 15700
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-collections",
+      "label": "Complete original-file collection, interpretation and receiving workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_COLLECTIONS.md",
+      "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+      "editions": [
+        {
+          "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+          "git_blob": "133e24335dd20faa644e5bfa4fa9e8b48a796d06",
+          "sha256": "04dee862787578ecc5b42280c37c61fba73a7df2fd3653fff4660ca10aee736c",
+          "bytes": 9864
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-collection-model",
+      "label": "Complete collection transfer, original bytes and per-file interpretation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/public/source-collection-model.mjs",
+      "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+      "editions": [
+        {
+          "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+          "git_blob": "c88ec756e3aec539e7ccbf7f3be87b79d167cfe6",
+          "sha256": "4e8c076305c3d65df10f2324e237d3c7c991216b8beaea93e1f8aaaee9851855",
+          "bytes": 12371
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-source-collection-command",
+      "label": "Installed complete collection preparation, inspection and original extraction",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/collection-cli.mjs",
+      "commit": "929ed21c5b8206fa17491ebd7c5da48ed49ca979",
+      "editions": [
+        {
+          "commit": "929ed21c5b8206fa17491ebd7c5da48ed49ca979",
+          "git_blob": "4938313a5255f835c451f1f1e844ee910b0e1c58",
+          "sha256": "26dc4e465de76f50a74581aace0430cece18b87b69fc4cc33e0ff32c61721202",
+          "bytes": 7356
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-bundesbank-originals",
+      "label": "Both original official Bundesbank archives and all twenty-two XML members",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/BUNDESBANK_ORIGINALS.json",
+      "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+      "editions": [
+        {
+          "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+          "git_blob": "7095fec9e97c434199abac2a607aa22a29a3692e",
+          "sha256": "15d9affd621121c16bb900a169eb359b1abf1377cffeb9bd301361b85efb8ee3",
+          "bytes": 187118
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-bundesbank-receiving",
+      "label": "Complete Bundesbank interpretation and installed original-delivery receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/BUNDESBANK.md",
+      "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+      "editions": [
+        {
+          "commit": "f912a1ece05abcfeaa83882dfb86db719fd745da",
+          "git_blob": "63dde7b6851c66b9d323005c809e1e4fb339b0a3",
+          "sha256": "d75fec49a4e2c3e4f60808a4ad2387875fe29c68ab66c6e87baba9d1b6e3b451",
+          "bytes": 7944
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-original-application-course",
+      "label": "Original issuer sources through complete application imports, replay, closes and cold reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "operations/merchant-bank-camt053-receiving-dff77-20261013/receive-application.mjs",
+      "commit": "1c5a12ecf311ba7d7206905fbdabbe751a08b05e",
+      "editions": [
+        {
+          "commit": "1c5a12ecf311ba7d7206905fbdabbe751a08b05e",
+          "git_blob": "ec5e0fb81c4dd9b9e1d7a52c3705e0f26a440290",
+          "sha256": "73e5b95bb7819d40bb3461a7725ba562dc518ec082852e45f783ba76ddfa5857",
+          "bytes": 23079
+        }
+      ]
+    },
+    {
+      "id": "merchant-bank-original-delivery-operation",
+      "label": "Complete original Nordea, Goldman Sachs and Bundesbank operating programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "operations/merchant-bank-camt053-receiving-dff77-20261013/README.md",
+      "commit": "1c5a12ecf311ba7d7206905fbdabbe751a08b05e",
+      "editions": [
+        {
+          "commit": "1c5a12ecf311ba7d7206905fbdabbe751a08b05e",
+          "git_blob": "0b88365227dfaff8afc93e9511dc15de055542bd",
+          "sha256": "9175040ea39acbf87d9dbcc4d955c1221135af215dcd2dad6983f150e2943741",
+          "bytes": 10683
         }
       ]
     }

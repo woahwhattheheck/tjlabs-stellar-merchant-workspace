@@ -2,7 +2,7 @@
 
 This delivery brings the current application, detailed customer chapters, source register and saved-submission tools into the existing grant reader. It keeps the original nine-answer draft, manual edits, issuer fields, review rounds, planning and handover history together with the complete selected source.
 
-The selected reader contains **494 original source records and 78 detailed companion chapters**. The funding remains **$38,000 for 400 prospective hours over 150 days**, with the original six priced packages and two independent merchant / two independent buyer commitments.
+The selected reader contains **503 original source records and 78 detailed companion chapters**. The funding remains **$38,000 for 400 prospective hours over 150 days**, with the original six priced packages and two independent merchant / two independent buyer commitments.
 
 ## Original buyer inputs and complete Collections delivery
 
@@ -10,22 +10,22 @@ The existing architecture answer now explains the shipped Request Collections in
 
 The complete original **Product selection, installation and recurring buyer work** chapter is received from the current canonical manuscript. It includes product selection and installation, the local-input library at PR1258 merge `5fefeae6a13b2f58ec7562c101e575ced25d7e6b`, complete shared-plan adoption, and the original task/package/recipient workflow. All three package, MCP and customer-course subsections remain present. The maintained PR1311 declaration receives all ten Collections customer-delivery source IDs, including the three mutually composed MCP sources at `7d8e70f7150b23b1f33ac4c416facdc484c3d624`. The existing authoring source ID selects the complete current guide.
 
-This composition starts with the actual reader at `2c69f99e2a787a0ff4966e1029c809fc65a8c0c2`: 492 source IDs, 78 chapters, and the full 970,556-byte companion. It retains all 492 IDs, adds the two original task/browser records from the maintained declaration, and preserves all 483 unrelated source records exactly. Every companion byte outside that existing Collections chapter is unchanged. The original 597-byte six-package budget is unchanged.
+This composition starts with the actual reader at `f810457375913742f97c5d3c365372a3aa640984`: 501 source IDs, 78 chapters, and the full 976,758-byte companion. It retains all 501 IDs, adds the two original task/browser records from the maintained declaration, and preserves all 492 unrelated source records exactly. Every companion byte outside that existing Collections chapter is unchanged. The original 597-byte six-package budget is unchanged.
 
 ## Complete files in this delivery
 
 `source-package.json` is the existing submission application's complete four-file source package. It contains the application, source index, six-package budget and full companion. The original `createSourceBundle`, `createReviewerSourcePackage` and `openReviewerSourcePackage` created and reopened all four complete bodies using their actual byte counts, SHA-256 and Git identities.
 
-`source-files.json` retains the complete original selected runtime/source closure and joins these current reader outputs. It supplies **248 full files / 7,352,644 decoded bytes**, preserving all 247 original paths and their existing native receiving helpers. The additional declaration is the already-selected Merchant monitoring source; the current Collections declaration replaces its earlier body. It includes 44 complete declaration files, the maintained composer and complete imports, the original browser assets and routes, the original ten-file receiving runtime, and all 18 source/helper files.
+`source-files.json` retains the complete original selected runtime/source closure and joins these current reader outputs. It supplies **248 full files / 7,377,389 decoded bytes**, preserving all 247 original paths and their existing native receiving helpers. The additional declaration is the already-selected Merchant monitoring source; the current Collections and Flowable declarations replace their earlier bodies. The complete concurrently merged Flowable programme, all nine new source IDs, and its original chapter remain intact. It includes 44 complete declaration files, the maintained composer and complete imports, the original browser assets and routes, the original ten-file receiving runtime, and all 18 source/helper files.
 
-The retained runtime/source basis is `b7e180022deff675a492e41e076009c428145cbc`, received through the original complete PR1286 carrier. Its current reader overlays use the separate exact `2c69f99e` basis above. Each changed reader/declaration records its original and resulting Git blob in `sourceOverlays`; every other carried runtime body is unchanged. The full binary FRED example retains its original canonical Base64. Text bodies use complete UTF-8 in `content`, and both `gitBlob` and `git_blob` refer to those exact decoded bytes.
+The retained runtime/source basis is `b7e180022deff675a492e41e076009c428145cbc`, received through the original complete PR1286 carrier. Its current reader overlays use the separate exact `f8104573` basis above. Each changed reader/declaration records its original and resulting Git blob in `sourceOverlays`; every other carried runtime body is unchanged. The full binary FRED example retains its original canonical Base64. Text bodies use complete UTF-8 in `content`, and both `gitBlob` and `git_blob` refer to those exact decoded bytes.
 
 | Reader file | UTF-8 bytes | Git blob |
 | --- | ---: | --- |
 | `grant.html` | 96,785 | `bd8173a28dde135abf22b1ffd1d193025fbd5715` |
 | `grant-data/application.md` | 47,684 | `15c2a09c49fc72e63179e17211ff7395c756955d` |
-| `grant-data/product-and-finance.md` | 980,432 | `d4103d305b440fe121b5f52f7600b087b3a4df31` |
-| `grant-data/source-index.json` | 605,413 | `86703f738f94ec7a4d76ae931e76ded03d596af2` |
+| `grant-data/product-and-finance.md` | 986,634 | `b697b2d765ee7e4d9347e11c2f0b0da1e6b607a1` |
+| `grant-data/source-index.json` | 617,433 | `7e598109e671470fcae3806a569c3bd87eaad19a` |
 
 The complete canonical manuscript was observed and retained by identity. This edition selects its existing architecture paragraph and complete Collections H2; all other reader content comes from the current repository edition. The canonical architecture paragraph was also saved and read back in F0C86PRE5NF. Concurrent author additions remain in their original sections for the same serial publisher.
 
@@ -33,8 +33,8 @@ The actual maintained composition and original package APIs ran in the connected
 
 | Complete delivery | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `source-package.json` | 2,229,885 | `56ed8becd93a2516a9a05936e35fe20c0d38b680e7412a502bba7552df2f7e4e` |
-| `source-files.json` | 7,822,469 | `5bbb2e95c5a06ce02e86a400a96f2f3a56f3cd90f6f59cb421620c4e9f6f6636` |
+| `source-package.json` | 2,254,177 | `df44492d0a7e802f131c6fd403b69d2de2ddc8edcaad3fdae5db9350f0149ef7` |
+| `source-files.json` | 7,849,418 | `cf0b2720e80dcb558eaceab08f2fad2557cf5afd2ca66a7956d2ce3bdd6f4067` |
 
 ## Receive into the existing saved submission
 
@@ -58,9 +58,9 @@ Use the existing `operations/scf-current-application-receiving-81cf-20261012/pre
 ```sh
 python -B operations/scf-current-application-receiving-81cf-20261012/prepare-source-selection.py \
   --source-packet /absolute/received/source-files.json \
-  --source-packet-sha256 5bbb2e95c5a06ce02e86a400a96f2f3a56f3cd90f6f59cb421620c4e9f6f6636 \
+  --source-packet-sha256 cf0b2720e80dcb558eaceab08f2fad2557cf5afd2ca66a7956d2ce3bdd6f4067 \
   --source-package /absolute/received/source-package.json \
-  --source-package-sha256 56ed8becd93a2516a9a05936e35fe20c0d38b680e7412a502bba7552df2f7e4e \
+  --source-package-sha256 df44492d0a7e802f131c6fd403b69d2de2ddc8edcaad3fdae5db9350f0149ef7 \
   --original-source-commit ACTUAL_ORIGINAL_CASE_SOURCE_COMMIT \
   --runtime-source-commit ACTUAL_SELECTED_RECEIVING_RUNTIME_COMMIT \
   --application-source-commit ACTUAL_MERGED_SOURCE_COMMIT \

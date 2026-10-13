@@ -76,6 +76,9 @@ const SOURCE_FILES = [
   "products/x402api-merchant-workspace/observation.mjs",
   "products/x402api-merchant-workspace/invoice-register.mjs",
   "products/x402api-merchant-workspace/INVOICE_REGISTER.md",
+  "products/x402api-merchant-workspace/invoice-intake.mjs",
+  "products/x402api-merchant-workspace/web/invoice-intake.mjs",
+  "products/x402api-merchant-workspace/INVOICE_INTAKE.md",
   "products/x402api-merchant-workspace/operator-client.mjs",
   "products/x402api-merchant-workspace/operator-client.d.mts",
   "products/x402api-merchant-workspace/operator-cli.mjs",
@@ -91,7 +94,19 @@ const SOURCE_FILES = [
   "products/x402api-merchant-workspace/PROJECT_INTAKE.md",
   "products/x402api-merchant-workspace/web/intake.html",
   "products/x402api-merchant-workspace/web/intake.css",
-  "products/x402api-merchant-workspace/web/intake.mjs"
+  "products/x402api-merchant-workspace/web/intake.mjs",
+  "products/x402api-merchant-workspace/project-intake-client.mjs",
+  "products/x402api-merchant-workspace/project-intake-client.d.mts",
+  "stellar-forge/mcp-merchant-operator/merchant-project-connection.mjs",
+  "stellar-forge/mcp-merchant-operator/merchant-project-files.mjs",
+  "stellar-forge/mcp-merchant-operator/merchant-project-protocol.mjs",
+  "stellar-forge/mcp-merchant-operator/merchant-projects.mjs",
+  "stellar-forge/mcp-merchant-operator/providers/merchant-projects.mjs",
+  "stellar-forge/mcp-merchant-operator/provider-contract.mjs",
+  "stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs",
+  "stellar-forge/mcp-merchant-operator/retained-file-reads.mjs",
+  "products/x402api-merchant-workspace/PROJECT_AGENT.md",
+  "products/x402api-merchant-workspace/project-agent-receiving.mjs"
 ];
 const SCHEMA = 'stellar-forge.x402api-merchant-handover.v1';
 const RESTORE_SCHEMA = 'stellar-forge.x402api-merchant-restoration.v1';

@@ -209,7 +209,7 @@ function receiveApplicationNavigation(templateHtml, headings) {
 /** Pure composition; the caller chooses whether and where the result is written. */
 export function composeGrantApplication({
   applicationMarkdown, productAndFinanceMarkdown, templateHtml, sourceIndex,
-  fredCommit, coopsCommit = null, financeCommit = null, customerClosingCommit = null, datasetteCommit = null, datasettePublisherCommit = null, canonicalManuscript = CANONICAL_MANUSCRIPT,
+  fredCommit, coopsCommit = null, financeCommit = null, customerClosingCommit = null, customerServiceCalendarsCommit = null, datasetteCommit = null, datasettePublisherCommit = null, canonicalManuscript = CANONICAL_MANUSCRIPT,
   productRegistrations = [],
 }) {
   need(typeof fredCommit === 'string' && /^[a-f0-9]{40}$/.test(fredCommit), 'Select the actual merged economic product commit.');
@@ -280,9 +280,11 @@ export function composeGrantApplication({
     financialOperation = attached.financialOperation;
   }
   const selectedCustomerClosingCommit = customerClosingCommit || index.narrative_source?.customer_closing_product_commit || null;
+  const selectedServiceCalendarsCommit = customerServiceCalendarsCommit || index.narrative_source?.customer_service_calendars_product_commit || null;
+  need(!selectedServiceCalendarsCommit || selectedCustomerClosingCommit, 'Keep the original customer-closing product selected alongside its service calendars.');
   let customerClosing = null, customerClosingSources = null;
   if (selectedCustomerClosingCommit) {
-    const attached = attachCustomerClosingSources(index, { customerClosingCommit: selectedCustomerClosingCommit, productAndFinanceMarkdown: companion });
+    const attached = attachCustomerClosingSources(index, { customerClosingCommit: selectedCustomerClosingCommit, customerServiceCalendarsCommit: selectedServiceCalendarsCommit, productAndFinanceMarkdown: companion });
     index = attached.sourceIndex;
     customerClosing = attached.customerClosing;
     customerClosingSources = attached.customerClosingSources;
@@ -316,8 +318,8 @@ function argumentsFor(argv) {
   const options = {};
   for (let i = 0; i < argv.length; i++) {
     const name = argv[i];
-    need(['--directory', '--manuscript', '--fred-commit', '--coops-commit', '--finance-commit', '--customer-closing-commit', '--datasette-commit', '--datasette-publisher-commit', '--source-pins-output', '--product-registrations-directory', '--product-registration'].includes(name) && i + 1 < argv.length,
-      'Use --directory <existing dist>, --manuscript <canonical.md>, --fred-commit <merged sha>, optional --coops-commit <merged sha>, --finance-commit <merged sha>, --customer-closing-commit <merged sha>, paired --datasette-commit <customer sha> / --datasette-publisher-commit <publisher sha> and --source-pins-output <file>, optional --product-registrations-directory <directory>, and repeatable --product-registration <file.json>.');
+    need(['--directory', '--manuscript', '--fred-commit', '--coops-commit', '--finance-commit', '--customer-closing-commit', '--customer-service-calendars-commit', '--datasette-commit', '--datasette-publisher-commit', '--source-pins-output', '--product-registrations-directory', '--product-registration'].includes(name) && i + 1 < argv.length,
+      'Use --directory <existing dist>, --manuscript <canonical.md>, --fred-commit <merged sha>, optional --coops-commit <merged sha>, --finance-commit <merged sha>, --customer-closing-commit <merged sha>, --customer-service-calendars-commit <merged sha>, paired --datasette-commit <customer sha> / --datasette-publisher-commit <publisher sha> and --source-pins-output <file>, optional --product-registrations-directory <directory>, and repeatable --product-registration <file.json>.');
     if (name === '--product-registration') {
       (options[name] ||= []).push(argv[++i]);
       continue;
@@ -379,6 +381,7 @@ export async function runGrantComposition(argv = process.argv.slice(2)) {
   const coopsCommit = options['--coops-commit'] || index.narrative_source?.coastal_product_commit || null;
   const financeCommit = options['--finance-commit'] || index.narrative_source?.financial_product_commit || null;
   const customerClosingCommit = options['--customer-closing-commit'] || index.narrative_source?.customer_closing_product_commit || null;
+  const customerServiceCalendarsCommit = options['--customer-service-calendars-commit'] || index.narrative_source?.customer_service_calendars_product_commit || null;
   const datasetteCommit = options['--datasette-commit'] || index.narrative_source?.datasette_customer_commit || null;
   const datasettePublisherCommit = options['--datasette-publisher-commit'] || index.narrative_source?.datasette_publisher_commit || null;
   const datasetteSelection = datasetteSourceSelection({ analysisCommit: datasetteCommit, publisherCommit: datasettePublisherCommit });
@@ -400,7 +403,7 @@ export async function runGrantComposition(argv = process.argv.slice(2)) {
     applicationMarkdown: selectedApplication,
     productAndFinanceMarkdown: companion, templateHtml, sourceIndex: projectGrantSourceIndex(index),
     fredCommit: options['--fred-commit'] || index.narrative_source?.economic_product_commit,
-    coopsCommit, financeCommit, customerClosingCommit, datasetteCommit, datasettePublisherCommit, productRegistrations,
+    coopsCommit, financeCommit, customerClosingCommit, customerServiceCalendarsCommit, datasetteCommit, datasettePublisherCommit, productRegistrations,
   });
   for (const [path, body] of Object.entries(result.files)) await writeFile(join(directory, path), body);
   if (options['--source-pins-output']) await writeFile(resolve(options['--source-pins-output']), JSON.stringify(result.sourcePins, null, 2) + '\n');

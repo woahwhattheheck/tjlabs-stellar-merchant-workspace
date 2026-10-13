@@ -304,3 +304,63 @@ The operation journal retains the exact programme-file SHA together with the nor
 Omitting `--programme` retains the existing NEED operation identity, original request IDs, 2025 Q4 initial edition, 2026 Q1 successor and original journal selection shape. Existing native operations therefore resume under their original identity.
 
 The completed directory includes `journey.json`, `native-result.json`, the complete source project, both report editions, `complete-project.json` and an independently received project. Each edition retains its full report model, HTML, native PDF when requested, calculation CSV, original selected rows and methodology; the successor also retains its predecessor comparison. The received project reopens the original files and exports the same complete project content. Customer authoring, saved edition history, downloaded originals and the paid receiving workflow remain part of the same product.
+
+## Complete quarterly area CSV intake
+
+The same report and project workflow also accepts complete current published BLS quarterly area CSV slices. Use this route when the selected programme needs specific released quarters. Each input remains the complete original area CSV, including every ownership, industry and aggregation row, original disclosure flags, field names and published values. The collector does not trim the originals to the report's selected industries.
+
+The intake identifies this source family as current_published_quarterly_api_slices. It retains the exact official URL, area, year and quarter, complete source bytes and SHA256, gzip identity, original header, row count and acquisition receipt. Annual ZIP members retain their existing source contract. Quarterly inputs are not represented as annual archive members.
+
+Run from this qcew source directory, choosing an existing private operation directory and the exact saved programme:
+
+```sh
+python3 source_fetch.py --directory /absolute/operation/original-intake --periods 2025-Q1,2026-Q1 --areas 42101,42017,42029,42045,42091,42000,US000 --programme /absolute/operation/programme.json
+```
+
+Each requested area must have one complete source for every selected period. Two different quarters for the same area and year are retained separately. Duplicate area/quarter coverage, wrong-period rows, inconsistent headers, truncated response lengths and changed original bytes are rejected. The saved programme must use the same operation and both report periods must be present in the selected intake.
+
+### Receive original files already retained by a connected provider
+
+When the official files have already been acquired and retained, download those exact files to the selected private operation directory and compute each complete file's SHA256. Keep the original provider receipt. Pass a descriptor with schema stellar-forge.qcew-retained-slices.v1, the original operation ID, and a sources array containing every requested area and quarter:
+
+```json
+{
+  "schema": "stellar-forge.qcew-retained-slices.v1",
+  "operation": "YOUR-ORIGINAL-OPERATION",
+  "sources": [
+    {
+      "year": 2025,
+      "quarter": 1,
+      "area": "42101",
+      "sourceUrl": "https://data.bls.gov/cew/data/api/2025/1/area/42101.csv",
+      "file": "/absolute/operation/originals/2025-q1-42101.csv",
+      "sha256": "THE_ACTUAL_COMPLETE_FILE_SHA256",
+      "receipt": {
+        "kind": "retained_provider_file",
+        "provider": "Notion",
+        "sourceUrl": "https://data.bls.gov/cew/data/api/2025/1/area/42101.csv",
+        "recordedAt": "THE_ACTUAL_PROVIDER_RECEIPT_TIMESTAMP",
+        "upload": {
+          "file_upload_id": "THE_ORIGINAL_UPLOAD_ID",
+          "filename": "THE_ORIGINAL_FILENAME",
+          "content_type": "THE_ORIGINAL_CSV_CONTENT_TYPE",
+          "content_length": "THE_ACTUAL_ORIGINAL_BYTE_LENGTH",
+          "status": "uploaded"
+        }
+      }
+    }
+  ]
+}
+```
+
+The displayed receipt values are placeholders for the actual acquisition response. Preserve that complete response, including any additional provider fields. The receipt must identify an uploaded CSV and its byte length must match the complete downloaded original. The reader verifies the official source URL, provider identity, upload identifier and native-computed byte/hash result. A temporary signed download URL is transport only; it does not replace the official source URL or become a report citation.
+
+```sh
+python3 source_fetch.py --directory /absolute/operation/original-intake --periods 2025-Q1,2026-Q1 --areas 42101,42017,42029,42045,42091,42000,US000 --programme /absolute/operation/programme.json --received-slices /absolute/operation/retained-slices.json
+```
+
+The private source lock and one complete pending checkpoint preserve both original bytes and their acquisition receipt before publishing each gzip member. Resuming the same request validates and reuses complete saved files. A finished intake reopens without changing its completion timestamp or manifest identity. Keep the descriptor and operation directory unchanged across a resumed operation; a changed selection belongs in a separately selected intake.
+
+After acquisition, use the existing native-journey or CLI import/profile/produce path with this original-intake directory. The source reader checks the entire selected matrix and all original rows, then the maintained report engine, complete source context, project export and independent receiving retain the same originals. Report methods and original-file links identify the quarterly API source explicitly. Existing annual-source report wording, citations and rebuilt report identities remain unchanged.
+
+Official source documentation: https://www.bls.gov/cew/additional-resources/open-data/home.htm . Quarter availability and revisions follow the publisher's current release catalogue. Calculated changes compare the retained unadjusted CSV values under the saved methodology; the County Employment and Wages news release separately publishes administratively adjusted over-the-year changes.

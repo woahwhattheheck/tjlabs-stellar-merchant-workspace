@@ -201,39 +201,155 @@ async function upload(file) {
   notice("Receiving the complete file: " + file.name);
   return api("/api/upload", { method: "POST", headers: { "Content-Type": "application/zip" }, body: file });
 }
+function businessCentralMeasure(measure) {
+  const cell = node("div");
+  if (measure.status === "NO_ROWS") {
+    cell.append(node("strong", "No source rows"), node("p", "No amount reported for this measure.", "small"));
+  } else if (measure.status === "COMPLETE") {
+    cell.append(node("strong", measure.total, "number"),
+      node("p", "Complete · " + measure.contributing_rows + " records", "small"));
+  } else {
+    cell.append(node("strong", measure.contributing_rows ? measure.partial_total + " (partial)" : "Amount missing", "number"),
+      node("p", "Incomplete · " + measure.contributing_rows + " included · " + measure.missing_rows + " missing", "small"));
+  }
+  return cell;
+}
+function showBusinessCentralSource(source) {
+  const native = source.native, summary = native.summary;
+  const overview = panel("Financial edition", source.coverage.statement);
+  overview.append(node("p", native.period.from + " to " + native.period.to + " · "
+    + (summary.ready ? "Reconciliation ready" : "Financial review required")));
+  overview.append(node("p", "Company " + native.scope.companyId, "small"));
+  const counts = node("div", null, "metrics");
+  counts.append(metric(native.nativeRowCount, "original planning and ledger rows"),
+    metric(native.financialRowCount, "separate financial records"),
+    metric(native.eligibleFinancialRowCount, "included financial records"),
+    metric(summary.findings.length, "findings"));
+  overview.append(counts);
+  const coverage = panel("Source coverage and dispositions");
+  const labels = { planning_rows: "Planning rows", ledger_rows: "Ledger rows",
+    outside_period: "Outside reporting period", text_lines: "Text lines",
+    explicitly_excluded: "Excluded by review", unallocated: "Unallocated",
+    multiply_allocated: "Multiple allocation matches" };
+  coverage.append(table(["Source measure", "Original count"],
+    Object.entries(labels).map(([key, label]) => [label, summary.counts[key]])));
+  coverage.append(node("p", "These counts describe the original source rows. One row can produce more than one financial record when it has multiple measures or currency bases.", "small"));
+  const groups = panel("Project and grant amounts",
+    "Local and project currency bases are separate views of the same source records. Keep them separate even when their currency codes match. Amounts retain original signs and exact decimal text.");
+  const groupBody = node("div");
+  groups.append(groupBody);
+  const renderGroups = offset => {
+    const rows = summary.totals.slice(offset, offset + 50);
+    if (!summary.totals.length) {
+      groupBody.replaceChildren(node("p", "This edition has no allocated financial groups. Review its source dispositions and findings."));
+      return;
+    }
+    groupBody.replaceChildren(table(["Project", "Grant", "Currency basis", "Currency",
+      "Budget cost", "Billable amount", "Usage cost", "Sales",
+      "Budget cost − usage cost", "Billable amount − sales"],
+      rows.map(group => [group.project_number, group.grant_label + " (" + group.grant_key + ")",
+        group.currency_basis === "lcy" ? "Local currency" : "Project currency",
+        group.currency || "Unresolved",
+        ...["budget_cost", "billable_amount", "usage_cost", "sale_amount"].map(key => businessCentralMeasure(group.metrics[key])),
+        { text: group.cost_variance.value ?? "Unavailable: complete measures required", className: "number" },
+        { text: group.billable_difference.value ?? "Unavailable: complete measures required", className: "number" }])),
+      pager({ rows, offset, total: summary.totals.length,
+        nextOffset: offset + rows.length < summary.totals.length ? offset + rows.length : null }, renderGroups));
+  };
+  renderGroups(0);
+  const findings = panel("Financial findings",
+    "Review each original finding against the captured source and allocation. Correct the source or mapping in the finance service, then receive its following complete edition.");
+  const findingBody = node("div");
+  findings.append(findingBody);
+  const renderFindings = offset => {
+    const rows = summary.findings.slice(offset, offset + 50);
+    if (!summary.findings.length) {
+      findingBody.replaceChildren(node("p", "The original reconciliation recorded no findings."));
+      return;
+    }
+    findingBody.replaceChildren(table(["Effect", "Finding", "Original record", "Source detail"],
+      rows.map(finding => [finding.blocking ? "Requires financial review" : "Information",
+        node("div", finding.message),
+        finding.row ? finding.row.family + " · " + finding.row.id : "Edition-wide",
+        rawDetails("Open finding detail", { code: finding.code, sourceRecord: finding.row,
+          details: finding.details, findingId: finding.id })])),
+      pager({ rows, offset, total: summary.findings.length,
+        nextOffset: offset + rows.length < summary.findings.length ? offset + rows.length : null }, renderFindings));
+  };
+  renderFindings(0);
+  const original = panel("Original source");
+  const link = node("a", "Open recorded company API source");
+  link.href = source.coverage.sourceUrl; link.target = "_blank"; link.rel = "noreferrer";
+  original.append(link, node("p", source.coverage.observedAt + " · " + source.coverage.license, "small"),
+    button("Download complete source handoff", () => download("/api/object?sha256=" + source.object.sha256,
+      source.label.replace(/[^a-z0-9]+/gi, "_") + ".zip")),
+    rawDetails("Complete source and reconciliation details", source));
+  showDialog(source.label, [overview, coverage, groups, findings, original]);
+}
 function sourceCard(source) {
   const card = panel(source.label);
-  card.append(node("span", source.standard === "iati" ? "IATI" : "360Giving", "tag"),
+  card.append(node("span", ({ iati: "IATI", "360giving": "360Giving", businesscentral: "Business Central" })[source.standard] || source.standard, "tag"),
     node("p", source.coverage.statement, "coverage"));
-  const line = node("p", null, "small"), link = node("a", "Publisher source");
+  const line = node("p", null, "small"), link = node("a", "Original source");
   link.href = source.coverage.sourceUrl; link.target = "_blank"; link.rel = "noreferrer";
   line.append(link, node("span", " · " + source.coverage.observedAt + " · " + source.coverage.license));
   card.append(line);
   const metrics = node("div", null, "metrics");
   metrics.append(metric(source.counts.entities, "records and organizations"), metric(source.counts.financial, "financial records"));
   card.append(metrics);
+  if (source.standard === "businesscentral") {
+    const summary = source.financialSummary;
+    if (summary) {
+      card.append(node("p", summary.period.from + " to " + summary.period.to + " · "
+        + summary.companyId + " · " + (summary.ready ? "Reconciliation ready" : "Financial review required"), "small"));
+      card.append(node("p", summary.nativeRowCount + " original rows · " + summary.findingCount
+        + " findings (" + summary.blockingFindingCount + " blocking) · "
+        + summary.eligibleFinancialRowCount + " included financial records", "small"));
+      const bases = summary.currencyBases.map(basis => basis === "lcy" ? "local currency" : "project currency");
+      card.append(node("p", bases.length ? "Separate views: " + bases.join(" and ")
+        : "No allocated currency groups in this edition.", "small"));
+    } else {
+      card.append(node("p", "Open Source details for this edition's financial review and reporting period.", "small"));
+    }
+  }
   const buttons = node("div", null, "actions");
   buttons.append(button("Original source packet", () => download("/api/object?sha256=" + source.object.sha256, source.label.replace(/[^a-z0-9]+/gi, "_") + ".zip")),
     button("Source details", async () => {
       const full = await api("/api/source?id=" + source.id);
-      showDialog(source.label, [node("p", source.coverage.statement, "coverage"), rawDetails("Complete native selection and receiving", full)]);
+      if (full.standard === "businesscentral") showBusinessCentralSource(full);
+      else showDialog(source.label, [node("p", source.coverage.statement, "coverage"), rawDetails("Complete native selection and receiving", full)]);
     }));
   card.append(buttons); return card;
 }
 function sourcesView(container) {
-  container.append(heading("Source editions", "Receive complete IATI or 360Giving handoffs with their original coverage and capture."));
+  container.append(heading("Source editions", "Receive complete IATI, 360Giving or Business Central handoffs with their original coverage and capture."));
   const form = node("form", null, "panel"), grid = node("div", null, "form-grid");
   form.append(node("h2", "Receive a source edition"));
-  const standard = field("Standard", "select", "iati", [["iati", "IATI"], ["360giving", "360Giving"]]);
-  const label = field("Publisher and edition label", "text");
-  const sourceUrl = field("Original publisher URL", "url");
+  const standard = field("Standard", "select", "iati", [["iati", "IATI"], ["360giving", "360Giving"], ["businesscentral", "Business Central"]]);
+  const label = field("Source and edition label", "text");
+  const sourceUrl = field("Original publisher or company API URL", "url");
   const observedAt = field("Captured at", "text", new Date().toISOString());
-  const license = field("Published license", "text");
+  const license = field("License or source access terms", "text");
   const selection = field("Native build", "select", "original", [["original", "Original publisher records"], ["candidate", "Explicit reviewed 360Giving candidate"]]);
+  const reconciliation = field("Original financial reconciliation SHA-256", "text");
+  reconciliation.input.pattern = "[0-9a-f]{64}";
+  reconciliation.input.placeholder = "Select the full saved reconciliation identity";
+  const switchSource = () => {
+    const businesscentral = standard.input.value === "businesscentral";
+    reconciliation.wrapper.hidden = !businesscentral;
+    reconciliation.wrapper.style.display = businesscentral ? "" : "none";
+    reconciliation.input.disabled = !businesscentral;
+    reconciliation.input.required = businesscentral;
+    selection.wrapper.hidden = standard.input.value !== "360giving";
+    selection.wrapper.style.display = standard.input.value === "360giving" ? "" : "none";
+    selection.input.disabled = standard.input.value !== "360giving";
+  };
+  standard.input.addEventListener("change", switchSource);
+  switchSource();
   const coverage = field("Coverage of this edition", "textarea");
   coverage.wrapper.classList.add("full");
   const file = field("Complete native ZIP handoff", "file"); file.input.accept = ".zip,application/zip"; file.wrapper.classList.add("full");
-  for (const item of [standard, label, sourceUrl, observedAt, license, selection, coverage, file]) grid.append(item.wrapper);
+  for (const item of [standard, label, sourceUrl, observedAt, license, selection, reconciliation, coverage, file]) grid.append(item.wrapper);
   for (const item of [label, sourceUrl, observedAt, license, coverage, file]) item.input.required = true;
   form.append(grid);
   const submit = node("button", "Receive complete source", "primary"); submit.type = "submit";
@@ -244,7 +360,9 @@ function sourcesView(container) {
       const selected = { standard: standard.input.value, label: label.input.value,
         coverage: { statement: coverage.input.value, sourceUrl: sourceUrl.input.value,
           observedAt: observedAt.input.value, license: license.input.value },
-        selection: standard.input.value === "360giving" ? { build: selection.input.value } : {} };
+        selection: standard.input.value === "businesscentral"
+          ? { reconciliationId: reconciliation.input.value.trim() }
+          : standard.input.value === "360giving" ? { build: selection.input.value } : {} };
       const original = await upload(file.input.files[0]);
       await action("source.receive", { ...selected, object: original.sha256 });
     } catch (error) { failure(error); } finally { submit.disabled = false; }
@@ -442,7 +560,7 @@ function filters(container, options = {}) {
   const status = node("select"), standard = node("select");
   for (const value of ["", ...(options.statuses || [])]) { const o = node("option", value || "All states"); o.value = value; status.append(o); }
   status.value = S.status;
-  for (const [value, text] of [["", "Both standards"], ["iati", "IATI"], ["360giving", "360Giving"]]) {
+  for (const [value, text] of [["", "All standards"], ["iati", "IATI"], ["360giving", "360Giving"], ["businesscentral", "Business Central"]]) {
     const o = node("option", text); o.value = value; standard.append(o);
   }
   standard.value = S.standard;
@@ -490,7 +608,7 @@ async function ledgerView(container, epoch) {
   container.append(heading("Financial ledger", "Amounts retain their original decimal text, source, currency, dates and financial meaning."));
   if (needPortfolio(container)) return;
   const p = S.portfolio, totals = p.financialTotals.slice(S.totalsOffset, S.totalsOffset + 50), summary = panel("Independent financial groups");
-  summary.append(node("p", "Awards, application requests, commitments, disbursements and budgets remain separate. Confirmed links keep both source records visible.", "small"));
+  summary.append(node("p", "Awards, requests, commitments, disbursements, budget cost, billable amounts, usage cost and sales retain separate meanings. Business Central local and project currency bases are separate views of the same native records. Included amounts may be partial where excluded or missing records remain.", "small"));
   summary.append(table(["Source edition", "Meaning and original dimensions", "Amount", "Included", "Excluded / missing"],
     totals.map(row => [sourceName(row.dimensions.sourceId), JSON.stringify(Object.fromEntries(Object.entries(row.dimensions).filter(([key]) => key !== "sourceId"))),
       { text: row.amount ?? "Missing", className: "number" }, row.includedRecords, row.excludedRecords + " / " + row.missingRecords])));
@@ -498,7 +616,7 @@ async function ledgerView(container, epoch) {
     nextOffset: S.totalsOffset + totals.length < p.financialTotals.length ? S.totalsOffset + totals.length : null },
     offset => { S.totalsOffset = offset; return render(); }));
   container.append(summary);
-  filters(container, { statuses: ["award", "application-request", "transactions", "budgets"] });
+  filters(container, { statuses: ["award", "application-request", "transactions", "budgets", "budget_cost", "billable_amount", "usage_cost", "sale_amount", "source-disposition"] });
   const result = await page("financial"); if (epoch !== S.epoch) return;
   container.append(table(["Original record", "Source edition", "Meaning", "Amount", "Currency", "Eligibility", "Original dimensions", "Detail"],
     result.rows.map(row => [row.originalId, sourceName(row.sourceId), row.kind, { text: row.value ?? "Missing", className: "number" },

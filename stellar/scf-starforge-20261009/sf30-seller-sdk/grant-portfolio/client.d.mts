@@ -17,7 +17,7 @@ export type OperationId = string;
 export type JsonValue = null | boolean | number | string | JsonValue[] | {[key:string]:JsonValue};
 export type JsonObject = {[key:string]:JsonValue};
 export type PortfolioTable = 'entities'|'financial'|'links'|'decisions'|'candidates'|'changes'|'sources'|ProgrammeTable|AwardTable|GovernanceTable|'planning_scenarios'|'planning_lines';
-export type SourceStandard = 'iati'|'360giving';
+export type SourceStandard = 'iati'|'360giving'|'businesscentral';
 export type RequestState = 'RUNNING'|'COMPLETED'|'FAILED';
 export type CorePortfolioAction = 'source.receive'|'portfolio.save'|'review.save'|'portfolio.export'|'portfolio.receive';
 export type PortfolioAction = CorePortfolioAction|DataverseAction|SupportAction;
@@ -29,9 +29,14 @@ export interface PortfolioFile { descriptor:FileDescriptor; response:Response; }
 export interface SourceCoverage {
   statement:string; sourceUrl:string; observedAt:string; license:string;
 }
-export interface SourceReceiveInput {
-  object:Sha256; standard:SourceStandard; label:string; coverage:SourceCoverage; selection?:JsonObject;
-}
+export interface BusinessCentralSelection { reconciliationId:Sha256; }
+export type SourceReceiveInput = {
+  object:Sha256; label:string; coverage:SourceCoverage;
+} & (
+  | {standard:'iati'; selection?:JsonObject}
+  | {standard:'360giving'; selection?:JsonObject}
+  | {standard:'businesscentral'; selection:BusinessCentralSelection}
+);
 export interface PortfolioReview { status:'draft'|'reviewed'|'needs-correction'; reviewer:string; note:string; }
 export interface PortfolioSaveInput {
   id?:PortfolioId; expectedPortfolioRevision?:number; name:string; notes:string;
@@ -70,9 +75,21 @@ export type CoreActionInput = {operationId:OperationId; expectedRevision?:number
   | {action:'portfolio.receive'; payload:PortfolioReceiveInput}
 );
 export type ActionInput = CoreActionInput|DataverseActionInput|SupportActionInput;
+/** Bounded source-list facts from the exact retained Business Central reconciliation. */
+export interface BusinessCentralFinancialSummary {
+  reconciliationId:Sha256; companyId:string; period:{from:string;to:string}; ready:boolean;
+  nativeRowCount:number; financialRowCount:number; eligibleFinancialRowCount:number;
+  findingCount:number; blockingFindingCount:number; currencyBases:('lcy'|'project')[];
+}
+export interface PortfolioSourceSummary {
+  id:Sha256; standard:SourceStandard; label:string; coverage:SourceCoverage;
+  selection:JsonObject|BusinessCentralSelection;
+  counts:{entities:number;financial:number}; object:FileDescriptor;
+  financialSummary?:BusinessCentralFinancialSummary;
+}
 export interface PortfolioState {
   schema:'stellar-forge.grant-portfolio.v1'; workspaceId:string; revision:number;
-  sources:JsonObject[]; portfolios:JsonObject[]; requests:JsonObject[];
+  sources:PortfolioSourceSummary[]; portfolios:JsonObject[]; requests:JsonObject[];
   [key:string]:unknown;
 }
 export interface RowsInput extends PortfolioSelection {

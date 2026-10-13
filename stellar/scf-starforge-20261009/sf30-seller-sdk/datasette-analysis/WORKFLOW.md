@@ -295,3 +295,18 @@ All local API calls require `X-Workflow-Capability` from the current private lau
 | POST /api/requests/{id}/acknowledge | Receive the original customer receipt |
 | POST /api/requests/{id}/export | Prepare the complete editable project |
 | POST /api/results | Retain the complete customer result and return its receipt |
+
+
+## BDNB territory and complete customer receiving
+
+The [BDNB product entry](../../../../products/ntico/bdnb-territory/README.md) composes
+original publisher files, explicit source dictionaries, territory selections,
+edition correspondence, individual reviews and complete Analysis reports,
+workbooks, streaming annexes and workspace archives in this same application.
+The mounted **BDNB territory** operator and exact CLI requests share its native
+database and request history.
+
+Use the [complete receiving programme](../../../../products/ntico/bdnb-territory/RECEIVING.md)
+for producer → customer review → returned archive → independent reopen, and the
+[original workflow profile](../../../../products/ntico/bdnb-territory/WORKFLOW.md)
+for commissioned API/Kestra/JMS delivery and its real recipient receipt.

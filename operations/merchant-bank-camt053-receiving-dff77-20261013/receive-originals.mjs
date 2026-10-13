@@ -8,7 +8,7 @@ const shortIssue=x=>({code:x.code,severity:x.severity,message:x.message,source:x
 for(const input of inputs){
  const bytes=readFileSync(new URL(input.local,import.meta.url));const out={name:input.name,label:input.label,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),sourceKind:input.sourceKind};
  try{
-  const report=readBankStatementSource({format:'CAMT053',file:{name:input.name,dataBase64:bytes.toString('base64')},accountNamespace:input.accountNamespace||'NORDEA-ISSUED-EXAMPLES',camt:{detailPolicy:'ENTRY_CURRENCY_TX_AMT'}});
+  const report=readBankStatementSource({format:'CAMT053',file:{name:input.name,dataBase64:bytes.toString('base64')},accountNamespace:input.accountNamespace||'NORDEA-ISSUED-EXAMPLES',camt:{detailPolicy:'ENTRY_CURRENCY_TX_AMT',...input.camt}});
   if(input.expectedRejection)throw new Error('Expected original-source condition was not retained');
   assert.equal(report.file.sha256,out.sha256);assert.equal(report.bytes.compare(bytes),0);assert.equal(report.statements.length,input.expected.statements.length);
   assert.equal(report.camt.messageVersion,input.expected.messageVersion);

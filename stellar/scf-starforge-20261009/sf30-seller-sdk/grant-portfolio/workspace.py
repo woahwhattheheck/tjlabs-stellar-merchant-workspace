@@ -34,6 +34,27 @@ from workspace_extensions import (
 ACTIONS = ("source.receive", "portfolio.save", "review.save", "portfolio.export", "portfolio.receive") + extension_actions()
 
 
+def source_summary(source):
+    """Compact source-list contract; complete native records remain on source()."""
+    result = {key: source[key] for key in
+              ("id", "standard", "label", "coverage", "selection", "counts", "object")}
+    if source["standard"] == "businesscentral":
+        native = source["native"]
+        summary = native["summary"]
+        result["financialSummary"] = {
+            "reconciliationId": native["reconciliationId"],
+            "companyId": native["scope"]["companyId"],
+            "period": native["period"],
+            "ready": summary["ready"],
+            "nativeRowCount": native["nativeRowCount"],
+            "financialRowCount": native["financialRowCount"],
+            "eligibleFinancialRowCount": native["eligibleFinancialRowCount"],
+            "findingCount": len(summary["findings"]),
+            "blockingFindingCount": sum(bool(item["blocking"]) for item in summary["findings"]),
+            "currencyBases": sorted({item["currency_basis"] for item in summary["totals"]})}
+    return result
+
+
 def portfolio_documents(history):
     """Original programme objects also cover frozen award contributor editions."""
     selected = dict(programme_objects(history))
@@ -210,8 +231,7 @@ class Workspace:
             requests = [parse(x[0]) for x in db.execute("SELECT body FROM requests ORDER BY rowid DESC")]
             return {"schema": SCHEMA, "workspaceId": self.marker["workspaceId"],
                     "revision": self.current_revision(db),
-                    "sources": [{k: x[k] for k in ("id", "standard", "label", "coverage", "selection", "counts", "object")}
-                                for x in sources],
+                    "sources": [source_summary(source) for source in sources],
                     "portfolios": [{k: x[k] for k in ("id", "revision", "snapshot", "name", "review", "counts", "updatedAt")}
                                    for x in portfolios],
                     "requests": [{k: x[k] for k in ("id", "state", "action", "inputSha256", "updatedAt", "error")
@@ -325,7 +345,7 @@ class Workspace:
         shape(payload, ("object", "standard", "label", "coverage", "selection"),
               ("object", "standard", "label", "coverage"))
         sha(payload["object"])
-        require(payload["standard"] in {"iati", "360giving"}, "Select an original source standard")
+        require(payload["standard"] in {"iati", "360giving", "businesscentral"}, "Select an original source standard")
         label = short(payload["label"], "Source label", 240)
         coverage = shape(payload["coverage"], ("statement", "sourceUrl", "observedAt", "license"),
                          ("statement", "sourceUrl", "observedAt", "license"))
@@ -377,6 +397,17 @@ class Workspace:
                                     (source["id"], row["entityKey"], canonical(row).decode()))
                 else:
                     sha(row["rowKey"])
+                    related = row.get("relatedEntityKeys", [])
+                    require(isinstance(related, list) and len(related) <= 64
+                            and all(isinstance(key, str) for key in related)
+                            and len(set(related)) == len(related)
+                            and row["entityKey"] not in related,
+                            "Financial related records must be distinct from their primary record")
+                    for key in [row["entityKey"], *related]:
+                        sha(key)
+                        require(self.db.execute("SELECT 1 FROM entities WHERE source_id=? AND entity_key=?",
+                                    (source["id"], key)).fetchone() is not None,
+                                "A financial record selects an entity outside its complete source edition")
                     self.db.execute("INSERT INTO financial VALUES(?,?,?,?)",
                                     (source["id"], row["rowKey"], row["entityKey"], canonical(row).decode()))
         self.db.execute("INSERT INTO sources VALUES(?,?)", (source["id"], canonical(source).decode()))
@@ -628,8 +659,13 @@ class Workspace:
         where, args = "portfolio_id=? AND revision=? AND table_name=?", [identifier(ident), revision(version), table]
         for key, value in (("status", status), ("standard", standard), ("entity_key", entityKey)):
             if value:
-                where += " AND " + key + "=?"
-                args.append(value)
+                if key == "entity_key" and table == "financial":
+                    where += (" AND (entity_key=? OR EXISTS (SELECT 1 FROM "
+                              "json_each(derived.body,'$.relatedEntityKeys') AS related WHERE related.value=?))")
+                    args.extend((value, value))
+                else:
+                    where += " AND " + key + "=?"
+                    args.append(value)
         if search:
             where += " AND instr(search,?)>0"
             args.append(search.casefold())
@@ -653,8 +689,10 @@ class Workspace:
             return {"portfolioId": ident, "revision": version, "snapshot": portfolio["snapshot"],
                     "entity": parse(row[0]), "source": self.source(source_id, db),
                     "financial": [parse(item[0]) for item in db.execute(
-                        "SELECT body FROM financial WHERE source_id=? AND entity_key=? ORDER BY row_key",
-                        (source_id, entity_key_value))]}
+                        "SELECT body FROM financial WHERE source_id=? AND (entity_key=? OR EXISTS "
+                        "(SELECT 1 FROM json_each(financial.body,'$.relatedEntityKeys') AS related "
+                        "WHERE related.value=?)) ORDER BY row_key",
+                        (source_id, entity_key_value, entity_key_value))]}
 
     def execute(self, ident):
         with self.execution:

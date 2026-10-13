@@ -890,6 +890,13 @@
         "source-table-intake.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/grant-review-working-copy.mjs",
+      [
+        "grant-review-working-copy.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

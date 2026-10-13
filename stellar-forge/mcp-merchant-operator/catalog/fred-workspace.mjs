@@ -1,4 +1,5 @@
 // MIT. Static FRED tool metadata; imports no source, merchant or buyer runtime.
+import { fredOperatingTools } from './fred-operating.mjs';
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
 const alias = { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]{0,63}$' };
 const operation = { type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$' };
@@ -112,6 +113,7 @@ export const fredFileSelection = {
 };
 export function fredWorkspaceTools(tool) {
   return [
+    ...fredOperatingTools(tool),
     tool('merchant_fred_workspaces', 'List original configured economic workspace aliases and source/profile names.', {}, [], read),
     tool('merchant_fred_status', 'Inspect the original project, revision, source and publication counts, native merchant, buyer configuration and pending acquisition.', workspace, ['workspace'], read),
     tool('merchant_fred_inputs', 'List host-retained source aliases and the complete configured public merchant/payment profiles.', workspace, ['workspace'], read),

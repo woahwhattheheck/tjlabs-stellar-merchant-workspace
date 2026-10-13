@@ -27,7 +27,8 @@
     "./grant/issuer-context/source": "./source/stellar-forge/developer-site/dist/grant-issuer-source.mjs",
     "./grant/issuer-context/core": "./source/stellar-forge/developer-site/dist/grant-issuer-core.mjs",
     "./grant/static-reader": "./source/stellar-forge/developer-site/grant-static-export.mjs",
-    "./grant/financial-walkthrough": "./source/stellar-forge/developer-site/grant-financial-walkthrough.mjs"
+    "./grant/financial-walkthrough": "./source/stellar-forge/developer-site/grant-financial-walkthrough.mjs",
+    "./grant/review-round/working-copy": "./source/stellar-forge/developer-site/dist/grant-review-working-copy.mjs"
   },
   "commands": {
     "grant-application": "stellar-forge/developer-site/grant.mjs",

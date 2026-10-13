@@ -18,6 +18,7 @@ for item in manifest["files"]:
  assert hashlib.sha1(b"blob "+str(len(data)).encode()+b"\0"+data).hexdigest()==item["git_blob_sha1"],item["path"]
  texts[item["path"]]=data.decode("utf-8")
 cfg=json.loads(texts["source-config.json"])
+cfg["bundesbankOriginals"]=json.loads(texts["BUNDESBANK_ORIGINALS.json"])
 cfg["nodeProgram"]=texts["receive-originals.mjs"]
 cfg["application"]["nodeProgram"]=texts["receive-application.mjs"]
 cfg["artifactDirectory"]=str(pathlib.Path(args.artifacts).expanduser().resolve())

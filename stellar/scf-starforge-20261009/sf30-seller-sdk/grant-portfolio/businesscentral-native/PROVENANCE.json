@@ -1,0 +1,69 @@
+{
+  "schema": "stellar-forge.businesscentral-engine-source.v1",
+  "repository": "woahwhattheheck/public-commons-sprint-2026",
+  "maintainedRoot": "services/project-grant-finance/workspace",
+  "sourcePacketBlob": "cd9b18f5b16eb0dd8ac659c8b55d27db27720a27",
+  "sourcePacketSha256": "fb6bd16af3b45f071bb5aad5e4c9d16746e23f59be1c2dc88282fa34a4652149",
+  "files": {
+    "pmrs/errors.py": {
+      "bytes": 942,
+      "gitBlob": "6893cfcbc5819321d6f69300851f065cb53dbf37"
+    },
+    "pmrs/canonical.py": {
+      "bytes": 7468,
+      "gitBlob": "87cdbd569c4f9b964229f0ee804a326b665e147e"
+    },
+    "pmrs/store.py": {
+      "bytes": 15439,
+      "gitBlob": "9d447edfe79a30e57dc08023d40e2fd76e437118"
+    },
+    "pmrs/__init__.py": {
+      "bytes": 325,
+      "gitBlob": "3698dec62bfd714c98896a3ac99660772c8e51c2"
+    },
+    "pmrs/connection.py": {
+      "bytes": 9923,
+      "gitBlob": "9a96b5d6dc236243f0b513642705e33e5b505c0e"
+    },
+    "pmrs/source.py": {
+      "bytes": 15864,
+      "gitBlob": "ee270f6966d56a48d7df365d49e50e9e790af9f8"
+    },
+    "pmrs/reconcile.py": {
+      "bytes": 24764,
+      "gitBlob": "9dd47b68ae46c86d4e877ac67b93529a40a2de1b"
+    },
+    "pmrs/dataverse.py": {
+      "bytes": 16561,
+      "gitBlob": "9c2c0599294a8803125727cef79a618ececc0b6e"
+    },
+    "pmrs/delivery.py": {
+      "bytes": 29044,
+      "gitBlob": "6827cad6cf17aa0c504b7bac1a4323cc601d1036"
+    },
+    "pmrs/reports.py": {
+      "bytes": 7656,
+      "gitBlob": "5bc03c5e38c9c0947f5a37e4f11e29c0e3108d3a"
+    },
+    "pmrs/package.py": {
+      "bytes": 25708,
+      "gitBlob": "01d9106130f8d3ef8a41c599b1f3d9e2f42b9727"
+    },
+    "pmrs/workspace.py": {
+      "bytes": 24084,
+      "gitBlob": "5412af1c478cfcf45112f44e322252800e1a9cd8"
+    },
+    "pmrs/server.py": {
+      "bytes": 13216,
+      "gitBlob": "bc3d6775b6890dfca901a7478bd8744c56e63ea4"
+    },
+    "pmrs/cli.py": {
+      "bytes": 8938,
+      "gitBlob": "82e32e363441dcc3a60f76b47db010d0fa21079d"
+    },
+    "pmrs/__main__.py": {
+      "bytes": 47,
+      "gitBlob": "13be635566e79adccc98892cc67a44e636908b35"
+    }
+  }
+}

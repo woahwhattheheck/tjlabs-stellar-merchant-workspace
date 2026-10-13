@@ -8,6 +8,7 @@ import { managedState, managedHome, openManagedHome, reviewManagedAdoption } fro
 import { applicationRunPage, applicationHistoryLimit } from './application-history.mjs';
 import { readApplicationTerminal, sendApplicationTerminal } from './application-command.mjs';
 import { applicationEnvironment } from './application-environment.mjs';
+import { managedResult, managedResultUncertain } from './managed-result.mjs';
 import { defaultApplicationProviders, applicationProviderForKind } from './application-providers.mjs';
 import { prepareProviderApplication, retainedApplicationArguments } from './application-provider.mjs';
 import { absolute, privateDirectory, makePrivate, regular, readJSON, saveJSON, recordId, operationId,
@@ -153,10 +154,11 @@ async function operationView(root, id, observations = null) {
           message: 'The original operation changed during this refresh. Refresh its current status.' } };
     }
   } else active = Boolean(state) && await operationRunning(join(directory, 'worker.lock'));
-  const result = await readJSON(join(directory, 'command-result.json'), true);
+  const commandResult = await readJSON(join(directory, 'command-result.json'), true);
+  const outcome = managedResult(state, commandResult);
   const stop = await readJSON(join(directory, 'stop.json'), true);
   const url = await readJSON(join(directory, 'application-url.json'), true);
-  return { id, request, state, result, active, stop, ...(observation ? { observation } : {}),
+  return { id, request, state, ...outcome, active, stop, ...(observation ? { observation } : {}),
     phase: !request ? 'PENDING' : !state ? 'QUEUED' : state.phase === 'RUNNING' && active !== true
       ? active === null ? 'OBSERVATION_UNAVAILABLE' : 'INTERRUPTED' : state.phase,
     url: url?.operationId === id ? url : null };
@@ -214,7 +216,8 @@ async function view(root, saved, { homes = null, historyLimit = 30, observations
   const adoption = release ? null : connection;
   const phase = !release ? 'CONNECTING' : !current ? 'READY' :
     current.active ? current.stop ? 'STOPPING' : current.url ? 'RUNNING' : 'STARTING' :
-      ['SUCCEEDED', 'CANCELLED'].includes(current.phase) ? current.result?.state === 'EXITED' || current.result?.state === 'LAUNCH_FAILED' ? 'FAILED' : 'STOPPED' :
+      ['SUCCEEDED', 'CANCELLED'].includes(current.phase) ? managedResultUncertain(current.result) ? current.result.state :
+        current.result?.state === 'EXITED' || current.result?.state === 'LAUNCH_FAILED' ? 'FAILED' : 'STOPPED' :
         current.phase;
   return { ...saved, phase, release: release ? { id: release.id, digest: release.digest, sourceCommit: release.sourceCommit } : null,
     home: home ? { id: home.id, directory: home.directory, revision: home.revision, phase: home.phase } : null,
@@ -475,6 +478,7 @@ export async function applicationOutput(root, { applicationId, operationId: id }
     output = { available: false, state: error.code === 'ENOENT' ? 'NOT_CREATED' : 'UNAVAILABLE',
       text: '', totalBytes: 0, offset: 0, error: errorView(error) };
   }
-  return { operationId: id, phase: value.phase, active: value.active, observation: value.observation, result: value.result, output };
+  return { operationId: id, phase: value.phase, active: value.active, observation: value.observation,
+    result: value.result, commandResult: value.commandResult, resultSource: value.resultSource, output };
 }
 export { readApplicationTerminal, sendApplicationTerminal };
