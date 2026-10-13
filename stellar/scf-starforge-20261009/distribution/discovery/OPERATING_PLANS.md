@@ -34,6 +34,7 @@ Saved plans and drafts use IndexedDB at the listener's browser origin. Use the s
 | Import complete plan | A new plan or later revisions extending an identical saved history |
 | Keep incoming as a copy | A divergent incoming history under its own new identity |
 | Save as a copy | The complete original history plus selected edited content under a new identity |
+| Prepare next cycle | Complete original history plus planned work for an explicit next period, dates and selected reference files |
 | Markdown / HTML handover | The selected saved revision, with work, results, arguments and registration details |
 | Working draft JSON | A valid editable draft for the CLI edit operation, retaining its original base revision |
 | Current source comparison | Per-step comparison between the selected saved revision and loaded catalog |
@@ -44,6 +45,101 @@ Imports compare every shared revision. Reimporting the same file reuses the curr
 Each editor session saves its own draft. When another tab advances the saved plan, saving an older draft reports the conflict and retains that work. **Save as a copy** keeps its edits. **Open current saved revision** prepares the latest saved content and retains the prior draft in the recovery selector. Removing a step or continuing historical content also retains the previous draft.
 
 Readable handovers use saved revisions; save the current work first when it belongs in the handover. The HTML export is a standalone printable document with a monochrome layout and escaped customer text. Complete JSON is the editable transfer format.
+
+
+## Prepare the next operating cycle
+
+Use **Prepare next cycle** when a saved customer procedure should run for a new period. Select the exact saved source revision, enter the next title and period, and review the complete preparation before creating it. The new plan receives an independent identity and one new saved revision after the complete unchanged original history. Its origin records the selected original plan and revision. Choosing an older source revision retains all the later original revisions as history too.
+
+The new current revision starts every step **Planned** with an empty recorded result. Customer, plan and step owners, purpose, notes, receiving instructions, step order and IDs, work, inputs, expected results, exact command arguments, source registrations and runtime selections remain as entered in the source. Review period-specific wording, input paths, command dates and receiving destinations before performing the new work. This preparation creates an operating record; it does not run commands or schedule unattended work.
+
+Choose the due-date policy explicitly:
+
+| Policy | New current due dates |
+| --- | --- |
+| Clear | Every due date is empty, ready for explicit scheduling |
+| Shift | Every dated step moves by the whole calendar-day difference between the entered original and next anchor; undated steps stay undated |
+| Keep | Every exact original due date remains visible in the preview |
+
+Shifting uses UTC calendar dates and the same day offset for every step. It preserves spacing across month boundaries and leap days. It does not mean “same weekday” or “same day of next month.” The preview lists each original and resulting due date, the original owner and selected reference files. Invalid or out-of-range dates keep the preparation open for correction.
+
+All previous output files remain complete in their original saved revisions. The next current revision carries only files explicitly selected under **Original files to carry as references**. Download and inspect an original before choosing it. Names, notes, media types and every byte remain unchanged. Unselected prior reports stay in history and do not appear as new-period outputs. Record the actual new outputs through **Add result files** as the new cycle progresses.
+
+The browser retains unfinished preparation fields with this editor session's original working draft, including a blank title/period or incomplete anchor dates. Closing and reopening preparation recovers those choices. The original unsaved command arguments and customer edits remain separate from the chosen saved revision. **Download preparation JSON** carries the full source history and unfinished choices; **Open preparation JSON** receives that original history through the existing matching-history rules before restoring the choices. A conflicting original history stays available through its complete file and the ordinary import/copy workflow.
+
+**Preview next cycle** validates the entire result and shows what will change. **Create cycle and open** saves the new plan and its completed-preparation link in one original IndexedDB transaction. It checks that the source history still matches the preview; if another tab advances it, close and reopen preparation to preview that complete newer history with your choices retained. Reopening a completed preparation offers **Open created cycle**. Changing a preparation field explicitly begins another preparation.
+
+Complete plan JSON and HTML downloads from the preview carry that exact prepared plan identity and saved revision. The normal editor can reopen its complete JSON and receive later matching history. Select an original revision in **Saved history** to read earlier results or download the exact original files. The full 32 MiB plan/preparation limit includes the retained history and all file bytes.
+
+A generic cycle is an independent procedure. Product-specific cases continue through their original applications and current source selection. Grant reporting's original preparation accepts the actual new Grant case, Source Tables and reporting dates. Managed Grant trackers retain their programme decisions and use their own preparation; their generic cycle control is disabled. IATI, Support and economic cases likewise keep their original source and receiving identities. Preparing a generic cycle does not update those cases or make its new identity a later return to the original procedure.
+
+### CLI preparation and receiving
+
+Preview the complete result before creating its new file:
+
+~~~sh
+starforge discover plan cycle-preview \
+  --file october-plan.json --revision 4 \
+  --title "Customer close · November" --period "November 2026" \
+  --dates shift --shift-from 2026-10-01 --shift-to 2026-11-01 \
+  --out november-preview.json
+
+starforge discover plan cycle \
+  --file october-plan.json --revision 4 \
+  --title "Customer close · November" --period "November 2026" \
+  --dates shift --shift-from 2026-10-01 --shift-to 2026-11-01 \
+  --references selected-references.json --out november-plan.json
+
+starforge discover plan show --file november-plan.json \
+  --format html --out november-handover.html
+
+starforge discover plan receive --file november-plan.json \
+  --out received-november-plan.json
+~~~
+
+The optional reference file contains an array of exact original identities:
+
+~~~json
+[
+  { "stepId": "actual-source-step-id", "fileId": "actual-original-file-id" }
+]
+~~~
+
+Use the same references in preview and creation. Omit --references to carry no old files in the new current revision. The complete original file history remains. --dates defaults to clear; keep retains the entered dates; shift requires both anchors. --revision chooses saved content while retaining the entire later history. --id optionally fixes the new independent plan identity. cycle requires a new output path; cycle-preview prints the complete preview or writes its explicit new path. Existing files remain preserved by the original create-only writer.
+
+### Typed application integration
+
+~~~js
+import {
+  previewOperatingPlanCycle, createOperatingPlanCycle,
+} from '@tokenjunkielabs/starforge-merchant/operator/operating-plans';
+
+const options = {
+  revision: 4,
+  title: 'Customer close · November',
+  period: 'November 2026',
+  datePolicy: 'shift',
+  shiftFrom: '2026-10-01',
+  shiftTo: '2026-11-01',
+  referenceFiles: [{ stepId: originalStepId, fileId: originalFileId }],
+};
+const preview = previewOperatingPlanCycle(originalPlan, options);
+const nextCycle = createOperatingPlanCycle(originalPlan, {
+  ...options, id: crypto.randomUUID(),
+});
+~~~
+
+The preview retains the full prepared content, exact source revision and history count, date policy/day shift, per-step date comparison, owner and complete reference-file metadata. The constructor reuses the same preparation, validates all original history and creates one explicit new revision even for an otherwise identical empty procedure. Both functions return independent values.
+
+## Maintained build and customer receiving: inspect the exact rendered product
+
+Bryce's rendered-product instruction applies to this maintained application, its exports, resumed work and delegated workers. Before describing an outgoing edition as customer-ready, open and run that exact edition, look at its actual rendered screens or screenshots, and operate its key controls. A successful HTTP response, DOM count, screenshot capture without looking, source review or unit result does not replace seeing and using the product.
+
+Use the existing source/customer receiving operation and exact outgoing files. Inspect desktop/screenshare and narrow/mobile layouts, populated and empty content, loading and error states, readable controls and tables, navigation, download/export and independent reopening. For this workflow, operate saved-source selection, each date policy, reference-file selection and original download, unfinished-preparation recovery, preview, creation, original-history navigation and complete JSON/HTML receiving. Inspect a validation error and the saved-history-change recovery. Correct clipping, overflow, cramped or unstyled presentation, unreadable text and broken actions directly in the maintained source, then reopen the corrected exact edition.
+
+Every outgoing attachment is part of this requirement. Open the final HTML and actual files, use the editable JSON in its receiver, and extract an outgoing archive before opening its contained deliverables. For other delivered types, inspect the applicable final PDF/report pages and use the actual presentation, spreadsheet, map or media. For video, review final voice/audio and pacing as well as visible frames. Keep the industrial presentation clean: readable typography, spacing, hierarchy and tables, restrained controls and useful empty/error states.
+
+Carry this complete requirement into the actual instructions and receiving guide used by delegated or resumed workers. Preserve the original source, customer case, save/receiving identity and applicable owner deadline. Continue the existing operation rather than creating a separate validation product, broad test suite, paid CI run, watcher or replacement customer case. Retain the inspected exact source, actual operated outputs and any concrete repairs with that original delivery.
 
 ## Review work returned by another operator
 
@@ -113,8 +209,8 @@ starforge discover plan receive \
 
 starforge discover plan copy \
   --file /absolute/customer/received-plan.json \
-  --title "Next reporting period" \
-  --out /absolute/customer/next-period-plan.json
+  --title "Independent working copy" \
+  --out /absolute/customer/copied-plan.json
 ~~~
 
 Create, edit, add, receive and copy require a new output path. Exports use the existing create-only writer: a temporary file is synced and linked into its new destination. Existing files are preserved.

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { bytes, digest, readPrivate, hashPrivate, createFile, atomicJson, privateDirectory, fault, stamp }
   from '../postgres/publisher/files.mjs';
+import { verifyDcatSemanticRuntimeEnvironment } from './dcat-semantic-runtime.mjs';
 
 export const DCAT_SEMANTIC_NATIVE_SCHEMA = 'stellar-forge.dcat-semantic-native-result.v1';
 export const DCAT_SEMANTIC_MAX_INPUT = 64 * 1024 * 1024;
@@ -272,6 +273,9 @@ export function createDcatSemanticNative({root,environment=process.env}) {
   need(typeof root==='string' && isAbsolute(root),'DCAT_SEMANTIC_ROOT_INVALID');
   root=resolve(root);const active=new Map();let closed=false;
   const selectedPython=environment.SCF_DCAT_SEMANTIC_PYTHON || environment.SCF_DCAT_PYTHON || 'python3';
+  const runtimeEnvironment=Object.fromEntries(['SCF_DCAT_SEMANTIC_RUNTIME',
+    'SCF_DCAT_SEMANTIC_RUNTIME_SHA256','SCF_DCAT_SEMANTIC_PYTHON']
+    .filter(key=>environment[key]!==undefined).map(key=>[key,environment[key]]));
   const childEnvironment={};
   for(const key of ['PATH','LANG','LC_ALL','SYSTEMROOT'])if(environment[key])childEnvironment[key]=environment[key];
   childEnvironment.PYTHONDONTWRITEBYTECODE='1';childEnvironment.PYTHONUNBUFFERED='1';
@@ -380,11 +384,18 @@ export function createDcatSemanticNative({root,environment=process.env}) {
     return finish(directory,{schema:DCAT_SEMANTIC_NATIVE_SCHEMA,runId,status:'INTERRUPTED',
       requestSha256,engine:null,prepared:null,snapshot:null,coverage:null,validation:null,startedAt,
       ...comparisonFields(savedRequest),
+      ...(savedRequest?.runtimeBinding?{runtimeBinding:savedRequest.runtimeBinding}:{}),
       error:{code:'DCAT_SEMANTIC_OWNER_INTERRUPTED',message:'The prior owner ended before a complete run receipt was retained.'}});
   }
   async function dispatch(handle,argv,cwd,logName,seconds) {
     need(selectedPython==='python3' || (typeof selectedPython==='string' && isAbsolute(selectedPython)),
       'DCAT_SEMANTIC_PYTHON_INVALID','Configure an absolute semantic Python executable.');
+    if(handle.stopKind)throw fault('DCAT_SEMANTIC_STOPPED',handle.stopKind);
+    const runtimeBinding=await verifyDcatSemanticRuntimeEnvironment(runtimeEnvironment,
+      {expectedSha256:handle.runtimeBinding?.receiptSha256});
+    need((runtimeBinding?.receiptSha256 ?? null)===(handle.runtimeBinding?.receiptSha256 ?? null)
+      && (!runtimeBinding || runtimeBinding.python===selectedPython),
+      'DCAT_SEMANTIC_RUNTIME_BINDING_CHANGED','The selected prepared runtime changed before native dispatch.');
     if(handle.stopKind)throw fault('DCAT_SEMANTIC_STOPPED',handle.stopKind);
     const log=await open(join(handle.directory,logName),constants.O_CREAT|constants.O_EXCL|constants.O_WRONLY
       |(constants.O_NOFOLLOW??0),0o600);
@@ -435,22 +446,39 @@ export function createDcatSemanticNative({root,environment=process.env}) {
   }
   async function execute(spec,options,handle,kind) {
     const {selected,value}=kind==='comparison'?comparisonRequest(spec,root):request(spec);
-    const directory=handle.directory,raw=bytes(value),roles={};
+    const directory=handle.directory,roles={};
+    const retainedRequest=await exists(join(directory,'request.json'))
+      ?await readPrivate(join(directory,'request.json'),MAX_CONTROL):null;
+    if(retainedRequest) {
+      // Runtime paths in an existing request are historical custody. Replaying a
+      // retained result never requires the sender's interpreter to exist here.
+      const saved=JSON.parse(retainedRequest);
+      if(Object.hasOwn(saved,'runtimeBinding'))value.runtimeBinding=saved.runtimeBinding;
+    }
     const prior=await completed(directory,spec.runId);
+    if(!prior && !retainedRequest) {
+      handle.runtimeBinding=await verifyDcatSemanticRuntimeEnvironment(runtimeEnvironment);
+      if(handle.runtimeBinding) {
+        need(handle.runtimeBinding.python===selectedPython,'DCAT_SEMANTIC_RUNTIME_BINDING_CHANGED');
+        value.runtimeBinding=handle.runtimeBinding;
+      }
+    }
+    const raw=bytes(value);
     if(prior) {need(prior.requestSha256===digest(raw),'DCAT_SEMANTIC_REPLAY_CHANGED',undefined,409);handle.committing=true;return prior;}
-    if(await exists(join(directory,'request.json'))) {
-      const saved=await readPrivate(join(directory,'request.json'),MAX_CONTROL);
-      need(saved.equals(raw),'DCAT_SEMANTIC_REPLAY_CHANGED',undefined,409);
+    if(retainedRequest) {
+      need(retainedRequest.equals(raw),'DCAT_SEMANTIC_REPLAY_CHANGED',undefined,409);
       handle.committing=true;
       return finish(directory,{schema:DCAT_SEMANTIC_NATIVE_SCHEMA,runId:spec.runId,status:'INTERRUPTED',
         requestSha256:digest(raw),engine:null,prepared:null,snapshot:null,coverage:null,validation:null,
-        ...comparisonFields(value),startedAt:null,error:{code:'DCAT_SEMANTIC_PRIOR_OWNER_ENDED',
+        ...comparisonFields(value),...(value.runtimeBinding?{runtimeBinding:value.runtimeBinding}:{}),
+        startedAt:null,error:{code:'DCAT_SEMANTIC_PRIOR_OWNER_ENDED',
           message:'This retained run was interrupted. Create an explicitly linked retry to run the same inputs again.'}});
     }
     await once(join(directory,'request.json'),raw);handle.accepted=true;
     const result={schema:DCAT_SEMANTIC_NATIVE_SCHEMA,runId:spec.runId,status:'FAILED',
       requestSha256:digest(raw),engine:null,prepared:null,snapshot:null,coverage:null,validation:null,
-      ...comparisonFields(value),startedAt:stamp(),error:null};
+      ...comparisonFields(value),...(value.runtimeBinding?{runtimeBinding:value.runtimeBinding}:{}),
+      startedAt:stamp(),error:null};
     const update=async phase=>{
       handle.phase=phase;
       const state={schema:'stellar-forge.dcat-semantic-native-state.v1',runId:spec.runId,status:'RUNNING',
@@ -567,7 +595,8 @@ export function createDcatSemanticNative({root,environment=process.env}) {
     need(!closed,'DCAT_SEMANTIC_OWNER_CLOSED');identifier(spec?.runId);
     need(!active.has(spec.runId),'DCAT_SEMANTIC_RUN_ACTIVE','This native run already has an owner.',409);
     const handle={runId:spec.runId,directory:join(root,spec.runId),phase:'preparing',stopKind:null,
-      child:null,operation:null,jobId:null,stopChild:null,promise:null,stopTask:null,committing:false,accepted:false};
+      child:null,operation:null,jobId:null,stopChild:null,promise:null,stopTask:null,committing:false,accepted:false,
+      runtimeBinding:null};
     active.set(spec.runId,handle);
     const onAbort=()=>{stop(handle,'CANCELLED').catch(error=>{handle.stopError=error;handle.stopChild?.();});};
     handle.promise=(async()=>{

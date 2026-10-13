@@ -274,6 +274,27 @@ export async function createMerchantOperatorClient(input,{signal}={}) {
         /^\/downloads\/invoices\/[0-9a-f-]{36}$/.test(ticket.url??''),'MERCHANT_OPERATOR_EXPORT_CHANGED');
       return receiveFile(options,identity,ticket.url,ticket,destination,{signal,authenticated:false});
     },
+    async previewInvoiceDelivery(value,settings={}) {
+      const original=id(value),preview=await request(invoicePath(original)+'/delivery',readSettings(settings));
+      need(preview.schema==='stellar-forge.merchant-invoice-delivery.v1'&&preview.invoiceId===original&&
+        preview.owner?.storeId===identity.storeId&&preview.owner?.tenantId===identity.tenantId&&SHA.test(preview.revision??'')&&
+        Array.isArray(preview.members)&&Array.isArray(preview.offers),'MERCHANT_OPERATOR_INVOICE_DELIVERY_CHANGED');
+      return preview;
+    },
+    async prepareInvoiceDelivery(value,revision,settings={}) {
+      const original=id(value);need(SHA.test(revision??''),'INVOICE_DELIVERY_REVIEW_REQUIRED');
+      const ticket=await request(invoicePath(original)+'/delivery/export?revision='+encodeURIComponent(revision),readSettings(settings));
+      fileIdentity(ticket);need(ticket.source?.storeId===identity.storeId&&ticket.source?.tenantId===identity.tenantId&&
+        ticket.source?.revision===revision&&ticket.selection?.invoiceId===original&&ticket.selection?.revision===revision&&
+        /^\/downloads\/invoices\/[0-9a-f-]{36}$/.test(ticket.url??''),'MERCHANT_OPERATOR_INVOICE_DELIVERY_CHANGED');
+      return ticket;
+    },
+    async downloadInvoiceDelivery(ticket,destination,{signal}={}) {
+      need(object(ticket)&&ticket.source?.storeId===identity.storeId&&ticket.source?.tenantId===identity.tenantId&&
+        SHA.test(ticket.source?.revision??'')&&ticket.selection?.revision===ticket.source.revision&&UUID.test(ticket.selection?.invoiceId??'')&&
+        /^\/downloads\/invoices\/[0-9a-f-]{36}$/.test(ticket.url??''),'MERCHANT_OPERATOR_INVOICE_DELIVERY_CHANGED');
+      return receiveFile(options,identity,ticket.url,ticket,destination,{signal,authenticated:false});
+    },
     async downloadInvoiceResult(value,destination,{signal}={}) {
       const detail=await client.inspectInvoice(value,{signal});
       need(detail.order?.id===value&&object(detail.order.result),'MERCHANT_OPERATOR_RESULT_NOT_READY');

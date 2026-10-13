@@ -3,12 +3,11 @@ import { randomUUID } from 'node:crypto';
 import { readFile, stat, realpath, open, mkdtemp, link, rm } from 'node:fs/promises';
 import { resolve, basename, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { loadCommandCatalog } from './load.mjs';
 import { saveExport, saveTextExport } from './write-json.mjs';
 import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapshotRegistration,
   operatingPlanDraft, operatingPlanRevision, saveOperatingPlanRevision,
   createOperatingFile, addOperatingFile, removeOperatingFile, operatingFileBytes, operatingFileSummary, OPERATING_FILE_MAX_BYTES, addOperatingStep, compareOperatingPlan,
-  summarizeOperatingPlan, receiveOperatingPlan, forkOperatingPlan,
+  summarizeOperatingPlan, receiveOperatingPlan, forkOperatingPlan, previewOperatingPlanCycle, createOperatingPlanCycle,
   renderOperatingPlanMarkdown, renderOperatingPlanHTML } from './operating-plan.mjs';
 
 export const OPERATING_PLAN_HELP = [
@@ -23,18 +22,22 @@ export const OPERATING_PLAN_HELP = [
   'starforge discover plan compare --file PLAN.json [--revision N] [--out NEW.json]',
   'starforge discover plan receive --file INCOMING.json [--existing CURRENT.json] --out NEW.json',
   'starforge discover plan copy --file PLAN.json [--title TITLE] [--id ID] --out NEW.json',
+  'starforge discover plan cycle --file PLAN.json --title TITLE --period PERIOD [--revision N] [--dates clear|keep|shift] [--shift-from YYYY-MM-DD --shift-to YYYY-MM-DD] [--references FILES.json] --out NEW.json',
+  'starforge discover plan cycle-preview --file PLAN.json --title TITLE --period PERIOD [same cycle options] [--out NEW.json]',
   'starforge discover plan attach --file PLAN.json --step-id STEP --attachment OUTPUT [--attachment OUTPUT ...] [--note TEXT] --out NEW.json',
   'starforge discover plan files --file PLAN.json [--revision N] [--step-id STEP] [--out NEW.json]',
   'starforge discover plan extract --file PLAN.json --step-id STEP --attachment-id ID [--revision N] --out NEW',
   'starforge discover plan remove-file --file PLAN.json --step-id STEP --attachment-id ID --out NEW.json',
   '',
   'Create fields: --id, --title, --customer, --purpose, --period, --owner, --receiving, --notes.',
+  'Cycle references: --references reads a JSON array of {stepId,fileId}; omitted means no files in the new current revision.',
+  'Cycle preparation keeps all original history and owners, resets progress/results and requires an explicit new period.',
   'Catalog reads: --source-root DIRECTORY, --selection PRODUCT.',
   'A --step value is an exact Command finder registration ID. Repeated selections are separate task steps.',
-  'Create, edit, add, receive, copy, attach, extract and remove-file require a new output filename. Existing files are preserved.',
+  'Create, edit, add, receive, copy, cycle, attach, extract and remove-file require a new output filename. Existing files are preserved.',
   'The browser is available at /operating-plan.html when starforge discover serve is running.',
 ].join('\n');
-const ACTIONS = ['catalog', 'create', 'show', 'draft', 'edit', 'add', 'compare', 'receive', 'copy', 'attach', 'files', 'extract', 'remove-file'];
+const ACTIONS = ['catalog', 'create', 'show', 'draft', 'edit', 'add', 'compare', 'receive', 'copy', 'cycle', 'cycle-preview', 'attach', 'files', 'extract', 'remove-file'];
 const COMMON = ['file', 'out'];
 const FLAGS = {
   catalog: ['source-root', 'selection', 'out'],
@@ -46,6 +49,8 @@ const FLAGS = {
   compare: [...COMMON, 'revision', 'source-root', 'selection'],
   receive: [...COMMON, 'existing'],
   copy: [...COMMON, 'title', 'id'],
+  cycle: [...COMMON, 'title', 'period', 'revision', 'id', 'dates', 'shift-from', 'shift-to', 'references'],
+  'cycle-preview': [...COMMON, 'title', 'period', 'revision', 'dates', 'shift-from', 'shift-to', 'references'],
   attach: [...COMMON, 'step-id', 'attachment', 'note', 'media-type'],
   files: [...COMMON, 'step-id', 'revision'],
   extract: [...COMMON, 'step-id', 'attachment-id', 'revision'],
@@ -74,9 +79,11 @@ export function parseOperatingPlanArguments(args) {
   if (steps.length) options.steps = steps;
   if (attachments.length) options.attachments = attachments;
   if (!['create', 'catalog'].includes(action) && !options.file) throw new TypeError('--file is required.');
-  if (['create', 'edit', 'add', 'receive', 'copy', 'attach', 'extract', 'remove-file'].includes(action) && !options.out)
+  if (['create', 'edit', 'add', 'receive', 'copy', 'cycle', 'attach', 'extract', 'remove-file'].includes(action) && !options.out)
     throw new TypeError('--out must name a new output file.');
   if (action === 'create' && !options.title) throw new TypeError('--title is required.');
+  if (['cycle', 'cycle-preview'].includes(action) && (!options.title || !options.period))
+    throw new TypeError('--title and --period are required for a new cycle.');
   if (action === 'edit' && !options.draft) throw new TypeError('--draft is required.');
   if (action === 'add' && !steps.length) throw new TypeError('Select at least one --step registration.');
   if (['attach', 'extract', 'remove-file'].includes(action) && !options['step-id'])
@@ -101,6 +108,7 @@ async function readJSON(filename) {
   return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
 }
 async function currentCatalog(options) {
+  const { loadCommandCatalog } = await import('./load.mjs');
   return loadCommandCatalog({ sourceRoot: options['source-root'], selection: options.selection });
 }
 export async function mainOperatingPlan(args = process.argv.slice(2), { log = console.log } = {}) {
@@ -136,7 +144,15 @@ export async function mainOperatingPlan(args = process.argv.slice(2), { log = co
     const existing = options.existing ? inspectOperatingPlan(await readJSON(options.existing)) : null;
     const received = receiveOperatingPlan(original, existing); value = received.plan;
   } else if (action === 'copy') value = forkOperatingPlan(original, { id: options.id ?? randomUUID(), title: options.title });
-  if (action === 'attach') {
+  if (action === 'cycle' || action === 'cycle-preview') {
+    const preparation = { revision: options.revision, title: options.title, period: options.period,
+      datePolicy: options.dates ?? 'clear',
+      ...(options['shift-from'] === undefined ? {} : { shiftFrom: options['shift-from'] }),
+      ...(options['shift-to'] === undefined ? {} : { shiftTo: options['shift-to'] }),
+      referenceFiles: options.references ? await readJSON(options.references) : [] };
+    value = action === 'cycle' ? createOperatingPlanCycle(original, { ...preparation, id: options.id ?? randomUUID() })
+      : previewOperatingPlanCycle(original, preparation);
+  } else if (action === 'attach') {
     let draft = operatingPlanDraft(original);
     for (const filename of options.attachments) {
       const target = resolve(filename), info = await stat(target);

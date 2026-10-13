@@ -674,6 +674,31 @@ class Acquisition:
         self.bank([manifest], directory.name + "-archive-index")
         return result
 
+    def publisher_archive_assertion(self, path, selected):
+        fields = {}
+        expected = {"sha256", "real_size", "zip_size", "s3_link", "s3_link_metadata"}
+        for line in Path(path).read_text(encoding="utf-8").splitlines():
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            key, separator, value = line.partition(":")
+            key, value = key.strip(), value.strip()
+            need(separator and key in expected and key not in fields,
+                 "Original publisher archive metadata fields changed")
+            fields[key] = value
+        need(set(fields) == expected, "Original publisher archive metadata is incomplete")
+        need(re.fullmatch(r"[0-9a-fA-F]{64}", fields["sha256"]),
+             "Original archive SHA-256 assertion is invalid")
+        need(re.fullmatch(r"[1-9][0-9]*", fields["zip_size"]),
+             "Original archive byte assertion is invalid")
+        need(fields["real_size"] == "null" or re.fullmatch(r"[0-9]+", fields["real_size"]),
+             "Original expanded-size metadata changed")
+        need(fields["s3_link"] == selected["archive_url"] and
+             fields["s3_link_metadata"] == selected["metadata_url"],
+             "Publisher metadata belongs to another selected archive")
+        return {"bytes": int(fields["zip_size"]), "sha256": fields["sha256"].lower(),
+                "archive_url": fields["s3_link"], "metadata_url": fields["s3_link_metadata"],
+                "declared_real_size": None if fields["real_size"] == "null" else int(fields["real_size"])}
+
     def run(self):
         dataset = self.download("publisher-dataset-metadata",
             "https://www.data.gouv.fr/api/1/datasets/base-de-donnees-nationale-des-batiments/",
@@ -687,6 +712,7 @@ class Acquisition:
             directory = self.root / edition["directory"]
             metadata = self.download(edition["directory"] + "-metadata", chosen["metadata_url"],
                                      edition["directory"] + "/archive-metadata", MAX_METADATA)
+            publisher_assertion = self.publisher_archive_assertion(self.root / metadata["path"], chosen)
             workbook = self.download(edition["directory"] + "-dictionary", chosen["dictionary_url"],
                                      edition["directory"] + "/documentation.xlsx", MAX_METADATA)
             matching = [r for r in metadata_body["resources"] if r.get("url") == chosen["dictionary_url"]]
@@ -700,10 +726,15 @@ class Acquisition:
                          "Publisher dictionary checksum assertion changed")
             dictionary_index = self.workbook(self.root / workbook["path"], directory)
             archive = self.download(edition["directory"] + "-archive", chosen["archive_url"],
-                                    edition["directory"] + "/publisher-archive")
+                                    edition["directory"] + "/publisher-archive",
+                                    min(self.maximum, publisher_assertion["bytes"]))
+            need(archive["identity"] == {"bytes": publisher_assertion["bytes"], "sha256": publisher_assertion["sha256"]},
+                 "Complete archive differs from its original publisher metadata")
+            self.record("PUBLISHER_ARCHIVE_MATCHED", edition=edition["directory"], **publisher_assertion)
             inventory = self.inventory(self.root / archive["path"], directory)
             result = {"selected": chosen, "metadata": metadata, "dictionary": workbook,
-                      "dictionary_index": dictionary_index, "archive": archive, "inventory": inventory}
+                      "dictionary_index": dictionary_index, "archive": archive, "inventory": inventory,
+                      "publisher_archive_assertion": publisher_assertion}
             atomic(directory / "edition-received.json", result)
             self.bank([directory / "selection.json", directory / "edition-received.json"], edition["directory"] + "-edition")
             results.append(result)
@@ -785,8 +816,10 @@ def main():
         previous_source = None
         if retained_source != source and retained_source.exists() and retained_source.read_bytes() != source_bytes:
             previous_source = identity(retained_source)
-            need(previous_source == {"bytes": 39190, "sha256": "e18162e23ed7b3e173c78be3f1a1e6041a4c3cd3d2412bc0e0027b5848779adc"},
-                 "Resume from the exact authorized acquisition predecessor")
+            need(previous_source in (
+                 {"bytes": 39190, "sha256": "e18162e23ed7b3e173c78be3f1a1e6041a4c3cd3d2412bc0e0027b5848779adc"},
+                 {"bytes": 48606, "sha256": "613fc130f655a24fe4c73d750595afccff6f4fc0f9b217d305b680a33235e95b"}),
+                 "Resume from an exact authorized acquisition predecessor")
             historical = root / "source-history" / previous_source["sha256"] / "acquire_nord.py"
             if historical.exists():
                 need(identity(historical) == previous_source, "The retained predecessor changed")

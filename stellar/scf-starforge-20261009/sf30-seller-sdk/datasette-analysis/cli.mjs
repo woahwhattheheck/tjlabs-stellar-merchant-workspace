@@ -21,7 +21,17 @@ const CORE = ['cli.mjs', 'cli.py', 'model.py', 'source.py', 'recipes.py',
   'nld_contract.py', 'nld_task.py', 'nld_worker.py', 'nld_adapter.py',
   'nld_cli.py', 'nld_receiving.py', 'nld_operator.mjs', 'NLD.md', 'NLD_SOURCE_CONTRACT.json',
   'bdnb_source.py', 'bdnb_adapter.py', 'bdnb_dictionary.json', 'bdnb_contract.json', 'BDNB_SOURCE.md',
-  'bdnb_products.py', 'bdnb_workflow.py', 'bdnb_receiving.py', 'bdnb_operator.mjs'];
+  'bdnb_products.py', 'bdnb_workflow.py', 'bdnb_receiving.py', 'bdnb_operator.mjs',
+  'provider_workflows.py', 'provider_workflows.mjs', 'provider_workflows.css', 'PROVIDER_WORKFLOWS.md',
+  'partner-workflows/preparation.mjs', 'partner-workflows/profiles.mjs',
+  'partner-workflows/prepare_cli.mjs', 'partner-workflows/README.md',
+  'partner-workflows/SOURCE_CONTRACTS.md',
+  'partner-workflows/shopify_payments.mjs', 'partner-workflows/shopify_payments_cli.mjs',
+  'partner-workflows/SHOPIFY_PAYMENTS.md',
+  'partner-workflows/odoo_target.mjs', 'partner-workflows/odoo_target_cli.mjs',
+  'partner-workflows/ODOO_TARGET.md',
+  'partner-workflows/xero_contacts.mjs', 'partner-workflows/xero_contacts_cli.mjs',
+  'partner-workflows/XERO_CONTACTS.md'];
 const OPTIONS = new Map([
   ['--runtime-workspace', 'root'], ['--runtime-directory', 'runtimeDirectory'],
   ['--runtime-id', 'runtimeId'], ['--installation-id', 'installationId'],
@@ -100,7 +110,7 @@ export async function inspectDatasetteAnalysisInstallation(root, {
   for (const path of files.keys()) {
     if (typeof path !== 'string' || !path.startsWith(DATASETTE_ANALYSIS_SOURCE)) continue;
     const name = path.slice(DATASETTE_ANALYSIS_SOURCE.length);
-    if (!/^(?:workflow_[^/]+|WORKFLOW[^/]*\.(?:md|json)|kestra\/.+)$/.test(name)) continue;
+    if (!/^(?:workflow_[^/]+|WORKFLOW[^/]*\.(?:md|json)|provider_workflows\.[^/]+|PROVIDER_WORKFLOWS\.md|partner-workflows\/.+|kestra\/.+)$/.test(name)) continue;
     need(!name.includes('\\') && name.split('/').every(part => part && part !== '.' && part !== '..'),
       'DATASETTE_ANALYSIS_SOURCE_CHANGED');
     required.add(path);

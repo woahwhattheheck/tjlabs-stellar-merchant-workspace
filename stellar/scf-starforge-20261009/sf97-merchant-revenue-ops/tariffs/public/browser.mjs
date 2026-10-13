@@ -15,16 +15,8 @@ let busy=false, state=null, source=null, activePreview=null, activePlan=null, se
 let priceSource=null, priceInput=null, pricePreview=null, priceDecision=null, priceSaveRequest=null;
 let draft = {version:'',label:'Monthly tariff comparison',volumes:'0, 100, 1000, 10000',tariffs:[]};
 let pendingSave=null, pendingCommit=null;
-try {
-  const saved=JSON.parse(localStorage.getItem(storageKey) ?? 'null');
-  if (saved?.draft) draft=saved.draft;
-  pendingSave=saved?.pendingSave ?? null;
-  pendingCommit=saved?.pendingCommit ?? null;
-  priceSaveRequest=saved?.priceSaveRequest ?? null;
-} catch {}
-function persist() {
-  try { localStorage.setItem(storageKey,JSON.stringify({draft,pendingSave,pendingCommit,priceSaveRequest})); } catch {}
-}
+function persist() { retainBrowserStudy(); }
+
 function message(text,error=false) {
   $('status').textContent=text; $('status').dataset.error=String(error);
 }
@@ -75,6 +67,7 @@ const valueText = value => value === null || value === undefined ? 'Unknown' : S
 const amount = value => value === null || value === undefined ? 'Unknown' : '$'+value;
 const pretty = value => JSON.stringify(value,null,2);
 function resetPreview() {
+  if(!bootStudyRestore&&!restoringStudy)localPlanId=null;
   activePreview=null; activePlan=null; selection=null; $('save-plan').disabled=true;
   $('selection-section').hidden=true; $('commit-selection').disabled=true;
   $('download-plan').disabled=true; $('download-csv').disabled=true;
@@ -162,7 +155,9 @@ function renderOperations() {
   if(pendingSave)root.append(button('Resume retained tariff save',()=>saveBody(pendingSave),'small'));
   if(pendingCommit)root.append(button('Resume retained quote save',()=>commitBody(pendingCommit),'small'));
   if(priceSaveRequest)root.append(button('Resume price decision save',async()=>{
+    await retainBeforeNative();
     priceDecision=await request('/repricing/save',priceSaveRequest);priceSaveRequest=null;persist();
+    await retainAfterNative();
     renderPriceDecision();await reload(false);message('The original price decision is saved.');
   },'small'));
   for(const operation of state?.tariffs?.selections ?? []) {
@@ -200,12 +195,15 @@ async function reload(loadSource=true) {
     token=(await response.json()).token;
   }
   state=await request('/state');
+  restoreLocalStudy();
   const rows=state.pricing.history ?? [], prior=$('source-version').value || draft.version;
   optionList($('source-version'),rows,prior || rows[0]?.version);
+  if(prior)ensureSourceOption($('source-version'),prior,source?.label);
   const selected=$('repricing-version').value;
   optionList($('repricing-version'),rows,selected || rows[0]?.version);
   renderPlans();
   if(loadSource)await loadSourceVersion();
+  await refreshStudies();
 }
 async function loadSourceVersion() {
   const version=$('source-version').value;draft.version=version;resetPreview();
@@ -259,14 +257,17 @@ async function calculate() {
 }
 async function saveBody(body) {
   pendingSave=structuredClone(body);persist();renderOperations();
+  await retainBeforeNative();
   const result=await request('/plans',pendingSave);
   activePlan=result.record;pendingSave=null;persist();
+  await retainAfterNative();
   $('saved-plan-status').textContent='Saved '+activePlan.label+' — '+new Date(activePlan.savedAt).toLocaleString();
   $('download-plan').disabled=false;$('download-csv').disabled=false;$('save-plan').disabled=true;
   renderComparison(activePlan.review);await reload(false);
   message(result.recovered?'The original tariff save was recovered.':'Tariff plan saved.');
 }
 async function savePlan() {
+  if(pendingSave)return saveBody(pendingSave);
   if(!activePreview || JSON.stringify(formInput())!==JSON.stringify(activePreview.input))
     throw new Error('Calculate the current tariff inputs before saving.');
   const body={...structuredClone(activePreview.input),requestId:crypto.randomUUID(),label:$('plan-label').value,
@@ -276,6 +277,13 @@ async function savePlan() {
   await saveBody(body);
 }
 async function openPlan(planId) {
+  await saveBeforeSwitch();
+  study=null;studyRequest=null;localPlanId=null;pendingSave=null;pendingCommit=null;priceSaveRequest=null;
+  paymentDraft={version:null,valuations:[]};priceSource=null;
+  priceInput=null;pricePreview=null;priceDecision=null;
+  $('valuation-rows').replaceChildren();$('price-preview').replaceChildren();$('price-downloads').replaceChildren();
+  $('preview-prices').disabled=true;$('save-prices').disabled=true;$('stage-prices').disabled=true;
+  $('study-label').value='Study from saved tariff plan';$('study-history').replaceChildren();
   activePlan=await request('/plans/'+encodeURIComponent(planId));activePreview=null;selection=null;
   draft={version:activePlan.version,label:activePlan.label,volumes:activePlan.inputs.volumes.join(', '),
     tariffs:structuredClone(activePlan.inputs.tariffs)};
@@ -318,14 +326,17 @@ function renderSelection() {
 }
 async function commitBody(body) {
   pendingCommit=structuredClone(body);persist();renderOperations();
+  await retainBeforeNative();
   const result=await request('/selection/commit',pendingCommit);
   pendingCommit=null;persist();
+  await retainAfterNative();
   $('commit-result').textContent='Saved pricing review '+result.pricing.label+'. Its scenario and original capture are retained.';
   $('commit-selection').disabled=true;
   await reload(false);$('repricing-version').value=result.pricing.version;
   message(result.recovered?'The original scenario and pricing save were recovered.':'Scenario and pricing review saved.');
 }
 async function commitSelection() {
+  if(pendingCommit)return commitBody(pendingCommit);
   if(!selection)throw new Error('Review a saved tariff comparison first.');
   const body={selection:structuredClone(selection),planRequestId:crypto.randomUUID(),pricingRequestId:crypto.randomUUID()};
   if(pendingCommit?.selection?.selectionSha256===selection.selectionSha256)await commitBody(pendingCommit);
@@ -342,6 +353,8 @@ async function serverDownload(path,name) {
   localDownload(name,await response.arrayBuffer(),response.headers.get('content-type') ?? 'application/octet-stream');
 }
 async function loadPrices() {
+  if(!restoringStudy&&priceSaveRequest&&$('repricing-version').value!==priceSaveRequest.version)
+    throw new Error('Recover the retained price request, or start a new study before changing its payment source.');
   const version=$('repricing-version').value;if(!version)throw new Error('Choose a saved pricing review.');
   const result=await request('/repricing/source?version='+encodeURIComponent(version));
   if($('repricing-version').value!==version)return;
@@ -368,10 +381,12 @@ async function loadPrices() {
     fields.append(units,usd,basis);card.append(fields);root.append(card);
     enabled.addEventListener('change',invalidatePrices);
   });
+  if(!restoringStudy){capturePaymentDraft();persist();}
   message('Original payment options loaded. Enter explicit valuation inputs.');
 }
 function invalidatePrices() {
   priceInput=null;pricePreview=null;priceDecision=null;$('save-prices').disabled=true;$('stage-prices').disabled=true;
+  persist();
 }
 function quoteValuations() {
   return [...$('valuation-rows').querySelectorAll('.valuation')].filter(card=>card.querySelector('.enabled').checked).map(card=>({
@@ -403,7 +418,9 @@ function renderPriceDecision() {
 async function savePrices() {
   if(priceSaveRequest) {
     message('Resuming the retained native price decision…');
+    await retainBeforeNative();
     priceDecision=await request('/repricing/save',priceSaveRequest);priceSaveRequest=null;persist();
+    await retainAfterNative();
     renderPriceDecision();await reload(false);message('The retained native price decision is saved.');return;
   }
   if(!priceInput || !pricePreview)throw new Error('Review current native amounts first.');
@@ -412,7 +429,9 @@ async function savePrices() {
     expectedRevision:priceSource.repricingRevision,label:(priceSource.label+' / native amounts').slice(0,100),
     reviewSha256:pricePreview.reviewSha256};
   persist();renderOperations();
-  priceDecision=await request('/repricing/save',priceSaveRequest);priceSaveRequest=null;persist();
+  await retainBeforeNative();
+    priceDecision=await request('/repricing/save',priceSaveRequest);priceSaveRequest=null;persist();
+    await retainAfterNative();
   renderPriceDecision();await reload(false);message('Native price decision saved.');
 }
 async function stagePrices() {
@@ -421,10 +440,261 @@ async function stagePrices() {
   $('price-preview').append(node('h3','Retained release'),node('pre',pretty(result)));
   $('stage-prices').disabled=true;message('The original retained seller release is staged.');
 }
+
+/* Native named studies. Browser recovery is scoped to this original workspace. */
+let localPlanId=null,bootStudyRestore=true;
+let study=null,studyRequest=null,studyImportRequest=null,studyDirty=false,studyReady=false,studyRows=[],restoringStudy=false;
+let paymentDraft={version:null,valuations:[]},studyStorage=null;
+const legacyStudyKey=storageKey;
+function studyDocument() {
+  capturePaymentDraft();
+  return {label:$('study-label').value,draft:structuredClone(draft),
+    pendingSave:structuredClone(pendingSave),pendingCommit:structuredClone(pendingCommit),
+    priceSaveRequest:structuredClone(priceSaveRequest),repricing:structuredClone(paymentDraft),
+    activePlanId:activePlan?.version===draft.version?activePlan.planId:localPlanId};
+}
+function capturePaymentDraft() {
+  if(!priceSource)return;
+  paymentDraft={version:priceSource.version,valuations:[...$('valuation-rows').querySelectorAll('.valuation')].map(card=>({
+    routeId:card.dataset.routeId,paymentIndex:Number(card.dataset.paymentIndex),expectedAmount:card.dataset.expectedAmount,
+    enabled:card.querySelector('.enabled').checked,atomicUnits:card.querySelector('.atomic-units').value,
+    usd:card.querySelector('.valuation-usd').value,basis:card.querySelector('.valuation-basis').value
+  }))};
+}
+function retainBrowserStudy() {
+  if(!studyReady||restoringStudy)return;
+  studyDirty=true;capturePaymentDraft();
+  try {
+    localStorage.setItem(studyStorage,JSON.stringify({document:studyDocument(),study,studyRequest,studyImportRequest}));
+    $('study-local-status').textContent='Browser recovery saved for this workspace.';
+  } catch {
+    $('study-local-status').textContent='Browser recovery could not be saved. Save this study to the workspace or download the raw inputs.';
+  }
+  renderStudyStatus();
+}
+function pendingNative(){return Boolean(pendingSave||pendingCommit||priceSaveRequest);}
+function renderStudyStatus() {
+  $('study-status').textContent=studyRequest?'A native study save is awaiting its original response. Recover it before saving newer inputs.':
+    study?(studyDirty?'Unsaved changes in ':'Saved study: ')+study.label+' / '+study.revision.slice(0,12):
+      'New study. Partial quantities and prices can be saved before calculation.';
+  $('study-save').disabled=!source;
+  $('study-fork').disabled=!source||Boolean(studyRequest);
+  $('study-recover').hidden=!studyRequest;
+  $('study-recover-import').hidden=!studyImportRequest;
+  $('study-export').disabled=!study;
+}
+function ensureSourceOption(select,version,label) {
+  if(!version)return;
+  if(![...select.options].some(option=>option.value===version)) {
+    const option=node('option',label||version+' (retained source)');option.value=version;select.append(option);
+  }
+  select.value=version;
+}
+function restoreLocalStudy() {
+  if(studyReady)return;
+  studyStorage=storageKey+':workspace:'+state.workspaceId;studyReady=true;
+  let value=null;
+  try{value=JSON.parse(localStorage.getItem(studyStorage)??'null');}catch{}
+  if(value?.document) {
+    const document=value.document;
+    localPlanId=document.activePlanId??null;
+    draft=structuredClone(document.draft);pendingSave=document.pendingSave;pendingCommit=document.pendingCommit;
+    priceSaveRequest=document.priceSaveRequest;paymentDraft=document.repricing??{version:null,valuations:[]};
+    study=value.study??null;studyRequest=value.studyRequest??null;studyImportRequest=value.studyImportRequest??null;studyDirty=true;
+    $('study-label').value=document.label??'Tariff study';
+    $('plan-label').value=draft.label;$('volumes').value=draft.volumes;
+  }
+  let legacy=false;try{legacy=Boolean(localStorage.getItem(legacyStudyKey));}catch{}
+  $('study-legacy').hidden=!legacy;
+  renderStudyStatus();
+}
+async function refreshStudies() {
+  const value=await request('/working');studyRows=value.copies;
+  const list=$('study-list');list.replaceChildren();
+  if(!studyRows.length)list.append(node('p','No named studies yet.','muted'));
+  for(const row of studyRows) {
+    const item=node('div',undefined,'saved-item');
+    item.append(button(row.label,()=>openStudy({workingCopyId:row.workingCopyId})),
+      node('small',row.tariffCount+' tariffs / '+new Date(row.savedAt).toLocaleString()),
+      node('small',row.pendingOperations.length?'Original requests retained: '+row.pendingOperations.length:'Saved unfinished inputs'));
+    list.append(item);
+  }
+}
+async function saveStudy({fork=false}={}) {
+  if(studyRequest) {
+    const retained=structuredClone(studyRequest),current=JSON.stringify(studyDocument());
+    let result;
+    try{result=await request('/working/save',retained);}
+    catch(error){if([409,422].includes(error.status)&&['WORKING_COPY_CONFLICT','WORKING_REQUEST_CHANGED','WORKING_SOURCE_CHANGED',
+      'WORKING_ROUTE_CHANGED','WORKING_PAYMENT_SOURCE_CHANGED','TARIFF_STUDY_INVALID','TARIFF_STUDY_REQUEST_INVALID',
+      'WORKING_COPY_TOO_LARGE','WORKING_COPY_SAVE_REQUIRED'].includes(error.code)) {
+      studyRequest=null;persistStudyState();renderStudyStatus();
+    }throw error;}
+    study={workingCopyId:result.workingCopyId,revision:result.revision,label:result.label};
+    studyRequest=null;studyDirty=JSON.stringify(retained.document)!==current;
+    persistStudyState();await refreshStudies();renderStudyStatus();
+    if(studyDirty)message('The original study save was recovered. Newer editor inputs are still available; save them as the next revision.');
+    return result;
+  }
+  if(!source||source.version!==draft.version)throw new Error('Choose the original saved pricing source before saving this study.');
+  const document=studyDocument();
+  studyRequest={workingCopyId:fork||!study?crypto.randomUUID():study.workingCopyId,
+    expectedRevision:fork||!study?null:study.revision,requestId:crypto.randomUUID(),
+    version:draft.version,sourceBinding:{version:source.version,provenance:structuredClone(source.provenance)},document};
+  persistStudyState();renderStudyStatus();
+  let result;
+  try{result=await request('/working/save',studyRequest);}
+  catch(error) {
+    // These rejections are returned before publication; the editor stays intact.
+    if([409,422].includes(error.status)&&['WORKING_COPY_CONFLICT','WORKING_REQUEST_CHANGED','WORKING_SOURCE_CHANGED',
+      'WORKING_ROUTE_CHANGED','WORKING_PAYMENT_SOURCE_CHANGED','TARIFF_STUDY_INVALID','TARIFF_STUDY_REQUEST_INVALID',
+      'WORKING_COPY_TOO_LARGE','WORKING_COPY_SAVE_REQUIRED'].includes(error.code)) {
+      studyRequest=null;persistStudyState();renderStudyStatus();
+    }
+    throw error;
+  }
+  const unchanged=JSON.stringify(studyRequest.document)===JSON.stringify(studyDocument());
+  study={workingCopyId:result.workingCopyId,revision:result.revision,label:result.label};
+  studyRequest=null;studyDirty=!unchanged;persistStudyState();
+  await refreshStudies();renderStudyStatus();
+  message(result.recovered?'Original tariff study save recovered.':'Tariff study saved with its raw inputs and original source.');
+  return result;
+}
+function persistStudyState() {
+  if(!studyReady||restoringStudy)return;
+  try{localStorage.setItem(studyStorage,JSON.stringify({document:studyDocument(),study,studyRequest,studyImportRequest}));
+    $('study-local-status').textContent='Browser recovery saved for this workspace.';}
+  catch{$('study-local-status').textContent='Browser recovery unavailable. The editor is intact; save natively or download raw inputs.';}
+}
+async function saveBeforeSwitch() {
+  if(studyRequest)await saveStudy();
+  if(source&&(studyDirty||!study))await saveStudy();
+}
+async function retainBeforeNative() {
+  if(studyRequest)await saveStudy();
+  await saveStudy();
+  if(studyRequest||studyDirty)throw new Error('Recover the original study save before sending the retained operation.');
+}
+async function retainAfterNative() {
+  studyDirty=true;persistStudyState();
+  await saveStudy();
+}
+async function restorePaymentEditor() {
+  if(!paymentDraft.version)return;
+  const original=structuredClone(paymentDraft);
+  ensureSourceOption($('repricing-version'),original.version,'Retained payment source');
+  await loadPrices();
+  for(const row of original.valuations) {
+    const card=[...$('valuation-rows').querySelectorAll('.valuation')].find(card=>card.dataset.routeId===row.routeId&&Number(card.dataset.paymentIndex)===row.paymentIndex);
+    if(!card||card.dataset.expectedAmount!==row.expectedAmount)
+      throw new Error('A saved payment valuation no longer matches its original option.');
+    card.querySelector('.enabled').checked=row.enabled;card.querySelector('.atomic-units').value=row.atomicUnits;
+    card.querySelector('.valuation-usd').value=row.usd;card.querySelector('.valuation-basis').value=row.basis;
+  }
+  paymentDraft=original;
+}
+async function applyStudy(loaded) {
+  const d=structuredClone(loaded.record.document);
+  // Resolve the complete original source before replacing the current editor.
+  const original=await request('/source?version='+encodeURIComponent(loaded.record.source.version));
+  restoringStudy=true;
+  try {
+    study={workingCopyId:loaded.workingCopyId,revision:loaded.revision,label:loaded.label};
+    studyRequest=null;localPlanId=d.activePlanId;draft=d.draft;pendingSave=d.pendingSave;pendingCommit=d.pendingCommit;priceSaveRequest=d.priceSaveRequest;
+    paymentDraft=d.repricing;source=original;activePlan=null;activePreview=null;selection=null;priceSource=null;
+    priceInput=null;pricePreview=null;priceDecision=null;
+    $('study-label').value=d.label;$('plan-label').value=draft.label;$('volumes').value=draft.volumes;
+    ensureSourceOption($('source-version'),draft.version,original.label+' (study source)');
+    $('source-summary').textContent=original.label+' / '+original.routes.length+' selected routes';
+    resetPreview();renderEditors();$('calculate').disabled=false;
+    $('valuation-rows').replaceChildren();$('price-preview').replaceChildren();$('price-downloads').replaceChildren();
+    $('preview-prices').disabled=true;$('save-prices').disabled=true;$('stage-prices').disabled=true;
+    if(d.activePlanId) {
+      const plan=await request('/plans/'+encodeURIComponent(d.activePlanId));
+      if(plan.version!==draft.version)throw new Error('The retained completed plan has another tariff source.');
+      activePlan=plan;localPlanId=null;renderComparison(plan.review);
+      $('download-plan').disabled=false;$('download-csv').disabled=false;$('print-plan').disabled=false;
+    }
+    await restorePaymentEditor();renderOperations();
+    const history=$('study-history');history.replaceChildren();
+    for(const row of loaded.history)history.append(button(new Date(row.savedAt).toLocaleString()+' / '+row.revision.slice(0,12),
+      ()=>openStudy({workingCopyId:row.workingCopyId,revision:row.revision}),'small'));
+    studyDirty=false;
+  } finally {restoringStudy=false;persistStudyState();renderStudyStatus();}
+}
+async function openStudy(input) {
+  await saveBeforeSwitch();
+  const loaded=await request('/working/load',input);await applyStudy(loaded);
+  message('Tariff study opened. Its original inputs and retained requests are available.');
+}
+async function newStudy(nextSource=source) {
+  await saveBeforeSwitch();
+  source=nextSource;localPlanId=null;
+  study=null;studyRequest=null;pendingSave=null;pendingCommit=null;priceSaveRequest=null;
+  paymentDraft={version:null,valuations:[]};priceSource=null;priceInput=null;pricePreview=null;priceDecision=null;
+  draft={version:source?.version??'',label:'Monthly tariff comparison',volumes:'0, 100, 1000, 10000',tariffs:[]};
+  $('study-label').value='Tariff study';$('plan-label').value=draft.label;$('volumes').value=draft.volumes;
+  $('valuation-rows').replaceChildren();$('price-preview').replaceChildren();$('price-downloads').replaceChildren();$('study-history').replaceChildren();
+  $('preview-prices').disabled=true;$('save-prices').disabled=true;$('stage-prices').disabled=true;
+  if(source)draft.tariffs.push(newTariff());
+  ensureSourceOption($('source-version'),draft.version,source?.label);
+  $('source-summary').textContent=source?source.label+' / '+source.routes.length+' selected routes':'';
+  $('calculate').disabled=!source;
+  resetPreview();renderEditors();renderOperations();persist();
+  message('New tariff study. The previous work remains saved in its original study.');
+}
+async function changeStudySource() {
+  const selected=$('source-version').value;
+  ensureSourceOption($('source-version'),draft.version,source?.label);
+  const target=selected?await request('/source?version='+encodeURIComponent(selected)):null;
+  await newStudy(target);
+}
+
+async function recoverStudyImport() {
+  if(!studyImportRequest)return;
+  let imported;
+  try{imported=await request('/working/import',studyImportRequest);}
+  catch(error) {
+    if([409,422].includes(error.status)&&['WORKING_PACKAGE_CHANGED','WORKING_IMPORT_ID_REQUIRED','WORKING_SOURCE_CHANGED',
+      'WORKING_ROUTE_CHANGED','WORKING_PAYMENT_SOURCE_CHANGED','TARIFF_STUDY_INVALID','TARIFF_STUDY_REQUEST_INVALID',
+      'WORKING_COPY_INVALID','WORKING_COPY_TOO_LARGE','WORKING_COPY_CONFLICT','WORKING_REQUEST_CHANGED'].includes(error.code)) {
+      studyImportRequest=null;persistStudyState();renderStudyStatus();
+    }
+    throw error;
+  }
+  studyImportRequest=null;persistStudyState();await refreshStudies();renderStudyStatus();
+  message('Study received under a new local identity. Open it from the named studies list; the current editor is retained.');
+  return imported;
+}
+async function receiveStudyFile() {
+  const file=$('study-import').files?.[0];if(!file)return;
+  try {
+    if(studyImportRequest)throw new Error('Recover the original study import before receiving another file.');
+    if(file.size>8*1024*1024)throw new Error('Use a complete study file up to 8 MiB.');
+    const packet=JSON.parse(await file.text());
+    await saveBeforeSwitch();
+    studyImportRequest={package:packet,workingCopyId:crypto.randomUUID(),requestId:crypto.randomUUID()};
+    persistStudyState();renderStudyStatus();
+    await recoverStudyImport();
+  }finally{$('study-import').value='';}
+}
+async function adoptLegacyStudy() {
+  let value;try{value=JSON.parse(localStorage.getItem(legacyStudyKey)??'null');}catch{}
+  if(!value?.draft?.version)throw new Error('The earlier browser draft has no saved pricing source.');
+  const original=await request('/source?version='+encodeURIComponent(value.draft.version));
+  await saveBeforeSwitch();
+  study=null;studyRequest=null;source=original;draft=value.draft;
+  pendingSave=value.pendingSave??null;pendingCommit=value.pendingCommit??null;priceSaveRequest=value.priceSaveRequest??null;
+  paymentDraft={version:priceSaveRequest?.version??null,valuations:[]};priceSource=null;activePlan=null;activePreview=null;selection=null;
+  $('study-label').value='Recovered browser tariff work';$('plan-label').value=draft.label;$('volumes').value=draft.volumes;
+  ensureSourceOption($('source-version'),draft.version,original.label);renderEditors();resetPreview();renderOperations();
+  await saveStudy();message('Earlier browser work saved as a native study against its exact original source.');
+}
+
 $('plan-label').value=draft.label;$('volumes').value=draft.volumes;
 $('plan-label').addEventListener('input',()=>{draft.label=$('plan-label').value;persist();});
 $('volumes').addEventListener('input',()=>{draft.volumes=$('volumes').value;resetPreview();});
-$('source-version').addEventListener('change',()=>run(loadSourceVersion));
+$('source-version').addEventListener('change',()=>run(changeStudySource));
 $('repricing-version').addEventListener('change',()=>{priceSource=null;invalidatePrices();$('preview-prices').disabled=true;});
 $('refresh').addEventListener('click',()=>run(async()=>{await reload();message('Pricing source and saved operations refreshed.');}));
 $('add-tariff').addEventListener('click',()=>run(async()=>{draft.tariffs.push(newTariff());resetPreview();renderEditors();}));
@@ -451,4 +721,39 @@ $('import-portfolio').addEventListener('change',()=>run(async()=>{
   $('portfolio-result').textContent='Received '+result.plans.length+' tariff plans. Original pricing sources were matched.';
   await reload(false);message('Tariff portfolio received. Open a saved plan to continue.');
 }));
-await run(async()=>{await reload();message('Merchant tariffs ready. Choose an original pricing review.');});
+$('study-label').addEventListener('input',persist);
+$('study-save').addEventListener('click',()=>run(()=>saveStudy()));
+$('study-fork').addEventListener('click',()=>run(()=>saveStudy({fork:true})));
+$('study-recover').addEventListener('click',()=>run(()=>saveStudy()));
+$('study-recover-import').addEventListener('click',()=>run(recoverStudyImport));
+$('study-new').addEventListener('click',()=>run(newStudy));
+$('study-legacy').addEventListener('click',()=>run(adoptLegacyStudy));
+$('study-import').addEventListener('change',()=>run(receiveStudyFile));
+$('study-raw').addEventListener('click',()=>run(async()=>{
+  if(!source)throw new Error('Choose the original source before exporting unfinished inputs.');
+  localDownload('tariff-study-inputs.json',pretty({schema:'stellar-forge.merchant-tariff-working-inputs.v1',
+    source:{version:source.version,provenance:source.provenance},document:studyDocument()})+'\n');
+}));
+$('study-export').addEventListener('click',()=>run(async()=>{
+  if(!study)throw new Error('Save a study first.');
+  const packet=await request('/working/export',{workingCopyId:study.workingCopyId,revision:study.revision});
+  localDownload('tariff-study.json',pretty(packet)+'\n');
+  message('Exported the selected saved study revision. Raw editor changes remain available separately.');
+}));
+await run(async()=>{
+  try {
+    await reload();restoringStudy=true;
+    try {
+      if(localPlanId) {
+        const plan=await request('/plans/'+encodeURIComponent(localPlanId));
+        if(plan.version!==draft.version)throw new Error('The retained completed plan has another tariff source.');
+        activePlan=plan;localPlanId=null;renderComparison(plan.review);
+        $('download-plan').disabled=false;$('download-csv').disabled=false;$('print-plan').disabled=false;
+        $('saved-plan-status').textContent='Retained completed plan: '+plan.label+'. The raw editor may contain newer unfinished inputs.';
+      }
+      await restorePaymentEditor();
+    }finally{restoringStudy=false;}
+    persistStudyState();renderStudyStatus();
+    message('Merchant tariffs ready. Named studies retain original sources and unfinished inputs.');
+  }finally{bootStudyRestore=false;}
+});

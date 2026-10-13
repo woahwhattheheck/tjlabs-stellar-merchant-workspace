@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 52315,
-    "sha256": "f37983a419112f5a6044f0eb716e09f0f3e7a0582341492f28c334f87b4679d9",
-    "git_blob": "b436fd03e2de61238cf82975ab456a7f511a38c6"
+    "bytes": 53187,
+    "sha256": "2e02c1d95117069bb1b74be3d0ae902503c1ca9b8a2ffbdefbedd7b640019603",
+    "git_blob": "097932e5c8d43be6022f219f2ba0e4a9b47c87c6"
   },
   "request": {
     "basis": "prospective",
@@ -15837,15 +15837,70 @@
         "sha256": "e93c7c16ecd12096f3c1b249bebd343512baf7281a1d2f04c4fe6bf6ceec7fed",
         "bytes": 16165
       }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/README.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c/stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/README.md",
+      "source_kind": "source-file",
+      "id": "commercial-unit-guide",
+      "kind": "published-source",
+      "label": "Commercial service units and care planning",
+      "source_registration": "commercial-unit-economics"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/inputs.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c/stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/inputs.json",
+      "source_kind": "source-file",
+      "id": "commercial-unit-inputs",
+      "kind": "published-source",
+      "label": "Editable original commercial planning assumptions",
+      "source_registration": "commercial-unit-economics"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/commercial-economics.mjs",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c/stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/commercial-economics.mjs",
+      "source_kind": "source-file",
+      "id": "commercial-unit-caller",
+      "kind": "published-source",
+      "label": "Thin caller over the unchanged original SF47 cohort model",
+      "source_registration": "commercial-unit-economics"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/operated-summary.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c/stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/operated-summary.json",
+      "source_kind": "source-file",
+      "id": "commercial-unit-operated",
+      "kind": "published-source",
+      "label": "Operated original model commercial planning result",
+      "source_registration": "commercial-unit-economics"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/forecast-commercial-templates.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c/stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/forecast-commercial-templates.json",
+      "source_kind": "source-file",
+      "id": "commercial-unit-forecast",
+      "kind": "published-source",
+      "label": "Dated Forecast commercial templates with required cash inputs",
+      "source_registration": "commercial-unit-economics"
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "e01fcb0b8bf26b293c02c1c20ffb4abe49c92d74",
-    "bytes": 1260127,
-    "sha256": "43abcf021eb98abf2b08b8c00107b69f145e60fb29b1b772ae60b8a695461924",
+    "git_blob": "b1731368a179aa62a05da53d1f501ac87d3968a5",
+    "bytes": 1265937,
+    "sha256": "bd7446f6ead57a77ac37caca6776778be66594eabc3de473dcf5f05b599bf543",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
-    "prior_git_blob": "20004dd3d33c68ebfc69f6c338a2ce44f5a3dcc9"
+    "prior_git_blob": "e01fcb0b8bf26b293c02c1c20ffb4abe49c92d74"
   },
   "narrative_source": {
     "basis": "Original manuscript author's complete October 12 reviewer answer",
@@ -16064,9 +16119,29 @@
         "mcp_workflows": 8,
         "original_purchase_baseline_unchanged": true,
         "common_budget_unchanged": true
+      },
+      {
+        "id": "commercial-unit-economics",
+        "application_operation": "SCF-COMMERCIAL-UNIT-ECONOMICS-A238-20261013",
+        "basis": "Operated unchanged original cohort planning model over proposed implementation/care terms and explicit recurring service assumptions; exact cost coefficients and cash-cost-required Forecast templates. No native customer execution or observed revenue claimed.",
+        "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "source_commit": "b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c",
+        "cohort_engine_git_blob": "3cf156e25ee3dd4e139bf1b27a65a2c9d781c556",
+        "previous_application_git_blob": "b436fd03e2de61238cf82975ab456a7f511a38c6",
+        "previous_companion_git_blob": "e01fcb0b8bf26b293c02c1c20ffb4abe49c92d74",
+        "source_model_cases": 12,
+        "common_budget_unchanged": true,
+        "original_purchase_baseline_unchanged": true,
+        "official_rules": "https://stellar.gitbook.io/scf-handbook/scf-awards/official-rules-for-submissions",
+        "official_sections": [
+          "5.3",
+          "5.6",
+          "5.8"
+        ],
+        "cash_basis": "The $7,600 first-tranche financing difference is conditional on the existing full-package cash-cost model; actual contributor cash costs remain separate inputs."
       }
     ],
-    "current_application_sha256": "f37983a419112f5a6044f0eb716e09f0f3e7a0582341492f28c334f87b4679d9",
+    "current_application_sha256": "2e02c1d95117069bb1b74be3d0ae902503c1ca9b8a2ffbdefbedd7b640019603",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -16433,6 +16508,23 @@
             "bytes": 12981,
             "sha256": "4efd1e042cb43dd4c24dc3c18d3533d945f580d3405f25d0a491848fbe5b3a59",
             "git_blob": "2206a29b9b349a66d67a0a73b4542333a4717804"
+          }
+        },
+        {
+          "id": "commercial-unit-economics",
+          "heading": "## Customer value and delivery economics",
+          "source_ids": [
+            "commercial-unit-guide",
+            "commercial-unit-inputs",
+            "commercial-unit-caller",
+            "commercial-unit-operated",
+            "commercial-unit-forecast"
+          ],
+          "definition": {
+            "path": "grant-products/commercial-unit-economics.json",
+            "bytes": 2121,
+            "sha256": "7c7d72e6f470f837cf957ca1028ba5dc58f25b1b90afe11f3a7ee4904151ffd7",
+            "git_blob": "c9e8cb4484f01228d4dc6d9aa02cd6bc978ac608"
           }
         },
         {

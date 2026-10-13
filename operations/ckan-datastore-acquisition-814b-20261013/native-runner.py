@@ -127,5 +127,30 @@ if report.is_file():
     actual=json.loads(report.read_text())
     print(json.dumps({"phase":"actual-native-result","state":actual.get("state"),"checks":actual.get("checks"),
         "observations":actual.get("observations"),"browser":actual.get("browser"),"error":actual.get("error")}),flush=True)
+
+# Keep actual rendered views separate from the portable customer workspace.
+visual_root=root/"rendered-product"
+if visual_root.is_dir():
+    import zipfile,tempfile
+    descriptor,temp_name=tempfile.mkstemp(prefix="rendered-product-",suffix=".zip",dir=str(root))
+    os.close(descriptor)
+    staged_zip=pathlib.Path(temp_name)
+    try:
+        total=0;members=[]
+        with zipfile.ZipFile(staged_zip,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6) as outgoing:
+            for path in sorted(visual_root.iterdir()):
+                info=path.lstat()
+                if not stat.S_ISREG(info.st_mode) or info.st_uid!=os.geteuid():raise ValueError("rendered attachment must be an owned regular file")
+                total+=info.st_size
+                if total>268435456 or len(members)>=100:raise ValueError("rendered attachment bound")
+                outgoing.write(path,"rendered-product/"+path.name);members.append(path.name)
+        destination=root/"Rendered_Product_Views.zip"
+        if destination.is_symlink():raise ValueError("rendered archive path")
+        os.replace(staged_zip,destination)
+        print(json.dumps({"phase":"rendered-product-attachments","file":str(destination),
+            "bytes":destination.stat().st_size,"sha256":checksum(destination,"sha256"),
+            "members":members,"inspection":"awaiting-producing-peer-view"}),flush=True)
+    finally:staged_zip.unlink(missing_ok=True)
+
 print(json.dumps({"phase":"controller-complete","returncode":result.returncode}),flush=True)
 sys.exit(result.returncode)

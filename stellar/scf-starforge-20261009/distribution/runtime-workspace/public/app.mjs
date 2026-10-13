@@ -35,12 +35,14 @@ function prefs() {
   if (!state) return;
   try { localStorage.setItem('starforge-runtime-' + state.workspaceId, JSON.stringify({ selectedId, view, logSelection })); } catch {}
 }
-function switchView(name) {
+function switchView(name, { refreshState = true } = {}) {
   view = name;
   document.querySelectorAll('[data-pane]').forEach(node => { node.hidden = node.dataset.pane !== name; });
   document.querySelectorAll('[data-view]').forEach(node => { if (node.dataset.view === name) node.setAttribute('aria-current', 'page'); else node.removeAttribute('aria-current'); });
   prefs();
-  if (state && loadedOperationDetail !== operationDetail(name)) refresh({ quiet: true }).catch(error);
+  if (refreshState && state && loadedOperationDetail !== operationDetail(name)) {
+    refresh({ quiet: true }).catch(error); return;
+  }
   if (name === 'managed') managed.refresh().catch(error);
   if (name === 'applications') applications.refresh().catch(error);
   if (name === 'application-groups') applicationGroups.refresh().catch(error);
@@ -318,7 +320,7 @@ async function refresh({ quiet = false } = {}) {
 async function chooseRuntime(id) {
   selectedId = id; handoff = null; $('handoff').hidden = true; $('comparison').hidden = true;
   updateControls();
-  switchView('runtime'); prefs(); await refresh();
+  switchView('runtime', { refreshState: false }); prefs(); await refresh();
 }
 function invalidateReview() {
   profileReview = null; $('profile-review').hidden = true; updateControls();
@@ -380,7 +382,7 @@ async function showOperationResult(result, scope) {
   if (!scope.current()) return false;
   if (result.cacheTransferId) await transfers.choose(result.cacheTransferId);
   if (!scope.current()) return false;
-  switchView('operations'); await refresh();
+  switchView('operations', { refreshState: false }); await refresh();
   if (scope.current() && result.operationId) await operationHistoryView.choose(result.operationId);
   return scope.current();
 }

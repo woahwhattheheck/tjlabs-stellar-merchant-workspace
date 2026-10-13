@@ -311,3 +311,8 @@ The installed statement desk includes the same original Python readers used by M
 ## Reuse the next period’s account setup
 
 The Statements desk now provides **Use a saved statement setup**. Save the actual current account and mapping as a named edition, compare exact headings and interpretation changes for the next file, and retain the selected edition with the original import. See [Saved statement setups](STATEMENT_SETUPS.md) for first-period setup, next-period receiving, revisions, archive history and full case recovery.
+
+
+## Supplier payment allocation review
+
+The invoice allocation editor now joins supplier/invoice search, original reference suggestions, current native paid/open balances, explicit partial and multiple-invoice allocations, original invoice source downloads, and a full before/after review. Each row keeps its own unfinished working copy in the same Staff-scoped statement draft and recovery file. Apply the reviewed allocation proposal, then preview the full statement again before importing. See [STATEMENT_ALLOCATIONS.md](STATEMENT_ALLOCATIONS.md) for the complete operator workflow, incoming refund treatment, current-position interpretation and recovery steps.

@@ -6,34 +6,46 @@ const day=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffse
 const download=(blob,name)=>{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);};
 const human=value=>String(value||'').toLowerCase().replaceAll('_',' ').replace(/^./,s=>s.toUpperCase());
 
+/** Match the original Python text() contract without changing retained input. */
+function commercialRequired(value,maximum){
+  if(typeof value!=='string'||[...value].length>maximum||value.includes('\0'))return null;
+  const normalized=value.replace(/^[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/g,'');
+  return normalized||null;
+}
+
 /** Resolve only the exact retained action from the authoritative saved journal. */
 export function reconcileCommercialChangeAction(original,row){
   if(!original||!row||original.changeId!==row.id||!original.body||
-      original.body.expectedProposalSha256!==row.proposalSha256||
-      String(original.body.actor||'').trim()!==row.proposal?.actor||!Array.isArray(row.commands))return null;
-  const commands=row.commands,proposal=row.proposal;
-  if(commands.some(c=>c.state==='PENDING'))return null;
+      original.body.expectedProposalSha256!==row.proposalSha256||!Array.isArray(row.commands))return null;
+  const commands=row.commands,proposal=row.proposal,actor=commercialRequired(original.body.actor,300);
+  if(actor===null)return null;
   if(original.action==='apply'){
+    if(actor!==proposal?.actor)return null;
     const steps=proposal.steps;
-    if(!Array.isArray(steps)||!commands.length||commands.length>steps.length||
-       commands.some((c,i)=>c.index!==i||c.action!==steps[i].action||c.requestId!==row.id+'-step-'+(i+1)))return null;
-    if(row.state==='APPLIED'&&commands.length===steps.length&&commands.every(c=>c.state==='ACKNOWLEDGED'))
+    if(!Array.isArray(steps)||!commands.length||commands.length>steps.length+1)return null;
+    const applied=commands.slice(0,steps.length),later=commands.slice(steps.length);
+    if(applied.some((c,i)=>c.index!==i||c.action!==steps[i].action||c.requestId!==row.id+'-step-'+(i+1))||
+       later.some(c=>c.index!==steps.length||c.action!=='issue'||c.requestId!==row.id+'-issue'))return null;
+    if(row.state==='APPLIED'&&applied.length===steps.length&&applied.every(c=>c.state==='ACKNOWLEDGED'))
       return {outcome:'ACKNOWLEDGED',commands:copy(commands)};
     // A partially applied replacement must continue its remaining original step.
-    if(['PREPARED','RUNNING'].includes(row.state)&&commands.every(c=>c.state==='REJECTED'&&c.lastError?.code))
+    if(!later.length&&['PREPARED','RUNNING'].includes(row.state)&&applied.every(c=>c.state==='REJECTED'&&c.lastError?.code))
       return {outcome:'REJECTED',commands:copy(commands)};
   }
   if(original.action==='issue'){
+    if(actor!==proposal?.actor||commands.some(c=>c.state==='PENDING'))return null;
     const command=commands.find(c=>c.action==='issue');
-    if(!command||command.requestId!==row.id+'-issue'||command.body?.invoiceId!==row.activeInvoiceId||
+    const decision=original.body.creditDecisionId?commercialRequired(original.body.creditDecisionId,100):'';
+    if(decision===null||!command||command.requestId!==row.id+'-issue'||command.body?.invoiceId!==row.activeInvoiceId||
        command.review?.issuePreviewSha256!==original.body.expectedIssuePreviewSha256||
-       String(command.body?.creditDecisionId||'')!==String(original.body.creditDecisionId||'').trim())return null;
+       (command.body?.creditDecisionId||'')!==decision)return null;
     if(command.state==='ACKNOWLEDGED'||command.state==='REJECTED'&&command.lastError?.code)
       return {outcome:command.state,commands:[copy(command)]};
   }
-  if(original.action==='cancel'&&row.state==='CANCELLED'){
-    const record=row.history?.find(h=>h.action==='cancelled'&&h.requestId===original.body.requestId&&
-      h.actor===String(original.body.actor||'').trim());
+  if(original.action==='cancel'&&row.state==='CANCELLED'&&!commands.some(c=>c.state==='PENDING')){
+    const requestId=commercialRequired(original.body.requestId,100),reason=commercialRequired(original.body.reason,6000);
+    if(requestId===null||reason===null)return null;
+    const record=row.history?.find(h=>h.action==='cancelled'&&h.requestId===requestId&&h.actor===actor&&h.reason===reason);
     if(record)return {outcome:'ACKNOWLEDGED',commands:[],cancellation:copy(record)};
   }
   return null;
@@ -192,8 +204,11 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
       '<div><dt>Total</dt><dd>'+money(d.totals.total,d.currency)+'</dd></div></dl>'+
       '<p>'+esc(d.lines.map(l=>l.description+' · '+l.quantity+' × '+l.unitAmount).join('\n'))+'</p>'+
       '<p>'+esc(review.eligibility?.ready?'Original milestone billing prerequisites are satisfied.':review.eligibility?.message||'Complete the original milestone acceptance before issue.')+'</p>'+
-      '<p>'+esc(review.nativePreview.creditReviewRequired?'Native credit review is required. Select its current approved decision.':'')+'</p>'+
-      field('creditDecisionId','Existing native credit decision, when required',review.nativePreview.creditDecisionId||'')+
+      (review.retainedCommand?
+        '<p>This continuation uses the original invoice review and retained credit decision. To use a different decision, prepare a new source-backed draft correction.</p>'+
+        '<dl class="change-facts"><div><dt>Retained native credit decision</dt><dd>'+esc(review.retainedCommand.body.creditDecisionId||'No decision was selected for this original request.')+'</dd></div></dl>':
+        '<p>'+esc(review.nativePreview.creditReviewRequired?'Native credit review is required. Select its current approved decision.':'')+'</p>'+
+        field('creditDecisionId','Existing native credit decision, when required',review.nativePreview.creditDecisionId||''))+
       '<div class="change-actions">'+button(review.retainedCommand?'Resume original invoice issue':'Confirm and issue reviewed invoice','issue',!review.retainedCommand&&!review.eligibility?.ready)+button('Close issue review','close-issue')+'</div></section>';
   }
   function render(){
@@ -260,7 +275,8 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
       const value={actor:recordingActor(),expectedProposalSha256:row.proposalSha256};
       if(action==='cancel'){value.reason=input('cancelReason');value.requestId=await mutationId('commercial-change:'+row.id+':cancel',value);}
       if(action==='issue'){if(!state.issue)throw Error('Review the changed native invoice first.');value.expectedIssuePreviewSha256=state.issue.issuePreviewSha256;
-        if(input('creditDecisionId'))value.creditDecisionId=input('creditDecisionId');}
+        const decision=state.issue.retainedCommand?state.issue.retainedCommand.body.creditDecisionId:input('creditDecisionId');
+        if(decision)value.creditDecisionId=decision;}
       if(!['apply','cancel','issue'].includes(action))throw Error('Choose a current customer action.');
       await sendOriginal({action,changeId:row.id,endpoint:selectedPath(row.id)+'/'+action,body:value});
       state.message=action==='issue'?'Received the original native invoice issue.':action==='cancel'?'Retained the cancelled preparation and its source.':'Received the reviewed native correction commands.';

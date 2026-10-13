@@ -21,6 +21,7 @@ export async function handleTariffRequest({req,res,url,workspace,prefix='/api',a
       if (path === '/state') json(200,await workspace.state());
       else if (path === '/source') json(200,await workspace.source(url.searchParams.get('version')));
       else if (path === '/repricing/source') json(200,await workspace.repricingSource(url.searchParams.get('version')));
+      else if (path === '/working') json(200,await workspace.working.list());
       else if (path === '/plans') json(200,await workspace.list());
       else if (path === '/bundle') reply(200,'application/json; charset=utf-8',await workspace.bundle(
         url.searchParams.has('selectionRequestId') ? {selectionRequestId:url.searchParams.get('selectionRequestId')} : {}),
@@ -51,11 +52,14 @@ export async function handleTariffRequest({req,res,url,workspace,prefix='/api',a
       '/preview':'preview', '/plans':'save', '/selection':'selection', '/selection/commit':'commitSelection',
       '/portfolio/inspect':'inspectPortfolio', '/receive':'receive',
       '/repricing/preview':'previewRepricing', '/repricing/save':'saveRepricing',
-      '/repricing/stage':'stageRepricing'
+      '/repricing/stage':'stageRepricing',
+      '/working/load':'working.load','/working/save':'working.save',
+      '/working/export':'working.exportCopy','/working/import':'working.importCopy'
     };
     if (!Object.hasOwn(actions,path)) throw error('TARIFF_ROUTE_NOT_FOUND','Tariff operation not found.',404);
     const input = await body(['/portfolio/inspect','/receive'].includes(path) ? 64*1024*1024 : 16*1024*1024);
-    json(200,await workspace[actions[path]](input));
+    const action=actions[path];
+    json(200,await (action.startsWith('working.')?workspace.working[action.slice(8)](input):workspace[action](input)));
   } catch (failure) {
     json(failure.status ?? (failure instanceof TypeError || failure instanceof RangeError ? 422 : 500),
       {error:{code:failure.code ?? 'TARIFF_OPERATION_FAILED',message:failure.message ?? 'Tariff operation failed.'}});

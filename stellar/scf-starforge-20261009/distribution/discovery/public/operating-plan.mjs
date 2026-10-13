@@ -6,7 +6,7 @@ import { mountGrantTracker } from '/grant-tracker-editor.mjs';
 import { isGrantTracker, inspectGrantTracker } from '/grant-tracker-core/grant-tracker.mjs';
 import { installGrantReportingEditor } from '/grant-reporting-editor.mjs';
 import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapshotRegistration,
-  operatingPlanDraft, operatingPlanRevision, saveOperatingPlanRevision, forkOperatingPlan,
+  operatingPlanDraft, operatingPlanRevision, saveOperatingPlanRevision, forkOperatingPlan, previewOperatingPlanCycle, createOperatingPlanCycle,
   receiveOperatingPlan, compareOperatingPlan, summarizeOperatingPlan, shellArgument,
   renderOperatingPlanMarkdown, renderOperatingPlanHTML,
   createOperatingFile, addOperatingFile, removeOperatingFile, operatingFileBytes, OPERATING_FILE_MAX_BYTES } from '/operating-plan-core.mjs';
@@ -96,14 +96,15 @@ function readDrafts(id) {
 }
 function recordDraft(key = draftKey(current.id)) {
   return { key, planId: current.id, sessionId, updatedAt: new Date().toISOString(),
-    draft: clone(draft), rawArguments: clone(rawArguments) };
+    draft: clone(draft), rawArguments: clone(rawArguments),
+    ...(cyclePreparation ? { cyclePreparation: clone(cyclePreparation) } : {}) };
 }
 function writeDraft(record) {
   bytes(record);
   return transaction(['drafts'], 'readwrite', tx => { tx.objectStore('drafts').put(record); });
 }
-function queueDraft() {
-  if (!editable()) return;
+function queueDraft(force = false) {
+  if (!editable() && !force) return;
   draftQueued = true;
   $('draft-status').textContent = 'Saving working draft in this browser…';
   clearTimeout(draftTimer);
@@ -177,6 +178,7 @@ async function openPlan(id, { fresh = false } = {}) {
   current = inspectOperatingPlan(plan);
   draft = !fresh && ownDraft ? clone(ownDraft.draft) : operatingPlanDraft(current);
   rawArguments = !fresh && ownDraft ? clone(ownDraft.rawArguments ?? {}) : {};
+  cyclePreparation = ownDraft?.cyclePreparation ? clone(ownDraft.cyclePreparation) : null;
   selectedRevision = null; selectedStep = draft.content.steps[0]?.id ?? ''; draftQueued = false;
   const url = new URL(location.href); url.searchParams.set('plan', id); history.replaceState(null, '', url);
   renderEditor(); renderPlanList(); await refreshRecovery();
@@ -207,6 +209,7 @@ function renderEditor() {
   for (const name of planFields) $(name).value = content[name];
   for (const id of ['save-plan', 'add-manual']) $(id).disabled = !editing;
   $('copy-plan').disabled = busy;
+  $('prepare-cycle').disabled = busy || isGrantTracker(current);
   $('add-registration').hidden = !editing;
   $('export-draft').disabled = !draft;
   $('export-comparison').disabled = !catalog;
@@ -406,6 +409,7 @@ async function savePlan() {
     };
   });
   current = saved; draft = operatingPlanDraft(saved); rawArguments = {}; draftQueued = false;
+  if (cyclePreparation) { queueDraft(true); await flushDraft(); }
   await refreshPlanList(); renderEditor(); await refreshRecovery();
   $('draft-status').textContent = 'Revision ' + saved.revisions.length + ' saved · ' + dateLabel(saved.revisions.at(-1).savedAt);
   status('Saved ' + saved.revisions.at(-1).title + ' · revision ' + saved.revisions.length + '.');
@@ -512,6 +516,219 @@ async function run(action, { propagate = false } = {}) {
 }
 
 
+
+// Cycle preparation belongs to this editor's existing per-session working record.
+let cyclePreparation = null, cycleSource = null, cyclePreview = null, cyclePlan = null;
+const CYCLE_PREPARATION_SCHEMA = 'stellar-forge.operating-plan-cycle-preparation.v1';
+const cycleFields = ['revision', 'title', 'period', 'datePolicy', 'shiftFrom', 'shiftTo'];
+function cycleError(error) {
+  $('cycle-error').hidden = !error;
+  $('cycle-error').textContent = error ? (error.code ? error.code + ': ' : '') + error.message : '';
+}
+function cycleOptions() {
+  return { revision: Number(cyclePreparation.revision), title: cyclePreparation.title,
+    period: cyclePreparation.period, datePolicy: cyclePreparation.datePolicy,
+    ...(cyclePreparation.datePolicy === 'shift' ? { shiftFrom: cyclePreparation.shiftFrom, shiftTo: cyclePreparation.shiftTo } : {}),
+    referenceFiles: clone(cyclePreparation.referenceFiles) };
+}
+function changedCycle() {
+  cyclePreview = null; cyclePlan = null; $('cycle-preview').hidden = true;
+  delete cyclePreparation.createdId;
+  $('cycle-created').hidden = true;
+  queueDraft(true);
+  $('cycle-storage').textContent = 'Saving preparation with this browser working draft…';
+}
+function renderCycleFiles() {
+  const parent = $('cycle-files'); parent.replaceChildren();
+  const revision = operatingPlanRevision(cycleSource, Number(cyclePreparation.revision));
+  let count = 0;
+  for (const step of revision.steps) {
+    if (!step.files?.length) continue;
+    const group = node('section', undefined, 'cycle-file-group'); group.append(node('h4', step.title));
+    for (const file of step.files) {
+      count++;
+      const row = node('div', undefined, 'cycle-file-row'), label = node('label');
+      const input = node('input'); input.type = 'checkbox';
+      input.checked = cyclePreparation.referenceFiles.some(ref => ref.stepId === step.id && ref.fileId === file.id);
+      input.addEventListener('change', () => {
+        const remaining = cyclePreparation.referenceFiles.filter(ref => ref.stepId !== step.id || ref.fileId !== file.id);
+        cyclePreparation.referenceFiles = input.checked ? [...remaining, { stepId: step.id, fileId: file.id }] : remaining;
+        changedCycle();
+      });
+      label.append(input, node('span', file.name + ' · ' + file.bytes.toLocaleString() + ' bytes · ' + file.mediaType));
+      const get = node('button', 'Download original'); get.type = 'button'; get.dataset.cycleAction = '';
+      get.addEventListener('click', () => cycleRun(() => downloadOperatingFile(file)));
+      row.append(label, get); group.append(row);
+      if (file.note) group.append(node('p', file.note, 'hint'));
+    }
+    parent.append(group);
+  }
+  if (!count) parent.append(node('p', 'No result files in this saved source revision.', 'hint'));
+}
+function renderCycleForm() {
+  const select = $('cycle-revision'); select.replaceChildren();
+  for (const revision of [...cycleSource.revisions].reverse()) {
+    const option = node('option', 'Revision ' + revision.revision + ' · ' + revision.title + ' · ' + dateLabel(revision.savedAt));
+    option.value = String(revision.revision); select.append(option);
+  }
+  for (const field of cycleFields) $('cycle-' + field).value = cyclePreparation[field];
+  const shift = cyclePreparation.datePolicy === 'shift';
+  $('cycle-from-field').hidden = !shift; $('cycle-to-field').hidden = !shift;
+  $('cycle-shiftFrom').required = shift; $('cycle-shiftTo').required = shift;
+  $('cycle-source').textContent = cycleSource.id + ' · complete history of ' + cycleSource.revisions.length + ' saved revisions';
+  renderCycleFiles();
+}
+async function openCycle() {
+  if (!current) throw new Error('Open a saved operating plan first.');
+  if (isGrantTracker(current)) throw new Error('Use the Grant tracker’s original preparation for a new programme or period. Its retained grant decisions stay with that case.');
+  await flushDraft();
+  cycleSource = inspectOperatingPlan(await readPlan(current.id));
+  if (!cyclePreparation) {
+    const revision = selectedRevision ?? current.revisions.length;
+    const source = operatingPlanRevision(cycleSource, revision);
+    cyclePreparation = { revision: String(revision), title: (source.title.slice(0, 286) + ' · next cycle'),
+      period: '', datePolicy: 'clear', shiftFrom: '', shiftTo: '', referenceFiles: [] };
+  }
+  cyclePreview = null; cyclePlan = null; cycleError(null); $('cycle-preview').hidden = true;
+  renderCycleForm();
+  $('cycle-created').hidden = !cyclePreparation.createdId;
+  queueDraft(true); await flushDraft();
+  $('cycle-storage').textContent = 'Preparation retained in this browser. Download its complete JSON to transfer unfinished work.';
+  $('cycle-dialog').showModal();
+}
+async function cycleRun(action) {
+  if (busy) return;
+  $('cycle-fields').disabled = true;
+  for (const button of $('cycle-dialog').querySelectorAll('[data-cycle-action]')) button.disabled = true;
+  cycleError(null);
+  try { await run(action, { propagate: true }); }
+  catch (error) { cycleError(error); }
+  finally {
+    $('cycle-fields').disabled = false;
+    for (const button of $('cycle-dialog').querySelectorAll('[data-cycle-action]')) button.disabled = false;
+  }
+}
+async function previewCycle() {
+  if (cyclePreparation.createdId && await readPlan(cyclePreparation.createdId))
+    throw new Error('This preparation already created a cycle. Open that saved plan, or change the new-period fields to prepare another.');
+  await flushDraft();
+  cyclePreview = previewOperatingPlanCycle(cycleSource, cycleOptions());
+  cyclePlan = completePlanCapacity(createOperatingPlanCycle(cycleSource, { ...cycleOptions(), id: crypto.randomUUID() }));
+  const parent = $('cycle-steps'); parent.replaceChildren();
+  for (const step of cyclePreview.steps) {
+    const row = node('tr'), work = node('td');
+    work.append(node('strong', step.title), node('small', step.owner || 'Owner not entered'));
+    row.append(work, node('td', step.previousDue || 'Undated'), node('td', step.due || 'Undated'),
+      node('td', step.referenceFiles.map(file => file.name).join('\n') || 'None'));
+    parent.append(row);
+  }
+  if (!cyclePreview.steps.length) {
+    const row = node('tr'), cell = node('td', 'No steps in the selected saved revision. Add work after creating the cycle.');
+    cell.colSpan = 4; row.append(cell); parent.append(row);
+  }
+  $('cycle-preview-summary').textContent = cyclePreview.content.title + ' · ' + cyclePreview.content.period +
+    ' · source revision ' + cyclePreview.source.revision + ' of ' + cyclePreview.source.historyRevisions +
+    ' · ' + cyclePreview.steps.length + ' planned steps · ' +
+    (cyclePreview.datePolicy === 'shift' ? 'dated steps shifted ' + cyclePreview.shiftDays + ' days'
+      : cyclePreview.datePolicy === 'keep' ? 'exact original dates retained' : 'due dates cleared') +
+    '. All previous results remain in the retained history.';
+  $('cycle-preview').hidden = false;
+  $('cycle-preview').scrollIntoView({ block: 'nearest' });
+}
+async function createCycle() {
+  if (!cyclePlan || !cyclePreview) throw new Error('Preview the current preparation before creating its cycle.');
+  const sourceId = cycleSource.id, sourceBody = JSON.stringify(cycleSource), result = clone(cyclePlan);
+  await retainWorkingDraft();
+  const preparedRecord = recordDraft();
+  preparedRecord.cyclePreparation.createdId = result.id;
+  await transaction(['plans', 'drafts'], 'readwrite', (tx, done, abort) => {
+    const plans = tx.objectStore('plans');
+    plans.get(sourceId).onsuccess = event => {
+      try {
+        if (JSON.stringify(event.target.result) !== sourceBody)
+          throw new Error('The original saved history advanced. Close and reopen preparation to preview its current complete history. Your choices remain saved.');
+        plans.get(result.id).onsuccess = existing => {
+          if (existing.target.result && JSON.stringify(existing.target.result) !== JSON.stringify(result)) {
+            abort(new Error('The prepared cycle identity already contains different work. Preview again to keep both complete plans.')); return;
+          }
+          if (!existing.target.result) plans.add(result);
+          tx.objectStore('drafts').put(preparedRecord);
+          done(result);
+        };
+      } catch (error) { abort(error); }
+    };
+  });
+  cyclePreparation.createdId = result.id;
+  $('cycle-dialog').close();
+  await refreshPlanList(); await openPlan(result.id);
+  broadcast?.postMessage({ id: result.id, revision: result.revisions.length });
+  status('Created the next cycle with planned work and the complete original history. Review the period-specific inputs, paths and instructions before running its operations.');
+}
+function validateCyclePreparation(value) {
+  if (!value || value.schema !== CYCLE_PREPARATION_SCHEMA || !value.preparation ||
+      typeof value.preparation !== 'object' || Array.isArray(value.preparation))
+    throw new TypeError('Open a complete operating-cycle preparation JSON.');
+  const source = inspectOperatingPlan(value.source), settings = value.preparation;
+  if (!cycleFields.every(field => typeof settings[field] === 'string') ||
+      settings.title.length > 300 || settings.period.length > 1000 ||
+      !['clear', 'keep', 'shift'].includes(settings.datePolicy) ||
+      settings.shiftFrom.length > 10 || settings.shiftTo.length > 10 ||
+      !Array.isArray(settings.referenceFiles))
+    throw new TypeError('The retained cycle fields are incomplete.');
+  operatingPlanRevision(source, Number(settings.revision));
+  // Validate reference identities and presence while retaining incomplete title/date entry.
+  previewOperatingPlanCycle(source, { revision: Number(settings.revision), title: settings.title.trim() ? settings.title : 'Unfinished cycle',
+    period: settings.period.trim() ? settings.period : 'Unfinished period', datePolicy: 'clear', referenceFiles: settings.referenceFiles });
+  return { source, preparation: Object.fromEntries([...cycleFields, 'referenceFiles'].map(key => [key, clone(settings[key])])) };
+}
+$('prepare-cycle').addEventListener('click', () => run(openCycle));
+for (const field of cycleFields) $('cycle-' + field).addEventListener('input', () => {
+  if (!cyclePreparation || busy) return;
+  cyclePreparation[field] = $('cycle-' + field).value;
+  if (field === 'revision') cyclePreparation.referenceFiles = [];
+  changedCycle();
+  if (field === 'revision' || field === 'datePolicy') renderCycleForm();
+});
+$('cycle-form').addEventListener('submit', event => { event.preventDefault(); cycleRun(previewCycle); });
+$('cycle-create').addEventListener('click', () => cycleRun(createCycle));
+$('cycle-open-created').addEventListener('click', () => cycleRun(async () => {
+  const id = cyclePreparation?.createdId;
+  if (!id || !await readPlan(id)) throw new Error('The created cycle is unavailable in this browser. Reopen its complete exported JSON.');
+  await flushDraft(); $('cycle-dialog').close(); await openPlan(id);
+}));
+$('cycle-close').addEventListener('click', () => cycleRun(async () => { await flushDraft(); $('cycle-dialog').close(); }));
+$('cycle-dialog').addEventListener('cancel', event => {
+  event.preventDefault(); if (!busy) cycleRun(async () => { await flushDraft(); $('cycle-dialog').close(); });
+});
+$('cycle-export-json').addEventListener('click', () => cycleRun(() => {
+  if (!cyclePlan) throw new Error('Preview the current preparation first.');
+  download(cyclePlan, 'operating-cycle-' + cyclePlan.id + '.json');
+}));
+$('cycle-export-html').addEventListener('click', () => cycleRun(() => {
+  if (!cyclePlan) throw new Error('Preview the current preparation first.');
+  download(renderOperatingPlanHTML(cyclePlan), 'operating-cycle-' + cyclePlan.id + '.html', 'text/html');
+}));
+$('cycle-export-preparation').addEventListener('click', () => cycleRun(async () => {
+  await flushDraft();
+  const value = { schema: CYCLE_PREPARATION_SCHEMA, source: cycleSource, preparation: cyclePreparation };
+  const encoded = JSON.stringify(value, null, 2) + '\n';
+  if (new Blob([encoded]).size > maximumBytes) throw new Error('The complete preparation JSON exceeds 32 MiB. Keep the saved source and browser preparation; choose a smaller complete source history for transfer.');
+  download(encoded, 'operating-cycle-preparation-' + cycleSource.id + '.json');
+}));
+$('cycle-import-preparation').addEventListener('click', () => {
+  if (busy) return; $('cycle-preparation-file').value = ''; $('cycle-preparation-file').click();
+});
+$('cycle-preparation-file').addEventListener('change', () => cycleRun(async () => {
+  const file = $('cycle-preparation-file').files[0]; if (!file) return;
+  if (file.size > maximumBytes) throw new Error('Keep the complete preparation within 32 MiB.');
+  const imported = validateCyclePreparation(JSON.parse(await file.text()));
+  if (isGrantTracker(imported.source)) throw new Error('Use the original Grant tracker preparation for this source.');
+  await retainWorkingDraft(); await receivePlan(imported.source);
+  cyclePreparation = imported.preparation; cycleSource = inspectOperatingPlan(await readPlan(current.id));
+  changedCycle(); renderCycleForm(); await flushDraft();
+  $('cycle-storage').textContent = 'Opened the complete source and unfinished preparation; prior local working drafts remain retained.';
+}));
+
 const operatingFileSection = node('section', undefined, 'handover-section');
 operatingFileSection.setAttribute('aria-labelledby', 'step-file-heading');
 const operatingFileHeading = node('h3', 'Complete result files'); operatingFileHeading.id = 'step-file-heading';
@@ -581,6 +798,7 @@ $('recover-draft').addEventListener('click', () => run(async () => {
   if (!record) throw new Error('The selected working draft is unavailable.');
   await retainWorkingDraft();
   draft = clone(record.draft); rawArguments = clone(record.rawArguments ?? {});
+  cyclePreparation = record.cyclePreparation ? clone(record.cyclePreparation) : null;
   selectedRevision = null; selectedStep = draft.content.steps[0]?.id ?? '';
   queueDraft(); renderEditor(); await refreshRecovery();
   status('Opened retained work from ' + dateLabel(record.updatedAt) + ' · based on revision ' + draft.baseRevision + '.');

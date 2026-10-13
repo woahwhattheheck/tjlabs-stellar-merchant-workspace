@@ -231,3 +231,39 @@ The source-owned distribution contribution declares both CLI commands, six modul
 [Native receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/NATIVE_RECEIVING.md) is one restartable complete HTTP/SQLite/CLI/browser programme. It uses the unchanged upstream software fixture, explicitly authored local protocol responses, sixteen views and three generations of original Research receiving. Its native outcome remains pending at this source publication. No installed or live-account success is asserted by the source merge.
 
 [Zotero v3 basics](https://www.zotero.org/support/dev/web_api/v3/basics), [syncing](https://www.zotero.org/support/dev/web_api/v3/syncing) and [types and fields](https://www.zotero.org/support/dev/web_api/v3/types_and_fields) are the primary protocol references. Full original source identities and notices are retained under the product's reference directory.
+
+
+## Customer-agent operation of the same saved library
+
+The installed selection now discovers the source-owned `zotero-workspaces`
+Merchant provider. [Customer setup](../../stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/MERCHANT_SETUP.md)
+connects managed or owned aliases to the existing `workspace.sqlite`, original
+private listener and Research binding. The browser, CLI and customer agent use
+the same saved library and original operations.
+
+The fourteen tools cover current library/project views, exact saved mutation
+requests and replay, capture cancellation, configured original-file import,
+complete immutable exports, chunked file reading and original named receiving.
+Source imports retain all original bytes in the project. A lost response is
+resolved by the same native UUID and retained request, including its full source
+digest. Capture admission and actual source completion have separate states.
+
+A named receive returns an admitted `childWorkspace` alias. Read and edit that
+actual child with the same tools, continue its original Research handoff, export
+the complete progressed project and reopen it independently. The original
+parent owns its child listener; the agent keeps only the matching attachment.
+Failed startup, receiving or close keeps the same native database/lease owner
+available to retry, preventing replacement listeners while cleanup is pending.
+
+The typed `./zotero/operator-client` export offers the same saved operations
+and full-file receiving for customer code. Controls stay within 1 MiB, source
+imports within 64 MiB and the unchanged complete transfer within 256 MiB.
+Retained file reads stream the actual owned file descriptor in chunks up to
+196,608 bytes and check its original length and SHA256.
+
+Continue the existing SDK12 / Root2D58 OSF group479248 case, library
+version11212: 5,503 items, 18 collections and 58 original API responses. Its
+completed original library/browser receiving remains the base; the new
+customer-agent course is specified in the same native guide and follows that
+saved project. Original source terms, attachment access and Research history
+remain attached to the actual source.

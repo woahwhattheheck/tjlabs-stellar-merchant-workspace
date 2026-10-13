@@ -74,6 +74,26 @@
       </section>
     </div>
     <aside>
+      <section aria-labelledby="studies-title">
+        <h2 id="studies-title">Tariff studies</h2>
+        <p class="muted">Keep unfinished bands, quantities and payment valuations with their original pricing source.</p>
+        <label>Study name<input id="study-label" value="Tariff study" autocomplete="off"></label>
+        <p id="study-status" role="status"></p><p id="study-local-status" class="muted"></p>
+        <div class="toolbar">
+          <button id="study-save" type="button">Save study</button>
+          <button id="study-fork" type="button">Save as new study</button>
+          <button id="study-new" type="button">New study</button>
+          <button id="study-recover" type="button" hidden>Recover original study save</button>
+          <button id="study-recover-import" type="button" hidden>Recover original import</button>
+          <button id="study-export" type="button" disabled>Export saved study</button>
+          <button id="study-raw" type="button">Download raw inputs</button>
+          <button id="study-legacy" type="button" hidden>Recover earlier browser work</button>
+        </div>
+        <label class="file-label">Receive a study<input id="study-import" type="file" accept=".json,application/json"></label>
+        <p class="muted">Receive the original workspace backup first. A study file keeps its selected working revision; the full backup also carries the source reviews and saved operations.</p>
+        <details><summary>Current study history</summary><div id="study-history" class="toolbar"></div></details>
+        <div id="study-list"></div>
+      </section>
       <section aria-labelledby="saved-title"><h2 id="saved-title">Saved plans</h2><div id="saved-plans" class="empty">Loading…</div></section>
       <section aria-labelledby="operations-title"><h2 id="operations-title">Retained operations</h2><p class="muted">An interrupted save keeps its original request and selected capture.</p><div id="operations"></div></section>
       <section aria-labelledby="portfolio-title"><h2 id="portfolio-title">Portable portfolio</h2><p class="muted">Keep the tariff portfolio together with its original Pricing workspace backup.</p><button id="export-portfolio" type="button">Export complete portfolio</button><label class="file-label">Receive a portfolio<input id="import-portfolio" type="file" accept=".json,application/json"></label><p id="portfolio-result"></p></section>

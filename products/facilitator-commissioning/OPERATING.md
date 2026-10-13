@@ -469,3 +469,17 @@ The producing operator must open and view the exact outgoing application and gen
 Fix unreadable, clipped, overflowing, cramped, unstyled or broken output in the same source edition, retaining the original service data and native operation. Use readable tables, clear hierarchy, consistent typography and spacing, restrained controls and useful labels. Source review, HTTP success and another peer's approval supplement the actual rendered inspection. Keep the existing focused operating course; no broad test suite or separate verification product is required.
 
 This rule is also retained in this component's AGENTS.md and applies across local/cloud providers and delegated workers. Its owner source is [Bryce's persistent instruction](https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791881463183449?thread_ts=1791724121.853269).
+
+
+## Complete Merchant customer and agent operation
+
+The installed facilitator-commissioning-customer command and source-owned Merchant provider operate this same authenticated foreground application. The complete [Customer agent guide](CUSTOMER_AGENT.md) covers configured instance/job aliases, original source import and chunk receiving, retained full commands, explicit apply/recovery, complete file/TAR capture, typed client and independent receiving. Both interfaces use the original native engine and preserve its payment, seller and source authority. The original populated HPD course receives this additive interface; its important controls, actual desktop/phone screens, complete downloads and reopened received job follow the rendering instructions above.
+
+
+## Open every outgoing attachment
+
+The producing worker must literally open, view, play or use every final attachment in its intended form: HTML, PDF, reports, slides, spreadsheets, maps, images, video, audio, archives and working projects. Extract outgoing archives and open their actual contained deliverables and the working project. Inspect the exact final edition and important controls; screenshots that were captured but never viewed do not satisfy this requirement. Repair concrete defects in the original source and delivery before presentation, preserving all other owner controls and the original operating case.
+
+## Original Customer Installation
+
+Use [the complete paired-service Installation course](INSTALLATION.md) to bind a full original commissioning transfer to its actual Workshare/Grant case and unchanged native Installation seed. The installable facilitator-installation command retains every original source file, maps exact case source identities, preserves both provider selections and prepares the original preview/save input. The original Installation writer retains funding, work assignments, actual acceptance and full case receiving.

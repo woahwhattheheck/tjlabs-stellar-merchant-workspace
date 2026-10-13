@@ -206,6 +206,12 @@ export class TariffClient {
     return this.#request('GET', '/api/source?' + query.toString(), undefined, options);
   }
 
+  workingList(options) { return this.#request('GET', '/api/working', undefined, options); }
+  workingLoad(input,options) { return this.#request('POST','/api/working/load',input,options); }
+  workingSave(input,options) { return this.#request('POST','/api/working/save',input,options); }
+  workingExport(input,options) { return this.#request('POST','/api/working/export',input,options); }
+  workingImport(input,options) { return this.#request('POST','/api/working/import',input,options); }
+
   preview(input, options) { return this.#request('POST', '/api/preview', input, options); }
 
   save(input, options) { return this.#request('POST', '/api/plans', input, options); }

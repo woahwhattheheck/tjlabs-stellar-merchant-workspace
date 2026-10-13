@@ -6,16 +6,42 @@
     "products/facilitator-commissioning"
   ],
   "commands": {
-    "facilitator-commissioning": "products/facilitator-commissioning/cli.mjs"
+    "facilitator-commissioning": "products/facilitator-commissioning/cli.mjs",
+    "facilitator-commissioning-customer": "products/facilitator-commissioning/agent-cli.mjs",
+    "facilitator-installation": "products/facilitator-commissioning/installation-cli.mjs"
   },
   "commandDescriptions": {
-    "facilitator-commissioning": "Prepare, operate, receive and hand over one complete retained service on two original facilitator profiles"
+    "facilitator-commissioning": "Prepare, operate, receive and hand over one complete retained service on two original facilitator profiles",
+    "facilitator-commissioning-customer": "Operate the complete configured commissioning customer and receive exact original files through the same authenticated host",
+    "facilitator-installation": "Prepare and independently inspect the complete original paired-service Customer Installation"
   },
   "exports": {
     "./facilitator/commissioning": "./source/products/facilitator-commissioning/commissioning.mjs",
     "./facilitator/commissioning-client": "./source/products/facilitator-commissioning/client.mjs",
     "./facilitator/commissioning-operator": "./source/products/facilitator-commissioning/operator.mjs",
     "./facilitator/commissioning-server": "./source/products/facilitator-commissioning/operator-server.mjs",
-    "./facilitator/commissioning-receive": "./source/products/facilitator-commissioning/receive-operator.mjs"
-  }
+    "./facilitator/commissioning-receive": "./source/products/facilitator-commissioning/receive-operator.mjs",
+    "./facilitator/commissioning-customer": {
+      "types": "./source/products/facilitator-commissioning/agent-client.d.mts",
+      "import": "./source/products/facilitator-commissioning/agent-client.mjs"
+    },
+    "./facilitator/commissioning-customer-provider": "./source/products/facilitator-commissioning/agent-provider.mjs",
+    "./facilitator/installation": {
+      "types": "./source/products/facilitator-commissioning/installation.d.mts",
+      "import": "./source/products/facilitator-commissioning/installation.mjs"
+    },
+    "./facilitator/installation-core": "./source/products/facilitator-commissioning/installation-core.mjs"
+  },
+  "merchantProviders": {
+    "facilitator-commissioning-customer": "products/facilitator-commissioning/agent-provider.mjs"
+  },
+  "supportFiles": [
+    "products/facilitator-commissioning/CUSTOMER_AGENT.md",
+    "products/facilitator-commissioning/agent-connection.example.json",
+    "products/facilitator-commissioning/agent-client.d.mts",
+    "products/facilitator-commissioning/agent-customer.d.mts",
+    "products/facilitator-commissioning/INSTALLATION.md",
+    "products/facilitator-commissioning/installation.d.mts",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/facilitator-commissioning.json"
+  ]
 }

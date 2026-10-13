@@ -120,6 +120,38 @@ is retained by the original commissioning owner with its exact source inputs and
 outputs. Product/source completion and the actual deployed customer result each
 retain their own recorded state.
 
+## Receive the Analysis result into its original Customer Installation
+
+Use the complete [Event customer Installation course](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/WEBHOOK_EVENT_ANALYSIS.md)
+and installed `starforge mcp-analysis-event-installation` command. Select the
+actual original SF47 Workshare seed, explicit operator bindings and exact
+sixteen-file Event delivery index. The receiver retains the original seed,
+bindings and selected profile before preparing the native document. The original
+download writer receives every complete customer file into that private output.
+
+The prepared result contains the full editable Installation, native preview
+input, original Workorder, derived bindings and a readable customer-source
+inventory. It preserves original phases, funded assignments and native
+acceptance checks. Source authority, deployment, aggregate spending and
+accountable recipient remain actual operator selections. The existing
+Customer installations desk performs preview and save through its original
+case and revision controls.
+
+Once the complete local delivery has arrived, an interrupted preparation can
+finish without the producer directory. Offline reopen checks all sixteen
+original files, all three original preparation inputs and all six derived
+outputs. A changed retained member remains a concrete source error. Partial
+receiving continues the original download operation against the same selected
+source.
+
+Export and independently import the whole saved operating-case archive.
+Keep the complete Event preparation alongside that archive so every original
+source, report, workbook and native analytical workspace remains available.
+Continue the next useful source window through the same customer programme.
+The original proposed Mercury USD 2,400 / five-business-day commercial scope
+and its start/acceptance milestones stay in the original Workshare; assigned
+effort and actual customer acceptance remain its native records.
+
 ## Operate and inspect the outgoing customer result
 
 Before presenting an application, demonstration, report or export as ready,
@@ -219,8 +251,11 @@ private HTTP integration and browser guide at
 cf0a48c99dd896a9dc315b6f9883db850d9f232c.
 The agent provider, operation/index contracts, typed input and delivery clients,
 installed contribution and complete operating guide select merged commit
-3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9. The complete original nine records
-and their accepted source editions remain in this same contribution.
+3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9. Complete Customer Installation
+receiving, its typed interface, selected profile and whole operator course select
+cdaafeb22d7ffdd080a11362822c28ad01ac96ab. The existing agent guide and installed
+contribution keep both original and current editions. All eighteen preceding
+source IDs and their accepted source editions remain in this same contribution.
 
 The independent registration is
 stellar-forge/developer-site/grant-products/webhook-customer-analysis.json.

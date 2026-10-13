@@ -93,3 +93,28 @@ export function operatingFileSummary(file: OperatingFile): OperatingFileSummary;
 export function addOperatingFile(draft: OperatingPlanDraft, stepId: string, file: OperatingFile): OperatingPlanDraft;
 export function removeOperatingFile(draft: OperatingPlanDraft, stepId: string, fileId: string): OperatingPlanDraft;
 export function compareOperatingFiles(previous?: OperatingFile[], returned?: OperatingFile[]): OperatingFileComparison;
+
+export interface OperatingCycleOptions {
+  /** Saved source content; all later original history is retained too. */
+  revision?: number;
+  title: string;
+  period: string;
+  datePolicy?: 'clear' | 'keep' | 'shift';
+  /** Both real YYYY-MM-DD dates are required only for shift. */
+  shiftFrom?: string;
+  shiftTo?: string;
+  referenceFiles?: { stepId: string; fileId: string }[];
+}
+export interface OperatingCyclePreview {
+  source: { id: string; revision: number; historyRevisions: number; createdAt: string; title: string; period: string };
+  datePolicy: 'clear' | 'keep' | 'shift'; shiftDays: number; shiftFrom?: string; shiftTo?: string;
+  content: OperatingPlanContent;
+  steps: { id: string; title: string; owner: string; previousStatus: OperatingStepState;
+    previousDue: string; due: string; originalFiles: OperatingFileSummary[]; referenceFiles: OperatingFileSummary[] }[];
+}
+/** Resets current progress/results and carries only explicitly selected reference files. */
+export function previewOperatingPlanCycle(plan: OperatingPlan, options: OperatingCycleOptions): OperatingCyclePreview;
+/** Independent plan identity, complete unchanged original history and one new planned revision. */
+export function createOperatingPlanCycle(plan: OperatingPlan, options: OperatingCycleOptions & {
+  id: string; savedAt?: string;
+}): OperatingPlan;

@@ -6,6 +6,7 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 import { verifyDcatManagedSelection } from '../../distribution/runtime-workspace/application-dcat.mjs';
 import { openCkanWorkbench } from './model.mjs';
 import { semanticCliOptions, semanticCliUsage, executeDcatSemanticCommand } from './dcat-semantic-cli.mjs';
+import { semanticRuntimeCliOptions, semanticRuntimeCliUsage, executeDcatSemanticRuntimeCommand } from './dcat-semantic-runtime.mjs';
 import { openWorkbenchOwner, saveWorkbenchStartup } from './workbench-owner.mjs';
 import { parseCkanJson } from './capture.mjs';
 import { startCkanServer } from './server.mjs';
@@ -35,6 +36,7 @@ const usage = [
   '  dcat inspect-archive --file FILE.ckanw [--sha256 HASH]',
   '  dcat receive --file FILE.ckanw --sha256 HASH --workspace NEW_DIR',
   ...semanticCliUsage,
+  ...semanticRuntimeCliUsage,
   'Set SCF_DCAT_PYTHON to the prepared interpreter; the default profile original requires Python 3.13.',
   'For prepared Python 3.12, explicitly set SCF_DCAT_RUNTIME_PROFILE=portable-python312; see PORTABLE_RUNTIME.md.',
   'Catalog originals, corrected candidates, full reviews and release history remain in the same saved project.',
@@ -42,6 +44,7 @@ const usage = [
 const output = value => process.stdout.write(JSON.stringify(value, null, 2) + '\n');
 const optionsByCommand = {
   ...semanticCliOptions,
+  ...semanticRuntimeCliOptions,
   init: ['workspace', 'origin'], serve: ['workspace', 'port', 'managed-selection', 'startup-file'],
   status: ['workspace'], source: ['workspace', 'source'],
   'save-source': ['workspace', 'source', 'expected-source', 'label', 'url', 'profile', 'token-env', 'interval-minutes', 'timeout-ms', 'max-bytes', 'enabled'],
@@ -114,6 +117,20 @@ export async function main(supplied = process.argv.slice(2)) {
     if (!options[name]) throw fault('DCAT_COMMAND_ARGUMENTS', 'Supply --' + name + '.');
     return options[name];
   };
+  if (Object.hasOwn(semanticRuntimeCliOptions, command)) {
+    const controller = new AbortController();
+    const stop = () => controller.abort();
+    process.once('SIGINT', stop); process.once('SIGTERM', stop);
+    try {
+      const result = await executeDcatSemanticRuntimeCommand(command, options, { signal: controller.signal });
+      output(result.schema === 'stellar-forge.dcat-semantic-prepared-runtime.v1'
+        ? { schema: result.schema, status: result.status, directory: result.directory, python: result.python,
+            receiptSha256: result.receiptSha256, receiptBytes: result.receiptBytes,
+            lockSha256: result.lockSha256, packageCount: result.packages.length,
+            completeReceipt: resolve(result.directory, 'runtime.json') } : result);
+      return result;
+    } finally { process.removeListener('SIGINT', stop); process.removeListener('SIGTERM', stop); }
+  }
   if (command === 'inspect-archive') {
     output(await inspectCkanWorkspaceArchive({ file: resolve(required('file')), expectedSha256: options.sha256 })); return;
   }

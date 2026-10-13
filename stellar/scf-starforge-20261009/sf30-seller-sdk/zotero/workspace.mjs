@@ -9,11 +9,14 @@ import {createZoteroCapturer,newCapture,restartCaptureState} from './capture.mjs
 import {decodeDocumentSet,buildEdition,compareEditions,selectedItems,projectView,researchSourceBundle} from './source.mjs';
 import {exportWorkspace,receiveWorkspace,resolveResearchTarget,receivedResearchDirectory} from './transfer.mjs';
 
+import {createZoteroAgentRequests} from './agent-requests.mjs';
+import {retainZoteroCleanup} from './agent-cleanup.mjs';
+
 const ref=(kind,value)=>({record:{kind,id:value.id,revision:value.revision}});
 const researchIdentity=directory=>'research_'+sha256(Buffer.from(directory));
 export async function openZoteroWorkspace({directory,researchDirectory=null,dossierStore=null,fetchImpl,environment,transport=null}={}) {
   const store=await openZoteroStore(directory);
-  let dossiers,capturer,closing=false,closePromise;
+  let dossiers,capturer,agentRequests,closing=false,closePromise;
   const pending=new Set(),handoffWork=new Map(),admission=new AsyncLocalStorage(),admittedToken={};
   try{
     need(researchDirectory===null||isAbsolute(researchDirectory)&&resolve(researchDirectory)===researchDirectory,
@@ -230,7 +233,7 @@ export async function openZoteroWorkspace({directory,researchDirectory=null,doss
       return {bytes:await store.objectBytes(object),filename:name,mediaType:'application/json',sha256:object.sha256};
     }
     async function snapshot() {
-      live();const kinds=['profile','capture','edition','project','comparison','handoff'],result={};
+      live();const kinds=['profile','capture','edition','project','comparison','handoff','agent-request'],result={};
       for(const kind of kinds){
         const page=store.list(kind,{limit:100});
         result[kind]={...page,rows:page.rows.map(r=>kind==='capture'?captureView(r.id):
@@ -259,12 +262,13 @@ export async function openZoteroWorkspace({directory,researchDirectory=null,doss
       need(methods[method],'ZOTERO_METHOD_INVALID');
       return methods[method](input,op);
     }
+    agentRequests=createZoteroAgentRequests({store,invoke,admit});
     async function close() {
-      if(closePromise)return closePromise;closing=true;
+      if(closePromise)return closePromise;closing=true;agentRequests.requestClose();
       closePromise=(async()=>{
         const errors=[];
         const stopCaptures=capturer.close();
-        const settled=await Promise.allSettled([...pending,stopCaptures]);errors.push(...settled.filter(r=>r.status==='rejected').map(r=>r.reason));
+        const settled=await Promise.allSettled([...pending,stopCaptures,agentRequests.drain()]);errors.push(...settled.filter(r=>r.status==='rejected').map(r=>r.reason));
         // Preserve the original store and writer if admitted work did not finish cleanly.
         if(errors.length)throw new AggregateError(errors,'ZOTERO_WORKSPACE_CLOSE_FAILED');
         store.close();
@@ -278,8 +282,9 @@ export async function openZoteroWorkspace({directory,researchDirectory=null,doss
       saveProject:publicCall(saveProject),decide:publicCall(decide),compare:publicCall(compare),edition:publicCall(edition),
       documentsFor:publicCall(documentsFor),viewProject:publicCall(viewProject),pageProject:publicCall(pageProject),prepareHandoff:publicCall(prepareHandoff),
       receiveHandoff:publicCall(receiveHandoff),download:publicCall(download),captureView:publicCall(captureView),
+      agentGet:publicCall(agentRequests.get),agentSave:publicCall(agentRequests.save),agentResume:publicCall(agentRequests.resume),
       waitCapture:publicCall(capturer.wait),exportWorkspace:publicCall(op=>exportWorkspace(store,op,{dossiers})),close};
 
-  }catch(error){try{await capturer?.close();}finally{store.close();}throw error;}
+  }catch(error){const cleanup=retainZoteroCleanup(error,[capturer,store]);try{await cleanup.close();}catch(secondary){error.cleanupFailure=secondary.code??'ZOTERO_CLOSE_FAILED';}throw error;}
 }
 export {receiveWorkspace};

@@ -172,7 +172,8 @@ function newDraft(value, seed) {
   };
 }
 function restoreDraft(value, discard = false, seed) {
-  const saved = discard ? null : readJSON(draftKey(value.id), null);
+  const saved = discard ? null : draft?.reviewId===value.id&&(draft.dirty===true||draft.mappingDirty===true)
+    ? draft : readJSON(draftKey(value.id), null);
   if (object(saved) && saved.reviewId === value.id && Number.isInteger(saved.expectedRevision) &&
       object(saved.decisions) && object(saved.mappings) && typeof saved.reviewer === 'string' && typeof saved.note === 'string' &&
       (saved.dirty === true || saved.mappingDirty === true)) {
@@ -241,6 +242,7 @@ function updateControls() {
   $('previous-changes').disabled = page === 0;
   $('next-changes').disabled = (page + 1) * PAGE_SIZE >= filteredChanges.length;
   for (const element of document.querySelectorAll('[data-no-choices="true"]')) element.disabled = true;
+  renderColleague();
 }
 async function run(operation) {
   if (busy) return;
@@ -856,6 +858,7 @@ function renderReadiness() {
   } else replace('approval-detail');
 }
 function renderReview() {
+  renderColleague();
   const active = Boolean(review && draft);
   $('review-empty').hidden = active;
   $('review-content').hidden = !active;
@@ -925,8 +928,8 @@ async function acceptReviewWrite(result, options) {
   try {
     const received = object(result?.review) ? result.review : result;
     if (received?.id === prior && Number.isInteger(received.revision) && object(received.assessment))
-      installReview(received,{discardDraft:true,seed:options.seed,focus:false});
-    else await loadReview(prior,{discardDraft:true,seed:options.seed,focus:false});
+      installReview(received,{discardDraft:options.preserveDraft!==true,seed:options.seed,focus:false});
+    else await loadReview(prior,{discardDraft:options.preserveDraft!==true,seed:options.seed,focus:false});
     replace('overview', metric('Retained sources',list(state.snapshots).length),metric('Saved reviews',list(state.reviews).length),
       metric('Approved reviews',list(state.reviews).filter(item => String(item.status).toLowerCase() === 'approved').length),
       metric('Publication records',list(state.publications).length));
@@ -1091,4 +1094,209 @@ function initialize() {
     updateControls();
   }
 }
+
+/* Complete colleague receiving on this same saved release review. */
+let colleaguePreview=null,colleagueChoices={},colleagueFile=null;
+const colleagueKey=()=>storagePrefix+':colleague:'+review?.id;
+function colleagueOperation(){return review?readJSON(colleagueKey(),null):null;}
+function retainColleagueOperation(value){
+ try{
+  if(value===null)sessionStorage.removeItem(colleagueKey());
+  else sessionStorage.setItem(colleagueKey(),JSON.stringify(value));
+ }catch{throw new Error('The browser could not retain this original request. Make session storage available before sending; the current source and draft remain open.');}
+ renderColleague();
+}
+function colleagueUnchanged(){return review&&draft&&!draft.dirty&&!draft.mappingDirty&&!conflict()&&!mustRefreshReview;}
+function renderColleague(){
+ if(!$('colleague-history'))return;
+ const active=Boolean(review),pending=colleagueOperation();
+ $('export-colleague').disabled=busy||!active||Boolean(pending&&pending.kind!=='export');
+ $('receive-colleague').disabled=busy||!active||Boolean(pending&&pending.kind!=='receive');
+ $('colleague-file').disabled=busy||!active||Boolean(pending&&pending.kind!=='receive');
+ $('colleague-resume').hidden=!pending;
+ $('colleague-resume').disabled=busy;
+ $('colleague-new-file').hidden=!(pending?.kind==='receive'&&pending.rejected===true);
+ $('colleague-new-file').disabled=busy;
+ $('colleague-pending').textContent=pending?
+  (pending.kind==='export'?'The original package request is retained. Resume it to receive that same saved edition.':
+   pending.kind==='apply'?'The exact selected feedback request is retained. Resume it to receive its original saved outcome.':
+   'The original return ID and file identity are retained. Check its saved result or reselect the same complete JSON file to resume.'):
+  'Download a complete review for a colleague, then receive their returned JSON in this same saved review.';
+ const rows=[];
+ for(const pack of list(review?.colleague?.packages)){
+  const row=node('li',null,'source-row'),detail=node('div');
+  detail.append(node('strong','Saved colleague package'),node('p',pack.id+' · '+dateLabel(pack.createdAt),'muted'));
+  const actions=node('div',null,'button-row');
+  if(pack.html)actions.append(button('Download working HTML',()=>run(()=>openOriginalFile({name:'form-colleague-'+pack.id+'.html',receipt:pack.html}))));
+  if(pack.source)actions.append(button('Download original package',()=>run(()=>openOriginalFile({name:'form-colleague-'+pack.id+'.json',receipt:pack.source}))));
+  row.append(detail,actions);rows.push(row);
+ }
+ for(const received of list(review?.colleague?.returns)){
+  const row=node('li',null,'source-row'),detail=node('div');
+  detail.append(node('strong',received.reviewer||'Returned colleague review'),node('p',statusLabel(received.status)+' · '+received.editionCount+' saved editions · '+dateLabel(received.createdAt),'muted'));
+  const actions=node('div',null,'button-row');
+  actions.append(button('Review returned decisions',()=>run(()=>openColleagueReturn(received.id))));
+  if(received.source)actions.append(button('Download original return',()=>run(()=>openOriginalFile({name:'form-colleague-return-'+received.id+'.json',receipt:received.source}))));
+  row.append(detail,actions);rows.push(row);
+ }
+ replace('colleague-history',...rows);
+ const preview=colleaguePreview?.reviewId===review?.id?colleaguePreview:null;
+ $('colleague-preview').hidden=!preview;
+ if(!preview)return;
+ $('colleague-message').textContent=preview.message+' Original review revision '+preview.originalRevision+'; current saved revision '+preview.currentRevision+(preview.currentRevision!==review.revision?' (saved review is now revision '+review.revision+'; refresh this comparison)':'')+'.';
+ replace('colleague-author',facts([['Colleague',preview.draft.reviewer||'Not entered'],['Overall note',preview.draft.note||'Not entered'],
+  ['Saved local editions',preview.editions.length],['Current review status',statusLabel(preview.currentStatus)],
+  ['Current approved plan',preview.currentApproval?.planId||'None']]));
+ const differences=preview.rows.filter(row=>row.different&&row.colleague!==null);
+ const nodes=differences.map(row=>{
+  const card=node('section',null,'subpanel');card.append(node('h4',row.change.summary),node('p',row.change.path||human(row.change.kind),'muted'));
+  if(row.nativeChanged)card.append(node('p','The saved staff disposition changed after this package was exported.','notice'));
+  const pair=node('div',null,'source-pair');
+  for(const [label,value] of [['Originally exported staff decision',row.original],['Current staff decision',row.current],['Colleague decision',row.colleague]]){
+   const side=node('div');side.append(node('strong',label),node('p',value?human(value.decision):'No saved decision'),node('p',value?.note||'No note'));pair.append(side);
+  }
+  card.append(pair);
+  const label=node('label','Select the disposition to keep'),select=node('select');
+  select.append(new Option('Choose explicitly',''),new Option('Keep current staff decision','current'),new Option('Use colleague decision','colleague'));
+  select.value=colleagueChoices[row.change.id]||'';
+  select.disabled=busy||!preview.canApply;
+  select.addEventListener('change',()=>{colleagueChoices[row.change.id]=select.value;saveColleagueFeedback();renderColleague();});
+  label.append(select);card.append(label);
+  if(row.incomplete)card.append(node('p','The colleague disposition has no note. Keep the current decision or return the complete working file for the colleague to finish.','notice'));
+  return card;
+ });
+ replace('colleague-differences',...nodes.length?nodes:[empty('No changed colleague dispositions. The complete returned note and history can still be received as a staff review.')]);
+ const history=node('div');
+ for(const edition of preview.editions){
+  const item=node('details');item.append(node('summary',(edition.reviewer||'Reviewer')+' · '+dateLabel(edition.createdAt)));
+  item.append(node('p',edition.note),renderValue(edition.decisions));history.append(item);
+ }
+ replace('colleague-editions',history);
+ $('apply-colleague').disabled=busy||!preview.canApply||preview.currentRevision!==review.revision||!colleagueUnchanged()||Boolean(pending&&pending.kind!=='apply')||
+  differences.some(row=>!colleagueChoices[row.change.id]||row.incomplete&&colleagueChoices[row.change.id]==='colleague');
+ $('colleague-apply-guidance').textContent=preview.currentRevision!==review.revision?'Refresh this returned comparison against the current saved review.':!colleagueUnchanged()?'Save or reload the current local draft before applying returned feedback.':
+  preview.currentApproval?'Applying a staff review opens the review again and retains the earlier approved plan. Review the current result before any new approval.':
+  'Applying saves the explicit choices and the complete returned note/history in the current review. Approval uses the existing separate staff action.';
+}
+async function exportColleague(){
+ if(!review)throw new Error('Open the original saved review.');
+ let pending=colleagueOperation();
+ if(!pending)requireCurrentReview();
+ if(pending&&pending.kind!=='export')throw new Error('Finish the retained colleague request first.');
+ if(!pending){pending={kind:'export',body:{id:review.id,expectedRevision:review.revision,packageId:'colleague-'+crypto.randomUUID()}};retainColleagueOperation(pending);}
+ notice('Preparing the complete original colleague package…');
+ const result=await action('exportColleague',pending.body);
+ retainColleagueOperation(null);
+ await loadReview(review.id,{focus:false});
+ await openOriginalFile({name:'form-colleague-'+result.id+'.html',receipt:result.html});
+ notice('The complete colleague working HTML was downloaded. The saved package remains available in this review.');
+}
+async function digestFile(file){
+ const raw=await file.arrayBuffer(),hash=await crypto.subtle.digest('SHA-256',raw);
+ return [...new Uint8Array(hash)].map(value=>value.toString(16).padStart(2,'0')).join('');
+}
+function colleagueFeedbackKey(){return colleaguePreview?storagePrefix+':colleague-feedback:'+colleaguePreview.id+':'+colleaguePreview.previewHash:null;}
+function saveColleagueFeedback(){
+ const key=colleagueFeedbackKey();if(!key)return;
+ writeStorage(key,JSON.stringify({choices:colleagueChoices,reviewer:$('colleague-reviewer').value,note:$('colleague-note').value,overall:$('colleague-overall').value}));
+}
+function installColleaguePreview(result){
+ colleaguePreview=result;
+ const saved=readJSON(colleagueFeedbackKey(),null);
+ colleagueChoices=object(saved?.choices)?saved.choices:{};
+ $('colleague-reviewer').value=saved?.reviewer??draft?.reviewer??'';
+ $('colleague-note').value=saved?.note??'';
+ $('colleague-overall').value=saved?.overall==='revise'?'revise':'review';
+}
+async function openColleagueReturn(id){
+ const result=await request('/api/form-releases/colleague-returns/'+encodeURIComponent(id));
+ if(result.reviewId!==review.id)throw new Error('This return belongs to another review.');
+ installColleaguePreview(result);
+ renderColleague();
+ notice('The complete original feedback is open beside current saved staff decisions.');
+ return result;
+}
+async function receiveColleague(){
+ if(!review)throw new Error('Open the original saved review.');
+ let pending=colleagueOperation();
+ if(pending&&pending.kind!=='receive')throw new Error('Finish the retained colleague request first.');
+ if(pending){
+  try{
+   const received=await openColleagueReturn(pending.id);
+   if(received.reviewId!==pending.reviewId||received.source?.sha256!==pending.sha256||received.source?.bytes!==pending.bytes)
+    throw new Error('The saved receiving result differs from this retained original file request. Keep this request and review its original source.');
+   retainColleagueOperation(null);
+   await loadReview(review.id,{focus:false});return;
+  }catch(error){if(error.status!==404)throw error;}
+ }
+ const file=colleagueFile||$('colleague-file').files[0];
+ if(!file)throw new Error('Choose the complete colleague return JSON file.');
+ if(file.size>256*1024*1024)throw new Error('The complete return exceeds this receiver’s 256 MiB file limit.');
+ const sha256=await digestFile(file);
+ if(pending){
+  if(pending.sha256!==sha256||pending.bytes!==file.size)throw new Error('Resume with the same original return file. Its bytes differ from the retained request.');
+ }else{
+  pending={kind:'receive',id:'colleague-return-'+crypto.randomUUID(),reviewId:review.id,name:file.name,bytes:file.size,sha256};
+  retainColleagueOperation(pending);
+ }
+ notice('Receiving the complete original colleague return…');
+ const response=await fetch('/api/form-releases/colleague-returns/'+encodeURIComponent(pending.id)+'?reviewId='+encodeURIComponent(pending.reviewId),{
+  method:'POST',redirect:'error',cache:'no-store',credentials:'same-origin',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:file});
+ let value;try{value=await response.json();}catch{throw new Error('The receiving response was interrupted. Resume this same retained request.');}
+ if(!response.ok||value.ok===false){
+  if([400,409,413,415,422].includes(response.status)){pending.rejected=true;pending.error=value.error?.message||'The file was rejected.';retainColleagueOperation(pending);}
+  throw Object.assign(new Error(value.error?.message||'The original return could not be received.'),value.error||{},{status:response.status});
+ }
+ installColleaguePreview(value.result);colleagueFile=null;$('colleague-file').value='';
+ retainColleagueOperation(null);await loadReview(review.id,{focus:false});renderColleague();
+ notice('The complete returned file is retained. Review its decisions and history below.');
+}
+async function applyColleague(){
+ if(!review)throw new Error('Open the original saved review.');
+ let pending=colleagueOperation();
+ if(pending&&pending.kind!=='apply')throw new Error('Finish the retained colleague request first.');
+ if(!pending){
+  if(!colleagueUnchanged())throw new Error('Save or reload the current local draft before applying feedback.');
+  const preview=colleaguePreview;
+  if(!preview||preview.reviewId!==review.id||!preview.canApply)throw new Error('Open an applicable colleague return.');
+  const reviewer=$('colleague-reviewer').value.trim(),note=$('colleague-note').value.trim();
+  if(!reviewer||!note)throw new Error('Enter the accepting staff reviewer and decision note.');
+  const differences=preview.rows.filter(row=>row.different&&row.colleague!==null);
+  if(differences.some(row=>!['current','colleague'].includes(colleagueChoices[row.change.id])||row.incomplete&&colleagueChoices[row.change.id]==='colleague'))
+   throw new Error('Choose a complete disposition for every returned difference.');
+  const body={id:preview.id,expectedRevision:preview.currentRevision,previewHash:preview.previewHash,reviewer,note,
+   overall:$('colleague-overall').value,choices:differences.map(row=>({changeId:row.change.id,source:colleagueChoices[row.change.id]}))};
+  pending={kind:'apply',body};retainColleagueOperation(pending);
+ }
+ notice('Saving the explicit colleague feedback selection…');
+ let result;
+ try{result=await action('applyColleague',pending.body);}
+ catch(error){
+  if(error.status===409){try{await openColleagueReturn(pending.body.id);if(!colleaguePreview.applied)retainColleagueOperation(null);}catch{}}
+  throw error;
+ }
+ retainColleagueOperation(null);await acceptReviewWrite(result.review,{preserveDraft:Boolean(draft?.dirty||draft?.mappingDirty),seed:{reviewer:pending.body.reviewer,note:pending.body.note},message:'The selected feedback is saved.'});
+ await openColleagueReturn(pending.body.id);
+ notice('The selected feedback and complete original return are saved in this release review.');
+}
+async function resumeColleague(){
+ const pending=colleagueOperation();
+ if(pending?.kind==='export')return exportColleague();
+ if(pending?.kind==='receive')return receiveColleague();
+ if(pending?.kind==='apply')return applyColleague();
+}
+$('refresh-colleague').addEventListener('click',()=>run(()=>openColleagueReturn(colleaguePreview.id)));
+$('export-colleague').addEventListener('click',()=>run(exportColleague));
+$('receive-colleague').addEventListener('click',()=>run(receiveColleague));
+$('colleague-resume').addEventListener('click',()=>run(resumeColleague));
+$('colleague-new-file').addEventListener('click',()=>{
+ const pending=colleagueOperation();if(pending?.kind!=='receive'||pending.rejected!==true)return;
+ writeStorage(colleagueKey()+':rejected:'+pending.id,JSON.stringify(pending));
+ retainColleagueOperation(null);colleagueFile=null;$('colleague-file').value='';
+ notice('The rejected request is retained. Choose the corrected complete return as a new receiving request.');
+});
+for(const id of ['colleague-reviewer','colleague-note','colleague-overall'])$(id).addEventListener('input',saveColleagueFeedback);
+$('colleague-file').addEventListener('change',()=>{colleagueFile=$('colleague-file').files[0]??null;});
+$('colleague-apply-form').addEventListener('submit',event=>{event.preventDefault();run(applyColleague);});
+
 initialize();

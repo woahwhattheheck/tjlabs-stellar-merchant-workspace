@@ -208,6 +208,18 @@ The review compares every selected tariff and quantity with the saved original b
 
 A graduated total and its chosen uniform quote are separate results. The exact effective unit price retains a numerator and denominator with twelve-decimal display bounds. The selected **UNIFORM** quote rounds upward to six decimal places per request. Review the uniform gross projection and its rounding difference before using that price in the original scenario and pricing workflows. At zero quantity the review remains readable and offers no scenario selection.
 
+### Retain a named unfinished tariff study
+
+The **Tariff studies** sidebar saves the raw tariff editor before its quantities and prices are complete. Give the study a name, choose its original saved Pricing review and select **Save study**. **Calculate comparison** still applies the original exact tariff validation; a study can retain unfinished text while that calculation remains to be completed.
+
+Open a study to restore its original review, partially entered bands/volumes, payment valuation rows and original completed-plan continuation. Choose an earlier revision from its history, or **Save as new study** to retain a separate alternative. Changing the Pricing source saves the previous study and initializes a new tariff from the selected source. Refresh preserves a selected historical source beyond the recent-review list.
+
+Before the browser dispatches a plan, quote or native-price save, it saves the exact original request in the study. Its existing retained-operation controls recover the same request after an interruption. A lost study-save response offers **Recover original study save**; newer editor inputs remain available as the next revision. Revision conflicts retain the editor and offer a new study or the current saved revision.
+
+**Export saved study** selects its exact immutable revision; **Download raw inputs** selects the current editor. Receive either after restoring matching original sources. The complete workspace backup now carries all selected study histories, original tariff plans and quote intent/result journals alongside scenario/Pricing and payment-source records. Receive a study under a new local identity to preserve its origin and original operation IDs.
+
+The installed command also supports **working-list**, **working-load**, **working-save**, **working-export** and **working-import** with only the original **--state** directory. See the [complete named-study operation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2270313c56c7bd4ca7fc81187829c842f0028e4/stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/STUDIES.md) for input contracts, typed client methods and the original desktop/narrow, export/reopen and restore course.
+
 ### Save a complete tariff plan
 
 The CLI accepts the same input as the browser. A preview JSON contains `version`, `tariffs` and `volumes`. Each tariff contains `id`, `label`, `routeId`, `mode` and `tiers`; each tier contains `upTo` and `unitPriceUsd`. The final `upTo` is `null`. Use the exact saved version and route from the original source.

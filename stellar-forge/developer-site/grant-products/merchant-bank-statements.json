@@ -8,7 +8,7 @@
       "label": "Original bank statements and shared customer payment coverage",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "products/merchant-bank-statements/README.md",
-      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
       "editions": [
         {
           "commit": "933219ca2f66ebbaf28d5a7ef69cefe278de2a98",
@@ -39,6 +39,12 @@
           "git_blob": "66b83aade94f20023f698a706d63b782067ebfe6",
           "sha256": "e2dba7627415bd0379ba3cc1b99906dcce41e95767328e96e925496786cc841a",
           "bytes": 30508
+        },
+        {
+          "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
+          "git_blob": "5de86ac627dbba92c1f33051c7920f2cba8df6a1",
+          "sha256": "70ecfd7eaf1b8ad2b33ecd277d355bbd96199bcd2c7363e7d7e7abc461ea6164",
+          "bytes": 34336
         }
       ]
     },
@@ -47,7 +53,7 @@
       "label": "Complete bank product installation and original runtime transfer",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "products/merchant-bank-statements/INSTALLATION.md",
-      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
       "editions": [
         {
           "commit": "e57a359966f093f483a1aa5f4c2dac28566b6a5c",
@@ -84,6 +90,12 @@
           "git_blob": "9b3094285dd83050dd0cdfe663792f871ff863f4",
           "sha256": "d8a070d4c36a49a09de18771c3f6ea943e1e0cbfd95efa16b418b5958c7fe8fb",
           "bytes": 23777
+        },
+        {
+          "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
+          "git_blob": "0c11752ef2fa164eb8fc2937658e5a6dee50379d",
+          "sha256": "f88814fd533e175cd83d35e8cd6287b8b8491595c30a639cb9d65257a4a1446e",
+          "bytes": 27605
         }
       ]
     },
@@ -92,7 +104,7 @@
       "label": "Original bank source, remittances and complete accountant handover",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "products/merchant-bank-statements/HANDOVER.md",
-      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
       "editions": [
         {
           "commit": "e57a359966f093f483a1aa5f4c2dac28566b6a5c",
@@ -123,6 +135,12 @@
           "git_blob": "a7c740349b4c1e30299587cae0f40c5263b5df28",
           "sha256": "ef31cdc4c96d964edee2d77498806409fc81ea8b7332bdb7df02046c74ea268b",
           "bytes": 29724
+        },
+        {
+          "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
+          "git_blob": "143c13a06422c7c6c224738b3622a1d18f9d541a",
+          "sha256": "47ce16ba350f6129ca20aae023175f256aa4b45fe689afd45183766af375acc4",
+          "bytes": 33552
         }
       ]
     },
@@ -1043,13 +1061,19 @@
       "label": "Complete configured-source operator and original receiving guide",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_BANK_SOURCES.md",
-      "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
+      "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
       "editions": [
         {
           "commit": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2",
           "git_blob": "8af7d51438069489c59ccee43435e19e5165bb7b",
           "sha256": "f317035c4d63f84e64a9ef038c2103913bf45735e0e78b1fc91c0624b949b847",
           "bytes": 18526
+        },
+        {
+          "commit": "deffacfdcbd8705ccd8b4d32d70214285bbc6035",
+          "git_blob": "e4f52cb53a2cb58579c86f6c754704d1727c2dbe",
+          "sha256": "a66cba366671e06f58d0b59754340d5f550651d5fc5e571346f5d8fb2a9db9e8",
+          "bytes": 22354
         }
       ]
     }

@@ -6,7 +6,8 @@ import {isAbsolute,resolve,join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {privateDirectory,writeBytes,readBytes,writeJson,readJson} from '../../sf88-operator-buyer-cli/node/store.mjs';
 import {SCHEMA,LIMIT,need,plain,parse,json,sha256,clone,id,requestId,revision,now,objectReference} from './contracts.mjs';
-const KINDS=new Set(['profile','capture','edition','project','comparison','handoff','rate']);
+import {retainZoteroCleanup} from './agent-cleanup.mjs';
+const KINDS=new Set(['profile','capture','edition','project','comparison','handoff','rate','agent-request']);
 const format='stellar-forge.zotero-store.v1';
 const hash=/^[a-f0-9]{64}$/;
 const encode=value=>json(value).toString('utf8');
@@ -140,7 +141,7 @@ export async function openZoteroStore(directory,{receiving=false}={}) {
       }catch(error){throw new AggregateError([error],'ZOTERO_CLOSE_FAILED');}
     }
     return {directory,get identity(){return clone(identity);},get,list,history,put,transaction,action,putObject,objectBytes,snapshot,adopt,close};
-  }catch(error){try{db?.close();}catch{}try{lease?.close();}catch{}throw error;}
+  }catch(error){const cleanup=retainZoteroCleanup(error,[db,lease]);try{await cleanup.close();}catch(secondary){error.cleanupFailure=secondary.code??'ZOTERO_CLOSE_FAILED';}throw error;}
 }
 export function validateSnapshot(value) {
   need(plain(value)&&value.schema===format&&plain(value.identity)&&value.identity.schema===format&&

@@ -1,0 +1,14 @@
+{
+  "schema": "stellar-forge.facilitator-customer-connection.v1",
+  "instances": {
+    "customer": {
+      "label": "Original customer commissioning",
+      "jobId": "original-customer-job",
+      "launchFile": "./operator-launch.json",
+      "inputs": {},
+      "receivers": {
+        "handover": "./received-customer-job"
+      }
+    }
+  }
+}

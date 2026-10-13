@@ -5,12 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Source workflows</title>
 <link rel="stylesheet" href="/workflow_app.css">
+<link rel="stylesheet" href="/provider_workflows.css">
 <script type="module" src="/workflow_app.mjs"></script>
 </head>
 <body>
 <header><div><strong>Source workflows</strong><span id="profile">Operations</span></div><button id="refresh" type="button">Refresh</button></header>
 <div id="notice" role="status" aria-live="polite"></div>
-<div class="layout">
+<nav class="pw-workspace-modes" aria-label="Operator workspace">
+<button id="workspace-requests" type="button" aria-pressed="true">Business requests</button>
+<button id="workspace-providers" type="button" aria-pressed="false">Provider sources</button>
+</nav>
+<div id="business-workspace" class="layout">
 <aside>
 <div class="aside-head"><h1>Requests</h1><button id="new-request" type="button">New</button></div>
 <label class="search-label" for="search">Find a request</label><input id="search" type="search" placeholder="ID, correlation or status">
@@ -67,6 +72,7 @@
 </section>
 </main>
 </div>
+<section id="provider-workspace" aria-label="Provider source operations" hidden></section>
 <footer>Original source editions · Native Analysis reports · Complete editable receiving</footer>
 </body>
 </html>

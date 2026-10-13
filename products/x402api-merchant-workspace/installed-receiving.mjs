@@ -497,6 +497,9 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
         downloads.push(await originalFile(envelopePath, { bytes: invoice.envelope.bytes, sha256: invoice.envelope.sha256 }));
       }
     }
+    const {receiveInvoiceDeliveries}=await import('./invoice-delivery-receiving.mjs');
+    const customerDelivery=await receiveInvoiceDeliveries({browser,page,opening,scenario,reads,label,root:ROOT,directory,save,originalFile,runCommand,stopped});
+    downloads.push(...customerDelivery.files);images.push(...customerDelivery.images);
     const firstInvoice=reads.invoices[0],otherInvoice=reads.invoices[1];
     await page.getByRole('row',{name:firstInvoice.reference+', Delivered',exact:true}).click();
     await page.locator('#detail-content[data-order-id="'+firstInvoice.merchantOrderId+'"]').waitFor({state:'visible'});
@@ -559,17 +562,17 @@ async function receiveBrowser(opening, scenario, reads, { label = 'installed', r
     await page.locator('#detail-panel').evaluate(element => element.scrollIntoView({ block: 'start' }));
     const phone = await dimensions(); assert(phone.document <= phone.viewport + 1, 'The original phone layout overflows.');
     await capture('merchant-' + label + '-phone-detail.png'); await capture('merchant-' + label + '-phone-complete.png', true);
-    await page.locator('#search').fill('CEDAR_PAYMENT_DESK_NO_MATCH'); await page.waitForFunction(()=>document.querySelectorAll('#order-rows tr').length===0);
+    await page.locator('#search').fill('CEDAR_PAYMENT_DESK_NO_MATCH'); await page.locator('#register-filter-form').evaluate(form=>form.requestSubmit()); await page.waitForFunction(()=>document.querySelectorAll('#order-rows tr').length===0);
     await capture('merchant-'+label+'-phone-empty.png');
-    await page.locator('#search').fill(reads.invoices.at(-1).reference); await page.waitForFunction(()=>document.querySelectorAll('#order-rows tr').length===1);
-    await page.locator('#search').fill(''); await page.waitForFunction(()=>document.querySelectorAll('#order-rows tr').length===5);
+    await page.locator('#search').fill(reads.invoices.at(-1).reference); await page.locator('#register-filter-form').evaluate(form=>form.requestSubmit()); await page.waitForFunction(()=>document.querySelectorAll('#order-rows tr').length===1);
+    await page.locator('#search').fill(''); await page.locator('#register-filter-form').evaluate(form=>form.requestSubmit()); await page.waitForFunction(()=>document.querySelectorAll('#order-rows tr').length===5);
     await page.locator('#disconnect').click(); await page.locator('#connect-panel').waitFor({ state: 'visible' });
     await page.locator('#operator-token').fill(scenario.operatorToken); await page.locator('#connect-form button').click();
     await page.locator('#workspace').waitFor({ state: 'visible' }); assert.equal(await page.locator('#count-complete').innerText(), '5');
     assert.deepEqual(failures, []); assert.deepEqual(consoleErrors, []);
     return { browser: await browser.version(), chromium: values.chromium,
       mode: exportProject ? 'ORIGINAL_INSTALLED_PORTABLE_HTTP_BRIDGE' : 'ORIGINAL_INSTALLED_HTTP_GET_BRIDGE',
-      dimensions: { phone }, images, downloads, requests, paymentWork,
+      dimensions: { phone }, images, downloads, requests, paymentWork, customerDelivery,
       renderedInspection: { state:'AWAITING_PRODUCER_SCREEN_REVIEW',guide:'PAYMENTS.md#required-inspection-before-customer-readiness' },
       pageErrors: failures, consoleErrors,
       ...(project ? { project } : {}) };

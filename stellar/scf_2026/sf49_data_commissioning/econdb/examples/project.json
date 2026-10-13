@@ -1,0 +1,33 @@
+{
+  "schema": "econdb.maritime-project.v1",
+  "id": "issuer-maritime-examples",
+  "title": "Issuer maritime examples — source review",
+  "entries": [
+    {
+      "id": "capacity",
+      "title": "Calling-vessel capacity example",
+      "current": "editions/issuer-doc-capacity-by-operator",
+      "selection": {
+        "from": "2022-02-01",
+        "until": "2022-04-01"
+      },
+      "before": {
+        "from": "2022-02-01",
+        "until": "2022-03-01"
+      },
+      "after": {
+        "from": "2022-03-01",
+        "until": "2022-04-01"
+      }
+    },
+    {
+      "id": "traffic",
+      "title": "Container-traffic example",
+      "current": "editions/issuer-doc-container-traffic",
+      "selection": {
+        "from": "2022-02-01",
+        "until": "2022-04-01"
+      }
+    }
+  ]
+}

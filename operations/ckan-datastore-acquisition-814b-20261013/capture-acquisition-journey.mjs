@@ -1,6 +1,6 @@
 // One complete live, read-only source acquisition and customer receiving programme.
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -10,7 +10,7 @@ import { saveWorkbenchStartup } from './stellar/scf-starforge-20261009/sf30-sell
 import { readCkanCapture } from './stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/capture.mjs';
 import { scheduledCkanCaptureRunId } from './stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/capture-plans.mjs';
 import { receiveCkanWorkspaceArchive } from './stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/archive.mjs';
-import { cloneRemote, remoteIdentity } from './stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/remote-json.mjs';
+import { cloneRemote, remoteIdentity, parseRemote } from './stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/remote-json.mjs';
 import { atomicJson } from './stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/publisher/files.mjs';
 const root=process.cwd(), cfg=JSON.parse(await readFile(join(root,'journey-input.json'),'utf8'));
 const recordFile=join(root,'acquisition-journey-record.json'), exists=async path=>access(path).then(()=>true,()=>false);
@@ -20,7 +20,43 @@ let record=await exists(recordFile)?JSON.parse(await readFile(recordFile,'utf8')
   operation:'CKAN-DATASTORE-ACQUISITION-814B-20261013',planId:randomUUID(),requests:[],
   checks:[],createdAt:new Date().toISOString(),controlledInterruption:false,publisher:{}};
 assert.equal(record.operation,'CKAN-DATASTORE-ACQUISITION-814B-20261013');
+const visualIndexFile=join(root,'rendered-product','rendered-index.json');
+const previousVisual=await exists(visualIndexFile)?JSON.parse(await readFile(visualIndexFile,'utf8')):null;
+if(previousVisual)assert(previousVisual.operation===record.operation&&Array.isArray(previousVisual.images)&&Array.isArray(previousVisual.downloads));
+const visual=record.rendered=previousVisual??record.rendered??{operation:record.operation,inspection:'awaiting-producing-peer-view',images:[],downloads:[]};
 const save=()=>atomicJson(root,'acquisition-journey-record.json',record);
+// Retain the actual rendered pixels for direct inspection by the producing peer.
+const renderedRoot=join(root,'rendered-product');
+async function renderedView(page,name,viewport={width:1366,height:900}) {
+  await mkdir(renderedRoot,{mode:0o700,recursive:true});
+  await page.setViewportSize(viewport);
+  await page.evaluate(async()=>{await document.fonts.ready;window.scrollTo(0,0);
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
+  const raw=await page.screenshot({type:'png',fullPage:true});
+  const filename=String(visual.images.length+1).padStart(2,'0')+'-'+name+'-'+randomUUID()+'.png';
+  await writeFile(join(renderedRoot,filename),raw,{flag:'wx',mode:0o600});
+  visual.images.push({file:filename,bytes:raw.length,sha256:createHash('sha256').update(raw).digest('hex'),
+    viewport:{...viewport},title:await page.title(),path:new URL(page.url()).pathname});
+  await atomicJson(renderedRoot,'rendered-index.json',visual);
+}
+async function renderedWidths(page,name) {
+  await renderedView(page,name+'-desktop');
+  await renderedView(page,name+'-narrow',{width:390,height:844});
+  await page.setViewportSize({width:1366,height:900});
+}
+async function userDownload(page,label,name) {
+  await mkdir(renderedRoot,{mode:0o700,recursive:true});
+  const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:label,exact:true}).click()]);
+  const filename=String(visual.downloads.length+1).padStart(2,'0')+'-'+randomUUID()+'-'+name;
+  await download.saveAs(join(renderedRoot,filename));
+  assert.equal(await download.failure(),null);
+  const raw=await readFile(join(renderedRoot,filename));
+  visual.downloads.push({file:filename,suggestedName:download.suggestedFilename(),bytes:raw.length,
+    sha256:createHash('sha256').update(raw).digest('hex')});
+  await atomicJson(renderedRoot,'rendered-index.json',visual);
+  return raw;
+}
+
 const checked=message=>{if(!record.checks.includes(message))record.checks.push(message);};
 let workbench, listener, browser;
 const pageErrors=[];
@@ -28,10 +64,20 @@ const until=async(predicate,message)=>{const deadline=Date.now()+120000;for(;;){
 const browserPage=async()=>{
   if(!listener)listener=await startCkanServer({workbench});
   if(!browser){const {chromium}=await import('playwright');browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage'],...(cfg.browserExecutable?{executablePath:cfg.browserExecutable}:{})});}
-  const page=await browser.newPage();page.on('pageerror',error=>pageErrors.push(error.message));
+  const page=await browser.newPage({viewport:{width:1366,height:900},acceptDownloads:true});page.on('pageerror',error=>pageErrors.push(error.message));
   await page.goto(listener.url,{waitUntil:'networkidle'});
-  await page.getByRole('button',{name:'Capture plans',exact:true}).click();return page;
+  await page.getByRole('button',{name:'Capture plans',exact:true}).click();
+  await page.getByRole('heading',{name:'Saved acquisition plans',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Create a complete capture plan',exact:true}).waitFor();return page;
 };
+async function awaitRenderedRun(page,id,state){
+  await page.waitForFunction(({id,state})=>[...document.querySelectorAll('.card')].some(card=>
+    [...card.querySelectorAll('h3')].some(heading=>heading.textContent==='Original acquisition '+id) &&
+    [...card.querySelectorAll('.pill')].some(pill=>pill.textContent===state)),{id,state},{timeout:120000});
+  const summary=page.getByText('Retained period, source selection and capture outcome',{exact:true});
+  const details=summary.locator('..');
+  if((await details.getAttribute('open'))===null)await summary.click();
+}
 const captureDue=async()=>{
   if(!listener)listener=await startCkanServer({workbench});
   const startupFile=join(home,'private-listener.json');
@@ -85,6 +131,10 @@ try {
     period:{kind:'utc-day',offsetDays:-1},comparisonKeys:['_id']};
   workbench=await openCkanWorkbench({directory,create:!await exists(join(directory,'workbench.json')),
     origin:firstSelection.catalogOrigin});
+  if(!workbench.status().capturePlans.plans.length&&!visual.images.some(item=>item.file.includes('empty-plans'))){
+    const emptyPage=await browserPage();await renderedWidths(emptyPage,'empty-plans');
+    await emptyPage.close();await browser.close();browser=null;await listener.close();listener=null;await save();
+  }
   const firstPreview=workbench.previewCapturePlan({config:initialConfig,scheduledFor:'2026-10-11T00:00:00.000Z'});
   const secondPreview=workbench.previewCapturePlan({config:initialConfig,scheduledFor:'2026-10-12T00:00:00.000Z'});
   assert.equal(remoteIdentity(firstPreview.selection),remoteIdentity(originals[0].manifest.selection));
@@ -125,6 +175,13 @@ try {
   } else first=await workbench.capturePlanRun(firstId);
   if(first.state!=='COMPLETE'){
     const originalEdition=first.editionId,originalSelection=first.selectionSha256;
+    const interruptedPage=await browserPage();
+    await interruptedPage.getByRole('button',{name:'Open plan and complete history',exact:true}).click();
+    await interruptedPage.getByRole('button',{name:'Inspect original run',exact:true}).first().click();
+    await interruptedPage.getByRole('button',{name:'Resume the same source acquisition',exact:true}).waitFor();
+    await awaitRenderedRun(interruptedPage,firstId,first.state);
+    await renderedView(interruptedPage,'retained-interrupted-acquisition');
+    await interruptedPage.close();await browser.close();browser=null;await listener.close();listener=null;await save();
     await workbench.close();workbench=null;
     workbench=await openCkanWorkbench({directory});
     assert.throws(()=>workbench.resumeCapture(originalEdition,{maxRows:first.limits.maxRows+1}),
@@ -148,10 +205,19 @@ try {
     const page=await browserPage();
     await page.getByRole('button',{name:'Open plan and complete history',exact:true}).click();
     await page.getByRole('button',{name:'Edit this inspected plan version',exact:true}).click();
+    await page.getByLabel('Complete capture plan configuration',{exact:true}).waitFor();
+    await until(async()=>remoteIdentity(parseRemote(await page.getByLabel('Complete capture plan configuration',{exact:true}).inputValue()))===remoteIdentity(plan.config),
+      'The browser did not render the complete inspected original plan.');
+    await renderedWidths(page,'edit-original-plan');
+    await page.getByRole('button',{name:'Save this plan version',exact:true}).click();
+    await page.locator('#notice .error').waitFor();
+    await renderedView(page,'unchanged-preview-required');
     await page.getByLabel('Complete capture plan configuration',{exact:true}).fill(JSON.stringify(renamed,null,2));
     await page.getByLabel('Preview slot in UTC',{exact:true}).fill(secondPreview.scheduledFor);
     await page.getByRole('button',{name:'Preview exact upstream selection',exact:true}).click();
     await page.getByText('Exact resolved period, filters and query',{exact:true}).waitFor();
+    await page.getByText('Exact resolved period, filters and query',{exact:true}).click();
+    await renderedView(page,'resolved-following-source-selection');
     await page.getByRole('button',{name:'Save this plan version',exact:true}).click();
     await until(async()=>!workbench.status().active&&(await workbench.capturePlan(record.planId)).planSha256===renamedPreview.planSha256,
       'The browser plan save did not reach its original retained result.');
@@ -228,6 +294,13 @@ try {
   await page.getByRole('button',{name:'Open plan and complete history',exact:true}).click();
   await page.getByRole('button',{name:'Inspect original run',exact:true}).last().click();
   await page.getByRole('button',{name:'Open retained edition and field dictionary',exact:true}).waitFor();
+  await awaitRenderedRun(page,secondId,'COMPLETE');
+  await renderedWidths(page,'following-original-run');
+  const downloadedRun=parseRemote((await userDownload(page,'Download full original run','following-run.json')).toString('utf8'));
+  assert.equal(downloadedRun.id,secondId);
+  const downloadedPlan=parseRemote((await userDownload(page,'Download inspected plan version','current-plan.json')).toString('utf8'));
+  assert.equal(downloadedPlan.planId,record.planId);assert.equal(downloadedPlan.planSha256,plan.planSha256);
+  checked('Actual operator download controls returned and reopened the selected complete run and plan.');
   assert.deepEqual(pageErrors,[]);
   record.browser={...(record.browser??{}),state:'PASS',followingRunId:secondId,pageErrors:[]};await save();
   checked('The actual browser reopened both original acquisition periods and the retained following run.');
@@ -257,6 +330,16 @@ try {
   assert.equal((await workbench.capturePlanRun(secondId)).manifestSha256,second.manifestSha256);
   assert.equal(record.requests.length,callsBeforeReceive);
   checked('Complete customer receiving and cold reopen retained both policies, all pages, reviews and published editions without network.');
+  const receivedPage=await browserPage();
+  await receivedPage.getByRole('button',{name:'Open plan and complete history',exact:true}).click();
+  await receivedPage.getByRole('button',{name:'Inspect original run',exact:true}).last().click();
+  await receivedPage.getByRole('button',{name:'Open retained edition and field dictionary',exact:true}).waitFor();
+  await awaitRenderedRun(receivedPage,secondId,'COMPLETE');
+  await renderedWidths(receivedPage,'cold-received-acquisition');
+  const reopenedRun=parseRemote((await userDownload(receivedPage,'Download full original run','received-following-run.json')).toString('utf8'));
+  assert.equal(reopenedRun.id,secondId);assert.equal(record.requests.length,callsBeforeReceive);assert.deepEqual(pageErrors,[]);
+  await receivedPage.close();await browser.close();browser=null;await listener.close();listener=null;
+  checked('Actual cold-received desktop and narrow operator screens, retained controls and reopened download were returned for producing-peer inspection.');
   record.state='PASS';record.error=null;
 } catch(error) {
   record.state='FAIL';record.error={code:error.code,message:error.message,stack:error.stack};

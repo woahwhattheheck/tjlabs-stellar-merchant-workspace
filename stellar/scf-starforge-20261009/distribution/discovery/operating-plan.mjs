@@ -279,6 +279,79 @@ export function forkOperatingPlan(plan, { id, title, savedAt = new Date().toISOS
     baseRevision: forked.revisions.length,
     content: { ...copy(content), ...(title !== undefined ? { title } : {}) } }, { savedAt });
 }
+
+/** Prepare another period from one saved revision while retaining every original revision. */
+export function previewOperatingPlanCycle(plan, options = {}) {
+  const original = inspectOperatingPlan(plan);
+  need(!original.revisions.some(revision => revision.steps.some(step => step.id === 'grant-tracker')),
+    'PLAN_CYCLE_NATIVE_PREPARATION', 'Prepare a new managed Grant tracker through its original application; preserve the programme decisions and required source files.');
+  only(options, ['revision', 'title', 'period', 'datePolicy', 'shiftFrom', 'shiftTo', 'referenceFiles'], 'Cycle preparation');
+  const selected = operatingPlanRevision(original, options.revision);
+  text(options.title, 'New cycle title', 300, true);
+  text(options.period, 'New cycle period', 1000, true);
+  const datePolicy = options.datePolicy ?? 'clear';
+  need(['clear', 'keep', 'shift'].includes(datePolicy), 'PLAN_CYCLE_DATES_INVALID',
+    'Choose whether to clear, retain or shift the original due dates.');
+  let shiftDays = 0;
+  if (datePolicy === 'shift') {
+    date(options.shiftFrom); date(options.shiftTo);
+    need(options.shiftFrom && options.shiftTo, 'PLAN_CYCLE_ANCHORS_REQUIRED',
+      'Choose the original and next cycle anchor dates before shifting due dates.');
+    shiftDays = (Date.parse(options.shiftTo + 'T00:00:00Z') - Date.parse(options.shiftFrom + 'T00:00:00Z')) / 86400000;
+  } else need(options.shiftFrom === undefined && options.shiftTo === undefined,
+    'PLAN_CYCLE_ANCHORS_UNUSED', 'Anchor dates apply only to the shift policy.');
+  const references = options.referenceFiles ?? [];
+  need(Array.isArray(references) && references.length <= 1000000,
+    'PLAN_CYCLE_FILES_INVALID', 'Select original files by their step and file IDs.');
+  const referenceIds = new Set();
+  const sourceFiles = new Set(selected.steps.flatMap(step => (step.files ?? []).map(file => JSON.stringify([step.id, file.id]))));
+  for (const reference of references) {
+    only(reference, ['stepId', 'fileId'], 'Cycle reference file');
+    identity(reference.stepId, 'Reference step ID'); identity(reference.fileId, 'Reference file ID');
+    const key = JSON.stringify([reference.stepId, reference.fileId]);
+    need(!referenceIds.has(key), 'PLAN_CYCLE_FILE_REPEATED', 'Select each reference file once.');
+    need(sourceFiles.has(key), 'PLAN_CYCLE_FILE_MISSING',
+      'A selected reference file is unavailable in the chosen source revision.');
+    referenceIds.add(key);
+  }
+  const content = bodyFromRevision(selected);
+  content.title = options.title; content.period = options.period;
+  const steps = content.steps.map(step => {
+    const previousDue = step.due, previousStatus = step.status;
+    const originalFiles = step.files ?? [];
+    step.status = 'planned'; step.recordedResult = '';
+    if (datePolicy === 'clear') step.due = '';
+    if (datePolicy === 'shift' && step.due) {
+      const next = new Date(Date.parse(step.due + 'T00:00:00Z') + shiftDays * 86400000);
+      need(Number.isFinite(next.getTime()), 'PLAN_CYCLE_DATE_RANGE', 'The shifted due date is outside the calendar range.');
+      step.due = next.toISOString().slice(0, 10); date(step.due);
+    }
+    const kept = originalFiles.filter(file => referenceIds.has(JSON.stringify([step.id, file.id])));
+    if (kept.length) step.files = kept;
+    else delete step.files;
+    return { id: step.id, title: step.title, owner: step.owner, previousStatus,
+      previousDue, due: step.due, originalFiles: originalFiles.map(operatingFileSummary),
+      referenceFiles: kept.map(operatingFileSummary) };
+  });
+  validateBody(content);
+  return {
+    source: { id: original.id, revision: selected.revision, historyRevisions: original.revisions.length,
+      createdAt: original.createdAt, title: selected.title, period: selected.period },
+    datePolicy, shiftDays,
+    ...(datePolicy === 'shift' ? { shiftFrom: options.shiftFrom, shiftTo: options.shiftTo } : {}),
+    content, steps,
+  };
+}
+export function createOperatingPlanCycle(plan, { id, savedAt = new Date().toISOString(), ...options } = {}) {
+  const original = inspectOperatingPlan(plan), preview = previewOperatingPlanCycle(original, options);
+  identity(id, 'New cycle plan ID'); time(savedAt, 'New cycle save time');
+  need(id !== original.id, 'PLAN_COPY_ID_REQUIRED', 'A new cycle needs its own plan ID.');
+  // A cycle always has an explicit new saved revision, including an identical empty procedure.
+  return inspectOperatingPlan({ ...original, id,
+    origin: { id: original.id, revision: preview.source.revision, createdAt: original.createdAt },
+    revisions: [...original.revisions, { revision: original.revisions.length + 1, savedAt, ...preview.content }] });
+}
+
 /** Extend an existing history only when every shared revision is identical. */
 export function receiveOperatingPlan(incoming, existing = null) {
   const received = inspectOperatingPlan(incoming);
