@@ -1,0 +1,199 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "merchant-implementation",
+  "heading": "## Merchant implementation, source delivery and offline customer review",
+  "sources": [
+    {
+      "id": "implementation-grafana-guide",
+      "label": "Grafana archive, task mapping and complete independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/GRAFANA_CASE_DELIVERY.md",
+      "commit": "b81137ecb4e8ca27a108cb28b09ae12558bcbc86",
+      "editions": [
+        {
+          "commit": "b81137ecb4e8ca27a108cb28b09ae12558bcbc86",
+          "git_blob": "1ee0d58a96ad8c7e045616ca0f35c576cab8385c",
+          "bytes": 9690,
+          "sha256": "22035d701d667e9a67da57aa7c7826150629aa67074baa5b3a729c653ba963df"
+        }
+      ]
+    },
+    {
+      "id": "implementation-grafana-cli",
+      "label": "Installed original archive intake, export and receiving commands",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/GRAFANA_CASE_DELIVERY_CLI.md",
+      "commit": "b81137ecb4e8ca27a108cb28b09ae12558bcbc86",
+      "editions": [
+        {
+          "commit": "b81137ecb4e8ca27a108cb28b09ae12558bcbc86",
+          "git_blob": "2647b7825dadda962ee449ab3829b8b5c0599486",
+          "bytes": 10898,
+          "sha256": "faf16231f5943e7dc6108e05b0d38cd0f49511a0beffe93c111344ca4d9296ad"
+        }
+      ]
+    },
+    {
+      "id": "implementation-grafana-service",
+      "label": "Source-bound native inspection and original four-command case attachment",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/case-grafana-delivery.mjs",
+      "commit": "b81137ecb4e8ca27a108cb28b09ae12558bcbc86",
+      "editions": [
+        {
+          "commit": "b81137ecb4e8ca27a108cb28b09ae12558bcbc86",
+          "git_blob": "aaebf1f61132f984c2ef1ade88d4539d4a9fb31b",
+          "bytes": 29622,
+          "sha256": "b049e955d9be39464e0457744d5e1bbd8e5e908a19a4ffe65c7b10734479a0c9"
+        }
+      ]
+    },
+    {
+      "id": "implementation-grafana-inspector",
+      "label": "Original project, source history and provider checkpoint inspector",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/ma_eotss_observability_2026/integrations/grafana_handover_inspect.py",
+      "commit": "ea850ded8c1db17af09103ad98c12235e509d792",
+      "editions": [
+        {
+          "commit": "ea850ded8c1db17af09103ad98c12235e509d792",
+          "git_blob": "312516ceb1ee7702416f71bdb7f2a6e4d96dbd96",
+          "bytes": 19162,
+          "sha256": "3c4bdca61feee574fd036907989cca2e06451676eddc7b974abc292cf2a3ded8"
+        }
+      ]
+    },
+    {
+      "id": "implementation-grafana-project-store",
+      "label": "Original complete project and history validation",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/ma_eotss_observability_2026/service/state.py",
+      "commit": "ea850ded8c1db17af09103ad98c12235e509d792",
+      "editions": [
+        {
+          "commit": "ea850ded8c1db17af09103ad98c12235e509d792",
+          "git_blob": "45bd0b2a901b328f7de4b76828c8ab3649ccb8c7",
+          "bytes": 37434,
+          "sha256": "a7914abd70a7e4fbf7a187a952b9887b5c8ea15f87ef2f6339df0d86847925d7"
+        }
+      ]
+    },
+    {
+      "id": "implementation-offline-review-guide",
+      "label": "Complete offline recipient review, native application and receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/IMPLEMENTATION_REVIEW.md",
+      "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+      "editions": [
+        {
+          "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+          "git_blob": "4e2b5c6eea3350708b6863cc0dd38dd809ff2542",
+          "bytes": 31803,
+          "sha256": "003ccfb2050ab083c37fce21e20f154055b66c6e5943280d934eee7a7cae5c2e"
+        }
+      ]
+    },
+    {
+      "id": "implementation-offline-review-model",
+      "label": "Immutable review packet, full returned observations and source validation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/implementation-review-model.mjs",
+      "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+      "editions": [
+        {
+          "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+          "git_blob": "f06053ecc939af1ebc230ff1a317530406c8f2c7",
+          "bytes": 12510,
+          "sha256": "854240a91c7aa2bcbddfdcac44ef13281523d9fab796bb09ed0e451f7ad89fc3"
+        }
+      ]
+    },
+    {
+      "id": "implementation-offline-review-native",
+      "label": "Original case comparison, atomic return and exact request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/case-implementation-review.mjs",
+      "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+      "editions": [
+        {
+          "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+          "git_blob": "f98cdbf99b1bd3a24b4c487697cd3098d0d4921d",
+          "bytes": 17430,
+          "sha256": "cf6376d7c125db96b9f98004997e6d945120c204a5947b5cf1024e313eb0ba15"
+        }
+      ]
+    },
+    {
+      "id": "implementation-offline-review-recipient",
+      "label": "Named local reviews, unfinished drafts, source downloads and recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/implementation-review-recipient.js",
+      "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+      "editions": [
+        {
+          "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+          "git_blob": "e8c91f5e91d171da0f2b1576f8d21b7028699a4c",
+          "bytes": 17511,
+          "sha256": "6881bc4e9640af7b665dd8fcdf08afc50be55662975dd790d0fd217b2cf1dfcb"
+        }
+      ]
+    },
+    {
+      "id": "implementation-offline-review-operator",
+      "label": "Installed review preparation, current comparison and original-request continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/implementation-review.mjs",
+      "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+      "editions": [
+        {
+          "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+          "git_blob": "a6562024e419a1764588654b18fd2e1426317a40",
+          "bytes": 20085,
+          "sha256": "f351adc17559a7db74336dde481a75bb4c5186be01fc74e74596cc69d4bdefaf"
+        }
+      ]
+    },
+    {
+      "id": "implementation-offline-review-cli",
+      "label": "Installed prepare, inspect-return, preview, apply and status commands",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/implementation-review-cli.mjs",
+      "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+      "editions": [
+        {
+          "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+          "git_blob": "61bc772d3dc385688b576d9978c470a5a087c8cd",
+          "bytes": 10405,
+          "sha256": "4f1e7fd78461f6ee2dd930f6f8cdc45488d1aaa816a5590402a111c1744ca12c"
+        }
+      ]
+    },
+    {
+      "id": "implementation-original-receiving-model",
+      "label": "Original workorder, task, material, observation and history-preserving case model",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/commissioning.mjs",
+      "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+      "editions": [
+        {
+          "commit": "59928e62d6d521a1344d539145897668bd3e7d47",
+          "git_blob": "b00736e5edc0d38a55b445aabbd32618641b63f5",
+          "bytes": 56655,
+          "sha256": "390850f4753e7a77e9c1502860e02fbd15bacc9ab9971301e98fe16f98ac4cf6"
+        }
+      ]
+    }
+  ]
+}
