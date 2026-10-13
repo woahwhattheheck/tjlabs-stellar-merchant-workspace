@@ -20,6 +20,14 @@ const button = (text, action) => {
 const query = (path, value) => path + '?' + new URLSearchParams(value);
 const readable = text => String(text ?? '').replace(/\x1b\][^\x07]*?(?:\x07|\x1b\\)/g, '')
   .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+function outcomeText(result, source = null) {
+  if (!result) return source ? 'Original outcome is null · Receipt: ' + source : 'Original operation retained.';
+  const label = result.state ?? result.operation ?? 'Retained result';
+  const exit = result.exitCode !== null && result.exitCode !== undefined ? ', exit ' + result.exitCode : '';
+  const recovered = result.operation === 'original-command' &&
+    ['RECONCILED', 'OUTCOME_UNAVAILABLE'].includes(result.state) ? ' · Original exit outcome is unavailable.' : '';
+  return 'Original outcome: ' + label + exit + recovered + (source ? ' · Receipt: ' + source : '');
+}
 function facts(rows) {
   const node = element('dl', undefined, 'paths');
   for (const [label, value] of rows) {
@@ -194,8 +202,9 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
   terminalActions.append(send, interrupt, eof);
   inputForm.append(element('p', 'This is the original application terminal. Review its current prompt, then enter the response yourself. Opening or refreshing this page sends no input.', 'note'),
     field('Terminal response', input), terminalActions, inputStatus);
-  const outputReaderRoot = element('div');
-  outputPanel.append(outputReaderRoot, inputForm);
+  const outputReaderRoot = element('div'), outputOutcome = element('p', '', 'note');
+  outputOutcome.hidden = true;
+  outputPanel.append(outputOutcome, outputReaderRoot, inputForm);
   const outputReader = createApplicationOutputReader({ root: outputReaderRoot, api,
     getWorkspaceId: () => getState()?.workspaceId, error, output });
   outputDescription.hidden = true;
@@ -607,10 +616,17 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
         actions.append(button('Open output', () => { navigationVersion++; selectedRun = run.id; saveSelection(); refreshOutput().catch(error); }));
         row.append(element('h3', run.command + ' · ' + run.phase),
           element('p', run.id + ' · ' + run.createdAt),
-          element('p', run.result?.state ? 'Original outcome: ' + run.result.state + (run.result.exitCode !== null && run.result.exitCode !== undefined ? ', exit ' + run.result.exitCode : '') :
+          element('p', run.result || run.resultSource ? outcomeText(run.result, run.resultSource) :
             run.active === null ? 'Current process status is unavailable. Original operation retained.' :
               run.active ? 'The original worker or command is active.' : 'Original operation retained.'),
-          actions); return row;
+          actions);
+        if (run.result || run.resultSource) {
+          const receipt = element('details'); receipt.append(element('summary', 'Complete retained outcome'),
+            element('pre', JSON.stringify({ result: run.result, resultSource: run.resultSource ?? null,
+              commandResult: run.commandResult ?? null }, null, 2)));
+          row.append(receipt);
+        }
+        return row;
       }));
     }
     if (!selectedRun || !pageRuns.some(run => run.id === selectedRun)) selectedRun = pageRuns[0]?.id ?? null;
@@ -624,6 +640,9 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
     const response = await api(query(run.terminal ? '/api/applications/terminal' : '/api/applications/output', { applicationId: app.id, operationId: id }));
     if (scope !== own || app.id !== selectedId || id !== selectedRun) return;
     outputPanel.hidden = false;
+    const outcome = run.terminal ? response.managedOutcome : response;
+    outputOutcome.hidden = !(outcome?.result || outcome?.resultSource);
+    outputOutcome.textContent = outputOutcome.hidden ? '' : outcomeText(outcome.result, outcome.resultSource);
     await outputReader.update({ applicationId: app.id, operationId: id });
     if (scope !== own || app.id !== selectedId || id !== selectedRun) return;
     inputForm.hidden = !run.terminal;
@@ -635,6 +654,8 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
       const receipt = pending && response.inputs.find(item => item.inputId === pending.inputId);
       if (receipt && receipt.state !== 'QUEUED') saveSaved('terminal-input', null);
       if (response.result) inputStatus.prepend(element('p', 'This terminal has ended. Its input and output belong to this original operation.', 'note'));
+      else if (!response.active && (response.managedOutcome?.result || response.managedOutcome?.resultSource))
+        inputStatus.prepend(element('p', outcomeText(response.managedOutcome.result, response.managedOutcome.resultSource), 'note'));
     }
   }
   async function terminalSend(text) {
