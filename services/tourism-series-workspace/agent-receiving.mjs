@@ -99,6 +99,9 @@ export async function runTourismAgentReceiving({workspacePath,outputDirectory,op
    for(const [kind,id,name] of [['workspace',null,'Accepted_Working_Recovery.json'],['report',reportId,'Agent_Receiving_Report.html'],['target',planId,'Prepared_Target.csv'],['returned',returnId,'Observed_Return.json'],['working-html',null,'Tourism_Series_Workspace.html'],['handover',null,'Tourism_Series_Complete.zip']]){
     const file=await exportClient.originalFile({kind,id,expectedRevision:snapshot.record.workspace.revision,expectedHead:snapshot.headSha256}),out=path.join(root,name);publish(out,file.bytes);outputs.push(original(out));
    }
+   const cliHandover=await originalCLI(['handover','--workspace',snapshotPath,'--out',path.join(root,'Complete_CLI_Handover')]);
+   const cliRecovery=cliHandover.files.find(x=>x.path==='Working_Recovery.json');need(cliRecovery&&regular(path.join(cliHandover.directory,cliRecovery.path)).equals(regular(snapshotPath)),'CLI full exit retains the exact complete recovery.');
+   outputs.push(original(path.join(cliHandover.directory,cliRecovery.path)));
    const independent=path.join(root,'Independent_Working_Recovery.json');await originalCLI(['receive','--workspace',independent,'--input',snapshotPath]);
    const independentRecord=readWorking(independent);need(Portable.compare(independentRecord.record.workspace,snapshot.record.workspace)==='identical'||Portable.compare(independentRecord.record.workspace,snapshot.record.workspace)==='incoming_ancestor','Keep original ancestry during receiving.');
    identical(independentRecord.record.drafts,seed.drafts,'Reopen complete unfinished work independently.');

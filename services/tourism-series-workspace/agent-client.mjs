@@ -93,8 +93,10 @@ export class TourismSeriesClient{
   return{file,value};
  }
  mutate(action,input,{inputAlias=null,expectedSha256=null,expectedHead=null,sourcePacket=null}={}){
+  // Freeze the caller's complete submission before any queued task can yield.
+  const submitted=clone(input),packet=sourcePacket===null?null:clone(sourcePacket);
   return this.#enqueue(async()=>{
-   need(ACTIONS.includes(action),'Select an original Tourism mutation.');input=clone(input);recordId(input.operationId);
+   need(ACTIONS.includes(action),'Select an original Tourism mutation.');input=clone(submitted);sourcePacket=packet;recordId(input.operationId);
    const selected={action,input:clone(input),source:{inputAlias,expectedSha256},expectedHead,...(sourcePacket?{sourcePacket:clone(sourcePacket)}:{})};
    let saved=this.#retained(input.operationId);
    if(saved)need(same(saved.value.selection,selected),'The original operation ID belongs to a different complete request.','TOURISM_AGENT_OPERATION_CONFLICT');
@@ -110,7 +112,9 @@ export class TourismSeriesClient{
     }else need(expectedSha256===null,'Select the original configured input with its hash.');
     const value={schema:'stellar-forge.tourism-original-operation.v1',binding:{workspacePath:this.#entry.workspacePath,genesis:this.#entry.genesis},
      selection:selected,action,input,requestSha256:sha(Buffer.from(canonical({action,input}),'utf8'))};
-    const file=this.#file(input.operationId);publish(file,json(value));saved={file,value};
+    const file=this.#file(input.operationId),body=json(value);
+    need(Buffer.byteLength(body,'utf8')<=128*1024*1024,'The complete prepared request exceeds 128 MiB. Retain the original operation file and reduce its selected operation scope before dispatch.','TOURISM_AGENT_REQUEST_SIZE');
+    publish(file,body);saved={file,value};
    }
    return this.#dispatch(saved);
   });

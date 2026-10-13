@@ -115,18 +115,18 @@
     "files": [
       {
         "path": "services/tourism-series-workspace/cli.mjs",
-        "bytes": 12654,
-        "sha256": "29b43d7398af3e092f87b22dfc132403bf8011ff922c7e6bf3a2301fe1fbc44a"
+        "bytes": 12942,
+        "sha256": "e6ffe5b3d22ae3cf97704cb4bff5dd4a7de64ff18fac23db8f8758f5a44f642f"
       },
       {
         "path": "services/tourism-series-workspace/agent-io.mjs",
-        "bytes": 3552,
-        "sha256": "a852dbee54c87658ff49d23fffee74485cd20683f32641eff2ae772e83f3b358"
+        "bytes": 3656,
+        "sha256": "28111478d75b1c65cb9b8c4e4950d12a9d9a2f9427ae068998a142b20e75ce1e"
       },
       {
         "path": "services/tourism-series-workspace/agent-client.mjs",
-        "bytes": 14906,
-        "sha256": "fc99a072f188695a61ba90a19f3d9ff0200d64cf25729f53f8e9fe5cac3c98e5"
+        "bytes": 15335,
+        "sha256": "9fd3768196881aa201b12567653cd6eb896556151df9792313f680979d11abed"
       },
       {
         "path": "services/tourism-series-workspace/agent-tools.mjs",
@@ -155,13 +155,13 @@
       },
       {
         "path": "services/tourism-series-workspace/agent-receiving.mjs",
-        "bytes": 15511,
-        "sha256": "370f318fdac8542b567c81074fcab40666ccc22245b477f67eb315433e553097"
+        "bytes": 15961,
+        "sha256": "bdc8064e500200f35e85eee7a282738fd7a07e9fdbea77261feb05c367ba631e"
       },
       {
         "path": "services/tourism-series-workspace/AGENT_OPERATING.md",
-        "bytes": 9905,
-        "sha256": "a3501ef7234f0abb2b03c133e303436660822cd38f8b64007a4d98e2df16609c"
+        "bytes": 10172,
+        "sha256": "66984686f9f0f8a76c9a524966363175d7528d37645b727ec86af72b39016ac0"
       },
       {
         "path": "services/tourism-series-workspace/AGENT_RECEIVING.md",
@@ -180,8 +180,8 @@
       },
       {
         "path": "services/tourism-series-workspace/Tourism_Series_Workspace.html",
-        "bytes": 466957,
-        "sha256": "f4492a28a52ea7fc97bf0e813b192fcdeab623dd175a7d8c30dfdf3d7fbee419"
+        "bytes": 468515,
+        "sha256": "366c0cf9f74829979cedbe263cd743be4c316628ffd074b93a9ef519647c54e6"
       },
       {
         "path": "services/tourism-series-workspace/portable.mjs",

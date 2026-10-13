@@ -17,11 +17,11 @@ export function optional(file,maximum){try{return regular(file,maximum);}catch(e
 export function syncDirectory(directory){let fd;try{fd=fs.openSync(directory,'r');fs.fsyncSync(fd);}catch(error){if(!['EINVAL','EPERM','EISDIR','ENOTSUP'].includes(error.code))throw error;}finally{if(fd!==undefined)fs.closeSync(fd);}}
 export function directory(root){fs.mkdirSync(root,{recursive:true,mode:0o700});const stat=fs.lstatSync(root);need(stat.isDirectory()&&!stat.isSymbolicLink(),'Use an ordinary private operation directory.');return fs.realpathSync(root);}
 export function publish(file,bytes){
- bytes=Buffer.isBuffer(bytes)?bytes:Buffer.from(bytes,'utf8');const before=optional(file,256*1024*1024);
+ bytes=Buffer.isBuffer(bytes)?bytes:Buffer.from(bytes,'utf8');need(bytes.length<=512*1024*1024,'The complete native output exceeds its 512 MiB publication ceiling.');const before=optional(file,512*1024*1024);
  if(before){need(before.equals(bytes),'Retain the exact original prepared operation or output.','TOURISM_AGENT_OPERATION_CONFLICT');return;}
  directory(path.dirname(file));const tmp=file+'.'+randomUUID()+'.pending';let fd;
  try{fd=fs.openSync(tmp,'wx',0o600);fs.writeFileSync(fd,bytes);fs.fsyncSync(fd);fs.closeSync(fd);fd=undefined;
-  try{fs.linkSync(tmp,file);}catch(error){if(error.code!=='EEXIST')throw error;need(regular(file,256*1024*1024).equals(bytes),'A concurrent original operation differs.','TOURISM_AGENT_OPERATION_CONFLICT');}syncDirectory(path.dirname(file));
+  try{fs.linkSync(tmp,file);}catch(error){if(error.code!=='EEXIST')throw error;need(regular(file,512*1024*1024).equals(bytes),'A concurrent original operation differs.','TOURISM_AGENT_OPERATION_CONFLICT');}syncDirectory(path.dirname(file));
  }finally{if(fd!==undefined)fs.closeSync(fd);fs.rmSync(tmp,{force:true});}
 }
 export const json=value=>JSON.stringify(value,null,2)+'\n';

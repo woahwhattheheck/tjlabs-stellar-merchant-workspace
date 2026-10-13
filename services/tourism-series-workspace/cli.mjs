@@ -93,7 +93,10 @@ export async function main(argv=process.argv.slice(2)){
  if(command==='project'||command==='analyze'){const selection=JSON.parse(regular(absolute(o['--input'],'complete selection JSON'))),result=command==='project'?engine.project(ws,selection):engine.runAnalysis(ws,selection);output(o['--out'],result);return{state:'COMPLETE',revision:ws.revision,ready:result.ready,qualified:result.qualified??null,path:o['--out']};}
  if(command==='report'){publish(absolute(o['--out'],'readable report'),engine.renderReport(ws,o['--report']));return{state:'COMPLETE',revision:ws.revision,path:o['--out']};}
  if(command==='handover'){
-  const root=absolute(o['--out'],'complete handover directory'),packet=engine.buildHandover(ws);fs.mkdirSync(root,{recursive:true,mode:0o700});const stat=fs.lstatSync(root);need(stat.isDirectory()&&!stat.isSymbolicLink(),'Use the original ordinary handover directory.');const realRoot=fs.realpathSync(root);
+  const root=absolute(o['--out'],'complete handover directory'),packet=engine.buildHandover(ws);
+  const recoveryText=selected.format==='recovery'?selected.text:json(selected.record),recoveryBytes=Buffer.from(recoveryText,'utf8');
+  packet.files.push({path:'Working_Recovery.json',type:'application/json',content:recoveryText,bytes:recoveryBytes.length,sha256:sha(recoveryBytes)});
+  fs.mkdirSync(root,{recursive:true,mode:0o700});const stat=fs.lstatSync(root);need(stat.isDirectory()&&!stat.isSymbolicLink(),'Use the original ordinary handover directory.');const realRoot=fs.realpathSync(root);
   for(const f of packet.files){const target=path.resolve(root,f.path);need(target.startsWith(root+path.sep),'Keep complete outputs inside the selected handover.');fs.mkdirSync(path.dirname(target),{recursive:true,mode:0o700});const parent=fs.realpathSync(path.dirname(target));need(parent===realRoot||parent.startsWith(realRoot+path.sep),'Keep original member parents inside this handover.');const bytes=f.base64===undefined?Buffer.from(f.content,'utf8'):Buffer.from(f.base64,'base64');need(bytes.length===f.bytes&&sha(bytes)===f.sha256,'The complete member differs from its recorded identity.');publishBytes(target,bytes);}
   return{state:'COMPLETE',workspaceId:ws.id,revision:ws.revision,directory:root,files:packet.files.map(({content,base64,...f})=>f)};
  }
