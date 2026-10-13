@@ -1,5 +1,6 @@
 // MIT. Complete original DDP files and their actual acquisition provenance.
 import { createHash } from 'node:crypto';
+import { canonicalJSONDigest } from '../canonical-stream.mjs';
 import { canonical, clone, need, plain } from '../model.mjs';
 
 export const MAX_DDP_FILE_BYTES = 256 * 1024 * 1024;
@@ -10,10 +11,10 @@ export function normalizeFredDdpRelease(value) {
 }
 export function sealFredDdpFile({name,mediaType,bytes,provenance}) { return createFredDdpSourceFile({name,mediaType,content:bytes,provenance}); }
 export const ddpHash = value => createHash('sha256').update(value).digest('hex');
-export const ddpDigest = value => ddpHash(canonical(value));
+export const ddpDigest = value => canonicalJSONDigest(value);
 export const DDP_CROSSWALK_URL = 'https://www.federalreserve.gov/data/documents/DDP-FRED%20Data%20Series%20Crosswalk.csv';
 export const DDP_H15_ARCHIVE_URL = 'https://www.federalreserve.gov/releases/h15/data/FRB_h15_xml.zip';
-const same = (a, b) => canonical(a) === canonical(b);
+const same = (a, b) => ddpDigest(a) === ddpDigest(b);
 const allowedKeys = (value, allowed, label) => need(plain(value) && Object.keys(value).every(key => allowed.includes(key)), 'Unknown ' + label + ' field.');
 export function ddpFileName(value) {
   need(typeof value === 'string' && value.length >= 1 && value.length <= 1024 && !/[\\:\u0000-\u001f\u007f]/.test(value) &&
@@ -74,9 +75,9 @@ export function validateFredDdpSourceFile(file) {
   return clone(normalized);
 }
 export function fredDdpFileText(file) {
-  const bytes = fredDdpFileBytes(file), text = bytes.toString('utf8');
-  need(Buffer.from(text, 'utf8').equals(bytes), 'This original source requires a supported explicit text encoding.');
-  return text;
+  const bytes = fredDdpFileBytes(file);
+  try{return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);}
+  catch{need(false,'This original source requires a supported explicit text encoding.');}
 }
 export function fredDdpFileDescriptor(file) {
   validateFredDdpSourceFile(file);

@@ -19,6 +19,7 @@ import operations_workshare_installations as workshares
 import operations_commercial_installations as commercial
 import operations_installation_workflows as workflows
 import operations_dispatch as dispatch
+import operations_use_calendar as use_calendar
 
 SCHEMA = "stellar-forge.sf47-installation.v1"
 SELECTION_SCHEMA = SCHEMA + ".selection"
@@ -99,7 +100,10 @@ def summary(row):
             "sourceVersion": value["source"]["version"],
             "configurationComplete": report["configurationComplete"],
             "acceptedChecks": report["acceptedChecks"], "totalChecks": report["totalChecks"],
-            "openFindings": len(report["findings"])}
+            "openFindings": len(report["findings"]),
+            **({"useCalendar": {key: value["document"]["useCalendar"][key]
+                                for key in ("name", "startDate", "endDate", "tranche")}}
+               if value["document"].get("useCalendar") else {})}
 
 
 def latest_refs(rows):
@@ -137,7 +141,7 @@ def get(operations, program_id, installation_id, selected_revision=None):
 
 def normalized(context, raw):
     raw = object_value(deepcopy(raw), ("name", "stage", "merchantDeploymentId", "buyerDeploymentIds",
-        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods", "coordination", "commercial"), "installation")
+        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods", "coordination", "commercial", "useCalendar"), "installation")
     records, sources, plan = context["records"], context["sources"], context["plan"]
     maps = {kind: {row["id"]: row for row in records[kind]} for kind in COLLECTIONS}
     retained = lambda value, label: domain.reference_list(value if value is not None else [], sources, label)
@@ -263,6 +267,8 @@ def normalized(context, raw):
         result["workflowPeriods"] = workflows.normalize_binding(context, raw["workflowPeriods"])
     if "coordination" in raw:
         result["coordination"] = dispatch.normalize(raw["coordination"], check_ids)
+    if "useCalendar" in raw:
+        result["useCalendar"] = use_calendar.normalize(context, raw["useCalendar"], result) if raw["useCalendar"] is not None else None
     if len(canonical(result).encode("utf-8")) > MAX_DOCUMENT_BYTES:
         fail("The complete installation input exceeds 128 KiB.", status=413)
     return result
@@ -276,6 +282,9 @@ def capture(context, document):
         selected["deployments"].add(document["merchantDeploymentId"])
     source_ids = set(document["source"]["sourceIds"] + document["payment"]["termsSourceIds"]
                      + document["receiving"]["sourceIds"])
+    calendar_refs = use_calendar.references(document)
+    source_ids.update(calendar_refs["sourceIds"])
+    selected["purchases"].update(calendar_refs["purchaseIds"])
     if document["workorder"]["sourceId"]:
         source_ids.add(document["workorder"]["sourceId"])
     if document.get("commercial"):
@@ -395,7 +404,8 @@ def report(snapshot, document):
                                                 for row in purchases).items())),
             "purchaseAmounts": sorted(groups.values(), key=lambda row: (row["network"], row["asset"])),
             "sourceFiles": len(snapshot["sources"]), "sourceBytes": sum(row["bytes"] for row in snapshot["sources"].values()),
-            **({"workflowPeriods": workflows.report(document)} if document.get("workflowPeriods") else {})}
+            **({"workflowPeriods": workflows.report(document)} if document.get("workflowPeriods") else {}),
+            **({"useCalendar": use_calendar.report(snapshot, document)} if document.get("useCalendar") else {})}
 
 
 def differences(before, after, path=""):
@@ -437,7 +447,7 @@ def seed(context):
 
 
 def preview(operations, context, body):
-    object_value(body, ("expectedVersion", "installationId", "expectedRevision", "document"), "installation preview")
+    object_value(body, ("expectedVersion", "installationId", "expectedRevision", "document", "returnReview"), "installation preview")
     _current(context, body.get("expectedVersion"))
     ident = body.get("installationId")
     expected_revision = revision(body.get("expectedRevision", 0), True)
@@ -465,14 +475,18 @@ def preview(operations, context, body):
              "source": _source(context), "document": document, "snapshot": snapshot, "report": report(snapshot, document),
              "previous": None if previous is None else {"id": previous["id"], "revision": previous["revision"], "sha256": previous["sha256"]},
              "changes": differences(previous["preview"]["document"], document) if previous else []}
+    if body.get("returnReview") is not None:
+        import operations_installation_returns as receiving
+        value["returnReview"] = receiving.verify_stage_application(operations, context, body["returnReview"], previous, document)
     value["previewSha256"] = digest(value)
     return value
 
 
 def save(operations, context, data, actor, version, note):
-    object_value(data, ("installationId", "expectedRevision", "document", "expectedPreviewSha256"), "installation save")
+    object_value(data, ("installationId", "expectedRevision", "document", "expectedPreviewSha256", "returnReview"), "installation save")
     candidate = preview(operations, context, {"expectedVersion": context["program"]["version"],
-        **{key: data.get(key) for key in ("installationId", "expectedRevision", "document")}})
+        **{key: data.get(key) for key in ("installationId", "expectedRevision", "document")},
+        **({"returnReview": data["returnReview"]} if data.get("returnReview") is not None else {})})
     if candidate["previewSha256"] != domain.sha(data.get("expectedPreviewSha256"), "Reviewed installation", False):
         fail("The selected input or original records changed. Review the current installation.", "INSTALLATION_PREVIEW_CONFLICT", 409)
     count, distinct = operations.db.execute(
@@ -561,7 +575,7 @@ def validate_import(context, rows, events, source_version, source_files=None, *,
             fail("A retained installation edition differs from its complete identity.")
         candidate = row.get("preview")
         object_value(candidate, ("schema", "installationId", "expectedRevision", "source", "document", "snapshot",
-            "report", "previous", "changes", "previewSha256"), "saved installation preview")
+            "report", "previous", "changes", "previewSha256", "returnReview"), "saved installation preview")
         if candidate.get("schema") != SCHEMA or candidate.get("expectedRevision") != number - 1:
             fail("A retained installation uses a different edition contract.")
         if digest({key: value for key, value in candidate.items() if key != "previewSha256"}) != candidate.get("previewSha256"):
@@ -655,6 +669,7 @@ def html_document(row, original_workshare=None, original_commercial=None):
     body += commercial.html_section(original_commercial)
     body += workshares.html_section(original_workshare)
     body += workflows.html_section(document)
+    body += use_calendar.installation_section(document)
     body += "<h2>Acceptance and corrections</h2>" + table(
         ["Step", "Original criterion", "State", "Operator / observed", "Result / source"],
         [[e(item["title"]), e(item["criterion"]), e(item["state"]),

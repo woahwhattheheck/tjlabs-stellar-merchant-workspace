@@ -1,4 +1,5 @@
 /** SF32 read-only projection of one cached discovery record. MIT. */
+import { describeHttpPath } from '../route-identity/http-path.mjs';
 import { requiredQueryKeys, describeHttpQuery } from './query-requirements.mjs';
 import { prepareMcpInvocation, MCP_ARGUMENT_BYTES } from './remote-mcp.mjs';
 
@@ -18,8 +19,10 @@ function immutableCopy(value) {
 /** The broker owns handle lookup/expiry. This function never fetches a seller,
  * creates a quote, validates a payment option, approves or executes a call. */
 export function describeDiscoveredResource(record, { handle, allowedOrigin, expiresAt, remoteMcpPolicies = [] }) {
-  let query = null, queryInputError = null;
+  let query = null, queryInputError = null, path = null, pathInputError = null;
   if (record.type === 'http') {
+    try { path = describeHttpPath(record); }
+    catch(error) { pathInputError = {code:error.code, message:error.message, ...(error.details ? {details:error.details} : {})}; }
     try { query = describeHttpQuery(record); }
     catch(error) { queryInputError = {code:error.code, message:error.message, ...(error.details ? {details:error.details} : {})}; }
   }
@@ -58,6 +61,9 @@ export function describeDiscoveredResource(record, { handle, allowedOrigin, expi
         validation:'The live tool schema must match the original advertisement; the server validates argument values.',
       } : {
         container: 'query',
+        containers: ['path', 'query'],
+        additionalContainers: false,
+        path, pathInputError,
         ...(query ?? {advertisedKeys:[], keysSource:null, parameters:[], querySerialization:null}),
         inputError:queryInputError,
         requiredKeys,
@@ -66,7 +72,6 @@ export function describeDiscoveredResource(record, { handle, allowedOrigin, expi
         requiredKeysCheck: 'Presence in the final request URL only; fixed query values count. No defaults, type checks, refs or conditional schema evaluation.',
         lengthUnit: 'UTF-16 code units',
         disallowedControlCharacters: 'U+0000–U+001F and U+007F',
-        additionalContainers: false,
       },
     },
   });

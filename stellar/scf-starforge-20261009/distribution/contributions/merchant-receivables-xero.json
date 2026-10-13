@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-receivables-xero",
-  "description": "Xero customer document mapping, original provider results and corrected handovers",
+  "description": "Xero original document receiving, customer cash commissioning and complete billing-cycle handover",
   "commands": {
     "receivables-xero": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/cli.mjs"
   },
   "commandDescriptions": {
-    "receivables-xero": "Prepare original invoices and credits for Xero, receive native results, and continue unresolved handovers"
+    "receivables-xero": "Prepare and receive original Xero documents, commission customer cash across billing cycles, and preserve complete handovers"
   },
   "exports": {
     "./merchant/receivables/xero": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/store.mjs",
@@ -16,10 +16,13 @@
       "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/client.d.ts",
       "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/client.mjs"
     },
-    "./merchant/receivables/xero/native-return": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/native-return.mjs"
+    "./merchant/receivables/xero/native-return": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/native-return.mjs",
+    "./merchant/receivables/xero/cash": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/cash-workspace.mjs",
+    "./merchant/receivables/xero/cash/domain": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/cash-commissioning.mjs"
   },
   "supportFiles": [
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/client.d.ts"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/client.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/xero/CASH_COMMISSIONING.md"
   ],
   "browserAssets": [
     {

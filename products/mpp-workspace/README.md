@@ -2,7 +2,7 @@
 
 This product opens the native Stellar MPP merchant, customer workbench and merchant agent as one retained application. Operators configure paid resources and exact prices, receive a merchant contract, prepare a purchase, approve it through the original spending governor, recover the same purchase after interruption, and receive the original response or complete customer package.
 
-Recurring channel work uses the same application: select an existing funded channel, authorize a useful task budget, receive each cumulative commitment's original response, collect the merchant's accepted commitment and hand over the complete operating channel. Open **Channel work** in the browser for this workflow.
+Recurring channel work uses the same application: select an existing funded channel, authorize a useful task budget, receive each cumulative commitment's original response, add funds, collect the merchant's earned commitments while keeping the channel open, recover remaining funds and hand over the complete operating channel. Open **Channel work** in the browser for this workflow.
 
 The browser is the existing native console. The agent is the existing merchant MCP with its native MPP tools. Both use the same private workspace, purchase identities, signed credentials and accounting records.
 
@@ -59,14 +59,14 @@ Stop drains the merchant agent, accepted console jobs and merchant listener, the
 | Approval, reservation, finality and budget reconciliation | Existing SF36 governor and SF86 transfer reconciliation |
 | Official Stellar charge challenge and transaction credential | Published `@stellar/mpp@0.7.1` with `mppx@0.6.29` and `@stellar/stellar-sdk@15.1.0` |
 | Recurring channel tasks, capped cumulative vouchers and useful merchant output | Native channel workbench and the pinned SDK's channel intent |
-| Cooperative channel close and original transaction recovery | Recipient fee authority and selected-network Stellar RPC |
+| Channel funding, ongoing collection, close and remaining-balance refund | Original contract calls, selected funder/recipient fee authority and same-network transaction recovery |
 | Complete channel operation, source and input receiving | Native channel handover receiver and immutable-file reader |
 | Agent review/configure/prepare/execute/resume/finalize and retained exports | Existing native merchant MCP, including channel status/record/operate/file |
 | Twelve-file Node/TypeScript/Python customer receiving | Existing trusted native customer bundle receiver |
 | Exact response or customer-bundle transfer over MCP | Existing retained-file manifest/chunk downloader |
 | Private process ownership and source-bound start/stop | Existing Applications framework and native workspace lease |
 
-**[OPERATING.md](OPERATING.md)** explains setup, merchant and customer operations, terminal approval, recovery and typed clients. **[RECEIVING.md](RECEIVING.md)** explains customer/response delivery and complete channel receiving. The full **[channel work guide](../../stellar/scf-starforge-20261009/mpp-channel/README.md)** covers task budgets, merchant profiles, work lists, close and source handover.
+**[OPERATING.md](OPERATING.md)** explains setup, merchant and customer operations, terminal approval, recovery and typed clients. **[RECEIVING.md](RECEIVING.md)** explains customer/response delivery and complete channel receiving. The full **[channel work guide](../../stellar/scf-starforge-20261009/mpp-channel/README.md)** covers task budgets, merchant profiles, work lists, funding, collection, refund and source handover.
 
 ## Package interfaces
 

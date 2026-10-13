@@ -10,6 +10,10 @@ The complete Merchant setup, tools, input references, source-bound pages, downlo
 
 Read `client.read('delivery-queue', {caseId, asOfDate})` and download the complete handover with `client.download('delivery-queue', {caseId, asOfDate})`. The package now includes adjacent TypeScript declarations for the public client, complete queue, installation document and saved-edition workflow. [Installation delivery queue](DELIVERY_QUEUE.md) covers assignment editing, typed consumption, MCP paging, date semantics and complete receiving.
 
+## Complete customer adoption operations
+
+The original Merchant owner now carries native case or Calendar source through whole-plan authoring, pricing, shared capacity scheduling, full comparison, durable source saving and reopening. Use the eleven adoption tools or the typed `grant/cohort-agent` module described in [Complete adoption work through Merchant MCP](COHORT-PLANNING.md#complete-adoption-work-through-merchant-mcp). Full inputs, original funding groups and the native save request remain attached throughout the operation.
+
 ## Direct API
 
 First call inspectGrantAgentBinding with directory and optional scenarioFile, pythonExecutable, allowStart and label. It reads the original host selection without launching a process. Construct a GrantWorkspaceClient from that result.
@@ -391,3 +395,7 @@ The complete typed client, eight Merchant tools and original Forecast/Portfolio 
 `detach(expectedInstanceId?)` stops new client requests before it waits for already accepted operations. It coalesces concurrent detach/close calls, reads the final retained connection after those operations drain, and stops only its own original launcher. Borrowed application processes remain owned by their original host. After successful detach, an explicit `open()` can reconnect the same client. A failed detach keeps admission stopped and preserves the same child/connection for another detach attempt. Permanent `close()` keeps admission stopped and can be called again after a failed close; it does not create a replacement launcher.
 
 The original launch process remains owned through its `close` event and complete stdout/stderr closure, including late output errors. Its result retains the first output/launcher error and a bounded diagnostic tail. Startup failures remain primary if stopping that same child also reports an error. The Merchant provider drains all accepted calls, then attempts every retained file reader and client close even when another independent owner fails. Retry `close()` on that same provider after resolving the reported owner failure; its original objects and immutable results remain retained.
+
+## Saved customer-use calendar
+
+The optional `document.useCalendar` records complete useful tasks, dated uses, separate DIRECT/PREPAID funding groups and original buyer receipt associations in the same immutable Installation history. The **Customer use** tab reads exact saved reports alongside current receipt/source changes, expands explicit working dates into an editable draft, exports JSON/CSV/ICS, and stages the original Cohort inputs while preserving an existing edited draft. See [Customer-use calendar](CUSTOMER_USE_CALENDAR.md) for the full document, CLI, typed client, MCP and independent receiving workflow.

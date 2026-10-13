@@ -111,9 +111,22 @@ export async function inspectSupportSelection({casesDir,incidentSources,allowLoo
         return {id:row.id,label:row.label,directory:pathValue(row.directory,'original Object session')};
       });
     }
+    let ckanWorkspaces;
+    if(source.ckanWorkspaces!==undefined) {
+      need(Array.isArray(source.ckanWorkspaces)&&source.ckanWorkspaces.length<=16,
+        'SUPPORT_APPLICATION_CKAN_SELECTION_CHANGED');
+      const ids=new Set();
+      ckanWorkspaces=source.ckanWorkspaces.map(row=>{
+        need(plain(row)&&typeof row.id==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(row.id)&&
+          !ids.has(row.id)&&typeof row.label==='string'&&row.label.length<=120,
+          'SUPPORT_APPLICATION_CKAN_SELECTION_CHANGED');
+        ids.add(row.id);
+        return {id:row.id,label:row.label,directory:pathValue(row.directory,'original CKAN workspace')};
+      });
+    }
     sources.push({id:source.id,label:source.label,store,
       configuration:{revision:source.configuration.revision,sha256:source.configuration.sha256},
-      ...(objectSessions?.length?{objectSessions}:{})});
+      ...(objectSessions?.length?{objectSessions}:{}),...(ckanWorkspaces?.length?{ckanWorkspaces}:{})});
   }
   const connections=serviceConnectionSelection??(accountingConfig!==null||buyerExpenseConnection!==null
     ?(await (await import('./service-connections.mjs')).inspectServiceConnections({accountingConfig,buyerExpenseConnection})).selected:null);

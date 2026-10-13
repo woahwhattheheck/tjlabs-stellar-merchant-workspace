@@ -128,6 +128,10 @@ const read = (suffix, description, properties = {}, required = []) =>
 const mutate = (suffix, description, properties = {}, required = []) =>
   [PREFIX + suffix, description, {...context, ...properties}, ['workspace', 'actor', 'requestId', 'revision', ...required], {idempotent: true}];
 
+const remittanceSource = object({sourceId: text(160, 1), filename: text(240, 1), csv: text(500000, 1)},
+  ['sourceId', 'filename']);
+const remittanceApplySource = {...remittanceSource, required: ['sourceId', 'filename', 'csv']};
+
 export const receivablesFileNames = Object.freeze([
   'invoice.json', 'invoice.csv', 'invoice.html', 'credit.json', 'credit.csv', 'credit.html',
   'manifest.json', 'status.json', 'quote.json', 'response.json', 'source.json', 'review.json',
@@ -135,10 +139,11 @@ export const receivablesFileNames = Object.freeze([
   'payment-request.uri', 'receiving.json', 'proof.json', 'account.json', 'invoices.csv', 'account.html', 'account.tar',
   'request.json', 'request.html', 'request.csv', 'refund.json', 'refund.html', 'refund.csv',
   'reversal.json', 'reversal.html', 'reversal.csv', 'disposition.json', 'disposition.html', 'disposition.csv',
+  'review.csv', 'batch.json',
   'source.csv', 'source.ofx', 'source.mt940', 'import.json', 'rows.json', 'rows.csv', 'reconciliation.json', 'parser-report.json',
 ]);
 export const receivablesFileSelectors = Object.freeze([
-  'documentId', 'invoiceId', 'paymentRequestId', 'refundId', 'bankImportId', 'returnId', 'customerId', 'asOf',
+  'documentId', 'invoiceId', 'paymentRequestId', 'refundId', 'bankImportId', 'batchId', 'returnId', 'customerId', 'asOf',
 ]);
 export const receivablesDefinitions = [
   read('status', 'Read original invoice, receipt, credit, allocation, aging or operation-journal rows. Summary returns issuer, scoped counts and the current accounting revision.',
@@ -255,6 +260,14 @@ export const receivablesDefinitions = [
     {bankImportId: uuid, rowIds: bankRowIds, reason: text(3000,1)}, ['bankImportId', 'reason']),
   mutate('bank_import_close', 'Close an original bank statement after every actual cash credit has a retained disposition. Keep original source, parser findings, customer postings and complete reconciliation files available.',
     {bankImportId: uuid, reason: text(3000)}, ['bankImportId']),
+  read('remittance_list', 'Page saved customer remittance batches in the original accounting workspace. Returns the exact workspaceId, current revision and source filenames; search filters the complete inventory before paging.',
+    {search: text(300), ...page}),
+  read('remittance_preview', 'Read an original UTF-8 remittance CSV, match exact saved customer/invoice/payment identities and review every allocation and conflict. Choose inline source.csv or a configured receivablesInputs sourceAlias. Returns the complete CSV, review and workspace-bound reviewSha256 for durable preparation.',
+    {workspaceId: hash, source: remittanceSource, sourceAlias: alias}, ['workspaceId', 'source']),
+  mutate('remittance_apply', 'Apply the complete reviewed remittance through the original accounting transaction. Keep its exact workspaceId, inline source, revision and reviewSha256. Existing receipt lineage, dated balances, duplicate detection and original request recovery remain authoritative.',
+    {workspaceId: hash, source: remittanceApplySource, reviewSha256: hash}, ['workspaceId', 'source', 'reviewSha256']),
+  read('remittance_detail', 'Read a retained original remittance batch. Summary returns source identities and exact original file selections; groups and errors page every retained review row.',
+    {batchId: uuid, view: {type: 'string', enum: ['summary', 'groups', 'errors']}, ...page}, ['batchId']),
   read('request_lookup', 'Recover the exact original receivables operation by requestId after an uncertain response. Returns found, the retained operation and current original invoice/payment/receipt result identities.',
     {requestId, asOf: date}, ['requestId']),
 ];

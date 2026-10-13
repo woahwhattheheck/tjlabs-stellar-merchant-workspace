@@ -6,8 +6,8 @@ signal.signal(signal.SIGTERM,interrupt_original_operation)
 root=pathlib.Path(tempfile.mkdtemp(prefix="buyer-finance-6200-",dir=_original_source["temporary_directory"]))
 tmp=root/"tmp";tmp.mkdir(mode=0o700);os.environ["TMPDIR"]=str(tmp);tempfile.tempdir=str(tmp)
 os.environ["AZCOPY_CONCURRENCY_VALUE"]="1";os.environ["PYTHONDONTWRITEBYTECODE"]="1"
-source="05d093bc81a6e65d0ada0a7b9eed77fcc3208d8b"
-operation={"schema":"stellar-forge.buyer-finance-selected-native.v1","operation":"BUYER-FINANCE-STANDALONE-6200-20261012","sourceCommit":source,"originalPublishedMerge":"b86b7da8a72aed4ebd9f38aef7c2c37129940410","sourceRefinement":"05d093bc81a6e65d0ada0a7b9eed77fcc3208d8b","originalCase":"governed-buyer-expense-receiving-f232-20261012","directory":str(root),"pid":os.getpid(),"startedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),"phases":[],"artifacts":[]}
+source="9e1dad6b3d1a444170c249b18cde76da1aca8ce9"
+operation={"schema":"stellar-forge.buyer-finance-selected-native.v1","operation":"BUYER-FINANCE-STANDALONE-6200-20261012","sourceCommit":source,"originalPublishedMerge":"b86b7da8a72aed4ebd9f38aef7c2c37129940410","sourceRefinement":"9e1dad6b3d1a444170c249b18cde76da1aca8ce9","originalCase":"governed-buyer-expense-receiving-f232-20261012","directory":str(root),"pid":os.getpid(),"startedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),"phases":[],"artifacts":[]}
 def save():
  p=root/"native-operation.json"
  with p.open("w") as f:json.dump(operation,f,indent=2);f.write("\n");f.flush();os.fsync(f.fileno())
@@ -123,7 +123,7 @@ try:
  shutil.copyfile(original,root/"original-complete-buyer-expense-project.zip")
  with zipfile.ZipFile(outer) as z:original_case=json.loads(z.read("case/operation.json"))
  shutil.copyfile(_original_source["receiving_driver"],root/"receive.mjs")
- expected=json.loads("[{\"path\":\"stellar/scf-starforge-20261009/distribution/build.mjs\",\"sha\":\"4eed9f08057ff8e28f41c39609cc6926c7d346bb\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/git-source.mjs\",\"sha\":\"3d2a0c9f34d27cce9b6ef64e39cf130dc620f8d7\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/build-state.mjs\",\"sha\":\"eb9543e9ad3e594e4c343bb15375918a42149a9a\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/runtime-profile.mjs\",\"sha\":\"dd2ecfa155a5806dec9feed4f4d9a5bd15005d95\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs\",\"sha\":\"e9079549ce8644041c62779dec6109752a4b3251\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/runtime-install.mjs\",\"sha\":\"6d9374932166d7c597fb55148912be193116fa7b\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/browser-assets.mjs\",\"sha\":\"63801fa838c0479e6ae156d9f155461f02df0cfb\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/product-package.mjs\",\"sha\":\"2c668933f214f201137ac6d3c6b7410525955c9b\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/source-selection.mjs\",\"sha\":\"8b046fc9e3aee8c316bdb4b72c90215265d0dc2e\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/specification.mjs\",\"sha\":\"805c5463adf678123c860c1837d09446f0b3990d\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/runtime-unpack.py\",\"sha\":\"6981dc29e20a6795c9b656d8956b0976d2434ffc\"}]")
+ expected=json.loads("[{\"path\":\"stellar/scf-starforge-20261009/distribution/build.mjs\",\"sha\":\"4e8bff0196a1ec00cdc0b26d3b3b82cd5742f4d0\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/git-source.mjs\",\"sha\":\"3d2a0c9f34d27cce9b6ef64e39cf130dc620f8d7\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/build-state.mjs\",\"sha\":\"eb9543e9ad3e594e4c343bb15375918a42149a9a\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/runtime-profile.mjs\",\"sha\":\"dd2ecfa155a5806dec9feed4f4d9a5bd15005d95\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs\",\"sha\":\"e9079549ce8644041c62779dec6109752a4b3251\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/runtime-install.mjs\",\"sha\":\"6d9374932166d7c597fb55148912be193116fa7b\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/browser-assets.mjs\",\"sha\":\"63801fa838c0479e6ae156d9f155461f02df0cfb\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/product-package.mjs\",\"sha\":\"2c668933f214f201137ac6d3c6b7410525955c9b\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/source-selection.mjs\",\"sha\":\"206723af33889fdd8efcc77eb6e67f9de0a57845\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/specification.mjs\",\"sha\":\"a9c57222ca9514be0e03d542063cce0eadcf3f16\"},{\"path\":\"stellar/scf-starforge-20261009/distribution/runtime-unpack.py\",\"sha\":\"6981dc29e20a6795c9b656d8956b0976d2434ffc\"}]")
  for item in expected:
   captured=next((x for x in _original_source["incoming"] if x["sha"]==item["sha"]),None)
   if captured is None:raise RuntimeError("Original bootstrap source is absent: "+item["path"])
@@ -227,7 +227,7 @@ finally:
    with zipfile.ZipFile(root/"retained-original-source-cache.zip","x",compression=zipfile.ZIP_DEFLATED,compresslevel=6) as cachezip:
     for p in sorted(object_directory.rglob("*")):
      if p.is_file() and not p.is_symlink():cachezip.write(p,p.relative_to(root),compress_type=zipfile.ZIP_STORED if "/objects/" in str(p) else zipfile.ZIP_DEFLATED)
-  checkpoint=root/"BUYER_FINANCE_Selected_Receiving_05d093bc_20261012.zip"
+  checkpoint=root/"BUYER_FINANCE_Selected_Receiving_9e1dad6b_20261012.zip"
   selections=[]
   for p in root.iterdir():
    if p.is_file() and p!=checkpoint:selections.append(p)

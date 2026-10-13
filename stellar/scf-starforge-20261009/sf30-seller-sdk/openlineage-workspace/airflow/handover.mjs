@@ -5,10 +5,12 @@ import { randomUUID } from "node:crypto";
 import { verifyBundle, receiveBundle, LineageWorkspace } from "../store.mjs";
 import { readFile, readJSON, writeNew, ordinaryPath, jsonBytes, sha256, canonical, need, withDirectoryLock } from "./io.mjs";
 const ROOT=dirname(fileURLToPath(import.meta.url));
-export const AIRFLOW_SOURCE_FILES=[
+const ORIGINAL_AIRFLOW_SOURCE_FILES=[
   "OPERATING.md","client.mjs","cli.mjs","desk.html","environment.py","execute.py",
   "handover.mjs","io.mjs","mcp.mjs","package.json","plan.mjs","report.mjs","sources.json","RECEIVING.mjs","receiving_csv_dag.py","NATIVE_RECEIVING.md"
 ];
+export const AIRFLOW_SOURCE_FILES=[...ORIGINAL_AIRFLOW_SOURCE_FILES,"runtime_bundle.py","RUNTIME_BUNDLES.md"];
+const AIRFLOW_SOURCE_EDITIONS=[ORIGINAL_AIRFLOW_SOURCE_FILES,AIRFLOW_SOURCE_FILES];
 function entry(path,bytes){return {path,bytes:bytes.length,sha256:sha256(bytes),base64:bytes.toString("base64")};}
 function verifyReviewMembership(review,state) {
   const edition=state.editions.find(x=>x.id===review.editionId);
@@ -69,7 +71,7 @@ export function verifyHandover(bytes) {
     }return found;
   }
   const operator=entries(payload.operator),documents=entries(payload.documents),workspace=entries([payload.workspace]);
-  need(operator.size===AIRFLOW_SOURCE_FILES.length&&AIRFLOW_SOURCE_FILES.every(x=>operator.has(x)),"Airflow source inventory differs from this operator edition");
+  need(AIRFLOW_SOURCE_EDITIONS.some(files=>operator.size===files.length&&files.every(x=>operator.has(x))),"Airflow source inventory differs from a complete supported operator edition");
   need(workspace.has("workspace.json"),"Original workspace package is missing");
   const inner=verifyBundle(workspace.get("workspace.json"));
   need(inner.application.size>0&&inner.state.workspaceId===payload.workspaceId&&inner.state.revision===payload.revision,"Original workspace identity differs");

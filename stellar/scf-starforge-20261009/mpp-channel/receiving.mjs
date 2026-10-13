@@ -37,6 +37,7 @@ async function sourceClosure() {
   }
   async function seed(path) {
     for(const entry of await readdir(path,{withFileTypes:true})) {
+      if(entry.name==='__pycache__' || /\.py[co]$/.test(entry.name)) continue;
       need(!entry.isSymbolicLink(), 'MPP_CHANNEL_SOURCE_SYMLINK_UNSUPPORTED');
       if(entry.isDirectory()) await seed(join(path,entry.name));
       else if(entry.isFile()) await visit(join(path,entry.name));
@@ -96,7 +97,7 @@ export async function exportChannel({workspace,terms,handoverId}) {
     }
     await assertOperating(workspace,terms);
     const prefix='mpp-channel:'+terms.network+':'+terms.address+':', records=[];
-    for(const group of [groups.tasks,groups.streams,groups.purchases,groups.deliveries,groups.settlements,groups.settings,'sdk']) {
+    for(const group of [groups.tasks,groups.streams,groups.purchases,groups.deliveries,groups.settlements,groups.settings,groups.funding,groups.funders,groups.observations,'sdk']) {
       for(const row of await nativeRows(workspace,group)) {
         const config=row.value.config, rowTerms=config?.channel ?? row.value.channel;
         if(group==='sdk'?row.key.startsWith(prefix):rowTerms && streamKey(rowTerms)===selected) records.push(row);
@@ -140,7 +141,7 @@ export function parseBundle(value) {
   channel(bundle.channel); id(bundle.id);
   const names=new Set();
   for(const row of bundle.records) {
-    need([groups.tasks,groups.streams,groups.purchases,groups.deliveries,groups.settlements,groups.settings,'sdk','profiles'].includes(row.group) &&
+    need([groups.tasks,groups.streams,groups.purchases,groups.deliveries,groups.settlements,groups.settings,groups.funding,groups.funders,groups.observations,'sdk','profiles'].includes(row.group) &&
       typeof row.key==='string' && row.value && !names.has(row.group+'\n'+row.key), 'MPP_CHANNEL_HANDOVER_RECORD_INVALID');
     names.add(row.group+'\n'+row.key);
     if(row.group==='profiles') need(hash(stable(row.value))===row.key, 'MPP_CHANNEL_PROFILE_HASH_CHANGED');

@@ -88,6 +88,59 @@ source. For a checkout, the original entry is
 `node stellar-forge/developer-site/grant.mjs --port 8787`.
 The retained purchase workbench below keeps its own saved packet and lifecycle.
 
+## Export a saved submission
+
+The installed `grant-export` command prepares the same saved draft through the
+original submission, planning and handover models:
+
+~~~sh
+starforge grant-export \
+  --draft /private/scf/saved-submission.json \
+  --out /private/scf/prepared-submission
+~~~
+
+Select a new private output directory. The complete result contains the native
+checksummed draft for reopening, all nine canonical answers, the original form
+map, prepared values and exact individual field text, an offline copy/print
+page, and the final file manifest. Manual edits, source editions, planning,
+review decisions and version history stay in the same native record.
+
+Use `--select answers` or `--select fields` to select the output explicitly;
+`--format plain` and `--format markdown` use the original model's prepared
+values. Counts and recorded issuer limits apply to those exact values. Exit 2
+retains the complete output and reports recorded limits exceeded. The
+[complete export guide](../../stellar-forge/developer-site/GRANT_EXPORT.md)
+also covers receiving a matching application/source-index pair with its
+original URL and complete budget/companion files. Reopen `draft.json` through
+**Prepare submission** to continue the same draft.
+
+## Prepare the customer's operating procedure
+
+The installed reviewer includes Command finder and Operating plans. A saved
+submission's **Planning → Customer operating procedure** turns its selected
+native SF47 packages into editable ordered work, with each original scope,
+completion measure, price, hours and relative window retained.
+
+~~~sh
+starforge grant-operating-plan \
+  --file /absolute/customer/submission-draft.json \
+  --customer "Receiving merchant" \
+  --out /absolute/customer/operating-plan.json
+
+starforge discover serve --host 127.0.0.1 --port 8846
+~~~
+
+Open `http://127.0.0.1:8846/operating-plan.html` and choose **Import complete
+plan**. Enter actual operating instructions, due dates and command arguments,
+then save revisions as work progresses. Complete JSON transfers all saved
+history; HTML and Markdown carry the readable procedure.
+
+Use `starforge discover plan catalog --out /absolute/customer/toolkit-catalog.json`
+to supply the complete actual toolkit registrations to the saved planning
+review. The [customer operating procedure guide](../../stellar-forge/developer-site/GRANT_OPERATING_PLANS.md)
+describes original native files, explicit package selection, catalog bindings
+and receiving.
+
 ## Open the reviewer
 
 Use the [maintained runtime installation](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md)

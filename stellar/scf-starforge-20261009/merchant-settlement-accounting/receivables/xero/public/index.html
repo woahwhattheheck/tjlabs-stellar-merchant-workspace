@@ -21,6 +21,7 @@
         <button type="button" data-page="profiles"><span>02</span> Organisation mapping</button>
         <button type="button" data-page="prepare"><span>03</span> Prepare documents</button>
         <button type="button" data-page="current"><span>04</span> Package and results</button>
+        <button type="button" data-page="cash"><span>05</span> Cash commissioning</button>
       </nav>
       <label class="operator-label" for="actor">Operator</label>
       <input id="actor" name="actor" type="text" autocomplete="name" maxlength="200" placeholder="Your name">
@@ -121,6 +122,7 @@
           <div class="section-heading"><div><p class="eyebrow">Package and results</p><h2 id="package-heading"></h2><p id="package-identity" class="source-note mono"></p></div><span id="package-state" class="badge"></span></div>
           <div id="package-counts" class="metrics"></div>
           <p id="package-context"></p>
+          <div class="actions"><button type="button" data-go="cash">Commission customer cash</button></div>
           <div id="package-family" class="actions"></div>
           <section class="review" aria-labelledby="package-files-title">
             <div class="section-heading"><h3 id="package-files-title">Original handover files</h3><div class="actions"><button id="export-tar" type="button">Download complete archive</button><button id="export-json" type="button">Download package record</button></div></div>
@@ -177,6 +179,10 @@
           </section>
           <details class="review"><summary>Retained mapping and operation history</summary><div id="retained-profile"></div><div class="table-wrap"><table><thead><tr><th>When</th><th>Operator</th><th>Operation</th><th>Record</th></tr></thead><tbody id="history-body"></tbody></table></div></details>
         </div>
+      </section>
+      <section id="page-cash" class="page" aria-labelledby="cash-page-title" hidden>
+        <div class="section-heading"><div><p class="eyebrow">Cash commissioning</p><h2 id="cash-page-title">Customer payments and billing cycles</h2></div><div class="actions"><a id="cash-commissioning-guide" href="./CASH_COMMISSIONING.md" target="_blank" rel="noopener">Operator guide</a><button type="button" data-go="current">Package and results</button></div></div>
+        <div id="cash-desk"></div>
       </section>
     </main>
   </div>

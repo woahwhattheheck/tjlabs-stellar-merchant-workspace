@@ -216,3 +216,46 @@ All fields after `schema` are optional. An absent `product` keeps the existing p
 Select each declared executable and README in the ordinary `components` or `supportFiles` inventory. Missing or explicitly excluded product entries fail before a package is materialized. Keep only the product's required native components, source-owned contribution files, dynamic runtime inputs and browser assets in that repository. The existing static-import closure, dependency manifests, archive limits and publication lifecycle apply to the complete selected source.
 
 The selected Git commit remains the build identity. The complete base declaration, including product metadata, remains in `distributionInputs` with its original Git blob and byte digest. `manifest.sourceRepository` and npm repository metadata identify the standalone product; retain upstream source pins and legitimate third-party licenses in that repository when copying maintained source. Resume uses the same pinned declaration and refuses a changed manifest. Use the ordinary `build.mjs --repo PRODUCT_CHECKOUT --ref COMMIT --out OUTPUT` invocation; the product introduces no second packaging engine.
+
+## Customer module templates
+
+An exporter can retain a complete JavaScript module as source data and copy it into a customer package where generated sibling modules become available. Declare these exact source paths in `moduleTemplates` in the original contribution, base specification or selected product recipe. The builder includes every declared file with its original bytes and validates its JavaScript syntax. It resolves imports for every executable module, while import resolution inside a declared template belongs to the original customer exporter. Commands, package exports, providers, browser assets and other executable imports cannot use a declared template as runnable source.
+
+The Buyer Expenses selection includes the unchanged SF30 Python and Ruby `request-bridge.mjs` templates this way. Their `seller-client.mjs` sibling is produced by the original seller OpenAPI exporter in the customer directory. The selection also carries the complete SF82 release-store dependency chain: literal dynamic imports, native reader companions, generated-client source files, served assets and the SF98 exchange/SF101 outbox continuity modules. The financial receiver continues to build and install the selected original source before invoking the native SDK and MCP workflow.
+
+## Original JSON source data
+
+Some upstream references publish serialized JSON under a JavaScript filename.
+Keep that original filename and every byte. Declare the exact path in
+`sourceFormats` in its original contribution, base specification or selected
+recipe:
+
+```json
+{
+  "sourceFormats": {
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/reference/zotero/itemJSON.js": "json"
+  }
+}
+```
+
+This declares data, selects the exact original file and requires strict UTF-8
+JSON parsing before packaging. It does not rewrite the source or depend on a
+filename heuristic. The ordinary regular-file, Git object/hash, byte limit and
+explicit-exclusion checks still apply. The existing fixture-data exception also
+recognizes an explicitly declared JSON file's format rather than its suffix.
+
+A declared JSON source cannot also be a JavaScript `moduleTemplates` entry or a
+command, product executable, package export, Applications/merchant provider or
+browser server. The original static import collector rejects executable imports
+to declared data. JSON data can remain an ordinary served asset; the original
+asset manifest continues to identify its route and bytes. Every other JavaScript
+source, including module templates, retains the original syntax validation.
+
+The package manifest retains `sourceFormats` alongside each original file's Git
+blob, SHA-256, byte count and package path. Registration inspection names the
+source declaration that owns the format. An installed source reader recomposes
+the same declarations, checks that its manifest format map matches, verifies
+the complete formatted file bytes and parses their JSON before exposing the
+installed specification. Legacy packages without declarations retain their
+original manifest form. The complete build/resume and runtime/source inspection
+continue to bind the ordinary manifest and original input hashes.

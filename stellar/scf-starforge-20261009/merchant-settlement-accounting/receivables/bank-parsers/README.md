@@ -20,3 +20,9 @@ OFX uses its original declared encoding and the original DTPOSTED local calendar
 MT940 requires explicit transport, encoding, debit/reversal profile, currency scales and a 100-year date window. Native receipt dating uses the explicitly chosen full value date. Original entry MMDD is retained without an invented year. MT940 transaction identity comes from the original statement/page identity and transaction ordinal; it is labeled STATEMENT_POSITION, while the bank-provided reference remains a separate original field. Supplied statement balances and all original page controls remain visible in parser-report.json.
 
 The native accounting review handles explicit customer splits, original receipt links and corrections, dated invoice allocations, refund conservation and retained customer receipt advice. It uses the same accounting workspace revision, journal and lease as other receivables operations.
+
+## Statement closing information
+
+The OFX reader preserves bank and credit-card closing responses in `sources[].parsed.closing_statements`, including the original account, currency, response status, source lines, period dates, opening/closing amounts, credit-line details, rewards, last payment, currency conversion and image reference metadata supplied by the source. These records remain separate from posted transactions and pending observations; they do not create receipt rows or cash activity. The original byte-for-byte file and full parser report remain downloadable with each intake.
+
+The import profile follows [OFX Banking 2.3](https://financialdataexchange.org/wp-content/uploads/2025/12/OFX-Banking-Specification-v2.3.pdf), sections 3.1.6.1, 11.4.2.2 and 11.5. Pending lists retain their required `DTASOF` snapshot timestamp. Closing periods and transaction download windows retain their respective meanings.

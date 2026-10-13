@@ -298,3 +298,55 @@ starforge islandora --python /absolute/path/to/python --workspace /absolute/priv
 ```
 
 The same entry point can be called directly with `node islandora_cli.mjs`. Managed Applications opens **Repository metadata and migration** under the original `oai-repository` identity. Its source review binds all 22 original runtime and migration files before launch, then verifies the original workspace and live session through the existing startup exchange. The native Workbench executable and environment are selected inside the retained migration.
+
+
+## Review completed original GetRecord operations as one collection
+
+Use **Record selections** when a staff case, migration cohort or source review needs records from several native sets. Complete each original GetRecord operation with its exact requested identifier and metadata format. The collection then references those original operations and observations directly.
+
+The console provides the complete workflow:
+
+1. Prepare an individual GetRecord operation using the exact repository, metadata prefix and identifier. Choose direct acquisition or receive the original response and receipt in Harvests.
+2. Choose completed source rows, paste their original operation IDs, or open a complete saved selection request. Every selected operation must belong to the same repository and metadata format.
+3. Give the collection a stable operation ID and name. Optionally select an earlier explicit collection as its reviewed baseline.
+4. Prepare the complete edition review. Review the identifiers, datestamps and any same-datestamp conflicts, then save the edition decision.
+5. Choose the edition's metadata mapping, edit the actual original fields, and build through the maintained native dataset engine.
+6. Export the complete source or continue the edition in the TIND or Islandora workflow.
+
+A collection baseline carries forward its existing members. Later original records update the same identifiers by repository datestamp. Explicit deleted headers retain the established deletion rule. A new collection without a baseline selects a different membership. The UI displays the complete selection and source operations before the edition review.
+
+### Durable receiving and native continuation
+
+The browser saves the entire selection request in the same workspace-scoped IndexedDB slot used for original response receiving. An unknown receiving result resumes the same operation ID and exact source list. A returned request can be corrected after the receiver has explicitly declined it. Another mutation waits for this saved request's result.
+
+Download the complete selection request before native continuation. The file uses this schema:
+
+```json
+{
+  "schema": "stellar-forge.oai-record-selection-request.v1",
+  "operationId": "staff-record-selection",
+  "sourceOperationIds": [
+    "first-completed-getrecord-operation",
+    "second-completed-getrecord-operation"
+  ],
+  "baseline": null,
+  "label": "Original staff source collection"
+}
+```
+
+Use actual retained source operation IDs in the selected workspace. Continue the complete request with the native CLI:
+
+```bash
+python3 oai-pmh/cli.py --workspace /private/original-workspace \
+  select-records --request /private/oai-record-selection-request.json
+```
+
+The returned collection is an immutable completed local selection. It retains every original source operation, attempt, revision, request ID, observation ID and response digest. A changed source list, baseline or name requires a new collection operation ID. Identical retries return the original collection.
+
+### Original source paths and export
+
+The mapping for a collection uses the original expanded-name path **OAI-PMH / GetRecord / record**. ListRecords editions retain their original ListRecords path. The metadata mapping command chooses the appropriate path from the actual edition; a build verifies that the mapping belongs to that source wrapper.
+
+The source export includes the complete original GetRecord bodies and receipts, the local selection and original operations in operations.json, immutable edition membership, the full lineage, and the native dataset. Each record still points to the actual observation and request that supplied it. Original request-history pages remain available from the collection.
+
+The existing whole-workspace backup and TIND handover include collection membership in the native SQLite database. Reopen or receive them with the corresponding maintained source version.

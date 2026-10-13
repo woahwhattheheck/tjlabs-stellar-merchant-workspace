@@ -92,8 +92,27 @@ export function mountSupplierReview(container, options = {}) {
     if (!Array.isArray(item.key)) return 'Key unavailable';
     return item.key.map(value => value === null ? '(null)' : value === '' ? '(empty)' : asText(value)).join(' / ');
   }
+  function describeError(error) {
+    const parts = [error && error.message ? error.message : String(error)];
+    const details = error && error.details;
+    if (details && typeof details === 'object') {
+      const context = [];
+      if (details.field !== undefined) context.push('Field: ' + asText(details.field));
+      if (details.side !== undefined) context.push('Source: ' + asText(details.side));
+      if (details.column !== undefined) context.push('Column: ' + asText(details.column));
+      if (context.length) parts.push(context.join(' · '));
+      if (Array.isArray(details.issues)) {
+        for (const problem of details.issues) {
+          if (!problem || typeof problem !== 'object') continue;
+          const field = problem.field === undefined ? '' : asText(problem.field) + ': ';
+          parts.push(field + asText(problem.message || problem.code || 'Requires correction'));
+        }
+      }
+    }
+    return [...new Set(parts)].join('\n');
+  }
   function fail(error) {
-    errorText = error && error.message ? error.message : String(error);
+    errorText = describeError(error);
     statusText = '';
     render({ focus: 'error' });
   }
@@ -224,8 +243,8 @@ export function mountSupplierReview(container, options = {}) {
     const source = item.candidate.length === 1 ? item.candidate[0] :
       item.baseline.length === 1 ? item.baseline[0] : null;
     const originalValues = existing && existing.values ? existing.values : (source && source.values) || {};
-    const values = {};
-    const nulls = {};
+    const values = Object.create(null);
+    const nulls = Object.create(null);
     for (const field of report.rules.fields) {
       const original = originalValues[field.name];
       nulls[field.name] = original === null || original === undefined;
@@ -253,7 +272,7 @@ export function mountSupplierReview(container, options = {}) {
     if (!change.reason) throw new Error('Enter the reason for this decision.');
     if (!reviewer.trim()) throw new Error('Enter the reviewer name before saving a decision.');
     if (draft.action === 'replace') {
-      change.values = {};
+      change.values = Object.create(null);
       for (const field of report.rules.fields) {
         change.values[field.name] = draft.nulls[field.name] ? null : draft.values[field.name];
       }
@@ -330,7 +349,7 @@ export function mountSupplierReview(container, options = {}) {
       }
       statusText = 'Prepared ' + ({ workspace: 'the complete review workspace', changes: 'the changes CSV', accepted: 'the accepted CSV', html: 'the review HTML', sql: 'the SQLite snapshot file' })[kind] + '.';
     } catch (error) {
-      errorText = error.message || String(error);
+      errorText = describeError(error);
     } finally {
       busy = false;
       if (!destroyed) render({ focus: errorText ? 'error' : 'status' });
@@ -343,14 +362,16 @@ export function mountSupplierReview(container, options = {}) {
     busy = true;
     render();
     try {
-      let original;
+      let retainedText;
       try {
-        original = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(await file.arrayBuffer());
+        retainedText = new win.TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer());
       } catch (error) {
-        if (error instanceof TypeError) throw new Error('The review file must contain valid UTF-8 text. Open the original saved review JSON file.');
+        if (error instanceof TypeError || error.name === 'TypeError') {
+          throw new Error('The review file must contain valid UTF-8 text. Open the original saved review JSON file.');
+        }
         throw error;
       }
-      const restored = reopenWorkspace(original.charCodeAt(0) === 0xfeff ? original.slice(1) : original);
+      const restored = reopenWorkspace(retainedText);
       if (destroyed) return;
       busy = false;
       applyReport(restored, 'Opened the complete retained review from ' + file.name + '.', { reset: true });
@@ -882,8 +903,8 @@ export function mountSupplierReview(container, options = {}) {
     table.addEventListener('input', () => { tableName = table.value; });
     sql.append(labelControl('New SQLite table', table));
     sql.append(button('SQLite snapshot', () => runExport('sql'), '', !ready));
-    sql.append(element('p', 'sr-help', 'Creates a new SQLite table with TEXT columns and a lineage transaction from the reviewed accepted records.'));
     section.append(sql);
+    section.append(element('p', 'sr-help', 'Creates a new SQLite table with TEXT columns and a lineage transaction from the reviewed accepted records.'));
     const history = element('details', 'sr-history');
     history.append(element('summary', '', 'Complete retained decision history'));
     history.append(element('pre', 'sr-json', JSON.stringify(report.history || [], null, 2)));

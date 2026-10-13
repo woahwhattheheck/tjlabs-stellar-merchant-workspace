@@ -85,8 +85,8 @@ export function createBankUi(host) {
   }
   function render() {
     const imports=state.imports?.imports||[];
-    return '<section class="panel bank-workbench"><div class="panel-head"><div><h2>Bank statements</h2>' +
-      '<p class="small-text muted">Retain original statements, match customer payments and review invoice allocations.</p></div><div class="row">' +
+    return '<section class="panel bank-workbench"><div class="panel-head"><div><h2>Bank receipts</h2>' +
+      '<p class="small-text muted">Retain original statements, match customer payments and review invoice allocations.</p><p class="small-text"><a href="/bank-statements/">Open bank reconciliation and period closes</a></p></div><div class="row">' +
       button('Bank accounts','accounts') + button('Import statement','new-import','',true,true) + '</div></div>' +
       '<div class="panel-body"><div class="form-grid three">' +
       label('Bank account','<select data-bank-filter="account">' + options(state.accounts,state.accountFilter,'All accounts',row=>row.reference+' · '+row.name) + '</select>') +
@@ -145,8 +145,8 @@ export function createBankUi(host) {
     const selected=currentAssignments()[row.id];
     if(selected)return selected.splits.map(split=>'<span class="subline">'+e(customerName(split.customerId||getState()?.receipts?.find(r=>r.id===split.receiptId)?.customerId))+
       ' · '+money(split.amount,row.currency)+'</span>').join('');
-    const receipts=row.receiptCandidates||[], invoices=row.invoiceCandidates||[], people=row.customerCandidates||[];
-    return (receipts.length?'<span class="subline">'+receipts.length+' possible recorded receipt'+(receipts.length===1?'':'s')+'</span>':'')+
+    const receipts=row.receiptCandidates||[], invoices=row.invoiceCandidates||[], people=row.customerCandidates||[],saved=statementReconciliation(row);
+    return (saved?'<span class="subline">Saved customer payment '+money(customerPaymentAmount(row),row.currency)+' · bank adjustments '+money(saved.adjustmentAmount??'0',row.currency)+'</span>':'')+(receipts.length?'<span class="subline">'+receipts.length+' possible recorded receipt'+(receipts.length===1?'':'s')+'</span>':'')+
       (invoices.length?'<span class="subline">'+invoices.length+' invoice match'+(invoices.length===1?'':'s')+'</span>':'')+
       (people.length?'<span class="subline">'+people.map(value=>e(value.customer.name)).join(', ')+'</span>':'')||
       '<span class="muted">Choose the customer and invoices.</span>';
@@ -159,6 +159,33 @@ export function createBankUi(host) {
       '</dl><details><summary>Complete original record</summary><pre class="bank-json">'+e(JSON.stringify(row,null,2))+'</pre></details></details>').join('')+'</div>';
   }
   function sourceRow(id) { return state.page?.items?.find(row=>row.id===id)||(state.editor?.row?.id===id?state.editor.row:null)||currentAssignments()[id]?.source; }
+  function reconciliationLink(transactionId='') {
+    return '/bank-statements/'+(transactionId?'?view=transactions&transaction='+encodeURIComponent(transactionId):'');
+  }
+  function renderSourceMatches(rows,currency,title) {
+    return '<h3 class="section">'+e(title)+'</h3><div class="table-wrap bank-original"><table><thead><tr><th>Original source</th><th>Bank date</th><th class="num">Amount</th><th>Current disposition</th><th>Open original</th></tr></thead><tbody>'+
+      rows.map(match=>{
+        const transactionId=match.statementTransactionId||match.statementReconciliation?.transactionId;
+        const navigation=match.sourceOrigin==='BANK_STATEMENT_RECONCILIATION'&&transactionId?
+          '<a href="'+e(reconciliationLink(transactionId))+'" target="_blank" rel="noopener">Bank reconciliation transaction</a>':
+          (!match.sourceOrigin||match.sourceOrigin==='BANK_RECEIPT_INTAKE')&&match.bankImportId&&match.rowId?
+          button('Bank receipt source','open-source-match',' class="small" data-import="'+e(match.bankImportId)+'" data-row="'+e(match.rowId)+'"'):'';
+        return '<tr><td>'+e(match.sourceName)+'<span class="subline">'+e(formatStatus(match.match))+'</span></td><td>'+e(match.bookedDate)+'</td><td class="num">'+money(match.amount,currency)+'</td><td>'+status(match.status)+'</td><td>'+navigation+'</td></tr>';
+      }).join('')+'</tbody></table></div>'+renderRecords(rows,title);
+  }
+  async function openMatchedSource(bankImportId,rowId) {
+    if(!bankImportId||!rowId)throw new Error('Choose the retained original source match.');
+    captureEditor();
+    state.selectedId=bankImportId;state.rowOffset=0;state.rowStatus='';state.direction='';state.rowSearch=rowId;state.view='rows';
+    state.detail=null;state.page=null;state.review=null;state.dialog='source-row-loading';persist();host.showBank?.();
+    openDialog('Original matched bank source','<p>Opening the retained source row and its current customer receipts…</p>'+actions(null));
+    await load();
+    if(state.selectedId!==bankImportId||state.rowSearch!==rowId||state.dialog!=='source-row-loading')return;
+    if(state.error)return;
+    const row=state.page?.items?.find(item=>item.id===rowId);
+    if(!row)throw new Error('The current original statement does not contain this source row.');
+    state.dialog='source-row';openDialog('Original matched bank source',renderRaw(row)+actions(null));
+  }
   function renderRaw(row) {
     const raw=row.raw||{}, fields=raw.fields||{}, columns=state.detail?.columns||state.inspection?.columns||[];
     return '<dl class="definition"><dt>Booked date</dt><dd>'+e(row.bookedDate)+'</dd><dt>Value date</dt><dd>'+e(row.valueDate)+'</dd>'+
@@ -173,8 +200,9 @@ export function createBankUi(host) {
       (row.sourceIssues?.length?'<h3 class="section">Source findings</h3>'+renderRecords(row.sourceIssues.map(item=>typeof item==='string'?{code:item}:item),'Source finding'):'')+
       '<details class="bank-original"><summary>Complete original source row</summary><pre class="bank-json">'+e(JSON.stringify(row,null,2))+'</pre></details>'+
       '<details class="bank-original"><summary>Original source identity</summary><p class="mono">'+e(row.sourceRowSha256)+'</p></details>'+
-      (row.supersededBy?.length?'<h3 class="section">Posted source replacements</h3>'+renderRecords(row.supersededBy,'Source replacement'):'')+
-      (row.sourceMatches?.length?'<h3 class="section">Other retained source matches</h3>'+renderRecords(row.sourceMatches,'Source match'):'');
+      renderStatementReconciliation(row)+
+      (row.supersededBy?.length?renderSourceMatches(row.supersededBy,row.currency,'Posted source replacements'):'')+
+      (row.sourceMatches?.length?renderSourceMatches(row.sourceMatches,row.currency,'Other retained source matches'):'');
   }
 
 
@@ -336,9 +364,74 @@ export function createBankUi(host) {
   }
 
 
+  function statementReconciliation(row) {
+    if(row?.statementReconciliation)return row.statementReconciliation;
+    const matches=(row?.sourceMatches||[]).map(value=>value.statementReconciliation).filter(Boolean);
+    const unique=new Map(matches.map(value=>[(value.statementAccountId||'')+':'+(value.transactionId||'')+':'+(value.matchId||''),value]));
+    return unique.size===1?[...unique.values()][0]:null;
+  }
+  function statementAdjustment(row) {
+    const saved=statementReconciliation(row);
+    return saved?host.units(saved.adjustmentAmount??'0',row.currency):0n;
+  }
+  function customerPaymentAmount(row) {
+    return host.amount(host.units(row.amount,row.currency)-statementAdjustment(row),row.currency);
+  }
+  function statementReceiptCoverage(row,receipt) {
+    if(!receipt)return null;
+    const saved=statementReconciliation(row);
+    if(!saved)return null;
+    const direct=(saved.receipts||[]).find(value=>value.receiptId===receipt.id);
+    if(direct&&host.units(direct.amount,row.currency)>0n)
+      return {amount:direct.amount,coverageKey:direct.coverageKey||''};
+    const originalMatches=(receipt.bankSources||[]).filter(value=>{
+      const occurrences=[...(value.sourceOccurrenceKeys||[]),...(value.sourceOccurrenceKey?[value.sourceOccurrenceKey]:[])];
+      if(row.sourceOccurrenceKey&&occurrences.includes(row.sourceOccurrenceKey))return true;
+      return Boolean(row.transactionKey&&value.transactionKey===row.transactionKey&&
+        value.bankAccountId===state.detail?.account?.id);
+    });
+    const groups=new Map();
+    for(const value of originalMatches) {
+      const key=value.coverageKey;
+      if(!key||!value.splitAmount)continue;
+      const previous=groups.get(key);
+      if(previous&&host.units(previous.amount,row.currency)!==host.units(value.splitAmount,row.currency))return null;
+      groups.set(key,{amount:value.splitAmount,coverageKey:key});
+    }
+    return groups.size===1?[...groups.values()][0]:null;
+  }
+  function initialStatementSplits(row) {
+    const saved=statementReconciliation(row);
+    if(!saved)return [newSplit(row)];
+    const covered=allReceipts(row).map(receipt=>({receipt,coverage:statementReceiptCoverage(row,receipt)})).filter(value=>value.coverage);
+    const total=covered.reduce((sum,value)=>sum+host.units(value.coverage.amount,row.currency),0n);
+    const expected=host.units(customerPaymentAmount(row),row.currency);
+    if(covered.length&&total===expected)
+      return covered.map(({receipt,coverage})=>({...newSplit(row,{action:'LINK',receipt}),amount:coverage.amount,coverageKey:coverage.coverageKey}));
+    return [newSplit(row)];
+  }
+  function renderStatementReconciliation(row,currency=row.currency) {
+    const saved=statementReconciliation(row);if(!saved)return '';
+    const adjustments=saved.adjustments||[];
+    return '<section class="bank-original bank-statement-reconciliation"><h3>Saved bank reconciliation</h3>'+
+      '<p class="small-text">This original source payment already has retained receipt coverage. Link the recorded gross customer payment and keep the saved bank adjustments.</p>'+
+      '<dl class="definition"><dt>Original bank amount</dt><dd>'+money(saved.bankAmount??row.amount,currency)+'</dd>'+
+      '<dt>Customer payment</dt><dd>'+money(customerPaymentAmount({...row,currency}),currency)+'</dd>'+
+      '<dt>Saved adjustments</dt><dd data-bank-statement-adjustment>'+money(saved.adjustmentAmount??'0',currency)+'</dd></dl>'+
+      (adjustments.length?'<div class="table-wrap bank-original"><table><thead><tr><th>Saved adjustment</th><th class="num">Amount</th><th>Ledger / reference</th><th>Original note</th></tr></thead><tbody>'+
+        adjustments.map(part=>'<tr><td>'+e(formatStatus(part.kind))+'</td><td class="num">'+money(part.amount,currency)+'</td><td>'+
+          e([part.ledgerCode,part.reference].filter(Boolean).join(' · '))+'</td><td class="preline">'+e(part.note)+'</td></tr>').join('')+'</tbody></table></div>':'')+
+      '<p class="hint bank-original">The receipt and adjustment totals reconcile to the original bank amount. Open this original <a href="'+e(reconciliationLink(saved.transactionId))+'" target="_blank" rel="noopener">Bank reconciliation transaction</a> to review its saved adjustments and current successors.</p>'+
+      '<details><summary>Original reconciliation and source coverage</summary><dl class="definition">'+
+        '<dt>Bank account</dt><dd class="mono">'+e(saved.statementAccountId)+'</dd><dt>Transaction</dt><dd class="mono">'+e(saved.transactionId)+'</dd>'+
+        '<dt>Match</dt><dd class="mono">'+e(saved.matchId)+'</dd><dt>Match SHA256</dt><dd class="mono">'+e(saved.matchSha256)+'</dd></dl>'+
+        '<pre class="bank-json">'+e(JSON.stringify(saved,null,2))+'</pre></details></section>';
+  }
+
   function newSplit(row,{action='CREATE',receipt=null,customerId=''}={}) {
-    return {key:crypto.randomUUID(),action,customerId:customerId||receipt?.customerId||'',receiptId:receipt?.id||'',coverageKey:'',
-      amount:receipt?.amount||row.amount,allocations:[],residualAllocations:[],effectiveDate:action==='LINK'?(receipt?.accountingDate||receipt?.receivedDate||row.bookedDate):action==='CORRECT'?getAsOf():row.bookedDate,
+    const coverage=action==='LINK'?statementReceiptCoverage(row,receipt):null;
+    return {key:crypto.randomUUID(),action,customerId:customerId||receipt?.customerId||'',receiptId:receipt?.id||'',coverageKey:coverage?.coverageKey||'',
+      amount:coverage?.amount||receipt?.amount||customerPaymentAmount(row),allocations:[],residualAllocations:[],effectiveDate:action==='LINK'?(receipt?.accountingDate||receipt?.receivedDate||row.bookedDate):action==='CORRECT'?getAsOf():row.bookedDate,
       reason:'',dateDifferenceReason:'',funds:null};
   }
   function allReceipts(row) {
@@ -383,7 +476,7 @@ export function createBankUi(host) {
       sourceResolutionReason:saved?.sourceResolutionReason||'',splits:saved?saved.splits.map(split=>({...clone(split),key:crypto.randomUUID(),funds:null,
         allocations:split.allocations.map(item=>({...item,key:crypto.randomUUID()})),
         residualAllocations:(split.residualAllocations||[]).map(item=>({...item,key:crypto.randomUUID()})),residualFunds:null})):[]};
-    if(!state.editor.splits.length)state.editor.splits.push(newSplit(row));
+    if(!state.editor.splits.length)state.editor.splits.push(...initialStatementSplits(row));
     state.dialog='assignment';persist();assignmentDialog();
     await refreshAssignmentFunds();
   }
@@ -405,10 +498,10 @@ export function createBankUi(host) {
     state.dialog='assignment';
     const row=editor.row,receiptOptions=allReceipts(row),sum=editor.splits.reduce((total,split)=>{
       try{return total+host.units(split.amount,row.currency);}catch{return total;}
-    },0n),unassigned=host.units(row.amount,row.currency)-sum;
+    },0n),unassigned=host.units(row.amount,row.currency)-sum-statementAdjustment(row);
     openDialog('Match bank payment','<form id="bank-assignment-form"><div class="row between"><div><h3>'+e(row.reference||row.bankReference||row.transactionId)+'</h3>'+
       '<p>'+e(row.bookedDate)+' · '+e(row.counterparty)+' · <strong>'+money(row.amount,row.currency)+'</strong></p></div>'+
-      button('Original source','editor-source')+'</div>'+
+      button('Original source','editor-source')+'</div>'+renderStatementReconciliation(row)+
       '<div class="form-grid">'+label('Invoice balance date',input('lookupDate',editor.lookupDate,' type="date" required'),
         false,'Invoice and available-receipt views use this date. Each allocation retains its own date.')+
       '<div class="stat"><span>Amount left to assign</span><strong data-bank-unassigned>'+money(host.amount(unassigned,row.currency),row.currency)+'</strong></div></div>'+
@@ -494,12 +587,24 @@ export function createBankUi(host) {
         split.effectiveDate=split.action==='CORRECT'?getAsOf():editor.row.bookedDate;
         if(split.action==='CREATE')split.receiptId='';
       }
-      if(split.action==='LINK'&&original)split.effectiveDate=original.accountingDate||original.receivedDate;
+      if(split.action==='LINK'&&original){
+        split.effectiveDate=original.accountingDate||original.receivedDate;
+        if(previous.action!==split.action||previous.receiptId!==split.receiptId){
+          const coverage=statementReceiptCoverage(editor.row,original);
+          if(coverage){
+            split.amount=coverage.amount;split.coverageKey=coverage.coverageKey;
+            const amountField=section.querySelector('[name="amount"]');if(amountField)amountField.value=split.amount;
+          }
+        }
+      }
       if(previous.action!==split.action||previous.customerId!==split.customerId||previous.receiptId!==split.receiptId) {
         split.allocations=[];split.funds=null;
       }
       split.residualAllocations ||= [];
-      if(previous.action!==split.action||previous.receiptId!==split.receiptId){split.residualAllocations=[];split.residualFunds=null;split.coverageKey='';}
+      if(previous.action!==split.action||previous.receiptId!==split.receiptId){
+        split.residualAllocations=[];split.residualFunds=null;
+        if(split.action!=='LINK'||!statementReceiptCoverage(editor.row,original))split.coverageKey='';
+      }
       for(const tr of section.querySelectorAll('[data-bank-allocation]')) {
         const item=split.allocations.find(value=>value.key===tr.dataset.bankAllocation);if(!item)continue;
         item.invoiceId=tr.querySelector('[name=invoiceId]').value;item.amount=tr.querySelector('[name=allocationAmount]').value;
@@ -546,8 +651,8 @@ export function createBankUi(host) {
         ...(split.reason.trim()?{reason:split.reason.trim()}:{}),
         ...(split.dateDifferenceReason.trim()?{dateDifferenceReason:split.dateDifferenceReason.trim()}:{})};
     });
-    if(splits.reduce((sum,split)=>sum+host.units(split.amount,currency),0n)!==host.units(editor.row.amount,currency))
-      throw new Error('Assign the exact full bank credit across customer splits before reviewing the posting.');
+    if(splits.reduce((sum,split)=>sum+host.units(split.amount,currency),0n)+statementAdjustment(editor.row)!==host.units(editor.row.amount,currency))
+      throw new Error('Assign the complete gross customer payment. Customer splits plus the saved bank adjustments must equal the original bank credit.');
     return {rowId:editor.row.id,splits,
       ...(editor.sourceResolutionReason.trim()?{sourceResolutionReason:editor.sourceResolutionReason.trim()}:{}),
       ...(editor.distinctPaymentReason.trim()?{distinctPaymentReason:editor.distinctPaymentReason.trim()}:{})};
@@ -657,6 +762,7 @@ export function createBankUi(host) {
       '<div class="stats"><div class="stat"><span>Original credits</span><strong>'+money(totals.sourceCredits,currency)+'</strong></div>'+
       '<div class="stat"><span>New receipts</span><strong>'+money(totals.createdReceiptAmount,currency)+'</strong></div>'+
       '<div class="stat"><span>Linked receipts</span><strong>'+money(totals.linkedReceiptAmount,currency)+'</strong></div>'+
+      '<div class="stat"><span>Saved bank adjustments</span><strong>'+money(totals.statementAdjustmentAmount??'0',currency)+'</strong></div>'+
       '<div class="stat"><span>Corrected receipts</span><strong>'+money(totals.correctedReceiptAmount,currency)+'</strong></div>'+
       '<div class="stat"><span>New invoice allocations</span><strong>'+money(totals.allocatedAmount,currency)+'</strong></div></div>'+
       (proposal.selections.some(row=>row.splits.some(split=>split.residualReceipt))?'<p class="notice bank-original">Partial corrections retain the original customer’s remaining cash in the receipts shown below.</p>':'')+
@@ -669,9 +775,10 @@ export function createBankUi(host) {
       actions('Post reviewed customer payments',button('Download complete review','download-review'))+'</form>');
   }
   function reviewSelection(selection,currency) {
-    const source=selection.sourceRow;
+    const source=selection.sourceRow,sourceWithReview={...source,currency,statementReconciliation:selection.statementReconciliation||source.statementReconciliation,sourceMatches:selection.sourceMatches};
     return '<section class="section"><h3>'+e(source.reference||source.bankReference||source.transactionId||'Original payment')+'</h3>'+
       '<p>'+e(source.bookedDate)+' · '+e(source.counterparty)+' · <strong>'+money(source.amount,currency)+'</strong></p>'+
+      renderStatementReconciliation(sourceWithReview,currency)+
       (selection.sourceResolutionReason?'<p class="preline small-text"><strong>Source correction reason:</strong> '+e(selection.sourceResolutionReason)+'</p>':'')+
       (selection.distinctPaymentReason?'<p class="preline small-text"><strong>Distinct payment reason:</strong> '+e(selection.distinctPaymentReason)+'</p>':'')+
       selection.splits.map(split=>'<div class="bank-split"><h4>'+e(formatStatus(split.action))+' · '+e(split.customer.name||split.customer.id)+
@@ -828,7 +935,7 @@ export function createBankUi(host) {
   function updateEditorTotals() {
     const editor=state.editor,target=$('[data-bank-unassigned]');if(!editor||!target)return;
     try {
-      const value=host.units(editor.row.amount,editor.row.currency)-editor.splits.reduce((sum,split)=>sum+host.units(split.amount,editor.row.currency),0n);
+      const value=host.units(editor.row.amount,editor.row.currency)-editor.splits.reduce((sum,split)=>sum+host.units(split.amount,editor.row.currency),0n)-statementAdjustment(editor.row);
       target.innerHTML=money(host.amount(value,editor.row.currency),editor.row.currency);
     } catch {target.textContent='Complete each amount';}
   }
@@ -937,7 +1044,8 @@ export function createBankUi(host) {
     else if(action==='bank-open-import') {
       state.selectedId=control.dataset.id;state.rowOffset=0;state.rowStatus='';state.direction='';state.rowSearch='';state.view='rows';
       state.review=null;persist();await load();
-    } else if(action==='bank-imports-page'){state.importOffset=Number(control.dataset.offset);await load();}
+    } else if(action==='bank-open-source-match')await openMatchedSource(control.dataset.import,control.dataset.row);
+    else if(action==='bank-imports-page'){state.importOffset=Number(control.dataset.offset);await load();}
     else if(action==='bank-rows-page'){state.rowOffset=Number(control.dataset.offset);await load();}
     else if(action==='bank-detail-view'){state.view=control.dataset.view;state.rowOffset=0;await load();}
     else if(action==='bank-files')await filesDialog();

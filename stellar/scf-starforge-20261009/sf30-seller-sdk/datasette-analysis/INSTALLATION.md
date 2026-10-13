@@ -12,10 +12,15 @@ Start the existing runtime workspace:
 starforge runtime-workspace serve --workspace /srv/starforge/operator --port 8465
 ~~~
 
-Select the complete Datasette merchant runtime in the sidebar. Its original source release must include the Datasette publisher and customer Analysis contributions together.
+Launch this Runtime workspace from the complete selected Datasette release,
+then select its original merchant runtime in the sidebar. The source release
+includes the publisher, customer Analysis, source workflow and supplier
+contributions together. The Applications catalogue belongs to this running
+operator's source; reopen the operator from an updated release to discover its
+new source-owned entries.
 
 1. Open **Python & workbooks**. Select a Python 3.11 or newer executable and the **workbooks** extra.
-2. Use **Review source and interpreter**, **Resolve and retain exact wheels**, then **Install offline**. Keep the returned Python installation ID. The maintained original pyproject selects openpyxl 3.1.5.
+2. Use **Review source and interpreter**, **Resolve and retain exact wheels**, then **Install offline**. Keep the returned Python installation ID for this actual selected source. The maintained original pyproject selects openpyxl 3.1.5. The installed package includes the selected-view query/report/export implementation carried by the release; use the maintained Python source and installation controls when adopting a new release.
 3. Open **Applications** and select **Datasette customer Analysis**. Choose that Python installation, the private Analysis database directory and its stable operation ID. Select the original Node executable when the runtime default is unsuitable.
 4. Use the existing review, save, connect and start controls. **Open** takes you to the running Datasette operator.
 5. Select the source handover, prepare the edition and inspect its rows and source review. Edit additional saved queries, reports and workbooks through **Original Analysis**.
@@ -99,7 +104,10 @@ of its native database.
 
 Prepare the complete installed configuration before reviewing the application.
 Use workflow configure with the original source files, native Analysis directory
-and operation, complete source archive and any selected supplier workspace.
+and operation, complete source archive and selected supplier workspace.
+The installed component includes the complete retained supplier review at
+products/conapi/supplier-report/examples/published-pricing-intake.workspace.json;
+select it with the matching original pricing and catalogue example.
 The [source workflow guide](WORKFLOW.md) documents every configuration flag;
 [the supplier receiving programme](WORKFLOW_RECEIVING.md) binds the complete
 original paired CSV family and all six SQL sections.

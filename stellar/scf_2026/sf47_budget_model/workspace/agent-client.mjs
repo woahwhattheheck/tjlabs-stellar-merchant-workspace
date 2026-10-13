@@ -145,6 +145,23 @@ function deliveryCalendarQuery(args) {
     query.set('expectedVersion', String(integer(args.expectedVersion, 'Selected calendar case version')));
   return query.size ? '?' + query : '';
 }
+function customerUseRefs(value) {
+  need(Array.isArray(value) && value.length <= 100, 'GRANT_INVALID_INPUT', 'Select at most 100 original Installation editions.');
+  const seen=new Set();
+  for(const row of value){
+    exact(row,['id','revision','sha256'],['id','revision']);
+    id(row.id,'installation');integer(row.revision,'Selected Installation edition',1,500);
+    need(!seen.has(row.id),'GRANT_INVALID_INPUT','Select one exact edition per Installation.');seen.add(row.id);
+    if(row.sha256!==undefined)sha(row.sha256);
+  }
+  return value;
+}
+function customerUseQuery(args) {
+  const query=new URLSearchParams({expectedVersion:String(integer(args.expectedVersion,'Selected customer-use case version'))});
+  if(args.asOfDate!==undefined)query.set('asOfDate',completionDate(args.asOfDate));
+  if(args.installationRefs!==undefined)query.set('installationRefs',JSON.stringify(customerUseRefs(args.installationRefs)));
+  return '?'+query;
+}
 function deliveryCalendarFormat(value = 'ics') {
   need(['ics','csv','json'].includes(value), 'GRANT_INVALID_INPUT', 'Choose the ICS, CSV or JSON calendar format.');
   return value;
@@ -167,6 +184,33 @@ function supplierAccountQuery(args, exported = false) {
   if (args.contributorId !== undefined && args.contributorId !== null)
     values.set('contributorId', id(args.contributorId, 'person'));
   return values.size ? '?' + values.toString() : '';
+}
+function accountReconciliationQuery(args, exported = false) {
+  const values = new URLSearchParams();
+  if (args.reconciliationId !== undefined && args.reconciliationId !== null)
+    values.set('reconciliationId', id(args.reconciliationId, 'reconciliation'));
+  if (args.revision !== undefined && args.revision !== null) {
+    need(values.has('reconciliationId'), 'GRANT_INVALID_INPUT', 'Select the original reconciliation for this edition.');
+    values.set('revision', String(integer(args.revision, 'Original reconciliation edition')));
+  }
+  if (args.expectedVersion !== undefined || exported)
+    values.set('expectedVersion', String(integer(args.expectedVersion, 'Reviewed case version')));
+  if (exported) values.set('expectedReportSha256', sha(args.expectedReportSha256));
+  return values.size ? '?' + values.toString() : '';
+}
+function accountReconciliationInput(body, applying = false) {
+  const keys = ['expectedVersion','reconciliationId','expectedRevision','state','document'];
+  if (applying) keys.push('expectedPreviewSha256','requestId','actor');
+  exact(body, keys, keys);
+  integer(body.expectedVersion, 'Original case version');
+  integer(body.expectedRevision, 'Current reconciliation edition', 0);
+  if (body.reconciliationId !== null) id(body.reconciliationId, 'reconciliation');
+  need(body.reconciliationId === null ? body.expectedRevision === 0 : body.expectedRevision >= 1,
+    'GRANT_INVALID_INPUT', 'Select edition zero for a new reconciliation or the current original edition.');
+  need(['DRAFT','CLOSED'].includes(body.state), 'GRANT_INVALID_INPUT', 'Save a draft reconciliation or a closed period.');
+  object(body.document, 'Complete original reconciliation document');
+  if (applying) { sha(body.expectedPreviewSha256); requestId(body.requestId); text(body.actor, 'Recording operator', 300); }
+  return body;
 }
 function cashAccountQuery(args, exported = false) {
   const values = new URLSearchParams(performanceQuery(args, exported));
@@ -591,9 +635,18 @@ export class GrantWorkspaceClient {
       cases:() => '/api/operations' + (args.planId === undefined ? '' : '?planId=' + pid()),
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
+      'cost-funding':() => '/api/operations/' + cid() + '/cost-funding',
+      'funding-edition':() => '/api/operations/' + cid() + '/cost-funding/edition' +
+        (args.revision===undefined?'':'?revision='+integer(args.revision,'Funding edition',1,1000000)),
+      'funding-request':() => '/api/operations/' + cid() + '/cost-funding/request?requestId=' + encodeURIComponent(requestId(args.requestId)),
+      'task-outcomes':() => '/api/operations/' + cid() + '/task-outcomes',
+      'task-outcome':() => '/api/operations/' + cid() + '/task-outcomes/' + id(args.comparisonId,'task-outcomes') +
+        (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Task comparison revision',1,1000000)),
       'supplier-account':() => '/api/operations/' + cid() + '/supplier-account' + supplierAccountQuery(args),
       performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
       'cash-account':() => '/api/operations/' + cid() + '/cash-account' + cashAccountQuery(args),
+      'account-reconciliation':() => '/api/operations/' + cid() + '/account-reconciliation' + accountReconciliationQuery(args),
+      'account-reconciliation-statement-inputs':() => '/api/operations/' + cid() + '/account-reconciliation-statements/' + id(args.sourceId,'source') + '/inputs',
       amendments:() => '/api/operations/' + cid() + '/amendments',
       amendment:() => '/api/operations/' + cid() + '/amendments/' + id(args.amendmentId, 'amendment') +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision, 'Amendment edition', 1, 300)),
@@ -655,6 +708,14 @@ export class GrantWorkspaceClient {
     object(body.data, 'Original action data');
     return this.#request('/api/operations/' + caseId + '/command', {body, originalRequestId:body.requestId});
   }
+  accountReconciliationPreview(caseId, body) {
+    id(caseId,'operation'); accountReconciliationInput(body);
+    return this.#request('/api/operations/'+caseId+'/account-reconciliation-preview', {body,mutation:false});
+  }
+  accountReconciliationApply(caseId, body) {
+    id(caseId,'operation'); accountReconciliationInput(body,true);
+    return this.#request('/api/operations/'+caseId+'/account-reconciliation', {body,originalRequestId:body.requestId});
+  }
   cashCorrectionPreview(caseId, body) {
     id(caseId, 'operation'); cashCorrectionInput(body);
     return this.#request('/api/operations/' + caseId + '/cash-correction-preview', {body, mutation:false});
@@ -681,6 +742,13 @@ export class GrantWorkspaceClient {
     integer(body.expectedVersion, 'Current case version', 1, 10000000);
     sha(body.expectedPreviewSha256); requestId(body.requestId);
     return this.#request('/api/operations/' + caseId + '/ledger-intake-apply', {body, originalRequestId:body.requestId});
+  }
+  statementInspect(caseId, expectedVersion, inputs) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    exact(inputs, ['sourceFormat', 'source', 'statementOptions'], ['sourceFormat', 'source']);
+    need(inputs.sourceFormat === 'OFX' || inputs.sourceFormat === 'MT940', 'GRANT_INVALID_INPUT',
+      'Choose an original OFX / QFX or MT940 source format.'); object(inputs.source, 'Original bank source');
+    return this.#request('/api/operations/' + caseId + '/statement-inspect', {body:{expectedVersion, inputs}, mutation:false});
   }
   statementPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Statement inputs');
@@ -842,6 +910,56 @@ export class GrantWorkspaceClient {
     return this.#request('/api/operations/' + caseId + '/portfolio-selection',
       {body:{expectedVersion, portfolioId, alternativeId}, mutation:false});
   }
+  fundingSeed(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','revision'],['expectedVersion']);
+    integer(body.expectedVersion,'Current case version');
+    if(body.revision!==undefined)integer(body.revision,'Selected funding edition',1,1000000);
+    return this.#request('/api/operations/'+caseId+'/funding-seed',{body,mutation:false});
+  }
+  fundingPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
+    integer(body.expectedVersion,'Current case version'); object(body.inputs,'Complete funding inputs');
+    return this.#request('/api/operations/'+caseId+'/funding-preview',{body,mutation:false});
+  }
+  async fundingSave(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256','acceptedResult'],
+      ['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.inputs,'Complete funding inputs'); requestId(body.requestId);
+    const {inputs,expectedPreviewSha256,acceptedResult,...original}=body;
+    const command={...original,action:'funding.save',data:{inputs,expectedPreviewSha256}};
+    const ordered=value=>Array.isArray(value)?value.map(ordered):plain(value)
+      ?Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):value;
+    const canonical=value=>JSON.stringify(ordered(value));
+    const fingerprint=digest(Buffer.from(canonical({domain:'stellar-forge.sf47-operations.v1',programId:caseId,body:command})));
+    const read=await this.read('funding-request',{caseId,requestId:body.requestId}), native=read.value;
+    need(native?.caseId===caseId&&native.requestId===body.requestId&&typeof native.found==='boolean',
+      'GRANT_FUNDING_REQUEST_CHANGED','The original funding request journal changed.');
+    if(native.found) {
+      need(native.fingerprint===fingerprint&&native.resultSha256===digest(Buffer.from(canonical(native.result))),
+        'GRANT_FUNDING_REQUEST_CHANGED','The original request identifies another complete funding input.');
+      if(acceptedResult!==undefined)need(canonical(native.result)===canonical(acceptedResult),
+        'GRANT_FUNDING_ACCEPTANCE_CHANGED','The retained accepted response differs from the original commitment.');
+    }else need(acceptedResult===undefined,'GRANT_FUNDING_COMMITMENT_MISSING',
+      'The restored workspace lacks this accepted original funding save. Restore matching state before continuing.');
+    // The unchanged native command recovers its original result before its case CAS.
+    return this.command(caseId,command);
+  }
+  taskOutcomesSeed(caseId, expectedVersion) {
+    id(caseId,'operation'); integer(expectedVersion,'Current case version');
+    return this.#request('/api/operations/'+caseId+'/task-outcomes-seed',{body:{expectedVersion},mutation:false});
+  }
+  taskOutcomesPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
+    integer(body.expectedVersion,'Current case version'); object(body.inputs,'Complete customer task comparison inputs');
+    return this.#request('/api/operations/'+caseId+'/task-outcomes-preview',{body,mutation:false});
+  }
+  taskOutcomesSave(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','inputs','expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.inputs,'Complete customer task comparison inputs');
+    const {inputs,expectedPreviewSha256,...original}=body;
+    return this.command(caseId,{...original,action:'task-outcomes.save',data:{inputs,expectedPreviewSha256}});
+  }
   installationReturnSeed(caseId, body) {
     id(caseId,'operation');
     exact(body,['expectedVersion','installationId','revision','sha256'],['expectedVersion','installationId','revision','sha256']);
@@ -853,6 +971,13 @@ export class GrantWorkspaceClient {
     id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
     integer(body.expectedVersion,'Current receiving case version'); object(body.inputs,'Complete receiving observations');
     return this.#request('/api/operations/'+caseId+'/installation-return-preview',{body,mutation:false});
+  }
+  installationReturnReviewSeed(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','retainedReview'],['expectedVersion','retainedReview']);
+    integer(body.expectedVersion,'Current owner case version');
+    exact(body.retainedReview,['id','sha256'],['id','sha256']);
+    id(body.retainedReview.id,'review'); sha(body.retainedReview.sha256);
+    return this.#request('/api/operations/'+caseId+'/installation-return-review-seed',{body,mutation:false});
   }
   installationReturnReviewPreview(caseId, body) {
     id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
@@ -874,6 +999,27 @@ export class GrantWorkspaceClient {
     text(body.note,'Owner receiving reason',12000);
     const {inputs,expectedPreviewSha256,...original}=body;
     return this.command(caseId,{...original,action:'installation.return-stage',data:{inputs,expectedPreviewSha256}});
+  }
+  customerUseCalendar(caseId, body) {
+    id(caseId,'operation');exact(body,['expectedVersion','installationRefs','asOfDate'],['expectedVersion']);
+    integer(body.expectedVersion,'Current case version');
+    if(body.installationRefs!==undefined)customerUseRefs(body.installationRefs);
+    if(body.asOfDate!==undefined)completionDate(body.asOfDate);
+    return this.#request('/api/operations/'+caseId+'/customer-use-calendar',{body,mutation:false});
+  }
+  customerUseCalendarExpand(caseId, body) {
+    id(caseId,'operation');exact(body,['expectedVersion','document','pattern'],['expectedVersion','document','pattern']);
+    integer(body.expectedVersion,'Current case version');object(body.document,'Complete Installation document');
+    exact(body.pattern,['id','taskIds','buyerDeploymentIds','weekdays','includeDates','excludeDates','mode','fundingByBuyer','replacePattern'],
+      ['id','taskIds','buyerDeploymentIds']);
+    return this.#request('/api/operations/'+caseId+'/customer-use-calendar-expand',{body,mutation:false});
+  }
+  customerUseCalendarCohort(caseId, body) {
+    id(caseId,'operation');exact(body,['expectedVersion','installationRefs','groupId','asOfAt'],['expectedVersion','groupId']);
+    integer(body.expectedVersion,'Current case version');text(body.groupId,'Selected customer-use window',100);
+    if(body.installationRefs!==undefined)customerUseRefs(body.installationRefs);
+    if(body.asOfAt!==undefined)text(body.asOfAt,'Original receipt observation cutoff',100);
+    return this.#request('/api/operations/'+caseId+'/customer-use-calendar-cohort',{body,mutation:false});
   }
   installationSeed(caseId, expectedVersion) {
     id(caseId,'operation'); integer(expectedVersion,'Current case version');
@@ -953,18 +1099,19 @@ export class GrantWorkspaceClient {
   }
   installationPreview(caseId, body) {
     id(caseId,'operation');
-    exact(body,['expectedVersion','installationId','expectedRevision','document'],
+    exact(body,['expectedVersion','installationId','expectedRevision','document','returnReview'],
       ['expectedVersion','installationId','expectedRevision','document']);
     integer(body.expectedVersion,'Current case version'); integer(body.expectedRevision,'Current installation edition',0,500);
     if(body.installationId!==null)id(body.installationId,'installation');
     need(body.installationId===null?body.expectedRevision===0:body.expectedRevision>=1,
       'GRANT_INVALID_INPUT','Select edition zero for a new installation or the original current installation edition.');
     object(body.document,'Complete installation document');
+    if(body.returnReview!==undefined){exact(body.returnReview,['id','sha256'],['id','sha256']);id(body.returnReview.id,'review');sha(body.returnReview.sha256);}
     return this.#request('/api/operations/'+caseId+'/installation-preview',{body,mutation:false});
   }
   installationSave(caseId, body) {
     id(caseId,'operation');
-    exact(body,['expectedVersion','requestId','actor','note','installationId','expectedRevision','document','expectedPreviewSha256'],
+    exact(body,['expectedVersion','requestId','actor','note','installationId','expectedRevision','document','expectedPreviewSha256','returnReview'],
       ['expectedVersion','requestId','actor','note','installationId','expectedRevision','document','expectedPreviewSha256']);
     integer(body.expectedVersion,'Current case version'); integer(body.expectedRevision,'Current installation edition',0,500);
     requestId(body.requestId); sha(body.expectedPreviewSha256);
@@ -973,9 +1120,11 @@ export class GrantWorkspaceClient {
     need(body.installationId===null?body.expectedRevision===0:body.expectedRevision>=1,
       'GRANT_INVALID_INPUT','Select edition zero for a new installation or the original current installation edition.');
     object(body.document,'Complete installation document');
-    const {installationId,expectedRevision,document,expectedPreviewSha256,...original}=body;
+    if(body.returnReview!==undefined){exact(body.returnReview,['id','sha256'],['id','sha256']);id(body.returnReview.id,'review');sha(body.returnReview.sha256);}
+    const {installationId,expectedRevision,document,expectedPreviewSha256,returnReview,...original}=body;
     return this.#request('/api/operations/'+caseId+'/command',{originalRequestId:body.requestId,
-      body:{...original,action:'installation.save',data:{installationId,expectedRevision,document,expectedPreviewSha256}}});
+      body:{...original,action:'installation.save',data:{installationId,expectedRevision,document,expectedPreviewSha256,
+        ...(returnReview===undefined?{}:{returnReview})}}});
   }
   commercialConnections() {
     return this.#request('/api/operations/commercial-connections', {});
@@ -1164,9 +1313,16 @@ export class GrantWorkspaceClient {
       'daily-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/daily.csv',
       'costs-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/costs.csv',
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
+      'cost-funding':() => '/api/operations/' + id(args.caseId,'operation') + '/cost-funding/export.zip?revision=' +
+        integer(args.revision,'Funding edition',1,1000000) + '&expectedVersion=' +
+        integer(args.expectedVersion,'Reviewed case version') + '&expectedReportSha256=' + sha(args.expectedReportSha256),
+      'task-outcomes':() => '/api/operations/' + id(args.caseId,'operation') + '/task-outcomes/' +
+        id(args.comparisonId,'task-outcomes') + '/export.zip?revision=' + integer(args.revision,'Task comparison revision',1,1000000) +
+        '&expectedVersion=' + integer(args.expectedVersion,'Reviewed export case version'),
       'supplier-account':() => '/api/operations/' + id(args.caseId,'operation') + '/supplier-account/export.zip' + supplierAccountQuery(args,true),
       performance:() => '/api/operations/' + id(args.caseId,'operation') + '/performance/export.zip' + performanceQuery(args,true),
       'cash-account':() => '/api/operations/' + id(args.caseId,'operation') + '/cash-account/export.zip' + cashAccountQuery(args,true),
+      'account-reconciliation':() => '/api/operations/' + id(args.caseId,'operation') + '/account-reconciliation/export.zip' + accountReconciliationQuery(args,true),
       engagement:() => '/api/operations/' + id(args.caseId, 'operation') + '/engagements/' + id(args.reviewId, 'review') + '/export.zip',
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',
@@ -1177,6 +1333,8 @@ export class GrantWorkspaceClient {
       'installation-return':() => '/api/operations/' + id(args.caseId,'operation') + '/installation-returns/' + id(args.reviewId,'review') + '/export.zip',
       commercial:() => commercialPath(args.caseId, args.billingId) + '/export.zip',
       source:() => '/api/operations/' + id(args.caseId, 'operation') + '/sources/' + id(args.sourceId, 'source'),
+      'customer-use-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/customer-use-calendar/export.' +
+        deliveryCalendarFormat(args.format ?? 'json') + customerUseQuery(args),
       'delivery-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-calendar/export.' +
         deliveryCalendarFormat(args.format) + deliveryCalendarQuery(args),
       completion:() => '/api/operations/' + id(args.caseId,'operation') + '/completion-reviews/' + id(args.reviewId,'review') + '/export.zip',

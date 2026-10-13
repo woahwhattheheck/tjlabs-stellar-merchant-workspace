@@ -1,0 +1,35 @@
+{
+  "purpose": "Published tariff controls with explicit operating quantities",
+  "rounding": {
+    "decimal_places": 2,
+    "mode": "half_even",
+    "scope": "invoice"
+  },
+  "tax": null,
+  "lines": [
+    {
+      "line_id": "main",
+      "profile_id": "AS14-2026-07",
+      "tariff_key": "AS14-2026-07:annual-main",
+      "quantity": "1"
+    },
+    {
+      "line_id": "branch",
+      "profile_id": "AS14-2026-07",
+      "tariff_key": "AS14-2026-07:annual-branch",
+      "quantity": "1"
+    },
+    {
+      "line_id": "satellite",
+      "profile_id": "AS14-2026-07",
+      "tariff_key": "AS14-2026-07:annual-satellite",
+      "quantity": "1"
+    },
+    {
+      "line_id": "recognition",
+      "profile_id": "AS14-2026-07",
+      "tariff_key": "AS14-2026-07:international-recognition",
+      "quantity": "6"
+    }
+  ]
+}
